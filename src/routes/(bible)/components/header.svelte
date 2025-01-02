@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { base } from '$app/paths';
+	import BookChapterPopup from './bookChapterPopup.svelte';
 
 	let showBookChapterPopup: Boolean = $state(false)
 	function onBookChapterClick() {
@@ -27,7 +28,7 @@
 				<div
 					class="absolute {showBookChapterPopup ? '': 'hidden'} h-[70vh] left-0 right-0 mx-auto md:w-1/2 p-4 md:max-w-screen-sm w-[90vw] bg-slate-300"
 				>
-					(popup)
+					<BookChapterPopup></BookChapterPopup>
 				</div>
 			</button>
 		</div>
