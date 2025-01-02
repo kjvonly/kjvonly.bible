@@ -192,7 +192,23 @@ export default {
 			'6xl': '72rem',
 			'7xl': '80rem',
 		},
-		container: {},
+		container: {
+			// you can configure the container to be centered
+			center: true,
+
+			// or have default horizontal padding
+			padding: '1rem',
+
+			// default breakpoints but with 40px removed
+			screens: {
+				sm: '640px',
+				md: '768px',
+				lg: '1025px',
+				xl: '1280px',
+				'2xl': '1536px',
+			},
+
+		},
 		content: {
 			none: 'none',
 		},
