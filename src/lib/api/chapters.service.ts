@@ -37,7 +37,8 @@ export class ChapterService {
         let chapter = undefined
         
         try {
-            chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            chapter = await bibleDB.getValue('chapters', chapterKey)
             console.log(`success reading ${chapterKey} from indexdb: slice(0,50) ${JSON.stringify(chapter).slice(0,50)}`)
             
         } catch (error){

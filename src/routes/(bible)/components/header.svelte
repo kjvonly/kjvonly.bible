@@ -26,7 +26,7 @@
 					>
 				</div>				
 				<div
-					class="absolute {showBookChapterPopup ? '': 'hidden'} h-[70vh] left-0 right-0 mx-auto md:w-1/2 p-4 md:max-w-screen-sm w-[90vw] bg-slate-300"
+					class="absolute {showBookChapterPopup ? '': 'hidden'} h-[70vh] left-0 right-0 mx-auto md:w-1/2 md:max-w-screen-sm w-[90vw] bg-white shadow-lg"
 				>
 					<BookChapterPopup></BookChapterPopup>
 				</div>
