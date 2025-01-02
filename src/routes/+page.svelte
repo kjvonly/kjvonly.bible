@@ -1,12 +1,11 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { bibleDB } from '$lib/db/bible.db';
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
-		bibleDB.init();
+        goto(`${base}/bible/chapter`)
 	});
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>

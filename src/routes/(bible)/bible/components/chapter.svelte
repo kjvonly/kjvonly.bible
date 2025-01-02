@@ -1,8 +1,23 @@
 <script lang="ts">
-	import Verse from "./verse.svelte";
+	import { bibleDB } from '$lib/db/bible.db';
+	import { onMount } from 'svelte';
+	import Verse from './verse.svelte';
 
-    let verse = '44_3_16'
+	let chapter = '50_3';
+	let versemap: Map<string, string>;
+	let keys: string[];
 
+	onMount(() => {
+		bibleDB.ready.then(() => {
+			bibleDB.getValue('chapters', chapter).then((data) => {
+				versemap = data['verseMap'];
+				keys = Object.keys(versemap).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
+			});
+		});
+	});
 </script>
 
-<Verse verse></Verse>
+{#each keys as k}
+
+	<Verse verse={k + ' ' + versemap[k]}></Verse>
+{/each}
