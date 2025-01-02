@@ -2,9 +2,9 @@
 	import { base } from '$app/paths';
 	import BookChapterPopup from './bookChapterPopup.svelte';
 
-	let showBookChapterPopup: Boolean = $state(false)
+	let showBookChapterPopup: Boolean = $state(false);
 	function onBookChapterClick() {
-		showBookChapterPopup = !showBookChapterPopup
+		showBookChapterPopup = !showBookChapterPopup;
 	}
 </script>
 
@@ -12,7 +12,7 @@
 	<div class="pt-5">
 		<h1 class="text-3xl font-bold">KJVonly</h1>
 	</div>
-	<div  class="justify-items-center pt-11">
+	<div class="justify-items-center pt-11">
 		<div class=" text-base">
 			<button onclick={onBookChapterClick}>
 				<div class="my-2 border-b-2 hover:bg-gray-300/75">
@@ -24,17 +24,19 @@
 							alt="chevron-down"
 						/></span
 					>
-				</div>				
-				<div
-					class="absolute {showBookChapterPopup ? '': 'hidden'} h-[70vh] left-0 right-0 mx-auto md:w-1/2 md:max-w-screen-sm w-[90vw] bg-white shadow-lg"
-				>
-					<BookChapterPopup></BookChapterPopup>
 				</div>
 			</button>
+
+			<div
+				class="absolute {showBookChapterPopup
+					? ''
+					: 'hidden'} left-0 right-0 mx-auto h-[70vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:max-w-screen-sm"
+			>
+				<BookChapterPopup></BookChapterPopup>
+			</div>
 		</div>
 	</div>
 </div>
 
 <style>
-
 </style>
