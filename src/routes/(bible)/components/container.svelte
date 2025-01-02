@@ -5,7 +5,7 @@
 
 <div class="w-full h-full flex justify-center">
 
-    <div class="max-w-5xl w-full">
+    <div class="max-w-6xl w-full">
         {@render children?.()}
     </div>
 

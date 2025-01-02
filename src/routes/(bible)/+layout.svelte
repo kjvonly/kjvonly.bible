@@ -8,7 +8,7 @@
 <Container>
 	<Header></Header>
 	<div class="flex justify-center">
-		<div class="max-w-xl ">
+		<div class="md:max-w-lg max-w-sm ">
 			<div class="flex flex-wrap justify-start">
 				{@render children()}
 			</div>
