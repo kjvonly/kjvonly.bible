@@ -6,12 +6,5 @@
 </script>
 
 <Container>
-	<Header></Header>
-	<div class="flex justify-center m-12">
-		<div class="md:max-w-lg max-w-sm ">
-			<div class="flex flex-wrap justify-start">
-				{@render children()}
-			</div>
-		</div>
-	</div>
+{@render children?.()}
 </Container>

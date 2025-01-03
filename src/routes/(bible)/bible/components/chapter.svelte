@@ -3,27 +3,37 @@
 	import { onMount } from 'svelte';
 	import Verse from './verse.svelte';
 
-	let book: string;
-	let number: string;
-	let chapter = '50_3';
-	let versemap: any;
-	let keys: string[];
+	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
 
-	onMount(() => {
-		bibleDB.ready.then(() => {
-			bibleDB.getValue('chapters', chapter).then((data) => {
-				book = data['bookName'];
-				number = data['number'];
-				versemap = data['verseMap'];
-				keys = Object.keys(versemap).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
-			});
-		});
+	$effect(() => {
+        if(chapterKey){
+            loadChapter();
+        }
+		
+        
+	});
+
+    
+	let versemap: any = $state();
+	let keys: string[] = $state([]);
+
+	async function loadChapter() {
+		await bibleDB.ready;
+		let data = await bibleDB.getValue('chapters', chapterKey);
+		bookName = data['bookName'];
+		bookChapter = data['number'];
+		versemap = data['verseMap'];
+		keys = Object.keys(versemap).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
+	}
+
+	onMount(async () => {
+		
 	});
 </script>
 
 <div class="flex-col">
-	{#if book && number}
-		<h1 class="text-center font-bold">{book} {number}</h1>
+	{#if bookChapter && bookName}
+		<h1 class="text-center font-bold">{bookName} {bookChapter}</h1>
 	{/if}
 	{#each keys as k}
 		<Verse verse={k + ' ' + versemap[k]}></Verse>

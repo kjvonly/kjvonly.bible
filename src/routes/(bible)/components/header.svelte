@@ -2,6 +2,9 @@
 	import { base } from '$app/paths';
 	import BookChapterPopup from './bookChapterPopup.svelte';
 
+	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
+
+
 	let showBookChapterPopup: Boolean = $state(false);
 	function onBookChapterClick() {
 		showBookChapterPopup = !showBookChapterPopup;
@@ -16,7 +19,7 @@
 		<div class=" text-base">
 			<button onclick={onBookChapterClick}>
 				<div class="my-2 border-b-2 hover:bg-gray-300/75">
-					<span class="mr-56 ps-2 text-sm">John 3</span>
+					<span class="mr-56 ps-2 text-sm">{bookName} {bookChapter}</span>
 					<span
 						><img
 							class="mr-2 inline-block w-3"
@@ -32,7 +35,7 @@
 					? ''
 					: 'hidden'} left-0 right-0 mx-auto h-[70vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:max-w-screen-sm"
 			>
-				<BookChapterPopup></BookChapterPopup>
+				<BookChapterPopup bind:showBookChapterPopup bind:chapterKey></BookChapterPopup>
 			</div>
 		</div>
 	</div>

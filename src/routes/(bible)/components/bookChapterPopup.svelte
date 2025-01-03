@@ -2,6 +2,7 @@
 	import { chapterService } from '$lib/api/chapters.service';
 	import { onMount } from 'svelte';
 
+	let { chapterKey = $bindable(), showBookChapterPopup = $bindable() } = $props();
 	let bookNames: any = $state();
 	let bookIds: any;
 	let bookNamesSorted: any[] = $state([]);
@@ -23,7 +24,11 @@
 		event.stopPropagation();
 		selectedBook = bn;
 	}
-	function chapterSelected(ch: any) {}
+	function chapterSelected(ch: any) {
+		chapterKey = `${selectedBook.id}_${ch}`;
+		showBookChapterPopup = false;
+        selectedBook = undefined
+	}
 </script>
 
 <div class="h-full w-full justify-start justify-items-start overflow-y-scroll">
