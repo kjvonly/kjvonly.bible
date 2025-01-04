@@ -38,7 +38,7 @@
 			</div>
 		</div>
 	</div>
-	<span class="fixed w-full	 left-0 border-b-2 border-gray-500"></span>
+	<span class="fixed w-full	 left-0 border-b-2 dark:border-gray-500"></span>
 </div>
 
 <style>

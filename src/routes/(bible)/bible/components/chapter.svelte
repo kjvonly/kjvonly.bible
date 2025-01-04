@@ -14,7 +14,7 @@
 	});
 
     
-	let versemap: any = $state();
+	let verses: any = $state();
 	let keys: string[] = $state([]);
 
 	async function loadChapter() {
@@ -22,8 +22,8 @@
 		let data = await bibleDB.getValue('chapters', chapterKey);
 		bookName = data['bookName'];
 		bookChapter = data['number'];
-		versemap = data['verseMap'];
-		keys = Object.keys(versemap).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
+		verses = data['verses'];
+		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
 	onMount(async () => {
@@ -31,11 +31,11 @@
 	});
 </script>
 
-<div class="flex-col">
+<div class="flex-col leading-loose">
 	{#if bookChapter && bookName}
 		<h1 class="text-center font-bold">{bookName} {bookChapter}</h1>
 	{/if}
 	{#each keys as k}
-		<Verse verse={k + ' ' + versemap[k]}></Verse>
+		<Verse verse={verses[k]}></Verse>
 	{/each}
 </div>

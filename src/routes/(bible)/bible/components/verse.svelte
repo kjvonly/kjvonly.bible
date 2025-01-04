@@ -5,7 +5,8 @@
 </script>
 
 {#if verse}
-	{#each verse.split(' ') as word}
+
+	{#each verse.words as word}
 		<Word {word}></Word>
 	{/each}
 {/if}
