@@ -3,7 +3,7 @@
 	import BookChapterPopup from './bookChapterPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
 
-	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
+	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable(), chapterSettings = $bindable() } = $props();
 
 	let showBookChapterPopup: Boolean = $state(false);
 	let showSettingsPopup: Boolean = $state(false);
@@ -91,7 +91,7 @@
 					? ''
 					: 'hidden'}  z-popover mx-auto h-[40vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:min-w-xs"
 			>
-				<SettingsPopup bind:showSettingsPopup></SettingsPopup>
+				<SettingsPopup  bind:chapterSettings></SettingsPopup>
 			</div>
 		</div>
 	</div>

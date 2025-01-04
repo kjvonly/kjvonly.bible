@@ -1,9 +1,14 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.service';
+	
 	import { onMount } from 'svelte';
 
-	let { showSettingsPopup = $bindable() } = $props();
+	let {  chapterSettings = $bindable() } = $props();
 
+	interface FontSize {
+		height: string
+		fontSzie: string
+	}
+	
 	let fontSizes = [
 		{
 			height: 'h-8 w-8',
@@ -20,8 +25,8 @@
 	];
 	onMount(async () => {});
 
-	function onSizeSelected() {
-		
+	function onSizeSelected(fontSize: string) {
+		chapterSettings.fontSize = fontSize
 	}
 </script>
 
@@ -44,7 +49,7 @@
 	<div class="mt-4 flex w-full justify-center p-6">
 		{#each fontSizes as fs}
 			<button
-				onclick={onSizeSelected}
+				onclick={() => onSizeSelected(fs.fontSize)}
 				class="flex h-16 w-1/3 items-center justify-center bg-white ring-1 ring-gray-200 ring-offset-2"
 				aria-label="font-size button"
 			>

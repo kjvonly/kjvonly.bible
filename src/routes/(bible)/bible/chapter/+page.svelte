@@ -1,12 +1,31 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
+	import { onMount } from 'svelte';
 	import Header from '../../components/header.svelte';
 	import Chapter from '../components/chapter.svelte';
+	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
 
 	let chapterKey = $state('50_3');
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
+
+	let chapterSettings: ChapterSettings| null = $state(null);
+
+	$effect(() => {
+		chapterSettings;
+		if (chapterSettings !== null){
+			localStorage.setItem('chapterSettings', JSON.stringify(chapterSettings));
+		}
+	});
+
+	onMount(() => {
+		let cs = localStorage.getItem('chapterSettings');
+		if (cs !== null) {
+			chapterSettings = JSON.parse(cs);
+		}else {
+			chapterSettings = newChapterSettings()
+		}
+	});
 
 	async function _nextChapter() {
 		chapterKey = bibleNavigationService.next(chapterKey);
@@ -18,11 +37,11 @@
 </script>
 
 <div class="relative">
-	<Header bind:bookName bind:bookChapter bind:chapterKey></Header>
+	<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings></Header>
 
 	<div class="m-4 flex justify-center md:m-12">
 		<div class="max-w-sm md:max-w-lg">
-			<div class="flex flex-wrap justify-start">
+			<div class="flex flex-wrap justify-start {chapterSettings?.fontSize}">
 				<Chapter bind:bookName bind:bookChapter bind:chapterKey></Chapter>
 			</div>
 		</div>
