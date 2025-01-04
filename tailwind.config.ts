@@ -720,7 +720,8 @@ export default {
 			min: 'min-content',
 			max: 'max-content',
 			fit: 'fit-content',
-
+			'2xs': '291px',
+			xs: '448px',
 			sm: '640px',
 			md: '768px',
 			lg: '1024px',
