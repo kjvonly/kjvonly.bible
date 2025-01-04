@@ -2,6 +2,7 @@
 	import { bibleDB } from '$lib/db/bible.db';
 	import { onMount } from 'svelte';
 	import Verse from './verse.svelte';
+	import { chapterService } from '$lib/api/chapters.service';
 
 	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
 
@@ -15,8 +16,7 @@
 	let keys: string[] = $state([]);
 
 	async function loadChapter() {
-		await bibleDB.ready;
-		let data = await bibleDB.getValue('chapters', chapterKey);
+		let data = await chapterService.getChapter(chapterKey)
 		bookName = data['bookName'];
 		bookChapter = data['number'];
 		verses = data['verses'];

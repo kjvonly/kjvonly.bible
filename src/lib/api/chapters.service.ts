@@ -29,26 +29,28 @@ export class ChapterService {
             prom,
             new Promise((_r, rej) => timer = setTimeout(rej, time, timeoutError)) // returns the defined timeoutError in case of rejection
         ]).catch(err => { // handle errors that may occur during the promise race
-            throw(err);
-        }) .finally(() => clearTimeout(timer)); // clears timer 
+            throw (err);
+        }).finally(() => clearTimeout(timer)); // clears timer 
     }
 
     async getChapter(chapterKey: string): Promise<any> {
         let chapter = undefined
-        
+
         try {
             // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
-            await bibleDB.ready
-            chapter = await bibleDB.getValue('chapters', chapterKey)
-            console.log(`success reading ${chapterKey} from indexdb: slice(0,50) ${JSON.stringify(chapter).slice(0,50)}`)
-            
-        } catch (error){
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                chapter = await bibleDB.getValue('chapters', chapterKey)
+                console.log(`success reading ${chapterKey} from indexdb: slice(0,50) ${JSON.stringify(chapter).slice(0, 50)}`)
+            }
+
+        } catch (error) {
             console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
         }
 
         if (chapter === undefined) {
             console.log(`getting chapter ${chapterKey} from web service`)
-            return api.get(`data/json.gz/${chapterKey}.json.gz`);
+            return await api.get(`data/json.gz/${chapterKey}.json.gz`);
         }
 
         return chapter;

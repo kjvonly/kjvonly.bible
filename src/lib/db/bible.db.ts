@@ -5,6 +5,7 @@ export class BibleDB extends IndexedDb {
 	ready: Promise<boolean | undefined> = new Promise((resolve, reject) => {
 		this.resolve = resolve;
 	});
+	isReady = false
 
 	constructor() {
 		super('bible');
@@ -53,6 +54,7 @@ export class BibleDB extends IndexedDb {
 			return;
 		}
 		this.resolve(true);
+		this.isReady = true
 	}
 }
 
