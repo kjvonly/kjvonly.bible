@@ -193,13 +193,10 @@ export default {
 			'7xl': '80rem',
 		},
 		container: {
-			// you can configure the container to be centered
 			center: true,
 
-			// or have default horizontal padding
 			padding: '1rem',
 
-			// default breakpoints but with 40px removed
 			screens: {
 				sm: '640px',
 				md: '768px',
@@ -709,6 +706,13 @@ export default {
 			min: 'min-content',
 			max: 'max-content',
 			fit: 'fit-content',
+
+			sm: '640px',
+			md: '768px',
+			lg: '1024px',
+			xl: '1280px',
+			'2xl': '1536px',
+
 		}),
 		objectPosition: {
 			bottom: 'bottom',
@@ -1072,11 +1076,13 @@ export default {
 		zIndex: {
 			auto: 'auto',
 			0: '0',
+			1: '1',
 			10: '10',
 			20: '20',
 			30: '30',
 			40: '40',
 			50: '50',
+			popover: '1500',
 		},
 	},
 } satisfies Config;
