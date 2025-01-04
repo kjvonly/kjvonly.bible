@@ -1197,9 +1197,7 @@ export class BibleNavigationService {
 	chapterList: string[];
 	bookNames: any;
 	constructor() {
-		chapterService.getChapter("booknames").then((data: any) => {
-			this.bookNames = data;
-		});
+
 
 
 		this.chapterList = chapters;
@@ -1223,7 +1221,14 @@ export class BibleNavigationService {
 		}
 	}
 
-	goto(shortBook: string, chapter: string) {
+	
+
+	async goto(shortBook: string, chapter: string) {
+		if (!this.bookNames) {
+			await chapterService.getChapter("booknames").then((data: any) => {
+				this.bookNames = data;
+			});
+		}
 		for (const [key, value] of Object.entries(this.bookNames['shortNames'])) {
 			if (shortBook.toLowerCase() === value.toLowerCase()) {
 				return key + '_' + chapter;

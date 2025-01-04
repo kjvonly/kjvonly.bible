@@ -1,6 +1,7 @@
 import { api } from './api'
 import { bibleDB } from '../db/bible.db';
 import { base } from '$app/paths';
+import { browser } from '$app/environment';
 
 export class ChapterService {
 

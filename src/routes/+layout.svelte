@@ -3,7 +3,10 @@
 	import '../app.css';
 	import { bibleDB } from '$lib/db/bible.db';
 
-	onMount(() => {
+	import { tick } from 'svelte';
+
+	
+	onMount(async () => {
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		bibleDB.init();
 	});
@@ -11,4 +14,6 @@
 	let { children } = $props();
 </script>
 
-{@render children()}
+
+	{@render children()}
+

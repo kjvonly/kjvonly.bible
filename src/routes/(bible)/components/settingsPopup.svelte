@@ -62,7 +62,7 @@
 			{#each fontSizes as fs}
 				<button
 					onclick={() => onSizeSelected(fs.fontSize)}
-					class=" {chapterSettings?.fontSize === fs.fontSize ? 'bg-black text-white': ''} flex h-16 w-1/3 items-center justify-center bg-white ring-1 ring-gray-200 ring-offset-2"
+					class=" {chapterSettings?.fontSize === fs.fontSize ? 'bg-black text-white': 'bg-white'} flex h-16 w-1/3 items-center justify-center  ring-1 ring-gray-200 ring-offset-2"
 					aria-label="font-size button"
 				>
 					<svg
@@ -89,7 +89,7 @@
 			{#each fontFamilies as ff}
 				<button
 					onclick={() => onFontFamilySelected(ff.fontFamily)}
-					class="{chapterSettings?.fontFamily === ff.fontFamily ? 'bg-black text-white': ''} {ff.fontFamily} flex h-16 w-1/2 items-center justify-center bg-white ring-1 ring-gray-200 ring-offset-2"
+					class="{chapterSettings?.fontFamily === ff.fontFamily ? 'bg-black text-white': 'bg-white'} {ff.fontFamily} flex h-16 w-1/2 items-center justify-center  ring-1 ring-gray-200 ring-offset-2"
 					aria-label="font-size button"
 				>
 					{ff.name}
