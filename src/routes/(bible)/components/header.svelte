@@ -4,7 +4,6 @@
 
 	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
 
-
 	let showBookChapterPopup: Boolean = $state(false);
 	function onBookChapterClick() {
 		showBookChapterPopup = !showBookChapterPopup;
@@ -39,6 +38,7 @@
 			</div>
 		</div>
 	</div>
+	<span class="fixed w-full	 left-0 border-b-2 border-gray-500"></span>
 </div>
 
 <style>
