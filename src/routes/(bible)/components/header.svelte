@@ -18,7 +18,7 @@
 </script>
 
 <div class="flex-column sticky top-0 z-10 w-[100%] bg-white">
-	<div class="pt-5">
+	<div class="px-2 pt-5">
 		<h1 class="text-3xl font-bold">KJVonly</h1>
 	</div>
 
@@ -27,7 +27,8 @@
 			<!-- book chapter selection -->
 			<div class="relative">
 				<button
-					class="mt-2 flex w-full items-center justify-between border-b-2 hover:bg-gray-300/75"
+					class="mt-2 flex w-full items-cen
+					ter justify-between border-b-2 hover:bg-gray-300/75"
 					onclick={onBookChapterClick}
 				>
 					<span class="w-full text-start text-sm">{bookName} {bookChapter}</span>

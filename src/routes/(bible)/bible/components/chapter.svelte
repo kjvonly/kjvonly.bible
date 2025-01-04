@@ -6,14 +6,11 @@
 	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
 
 	$effect(() => {
-        if(chapterKey){
-            loadChapter();
-        }
-		
-        
+		if (chapterKey) {
+			loadChapter();
+		}
 	});
 
-    
 	let verses: any = $state();
 	let keys: string[] = $state([]);
 
@@ -26,10 +23,9 @@
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
-	onMount(async () => {
-		
-	});
+	onMount(async () => {});
 </script>
+
 
 <div class="flex-col leading-loose">
 	{#if bookChapter && bookName}
@@ -39,3 +35,7 @@
 		<Verse verse={verses[k]}></Verse>
 	{/each}
 </div>
+
+<style>
+
+</style>

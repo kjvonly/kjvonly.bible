@@ -8,6 +8,11 @@ export default {
 	presets: [],
 	darkMode: 'media', // or 'class'
 	theme: {
+		extend: {
+			fontFamily: {
+				'KJV1611': ['KJV1611']
+			  }
+		},
 		accentColor: ({ theme }) => ({
 			...theme('colors'),
 			auto: 'auto',

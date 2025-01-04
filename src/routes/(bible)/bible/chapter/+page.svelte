@@ -41,7 +41,7 @@
 
 	<div class="m-4 flex justify-center md:m-12">
 		<div class="max-w-sm md:max-w-lg">
-			<div class="flex flex-wrap justify-start {chapterSettings?.fontSize}">
+			<div class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}">
 				<Chapter bind:bookName bind:bookChapter bind:chapterKey></Chapter>
 			</div>
 		</div>

@@ -1,14 +1,27 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
+
+
+
 @import 'tailwindcss/utilities';
+
+@font-face {
+	font-family: 'KJV1611';
+	src: url('/fonts/KJV1611.woff') format('woff');
+}
 
 @layer base {
     body {
-        @apply text-2xl
+        @apply text-2xl 
     }
 }
 
+
+
+
 body {
+    
+
     scrollbar-color: bg-slate-200 transparent !important;
     scrollbar-width: 0em !important;
 
