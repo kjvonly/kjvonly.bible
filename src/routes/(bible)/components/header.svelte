@@ -50,6 +50,7 @@
 			</div>
 		</div>
 		<!-- settings buttong Aa -->
+
 		<div class="relative">
 			<button
 				onclick={onSettingsClick}
@@ -74,8 +75,19 @@
 					</g>
 				</svg>
 			</button>
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div
-				class=" fixed md:absolute md:-left-[200px] left-0 right-0  {showSettingsPopup
+				class="{showSettingsPopup
+					? ''
+					: 'hidden'} fixed left-0 top-0 h-full w-full "
+				onclick={(event) => {
+					event.stopPropagation();
+					showSettingsPopup = false;
+				}}
+			></div>
+			<div
+				class=" fixed left-0 right-0 md:absolute md:-left-[200px] {showSettingsPopup
 					? ''
 					: 'hidden'}  z-popover mx-auto h-[40vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:min-w-xs"
 			>

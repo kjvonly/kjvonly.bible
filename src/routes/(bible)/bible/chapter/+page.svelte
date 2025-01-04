@@ -28,6 +28,7 @@
 		</div>
 	</div>
 
+	<!-- prev/next chapter buttons -->
 	<div class="sticky bottom-28 z-1 flex flex-row px-4">
 		<button
 			onclick={_previousChapter}
