@@ -27,11 +27,36 @@
 	function chapterSelected(ch: any) {
 		chapterKey = `${selectedBook.id}_${ch}`;
 		showBookChapterPopup = false;
-        selectedBook = undefined
+		selectedBook = undefined;
 	}
 </script>
 
+<!--
+  Heads up! 👋
+
+  Plugins:
+    - @tailwindcss/forms
+-->
+
 <div class="h-full w-full justify-start justify-items-start overflow-y-scroll">
+	<header class="bg-gray-10 items c sticky top-0 w-full flex-col">
+		<div class="flex w-full justify-between p-2 text-gray-500">
+			<span></span>
+			<h1 class="text-lg ">BOOK</h1>
+			<button onclick={() => {showBookChapterPopup = false}} class="m-0 p-0"> Cancel </button>
+		</div>
+
+		<div class="p-2">
+			<label class="sr-only" for="name">Name</label>
+			<input
+				class="w-full rounded-lg border-gray-200 p-3 text-sm"
+				placeholder="Filter Books..."
+				type="text"
+				id="name"
+			/>
+		</div>
+	</header>
+
 	{#if selectedBook}
 		<div class="grid w-[100%] grid-cols-5 gap-4">
 			{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
