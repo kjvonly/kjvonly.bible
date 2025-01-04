@@ -17,17 +17,16 @@
 		<h1 class="text-3xl font-bold">KJVonly</h1>
 	</div>
 
-	<div class="flex w-full justify-center pt-11 text-base">
-		<div class=" flex-col">
+	<div class="flex relative w-full justify-center pt-11 pb-2 text-base">
+		<div class=" w-[300px] flex-col">
 			<!-- book chapter selection -->
 			<div class="relative">
 				<button
 					class="mt-2 flex w-full items-center justify-between border-b-2 hover:bg-gray-300/75"
 					onclick={onBookChapterClick}
 				>
-					<span class="text-start text-sm">{bookName} {bookChapter}</span>
+					<span class="w-full text-start text-sm">{bookName} {bookChapter}</span>
 
-					<span class="flex w-full flex-1"></span>
 					<span
 						><img
 							class="mr-2 inline-block w-3"
@@ -37,9 +36,9 @@
 					>
 				</button>
 				<div
-					class="absolute {showBookChapterPopup
+					class="md:absolute fixed md:-left-[150px] left-0 right-0 {showBookChapterPopup
 						? ''
-						: 'hidden'} left-0 right-0 z-popover mx-auto h-[70vh] w-[90vw] min-w-sm bg-white shadow-lg md:w-1/2"
+						: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] md:min-w-sm bg-white shadow-lg md:w-1/2"
 				>
 					<BookChapterPopup bind:showBookChapterPopup bind:chapterKey></BookChapterPopup>
 				</div>
@@ -48,7 +47,7 @@
 		<!-- settings buttong Aa -->
 		<button
 			onclick={onSettingsClick}
-			class="ml-5 h-8 w-8 rounded-full bg-white ring-2 ring-gray-200 ring-offset-2"
+			class="ml-5 h-8 w-8 rounded-full bg-white ring-1 ring-gray-200 ring-offset-2"
 			aria-label="font-size button"
 		>
 			<svg

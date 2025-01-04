@@ -31,7 +31,7 @@
 	<div class="sticky bottom-28 z-1 flex flex-row px-4">
 		<button
 			onclick={_previousChapter}
-			class="ring-offset-blue-20 rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300 ring-offset-2"
+			class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300 ring-offset-2"
 			aria-label="left arrow"
 		>
 			<svg
@@ -55,7 +55,7 @@
 		<span class="flex-1"></span>
 		<button
 			onclick={_nextChapter}
-			class="ring-offset-blue-20 h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300 ring-offset-2"
+			class="h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300 ring-offset-2"
 			aria-label="next chapter arrow"
 		>
 			<svg
