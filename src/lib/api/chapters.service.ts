@@ -42,7 +42,6 @@ export class ChapterService {
             if (bibleDB.isReady) {
                 await bibleDB.ready
                 chapter = await bibleDB.getValue('chapters', chapterKey)
-                console.log(`success reading ${chapterKey} from indexdb: slice(0,50) ${JSON.stringify(chapter).slice(0, 50)}`)
             }
 
         } catch (error) {
@@ -50,7 +49,6 @@ export class ChapterService {
         }
 
         if (chapter === undefined) {
-            console.log(`getting chapter ${chapterKey} from web service`)
             return await api.get(`data/json.gz/${chapterKey}.json.gz`);
         }
 
