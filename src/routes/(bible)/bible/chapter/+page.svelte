@@ -5,16 +5,22 @@
 	import Chapter from '../components/chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
 
-	let chapterKey = $state('50_3');
+	let chapterKey: string | null = $state(null);
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
 
-	let chapterSettings: ChapterSettings| null = $state(null);
+	let chapterSettings: ChapterSettings | null = $state(null);
 
 	$effect(() => {
 		chapterSettings;
-		if (chapterSettings !== null){
+		if (chapterSettings !== null) {
 			localStorage.setItem('chapterSettings', JSON.stringify(chapterSettings));
+		}
+	});
+
+	$effect(() => {
+		if (chapterKey) {
+			localStorage.setItem('currentChapterKey', chapterKey);
 		}
 	});
 
@@ -22,17 +28,28 @@
 		let cs = localStorage.getItem('chapterSettings');
 		if (cs !== null) {
 			chapterSettings = JSON.parse(cs);
-		}else {
-			chapterSettings = newChapterSettings()
+		} else {
+			chapterSettings = newChapterSettings();
+		}
+
+		let ck = localStorage.getItem('currentChapterKey');
+		if (ck) {
+			chapterKey = ck;
+		} else {
+			chapterKey = '50_3'; // John 3
 		}
 	});
 
 	async function _nextChapter() {
-		chapterKey = bibleNavigationService.next(chapterKey);
+		if (chapterKey) {
+			chapterKey = bibleNavigationService.next(chapterKey);
+		}
 	}
 
 	async function _previousChapter() {
-		chapterKey = bibleNavigationService.previous(chapterKey);
+		if (chapterKey) {
+			chapterKey = bibleNavigationService.previous(chapterKey);
+		}
 	}
 </script>
 
@@ -41,17 +58,19 @@
 
 	<div class="m-4 flex justify-center md:m-12">
 		<div class="max-w-sm md:max-w-lg">
-			<div class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}">
+			<div
+				class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"
+			>
 				<Chapter bind:bookName bind:bookChapter bind:chapterKey></Chapter>
 			</div>
 		</div>
 	</div>
 
 	<!-- prev/next chapter buttons -->
-	<div class="sticky bottom-28 z-1 flex flex-row px-4 max-w-6xl mx-auto">
+	<div class="sticky bottom-28 z-1 mx-auto flex max-w-6xl flex-row px-4">
 		<button
 			onclick={_previousChapter}
-			class="rounded-full bg-white  dark:bg-black text-gray-500 shadow-lg ring-2 ring-gray-300 dark:ring-gray-400"
+			class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"
 			aria-label="left arrow"
 		>
 			<svg
@@ -75,7 +94,7 @@
 		<span class="flex-1"></span>
 		<button
 			onclick={_nextChapter}
-			class="h-12 w-12 rounded-full bg-white dark:bg-black text-gray-500 ring-2 ring-gray-300 dark:ring-gray-400"
+			class="h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"
 			aria-label="next chapter arrow"
 		>
 			<svg
