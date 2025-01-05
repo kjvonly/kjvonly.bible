@@ -2,11 +2,10 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import { bibleDB } from '$lib/db/bible.db';
-
-	import { tick } from 'svelte';
-
+	import { colorTheme } from '$lib/services/colorTheme.service';
 	
 	onMount(async () => {
+		colorTheme.init()
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		bibleDB.init();
 	});

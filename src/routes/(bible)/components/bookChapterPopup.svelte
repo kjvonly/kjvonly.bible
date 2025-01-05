@@ -49,7 +49,7 @@
 -->
 
 <div class="h-full w-full justify-start justify-items-start overflow-y-scroll">
-	<header class="bg-gray-10 items c sticky top-0 w-full flex-col border-b-2 border-white">
+	<header class="bg-gray-10 dark:bg-zinc-800 items c sticky top-0 w-full flex-col border-b-2 border-white dark:border-gray-400">
 		<div class="flex w-full justify-between p-2 text-gray-500">
 			<div class="w-12 h-12">
 				<button onclick={()=> {selectedBook = undefined}} hidden={selectedBook === undefined} aria-label="back to book button">
@@ -93,7 +93,7 @@
 		<div class="p-2">
 			<label class="sr-only" for="name">Name</label>
 			<input
-				class="w-full rounded-lg border-gray-200 p-3 text-sm"
+				class="w-full rounded-lg border-gray-200 dark:bg-gray-10 p-3 text-sm"
 				placeholder="Filter Books..."
 				type="text"
 				id="name"
@@ -106,7 +106,7 @@
 	{#if selectedBook}
 		<div class="grid w-[100%] grid-cols-5 gap-4">
 			{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
-				<button onclick={() => chapterSelected(ch + 1)} class="hover:bg-gray-10 row-span-1 p-4"
+				<button onclick={() => chapterSelected(ch + 1)} class="hover:bg-gray-10  dark:hover:bg-zinc-800 row-span-1 p-4"
 					>{ch + 1}</button
 				>
 			{/each}
@@ -116,7 +116,7 @@
 			<div class="w-full">
 				<button
 					onclick={(event) => bookSelected(event, bn)}
-					class="hover:bg-gray-10 w-full p-4 text-start">{bn.name}</button
+					class="hover:bg-gray-10 dark:hover:bg-zinc-800 w-full p-4 text-start">{bn.name}</button
 				>
 			</div>
 		{/each}
