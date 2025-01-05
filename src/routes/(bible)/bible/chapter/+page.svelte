@@ -4,11 +4,7 @@
 	import Header from '../../components/header.svelte';
 	import Chapter from '../components/chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
-	import { scrolledIntoView } from '$lib/utils/position';
-	
-	// chapterID: when we display more than one chapter view we'll need to be 
-	// able to distiguish what chapter view we are acting on
-	let chapterID: string = `${crypto.randomUUID()}-`;
+
 	let chapterKey: string | null = $state(null);
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
@@ -24,7 +20,6 @@
 
 	$effect(() => {
 		if (chapterKey) {
-			scrolledIntoView(chapterID, '1', `${chapterID}chapter`)
 			localStorage.setItem('currentChapterKey', chapterKey);
 		}
 	});
@@ -58,22 +53,26 @@
 	}
 </script>
 
-<div  class="relative">
+<div class="relative">
 	<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings></Header>
 
-	<div class="m-4 flex justify-center md:m-12 overflow-y-scroll">
+	<div class="m-4 flex justify-center md:m-12">
 		<div class="max-w-sm md:max-w-lg">
 			<div
 				class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"
 			>
-				<span id={`${chapterID}chapter`} class="inline-block"></span>
-				<Chapter bind:bookName bind:bookChapter bind:chapterKey bind:chapterID></Chapter>
+				
+					<Chapter bind:bookName bind:bookChapter bind:chapterKey></Chapter>
+				
 			</div>
 		</div>
 	</div>
+</div>
 
-	<!-- prev/next chapter buttons -->
-	<div class="sticky bottom-28 z-1 mx-auto flex max-w-6xl flex-row px-4">
+<!-- prev/next chapter buttons -->
+
+<div class="fixed bottom-28 z-1 mx-auto flex w-full flex-row justify-center px-4">
+	<div class="flex w-full max-w-6xl">
 		<button
 			onclick={_previousChapter}
 			class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"

@@ -13,32 +13,33 @@
 @layer base {
     body {
         @apply text-2xl 
+        
     }
 }
 
 
-
-
-body {
-
-    scrollbar-color: bg-slate-200 transparent !important;
-    scrollbar-width: 0em !important;
-
-    /* Chrome/Brave */
-    ::-webkit-scrollbar {
-        /* width of the entire scrollbar */
-        width: 0rem;
-    }
-
-    ::-webkit-scrollbar-track {
-        /* color of the tracking area */
-        background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        /* color of the scroll thumb */
-        background-color: bg-slate-200;
-        /* roundness of the scroll thumb */
-        border-radius: 1rem;
-    }
+/* if you want a scroll bar in chrome */
+/* html {
+    overflow-y: scroll;
 }
+ */
+
+/* Chrome/Brave */
+::-webkit-scrollbar {
+    /* width of the entire scrollbar */
+    width: 0;
+}
+
+::-webkit-scrollbar-track {
+    /* color of the tracking area */
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    /* color of the scroll thumb */
+    background-color: blue;
+    /* roundness of the scroll thumb */
+    border-radius: 1rem;
+}
+
+

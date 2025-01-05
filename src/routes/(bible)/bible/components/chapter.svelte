@@ -3,17 +3,39 @@
 	import { onMount } from 'svelte';
 	import Verse from './verse.svelte';
 	import { chapterService } from '$lib/api/chapters.service';
+	let showChapter: boolean = $state(true);
+	let fadeClass: string = $state('fade-in');
+	let timeoutIDs: number[] = [];
+	let loadedBookName = $state();
+	let loadedChapter  = $state();
 
-	let {
-		chapterKey = $bindable(),
-		bookName = $bindable(),
-		bookChapter = $bindable(),
-		chapterID= $bindable()
-	} = $props();
+	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
 
 	$effect(() => {
 		if (chapterKey) {
-			loadChapter();
+			chapterService.getChapter(chapterKey).then((data) => {
+				bookName = data['bookName'];
+				bookChapter = data['number'];
+			});
+			timeoutIDs.forEach((id, idx) => {
+				//showChapter = false;
+				clearTimeout(id);
+			});
+
+			fadeClass = 'fade-out';
+			let id = setTimeout(() => {
+				showChapter = false;
+			}, 900);
+
+
+			let id2 = setTimeout(() => {
+				loadChapter();
+				fadeClass = 'fade-in';
+				showChapter = true;
+				timeoutIDs = [];
+			}, 2200);
+
+			timeoutIDs.push(id2);
 		}
 	});
 
@@ -24,6 +46,8 @@
 		let data = await chapterService.getChapter(chapterKey);
 		bookName = data['bookName'];
 		bookChapter = data['number'];
+		loadedBookName = bookName
+		loadedChapter = bookChapter
 		verses = data['verses'];
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
@@ -31,16 +55,41 @@
 	onMount(async () => {});
 </script>
 
-<div class="flex-col leading-loose">
-	{#if bookChapter && bookName}
-		<h1 class="text-center font-bold">{bookName} {bookChapter}</h1>
+<div class="{fadeClass} flex-col leading-loose">
+	{#if showChapter}
+		{#if loadedBookName && loadedChapter}
+			<h1 class="text-center font-bold">{loadedBookName} {loadedChapter} </h1>
+		{/if}
+		{#each keys as k}
+			<Verse verse={verses[k]}></Verse>
+		{/each}
 	{/if}
-	{#each keys as k}
-	<!-- span id used to scroll into position on chapter changes -->
-		<span id="{chapterID}{k}" class="inline-block"></span>
-		<Verse verse={verses[k]}></Verse>
-	{/each}
 </div>
 
 <style>
+	.fade-in {
+		animation: fadeIn 0.5s ease-in-out;
+	}
+
+	.fade-out {
+		animation: fadeOut 1s ease-in-out;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes fadeOut {
+		from {
+			opacity: 1;
+		}
+		to {
+			opacity: 0;
+		}
+	}
 </style>
