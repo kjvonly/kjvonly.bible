@@ -97,7 +97,7 @@
 		</div>
 	</div>
 
-	<span class="fixed left-0 w-full border-b-2 bg-white dark:border-gray-500"></span>
+	<span class="fixed left-0 right-0 h-1 w-full border-b-2 bg-white dark:border-gray-500"></span>
 </div>
 
 <style>

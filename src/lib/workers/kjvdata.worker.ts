@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 import IndexedDb from '../db/idb.db';
 
 onmessage = async () => {
@@ -9,7 +10,7 @@ onmessage = async () => {
 	let v = db.getValue('chapters', 'booknames');
 	v.then((v) => {
 		if (v === undefined) {
-			fetch(location.origin + '/data/json.gz/all.json.gz').then((res) => {
+			fetch(`${base}/data/json.gz/all.json.gz`).then((res) => {
 				res.json().then((json) => {
 					let myMap = new Map<string, any>(Object.entries(json));
 					myMap.forEach((value: any, key: string) => {
@@ -17,14 +18,18 @@ onmessage = async () => {
 						db.putValue('chapters', value);
 					});
 				});
+			}).catch((err) => {
+				console.log(`error: ${err}`)
 			});
-			fetch(location.origin + '/data/json.gz/booknames.json.gz').then((res) => {
+			fetch(`${base}/data/json.gz/booknames.json.gz`).then((res) => {
 				res.json().then((json) => {
 					json['id'] = 'booknames';
 					db.putValue('chapters', json);
 				});
-			});
-			fetch(location.origin + '/data/strongs.json.gz/all.json.gz').then((res) => {
+			}).catch((err) => {
+				console.log(`error: ${err}`)
+			});;
+			fetch(`${base}/data/strongs.json.gz/all.json.gz`).then((res) => {
 				res.json().then((json) => {
 					let myMap = new Map<string, any>(Object.entries(json));
 					myMap.forEach((value: any, key: string) => {
@@ -32,9 +37,11 @@ onmessage = async () => {
 						db.putValue('chapters', value);
 					});
 				});
+			}).catch((err) => {
+				console.log(`error: ${err}`)
 			});
 		}
 	});
 };
 
-export {};
+export { };
