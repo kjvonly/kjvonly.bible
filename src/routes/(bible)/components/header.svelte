@@ -34,7 +34,7 @@
 				<div class="relative">
 					<button
 						class="items-cen ter mt-2 flex
-					w-full justify-between border-b-2 dark:border-gray-400 hover:bg-zinc-800"
+					w-full justify-between border-b-2 dark:border-gray-400 hover:bg-gray-10 dark:hover:bg-zinc-800"
 						onclick={onBookChapterClick}
 					>
 						<span class="w-full text-start text-sm">{bookName} {bookChapter}</span>
