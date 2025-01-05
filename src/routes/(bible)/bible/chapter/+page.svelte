@@ -62,7 +62,7 @@
 				class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"
 			>
 				
-					<Chapter bind:bookName bind:bookChapter bind:chapterKey></Chapter>
+					<Chapter bind:bookName bind:bookChapter bind:chapterKey doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}></Chapter>
 				
 			</div>
 		</div>

@@ -4,38 +4,57 @@
 	import Verse from './verse.svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	let showChapter: boolean = $state(true);
-	let fadeClass: string = $state('fade-in');
+	let fadeClass: string = $state('');
 	let timeoutIDs: number[] = [];
 	let loadedBookName = $state();
-	let loadedChapter  = $state();
+	let loadedChapter = $state();
+	let firstLoad = true;
 
-	let { chapterKey = $bindable(), bookName = $bindable(), bookChapter = $bindable() } = $props();
+	let {
+		chapterKey = $bindable(),
+		bookName = $bindable(),
+		bookChapter = $bindable(),
+		doChapterFadeAnimation = $bindable()
+	} = $props();
 
 	$effect(() => {
 		if (chapterKey) {
-			chapterService.getChapter(chapterKey).then((data) => {
-				bookName = data['bookName'];
-				bookChapter = data['number'];
-			});
-			timeoutIDs.forEach((id, idx) => {
-				//showChapter = false;
-				clearTimeout(id);
-			});
+			if (doChapterFadeAnimation) {
+				if (firstLoad) {
+					firstLoad = false;
+					loadChapter();
+					return;
+				}
 
-			fadeClass = 'fade-out';
-			let id = setTimeout(() => {
+				chapterService.getChapter(chapterKey).then((data) => {
+					bookName = data['bookName'];
+					bookChapter = data['number'];
+				});
+				timeoutIDs.forEach((id, idx) => {
+					//showChapter = false;
+					clearTimeout(id);
+				});
+
+				fadeClass = 'fade-out';
+				let id = setTimeout(() => {
+					showChapter = false;
+				}, 900);
+
+				let id2 = setTimeout(() => {
+					loadChapter();
+					fadeClass = 'fade-in';
+					showChapter = true;
+					timeoutIDs = [];
+				}, 2200);
+
+				timeoutIDs.push(id2);
+			} else {
 				showChapter = false;
-			}, 900);
-
-
-			let id2 = setTimeout(() => {
+				setTimeout(() => {
+					showChapter = true;
+				}, 100);
 				loadChapter();
-				fadeClass = 'fade-in';
-				showChapter = true;
-				timeoutIDs = [];
-			}, 2200);
-
-			timeoutIDs.push(id2);
+			}
 		}
 	});
 
@@ -43,11 +62,12 @@
 	let keys: string[] = $state([]);
 
 	async function loadChapter() {
+		console.log(chapterKey);
 		let data = await chapterService.getChapter(chapterKey);
 		bookName = data['bookName'];
 		bookChapter = data['number'];
-		loadedBookName = bookName
-		loadedChapter = bookChapter
+		loadedBookName = bookName;
+		loadedChapter = bookChapter;
 		verses = data['verses'];
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
@@ -58,7 +78,7 @@
 <div class="{fadeClass} flex-col leading-loose">
 	{#if showChapter}
 		{#if loadedBookName && loadedChapter}
-			<h1 class="text-center font-bold">{loadedBookName} {loadedChapter} </h1>
+			<h1 class="text-center font-bold">{loadedBookName} {loadedChapter}</h1>
 		{/if}
 		{#each keys as k}
 			<Verse verse={verses[k]}></Verse>
