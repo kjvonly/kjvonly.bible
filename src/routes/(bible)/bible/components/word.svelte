@@ -16,7 +16,11 @@
 	}
 
 	.redtxt {
-		@apply text-red-500;
+		@apply text-red-500 dark:text-red-950;
+	}
+
+	:global(.dark) .redtxt {
+		@apply text-red-950;
 	}
 
 	u {
@@ -27,7 +31,7 @@
 		vertical-align: baseline;
 		position: relative;
 		top: -0.6em;
-        @apply text-xs text-gray-500 -z-10
+		@apply -z-10 text-xs text-gray-500;
 	}
 
 	u.xref {

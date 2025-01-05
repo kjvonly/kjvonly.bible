@@ -6,7 +6,7 @@ export default {
 	plugins: [typography],
 
 	presets: [],
-	darkMode: 'class', // or 'class'
+	darkMode:  ['class', "[class~='dark']"], // or 'class'
 	theme: {
 		extend: {
 			fontFamily: {
