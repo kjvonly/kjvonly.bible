@@ -1,10 +1,10 @@
-import { base } from "$app/paths";
+import { base } from "$lib/utils/paths";
 
 export class Api {
 
 
     async get(path: string) {
-        let response = await fetch(`${base}/${path}`);
+        let response = await fetch(`${base}${path}`);
         let data = await response.json();
         return data;
     }

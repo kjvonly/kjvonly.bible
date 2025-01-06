@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import BookChapterPopup from './bookChapterPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
 
@@ -42,7 +41,7 @@
 						<span
 							><img
 								class="mr-2 inline-block w-3"
-								src={`${base}/icons/chevron-down.svg`}
+								src={`${import.meta.env.BASE_URL}icons/chevron-down.svg`}
 								alt="chevron-down"
 							/></span
 						>

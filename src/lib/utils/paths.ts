@@ -1,0 +1,1 @@
+export const base = `${location.origin}${import.meta.env.BASE_URL}`
