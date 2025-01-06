@@ -48,7 +48,7 @@ export class ChapterService {
         }
 
         if (chapter === undefined) {
-            return await api.get(`data/json.gz/${chapterKey}.json.gz`);
+            return await api.get(`data/json.gz/${chapterKey}.json`);
         }
 
         return chapter;

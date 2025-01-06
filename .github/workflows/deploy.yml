@@ -17,6 +17,9 @@ jobs:
           git clone --depth=1 https://github.com/kjvonly/data.git kjvdata
           mkdir static/data
           mv kjvdata/json.gz static/data
+          cd static/data
+          for i in $(ls -1); do export f=${i%.gz} && zcat $i > $f ; done
+          rm ./*.json.gz
 
       - name: Add BASE_URL
         run: echo VITE_BASE_URL="/${{ github.event.repository.name }}/" > .env && cat .env

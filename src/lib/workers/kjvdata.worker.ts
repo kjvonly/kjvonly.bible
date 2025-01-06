@@ -10,7 +10,7 @@ onmessage = async () => {
 	v.then((v) => {
 
 		if (v === undefined) {
-			fetch(`${base}data/json.gz/all.json.gz`, {
+			fetch(`${base}data/json.gz/all.json`, {
 				headers: myHeaders
 			}).then((res) => {
 				res.json().then((json) => {
@@ -23,7 +23,7 @@ onmessage = async () => {
 			}).catch((err) => {
 				console.log(`error: ${err}`)
 			});
-			fetch(`${base}data/json.gz/booknames.json.gz`, {
+			fetch(`${base}data/json.gz/booknames.json`, {
 				headers: myHeaders
 			}).then((res) => {
 				res.json().then((json) => {
@@ -33,7 +33,7 @@ onmessage = async () => {
 			}).catch((err) => {
 				console.log(`error: ${err}`)
 			});;
-			fetch(`${base}data/strongs.json.gz/all.json.gz`, {
+			fetch(`${base}data/strongs.json/all.json`, {
 				headers: myHeaders
 			}).then((res) => {
 				res.json().then((json) => {
