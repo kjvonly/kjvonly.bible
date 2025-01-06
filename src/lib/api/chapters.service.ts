@@ -1,7 +1,6 @@
 import { api } from './api'
 import { bibleDB } from '../db/bible.db';
-import { base } from '$app/paths';
-import { browser } from '$app/environment';
+
 
 export class ChapterService {
 
@@ -49,7 +48,7 @@ export class ChapterService {
         }
 
         if (chapter === undefined) {
-            return await api.get(`data/json.gz/${chapterKey}.json.gz`);
+            return await api.get(`data/json.gz/${chapterKey}.json`);
         }
 
         return chapter;

@@ -1,6 +1,5 @@
-import { base } from '$app/paths';
 import IndexedDb from '../db/idb.db';
-
+import { base } from '../utils/paths'
 onmessage = async () => {
 	const myHeaders = new Headers();
 	myHeaders.append('Content-Type', 'application/json');
@@ -9,8 +8,11 @@ onmessage = async () => {
 	await db.createObjectStore(['chapters']);
 	let v = db.getValue('chapters', 'booknames');
 	v.then((v) => {
+
 		if (v === undefined) {
-			fetch(`${base}/data/json.gz/all.json.gz`).then((res) => {
+			fetch(`${base}data/json.gz/all.json`, {
+				headers: myHeaders
+			}).then((res) => {
 				res.json().then((json) => {
 					let myMap = new Map<string, any>(Object.entries(json));
 					myMap.forEach((value: any, key: string) => {
@@ -21,7 +23,9 @@ onmessage = async () => {
 			}).catch((err) => {
 				console.log(`error: ${err}`)
 			});
-			fetch(`${base}/data/json.gz/booknames.json.gz`).then((res) => {
+			fetch(`${base}data/json.gz/booknames.json`, {
+				headers: myHeaders
+			}).then((res) => {
 				res.json().then((json) => {
 					json['id'] = 'booknames';
 					db.putValue('chapters', json);
@@ -29,7 +33,9 @@ onmessage = async () => {
 			}).catch((err) => {
 				console.log(`error: ${err}`)
 			});;
-			fetch(`${base}/data/strongs.json.gz/all.json.gz`).then((res) => {
+			fetch(`${base}data/strongs.json/all.json`, {
+				headers: myHeaders
+			}).then((res) => {
 				res.json().then((json) => {
 					let myMap = new Map<string, any>(Object.entries(json));
 					myMap.forEach((value: any, key: string) => {

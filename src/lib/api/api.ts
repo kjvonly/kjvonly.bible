@@ -1,10 +1,18 @@
-import { base } from "$app/paths";
+import { base } from "$lib/utils/paths";
 
 export class Api {
 
 
     async get(path: string) {
-        let response = await fetch(`${base}/${path}`);
+        const myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        myHeaders.append('Transfer-Encoding', 'gzip');
+
+        let response = await fetch(`${base}${path}`,
+            {
+				headers: myHeaders
+			}
+        );
         let data = await response.json();
         return data;
     }
