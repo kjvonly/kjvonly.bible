@@ -62,7 +62,6 @@
 	let keys: string[] = $state([]);
 
 	async function loadChapter() {
-		console.log(chapterKey);
 		let data = await chapterService.getChapter(chapterKey);
 		bookName = data['bookName'];
 		bookChapter = data['number'];
