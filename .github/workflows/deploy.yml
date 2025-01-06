@@ -14,9 +14,9 @@ jobs:
 
       - name: Clone KJVonly data
         run: |
-          git clone --depth=1 https://github.com/kjvonly/data.git /data
+          git clone --depth=1 https://github.com/kjvonly/data.git /kjvdata
           mkdir static/data
-          mv /data/json.gz static/data
+          mv /kjvdata/json.gz static/data
 
       - name: Install Node.js
         uses: actions/setup-node@v4
