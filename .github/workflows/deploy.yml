@@ -18,6 +18,9 @@ jobs:
           mkdir static/data
           mv kjvdata/json.gz static/data
 
+      - name: Add BASE_URL
+        run: echo VITE_BASE_URL="/${{ github.event.repository.name }}/" > .env && cat .env
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:

@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-        goto(`${import.meta.env.BASE_URL}bible/chapter`)
+        goto(`${import.meta.env.VITE_BASE_URL}bible/chapter`)
 	});
 </script>
 
