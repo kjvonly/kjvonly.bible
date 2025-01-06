@@ -153,7 +153,7 @@
 					onclick={() => onFontFamilySelected(ff.fontFamily)}
 					class="{chapterSettings?.fontFamily === ff.fontFamily
 						? 'bg-black text-white dark:bg-gray-500'
-						: 'bg-white dark:bg-black'} {ff.fontFamily} flex h-16 w-1/2 items-center justify-center border dark:border-zinc-800"
+						: 'bg-white dark:bg-black'} {ff.fontFamily} flex h-16 w-1/2 items-center justify-center border dark:border-zinc-800 text-lg font-bold"
 					aria-label="font-size button"
 				>
 					{ff.name}
