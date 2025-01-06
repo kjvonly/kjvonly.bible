@@ -2,7 +2,7 @@
 	let { word } = $props();
 </script>
 
-<span class="inline-block pr-1 {word.class?.join(' ')}">{word.text}</span>
+&nbsp;<span class="inline-block {word.class?.join(' ')}">{word.text}</span>
 
 <style>
 	u.FOOTNO + u.whitespace {

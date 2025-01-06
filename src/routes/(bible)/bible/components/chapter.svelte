@@ -75,14 +75,16 @@
 </script>
 
 <div class="{fadeClass} flex-col leading-loose">
-	{#if showChapter}
-		{#if loadedBookName && loadedChapter}
-			<h1 class="text-center font-bold">{loadedBookName} {loadedChapter}</h1>
+	<p>
+		{#if showChapter}
+			{#if loadedBookName && loadedChapter}
+				<h1 class="text-center font-bold">{loadedBookName} {loadedChapter}</h1>
+			{/if}
+			{#each keys as k}
+				<Verse verse={verses[k]}></Verse>
+			{/each}
 		{/if}
-		{#each keys as k}
-			<Verse verse={verses[k]}></Verse>
-		{/each}
-	{/if}
+	</p>
 </div>
 
 <style>
