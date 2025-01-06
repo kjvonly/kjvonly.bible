@@ -5,8 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"echo": "echo $BASE_PATH",
-		"dev": "vite dev",
-		"build": "vite build --base=$BASE_PATH",
+		"dev": "BASE_PATH= vite dev",
+		"build": "BASE_PATH=$BASE_PATH vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
