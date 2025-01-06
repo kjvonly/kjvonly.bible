@@ -12,6 +12,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Clone KJVonly data
+        run: |
+          git clone --depth=1 https://github.com/kjvonly/data.git /data
+          mkdir static/data
+          mv /data/json.gz static/data
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -20,12 +26,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Clone KJVonly data
-        run: |
-          git clone --depth=1 https://github.com/kjvonly/data.git /data
-          mkdir static/data
-          mv /data/json.gz static/data
 
       - name: build
         env:
