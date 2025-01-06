@@ -1,0 +1,45 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+
+
+
+@import 'tailwindcss/utilities';
+
+@font-face {
+	font-family: 'KJV1611';
+	src: url('/fonts/KJV1611.woff') format('woff');
+}
+
+@layer base {
+    body {
+        @apply text-2xl 
+        
+    }
+}
+
+
+/* if you want a scroll bar in chrome */
+/* html {
+    overflow-y: scroll;
+}
+ */
+
+/* Chrome/Brave */
+::-webkit-scrollbar {
+    /* width of the entire scrollbar */
+    width: 0;
+}
+
+::-webkit-scrollbar-track {
+    /* color of the tracking area */
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    /* color of the scroll thumb */
+    background-color: blue;
+    /* roundness of the scroll thumb */
+    border-radius: 1rem;
+}
+
+
