@@ -21,10 +21,10 @@
 	}
 </script>
 
-<div class="flex flex-col sticky top-0 z-10 w-[100%] bg-white dark:bg-black max-h-[147.5px]">
+<div class="flex flex-col sticky top-0 z-10 w-[100%] bg-white  dark:bg-black max-h-[147.5px]">
 	<div class="w-full mx-auto max-w-6xl flex-col">
 		<div class="px-2 pt-5">
-			<h1 class="text-3xl font-bold">KJVonly</h1>
+			<h1 class="text-3xl text-primary-500 font-bold">KJVonly</h1>
 		</div>
 
 		<div class="relative flex w-full justify-center pb-2 pt-11 text-base">
