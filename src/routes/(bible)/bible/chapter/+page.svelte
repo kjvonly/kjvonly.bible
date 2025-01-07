@@ -57,7 +57,7 @@
 	<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings></Header>
 
 	<div class="min-h-16"></div>
-	<div class="m-4 flex justify-center md:m-16 top-[600px]">
+	<div class="m-4 flex justify-center md:m-16">
 		<div class="max-w-sm md:max-w-lg">
 			<div
 				class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"
@@ -75,7 +75,7 @@
 
 <!-- prev/next chapter buttons -->
 
-<div class="fixed bottom-28 -z-10 mx-auto hidden w-full justify-center px-4 md:flex md:flex-row">
+<div class="fixed bottom-28 mx-auto hidden w-full justify-center px-4 md:flex md:flex-row">
 	<div class="flex w-full max-w-6xl">
 		<button
 			onclick={_previousChapter}

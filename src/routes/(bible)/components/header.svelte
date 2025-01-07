@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BookChapterPopup from './bookChapterPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
-	let clientHeight: number = $state(0)
+	let clientHeight: number = $state(0);
 	let pageWidth: number = $state(0);
 	let bookChapterWidth: number = $state(0);
 	let {
@@ -21,24 +21,48 @@
 	function onSettingsClick() {
 		showSettingsPopup = !showSettingsPopup;
 	}
+
+	let lastKnownScrollPosition = 0;
+	let ticking = false;
+
+	let scrollPos = $state(0);
+	function doSomething(sp: number) {
+
+		scrollPos = sp / 3
+	}
+
+	document.addEventListener('scroll', (event) => {
+		lastKnownScrollPosition = window.scrollY;
+		if (!ticking) {
+			window.requestAnimationFrame(() => {
+				doSomething(lastKnownScrollPosition);
+				ticking = false;
+			});
+			ticking = true;
+		}
+	});
 </script>
 
-<div bind:clientWidth={pageWidth}
+<div
+	bind:clientWidth={pageWidth}
+	style="transform: translate3d(0px, -{scrollPos}px, 0px);"
 	class="sticky top-0 z-10 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-primary-700 from-50% to-primary-500 to-50% dark:bg-black"
 >
-	<div
-		class="mx-auto flex w-full max-w-6xl flex-col items-center"
-	>
+	<div class="mx-auto flex w-full max-w-6xl flex-col items-center">
 		<div class="w-full justify-start px-2 pt-4">
 			<h1 class="text-3xl font-bold text-neutral-900">KJVonly</h1>
 		</div>
 
-		<div bind:clientHeight={clientHeight} 
-			style="transform: translate3d(0px, {clientHeight/3}px, 0px);"
-			class="relative flex p-4 w-[90%] justify-center items-center rounded-lg bg-white text-base shadow-lg min-h-32"
+		<div
+			bind:clientHeight
+			style="transform: translate3d(0px, {clientHeight / 3}px, 0px);"
+			class="relative flex min-h-32 w-[90%] items-center justify-center rounded-lg bg-white p-4 text-base shadow-lg"
 		>
-		
-			<div bind:clientWidth={bookChapterWidth} class="md:w-[300px] w-full flex-col" style="max-width: {pageWidth}px;">
+			<div
+				bind:clientWidth={bookChapterWidth}
+				class="w-full flex-col md:w-[300px]"
+				style="max-width: {pageWidth}px;"
+			>
 				<!-- book chapter selection -->
 				<div class="relative">
 					<button
@@ -46,7 +70,7 @@
 					w-full justify-between border-b-2 border-neutral-200 text-neutral-500"
 						onclick={onBookChapterClick}
 					>
-						<span class="w-full text-start text-sm font-bold ">{bookName} {bookChapter}</span>
+						<span class="w-full text-start text-sm font-bold">{bookName} {bookChapter}</span>
 
 						<span
 							><img
@@ -68,7 +92,7 @@
 					></div>
 					<div
 						style="transform: translate3d(0px, 5px, 0px);"
-						class="absolute -left-[5vw] right-0 md:-left-[150px]  {showBookChapterPopup
+						class="absolute -left-[5vw] right-0 md:-left-[150px] {showBookChapterPopup
 							? ''
 							: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] bg-white shadow-lg dark:bg-black md:w-1/2 md:min-w-sm"
 					>
