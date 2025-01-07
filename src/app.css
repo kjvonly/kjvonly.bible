@@ -76,12 +76,60 @@
       }
     
       :root[class~="dark"] {
-        --color-primary: 247 147 34;
-        --color-text: 33 33 33;
-        --color-success: 0 200 81;
-        --color-info: 51 181 229;
-        --color-warn: 255 187 51;
-        --color-error: 254 78 78;
+        --color-primary-50: 360deg 62% 20%;
+        --color-primary-100: 360deg 85% 25%;
+        --color-primary-200: 360deg 79% 32%;
+        --color-primary-300: 360deg 72% 38%;
+        --color-primary-400: 360deg 67% 44%;
+        --color-primary-500: 360deg 64% 55%;
+        --color-primary-600: 360deg 71% 66%;
+        --color-primary-700: 360deg 77% 78%;
+        --color-primary-800: 360deg 82% 89%;
+        --color-primary-900:  360deg 100% 97%;
+
+        --color-vivid-50: 15deg 86%, 30%;
+        --color-vivid-100: 22deg 82%, 39%;
+        --color-vivid-200: 29deg 80%, 44%;
+        --color-vivid-300: 36deg 77%, 49%;
+        --color-vivid-400: 42deg 87%, 55%;
+        --color-vivid-500: 44deg 92%, 63%;
+        --color-vivid-600: 48deg 94%, 68%;
+        --color-vivid-700: 48deg 95%, 76%;
+        --color-vivid-800: 48deg 100%, 88%;
+        --color-vivid-900: 49deg 100%, 96%;
+
+        --color-neutral-50: 42deg 15% 13%;
+        --color-neutral-100: 40deg 13% 23%;
+        --color-neutral-200: 37deg 11% 28%;
+        --color-neutral-300: 41deg 9% 35%;
+        --color-neutral-400: 41deg 8% 48%;
+        --color-neutral-500: 41deg 8% 61%;
+        --color-neutral-600: 39deg 11% 69%;
+        --color-neutral-700: 40deg 15% 80%;
+        --color-neutral-800: 43deg 13% 90%;
+        --color-neutral-900: 40deg 23% 97%;
+
+        --color-support-a-50: 184deg 91% 17%;
+        --color-support-a-100: 185deg 84% 25%;
+        --color-support-a-200: 185deg 81% 29%;
+        --color-support-a-300: 184deg 77% 34%;
+        --color-support-a-400: 185deg 62% 45%;
+        --color-support-a-500: 185deg 57% 50%;
+        --color-support-a-600: 184deg 65% 59%;
+        --color-support-a-700: 184deg 80% 74%;
+        --color-support-a-800: 185deg 94% 87%;
+        --color-support-a-900: 186deg 100% 94%;
+
+        --color-support-b-50: 8deg 86%, 14%;
+        --color-support-b-100: 8deg 78%, 21%;
+        --color-support-b-200: 8deg 74%, 27%;
+        --color-support-b-300: 8deg 70%, 34%;
+        --color-support-b-400: 8deg 64%, 42%;
+        --color-support-b-500: 8deg 55%, 52%;
+        --color-support-b-600: 8deg 63%, 61%;
+        --color-support-b-700: 8deg 68%, 74%;
+        --color-support-b-800: 8deg 77%, 86%;
+        --color-support-b-900: 8deg 88%, 94%;    
       }
 }
 
