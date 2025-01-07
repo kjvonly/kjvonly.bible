@@ -51,6 +51,40 @@
 			chapterKey = bibleNavigationService.previous(chapterKey);
 		}
 	}
+
+
+	let lastKnownScrollPosition = 0;
+	let ticking = false;
+
+	let buttonTopOffset = $state(0);
+	function setButtonOffset(sp: number) {
+		const scrolledTo = window.scrollY + window.innerHeight;
+		const threshold = 200; // Adjust this value as needed
+		const isReachBottom = document.body.scrollHeight - threshold <= scrolledTo;
+		if (isReachBottom) {
+			// this function will be called when window height changes i.e. changing a chapter.
+			// when this happens pos will be negative. If we remove this check the buttons will
+			// end up in the header :)
+			let pos= (scrolledTo - document.body.scrollHeight) * -1
+			if (pos < 0) {
+				return
+			}
+			buttonTopOffset = (scrolledTo - document.body.scrollHeight) * -1;
+		} else {
+			buttonTopOffset = sp / 3;
+		}
+	}
+
+	document.addEventListener('scroll', (event) => {
+		lastKnownScrollPosition = window.scrollY;
+		if (!ticking) {
+			window.requestAnimationFrame(() => {
+				setButtonOffset(lastKnownScrollPosition);
+				ticking = false;
+			});
+			ticking = true;
+		}
+	});
 </script>
 
 <div class="relative">
@@ -75,7 +109,10 @@
 
 <!-- prev/next chapter buttons -->
 
-<div class="fixed bottom-28 mx-auto hidden w-full justify-center px-4 md:flex md:flex-row">
+<div
+	style="transform: translate3d(0px, {buttonTopOffset}px, 0px);"
+	class="fixed bottom-28 mx-auto hidden w-full justify-center px-4 md:flex md:flex-row"
+>
 	<div class="flex w-full max-w-6xl">
 		<button
 			onclick={_previousChapter}
@@ -128,7 +165,10 @@
 	</div>
 </div>
 
-<div class="fixed md:hidden bottom-28 left-0 p-4">
+<div
+	style="transform: translate3d(0px, {buttonTopOffset}px, 0px);"
+	class="fixed bottom-28 left-0 p-4 md:hidden"
+>
 	<button
 		onclick={_previousChapter}
 		class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"
@@ -153,7 +193,10 @@
 		</svg>
 	</button>
 </div>
-<div class="fixed md:hidden bottom-28 right-0 p-4">
+<div
+	style="transform: translate3d(0px, {buttonTopOffset}px, 0px);"
+	class="fixed bottom-28 right-0 p-4 md:hidden"
+>
 	<button
 		onclick={_nextChapter}
 		class="h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"

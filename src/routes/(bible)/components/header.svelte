@@ -22,20 +22,20 @@
 		showSettingsPopup = !showSettingsPopup;
 	}
 
+	// scroll header off the top of page
 	let lastKnownScrollPosition = 0;
 	let ticking = false;
+	let headerTopOffset = $state(0);
 
-	let scrollPos = $state(0);
-	function doSomething(sp: number) {
-
-		scrollPos = sp / 3
+	function setHeaderTopOffset(sp: number) {
+		headerTopOffset = sp / 3;
 	}
 
 	document.addEventListener('scroll', (event) => {
 		lastKnownScrollPosition = window.scrollY;
 		if (!ticking) {
 			window.requestAnimationFrame(() => {
-				doSomething(lastKnownScrollPosition);
+				setHeaderTopOffset(lastKnownScrollPosition);
 				ticking = false;
 			});
 			ticking = true;
@@ -45,7 +45,7 @@
 
 <div
 	bind:clientWidth={pageWidth}
-	style="transform: translate3d(0px, -{scrollPos}px, 0px);"
+	style="transform: translate3d(0px, -{headerTopOffset}px, 0px);"
 	class="sticky top-0 z-10 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-primary-700 from-50% to-primary-500 to-50% dark:bg-black"
 >
 	<div class="mx-auto flex w-full max-w-6xl flex-col items-center">
