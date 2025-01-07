@@ -12,7 +12,7 @@
 
 @layer base {
     body {
-        @apply text-2xl 
+        @apply text-2xl  
     }
 
     :root {
@@ -73,6 +73,7 @@
         --color-support-b-100: 8deg 77%, 86%;
         --color-support-b-50: 8deg 88%, 94%;    
 
+        --color-redtxt: 360deg 67% 44%;
       }
     
       :root[class~="dark"] {
@@ -87,16 +88,16 @@
         --color-primary-800: 360deg 82% 89%;
         --color-primary-900:  360deg 100% 97%;
 
-        --color-vivid-50: 15deg 86%, 30%;
-        --color-vivid-100: 22deg 82%, 39%;
-        --color-vivid-200: 29deg 80%, 44%;
-        --color-vivid-300: 36deg 77%, 49%;
-        --color-vivid-400: 42deg 87%, 55%;
-        --color-vivid-500: 44deg 92%, 63%;
-        --color-vivid-600: 48deg 94%, 68%;
-        --color-vivid-700: 48deg 95%, 76%;
-        --color-vivid-800: 48deg 100%, 88%;
-        --color-vivid-900: 49deg 100%, 96%;
+        --color-vivid-50: 15deg 86% 30%;
+        --color-vivid-100: 22deg 82% 39%;
+        --color-vivid-200: 29deg 80% 44%;
+        --color-vivid-300: 36deg 77% 49%;
+        --color-vivid-400: 42deg 87% 55%;
+        --color-vivid-500: 44deg 92% 63%;
+        --color-vivid-600: 48deg 94% 68%;
+        --color-vivid-700: 48deg 95% 76%;
+        --color-vivid-800: 48deg 100% 88%;
+        --color-vivid-900: 49deg 100% 96%;
 
         --color-neutral-50: 42deg 15% 13%;
         --color-neutral-100: 40deg 13% 23%;
@@ -129,7 +130,9 @@
         --color-support-b-600: 8deg 63%, 61%;
         --color-support-b-700: 8deg 68%, 74%;
         --color-support-b-800: 8deg 77%, 86%;
-        --color-support-b-900: 8deg 88%, 94%;    
+        --color-support-b-900: 8deg 88%, 94%;
+
+        --color-redtxt: 48deg 95% 76%;
       }
 }
 

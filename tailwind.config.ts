@@ -6,7 +6,7 @@ export default {
 	plugins: [typography],
 
 	presets: [],
-	darkMode: 'class', // or 'class'
+	darkMode: 'class',
 	theme: {
 		extend: {
 			fontFamily: {
@@ -233,7 +233,9 @@ export default {
 				'700': 'hsl(var(--color-support-b-700))',
 				'800': 'hsl(var(--color-support-b-800))',
 				'900': 'hsl(var(--color-support-b-900))',
-			}
+			},
+
+			redtxt: 'hsl(var(--color-redtxt))',
 
 		}),
 		columns: {

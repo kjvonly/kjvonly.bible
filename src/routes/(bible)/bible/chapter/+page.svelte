@@ -116,7 +116,7 @@
 	<div class="flex w-full max-w-6xl">
 		<button
 			onclick={_previousChapter}
-			class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"
+			class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300"
 			aria-label="left arrow"
 		>
 			<svg
@@ -140,7 +140,7 @@
 		<span class="flex-1"></span>
 		<button
 			onclick={_nextChapter}
-			class="h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"
+			class="h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300"
 			aria-label="next chapter arrow"
 		>
 			<svg
@@ -171,7 +171,7 @@
 >
 	<button
 		onclick={_previousChapter}
-		class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"
+		class="rounded-full bg-white text-gray-500 shadow-lg ring-2 ring-gray-300"
 		aria-label="left arrow"
 	>
 		<svg
@@ -199,7 +199,7 @@
 >
 	<button
 		onclick={_nextChapter}
-		class="h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300 dark:bg-black dark:ring-gray-400"
+		class="h-12 w-12 rounded-full bg-white text-gray-500 ring-2 ring-gray-300 "
 		aria-label="next chapter arrow"
 	>
 		<svg

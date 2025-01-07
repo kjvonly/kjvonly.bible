@@ -16,13 +16,10 @@
 	}
 
 	.redtxt {
-		@apply text-red-500 dark:text-red-950;
+		@apply text-redtxt
 	}
 
-	:global(.dark) .redtxt {
-		@apply text-red-950;
-	}
-
+	
 	u {
 		text-decoration: none;
 	}
