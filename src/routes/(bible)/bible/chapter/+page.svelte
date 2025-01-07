@@ -56,7 +56,8 @@
 <div class="relative">
 	<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings></Header>
 
-	<div class="m-4 flex justify-center md:m-12">
+	<div class="min-h-16"></div>
+	<div class="m-4 flex justify-center md:m-16 top-[600px]">
 		<div class="max-w-sm md:max-w-lg">
 			<div
 				class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"

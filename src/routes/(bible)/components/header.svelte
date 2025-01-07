@@ -1,7 +1,9 @@
 <script lang="ts">
 	import BookChapterPopup from './bookChapterPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
-
+	let clientHeight: number = $state(0)
+	let pageWidth: number = $state(0);
+	let bookChapterWidth: number = $state(0);
 	let {
 		chapterKey = $bindable(),
 		bookName = $bindable(),
@@ -21,22 +23,30 @@
 	}
 </script>
 
-<div class="flex flex-col sticky top-0 z-10 w-[100%] bg-white  dark:bg-black max-h-[147.5px]">
-	<div class="w-full mx-auto max-w-6xl flex-col">
-		<div class="px-2 pt-5">
-			<h1 class="text-3xl text-primary-500 font-bold">KJVonly</h1>
+<div bind:clientWidth={pageWidth}
+	class="sticky top-0 z-10 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-primary-700 from-50% to-primary-500 to-50% dark:bg-black"
+>
+	<div
+		class="mx-auto flex w-full max-w-6xl flex-col items-center"
+	>
+		<div class="w-full justify-start px-2 pt-4">
+			<h1 class="text-3xl font-bold text-neutral-900">KJVonly</h1>
 		</div>
 
-		<div class="relative flex w-full justify-center pb-2 pt-11 text-base">
-			<div class=" w-[300px] flex-col">
+		<div bind:clientHeight={clientHeight} 
+			style="transform: translate3d(0px, {clientHeight/3}px, 0px);"
+			class="relative flex p-4 w-[90%] justify-center items-center rounded-lg bg-white text-base shadow-lg min-h-32"
+		>
+		
+			<div bind:clientWidth={bookChapterWidth} class="md:w-[300px] w-full flex-col" style="max-width: {pageWidth}px;">
 				<!-- book chapter selection -->
 				<div class="relative">
 					<button
 						class="items-cen ter mt-2 flex
-					w-full justify-between border-b-2 dark:border-gray-400 hover:bg-gray-10 dark:hover:bg-zinc-800"
+					w-full justify-between border-b-2 border-neutral-200 text-neutral-500"
 						onclick={onBookChapterClick}
 					>
-						<span class="w-full text-start text-sm">{bookName} {bookChapter}</span>
+						<span class="w-full text-start text-sm font-bold ">{bookName} {bookChapter}</span>
 
 						<span
 							><img
@@ -46,21 +56,21 @@
 							/></span
 						>
 					</button>
-						<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div
-				style="transform: translate3d(0px, 5px, 0px);"
-				class="{showBookChapterPopup ? '' : 'hidden'} fixed z-50 left-0 top-0 h-full w-full"
-				onclick={(event) => {
-					event.stopPropagation();
-					showBookChapterPopup = false;
-				}}
-			></div>
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						style="transform: translate3d(0px, 5px, 0px);"
-						class="absolute left-0 right-0 md:-left-[150px] {showBookChapterPopup
+						class="{showBookChapterPopup ? '' : 'hidden'} fixed left-0 top-0 z-50 h-full w-full"
+						onclick={(event) => {
+							event.stopPropagation();
+							showBookChapterPopup = false;
+						}}
+					></div>
+					<div
+						style="transform: translate3d(0px, 5px, 0px);"
+						class="absolute -left-[5vw] right-0 md:-left-[150px]  {showBookChapterPopup
 							? ''
-							: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] bg-white  dark:bg-black shadow-lg md:w-1/2 md:min-w-sm"
+							: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] bg-white shadow-lg dark:bg-black md:w-1/2 md:min-w-sm"
 					>
 						<BookChapterPopup bind:showBookChapterPopup bind:chapterKey></BookChapterPopup>
 					</div>
@@ -71,7 +81,7 @@
 			<div class="relative">
 				<button
 					onclick={onSettingsClick}
-					class="ml-5 h-8 w-8 rounded-full bg-white dark:bg-black ring-2 ring-gray-200 dark:ring-gray-400"
+					class="ml-5 h-8 w-8 rounded-full bg-white ring-2 ring-gray-200 dark:bg-black dark:ring-gray-400"
 					aria-label="font-size button"
 				>
 					<svg
@@ -101,7 +111,8 @@
 						event.stopPropagation();
 						showSettingsPopup = false;
 					}}
-				></div>	<!-- svelte-ignore a11y_click_events_have_key_events -->
+				></div>
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					style="transform: translate3d(0px, 5px, 0px);"
@@ -114,17 +125,18 @@
 				<div
 					class=" fixed left-0 right-0 md:absolute md:-left-[200px] {showSettingsPopup
 						? ''
-						: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] bg-white  dark:bg-black shadow-lg md:w-1/2 md:min-w-xs"
+						: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] bg-white shadow-lg dark:bg-black md:w-1/2 md:min-w-xs"
 				>
 					<SettingsPopup bind:chapterSettings></SettingsPopup>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div class="relative">
-		<span class="absolute left-0 right-0  w-full border-b-2 dark:border-gray-400 bg-white dark:bg-black "
+	<!-- <div class="relative">
+		<span
+			class="absolute left-0 right-0 w-full border-b-2 bg-white dark:border-gray-400 dark:bg-black"
 		></span>
-	</div>
+	</div> -->
 </div>
 
 <style>
