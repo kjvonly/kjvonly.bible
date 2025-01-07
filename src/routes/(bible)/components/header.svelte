@@ -49,8 +49,8 @@
 	class="sticky top-0 z-10 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-primary-700 from-50% to-primary-500 to-50%"
 >
 	<div class="mx-auto flex w-full max-w-6xl flex-col items-center">
-		<div class="w-full justify-start px-2 pt-4">
-			<h1 class="text-3xl font-bold text-neutral-900">KJVonly</h1>
+		<div style="transform: translate3d(0px, {clientHeight/6}px, 0px);" class="justify-center px-2 pt-4">
+			<h1 class="text-3xl font-bold text-neutral-50">KJVonly</h1>
 		</div>
 
 		<div
