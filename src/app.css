@@ -129,18 +129,19 @@
         --color-support-a-800: 185deg 94% 87%;
         --color-support-a-900: 186deg 100% 94%;
 
-        --color-support-b-50: 8deg 86%, 14%;
-        --color-support-b-100: 8deg 78%, 21%;
-        --color-support-b-200: 8deg 74%, 27%;
-        --color-support-b-300: 8deg 70%, 34%;
-        --color-support-b-400: 8deg 64%, 42%;
-        --color-support-b-500: 8deg 55%, 52%;
-        --color-support-b-600: 8deg 63%, 61%;
-        --color-support-b-700: 8deg 68%, 74%;
-        --color-support-b-800: 8deg 77%, 86%;
-        --color-support-b-900: 8deg 88%, 94%;
+        --color-support-b-50: 8deg 86% 14%;
+        --color-support-b-100: 8deg 78% 21%;
+        --color-support-b-200: 8deg 74% 27%;
+        --color-support-b-300: 8deg 70% 34%;
+        --color-support-b-400: 8deg 64% 42%;
+        --color-support-b-500: 8deg 55% 52%;
+        --color-support-b-600: 8deg 63% 61%;
+        --color-support-b-700: 8deg 68% 74%;
+        --color-support-b-800: 8deg 77% 86%;
+        --color-support-b-900: 8deg 88% 94%;
 
-        --color-redtxt: 48deg 95% 76%;
+        /* support b 500*/
+        --color-redtxt:  8deg 55% 52%;
         /* primary-200 */
         --color-header-from:  360deg 79% 32%;
         /* primary-500 */
