@@ -41,18 +41,11 @@
 	}
 </script>
 
-<!--
-  Heads up! 👋
-
-  Plugins:
-    - @tailwindcss/forms
--->
-
 <div class="h-full w-full justify-start justify-items-start overflow-y-scroll">
 	<header
-		class="items c sticky top-0 w-full flex-col border-b-2 border-white bg-gray-10"
+		class="items sticky top-0 w-full flex-col border-b-2  bg-neutral-100 text-neutral-700"
 	>
-		<div class="flex w-full justify-between p-2 text-gray-500">
+		<div class="flex w-full justify-between p-2 ">
 			<div class="h-12 w-12">
 				<button
 					onclick={() => {
@@ -71,7 +64,7 @@
 					>
 						<g id="g8" transform="translate(-40,-34.843996)">
 							<path
-								class="fill-gray-500"
+								class="fill-neutral-700"
 								style="stroke-width:1.33333"
 								d="M 53,80.35758 C 43.505656,70.810684 40,66.386425 40,63.951131 c 0,-2.445847 3.49976,-6.821123 13.132229,-16.417448 11.374404,-11.331724 13.649954,-13.023883 17,-12.641652 2.904499,0.331396 3.980004,1.235166 4.318418,3.62886 0.353064,2.497337 -1.95028,5.601021 -10.637231,14.333333 L 52.725541,64 63.813416,75.145776 C 72.500367,83.878088 74.803711,86.981772 74.450647,89.479109 74.105181,91.922689 73.066399,92.755693 70,93.048101 66.510733,93.380832 64.340117,91.760465 53,80.35758 Z"
 								id="path170"
@@ -101,7 +94,7 @@
 			<div class="p-2">
 				<label class="sr-only" for="name">Name</label>
 				<input
-					class="w-full rounded-lg border   border-gray-200 p-3 text-sm "
+					class="w-full rounded-lg border fill-neutral-100 p-3 text-sm "
 					placeholder="Filter Books..."
 					type="text"
 					id="name"
@@ -116,7 +109,7 @@
 			{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
 				<button
 					onclick={() => chapterSelected(ch + 1)}
-					class="row-span-1 p-4 hover:bg-gray-10">{ch + 1}</button
+					class="row-span-1 p-4 hover:bg-primary-50">{ch + 1}</button
 				>
 			{/each}
 		</div>
@@ -125,7 +118,7 @@
 			<div class="w-full">
 				<button
 					onclick={(event) => bookSelected(event, bn)}
-					class="w-full p-4 text-start hover:bg-gray-10 ">{bn.name}</button
+					class="w-full p-4 text-start hover:bg-primary-50 ">{bn.name}</button
 				>
 			</div>
 		{/each}
