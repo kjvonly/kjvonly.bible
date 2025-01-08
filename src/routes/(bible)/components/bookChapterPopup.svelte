@@ -105,11 +105,11 @@
 	</header>
 
 	{#if selectedBook}
-		<div class="grid w-[100%] grid-cols-5 gap-4">
+		<div class="grid w-[100%] grid-cols-5 gap-4 ">
 			{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
 				<button
 					onclick={() => chapterSelected(ch + 1)}
-					class="row-span-1 p-4 hover:bg-primary-50">{ch + 1}</button
+					class="row-span-1 p-4 hover:bg-primary-50 bg-neutral-50">{ch + 1}</button
 				>
 			{/each}
 		</div>
@@ -118,7 +118,7 @@
 			<div class="w-full">
 				<button
 					onclick={(event) => bookSelected(event, bn)}
-					class="w-full p-4 text-start hover:bg-primary-50 ">{bn.name}</button
+					class="w-full p-4 text-start hover:bg-primary-50 bg-neutral-50">{bn.name}</button
 				>
 			</div>
 		{/each}
