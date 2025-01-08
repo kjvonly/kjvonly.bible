@@ -16,7 +16,7 @@
 	let showSettingsPopup: Boolean = $state(false);
 
 	function onBookChapterClick() {
-		showSettingsPopup =false;
+		showSettingsPopup = false;
 		showBookChapterPopup = !showBookChapterPopup;
 	}
 
@@ -49,23 +49,21 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 
-
 <div
 	bind:clientWidth={pageWidth}
 	style="transform: translate3d(0px, -{headerTopOffset}px, 0px);"
-	class="sticky top-0 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-primary-700 from-50% to-primary-500 to-50%"
+	class="sticky z-20 top-0 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-primary-700 from-50% to-primary-500 to-50%"
 >
-<div 
-	
-	class="{showSettingsPopup || showBookChapterPopup
-		? ''
-		: 'hidden'} fixed  top-0 h-[100vh] w-[100vw]"
-	onclick={(event) => {
-		event.stopPropagation();
-		showSettingsPopup = false;
-		showBookChapterPopup = false;
-	}}
-></div>
+	<div
+		class="{showSettingsPopup || showBookChapterPopup
+			? ''
+			: 'hidden'} fixed top-0 h-[100vh] w-[100vw]"
+		onclick={(event) => {
+			event.stopPropagation();
+			showSettingsPopup = false;
+			showBookChapterPopup = false;
+		}}
+	></div>
 	<div class="mx-auto flex w-full max-w-6xl flex-col items-center">
 		<div
 			style="transform: translate3d(0px, {clientHeight / 6}px, 0px);"
@@ -88,7 +86,7 @@
 				<div class="relative">
 					<button
 						class="items-cen ter mt-2 flex
-					w-full justify-between border-b-2 border-b-neutral-400 text-neutral-700 hover:bg-primary-100"
+					w-full justify-between border-b-2 border-b-neutral-400 text-neutral-700 hover:bg-neutral-100"
 						onclick={onBookChapterClick}
 					>
 						<span class="w-full p-1 text-start text-sm font-bold">{bookName} {bookChapter}</span>
@@ -123,7 +121,7 @@
 			</div>
 			<!-- settings buttong Aa -->
 
-			<div class="relative pl-2">
+			<div class="relative pl-4">
 				<Button fn={onSettingsClick} text={'Settings'} base={true}></Button>
 
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -147,7 +145,6 @@
 		</div>
 	</div>
 </div>
-
 
 <style>
 </style>

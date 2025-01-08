@@ -14,7 +14,7 @@
 		filterText;
 
 		filteredBooks = bookNamesSorted.filter((book: { name: string; id: number }) => {
-			return book.name.toLowerCase().includes(filterText);
+			return book.name.toLowerCase().includes(filterText.toLowerCase());
 		});
 	});
 
