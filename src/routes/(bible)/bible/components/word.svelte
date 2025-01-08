@@ -28,7 +28,7 @@
 		vertical-align: baseline;
 		position: relative;
 		top: -0.6em;
-		@apply -z-10 text-xs text-gray-500;
+		@apply -z-10 text-xs text-neutral-700;
 	}
 
 	u.xref {

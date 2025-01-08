@@ -41,7 +41,7 @@
 	}
 </script>
 
-<div class="h-full w-full justify-start justify-items-start overflow-y-scroll">
+<div class="h-full w-full justify-start justify-items-start overflow-y-scroll bg-neutral-100">
 	<header
 		class="items sticky top-0 w-full flex-col border-b-2  bg-neutral-100 text-neutral-700"
 	>
@@ -94,7 +94,7 @@
 			<div class="p-2">
 				<label class="sr-only" for="name">Name</label>
 				<input
-					class="w-full rounded-lg border fill-neutral-100 p-3 text-sm "
+					class="w-full rounded-lg border-none bg-neutral-50 p-3 text-sm outline-none"
 					placeholder="Filter Books..."
 					type="text"
 					id="name"
@@ -105,7 +105,7 @@
 	</header>
 
 	{#if selectedBook}
-		<div class="grid w-[100%] grid-cols-5 gap-4 ">
+		<div class="grid w-[100%] grid-cols-5">
 			{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
 				<button
 					onclick={() => chapterSelected(ch + 1)}
