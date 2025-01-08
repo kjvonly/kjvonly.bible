@@ -16,10 +16,12 @@
 	let showSettingsPopup: Boolean = $state(false);
 
 	function onBookChapterClick() {
+		showSettingsPopup =false;
 		showBookChapterPopup = !showBookChapterPopup;
 	}
 
 	function onSettingsClick() {
+		showBookChapterPopup = false;
 		showSettingsPopup = !showSettingsPopup;
 	}
 
