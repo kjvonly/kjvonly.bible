@@ -236,7 +236,11 @@ export default {
 			},
 
 			redtxt: 'hsl(var(--color-redtxt))',
-
+			header: {
+				to: 'hsl(var(--color-header-to))',
+				from: 'hsl(var(--color-header-from))',
+				title: 'hsl(var(--color-header-title))'
+			}
 		}),
 		columns: {
 			auto: 'auto',

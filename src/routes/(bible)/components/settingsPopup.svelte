@@ -4,7 +4,7 @@
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	let { chapterSettings = $bindable() } = $props();
-	let headerHeight = $state(0)
+	let headerHeight = $state(0);
 
 	let fontSizes = [
 		{
@@ -48,8 +48,11 @@
 
 <div
 	class="h-full w-full justify-start justify-items-start overflow-y-scroll bg-neutral-100 text-neutral-700"
-> 
-	<header bind:clientHeight={headerHeight} class="items c sticky top-0 w-full flex-col border-b-2 bg-neutral-100">
+>
+	<header
+		bind:clientHeight={headerHeight}
+		class="items c sticky top-0 w-full flex-col border-b-2 bg-neutral-100"
+	>
 		<div class="flex w-full justify-between pl-2 pt-2 text-neutral-700">
 			<div class="flex items-center">
 				<h1 class=" text-center text-lg">READING SETTINGS</h1>
@@ -57,8 +60,10 @@
 		</div>
 	</header>
 
-	<div style="max-height: calc(100% - {headerHeight}px);" class="flex w-full h-full flex-col justify-center bg-neutral-50 p-6">
-		
+	<div
+		style="max-height: calc(100% - {headerHeight}px);"
+		class="flex h-full w-full flex-col justify-center bg-neutral-50 p-6"
+	>
 		<div class="flex w-full flex-row">
 			<button
 				onclick={() => {
@@ -164,13 +169,13 @@
 
 		<div class="flex w-full flex-col space-y-2 pt-4">
 			<label for="Option1" class="flex cursor-pointer items-start gap-4">
-				<div class="flex items-center">
+				<div class="checkbox  flex items-center">
 					&#8203;
 					{#if chapterSettings}
 						<input
 							type="checkbox"
 							bind:checked={chapterSettings.doChapterFadeAnimation}
-							class="size-4 rounded border-gray-300 accent-gray-10"
+							class="size-4 rounded border-neutral-300 checked:accent-primary-500"
 							id="Option1"
 						/>
 					{/if}
@@ -181,6 +186,12 @@
 				</div>
 			</label>
 		</div>
-		<span class="flex-1 h-full"></span>
+		<span class="h-full flex-1"></span>
 	</div>
 </div>
+
+<style>
+	.checkbox > input[type='checkbox']:checked::before {
+		background-color: red;
+	}
+</style>

@@ -12,7 +12,8 @@
 
 @layer base {
     body {
-        @apply text-2xl bg-neutral-50 text-neutral-700
+        @apply text-2xl bg-neutral-50 text-neutral-700 selection:bg-primary-100
+
     }
 
     :root {
@@ -74,6 +75,13 @@
         --color-support-b-50: 8deg 88%, 94%;    
 
         --color-redtxt: 360deg 67% 44%;
+
+        /* primary-700 */
+        --color-header-from:  360deg 79% 32%;
+        /* primary-500 */
+        --color-header-to: 360deg 67% 44%;
+        /* neutral 100 */
+        --color-header-title: 360deg 82% 89%; 
       }
     
       :root[class~="dark"] {
@@ -133,6 +141,12 @@
         --color-support-b-900: 8deg 88%, 94%;
 
         --color-redtxt: 48deg 95% 76%;
+        /* primary-200 */
+        --color-header-from:  360deg 79% 32%;
+        /* primary-500 */
+        --color-header-to: 360deg 67% 44%;
+        /* neutral 800 */
+        --color-header-title: 360deg 82% 89%;
 
       }
 }

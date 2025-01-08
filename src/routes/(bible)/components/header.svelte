@@ -52,7 +52,7 @@
 <div
 	bind:clientWidth={pageWidth}
 	style="transform: translate3d(0px, -{headerTopOffset}px, 0px);"
-	class="sticky z-20 top-0 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-primary-700 from-50% to-primary-500 to-50%"
+	class="sticky z-20 top-0 flex max-h-[147.5px] w-[100%] flex-col justify-center bg-gradient-to-tl from-header-from from-50% to-header-to to-50%"
 >
 	<div
 		class="{showSettingsPopup || showBookChapterPopup
@@ -69,7 +69,7 @@
 			style="transform: translate3d(0px, {clientHeight / 6}px, 0px);"
 			class="justify-center px-2 pt-4"
 		>
-			<h1 class="text-3xl font-bold text-neutral-100">KJVonly</h1>
+			<h1 class="text-3xl font-bold text-header-title">KJVonly</h1>
 		</div>
 
 		<div
