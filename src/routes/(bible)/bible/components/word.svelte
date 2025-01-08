@@ -2,7 +2,7 @@
 	let { word } = $props();
 </script>
 
-<span class="inline-block pr-1 {word.class?.join(' ')}">{word.text}</span>
+&nbsp;<span class="inline-block {word.class?.join(' ')}">{word.text}</span>
 
 <style>
 	u.FOOTNO + u.whitespace {
@@ -16,13 +16,10 @@
 	}
 
 	.redtxt {
-		@apply text-red-500 dark:text-red-950;
+		@apply text-redtxt
 	}
 
-	:global(.dark) .redtxt {
-		@apply text-red-950;
-	}
-
+	
 	u {
 		text-decoration: none;
 	}

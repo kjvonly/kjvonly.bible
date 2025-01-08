@@ -6,12 +6,12 @@ export default {
 	plugins: [typography],
 
 	presets: [],
-	darkMode:  'class', // or 'class'
+	darkMode: 'class',
 	theme: {
 		extend: {
 			fontFamily: {
 				'KJV1611': ['KJV1611']
-			  }
+			}
 		},
 		accentColor: ({ theme }) => ({
 			...theme('colors'),
@@ -49,7 +49,10 @@ export default {
 		backdropOpacity: ({ theme }) => theme('opacity'),
 		backdropSaturate: ({ theme }) => theme('saturate'),
 		backdropSepia: ({ theme }) => theme('sepia'),
-		backgroundColor: ({ theme }) => theme('colors'),
+		backgroundColor: ({ theme }) => ({
+			...theme('colors'),
+			DEFAULT: theme('colors.neutral.300', 'currentColor'),
+		}),
 		backgroundImage: {
 			none: 'none',
 			'gradient-to-t': 'linear-gradient(to top, var(--tw-gradient-stops))',
@@ -60,6 +63,7 @@ export default {
 			'gradient-to-bl': 'linear-gradient(to bottom left, var(--tw-gradient-stops))',
 			'gradient-to-l': 'linear-gradient(to left, var(--tw-gradient-stops))',
 			'gradient-to-tl': 'linear-gradient(to top left, var(--tw-gradient-stops))',
+
 		},
 		backgroundOpacity: ({ theme }) => theme('opacity'),
 		backgroundPosition: {
@@ -91,7 +95,7 @@ export default {
 		},
 		borderColor: ({ theme }) => ({
 			...theme('colors'),
-			DEFAULT: theme('colors.gray.200', 'currentColor'),
+			DEFAULT: theme('colors.neutral.100', 'currentColor'),
 		}),
 		borderOpacity: ({ theme }) => theme('opacity'),
 		borderRadius: {
@@ -148,7 +152,6 @@ export default {
 			white: colors.white,
 			slate: colors.slate,
 			zinc: colors.zinc,
-			neutral: colors.neutral,
 			stone: colors.stone,
 			red: colors.red,
 			orange: colors.orange,
@@ -180,8 +183,64 @@ export default {
 				'800': '#1f2937',
 				'900': '#111827',
 				'950': '#030712',
-			}
+			},
+			primary: {
+				'50': 'hsl(var(--color-primary-50))',
+				'100': 'hsl(var(--color-primary-100))',
+				'200': 'hsl(var(--color-primary-200))',
+				'300': 'hsl(var(--color-primary-300))',
+				'400': 'hsl(var(--color-primary-400))',
+				'500': 'hsl(var(--color-primary-500))',
+				'600': 'hsl(var(--color-primary-600))',
+				'700': 'hsl(var(--color-primary-700))',
+				'800': 'hsl(var(--color-primary-800))',
+				'900': 'hsl(var(--color-primary-900))',
+			},
 
+			neutral: {
+				'50': 'hsl(var(--color-neutral-50))',
+				'100': 'hsl(var(--color-neutral-100))',
+				'200': 'hsl(var(--color-neutral-200))',
+				'300': 'hsl(var(--color-neutral-300))',
+				'400': 'hsl(var(--color-neutral-400))',
+				'500': 'hsl(var(--color-neutral-500))',
+				'600': 'hsl(var(--color-neutral-600))',
+				'700': 'hsl(var(--color-neutral-700))',
+				'800': 'hsl(var(--color-neutral-800))',
+				'900': 'hsl(var(--color-neutral-900))',
+			},
+
+			supporta: {
+				'50': 'hsl(var(--color-support-a-50))',
+				'100': 'hsl(var(--color-support-a-100))',
+				'200': 'hsl(var(--color-support-a-200))',
+				'300': 'hsl(var(--color-support-a-300))',
+				'400': 'hsl(var(--color-support-a-400))',
+				'500': 'hsl(var(--color-support-a-500))',
+				'600': 'hsl(var(--color-support-a-600))',
+				'700': 'hsl(var(--color-support-a-700))',
+				'800': 'hsl(var(--color-support-a-800))',
+				'900': 'hsl(var(--color-support-a-900))',
+			},
+			supportb: {
+				'50': 'hsl(var(--color-support-b-50))',
+				'100': 'hsl(var(--color-support-b-100))',
+				'200': 'hsl(var(--color-support-b-200))',
+				'300': 'hsl(var(--color-support-b-300))',
+				'400': 'hsl(var(--color-support-b-400))',
+				'500': 'hsl(var(--color-support-b-500))',
+				'600': 'hsl(var(--color-support-b-600))',
+				'700': 'hsl(var(--color-support-b-700))',
+				'800': 'hsl(var(--color-support-b-800))',
+				'900': 'hsl(var(--color-support-b-900))',
+			},
+
+			redtxt: 'hsl(var(--color-redtxt))',
+			header: {
+				to: 'hsl(var(--color-header-to))',
+				from: 'hsl(var(--color-header-from))',
+				title: 'hsl(var(--color-header-title))'
+			}
 		}),
 		columns: {
 			auto: 'auto',
@@ -804,7 +863,7 @@ export default {
 		placeholderColor: ({ theme }) => theme('colors'),
 		placeholderOpacity: ({ theme }) => theme('opacity'),
 		ringColor: ({ theme }) => ({
-			DEFAULT: theme('colors.blue.500', '#3b82f6'),
+			DEFAULT: theme('colors.primary.500', '#3b82f6'),
 			...theme('colors'),
 		}),
 		ringOffsetColor: ({ theme }) => theme('colors'),
@@ -931,7 +990,10 @@ export default {
 		},
 		supports: {},
 		data: {},
-		textColor: ({ theme }) => theme('colors'),
+		textColor: ({ theme }) => ({
+			...theme('colors'),
+			DEFAULT: theme('colors.red.900', '#fff'),
+		}),
 		textDecorationColor: ({ theme }) => theme('colors'),
 		textDecorationThickness: {
 			auto: 'auto',
