@@ -194,6 +194,16 @@
         --color-vivid-b-200: 360deg 100% 80%;
         --color-vivid-b-100: 360deg 100% 87%;
         --color-vivid-b-50: 360deg 100% 95%;
+
+        /* vivid-b 500*/
+        --color-redtxt: 354deg 85% 44%;
+
+        /* neutral-600 */
+        --color-header-from: 209deg 14% 37%;
+        /* neutral-600 */
+        --color-header-to: 209deg 14% 37%;
+        /* neutral 100 */
+        --color-header-title: 214deg 15% 91%;
     }
 
     :root[class~="color-theme-dark-light-blue"] {
@@ -240,6 +250,16 @@
         --color-vivid-b-200: 360deg 100% 80%;
         --color-vivid-b-100: 360deg 100% 87%;
         --color-vivid-b-50: 360deg 100% 95%;
+
+         /* support b 500*/
+         --color-redtxt: 162deg 63% 41%;
+
+         /* primary-200 */
+         --color-header-from: 210deg 24% 10%;
+         /* primary-500 */
+         --color-header-to: 210deg 24% 10%;
+         /* neutral 800 */
+         --color-header-title: 216deg 33% 97%;
     }
 }
 
