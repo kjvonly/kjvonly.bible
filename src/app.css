@@ -6,14 +6,13 @@
 @import 'tailwindcss/utilities';
 
 @font-face {
-	font-family: 'KJV1611';
-	src: url('/fonts/KJV1611.woff') format('woff');
+    font-family: 'KJV1611';
+    src: url('/fonts/KJV1611.woff') format('woff');
 }
 
 @layer base {
     body {
         @apply text-2xl bg-neutral-50 text-neutral-700 selection:bg-primary-100
-
     }
 
     :root[class~="color-theme-red"] {
@@ -28,7 +27,7 @@
         --color-primary-300: 360deg 71% 66%;
         --color-primary-200: 360deg 77% 78%;
         --color-primary-100: 360deg 82% 89%;
-        --color-primary-50:  360deg 100% 97%;
+        --color-primary-50: 360deg 100% 97%;
 
         --color-vivid-900: 15deg 86%, 30%;
         --color-vivid-800: 22deg 82%, 39%;
@@ -72,19 +71,19 @@
         --color-support-b-300: 8deg 63%, 61%;
         --color-support-b-200: 8deg 68%, 74%;
         --color-support-b-100: 8deg 77%, 86%;
-        --color-support-b-50: 8deg 88%, 94%;    
+        --color-support-b-50: 8deg 88%, 94%;
 
         --color-redtxt: 360deg 67% 44%;
 
         /* primary-700 */
-        --color-header-from:  360deg 79% 32%;
+        --color-header-from: 360deg 79% 32%;
         /* primary-500 */
         --color-header-to: 360deg 67% 44%;
         /* neutral 100 */
-        --color-header-title: 360deg 82% 89%; 
-      }
-    
-      :root[class~="color-theme-dark-red"] {
+        --color-header-title: 360deg 82% 89%;
+    }
+
+    :root[class~="color-theme-dark-red"] {
         --color-primary-50: 360deg 62% 20%;
         --color-primary-100: 360deg 85% 25%;
         --color-primary-200: 360deg 79% 32%;
@@ -94,7 +93,7 @@
         --color-primary-600: 360deg 71% 66%;
         --color-primary-700: 360deg 77% 78%;
         --color-primary-800: 360deg 82% 89%;
-        --color-primary-900:  360deg 100% 97%;
+        --color-primary-900: 360deg 100% 97%;
 
         --color-vivid-50: 15deg 86% 30%;
         --color-vivid-100: 22deg 82% 39%;
@@ -141,15 +140,107 @@
         --color-support-b-900: 8deg 88% 94%;
 
         /* support b 500*/
-        --color-redtxt:  8deg 55% 52%;
+        --color-redtxt: 8deg 55% 52%;
         /* primary-200 */
-        --color-header-from:  360deg 79% 32%;
+        --color-header-from: 360deg 79% 32%;
         /* primary-500 */
         --color-header-to: 360deg 67% 44%;
         /* neutral 800 */
         --color-header-title: 360deg 82% 89%;
 
-      }
+    }
+
+    :root[class~="color-theme-light-blue"] {
+        --color-primary-900: 204deg 96% 27%;
+        --color-primary-800: 203deg 87% 34%;
+        --color-primary-700: 202deg 83% 41%;
+        --color-primary-600: 201deg 79% 46%;
+        --color-primary-500: 199deg 84% 55%;
+        --color-primary-400: 197deg 92% 61%;
+        --color-primary-300: 196deg 94% 67%;
+        --color-primary-200: 195deg 97% 75%;
+        --color-primary-100: 195deg 100% 85%;
+        --color-primary-50: 195deg 100% 95%;
+
+        --color-neutral-900: 210deg 24% 16%;
+        --color-neutral-800: 209deg 20% 25%;
+        --color-neutral-700: 209deg 18% 30%;
+        --color-neutral-600: 209deg 14% 37%;
+        --color-neutral-500: 211deg 12% 43%;
+        --color-neutral-400: 211deg 10% 53%;
+        --color-neutral-300: 211deg 13% 65%;
+        --color-neutral-200: 210deg 16% 82%;
+        --color-neutral-100: 214deg 15% 91%;
+        --color-neutral-50: 216deg 33% 97%;
+
+        --color-vivid-a-900: 320deg 100% 19%;
+        --color-vivid-a-800: 322deg 93% 27%;
+        --color-vivid-a-700: 324deg 93% 33%;
+        --color-vivid-a-600: 326deg 90% 39%;
+        --color-vivid-a-500: 328deg 85% 46%;
+        --color-vivid-a-400: 330deg 79% 56%;
+        --color-vivid-a-300: 334deg 86% 67%;
+        --color-vivid-a-200: 336deg 100% 77%;
+        --color-vivid-a-100: 338deg 100% 86%;
+        --color-vivid-a-50: 341deg 100% 95%;
+
+        --color-vivid-b-900: 348deg 94% 20%;
+        --color-vivid-b-800: 350deg 94% 28%;
+        --color-vivid-b-700: 352deg 90% 35%;
+        --color-vivid-b-600: 354deg 85% 44%;
+        --color-vivid-b-500: 356deg 75% 53%;
+        --color-vivid-b-400: 360deg 83% 62%;
+        --color-vivid-b-300: 360deg 91% 69%;
+        --color-vivid-b-200: 360deg 100% 80%;
+        --color-vivid-b-100: 360deg 100% 87%;
+        --color-vivid-b-50: 360deg 100% 95%;
+    }
+
+    :root[class~="color-theme-dark-light-blue"] {
+        --color-primary-50: 204deg 96% 27%;
+        --color-primary-100: 203deg 87% 34%;
+        --color-primary-200: 202deg 83% 41%;
+        --color-primary-300: 201deg 79% 46%;
+        --color-primary-400: 199deg 84% 55%;
+        --color-primary-500: 197deg 92% 61%;
+        --color-primary-600: 196deg 94% 67%;
+        --color-primary-700: 195deg 97% 75%;
+        --color-primary-800: 195deg 100% 85%;
+        --color-primary-900: 195deg 100% 95%;
+
+        --color-neutral-50: 210deg 24% 16%;
+        --color-neutral-100: 209deg 20% 25%;
+        --color-neutral-200: 209deg 18% 30%;
+        --color-neutral-300: 209deg 14% 37%;
+        --color-neutral-400: 211deg 12% 43%;
+        --color-neutral-500: 211deg 10% 53%;
+        --color-neutral-600: 211deg 13% 65%;
+        --color-neutral-700: 210deg 16% 82%;
+        --color-neutral-800: 214deg 15% 91%;
+        --color-neutral-900: 216deg 33% 97%;
+
+        --color-vivid-a-900: 320deg 100% 19%;
+        --color-vivid-a-800: 322deg 93% 27%;
+        --color-vivid-a-700: 324deg 93% 33%;
+        --color-vivid-a-600: 326deg 90% 39%;
+        --color-vivid-a-500: 328deg 85% 46%;
+        --color-vivid-a-400: 330deg 79% 56%;
+        --color-vivid-a-300: 334deg 86% 67%;
+        --color-vivid-a-200: 336deg 100% 77%;
+        --color-vivid-a-100: 338deg 100% 86%;
+        --color-vivid-a-50: 341deg 100% 95%;
+
+        --color-vivid-b-900: 348deg 94% 20%;
+        --color-vivid-b-800: 350deg 94% 28%;
+        --color-vivid-b-700: 352deg 90% 35%;
+        --color-vivid-b-600: 354deg 85% 44%;
+        --color-vivid-b-500: 356deg 75% 53%;
+        --color-vivid-b-400: 360deg 83% 62%;
+        --color-vivid-b-300: 360deg 91% 69%;
+        --color-vivid-b-200: 360deg 100% 80%;
+        --color-vivid-b-100: 360deg 100% 87%;
+        --color-vivid-b-50: 360deg 100% 95%;
+    }
 }
 
 
@@ -176,5 +267,3 @@
     /* roundness of the scroll thumb */
     border-radius: 1rem;
 }
-
-
