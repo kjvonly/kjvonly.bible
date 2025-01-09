@@ -1,11 +1,17 @@
 import { type ChapterSettings, newChapterSettings } from "../../routes/(bible)/bible/models/chapterSettings";
 
 class ColorTheme {
-    init() {
 
-    }
+    VALID_COLOR_THEMES = [
+        'red',
+        'light-blue'
+    ]
 
     setTheme(theme: string) {
+
+        if (!this.VALID_COLOR_THEMES.includes(theme)) {
+            theme = this.VALID_COLOR_THEMES[0]
+        }
         let html = document.getElementById('kjvonly-html');
         html?.classList.forEach((className: string) => {
             if (className.includes('color-theme')) {

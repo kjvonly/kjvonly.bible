@@ -139,7 +139,7 @@
 						chapterSettings = chapterSettings;
 					}}
 				>
-					<option  class="aclass" value="red">RED</option>
+					<option value="red">RED</option>
 					<option value="light-blue">LIGHT BLUE</option>
 				</select>
 			{/if}
