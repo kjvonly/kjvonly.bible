@@ -16,7 +16,7 @@
 
     }
 
-    :root {
+    :root[class~="color-theme-red"] {
         --color-primary-surface: 0 0% 100%;
 
         --color-primary-900: 360deg 62% 20%;
@@ -84,7 +84,7 @@
         --color-header-title: 360deg 82% 89%; 
       }
     
-      :root[class~="dark"] {
+      :root[class~="color-theme-dark-red"] {
         --color-primary-50: 360deg 62% 20%;
         --color-primary-100: 360deg 85% 25%;
         --color-primary-200: 360deg 79% 32%;

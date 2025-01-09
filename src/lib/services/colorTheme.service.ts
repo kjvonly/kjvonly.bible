@@ -13,24 +13,23 @@ class ColorTheme {
         if (cs != null) {
             let chapterSettings: ChapterSettings | null = JSON.parse(cs);
             if (chapterSettings?.colorTheme) {
-                if (chapterSettings.colorTheme === 'light') {
-                    this.setLightTheme();
-                } else {
-                    this.setDarkTheme();
-                }
+                this.setColorTheme(chapterSettings.colorTheme)
             }
         }
     }
 
-    setLightTheme() {
+
+
+    setColorTheme(theme: string) {
         let html = document.getElementById('kjvonly-html');
-        html?.classList.remove('dark');
-        this.chapterSettings.colorTheme = 'light';
-    }
-    setDarkTheme() {
-        let html = document.getElementById('kjvonly-html');
-        html?.classList.add('dark');
-        this.chapterSettings.colorTheme = 'dark';
+        html?.classList.forEach(   (className: string) => {
+            if (className.includes('color-theme')){
+                html?.classList.remove(className);
+            }
+        })
+
+        html?.classList.add(theme)
+        this.chapterSettings.colorTheme = theme;
     }
 }
 

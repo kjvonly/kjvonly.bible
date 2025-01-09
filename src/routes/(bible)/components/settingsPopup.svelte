@@ -44,6 +44,16 @@
 	function onFontFamilySelected(fontFamily: string) {
 		chapterSettings.fontFamily = fontFamily;
 	}
+
+	function isLightTheme(colorTheme: string) {
+		return !isDarkTheme(colorTheme);
+	}
+	function isDarkTheme(colorTheme: string) {
+		if (colorTheme === undefined) {
+			return false;
+		}
+		return colorTheme.includes('dark');
+	}
 </script>
 
 <div
@@ -67,10 +77,10 @@
 		<div class="flex w-full flex-row">
 			<button
 				onclick={() => {
-					colorTheme.setLightTheme();
-					chapterSettings.colorTheme = 'light';
+					colorTheme.setColorTheme('color-theme-red');
+					chapterSettings.colorTheme = 'color-theme-red';
 				}}
-				class=" {chapterSettings?.colorTheme === 'light'
+				class=" {isLightTheme(chapterSettings?.colorTheme)
 					? 'bg-primary-500 '
 					: ' '} flex h-16 w-1/2 items-center justify-center border"
 				aria-label="font-size button"
@@ -83,7 +93,7 @@
 					height="24px"
 				>
 					<path
-						class={chapterSettings?.colorTheme === 'light'
+						class={isLightTheme(chapterSettings?.colorTheme)
 							? 'fill-neutral-100'
 							: 'fill-neutral-100'}
 						d="M 12 0 C 11.4 0 11 0.4 11 1 L 11 2 C 11 2.6 11.4 3 12 3 C 12.6 3 13 2.6 13 2 L 13 1 C 13 0.4 12.6 0 12 0 z M 4.1992188 3.1992188 C 3.9492188 3.1992187 3.7 3.3 3.5 3.5 C 3.1 3.9 3.1 4.5003906 3.5 4.9003906 L 4.1992188 5.5996094 C 4.5992187 5.9996094 5.1996094 5.9996094 5.5996094 5.5996094 C 5.9996094 5.1996094 5.9996094 4.5992188 5.5996094 4.1992188 L 4.9003906 3.5 C 4.7003906 3.3 4.4492188 3.1992188 4.1992188 3.1992188 z M 19.800781 3.1992188 C 19.550781 3.1992188 19.299609 3.3 19.099609 3.5 L 18.400391 4.1992188 C 18.000391 4.5992187 18.000391 5.1996094 18.400391 5.5996094 C 18.800391 5.9996094 19.400781 5.9996094 19.800781 5.5996094 L 20.5 4.9003906 C 20.9 4.5003906 20.9 3.9 20.5 3.5 C 20.3 3.3 20.050781 3.1992188 19.800781 3.1992188 z M 12 5 A 7 7 0 0 0 5 12 A 7 7 0 0 0 12 19 A 7 7 0 0 0 19 12 A 7 7 0 0 0 12 5 z M 1 11 C 0.4 11 0 11.4 0 12 C 0 12.6 0.4 13 1 13 L 2 13 C 2.6 13 3 12.6 3 12 C 3 11.4 2.6 11 2 11 L 1 11 z M 22 11 C 21.4 11 21 11.4 21 12 C 21 12.6 21.4 13 22 13 L 23 13 C 23.6 13 24 12.6 24 12 C 24 11.4 23.6 11 23 11 L 22 11 z M 4.9003906 18.099609 C 4.6503906 18.099609 4.3992188 18.200391 4.1992188 18.400391 L 3.5 19.099609 C 3.1 19.499609 3.1 20.1 3.5 20.5 C 3.9 20.9 4.5003906 20.9 4.9003906 20.5 L 5.5996094 19.800781 C 5.9996094 19.400781 5.9996094 18.800391 5.5996094 18.400391 C 5.3996094 18.200391 5.1503906 18.099609 4.9003906 18.099609 z M 19.099609 18.099609 C 18.849609 18.099609 18.600391 18.200391 18.400391 18.400391 C 18.000391 18.800391 18.000391 19.400781 18.400391 19.800781 L 19.099609 20.5 C 19.499609 20.9 20.1 20.9 20.5 20.5 C 20.9 20.1 20.9 19.499609 20.5 19.099609 L 19.800781 18.400391 C 19.600781 18.200391 19.349609 18.099609 19.099609 18.099609 z M 12 21 C 11.4 21 11 21.4 11 22 L 11 23 C 11 23.6 11.4 24 12 24 C 12.6 24 13 23.6 13 23 L 13 22 C 13 21.4 12.6 21 12 21 z"
@@ -92,10 +102,10 @@
 			</button>
 			<button
 				onclick={() => {
-					colorTheme.setDarkTheme();
-					chapterSettings.colorTheme = 'dark';
+					colorTheme.setColorTheme('color-theme-dark-red');
+					chapterSettings.colorTheme = 'color-theme-dark-red';
 				}}
-				class=" {chapterSettings?.colorTheme === 'dark'
+				class=" {isDarkTheme(chapterSettings?.colorTheme)
 					? 'bg-primary-500 '
 					: ''} flex h-16 w-1/2 items-center justify-center border"
 				aria-label="font-size button"
@@ -111,7 +121,7 @@
 				>
 					<g id="g479" transform="translate(-83.478769,-13.695354)">
 						<path
-							class={chapterSettings?.colorTheme === 'dark'
+							class={isDarkTheme(chapterSettings?.colorTheme)
 								? ' fill-neutral-100'
 								: 'fill-neutral-700'}
 							d="m 123.63575,118.71778 c -8.26967,-1.94139 -20.37754,-9.06807 -26.273747,-15.4647 -2.994481,-3.24864 -7.343225,-9.914372 -9.663873,-14.812752 -3.815837,-8.054396 -4.219361,-10.117536 -4.219361,-21.572812 0,-11.455276 0.403524,-13.518416 4.219361,-21.572812 5.675823,-11.980419 13.42575,-20.064811 24.58783,-25.648972 12.91273,-6.459976 29.19281,-8.044725 29.19281,-2.841712 0,0.966241 -1.47081,2.720513 -3.26847,3.898383 -5.66308,3.710594 -10.23082,9.25226 -13.87367,16.83178 -2.96523,6.16963 -3.52199,9.131782 -3.50853,18.666666 0.0195,13.848922 2.44031,19.160356 13.22484,29.016804 9.75394,8.91455 17.24958,11.411006 32.39029,10.787724 13.53878,-0.557336 14.54362,0.447272 7.85384,7.852063 -11.41863,12.63905 -33.07019,18.99005 -50.66132,14.86034 z"
@@ -169,7 +179,7 @@
 
 		<div class="flex w-full flex-col space-y-2 pt-4">
 			<label for="Option1" class="flex cursor-pointer items-start gap-4">
-				<div class="checkbox  flex items-center">
+				<div class="checkbox flex items-center">
 					&#8203;
 					{#if chapterSettings}
 						<input
