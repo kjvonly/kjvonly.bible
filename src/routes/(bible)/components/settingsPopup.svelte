@@ -128,7 +128,7 @@
 			</button>
 		</div>
 
-		<div class="flex w-full flex-row pt-4 font-bold">
+		<div class="flex w-full flex-row pt-4 font-bold bg-neutral-50">
 			{#if chapterSettings?.colorTheme}
 				<select
 					name="HeadlineAct"
@@ -139,7 +139,7 @@
 						chapterSettings = chapterSettings;
 					}}
 				>
-					<option class="font-bold" value="red">RED</option>
+					<option  class="aclass" value="red">RED</option>
 					<option value="light-blue">LIGHT BLUE</option>
 				</select>
 			{/if}
@@ -214,6 +214,7 @@
 </div>
 
 <style>
+
 	.checkbox > input[type='checkbox']:checked::before {
 		background-color: red;
 	}

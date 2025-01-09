@@ -170,6 +170,7 @@
 					bind:chapterKey
 					doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
 				></Chapter>
+				<span class="h-16 md:hidden"></span>
 			</div>
 		</div>
 	</div>
@@ -179,7 +180,7 @@
 
 <div
 	style="transform: translate3d(0px, {buttonTopOffset}px, 0px);"
-	class="fixed bottom-20 left-0 p-4 md:hidden"
+	class="fixed bottom-0 left-0 p-4 md:hidden"
 >
 	<button
 		onclick={_previousChapter}
@@ -207,7 +208,7 @@
 </div>
 <div
 	style="transform: translate3d(0px, {buttonTopOffset}px, 0px); "
-	class="fixed bottom-20 right-0 p-4 md:hidden"
+	class="fixed bottom-0 right-0 p-4 md:hidden"
 >
 	<button
 		onclick={_nextChapter}
