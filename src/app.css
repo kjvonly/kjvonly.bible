@@ -251,16 +251,173 @@
         --color-vivid-b-100: 360deg 100% 87%;
         --color-vivid-b-50: 360deg 100% 95%;
 
-         /* support b 500*/
-         --color-redtxt: 162deg 63% 41%;
+        /* support b 500*/
+        --color-redtxt: 162deg 63% 41%;
 
-         /* primary-200 */
-         --color-header-from: 210deg 24% 10%;
-         /* primary-500 */
-         --color-header-to: 210deg 24% 10%;
-         /* neutral 800 */
-         --color-header-title: 216deg 33% 97%;
+        /* primary-200 */
+        --color-header-from: 210deg 24% 10%;
+        /* primary-500 */
+        --color-header-to: 210deg 24% 10%;
+        /* neutral 800 */
+        --color-header-title: 216deg 33% 97%;
     }
+
+    :root[class~="color-theme-purple"] {
+        --color-primary-900: 263deg 85% 18%;
+        --color-primary-800: 262deg 72% 25%;
+        --color-primary-700: 262deg 69% 31%;
+        --color-primary-600: 262deg 60% 38%;
+        --color-primary-500: 262deg 48% 46%;
+        --color-primary-400: 262deg 43% 51%;
+        --color-primary-300: 261deg 47% 58%;
+        --color-primary-200: 261deg 54% 68%;
+        --color-primary-100: 261deg 68% 84%;
+        --color-primary-50: 262deg 61% 93%;
+
+        --color-neutral-900: 42deg 15% 13%;
+        --color-neutral-800: 40deg 13% 23%;
+        --color-neutral-700: 37deg 11% 28%;
+        --color-neutral-600: 41deg 9% 35%;
+        --color-neutral-500: 41deg 8% 48%;
+        --color-neutral-400: 41deg 8% 61%;
+        --color-neutral-300: 39deg 11% 69%;
+        --color-neutral-200: 40deg 15% 80%;
+        --color-neutral-100: 43deg 13% 90%;
+        --color-neutral-50: 40deg 23% 97%;
+
+        --color-support-a-900: 184deg 91% 17%;
+        --color-support-a-800: 185deg 84% 25%;
+        --color-support-a-700: 185deg 81% 29%;
+        --color-support-a-600: 184deg 77% 34%;
+        --color-support-a-500: 185deg 62% 45%;
+        --color-support-a-400: 185deg 57% 50%;
+        --color-support-a-300: 184deg 65% 59%;
+        --color-support-a-200: 184deg 80% 74%;
+        --color-support-a-100: 185deg 94% 87%;
+        --color-support-a-50: 186deg 100% 94%;
+
+        --color-support-b-900: 43deg 86% 17%;
+        --color-support-b-800: 43deg 77% 27%;
+        --color-support-b-700: 43deg 72% 37%;
+        --color-support-b-600: 42deg 63% 48%;
+        --color-support-b-500: 42deg 78% 60%;
+        --color-support-b-400: 43deg 89% 70%;
+        --color-support-b-300: 43deg 90% 76%;
+        --color-support-b-100: 45deg 86% 81%;
+        --color-support-b-100: 45deg 90% 88%;
+        --color-support-b-50: 45deg 100% 96%;
+
+        --color-vivid-a-900: 348deg 94% 20%;
+        --color-vivid-a-800: 350deg 94% 28%;
+        --color-vivid-a-700: 352deg 90% 35%;
+        --color-vivid-a-600: 354deg 85% 44%;
+        --color-vivid-a-500: 356deg 75% 53%;
+        --color-vivid-a-400: 360deg 83% 62%;
+        --color-vivid-a-300: 360deg 91% 69%;
+        --color-vivid-a-200: 360deg 100% 80%;
+        --color-vivid-a-100: 360deg 100% 87%;
+        --color-vivid-a-50: 360deg 100% 95%;
+
+        --color-vivid-b-900: 125deg 97% 14%;
+        --color-vivid-b-800: 125deg 86% 20%;
+        --color-vivid-b-700: 125deg 79% 26%;
+        --color-vivid-b-600: 122deg 80% 29%;
+        --color-vivid-b-500: 122deg 73% 35%;
+        --color-vivid-b-400: 123deg 57% 45%;
+        --color-vivid-b-300: 123deg 53% 55%;
+        --color-vivid-b-200: 124deg 63% 74%;
+        --color-vivid-b-100: 127deg 65% 85%;
+        --color-vivid-b-50: 125deg 65% 93%;
+
+        --color-redtxt: 262deg 48% 46%;
+
+        /* primary-700 */
+        --color-header-from: 262deg 69% 31%;
+        /* primary-500 */
+        --color-header-to: 262deg 48% 46%;
+        /* neutral 100 */
+        --color-header-title: 43deg 13% 90%;
+    }
+
+    :root[class~="color-theme-dark-purple"] {
+        --color-primary-50: 263deg 85% 18%;
+        --color-primary-100: 262deg 72% 25%;
+        --color-primary-200: 262deg 69% 31%;
+        --color-primary-300: 262deg 60% 38%;
+        --color-primary-400: 262deg 48% 46%;
+        --color-primary-500: 262deg 43% 51%;
+        --color-primary-600: 261deg 47% 58%;
+        --color-primary-700: 261deg 54% 68%;
+        --color-primary-800: 261deg 68% 84%;
+        --color-primary-900: 262deg 61% 93%;
+
+        --color-neutral-50: 42deg 15% 13%;
+        --color-neutral-100: 40deg 13% 23%;
+        --color-neutral-200: 37deg 11% 28%;
+        --color-neutral-300: 41deg 9% 35%;
+        --color-neutral-400: 41deg 8% 48%;
+        --color-neutral-500: 41deg 8% 61%;
+        --color-neutral-600: 39deg 11% 69%;
+        --color-neutral-700: 40deg 15% 80%;
+        --color-neutral-800: 43deg 13% 90%;
+        --color-neutral-900: 40deg 23% 97%;
+
+        --color-support-a-50: 184deg 91% 17%;
+        --color-support-a-100: 185deg 84% 25%;
+        --color-support-a-200: 185deg 81% 29%;
+        --color-support-a-300: 184deg 77% 34%;
+        --color-support-a-400: 185deg 62% 45%;
+        --color-support-a-500: 185deg 57% 50%;
+        --color-support-a-600: 184deg 65% 59%;
+        --color-support-a-700: 184deg 80% 74%;
+        --color-support-a-800: 185deg 94% 87%;
+        --color-support-a-900: 186deg 100% 94%;
+
+        --color-support-b-50: 43deg 86% 17%;
+        --color-support-b-100: 43deg 77% 27%;
+        --color-support-b-200: 43deg 72% 37%;
+        --color-support-b-300: 42deg 63% 48%;
+        --color-support-b-400: 42deg 78% 60%;
+        --color-support-b-500: 43deg 89% 70%;
+        --color-support-b-600: 43deg 90% 76%;
+        --color-support-b-700: 45deg 86% 81%;
+        --color-support-b-800: 45deg 90% 88%;
+        --color-support-b-900: 45deg 100% 96%;
+
+        --color-vivid-a-50: 348deg 94% 20%;
+        --color-vivid-a-100: 350deg 94% 28%;
+        --color-vivid-a-200: 352deg 90% 35%;
+        --color-vivid-a-300: 354deg 85% 44%;
+        --color-vivid-a-400: 356deg 75% 53%;
+        --color-vivid-a-500: 360deg 83% 62%;
+        --color-vivid-a-600: 360deg 91% 69%;
+        --color-vivid-a-700: 360deg 100% 80%;
+        --color-vivid-a-800: 360deg 100% 87%;
+        --color-vivid-a-900: 360deg 100% 95%;
+
+        --color-vivid-b-50: 125deg 97% 14%;
+        --color-vivid-b-100: 125deg 86% 20%;
+        --color-vivid-b-200: 125deg 79% 26%;
+        --color-vivid-b-300: 122deg 80% 29%;
+        --color-vivid-b-400: 122deg 73% 35%;
+        --color-vivid-b-500: 123deg 57% 45%;
+        --color-vivid-b-600: 123deg 53% 55%;
+        --color-vivid-b-700: 124deg 63% 74%;
+        --color-vivid-b-800: 127deg 65% 85%;
+        --color-vivid-b-900: 125deg 65% 93%;
+
+        --color-redtxt: 262deg 48% 46%;
+
+        /* primary-700 */
+        --color-header-from: 262deg 69% 31%;
+        /* primary-500 */
+        --color-header-to: 262deg 48% 46%;
+        /* neutral 100 */
+        --color-header-title: 43deg 13% 90%;
+    }
+
+
+
 }
 
 
