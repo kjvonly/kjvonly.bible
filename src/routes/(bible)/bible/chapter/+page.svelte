@@ -15,7 +15,7 @@
 
 	$effect(() => {
 		chapterSettings;
-		
+
 		if (chapterSettings !== null) {
 			localStorage.setItem('chapterSettings', JSON.stringify(chapterSettings));
 		}
@@ -99,8 +99,9 @@
 </script>
 
 <div class="relative">
-	<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings></Header>
-
+	<div>
+		<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings></Header>
+	</div>
 	<div class="min-h-16"></div>
 	<div class="m-4 flex justify-center md:m-16">
 		<div

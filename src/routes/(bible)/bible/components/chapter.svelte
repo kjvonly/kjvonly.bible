@@ -43,16 +43,14 @@
 				let id2 = setTimeout(() => {
 					loadChapter();
 					fadeClass = 'fade-in';
+					window.scrollTo(0, 0);
 					showChapter = true;
 					timeoutIDs = [];
 				}, 2200);
 
 				timeoutIDs.push(id2);
 			} else {
-				showChapter = false;
-				setTimeout(() => {
-					showChapter = true;
-				}, 100);
+				window.scrollTo(0, 0);
 				loadChapter();
 			}
 		}
@@ -75,16 +73,18 @@
 </script>
 
 <div class="{fadeClass} flex-col leading-loose">
-	<p>
+	<div>
 		{#if showChapter}
 			{#if loadedBookName && loadedChapter}
-				<h1 class="text-center font-bold">{loadedBookName} {loadedChapter}</h1>
+				<h1 class="text-center text-lg font-bold">{loadedBookName} {loadedChapter}</h1>
 			{/if}
-			{#each keys as k}
-				<Verse verse={verses[k]}></Verse>
-			{/each}
+			<p>
+				{#each keys as k}
+					<Verse verse={verses[k]}></Verse>
+				{/each}
+			</p>
 		{/if}
-	</p>
+	</div>
 </div>
 
 <style>
