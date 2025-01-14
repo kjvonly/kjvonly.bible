@@ -4,7 +4,8 @@ class ColorTheme {
 
     VALID_COLOR_THEMES = [
         'red',
-        'light-blue'
+        'light-blue',
+        'purple'
     ]
 
     setTheme(theme: string) {
