@@ -9,7 +9,7 @@
 		chapterKey = $bindable(),
 		bookName = $bindable(),
 		bookChapter = $bindable(),
-		chapterSettings = $bindable()
+		chapterSettings = $bindable(),
 	} = $props();
 
 	let showBookChapterPopup: Boolean = $state(false);
