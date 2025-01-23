@@ -1,6 +1,7 @@
 import IndexedDb from './idb.db';
 
 export class BibleDB extends IndexedDb {
+	instance: any;
 	resolve: any;
 	ready: Promise<boolean | undefined> = new Promise((resolve, reject) => {
 		this.resolve = resolve;
@@ -9,7 +10,12 @@ export class BibleDB extends IndexedDb {
 
 	constructor() {
 		super('bible');
+		if (this.instance) {
+			return this.instance;
+		}
+		this.instance = this;
 	}
+
 	delay = (ms: any) => new Promise((res) => setTimeout(res, ms));
 
 
@@ -32,6 +38,8 @@ export class BibleDB extends IndexedDb {
 
 
 		let v = await this.getValue('chapters', 'booknames');
+
+
 
 		if (v === undefined) {
 			let worker = new Worker(new URL('../workers/kjvdata.worker?worker', import.meta.url), {
@@ -58,4 +66,4 @@ export class BibleDB extends IndexedDb {
 	}
 }
 
-export let bibleDB = new BibleDB();
+export const bibleDB = new BibleDB();

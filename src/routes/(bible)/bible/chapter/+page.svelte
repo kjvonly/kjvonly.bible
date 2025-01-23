@@ -5,6 +5,7 @@
 	import Chapter from '../components/chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
+	import { searchWorker } from '$lib/services/search.service';
 
 	let chapterKey: string | null = $state(null);
 	let bookName: string = $state('');
@@ -96,6 +97,7 @@
 			ticking = true;
 		}
 	});
+
 </script>
 
 <div class="relative">
