@@ -8,11 +8,12 @@ class SearchService {
         this.webWorker.onmessage = (e) => {
             this.subscribers.forEach((s) => {
                 if (s.id === e.data.id){
-                    s.fn(e.data.data)
+                    s.fn(e.data)
                 }
             })
             console.log('message received from web worker', e.data)
         }
+
         this.webWorker.postMessage({action: 'init'})
 
     }
@@ -22,7 +23,8 @@ class SearchService {
     }
 
     search(id: string, text: string){
-       this.webWorker.postMessage({id: id, text: text})
+        console.log('search service')
+       this.webWorker.postMessage({action: 'search', id: id, text: text})
     }
 
 

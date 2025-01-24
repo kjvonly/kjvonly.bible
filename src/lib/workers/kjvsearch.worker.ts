@@ -1,5 +1,5 @@
 import { bibleDB } from "$lib/db/bible.db"
-import FlexSearch from 'flexsearch';
+import FlexSearch, { type Id } from 'flexsearch';
 import type { chapter } from "../../models/chapter";
 
 
@@ -33,14 +33,29 @@ async function init() {
 async function search(id: string, text: string) {
 
     let indexes = await index.searchAsync(text)
-    let verses = []
-    indexes.forEach(async (i: string) => {
+    console.log('webworker search: ', indexes)
+    let verses: any[] = []
 
-        bibleDB.getValue(i.)
-    })
+    for (const i of indexes) {
+        console.log('for each')
+        let chatperKeyIndex = i.toString().lastIndexOf('_');
+        let chapterKey = i.toString().substring(0, chatperKeyIndex);
+        let verseNumber = i.toString().substring(chatperKeyIndex + 1, i.toString().length);
+        let chapter = await bibleDB.getValue('chapters', chapterKey);
+        let verse = chapter['verseMap'][verseNumber];
+
+        let data = { bookName: chapter['bookName'], number: chapter['number'], verseNumber: verseNumber, text: verse };
+        console.log('data', data)
+        verses.push(data);
+    }
 
 
 
+    console.log('webworker search verses: ', verses)
+
+    if (verses.length > 0) {
+        postMessage({ id: id, verses: verses })
+    }
 }
 
 onmessage = async (e) => {
@@ -50,7 +65,8 @@ onmessage = async (e) => {
             await init()
             break;
         case 'search':
-            search(e.data.id, e.data.text)
+            await search(e.data.id, e.data.text)
+            break
 
     }
 

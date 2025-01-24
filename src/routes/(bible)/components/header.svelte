@@ -61,6 +61,7 @@
 	}
 
 	function onSearchTextChanged(){
+		console.log(searchText)
 		searchService.search(searchID, searchText)
 	}
 
@@ -167,7 +168,7 @@
 					</div>
 				</div>
 				<div class="w-[100%] py-2">
-					<input class="w-full" oninput="{() => {} }" bind:value={searchText} placeholder="search" />
+					<input class="w-full" oninput="{onSearchTextChanged}" bind:value={searchText} placeholder="search" />
 				</div>
 			</div>
 		</div>
