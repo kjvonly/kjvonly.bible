@@ -5,11 +5,10 @@
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
 
-
 	let searchID = crypto.randomUUID();
 
 	let clientHeight: number = $state(0);
-	let searchInputHeight: nubmer = $state(0)
+	let searchInputHeight: number = $state(0);
 	let pageWidth: number = $state(0);
 	let bookChapterWidth: number = $state(0);
 	let searchText = $state('');
@@ -105,7 +104,7 @@
 			style="transform: translate3d(0px, {clientHeight / 3}px, 0px);"
 			class="relative flex min-h-32 w-[90%] items-center justify-center rounded-lg border border-neutral-100 bg-neutral-50 p-4 text-base shadow-lg"
 		>
-			<div class="flex flex-col w-[100%] justify-center">
+			<div class="flex w-[100%] flex-col justify-center">
 				<div class="flex flex-row justify-center">
 					<div
 						bind:clientWidth={bookChapterWidth}
@@ -174,22 +173,32 @@
 						</div>
 					</div>
 				</div>
-				<div class="relative w-[100%] py-2 flex flex-row justify-center">
+				<div class="relative flex w-[100%] flex-row justify-center py-2">
 					<input
-					bind:clientHeight={searchInputHeight}
-						class="w-full max-w-[450px] "
+						bind:clientHeight={searchInputHeight}
+						class="w-full max-w-[450px] border-b border-primary-500 outline-none"
 						oninput={onSearchTextChanged}
 						bind:value={searchText}
 						placeholder="search"
 					/>
-					<div style='transform: translate3d(0px, {searchInputHeight}px, 0px);'
-					class="{searchResults?.length > 0
-								? ''
-								: 'hidden'} overflow-y-scroll bg-neutral-50  max-h-96 fixed left-0 right-0 md:absolute
-								  z-popover mx-auto h-[70vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:min-w-xs max-w-[450px]">
+					<div
+						style="transform: translate3d(0px, {searchInputHeight + 2}px, 0px);"
+						class="{searchResults?.length > 0
+							? ''
+							: 'hidden'} fixed left-0 right-0 z-popover mx-auto h-[70vh] max-h-96
+								  w-[90vw] max-w-[450px] overflow-y-scroll bg-neutral-50 bg-white shadow-lg md:absolute md:w-1/2 md:min-w-xs
+								  "
+					>
 						{#each searchResults as v}
-							<div class="p-4 hover:bg-primary-100">
-								<span>{v.text}</span>
+							<div class="px-4 py-2 hover:bg-primary-100">
+								<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span>
+								{#each v.text.split(' ') as w}
+									{#if searchText.toLowerCase().includes(w.toLowerCase())}
+										<span class="text-redtxt inline-block">{w}</span>&nbsp;
+									{:else}
+										<span class="inline-block">{w}</span>&nbsp;
+									{/if}
+								{/each}
 							</div>
 						{/each}
 					</div>
