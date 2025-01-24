@@ -32,12 +32,33 @@ async function init() {
 
 async function search(id: string, text: string) {
 
-    let indexes = await index.searchAsync(text)
-    console.log('webworker search: ', indexes)
+    let indexes = await index.searchAsync(text, 100)
+    console.log(indexes)
     let verses: any[] = []
+    indexes = indexes.sort((a: Id, b: Id) => {
+        let asplit = a.toString().split('_').map(i => {
+            return parseInt(i)
+        })
+
+        let bsplit = b.toString().split('_').map(i => {
+            return parseInt(i)
+        })
+
+        console.log(asplit, bsplit)
+
+        if (asplit[0] === bsplit[0]) {
+            if (asplit[1] === bsplit[1]) {
+                return asplit[2] - bsplit[2]
+            } else {
+                return asplit[1] - bsplit[1]
+            }
+        } else {
+            return asplit[0] - bsplit[0]
+        }
+
+    })
 
     for (const i of indexes) {
-        console.log('for each')
         let chatperKeyIndex = i.toString().lastIndexOf('_');
         let chapterKey = i.toString().substring(0, chatperKeyIndex);
         let verseNumber = i.toString().substring(chatperKeyIndex + 1, i.toString().length);
@@ -45,13 +66,11 @@ async function search(id: string, text: string) {
         let verse = chapter['verseMap'][verseNumber];
 
         let data = { bookName: chapter['bookName'], number: chapter['number'], verseNumber: verseNumber, text: verse };
-        console.log('data', data)
+
         verses.push(data);
     }
 
-
-
-    console.log('webworker search verses: ', verses)
+    console.log(indexes)
 
     if (verses.length > 0) {
         postMessage({ id: id, verses: verses })

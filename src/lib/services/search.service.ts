@@ -11,7 +11,7 @@ class SearchService {
                     s.fn(e.data)
                 }
             })
-            console.log('message received from web worker', e.data)
+
         }
 
         this.webWorker.postMessage({action: 'init'})
