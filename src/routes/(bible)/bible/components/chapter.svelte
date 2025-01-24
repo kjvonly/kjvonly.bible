@@ -18,6 +18,23 @@
 	} = $props();
 
 	$effect(() => {
+		if (!chapterKey) {
+			return;
+		}
+
+		let bcv = chapterKey.split('_');
+		if (bcv.length === 3) {
+			chapterKey = `${bcv[0]}_${bcv[1]}`;
+			setTimeout(() => {
+				let e = document.getElementById(`vno-${bcv[2]}`);
+				e?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+				e?.classList.add('scrolled-to');
+				setTimeout(() => {
+					e?.classList.remove('scrolled-to');
+				}, 4000);
+			}, 250);
+		}
+
 		if (chapterKey) {
 			if (doChapterFadeAnimation) {
 				if (firstLoad) {
@@ -79,8 +96,10 @@
 				<h1 class="text-center text-lg font-bold">{loadedBookName} {loadedChapter}</h1>
 			{/if}
 			<p>
-				{#each keys as k}
-					<Verse verse={verses[k]}></Verse>
+				{#each keys as k, idx}
+					<span id={`vno-${idx + 1}`}>
+						<Verse verse={verses[k]}></Verse>
+					</span>
 				{/each}
 			</p>
 		{/if}
@@ -88,6 +107,10 @@
 </div>
 
 <style>
+	.scrolled-to {
+		@apply animate-pulse;
+	}
+
 	.fade-in {
 		animation: fadeIn 0.5s ease-in-out;
 	}

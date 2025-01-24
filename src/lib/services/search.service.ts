@@ -23,7 +23,6 @@ class SearchService {
     }
 
     search(id: string, text: string){
-        console.log('search service')
        this.webWorker.postMessage({action: 'search', id: id, text: text})
     }
 

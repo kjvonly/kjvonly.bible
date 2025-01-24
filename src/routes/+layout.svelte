@@ -7,7 +7,7 @@
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		bibleDB.init();
 	});
-
+	
 	let { children } = $props();
 </script>
 

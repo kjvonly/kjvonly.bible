@@ -5,8 +5,8 @@
 	import Chapter from '../components/chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
-	import { searchService } from '$lib/services/search.service';
-
+	
+	
 	let chapterKey: string | null = $state(null);
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
@@ -51,7 +51,13 @@
 		} else {
 			chapterKey = '50_3'; // John 3
 		}
+
+		bibleNavigationService.subscribe('0', goto)
 	});
+
+	function goto(key: string){
+		chapterKey = key
+	}
 
 	async function _nextChapter() {
 		if (chapterKey) {

@@ -35,6 +35,12 @@ export class ChapterService {
 
     async getChapter(chapterKey: string): Promise<any> {
         let chapter = undefined
+        let bcv= chapterKey.split('_')
+        if (bcv.length === 3 ){
+            chapterKey = `${bcv[0]}_${bcv[1]}`
+        }
+
+        
 
         try {
             // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)

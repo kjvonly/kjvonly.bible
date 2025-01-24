@@ -4,6 +4,7 @@
 	import SettingsPopup from './settingsPopup.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
+	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 
 	let searchID = crypto.randomUUID();
 
@@ -59,7 +60,6 @@
 	});
 
 	function onSearchResult(data: any) {
-		console.log('onSearchResult', data);
 		searchResults = data.verses;
 	}
 
@@ -67,9 +67,14 @@
 		if (searchText.length < 3) {
 			searchResults = [];
 		} else {
-			console.log(searchText);
 			searchService.search(searchID, searchText);
 		}
+	}
+
+	function gotoBCV(key: string) {
+		searchText = '';
+		searchResults = [];
+		bibleNavigationService.publish(key);
 	}
 </script>
 
@@ -176,7 +181,7 @@
 				<div class="relative flex w-[100%] flex-row justify-center py-2">
 					<input
 						bind:clientHeight={searchInputHeight}
-						class="w-full max-w-[450px] border-b border-primary-500 outline-none"
+						class="w-full max-w-[440px] border-b border-primary-500 bg-neutral-50 p-1 outline-none"
 						oninput={onSearchTextChanged}
 						bind:value={searchText}
 						placeholder="search"
@@ -191,7 +196,10 @@
 								  "
 					>
 						{#each searchResults as v}
-							<button class="px-4 py-2 text-left hover:bg-primary-100">
+							<button
+								onclick={() => gotoBCV(v.key)}
+								class="px-4 py-2 text-left hover:bg-primary-100"
+							>
 								<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br />
 								{#each v.text.split(' ') as w}
 									{#if searchText.toLowerCase().includes(w.toLowerCase())}
@@ -213,8 +221,8 @@
 	<button
 		aria-label="lskdjf"
 		onclick={() => {
-			searchText=''
-			searchResults=[]
+			searchText = '';
+			searchResults = [];
 		}}
 		class="fixed right-0 top-0 z-[19] h-full w-full bg-black opacity-50"
 	></button>

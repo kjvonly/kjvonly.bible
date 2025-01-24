@@ -7,7 +7,6 @@ let index = new FlexSearch.Index();
 
 async function init() {
     let indexes = index.search('for god so')
-    console.log(indexes)
     if (indexes.length === 0) {
         await bibleDB.init()
         postMessage(`ready `)
@@ -32,8 +31,8 @@ async function init() {
 
 async function search(id: string, text: string) {
     let indexes = await index.searchAsync(text, 100)
-    console.log(indexes)
     let verses: any[] = []
+
     indexes = indexes.sort((a: Id, b: Id) => {
         let asplit = a.toString().split('_').map(i => {
             return parseInt(i)
@@ -42,8 +41,6 @@ async function search(id: string, text: string) {
         let bsplit = b.toString().split('_').map(i => {
             return parseInt(i)
         })
-
-        console.log(asplit, bsplit)
 
         if (asplit[0] === bsplit[0]) {
             if (asplit[1] === bsplit[1]) {
@@ -64,12 +61,10 @@ async function search(id: string, text: string) {
         let chapter = await bibleDB.getValue('chapters', chapterKey);
         let verse = chapter['verseMap'][verseNumber];
 
-        let data = { bookName: chapter['bookName'], number: chapter['number'], verseNumber: verseNumber, text: verse };
+        let data = { key: i.toString(), bookName: chapter['bookName'], number: chapter['number'], verseNumber: verseNumber, text: verse };
 
         verses.push(data);
     }
-
-    console.log(indexes)
 
     if (verses.length > 0) {
         postMessage({ id: id, verses: verses })
