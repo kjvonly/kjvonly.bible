@@ -5,12 +5,15 @@
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
 
-	let searchID = crypto.randomUUID()
+
+	let searchID = crypto.randomUUID();
 
 	let clientHeight: number = $state(0);
+	let searchInputHeight: nubmer = $state(0)
 	let pageWidth: number = $state(0);
 	let bookChapterWidth: number = $state(0);
 	let searchText = $state('');
+	let searchResults: any[] = $state([]);
 
 	let {
 		chapterKey = $bindable(),
@@ -53,18 +56,22 @@
 	});
 
 	onMount(() => {
-		searchService.subscribe(searchID, onSearchResult)
-	})
+		searchService.subscribe(searchID, onSearchResult);
+	});
 
 	function onSearchResult(data: any) {
-		console.log('onSearchResult', data)
+		console.log('onSearchResult', data);
+		searchResults = data.verses;
 	}
 
-	function onSearchTextChanged(){
-		console.log(searchText)
-		searchService.search(searchID, searchText)
+	function onSearchTextChanged() {
+		if (searchText.length < 3) {
+			searchResults = [];
+		} else {
+			console.log(searchText);
+			searchService.search(searchID, searchText);
+		}
 	}
-
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -98,8 +105,8 @@
 			style="transform: translate3d(0px, {clientHeight / 3}px, 0px);"
 			class="relative flex min-h-32 w-[90%] items-center justify-center rounded-lg border border-neutral-100 bg-neutral-50 p-4 text-base shadow-lg"
 		>
-			<div class="flex flex-col">
-				<div class="flex flex-row">
+			<div class="flex flex-col w-[100%] justify-center">
+				<div class="flex flex-row justify-center">
 					<div
 						bind:clientWidth={bookChapterWidth}
 						class="w-full flex-col md:w-[300px]"
@@ -135,7 +142,7 @@
 							</button>
 							<div
 								style="transform: translate3d(0px, 5px, 0px);"
-								class="absolute -left-[5vw] right-0 md:-left-[150px] {showBookChapterPopup
+								class="absolute -left-[4vw] right-0 md:-left-[150px] {showBookChapterPopup
 									? ''
 									: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:min-w-sm"
 							>
@@ -167,8 +174,25 @@
 						</div>
 					</div>
 				</div>
-				<div class="w-[100%] py-2">
-					<input class="w-full" oninput="{onSearchTextChanged}" bind:value={searchText} placeholder="search" />
+				<div class="relative w-[100%] py-2 flex flex-row justify-center">
+					<input
+					bind:clientHeight={searchInputHeight}
+						class="w-full max-w-[450px] "
+						oninput={onSearchTextChanged}
+						bind:value={searchText}
+						placeholder="search"
+					/>
+					<div style='transform: translate3d(0px, {searchInputHeight}px, 0px);'
+					class="{searchResults?.length > 0
+								? ''
+								: 'hidden'} overflow-y-scroll bg-neutral-50  max-h-96 fixed left-0 right-0 md:absolute
+								  z-popover mx-auto h-[70vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:min-w-xs max-w-[450px]">
+						{#each searchResults as v}
+							<div class="p-4 hover:bg-primary-100">
+								<span>{v.text}</span>
+							</div>
+						{/each}
+					</div>
 				</div>
 			</div>
 		</div>
