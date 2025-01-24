@@ -2,9 +2,13 @@
 	import Button from '../../../components/button.svelte';
 	import BookChapterPopup from './bookChapterPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
+	import { searchService } from '$lib/services/search.service';
+
 	let clientHeight: number = $state(0);
 	let pageWidth: number = $state(0);
 	let bookChapterWidth: number = $state(0);
+	let searchText = $state('')
+	
 	let {
 		chapterKey = $bindable(),
 		bookName = $bindable(),
@@ -142,6 +146,8 @@
 					<SettingsPopup bind:chapterSettings></SettingsPopup>
 				</div>
 			</div>
+
+			<input bind:value={searchText} placeholder="search">
 		</div>
 	</div>
 </div>
