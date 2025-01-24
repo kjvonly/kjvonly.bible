@@ -181,25 +181,26 @@
 						bind:value={searchText}
 						placeholder="search"
 					/>
+
 					<div
 						style="transform: translate3d(0px, {searchInputHeight + 2}px, 0px);"
 						class="{searchResults?.length > 0
 							? ''
-							: 'hidden'} fixed left-0 right-0 z-popover mx-auto h-[70vh] max-h-96
-								  w-[90vw] max-w-[450px] overflow-y-scroll bg-neutral-50 bg-white shadow-lg md:absolute md:w-1/2 md:min-w-xs
+							: 'hidden'} fixed left-0 right-0 z-popover mx-auto max-h-96
+								  w-[90vw] max-w-[450px] overflow-y-scroll bg-neutral-50 md:absolute md:w-1/2 md:min-w-xs
 								  "
 					>
 						{#each searchResults as v}
-							<div class="px-4 py-2 hover:bg-primary-100">
-								<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span>
+							<button class="px-4 py-2 text-left hover:bg-primary-100">
+								<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br />
 								{#each v.text.split(' ') as w}
 									{#if searchText.toLowerCase().includes(w.toLowerCase())}
-										<span class="text-redtxt inline-block">{w}</span>&nbsp;
+										<span class="inline-block text-redtxt">{w}</span>&nbsp;
 									{:else}
 										<span class="inline-block">{w}</span>&nbsp;
 									{/if}
 								{/each}
-							</div>
+							</button>
 						{/each}
 					</div>
 				</div>
@@ -207,6 +208,17 @@
 		</div>
 	</div>
 </div>
+
+{#if searchResults.length > 0}
+	<button
+		aria-label="lskdjf"
+		onclick={() => {
+			searchText=''
+			searchResults=[]
+		}}
+		class="fixed right-0 top-0 z-[19] h-full w-full bg-black opacity-50"
+	></button>
+{/if}
 
 <style>
 </style>
