@@ -13,6 +13,7 @@ onmessage = async () => {
 			fetch(`${base}data/json.gz/all.json`, {
 				headers: myHeaders
 			}).then((res) => {
+				
 				res.json().then((json) => {
 					let myMap = new Map<string, any>(Object.entries(json));
 					myMap.forEach((value: any, key: string) => {

@@ -67,6 +67,10 @@ class IndexedDb {
 		await store.delete(id);
 		return id;
 	}
+
+	public async getAllKeys(tableName: string){
+		return this.db.getAllKeys(tableName)
+	}
 }
 
 export default IndexedDb;

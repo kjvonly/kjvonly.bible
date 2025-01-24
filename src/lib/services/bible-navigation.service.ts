@@ -1196,11 +1196,14 @@ var chapters: string[] = [
 export class BibleNavigationService {
 	chapterList: string[];
 	bookNames: any;
+	subscribers: any[] = []
+
 	constructor() {
-
-
-
 		this.chapterList = chapters;
+	}
+
+	subscribe(id: string, fn: any) {
+		this.subscribers.push({ id: id, fn: fn })
 	}
 
 	next(currentKey: string): string {
@@ -1221,8 +1224,11 @@ export class BibleNavigationService {
 		}
 	}
 
-	
-
+	async publish(key: string) {
+		this.subscribers.forEach(s => {
+			s.fn(key)
+		})
+	}
 	async goto(shortBook: string, chapter: string) {
 		if (!this.bookNames) {
 			await chapterService.getChapter("booknames").then((data: any) => {
