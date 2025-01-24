@@ -30,12 +30,28 @@ async function init() {
     }
 }
 
+async function search(id: string, text: string) {
+
+    let indexes = await index.searchAsync(text)
+    let verses = []
+    indexes.forEach(async (i: string) => {
+
+        bibleDB.getValue(i.)
+    })
+
+
+
+}
+
 onmessage = async (e) => {
 
-    switch (e.data) {
+    switch (e.data.action) {
         case 'init':
             await init()
             break;
+        case 'search':
+            search(e.data.id, e.data.text)
+
     }
 
 
