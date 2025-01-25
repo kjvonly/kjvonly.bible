@@ -1,3 +1,4 @@
+import { sleep } from '$lib/utils/sleep';
 import IndexedDb from './idb.db';
 
 export class BibleDB extends IndexedDb {
@@ -16,7 +17,7 @@ export class BibleDB extends IndexedDb {
 		this.instance = this;
 	}
 
-	delay = (ms: any) => new Promise((res) => setTimeout(res, ms));
+
 
 
 	async init() {
@@ -52,7 +53,7 @@ export class BibleDB extends IndexedDb {
 		let retryMax = 10;
 
 		while (v === undefined || retries == retryMax) {
-			await this.delay(1000);
+			await sleep(1000);
 			v = await this.getValue('chapters', 'booknames');
 			retries = retries + 1;
 		}
