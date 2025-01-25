@@ -6,8 +6,7 @@ import type { IDBPDatabase } from 'idb';
  */
 class IndexedDB {
 	private database: string;
-	protected db: any;
-
+	protected db: IDBPDatabase<unknown> | undefined
 	constructor(database: string) {
 		this.database = database;
 	}
@@ -17,20 +16,22 @@ class IndexedDB {
 	 * @param tableNames list of tables that should exist in db
 	 * @returns boolean if creation/opening was successfull
 	 */
-	public async createAndOrOpenObjectStore(tableNames: string[]) {
+	public async createAndOrOpenObjectStores(tableNames: string[]) {
 		try {
-			this.db = await openDB(this.database, 1, {
+			this.db = await openDB(this.database, 2, {
 				upgrade(db: IDBPDatabase) {
 					for (const tableName of tableNames) {
 						if (db.objectStoreNames.contains(tableName)) {
 							continue;
 						}
 						db.createObjectStore(tableName, { autoIncrement: true, keyPath: 'id' });
+						console.log('created ', tableName)
 					}
 				}
 			});
 			return true;
 		} catch (error) {
+			console.log(error)
 			return false;
 		}
 	}
@@ -43,9 +44,9 @@ class IndexedDB {
 	 * @returns the value at that key
 	 */
 	public async getValue(tableName: string, id: string) {
-		const tx = this.db.transaction(tableName, 'readonly');
-		const store = tx.objectStore(tableName);
-		const result = await store.get(id);
+		const tx = this.db?.transaction(tableName, 'readonly');
+		const store = tx?.objectStore(tableName);
+		const result = await store?.get(id);
 		return result;
 	}
 
@@ -56,9 +57,9 @@ class IndexedDB {
 	 * @returns all objects
 	 */
 	public async getAllValue(tableName: string) {
-		const tx = this.db.transaction(tableName, 'readonly');
-		const store = tx.objectStore(tableName);
-		const result = await store.getAll();
+		const tx = this.db?.transaction(tableName, 'readonly');
+		const store = tx?.objectStore(tableName);
+		const result = await store?.getAll();
 		return result;
 	}
 
@@ -71,9 +72,10 @@ class IndexedDB {
 	 * @returns 
 	 */
 	public async putValue(tableName: string, value: object) {
-		const tx = this.db.transaction(tableName, 'readwrite');
-		const store = tx.objectStore(tableName);
-		const result = await store.put(value);
+		console.log(this.db, 'db')
+		const tx = this.db?.transaction(tableName, 'readwrite');
+		const store = tx?.objectStore(tableName);
+		const result = await store?.put(value);
 		return result;
 	}
 
@@ -84,10 +86,10 @@ class IndexedDB {
 	 * @returns 
 	 */
 	public async putBulkValue(tableName: string, values: object[]) {
-		const tx = this.db.transaction(tableName, 'readwrite');
-		const store = tx.objectStore(tableName);
+		const tx = this.db?.transaction(tableName, 'readwrite');
+		const store = tx?.objectStore(tableName);
 		for (const value of values) {
-			const result = await store.put(value);
+			const result = await store?.put(value);
 		}
 		return this.getAllValue(tableName);
 	}
@@ -99,13 +101,13 @@ class IndexedDB {
 	 * @returns id of result or undefined
 	 */
 	public async deleteValue(tableName: string, id: number) {
-		const tx = this.db.transaction(tableName, 'readwrite');
-		const store = tx.objectStore(tableName);
-		const result = await store.get(id);
+		const tx = this.db?.transaction(tableName, 'readwrite');
+		const store = tx?.objectStore(tableName);
+		const result = await store?.get(id);
 		if (!result) {
 			return result;
 		}
-		await store.delete(id);
+		await store?.delete(id);
 		return id;
 	}
 
@@ -117,11 +119,11 @@ class IndexedDB {
 	 * @param tableName table to get all index keys
 	 * @returns list of keys
 	 */
-	public async getAllKeys(tableName: string) {
-		const tx = this.db.transaction(tableName, 'readwrite');
-		const store = tx.objectStore(tableName);
-		const result = await store.getAllKeys();
-		return result
+	public async getAllKeys(tableName: string): Promise<IDBValidKey[]> {
+		if (this.db) {
+			return await this.db.getAllKeys(tableName);
+		}
+		return []
 	}
 }
 

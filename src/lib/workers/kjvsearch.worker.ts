@@ -12,8 +12,8 @@ async function init() {
         postMessage(`ready `)
 
         let keys = await bibleDB.getAllKeys('chapters')
-        keys.forEach(async (key: string) => {
-            let chapter = await bibleDB.getValue('chapters', key)
+        keys.forEach(async (key: IDBValidKey) => {
+            let chapter = await bibleDB.getValue('chapters', key.toString())
             if (key === 'booknames') {
                 return
             }

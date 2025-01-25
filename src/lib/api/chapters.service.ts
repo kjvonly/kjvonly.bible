@@ -40,8 +40,6 @@ export class ChapterService {
             chapterKey = `${bcv[0]}_${bcv[1]}`
         }
 
-        
-
         try {
             // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
             if (bibleDB.isReady) {
@@ -58,6 +56,28 @@ export class ChapterService {
         }
 
         return chapter;
+    }
+
+
+    async getBooknames(): Promise<any> {
+        let booknames = undefined;
+
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                booknames = await bibleDB.getValue('booknames', 'booknames')
+            }
+
+        } catch (error) {
+            console.log(`error getting booknames from indexedDB: ${error}`)
+        }
+
+        if (booknames === undefined) {
+            return await api.get(`data/json.gz/booknames.json`);
+        }
+
+        return booknames;
     }
 }
 
