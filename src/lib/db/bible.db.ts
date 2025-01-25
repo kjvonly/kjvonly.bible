@@ -2,7 +2,7 @@ import { sleep } from '$lib/utils/sleep';
 import IndexedDB from './idb.db';
 
 const TOTAL_CHAPTERS_KEYS = 1189
-/** BOOKNAMES is metadata on all bible chapters. We store it in the same table */
+/** BOOKNAMES is metadata on all bible chapters. */
 const TOTAL_BOOKNAMES_KEYS = 1
 
 export class BibleDB extends IndexedDB {
@@ -17,6 +17,28 @@ export class BibleDB extends IndexedDB {
 	constructor() {
 		super('bible');
 		this.createAndOrOpenObjectStores(['chapters', 'booknames']);
+	}
+
+	async waitForIndexDB(): Promise<boolean> {
+		while (1) {
+			let chapterKeys = await this.getAllKeys('chapters');
+			let booknamesKeys = await this.getAllKeys('booknames');
+			/** 
+			 * NOTE chapterKeys.length >= TOTAL_CHAPTERS_KEYS 
+			 * becuase version 1 indexedDB also included booknames
+			 * version 2 we moved booknames to booknames store
+			*/
+			if (
+				booknamesKeys.length === TOTAL_BOOKNAMES_KEYS &&
+				chapterKeys.length >= TOTAL_CHAPTERS_KEYS
+			) {
+				this.resolve(true)
+				this.isReady = true
+				return true
+			}
+			await sleep(1000)
+		}
+		return false
 	}
 
 	async init() {

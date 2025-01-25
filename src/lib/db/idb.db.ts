@@ -25,7 +25,6 @@ class IndexedDB {
 							continue;
 						}
 						db.createObjectStore(tableName, { autoIncrement: true, keyPath: 'id' });
-						console.log('created ', tableName)
 					}
 				}
 			});
@@ -72,7 +71,6 @@ class IndexedDB {
 	 * @returns 
 	 */
 	public async putValue(tableName: string, value: object) {
-		console.log(this.db, 'db')
 		const tx = this.db?.transaction(tableName, 'readwrite');
 		const store = tx?.objectStore(tableName);
 		const result = await store?.put(value);

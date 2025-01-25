@@ -32,7 +32,6 @@ async function onBooknames() {
 	}).then((res) => {
 
 		res.json().then((json) => {
-			console.log(json)
 			json['id'] = 'booknames';
 			db.putValue('booknames', json);
 		});
@@ -59,7 +58,6 @@ async function onStrongs() {
 }
 
 onmessage = async (e) => {
-	console.log(e.data.sync)
 	switch (e.data.sync) {
 		case 'chapters':
 			onChapters();
