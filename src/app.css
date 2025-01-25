@@ -457,6 +457,36 @@
         --color-header-to: 262deg 48% 46%;
         /* neutral 100 */
         --color-header-title: 43deg 13% 90%;
+
+            /**
+        * colored groups for chapter select light mode
+        */
+
+        
+        /* primary 700 */
+        --color-bg-law: 262deg 69% 31%;
+        /* neutral 50 */
+        --color-text-law: 40deg 23% 97%;
+
+        /* supporta 700 */
+        --color-bg-history:  185deg 81% 29%;
+        /* neutral 50 */
+        --color-text-history: 40deg 23% 97%;
+
+        /* supportb 700 */
+        --color-bg-poetry:  43deg 72% 37%;
+        /* neutral 50 */
+        --color-text-poetry: 40deg 23% 97%;
+
+        /* vivida 700 */
+        --color-bg-major-prophets:   352deg 90% 35%;
+        /* neutral 50 */
+        --color-text-major-prophets: 40deg 23% 97%;
+
+        /* vividb 700 */
+        --color-bg-minor-prophets: 125deg 79% 26%;
+        /* neutral 50 */
+        --color-text-minor-prophets: 40deg 23% 97%;
     }
 
     :root[class~="color-theme-dark-purple"] {
@@ -534,10 +564,37 @@
         --color-header-to: 262deg 48% 46%;
         /* neutral 100 */
         --color-header-title: 43deg 13% 90%;
+
+             /**
+        * colored groups for chapter select light mode
+        */
+
+        
+        /* primary 700 */
+        --color-bg-law: 262deg 69% 31%;
+        /* neutral 50 */
+        --color-text-law: 40deg 23% 97%;
+
+        /* supporta 700 */
+        --color-bg-history:  185deg 81% 29%;
+        /* neutral 50 */
+        --color-text-history: 40deg 23% 97%;
+
+        /* supportb 700 */
+        --color-bg-poetry:  43deg 72% 37%;
+        /* neutral 50 */
+        --color-text-poetry: 40deg 23% 97%;
+
+        /* vivida 700 */
+        --color-bg-major-prophets:   352deg 90% 35%;
+        /* neutral 50 */
+        --color-text-major-prophets: 40deg 23% 97%;
+
+        /* vividb 700 */
+        --color-bg-minor-prophets: 125deg 79% 26%;
+        /* neutral 50 */
+        --color-text-minor-prophets: 40deg 23% 97%;
     }
-
-
-
 }
 
 
