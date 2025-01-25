@@ -266,7 +266,31 @@ export default {
 				to: 'hsl(var(--color-header-to))',
 				from: 'hsl(var(--color-header-from))',
 				title: 'hsl(var(--color-header-title))'
-			}
+			},
+
+			law: {
+				bg: 'hsl(var(--color-bg-law))',
+				text: 'hsl(var(--color-text-law))'
+			},
+
+			history: {
+				bg: 'hsl(var(--color-bg-history))',
+				text: 'hsl(var(--color-text-history))'
+			},
+			poetry: {
+				bg: 'hsl(var(--color-bg-poetry))',
+				text: 'hsl(var(--color-text-poetry))'
+			},
+
+			'major-prophets': {
+				bg: 'hsl(var(--color-bg-major-prophets))',
+				text: 'hsl(var(--color-text-major-prophets))'
+			},
+			'minor-prophets': {
+				bg: 'hsl(var(--color-bg-minor-prophets))',
+				text: 'hsl(var(--color-text-minor-prophets))'
+			},
+
 		}),
 		columns: {
 			auto: 'auto',

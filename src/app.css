@@ -29,16 +29,16 @@
         --color-primary-100: 360deg 82% 89%;
         --color-primary-50: 360deg 100% 97%;
 
-        --color-vivid-a-900: 15deg 86%, 30%;
-        --color-vivid-a-800: 22deg 82%, 39%;
-        --color-vivid-a-700: 29deg 80%, 44%;
-        --color-vivid-a-600: 36deg 77%, 49%;
-        --color-vivid-a-500: 42deg 87%, 55%;
-        --color-vivid-a-400: 44deg 92%, 63%;
-        --color-vivid-a-300: 48deg 94%, 68%;
-        --color-vivid-a-200: 48deg 95%, 76%;
-        --color-vivid-a-100: 48deg 100%, 88%;
-        --color-vivid-a-50: 49deg 100%, 96%;
+        --color-vivid-a-900: 15deg 86% 30%;
+        --color-vivid-a-800: 22deg 82% 39%;
+        --color-vivid-a-700: 29deg 80% 44%;
+        --color-vivid-a-600: 36deg 77% 49%;
+        --color-vivid-a-500: 42deg 87% 55%;
+        --color-vivid-a-400: 44deg 92% 63%;
+        --color-vivid-a-300: 48deg 94% 68%;
+        --color-vivid-a-200: 48deg 95% 76%;
+        --color-vivid-a-100: 48deg 100% 88%;
+        --color-vivid-a-50: 49deg 100% 96%;
 
         --color-neutral-900: 42deg 15% 13%;
         --color-neutral-800: 40deg 13% 23%;
@@ -62,6 +62,7 @@
         --color-support-a-100: 185deg 94% 87%;
         --color-support-a-50: 186deg 100% 94%;
 
+
         --color-support-b-900: 8deg 86%, 14%;
         --color-support-b-800: 8deg 78%, 21%;
         --color-support-b-700: 8deg 74%, 27%;
@@ -81,6 +82,36 @@
         --color-header-to: 360deg 67% 44%;
         /* neutral 100 */
         --color-header-title: 360deg 82% 89%;
+
+
+        /**
+        * colored groups for chapter select
+        */
+
+        /* primary 700 */
+        --color-bg-law: 360deg 67% 44%;
+        /* neutral 50 */
+        --color-text-law: 40deg 23% 97%;
+
+        /* supporta 700 */
+        --color-bg-history:  185deg 81% 29%;
+        /* neutral 50 */
+        --color-text-history: 40deg 23% 97%;
+
+        /* supportb 700 */
+        --color-bg-poetry:  8deg 74%, 27%;
+        /* neutral 50 */
+        --color-text-poetry: 40deg 23% 97%;
+
+        /* vivida 700 */
+        --color-bg-major-prophets:  29deg 80% 44%;
+        /* neutral 50 */
+        --color-text-major-prophets: 40deg 23% 97%;
+
+        /* vividb 700 */
+        --color-bg-minor-prophets:  100deg 20% 44%;
+        /* neutral 50 */
+        --color-text-minor-prophets: 40deg 23% 97%;
     }
 
     :root[class~="color-theme-dark-red"] {
@@ -147,6 +178,35 @@
         --color-header-to: 360deg 67% 44%;
         /* neutral 800 */
         --color-header-title: 360deg 82% 89%;
+
+        /**
+        * colored groups for chapter select
+        */
+
+        /* primary 700 */
+        --color-bg-law: 360deg 67% 44%;
+        /* neutral 50 */
+        --color-text-law: 40deg 23% 97%;
+
+        /* supporta 700 */
+        --color-bg-history:  185deg 81% 29%;
+        /* neutral 50 */
+        --color-text-history: 40deg 23% 97%;
+
+        /* supportb 700 */
+        --color-bg-poetry:  8deg 74%, 27%;
+        /* neutral 50 */
+        --color-text-poetry: 40deg 23% 97%;
+
+        /* vivida 700 */
+        --color-bg-major-prophets:  29deg 80% 44%;
+        /* neutral 50 */
+        --color-text-major-prophets: 40deg 23% 97%;
+
+        /* vividb 700 */
+        --color-bg-minor-prophets:  100deg 20% 44%;
+        /* neutral 50 */
+        --color-text-minor-prophets: 40deg 23% 97%;
 
     }
 
@@ -406,7 +466,7 @@
         --color-vivid-b-800: 127deg 65% 85%;
         --color-vivid-b-900: 125deg 65% 93%;
 
-        --color-redtxt:  261deg 47% 58%;
+        --color-redtxt: 261deg 47% 58%;
 
         /* primary-700 */
         --color-header-from: 262deg 69% 31%;
