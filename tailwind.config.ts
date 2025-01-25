@@ -235,6 +235,32 @@ export default {
 				'900': 'hsl(var(--color-support-b-900))',
 			},
 
+			vivida: {
+				'50': 'hsl(var(--color-vivid-a-50))',
+				'100': 'hsl(var(--color-vivid-a-100))',
+				'200': 'hsl(var(--color-vivid-a-200))',
+				'300': 'hsl(var(--color-vivid-a-300))',
+				'400': 'hsl(var(--color-vivid-a-400))',
+				'500': 'hsl(var(--color-vivid-a-500))',
+				'600': 'hsl(var(--color-vivid-a-600))',
+				'700': 'hsl(var(--color-vivid-a-700))',
+				'800': 'hsl(var(--color-vivid-a-800))',
+				'900': 'hsl(var(--color-vivid-a-900))',
+			},
+
+			vividb: {
+				'50': 'hsl(var(--color-vivid-b-50))',
+				'100': 'hsl(var(--color-vivid-b-100))',
+				'200': 'hsl(var(--color-vivid-b-200))',
+				'300': 'hsl(var(--color-vivid-b-300))',
+				'400': 'hsl(var(--color-vivid-b-400))',
+				'500': 'hsl(var(--color-vivid-b-500))',
+				'600': 'hsl(var(--color-vivid-b-600))',
+				'700': 'hsl(var(--color-vivid-b-700))',
+				'800': 'hsl(var(--color-vivid-b-800))',
+				'900': 'hsl(var(--color-vivid-b-900))',
+			},
+
 			redtxt: 'hsl(var(--color-redtxt))',
 			header: {
 				to: 'hsl(var(--color-header-to))',

@@ -9,6 +9,405 @@
 	let filteredBooks: any[] = $state([]);
 	let filterText: string = $state('');
 	let selectedBook: any = $state();
+	let group = $state(true);
+	let bookGroups = {
+		'1': { 
+			name: 'Gen', 
+			group: 'law', 
+			bgcolor: 'bg-law' ,
+			fgcolor: 'fg-law',
+		},
+		'2': { 
+			name: 'Exo', 
+			group: 'law', 
+			bgcolor: 'bg-law' ,
+			fgcolor: 'fg-law',
+		},
+		'3': { 
+			name: 'Lev', 
+			group: 'law', 
+			bgcolor: 'bg-law' ,
+			fgcolor: 'fg-law',
+		},
+		'4': { 
+			name: 'Num', 
+			group: 'law', 
+			bgcolor: 'bg-law' ,
+			fgcolor: 'fg-law',
+		},
+		'5': { 
+			name: 'Deu', 
+			group: 'law', 
+			bgcolor: 'bg-law' ,
+			fgcolor: 'fg-law',
+		},
+		'6': { 
+			name: 'Jos', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'historyfg-',
+		},
+		'7': { 
+			name: 'Jud', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'8': { 
+			name: 'Rut', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'9': { 
+			name: '1Sa', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'10': { 
+			name: '2Sa', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'11': { 
+			name: '1Ki', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'12': { 
+			name: '2Ki', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'13': { 
+			name: '1Ch', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'14': { 
+			name: '2Ch', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'15': { 
+			name: 'Ezr', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'16': { 
+			name: 'Neh', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'19': { 
+			name: 'Est', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'22': { 
+			name: 'Job', 
+			group: 'poetry', 
+			bgcolor: 'bg-poetry' ,
+			fgcolor: 'fg-poetry',
+		},
+		'23': { 
+			name: 'Psa', 
+			group: 'poetry', 
+			bgcolor: 'bg-poetry' ,
+			fgcolor: 'fg-poetry',
+		},
+		'24': { 
+			name: 'Pro', 
+			group: 'poetry', 
+			bgcolor: 'bg-poetry' ,
+			fgcolor: 'fg-poetry',
+		},
+		'25': { 
+			name: 'Ecc', 
+			group: 'poetry', 
+			bgcolor: 'bg-poetry' ,
+			fgcolor: 'fg-poetry',
+		},
+		'26': { 
+			name: 'Son', 
+			group: 'poetry', 
+			bgcolor: 'bg-poetry' ,
+			fgcolor: 'fg-poetry',
+		},
+		'29': { 
+			name: 'Isa', 
+			group: 'major prophets', 
+			bgcolor: 'bg-major-prophets' ,
+			fgcolor: 'major-prophetsfg-',
+		},
+		'30': { 
+			name: 'Jer', 
+			group: 'major prophets', 
+			bgcolor: 'bg-major-prophets' ,
+			fgcolor: 'fg-major-prophets',
+		},
+		'31': { 
+			name: 'Lam', 
+			group: 'poetry', 
+			bgcolor: 'bg-poetry' ,
+			fgcolor: 'fg-poetry',
+		},
+		'33': { 
+			name: 'Eze', 
+			group: 'major prophets', 
+			bgcolor: 'bg-major-prophets' ,
+			fgcolor: 'fg-major-prophets',
+		},
+		'34': { 
+			name: 'Dan', 
+			group: 'major prophets', 
+			bgcolor: 'bg-major-prophets' ,
+			fgcolor: 'fg-major-prophets',
+		},
+		'35': { 
+			name: 'Hos', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'36': { 
+			name: 'Joe', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'37': { 
+			name: 'Amo', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'38': { 
+			name: 'Oba', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'39': { 
+			name: 'Jon', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'40': { 
+			name: 'Mic', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'41': { 
+			name: 'Nah', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'42': { 
+			name: 'Hab', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'43': { 
+			name: 'Zep', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'44': { 
+			name: 'Hag', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'45': { 
+			name: 'Zec', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'46': { 
+			name: 'Mal', 
+			group: 'minor prophets', 
+			bgcolor: 'bg-minor-prophets' ,
+			fgcolor: 'fg-minor-prophets',
+		},
+		'47': { 
+			name: 'Mat', 
+			group: 'gospel', 
+			bgcolor: 'bg-gospel' ,
+			fgcolor: 'gospelfg-',
+		},
+		'48': { 
+			name: 'Mar', 
+			group: 'gospel', 
+			bgcolor: 'bg-gospel' ,
+			fgcolor: 'fg-gospel',
+		},
+		'49': { 
+			name: 'Luk', 
+			group: 'gospel', 
+			bgcolor: 'bg-gospel' ,
+			fgcolor: 'fg-gospel',
+		},
+		'50': { 
+			name: 'Joh', 
+			group: 'gospel', 
+			bgcolor: 'bg-gospel' ,
+			fgcolor: 'fg-gospel',
+		},
+		'51': { 
+			name: 'Act', 
+			group: 'history', 
+			bgcolor: 'bg-history' ,
+			fgcolor: 'fg-history',
+		},
+		'52': { 
+			name: 'Rom', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'paul-letterfg-',
+		},
+		'53': { 
+			name: '1Co', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'54': { 
+			name: '2Co', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'55': { 
+			name: 'Gal', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'56': { 
+			name: 'Eph', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'57': { 
+			name: 'Phi', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'58': { 
+			name: 'Col', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'59': { 
+			name: '1Th', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'60': { 
+			name: '2Th', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'61': { 
+			name: '1Ti', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'62': { 
+			name: '2Ti', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'63': { 
+			name: 'Tit', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'64': { 
+			name: 'Phm', 
+			group: 'letter of Paul', 
+			bgcolor: 'bg-paul-letter' ,
+			fgcolor: 'fg-paul-letter',
+		},
+		'65': { 
+			name: 'Heb', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'lettersfg-',
+		},
+		'66': { 
+			name: 'Jam', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'fg-letters',
+		},
+		'67': { 
+			name: '1Pe', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'fg-letters',
+		},
+		'68': { 
+			name: '2Pe', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'fg-letters',
+		},
+		'69': { 
+			name: '1Jo', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'fg-letters',
+		},
+		'70': { 
+			name: '2Jo', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'fg-letters',
+		},
+		'71': { 
+			name: '3Jo', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'fg-letters',
+		},
+		'72': { 
+			name: 'Jude', 
+			group: 'letters', 
+			bgcolor: 'bg-letters' ,
+			fgcolor: 'fg-letters',
+		},
+		'73': { 
+			name: 'Rev', 
+			group: 'prophecy', 
+			bgcolor: 'bg-prophecy',
+			fgcolor: 'fg-prophecy',
+		 }
+	};
 
 	$effect(() => {
 		filterText;
@@ -42,10 +441,8 @@
 </script>
 
 <div class="h-full w-full justify-start justify-items-start overflow-y-scroll bg-neutral-100">
-	<header
-		class="items sticky top-0 w-full flex-col border-b-2  bg-neutral-100 text-neutral-700"
-	>
-		<div class="flex w-full justify-between p-2 ">
+	<header class="items sticky top-0 w-full flex-col border-b-2 bg-neutral-100 text-neutral-700">
+		<div class="flex w-full justify-between p-2">
 			<div class="h-12 w-12">
 				<button
 					onclick={() => {
@@ -109,8 +506,16 @@
 			{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
 				<button
 					onclick={() => chapterSelected(ch + 1)}
-					class="row-span-1 p-4 hover:bg-primary-50 bg-neutral-50">{ch + 1}</button
+					class="row-span-1 bg-neutral-50 p-4 hover:bg-primary-50">{ch + 1}</button
 				>
+			{/each}
+		</div>
+	{:else if group}
+		<div class="grid w-full grid-cols-5">
+			{#each filteredBooks as bn}
+				<button class="cols-span-1 align-items-center p-4 text-center {bookGroups[bn.id].bgcolor}  {bookGroups[bn.id].fgolor}">
+					{bookGroups[bn.id].name}
+				</button>
 			{/each}
 		</div>
 	{:else}
@@ -118,7 +523,7 @@
 			<div class="w-full">
 				<button
 					onclick={(event) => bookSelected(event, bn)}
-					class="w-full p-4 text-start hover:bg-primary-50 bg-neutral-50">{bn.name}</button
+					class="w-full bg-neutral-50 p-4 text-start hover:bg-primary-50">{bn.name}</button
 				>
 			</div>
 		{/each}

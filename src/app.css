@@ -29,16 +29,16 @@
         --color-primary-100: 360deg 82% 89%;
         --color-primary-50: 360deg 100% 97%;
 
-        --color-vivid-900: 15deg 86%, 30%;
-        --color-vivid-800: 22deg 82%, 39%;
-        --color-vivid-700: 29deg 80%, 44%;
-        --color-vivid-600: 36deg 77%, 49%;
-        --color-vivid-500: 42deg 87%, 55%;
-        --color-vivid-400: 44deg 92%, 63%;
-        --color-vivid-300: 48deg 94%, 68%;
-        --color-vivid-200: 48deg 95%, 76%;
-        --color-vivid-100: 48deg 100%, 88%;
-        --color-vivid-50: 49deg 100%, 96%;
+        --color-vivid-a-900: 15deg 86%, 30%;
+        --color-vivid-a-800: 22deg 82%, 39%;
+        --color-vivid-a-700: 29deg 80%, 44%;
+        --color-vivid-a-600: 36deg 77%, 49%;
+        --color-vivid-a-500: 42deg 87%, 55%;
+        --color-vivid-a-400: 44deg 92%, 63%;
+        --color-vivid-a-300: 48deg 94%, 68%;
+        --color-vivid-a-200: 48deg 95%, 76%;
+        --color-vivid-a-100: 48deg 100%, 88%;
+        --color-vivid-a-50: 49deg 100%, 96%;
 
         --color-neutral-900: 42deg 15% 13%;
         --color-neutral-800: 40deg 13% 23%;
@@ -95,16 +95,16 @@
         --color-primary-800: 360deg 82% 89%;
         --color-primary-900: 360deg 100% 97%;
 
-        --color-vivid-50: 15deg 86% 30%;
-        --color-vivid-100: 22deg 82% 39%;
-        --color-vivid-200: 29deg 80% 44%;
-        --color-vivid-300: 36deg 77% 49%;
-        --color-vivid-400: 42deg 87% 55%;
-        --color-vivid-500: 44deg 92% 63%;
-        --color-vivid-600: 48deg 94% 68%;
-        --color-vivid-700: 48deg 95% 76%;
-        --color-vivid-800: 48deg 100% 88%;
-        --color-vivid-900: 49deg 100% 96%;
+        --color-vivid-a-50: 15deg 86% 30%;
+        --color-vivid-a-100: 22deg 82% 39%;
+        --color-vivid-a-200: 29deg 80% 44%;
+        --color-vivid-a-300: 36deg 77% 49%;
+        --color-vivid-a-400: 42deg 87% 55%;
+        --color-vivid-a-500: 44deg 92% 63%;
+        --color-vivid-a-600: 48deg 94% 68%;
+        --color-vivid-a-700: 48deg 95% 76%;
+        --color-vivid-a-800: 48deg 100% 88%;
+        --color-vivid-a-900: 49deg 100% 96%;
 
         --color-neutral-50: 42deg 15% 13%;
         --color-neutral-100: 40deg 13% 23%;
