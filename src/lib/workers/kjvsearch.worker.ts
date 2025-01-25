@@ -1,19 +1,16 @@
 import { bibleDB } from "$lib/db/bible.db"
 import FlexSearch, { type Id } from 'flexsearch';
-import type { chapter } from "../../models/chapter";
-
 
 let index = new FlexSearch.Index();
 
 async function init() {
     let indexes = index.search('for god so')
     if (indexes.length === 0) {
-        await bibleDB.init()
-        postMessage(`ready `)
+        await bibleDB.waitForIndexDB()
 
         let keys = await bibleDB.getAllKeys('chapters')
-        keys.forEach(async (key: string) => {
-            let chapter = await bibleDB.getValue('chapters', key)
+        keys.forEach(async (key: IDBValidKey) => {
+            let chapter = await bibleDB.getValue('chapters', key.toString())
             if (key === 'booknames') {
                 return
             }
@@ -22,8 +19,6 @@ async function init() {
                 index.addAsync(`${key}_${k}`, `${chapter['verseMap'][k]}`)
             })
         });
-
-        postMessage(`keys are ${JSON.stringify(keys)}`)
     } else {
         postMessage(`already indexed ${indexes}`)
     }
@@ -72,7 +67,6 @@ async function search(id: string, text: string) {
 }
 
 onmessage = async (e) => {
-
     switch (e.data.action) {
         case 'init':
             await init()
@@ -80,10 +74,7 @@ onmessage = async (e) => {
         case 'search':
             await search(e.data.id, e.data.text)
             break
-
     }
-
-
 }
 
 export { };
