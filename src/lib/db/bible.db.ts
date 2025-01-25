@@ -1,7 +1,7 @@
 import { sleep } from '$lib/utils/sleep';
-import IndexedDb from './idb.db';
+import IndexedDB from './idb.db';
 
-export class BibleDB extends IndexedDb {
+export class BibleDB extends IndexedDB {
 	instance: any;
 	resolve: any;
 	ready: Promise<boolean | undefined> = new Promise((resolve, reject) => {
@@ -17,9 +17,6 @@ export class BibleDB extends IndexedDb {
 		this.instance = this;
 	}
 
-
-
-
 	async init() {
 		/**
 		 * This is called on app startup in +page.svelte.
@@ -31,7 +28,7 @@ export class BibleDB extends IndexedDb {
 		 *
 		 */
 
-		let val = await this.createObjectStore(['chapters']);
+		let val = await this.createAndOrOpenObjectStore(['chapters']);
 
 		if (!val) {
 			return;

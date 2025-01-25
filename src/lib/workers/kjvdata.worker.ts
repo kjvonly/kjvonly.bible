@@ -1,11 +1,11 @@
-import IndexedDb from '../db/idb.db';
+import IndexedDB from '../db/idb.db';
 import { base } from '../utils/paths'
 onmessage = async () => {
 	const myHeaders = new Headers();
 	myHeaders.append('Content-Type', 'application/json');
 	myHeaders.append('Transfer-Encoding', 'gzip');
-	let db = new IndexedDb('bible');
-	await db.createObjectStore(['chapters']);
+	let db = new IndexedDB('bible');
+	await db.createAndOrOpenObjectStore(['chapters']);
 	let v = db.getValue('chapters', 'booknames');
 	v.then((v) => {
 
