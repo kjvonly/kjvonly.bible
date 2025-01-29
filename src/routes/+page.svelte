@@ -8,7 +8,5 @@
 		link.setAttribute('rel', 'manifest');
 		link.setAttribute('href', `${import.meta.env.VITE_BASE_URL}manifest.json`);
 		document.getElementById('kjvonly-head')?.appendChild(link);
-
-	
 	});
 </script>
