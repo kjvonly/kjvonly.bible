@@ -21,6 +21,9 @@ jobs:
           for i in $(ls -1); do export f=${i%.gz} && zcat $i > $f ; done
           rm ./*.json.gz
 
+      - name: Add BASE_URL
+        run: echo VITE_BASE_URL="/" > .env && cat .env
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
