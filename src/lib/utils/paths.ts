@@ -1,1 +1,1 @@
-export const base = `${location.origin}${import.meta.env.VITE_BASE_URL}`
+export const base = `${location.origin}/`
