@@ -3,12 +3,10 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		goto(`${import.meta.env.VITE_BASE_URL}bible/chapter`);
+		goto(`/bible/chapter`);
 		let link = document.createElement('link');
 		link.setAttribute('rel', 'manifest');
-		link.setAttribute('href', `${import.meta.env.VITE_BASE_URL}manifest.json`);
+		link.setAttribute('href', `/manifest.json`);
 		document.getElementById('kjvonly-head')?.appendChild(link);
-
-	
 	});
 </script>

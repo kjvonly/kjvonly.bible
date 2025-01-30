@@ -3,12 +3,12 @@
     "name": "KJVonly",
     "icons": [
         {
-            "src": "/app/icons/cross.svg",
+            "src": "/icons/cross.svg",
             "sizes": "any"
         }
     ],
-    "start_url": "/app",
-    "scope": "/app",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "theme_color": "#921111",
     "background_color": "#f9f8f6"
