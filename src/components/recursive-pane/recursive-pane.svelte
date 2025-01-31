@@ -21,9 +21,10 @@
 		<div id="_{id}-buffer-pane" class="h-[100%] w-full {borderStyling}">
 			{#if !(pane.buffer instanceof NullBuffer)}
 				{@const Component = pane.buffer.component}
+				<Component paneId={pane.id}></Component>
 			{/if}
 			{#if pane.buffer instanceof NullBuffer}
-				<ChapterContainer></ChapterContainer>
+				<ChapterContainer paneId={pane.id}></ChapterContainer>
 			{/if}
 		</div>
 	{:else if pane && pane.split !== PaneSplit.Null && pane.buffer instanceof NullBuffer}

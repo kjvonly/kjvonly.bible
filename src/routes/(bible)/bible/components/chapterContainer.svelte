@@ -14,6 +14,8 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
+	let {paneId} = $props()
+
 	$effect(() => {
 		chapterSettings;
 
@@ -147,6 +149,7 @@
 						bind:bookChapter
 						bind:chapterKey
 						bind:id
+						bind:paneId
 						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>

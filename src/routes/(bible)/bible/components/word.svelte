@@ -1,9 +1,9 @@
 <script lang="ts">
-	let { word } = $props();
+	let { word, paneId = $bindable() } = $props();
 
 	function onWordClicked(e: Event, word: any){
 		e.stopPropagation()
-		alert(JSON.stringify(word))
+		alert(`paneId: ${paneId} ${JSON.stringify(word)}`)
 	}
 </script>
 
