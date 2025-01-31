@@ -25,12 +25,19 @@
 	let showBookChapterPopup: Boolean = $state(false);
 	let showSettingsPopup: Boolean = $state(false);
 
+	function clearSearch() {
+		searchText = '';
+		searchResults = [];
+	}
+
 	function onBookChapterClick() {
+		clearSearch();
 		showSettingsPopup = false;
 		showBookChapterPopup = !showBookChapterPopup;
 	}
 
 	function onSettingsClick() {
+		clearSearch();
 		showBookChapterPopup = false;
 		showSettingsPopup = !showSettingsPopup;
 	}
@@ -75,6 +82,11 @@
 		searchText = '';
 		searchResults = [];
 		bibleNavigationService.publish(key);
+	}
+
+	function match(word: string) {
+		let stripWord = word.toLowerCase().replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
+		return new RegExp('\\b' + stripWord + '\\b').test(searchText.toLowerCase());
 	}
 </script>
 
@@ -202,7 +214,7 @@
 							>
 								<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br />
 								{#each v.text.split(' ') as w}
-									{#if searchText.toLowerCase().includes(w.toLowerCase())}
+									{#if match(w)}
 										<span class="inline-block text-redtxt">{w}</span>&nbsp;
 									{:else}
 										<span class="inline-block">{w}</span>&nbsp;
