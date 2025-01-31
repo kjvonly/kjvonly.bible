@@ -8,11 +8,17 @@
 
 	let _id = crypto.randomUUID();
 	let { id, pane = $bindable<Pane>() } = $props();
+	let panePadding = $state('');
+	$effect(() => {
+		panePadding;
+
+		panePadding = pane && pane.split === PaneSplit.Null ? 'border border-neutral-700' : '';
+	});
 </script>
 
 <div id="_{id}-pane" class="h-full w-full">
 	{#if pane && pane.split === PaneSplit.Null}
-		<div id="_{id}-buffer-pane" class="h-[100%] w-full">
+		<div id="_{id}-buffer-pane" class="h-[100%] w-full {panePadding}">
 			{#if !(pane.buffer instanceof NullBuffer)}
 				{@const Component = pane.buffer.component}
 			{/if}
@@ -22,11 +28,11 @@
 		</div>
 	{:else if pane && pane.split !== PaneSplit.Null && pane.buffer instanceof NullBuffer}
 		{#if pane.split === PaneSplit.Vertical}
-			<div class="flex flex-row w-[100%] h-[100%]">
+			<div class="flex h-[100%] w-[100%] flex-row">
 				<VerticalSplit {id} bind:pane></VerticalSplit>
 			</div>
 		{:else if pane.split === PaneSplit.Horizontal}
-			<div class="flex flex-col  w-[100%] h-[100%]">
+			<div class="flex h-[100%] w-[100%] flex-col">
 				<HorizontalSplit {id} bind:pane></HorizontalSplit>
 			</div>
 		{/if}
