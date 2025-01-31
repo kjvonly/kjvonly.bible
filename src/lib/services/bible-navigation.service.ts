@@ -1224,9 +1224,9 @@ export class BibleNavigationService {
 		}
 	}
 
-	async publish(key: string) {
+	async publish(idKey: any) {
 		this.subscribers.forEach(s => {
-			s.fn(key)
+			s.fn(idKey)
 		})
 	}
 	async goto(shortBook: string, chapter: string) {

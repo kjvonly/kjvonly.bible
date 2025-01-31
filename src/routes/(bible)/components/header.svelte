@@ -19,7 +19,8 @@
 		chapterKey = $bindable(),
 		bookName = $bindable(),
 		bookChapter = $bindable(),
-		chapterSettings = $bindable()
+		chapterSettings = $bindable(),
+		goTo
 	} = $props();
 
 	let showBookChapterPopup: Boolean = $state(false);
@@ -81,7 +82,7 @@
 	function gotoBCV(key: string) {
 		searchText = '';
 		searchResults = [];
-		bibleNavigationService.publish(key);
+		goTo(key)
 	}
 
 	function match(word: string) {
@@ -101,7 +102,7 @@
 	<div
 		class="{showSettingsPopup || showBookChapterPopup
 			? ''
-			: 'hidden'} fixed top-0 h-[100vh] w-[100vw]"
+			: 'hidden'} fixed top-0 h-[100%] w-[100%]"
 		onclick={(event) => {
 			event.stopPropagation();
 			showSettingsPopup = false;
@@ -203,8 +204,8 @@
 						style="transform: translate3d(0px, {searchInputHeight + 2}px, 0px);"
 						class="{searchResults?.length > 0
 							? ''
-							: 'hidden'} fixed left-0 right-0 z-popover mx-auto max-h-96
-								  w-[90vw] max-w-[450px] overflow-y-scroll bg-neutral-50 md:absolute md:w-1/2 md:min-w-xs
+							: 'hidden'} absolute  z-popover max-h-96
+								  w-[90%] max-w-[450px] overflow-y-scroll overflow-x-hidden bg-neutral-50 md:absolute md:w-1/2 md:min-w-xs
 								  "
 					>
 						{#each searchResults as v}
@@ -236,7 +237,7 @@
 			searchText = '';
 			searchResults = [];
 		}}
-		class="fixed right-0 top-0 z-[19] h-full w-full bg-black opacity-50"
+		class="sticky left-0 top-0 z-[19] h-[100vh] w-[100%] bg-neutral-100 opacity-50"
 	></button>
 {/if}
 

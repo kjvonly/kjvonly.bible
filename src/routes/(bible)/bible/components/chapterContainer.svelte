@@ -52,10 +52,9 @@
 			chapterKey = '50_3'; // John 3
 		}
 
-		bibleNavigationService.subscribe('0', goto);
 	});
 
-	function goto(key: string) {
+	function goto(key: any) {
 		chapterKey = key;
 	}
 
@@ -99,7 +98,7 @@
 		}
 	}
 
-    let containerHeight: number = $state()
+    let containerHeight: number = $state(0)
 	onMount(() => {
 		let el = document.getElementById(id);
 		if (el === null) {
@@ -132,9 +131,9 @@
 </script>
 
 <div id="{id}-container" class="relative overflow-hidden h-full">
-	<div {id} style="height: {containerHeight}px;"  class="relative overflow-y-scroll">
+	<div id={id} style="height: {containerHeight}px;"  class="relative overflow-y-scroll">
 		<div>
-			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings></Header>
+			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}></Header>
 		</div>
 		<div class="min-h-16"></div>
 		<div class="m-4 flex justify-center md:m-16">

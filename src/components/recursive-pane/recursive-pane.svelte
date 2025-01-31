@@ -8,17 +8,17 @@
 
 	let _id = crypto.randomUUID();
 	let { id, pane = $bindable<Pane>() } = $props();
-	let panePadding = $state('');
+	let borderStyling = $state('');
 	$effect(() => {
-		panePadding;
+		borderStyling;
 
-		panePadding = pane && pane.split === PaneSplit.Null ? 'border border-neutral-700' : '';
+		borderStyling = pane && pane.split === PaneSplit.Null ? 'border border-neutral-700' : '';
 	});
 </script>
 
 <div id="_{id}-pane" class="h-full w-full">
 	{#if pane && pane.split === PaneSplit.Null}
-		<div id="_{id}-buffer-pane" class="h-[100%] w-full {panePadding}">
+		<div id="_{id}-buffer-pane" class="h-[100%] w-full {borderStyling}">
 			{#if !(pane.buffer instanceof NullBuffer)}
 				{@const Component = pane.buffer.component}
 			{/if}

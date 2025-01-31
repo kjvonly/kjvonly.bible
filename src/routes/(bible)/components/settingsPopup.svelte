@@ -31,6 +31,7 @@
 			fontFamily: 'font-KJV1611'
 		}
 	];
+	
 	onMount(async () => {
 		if (chapterSettings && chapterSettings.doChapterFadeAnimation === undefined) {
 			chapterSettings.doChapterFadeAnimation = false;
