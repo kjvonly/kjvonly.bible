@@ -38,6 +38,7 @@
 	},
 	"dependencies": {
 		"@tailwindcss/typography": "^0.5.15",
+		"cockatiel": "^3.2.1",
 		"flexsearch": "^0.7.43",
 		"idb": "^8.0.1"
 	}
