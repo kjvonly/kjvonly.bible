@@ -1,25 +1,31 @@
 <script lang="ts">
 	let { word } = $props();
+
+	function onWordClicked(e: Event, word: any){
+		e.stopPropagation()
+		alert(JSON.stringify(word))
+	}
 </script>
 
-&nbsp;<span class="inline-block {word.class?.join(' ')}">{word.text}</span>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+&nbsp;<span onclick={(e) => {onWordClicked(e, word)}} class="inline-block {word.class?.join(' ')}">{word.text}</span>
 
 <style>
-	u.FOOTNO + u.whitespace {
-		display: none;
-	}
+
 
 	/* TODO: Decide if supporting footnotes. */
 	.FOOTNO {
-		display: none;
-		width: 0px !important;
+		vertical-align: baseline;
+		position: relative;
+		top: -0.6em;
+		@apply -z-10 text-base text-neutral-700 me-2 ;
 	}
 
 	.redtxt {
-		@apply text-redtxt
+		@apply text-redtxt;
 	}
 
-	
 	u {
 		text-decoration: none;
 	}
@@ -31,8 +37,8 @@
 		@apply -z-10 text-xs text-neutral-700;
 	}
 
-	u.xref {
-		text-decoration: underline dotted darkgray;
+	.xref {
+		@apply underline decoration-dotted;
 		cursor: pointer;
 	}
 </style>

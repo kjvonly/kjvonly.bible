@@ -79,6 +79,28 @@ export class ChapterService {
 
         return booknames;
     }
+
+
+    async getStrongs(key: string): Promise<any> {
+        let strongs = undefined
+
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                strongs = await bibleDB.getValue('strongs', key)
+            }
+
+        } catch (error) {
+            console.log(`error getting chapter ${key} from indexdb: ${error}`)
+        }
+
+        if (strongs === undefined) {
+            return await api.get(`data/strongs.json.gz/${key}.json`);
+        }
+
+        return strongs;
+    }
 }
 
 export let chapterService = new ChapterService()
