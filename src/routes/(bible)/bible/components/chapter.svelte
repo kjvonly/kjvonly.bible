@@ -14,6 +14,7 @@
 		chapterKey = $bindable(),
 		bookName = $bindable(),
 		bookChapter = $bindable(),
+		id = $bindable(),
 		doChapterFadeAnimation = $bindable()
 	} = $props();
 
@@ -67,7 +68,8 @@
 
 				timeoutIDs.push(id2);
 			} else {
-				window.scrollTo(0, 0);
+				let el = document.getElementById(id)
+				el?.scrollTo(0, 0)
 				loadChapter();
 			}
 		}
