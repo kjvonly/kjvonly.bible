@@ -7,14 +7,12 @@
 	import ChapterContainer from '../../routes/(bible)/bible/components/chapterContainer.svelte';
 
 	let _id = crypto.randomUUID();
-	let { id ,  pane =$bindable<Pane>() } = $props();
-
-	
+	let { id, pane = $bindable<Pane>() } = $props();
 </script>
 
-<div id="_{id}-pane" class="h-full">
+<div id="_{id}-pane" class="h-full w-full">
 	{#if pane && pane.split === PaneSplit.Null}
-		<div id="_{id}-buffer-pane" class="w-full h-[100%]">
+		<div id="_{id}-buffer-pane" class="h-[100%] w-full">
 			{#if !(pane.buffer instanceof NullBuffer)}
 				{@const Component = pane.buffer.component}
 			{/if}
@@ -24,9 +22,13 @@
 		</div>
 	{:else if pane && pane.split !== PaneSplit.Null && pane.buffer instanceof NullBuffer}
 		{#if pane.split === PaneSplit.Vertical}
-			<VerticalSplit {id} bind:pane={pane}></VerticalSplit>
+			<div class="flex flex-row w-[100%] h-[100%]">
+				<VerticalSplit {id} bind:pane></VerticalSplit>
+			</div>
 		{:else if pane.split === PaneSplit.Horizontal}
-			<HorizontalSplit {id} bind:pane={pane}></HorizontalSplit>
+			<div class="flex flex-col  w-[100%] h-[100%]">
+				<HorizontalSplit {id} bind:pane></HorizontalSplit>
+			</div>
 		{/if}
 	{/if}
 </div>

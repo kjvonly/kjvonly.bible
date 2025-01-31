@@ -71,7 +71,7 @@
 	});
 </script>
 
-<div id="_{id}-vertical-left" class="kjv-left-pane">
+<div id="_{id}-vertical-left" class="w-[50%]">
 	{#if pane}
 		{#if pane.leftPane}
 			<RecursivePane {id} bind:pane={pane.leftPane} />
@@ -81,7 +81,7 @@
 <div class="vertical-resize-container">
 	<div id="_{id}-vertical-resize" class="vertical-resize"></div>
 </div>
-<div id="_{id}-vertical-right" class="kjv-right-pane">
+<div id="_{id}-vertical-right" class="flex flex-row w-[50%]">
 	{#if pane}
 		{#if pane.rightPane}
 			<RecursivePane {id} bind:pane={pane.rightPane}/>

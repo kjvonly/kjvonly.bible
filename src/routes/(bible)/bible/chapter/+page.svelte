@@ -1,9 +1,22 @@
 <script lang="ts">
-	import { Pane } from '$lib/models/pane.model';
+	import { Pane, PaneSplit } from '$lib/models/pane.model';
 	import RecursivePane from '../../../../components/recursive-pane/recursive-pane.svelte';
-import ChapterContainer from '../components/chapterContainer.svelte';
+	import ChapterContainer from '../components/chapterContainer.svelte';
 
-let pane = new Pane()
+	let pane = new Pane();
+
+	pane.split = PaneSplit.Horizontal;
+
+	pane.leftPane = new Pane();
+	pane.leftPane.split=  PaneSplit.Vertical
+	pane.leftPane.leftPane = new Pane()
+	pane.leftPane.rightPane = new Pane()
+	pane.rightPane = new Pane();
+
+	pane.rightPane.split=  PaneSplit.Vertical
+	pane.rightPane.leftPane = new Pane()
+	pane.rightPane.rightPane = new Pane()
+	
 </script>
 
 <div class="flex h-full w-full flex-col">
@@ -14,7 +27,5 @@ let pane = new Pane()
 		<ChapterContainer></ChapterContainer>
 	</div> -->
 
-	<RecursivePane id="{pane.id}" bind:pane={pane}>
- 
-	</RecursivePane>
+	<RecursivePane id={pane.id} bind:pane></RecursivePane>
 </div>

@@ -1,13 +1,10 @@
 <script lang="ts">
-
 	import RecursivePane from './recursive-pane.svelte';
 	import { retry, handleAll, ConstantBackoff } from 'cockatiel';
 	import type { Pane } from '$lib/models/pane.model';
 	import { onMount } from 'svelte';
 
-
 	let { id, pane = $bindable<Pane>() } = $props();
-
 
 	function resizeRow(resizeId: string, leftId: string, rightId: string, containerId: string) {
 		var resize = document.querySelector(resizeId) as HTMLElement;
@@ -72,23 +69,21 @@
 	});
 </script>
 
-<div class="d-flex flex-column w-100">
-	<div id="_{id}-horizontal-left" class="kjv-top-pane">
-		{#if pane}
-			{#if pane.leftPane}
-				<RecursivePane {id} bind:pane={pane.leftPane}  />
-			{/if}
+<div id="_{id}-horizontal-left" class="w-[100%] h-[50%]">
+	{#if pane}
+		{#if pane.leftPane}
+			<RecursivePane {id} bind:pane={pane.leftPane} />
 		{/if}
-	</div>
-	<div class="horizontal-resize-container">
-		<div id="_{id}-horizontal-resize" class="horizontal-resize"></div>
-	</div>
+	{/if}
+</div>
+<div class="horizontal-resize-container">
+	<div id="_{id}-horizontal-resize" class="horizontal-resize"></div>
+</div>
 
-	<div id="_{id}-horizontal-right" class="kjv-bottom-pane">
-		{#if pane}
-			{#if pane.rightPane}
-				<RecursivePane {id} bind:pane={pane.rightPane} />
-			{/if}
+<div id="_{id}-horizontal-right" class="w-[100%] h-[50%]">
+	{#if pane}
+		{#if pane.rightPane}
+			<RecursivePane {id} bind:pane={pane.rightPane} />
 		{/if}
-	</div>
+	{/if}
 </div>
