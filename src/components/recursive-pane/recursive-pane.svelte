@@ -27,6 +27,7 @@
 				<button
 					onclick={() => {
 						paneService.deletePane(pane.id);
+						paneService.save()
 					}}
 					class=" absolute right-2 top-0 text-primary-500">x</button
 				>

@@ -15,7 +15,7 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let {pane} = $props()
+	let { pane } = $props();
 
 	$effect(() => {
 		chapterSettings;
@@ -32,8 +32,8 @@
 
 	$effect(() => {
 		if (chapterKey) {
-			pane.buffer.bag.chapterKey = chapterKey
-			paneService.save()
+			pane.buffer.bag.chapterKey = chapterKey;
+			paneService.save();
 		}
 	});
 
@@ -55,7 +55,6 @@
 		} else {
 			chapterKey = '50_3'; // John 3
 		}
-
 	});
 
 	function goto(key: any) {
@@ -101,12 +100,13 @@
 		}
 	}
 
-    let containerHeight: number = $state(0)
+	let containerHeight: number = $state(0);
 	onMount(() => {
 		let el = document.getElementById(id);
 		if (el === null) {
 			return;
 		}
+
 		el.addEventListener('scroll', (event) => {
 			//lastKnownScrollPosition = window.scrollY;
 
@@ -118,6 +118,12 @@
 				});
 				ticking = true;
 			}
+
+			if (pane?.buffer?.bag) {
+				console.log(lastKnownScrollPosition)
+				pane.buffer.bag.lastKnownScrollPosition = lastKnownScrollPosition;
+				paneService.save()
+			}
 		});
 
 		let cel = document.getElementById(`${id}-container`);
@@ -125,18 +131,21 @@
 			return;
 		}
 
-        let pel = el?.parentNode as HTMLElement;
+		let pel = el?.parentNode as HTMLElement;
 
-        containerHeight = pel.clientHeight
-        
-        
+		containerHeight = pel.clientHeight;
+
+		if (pane?.buffer?.bag?.lastKnownScrollPosition) {
+			el.scrollTo({top: pane.buffer.bag.lastKnownScrollPosition})
+		}
 	});
 </script>
 
-<div id="{id}-container" class="relative overflow-hidden h-full">
-	<div id={id} style="height: {containerHeight}px;"  class="relative overflow-y-scroll">
+<div id="{id}-container" class="relative h-full overflow-hidden">
+	<div {id} style="height: {containerHeight}px;" class="relative overflow-y-scroll">
 		<div>
-			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}></Header>
+			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}
+			></Header>
 		</div>
 		<div class="min-h-16"></div>
 		<div class="m-4 flex justify-center md:m-16">
