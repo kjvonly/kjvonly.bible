@@ -80,7 +80,7 @@ export class BibleDB extends IndexedDB {
 	async syncChapters() {
 		let keys = await this.getAllKeys('chapters');
 		if (keys.length < TOTAL_CHAPTERS_KEYS) {
-			this.worker?.postMessage({ sync: 'booknames' });
+			this.worker?.postMessage({ sync: 'chapters' });
 
 			let retries = 0;
 			let retryMax = 10;
