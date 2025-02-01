@@ -16,8 +16,8 @@
 
 {#if strongs}
 	<div class="pt-4 px-4">
-		<h1 class="pt-4 text-4xl">{strongs['number']} </h1>
-        <h2>{text}</h2>
+		<h1 class="pt-4 text-4xl">{strongs['number']}: {text}</h1>
+        
 		{#if strongs['strongsDef']}
 			<div class="py-4">
 				<h1 class="font-bold underline underline-offset-8">Strongs Definition</h1>
