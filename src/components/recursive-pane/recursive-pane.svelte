@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Pane, PaneSplit } from '$lib/models/pane.model';
+	import { Pane, PaneSplit } from '$lib/models/pane.model.svelte';
 	import { NullBuffer } from '$lib/models/buffer.model';
 
 	import VerticalSplit from './vertical-split.svelte';
 	import HorizontalSplit from './horizontal-split.svelte';
-	import ChapterContainer from '../../routes/(bible)/bible/components/chapterContainer.svelte';
-	import { paneService } from '$lib/services/pane.service';
+	import ChapterContainer from '../../routes/(bible)/bible/components/chapter/chapterContainer.svelte';
+	import { paneService } from '$lib/services/pane.service.svelte';
 	import { componentMapping } from '$lib/services/component-mapping.service';
 
 	let _id = crypto.randomUUID();
@@ -22,11 +22,16 @@
 	{#if pane && pane.split === PaneSplit.Null}
 		<div class="relative h-full w-full">
 			<div
-				class="sticky right-0 top-0 z-popover {pane.id === paneService.rootPane.id ? 'hidden' : ''}"
+				class="sticky right-0 top-0 z-popover {pane.id === paneService.rootPane.id &&
+				(pane.buffer.componentName === 'ChapterContainer' ||
+					pane.buffer.componentName === 'NullBuffer')
+					? 'hidden'
+					: ''}"
 			>
 				<button
 					onclick={() => {
 						paneService.deletePane(pane.id);
+						paneService.save();
 					}}
 					class=" absolute right-2 top-0 text-primary-500">x</button
 				>

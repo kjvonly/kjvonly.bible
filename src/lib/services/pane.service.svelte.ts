@@ -1,26 +1,30 @@
 
 import { Buffer, NullBuffer } from '$lib/models/buffer.model';
-import { NullPane, Pane, PaneJson, PaneSplit } from '$lib/models/pane.model';
+import { NullPane, Pane, PaneJson, PaneSplit } from '$lib/models/pane.model.svelte';
 import { componentMapping } from '$lib/services/component-mapping.service';
 
 
 export class PaneService {
 	private static _instance: PaneService;
-	rootPane: Pane = new Pane();
+	rootPane: Pane = $state(new Pane());
 
 	onUpdate: Function = () => { }
 
 	private constructor() {
 
 		let ps = localStorage.getItem('pane');
+
 		if (ps !== null) {
 			let pane = new Pane();
 			fromJson(JSON.parse(ps), pane);
 			this.rootPane = pane
-		} else{
+		} else {
+
 			this.rootPane = new Pane();
 			this.rootPane.buffer = new Buffer();
 			this.rootPane.buffer.componentName = 'ChapterContainer';
+			this.rootPane.buffer.name = 'ChapterContainer';
+
 			//this.rootPane.buffer.component = componentMapping.getComponent('ChapterContainer');
 			this.rootPane.split = PaneSplit.Null;
 		}
@@ -84,7 +88,7 @@ export class PaneService {
 		return new NullPane();
 	}
 
-	splitPane(id: string, paneSplit: PaneSplit, componentName: any) {
+	splitPane(id: string, paneSplit: PaneSplit, componentName: any, bag: any = {}) {
 		let p = this.findPane(id, this.rootPane)
 
 		p.split = paneSplit;
@@ -96,13 +100,13 @@ export class PaneService {
 
 		p.rightPane = new Pane();
 		p.rightPane.buffer = new Buffer();
+		p.rightPane.buffer.bag = bag;
 		p.rightPane.buffer.componentName = componentName;
 		p.rightPane.buffer.component = componentMapping.getComponent(componentName);
 		p.rightPane.parentNode = p;
 		p.rightPane.split = PaneSplit.Null;
 
 		p.buffer = new NullBuffer();
-
 
 		this.onUpdate(this.rootPane)
 	}

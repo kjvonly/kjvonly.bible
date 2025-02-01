@@ -205,7 +205,7 @@
 						class="{searchResults?.length > 0
 							? ''
 							: 'hidden'} absolute  z-popover max-h-96
-								  w-[90%] max-w-[450px] overflow-y-scroll overflow-x-hidden bg-neutral-50 md:absolute md:w-1/2 md:min-w-xs
+								  w-[90%] max-w-[450px] overflow-y-scroll border border-primary-500 overflow-x-hidden bg-neutral-50 md:absolute md:w-1/2 md:min-w-xs
 								  "
 					>
 						{#each searchResults as v}
@@ -229,17 +229,6 @@
 		</div>
 	</div>
 </div>
-
-{#if searchResults.length > 0}
-	<button
-		aria-label="lskdjf"
-		onclick={() => {
-			searchText = '';
-			searchResults = [];
-		}}
-		class="sticky left-0 top-0 z-[19] h-[100vh] w-[100%] bg-neutral-100 opacity-50"
-	></button>
-{/if}
 
 <style>
 </style>

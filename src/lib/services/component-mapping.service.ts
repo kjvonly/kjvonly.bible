@@ -1,6 +1,7 @@
 import { NullBuffer } from '$lib/models/buffer.model';
-import type { Pane } from '$lib/models/pane.model';
-import ChapterContainer from '../../routes/(bible)/bible/components/chapterContainer.svelte';
+import type { Pane } from '$lib/models/pane.model.svelte';
+import ChapterContainer from '../../routes/(bible)/bible/components/chapter/chapterContainer.svelte';
+import StrongsVersesRefs from '../../routes/(bible)/bible/components/refs/strongs-verses-refs/strongsVersesRefs.svelte';
 
 /**
  * Component Mapping is responsible for converting the
@@ -17,6 +18,8 @@ export class ComponentMapping {
 		switch (componentName) {
 			case 'ChapterContainer':
 				return ChapterContainer;
+			case 'StrongsVersesRefs':
+				return StrongsVersesRefs;
 		}
 
 		return ChapterContainer;

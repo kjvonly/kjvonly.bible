@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 	import { onMount } from 'svelte';
-	import Header from '../../components/header.svelte';
-	import Chapter from '../components/chapter.svelte';
-	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
+	import Header from '../../../components/header.svelte';
+	import Chapter from './chapter.svelte';
+	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
-	import { paneService } from '$lib/services/pane.service';
+	import { paneService } from '$lib/services/pane.service.svelte';
+	import type { Pane } from '$lib/models/pane.model.svelte';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -15,8 +16,9 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let {pane} = $props()
+	let { pane = $bindable<Pane>() } = $props();
 
+	
 	$effect(() => {
 		chapterSettings;
 
@@ -32,8 +34,9 @@
 
 	$effect(() => {
 		if (chapterKey) {
-			pane.buffer.bag.chapterKey = chapterKey
-			paneService.save()
+			pane.buffer.bag.chapterKey = chapterKey;
+			localStorage.setItem('lastChapterKey', chapterKey);
+			paneService.save();
 		}
 	});
 
@@ -53,9 +56,11 @@
 		if (ck) {
 			chapterKey = ck;
 		} else {
-			chapterKey = '50_3'; // John 3
+			chapterKey = localStorage.getItem('lastChapterKey');
+			if (!chapterKey) {
+				chapterKey = '50_3'; // John 3
+			}
 		}
-
 	});
 
 	function goto(key: any) {
@@ -101,12 +106,13 @@
 		}
 	}
 
-    let containerHeight: number = $state(0)
+	let containerHeight: number = $state(0);
 	onMount(() => {
 		let el = document.getElementById(id);
 		if (el === null) {
 			return;
 		}
+
 		el.addEventListener('scroll', (event) => {
 			//lastKnownScrollPosition = window.scrollY;
 
@@ -125,18 +131,30 @@
 			return;
 		}
 
-        let pel = el?.parentNode as HTMLElement;
+		let pel = el?.parentNode as HTMLElement;
 
-        containerHeight = pel.clientHeight
-        
-        
+		containerHeight = pel.clientHeight;
+
+		if (pane?.buffer?.bag?.lastVerse) {
+			setTimeout(() => {
+				let vel = document.getElementById(`${id}-vno-${pane.buffer.bag.lastVerse}`);
+				vel?.scrollIntoView({
+					behavior: 'instant',
+					block: 'center'
+				});
+			}, 50);
+		}
+
+		if (pane?.buffer?.bag?.lastKnownScrollPosition) {
+		}
 	});
 </script>
 
-<div id="{id}-container" class="relative overflow-hidden h-full">
-	<div id={id} style="height: {containerHeight}px;"  class="relative overflow-y-scroll">
+<div id="{id}-container" class="relative h-full overflow-hidden">
+	<div {id} style="height: {containerHeight}px;" class="relative overflow-y-scroll">
 		<div>
-			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}></Header>
+			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}
+			></Header>
 		</div>
 		<div class="min-h-16"></div>
 		<div class="m-4 flex justify-center md:m-16">
@@ -150,7 +168,7 @@
 						bind:bookChapter
 						bind:chapterKey
 						bind:id
-						paneId={pane.id}
+						bind:pane
 						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>

@@ -4,8 +4,8 @@ import { Buffer, NullBuffer } from './buffer.model';
 export class Pane {
 	id: string = crypto.randomUUID();
 	parentNode: Pane | null = null;
-	leftPane: Pane | null = null;
-	rightPane: Pane | null = null;
+	leftPane: Pane | null = $state(null);
+	rightPane: Pane | null = $state(null);
 	buffer: Buffer = new NullBuffer();
 	split: PaneSplit = PaneSplit.Null;
 	leftPercentage: string = '50%';
