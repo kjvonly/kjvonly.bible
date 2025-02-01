@@ -2,7 +2,7 @@
 	import { bibleDB } from '$lib/db/bible.db';
 	import { onMount } from 'svelte';
 
-	let { strongsRef } = $props();
+	let { strongsRef, text } = $props();
 
 	let strongs: any | undefined = $state();
 	onMount(() => {
@@ -16,7 +16,8 @@
 
 {#if strongs}
 	<div class="pt-4 px-4">
-		<h1 class="pt-4 text-4xl">{strongs['number']}</h1>
+		<h1 class="pt-4 text-4xl">{strongs['number']} </h1>
+        <h2>{text}</h2>
 		{#if strongs['strongsDef']}
 			<div class="py-4">
 				<h1 class="font-bold underline underline-offset-8">Strongs Definition</h1>

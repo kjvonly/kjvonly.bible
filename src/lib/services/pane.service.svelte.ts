@@ -89,15 +89,12 @@ export class PaneService {
 	}
 
 	splitPane(id: string, paneSplit: PaneSplit, componentName: any, bag: any = {}) {
-		console.log('id:', this.rootPane.id)
 		let p = this.findPane(id, this.rootPane)
-		console.log('found id:', p.id)
 
 		p.split = paneSplit;
 
 		p.leftPane = new Pane();
 		p.leftPane.buffer = p.buffer;
-		console.log('p.buffer',JSON.stringify(p.buffer))
 		p.leftPane.parentNode = p;
 		p.leftPane.split = PaneSplit.Null;
 
@@ -110,8 +107,6 @@ export class PaneService {
 		p.rightPane.split = PaneSplit.Null;
 
 		p.buffer = new NullBuffer();
-		console.log('p.leftPane.buffer',JSON.stringify(p.leftPane.buffer))
-		console.log('rootpane.leftPane.buffer',JSON.stringify(this.rootPane.leftPane?.buffer))
 
 		this.onUpdate(this.rootPane)
 	}
@@ -172,7 +167,6 @@ export class PaneService {
 		let p2j = new PaneJson();
 		toJson(this.rootPane, p2j);
 		localStorage.setItem('pane', JSON.stringify(p2j));
-		console.log('save', JSON.stringify(p2j))
 	}
 }
 

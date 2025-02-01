@@ -18,12 +18,7 @@
 
 	let { pane = $bindable<Pane>() } = $props();
 
-	$effect(() => {
-		pane;
-
-		console.log('pane has changed', pane.buffer.bag)
-	})
-
+	
 	$effect(() => {
 		chapterSettings;
 
@@ -39,10 +34,8 @@
 
 	$effect(() => {
 		if (chapterKey) {
-			console.log('effect chatperkey', pane.buffer.bag)
 			pane.buffer.bag.chapterKey = chapterKey;
 			localStorage.setItem('lastChapterKey', chapterKey);
-			console.log('lastChapterKey', chapterKey)
 			paneService.save();
 		}
 	});

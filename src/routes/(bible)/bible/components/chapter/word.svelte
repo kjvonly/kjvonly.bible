@@ -9,11 +9,7 @@
 
 		pane.buffer.bag.lastVerse = verse.number
 		paneService.save()
-		//paneService.addToBag(pane.buffer.key, 'lastVerse', verse.number)
-		setTimeout(() => {
-			paneService.splitPane(pane.id, PaneSplit.Horizontal, 'StrongsVersesRefs', { word: word });
-		}, 500);
-
+		paneService.splitPane(pane.id, PaneSplit.Horizontal, 'StrongsVersesRefs', { word: word });
 	}
 </script>
 

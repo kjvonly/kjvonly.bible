@@ -9,6 +9,7 @@
 	let { pane } = $props();
 
 	let strongsRef = $state('');
+	let text = $state('')
 	let containerHeight: number = $state(0);
 	onMount(() => {
 		containerHeight = getParentHeight(id);
@@ -18,6 +19,11 @@
 				strongsRef = ref;
 			}
 		});
+
+		if (pane?.buffer?.bag?.word?.text){
+			
+			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
+		}
 	});
 </script>
 
@@ -26,7 +32,7 @@
 		<div class="flex h-full w-full justify-center">
 			<div class="max-w-6xl">
 				{#if strongsRef.length > 0}
-					<StrongsRefsContainer {strongsRef}></StrongsRefsContainer>
+					<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
 				{/if}
 				<VerseRefsContainer></VerseRefsContainer>
 			</div>

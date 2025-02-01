@@ -29,17 +29,20 @@
 			chapterSettings = newChapterSettings();
 		}
 
-		if (paneService.rootPane.buffer.componentName === 'NullBuffer') {
+		if (
+			paneService.rootPane &&
+			paneService.rootPane.leftPane === null &&
+			paneService.rootPane.rightPane === null &&
+			paneService.rootPane.buffer.componentName === 'NullBuffer'
+		) {
 			paneService.rootPane.buffer.componentName = 'ChapterContainer';
 			componentMapping.map(paneService.rootPane);
 		}
-		
+
 		obj.obj = [paneService.rootPane];
 		componentMapping.map(obj.obj[0]);
 		paneService.onUpdate = (p: Pane) => {
-			console.log('update', JSON.stringify(p.leftPane?.buffer.bag));
 			componentMapping.map(p);
-
 			obj.obj = [p];
 		};
 	});
