@@ -2,11 +2,13 @@
 	import { PaneSplit } from "$lib/models/pane.model.svelte";
 	import { paneService } from "../../../../../lib/services/pane.service.svelte";
 
-	let { word, paneId } = $props();
+	let { word, verse, pane = $bindable() } = $props();
 
 	function onWordClicked(e: Event, word: any){
 		e.stopPropagation()
-		paneService.splitPane(paneId, PaneSplit.Horizontal, 'StrongsVersesRefs', {word: word})
+		pane.buffer.bag.lastVerse = verse.number
+		paneService.save()
+		paneService.splitPane(pane.id, PaneSplit.Horizontal, 'StrongsVersesRefs', {word: word})
 	}
 </script>
 

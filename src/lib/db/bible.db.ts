@@ -53,7 +53,6 @@ export class BibleDB extends IndexedDB {
 	}
 
 	async init() {
-		console.log('metaurl', import.meta.url)
 		this.worker = new Worker(new URL('../workers/kjvdata.worker?worker', import.meta.url), {
 			type: 'module'
 		});

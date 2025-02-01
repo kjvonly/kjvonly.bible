@@ -15,7 +15,7 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let { pane } = $props();
+	let { pane = $bindable() } = $props();
 
 	$effect(() => {
 		chapterSettings;
@@ -33,6 +33,7 @@
 	$effect(() => {
 		if (chapterKey) {
 			pane.buffer.bag.chapterKey = chapterKey;
+			localStorage.setItem('lastChapterKey', chapterKey);
 			paneService.save();
 		}
 	});
@@ -53,7 +54,10 @@
 		if (ck) {
 			chapterKey = ck;
 		} else {
-			chapterKey = '50_3'; // John 3
+			chapterKey = localStorage.getItem('lastChapterKey');
+			if (!chapterKey) {
+				chapterKey = '50_3'; // John 3
+			}
 		}
 	});
 
@@ -118,11 +122,6 @@
 				});
 				ticking = true;
 			}
-
-			if (pane?.buffer?.bag) {
-				pane.buffer.bag.lastKnownScrollPosition = lastKnownScrollPosition ;
-				paneService.save();
-			}
 		});
 
 		let cel = document.getElementById(`${id}-container`);
@@ -134,10 +133,17 @@
 
 		containerHeight = pel.clientHeight;
 
-		if (pane?.buffer?.bag?.lastKnownScrollPosition) {
+		if (pane?.buffer?.bag?.lastVerse) {
 			setTimeout(() => {
-				el?.scrollTo({ top: Number(pane.buffer.bag.lastKnownScrollPosition), behavior: 'instant' });
+				let vel = document.getElementById(`${id}-vno-${pane.buffer.bag.lastVerse}`);
+				vel?.scrollIntoView({
+					behavior: 'instant',
+					block: 'center'
+				});
 			}, 50);
+		}
+
+		if (pane?.buffer?.bag?.lastKnownScrollPosition) {
 		}
 	});
 </script>
@@ -160,7 +166,7 @@
 						bind:bookChapter
 						bind:chapterKey
 						bind:id
-						paneId={pane.id}
+						bind:pane
 						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>

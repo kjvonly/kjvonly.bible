@@ -13,11 +13,13 @@ export class PaneService {
 	private constructor() {
 
 		let ps = localStorage.getItem('pane');
+
 		if (ps !== null) {
 			let pane = new Pane();
 			fromJson(JSON.parse(ps), pane);
 			this.rootPane = pane
 		} else {
+
 			this.rootPane = new Pane();
 			this.rootPane.buffer = new Buffer();
 			this.rootPane.buffer.componentName = 'ChapterContainer';

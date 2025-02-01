@@ -14,12 +14,11 @@
 		bookName = $bindable(),
 		bookChapter = $bindable(),
 		id = $bindable(),
-		paneId,
+		pane = $bindable(),
 		doChapterFadeAnimation = $bindable()
 	} = $props();
 
 	$effect(() => {
-		
 		if (!chapterKey) {
 			return;
 		}
@@ -69,8 +68,8 @@
 
 				timeoutIDs.push(id2);
 			} else {
-				let el = document.getElementById(id)
-				el?.scrollTo(0, 0)
+				let el = document.getElementById(id);
+				el?.scrollTo(0, 0);
 				loadChapter();
 			}
 		}
@@ -97,13 +96,14 @@
 		{#if showChapter}
 			{#if loadedBookName && loadedChapter}
 				<h1 class=" sticky top-0 bg-neutral-50 text-center text-lg font-bold">
-					<span>{loadedBookName} {loadedChapter}<span>
+					<span>{loadedBookName} {loadedChapter}<span> </span></span>
 				</h1>
 			{/if}
 			<p>
 				{#each keys as k, idx}
-					<span id={`${id}-vno-${idx + 1}`}>
-						<Verse paneId={paneId} verse={verses[k]}></Verse>
+					<span id={`${id}-vno-${idx + 1}`}
+					>
+						<Verse bind:pane verse={verses[k]}></Verse>
 					</span>
 				{/each}
 			</p>
