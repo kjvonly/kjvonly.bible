@@ -1,9 +1,15 @@
 <script lang="ts">
+	import { PaneSplit } from "$lib/models/pane.model";
+	import { paneService } from "../../../../lib/services/pane.service";
+
 	let { word, paneId = $bindable() } = $props();
 
 	function onWordClicked(e: Event, word: any){
 		e.stopPropagation()
-		alert(`paneId: ${paneId} ${JSON.stringify(word)}`)
+		paneService.splitPane(paneService.rootPane, PaneSplit.Horizontal, 'ChapterContainer')
+		paneService.rootPane = paneService.rootPane
+		console.log(paneService.rootPane)
+		
 	}
 </script>
 

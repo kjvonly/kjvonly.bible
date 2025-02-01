@@ -1,10 +1,23 @@
-import { Buffer, NullBuffer } from "$lib/models/buffer.model";
-import { NullPane, Pane, PaneSplit } from "$lib/models/pane.model";
-import { componentMapping } from "./component-mapping.service";
+
+import { Buffer, NullBuffer } from '$lib/models/buffer.model';
+import { NullPane, Pane, PaneSplit } from '$lib/models/pane.model';
+import { componentMapping } from '$lib/services/component-mapping.service';
+
 
 export class PaneService {
+	private static _instance: PaneService;
+	rootPane: Pane = new Pane();
 
-    findBufferPane(key: string, pane: Pane | null): Pane {
+	onUpdate: Function = ()=>{}
+
+	private constructor() { }
+
+	public static get Instance() {
+		// Do you need arguments? Make it a regular static method instead.
+		return this._instance || (this._instance = new this());
+	}
+
+	findBufferPane(key: string, pane: Pane | null): Pane {
 		if (!pane || pane instanceof NullPane) {
 			return new NullPane();
 		}
@@ -29,28 +42,27 @@ export class PaneService {
 
 		return new NullPane();
 	}
-    
-    splitPane(p: Pane, paneSplit: PaneSplit, componentName: any) {
-        
-        
-        p.split = paneSplit;
 
-        p.leftPane = new Pane();
-        p.leftPane.buffer = p.buffer;
-        p.leftPane.parentNode = p;
-        p.leftPane.split = PaneSplit.Null;
+	splitPane(p: Pane, paneSplit: PaneSplit, componentName: any) {
+		p.split = paneSplit;
 
-        p.rightPane = new Pane();
-        p.rightPane.buffer = new Buffer();
-        p.rightPane.buffer.componentName = componentName
-        p.rightPane.buffer.component = componentMapping.getComponent(componentName)
-        p.rightPane.parentNode = p;
-        p.rightPane.split = PaneSplit.Null;
+		p.leftPane = new Pane();
+		p.leftPane.buffer = p.buffer;
+		p.leftPane.parentNode = p;
+		p.leftPane.split = PaneSplit.Null;
 
-        p.buffer = new NullBuffer();
-        
-    }
+		p.rightPane = new Pane();
+		p.rightPane.buffer = new Buffer();
+		p.rightPane.buffer.componentName = componentName;
+		p.rightPane.buffer.component = componentMapping.getComponent(componentName);
+		p.rightPane.parentNode = p;
+		p.rightPane.split = PaneSplit.Null;
 
+		p.buffer = new NullBuffer();
+		
+
+		this.onUpdate(this.rootPane)
+	}
 }
+export let paneService = PaneService.Instance;
 
-export let paneService = new PaneService();
