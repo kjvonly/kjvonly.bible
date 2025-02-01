@@ -611,7 +611,7 @@
         --color-primary-300: 184deg 65% 59%;
         --color-primary-200: 184deg 80% 74%;
         --color-primary-100: 185deg 94% 87%;
-        --color-primary-50:  186deg 100% 94%;
+        --color-primary-50: 186deg 100% 94%;
 
         /* warm grey */
         --color-neutral-900: 42deg 15% 13%;
@@ -664,7 +664,7 @@
         --color-vivid-a-50: 45deg 100% 96%;
 
 
-
+        /* teal */
         --color-vivid-b-900: 170deg 97% 15%;
         --color-vivid-b-800: 168deg 80% 23%;
         --color-vivid-b-700: 166deg 72% 28%;
@@ -683,7 +683,7 @@
         /* primary-500 */
         --color-header-to: 185deg 62% 45%;
         /* neutral 100 */
-        --color-header-title:  43deg 13% 90%;
+        --color-header-title: 43deg 13% 90%;
 
         /**
         * colored groups for chapter select light mode
@@ -693,7 +693,127 @@
         /* primary 700 */
         --color-bg-law: 185deg 81% 29%;
         /* neutral 50 */
-        --color-text-law: 40deg 23% 97%;;
+        --color-text-law: 40deg 23% 97%;
+        ;
+
+        /* supporta 700 */
+        --color-bg-history: 205deg 82% 33%;
+        /* neutral 50 */
+        --color-text-history: 40deg 23% 97%;
+
+        /* supportb 700 */
+        --color-bg-poetry: 360deg 79% 32%;
+        /* neutral 50 */
+        --color-text-poetry: 40deg 23% 97%;
+
+        /* vivida 700 */
+        --color-bg-major-prophets: 43deg 72% 37%;
+        /* neutral 50 */
+        --color-text-major-prophets: 40deg 23% 97%;
+
+        /* vividb 700 */
+        --color-bg-minor-prophets: 166deg 72% 28%;
+        /* neutral 50 */
+        --color-text-minor-prophets: 40deg 23% 97%;
+    }
+
+    /*new color*/
+    :root[class~="color-theme-dark-cyan"] {
+
+        /*cyan primary*/
+        --color-primary-50: 184deg 91% 17%;
+        --color-primary-100: 185deg 84% 25%;
+        --color-primary-200: 185deg 81% 29%;
+        --color-primary-300: 184deg 77% 34%;
+        --color-primary-400: 185deg 62% 45%;
+        --color-primary-500: 185deg 57% 50%;
+        --color-primary-600: 184deg 65% 59%;
+        --color-primary-700: 184deg 80% 74%;
+        --color-primary-800: 185deg 94% 87%;
+        --color-primary-900: 186deg 100% 94%;
+
+        /* warm grey */
+        --color-neutral-50: 42deg 15% 13%;
+        --color-neutral-100: 40deg 13% 23%;
+        --color-neutral-200: 37deg 11% 28%;
+        --color-neutral-300: 41deg 9% 35%;
+        --color-neutral-400: 41deg 8% 48%;
+        --color-neutral-500: 41deg 8% 61%;
+        --color-neutral-600: 39deg 11% 69%;
+        --color-neutral-700: 40deg 15% 80%;
+        --color-neutral-800: 43deg 13% 90%;
+        --color-neutral-900: 40deg 23% 97%;
+
+        /* blue */
+        --color-support-a-50: 205deg 100% 21%;
+        --color-support-a-100: 205deg 87% 29%;
+        --color-support-a-200: 205deg 82% 33%;
+        --color-support-a-300: 205deg 76% 39%;
+        --color-support-a-400: 205deg 67% 45%;
+        --color-support-a-500: 205deg 65% 55%;
+        --color-support-a-600: 205deg 74% 65%;
+        --color-support-a-700: 205deg 84% 74%;
+        --color-support-a-800: 205deg 97% 85%;
+        --color-support-a-900: 205deg 79% 92%;
+
+
+        /* red */
+        --color-support-b-50: 360deg 92% 20%;
+        --color-support-b-100: 360deg 85% 25%;
+        --color-support-b-200: 360deg 79% 32%;
+        --color-support-b-300: 360deg 72% 38%;
+        --color-support-b-400: 360deg 67% 44%;
+        --color-support-b-500: 360deg 64% 55%;
+        --color-support-b-600: 360deg 71% 66%;
+        --color-support-b-700: 360deg 77% 78%;
+        --color-support-b-800: 360deg 82% 89%;
+        --color-support-b-900: 360deg 100% 97%;
+
+
+        /*yellow*/
+        --color-vivid-a-50: 43deg 86% 17%;
+        --color-vivid-a-100: 43deg 77% 27%;
+        --color-vivid-a-200: 43deg 72% 37%;
+        --color-vivid-a-300: 42deg 63% 48%;
+        --color-vivid-a-400: 42deg 78% 60%;
+        --color-vivid-a-500: 43deg 89% 70%;
+        --color-vivid-a-600: 43deg 90% 76%;
+        --color-vivid-a-700: 45deg 86% 81%;
+        --color-vivid-a-800: 45deg 90% 88%;
+        --color-vivid-a-900: 45deg 100% 96%;
+
+
+        /* teal */
+        --color-vivid-b-50: 170deg 97% 15%;
+        --color-vivid-b-100: 168deg 80% 23%;
+        --color-vivid-b-200: 166deg 72% 28%;
+        --color-vivid-b-300: 164deg 71% 34%;
+        --color-vivid-b-400: 162deg 63% 41%;
+        --color-vivid-b-500: 160deg 51% 49%;
+        --color-vivid-b-600: 158deg 58% 62%;
+        --color-vivid-b-700: 156deg 73% 74%;
+        --color-vivid-b-800: 154deg 75% 87%;
+        --color-vivid-b-900: 152deg 68% 96%;
+
+        --color-redtxt: 185deg 62% 45%;
+
+        /* primary-700 */
+        --color-header-from: 185deg 81% 29%;
+        /* primary-500 */
+        --color-header-to: 185deg 62% 45%;
+        /* neutral 100 */
+        --color-header-title: 43deg 13% 90%;
+
+        /**
+        * colored groups for chapter select light mode
+        */
+
+
+        /* primary 700 */
+        --color-bg-law: 185deg 81% 29%;
+        /* neutral 50 */
+        --color-text-law: 40deg 23% 97%;
+        ;
 
         /* supporta 700 */
         --color-bg-history: 205deg 82% 33%;
