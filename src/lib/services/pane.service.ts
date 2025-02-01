@@ -17,7 +17,7 @@ export class PaneService {
 			let pane = new Pane();
 			fromJson(JSON.parse(ps), pane);
 			this.rootPane = pane
-		} else{
+		} else {
 			this.rootPane = new Pane();
 			this.rootPane.buffer = new Buffer();
 			this.rootPane.buffer.componentName = 'ChapterContainer';
@@ -84,7 +84,7 @@ export class PaneService {
 		return new NullPane();
 	}
 
-	splitPane(id: string, paneSplit: PaneSplit, componentName: any) {
+	splitPane(id: string, paneSplit: PaneSplit, componentName: any, bag: any = {}) {
 		let p = this.findPane(id, this.rootPane)
 
 		p.split = paneSplit;
@@ -96,6 +96,7 @@ export class PaneService {
 
 		p.rightPane = new Pane();
 		p.rightPane.buffer = new Buffer();
+		p.rightPane.buffer.bag = bag;
 		p.rightPane.buffer.componentName = componentName;
 		p.rightPane.buffer.component = componentMapping.getComponent(componentName);
 		p.rightPane.parentNode = p;

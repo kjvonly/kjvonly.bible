@@ -6,7 +6,7 @@
 
 	function onWordClicked(e: Event, word: any){
 		e.stopPropagation()
-		paneService.splitPane(paneId, PaneSplit.Horizontal, 'ChapterContainer')
+		paneService.splitPane(paneId, PaneSplit.Horizontal, 'StrongsVersesRefs', {word: word})
 	}
 </script>
 
