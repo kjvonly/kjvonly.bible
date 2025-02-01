@@ -8,7 +8,7 @@ export class PaneService {
 	private static _instance: PaneService;
 	rootPane: Pane = new Pane();
 
-	onUpdate: Function = ()=>{}
+	onUpdate: Function = () => { }
 
 	private constructor() { }
 
@@ -43,7 +43,38 @@ export class PaneService {
 		return new NullPane();
 	}
 
-	splitPane(p: Pane, paneSplit: PaneSplit, componentName: any) {
+	findPane(id: string, pane: Pane | null): Pane {
+	
+		if (!pane || pane instanceof NullPane) {
+			return new NullPane();
+		}
+
+		if (pane.split === PaneSplit.Null && pane.id === id) {
+			return pane;
+		}
+
+		// recurse left panes
+		let newPane = this.findPane(id, pane.leftPane);
+
+		if (!(newPane instanceof NullPane)) {
+			return newPane;
+		}
+
+		// recurse right panes
+		newPane = this.findPane(id, pane.rightPane);
+
+		if (!(newPane instanceof NullPane)) {
+			return newPane;
+		}
+
+		return new NullPane();
+	}
+
+	splitPane(id: string, paneSplit: PaneSplit, componentName: any) {
+
+		let p = this.findPane(id, this.rootPane)
+		console.log('findpane2',  id, this.rootPane.id)
+		console.log(this.rootPane)
 		p.split = paneSplit;
 
 		p.leftPane = new Pane();
@@ -59,7 +90,7 @@ export class PaneService {
 		p.rightPane.split = PaneSplit.Null;
 
 		p.buffer = new NullBuffer();
-		
+
 
 		this.onUpdate(this.rootPane)
 	}

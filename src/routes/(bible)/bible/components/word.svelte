@@ -6,10 +6,7 @@
 
 	function onWordClicked(e: Event, word: any){
 		e.stopPropagation()
-		paneService.splitPane(paneService.rootPane, PaneSplit.Horizontal, 'ChapterContainer')
-		paneService.rootPane = paneService.rootPane
-		console.log(paneService.rootPane)
-		
+		paneService.splitPane(paneId, PaneSplit.Horizontal, 'ChapterContainer')
 	}
 </script>
 
