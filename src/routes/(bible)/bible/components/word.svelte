@@ -22,7 +22,7 @@
 		vertical-align: baseline;
 		position: relative;
 		top: -0.6em;
-		@apply -z-10 text-base text-neutral-700 me-2 ;
+		@apply -z-10 md:text-base text-xs text-neutral-700 me-2 ;
 	}
 
 	.redtxt {
@@ -37,7 +37,7 @@
 		vertical-align: baseline;
 		position: relative;
 		top: -0.6em;
-		@apply -z-10 text-xs text-neutral-700;
+		@apply -z-10 text-xs sm:text-base text-neutral-700;
 	}
 
 	.xref {

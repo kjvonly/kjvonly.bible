@@ -5,6 +5,7 @@
 	import VerticalSplit from './vertical-split.svelte';
 	import HorizontalSplit from './horizontal-split.svelte';
 	import ChapterContainer from '../../routes/(bible)/bible/components/chapterContainer.svelte';
+	import { paneService } from '$lib/services/pane.service';
 
 	let _id = crypto.randomUUID();
 	let { id, pane = $bindable<Pane>() } = $props();
@@ -19,12 +20,13 @@
 <div id="_{id}-pane" class="h-full w-full">
 	{#if pane && pane.split === PaneSplit.Null}
 		<div class="relative h-full w-full">
-			<div class="sticky right-0 top-0 z-popover">
+
+			<div class="sticky right-0 top-0 z-popover {pane.id === paneService.rootPane.id ? 'hidden' : ''}">
 				<button
 					onclick={() => {
 						alert(id);
 					}}
-					class="absolute right-5 top-3 text-primary-500">x</button
+					class=" absolute right-2 top-0 text-primary-500">x</button
 				>
 			</div>
 			<div id="_{id}-buffer-pane" class="h-[100%] w-full {borderStyling}">
