@@ -24,7 +24,7 @@ jobs:
           for i in $(ls -1); do export f=${i%.gz} && zcat $i > $f ; done
           rm ./*.json.gz
           cd ../strongs.json.gz
-          for i in $(ls -1); do export f=${i%.gz} && zcat $i > $f ; done
+          for i in $(ls -1 *.json.gz); do export f=${i%.gz} && zcat $i > $f ; done
           rm ./*.json.gz
           
       - name: Install Node.js
