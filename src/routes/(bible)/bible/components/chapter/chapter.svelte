@@ -19,6 +19,7 @@
 	} = $props();
 
 	$effect(() => {
+		
 		if (!chapterKey) {
 			return;
 		}

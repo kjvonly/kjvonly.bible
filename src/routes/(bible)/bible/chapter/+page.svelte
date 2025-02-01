@@ -14,8 +14,6 @@
 	onMount(() => {
 		obj.obj = [paneService.rootPane];
 		componentMapping.map(obj.obj[0]);
-		console.log(obj.obj);
-
 		paneService.onUpdate = (p: Pane) => {
 			componentMapping.map(obj.obj[0]);
 			obj.obj = [p]

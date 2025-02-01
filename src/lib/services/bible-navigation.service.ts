@@ -1208,7 +1208,7 @@ export class BibleNavigationService {
 
 	next(currentKey: string): string {
 		let ci = this.chapterList.indexOf(currentKey);
-		if (ci + 1 > this.chapterList.length) {
+		if (ci + 1 >= this.chapterList.length) {
 			return this.chapterList[0];
 		} else {
 			return this.chapterList[ci + 1];

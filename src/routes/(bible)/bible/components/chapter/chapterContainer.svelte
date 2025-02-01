@@ -121,7 +121,7 @@
 
 			if (pane?.buffer?.bag) {
 				pane.buffer.bag.lastKnownScrollPosition = lastKnownScrollPosition;
-				paneService.save()
+				paneService.save();
 			}
 		});
 
@@ -135,7 +135,9 @@
 		containerHeight = pel.clientHeight;
 
 		if (pane?.buffer?.bag?.lastKnownScrollPosition) {
-			el.scrollTo({top: pane.buffer.bag.lastKnownScrollPosition})
+			setTimeout(() => {
+				el?.scrollTo({ top: Number(pane.buffer.bag.lastKnownScrollPosition), behavior: 'instant' });
+			}, 50);
 		}
 	});
 </script>
