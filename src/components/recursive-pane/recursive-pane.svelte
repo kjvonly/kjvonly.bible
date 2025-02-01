@@ -4,7 +4,7 @@
 
 	import VerticalSplit from './vertical-split.svelte';
 	import HorizontalSplit from './horizontal-split.svelte';
-	import ChapterContainer from '../../routes/(bible)/bible/components/chapterContainer.svelte';
+	import ChapterContainer from '../../routes/(bible)/bible/components/chapter/chapterContainer.svelte';
 	import { paneService } from '$lib/services/pane.service';
 	import { componentMapping } from '$lib/services/component-mapping.service';
 

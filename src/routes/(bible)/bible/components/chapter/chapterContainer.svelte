@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 	import { onMount } from 'svelte';
-	import Header from '../../components/header.svelte';
-	import Chapter from '../components/chapter.svelte';
-	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
+	import Header from '../../../components/header.svelte';
+	import Chapter from './chapter.svelte';
+	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 	import { paneService } from '$lib/services/pane.service';
 

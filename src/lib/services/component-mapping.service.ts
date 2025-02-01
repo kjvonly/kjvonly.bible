@@ -1,6 +1,6 @@
 import { NullBuffer } from '$lib/models/buffer.model';
 import type { Pane } from '$lib/models/pane.model';
-import ChapterContainer from '../../routes/(bible)/bible/components/chapterContainer.svelte';
+import ChapterContainer from '../../routes/(bible)/bible/components/chapter/chapterContainer.svelte';
 
 /**
  * Component Mapping is responsible for converting the

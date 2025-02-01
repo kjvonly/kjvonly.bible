@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { bibleDB } from '$lib/db/bible.db';
 	import { onMount } from 'svelte';
-	import Verse from './verse.svelte';
 	import { chapterService } from '$lib/api/chapters.service';
+	import Verse from './verse.svelte';
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
 	let timeoutIDs: number[] = [];
