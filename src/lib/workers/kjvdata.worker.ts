@@ -42,14 +42,14 @@ async function onBooknames() {
 
 async function onStrongs() {
 	let db = await new BibleDB()
-	fetch(`${base}data/strongs.json/all.json`, {
+	fetch(`${base}data/strongs.json.gz/all.json`, {
 		headers: myHeaders
 	}).then((res) => {
 		res.json().then((json) => {
 			let myMap = new Map<string, any>(Object.entries(json));
 			myMap.forEach((value: any, key: string) => {
 				value['id'] = key;
-				db.putValue('chapters', value);
+				db.putValue('strongs', value);
 			});
 		});
 	}).catch((err) => {

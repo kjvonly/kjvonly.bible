@@ -14,6 +14,8 @@
 		chapterKey = $bindable(),
 		bookName = $bindable(),
 		bookChapter = $bindable(),
+		id = $bindable(),
+		paneId,
 		doChapterFadeAnimation = $bindable()
 	} = $props();
 
@@ -26,8 +28,8 @@
 		if (bcv.length === 3) {
 			chapterKey = `${bcv[0]}_${bcv[1]}`;
 			setTimeout(() => {
-				let e = document.getElementById(`vno-${bcv[2]}`);
-				e?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+				let e = document.getElementById(`${id}-vno-${bcv[2]}`);
+				e?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
 				e?.classList.add('scrolled-to');
 				setTimeout(() => {
 					e?.classList.remove('scrolled-to');
@@ -67,7 +69,8 @@
 
 				timeoutIDs.push(id2);
 			} else {
-				window.scrollTo(0, 0);
+				let el = document.getElementById(id)
+				el?.scrollTo(0, 0)
 				loadChapter();
 			}
 		}
@@ -93,12 +96,14 @@
 	<div>
 		{#if showChapter}
 			{#if loadedBookName && loadedChapter}
-				<h1 class="text-center text-lg font-bold">{loadedBookName} {loadedChapter}</h1>
+				<h1 class=" sticky top-0 bg-neutral-50 text-center text-lg font-bold">
+					<span>{loadedBookName} {loadedChapter}<span>
+				</h1>
 			{/if}
 			<p>
 				{#each keys as k, idx}
-					<span id={`vno-${idx + 1}`}>
-						<Verse verse={verses[k]}></Verse>
+					<span id={`${id}-vno-${idx + 1}`}>
+						<Verse paneId={paneId} verse={verses[k]}></Verse>
 					</span>
 				{/each}
 			</p>

@@ -1,9 +1,20 @@
 import { sleep } from '$lib/utils/sleep';
 import IndexedDB from './idb.db';
 
+/*
+* NOTE: github does not ungzip your files so we zcat them to .json on
+* build/deploy. do the same thing in your dev environment
+* 
+*  for i in $(ls -1); do zcat $i > ${i%%.gz} ; done 
+*  run this in the static/data/(json.gz|strongs.gz.gz) directories in
+*  your dev environment
+*/
 const TOTAL_CHAPTERS_KEYS = 1189
+
 /** BOOKNAMES is metadata on all bible chapters. */
 const TOTAL_BOOKNAMES_KEYS = 1
+
+const TOTAL_STRONGS_KEYS = 14058
 
 export class BibleDB extends IndexedDB {
 	instance: any;
@@ -16,7 +27,7 @@ export class BibleDB extends IndexedDB {
 
 	constructor() {
 		super('bible');
-		this.createAndOrOpenObjectStores(['chapters', 'booknames']);
+		this.createAndOrOpenObjectStores(['chapters', 'booknames', 'strongs']);
 	}
 
 	async waitForIndexDB(): Promise<boolean> {
@@ -57,6 +68,13 @@ export class BibleDB extends IndexedDB {
 			this.resolve(true);
 			this.isReady = true
 		}
+
+		/** this is after resolving since i want the user to be able to start
+		 * reading/searching the app as soon as possible. There 14k strong
+		 * defs that need to be cached
+		 */
+		await this.syncStrongs()
+
 	}
 
 	async syncChapters() {
@@ -68,7 +86,6 @@ export class BibleDB extends IndexedDB {
 			let retryMax = 10;
 
 			while (keys.length < TOTAL_CHAPTERS_KEYS || retries == retryMax) {
-				this.worker?.postMessage({ sync: 'chapters' });
 				await sleep(1000);
 				keys = await this.getAllKeys('chapters');
 				retries = retries + 1;
@@ -95,6 +112,29 @@ export class BibleDB extends IndexedDB {
 
 				await sleep(1000);
 				keys = await this.getAllKeys('booknames');
+				retries = retries + 1;
+			}
+
+			if (retries === retryMax) {
+				return false;
+			}
+		}
+
+		return true
+	}
+
+
+	async syncStrongs() {
+		let keys = await this.getAllKeys('strongs');
+		if (keys.length < TOTAL_STRONGS_KEYS) {
+			this.worker?.postMessage({ sync: 'strongs' });
+
+			let retries = 0;
+			let retryMax = 10;
+
+			while (keys.length < TOTAL_STRONGS_KEYS || retries == retryMax) {
+				await sleep(1000);
+				keys = await this.getAllKeys('strongs');
 				retries = retries + 1;
 			}
 

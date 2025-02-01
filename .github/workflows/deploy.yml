@@ -12,6 +12,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # NOTE: github does not ungzip your files so we zcat them to .json on
+      # build/deploy. do the same thing in your dev environment
       - name: Clone KJVonly data
         run: |
           git clone --depth=1 https://github.com/kjvonly/data.git kjvdata
