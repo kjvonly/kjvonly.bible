@@ -44,7 +44,7 @@ export class PaneService {
 	}
 
 	findPane(id: string, pane: Pane | null): Pane {
-	
+
 		if (!pane || pane instanceof NullPane) {
 			return new NullPane();
 		}
@@ -73,7 +73,7 @@ export class PaneService {
 	splitPane(id: string, paneSplit: PaneSplit, componentName: any) {
 
 		let p = this.findPane(id, this.rootPane)
-		console.log('findpane2',  id, this.rootPane.id)
+		console.log('findpane2', id, this.rootPane.id)
 		console.log(this.rootPane)
 		p.split = paneSplit;
 
@@ -91,6 +91,58 @@ export class PaneService {
 
 		p.buffer = new NullBuffer();
 
+
+		this.onUpdate(this.rootPane)
+	}
+
+	deletePane(id: string) {
+		let cp = this.findPane(id, this.rootPane)
+		if (cp.id === this.rootPane.id) {
+			cp.buffer = new NullBuffer();
+		}
+
+		let pn = cp.parentNode;
+		let ppn = pn?.parentNode;
+
+		let paneToReplaceParentPane: Pane | null = null;
+		if (pn?.leftPane?.id === cp.id) {
+			paneToReplaceParentPane = pn?.rightPane;
+		}
+
+		if (pn?.rightPane?.id === cp.id) {
+			paneToReplaceParentPane = pn?.leftPane;
+		}
+
+		if (ppn && ppn.leftPane && ppn.leftPane.id === pn?.id) {
+			ppn.leftPane = paneToReplaceParentPane;
+
+			if (ppn.leftPane) {
+				ppn.leftPane.parentNode = ppn;
+			}
+		}
+
+		if (ppn && ppn.rightPane && ppn.rightPane.id === pn?.id) {
+			ppn.rightPane = paneToReplaceParentPane;
+
+			if (ppn.rightPane) {
+				ppn.rightPane.parentNode = ppn;
+			}
+		}
+
+		// if ppn is null pn must be the root pane
+		if (ppn === null) {
+			if (paneToReplaceParentPane?.buffer) {
+				this.rootPane = paneToReplaceParentPane;
+				this.rootPane.parentNode = null;
+				if (this.rootPane.leftPane) {
+					// currentBuffer.set(this.rootPane.leftPane.buffer);
+				} else if (this.rootPane.rightPane) {
+					// currentBuffer.set(this.rootPane.rightPane.buffer);
+				} else {
+					// currentBuffer.set(this.rootPane.buffer);
+				}
+			}
+		}
 
 		this.onUpdate(this.rootPane)
 	}

@@ -24,7 +24,7 @@
 			<div class="sticky right-0 top-0 z-popover {pane.id === paneService.rootPane.id ? 'hidden' : ''}">
 				<button
 					onclick={() => {
-						alert(id);
+						paneService.deletePane(pane.id)
 					}}
 					class=" absolute right-2 top-0 text-primary-500">x</button
 				>
