@@ -22,7 +22,10 @@ jobs:
           cd static/data/json.gz
           for i in $(ls -1); do export f=${i%.gz} && zcat $i > $f ; done
           rm ./*.json.gz
-
+          cd ../strongs.json.gz
+          for i in $(ls -1); do export f=${i%.gz} && zcat $i > $f ; done
+          rm ./*.json.gz
+          
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
