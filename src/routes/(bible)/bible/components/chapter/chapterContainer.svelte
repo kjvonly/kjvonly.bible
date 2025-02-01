@@ -120,7 +120,7 @@
 			}
 
 			if (pane?.buffer?.bag) {
-				pane.buffer.bag.lastKnownScrollPosition = lastKnownScrollPosition;
+				pane.buffer.bag.lastKnownScrollPosition = lastKnownScrollPosition ;
 				paneService.save();
 			}
 		});

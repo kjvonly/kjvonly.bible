@@ -161,11 +161,9 @@ export class PaneService {
 	}
 
 	save() {
-		console.log('save')
 		let p2j = new PaneJson();
 		toJson(this.rootPane, p2j);
 		localStorage.setItem('pane', JSON.stringify(p2j));
-		console.log('save end')
 	}
 }
 
