@@ -150,7 +150,7 @@
 						bind:bookChapter
 						bind:chapterKey
 						bind:id
-						bind:paneId={pane.id}
+						paneId={pane.id}
 						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>

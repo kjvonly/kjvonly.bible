@@ -15,7 +15,7 @@
 		bookName = $bindable(),
 		bookChapter = $bindable(),
 		id = $bindable(),
-		paneId = $bindable(),
+		paneId,
 		doChapterFadeAnimation = $bindable()
 	} = $props();
 
@@ -103,7 +103,7 @@
 			<p>
 				{#each keys as k, idx}
 					<span id={`${id}-vno-${idx + 1}`}>
-						<Verse bind:paneId={paneId} verse={verses[k]}></Verse>
+						<Verse paneId={paneId} verse={verses[k]}></Verse>
 					</span>
 				{/each}
 			</p>

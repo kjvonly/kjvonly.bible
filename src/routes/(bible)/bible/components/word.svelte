@@ -2,7 +2,7 @@
 	import { PaneSplit } from "$lib/models/pane.model";
 	import { paneService } from "../../../../lib/services/pane.service";
 
-	let { word, paneId = $bindable() } = $props();
+	let { word, paneId } = $props();
 
 	function onWordClicked(e: Event, word: any){
 		e.stopPropagation()
