@@ -18,14 +18,24 @@
 
 <div id="_{id}-pane" class="h-full w-full">
 	{#if pane && pane.split === PaneSplit.Null}
-		<div id="_{id}-buffer-pane" class="h-[100%] w-full {borderStyling}">
-			{#if !(pane.buffer instanceof NullBuffer)}
-				{@const Component = pane.buffer.component}
-				<Component paneId={pane.id}></Component>
-			{/if}
-			{#if pane.buffer instanceof NullBuffer}
-				<ChapterContainer paneId={pane.id}></ChapterContainer>
-			{/if}
+		<div class="relative h-full w-full">
+			<div class="sticky right-0 top-0 z-popover">
+				<button
+					onclick={() => {
+						alert(id);
+					}}
+					class="absolute right-5 top-3 text-primary-500">x</button
+				>
+			</div>
+			<div id="_{id}-buffer-pane" class="h-[100%] w-full {borderStyling}">
+				{#if !(pane.buffer instanceof NullBuffer)}
+					{@const Component = pane.buffer.component}
+					<Component paneId={pane.id}></Component>
+				{/if}
+				{#if pane.buffer instanceof NullBuffer}
+					<ChapterContainer paneId={pane.id}></ChapterContainer>
+				{/if}
+			</div>
 		</div>
 	{:else if pane && pane.split !== PaneSplit.Null && pane.buffer instanceof NullBuffer}
 		{#if pane.split === PaneSplit.Vertical}
