@@ -1,5 +1,5 @@
 import { NullBuffer } from '$lib/models/buffer.model';
-import type { Pane } from '$lib/models/pane.model';
+import type { Pane } from '$lib/models/pane.model.svelte';
 import ChapterContainer from '../../routes/(bible)/bible/components/chapter/chapterContainer.svelte';
 import StrongsVersesRefs from '../../routes/(bible)/bible/components/refs/strongs-verses-refs/strongsVersesRefs.svelte';
 

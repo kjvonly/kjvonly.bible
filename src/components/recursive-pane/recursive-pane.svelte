@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Pane, PaneSplit } from '$lib/models/pane.model';
+	import { Pane, PaneSplit } from '$lib/models/pane.model.svelte';
 	import { NullBuffer } from '$lib/models/buffer.model';
 
 	import VerticalSplit from './vertical-split.svelte';
 	import HorizontalSplit from './horizontal-split.svelte';
 	import ChapterContainer from '../../routes/(bible)/bible/components/chapter/chapterContainer.svelte';
-	import { paneService } from '$lib/services/pane.service';
+	import { paneService } from '$lib/services/pane.service.svelte';
 	import { componentMapping } from '$lib/services/component-mapping.service';
 
 	let _id = crypto.randomUUID();

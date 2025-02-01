@@ -1,7 +1,7 @@
 <script lang="ts">
 	import RecursivePane from './recursive-pane.svelte';
 	import { retry, handleAll, ConstantBackoff } from 'cockatiel';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/models/pane.model.svelte';
 	import { onMount } from 'svelte';
 
 	let { id, pane = $bindable<Pane>() } = $props();
@@ -69,10 +69,10 @@
 	});
 </script>
 
-<div id="_{id}-horizontal-left" class="w-[100%] h-[50%]">
+<div id="_{id}-horizontal-left" class="h-[50%] w-[100%]">
 	{#if pane}
 		{#if pane.leftPane}
-			<RecursivePane  bind:pane={pane.leftPane} />
+			<RecursivePane bind:pane={pane.leftPane} />
 		{/if}
 	{/if}
 </div>
@@ -80,7 +80,7 @@
 	<div id="_{id}-horizontal-resize" class="horizontal-resize"></div>
 </div>
 
-<div id="_{id}-horizontal-right" class="w-[100%] h-[50%]">
+<div id="_{id}-horizontal-right" class="h-[50%] w-[100%]">
 	{#if pane}
 		{#if pane.rightPane}
 			<RecursivePane bind:pane={pane.rightPane} />

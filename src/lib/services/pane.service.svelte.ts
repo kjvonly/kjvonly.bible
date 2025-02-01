@@ -1,12 +1,12 @@
 
 import { Buffer, NullBuffer } from '$lib/models/buffer.model';
-import { NullPane, Pane, PaneJson, PaneSplit } from '$lib/models/pane.model';
+import { NullPane, Pane, PaneJson, PaneSplit } from '$lib/models/pane.model.svelte';
 import { componentMapping } from '$lib/services/component-mapping.service';
 
 
 export class PaneService {
 	private static _instance: PaneService;
-	rootPane: Pane = new Pane();
+	rootPane: Pane = $state(new Pane());
 
 	onUpdate: Function = () => { }
 
@@ -161,9 +161,11 @@ export class PaneService {
 	}
 
 	save() {
+		console.log('save')
 		let p2j = new PaneJson();
 		toJson(this.rootPane, p2j);
 		localStorage.setItem('pane', JSON.stringify(p2j));
+		console.log('save end')
 	}
 }
 

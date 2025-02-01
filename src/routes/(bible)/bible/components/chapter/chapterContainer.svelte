@@ -5,7 +5,7 @@
 	import Chapter from './chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
-	import { paneService } from '$lib/services/pane.service';
+	import { paneService } from '$lib/services/pane.service.svelte';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -120,7 +120,6 @@
 			}
 
 			if (pane?.buffer?.bag) {
-				console.log(lastKnownScrollPosition)
 				pane.buffer.bag.lastKnownScrollPosition = lastKnownScrollPosition;
 				paneService.save()
 			}

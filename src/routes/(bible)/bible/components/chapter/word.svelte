@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { PaneSplit } from "$lib/models/pane.model";
-	import { paneService } from "../../../../../lib/services/pane.service";
+	import { PaneSplit } from "$lib/models/pane.model.svelte";
+	import { paneService } from "../../../../../lib/services/pane.service.svelte";
 
 	let { word, paneId } = $props();
 

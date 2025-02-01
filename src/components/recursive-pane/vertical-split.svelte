@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/models/pane.model.svelte';
 	import RecursivePane from './recursive-pane.svelte';
 	import { retry, handleAll, ConstantBackoff } from 'cockatiel';
 	
@@ -72,6 +72,7 @@
 </script>
 
 <div id="_{id}-vertical-left" class="w-[50%]">
+
 	{#if pane}
 		{#if pane.leftPane}
 			<RecursivePane bind:pane={pane.leftPane} />
