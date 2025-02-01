@@ -15,6 +15,7 @@
         @apply text-2xl bg-neutral-50 text-neutral-700 selection:bg-primary-100
     }
 
+    
     :root[class~="color-theme-red"] {
         --color-primary-surface: 0 0% 100%;
 

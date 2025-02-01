@@ -21,13 +21,15 @@
 	});
 </script>
 
-<Container>
-	<div id="{id}-container" class="relative overflow-hidden h-full">
-		<div id={id} style="height: {containerHeight}px;" class="max-w-sm overflow-y-scroll md:z-10 md:max-w-lg">
-			{#if strongsRef.length > 0}
-				<StrongsRefsContainer {strongsRef}></StrongsRefsContainer>
-			{/if}
-			<VerseRefsContainer></VerseRefsContainer>
+<div id="{id}-container" class="relative h-full overflow-hidden">
+	<div {id} style="height: {containerHeight}px;" class="relative overflow-y-scroll">
+		<div class="flex h-full w-full justify-center">
+			<div class="max-w-6xl">
+				{#if strongsRef.length > 0}
+					<StrongsRefsContainer {strongsRef}></StrongsRefsContainer>
+				{/if}
+				<VerseRefsContainer></VerseRefsContainer>
+			</div>
 		</div>
 	</div>
-</Container>
+</div>
