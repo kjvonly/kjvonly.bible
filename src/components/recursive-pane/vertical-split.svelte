@@ -74,7 +74,7 @@
 <div id="_{id}-vertical-left" class="w-[50%]">
 	{#if pane}
 		{#if pane.leftPane}
-			<RecursivePane {id} bind:pane={pane.leftPane} />
+			<RecursivePane bind:pane={pane.leftPane} />
 		{/if}
 	{/if}
 </div>
@@ -84,7 +84,7 @@
 <div id="_{id}-vertical-right" class="flex flex-row w-[50%]">
 	{#if pane}
 		{#if pane.rightPane}
-			<RecursivePane {id} bind:pane={pane.rightPane}/>
+			<RecursivePane bind:pane={pane.rightPane}/>
 		{/if}
 	{/if}
 </div>

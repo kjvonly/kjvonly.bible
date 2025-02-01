@@ -72,7 +72,7 @@
 <div id="_{id}-horizontal-left" class="w-[100%] h-[50%]">
 	{#if pane}
 		{#if pane.leftPane}
-			<RecursivePane {id} bind:pane={pane.leftPane} />
+			<RecursivePane  bind:pane={pane.leftPane} />
 		{/if}
 	{/if}
 </div>
@@ -83,7 +83,7 @@
 <div id="_{id}-horizontal-right" class="w-[100%] h-[50%]">
 	{#if pane}
 		{#if pane.rightPane}
-			<RecursivePane {id} bind:pane={pane.rightPane} />
+			<RecursivePane bind:pane={pane.rightPane} />
 		{/if}
 	{/if}
 </div>

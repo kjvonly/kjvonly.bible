@@ -1,6 +1,6 @@
 
 import { Buffer, NullBuffer } from '$lib/models/buffer.model';
-import { NullPane, Pane, PaneSplit } from '$lib/models/pane.model';
+import { NullPane, Pane, PaneJson, PaneSplit } from '$lib/models/pane.model';
 import { componentMapping } from '$lib/services/component-mapping.service';
 
 
@@ -10,7 +10,21 @@ export class PaneService {
 
 	onUpdate: Function = () => { }
 
-	private constructor() { }
+	private constructor() {
+
+		let ps = localStorage.getItem('pane');
+		if (ps !== null) {
+			let pane = new Pane();
+			fromJson(JSON.parse(ps), pane);
+			this.rootPane = pane
+		} else{
+			this.rootPane = new Pane();
+			this.rootPane.buffer = new Buffer();
+			this.rootPane.buffer.componentName = 'ChapterContainer';
+			//this.rootPane.buffer.component = componentMapping.getComponent('ChapterContainer');
+			this.rootPane.split = PaneSplit.Null;
+		}
+	}
 
 	public static get Instance() {
 		// Do you need arguments? Make it a regular static method instead.
@@ -71,10 +85,8 @@ export class PaneService {
 	}
 
 	splitPane(id: string, paneSplit: PaneSplit, componentName: any) {
-
 		let p = this.findPane(id, this.rootPane)
-		console.log('findpane2', id, this.rootPane.id)
-		console.log(this.rootPane)
+
 		p.split = paneSplit;
 
 		p.leftPane = new Pane();
@@ -146,6 +158,56 @@ export class PaneService {
 
 		this.onUpdate(this.rootPane)
 	}
+
+	save() {
+		let p2j = new PaneJson();
+		toJson(this.rootPane, p2j);
+		localStorage.setItem('pane', JSON.stringify(p2j));
+	}
 }
+
+
+function toJson(pane: Pane, p2j: PaneJson) {
+	if (pane.leftPane) {
+		p2j.leftPane = new PaneJson();
+		toJson(pane.leftPane, p2j.leftPane);
+	}
+
+	if (pane.rightPane) {
+		p2j.rightPane = new PaneJson();
+		toJson(pane.rightPane, p2j.rightPane);
+	}
+
+	p2j.id = pane.id;
+	p2j.leftPercentage = pane.leftPercentage;
+	p2j.rightPercentage = pane.rightPercentage;
+	p2j.buffer = pane.buffer;
+	p2j.parentNodeId = pane.parentNode?.id || '';
+	p2j.split = pane.split;
+}
+
+function fromJson(p2j: PaneJson, pane: Pane) {
+	if (p2j.leftPane !== null) {
+		let lp = new Pane();
+
+		lp.parentNode = pane;
+		pane.leftPane = lp;
+		fromJson(p2j.leftPane, pane.leftPane);
+	}
+
+	if (p2j.rightPane !== null) {
+		let rp = new Pane();
+		rp.parentNode = pane;
+		pane.rightPane = rp;
+		fromJson(p2j.rightPane, pane.rightPane);
+	}
+
+	pane.id = p2j.id;
+	pane.leftPercentage = p2j.leftPercentage;
+	pane.rightPercentage = p2j.rightPercentage;
+	pane.buffer = p2j.buffer;
+	pane.split = p2j.split;
+}
+
 export let paneService = PaneService.Instance;
 

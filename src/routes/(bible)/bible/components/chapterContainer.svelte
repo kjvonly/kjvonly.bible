@@ -5,6 +5,7 @@
 	import Chapter from '../components/chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
+	import { paneService } from '$lib/services/pane.service';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -14,7 +15,7 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let {paneId} = $props()
+	let {pane} = $props()
 
 	$effect(() => {
 		chapterSettings;
@@ -31,7 +32,8 @@
 
 	$effect(() => {
 		if (chapterKey) {
-			localStorage.setItem('currentChapterKey', chapterKey);
+			pane.buffer.bag.chapterKey = chapterKey
+			paneService.save()
 		}
 	});
 
@@ -47,7 +49,7 @@
 			chapterSettings = newChapterSettings();
 		}
 
-		let ck = localStorage.getItem('currentChapterKey');
+		let ck = pane.buffer.bag.chapterKey;
 		if (ck) {
 			chapterKey = ck;
 		} else {
@@ -86,7 +88,6 @@
 		const isReachBottom = el.scrollHeight - el.clientHeight - el.scrollTop <= threshold;
 
 		if (isReachBottom) {
-			console.log(isReachBottom, 'here');
 			// this function will be called when window height changes i.e. changing a chapter.
 			// when this happens pos will be negative. If we remove this check the buttons will
 			// end up in the header :)
@@ -149,7 +150,7 @@
 						bind:bookChapter
 						bind:chapterKey
 						bind:id
-						bind:paneId
+						bind:paneId={pane.id}
 						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>
