@@ -22,12 +22,16 @@
 	{#if pane && pane.split === PaneSplit.Null}
 		<div class="relative h-full w-full">
 			<div
-				class="sticky right-0 top-0 z-popover {pane.id === paneService.rootPane.id ? 'hidden' : ''}"
+				class="sticky right-0 top-0 z-popover {pane.id === paneService.rootPane.id &&
+				(pane.buffer.componentName === 'ChapterContainer' ||
+					pane.buffer.componentName === 'NullBuffer')
+					? 'hidden'
+					: ''}"
 			>
 				<button
 					onclick={() => {
 						paneService.deletePane(pane.id);
-						paneService.save()
+						paneService.save();
 					}}
 					class=" absolute right-2 top-0 text-primary-500">x</button
 				>
