@@ -19,7 +19,7 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/kjvonly/data.git kjvdata
           mkdir static/data
-          mv kjvdata/json.gz static/data
+          mv kjvdata/* static/data/
           cd static/data/json.gz
           for i in $(ls -1); do export f=${i%.gz} && zcat $i > $f ; done
           rm ./*.json.gz
