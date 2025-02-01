@@ -9,11 +9,19 @@ const ASSETS = [
 	...files  // everything in `static`
 ];
 
+const FILTERED_ASSETS = ASSETS.filter((a) => {
+	if (a === '/.nojekyll'){
+		return false
+	}
+	return !(a.endsWith('.json') || a.endsWith('.json.gz'))
+})
+
 self.addEventListener('install', (event) => {
 	// Create a new cache and add all files to it
 	async function addFilesToCache() {
 		const cache = await caches.open(CACHE);
-		await cache.addAll(ASSETS);
+		
+		await cache.addAll(FILTERED_ASSETS);
 	}
 
 	event.waitUntil(addFilesToCache());
@@ -39,7 +47,7 @@ self.addEventListener('fetch', (event) => {
 		const cache = await caches.open(CACHE);
 
 		// `build`/`files` can always be served from the cache
-		if (ASSETS.includes(url.pathname)) {
+		if (FILTERED_ASSETS.includes(url.pathname)) {
 			const response = await cache.match(url.pathname);
 
 			if (response) {
