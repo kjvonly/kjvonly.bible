@@ -6,6 +6,7 @@
 	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import type { Pane } from '$lib/models/pane.model.svelte';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -15,7 +16,13 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let { pane = $bindable() } = $props();
+	let { pane = $bindable<Pane>() } = $props();
+
+	$effect(() => {
+		pane;
+
+		console.log('pane has changed', pane.buffer.bag)
+	})
 
 	$effect(() => {
 		chapterSettings;
@@ -32,8 +39,10 @@
 
 	$effect(() => {
 		if (chapterKey) {
+			console.log('effect chatperkey', pane.buffer.bag)
 			pane.buffer.bag.chapterKey = chapterKey;
 			localStorage.setItem('lastChapterKey', chapterKey);
+			console.log('lastChapterKey', chapterKey)
 			paneService.save();
 		}
 	});

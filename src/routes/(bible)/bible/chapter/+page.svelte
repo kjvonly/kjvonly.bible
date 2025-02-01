@@ -12,12 +12,12 @@
 
 	let obj: any = $state({});
 	let chapterSettings: ChapterSettings | null = $state(null);
-	
+
 	onMount(() => {
 		/** chapter setting is duplicated at the moment. will update
 		 * when we refactor out chaptersettings. Chatpersettings will
 		 * become it's own buffer.
-		*/
+		 */
 		let cs = localStorage.getItem('chapterSettings');
 		if (cs !== null) {
 			chapterSettings = JSON.parse(cs);
@@ -29,10 +29,17 @@
 			chapterSettings = newChapterSettings();
 		}
 
+		if (paneService.rootPane.buffer.componentName === 'NullBuffer') {
+			paneService.rootPane.buffer.componentName = 'ChapterContainer';
+			componentMapping.map(paneService.rootPane);
+		}
+		
 		obj.obj = [paneService.rootPane];
 		componentMapping.map(obj.obj[0]);
 		paneService.onUpdate = (p: Pane) => {
-			componentMapping.map(obj.obj[0]);
+			console.log('update', JSON.stringify(p.leftPane?.buffer.bag));
+			componentMapping.map(p);
+
 			obj.obj = [p];
 		};
 	});
