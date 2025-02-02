@@ -19,8 +19,8 @@
 </script>
 
 <div id="_{pane.id}-pane" class="h-full w-full">
-	{#if pane && pane.split === PaneSplit.Null}
-		<div class="relative h-full w-full">
+	
+		<div class="relative {pane && pane.split === PaneSplit.Null ? 'h-full w-full': 'hidden'}">
 			<div
 				class="sticky right-0 top-0 z-popover {pane.id === paneService.rootPane.id &&
 				(pane.buffer.componentName === 'ChapterContainer' ||
@@ -46,7 +46,7 @@
 				{/if}
 			</div>
 		</div>
-	{:else if pane && pane.split !== PaneSplit.Null && pane.buffer instanceof NullBuffer}
+	{#if pane && pane.split !== PaneSplit.Null && pane.buffer instanceof NullBuffer}
 		{#if pane.split === PaneSplit.Vertical}
 			<div class="flex h-[100%] w-[100%] flex-row">
 				<VerticalSplit id={pane.id} bind:pane></VerticalSplit>

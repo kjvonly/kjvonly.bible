@@ -49,9 +49,9 @@
 </script>
 
 {#if obj.obj}
-	{#each obj.obj as p, idx}
+
 		<div class="flex h-full w-full flex-col">
-			<RecursivePane bind:pane={obj.obj[idx]}></RecursivePane>
+			<RecursivePane bind:pane={obj.obj[0]}></RecursivePane>
 		</div>
-	{/each}
+
 {/if}
