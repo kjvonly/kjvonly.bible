@@ -144,6 +144,7 @@
 					<option value="light-blue">LIGHT BLUE</option>
 					<option value="purple">PURPLE</option>
 					<option value="cyan">CYAN</option>
+					<option value="pink">PINK</option>
 				</select>
 			{/if}
 		</div>

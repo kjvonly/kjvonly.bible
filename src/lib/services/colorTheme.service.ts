@@ -6,7 +6,8 @@ class ColorTheme {
         'red',
         'light-blue',
         'purple',
-        'cyan'
+        'cyan',
+        'pink'
     ]
 
     setTheme(theme: string) {
