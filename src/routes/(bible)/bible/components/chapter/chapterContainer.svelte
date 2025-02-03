@@ -5,8 +5,10 @@
 	import Chapter from './chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	
 	import type { Pane } from '$lib/models/pane.model.svelte';
+	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
+		import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -18,10 +20,10 @@
 
 	let { paneId = $bindable<Pane>() } = $props();
 
-	let pane: Pane  = $state()
+	let pane: node  = $state()
 	$effect(() => {
-		paneId
-		pane = paneService.findPane(paneId, paneService.rootPane)
+		paneId;
+		pane = paneService.findNode(paneService.rootPane, paneId)
 	})
 
 	
@@ -40,32 +42,10 @@
 
 	$effect(() => {
 		if (chapterKey) {
+			console.log(pane)
 			pane.buffer.bag.chapterKey = chapterKey;
 			localStorage.setItem('lastChapterKey', chapterKey);
 			paneService.save();
-		}
-	});
-
-	onMount(() => {
-		let cs = localStorage.getItem('chapterSettings');
-		if (cs !== null) {
-			chapterSettings = JSON.parse(cs);
-
-			if (chapterSettings && chapterSettings.colorTheme) {
-				colorTheme.setTheme(chapterSettings?.colorTheme);
-			}
-		} else {
-			chapterSettings = newChapterSettings();
-		}
-
-		let ck = pane.buffer.bag.chapterKey;
-		if (ck) {
-			chapterKey = ck;
-		} else {
-			chapterKey = localStorage.getItem('lastChapterKey');
-			if (!chapterKey) {
-				chapterKey = '50_3'; // John 3
-			}
 		}
 	});
 
@@ -114,6 +94,30 @@
 
 	let containerHeight: number = $state(0);
 	onMount(() => {
+
+		let cs = localStorage.getItem('chapterSettings');
+		if (cs !== null) {
+			chapterSettings = JSON.parse(cs);
+
+			if (chapterSettings && chapterSettings.colorTheme) {
+				colorTheme.setTheme(chapterSettings?.colorTheme);
+			}
+		} else {
+			chapterSettings = newChapterSettings();
+		}
+
+		pane = paneService.findNode(paneService.rootPane, paneId)
+		console.log(pane)
+		let ck = pane.buffer.bag.chapterKey;
+		if (ck) {
+			chapterKey = ck;
+		} else {
+			chapterKey = localStorage.getItem('lastChapterKey');
+			if (!chapterKey) {
+				chapterKey = '50_3'; // John 3
+			}
+		}
+
 		let el = document.getElementById(id);
 		if (el === null) {
 			return;
@@ -156,8 +160,8 @@
 	});
 </script>
 
-<div id="{id}-container" class="relative h-full overflow-hidden">
-	<div {id} style="height: {containerHeight}px;" class="relative overflow-y-scroll">
+<div id="{id}-container" class="relative  overflow-hidden">
+	<div {id}  class="relative overflow-y-scroll">
 		<div>
 			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}
 			></Header>

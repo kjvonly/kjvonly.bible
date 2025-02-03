@@ -11,8 +11,34 @@ export class PaneService {
 
     };
 
+
+    findNode(n: node, key: string): node | undefined {
+		if (n.id === key) {
+			return n;
+		}
+		let found;
+
+		if (n.left) {
+			found = this.findNode(n.left, key);
+		}
+
+		if (found) {
+			return found;
+		}
+
+		if (n.right) {
+			found = this.findNode(n.right, key);
+		}
+
+		return found;
+	}
+
+    save(){
+        
+    }
     onDeletePane: Function = () => { }
     onSplitPane: Function = () => { }
+    
 
     private constructor() {
 

@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { numberToLetters, renderGridTemplateAreas, type node } from '../../../../components/dynamic-grid-template-areas/dynamicGrid';
+	import {
+		numberToLetters,
+		renderGridTemplateAreas,
+		type node
+	} from '../../../../components/dynamic-grid-template-areas/dynamicGrid';
 	import { onMount } from 'svelte';
-	
+
 	import { paneService } from '../../../../components/dynamic-grid-template-areas/pane.service.svelte';
 	import ChapterContainer from '../components/chapter/chapterContainer.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
 	import { componentMapping } from '$lib/services/component-mapping.service';
-	
 
 	let toggle = $state(true);
 
@@ -45,10 +48,14 @@
 				return aval - bval;
 			});
 
+		//
 		template = `display: grid;
-        grid-template-columns: repeat(${gta.length}, ${gta[0].length});
-		grid-template-areas:
+		max-height: 100vh;
+		grid-template-columns: repeat(${gta.length}, ${gta[0].length});
+		  grid-template-rows: auto auto;
+  		grid-template-areas:
 			${grid};`;
+			console.log(grid)
 	}
 
 	function findNodes(n: node, key: string): node | undefined {
@@ -72,7 +79,7 @@
 		return found;
 	}
 
-	function splitPane(paneId: string, split: string) {
+	function splitPane(paneId: string, split: string, componentName: string, bag: any) {
 		let n = findNodes(paneService.rootPane, paneId);
 
 		/**n should never be undefined */
@@ -88,6 +95,11 @@
 
 		let nid = numberToLetters(val + 1);
 		if (n.left && n.right) {
+			let buffer = new Buffer();
+			buffer.componentName = componentName;
+			buffer.name = componentName;
+			buffer.bag = bag;
+
 			n.left = {
 				split: n.split,
 				left: {
@@ -96,21 +108,25 @@
 				},
 				right: {
 					id: nid,
-					buffer: ChapterContainer
+					buffer: buffer
 				}
 			};
 			n.id = undefined;
 			n.split = split;
 		} else {
 			n.split = split;
-
 			n.left = {
 				id: n.id
 			};
 
+			let buffer = new Buffer();
+			buffer.componentName = componentName;
+			buffer.name = componentName;
+			buffer.bag = bag;
+
 			n.right = {
 				id: nid,
-				buffer: ChapterContainer
+				buffer: buffer
 			};
 			n.id = undefined;
 		}
@@ -177,12 +193,10 @@
 		paneService.onSplitPane = splitPane;
 		onGridUpdate();
 	});
-
-
 </script>
 
 <div class="flex h-[100vh] w-full flex-col">
-	<div style="min-width: 1px; {template}" class="h-[100%] w-full">
+	<div style="max-height: 100vh; min-width: 1px; {template};" class=" w-full">
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		{#each elements as a, idx}
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -192,7 +206,7 @@
 				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
 				<div
 					style="grid-area: {a};"
-					class="header bg-neutral-950 w-full items-center border border-neutral-200 text-balance"
+					class="header bg-neutral-950 w-full items-center text-balance border border-neutral-200"
 				>
 					<Component paneId={a}></Component>
 				</div>
