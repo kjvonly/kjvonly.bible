@@ -16,7 +16,13 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let { pane = $bindable<Pane>() } = $props();
+	let { paneId = $bindable<Pane>() } = $props();
+
+	let pane: Pane  = $state()
+	$effect(() => {
+		paneId
+		pane = paneService.findPane(paneId, paneService.rootPane)
+	})
 
 	
 	$effect(() => {

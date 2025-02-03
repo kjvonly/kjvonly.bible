@@ -1,57 +1,205 @@
 <script lang="ts">
-	import { Pane, PaneSplit } from '$lib/models/pane.model.svelte';
-	import { newChapterSettings, type ChapterSettings } from '../models/chapterSettings';
+	import { numberToLetters, renderGridTemplateAreas, type node } from '../../../../components/dynamic-grid-template-areas/dynamicGrid';
 	import { onMount } from 'svelte';
-	import RecursivePane from '../../../../components/recursive-pane/recursive-pane.svelte';
+	
+	import { paneService } from '../../../../components/dynamic-grid-template-areas/pane.service.svelte';
 	import ChapterContainer from '../components/chapter/chapterContainer.svelte';
-	import { paneService } from '../../../../lib/services/pane.service.svelte';
+	import { Buffer } from '$lib/models/buffer.model';
 	import { componentMapping } from '$lib/services/component-mapping.service';
-	import { colorTheme } from '$lib/services/colorTheme.service';
+	
 
-	//paneService.splitPane(paneService.rootPane, PaneSplit.Horizontal, 'ChapterContainer')
+	let toggle = $state(true);
 
-	let obj: any = $state({});
-	let chapterSettings: ChapterSettings | null = $state(null);
+	let template = $state();
+
+	let elements = $state([]);
+	let deletedElements = $state({});
+
+	function onGridUpdate() {
+		let gta = renderGridTemplateAreas(paneService.rootPane);
+
+		let els = {};
+		let grid = '';
+
+		for (let i = 0; i < gta.length; i++) {
+			let s = '';
+			for (let j = 0; j < gta[i].length; j++) {
+				s += `${gta[i][j]} `;
+				els[gta[i][j]] = gta[i][j];
+			}
+			grid += '"' + s + '"\n';
+		}
+
+		elements = Object.keys(els)
+			.concat(Object.keys(deletedElements))
+			.sort((a: string, b: string) => {
+				let aval = 0,
+					bval = 0;
+
+				for (let i = 0; i < a.length; i++) {
+					aval += a.charCodeAt(i) - 96;
+				}
+				for (let i = 0; i < b.length; i++) {
+					bval += b.charCodeAt(i) - 96;
+				}
+				return aval - bval;
+			});
+
+		template = `display: grid;
+        grid-template-columns: repeat(${gta.length}, ${gta[0].length});
+		grid-template-areas:
+			${grid};`;
+	}
+
+	function findNodes(n: node, key: string): node | undefined {
+		if (n.id === key) {
+			return n;
+		}
+		let found;
+
+		if (n.left) {
+			found = findNodes(n.left, key);
+		}
+
+		if (found) {
+			return found;
+		}
+
+		if (n.right) {
+			found = findNodes(n.right, key);
+		}
+
+		return found;
+	}
+
+	function splitPane(paneId: string, split: string) {
+		let n = findNodes(paneService.rootPane, paneId);
+
+		/**n should never be undefined */
+		if (!n) {
+			return;
+		}
+
+		let lid: string = elements[elements.length - 1];
+		let val = 0;
+		for (let i = 0; i < lid.length; i++) {
+			val += lid.charCodeAt(i) - 96;
+		}
+
+		let nid = numberToLetters(val + 1);
+		if (n.left && n.right) {
+			n.left = {
+				split: n.split,
+				left: {
+					id: n.id,
+					buffer: n.buffer
+				},
+				right: {
+					id: nid,
+					buffer: ChapterContainer
+				}
+			};
+			n.id = undefined;
+			n.split = split;
+		} else {
+			n.split = split;
+
+			n.left = {
+				id: n.id
+			};
+
+			n.right = {
+				id: nid,
+				buffer: ChapterContainer
+			};
+			n.id = undefined;
+		}
+		onGridUpdate();
+	}
+
+	function deletePane(n: node, key: string) {
+		if (n.id === key) {
+			return n;
+		}
+		let found;
+
+		if (n.left) {
+			found = deletePane(n.left, key);
+		}
+
+		if (found) {
+			deletedElements[n.left.id] = n.left.id;
+			//do delete. this is the parent
+			if (n.right.split) {
+				n.split = n.right.split;
+				n.left = n.right.left;
+				n.right = n.right.right;
+			} else {
+				n.id = n.right.id;
+				n.split = undefined;
+				n.left = undefined;
+				n.right = undefined;
+			}
+
+			onGridUpdate();
+			return;
+		}
+
+		if (n.right) {
+			found = deletePane(n.right, key);
+		}
+
+		if (found) {
+			let tmp = n.right.id;
+			deletedElements[n.right.id] = n.right.id;
+			//do delete this is the parent
+			if (n.left.split) {
+				n.split = n.left.split;
+				n.right = n.left.right;
+				n.left = n.left.left;
+			} else {
+				n.id = n.left.id;
+				n.split = undefined;
+				n.left = undefined;
+				n.right = undefined;
+			}
+
+			onGridUpdate();
+			return;
+		}
+	}
 
 	onMount(() => {
-		/** chapter setting is duplicated at the moment. will update
-		 * when we refactor out chaptersettings. Chatpersettings will
-		 * become it's own buffer.
-		 */
-		let cs = localStorage.getItem('chapterSettings');
-		if (cs !== null) {
-			chapterSettings = JSON.parse(cs);
-
-			if (chapterSettings && chapterSettings.colorTheme) {
-				colorTheme.setTheme(chapterSettings?.colorTheme);
-			}
-		} else {
-			chapterSettings = newChapterSettings();
-		}
-
-		if (
-			paneService.rootPane &&
-			paneService.rootPane.leftPane === null &&
-			paneService.rootPane.rightPane === null &&
-			paneService.rootPane.buffer.componentName === 'NullBuffer'
-		) {
-			paneService.rootPane.buffer.componentName = 'ChapterContainer';
-			componentMapping.map(paneService.rootPane);
-		}
-
-		obj.obj = [paneService.rootPane];
-		componentMapping.map(obj.obj[0]);
-		paneService.onUpdate = (p: Pane) => {
-			componentMapping.map(p);
-			obj.obj = [p];
-		};
+		paneService.rootPane.buffer = new Buffer();
+		paneService.rootPane.buffer.componentName = 'ChapterContainer';
+		paneService.rootPane.buffer.name = 'ChapterContainer';
+		paneService.onDeletePane = deletePane;
+		paneService.onSplitPane = splitPane;
+		onGridUpdate();
 	});
+
+
 </script>
 
-{#if obj.obj}
-	{#each obj.obj as p, idx}
-		<div class="flex h-full w-full flex-col">
-			<RecursivePane bind:pane={obj.obj[idx]}></RecursivePane>
-		</div>
-	{/each}
-{/if}
+<div class="flex h-[100vh] w-full flex-col">
+	<div style="min-width: 1px; {template}" class="h-[100%] w-full">
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		{#each elements as a, idx}
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			{#if !deletedElements[a]}
+				{@const pane = findNodes(paneService.rootPane, a)}
+				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
+				<div
+					style="grid-area: {a};"
+					class="header bg-neutral-950 w-full items-center border border-neutral-200 text-balance"
+				>
+					<Component paneId={a}></Component>
+				</div>
+			{/if}
+		{/each}
+	</div>
+</div>
+
+<style>
+</style>
