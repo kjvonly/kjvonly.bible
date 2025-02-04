@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import Container from '../../../../components/container.svelte';
 	import StrongsRefsContainer from '../strongs-refs/strongsRefsContainer.svelte';
 	import VerseRefsContainer from '../verses-refs/verseRefsContainer.svelte';
-	import { getParentHeight } from '$lib/utils/height';
 	import { paneService } from '../../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
 
 	let id = crypto.randomUUID();

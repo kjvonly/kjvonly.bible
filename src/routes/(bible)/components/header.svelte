@@ -5,11 +5,12 @@
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
+	import Search from './search.svelte';
 
-	let searchID = crypto.randomUUID();
+
 
 	let clientHeight: number = $state(0);
-	let searchInputHeight: number = $state(0);
+	
 	let pageWidth: number = $state(0);
 	let bookChapterWidth: number = $state(0);
 	let searchText = $state('');
@@ -62,33 +63,6 @@
 			ticking = true;
 		}
 	});
-
-	onMount(() => {
-		searchService.subscribe(searchID, onSearchResult);
-	});
-
-	function onSearchResult(data: any) {
-		searchResults = data.verses;
-	}
-
-	function onSearchTextChanged() {
-		if (searchText.length < 3) {
-			searchResults = [];
-		} else {
-			searchService.search(searchID, searchText);
-		}
-	}
-
-	function gotoBCV(key: string) {
-		searchText = '';
-		searchResults = [];
-		goTo(key)
-	}
-
-	function match(word: string) {
-		let stripWord = word.toLowerCase().replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
-		return new RegExp('\\b' + stripWord + '\\b').test(searchText.toLowerCase());
-	}
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -191,40 +165,9 @@
 						</div>
 					</div>
 				</div>
-				<div class="relative flex w-[100%] flex-row justify-center py-2">
-					<input
-						bind:clientHeight={searchInputHeight}
-						class="w-full max-w-[440px] border-b border-primary-500 bg-neutral-50 p-1 outline-none"
-						oninput={onSearchTextChanged}
-						bind:value={searchText}
-						placeholder="search"
-					/>
 
-					<div
-						style="transform: translate3d(0px, {searchInputHeight + 2}px, 0px);"
-						class="{searchResults?.length > 0
-							? ''
-							: 'hidden'} absolute  z-popover max-h-96
-								  w-[90%] max-w-[450px] overflow-y-scroll border border-primary-500 overflow-x-hidden bg-neutral-50 md:absolute md:w-1/2 md:min-w-xs
-								  "
-					>
-						{#each searchResults as v}
-							<button
-								onclick={() => gotoBCV(v.key)}
-								class="px-4 py-2 text-left hover:bg-primary-100"
-							>
-								<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br />
-								{#each v.text.split(' ') as w}
-									{#if match(w)}
-										<span class="inline-block text-redtxt">{w}</span>&nbsp;
-									{:else}
-										<span class="inline-block">{w}</span>&nbsp;
-									{/if}
-								{/each}
-							</button>
-						{/each}
-					</div>
-				</div>
+				<Search goTo></Search>
+				
 			</div>
 		</div>
 	</div>
