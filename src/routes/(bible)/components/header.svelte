@@ -1,11 +1,12 @@
 <script lang="ts">
 	import Button from '../../../components/button.svelte';
-	import BookChapterPopup from './bookChapterPopup.svelte';
+	
 	import SettingsPopup from './settingsPopup.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 	import Search from './search.svelte';
+	import BookChapterPopup from './bookChapterPopup.svelte';
 
 	let clientHeight: number = $state(0);
 
@@ -74,7 +75,7 @@
 					>
 			<!-- book chapter selection -->
 
-			<BookChapterPopup bind:showBookChapterPopup bind:chapterKey {bookName} {bookChapter}
+			<BookChapterPopup bind:showBookChapterPopup bind:chapterKey
 			></BookChapterPopup>
 		</div>
 		<!-- settings buttong Aa -->

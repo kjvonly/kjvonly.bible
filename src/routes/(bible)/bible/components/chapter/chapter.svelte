@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	import Verse from './verse.svelte';
-	import BookChapterPopup from '../../../components/bookChapterPopup.svelte';
+	import BookChapterPopup from '../../../components/chapterActions.svelte';
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
 	let timeoutIDs: number[] = [];
