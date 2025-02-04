@@ -9,6 +9,7 @@
 	import type { Pane } from '$lib/models/pane.model.svelte';
 	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
 	import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
+	import ChapterActions from '../../../components/chapterActions.svelte';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -52,13 +53,15 @@
 		chapterKey = key;
 	}
 
-	async function _nextChapter() {
+	async function _nextChapter(e) {
+		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.next(chapterKey);
 		}
 	}
 
-	async function _previousChapter() {
+	async function _previousChapter(e) {
+		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.previous(chapterKey);
 		}
@@ -98,7 +101,7 @@
 	}
 
 	let containerHeight: string = $state('');
-	let containerWidth: string = $state('')
+	let containerWidth: string = $state('');
 	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
 		if (cs !== null) {
@@ -160,8 +163,21 @@
 	});
 </script>
 
-<div id="{id}-container" style="{containerWidth} {containerHeight}" class="relative overflow-hidden">
+<div
+	id="{id}-container"
+	style="{containerWidth} {containerHeight}"
+	class="relative overflow-hidden"
+>
 	<div {id} style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
+		<div class="sticky top-0 z-popover flex w-full justify-center">
+			<ChapterActions
+				bind:chapterKey
+				bookName={bookName}
+				bookChapter={bookChapter}
+				{containerHeight}
+				paneId={pane.id}
+			></ChapterActions>
+		</div>
 		<div class="flex justify-center">
 			<div class="md:z-10 md:max-w-lg">
 				<div
@@ -186,7 +202,7 @@
 	<!-- prev/next chapter buttons -->
 	<div class="flex w-full justify-center">
 		<div class="w-full max-w-6xl">
-			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px);" class="sticky">
+			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px);" class="sticky z-10">
 				<div class="absolute bottom-4 left-4">
 					<button
 						onclick={_previousChapter}
@@ -213,7 +229,7 @@
 					</button>
 				</div>
 			</div>
-			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px); " >
+			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px); " class="sticky z-10">
 				<div class="absolute bottom-4 right-4">
 					<button
 						onclick={_nextChapter}

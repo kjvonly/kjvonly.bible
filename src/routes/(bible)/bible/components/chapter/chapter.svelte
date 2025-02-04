@@ -97,18 +97,6 @@
 <div class="{fadeClass} flex-col leading-loose">
 	<div>
 		{#if showChapter}
-			{#if loadedBookName && loadedChapter}
-				<div class="sticky top-0 w-full justify-center flex z-popover">
-					<ChapterActions
-
-						bind:chapterKey
-						bookName={loadedBookName}
-						bookChapter={loadedChapter}
-						{containerHeight}
-						paneId={pane.id}
-					></ChapterActions>
-				</div>
-			{/if}
 			<p class="px-4">
 				{#each keys as k, idx}
 					<span id={`${id}-vno-${idx + 1}`}>
