@@ -2,7 +2,12 @@
 	import { chapterService } from '$lib/api/chapters.service';
 	import { onMount } from 'svelte';
 
-	let { chapterKey = $bindable(), showBookChapterPopup = $bindable(), bookName, bookChapter } = $props();
+	let {
+		chapterKey = $bindable(),
+		showBookChapterPopup = $bindable(),
+		bookName,
+		bookChapter
+	} = $props();
 	let bookNames: any = $state();
 	let bookIds: any;
 	let bookNamesSorted: any[] = $state([]);
@@ -447,31 +452,41 @@
 
 <!-- book chapter selection -->
 <div class="relative">
-	<button
-		class="items-cen ter mt-2 flex
-		w-full justify-between border-b-2 border-b-neutral-400 text-neutral-700 hover:bg-neutral-100"
-		onclick={onBookChapterClick}
-	>
-		<span class="w-full p-1 text-start text-sm font-bold">{bookName} {bookChapter}</span>
+	<div class="">
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<span
+			class="flex items-center
+		justify-between bg-neutral-100 px-1 text-neutral-700 rounded-s-full rounded-e-full"
+			onclick={onBookChapterClick}
+		>
+			
+			<span class="border-s-2 border-neutral-300 h-[100%] ml-4 " >&nbsp;</span>
+			<span class="text-center font-bold p-1 m-0 md:text-base lg:text-lg hover:cursor-pointer">
+				<span>{bookName} {bookChapter}<span> </span></span>
+			</span>
+			<span class="border-e-2 border-neutral-300 h-[100%] mr-4" >&nbsp;</span>
 
-		<span>
-			<svg
-				class="mr-2 inline-block w-3"
-				viewBox="0 0 25.4 14.098638"
-				version="1.1"
-				id="svg5"
-				xml:space="preserve"
-				xmlns="http://www.w3.org/2000/svg"
-				><defs id="defs2" /><g id="layer1" transform="translate(-53.644677,-127.79211)"
-					><path
-						class="W fill-neutral-500"
-						d="m 59.906487,137.65245 -6.26181,-4.21622 v -2.82206 -2.82206 l 6.35,4.24282 6.35,4.24283 6.35,-4.24283 6.35,-4.24282 v 2.82222 2.82222 l -6.3429,4.23808 c -3.48859,2.33094 -6.38578,4.22817 -6.43819,4.21606 -0.0524,-0.0121 -2.91311,-1.91931 -6.3571,-4.23824 z"
-						id="path179"
-					/></g
-				></svg
-			>
+			<span>
+				<svg
+					fill="fill-neutral-700"
+					class="w-3 inline-block"
+					viewBox="0 0 25.4 14.098638"
+					version="1.1"
+					id="svg5"
+					xml:space="preserve"
+					xmlns="http://www.w3.org/2000/svg"
+					><defs id="defs2" /><g id="layer1" transform="translate(-53.644677,-127.79211)"
+						><path
+							class="W fill-neutral-500"
+							d="m 59.906487,137.65245 -6.26181,-4.21622 v -2.82206 -2.82206 l 6.35,4.24282 6.35,4.24283 6.35,-4.24283 6.35,-4.24282 v 2.82222 2.82222 l -6.3429,4.23808 c -3.48859,2.33094 -6.38578,4.22817 -6.43819,4.21606 -0.0524,-0.0121 -2.91311,-1.91931 -6.3571,-4.23824 z"
+							id="path179"
+						/></g
+					></svg
+				>
+			</span>
 		</span>
-	</button>
+	</div>
 	<div
 		style="transform: translate3d(0px, 5px, 0px);"
 		class="absolute -left-[4vw] right-0 md:-left-[150px] {showBookChapterPopup

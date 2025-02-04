@@ -97,12 +97,14 @@
 	<div>
 		{#if showChapter}
 			{#if loadedBookName && loadedChapter}
-				<BookChapterPopup
-					bind:showBookChapterPopup
-					bind:chapterKey
-					bookName={loadedBookName}
-					bookChapter={loadedChapter}
-				></BookChapterPopup>
+				<div class="sticky top-0 w-full justify-center flex">
+					<BookChapterPopup
+						bind:showBookChapterPopup
+						bind:chapterKey
+						bookName={loadedBookName}
+						bookChapter={loadedChapter}
+					></BookChapterPopup>
+				</div>
 			{/if}
 			<p>
 				{#each keys as k, idx}
