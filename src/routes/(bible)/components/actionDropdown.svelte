@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { paneService } from '../../../components/dynamic-grid-template-areas/pane.service.svelte';
 
-	let { showActionsDropdown = $bindable(), paneId} = $props();
+	let { showActionsDropdown = $bindable(), paneId } = $props();
 
 	function onActionClick(e) {
 		e.stopPropagation();
@@ -18,9 +18,14 @@
 		showActionsDropdown = false;
 	}
 
-    function onClosePane(){
-        paneService.onDeletePane(paneService.rootPane, paneId);
-    }
+	function onSearch() {
+		paneService.onSplitPane(paneId, 'h', 'Search', {});
+		showActionsDropdown = false;
+	}
+
+	function onClosePane() {
+		paneService.onDeletePane(paneService.rootPane, paneId);
+	}
 </script>
 
 <div class="relative">
@@ -47,7 +52,7 @@
 
 	{#if showActionsDropdown}
 		<div
-			class="absolute end-0 z-10 mt-2 w-56 rounded-md border border-neutral-100 bg-neutral-100 shadow-lg overflow-y-scroll max-h-[100px]"
+			class="absolute end-0 z-10 mt-2 max-h-[100px] w-56 overflow-y-scroll rounded-md border border-neutral-100 bg-neutral-100 shadow-lg"
 			role="menu"
 		>
 			<div class="">
@@ -65,6 +70,13 @@
 					role="menuitem"
 				>
 					Split Horizontal
+				</button>
+				<button
+					onclick={onSearch}
+					class="block w-full px-4 py-2 text-left text-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+					role="menuitem"
+				>
+					Search
 				</button>
 
 				<button
