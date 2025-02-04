@@ -81,8 +81,8 @@
 			};
 		});
 
-		paneService.hw = hw
-		paneService.publishHw(hw)
+		paneService.hw = hw;
+		paneService.publishHw(hw);
 		console.log(gta);
 	}
 
@@ -232,11 +232,21 @@
 			{#if !deletedElements[a]}
 				{@const pane = findNodes(paneService.rootPane, a)}
 				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-				<div
-					style="grid-area: {a};"
-					class="header bg-neutral-950 w-full items-center text-balance border border-neutral-200"
-				>
-					<Component paneId={a}></Component>
+				<div class="relative h-full w-full">
+					<button
+						onclick={() => {
+							console.log('delete pane', pane.id);
+							paneService.onDeletePane(paneService.rootPane, pane.id);
+							//paneService.save();
+						}}
+						class="absolute inline-block float-end right-2 z-popover text-primary-500">x</button
+					>
+					<div
+						style="grid-area: {a};"
+						class="header bg-neutral-950 w-full items-center text-balance border border-neutral-200"
+					>
+						<Component paneId={a}></Component>
+					</div>
 				</div>
 			{/if}
 		{/each}
