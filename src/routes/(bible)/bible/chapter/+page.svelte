@@ -10,6 +10,7 @@
 	import ChapterContainer from '../components/chapter/chapterContainer.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
 	import { componentMapping } from '$lib/services/component-mapping.service';
+	import Pane from '../../components/pane.svelte';
 
 	let toggle = $state(true);
 
@@ -132,11 +133,11 @@
 				split: n.split,
 				left: {
 					id: n.id,
-					buffer: n.buffer,
+					buffer: n.buffer
 				},
 				right: {
 					id: nid,
-					buffer: buffer,
+					buffer: buffer
 				}
 			};
 			n.id = undefined;
@@ -144,7 +145,7 @@
 		} else {
 			n.split = split;
 			n.left = {
-				id: n.id,
+				id: n.id
 			};
 
 			let buffer = new Buffer();
@@ -232,24 +233,10 @@
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			{#if !deletedElements[a]}
-				{@const pane = findNodes(paneService.rootPane, a)}
-				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-				<div class="relateive" style="grid-area: {a};">
-					<div class="sticky top-0 z-[1501]">
-						<button
-							onclick={() => {
-								console.log('delete pane', a);
-								paneService.onDeletePane(paneService.rootPane, a);
-								//paneService.save();
-							}}
-							class="absolute z-10 right-2 float-end inline-block text-primary-500">x</button
-						>
-					</div>
-					<div
-						class="header bg-neutral-950 w-full items-center text-balance  outline"
-					>
-						<Component paneId={a}></Component>
-					</div>
+				<div class="relateive outline" style="grid-area: {a};">
+					<Pane paneId={a}>
+						
+					</Pane>
 				</div>
 			{/if}
 		{/each}

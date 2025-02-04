@@ -19,7 +19,7 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let { paneId = $bindable<Pane>() } = $props();
+	let { paneId = $bindable<Pane>(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
 	let pane: node = $state();
 	$effect(() => {
@@ -94,14 +94,7 @@
 		}
 	}
 
-	function updateHw(hw: any) {
-		console.log('hw', hw[pane.id]);
-		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
-		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
-	}
 
-	let containerHeight: string = $state('');
-	let containerWidth: string = $state('');
 	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
 		if (cs !== null) {
@@ -115,9 +108,7 @@
 		}
 
 		pane = paneService.findNode(paneService.rootPane, paneId);
-		paneService.subscribe(pane.id, updateHw);
-		updateHw(paneService.hw);
-		console.log(pane);
+
 		let ck = pane.buffer.bag.chapterKey;
 		if (ck) {
 			chapterKey = ck;
