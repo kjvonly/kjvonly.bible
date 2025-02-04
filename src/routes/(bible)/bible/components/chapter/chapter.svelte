@@ -90,7 +90,6 @@
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
-
 	onMount(async () => {});
 </script>
 
@@ -104,6 +103,7 @@
 					</span>
 				{/each}
 			</p>
+			<div class="mt-16"></div>
 		{/if}
 	</div>
 </div>

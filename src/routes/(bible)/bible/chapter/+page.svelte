@@ -133,14 +133,10 @@
 				left: {
 					id: n.id,
 					buffer: n.buffer,
-					parentSplit: n.split,
-					direction: 'left'
 				},
 				right: {
 					id: nid,
 					buffer: buffer,
-					parentSplit: n.split,
-					direction: 'right'
 				}
 			};
 			n.id = undefined;
@@ -149,8 +145,6 @@
 			n.split = split;
 			n.left = {
 				id: n.id,
-				parentSplit: n.split,
-				direction: 'left'
 			};
 
 			let buffer = new Buffer();
@@ -160,9 +154,7 @@
 
 			n.right = {
 				id: nid,
-				buffer: buffer,
-				parentSplit: n.split,
-				direction: 'right'
+				buffer: buffer
 			};
 			n.id = undefined;
 		}
@@ -254,15 +246,7 @@
 						>
 					</div>
 					<div
-						class="header bg-neutral-950 w-full items-center text-balance {pane.parentSplit === 'v'
-							? pane.direction === 'left'
-								? 'outline-e outline-neutral-700'
-								: 'outline-s outline-neutral-700'
-							: ''}  {pane.parentSplit === 'h'
-							? pane.direction === 'left'
-								? 'outline-b outline-neutral-700'
-								: 'outline-t outline-neutral-700'
-							: ''}"
+						class="header bg-neutral-950 w-full items-center text-balance  outline"
 					>
 						<Component paneId={a}></Component>
 					</div>
