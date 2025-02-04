@@ -61,7 +61,7 @@
 		let gtaRows = gta.length;
 		let gtaCols = gta[0].length;
 
-		elements.forEach((k) => {
+		Object.keys(els).forEach((k) => {
 			let rows = [];
 			for (let i = 0; i < gta.length; i++) {
 				let cols: any = [];
@@ -173,6 +173,7 @@
 
 		if (found) {
 			deletedElements[n.left.id] = n.left.id;
+			paneService.unsubscribe(n.left.id)
 			//do delete. this is the parent
 			if (n.right.split) {
 				n.split = n.right.split;
@@ -185,6 +186,8 @@
 				n.right = undefined;
 			}
 
+			
+
 			onGridUpdate();
 			return;
 		}
@@ -196,6 +199,7 @@
 		if (found) {
 			let tmp = n.right.id;
 			deletedElements[n.right.id] = n.right.id;
+			paneService.unsubscribe(n.right.id)
 			//do delete this is the parent
 			if (n.left.split) {
 				n.split = n.left.split;

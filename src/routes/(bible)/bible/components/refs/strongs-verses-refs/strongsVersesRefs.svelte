@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import Container from '../../../../components/container.svelte';
 	import StrongsRefsContainer from '../strongs-refs/strongsRefsContainer.svelte';
 	import VerseRefsContainer from '../verses-refs/verseRefsContainer.svelte';
@@ -38,6 +38,10 @@
 			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
 		}
 	});
+
+	onDestroy(() => {
+		paneService.unsubscribe(paneId)
+	})
 </script>
 
 <div id="{id}-container" class="relative flex h-full overflow-hidden">

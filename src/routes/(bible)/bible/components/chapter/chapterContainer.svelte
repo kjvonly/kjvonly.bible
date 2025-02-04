@@ -5,10 +5,10 @@
 	import Chapter from './chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
-	
+
 	import type { Pane } from '$lib/models/pane.model.svelte';
 	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
-		import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
+	import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -20,13 +20,12 @@
 
 	let { paneId = $bindable<Pane>() } = $props();
 
-	let pane: node  = $state()
+	let pane: node = $state();
 	$effect(() => {
 		paneId;
-		pane = paneService.findNode(paneService.rootPane, paneId)
-	})
+		pane = paneService.findNode(paneService.rootPane, paneId);
+	});
 
-	
 	$effect(() => {
 		chapterSettings;
 
@@ -42,7 +41,7 @@
 
 	$effect(() => {
 		if (chapterKey) {
-			console.log(pane)
+			console.log(pane);
 			pane.buffer.bag.chapterKey = chapterKey;
 			localStorage.setItem('lastChapterKey', chapterKey);
 			paneService.save();
@@ -92,9 +91,9 @@
 		}
 	}
 
-	function updateHw(hw: any){
-		console.log('hw', hw[pane.id])
-		containerHeight = `height: ${hw[pane.id].height * 100}vh;`
+	function updateHw(hw: any) {
+		console.log('hw', hw[pane.id]);
+		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 	}
 
 	let containerHeight: string = $state('');
@@ -110,10 +109,10 @@
 			chapterSettings = newChapterSettings();
 		}
 
-		pane = paneService.findNode(paneService.rootPane, paneId)
-		paneService.subscribe(pane.id, updateHw)
-		updateHw(paneService.hw)
-		console.log(pane)
+		pane = paneService.findNode(paneService.rootPane, paneId);
+		paneService.subscribe(pane.id, updateHw);
+		updateHw(paneService.hw);
+		console.log(pane);
 		let ck = pane.buffer.bag.chapterKey;
 		if (ck) {
 			chapterKey = ck;
@@ -129,6 +128,19 @@
 			return;
 		}
 
+		el.addEventListener('scroll', (event) => {
+			//lastKnownScrollPosition = window.scrollY;
+
+			lastKnownScrollPosition = el.scrollTop;
+			if (!ticking) {
+				window.requestAnimationFrame(() => {
+					setButtonOffset(lastKnownScrollPosition);
+					ticking = false;
+				});
+				ticking = true;
+			}
+		});
+
 		if (pane?.buffer?.bag?.lastVerse) {
 			setTimeout(() => {
 				let vel = document.getElementById(`${id}-vno-${pane.buffer.bag.lastVerse}`);
@@ -139,12 +151,15 @@
 			}, 50);
 		}
 
-	
+		let cel = document.getElementById(`${id}-container`);
+		if (cel === null) {
+			return;
+		}
 	});
 </script>
 
-<div id="{id}-container" class="relative  overflow-hidden">
-	<div {id}  style="{containerHeight}" class="relative overflow-y-scroll">
+<div id="{id}-container" class="relative overflow-hidden">
+	<div {id} style={containerHeight} class="relative overflow-y-scroll">
 		<div>
 			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}
 			></Header>
