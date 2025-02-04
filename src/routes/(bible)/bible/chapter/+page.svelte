@@ -242,7 +242,7 @@
 			{#if !deletedElements[a]}
 				{@const pane = findNodes(paneService.rootPane, a)}
 				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-				<div class="relative h-full w-full">
+				<div class="flex flex-shrink" style="grid-area: {a};">
 					<button
 						onclick={() => {
 							console.log('delete pane', pane.id);
@@ -252,11 +252,15 @@
 						class="absolute right-2 z-popover float-end inline-block text-primary-500">x</button
 					>
 					<div
-						style="grid-area: {a};"
 						class="header bg-neutral-950 w-full items-center text-balance {pane.parentSplit === 'v'
-							? pane.direction === 'left' ? 'border-e border-neutral-700' : 'border-s border-neutral-700' : ''
-
-							 }  {pane.parentSplit === 'h' ? pane.direction === 'left' ? 'border-b border-neutral-700' :'border-t border-neutral-700' : ''}"
+							? pane.direction === 'left'
+								? 'border-e border-neutral-700'
+								: 'border-s border-neutral-700'
+							: ''}  {pane.parentSplit === 'h'
+							? pane.direction === 'left'
+								? 'border-b border-neutral-700'
+								: 'border-t border-neutral-700'
+							: ''}"
 					>
 						<Component paneId={a}></Component>
 					</div>

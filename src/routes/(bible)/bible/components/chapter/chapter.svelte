@@ -105,6 +105,7 @@
 						bookName={loadedBookName}
 						bookChapter={loadedChapter}
 						{containerHeight}
+						paneId={pane.id}
 					></ChapterActions>
 				</div>
 			{/if}

@@ -5,10 +5,11 @@
 	import SettingsPopup from './settingsPopup.svelte';
 	import ActionDropdown from './actionDropdown.svelte';
 
-	let { chapterKey = $bindable(), bookName, bookChapter, containerHeight } = $props();
+	let { chapterKey = $bindable(), bookName, bookChapter, containerHeight, paneId } = $props();
 
 	let showBookChapterPopup: Boolean = $state(false);
 	let showSettingsPopup: Boolean = $state(false);
+	let showActionsDropdown: Boolean = $state(false);
 
 	function onBookChapterClick(event: Event) {
 		event.stopPropagation();
@@ -62,7 +63,7 @@
 		</span>
 		<span class="mr-2 h-[100%] border-e-2 border-neutral-300">&nbsp;</span>
 
-		<ActionDropdown></ActionDropdown>
+		<ActionDropdown  {paneId} bind:showActionsDropdown></ActionDropdown>
 	</span>
 	<div></div>
 </div>

@@ -94,9 +94,11 @@
 	function updateHw(hw: any) {
 		console.log('hw', hw[pane.id]);
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
+		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
 
 	let containerHeight: string = $state('');
+	let containerWidth: string = $state('')
 	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
 		if (cs !== null) {
@@ -158,8 +160,8 @@
 	});
 </script>
 
-<div id="{id}-container" class="relative overflow-hidden">
-	<div {id} style={containerHeight} class="relative overflow-y-scroll">
+<div id="{id}-container" style="{containerWidth} {containerHeight}" class="relative overflow-hidden">
+	<div {id} style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
 		<div class="flex justify-center">
 			<div class="md:z-10 md:max-w-lg">
 				<div
