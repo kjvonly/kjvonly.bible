@@ -243,7 +243,4 @@
 </div>
 
 <style>
-	.checkbox > input[type='checkbox']:checked::before {
-		background-color: red;
-	}
 </style>

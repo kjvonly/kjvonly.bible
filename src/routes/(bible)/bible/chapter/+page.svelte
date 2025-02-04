@@ -228,15 +228,10 @@
 
 <div class="flex h-[100vh] w-full flex-col">
 	<div style="max-height: 100vh; min-width: 1px; {template};" class=" w-full">
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		{#each elements as a, idx}
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			{#if !deletedElements[a]}
-				<div class="relateive outline" style="grid-area: {a};">
-					<Pane paneId={a}>
-						
-					</Pane>
+		{#each elements as paneId}
+			{#if !deletedElements[paneId]}
+				<div class="relateive outline" style="grid-area: {paneId};">
+					<Pane paneId={paneId}></Pane>
 				</div>
 			{/if}
 		{/each}

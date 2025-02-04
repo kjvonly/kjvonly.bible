@@ -63,7 +63,7 @@
 		</span>
 		<span class="mr-2 h-[100%] border-e-2 border-neutral-300">&nbsp;</span>
 
-		<ActionDropdown  {paneId} bind:showActionsDropdown></ActionDropdown>
+		<ActionDropdown {containerHeight} {paneId} bind:showActionsDropdown></ActionDropdown>
 	</span>
 	<div></div>
 </div>

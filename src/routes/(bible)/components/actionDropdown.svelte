@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { paneService } from '../../../components/dynamic-grid-template-areas/pane.service.svelte';
 
-	let { showActionsDropdown = $bindable(), paneId } = $props();
+	let { showActionsDropdown = $bindable(), paneId, componentHeight} = $props();
 
 	function onActionClick(e) {
 		e.stopPropagation();
@@ -10,13 +10,17 @@
 
 	function onSplitVertical() {
 		paneService.onSplitPane(paneId, 'v', 'ChapterContainer', {});
-        showActionsDropdown = false
+		showActionsDropdown = false;
 	}
 
 	function onSplitHorizontal() {
 		paneService.onSplitPane(paneId, 'h', 'ChapterContainer', {});
-        showActionsDropdown = false
+		showActionsDropdown = false;
 	}
+
+    function onClosePane(){
+        paneService.onDeletePane(paneService.rootPane, paneId);
+    }
 </script>
 
 <div class="relative">
@@ -43,27 +47,33 @@
 
 	{#if showActionsDropdown}
 		<div
-			class="absolute end-0 z-10 mt-2 w-56 rounded-md border border-neutral-100 bg-neutral-100 shadow-lg"
+			class="absolute end-0 z-10 mt-2 w-56 rounded-md border border-neutral-100 bg-neutral-100 shadow-lg overflow-y-scroll max-h-[100px]"
 			role="menu"
 		>
-			<div class="p-2">
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<span
+			<div class="">
+				<button
 					onclick={onSplitVertical}
-					class="block rounded-lg px-4 py-2 text-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+					class="block w-full px-4 py-2 text-left text-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
 					role="menuitem"
 				>
 					Split Vertical
-				</span>
+				</button>
 
-				<span
+				<button
 					onclick={onSplitHorizontal}
-					class="block rounded-lg px-4 py-2 text-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+					class="block w-full px-4 py-2 text-left text-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
 					role="menuitem"
 				>
 					Split Horizontal
-				</span>
+				</button>
+
+				<button
+					onclick={onClosePane}
+					class="block w-full px-4 py-2 text-left text-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+					role="menuitem"
+				>
+					Close View
+				</button>
 			</div>
 		</div>
 	{/if}

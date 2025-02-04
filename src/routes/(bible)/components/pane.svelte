@@ -45,15 +45,7 @@
 
 <div style="{containerWidth} {containerHeight}" class="relative overflow-hidden">
 	<div style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
-		<div class="sticky top-0 z-[1501]">
-			<button
-				onclick={() => {
-					paneService.onDeletePane(paneService.rootPane, pane.id);
-					//paneService.save();
-				}}
-				class="absolute right-2 z-10 float-end inline-block text-primary-500">x</button
-			>
-		</div>
+
 		<div class="header bg-neutral-950 w-full items-center text-balance outline">
 			{#if pane?.buffer?.componentName}
 				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}

@@ -27,18 +27,31 @@
 	});
 
 	onDestroy(() => {
-		paneService.unsubscribe(paneId)
-	})
+		paneService.unsubscribe(paneId);
+	});
 </script>
 
 <div id="{id}-container" class="relative flex h-full w-full overflow-hidden">
-	<div {id} style="{containerHeight}" class="relative w-full overflow-y-scroll">
-		<div class="flex h-full w-full justify-center">
-			<div class="max-w-6xl">
-				{#if strongsRef.length > 0}
-					<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
-				{/if}
-				<VerseRefsContainer></VerseRefsContainer>
+	<div {id} style={containerHeight} class="relative w-full overflow-y-scroll">
+		<div class="h-full w-full">
+			<div class="flex flex-col justify-center">
+				<div class="sticky top-0 w-full bg-neutral-50">
+					<button
+						onclick={() => {
+							paneService.onDeletePane(paneService.rootPane, paneId);
+						}}
+						class="absolute z-10 float-end right-3 inline-block text-neutral-700">Close</button
+					>
+				</div>
+
+				<div class="flex w-full justify-center">
+					<div class="max-w-6xl">
+						{#if strongsRef.length > 0}
+							<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
+						{/if}
+						<VerseRefsContainer></VerseRefsContainer>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
