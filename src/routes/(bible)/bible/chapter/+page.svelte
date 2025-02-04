@@ -243,14 +243,16 @@
 				{@const pane = findNodes(paneService.rootPane, a)}
 				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
 				<div class="relateive" style="grid-area: {a};">
-					<button
-						onclick={() => {
-							console.log('delete pane', pane.id);
-							paneService.onDeletePane(paneService.rootPane, pane.id);
-							//paneService.save();
-						}}
-						class="absolute right-2 z-popover float-end inline-block text-primary-500">x</button
-					>
+					<div class="sticky top-0 z-[1501]">
+						<button
+							onclick={() => {
+								console.log('delete pane', a);
+								paneService.onDeletePane(paneService.rootPane, a);
+								//paneService.save();
+							}}
+							class="absolute z-10 right-2 float-end inline-block text-primary-500">x</button
+						>
+					</div>
 					<div
 						class="header bg-neutral-950 w-full items-center text-balance {pane.parentSplit === 'v'
 							? pane.direction === 'left'
