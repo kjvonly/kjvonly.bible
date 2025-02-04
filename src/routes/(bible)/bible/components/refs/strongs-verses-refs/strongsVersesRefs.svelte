@@ -5,24 +5,13 @@
 	import { paneService } from '../../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
 
 	let id = crypto.randomUUID();
-	let { paneId } = $props();
+	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
 	let strongsRef = $state('');
 	let text = $state('');
-	let containerHeight: string = $state('');
-
-
-
-	function updateHw(hw: any){
-		console.log('hw', hw[paneId])
-		containerHeight = `height: ${hw[paneId].height * 100}vh;`
-	}
-
 
 	onMount(() => {
 		let pane = paneService.findNode(paneService.rootPane, paneId);
-		paneService.subscribe(paneId, updateHw)
-		updateHw(paneService.hw)
 
 		console.log('word pane', pane);
 		pane?.buffer?.bag?.word?.href?.forEach((ref: string) => {

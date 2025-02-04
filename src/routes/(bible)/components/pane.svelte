@@ -48,8 +48,7 @@
 		<div class="sticky top-0 z-[1501]">
 			<button
 				onclick={() => {
-					console.log('delete pane', a);
-					paneService.onDeletePane(paneService.rootPane, a);
+					paneService.onDeletePane(paneService.rootPane, pane.id);
 					//paneService.save();
 				}}
 				class="absolute right-2 z-10 float-end inline-block text-primary-500">x</button
