@@ -44,8 +44,8 @@
 	})
 </script>
 
-<div id="{id}-container" class="relative flex h-full overflow-hidden">
-	<div {id} style="{containerHeight}" class="relative overflow-y-scroll">
+<div id="{id}-container" class="relative flex h-full w-full overflow-hidden">
+	<div {id} style="{containerHeight}" class="relative w-full overflow-y-scroll">
 		<div class="flex h-full w-full justify-center">
 			<div class="max-w-6xl">
 				{#if strongsRef.length > 0}
