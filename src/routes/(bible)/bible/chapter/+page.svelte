@@ -243,7 +243,7 @@
 							paneService.onDeletePane(paneService.rootPane, pane.id);
 							//paneService.save();
 						}}
-						class="absolute inline-block float-end right-2 z-popover text-primary-500">x</button
+						class="absolute inline-block float-end right-2 z-popover text-primary-500 ">x</button
 					>
 					<div
 						style="grid-area: {a};"
