@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { paneService } from '../../../components/dynamic-grid-template-areas/pane.service.svelte';
 
-	let { showActionsDropdown = $bindable(), paneId, componentHeight} = $props();
+	let { showActionsDropdown = $bindable(), paneId} = $props();
 
 	function onActionClick(e) {
 		e.stopPropagation();

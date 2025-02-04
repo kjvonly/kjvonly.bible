@@ -173,7 +173,7 @@
 			<div class="md:z-10 md:max-w-lg">
 				<div
 					bind:clientWidth={chapterWidth}
-					class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"
+					class="flex flex-wrap justify-start"
 				>
 					<Chapter
 						bind:bookName
