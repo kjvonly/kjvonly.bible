@@ -132,11 +132,15 @@
 				split: n.split,
 				left: {
 					id: n.id,
-					buffer: n.buffer
+					buffer: n.buffer,
+					parentSplit: n.split,
+					direction: 'left'
 				},
 				right: {
 					id: nid,
-					buffer: buffer
+					buffer: buffer,
+					parentSplit: n.split,
+					direction: 'right'
 				}
 			};
 			n.id = undefined;
@@ -144,7 +148,9 @@
 		} else {
 			n.split = split;
 			n.left = {
-				id: n.id
+				id: n.id,
+				parentSplit: n.split,
+				direction: 'left'
 			};
 
 			let buffer = new Buffer();
@@ -154,7 +160,9 @@
 
 			n.right = {
 				id: nid,
-				buffer: buffer
+				buffer: buffer,
+				parentSplit: n.split,
+				direction: 'right'
 			};
 			n.id = undefined;
 		}
@@ -173,7 +181,7 @@
 
 		if (found) {
 			deletedElements[n.left.id] = n.left.id;
-			paneService.unsubscribe(n.left.id)
+			paneService.unsubscribe(n.left.id);
 			//do delete. this is the parent
 			if (n.right.split) {
 				n.split = n.right.split;
@@ -186,8 +194,6 @@
 				n.right = undefined;
 			}
 
-			
-
 			onGridUpdate();
 			return;
 		}
@@ -199,7 +205,7 @@
 		if (found) {
 			let tmp = n.right.id;
 			deletedElements[n.right.id] = n.right.id;
-			paneService.unsubscribe(n.right.id)
+			paneService.unsubscribe(n.right.id);
 			//do delete this is the parent
 			if (n.left.split) {
 				n.split = n.left.split;
@@ -243,11 +249,14 @@
 							paneService.onDeletePane(paneService.rootPane, pane.id);
 							//paneService.save();
 						}}
-						class="absolute inline-block float-end right-2 z-popover text-primary-500 ">x</button
+						class="absolute right-2 z-popover float-end inline-block text-primary-500">x</button
 					>
 					<div
 						style="grid-area: {a};"
-						class="header bg-neutral-950 w-full items-center text-balance"
+						class="header bg-neutral-950 w-full items-center text-balance {pane.parentSplit === 'v'
+							? pane.direction === 'left' ? 'border-e border-neutral-700' : 'border-s border-neutral-700' : ''
+
+							 }  {pane.parentSplit === 'h' ? pane.direction === 'left' ? 'border-b border-neutral-700' :'border-t border-neutral-700' : ''}"
 					>
 						<Component paneId={a}></Component>
 					</div>
