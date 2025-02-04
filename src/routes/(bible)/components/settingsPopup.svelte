@@ -74,13 +74,13 @@
 </script>
 
 <div
-	class="h-full w-full justify-start justify-items-start overflow-y-scroll bg-neutral-100 text-neutral-700"
+	class="h-full w-full justify-start justify-items-start overflow-y-scroll  bg-neutral-100 text-neutral-700"
 >
 	<header
-		bind:clientHeight={headerHeight}
-		class="items c sticky top-0 w-full flex-col border-b-2 bg-neutral-100"
+		
+		class="items w-full flex-col border-b-2 bg-neutral-100"
 	>
-		<div class="flex w-full justify-between px-2 pt-2 text-neutral-700">
+		<div class="flex w-full justify-between px-2 pt-2 text-neutral-700  sticky top-0 ">
 			<div class="flex items-center">
 				<h1 class=" text-center text-lg">READING SETTINGS</h1>
 			</div>
@@ -97,10 +97,10 @@
 	</header>
 
 	<div
-		style="max-height: calc(100% - {headerHeight}px);"
-		class="flex h-full w-full flex-col justify-center bg-neutral-50 p-6"
+		
+		class="flex w-full flex-col justify-center bg-neutral-50 p-6 "
 	>
-		<div class="flex w-full flex-row">
+		<div class="flex w-full flex-row mt-4">
 			<button
 				onclick={() => {
 					chapterSettings.isDarkTheme = false;
