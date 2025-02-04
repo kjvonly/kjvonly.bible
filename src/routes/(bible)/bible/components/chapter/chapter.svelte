@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	import Verse from './verse.svelte';
-	import BookChapterPopup from '../../../components/chapterActions.svelte';
+	import ChapterActions from '../../../components/chapterActions.svelte';
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
 	let timeoutIDs: number[] = [];
@@ -89,7 +89,7 @@
 		verses = data['verses'];
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
-	let showBookChapterPopup: Boolean = $state(false);
+
 
 	onMount(async () => {});
 </script>
@@ -99,13 +99,13 @@
 		{#if showChapter}
 			{#if loadedBookName && loadedChapter}
 				<div class="sticky top-0 w-full justify-center flex z-popover">
-					<BookChapterPopup
-						bind:showBookChapterPopup
+					<ChapterActions
+
 						bind:chapterKey
 						bookName={loadedBookName}
 						bookChapter={loadedChapter}
 						{containerHeight}
-					></BookChapterPopup>
+					></ChapterActions>
 				</div>
 			{/if}
 			<p class="px-4">
