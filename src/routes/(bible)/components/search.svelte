@@ -35,7 +35,7 @@
 	});
 </script>
 
-<div style={containerHeight} class="pt-6">
+<div style={containerHeight} class="pt-6 overflow-hidden">
 	<div class="flex flex-col justify-center items-center">
 		<input
 			bind:clientHeight={searchInputHeight}
@@ -46,6 +46,7 @@
 		/>
 
 		<div
+		style={containerHeight}
 			class="{searchResults?.length > 0 ? '' : 'hidden'}
                   max-w-3xl overflow-x-hidden overflow-y-scroll  bg-neutral-50
                   "
