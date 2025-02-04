@@ -55,7 +55,35 @@
 		  grid-template-rows: auto auto;
   		grid-template-areas:
 			${grid};`;
-			console.log(grid)
+		console.log(grid);
+
+		let hw: any = {};
+		let gtaRows = gta.length;
+		let gtaCols = gta[0].length;
+
+		elements.forEach((k) => {
+			let rows = [];
+			for (let i = 0; i < gta.length; i++) {
+				let cols: any = [];
+				for (let j = 0; j < gta[i].length; j++) {
+					if (gta[i][j] === k) {
+						cols.push([gta[i][j]]);
+					}
+				}
+				if (cols.length > 0) {
+					rows.push(cols);
+				}
+			}
+
+			hw[k] = {
+				height: (rows.length * 1.0) / gtaRows,
+				width: (rows[0].length * 1.0) / gtaCols
+			};
+		});
+
+		paneService.hw = hw
+		paneService.publishHw(hw)
+		console.log(gta);
 	}
 
 	function findNodes(n: node, key: string): node | undefined {

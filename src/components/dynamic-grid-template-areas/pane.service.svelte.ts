@@ -11,34 +11,54 @@ export class PaneService {
 
     };
 
+    hw: any = {}
 
     findNode(n: node, key: string): node | undefined {
-		if (n.id === key) {
-			return n;
-		}
-		let found;
+        if (n.id === key) {
+            return n;
+        }
+        let found;
 
-		if (n.left) {
-			found = this.findNode(n.left, key);
-		}
+        if (n.left) {
+            found = this.findNode(n.left, key);
+        }
 
-		if (found) {
-			return found;
-		}
+        if (found) {
+            return found;
+        }
 
-		if (n.right) {
-			found = this.findNode(n.right, key);
-		}
+        if (n.right) {
+            found = this.findNode(n.right, key);
+        }
 
-		return found;
-	}
+        return found;
+    }
 
-    save(){
-        
+    save() {
+
     }
     onDeletePane: Function = () => { }
     onSplitPane: Function = () => { }
-    
+
+    subscribers: any = []
+
+    subscribe(id: string, fn: Function) {
+        this.subscribers.push({ id: id, fn: fn })
+    }
+
+    unsubscribe(id: string) {
+        this.subscribers = this.subscribers.filter((s: any) => {
+            if (s.id !== id) {
+                return s
+            }
+
+        })
+    }
+    publishHw(hw: any) {
+        this.subscribers.forEach(s => {
+            s.fn(hw)
+        });
+    }
 
     private constructor() {
 

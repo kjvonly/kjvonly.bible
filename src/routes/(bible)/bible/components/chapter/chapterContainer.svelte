@@ -92,9 +92,13 @@
 		}
 	}
 
-	let containerHeight: number = $state(0);
-	onMount(() => {
+	function updateHw(hw: any){
+		console.log('hw', hw[pane.id])
+		containerHeight = `height: ${hw[pane.id].height * 100}vh;`
+	}
 
+	let containerHeight: string = $state('');
+	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
 		if (cs !== null) {
 			chapterSettings = JSON.parse(cs);
@@ -107,6 +111,8 @@
 		}
 
 		pane = paneService.findNode(paneService.rootPane, paneId)
+		paneService.subscribe(pane.id, updateHw)
+		updateHw(paneService.hw)
 		console.log(pane)
 		let ck = pane.buffer.bag.chapterKey;
 		if (ck) {
@@ -123,28 +129,6 @@
 			return;
 		}
 
-		el.addEventListener('scroll', (event) => {
-			//lastKnownScrollPosition = window.scrollY;
-
-			lastKnownScrollPosition = el.scrollTop;
-			if (!ticking) {
-				window.requestAnimationFrame(() => {
-					setButtonOffset(lastKnownScrollPosition);
-					ticking = false;
-				});
-				ticking = true;
-			}
-		});
-
-		let cel = document.getElementById(`${id}-container`);
-		if (cel === null) {
-			return;
-		}
-
-		let pel = el?.parentNode as HTMLElement;
-
-		containerHeight = pel.clientHeight;
-
 		if (pane?.buffer?.bag?.lastVerse) {
 			setTimeout(() => {
 				let vel = document.getElementById(`${id}-vno-${pane.buffer.bag.lastVerse}`);
@@ -155,13 +139,12 @@
 			}, 50);
 		}
 
-		if (pane?.buffer?.bag?.lastKnownScrollPosition) {
-		}
+	
 	});
 </script>
 
 <div id="{id}-container" class="relative  overflow-hidden">
-	<div {id}  class="relative overflow-y-scroll">
+	<div {id}  style="{containerHeight}" class="relative overflow-y-scroll">
 		<div>
 			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}
 			></Header>

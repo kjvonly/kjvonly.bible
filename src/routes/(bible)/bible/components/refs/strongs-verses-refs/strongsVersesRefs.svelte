@@ -10,12 +10,23 @@
 	let { paneId } = $props();
 
 	let strongsRef = $state('');
-	let text = $state('')
-	let containerHeight: number = $state(0);
+	let text = $state('');
+	let containerHeight: string = $state('');
+
+
+
+	function updateHw(hw: any){
+		console.log('hw', hw[paneId])
+		containerHeight = `height: ${hw[paneId].height * 100}vh;`
+	}
+
+
 	onMount(() => {
-		let pane = paneService.findNode(paneService.rootPane, paneId)
-		console.log('word pane', pane)
-		containerHeight = getParentHeight(id);
+		let pane = paneService.findNode(paneService.rootPane, paneId);
+		paneService.subscribe(paneId, updateHw)
+		updateHw(paneService.hw)
+
+		console.log('word pane', pane);
 		pane?.buffer?.bag?.word?.href?.forEach((ref: string) => {
 			let match = new RegExp('^[GH]', 'm').test(ref);
 			if (match) {
@@ -23,19 +34,16 @@
 			}
 		});
 
-		if (pane?.buffer?.bag?.word?.text){
-			
+		if (pane?.buffer?.bag?.word?.text) {
 			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
 		}
 	});
 </script>
 
 <div id="{id}-container" class="relative flex h-full overflow-hidden">
-	<div {id}  class="relative overflow-y-scroll">
+	<div {id} style="{containerHeight}" class="relative overflow-y-scroll">
 		<div class="flex h-full w-full justify-center">
-
 			<div class="max-w-6xl">
-				test
 				{#if strongsRef.length > 0}
 					<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
 				{/if}
