@@ -160,13 +160,8 @@
 
 <div id="{id}-container" class="relative overflow-hidden">
 	<div {id} style={containerHeight} class="relative overflow-y-scroll">
-		<div>
-			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}
-			></Header>
-		</div>
-		
-		<div class="m-4 flex justify-center ">
-			<div class="max-w-sm md:z-10 md:max-w-lg">
+		<div class="flex justify-center">
+			<div class="md:z-10 md:max-w-lg">
 				<div
 					bind:clientWidth={chapterWidth}
 					class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"
@@ -178,6 +173,7 @@
 						bind:id
 						bind:pane
 						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
+						{containerHeight}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>
 				</div>
@@ -215,7 +211,7 @@
 					</button>
 				</div>
 			</div>
-			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px); " class="sticky">
+			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px); " >
 				<div class="absolute bottom-4 right-4">
 					<button
 						onclick={_nextChapter}

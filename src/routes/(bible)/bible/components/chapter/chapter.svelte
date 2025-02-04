@@ -16,7 +16,8 @@
 		bookChapter = $bindable(),
 		id = $bindable(),
 		pane = $bindable(),
-		doChapterFadeAnimation = $bindable()
+		doChapterFadeAnimation = $bindable(),
+		containerHeight
 	} = $props();
 
 	$effect(() => {
@@ -97,12 +98,13 @@
 	<div>
 		{#if showChapter}
 			{#if loadedBookName && loadedChapter}
-				<div class="sticky top-0 w-full justify-center flex">
+				<div class="sticky top-0 w-full justify-center flex z-popover">
 					<BookChapterPopup
 						bind:showBookChapterPopup
 						bind:chapterKey
 						bookName={loadedBookName}
 						bookChapter={loadedChapter}
+						{containerHeight}
 					></BookChapterPopup>
 				</div>
 			{/if}

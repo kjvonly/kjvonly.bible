@@ -6,7 +6,8 @@
 		chapterKey = $bindable(),
 		showBookChapterPopup = $bindable(),
 		bookName,
-		bookChapter
+		bookChapter,
+		containerHeight
 	} = $props();
 	let bookNames: any = $state();
 	let bookIds: any;
@@ -453,8 +454,8 @@
 </script>
 
 <!-- book chapter selection -->
-<div class="relative">
-	<div class=" leading-tight">
+
+	<div class="leading-tight ">
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<span
@@ -509,11 +510,12 @@
 		</span>
 	</div>
 	<div
-		style="transform: translate3d(0px, 5px, 0px);"
-		class="absolute -left-[4vw] right-0 md:-left-[150px] {showBookChapterPopup
+	style="{containerHeight}"
+		class="absolute   {showBookChapterPopup
 			? ''
-			: 'hidden'}  z-popover mx-auto h-[70vh] w-[90vw] bg-white shadow-lg md:w-1/2 md:min-w-sm"
+			: 'hidden'} z-[10000]  w-full  bg-white shadow-lg"
 	>
+	
 		<div class="h-full w-full justify-start justify-items-start overflow-y-scroll bg-neutral-100">
 			<header class="items sticky top-0 w-full flex-col border-b-2 bg-neutral-100 text-neutral-700">
 				<div class="flex w-full justify-between p-2">
@@ -657,4 +659,4 @@
 			{/if}
 		</div>
 	</div>
-</div>
+

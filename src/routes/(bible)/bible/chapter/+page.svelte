@@ -247,7 +247,7 @@
 					>
 					<div
 						style="grid-area: {a};"
-						class="header bg-neutral-950 w-full items-center text-balance border border-neutral-200"
+						class="header bg-neutral-950 w-full items-center text-balance"
 					>
 						<Component paneId={a}></Component>
 					</div>
