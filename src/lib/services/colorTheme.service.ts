@@ -21,7 +21,7 @@ class ColorTheme {
                 html?.classList.remove(className);
             }
         })
-        
+
         let cs = this.getChapterSettings()
         if (!cs) {
             return
@@ -44,6 +44,7 @@ class ColorTheme {
         }
         return newChapterSettings()
     }
+
 }
 
 

@@ -55,6 +55,8 @@ export class PaneService {
 
         })
     }
+
+
     publishHw(hw: any) {
         this.subscribers.forEach(s => {
             s.fn(hw)

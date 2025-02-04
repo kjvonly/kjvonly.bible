@@ -92,7 +92,7 @@
 {/if}
 {#if showSettingsPopup}
 	<div style={containerHeight} class="absolute z-[10000] w-full bg-white shadow-lg">
-		<SettingsPopup></SettingsPopup>
+		<SettingsPopup bind:showSettingsPopup></SettingsPopup>
 	</div>
 {/if}
 
