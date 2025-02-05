@@ -6,7 +6,7 @@
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	import type { Pane } from '$lib/models/pane.model.svelte';
-	import { paneService } from '$lib/components/dynamic-grid-template-areas/pane.service.svelte';
+	import { paneService } from '$lib/services/pane.service.svelte';
 	import type { node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
 	import ChapterActions from './chapterActions.svelte';
 

@@ -3,10 +3,10 @@
 		numberToLetters,
 		renderGridTemplateAreas,
 		type node
-	} from '../../../../lib/components/dynamic-grid-template-areas/dynamicGrid';
+	} from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
 	import { onMount } from 'svelte';
 
-	import { paneService } from '../../../../lib/components/dynamic-grid-template-areas/pane.service.svelte';
+	import { paneService } from '$lib/services/pane.service.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
 	import { componentMapping } from '$lib/services/component-mapping.service';
 	import Pane from '../../components/pane.svelte';

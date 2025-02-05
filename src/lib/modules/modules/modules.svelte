@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { paneService } from '$lib/components/dynamic-grid-template-areas/pane.service.svelte';
+	import { paneService } from '$lib/services/pane.service.svelte';
 	import type { node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
 
 	let components = ['ChapterContainer', 'Search'];
