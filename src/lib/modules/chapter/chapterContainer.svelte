@@ -2,7 +2,7 @@
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 	import { onMount } from 'svelte';
 		import Chapter from './chapter.svelte';
-	import { newChapterSettings, type ChapterSettings } from '../../models/settings.model';
+	import { newChapterSettings, type Settings } from '../../models/settings.model';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	import type { Pane } from '$lib/models/pane.model.svelte';
@@ -16,7 +16,7 @@
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
 
-	let chapterSettings: ChapterSettings | null = $state(null);
+	let chapterSettings: Settings | null = $state(null);
 
 	let { paneId = $bindable<Pane>(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 

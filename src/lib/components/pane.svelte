@@ -2,13 +2,13 @@
 	import { onMount } from 'svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { type node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
-	import { newChapterSettings, type ChapterSettings } from '../models/settings.model';
+	import { newChapterSettings, type Settings } from '../models/settings.model';
 	import { componentMapping } from '$lib/services/componentMappingService';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');
-	let chapterSettings: ChapterSettings | null = $state(null);
+	let chapterSettings: Settings | null = $state(null);
 
 	let { paneId = $bindable<string>() } = $props();
 

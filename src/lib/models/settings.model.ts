@@ -1,4 +1,4 @@
-export interface ChapterSettings {
+export interface Settings {
     fontSize: string
     fontFamily: string
     colorTheme?: string
@@ -6,7 +6,7 @@ export interface ChapterSettings {
     doChapterFadeAnimation?: boolean
 }
 
-export function newChapterSettings(): ChapterSettings{
+export function newChapterSettings(): Settings{
     return {
         fontSize: 'text-base',
         fontFamily: 'font-sans',

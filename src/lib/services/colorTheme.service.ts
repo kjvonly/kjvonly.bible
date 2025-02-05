@@ -1,4 +1,4 @@
-import { type ChapterSettings, newChapterSettings } from "../models/settings.model";
+import { type Settings, newChapterSettings } from "../models/settings.model";
 
 class ColorTheme {
 
@@ -54,10 +54,10 @@ class ColorTheme {
 
     }
 
-    getChapterSettings(): ChapterSettings {
+    getChapterSettings(): Settings {
         let cs = localStorage.getItem('chapterSettings');
         if (cs != null) {
-            let chapterSettings: ChapterSettings | null = JSON.parse(cs);
+            let chapterSettings: Settings | null = JSON.parse(cs);
             if (chapterSettings) {
                 return chapterSettings
             }

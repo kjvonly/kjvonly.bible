@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { ChapterSettings } from '../../models/settings.model';
+	import type { Settings } from '../../models/settings.model';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	let { showSettingsPopup = $bindable() } = $props();
