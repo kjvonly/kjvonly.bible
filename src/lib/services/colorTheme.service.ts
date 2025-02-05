@@ -1,4 +1,4 @@
-import { type ChapterSettings, newChapterSettings } from "../../routes/(bible)/bible/models/chapterSettings";
+import { type ChapterSettings, newChapterSettings } from "../models/chapterSettings";
 
 class ColorTheme {
 

@@ -2,7 +2,7 @@
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 	import { onMount } from 'svelte';
 		import Chapter from './chapter.svelte';
-	import { newChapterSettings, type ChapterSettings } from '../../../routes/(bible)/bible/models/chapterSettings';
+	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	import type { Pane } from '$lib/models/pane.model.svelte';

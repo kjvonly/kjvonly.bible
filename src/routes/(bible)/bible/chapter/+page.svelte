@@ -9,7 +9,7 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
 	import { componentMapping } from '$lib/services/componentMappingService';
-	import Pane from '../../components/pane.svelte';
+	import Pane from '../../../../lib/components/pane.svelte';
 
 	let toggle = $state(true);
 
