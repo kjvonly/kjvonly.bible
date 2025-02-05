@@ -54,7 +54,7 @@
 		template = `display: grid;
 		max-height: 100vh;
 		grid-template-columns: repeat(${gta.length}, ${gta[0].length});
-		  grid-template-rows: auto auto;
+
   		grid-template-areas:
 			${grid};`;
 

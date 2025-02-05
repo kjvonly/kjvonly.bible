@@ -33,32 +33,37 @@
 	onMount(() => {
 		searchService.subscribe(searchID, onSearchResult);
 	});
+
+	let clientHeight = $state(0);
+	let headerHeight = $state(0)
 </script>
 
-<div style={containerHeight} class="overflow-hidden">
+<div bind:clientHeight style={containerHeight} class="overflow-hidden">
 	<div class="flex flex-col items-center justify-center">
-		<div class="flex w-full justify-end">
-			<button
-				onclick={() => {
-					paneService.onDeletePane(paneService.rootPane, paneId);
-				}}
-				class="px-2 pt-2 text-neutral-700">Close</button
-			>
-		</div>
-		<div class="w-full px-4 flex justify-center">
-			<input
-				bind:clientHeight={searchInputHeight}
-				class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
-				oninput={onSearchTextChanged}
-				bind:value={searchText}
-				placeholder="search"
-			/>
+		<div bind:clientHeight={headerHeight} class="w-full">
+			<div class="flex w-full justify-end">
+				<button
+					onclick={() => {
+						paneService.onDeletePane(paneService.rootPane, paneId);
+					}}
+					class="px-2 pt-2 text-neutral-700">Close</button
+				>
+			</div>
+			<div class="flex w-full justify-center px-4">
+				<input
+					bind:clientHeight={searchInputHeight}
+					class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
+					oninput={onSearchTextChanged}
+					bind:value={searchText}
+					placeholder="search"
+				/>
+			</div>
 		</div>
 		<div class="p-4">
 			<div
-				style={containerHeight}
+				style="height: {clientHeight - headerHeight}px"
 				class="{searchResults?.length > 0 ? '' : 'hidden'}
-                  max-w-3xl overflow-x-hidden overflow-y-scroll bg-neutral-50 -m-1
+                  -m-1 max-w-3xl overflow-x-hidden overflow-y-scroll bg-neutral-50
                   "
 			>
 				{#each searchResults as v}
