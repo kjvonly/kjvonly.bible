@@ -1,6 +1,7 @@
 import { NullBuffer } from '$lib/models/buffer.model';
 import type { Pane } from '$lib/models/pane.model.svelte';
 import ChapterContainer from '../../routes/(bible)/bible/components/chapter/chapterContainer.svelte';
+import Modules from '../../routes/(bible)/bible/components/modules/modules.svelte';
 import StrongsVersesRefs from '../../routes/(bible)/bible/components/refs/strongs-verses-refs/strongsVersesRefs.svelte';
 import Search from '../../routes/(bible)/components/search.svelte';
 
@@ -25,6 +26,8 @@ export class ComponentMapping {
 				return StrongsVersesRefs;
 			case 'Search':
 				return Search;
+			case 'Modules':
+				return Modules
 		}
 
 		return ChapterContainer;

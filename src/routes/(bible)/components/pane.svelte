@@ -23,6 +23,7 @@
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
+	let component = $state()
 
 	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
@@ -36,19 +37,32 @@
 			chapterSettings = newChapterSettings();
 		}
 
-		pane = paneService.findNode(paneService.rootPane, paneId);
+		let p = paneService.findNode(paneService.rootPane, paneId);
+
+		/**
+		 * Pane buffer history:
+		 *  
+		 * Just used for modules to update the component. without rerendering the panes
+		 * could be useful tho for components to navigate back and forth without needing 
+		 * create a new pane. See a history of buffers in a pane and then being able to 
+		 * navigate back through the buffer list prior to closing the pane.
+		*/
+		p.updateBuffer = (c)=>{component = c}
+
+		pane = p
 		paneService.subscribe(pane.id, updateHw);
 		updateHw(paneService.hw);
 		console.log(pane);
+		component = pane?.buffer?.componentName
+		
 	});
 </script>
 
 <div style="{containerWidth} {containerHeight}" class="relative overflow-hidden">
 	<div style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
-
 		<div class="header bg-neutral-950 w-full items-center text-balance outline">
 			{#if pane?.buffer?.componentName}
-				{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
+				{@const Component = componentMapping.getComponent(component)}
 				<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
 			{/if}
 		</div>

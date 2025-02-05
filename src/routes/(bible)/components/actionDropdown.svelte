@@ -3,23 +3,18 @@
 
 	let { showActionsDropdown = $bindable(), paneId } = $props();
 
-	function onActionClick(e) {
+	function onActionClick(e: Event) {
 		e.stopPropagation();
 		showActionsDropdown = !showActionsDropdown;
 	}
 
 	function onSplitVertical() {
-		paneService.onSplitPane(paneId, 'v', 'ChapterContainer', {});
+		paneService.onSplitPane(paneId, 'v', 'Modules', {});
 		showActionsDropdown = false;
 	}
 
 	function onSplitHorizontal() {
-		paneService.onSplitPane(paneId, 'h', 'ChapterContainer', {});
-		showActionsDropdown = false;
-	}
-
-	function onSearch() {
-		paneService.onSplitPane(paneId, 'h', 'Search', {});
+		paneService.onSplitPane(paneId, 'h', 'Modules', {});
 		showActionsDropdown = false;
 	}
 
@@ -71,13 +66,7 @@
 				>
 					Split Horizontal
 				</button>
-				<button
-					onclick={onSearch}
-					class="block w-full px-4 py-2 text-left text-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
-					role="menuitem"
-				>
-					Search
-				</button>
+				
 
 				<button
 					onclick={onClosePane}
