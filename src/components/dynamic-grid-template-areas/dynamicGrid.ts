@@ -36,8 +36,8 @@ function joinVerticalGridTemplateAreas(
     let leftNumCols = lrgta[0].length
     let rightNumCols = rrgta[0].length
 
-    let lColRepeat = rightNumCols / leftNumCols
-    let lRowRepeat = rightNumRows / leftNumRows
+    let lColRepeat = rightNumCols % leftNumCols !== 0 ? (rightNumCols * leftNumCols) / leftNumCols : rightNumCols / leftNumCols
+    let lRowRepeat = rightNumRows % leftNumRows !== 0 ? (rightNumRows * leftNumRows) / leftNumRows : rightNumRows / leftNumRows
     let lRepeatRow = []
     for (let i = 0; i < leftNumRows; i++) {
         for (let m = 0; m < lRowRepeat; m++) {
@@ -52,8 +52,8 @@ function joinVerticalGridTemplateAreas(
     }
 
     let rRepeatRow = []
-    let rColRepeat = leftNumCols / rightNumCols
-    let rRowRepeat = leftNumRows / rightNumRows
+    let rColRepeat = leftNumCols % rightNumCols ? (leftNumCols * rightNumCols) / rightNumCols : leftNumCols / rightNumCols
+    let rRowRepeat = leftNumRows % rightNumRows ? (leftNumRows * rightNumRows) / rightNumRows : leftNumRows / rightNumRows
     for (let i = 0; i < rightNumRows; i++) {
         for (let m = 0; m < rRowRepeat; m++) {
             let repeatCol: string[] = []
@@ -125,8 +125,9 @@ function joinHorizontalGridTemplateAreas(
      * each index is repeated twice to get 1, 1, 2, 2
     */
     let lRepeatRows = []
-    let lColRepeat = (rightNumCols * leftNumCols) / leftNumCols;
-    let lRowRepeat = rightNumRows / leftNumRows
+
+    let lColRepeat = rightNumCols % leftNumCols !== 0 ? (rightNumCols * leftNumCols) / leftNumCols : rightNumCols / leftNumCols
+    let lRowRepeat = rightNumRows % leftNumRows !== 0 ? (rightNumRows * leftNumRows) / leftNumRows : rightNumRows / leftNumRows
 
     for (let i = 0; i < leftNumRows; i++) {
         for (let m = 0; m < lRowRepeat; m++) {
@@ -141,8 +142,8 @@ function joinHorizontalGridTemplateAreas(
     }
 
     let rRepeatRows = []
-    let rColRepeat = (leftNumCols * rightNumCols) / rightNumCols;
-    let rRowRepeat = leftNumRows / rightNumRows
+    let rColRepeat = leftNumCols % rightNumCols ? (leftNumCols * rightNumCols) / rightNumCols : leftNumCols / rightNumCols
+    let rRowRepeat = leftNumRows % rightNumRows ? (leftNumRows * rightNumRows) / rightNumRows : leftNumRows / rightNumRows
     for (let i = 0; i < rightNumRows; i++) {
         for (let m = 0; m < rRowRepeat; m++) {
             let repeatRow = []

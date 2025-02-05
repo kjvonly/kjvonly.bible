@@ -20,6 +20,7 @@
 	let deletedElements = $state({});
 
 	function onGridUpdate() {
+		console.log('onGridUpdate', paneService.rootPane)
 		let gta = renderGridTemplateAreas(paneService.rootPane);
 
 		let els = {};
@@ -80,6 +81,7 @@
 				width: (rows[0].length * 1.0) / gtaCols
 			};
 		});
+		console.log('hw grid ', hw, grid)
 
 		paneService.hw = hw;
 		paneService.publishHw(hw);

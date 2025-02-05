@@ -279,70 +279,171 @@ describe('suite name', () => {
         expect(gta).toEqual([['b'], ['c']])
     })
 
-    it('simple horizontal', () => {
+    it('failing grid', () => {
 
         let json = `{
-            "split": "v",
-            "left": {
-                "split": "h",
-                "left": {
-                    "id": "a"
-                },
-                "right": {
-                    "id": "d",
-                    "buffer": {
-                        "key": "7919c0ef-c36e-40a4-bee4-b15d27f746e4",
-                        "name": "Modules",
-                        "componentName": "Modules",
-                        "keyboardBindings": {},
-                        "selected": false,
-                        "bag": {}
-                    }
-                }
-            },
-            "right": {
-                "buffer": {
-                    "key": "384fa306-84ae-4a94-8c17-2d4c4df1ca8d",
-                    "name": "Modules",
-                    "componentName": "Modules",
-                    "keyboardBindings": {},
-                    "selected": false,
-                    "bag": {}
-                },
-                "split": "h",
-                "left": {
-                    "id": "b"
-                },
-                "right": {
-                    "id": "c",
-                    "buffer": {
-                        "key": "3623bbcf-054c-4742-bc77-6b3b6df472ff",
-                        "name": "ChapterContainer",
-                        "componentName": "ChapterContainer",
-                        "keyboardBindings": {},
-                        "selected": false,
-                        "bag": {
-                            "chapterKey": "2_8"
-                        }
-                    }
-                }
-            },
+    "split": "v",
+    "left": {
+        "split": "h",
+        "left": {
+            "id": "a"
+        },
+        "right": {
             "buffer": {
-                "key": "846e8b5e-3afc-492c-aa80-fa652b6ca4bc",
-                "name": "ChapterContainer",
-                "componentName": "ChapterContainer",
+                "key": "a77d4181-844d-4da4-8817-3f5da52e4d44",
+                "name": "Modules",
+                "componentName": "Modules",
                 "keyboardBindings": {},
                 "selected": false,
                 "bag": {
-                    "chapterKey": "1_1"
+                    "chapterKey": "2_8",
+                    "lastVerse": 1
+                }
+            },
+            "split": "h",
+            "left": {
+                "id": "d"
+            },
+            "right": {
+                "id": "e",
+                "buffer": {
+                    "key": "766af5c1-4623-4c6e-9c2b-dfb020714b0f",
+                    "name": "StrongsVersesRefs",
+                    "componentName": "StrongsVersesRefs",
+                    "keyboardBindings": {},
+                    "selected": false,
+                    "bag": {
+                        "word": {
+                            "text": "people",
+                            "class": [
+                                "xref"
+                            ],
+                            "href": [
+                                "H5971"
+                            ],
+                            "emphasis": false
+                        }
+                    }
                 }
             }
-        }`
+        }
+    },
+    "right": {
+        "buffer": {
+            "key": "ff21c5bb-6fb7-4d9e-be45-f42129894997",
+            "name": "Modules",
+            "componentName": "Modules",
+            "keyboardBindings": {},
+            "selected": false,
+            "bag": {
+                "chapterKey": "2_8",
+                "lastVerse": 3
+            }
+        },
+        "split": "h",
+        "left": {
+            "id": "b"
+        },
+        "right": {
+            "id": "c",
+            "buffer": {
+                "key": "a99c9c4e-f666-4c4d-a503-28f20d4e7398",
+                "name": "StrongsVersesRefs",
+                "componentName": "StrongsVersesRefs",
+                "keyboardBindings": {},
+                "selected": false,
+                "bag": {
+                    "word": {
+                        "text": "come",
+                        "class": [
+                            "xref"
+                        ],
+                        "href": [
+                            "H935"
+                        ],
+                        "emphasis": false
+                    }
+                }
+            }
+        }
+    },
+    "buffer": {
+        "key": "cbe962bf-8c93-47a9-a1fa-82f75f4f12b7",
+        "name": "ChapterContainer",
+        "componentName": "ChapterContainer",
+        "keyboardBindings": {},
+        "selected": false,
+        "bag": {
+            "chapterKey": "2_8"
+        }
+    }
+}`
 
-        root = JSON.parse(json)
+       let root = JSON.parse(json)
 
 
         let gta = renderGridTemplateAreas(root)
-        expect(gta).toEqual([['b'], ['c']])
+        console.log(gta)
+        expect(gta).toEqual([
+            [ 'a', 'b' ],
+            [ 'a', 'b' ],
+            [ 'd', 'b' ],
+            [ 'd', 'c' ],
+            [ 'e', 'c' ],
+            [ 'e', 'c' ]
+          ]
+          )
+    })
+
+    it('failing grid', () => {
+
+        let json = `{
+    "split": "v",
+    "left": {
+        "split": "h",
+        "left": {
+            "id": "a"
+        },
+        "right": {
+            "split": "h",
+            "left": {
+                "id": "d"
+            },
+            "right": {
+                "split": "v",
+                "left": {
+                    "id": "e"
+                },
+                "right": {
+                    "id": "f"
+                }
+            }
+        }
+    },
+    "right": {
+        "split": "h",
+        "left": {
+            "id": "b"
+        },
+        "right": {
+            "id": "c"
+        }
+    }
+}`
+
+       let root = JSON.parse(json)
+
+
+        let gta = renderGridTemplateAreas(root)
+        console.log(gta)
+        expect(gta).toEqual([
+            [ 'a', 'b' ],
+            [ 'a', 'b' ],
+            [ 'd', 'b' ],
+            [ 'd', 'c' ],
+            [ 'e', 'c' ],
+            [ 'e', 'c' ]
+          ]
+          )
     })
 })
