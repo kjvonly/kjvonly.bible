@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 		import Chapter from './chapter.svelte';
 	import { newSettings, type Settings } from '../../models/settings.model';
-	import { colorTheme } from '$lib/services/colorTheme.service';
+	import { settingsService } from '$lib/services/colorTheme.service';
 
 	import type { Pane } from '$lib/models/pane.model.svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
@@ -35,7 +35,7 @@
 
 		/* update color theme */
 		if (chapterSettings && chapterSettings.colorTheme) {
-			colorTheme.setTheme(chapterSettings?.colorTheme);
+			settingsService.setTheme(chapterSettings?.colorTheme);
 		}
 	});
 
@@ -99,7 +99,7 @@
 			chapterSettings = JSON.parse(cs);
 
 			if (chapterSettings && chapterSettings.colorTheme) {
-				colorTheme.setTheme(chapterSettings?.colorTheme);
+				settingsService.setTheme(chapterSettings?.colorTheme);
 			}
 		} else {
 			chapterSettings = newSettings();

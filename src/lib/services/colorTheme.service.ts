@@ -1,6 +1,6 @@
 import { type Settings, newSettings } from "../models/settings.model";
 
-class ColorTheme {
+class SettingsService {
 
     VALID_COLOR_THEMES = [
         'red',
@@ -68,4 +68,4 @@ class ColorTheme {
 }
 
 
-export let colorTheme = new ColorTheme()
+export let settingsService = new SettingsService()

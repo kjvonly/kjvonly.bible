@@ -4,7 +4,7 @@
 	import { type node } from '$lib/services/dynamicGrid.service';
 	import { newSettings, type Settings } from '../models/settings.model';
 	import { componentMapping } from '$lib/services/componentMappingService';
-	import { colorTheme } from '$lib/services/colorTheme.service';
+	import { settingsService } from '$lib/services/colorTheme.service';
 
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');
@@ -30,7 +30,7 @@
 			chapterSettings = JSON.parse(cs);
 
 			if (chapterSettings && chapterSettings.colorTheme) {
-				colorTheme.setTheme(chapterSettings?.colorTheme);
+				settingsService.setTheme(chapterSettings?.colorTheme);
 			}
 		} else {
 			chapterSettings = newSettings();
