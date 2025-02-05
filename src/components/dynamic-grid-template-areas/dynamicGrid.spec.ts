@@ -405,28 +405,56 @@ describe('suite name', () => {
             "id": "a"
         },
         "right": {
-            "split": "h",
-            "left": {
-                "id": "d"
-            },
-            "right": {
-                "split": "v",
-                "left": {
-                    "id": "e"
-                },
-                "right": {
-                    "id": "f"
+            "id": "d",
+            "buffer": {
+                "key": "a8ea4ce4-81d3-453f-aef9-3e12583f8d37",
+                "name": "Modules",
+                "componentName": "Modules",
+                "keyboardBindings": {},
+                "selected": false,
+                "bag": {
+                    "chapterKey": "2_9"
                 }
             }
         }
     },
     "right": {
+        "buffer": {
+            "key": "e20f803e-6e57-425c-9663-dba529749c3b",
+            "name": "Modules",
+            "componentName": "Modules",
+            "keyboardBindings": {},
+            "selected": false,
+            "bag": {
+                "chapterKey": "2_9"
+            }
+        },
         "split": "h",
         "left": {
             "id": "b"
         },
         "right": {
-            "id": "c"
+            "id": "c",
+            "buffer": {
+                "key": "52f3e9db-95c2-4d21-9a3f-2433c9f7f457",
+                "name": "Modules",
+                "componentName": "Modules",
+                "keyboardBindings": {},
+                "selected": false,
+                "bag": {
+                    "chapterKey": "2_9"
+                }
+            }
+        }
+    },
+    "buffer": {
+        "key": "fd459d14-87df-4a4b-add7-2b8540dc0acb",
+        "name": "ChapterContainer",
+        "componentName": "ChapterContainer",
+        "keyboardBindings": {},
+        "selected": false,
+        "bag": {
+            "chapterKey": "2_9"
         }
     }
 }`

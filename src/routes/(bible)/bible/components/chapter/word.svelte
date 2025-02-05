@@ -9,7 +9,6 @@
 
 		pane.buffer.bag.lastVerse = verse.number
 		//paneService.save()
-		console.log('called', pane.id)
 		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', { word: word });
 	}
 </script>

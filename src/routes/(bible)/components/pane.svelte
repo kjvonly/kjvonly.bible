@@ -19,7 +19,6 @@
 	});
 
 	function updateHw(hw: any) {
-		console.log(hw, pane.id)
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
