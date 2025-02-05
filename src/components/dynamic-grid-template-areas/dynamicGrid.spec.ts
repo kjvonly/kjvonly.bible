@@ -279,5 +279,70 @@ describe('suite name', () => {
         expect(gta).toEqual([['b'], ['c']])
     })
 
+    it('simple horizontal', () => {
 
+        let json = `{
+            "split": "v",
+            "left": {
+                "split": "h",
+                "left": {
+                    "id": "a"
+                },
+                "right": {
+                    "id": "d",
+                    "buffer": {
+                        "key": "7919c0ef-c36e-40a4-bee4-b15d27f746e4",
+                        "name": "Modules",
+                        "componentName": "Modules",
+                        "keyboardBindings": {},
+                        "selected": false,
+                        "bag": {}
+                    }
+                }
+            },
+            "right": {
+                "buffer": {
+                    "key": "384fa306-84ae-4a94-8c17-2d4c4df1ca8d",
+                    "name": "Modules",
+                    "componentName": "Modules",
+                    "keyboardBindings": {},
+                    "selected": false,
+                    "bag": {}
+                },
+                "split": "h",
+                "left": {
+                    "id": "b"
+                },
+                "right": {
+                    "id": "c",
+                    "buffer": {
+                        "key": "3623bbcf-054c-4742-bc77-6b3b6df472ff",
+                        "name": "ChapterContainer",
+                        "componentName": "ChapterContainer",
+                        "keyboardBindings": {},
+                        "selected": false,
+                        "bag": {
+                            "chapterKey": "2_8"
+                        }
+                    }
+                }
+            },
+            "buffer": {
+                "key": "846e8b5e-3afc-492c-aa80-fa652b6ca4bc",
+                "name": "ChapterContainer",
+                "componentName": "ChapterContainer",
+                "keyboardBindings": {},
+                "selected": false,
+                "bag": {
+                    "chapterKey": "1_1"
+                }
+            }
+        }`
+
+        root = JSON.parse(json)
+
+
+        let gta = renderGridTemplateAreas(root)
+        expect(gta).toEqual([['b'], ['c']])
+    })
 })

@@ -56,7 +56,6 @@
 		  grid-template-rows: auto auto;
   		grid-template-areas:
 			${grid};`;
-		console.log(grid);
 
 		let hw: any = {};
 		let gtaRows = gta.length;
@@ -84,7 +83,6 @@
 
 		paneService.hw = hw;
 		paneService.publishHw(hw);
-		console.log(gta);
 	}
 
 	function findNodes(n: node, key: string): node | undefined {

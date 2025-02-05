@@ -12,8 +12,6 @@
 
 	onMount(() => {
 		let pane = paneService.findNode(paneService.rootPane, paneId);
-
-		console.log('word pane', pane);
 		pane?.buffer?.bag?.word?.href?.forEach((ref: string) => {
 			let match = new RegExp('^[GH]', 'm').test(ref);
 			if (match) {

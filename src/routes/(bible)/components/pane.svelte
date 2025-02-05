@@ -19,7 +19,6 @@
 	});
 
 	function updateHw(hw: any) {
-		console.log('hw', hw[pane.id]);
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
@@ -52,9 +51,8 @@
 		pane = p
 		paneService.subscribe(pane.id, updateHw);
 		updateHw(paneService.hw);
-		console.log(pane);
 		component = pane?.buffer?.componentName
-		
+		console.log(paneService.rootPane)
 	});
 </script>
 

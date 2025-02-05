@@ -42,7 +42,6 @@
 
 	$effect(() => {
 		if (chapterKey) {
-			console.log(pane);
 			pane.buffer.bag.chapterKey = chapterKey;
 			localStorage.setItem('lastChapterKey', chapterKey);
 			paneService.save();
