@@ -1,8 +1,8 @@
 export interface node {
-    id: string;
+    id: string | any;
     left: node | any;
     right: node | any;
-    split: string;
+    split: string | any;
     buffer: any
 }
 

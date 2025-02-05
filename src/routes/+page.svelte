@@ -77,7 +77,7 @@
 			};
 		});
 
-		paneService.hw = hw;
+		paneService.heightWidth = hw;
 		paneService.publishHw(hw);
 	}
 

@@ -8,10 +8,10 @@ export class PaneService {
         split: undefined,
         left: undefined,
         right: undefined,
-
+        buffer: undefined
     };
 
-    hw: any = {}
+    heightWidth: any = {}
 
     findNode(n: node, key: string): node | undefined {
         if (n.id === key) {
@@ -59,7 +59,7 @@ export class PaneService {
 
 
     publishHw(hw: any) {
-        this.subscribers.forEach(s => {
+        this.subscribers.forEach((s: any) => {
             s.fn(hw)
         });
     }

@@ -50,7 +50,7 @@
 
 		pane = p
 		paneService.subscribe(pane.id, updateHw);
-		updateHw(paneService.hw);
+		updateHw(paneService.heightWidth);
 		component = pane?.buffer?.componentName
 	});
 </script>
