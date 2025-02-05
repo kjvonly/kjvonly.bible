@@ -1,4 +1,4 @@
-import type { node } from "./dynamicGrid.service";
+import type { node } from "$lib/models/node.model";
 
 
 export class PaneService {

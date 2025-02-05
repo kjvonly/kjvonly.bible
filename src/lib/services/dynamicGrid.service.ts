@@ -1,10 +1,5 @@
-export interface node {
-    id: string | any;
-    left: node | any;
-    right: node | any;
-    split: string | any;
-    buffer: any
-}
+import type { node } from "$lib/models/node.model"
+
 
 export function numberToLetters(number: number) {
     let result = ""
@@ -178,7 +173,7 @@ function joinGridTemplateAreas(lrgta: string[][], rrgta: string[][], split: stri
     return gta;
 }
 
-export function renderGridTemplateAreas(n: node) {
+export function renderGridTemplateAreas(n: node | any) {
     if (n.split === undefined) {
         return [[n.id]];
     } else {

@@ -1,15 +1,11 @@
 <script lang="ts">
-	import {
-		numberToLetters,
-		renderGridTemplateAreas,
-		type node
-	} from '$lib/services/dynamicGrid.service';
+	import { numberToLetters, renderGridTemplateAreas } from '$lib/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
 	import Pane from '$lib/components/pane.svelte';
-
+	import { type node } from '$lib/models/node.model';
 
 	let template = $state();
 	let elements: string[] = $state([]);
@@ -215,7 +211,6 @@
 		link.setAttribute('rel', 'manifest');
 		link.setAttribute('href', `/manifest.json`);
 		document.getElementById('kjvonly-head')?.appendChild(link);
-
 
 		paneService.rootPane.buffer = new Buffer();
 		paneService.rootPane.buffer.componentName = 'ChapterContainer';
