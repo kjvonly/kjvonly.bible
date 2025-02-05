@@ -1,5 +1,5 @@
 import { assert, describe, expect, it } from 'vitest'
-import { renderGridTemplateAreas } from './dynamicGrid'
+import { renderGridTemplateAreas } from '../../services/dynamicGrid.service'
 
 describe('suite name', () => {
     it('large grid vertical', () => {

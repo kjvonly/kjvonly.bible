@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import type { node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
+	import type { node } from '$lib/services/dynamicGrid.service';
 
 	let components = ['ChapterContainer', 'Search'];
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();

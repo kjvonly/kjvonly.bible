@@ -1,4 +1,4 @@
-import type { node } from "../components/dynamic-grid-template-areas/dynamicGrid";
+import type { node } from "./dynamicGrid.service";
 
 
 export class PaneService {

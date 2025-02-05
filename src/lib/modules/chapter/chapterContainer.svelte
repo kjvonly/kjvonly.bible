@@ -7,7 +7,7 @@
 
 	import type { Pane } from '$lib/models/pane.model.svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import type { node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
+	import type { node } from '$lib/services/dynamicGrid.service';
 	import ChapterActions from './chapterActions.svelte';
 
 	let id = crypto.randomUUID();

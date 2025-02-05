@@ -3,7 +3,7 @@
 		numberToLetters,
 		renderGridTemplateAreas,
 		type node
-	} from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
+	} from '$lib/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
 	import { paneService } from '$lib/services/pane.service.svelte';
@@ -12,13 +12,13 @@
 
 
 	let template = $state();
-	let elements = $state([]);
-	let deletedElements = $state({});
+	let elements: string[] = $state([]);
+	let deletedElements: any = $state({});
 
 	function onGridUpdate() {
 		let gta = renderGridTemplateAreas(paneService.rootPane);
 
-		let els = {};
+		let els: any = {};
 		let grid = '';
 
 		for (let i = 0; i < gta.length; i++) {
