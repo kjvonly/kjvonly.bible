@@ -1,12 +1,3 @@
-<!-- <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-
-	onMount(() => {
-
-	});
-</script> -->
-
 <script lang="ts">
 	import {
 		numberToLetters,
@@ -17,10 +8,8 @@
 
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
-	import { componentMapping } from '$lib/services/componentMappingService';
 	import Pane from '$lib/components/pane.svelte';
 
-	let toggle = $state(true);
 
 	let template = $state();
 
@@ -250,6 +239,3 @@
 		{/each}
 	</div>
 </div>
-
-<style>
-</style>
