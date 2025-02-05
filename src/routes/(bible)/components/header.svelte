@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Button from '../../../components/button.svelte';
+	import Button from '$lib/components/button.svelte';
 	
-	import SettingsPopup from './settingsPopup.svelte';
+	import SettingsPopup from '../../../lib/modules/chapter/settingsPopup.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';

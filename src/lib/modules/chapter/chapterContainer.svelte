@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 	import { onMount } from 'svelte';
-	import Header from '../../../components/header.svelte';
-	import Chapter from './chapter.svelte';
-	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
+		import Chapter from './chapter.svelte';
+	import { newChapterSettings, type ChapterSettings } from '../../../routes/(bible)/bible/models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	import type { Pane } from '$lib/models/pane.model.svelte';
-	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
-	import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
-	import ChapterActions from '../../../components/chapterActions.svelte';
+	import { paneService } from '$lib/components/dynamic-grid-template-areas/pane.service.svelte';
+	import type { node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
+	import ChapterActions from './chapterActions.svelte';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);

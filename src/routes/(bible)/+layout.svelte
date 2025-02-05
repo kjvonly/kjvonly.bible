@@ -1,5 +1,6 @@
 <script lang="ts">
-	import Container from './components/container.svelte';
+	import Container from '$lib/components/container.svelte';
+
 
 	let { children } = $props();
 

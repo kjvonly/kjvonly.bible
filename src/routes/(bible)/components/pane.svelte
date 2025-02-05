@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { paneService } from '../../../components/dynamic-grid-template-areas/pane.service.svelte';
-	import { type node } from '../../../components/dynamic-grid-template-areas/dynamicGrid';
+	import { paneService } from '$lib/components/dynamic-grid-template-areas/pane.service.svelte';
+	import { type node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
 	import { newChapterSettings, type ChapterSettings } from '../bible/models/chapterSettings';
 	import { componentMapping } from '$lib/services/component-mapping.service';
 	import { colorTheme } from '$lib/services/colorTheme.service';

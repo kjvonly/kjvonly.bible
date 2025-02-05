@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { paneService } from '../../../components/dynamic-grid-template-areas/pane.service.svelte';
+	import { paneService } from '$lib/components/dynamic-grid-template-areas/pane.service.svelte';
 
 	let { showActionsDropdown = $bindable(), paneId } = $props();
 
