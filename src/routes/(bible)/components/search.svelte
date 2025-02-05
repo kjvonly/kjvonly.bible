@@ -45,7 +45,7 @@
 				class="px-2 pt-2 text-neutral-700">Close</button
 			>
 		</div>
-		<div class="w-full px-4">
+		<div class="w-full px-4 flex justify-center">
 			<input
 				bind:clientHeight={searchInputHeight}
 				class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
@@ -58,7 +58,7 @@
 			<div
 				style={containerHeight}
 				class="{searchResults?.length > 0 ? '' : 'hidden'}
-                  max-w-3xl overflow-x-hidden overflow-y-scroll bg-neutral-50
+                  max-w-3xl overflow-x-hidden overflow-y-scroll bg-neutral-50 -m-1
                   "
 			>
 				{#each searchResults as v}

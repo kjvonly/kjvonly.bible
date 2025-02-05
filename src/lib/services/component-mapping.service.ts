@@ -10,6 +10,8 @@ import Search from '../../routes/(bible)/components/search.svelte';
  *
  */
 export class ComponentMapping {
+
+
 	/**
 	 *
 	 * @param componentName string of class to be returned
