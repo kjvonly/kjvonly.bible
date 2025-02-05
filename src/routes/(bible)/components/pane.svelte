@@ -3,7 +3,7 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { type node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
 	import { newChapterSettings, type ChapterSettings } from '../bible/models/chapterSettings';
-	import { componentMapping } from '$lib/services/component-mapping.service';
+	import { componentMapping } from '$lib/services/componentMappingService';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	let containerHeight: string = $state('');
