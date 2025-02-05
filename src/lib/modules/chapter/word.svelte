@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { PaneSplit } from '$lib/models/pane.model.svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
 
 	let { word, verse, pane = $bindable() } = $props();

@@ -12,12 +12,10 @@
 
 
 	let template = $state();
-
 	let elements = $state([]);
 	let deletedElements = $state({});
 
 	function onGridUpdate() {
-		console.log('onGridUpdate', paneService.rootPane);
 		let gta = renderGridTemplateAreas(paneService.rootPane);
 
 		let els = {};
