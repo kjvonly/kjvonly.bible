@@ -104,22 +104,6 @@ function joinHorizontalGridTemplateAreas(
     let leftNumCols = lrgta[0].length
     let rightNumCols = rrgta[0].length
 
-    /** if the columns length are equal stack the left pane on top of the right 
-     * the l repeat logic below would equal 1 and repeat an extra time if the 
-     * areas are equal. 
-     */
-    if (rightNumCols == leftNumCols) {
-        lrgta.forEach(la => {
-            gta.push(la)
-
-        });
-        rrgta.forEach(ra => {
-            gta.push(ra)
-        });
-
-        return gta
-    }
-
     /** ensure the left (top) and right (bottom) areas have equal col length. 
      * if differ in columns repeat an all indexes in a row n number of 
      * times to ensure row length is equal
