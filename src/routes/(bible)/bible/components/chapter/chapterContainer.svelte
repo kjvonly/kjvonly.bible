@@ -5,8 +5,11 @@
 	import Chapter from './chapter.svelte';
 	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
-	import { paneService } from '$lib/services/pane.service.svelte';
+
 	import type { Pane } from '$lib/models/pane.model.svelte';
+	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
+	import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
+	import ChapterActions from '../../../components/chapterActions.svelte';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -16,9 +19,14 @@
 
 	let chapterSettings: ChapterSettings | null = $state(null);
 
-	let { pane = $bindable<Pane>() } = $props();
+	let { paneId = $bindable<Pane>(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-	
+	let pane: node = $state();
+	$effect(() => {
+		paneId;
+		pane = paneService.findNode(paneService.rootPane, paneId);
+	});
+
 	$effect(() => {
 		chapterSettings;
 
@@ -40,40 +48,19 @@
 		}
 	});
 
-	onMount(() => {
-		let cs = localStorage.getItem('chapterSettings');
-		if (cs !== null) {
-			chapterSettings = JSON.parse(cs);
-
-			if (chapterSettings && chapterSettings.colorTheme) {
-				colorTheme.setTheme(chapterSettings?.colorTheme);
-			}
-		} else {
-			chapterSettings = newChapterSettings();
-		}
-
-		let ck = pane.buffer.bag.chapterKey;
-		if (ck) {
-			chapterKey = ck;
-		} else {
-			chapterKey = localStorage.getItem('lastChapterKey');
-			if (!chapterKey) {
-				chapterKey = '50_3'; // John 3
-			}
-		}
-	});
-
 	function goto(key: any) {
 		chapterKey = key;
 	}
 
-	async function _nextChapter() {
+	async function _nextChapter(e) {
+		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.next(chapterKey);
 		}
 	}
 
-	async function _previousChapter() {
+	async function _previousChapter(e) {
+		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.previous(chapterKey);
 		}
@@ -106,8 +93,31 @@
 		}
 	}
 
-	let containerHeight: number = $state(0);
+
 	onMount(() => {
+		let cs = localStorage.getItem('chapterSettings');
+		if (cs !== null) {
+			chapterSettings = JSON.parse(cs);
+
+			if (chapterSettings && chapterSettings.colorTheme) {
+				colorTheme.setTheme(chapterSettings?.colorTheme);
+			}
+		} else {
+			chapterSettings = newChapterSettings();
+		}
+
+		pane = paneService.findNode(paneService.rootPane, paneId);
+
+		let ck = pane.buffer.bag.chapterKey;
+		if (ck) {
+			chapterKey = ck;
+		} else {
+			chapterKey = localStorage.getItem('lastChapterKey');
+			if (!chapterKey) {
+				chapterKey = '50_3'; // John 3
+			}
+		}
+
 		let el = document.getElementById(id);
 		if (el === null) {
 			return;
@@ -126,15 +136,6 @@
 			}
 		});
 
-		let cel = document.getElementById(`${id}-container`);
-		if (cel === null) {
-			return;
-		}
-
-		let pel = el?.parentNode as HTMLElement;
-
-		containerHeight = pel.clientHeight;
-
 		if (pane?.buffer?.bag?.lastVerse) {
 			setTimeout(() => {
 				let vel = document.getElementById(`${id}-vno-${pane.buffer.bag.lastVerse}`);
@@ -145,23 +146,33 @@
 			}, 50);
 		}
 
-		if (pane?.buffer?.bag?.lastKnownScrollPosition) {
+		let cel = document.getElementById(`${id}-container`);
+		if (cel === null) {
+			return;
 		}
 	});
 </script>
 
-<div id="{id}-container" class="relative h-full overflow-hidden">
-	<div {id} style="height: {containerHeight}px;" class="relative overflow-y-scroll">
-		<div>
-			<Header bind:bookName bind:bookChapter bind:chapterKey bind:chapterSettings goTo={goto}
-			></Header>
+<div
+	id="{id}-container"
+	style="{containerWidth} {containerHeight}"
+	class="relative overflow-hidden"
+>
+	<div {id} style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
+		<div class="sticky top-0 z-popover flex w-full justify-center">
+			<ChapterActions
+				bind:chapterKey
+				bookName={bookName}
+				bookChapter={bookChapter}
+				{containerHeight}
+				paneId={pane.id}
+			></ChapterActions>
 		</div>
-		<div class="min-h-16"></div>
-		<div class="m-4 flex justify-center md:m-16">
-			<div class="max-w-sm md:z-10 md:max-w-lg">
+		<div class="flex justify-center">
+			<div class="md:z-10 md:max-w-lg">
 				<div
 					bind:clientWidth={chapterWidth}
-					class="flex flex-wrap justify-start {chapterSettings?.fontSize} {chapterSettings?.fontFamily}"
+					class="flex flex-wrap justify-start"
 				>
 					<Chapter
 						bind:bookName
@@ -170,6 +181,7 @@
 						bind:id
 						bind:pane
 						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
+						{containerHeight}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>
 				</div>
@@ -180,7 +192,7 @@
 	<!-- prev/next chapter buttons -->
 	<div class="flex w-full justify-center">
 		<div class="w-full max-w-6xl">
-			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px);" class="sticky">
+			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px);" class="sticky z-10">
 				<div class="absolute bottom-4 left-4">
 					<button
 						onclick={_previousChapter}
@@ -207,7 +219,7 @@
 					</button>
 				</div>
 			</div>
-			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px); " class="sticky">
+			<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px); " class="sticky z-10">
 				<div class="absolute bottom-4 right-4">
 					<button
 						onclick={_nextChapter}

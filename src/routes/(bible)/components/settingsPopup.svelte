@@ -3,7 +3,7 @@
 	import type { ChapterSettings } from '../bible/models/chapterSettings';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
-	let { chapterSettings = $bindable() } = $props();
+	let { showSettingsPopup = $bindable() } = $props();
 	let headerHeight = $state(0);
 
 	let fontSizes = [
@@ -31,8 +31,24 @@
 			fontFamily: 'font-KJV1611'
 		}
 	];
-	
+
+	$effect(() => {
+		chapterSettings;
+
+		if (chapterSettings !== undefined) {
+			localStorage.setItem('chapterSettings', JSON.stringify(chapterSettings));
+		}
+
+		/* update color theme */
+		if (chapterSettings && chapterSettings.colorTheme) {
+			colorTheme.setTheme(chapterSettings?.colorTheme);
+		}
+	});
+
+	let chapterSettings: any = $state();
+
 	onMount(async () => {
+		chapterSettings = colorTheme.getChapterSettings();
 		if (chapterSettings && chapterSettings.doChapterFadeAnimation === undefined) {
 			chapterSettings.doChapterFadeAnimation = false;
 		}
@@ -58,24 +74,33 @@
 </script>
 
 <div
-	class="h-full w-full justify-start justify-items-start overflow-y-scroll bg-neutral-100 text-neutral-700"
+	class="h-full w-full justify-start justify-items-start overflow-y-scroll  bg-neutral-100 text-neutral-700"
 >
 	<header
-		bind:clientHeight={headerHeight}
-		class="items c sticky top-0 w-full flex-col border-b-2 bg-neutral-100"
+		
+		class="items w-full flex-col border-b-2 bg-neutral-100"
 	>
-		<div class="flex w-full justify-between pl-2 pt-2 text-neutral-700">
+		<div class="flex w-full justify-between px-2 pt-2 text-neutral-700  sticky top-0 ">
 			<div class="flex items-center">
 				<h1 class=" text-center text-lg">READING SETTINGS</h1>
 			</div>
+
+			<button
+				onclick={() => {
+					showSettingsPopup = false;
+				}}
+				class="m-0 p-0"
+			>
+				Done
+			</button>
 		</div>
 	</header>
 
 	<div
-		style="max-height: calc(100% - {headerHeight}px);"
-		class="flex h-full w-full flex-col justify-center bg-neutral-50 p-6"
+		
+		class="flex w-full flex-col justify-center bg-neutral-50 p-6 "
 	>
-		<div class="flex w-full flex-row">
+		<div class="flex w-full flex-row mt-4">
 			<button
 				onclick={() => {
 					chapterSettings.isDarkTheme = false;
@@ -129,12 +154,12 @@
 			</button>
 		</div>
 
-		<div class="flex w-full flex-row pt-4 font-bold bg-neutral-50">
+		<div class="flex w-full flex-row bg-neutral-50 pt-4 font-bold">
 			{#if chapterSettings?.colorTheme}
 				<select
 					name="HeadlineAct"
 					id="HeadlineAct"
-					class="w-full flex-1 rounded-lg bg-primary-500 p-4 font-bold text-neutral-50 uppercase"
+					class="w-full flex-1 rounded-lg bg-primary-500 p-4 font-bold uppercase text-neutral-50"
 					bind:value={chapterSettings.colorTheme}
 					onchange={() => {
 						chapterSettings = chapterSettings;
@@ -218,8 +243,4 @@
 </div>
 
 <style>
-
-	.checkbox > input[type='checkbox']:checked::before {
-		background-color: red;
-	}
 </style>

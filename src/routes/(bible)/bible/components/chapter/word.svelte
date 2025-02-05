@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { PaneSplit } from '$lib/models/pane.model.svelte';
-	import { paneService } from '../../../../../lib/services/pane.service.svelte';
+	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
 
 	let { word, verse, pane = $bindable() } = $props();
 
@@ -8,8 +8,8 @@
 		e.stopPropagation();
 
 		pane.buffer.bag.lastVerse = verse.number
-		paneService.save()
-		paneService.splitPane(pane.id, PaneSplit.Horizontal, 'StrongsVersesRefs', { word: word });
+		//paneService.save()
+		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', { word: word });
 	}
 </script>
 

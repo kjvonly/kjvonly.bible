@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import Container from '../../../../components/container.svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import StrongsRefsContainer from '../strongs-refs/strongsRefsContainer.svelte';
 	import VerseRefsContainer from '../verses-refs/verseRefsContainer.svelte';
-	import { getParentHeight } from '$lib/utils/height';
+	import { paneService } from '../../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
 
 	let id = crypto.randomUUID();
-	let { pane } = $props();
+	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
 	let strongsRef = $state('');
-	let text = $state('')
-	let containerHeight: number = $state(0);
+	let text = $state('');
+
 	onMount(() => {
-		containerHeight = getParentHeight(id);
+		let pane = paneService.findNode(paneService.rootPane, paneId);
 		pane?.buffer?.bag?.word?.href?.forEach((ref: string) => {
 			let match = new RegExp('^[GH]', 'm').test(ref);
 			if (match) {
@@ -20,21 +19,37 @@
 			}
 		});
 
-		if (pane?.buffer?.bag?.word?.text){
-			
+		if (pane?.buffer?.bag?.word?.text) {
 			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
 		}
 	});
+
+	onDestroy(() => {
+		paneService.unsubscribe(paneId);
+	});
 </script>
 
-<div id="{id}-container" class="relative h-full overflow-hidden">
-	<div {id} style="height: {containerHeight}px;" class="relative overflow-y-scroll">
-		<div class="flex h-full w-full justify-center">
-			<div class="max-w-6xl">
-				{#if strongsRef.length > 0}
-					<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
-				{/if}
-				<VerseRefsContainer></VerseRefsContainer>
+<div id="{id}-container" class="relative flex h-full w-full overflow-hidden">
+	<div {id} style={containerHeight} class="relative w-full overflow-y-scroll">
+		<div class="h-full w-full">
+			<div class="flex flex-col justify-center">
+				<div class="sticky top-0 w-full bg-neutral-50">
+					<button
+						onclick={() => {
+							paneService.onDeletePane(paneService.rootPane, paneId);
+						}}
+						class="absolute z-10 float-end right-3 inline-block text-neutral-700">Close</button
+					>
+				</div>
+
+				<div class="flex w-full justify-center">
+					<div class="max-w-6xl">
+						{#if strongsRef.length > 0}
+							<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
+						{/if}
+						<VerseRefsContainer></VerseRefsContainer>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

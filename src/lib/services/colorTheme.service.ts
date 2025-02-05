@@ -21,17 +21,37 @@ class ColorTheme {
                 html?.classList.remove(className);
             }
         })
-        
+
         let cs = this.getChapterSettings()
         if (!cs) {
             return
         }
 
+
+        let classes = []
         if (cs.isDarkTheme) {
-            html?.classList.add(`color-theme-dark-${theme}`)
+            //    html?.classList.add(`color-theme-dark-${theme}`)
+            classes.push(`color-theme-dark-${theme}`)
         } else {
-            html?.classList.add(`color-theme-${theme}`)
+            //  html?.classList.add(`color-theme-${theme}`)
+            classes.push(`color-theme-${theme}`)
         }
+
+
+        classes.push(cs.fontSize)
+        classes.push(cs.fontFamily)
+
+
+        if (html) {
+            html?.classList.forEach((c) => {
+                html?.classList.remove(c)
+            })
+
+            classes.forEach(c => {
+                html?.classList.add(c)
+            })
+        }
+
     }
 
     getChapterSettings(): ChapterSettings {
@@ -44,6 +64,7 @@ class ColorTheme {
         }
         return newChapterSettings()
     }
+
 }
 
 

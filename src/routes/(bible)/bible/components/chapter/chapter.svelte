@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	import Verse from './verse.svelte';
+	import ChapterActions from '../../../components/chapterActions.svelte';
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
 	let timeoutIDs: number[] = [];
@@ -15,7 +16,8 @@
 		bookChapter = $bindable(),
 		id = $bindable(),
 		pane = $bindable(),
-		doChapterFadeAnimation = $bindable()
+		doChapterFadeAnimation = $bindable(),
+		containerHeight
 	} = $props();
 
 	$effect(() => {
@@ -94,19 +96,14 @@
 <div class="{fadeClass} flex-col leading-loose">
 	<div>
 		{#if showChapter}
-			{#if loadedBookName && loadedChapter}
-				<h1 class=" sticky top-0 bg-neutral-50 text-center text-lg font-bold">
-					<span>{loadedBookName} {loadedChapter}<span> </span></span>
-				</h1>
-			{/if}
-			<p>
+			<p class="px-4">
 				{#each keys as k, idx}
-					<span id={`${id}-vno-${idx + 1}`}
-					>
+					<span id={`${id}-vno-${idx + 1}`}>
 						<Verse bind:pane verse={verses[k]}></Verse>
 					</span>
 				{/each}
 			</p>
+			<div class="mt-16"></div>
 		{/if}
 	</div>
 </div>
