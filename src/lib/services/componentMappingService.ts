@@ -3,7 +3,7 @@ import type { Pane } from '$lib/models/pane.model.svelte';
 import ChapterContainer from '$lib/modules/chapter/chapterContainer.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
 import StrongsVersesRefs from '$lib/modules/refs/strongs-verses-refs/strongsVersesRefs.svelte';
-import Search from '../../routes/(bible)/components/search.svelte';
+import Search from '../modules/search/search.svelte';
 
 /**
  * Component Mapping is responsible for converting the
