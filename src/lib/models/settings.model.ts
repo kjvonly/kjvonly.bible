@@ -6,7 +6,7 @@ export interface Settings {
     doChapterFadeAnimation?: boolean
 }
 
-export function newChapterSettings(): Settings{
+export function newSettings(): Settings{
     return {
         fontSize: 'text-base',
         fontFamily: 'font-sans',

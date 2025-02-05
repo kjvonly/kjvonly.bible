@@ -2,7 +2,7 @@
 	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
 	import { onMount } from 'svelte';
 		import Chapter from './chapter.svelte';
-	import { newChapterSettings, type Settings } from '../../models/settings.model';
+	import { newSettings, type Settings } from '../../models/settings.model';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
 	import type { Pane } from '$lib/models/pane.model.svelte';
@@ -102,7 +102,7 @@
 				colorTheme.setTheme(chapterSettings?.colorTheme);
 			}
 		} else {
-			chapterSettings = newChapterSettings();
+			chapterSettings = newSettings();
 		}
 
 		pane = paneService.findNode(paneService.rootPane, paneId);

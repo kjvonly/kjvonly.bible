@@ -1,4 +1,4 @@
-import { type Settings, newChapterSettings } from "../models/settings.model";
+import { type Settings, newSettings } from "../models/settings.model";
 
 class ColorTheme {
 
@@ -62,7 +62,7 @@ class ColorTheme {
                 return chapterSettings
             }
         }
-        return newChapterSettings()
+        return newSettings()
     }
 
 }

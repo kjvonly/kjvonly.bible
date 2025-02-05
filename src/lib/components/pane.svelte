@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { type node } from '$lib/components/dynamic-grid-template-areas/dynamicGrid';
-	import { newChapterSettings, type Settings } from '../models/settings.model';
+	import { newSettings, type Settings } from '../models/settings.model';
 	import { componentMapping } from '$lib/services/componentMappingService';
 	import { colorTheme } from '$lib/services/colorTheme.service';
 
@@ -33,7 +33,7 @@
 				colorTheme.setTheme(chapterSettings?.colorTheme);
 			}
 		} else {
-			chapterSettings = newChapterSettings();
+			chapterSettings = newSettings();
 		}
 
 		let p = paneService.findNode(paneService.rootPane, paneId);
