@@ -35,34 +35,45 @@
 	});
 </script>
 
-<div style={containerHeight} class="pt-6 overflow-hidden">
-	<div class="flex flex-col justify-center items-center">
-		<input
-			bind:clientHeight={searchInputHeight}
-			class="max-w-3xl w-full border-b border-primary-500 bg-neutral-50 p-1 outline-none"
-			oninput={onSearchTextChanged}
-			bind:value={searchText}
-			placeholder="search"
-		/>
-
-		<div
-		style={containerHeight}
-			class="{searchResults?.length > 0 ? '' : 'hidden'}
-                  max-w-3xl overflow-x-hidden overflow-y-scroll  bg-neutral-50
+<div style={containerHeight} class="overflow-hidden">
+	<div class="flex flex-col items-center justify-center">
+		<div class="flex w-full justify-end">
+			<button
+				onclick={() => {
+					paneService.onDeletePane(paneService.rootPane, paneId);
+				}}
+				class="px-2 pt-2 text-neutral-700">Close</button
+			>
+		</div>
+		<div class="w-full px-4">
+			<input
+				bind:clientHeight={searchInputHeight}
+				class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
+				oninput={onSearchTextChanged}
+				bind:value={searchText}
+				placeholder="search"
+			/>
+		</div>
+		<div class="p-4">
+			<div
+				style={containerHeight}
+				class="{searchResults?.length > 0 ? '' : 'hidden'}
+                  max-w-3xl overflow-x-hidden overflow-y-scroll bg-neutral-50
                   "
-		>
-			{#each searchResults as v}
-				<button onclick={() => gotoBCV(v.key)} class="px-4 py-2 text-left hover:bg-primary-100">
-					<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br />
-					{#each v.text.split(' ') as w}
-						{#if match(w)}
-							<span class="inline-block text-redtxt">{w}</span>&nbsp;
-						{:else}
-							<span class="inline-block">{w}</span>&nbsp;
-						{/if}
-					{/each}
-				</button>
-			{/each}
+			>
+				{#each searchResults as v}
+					<button onclick={() => gotoBCV(v.key)} class="px-4 py-2 text-left hover:bg-primary-100">
+						<span class="font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br />
+						{#each v.text.split(' ') as w}
+							{#if match(w)}
+								<span class="inline-block text-redtxt">{w}</span>&nbsp;
+							{:else}
+								<span class="inline-block">{w}</span>&nbsp;
+							{/if}
+						{/each}
+					</button>
+				{/each}
+			</div>
 		</div>
 	</div>
 </div>
