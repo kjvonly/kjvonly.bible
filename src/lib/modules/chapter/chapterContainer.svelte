@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
+	import { bibleNavigationService } from '$lib/services/bibleNavigation.service';
 	import { onMount } from 'svelte';
 		import Chapter from './chapter.svelte';
 	import { newSettings, type Settings } from '../../models/settings.model';
