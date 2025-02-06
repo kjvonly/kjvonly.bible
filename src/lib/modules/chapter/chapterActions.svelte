@@ -26,7 +26,7 @@
 		showActionsPopup = !showActionsPopup;
 	}
 
-	let clientWidth: number = $state(0)
+	let clientWidth: number = $state(0);
 </script>
 
 <!-- book chapter selection -->
@@ -42,6 +42,7 @@
 			onclick={(e) => {
 				onSettingsClick(e);
 			}}
+			class="p-1"
 		>
 			<svg
 				fill="fill-neutral-700"
@@ -66,7 +67,9 @@
 			}}
 			class="m-0 text-center font-bold text-neutral-700 md:text-base lg:text-lg"
 		>
-			<span  >{bookName} {bookChapter}<span> </span></span>
+			<span class="bookChapter flex items-center text-center"
+				><span>{bookName} {bookChapter}</span><span> </span></span
+			>
 		</span>
 		<span class="mr-2 h-[100%] border-e-2 border-neutral-300">&nbsp;</span>
 
@@ -108,3 +111,9 @@
 		<ActionDropdown {paneId} bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
 	</div>
 {/if}
+
+<style>
+	.bookChapter {
+		font-size: min(5cqw, 1rem);
+	}
+</style>
