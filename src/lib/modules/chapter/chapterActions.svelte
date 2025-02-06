@@ -2,7 +2,7 @@
 	import { chapterService } from '$lib/api/chapters.service';
 	import { onMount } from 'svelte';
 	import BookChapterPopup from './bookChapterPopup.svelte';
-	import ActionDropdown from './actionDropdown.svelte';
+	import ActionDropdown from './actionsPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
 
 	let { chapterKey = $bindable(), bookName, bookChapter, containerHeight, paneId } = $props();
