@@ -22,7 +22,7 @@
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
-	let component = $state()
+	let component: string = $state('')
 
 	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
