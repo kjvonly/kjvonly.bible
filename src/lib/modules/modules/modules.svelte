@@ -3,34 +3,53 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import type { Pane } from '$lib/models/pane.model';
 
-	let components = ['ChapterContainer', 'Search'];
+	let components: any = {
+		bible: 'ChapterContainer',
+		search: 'Search'
+	};
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-let pane: Pane | any = $state()
-  
+	let pane: Pane | any = $state();
+
 	onMount(() => {
-        pane = paneService.findNode(paneService.rootPane, paneId)
-    });
+		pane = paneService.findNode(paneService.rootPane, paneId);
+	});
+
+	let headerHeight = $state(0);
 </script>
 
 <div style={containerHeight} class="overflow-hidden">
-	<div class="flex flex-col items-center justify-center">
-		<div class="flex w-full justify-end">
-			<button
-				onclick={() => {
-					paneService.onDeletePane(paneService.rootPane, paneId);
-				}}
-				class="px-2 pt-2 text-neutral-700">Close</button
-			>
-		</div>
-		<div class="gap-2 grid grid-cols-2 w-full p-4 overflow-y-scroll">
-			{#each components as c}
-				<button class="bg-neutral-100 rounded-lg text-neutral-700 h-24" onclick={() => {
-                    pane.updateBuffer(c)
-                }}>
-					<span>{c}</span>
+	<div class="flex flex-col items-center">
+		<header
+			bind:clientHeight={headerHeight}
+			class="sticky top-0 w-full md:max-w-lg flex-col border-b-2 bg-neutral-100 text-neutral-700"
+		>
+			<div class="flex w-full justify-end p-2">
+				<button
+					onclick={() => {
+						paneService.onDeletePane(paneService.rootPane, paneId);
+					}}
+					class=" m-0 p-0"
+				>
+					Cancel
 				</button>
-			{/each}
+			</div>
+		</header>
+
+		<div
+			style="height: {containerHeight - headerHeight}px"
+			class="flex w-full md:max-w-lg flex-col items-center justify-center"
+		>
+			<div class="flex w-full flex-col overflow-y-scroll">
+				{#each Object.keys(components) as c}
+					<div class="w-full">
+						<button
+							onclick={(event) => pane.updateBuffer(components[c])}
+							class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-primary-50">{c}</button
+						>
+					</div>
+				{/each}
+			</div>
 		</div>
 	</div>
 </div>

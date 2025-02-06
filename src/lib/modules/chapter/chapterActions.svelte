@@ -25,11 +25,13 @@
 		e.stopPropagation();
 		showActionsPopup = !showActionsPopup;
 	}
+
+	let clientWidth: number = $state(0);
 </script>
 
 <!-- book chapter selection -->
 
-<div class="leading-tight">
+<div bind:clientWidth class="leading-tight">
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<span
@@ -40,6 +42,7 @@
 			onclick={(e) => {
 				onSettingsClick(e);
 			}}
+			class="p-1"
 		>
 			<svg
 				fill="fill-neutral-700"
@@ -64,7 +67,9 @@
 			}}
 			class="m-0 text-center font-bold text-neutral-700 md:text-base lg:text-lg"
 		>
-			<span>{bookName} {bookChapter}<span> </span></span>
+			<span class="bookChapter flex items-center text-center"
+				><span>{bookName} {bookChapter}</span><span> </span></span
+			>
 		</span>
 		<span class="mr-2 h-[100%] border-e-2 border-neutral-300">&nbsp;</span>
 
@@ -106,3 +111,9 @@
 		<ActionDropdown {paneId} bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
 	</div>
 {/if}
+
+<style>
+	.bookChapter {
+		font-size: min(5cqw, 1rem);
+	}
+</style>
