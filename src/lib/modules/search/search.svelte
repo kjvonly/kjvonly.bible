@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
-	import { paneService } from '../../../components/dynamic-grid-template-areas/pane.service.svelte';
+	import { paneService } from '$lib/services/pane.service.svelte';
 
 	let searchID = crypto.randomUUID();
 	let searchInputHeight: number = $state(0);

@@ -1,6 +1,6 @@
-import { type ChapterSettings, newChapterSettings } from "../../routes/(bible)/bible/models/chapterSettings";
+import { type Settings, newSettings } from "../models/settings.model";
 
-class ColorTheme {
+class SettingsService {
 
     VALID_COLOR_THEMES = [
         'red',
@@ -54,18 +54,18 @@ class ColorTheme {
 
     }
 
-    getChapterSettings(): ChapterSettings {
+    getChapterSettings(): Settings {
         let cs = localStorage.getItem('chapterSettings');
         if (cs != null) {
-            let chapterSettings: ChapterSettings | null = JSON.parse(cs);
+            let chapterSettings: Settings | null = JSON.parse(cs);
             if (chapterSettings) {
                 return chapterSettings
             }
         }
-        return newChapterSettings()
+        return newSettings()
     }
 
 }
 
 
-export let colorTheme = new ColorTheme()
+export let settingsService = new SettingsService()

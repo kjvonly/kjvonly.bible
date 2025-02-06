@@ -1,15 +1,13 @@
 <script lang="ts">
-	import { bibleNavigationService } from '$lib/services/bible-navigation.service';
+	import { bibleNavigationService } from '$lib/services/bibleNavigation.service';
 	import { onMount } from 'svelte';
-	import Header from '../../../components/header.svelte';
-	import Chapter from './chapter.svelte';
-	import { newChapterSettings, type ChapterSettings } from '../../models/chapterSettings';
-	import { colorTheme } from '$lib/services/colorTheme.service';
+		import Chapter from './chapter.svelte';
+	import { newSettings, type Settings } from '../../models/settings.model';
+	import { settingsService } from '$lib/services/colorTheme.service';
 
-	import type { Pane } from '$lib/models/pane.model.svelte';
-	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
-	import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
-	import ChapterActions from '../../../components/chapterActions.svelte';
+	import { paneService } from '$lib/services/pane.service.svelte';
+	import ChapterActions from './chapterActions.svelte';
+	import type { Pane } from '$lib/models/pane.model';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -17,11 +15,11 @@
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
 
-	let chapterSettings: ChapterSettings | null = $state(null);
+	let chapterSettings: Settings | null = $state(null);
 
-	let { paneId = $bindable<Pane>(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
+	let { paneId = $bindable<string>(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-	let pane: node = $state();
+	let pane: Pane | any = $state();
 	$effect(() => {
 		paneId;
 		pane = paneService.findNode(paneService.rootPane, paneId);
@@ -36,7 +34,7 @@
 
 		/* update color theme */
 		if (chapterSettings && chapterSettings.colorTheme) {
-			colorTheme.setTheme(chapterSettings?.colorTheme);
+			settingsService.setTheme(chapterSettings?.colorTheme);
 		}
 	});
 
@@ -52,14 +50,14 @@
 		chapterKey = key;
 	}
 
-	async function _nextChapter(e) {
+	async function _nextChapter(e: Event) {
 		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.next(chapterKey);
 		}
 	}
 
-	async function _previousChapter(e) {
+	async function _previousChapter(e: Event) {
 		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.previous(chapterKey);
@@ -100,10 +98,10 @@
 			chapterSettings = JSON.parse(cs);
 
 			if (chapterSettings && chapterSettings.colorTheme) {
-				colorTheme.setTheme(chapterSettings?.colorTheme);
+				settingsService.setTheme(chapterSettings?.colorTheme);
 			}
 		} else {
-			chapterSettings = newChapterSettings();
+			chapterSettings = newSettings();
 		}
 
 		pane = paneService.findNode(paneService.rootPane, paneId);

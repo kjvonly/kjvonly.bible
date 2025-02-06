@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { ChapterSettings } from '../bible/models/chapterSettings';
-	import { colorTheme } from '$lib/services/colorTheme.service';
+	import type { Settings } from '../../models/settings.model';
+	import { settingsService } from '$lib/services/colorTheme.service';
 
 	let { showSettingsPopup = $bindable() } = $props();
 	let headerHeight = $state(0);
@@ -41,14 +41,14 @@
 
 		/* update color theme */
 		if (chapterSettings && chapterSettings.colorTheme) {
-			colorTheme.setTheme(chapterSettings?.colorTheme);
+			settingsService.setTheme(chapterSettings?.colorTheme);
 		}
 	});
 
 	let chapterSettings: any = $state();
 
 	onMount(async () => {
-		chapterSettings = colorTheme.getChapterSettings();
+		chapterSettings = settingsService.getChapterSettings();
 		if (chapterSettings && chapterSettings.doChapterFadeAnimation === undefined) {
 			chapterSettings.doChapterFadeAnimation = false;
 		}

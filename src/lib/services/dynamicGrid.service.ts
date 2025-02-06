@@ -1,10 +1,5 @@
-export interface node {
-    id: string;
-    left: node | any;
-    right: node | any;
-    split: string;
-    buffer: any
-}
+import type { Pane } from "$lib/models/pane.model"
+
 
 export function numberToLetters(number: number) {
     let result = ""
@@ -178,7 +173,7 @@ function joinGridTemplateAreas(lrgta: string[][], rrgta: string[][], split: stri
     return gta;
 }
 
-export function renderGridTemplateAreas(n: node) {
+export function renderGridTemplateAreas(n: Pane | any) {
     if (n.split === undefined) {
         return [[n.id]];
     } else {

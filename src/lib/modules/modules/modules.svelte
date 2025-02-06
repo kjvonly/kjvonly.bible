@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { paneService } from '../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
-	import type { node } from '../../../../../components/dynamic-grid-template-areas/dynamicGrid';
+	import { paneService } from '$lib/services/pane.service.svelte';
+	import type { Pane } from '$lib/models/pane.model';
 
 	let components = ['ChapterContainer', 'Search'];
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-let pane: node = $state()
+let pane: Pane | any = $state()
   
 	onMount(() => {
         pane = paneService.findNode(paneService.rootPane, paneId)

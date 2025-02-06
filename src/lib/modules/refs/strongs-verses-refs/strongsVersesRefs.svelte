@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import StrongsRefsContainer from '../strongs-refs/strongsRefsContainer.svelte';
 	import VerseRefsContainer from '../verses-refs/verseRefsContainer.svelte';
-	import { paneService } from '../../../../../../components/dynamic-grid-template-areas/pane.service.svelte';
+	import { paneService } from '$lib/services/pane.service.svelte';
 
 	let id = crypto.randomUUID();
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
