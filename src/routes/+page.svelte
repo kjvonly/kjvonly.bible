@@ -4,8 +4,8 @@
 
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
-	import Pane from '$lib/components/pane.svelte';
-	import { type node } from '$lib/models/node.model';
+	import PaneContainer from '$lib/components/pane.svelte';
+	import { type Pane } from '$lib/models/node.model';
 
 	let template = $state();
 	let elements: string[] = $state([]);
@@ -77,7 +77,7 @@
 		paneService.publishHw(hw);
 	}
 
-	function findNodes(n: node, key: string): node | undefined {
+	function findNodes(n: Pane, key: string): Pane | undefined {
 		if (n.id === key) {
 			return n;
 		}
@@ -152,7 +152,7 @@
 		onGridUpdate();
 	}
 
-	function deletePane(n: node, key: string) {
+	function deletePane(n: Pane, key: string) {
 		if (n.id === key) {
 			return n;
 		}
@@ -226,7 +226,7 @@
 		{#each elements as paneId}
 			{#if !deletedElements[paneId]}
 				<div class="relateive outline" style="grid-area: {paneId};">
-					<Pane {paneId}></Pane>
+					<PaneContainer {paneId}></PaneContainer>
 				</div>
 			{/if}
 		{/each}

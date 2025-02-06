@@ -1,7 +1,7 @@
-export interface node {
+export interface Pane {
     id: string | any;
-    left: node | any;
-    right: node | any;
+    left: Pane | any;
+    right: Pane | any;
     split: string | any;
     buffer: any
 }

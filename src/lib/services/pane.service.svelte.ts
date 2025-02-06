@@ -1,9 +1,9 @@
-import type { node } from "$lib/models/node.model";
+import type { Pane } from "$lib/models/node.model";
 
 
 export class PaneService {
     private static _instance: PaneService;
-    rootPane: node = {
+    rootPane: Pane = {
         id: 'a',
         split: undefined,
         left: undefined,
@@ -13,7 +13,7 @@ export class PaneService {
 
     heightWidth: any = {}
 
-    findNode(n: node, key: string): node | undefined {
+    findNode(n: Pane, key: string): Pane | undefined {
         if (n.id === key) {
             return n;
         }

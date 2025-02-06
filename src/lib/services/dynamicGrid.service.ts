@@ -1,4 +1,4 @@
-import type { node } from "$lib/models/node.model"
+import type { Pane } from "$lib/models/node.model"
 
 
 export function numberToLetters(number: number) {
@@ -173,7 +173,7 @@ function joinGridTemplateAreas(lrgta: string[][], rrgta: string[][], split: stri
     return gta;
 }
 
-export function renderGridTemplateAreas(n: node | any) {
+export function renderGridTemplateAreas(n: Pane | any) {
     if (n.split === undefined) {
         return [[n.id]];
     } else {
