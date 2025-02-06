@@ -11,6 +11,7 @@
 	let filterText: string = $state('');
 	let selectedBook: any = $state();
 	let group = $state(true);
+	let clientWidth = $state(0);
 
 	let bookGroups = {
 		'1': {
@@ -442,9 +443,9 @@
 	}
 </script>
 
-<div class="h-full w-full flex justify-center overflow-y-scroll bg-neutral-50">
-	<div class="max-w-3xl justify-center">
-		<header class="items stickytop-0 w-full flex-col border-b-2 bg-neutral-100 text-neutral-700">
+<div class="flex h-full w-full justify-center overflow-y-scroll bg-neutral-50">
+	<div class="w-full justify-center md:max-w-lg">
+		<header class="items sticky top-0 w-full flex-col border-b-2 bg-neutral-100 text-neutral-700">
 			<div class="flex w-full justify-between p-2">
 				{#if !selectedBook}
 					<button
@@ -552,37 +553,39 @@
 			{/if}
 		</header>
 
-		{#if selectedBook}
-			<div class="grid w-[100%] grid-cols-5">
-				{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
-					<button
-						onclick={() => chapterSelected(ch + 1)}
-						class="row-span-1 bg-neutral-50 p-4 hover:bg-primary-50">{ch + 1}</button
-					>
-				{/each}
-			</div>
-		{:else if group}
-			<div class="grid w-full grid-cols-5 gap-1">
-				{#each filteredBooks as bn}
-					<button
-						onclick={(event) => bookSelected(event, bn)}
-						class="cols-span-1 align-items-center p-4 text-center hover:cursor-pointer {bookGroups[
-							bn.id
-						].bgcolor}  {bookGroups[bn.id].textcolor}"
-					>
-						{bookGroups[bn.id].name}
-					</button>
-				{/each}
-			</div>
-		{:else}
-			{#each filteredBooks as bn}
-				<div class="w-full">
-					<button
-						onclick={(event) => bookSelected(event, bn)}
-						class="w-full bg-neutral-50 p-4 text-start hover:bg-primary-50">{bn.name}</button
-					>
+		<div bind:clientWidth class="flex w-full flex-col">
+			{#if selectedBook}
+				<div class="grid w-[100%] grid-cols-5">
+					{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
+						<button
+							onclick={() => chapterSelected(ch + 1)}
+							class="row-span-1 bg-neutral-50 p-4 hover:bg-primary-50">{ch + 1}</button
+						>
+					{/each}
 				</div>
-			{/each}
-		{/if}
+			{:else if group}
+				<div class="grid w-full {clientWidth < 250 ? 'grid-cols-3' : 'grid-cols-5'} gap-1">
+					{#each filteredBooks as bn}
+						<button
+							onclick={(event) => bookSelected(event, bn)}
+							class="cols-span-1  text-wrap py-6 text-center hover:cursor-pointer {bookGroups[
+								bn.id
+							].bgcolor}  {bookGroups[bn.id].textcolor}"
+						>
+							{bookGroups[bn.id].name}
+						</button>
+					{/each}
+				</div>
+			{:else}
+				{#each filteredBooks as bn}
+					<div class="w-full">
+						<button
+							onclick={(event) => bookSelected(event, bn)}
+							class="w-full bg-neutral-50 p-4 text-start hover:bg-primary-50">{bn.name}</button
+						>
+					</div>
+				{/each}
+			{/if}
+		</div>
 	</div>
 </div>
