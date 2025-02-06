@@ -5,7 +5,7 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
 	import PaneContainer from '$lib/components/pane.svelte';
-	import { type Pane } from '$lib/models/node.model';
+	import { type Pane } from '$lib/models/pane.model';
 
 	let template = $state();
 	let elements: string[] = $state([]);

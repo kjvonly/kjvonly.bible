@@ -1,4 +1,4 @@
-import type { Pane } from "$lib/models/node.model"
+import type { Pane } from "$lib/models/pane.model"
 
 
 export function numberToLetters(number: number) {
