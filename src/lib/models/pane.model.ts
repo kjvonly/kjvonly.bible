@@ -4,4 +4,5 @@ export interface Pane {
     right: Pane | any;
     split: string | any;
     buffer: any
+    updateBuffer: Function | any
 }

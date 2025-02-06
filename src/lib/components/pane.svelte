@@ -22,7 +22,7 @@
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
-	let component: string = $state('')
+	let component: string = $state('');
 
 	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
@@ -40,18 +40,22 @@
 
 		/**
 		 * Pane buffer history:
-		 *  
+		 *
 		 * Just used for modules to update the component. without rerendering the panes
-		 * could be useful tho for components to navigate back and forth without needing 
-		 * create a new pane. See a history of buffers in a pane and then being able to 
+		 * could be useful tho for components to navigate back and forth without needing
+		 * create a new pane. See a history of buffers in a pane and then being able to
 		 * navigate back through the buffer list prior to closing the pane.
-		*/
-		p.updateBuffer = (c)=>{component = c}
+		 */
+		if (p) {
+			p.updateBuffer = (c: string) => {
+				component = c;
+			};
+		}
 
-		pane = p
+		pane = p;
 		paneService.subscribe(pane.id, updateHw);
 		updateHw(paneService.heightWidth);
-		component = pane?.buffer?.componentName
+		component = pane?.buffer?.componentName;
 	});
 </script>
 
