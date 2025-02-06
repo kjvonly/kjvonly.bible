@@ -22,7 +22,6 @@
 >
 
 <style>
-	/* TODO: Decide if supporting footnotes. */
 	.FOOTNO {
 		vertical-align: baseline;
 		position: relative;

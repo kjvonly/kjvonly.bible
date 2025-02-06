@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import { type node } from '$lib/services/dynamicGrid.service';
 	import { newSettings, type Settings } from '../models/settings.model';
 	import { componentMapping } from '$lib/services/componentMappingService';
 	import { settingsService } from '$lib/services/colorTheme.service';
+	import type { Pane } from '$lib/models/pane.model';
 
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');
@@ -12,7 +12,7 @@
 
 	let { paneId = $bindable<string>() } = $props();
 
-	let pane: node = $state();
+	let pane: Pane | any = $state();
 	$effect(() => {
 		paneId;
 		pane = paneService.findNode(paneService.rootPane, paneId);

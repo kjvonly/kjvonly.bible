@@ -5,10 +5,9 @@
 	import { newSettings, type Settings } from '../../models/settings.model';
 	import { settingsService } from '$lib/services/colorTheme.service';
 
-	import type { Pane } from '$lib/models/pane.model.svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import type { node } from '$lib/services/dynamicGrid.service';
 	import ChapterActions from './chapterActions.svelte';
+	import type { Pane } from '$lib/models/pane.model';
 
 	let id = crypto.randomUUID();
 	let chapterKey: string | null = $state(null);
@@ -18,9 +17,9 @@
 
 	let chapterSettings: Settings | null = $state(null);
 
-	let { paneId = $bindable<Pane>(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
+	let { paneId = $bindable<string>(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-	let pane: node = $state();
+	let pane: Pane | any = $state();
 	$effect(() => {
 		paneId;
 		pane = paneService.findNode(paneService.rootPane, paneId);
@@ -51,14 +50,14 @@
 		chapterKey = key;
 	}
 
-	async function _nextChapter(e) {
+	async function _nextChapter(e: Event) {
 		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.next(chapterKey);
 		}
 	}
 
-	async function _previousChapter(e) {
+	async function _previousChapter(e: Event) {
 		e.stopPropagation();
 		if (chapterKey) {
 			chapterKey = bibleNavigationService.previous(chapterKey);
