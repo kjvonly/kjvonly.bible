@@ -3,7 +3,7 @@ import type { Pane } from "$lib/models/pane.model";
 
 export class PaneService {
     private static _instance: PaneService;
-    rootPane: Pane = {
+    rootPane: Pane | any = {
         id: 'a',
         split: undefined,
         left: undefined,

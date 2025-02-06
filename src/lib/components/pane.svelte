@@ -18,7 +18,7 @@
 		pane = paneService.findNode(paneService.rootPane, paneId);
 	});
 
-	function updateHw(hw: any) {
+	function updateHeightWidth(hw: any) {
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
@@ -53,8 +53,8 @@
 		}
 
 		pane = p;
-		paneService.subscribe(pane.id, updateHw);
-		updateHw(paneService.heightWidth);
+		paneService.subscribe(pane.id, updateHeightWidth);
+		updateHeightWidth(paneService.heightWidth);
 		component = pane?.buffer?.componentName;
 	});
 </script>
