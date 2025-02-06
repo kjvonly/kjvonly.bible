@@ -93,7 +93,7 @@
 	onMount(async () => {});
 </script>
 
-<div class="{fadeClass} flex-col leading-loose">
+<div class="{fadeClass} flex-col leading-loose overflow-hidden">
 	<div>
 		{#if showChapter}
 			<p class="px-4">

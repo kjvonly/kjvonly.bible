@@ -1101,8 +1101,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    /* color of the scroll thumb */
-    background-color: blue;
     /* roundness of the scroll thumb */
     border-radius: 1rem;
+    visibility: hidden;
 }
