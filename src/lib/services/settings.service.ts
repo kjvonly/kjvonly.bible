@@ -42,8 +42,14 @@ class SettingsService {
         classes.push(cs.fontFamily)
 
 
+        let currentClasses: string[] = []
+        html?.classList.forEach((c) => {
+            currentClasses.push(c)
+        })
+
+
         if (html) {
-            html?.classList.forEach((c) => {
+            currentClasses.forEach((c: string) => {
                 html?.classList.remove(c)
             })
 

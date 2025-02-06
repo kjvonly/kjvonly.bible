@@ -2,14 +2,14 @@
 	import { chapterService } from '$lib/api/chapters.service';
 	import { onMount } from 'svelte';
 	import BookChapterPopup from './bookChapterPopup.svelte';
-	import ActionDropdown from './actionDropdown.svelte';
+	import ActionDropdown from './actionsPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
 
 	let { chapterKey = $bindable(), bookName, bookChapter, containerHeight, paneId } = $props();
 
 	let showBookChapterPopup: Boolean = $state(false);
 	let showSettingsPopup: Boolean = $state(false);
-	let showActionsDropdown: Boolean = $state(false);
+	let showActionsPopup: Boolean = $state(false);
 
 	function onBookChapterClick(event: Event) {
 		event.stopPropagation();
@@ -19,6 +19,11 @@
 	function onSettingsClick(event: Event) {
 		event.stopPropagation();
 		showSettingsPopup = !showSettingsPopup;
+	}
+
+	function onActionClick(e: Event) {
+		e.stopPropagation();
+		showActionsPopup = !showActionsPopup;
 	}
 </script>
 
@@ -63,7 +68,24 @@
 		</span>
 		<span class="mr-2 h-[100%] border-e-2 border-neutral-300">&nbsp;</span>
 
-		<ActionDropdown {paneId} bind:showActionsDropdown></ActionDropdown>
+		<span onclick={onActionClick}>
+			<svg
+				fill="fill-neutral-700"
+				class="mr-2 h-5 w-5"
+				viewBox="0 0 25.4 14.098638"
+				version="1.1"
+				id="svg5"
+				xml:space="preserve"
+				xmlns="http://www.w3.org/2000/svg"
+				><defs id="defs2" /><g id="layer1" transform="translate(-53.644677,-127.79211)"
+					><path
+						class="fill-neutral-700"
+						d="m 59.906487,137.65245 -6.26181,-4.21622 v -2.82206 -2.82206 l 6.35,4.24282 6.35,4.24283 6.35,-4.24283 6.35,-4.24282 v 2.82222 2.82222 l -6.3429,4.23808 c -3.48859,2.33094 -6.38578,4.22817 -6.43819,4.21606 -0.0524,-0.0121 -2.91311,-1.91931 -6.3571,-4.23824 z"
+						id="path179"
+					/></g
+				></svg
+			>
+		</span>
 	</span>
 	<div></div>
 </div>
@@ -76,5 +98,11 @@
 {#if showSettingsPopup}
 	<div style={containerHeight} class="absolute z-[10000] w-full bg-white shadow-lg">
 		<SettingsPopup bind:showSettingsPopup></SettingsPopup>
+	</div>
+{/if}
+
+{#if showActionsPopup}
+	<div style={containerHeight} class="absolute z-[10000] w-full bg-white shadow-lg">
+		<ActionDropdown {paneId} bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
 	</div>
 {/if}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Settings } from '../../models/settings.model';
-	import { settingsService } from '$lib/services/colorTheme.service';
+	import { settingsService } from '$lib/services/settings.service';
 
 	let { showSettingsPopup = $bindable() } = $props();
 	let headerHeight = $state(0);

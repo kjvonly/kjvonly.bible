@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 		import Chapter from './chapter.svelte';
 	import { newSettings, type Settings } from '../../models/settings.model';
-	import { settingsService } from '$lib/services/colorTheme.service';
+	import { settingsService } from '$lib/services/settings.service';
 
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import ChapterActions from './chapterActions.svelte';
