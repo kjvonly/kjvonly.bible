@@ -153,6 +153,13 @@
 	}
 
 	function deletePane(n: Pane, key: string) {
+		
+		if (n.id === paneService.rootPane.id){
+			n.buffer.componentName = 'Modules'
+			n.buffer.bag = {}
+			n.updateBuffer('Modules')
+		}
+		
 		if (n.id === key) {
 			return n;
 		}
