@@ -16,9 +16,10 @@
 	});
 
 	let headerHeight = $state(0);
+	let clientHeight = $state(0)
 </script>
 
-<div style={containerHeight} class="overflow-hidden">
+<div bind:clientHeight={clientHeight} style={containerHeight} class="overflow-hidden">
 	<div class="flex flex-col items-center">
 		<header
 			bind:clientHeight={headerHeight}
@@ -37,10 +38,10 @@
 		</header>
 
 		<div
-			style="height: {containerHeight - headerHeight}px"
-			class="flex w-full md:max-w-lg flex-col items-center justify-center"
+			style="height: {clientHeight - headerHeight}px"
+			class="flex w-full md:max-w-lg flex-col items-center justify-center overflow-hidden"
 		>
-			<div class="flex w-full flex-col overflow-y-scroll">
+			<div class="flex w-full flex-col  overflow-y-scroll">
 				{#each Object.keys(components) as c}
 					<div class="w-full">
 						<button
