@@ -178,6 +178,8 @@
 				n.right = n.right.right;
 			} else {
 				n.id = n.right.id;
+				n.updateBuffer = n.right.updateBuffer
+				n.toggle = n.right.toggle
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;
@@ -192,7 +194,6 @@
 		}
 
 		if (found) {
-			let tmp = n.right.id;
 			deletedElements[n.right.id] = n.right.id;
 			paneService.unsubscribe(n.right.id);
 			//do delete this is the parent
@@ -202,6 +203,8 @@
 				n.left = n.left.left;
 			} else {
 				n.id = n.left.id;
+				n.updateBuffer = n.left.updateBuffer
+				n.toggle = n.left.toggle
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;
