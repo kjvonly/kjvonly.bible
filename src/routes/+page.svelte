@@ -123,7 +123,9 @@
 				split: n.split,
 				left: {
 					id: n.id,
-					buffer: n.buffer
+					buffer: n.buffer,
+					toggle: n.toggle,
+					updateBuffer: n.updateBuffer
 				},
 				right: {
 					id: nid,
@@ -135,7 +137,10 @@
 		} else {
 			n.split = split;
 			n.left = {
-				id: n.id
+				id: n.id,
+				buffer: n.buffer,
+				updateBuffer: n.updateBuffer,
+				toggle: n.toggle,
 			};
 
 			let buffer = new Buffer();

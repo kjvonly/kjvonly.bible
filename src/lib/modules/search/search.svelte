@@ -40,8 +40,8 @@
 
 <div bind:clientHeight style={containerHeight} class="overflow-hidden">
 	<div class="flex flex-col items-center justify-center">
-		<div bind:clientHeight={headerHeight} class="w-full">
-			<div class="flex w-full justify-end">
+		<div bind:clientHeight={headerHeight} class="w-full flex flex-col items-center">
+			<div class="flex w-full justify-end max-w-lg">
 				<button
 					onclick={() => {
 						paneService.onDeletePane(paneService.rootPane, paneId);
@@ -49,7 +49,7 @@
 					class="px-2 pt-2 text-neutral-700">Close</button
 				>
 			</div>
-			<div class="flex w-full justify-center px-4">
+			<div class="flex w-full justify-center px-4 max-w-lg">
 				<input
 					bind:clientHeight={searchInputHeight}
 					class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
@@ -63,7 +63,7 @@
 			<div
 				style="height: {clientHeight - headerHeight}px"
 				class="{searchResults?.length > 0 ? '' : 'hidden'}
-                  -m-1 max-w-3xl overflow-x-hidden overflow-y-scroll bg-neutral-50
+                  -m-1 max-w-lg overflow-x-hidden overflow-y-scroll bg-neutral-50
                   "
 			>
 				{#each searchResults as v}
