@@ -39,7 +39,7 @@
 
 		<div
 			style="height: {clientHeight - headerHeight}px"
-			class="flex w-full md:max-w-lg flex-col items-center justify-center overflow-hidden"
+			class="flex w-full md:max-w-lg flex-col items-center justify-start overflow-hidden"
 		>
 			<div class="flex w-full flex-col  overflow-y-scroll">
 				{#each Object.keys(components) as c}
