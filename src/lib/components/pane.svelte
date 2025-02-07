@@ -48,6 +48,7 @@
 		 */
 		if (p) {
 			p.updateBuffer = (c: string) => {
+				console.log('update buffer')
 				component = c;
 			};
 		}
