@@ -280,3 +280,9 @@ To remedy the issue of rerendering the `Pane`s that should not be rerendered we 
     {/if}
 {/each}
 ```
+
+#### Defining Pane Height
+
+In `HTML`/`CSS` you have to specify the height of an element otherwise the height will be sum of the height of inner html. For us since we generated the `grid-template-area` we know exactly the height of each `Pane` by adding up the number of rows the `Pane` id is present and dividing by the total number of rows to get the percentage of the view height.
+
+In the code (in +page.svelte, `onGridUpdate` function), we determine the height of each `Pane` and publish the height of the `Pane`s. Each `Pane` subscribes to this publish event and will update the `Pane` height accordingly.
