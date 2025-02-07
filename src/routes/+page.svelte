@@ -123,7 +123,9 @@
 				split: n.split,
 				left: {
 					id: n.id,
-					buffer: n.buffer
+					buffer: n.buffer,
+					toggle: n.toggle,
+					updateBuffer: n.updateBuffer
 				},
 				right: {
 					id: nid,
@@ -135,7 +137,10 @@
 		} else {
 			n.split = split;
 			n.left = {
-				id: n.id
+				id: n.id,
+				buffer: n.buffer,
+				updateBuffer: n.updateBuffer,
+				toggle: n.toggle,
 			};
 
 			let buffer = new Buffer();
@@ -153,6 +158,12 @@
 	}
 
 	function deletePane(n: Pane, key: string) {
+		if (n.id === paneService.rootPane.id && n.left === undefined && n.right === undefined) {
+			n.buffer.componentName = 'Modules';
+			n.buffer.bag = {};
+			n.updateBuffer('Modules');
+		}
+
 		if (n.id === key) {
 			return n;
 		}
@@ -172,6 +183,8 @@
 				n.right = n.right.right;
 			} else {
 				n.id = n.right.id;
+				n.updateBuffer = n.right.updateBuffer
+				n.toggle = n.right.toggle
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;
@@ -186,7 +199,6 @@
 		}
 
 		if (found) {
-			let tmp = n.right.id;
 			deletedElements[n.right.id] = n.right.id;
 			paneService.unsubscribe(n.right.id);
 			//do delete this is the parent
@@ -196,6 +208,8 @@
 				n.left = n.left.left;
 			} else {
 				n.id = n.left.id;
+				n.updateBuffer = n.left.updateBuffer
+				n.toggle = n.left.toggle
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;

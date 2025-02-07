@@ -22,7 +22,6 @@
 		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
 		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
 	}
-	let component: string = $state('');
 
 	onMount(() => {
 		let cs = localStorage.getItem('chapterSettings');
@@ -47,24 +46,38 @@
 		 * navigate back through the buffer list prior to closing the pane.
 		 */
 		if (p) {
+			p.toggle = false;
 			p.updateBuffer = (c: string) => {
-				component = c;
+				p.buffer.componentName = c;
+				p.toggle = !p.toggle
+				pane = p				
 			};
 		}
 
 		pane = p;
 		paneService.subscribe(pane.id, updateHeightWidth);
 		updateHeightWidth(paneService.heightWidth);
-		component = pane?.buffer?.componentName;
 	});
 </script>
 
 <div style="{containerWidth} {containerHeight}" class="relative overflow-hidden">
 	<div style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
 		<div class="header bg-neutral-950 w-full items-center text-balance outline">
-			{#if pane?.buffer?.componentName}
-				{@const Component = componentMapping.getComponent(component)}
-				<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
+
+			<!-- Since component is a Const we need a way to rerender this when the component changes. 
+			     We accomplish this with the toggle. -->
+			{#if pane?.toggle}
+				{#if pane?.buffer?.componentName}
+					{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
+					<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
+				{/if}
+			{/if}
+
+			{#if pane && !pane.toggle}
+				{#if pane?.buffer?.componentName}
+					{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
+					<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
+				{/if}
 			{/if}
 		</div>
 	</div>

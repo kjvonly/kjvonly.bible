@@ -5,4 +5,5 @@ export interface Pane {
     split: string | any;
     buffer: any
     updateBuffer: Function | any
+    toggle: boolean | any
 }

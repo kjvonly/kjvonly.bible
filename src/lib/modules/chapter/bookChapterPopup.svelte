@@ -13,7 +13,7 @@
 	let group = $state(true);
 	let clientWidth = $state(0);
 
-	let bookGroups = {
+	let bookGroups: any = {
 		'1': {
 			name: 'Gen',
 			group: 'law',
@@ -441,11 +441,17 @@
 		showBookChapterPopup = false;
 		selectedBook = undefined;
 	}
+
+	let clientHeight = $state(0);
+	let headerHeight = $state(0);
 </script>
 
-<div class="flex h-full w-full justify-center overflow-y-scroll bg-neutral-50">
-	<div class="w-full justify-center md:max-w-lg">
-		<header class="items sticky top-0 w-full flex-col border-b-2 bg-neutral-100 text-neutral-700">
+<div bind:clientHeight class="flex h-full w-full justify-center bg-neutral-50">
+	<div class="w-full md:max-w-lg">
+		<header
+			bind:clientHeight={headerHeight}
+			class="sticky top-0 w-full flex-col border-b-2 bg-neutral-100 text-neutral-700"
+		>
 			<div class="flex w-full justify-between p-2">
 				{#if !selectedBook}
 					<button
@@ -522,11 +528,11 @@
 						</button>
 					</div>
 				{/if}
-				<div class="flex items-center">
+				<div class="flex items-center justify-center">
 					{#if selectedBook}
-						<h1 class=" text-center text-lg">CHAPTER</h1>
+						<h1 class=" text-center">CHAPTER</h1>
 					{:else}
-						<h1 class=" text-center text-lg">Book</h1>
+						<h1 class=" text-center">Book</h1>
 					{/if}
 				</div>
 				<button
@@ -553,7 +559,7 @@
 			{/if}
 		</header>
 
-		<div bind:clientWidth class="flex w-full flex-col">
+		<div bind:clientWidth style="height: {clientHeight - headerHeight}px" class="flex w-full flex-col overflow-y-scroll">
 			{#if selectedBook}
 				<div class="grid w-[100%] grid-cols-5">
 					{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
@@ -568,9 +574,9 @@
 					{#each filteredBooks as bn}
 						<button
 							onclick={(event) => bookSelected(event, bn)}
-							class="cols-span-1  text-wrap py-6 text-center hover:cursor-pointer {bookGroups[
-								bn.id
-							].bgcolor}  {bookGroups[bn.id].textcolor}"
+							class="cols-span-1 text-wrap py-6 text-center hover:cursor-pointer
+							{bookGroups[bn.id].bgcolor}  {bookGroups[bn.id].textcolor}
+							"
 						>
 							{bookGroups[bn.id].name}
 						</button>
