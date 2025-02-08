@@ -5,6 +5,7 @@
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
+		console.log(chapterKey)
 
 		pane.buffer.bag.lastVerse = verse.number
 

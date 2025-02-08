@@ -10,14 +10,12 @@
 
 	let strongsRef = $state('');
 	let footnote = $state('');
-	let chapterKey = $state('');
 	let verse = $state('')
-	let verseRefs: string[][] = $state([])
+	let verseRefs: string[] = $state([])
 	let text = $state('');
 	let pane: any = $state();
 
 	onMount(() => {
-		let verseRef: string[] = []
 		pane = paneService.findNode(paneService.rootPane, paneId);
 		pane?.buffer?.bag?.word?.href?.forEach((ref: string) => {
 			let match = new RegExp('^[GH]', 'm').test(ref);
@@ -32,11 +30,11 @@
 
 			match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
 			if (match) {
-				verseRef.push(ref)
+				verseRefs.push(ref)
 			}
 		});
 
-		verseRefs.push(verseRef)
+		
 
 		if (pane?.buffer?.bag?.word?.text) {
 			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
@@ -72,7 +70,7 @@
 						{/if}
 
 						{#if verseRefs.length > 0}
-							<VerseRefsContainer chapterKey verse={pane?.buffer?.bag?.verse} bind:verseRefs></VerseRefsContainer>
+							<VerseRefsContainer chapterKey={pane?.buffer?.bag?.chapterKey} verse={pane?.buffer?.bag?.verse} bind:verseRefs></VerseRefsContainer>
 						{/if}
 					</div>
 				</div>
