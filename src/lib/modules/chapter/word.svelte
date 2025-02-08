@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
 
-	let { word, verse, pane = $bindable() } = $props();
+	let { word, verse, footnotes, pane = $bindable() } = $props();
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
 
 		pane.buffer.bag.lastVerse = verse.number
-		//paneService.save()
-		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', { word: word });
+
+		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', { word: word, footnotes: footnotes });
 	}
 </script>
 
@@ -23,10 +23,11 @@
 
 <style>
 	.FOOTNO {
+		cursor: pointer;
 		vertical-align: baseline;
-		position: relative;
+		position: relative;	
 		top: -0.6em;
-		@apply -z-10 me-2 text-xs text-neutral-700 md:text-base;
+		@apply me-2 text-xs text-neutral-700 md:text-base;
 	}
 
 	.redtxt {
@@ -41,7 +42,7 @@
 		vertical-align: baseline;
 		position: relative;
 		top: -0.6em;
-		@apply -z-10 text-xs text-neutral-700 sm:text-base;
+		@apply text-xs text-neutral-700 sm:text-base;
 	}
 
 	.xref {
