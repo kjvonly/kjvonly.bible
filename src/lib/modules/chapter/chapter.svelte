@@ -101,7 +101,6 @@
 			<p class="px-4">
 				{#each keys as k, idx}
 					<span id={`${id}-vno-${idx + 1}`}>
-						{chapterKey}
 						<Verse bind:pane verse={verses[k]} footnotes={footnotes} {chapterKey}></Verse>
 					</span>
 				{/each}

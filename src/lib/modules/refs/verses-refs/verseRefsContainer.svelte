@@ -66,6 +66,8 @@
 
 <div>
 	<div class="py-4">
+
+        
 		
 		<div class="py-4">
 			{#if verseRefs2.length > 0}
