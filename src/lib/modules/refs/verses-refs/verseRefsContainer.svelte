@@ -8,10 +8,9 @@
 	let bookChapter = $state();
 	let verseNumber = $state();
 	let verseText = $state();
-	let verseRefs2: any = $state([]);
+	let verseRefs2: any[] = $state([]);
 
 	onMount(async () => {
-		console.log('chapterKey ', chapterKey);
 		let data = await bibleDB.getValue('chapters', chapterKey);
 		bookName = data['bookName'];
 		bookChapter = data['number'];
@@ -38,7 +37,7 @@
 			let data = await bibleDB.getValue('chapters', ckey);
 			let bname = data['bookName'];
 			let v = data['verseMap'][vnumber];
-			let vNoVn = v.substring(0, v.length - 1);
+			let vNoVn = v.substring(0, v.length);
 
 			let vref = {
 				ref: ref,
@@ -56,9 +55,10 @@
 </script>
 
 {#snippet vrefSnippet(vref: any)}
-	<p>{vref.bookName} {vref.chapter}:{vref.vnumber}</p>
-	<p>
-		{#each vref.text.split(' ') as w}
+	
+	<p class="px-4 py-2 text-left hover:bg-primary-100">
+        <span class="font-bold">{vref.bookName} {vref.chapter}:{vref.vnumber}</span><br/>
+		{#each vref.text.trim().split(' ') as w}
 			<span class="inline-block">{w}</span>&nbsp;
 		{/each}
 	</p>
@@ -66,13 +66,15 @@
 
 <div>
 	<div class="py-4">
-		<h1 class="font-bold underline underline-offset-8">Verse References:</h1>
+		
 		<div class="py-4">
 			{#if verseRefs2.length > 0}
+            <h1 class="py-4 font-bold underline underline-offset-8">Verse</h1>
 				{@const vref = verseRefs2[verseRefs2.length - 1][0]}
 
 				{@render vrefSnippet(vref)}
-
+                
+                <h1 class="py-4 font-bold underline underline-offset-8">Verse References</h1>
 				{#each verseRefs2[verseRefs2.length - 1].slice(1, verseRefs2[verseRefs2.length - 1].length) as vref, idx}
 					{@render vrefSnippet(vref)}
 				{/each}
