@@ -8,6 +8,7 @@
 	let timeoutIDs: number[] = [];
 	let loadedBookName = $state();
 	let loadedChapter = $state();
+	let footnotes: any = $state()
 	let firstLoad = true;
 
 	let {
@@ -87,6 +88,7 @@
 		loadedBookName = bookName;
 		loadedChapter = bookChapter;
 		verses = data['verses'];
+		footnotes = data['footnotes']
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
@@ -99,7 +101,7 @@
 			<p class="px-4">
 				{#each keys as k, idx}
 					<span id={`${id}-vno-${idx + 1}`}>
-						<Verse bind:pane verse={verses[k]}></Verse>
+						<Verse bind:pane verse={verses[k]} footnotes={footnotes}></Verse>
 					</span>
 				{/each}
 			</p>
