@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	let { footnote, footnotes } = $props();
+	let {text ,footnote, footnotes } = $props();
 	let footnoteText = $state();
 
 	onMount(() => {
@@ -11,5 +11,7 @@
 </script>
 
 {#if footnoteText}
-	{@html footnoteText}
+	<div class="pt-6 ">
+    		{@html footnoteText}
+	</div>
 {/if}

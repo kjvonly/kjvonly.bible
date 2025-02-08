@@ -11,7 +11,7 @@
 	let strongsRef = $state('');
 	let footnote = $state('');
 	let text = $state('');
-	let pane: any = $state()
+	let pane: any = $state();
 
 	onMount(() => {
 		pane = paneService.findNode(paneService.rootPane, paneId);
@@ -36,8 +36,8 @@
 <div id="{id}-container" class="relative flex h-full w-full overflow-hidden">
 	<div {id} style={containerHeight} class="relative w-full overflow-y-scroll">
 		<div class="h-full w-full">
-			<div class="flex flex-col justify-center">
-				<div class="sticky top-0 w-full bg-neutral-50">
+			<div class="flex flex-col items-center">
+				<div class="sticky top-0 w-full bg-neutral-100 max-w-lg">
 					<div class="flex w-full">
 						<span class="flex-grow"></span>
 						<button
@@ -49,10 +49,11 @@
 					</div>
 				</div>
 
-				<div class="flex w-full justify-center">
-					<div class="max-w-6xl">
+				<div class="flex w-full max-w-lg">
+					<div class="">
 						{#if footnote.length > 0}
-							<FootnoteContainer {footnote} footnotes={pane?.buffer?.bag?.footnotes} ></FootnoteContainer>
+							<FootnoteContainer {text} {footnote} footnotes={pane?.buffer?.bag?.footnotes}
+							></FootnoteContainer>
 						{/if}
 
 						{#if strongsRef.length > 0}
@@ -60,7 +61,7 @@
 						{/if}
 
 						<!-- not implemented yet -->
-						{#if 0 > 0} 
+						{#if 0 > 0}
 							<VerseRefsContainer></VerseRefsContainer>
 						{/if}
 					</div>
