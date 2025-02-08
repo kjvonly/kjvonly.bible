@@ -396,7 +396,7 @@ describe('suite name', () => {
     })
 
     it('failing grid', () => {
-
+        
         let json = `{
     "split": "v",
     "left": {

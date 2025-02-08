@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
 
-	let { word, verse, footnotes, pane = $bindable() } = $props();
+	let { word, verse, footnotes, chapterKey, pane = $bindable() } = $props();
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
 
 		pane.buffer.bag.lastVerse = verse.number
 
-		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', { word: word, footnotes: footnotes });
+		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', { word: word, footnotes: footnotes, verse: verse, chapterKey: chapterKey });
 	}
 </script>
 
