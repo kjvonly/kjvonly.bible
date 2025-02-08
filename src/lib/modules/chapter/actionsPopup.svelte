@@ -43,7 +43,7 @@
 			</div>
 		</header>
 
-		<div style="height: {containerHeight - headerHeight}px" class="flex w-full flex-col overflow-y-scroll ">
+		<div style="height: {containerHeight - headerHeight}px" class="flex w-full flex-col overflow-y-scroll border">
 			{#each Object.keys(actions) as a}
 				<div class="w-full">
 					<button

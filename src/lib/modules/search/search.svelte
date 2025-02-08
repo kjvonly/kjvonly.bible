@@ -41,7 +41,7 @@
 <div bind:clientHeight style={containerHeight} class="overflow-hidden">
 	<div class="flex flex-col items-center justify-center">
 		<div bind:clientHeight={headerHeight} class="w-full flex flex-col items-center">
-			<div class="flex w-full justify-end max-w-lg">
+			<div class="flex w-full justify-end max-w-lg bg-neutral-100">
 				<button
 					onclick={() => {
 						paneService.onDeletePane(paneService.rootPane, paneId);

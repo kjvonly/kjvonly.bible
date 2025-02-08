@@ -559,7 +559,7 @@
 			{/if}
 		</header>
 
-		<div bind:clientWidth style="height: {clientHeight - headerHeight}px" class="flex w-full flex-col overflow-y-scroll">
+		<div bind:clientWidth style="height: {clientHeight - headerHeight}px" class="flex w-full flex-col overflow-y-scroll border">
 			{#if selectedBook}
 				<div class="grid w-[100%] grid-cols-5">
 					{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}

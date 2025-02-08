@@ -34,12 +34,15 @@
 		<div class="h-full w-full">
 			<div class="flex flex-col justify-center">
 				<div class="sticky top-0 w-full bg-neutral-50">
-					<button
-						onclick={() => {
-							paneService.onDeletePane(paneService.rootPane, paneId);
-						}}
-						class="absolute z-10 float-end right-3 inline-block text-neutral-700">Close</button
-					>
+					<div class="flex w-full">
+						<span  class="flex-grow"></span>
+						<button
+							onclick={() => {
+								paneService.onDeletePane(paneService.rootPane, paneId);
+							}}
+							class="text-neutral-700">Close</button
+						>
+					</div>
 				</div>
 
 				<div class="flex w-full justify-center">
