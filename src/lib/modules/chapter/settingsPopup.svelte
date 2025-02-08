@@ -74,7 +74,7 @@
 </script>
 
 <div
-	class="h-full w-full flex justify-center overflow-y-scroll bg-neutral-100 text-neutral-700"
+	class="h-full w-full flex justify-center overflow-y-scroll bg-neutral-50 text-neutral-700"
 >
 	<div class="max-w-lg">
 		<header class="items w-full flex-col border-b-2 bg-neutral-100">
@@ -94,7 +94,7 @@
 			</div>
 		</header>
 
-		<div class="flex w-full flex-col justify-center bg-neutral-50 p-6">
+		<div class="flex w-full flex-col justify-center bg-neutral-50 p-6 border">
 			<div class="mt-4 flex w-full flex-row">
 				<button
 					onclick={() => {
