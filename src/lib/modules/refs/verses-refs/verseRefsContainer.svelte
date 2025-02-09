@@ -4,60 +4,16 @@
 
 	let { chapterKey, verse, verseRefs = $bindable() } = $props();
 
-	let verseRefs2: any[] = $state([]);
+	let recursiveVerseRefs: any[] = $state([]);
 	let booknames: any;
 
 	onMount(async () => {
 		booknames = await bibleDB.getValue('booknames', 'booknames');
-		let data = await bibleDB.getValue('chapters', chapterKey);
-		let bookName = data['bookName'];
-		let bookID = data['id'].split('_')[0];
-		let bookChapter = data['number'];
 		let verseNumber = verse['number'];
-		let verseText = verse['text'].substring(1, verse['text'].length);
-
-		let vrefs = $state([]);
-
-		let vref = {
-			ref: chapterKey.replaceAll('_', '/') + verseNumber,
-			bookName: bookName,
-			chapter: bookChapter,
-			vnumber: verseNumber,
-			text: verseText,
-			bookID: bookID
-		};
-
-		vrefs.push(vref);
-		verseRefs2.push(vrefs);
-
-		verseRefs.forEach(async (ref: string) => {
-			try {
-				let index = ref.lastIndexOf('/');
-				let ckey = ref.substring(0, index).replaceAll('/', '_');
-
-				let cnumber = ckey.split('_')[1];
-				let vnumber = ref.substring(index + 1, ref.length);
-				let data = await bibleDB.getValue('chapters', ckey);
-				let bname = data['bookName'];
-				let bid = data['id'].split('_')[0];
-				let v = data['verseMap'][vnumber];
-				let vNoVn = v.substring(0, v.length);
-
-				let vref = {
-					ref: ref,
-					bookName: bname,
-					chapter: cnumber,
-					vnumber: vnumber,
-					text: vNoVn,
-					bookID: bid
-				};
-				vrefs.push(vref);
-				console.log(vref);
-			} catch (ex) {
-				console.log(`error fetching ref ${ref}`);
-			}
-			console.log(vrefs);
-		});
+		let ref = chapterKey.replaceAll('_', '/') + '/' + verseNumber;
+		let refs = [ref, ...verseRefs];
+		console.log('refs', ref, refs);
+		addVerseRefs(refs);
 	});
 
 	async function addVerseRefs(refs) {
@@ -85,13 +41,13 @@
 				};
 				vrefs.push(vref);
 
-				console.log('ref2', verseRefs2);
+				console.log('ref2', recursiveVerseRefs);
 			} catch (ex) {
 				console.log(`error fetching ref ${ref}`);
 			}
 		});
 
-		verseRefs2.push(vrefs);
+		recursiveVerseRefs.push(vrefs);
 	}
 
 	async function updateRefs(vref: any) {
@@ -107,7 +63,7 @@
 				let match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
 				if (match) {
 					refKeys.push(ref);
-                    console.log('new ref', ref)
+					console.log('new ref', ref);
 				}
 			});
 		});
@@ -115,8 +71,8 @@
 	}
 
 	function onNavigateRefs(idx: number) {
-		if (idx <= verseRefs2.length - 1) {
-			verseRefs2.splice(idx, verseRefs2.length);
+		if (idx <= recursiveVerseRefs.length - 1) {
+			recursiveVerseRefs.splice(idx, recursiveVerseRefs.length);
 		}
 	}
 </script>
@@ -152,8 +108,8 @@
 <div>
 	<div class="py-4">
 		<div class="py-4">
-			{#each verseRefs2 as refs, idx}
-				{#if idx > verseRefs2.length - 4 && refs[0]}
+			{#each recursiveVerseRefs as refs, idx}
+				{#if idx > recursiveVerseRefs.length - 4 && refs[0]}
 					{#if idx !== 0}
 						<span>&nbsp;/ </span>
 					{/if}
@@ -169,15 +125,15 @@
 				{/if}
 			{/each}
 
-			{#if verseRefs2.length > 0}
+			{#if recursiveVerseRefs.length > 0}
 				<h1 class="py-4 font-bold underline underline-offset-8">Verse</h1>
-				{@const vref = verseRefs2[verseRefs2.length - 1][0]}
+				{@const vref = recursiveVerseRefs[recursiveVerseRefs.length - 1][0]}
 
 				{@render refCurrentVerse(vref)}
 
-				{#if verseRefs2[verseRefs2.length - 1].length > 1}
+				{#if recursiveVerseRefs[recursiveVerseRefs.length - 1].length > 1}
 					<h1 class="py-4 font-bold underline underline-offset-8">Verse References</h1>
-					{#each verseRefs2[verseRefs2.length - 1].slice(1, verseRefs2[verseRefs2.length - 1].length) as vref, idx}
+					{#each recursiveVerseRefs[recursiveVerseRefs.length - 1].slice(1, recursiveVerseRefs[recursiveVerseRefs.length - 1].length) as vref, idx}
 						{@render refVerse(vref)}
 					{/each}
 				{/if}
