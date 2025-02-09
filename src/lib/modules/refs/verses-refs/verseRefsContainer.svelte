@@ -48,7 +48,7 @@
 					chapter: cnumber,
 					vnumber: vnumber,
 					text: vNoVn,
-					bid: bid
+					bookID: bid
 				};
 				vrefs.push(vref);
 				console.log(vref);
@@ -61,8 +61,8 @@
 	});
 </script>
 
-{#snippet vrefSnippet(vref: any)}
-	<p class="px-4 py-2 text-left hover:bg-primary-100">
+{#snippet vrefSnippet(vref: any, idx: number)}
+	<p class="px-4 py-2 text-left {idx !== 0 ? 'hover:bg-primary-100 cursor-pointer' : ''}">
 		<span class="font-bold">{vref.bookName} {vref.chapter}:{vref.vnumber}</span><br />
 		{#each vref.text.trim().split(' ') as w}
 			<span class="inline-block">{w}</span>&nbsp;
@@ -75,7 +75,8 @@
 		<div class="py-4">
 			{#each verseRefs2.slice().reverse() as refs, idx}
 				{#if idx < 4}
-					<span>{booknames['shortNames'][refs.bid]} {refs.chapter}:{refs.vnumber}</span>
+                {#if idx !== 0}/{/if}
+				    	<span class="underline underline-offset-8">{booknames['shortNames'][refs[0].bookID]} {refs[0].chapter}:{refs[0].vnumber}</span>
 				{/if}
 			{/each}
 
@@ -83,11 +84,11 @@
 				<h1 class="py-4 font-bold underline underline-offset-8">Verse</h1>
 				{@const vref = verseRefs2[verseRefs2.length - 1][0]}
 
-				{@render vrefSnippet(vref)}
+				{@render vrefSnippet(vref, 0)}
 
 				<h1 class="py-4 font-bold underline underline-offset-8">Verse References</h1>
 				{#each verseRefs2[verseRefs2.length - 1].slice(1, verseRefs2[verseRefs2.length - 1].length) as vref, idx}
-					{@render vrefSnippet(vref)}
+					{@render vrefSnippet(vref, idx + 1)}
 				{/each}
 			{/if}
 		</div>
