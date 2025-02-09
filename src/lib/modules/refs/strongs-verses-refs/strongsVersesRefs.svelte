@@ -70,7 +70,7 @@
 						{/if}
 
 						{#if verseRefs.length > 0}
-							<VerseRefsContainer chapterKey={pane?.buffer?.bag?.chapterKey} verse={pane?.buffer?.bag?.verse} bind:verseRefs></VerseRefsContainer>
+							<VerseRefsContainer chapterKey={pane?.buffer?.bag?.chapterKey} verse={pane?.buffer?.bag?.verse} {verseRefs}></VerseRefsContainer>
 						{/if}
 					</div>
 				</div>

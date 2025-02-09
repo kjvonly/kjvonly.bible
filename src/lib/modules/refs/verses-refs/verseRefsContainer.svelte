@@ -2,7 +2,7 @@
 	import { bibleDB } from '$lib/db/bible.db';
 	import { onMount } from 'svelte';
 
-	let { chapterKey, verse, verseRefs = $bindable() } = $props();
+	let { chapterKey, verse, verseRefs } = $props();
 
 	let recursiveVerseRefs: any[] = $state([]);
 	let booknames: any;
@@ -22,7 +22,6 @@
 			try {
 				let index = ref.lastIndexOf('/');
 				let ckey = ref.substring(0, index).replaceAll('/', '_');
-
 				let cnumber = ckey.split('_')[1];
 				let vnumber = ref.substring(index + 1, ref.length);
 				let data = await bibleDB.getValue('chapters', ckey);
@@ -110,6 +109,9 @@
 		<div class="py-4">
 			{#each recursiveVerseRefs as refs, idx}
 				{#if idx > recursiveVerseRefs.length - 4 && refs[0]}
+					{#if recursiveVerseRefs.length > 3 && idx === recursiveVerseRefs.length - 3}
+						<span class="underline underline-offset-8">...</span>
+					{/if}
 					{#if idx !== 0}
 						<span>&nbsp;/ </span>
 					{/if}
