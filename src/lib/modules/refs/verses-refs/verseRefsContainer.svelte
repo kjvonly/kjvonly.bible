@@ -4,18 +4,17 @@
 
 	let { chapterKey, verse, verseRefs = $bindable() } = $props();
 
-	let bookName = $state();
-	let bookChapter = $state();
-	let verseNumber = $state();
-	let verseText = $state();
 	let verseRefs2: any[] = $state([]);
+	let booknames: any;
 
 	onMount(async () => {
+		booknames = await bibleDB.getValue('booknames', 'booknames');
 		let data = await bibleDB.getValue('chapters', chapterKey);
-		bookName = data['bookName'];
-		bookChapter = data['number'];
-		verseNumber = verse['number'];
-		verseText = verse['text'].substring(1, verse['text'].length);
+		let bookName = data['bookName'];
+		let bookID = data['id'].split('_')[0];
+		let bookChapter = data['number'];
+		let verseNumber = verse['number'];
+		let verseText = verse['text'].substring(1, verse['text'].length);
 
 		let vrefs = $state([]);
 
@@ -24,7 +23,8 @@
 			bookName: bookName,
 			chapter: bookChapter,
 			vnumber: verseNumber,
-			text: verseText
+			text: verseText,
+			bookID: bookID
 		};
 
 		vrefs.push(vref);
@@ -33,10 +33,12 @@
 			try {
 				let index = ref.lastIndexOf('/');
 				let ckey = ref.substring(0, index).replaceAll('/', '_');
+
 				let cnumber = ckey.split('_')[1];
 				let vnumber = ref.substring(index + 1, ref.length);
 				let data = await bibleDB.getValue('chapters', ckey);
 				let bname = data['bookName'];
+				let bid = data['id'].split('_')[0];
 				let v = data['verseMap'][vnumber];
 				let vNoVn = v.substring(0, v.length);
 
@@ -45,7 +47,8 @@
 					bookName: bname,
 					chapter: cnumber,
 					vnumber: vnumber,
-					text: vNoVn
+					text: vNoVn,
+					bid: bid
 				};
 				vrefs.push(vref);
 				console.log(vref);
@@ -70,6 +73,12 @@
 <div>
 	<div class="py-4">
 		<div class="py-4">
+			{#each verseRefs2.slice().reverse() as refs, idx}
+				{#if idx < 4}
+					<span>{booknames['shortNames'][refs.bid]} {refs.chapter}:{refs.vnumber}</span>
+				{/if}
+			{/each}
+
 			{#if verseRefs2.length > 0}
 				<h1 class="py-4 font-bold underline underline-offset-8">Verse</h1>
 				{@const vref = verseRefs2[verseRefs2.length - 1][0]}
