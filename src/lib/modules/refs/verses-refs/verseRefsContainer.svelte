@@ -28,6 +28,7 @@
 		};
 
 		vrefs.push(vref);
+		verseRefs2.push(vrefs);
 
 		verseRefs.forEach(async (ref: string) => {
 			try {
@@ -55,28 +56,101 @@
 			} catch (ex) {
 				console.log(`error fetching ref ${ref}`);
 			}
+			console.log(vrefs);
+		});
+	});
+
+	async function addVerseRefs(refs) {
+		let vrefs = $state([]);
+		refs.forEach(async (ref) => {
+			try {
+				let index = ref.lastIndexOf('/');
+				let ckey = ref.substring(0, index).replaceAll('/', '_');
+
+				let cnumber = ckey.split('_')[1];
+				let vnumber = ref.substring(index + 1, ref.length);
+				let data = await bibleDB.getValue('chapters', ckey);
+				let bname = data['bookName'];
+				let bid = data['id'].split('_')[0];
+				let v = data['verseMap'][vnumber];
+				let vNoVn = v.substring(0, v.length);
+
+				let vref = {
+					ref: ref,
+					bookName: bname,
+					chapter: cnumber,
+					vnumber: vnumber,
+					text: vNoVn,
+					bookID: bid
+				};
+				vrefs.push(vref);
+
+				console.log('ref2', verseRefs2);
+			} catch (ex) {
+				console.log(`error fetching ref ${ref}`);
+			}
 		});
 
 		verseRefs2.push(vrefs);
-	});
+	}
+
+	async function updateRefs(vref: any) {
+		let index = vref.ref.lastIndexOf('/');
+		let ckey = vref.ref.substring(0, index).replaceAll('/', '_');
+		let vnumber = vref.ref.substring(index + 1, vref.ref.length);
+
+		let data = await bibleDB.getValue('chapters', ckey);
+		let verse = data['verses'][vnumber];
+		let refKeys = [vref.ref];
+		verse.words.forEach((w) => {
+			w.hrefs?.forEach((ref) => {
+				let match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
+				if (match) {
+					refKeys.push(ref);
+				}
+			});
+		});
+		addVerseRefs(refKeys);
+	}
 </script>
 
-{#snippet vrefSnippet(vref: any, idx: number)}
-	<p class="px-4 py-2 text-left {idx !== 0 ? 'hover:bg-primary-100 cursor-pointer' : ''}">
-		<span class="font-bold">{vref.bookName} {vref.chapter}:{vref.vnumber}</span><br />
-		{#each vref.text.trim().split(' ') as w}
-			<span class="inline-block">{w}</span>&nbsp;
-		{/each}
-	</p>
+{#snippet refCurrentVerse(vref: any)}
+	{#if vref}
+		<p class="px-4 py-2 text-left">
+			<span class="font-bold">{vref.bookName} {vref.chapter}:{vref.vnumber}</span><br />
+			{#each vref.text.trim().split(' ') as w}
+				<span class="inline-block">{w}</span>&nbsp;
+			{/each}
+		</p>
+	{/if}
+{/snippet}
+
+{#snippet refVerse(vref: any)}
+	{#if vref}
+		<button
+			onclick={() => {
+				updateRefs(vref);
+			}}
+		>
+			<p class="cursor-pointer px-4 py-2 text-left hover:bg-primary-100">
+				<span class="font-bold">{vref.bookName} {vref.chapter}:{vref.vnumber}</span><br />
+				{#each vref.text.trim().split(' ') as w}
+					<span class="inline-block">{w}</span>&nbsp;
+				{/each}
+			</p>
+		</button>
+	{/if}
 {/snippet}
 
 <div>
 	<div class="py-4">
 		<div class="py-4">
 			{#each verseRefs2.slice().reverse() as refs, idx}
-				{#if idx < 4}
-                {#if idx !== 0}/{/if}
-				    	<span class="underline underline-offset-8">{booknames['shortNames'][refs[0].bookID]} {refs[0].chapter}:{refs[0].vnumber}</span>
+				{#if idx < 4 && refs[0]}
+					{#if idx !== 0}/{/if}
+					<span class="underline underline-offset-8"
+						>{booknames['shortNames'][refs[0].bookID]} {refs[0].chapter}:{refs[0].vnumber}</span
+					>
 				{/if}
 			{/each}
 
@@ -84,12 +158,14 @@
 				<h1 class="py-4 font-bold underline underline-offset-8">Verse</h1>
 				{@const vref = verseRefs2[verseRefs2.length - 1][0]}
 
-				{@render vrefSnippet(vref, 0)}
+				{@render refCurrentVerse(vref)}
 
+                {#if verseRefs2[verseRefs2.length - 1].length > 1}
 				<h1 class="py-4 font-bold underline underline-offset-8">Verse References</h1>
 				{#each verseRefs2[verseRefs2.length - 1].slice(1, verseRefs2[verseRefs2.length - 1].length) as vref, idx}
-					{@render vrefSnippet(vref, idx + 1)}
+					{@render refVerse(vref)}
 				{/each}
+                {/if}
 			{/if}
 		</div>
 	</div>
