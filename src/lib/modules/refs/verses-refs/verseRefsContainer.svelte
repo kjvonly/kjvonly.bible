@@ -12,57 +12,54 @@
 		let verseNumber = verse['number'];
 		let ref = chapterKey.replaceAll('_', '/') + '/' + verseNumber;
 		let refs = [ref, ...verseRefs];
-		console.log('refs', ref, refs);
 		addVerseRefs(refs);
 	});
 
-	async function addVerseRefs(refs) {
-		let vrefs = $state([]);
-		refs.forEach(async (ref) => {
+	async function addVerseRefs(refs: string[]) {
+		let verseRefs: any = $state([]);
+		refs.forEach(async (ref: string) => {
 			try {
-				let index = ref.lastIndexOf('/');
-				let ckey = ref.substring(0, index).replaceAll('/', '_');
-				let cnumber = ckey.split('_')[1];
-				let vnumber = ref.substring(index + 1, ref.length);
-				let data = await bibleDB.getValue('chapters', ckey);
-				let bname = data['bookName'];
-				let bid = data['id'].split('_')[0];
-				let v = data['verseMap'][vnumber];
-				let vNoVn = v.substring(0, v.length);
+				let lastIndex = ref.lastIndexOf('/');
+				let chapterKey = ref.substring(0, lastIndex).replaceAll('/', '_');
+				let chapterNumber = chapterKey.split('_')[1];
+				let verseNumber = ref.substring(lastIndex + 1, ref.length);
+				let data = await bibleDB.getValue('chapters', chapterKey);
+				let bookName = data['bookName'];
+				let bookId = data['id'].split('_')[0];
+				let verse = data['verseMap'][verseNumber];
+				let verseWithoutNumber = verse.substring(0, verse.length);
 
-				let vref = {
+				let verseRef = {
 					ref: ref,
-					bookName: bname,
-					chapter: cnumber,
-					vnumber: vnumber,
-					text: vNoVn,
-					bookID: bid
+					bookName: bookName,
+					chapterNumber: chapterNumber,
+					verseNumber: verseNumber,
+					text: verseWithoutNumber,
+					bookId: bookId
 				};
-				vrefs.push(vref);
+				verseRefs.push(verseRef);
 
-				console.log('ref2', recursiveVerseRefs);
 			} catch (ex) {
 				console.log(`error fetching ref ${ref}`);
 			}
 		});
 
-		recursiveVerseRefs.push(vrefs);
+		recursiveVerseRefs.push(verseRefs);
 	}
 
 	async function updateRefs(vref: any) {
 		let index = vref.ref.lastIndexOf('/');
-		let ckey = vref.ref.substring(0, index).replaceAll('/', '_');
-		let vnumber = vref.ref.substring(index + 1, vref.ref.length);
+		let chapterKey = vref.ref.substring(0, index).replaceAll('/', '_');
+		let verseNumber = vref.ref.substring(index + 1, vref.ref.length);
 
-		let data = await bibleDB.getValue('chapters', ckey);
-		let verse = data['verses'][vnumber];
+		let data = await bibleDB.getValue('chapters', chapterKey);
+		let verse = data['verses'][verseNumber];
 		let refKeys = [vref.ref];
-		verse.words.forEach((w) => {
-			w.href?.forEach((ref) => {
+		verse.words.forEach((w: any) => {
+			w.href?.forEach((ref: string) => {
 				let match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
 				if (match) {
 					refKeys.push(ref);
-					console.log('new ref', ref);
 				}
 			});
 		});
@@ -79,7 +76,7 @@
 {#snippet refCurrentVerse(vref: any)}
 	{#if vref}
 		<p class="px-4 py-2 text-left">
-			<span class="font-bold">{vref.bookName} {vref.chapter}:{vref.vnumber}</span><br />
+			<span class="font-bold">{vref.bookName} {vref.chapterNumber}:{vref.verseNumber}</span><br />
 			{#each vref.text.trim().split(' ') as w}
 				<span class="inline-block">{w}</span>&nbsp;
 			{/each}
@@ -95,7 +92,7 @@
 			}}
 		>
 			<p class="cursor-pointer px-4 py-2 text-left hover:bg-primary-100">
-				<span class="font-bold">{vref.bookName} {vref.chapter}:{vref.vnumber}</span><br />
+				<span class="font-bold">{vref.bookName} {vref.chapterNumber}:{vref.verseNumber}</span><br />
 				{#each vref.text.trim().split(' ') as w}
 					<span class="inline-block">{w}</span>&nbsp;
 				{/each}
@@ -121,7 +118,7 @@
 						}}
 					>
 						<span class="underline underline-offset-8"
-							>{booknames['shortNames'][refs[0].bookID]} {refs[0].chapter}:{refs[0].vnumber}</span
+							>{booknames['shortNames'][refs[0].bookId]} {refs[0].chapterNumber}:{refs[0].verseNumber}</span
 						></button
 					>
 				{/if}
