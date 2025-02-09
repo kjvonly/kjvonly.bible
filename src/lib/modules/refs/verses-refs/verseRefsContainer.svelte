@@ -112,6 +112,22 @@
 		});
 		addVerseRefs(refKeys);
 	}
+
+	function onNavigateRefs(ref) {
+		let index;
+		verseRefs2.forEach((refs, idx) => {
+			if (refs[0].ref === ref.ref) {
+				index = idx;
+			}
+		});
+
+		if (index) {
+			let removeIndex = index + 1;
+			if (removeIndex <= verseRefs2.length - 1) {
+				verseRefs2.splice(index + 1, 1);
+			}
+		}
+	}
 </script>
 
 {#snippet refCurrentVerse(vref: any)}
@@ -145,11 +161,19 @@
 <div>
 	<div class="py-4">
 		<div class="py-4">
-			{#each verseRefs2.slice().reverse() as refs, idx}
+			{#each verseRefs2 as refs, idx}
 				{#if idx < 4 && refs[0]}
-					{#if idx !== 0}/{/if}
-					<span class="underline underline-offset-8"
-						>{booknames['shortNames'][refs[0].bookID]} {refs[0].chapter}:{refs[0].vnumber}</span
+					{#if idx !== 0}
+						<span>&nbsp;/ </span>
+					{/if}
+					<button
+						onclick={() => {
+							onNavigateRefs(refs);
+						}}
+					>
+						<span class="underline underline-offset-8"
+							>{booknames['shortNames'][refs[0].bookID]} {refs[0].chapter}:{refs[0].vnumber}</span
+						></button
 					>
 				{/if}
 			{/each}
@@ -160,12 +184,12 @@
 
 				{@render refCurrentVerse(vref)}
 
-                {#if verseRefs2[verseRefs2.length - 1].length > 1}
-				<h1 class="py-4 font-bold underline underline-offset-8">Verse References</h1>
-				{#each verseRefs2[verseRefs2.length - 1].slice(1, verseRefs2[verseRefs2.length - 1].length) as vref, idx}
-					{@render refVerse(vref)}
-				{/each}
-                {/if}
+				{#if verseRefs2[verseRefs2.length - 1].length > 1}
+					<h1 class="py-4 font-bold underline underline-offset-8">Verse References</h1>
+					{#each verseRefs2[verseRefs2.length - 1].slice(1, verseRefs2[verseRefs2.length - 1].length) as vref, idx}
+						{@render refVerse(vref)}
+					{/each}
+				{/if}
 			{/if}
 		</div>
 	</div>
