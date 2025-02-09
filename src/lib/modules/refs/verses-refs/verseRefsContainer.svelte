@@ -103,10 +103,11 @@
 		let verse = data['verses'][vnumber];
 		let refKeys = [vref.ref];
 		verse.words.forEach((w) => {
-			w.hrefs?.forEach((ref) => {
+			w.href?.forEach((ref) => {
 				let match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
 				if (match) {
 					refKeys.push(ref);
+                    console.log('new ref', ref)
 				}
 			});
 		});
