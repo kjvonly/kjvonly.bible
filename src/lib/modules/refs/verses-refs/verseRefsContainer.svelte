@@ -113,19 +113,9 @@
 		addVerseRefs(refKeys);
 	}
 
-	function onNavigateRefs(ref) {
-		let index;
-		verseRefs2.forEach((refs, idx) => {
-			if (refs[0].ref === ref.ref) {
-				index = idx;
-			}
-		});
-
-		if (index) {
-			let removeIndex = index + 1;
-			if (removeIndex <= verseRefs2.length - 1) {
-				verseRefs2.splice(index + 1, 1);
-			}
+	function onNavigateRefs(idx: number) {
+		if (idx <= verseRefs2.length - 1) {
+			verseRefs2.splice(idx, verseRefs2.length);
 		}
 	}
 </script>
@@ -162,13 +152,13 @@
 	<div class="py-4">
 		<div class="py-4">
 			{#each verseRefs2 as refs, idx}
-				{#if idx < 4 && refs[0]}
+				{#if idx > verseRefs2.length - 4 && refs[0]}
 					{#if idx !== 0}
 						<span>&nbsp;/ </span>
 					{/if}
 					<button
 						onclick={() => {
-							onNavigateRefs(refs);
+							onNavigateRefs(idx + 1);
 						}}
 					>
 						<span class="underline underline-offset-8"
