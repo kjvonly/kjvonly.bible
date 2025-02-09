@@ -10,6 +10,8 @@
 
 	let strongsRef = $state('');
 	let footnote = $state('');
+	let verse = $state('')
+	let verseRefs: string[] = $state([])
 	let text = $state('');
 	let pane: any = $state();
 
@@ -25,7 +27,14 @@
 			if (match) {
 				footnote = ref;
 			}
+
+			match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
+			if (match) {
+				verseRefs.push(ref)
+			}
 		});
+
+		
 
 		if (pane?.buffer?.bag?.word?.text) {
 			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
@@ -60,9 +69,8 @@
 							<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
 						{/if}
 
-						<!-- not implemented yet -->
-						{#if 0 > 0}
-							<VerseRefsContainer></VerseRefsContainer>
+						{#if verseRefs.length > 0}
+							<VerseRefsContainer chapterKey={pane?.buffer?.bag?.chapterKey} verse={pane?.buffer?.bag?.verse} {verseRefs}></VerseRefsContainer>
 						{/if}
 					</div>
 				</div>
