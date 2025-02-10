@@ -167,10 +167,9 @@
 			></ChapterActions>
 		</div>
 		<div class="flex justify-center">
-			<div class="md:z-10 md:max-w-lg">
+			<div class="md:z-10 max-w-lg">
 				<div
 					bind:clientWidth={chapterWidth}
-					class="flex flex-wrap justify-start"
 				>
 					<Chapter
 						bind:bookName
