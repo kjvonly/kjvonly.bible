@@ -143,20 +143,13 @@
 				});
 			}, 50);
 		}
-
-		let cel = document.getElementById(`${id}-container`);
-		if (cel === null) {
-			return;
-		}
 	});
 </script>
 
 <div
-	id="{id}-container"
-	style="{containerWidth} {containerHeight}"
-	class="relative overflow-hidden"
+	class="overflow-hidden"
 >
-	<div {id} style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
+	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
 			<ChapterActions
 				bind:chapterKey
@@ -167,7 +160,7 @@
 			></ChapterActions>
 		</div>
 		<div class="flex justify-center">
-			<div class="md:z-10 max-w-lg">
+			<div class="max-w-lg">
 				<div
 					bind:clientWidth={chapterWidth}
 				>

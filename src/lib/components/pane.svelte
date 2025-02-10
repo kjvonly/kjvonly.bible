@@ -60,7 +60,7 @@
 	});
 </script>
 
-<div style="{containerWidth} {containerHeight}" class="relative">
+<div style="{containerWidth} {containerHeight}">
 	<!-- Since component is a Const we need a way to rerender this when the component changes. 
 			     We accomplish this with the toggle. -->
 	{#if pane?.toggle}
