@@ -2,13 +2,13 @@
 	import { onMount } from 'svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	import Verse from './verse.svelte';
-	
+
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
 	let timeoutIDs: number[] = [];
 	let loadedBookName = $state();
 	let loadedChapter = $state();
-	let footnotes: any = $state()
+	let footnotes: any = $state();
 	let firstLoad = true;
 
 	let {
@@ -88,22 +88,21 @@
 		loadedBookName = bookName;
 		loadedChapter = bookChapter;
 		verses = data['verses'];
-		footnotes = data['footnotes']
+		footnotes = data['footnotes'];
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
 	onMount(async () => {});
 </script>
 
-<div class="{fadeClass} flex-col leading-loose ">
+<div class="{fadeClass} flex-col leading-loose">
 	<div>
 		{#if showChapter}
-			<p class="px-4 w-full">
+			<p class="w-full px-4">
 				{#each keys as k, idx}
-				<!-- w-full required for safari. -->
-					<span class="w-full" id={`${id}-vno-${idx + 1}`}>
-						<Verse bind:pane verse={verses[k]} footnotes={footnotes} {chapterKey}></Verse>
-					</span>
+					<!-- w-full required for safari. -->
+					<span id={`${id}-vno-${idx + 1}`}></span>
+					<Verse bind:pane verse={verses[k]} {footnotes} {chapterKey}></Verse>
 				{/each}
 			</p>
 			<div class="mt-16"></div>
