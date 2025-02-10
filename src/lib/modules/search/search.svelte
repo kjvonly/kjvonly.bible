@@ -199,7 +199,6 @@
 				{/each}
 				<div class="h-6"></div>
 			</div>
-		
 		</div>
 	</div>
 </div>

@@ -98,7 +98,7 @@
 <div class="{fadeClass} flex-col leading-loose ">
 	<div>
 		{#if showChapter}
-			<p class="px-4">
+			<p class="px-4 w-full">
 				{#each keys as k, idx}
 					<span id={`${id}-vno-${idx + 1}`}>
 						<Verse bind:pane verse={verses[k]} footnotes={footnotes} {chapterKey}></Verse>
