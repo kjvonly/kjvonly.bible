@@ -4,8 +4,9 @@
 	import VerseRefsContainer from '../verses-refs/verseRefsContainer.svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import FootnoteContainer from '../footnote/footnoteContainer.svelte';
+	import uuid4 from 'uuid4';
 
-	let id = crypto.randomUUID();
+	let id = uuid4();
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
 	let strongsRef = $state('');

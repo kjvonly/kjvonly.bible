@@ -2,8 +2,9 @@
 	import { searchService } from '$lib/services/search.service';
 	import { onMount } from 'svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import uuid4 from 'uuid4';
 
-	let searchID = crypto.randomUUID();
+	let searchID = uuid4();
 	let searchInputHeight: number = $state(0);
 	let searchText = $state('');
 	let searchResults: any[] = $state([]);

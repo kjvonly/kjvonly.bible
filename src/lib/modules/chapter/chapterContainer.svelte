@@ -8,8 +8,9 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import ChapterActions from './chapterActions.svelte';
 	import type { Pane } from '$lib/models/pane.model';
+	import uuid4 from 'uuid4';
 
-	let id = crypto.randomUUID();
+	let id = uuid4();
 	let chapterKey: string | null = $state(null);
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
