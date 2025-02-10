@@ -6,15 +6,21 @@
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
 
-		pane.buffer.bag.lastVerse = verse.number
+		pane.buffer.bag.lastVerse = verse.number;
 
-		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', { word: word, footnotes: footnotes, verse: verse, chapterKey: chapterKey });
+		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', {
+			word: word,
+			footnotes: footnotes,
+			verse: verse,
+			chapterKey: chapterKey
+		});
 	}
 </script>
 
+<nobr>&nbsp; </nobr>
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-&nbsp;<span
+<span
 	onclick={(e) => {
 		onWordClicked(e, word);
 	}}
@@ -25,7 +31,7 @@
 	.FOOTNO {
 		cursor: pointer;
 		vertical-align: baseline;
-		position: relative;	
+		position: relative;
 		top: -0.6em;
 		@apply me-2 text-xs text-neutral-700 md:text-base;
 	}
