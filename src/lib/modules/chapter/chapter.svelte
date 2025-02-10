@@ -64,7 +64,7 @@
 <div class="{fadeClass} flex-col leading-loose">
 	<div>
 		{#if showChapter}
-			<p class="">
+			<p class="px-4">
 				{#each keys as k, idx}
 					<!-- w-full required for safari. -->
 					<span id={`${id}-vno-${idx + 1}`}>
