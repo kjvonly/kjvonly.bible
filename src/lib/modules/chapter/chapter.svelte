@@ -100,7 +100,8 @@
 		{#if showChapter}
 			<p class="px-4 w-full">
 				{#each keys as k, idx}
-					<span id={`${id}-vno-${idx + 1}`}>
+				<!-- w-full required for safari. -->
+					<span class="w-full" id={`${id}-vno-${idx + 1}`}>
 						<Verse bind:pane verse={verses[k]} footnotes={footnotes} {chapterKey}></Verse>
 					</span>
 				{/each}
