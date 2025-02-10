@@ -170,7 +170,6 @@
 						bind:chapterKey
 						bind:id
 						bind:pane
-						doChapterFadeAnimation={chapterSettings?.doChapterFadeAnimation}
 						{containerHeight}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>

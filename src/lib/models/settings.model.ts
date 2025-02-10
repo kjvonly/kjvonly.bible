@@ -3,7 +3,6 @@ export interface Settings {
     fontFamily: string
     colorTheme?: string
     isDarkTheme?: boolean
-    doChapterFadeAnimation?: boolean
 }
 
 export function newSettings(): Settings{
@@ -11,7 +10,6 @@ export function newSettings(): Settings{
         fontSize: 'text-base',
         fontFamily: 'font-sans',
         colorTheme: 'red',
-        isDarkTheme: false,
-        doChapterFadeAnimation: false,
+        isDarkTheme: false
     };
 }
