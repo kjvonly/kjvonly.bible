@@ -59,7 +59,7 @@
 					</div>
 				</div>
 
-				<div class="flex w-full max-w-lg">
+				<div class="px-4 flex w-full max-w-lg">
 					<div class="">
 						{#if footnote.length > 0}
 							<FootnoteContainer {text} {footnote} footnotes={pane?.buffer?.bag?.footnotes}
