@@ -19,14 +19,14 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-{#if word && word.class && word.class.includes('xref')}
-	{#if wordIndex !== 0}&nbsp;{/if}<span
+{#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO'))}
+	&nbsp;<span
 		onclick={(e) => {
 			onWordClicked(e, word);
 		}}
 		class="inline-block {word.class?.join(' ')}">{word.text}</span
 	>
-{:else}{#if wordIndex !== 0}&nbsp;{/if}<span class="inline-block {word.class?.join(' ')}"
+{:else}&nbsp;<span class="inline-block {word.class?.join(' ')}"
 		>{word.text}</span
 	>
 {/if}
@@ -37,7 +37,7 @@
 		vertical-align: baseline;
 		position: relative;
 		top: -0.6em;
-		@apply me-2 text-xs text-neutral-700 md:text-base;
+		@apply ms-1 me-2 text-xs text-neutral-700 md:text-base;
 	}
 
 	.redtxt {
