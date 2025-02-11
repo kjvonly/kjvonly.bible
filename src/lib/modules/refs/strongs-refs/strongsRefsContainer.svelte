@@ -30,25 +30,25 @@
 		<div class="">
 			<h1 class="font-bold underline underline-offset-8">Linguistic Elements</h1>
 			<div class="flex flex-shrink py-4">
-				<div class="grid grid-cols-2 border">
+				<div class="flex flex-col">
 					{#if strongs['originalWord']}
-						<p class="border-2 p-4 text-center">Original Word</p>
-						<p class="border-2 p-4 text-center">{@html strongs['originalWord']}</p>
+						<p class="font-semibold underline pt-6">Original Word</p>
+						<p class="">{@html strongs['originalWord']}</p>
 					{/if}
 
 					{#if strongs['partsOfSpeech']}
-						<p class="border-2 p-4 text-center">Parts of Speech</p>
-						<p class="border-2 p-4 text-center">{@html strongs['partsOfSpeech']}</p>
+						<p class="font-semibold underline pt-6">Parts of Speech</p>
+						<p class="">{@html strongs['partsOfSpeech']}</p>
 					{/if}
 
 					{#if strongs['phoneticSpelling']}
-						<p class="border-2 p-4 text-center">Phonetic Spelling</p>
-						<p class="border-2 p-4 text-center">{@html strongs['phoneticSpelling']}</p>
+						<p class="font-semibold underline pt-6">Phonetic Spelling</p>
+						<p class="">{@html strongs['phoneticSpelling']}</p>
 					{/if}
 
 					{#if strongs['transliteratedWord']}
-						<p class="border-2 p-4 text-center">Transliterated Word</p>
-						<p class="border-2 p-4 text-center">{@html strongs['transliteratedWord']}</p>
+						<p class="font-semibold underline pt-6">Transliterated Word</p>
+						<p class="">{@html strongs['transliteratedWord']}</p>
 					{/if}
 				</div>
 			</div>
