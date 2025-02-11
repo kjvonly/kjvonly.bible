@@ -4,12 +4,19 @@
     "icons": [
         {
             "src": "/icons/cross.svg",
-            "sizes": "any"
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/cross.png",
+            "sizes": "512x512",
+            "type": "image/png"
         }
     ],
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "theme_color": "#921111",
-    "background_color": "#f9f8f6"
+    "theme_color": "#000000",
+    "background_color": "#ffffff"
 }

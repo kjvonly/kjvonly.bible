@@ -2,14 +2,13 @@
 	import { onMount } from 'svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	import Verse from './verse.svelte';
-	
+
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
-	let timeoutIDs: number[] = [];
+
 	let loadedBookName = $state();
 	let loadedChapter = $state();
-	let footnotes: any = $state()
-	let firstLoad = true;
+	let footnotes: any = $state();
 
 	let {
 		chapterKey = $bindable(),
@@ -17,7 +16,6 @@
 		bookChapter = $bindable(),
 		id = $bindable(),
 		pane = $bindable(),
-		doChapterFadeAnimation = $bindable(),
 		containerHeight
 	} = $props();
 
@@ -40,41 +38,9 @@
 		}
 
 		if (chapterKey) {
-			if (doChapterFadeAnimation) {
-				if (firstLoad) {
-					firstLoad = false;
-					loadChapter();
-					return;
-				}
-
-				chapterService.getChapter(chapterKey).then((data) => {
-					bookName = data['bookName'];
-					bookChapter = data['number'];
-				});
-				timeoutIDs.forEach((id, idx) => {
-					//showChapter = false;
-					clearTimeout(id);
-				});
-
-				fadeClass = 'fade-out';
-				let id = setTimeout(() => {
-					showChapter = false;
-				}, 900);
-
-				let id2 = setTimeout(() => {
-					loadChapter();
-					fadeClass = 'fade-in';
-					window.scrollTo(0, 0);
-					showChapter = true;
-					timeoutIDs = [];
-				}, 2200);
-
-				timeoutIDs.push(id2);
-			} else {
-				let el = document.getElementById(id);
-				el?.scrollTo(0, 0);
-				loadChapter();
-			}
+			let el = document.getElementById(id);
+			el?.scrollTo(0, 0);
+			loadChapter();
 		}
 	});
 
@@ -88,56 +54,29 @@
 		loadedBookName = bookName;
 		loadedChapter = bookChapter;
 		verses = data['verses'];
-		footnotes = data['footnotes']
+		footnotes = data['footnotes'];
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
 	onMount(async () => {});
 </script>
 
-<div class="{fadeClass} flex-col leading-loose ">
-	<div>
-		{#if showChapter}
-			<p class="px-4 w-full">
-				{#each keys as k, idx}
-					<span id={`${id}-vno-${idx + 1}`}>
-						<Verse bind:pane verse={verses[k]} footnotes={footnotes} {chapterKey}></Verse>
-					</span>
-				{/each}
-			</p>
-			<div class="mt-16"></div>
-		{/if}
-	</div>
+<div class="{fadeClass} flex-col leading-loose">
+	{#if showChapter}
+		<p class="px-4">
+			{#each keys as k, idx}
+				<!-- w-full required for safari. -->
+				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
+					<Verse bind:pane verse={verses[k]} {footnotes} {chapterKey}></Verse>
+				</span>
+			{/each}
+		</p>
+		<div class="mt-16"></div>
+	{/if}
 </div>
 
 <style>
 	.scrolled-to {
 		@apply animate-pulse;
-	}
-
-	.fade-in {
-		animation: fadeIn 0.5s ease-in-out;
-	}
-
-	.fade-out {
-		animation: fadeOut 1s ease-in-out;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	@keyframes fadeOut {
-		from {
-			opacity: 1;
-		}
-		to {
-			opacity: 0;
-		}
 	}
 </style>

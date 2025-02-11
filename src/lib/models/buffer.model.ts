@@ -1,5 +1,8 @@
+import uuid4 from "uuid4";
+
+
 export class Buffer {
-	key: string = crypto.randomUUID();
+	key: string = uuid4();
 	name: string = '';
 	component: any;
 	componentName: string = '';

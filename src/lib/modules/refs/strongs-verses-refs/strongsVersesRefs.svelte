@@ -4,8 +4,9 @@
 	import VerseRefsContainer from '../verses-refs/verseRefsContainer.svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import FootnoteContainer from '../footnote/footnoteContainer.svelte';
+	import uuid4 from 'uuid4';
 
-	let id = crypto.randomUUID();
+	let id = uuid4();
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
 	let strongsRef = $state('');
@@ -53,12 +54,12 @@
 							onclick={() => {
 								paneService.onDeletePane(paneService.rootPane, paneId);
 							}}
-							class="text-neutral-700">Close</button
+							class="text-neutral-700 pe-4">Close</button
 						>
 					</div>
 				</div>
 
-				<div class="flex w-full max-w-lg">
+				<div class="px-4 flex w-full max-w-lg">
 					<div class="">
 						{#if footnote.length > 0}
 							<FootnoteContainer {text} {footnote} footnotes={pane?.buffer?.bag?.footnotes}

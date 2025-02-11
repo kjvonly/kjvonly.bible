@@ -49,8 +49,8 @@
 			p.toggle = false;
 			p.updateBuffer = (c: string) => {
 				p.buffer.componentName = c;
-				p.toggle = !p.toggle
-				pane = p				
+				p.toggle = !p.toggle;
+				pane = p;
 			};
 		}
 
@@ -60,25 +60,20 @@
 	});
 </script>
 
-<div style="{containerWidth} {containerHeight}" class="relative overflow-hidden">
-	<div style="{containerHeight} {containerWidth}" class="relative overflow-y-scroll">
-		<div class="header bg-neutral-950 w-full items-center text-balance outline">
-
-			<!-- Since component is a Const we need a way to rerender this when the component changes. 
+<div style="{containerWidth} {containerHeight}">
+	<!-- Since component is a Const we need a way to rerender this when the component changes. 
 			     We accomplish this with the toggle. -->
-			{#if pane?.toggle}
-				{#if pane?.buffer?.componentName}
-					{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-					<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
-				{/if}
-			{/if}
+	{#if pane?.toggle}
+		{#if pane?.buffer?.componentName}
+			{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
+			<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
+		{/if}
+	{/if}
 
-			{#if pane && !pane.toggle}
-				{#if pane?.buffer?.componentName}
-					{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-					<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
-				{/if}
-			{/if}
-		</div>
-	</div>
+	{#if pane && !pane.toggle}
+		{#if pane?.buffer?.componentName}
+			{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
+			<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
+		{/if}
+	{/if}
 </div>
