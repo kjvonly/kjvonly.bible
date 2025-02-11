@@ -66,7 +66,7 @@
 		<p class="px-4">
 			{#each keys as k, idx}
 				<!-- w-full required for safari. -->
-				<span id={`${id}-vno-${idx + 1}`}>
+				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
 					<Verse bind:pane verse={verses[k]} {footnotes} {chapterKey}></Verse>
 				</span>
 			{/each}

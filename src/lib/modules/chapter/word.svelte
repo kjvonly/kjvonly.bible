@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
 
-	let { word, verse, footnotes, chapterKey, pane = $bindable() } = $props();
+	let { wordIndex, word, verse, footnotes, chapterKey, pane = $bindable() } = $props();
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
@@ -19,12 +19,17 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-&nbsp;<span
-	onclick={(e) => {
-		onWordClicked(e, word);
-	}}
-	class="inline-block {word.class?.join(' ')}">{word.text}</span
->
+{#if word && word.class && word.class.includes('xref')}
+	{#if wordIndex !== 0}&nbsp;{/if}<span
+		onclick={(e) => {
+			onWordClicked(e, word);
+		}}
+		class="inline-block {word.class?.join(' ')}">{word.text}</span
+	>
+{:else}{#if wordIndex !== 0}&nbsp;{/if}<span class="inline-block {word.class?.join(' ')}"
+		>{word.text}</span
+	>
+{/if}
 
 <style>
 	.FOOTNO {

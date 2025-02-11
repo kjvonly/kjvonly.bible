@@ -54,7 +54,7 @@
 							onclick={() => {
 								paneService.onDeletePane(paneService.rootPane, paneId);
 							}}
-							class="text-neutral-700">Close</button
+							class="text-neutral-700 pe-4">Close</button
 						>
 					</div>
 				</div>
