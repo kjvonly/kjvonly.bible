@@ -182,7 +182,7 @@
                   "
 			>
 				{#each searchResults as v}
-					<span class="px-4 py-2 text-left font-bold">{v.bookName} {v.number}:{v.verseNumber}</span
+					<span class="py-2 text-left font-bold">{v.bookName} {v.number}:{v.verseNumber}</span
 					><br />
 					{#each v.text.split(' ') as w}
 						{#if match(w)}
