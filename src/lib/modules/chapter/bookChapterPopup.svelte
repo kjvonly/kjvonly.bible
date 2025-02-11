@@ -421,7 +421,7 @@
 	});
 
 	onMount(async () => {
-		bookNames = await chapterService.getChapter('booknames');
+		bookNames = await chapterService.getBooknames();
 		bookIds = Object.keys(bookNames['booknamesById']).sort((a, b) =>
 			Number(a) < Number(b) ? -1 : 1
 		);

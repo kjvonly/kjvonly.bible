@@ -8,8 +8,14 @@
             "type": "image/svg+xml",
             "purpose": "any"
         },
+     
         {
-            "src": "/icons/cross.png",
+            "src": "/icons/192X192_cross.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/512X512_cross.png",
             "sizes": "512x512",
             "type": "image/png"
         }
@@ -17,6 +23,6 @@
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "theme_color": "#000000",
+    "theme_color": "#d64343",
     "background_color": "#ffffff"
 }
