@@ -9,9 +9,8 @@
 	let id = uuid4();
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-	let strongsRef = $state('');
+	let strongsRefs: string[] = $state([]);
 	let footnote = $state('');
-	let verse = $state('')
 	let verseRefs: string[] = $state([])
 	let text = $state('');
 	let pane: any = $state();
@@ -20,8 +19,9 @@
 		pane = paneService.findNode(paneService.rootPane, paneId);
 		pane?.buffer?.bag?.word?.href?.forEach((ref: string) => {
 			let match = new RegExp('^[GH]', 'm').test(ref);
+			
 			if (match) {
-				strongsRef = ref;
+				strongsRefs.push(ref);
 			}
 
 			match = new RegExp('\\d+_\\d+_\\d+', 'gm').test(ref);
@@ -34,6 +34,7 @@
 				verseRefs.push(ref)
 			}
 		});
+
 
 		
 
@@ -66,8 +67,8 @@
 							></FootnoteContainer>
 						{/if}
 
-						{#if strongsRef.length > 0}
-							<StrongsRefsContainer {text} {strongsRef}></StrongsRefsContainer>
+						{#if strongsRefs.length > 0}
+							<StrongsRefsContainer {text} {strongsRefs}></StrongsRefsContainer>
 						{/if}
 
 						{#if verseRefs.length > 0}
