@@ -235,7 +235,7 @@ function onGridUpdate() {
 ```
 
 ## html
-The html simple renders each `Pane` to the DOM if the `Pane` was not deleted.
+The html simply renders each `Pane` to the DOM if the `Pane` was not deleted.
 
 ```html
 <div class="flex h-[100vh] w-full flex-col">
