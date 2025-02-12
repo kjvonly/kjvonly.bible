@@ -8,11 +8,13 @@
 
 		pane.buffer.bag.lastVerse = verse.number;
 
+		let verseNumber = verse['number'];
+		let ref = chapterKey.replaceAll('_', '/') + '/' + verseNumber;
+
 		paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', {
 			word: word,
 			footnotes: footnotes,
-			verse: verse,
-			chapterKey: chapterKey
+			currentVerseRef: ref
 		});
 	}
 </script>

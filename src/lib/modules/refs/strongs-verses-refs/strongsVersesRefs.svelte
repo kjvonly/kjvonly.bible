@@ -17,6 +17,13 @@
 
 	onMount(() => {
 		pane = paneService.findNode(paneService.rootPane, paneId);
+		
+		
+		if(pane?.buffer?.bag?.currentVerseRef) {
+			verseRefs.push(pane?.buffer?.bag?.currentVerseRef)
+		}
+
+
 		pane?.buffer?.bag?.word?.href?.forEach((ref: string) => {
 			let match = new RegExp('^[GH]', 'm').test(ref);
 			
@@ -34,8 +41,6 @@
 				verseRefs.push(ref)
 			}
 		});
-
-
 		
 
 		if (pane?.buffer?.bag?.word?.text) {
@@ -72,7 +77,7 @@
 						{/if}
 
 						{#if verseRefs.length > 0}
-							<VerseRefsContainer paneId={pane?.id} chapterKey={pane?.buffer?.bag?.chapterKey} verse={pane?.buffer?.bag?.verse} {verseRefs}></VerseRefsContainer>
+							<VerseRefsContainer paneId={pane?.id}  {verseRefs}></VerseRefsContainer>
 						{/if}
 					</div>
 				</div>
