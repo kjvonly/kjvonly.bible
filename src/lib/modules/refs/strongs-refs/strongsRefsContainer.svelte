@@ -2,27 +2,32 @@
 	import { bibleDB } from '$lib/db/bible.db';
 	import { onMount } from 'svelte';
 
-	let { strongsRef, text } = $props();
+	let { strongsRefs, text } = $props();
 
-	let strongs: any | undefined = $state();
-	onMount(() => {
-		if (strongsRef) {
-			bibleDB.getValue('strongs', strongsRef.toLowerCase()).then((data) => {
-				strongs = data;
+	$effect(() => {});
+
+	let strongs: any[] | undefined = $state([]);
+	onMount(async () => {
+		if (strongsRefs) {
+			strongsRefs.forEach(async (ref: string) => {
+				let data = await bibleDB.getValue('strongs', ref.toLowerCase());
+				if (data) {
+					strongs.push(data);
+				}
 			});
 		}
 	});
 </script>
 
-{#if strongs}
-	<div class="pt-4 px-4">
-		<h1 class="pt-4 text-4xl">{strongs['number']}: {text}</h1>
-        
-		{#if strongs['strongsDef']}
+<div class="px-4 pt-4">
+	{#each strongs as s}
+		<h1 class="pt-4 text-4xl">{s['number']}: {text}</h1>
+
+		{#if s['strongsDef']}
 			<div class="py-4">
 				<h1 class="font-bold underline underline-offset-8">Strongs Definition</h1>
 				<div class="py-4">
-					{@html strongs['strongsDef']}
+					{@html s['strongsDef']}
 				</div>
 			</div>
 		{/if}
@@ -31,30 +36,30 @@
 			<h1 class="font-bold underline underline-offset-8">Linguistic Elements</h1>
 			<div class="flex flex-shrink py-4">
 				<div class="flex flex-col">
-					{#if strongs['originalWord']}
-						<p class="font-semibold underline pt-6">Original Word</p>
-						<p class="">{@html strongs['originalWord']}</p>
+					{#if s['originalWord']}
+						<p class="pt-6 font-semibold underline">Original Word</p>
+						<p class="">{@html s['originalWord']}</p>
 					{/if}
 
-					{#if strongs['partsOfSpeech']}
-						<p class="font-semibold underline pt-6">Parts of Speech</p>
-						<p class="">{@html strongs['partsOfSpeech']}</p>
+					{#if s['partsOfSpeech']}
+						<p class="pt-6 font-semibold underline">Parts of Speech</p>
+						<p class="">{@html s['partsOfSpeech']}</p>
 					{/if}
 
-					{#if strongs['phoneticSpelling']}
-						<p class="font-semibold underline pt-6">Phonetic Spelling</p>
-						<p class="">{@html strongs['phoneticSpelling']}</p>
+					{#if s['phoneticSpelling']}
+						<p class="pt-6 font-semibold underline">Phonetic Spelling</p>
+						<p class="">{@html s['phoneticSpelling']}</p>
 					{/if}
 
-					{#if strongs['transliteratedWord']}
-						<p class="font-semibold underline pt-6">Transliterated Word</p>
-						<p class="">{@html strongs['transliteratedWord']}</p>
+					{#if s['transliteratedWord']}
+						<p class="pt-6 font-semibold underline">Transliterated Word</p>
+						<p class="">{@html s['transliteratedWord']}</p>
 					{/if}
 				</div>
 			</div>
 		</div>
-	</div>
-{/if}
+	{/each}
+</div>
 
 <style>
 </style>
