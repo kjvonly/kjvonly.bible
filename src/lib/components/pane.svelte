@@ -24,7 +24,7 @@
 	}
 
 	onMount(() => {
-		let cs = localStorage.getItem('chapterSettings');
+		let cs = localStorage.getItem('settings');
 		if (cs !== null) {
 			chapterSettings = JSON.parse(cs);
 

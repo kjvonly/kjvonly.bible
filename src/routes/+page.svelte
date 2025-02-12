@@ -14,19 +14,19 @@
 	function onGridUpdate() {
 		let gta = renderGridTemplateAreas(paneService.rootPane);
 
-		let els: any = {};
+		let areas: any = {};
 		let grid = '';
 
 		for (let i = 0; i < gta.length; i++) {
 			let s = '';
 			for (let j = 0; j < gta[i].length; j++) {
 				s += `${gta[i][j]} `;
-				els[gta[i][j]] = gta[i][j];
+				areas[gta[i][j]] = gta[i][j];
 			}
 			grid += '"' + s + '"\n';
 		}
 
-		paneIds = Object.keys(els)
+		paneIds = Object.keys(areas)
 			.concat(Object.keys(deletedPaneIds))
 			.sort((a: string, b: string) => {
 				let aval = 0,
@@ -48,11 +48,11 @@
   		grid-template-areas:
 			${grid};`;
 
-		let hw: any = {};
+		let heightWidth: any = {};
 		let gtaRows = gta.length;
 		let gtaCols = gta[0].length;
 
-		Object.keys(els).forEach((k) => {
+		Object.keys(areas).forEach((k) => {
 			let rows = [];
 			for (let i = 0; i < gta.length; i++) {
 				let cols: any = [];
@@ -66,14 +66,14 @@
 				}
 			}
 
-			hw[k] = {
+			heightWidth[k] = {
 				height: (rows.length * 1.0) / gtaRows,
 				width: (rows[0].length * 1.0) / gtaCols
 			};
 		});
 
-		paneService.heightWidth = hw;
-		paneService.publishHw(hw);
+		paneService.heightWidth = heightWidth;
+		paneService.publishHw(heightWidth);
 	}
 
 	function findPane(p: Pane, paneId: string): Pane | undefined {
@@ -134,9 +134,9 @@
 		/**
 		 * TODO
 		 * May want to delete other variables too
-		 * need to make sure it does not effect 
+		 * need to make sure it does not effect
 		 * the left node vars we just copied.
-		*/
+		 */
 
 		onGridUpdate();
 	}
@@ -220,10 +220,10 @@
 </script>
 
 <div class="flex h-[100vh] w-full flex-col">
-	<div style="max-height: 100vh; min-width: 1px; {template};" class=" w-full">
+	<div style="max-height: 100vh; min-width: 1px; {template};" class="w-full">
 		{#each paneIds as paneId}
 			{#if !deletedPaneIds[paneId]}
-				<div class="relateive outline" style="grid-area: {paneId};">
+				<div class="outline" style="grid-area: {paneId};">
 					<PaneContainer {paneId}></PaneContainer>
 				</div>
 			{/if}

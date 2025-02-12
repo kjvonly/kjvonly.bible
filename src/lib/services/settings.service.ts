@@ -22,7 +22,7 @@ class SettingsService {
             }
         })
 
-        let cs = this.getChapterSettings()
+        let cs = this.getSettings()
         if (!cs) {
             return
         }
@@ -60,12 +60,12 @@ class SettingsService {
 
     }
 
-    getChapterSettings(): Settings {
-        let cs = localStorage.getItem('chapterSettings');
+    getSettings(): Settings {
+        let cs = localStorage.getItem('settings');
         if (cs != null) {
-            let chapterSettings: Settings | null = JSON.parse(cs);
-            if (chapterSettings) {
-                return chapterSettings
+            let settings: Settings | null = JSON.parse(cs);
+            if (settings) {
+                return settings
             }
         }
         return newSettings()
