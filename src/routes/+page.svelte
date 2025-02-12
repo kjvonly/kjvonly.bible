@@ -112,47 +112,26 @@
 		}
 
 		let pid = numberToLetters(val + 1);
-		if (p.left && p.right) {
-			let buffer = new Buffer();
-			buffer.componentName = componentName;
-			buffer.name = componentName;
-			buffer.bag = bag;
 
-			p.left = {
-				split: p.split,
-				left: {
-					id: p.id,
-					buffer: p.buffer,
-					toggle: p.toggle,
-					updateBuffer: p.updateBuffer
-				},
-				right: {
-					id: pid,
-					buffer: buffer
-				}
-			};
-			p.id = undefined;
-			p.split = split;
-		} else {
-			p.split = split;
-			p.left = {
-				id: p.id,
-				buffer: p.buffer,
-				updateBuffer: p.updateBuffer,
-				toggle: p.toggle,
-			};
+		p.split = split;
+		p.left = {
+			id: p.id,
+			buffer: p.buffer,
+			updateBuffer: p.updateBuffer,
+			toggle: p.toggle
+		};
 
-			let buffer = new Buffer();
-			buffer.componentName = componentName;
-			buffer.name = componentName;
-			buffer.bag = bag;
+		let buffer = new Buffer();
+		buffer.componentName = componentName;
+		buffer.name = componentName;
+		buffer.bag = bag;
 
-			p.right = {
-				id: pid,
-				buffer: buffer
-			};
-			p.id = undefined;
-		}
+		p.right = {
+			id: pid,
+			buffer: buffer
+		};
+		p.id = undefined;
+
 		onGridUpdate();
 	}
 
@@ -182,8 +161,8 @@
 				n.right = n.right.right;
 			} else {
 				n.id = n.right.id;
-				n.updateBuffer = n.right.updateBuffer
-				n.toggle = n.right.toggle
+				n.updateBuffer = n.right.updateBuffer;
+				n.toggle = n.right.toggle;
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;
@@ -207,8 +186,8 @@
 				n.left = n.left.left;
 			} else {
 				n.id = n.left.id;
-				n.updateBuffer = n.left.updateBuffer
-				n.toggle = n.left.toggle
+				n.updateBuffer = n.left.updateBuffer;
+				n.toggle = n.left.toggle;
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;
