@@ -98,48 +98,48 @@
 	}
 
 	function splitPane(paneId: string, split: string, componentName: string, bag: any) {
-		let n = findPane(paneService.rootPane, paneId);
+		let p = findPane(paneService.rootPane, paneId);
 
-		/**n should never be undefined */
-		if (!n) {
+		/** p should never be undefined */
+		if (!p) {
 			return;
 		}
 
-		let lid: string = paneIds[paneIds.length - 1];
+		let lastPaneId: string = paneIds[paneIds.length - 1];
 		let val = 0;
-		for (let i = 0; i < lid.length; i++) {
-			val += lid.charCodeAt(i) - 96;
+		for (let i = 0; i < lastPaneId.length; i++) {
+			val += lastPaneId.charCodeAt(i) - 96;
 		}
 
-		let nid = numberToLetters(val + 1);
-		if (n.left && n.right) {
+		let pid = numberToLetters(val + 1);
+		if (p.left && p.right) {
 			let buffer = new Buffer();
 			buffer.componentName = componentName;
 			buffer.name = componentName;
 			buffer.bag = bag;
 
-			n.left = {
-				split: n.split,
+			p.left = {
+				split: p.split,
 				left: {
-					id: n.id,
-					buffer: n.buffer,
-					toggle: n.toggle,
-					updateBuffer: n.updateBuffer
+					id: p.id,
+					buffer: p.buffer,
+					toggle: p.toggle,
+					updateBuffer: p.updateBuffer
 				},
 				right: {
-					id: nid,
+					id: pid,
 					buffer: buffer
 				}
 			};
-			n.id = undefined;
-			n.split = split;
+			p.id = undefined;
+			p.split = split;
 		} else {
-			n.split = split;
-			n.left = {
-				id: n.id,
-				buffer: n.buffer,
-				updateBuffer: n.updateBuffer,
-				toggle: n.toggle,
+			p.split = split;
+			p.left = {
+				id: p.id,
+				buffer: p.buffer,
+				updateBuffer: p.updateBuffer,
+				toggle: p.toggle,
 			};
 
 			let buffer = new Buffer();
@@ -147,11 +147,11 @@
 			buffer.name = componentName;
 			buffer.bag = bag;
 
-			n.right = {
-				id: nid,
+			p.right = {
+				id: pid,
 				buffer: buffer
 			};
-			n.id = undefined;
+			p.id = undefined;
 		}
 		onGridUpdate();
 	}
