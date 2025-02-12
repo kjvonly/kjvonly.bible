@@ -24,8 +24,6 @@ let deletedPaneIds: any = $state({});
 ```
 
 
-## 
-
 ## Tree/Node
 ### findPane
 A recursive function that finds a `Pane` provided a starting `Pane` and a `Pane` id.
@@ -99,6 +97,7 @@ function splitPane(paneId: string, split: string, componentName: string, bag: an
 ```
 
 ### deletePane
+A recursive function that finds the `Pane` to delete and updates the tree/node structure depending on existing structure. A branch node will have `left` and `right` `Pane`. The `left` and `right` could also contain a `left` and `right` node or be a `leaf` node. The if conditions checks for this and updates the `Pane` tree/node accordingly.
 
 ```typescript
 function deletePane(n: Pane, key: string) {
@@ -163,4 +162,92 @@ function deletePane(n: Pane, key: string) {
 			return;
 		}
 	}
+```
+
+### onGridUpdate
+This function will define the `grid-template-area` for the `Pane`s. We render the grid template based on the `paneService.rootPane`. From the grid we update the list of `Pane` ids and calculate the height and width of each `Pane`. 
+
+```typescript
+function onGridUpdate() {
+		let gta = renderGridTemplateAreas(paneService.rootPane);
+
+		let areas: any = {};
+		let grid = '';
+
+		for (let i = 0; i < gta.length; i++) {
+			let s = '';
+			for (let j = 0; j < gta[i].length; j++) {
+				s += `${gta[i][j]} `;
+				areas[gta[i][j]] = gta[i][j];
+			}
+			grid += '"' + s + '"\n';
+		}
+
+		paneIds = Object.keys(areas)
+			.concat(Object.keys(deletedPaneIds))
+			.sort((a: string, b: string) => {
+				let aval = 0,
+					bval = 0;
+
+				for (let i = 0; i < a.length; i++) {
+					aval += a.charCodeAt(i) - 96;
+				}
+				for (let i = 0; i < b.length; i++) {
+					bval += b.charCodeAt(i) - 96;
+				}
+				return aval - bval;
+			});
+
+		template = `display: grid;
+		max-height: 100vh;
+		grid-template-columns: repeat(${gta.length}, ${gta[0].length});
+
+  		grid-template-areas:
+			${grid};`;
+
+		let heightWidth: any = {};
+		let gtaRows = gta.length;
+		let gtaCols = gta[0].length;
+
+		Object.keys(areas).forEach((k) => {
+			let rows = [];
+			for (let i = 0; i < gta.length; i++) {
+				let cols: any = [];
+				for (let j = 0; j < gta[i].length; j++) {
+					if (gta[i][j] === k) {
+						cols.push([gta[i][j]]);
+					}
+				}
+				if (cols.length > 0) {
+					rows.push(cols);
+				}
+			}
+
+			heightWidth[k] = {
+				height: (rows.length * 1.0) / gtaRows,
+				width: (rows[0].length * 1.0) / gtaCols
+			};
+		});
+
+		paneService.heightWidth = heightWidth;
+		paneService.publishHw(heightWidth);
+	}
+```
+
+## html
+The html simple renders each `Pane` to the DOM if the `Pane` was not deleted.
+
+```html
+<div class="flex h-[100vh] w-full flex-col">
+	<div style="max-height: 100vh; min-width: 1px; {template};" class="w-full">
+		{#each paneIds as paneId}
+			{#if !deletedPaneIds[paneId]}
+				<div class="outline" style="grid-area: {paneId};">
+					<PaneContainer {paneId}></PaneContainer>
+				</div>
+			{/if}
+		{/each}
+	</div>
+</div>
+
 ```
