@@ -1,4 +1,4 @@
-# BibleDB
+# 4. BibleDB
 
 `BibleDB` is a class that abstracts accessing `IndexedDB`. It's responsible for fetching the `Data` and storing it locally and then providing `Modules` access to the data that is stored in `IndexedDB` with the `ChapterService`. 
 

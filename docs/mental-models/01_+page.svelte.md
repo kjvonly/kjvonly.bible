@@ -56,43 +56,41 @@ This function simply gets the last `Pane` id added to the `paneIds` array and ge
 
 ```typescript
 function splitPane(paneId: string, split: string, componentName: string, bag: any) {
-		function splitPane(paneId: string, split: string, componentName: string, bag: any) {
-		let p = findPane(paneService.rootPane, paneId);
+    let p = findPane(paneService.rootPane, paneId);
 
-		/** p should never be undefined */
-		if (!p) {
-			return;
-		}
+    /** p should never be undefined */
+    if (!p) {
+        return;
+    }
 
-		let lastPaneId: string = paneIds[paneIds.length - 1];
-		let val = 0;
-		for (let i = 0; i < lastPaneId.length; i++) {
-			val += lastPaneId.charCodeAt(i) - 96;
-		}
+    let lastPaneId: string = paneIds[paneIds.length - 1];
+    let val = 0;
+    for (let i = 0; i < lastPaneId.length; i++) {
+        val += lastPaneId.charCodeAt(i) - 96;
+    }
 
-		let pid = numberToLetters(val + 1);
+    let pid = numberToLetters(val + 1);
 
-		p.split = split;
-		p.left = {
-			id: p.id,
-			buffer: p.buffer,
-			updateBuffer: p.updateBuffer,
-			toggle: p.toggle
-		};
+    p.split = split;
+    p.left = {
+        id: p.id,
+        buffer: p.buffer,
+        updateBuffer: p.updateBuffer,
+        toggle: p.toggle
+    };
 
-		let buffer = new Buffer();
-		buffer.componentName = componentName;
-		buffer.name = componentName;
-		buffer.bag = bag;
+    let buffer = new Buffer();
+    buffer.componentName = componentName;
+    buffer.name = componentName;
+    buffer.bag = bag;
 
-		p.right = {
-			id: pid,
-			buffer: buffer
-		};
-		p.id = undefined;
-        
-        onGridUpdate();
-	}
+    p.right = {
+        id: pid,
+        buffer: buffer
+    };
+    p.id = undefined;
+    
+    onGridUpdate();
 	}
 ```
 

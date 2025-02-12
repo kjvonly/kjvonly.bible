@@ -1,4 +1,4 @@
-# Pane Component
+# 2. Pane Component
 The `Pane` component (different than the `Pane` tree/node) is the base component for every module. The responsibility for the `Pane` component is to set the height of `Pane` and to render the `Module` component i.e. Bible, search etc...
 
 
