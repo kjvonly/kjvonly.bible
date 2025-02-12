@@ -8,8 +8,8 @@
 	import { type Pane } from '$lib/models/pane.model';
 
 	let template = $state();
-	let elements: string[] = $state([]);
-	let deletedElements: any = $state({});
+	let paneIds: string[] = $state([]);
+	let deletedPaneIds: any = $state({});
 
 	function onGridUpdate() {
 		let gta = renderGridTemplateAreas(paneService.rootPane);
@@ -26,8 +26,8 @@
 			grid += '"' + s + '"\n';
 		}
 
-		elements = Object.keys(els)
-			.concat(Object.keys(deletedElements))
+		paneIds = Object.keys(els)
+			.concat(Object.keys(deletedPaneIds))
 			.sort((a: string, b: string) => {
 				let aval = 0,
 					bval = 0;
@@ -41,7 +41,6 @@
 				return aval - bval;
 			});
 
-		//
 		template = `display: grid;
 		max-height: 100vh;
 		grid-template-columns: repeat(${gta.length}, ${gta[0].length});
@@ -77,36 +76,36 @@
 		paneService.publishHw(hw);
 	}
 
-	function findNodes(n: Pane, key: string): Pane | undefined {
-		if (n.id === key) {
-			return n;
+	function findPane(p: Pane, paneId: string): Pane | undefined {
+		if (p.id === paneId) {
+			return p;
 		}
 		let found;
 
-		if (n.left) {
-			found = findNodes(n.left, key);
+		if (p.left) {
+			found = findPane(p.left, paneId);
 		}
 
 		if (found) {
 			return found;
 		}
 
-		if (n.right) {
-			found = findNodes(n.right, key);
+		if (p.right) {
+			found = findPane(p.right, paneId);
 		}
 
 		return found;
 	}
 
 	function splitPane(paneId: string, split: string, componentName: string, bag: any) {
-		let n = findNodes(paneService.rootPane, paneId);
+		let n = findPane(paneService.rootPane, paneId);
 
 		/**n should never be undefined */
 		if (!n) {
 			return;
 		}
 
-		let lid: string = elements[elements.length - 1];
+		let lid: string = paneIds[paneIds.length - 1];
 		let val = 0;
 		for (let i = 0; i < lid.length; i++) {
 			val += lid.charCodeAt(i) - 96;
@@ -174,7 +173,7 @@
 		}
 
 		if (found) {
-			deletedElements[n.left.id] = n.left.id;
+			deletedPaneIds[n.left.id] = n.left.id;
 			paneService.unsubscribe(n.left.id);
 			//do delete. this is the parent
 			if (n.right.split) {
@@ -199,7 +198,7 @@
 		}
 
 		if (found) {
-			deletedElements[n.right.id] = n.right.id;
+			deletedPaneIds[n.right.id] = n.right.id;
 			paneService.unsubscribe(n.right.id);
 			//do delete this is the parent
 			if (n.left.split) {
@@ -237,8 +236,8 @@
 
 <div class="flex h-[100vh] w-full flex-col">
 	<div style="max-height: 100vh; min-width: 1px; {template};" class=" w-full">
-		{#each elements as paneId}
-			{#if !deletedElements[paneId]}
+		{#each paneIds as paneId}
+			{#if !deletedPaneIds[paneId]}
 				<div class="relateive outline" style="grid-area: {paneId};">
 					<PaneContainer {paneId}></PaneContainer>
 				</div>
