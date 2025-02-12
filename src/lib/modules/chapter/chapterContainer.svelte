@@ -30,7 +30,7 @@
 		chapterSettings;
 
 		if (chapterSettings !== null) {
-			localStorage.setItem('chapterSettings', JSON.stringify(chapterSettings));
+			localStorage.setItem('settings', JSON.stringify(chapterSettings));
 		}
 
 		/* update color theme */
@@ -94,7 +94,7 @@
 
 
 	onMount(() => {
-		let cs = localStorage.getItem('chapterSettings');
+		let cs = localStorage.getItem('settings');
 		if (cs !== null) {
 			chapterSettings = JSON.parse(cs);
 
