@@ -131,6 +131,12 @@
 			buffer: buffer
 		};
 		p.id = undefined;
+		/**
+		 * TODO
+		 * May want to delete other variables too
+		 * need to make sure it does not effect 
+		 * the left node vars we just copied.
+		*/
 
 		onGridUpdate();
 	}
