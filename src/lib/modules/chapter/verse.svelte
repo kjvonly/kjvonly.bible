@@ -6,7 +6,7 @@
 
 {#if verse}
 
-	{#each verse.words as word, wordIndex}
-		<Word bind:pane {wordIndex} {verse} {word} {footnotes} {chapterKey}></Word>
+	{#each verse.words as word}
+		<Word bind:pane {verse} {word} {footnotes} {chapterKey}></Word>
 	{/each}
 {/if}

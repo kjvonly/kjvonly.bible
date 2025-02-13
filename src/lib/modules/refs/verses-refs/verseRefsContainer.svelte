@@ -3,17 +3,14 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 
-	let { paneId, chapterKey, verse, verseRefs } = $props();
+	let { paneId,  verseRefs } = $props();
 
 	let recursiveVerseRefs: any[] = $state([]);
 	let booknames: any;
 
 	onMount(async () => {
 		booknames = await bibleDB.getValue('booknames', 'booknames');
-		let verseNumber = verse['number'];
-		let ref = chapterKey.replaceAll('_', '/') + '/' + verseNumber;
-		let refs = [ref, ...verseRefs];
-		addVerseRefs(refs);
+		addVerseRefs(verseRefs);
 	});
 
 	async function addVerseRefs(refs: string[]) {
