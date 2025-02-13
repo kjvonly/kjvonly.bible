@@ -13,16 +13,28 @@
 
 		if (word.class.includes('vno')) {
 			let refs: string[] = [];
+			let strongsWords: string[] = []
 			verse.words.forEach((w: any) => {
 				if (w.href) {
 					refs.push(...w.href);
+
+					w.href.forEach((ref: string) => {
+						if (ref.startsWith('G') || ref.startsWith('H')){
+							strongsWords.push(w.text)
+						}
+					});
 				}
+
+
+
+
 			});
 
 			paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', {
 				footnotes: footnotes,
 				currentVerseRef: ref,
-				refs: refs
+				refs: refs,
+				strongsWords: strongsWords
 			});
 		} else {
 			paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', {

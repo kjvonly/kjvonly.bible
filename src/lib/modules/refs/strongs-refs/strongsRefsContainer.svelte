@@ -2,7 +2,7 @@
 	import { bibleDB } from '$lib/db/bible.db';
 	import { onMount } from 'svelte';
 
-	let { strongsRefs, text } = $props();
+	let { strongsRefs, strongsWords, text } = $props();
 
 	$effect(() => {});
 
@@ -20,9 +20,12 @@
 </script>
 
 <div class="px-4 pt-4">
-	{#each strongs as s}
-		<h1 class="pt-4 text-4xl">{s['number']}: {text}</h1>
-
+	{#each strongs as s, idx}
+		{#if strongsWords && strongsWords.length > 0}
+			<h1 class="pt-4 text-4xl">{s['number']}: {strongsWords[idx]}</h1>
+		{:else}
+			<h1 class="pt-4 text-4xl">{s['number']}: {text}</h1>
+		{/if}
 		{#if s['strongsDef']}
 			<div class="py-4">
 				<h1 class="font-bold underline underline-offset-8">Strongs Definition</h1>

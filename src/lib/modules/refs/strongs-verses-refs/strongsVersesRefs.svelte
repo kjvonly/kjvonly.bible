@@ -80,7 +80,7 @@
 						{/if}
 
 						{#if strongsRefs.length > 0}
-							<StrongsRefsContainer {text} {strongsRefs}></StrongsRefsContainer>
+							<StrongsRefsContainer strongsWords={pane?.buffer?.bag?.strongsWords} {text} {strongsRefs}></StrongsRefsContainer>
 						{/if}
 
 						{#if verseRefs.length > 0}
