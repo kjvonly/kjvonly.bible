@@ -83,7 +83,7 @@
 
 						{#if strongsRefs.length > 0}
 							<StrongsRefsContainer
-								isVerseRef={pane?.buffer?.bag?.refs !== undefined}
+								isVerseRef={verseRefs.length > 0}
 								strongsWords={pane?.buffer?.bag?.strongsWords}
 								{text}
 								{strongsRefs}

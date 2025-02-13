@@ -1,12 +1,14 @@
 <script lang="ts">
+	import ChevronDown from '$lib/components/chevronDown.svelte';
 	import { bibleDB } from '$lib/db/bible.db';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 
-	let { paneId,  verseRefs } = $props();
+	let { paneId, verseRefs } = $props();
 
 	let recursiveVerseRefs: any[] = $state([]);
 	let booknames: any;
+	let toggle = $state(false);
 
 	onMount(async () => {
 		booknames = await bibleDB.getValue('booknames', 'booknames');
@@ -76,7 +78,7 @@
 </script>
 
 {#snippet actions(vref: any)}
-	<div class="flex flex-row justify-end space-x-4">
+	<div class="flex flex-row justify-end space-x-4 py-2">
 		<!-- copy -->
 		<button
 			aria-label="copy button"
@@ -191,7 +193,9 @@
 {#snippet refCurrentVerse(vref: any)}
 	{#if vref}
 		<p class="px-4 py-2 text-left">
-			<span class="font-bold">{vref.bookName} {vref.chapterNumber}:{vref.verseNumber}</span><br />
+			<span class="font-bold text-neutral-500"
+				>{vref.bookName} {vref.chapterNumber}:{vref.verseNumber}</span
+			><br />
 			{#each vref.text.trim().split(' ') as w}
 				<span class="inline-block">{w}</span>&nbsp;
 			{/each}
@@ -208,7 +212,9 @@
 			}}
 		>
 			<p class="cursor-pointer px-4 py-2 text-left hover:bg-primary-100">
-				<span class="font-bold">{vref.bookName} {vref.chapterNumber}:{vref.verseNumber}</span><br />
+				<span class="font-bold text-neutral-500"
+					>{vref.bookName} {vref.chapterNumber}:{vref.verseNumber}</span
+				><br />
 				{#each vref.text.trim().split(' ') as w}
 					<span class="inline-block">{w}</span>&nbsp;
 				{/each}
@@ -220,41 +226,53 @@
 
 <div>
 	<div class="py-4">
-		<div class="py-4">
-			{#each recursiveVerseRefs as refs, idx}
-				{#if idx > recursiveVerseRefs.length - 4 && refs[0]}
-					{#if recursiveVerseRefs.length > 3 && idx === recursiveVerseRefs.length - 3}
-						<span class="underline underline-offset-8">...</span>
-					{/if}
-					{#if idx !== 0}
-						<span>&nbsp;/ </span>
-					{/if}
-					<button
-						onclick={() => {
-							onNavigateRefs(idx + 1);
-						}}
-					>
-						<span class="underline underline-offset-8"
-							>{booknames['shortNames'][refs[0].bookId]}
-							{refs[0].chapterNumber}:{refs[0].verseNumber}</span
-						></button
-					>
-				{/if}
-			{/each}
-
-			{#if recursiveVerseRefs.length > 0}
-				<h1 class="py-4 font-bold underline underline-offset-8">Verse</h1>
-				{@const vref = recursiveVerseRefs[recursiveVerseRefs.length - 1][0]}
-
-				{@render refCurrentVerse(vref)}
-
-				{#if recursiveVerseRefs[recursiveVerseRefs.length - 1].length > 1}
-					<h1 class="py-4 font-bold underline underline-offset-8">Verse References</h1>
-					{#each recursiveVerseRefs[recursiveVerseRefs.length - 1].slice(1, recursiveVerseRefs[recursiveVerseRefs.length - 1].length) as vref, idx}
-						{@render refVerse(vref)}
-					{/each}
-				{/if}
-			{/if}
+		<div class="flex flex-row items-center">
+			<p class="pe-4 capitalize">Verses:</p>
+			<button
+				onclick={() => {
+					toggle = !toggle;
+				}}
+				aria-label="toggle drop down"
+			>
+				<ChevronDown className="w-4 h-4" fill="fill-neutral-700"></ChevronDown>
+			</button>
 		</div>
+		{#if toggle}
+			<div class="py-4 ps-2">
+				{#each recursiveVerseRefs as refs, idx}
+					{#if idx > recursiveVerseRefs.length - 4 && refs[0]}
+						{#if recursiveVerseRefs.length > 3 && idx === recursiveVerseRefs.length - 3}
+							<span class="underline underline-offset-8">...</span>
+						{/if}
+						{#if idx !== 0}
+							<span>&nbsp;/ </span>
+						{/if}
+						<button
+							onclick={() => {
+								onNavigateRefs(idx + 1);
+							}}
+						>
+							<span class="underline underline-offset-8"
+								>{booknames['shortNames'][refs[0].bookId]}
+								{refs[0].chapterNumber}:{refs[0].verseNumber}</span
+							></button
+						>
+					{/if}
+				{/each}
+
+				<div class="h-2"></div>
+				{#if recursiveVerseRefs.length > 0}
+					{@const vref = recursiveVerseRefs[recursiveVerseRefs.length - 1][0]}
+
+					{@render refCurrentVerse(vref)}
+
+					{#if recursiveVerseRefs[recursiveVerseRefs.length - 1].length > 1}
+						{#each recursiveVerseRefs[recursiveVerseRefs.length - 1].slice(1, recursiveVerseRefs[recursiveVerseRefs.length - 1].length) as vref, idx}
+							{@render refVerse(vref)}
+						{/each}
+					{/if}
+				{/if}
+			</div>
+		{/if}
 	</div>
 </div>

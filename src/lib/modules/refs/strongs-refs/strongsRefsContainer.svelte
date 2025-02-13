@@ -5,7 +5,7 @@
 
 	let { isVerseRef, strongsRefs, strongsWords, text } = $props();
 
-	$effect(() => {});
+	let toggle = $state(false);
 
 	let strongs: any[] | undefined = $state([]);
 	onMount(async () => {
@@ -18,7 +18,6 @@
 			});
 		}
 	});
-	let toggle = $state(false);
 </script>
 
 {#snippet header(s, idx)}
@@ -36,6 +35,16 @@
 			</button>
 		{:else}
 			<span class="pe-4">{s['number']}: {text}</span>
+			{#if isVerseRef || strongs?.length > 1}
+				<button
+					onclick={() => {
+						s.toggle = !s.toggle;
+					}}
+					aria-label="toggle drop down"
+				>
+					<ChevronDown className="w-4 h-4" fill="fill-neutral-700"></ChevronDown>
+				</button>
+			{/if}
 		{/if}
 	</div>
 {/snippet}
