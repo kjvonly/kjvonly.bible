@@ -9,25 +9,21 @@
 		pane.buffer.bag.lastVerse = verse.number;
 		let verseNumber = verse['number'];
 		let ref = chapterKey.replaceAll('_', '/') + '/' + verseNumber;
-		let fn = []
+		let fn = [];
 
 		if (word.class.includes('vno')) {
 			let refs: string[] = [];
-			let strongsWords: string[] = []
+			let strongsWords: string[] = [];
 			verse.words.forEach((w: any) => {
 				if (w.href) {
 					refs.push(...w.href);
 
 					w.href.forEach((ref: string) => {
-						if (ref.startsWith('G') || ref.startsWith('H')){
-							strongsWords.push(w.text)
+						if (ref.startsWith('G') || ref.startsWith('H')) {
+							strongsWords.push(w.text);
 						}
 					});
 				}
-
-
-
-
 			});
 
 			paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', {

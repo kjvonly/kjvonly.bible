@@ -18,13 +18,9 @@
 	onMount(() => {
 		pane = paneService.findNode(paneService.rootPane, paneId);
 
-		if (pane?.buffer?.bag?.currentVerseRef) {
-			verseRefs.push(pane?.buffer?.bag?.currentVerseRef);
-		}
-
 		let refs: string[] = [];
 		if (pane?.buffer?.bag?.refs) {
-			refs = pane?.buffer?.bag?.refs
+			refs = pane?.buffer?.bag?.refs;
 		} else {
 			if (pane?.buffer?.bag?.word?.href) {
 				refs = pane?.buffer?.bag?.word?.href;
@@ -40,7 +36,6 @@
 
 			match = new RegExp('\\d+_\\d+_\\d+', 'gm').test(ref);
 			if (match) {
-				console.log(ref)
 				footnotes.push(ref);
 			}
 
@@ -49,6 +44,12 @@
 				verseRefs.push(ref);
 			}
 		});
+
+		if (verseRefs.length > 0) {
+			if (pane?.buffer?.bag?.currentVerseRef) {
+				verseRefs = [pane?.buffer?.bag?.currentVerseRef, ...verseRefs];
+			}
+		}
 
 		if (pane?.buffer?.bag?.word?.text) {
 			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
@@ -75,12 +76,20 @@
 				<div class="flex w-full max-w-lg px-4">
 					<div class="">
 						{#if footnotes.length > 0}
-							<FootnoteContainer {footnotes} chapterFootnotes={pane?.buffer?.bag?.footnotes}
+							<FootnoteContainer
+								isVerseRef={pane?.buffer?.bag?.refs !== undefined}
+								{footnotes}
+								chapterFootnotes={pane?.buffer?.bag?.footnotes}
 							></FootnoteContainer>
 						{/if}
 
 						{#if strongsRefs.length > 0}
-							<StrongsRefsContainer strongsWords={pane?.buffer?.bag?.strongsWords} {text} {strongsRefs}></StrongsRefsContainer>
+							<StrongsRefsContainer
+								isVerseRef={verseRefs.length > 0}
+								strongsWords={pane?.buffer?.bag?.strongsWords}
+								{text}
+								{strongsRefs}
+							></StrongsRefsContainer>
 						{/if}
 
 						{#if verseRefs.length > 0}
