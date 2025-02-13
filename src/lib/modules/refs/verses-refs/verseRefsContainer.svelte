@@ -37,7 +37,7 @@
 				};
 				verseRefs.push(verseRef);
 			} catch (ex) {
-				console.log(`error fetching ref ${ref}`);
+				console.log(`error fetching ref ${ref} : ${ex}`);
 			}
 		});
 

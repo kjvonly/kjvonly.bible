@@ -40,7 +40,6 @@
 
 			match = new RegExp('\\d+_\\d+_\\d+', 'gm').test(ref);
 			if (match) {
-				console.log(ref)
 				footnotes.push(ref);
 			}
 
