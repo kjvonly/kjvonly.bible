@@ -40,7 +40,6 @@
 			paneService.onSplitPane(pane.id, 'h', 'StrongsVersesRefs', {
 				word: word,
 				footnotes: footnotes,
-				currentVerseRef: ref
 			});
 		}
 	}

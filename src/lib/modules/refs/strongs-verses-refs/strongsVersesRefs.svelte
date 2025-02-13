@@ -74,7 +74,7 @@
 				<div class="flex w-full max-w-lg px-4">
 					<div class="">
 						{#if footnotes.length > 0}
-							<FootnoteContainer {footnotes} chapterFootnotes={pane?.buffer?.bag?.footnotes}
+							<FootnoteContainer isVerseRef={pane?.buffer?.bag?.refs !== undefined} {footnotes} chapterFootnotes={pane?.buffer?.bag?.footnotes}
 							></FootnoteContainer>
 						{/if}
 
