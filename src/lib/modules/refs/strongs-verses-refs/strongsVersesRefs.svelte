@@ -18,10 +18,6 @@
 	onMount(() => {
 		pane = paneService.findNode(paneService.rootPane, paneId);
 
-		if (pane?.buffer?.bag?.currentVerseRef) {
-			verseRefs.push(pane?.buffer?.bag?.currentVerseRef);
-		}
-
 		let refs: string[] = [];
 		if (pane?.buffer?.bag?.refs) {
 			refs = pane?.buffer?.bag?.refs;
@@ -48,6 +44,12 @@
 				verseRefs.push(ref);
 			}
 		});
+
+		if (verseRefs.length > 0) {
+			if (pane?.buffer?.bag?.currentVerseRef) {
+				verseRefs = [pane?.buffer?.bag?.currentVerseRef, ...verseRefs];
+			}
+		}
 
 		if (pane?.buffer?.bag?.word?.text) {
 			text = pane.buffer.bag.word.text.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
