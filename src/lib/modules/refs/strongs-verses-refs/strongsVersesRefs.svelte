@@ -10,7 +10,7 @@
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
 	let strongsRefs: string[] = $state([]);
-	let footnote = $state('');
+	let footnotes: string[] = $state([]);
 	let verseRefs: string[] = $state([]);
 	let text = $state('');
 	let pane: any = $state();
@@ -40,7 +40,8 @@
 
 			match = new RegExp('\\d+_\\d+_\\d+', 'gm').test(ref);
 			if (match) {
-				footnote = ref;
+				console.log(ref)
+				footnotes.push(ref);
 			}
 
 			match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
@@ -73,8 +74,8 @@
 
 				<div class="flex w-full max-w-lg px-4">
 					<div class="">
-						{#if footnote.length > 0}
-							<FootnoteContainer {text} {footnote} footnotes={pane?.buffer?.bag?.footnotes}
+						{#if footnotes.length > 0}
+							<FootnoteContainer {footnotes} chapterFootnotes={pane?.buffer?.bag?.footnotes}
 							></FootnoteContainer>
 						{/if}
 

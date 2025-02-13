@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
 
-	let { wordIndex, word, verse, footnotes, chapterKey, pane = $bindable() } = $props();
+	let { word, verse, footnotes, chapterKey, pane = $bindable() } = $props();
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
@@ -9,6 +9,7 @@
 		pane.buffer.bag.lastVerse = verse.number;
 		let verseNumber = verse['number'];
 		let ref = chapterKey.replaceAll('_', '/') + '/' + verseNumber;
+		let fn = []
 
 		if (word.class.includes('vno')) {
 			let refs: string[] = [];
