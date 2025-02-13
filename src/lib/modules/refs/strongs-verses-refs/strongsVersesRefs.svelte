@@ -24,7 +24,7 @@
 
 		let refs: string[] = [];
 		if (pane?.buffer?.bag?.refs) {
-			refs = pane?.buffer?.bag?.refs
+			refs = pane?.buffer?.bag?.refs;
 		} else {
 			if (pane?.buffer?.bag?.word?.href) {
 				refs = pane?.buffer?.bag?.word?.href;
@@ -74,12 +74,20 @@
 				<div class="flex w-full max-w-lg px-4">
 					<div class="">
 						{#if footnotes.length > 0}
-							<FootnoteContainer isVerseRef={pane?.buffer?.bag?.refs !== undefined} {footnotes} chapterFootnotes={pane?.buffer?.bag?.footnotes}
+							<FootnoteContainer
+								isVerseRef={pane?.buffer?.bag?.refs !== undefined}
+								{footnotes}
+								chapterFootnotes={pane?.buffer?.bag?.footnotes}
 							></FootnoteContainer>
 						{/if}
 
 						{#if strongsRefs.length > 0}
-							<StrongsRefsContainer strongsWords={pane?.buffer?.bag?.strongsWords} {text} {strongsRefs}></StrongsRefsContainer>
+							<StrongsRefsContainer
+								isVerseRef={pane?.buffer?.bag?.refs !== undefined}
+								strongsWords={pane?.buffer?.bag?.strongsWords}
+								{text}
+								{strongsRefs}
+							></StrongsRefsContainer>
 						{/if}
 
 						{#if verseRefs.length > 0}
