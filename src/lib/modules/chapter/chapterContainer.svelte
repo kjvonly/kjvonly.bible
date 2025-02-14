@@ -65,7 +65,7 @@
 		}
 	}
 
-	let lastKnownScrollPosition = 0;
+	let lastKnownScrollPosition = $state(0);
 	let ticking = false;
 
 	let buttonTopOffset = $state(0);
@@ -171,6 +171,7 @@
 						bind:chapterKey
 						bind:id
 						bind:pane
+						{lastKnownScrollPosition}
 						{containerHeight}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>

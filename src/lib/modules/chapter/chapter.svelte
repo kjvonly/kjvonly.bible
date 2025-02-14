@@ -16,6 +16,7 @@
 		bookChapter = $bindable(),
 		id = $bindable(),
 		pane = $bindable(),
+		lastKnownScrollPosition,
 		containerHeight
 	} = $props();
 
@@ -67,7 +68,7 @@
 			{#each keys as k, idx}
 				<!-- w-full required for safari. -->
 				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
-					<Verse bind:pane verse={verses[k]} {footnotes} {chapterKey}></Verse>
+					<Verse bind:pane verse={verses[k]} {footnotes} {chapterKey} {lastKnownScrollPosition}></Verse>
 				</span>
 			{/each}
 		</p>
