@@ -23,6 +23,18 @@
 		wordAnnotations = initWordAnnotations(wordIdx);
 	});
 
+	$effect(() =>{
+		mode;
+
+		if(mode !== ''){
+			console.log('mode changed',word, )
+		}
+	})
+
+	function updateMode(m: string){
+		mode.value = m
+	}
+
 	function initWordAnnotations(wordIndex: number) {
 		verseNumber = verse['number'];
 		if (!annotations[verseNumber]) {
@@ -119,7 +131,8 @@
 			}
 
 			console.log('2000 ms', word.text);
-			mode.value = 'edit';
+			updateMode('edit');
+			
 			track[wordIdx].finished = true;
 		}, 2000);
 		console.log('touchstart', word.text);
@@ -149,18 +162,16 @@
 			widxs.push(wordIdx);
 		}
 
-		let shouldAdd = true
-		if (widxs.length > 1){
+		let shouldAdd = true;
+		if (widxs.length > 1) {
 			let w = initWordAnnotations(0);
 			w.class.forEach((c: string) => {
-				if (c.startsWith('bg')){
-					shouldAdd = false
+				if (c.startsWith('bg')) {
+					shouldAdd = false;
 				}
 			});
-			
 		}
 
-	
 		widxs.forEach((i) => {
 			let w = initWordAnnotations(i);
 
@@ -179,6 +190,7 @@
 		});
 	}
 </script>
+
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->

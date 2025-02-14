@@ -48,6 +48,7 @@
 	let verses: any = $state();
 	let keys: string[] = $state([]);
 	let annotations: any = $state({});
+	let mode: any = $state({value: ''})
 
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);
@@ -84,6 +85,7 @@
 					<Verse
 						bind:pane
 						bind:annotations={annotations}
+						bind:mode
 						verse={verses[k]}
 						{footnotes}
 						{chapterKey}

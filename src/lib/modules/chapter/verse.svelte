@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Word from './word.svelte';
-	let mode: any = $state({value: ''})
 	let {
 		
 		lastKnownScrollPosition,
@@ -9,15 +8,16 @@
 		verse,
 		pane = $bindable(),
 		annotations = $bindable(),
-		
+		mode = $bindable()
 	} = $props();
 </script>
+
 {#if verse}
 	{#each verse.words as word, idx}
 		<Word
 			bind:pane
 			bind:annotations={annotations}
-			bind:mode
+			bind:mode={mode}
 			{verse}
 			{word}
 			{footnotes}
