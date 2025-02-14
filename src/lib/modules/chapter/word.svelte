@@ -5,6 +5,7 @@
 	let {
 		wordIdx,
 		lastKnownScrollPosition,
+		annotations,
 		word,
 		verse,
 		footnotes,
@@ -65,12 +66,6 @@
 				return;
 			}
 
-			const differenceInMilliseconds = Date.now() - track[wordIdx].startTime;
-			const differenceInSeconds = differenceInMilliseconds / 1000;
-			if (differenceInSeconds < 2) {
-				return;
-			}
-
 			if (track[wordIdx].lastKnownScrollPosition != lastKnownScrollPosition) {
 				delete track[wordIdx];
 				return;
@@ -83,9 +78,12 @@
 	}
 
 	function onMouseUpTouchEnd() {
-		track[wordIdx].finished = true;
+		const differenceInMilliseconds = Date.now() - track[wordIdx].startTime;
+		const differenceInSeconds = differenceInMilliseconds / 1000;
+		if (differenceInSeconds < 2) {
+			clearTimeout(track[wordIdx].timeoutID);
+		}
 	}
-	
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -93,25 +91,28 @@
 {#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
 	&nbsp;<span
 		onclick={(e) => {
-			if (!track[wordIdx] || track[wordIdx].finished) {
+			if (track[wordIdx] && track[wordIdx].finished) {
 				return;
 			}
 
-			track[wordIdx].finished = true;
+			if (track[wordIdx]) {
+				track[wordIdx].finished = true;
+			}
+
 			onWordClicked(e, word);
 		}}
 		ontouchstart={onMouseDownTouchStart}
 		ontouchend={onMouseUpTouchEnd}
 		onmousedown={onMouseDownTouchStart}
 		onmouseup={onMouseUpTouchEnd}
-		class="inline-block {word.class?.join(' ')}">{word.text}</span
+		class="inline-block {word.class?.join(' ')} {annotations?.class?.join(' ')}">{word.text}</span
 	>
 {:else}&nbsp;<span
 		ontouchstart={onMouseDownTouchStart}
 		ontouchend={onMouseUpTouchEnd}
 		onmousedown={onMouseDownTouchStart}
 		onmouseup={onMouseUpTouchEnd}
-		class="inline-block {word.class?.join(' ')}">{word.text}</span
+		class="inline-block {word.class?.join(' ')} {annotations?.class?.join(' ')}">{word.text}</span
 	>
 {/if}
 

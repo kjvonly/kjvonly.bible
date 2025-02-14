@@ -16,8 +16,7 @@
 		bookChapter = $bindable(),
 		id = $bindable(),
 		pane = $bindable(),
-		lastKnownScrollPosition,
-		containerHeight
+		lastKnownScrollPosition
 	} = $props();
 
 	$effect(() => {
@@ -42,11 +41,24 @@
 			let el = document.getElementById(id);
 			el?.scrollTo(0, 0);
 			loadChapter();
+			loadAnnotations();
 		}
 	});
 
 	let verses: any = $state();
 	let keys: string[] = $state([]);
+	let annotations: any = $state({})
+
+	async function loadAnnotations() {
+		annotations = await chapterService.getAnnotations(chapterKey);
+
+		annotations   = { 1: {
+			words: {
+				0: 'bg-red-500'
+			}
+		}
+		}
+	}
 
 	async function loadChapter() {
 		let data = await chapterService.getChapter(chapterKey);
@@ -68,7 +80,14 @@
 			{#each keys as k, idx}
 				<!-- w-full required for safari. -->
 				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
-					<Verse bind:pane verse={verses[k]} {footnotes} {chapterKey} {lastKnownScrollPosition}></Verse>
+					<Verse
+						bind:pane
+						annotations={annotations ? annotations[idx]?.words : undefined}
+						verse={verses[k]}
+						{footnotes}
+						{chapterKey}
+						{lastKnownScrollPosition}
+					></Verse>
 				</span>
 			{/each}
 		</p>

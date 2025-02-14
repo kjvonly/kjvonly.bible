@@ -172,7 +172,6 @@
 						bind:id
 						bind:pane
 						{lastKnownScrollPosition}
-						{containerHeight}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>
 				</div>
