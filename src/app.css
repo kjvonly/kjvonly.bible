@@ -309,6 +309,15 @@
         --color-bg-minor-prophets: 352deg 60% 35%;
         /* neutral 50 */
         --color-text-minor-prophets: 216deg 33% 97%;
+
+
+        --color-highlight-a: 195deg 97% 75%;
+        --color-highlight-b: 336deg 100% 77%;
+        --color-highlight-c: 360deg 100% 80%;
+        --color-highlight-d: 261deg 54% 68%;
+        ;
+        --color-highlight-e: 184deg 80% 74%;
+        ;
     }
 
     :root[class~="color-theme-dark-light-blue"] {
@@ -395,6 +404,14 @@
         --color-bg-minor-prophets: 352deg 60% 35%;
         /* neutral 50 */
         --color-text-minor-prophets: 216deg 33% 97%;
+
+
+        --color-highlight-a: 202deg 83% 41%;
+        --color-highlight-b: 336deg 100% 20%;
+        --color-highlight-c: 360deg 100% 10%;
+        --color-highlight-d: 262deg 69% 31%;
+        --color-highlight-e: 185deg 81% 29%;
+
     }
 
     :root[class~="color-theme-purple"] {
