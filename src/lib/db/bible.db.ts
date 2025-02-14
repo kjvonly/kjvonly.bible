@@ -27,7 +27,7 @@ export class BibleDB extends IndexedDB {
 
 	constructor() {
 		super('bible');
-		this.createAndOrOpenObjectStores(['chapters', 'booknames', 'strongs']);
+		this.createAndOrOpenObjectStores(['chapters', 'booknames', 'strongs', 'annotations']);
 	}
 
 	async waitForIndexDB(): Promise<boolean> {

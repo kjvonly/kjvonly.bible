@@ -18,7 +18,7 @@ class IndexedDB {
 	 */
 	public async createAndOrOpenObjectStores(tableNames: string[]) {
 		try {
-			this.db = await openDB(this.database, 3, {
+			this.db = await openDB(this.database, 4, {
 				upgrade(db: IDBPDatabase) {
 					for (const tableName of tableNames) {
 						if (db.objectStoreNames.contains(tableName)) {

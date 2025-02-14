@@ -101,6 +101,32 @@ export class ChapterService {
 
         return strongs;
     }
+
+
+    async getAnnotations(chapterKey: string): Promise<any> {
+        let annotations = undefined
+        let bcv= chapterKey.split('_')
+        if (bcv.length === 3 ){
+            chapterKey = `${bcv[0]}_${bcv[1]}`
+        }
+
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                annotations = await bibleDB.getValue('annotations', chapterKey)
+            }
+
+        } catch (error) {
+            console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
+        }
+
+        // if (chapter === undefined) {
+        //     return await api.get(`data/json.gz/${chapterKey}.json`);
+        // }
+
+        return annotations;
+    }
 }
 
 export let chapterService = new ChapterService()
