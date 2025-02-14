@@ -16,6 +16,7 @@
 		bookChapter = $bindable(),
 		id = $bindable(),
 		pane = $bindable(),
+		mode =$bindable(),
 		lastKnownScrollPosition
 	} = $props();
 
@@ -48,10 +49,11 @@
 	let verses: any = $state();
 	let keys: string[] = $state([]);
 	let annotations: any = $state({});
-	let mode: any = $state({value: ''})
+
 
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);
+
 	}
 
 	async function loadChapter() {

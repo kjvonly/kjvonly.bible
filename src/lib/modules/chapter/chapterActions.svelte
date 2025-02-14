@@ -96,21 +96,22 @@
 </div>
 
 {#if showBookChapterPopup}
-	<div style={containerHeight} class="absolute z-[10000] w-full bg-white shadow-lg">
+	<div style={containerHeight} class="absolute z-[10000] w-full  shadow-lg">
 		<BookChapterPopup bind:showBookChapterPopup bind:chapterKey></BookChapterPopup>
 	</div>
 {/if}
 {#if showSettingsPopup}
-	<div style={containerHeight} class="absolute z-[10000] w-full bg-white shadow-lg">
+	<div style={containerHeight} class="absolute z-[10000] w-full  shadow-lg">
 		<SettingsPopup bind:showSettingsPopup></SettingsPopup>
 	</div>
 {/if}
 
 {#if showActionsPopup}
-	<div style={containerHeight} class="absolute z-[10000] w-full bg-white shadow-lg">
+<div style={containerHeight} class="absolute z-[10000] w-full  shadow-lg">
 		<ActionDropdown {paneId} bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
 	</div>
 {/if}
+
 
 <style>
 	.bookChapter {
