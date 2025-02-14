@@ -2,7 +2,17 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 
-	let { lastKnownScrollPosition, word, verse, footnotes, chapterKey, pane = $bindable() } = $props();
+	let {
+		wordIdx,
+		lastKnownScrollPosition,
+		word,
+		verse,
+		footnotes,
+		chapterKey,
+		pane = $bindable()
+	} = $props();
+
+	let track: any = {};
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
@@ -41,9 +51,41 @@
 		}
 	}
 
-	onMount(() => {
+	onMount(() => {});
 
-	});
+	function onMouseDownTouchStart() {
+		track[wordIdx] = {
+			startTime: Date.now(),
+			lastKnownScrollPosition: lastKnownScrollPosition,
+			finished: false
+		};
+
+		track[wordIdx].timeoutID = setTimeout(() => {
+			if (track[wordIdx].finished) {
+				return;
+			}
+
+			const differenceInMilliseconds = Date.now() - track[wordIdx].startTime;
+			const differenceInSeconds = differenceInMilliseconds / 1000;
+			if (differenceInSeconds < 2) {
+				return;
+			}
+
+			if (track[wordIdx].lastKnownScrollPosition != lastKnownScrollPosition) {
+				delete track[wordIdx];
+				return;
+			}
+
+			console.log('2000 ms', word.text);
+			track[wordIdx].finished = true;
+		}, 2000);
+		console.log('touchstart', word.text);
+	}
+
+	function onMouseUpTouchEnd() {
+		track[wordIdx].finished = true;
+	}
+	
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -51,24 +93,26 @@
 {#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
 	&nbsp;<span
 		onclick={(e) => {
+			if (!track[wordIdx] || track[wordIdx].finished) {
+				return;
+			}
+
+			track[wordIdx].finished = true;
 			onWordClicked(e, word);
 		}}
-		ontouchstart={() => {
-			console.log('touchstart', word.text);
-		}}
-		ontouchend={() => {
-			console.log('touchend', word.text);
-		}}
-		onmousedown={() => {
-			console.log('onMouseDown', word.text);
-		}}
-		onmouseup={(e) => {
-			e.stopPropagation();
-			console.log('onMouseUp', word.text);
-		}}
+		ontouchstart={onMouseDownTouchStart}
+		ontouchend={onMouseUpTouchEnd}
+		onmousedown={onMouseDownTouchStart}
+		onmouseup={onMouseUpTouchEnd}
 		class="inline-block {word.class?.join(' ')}">{word.text}</span
 	>
-{:else}&nbsp;<span class="inline-block {word.class?.join(' ')}">{word.text}</span>
+{:else}&nbsp;<span
+		ontouchstart={onMouseDownTouchStart}
+		ontouchend={onMouseUpTouchEnd}
+		onmousedown={onMouseDownTouchStart}
+		onmouseup={onMouseUpTouchEnd}
+		class="inline-block {word.class?.join(' ')}">{word.text}</span
+	>
 {/if}
 
 <style>

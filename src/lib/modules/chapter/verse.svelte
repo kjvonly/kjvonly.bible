@@ -5,7 +5,7 @@
 </script>
 
 {#if verse}
-	{#each verse.words as word}
-		<Word bind:pane {verse} {word} {footnotes} {chapterKey} {lastKnownScrollPosition}></Word>
+	{#each verse.words as word, idx}
+		<Word bind:pane {verse} {word} {footnotes} {chapterKey} {lastKnownScrollPosition} wordIdx={idx}></Word>
 	{/each}
 {/if}
