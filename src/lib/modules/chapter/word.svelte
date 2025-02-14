@@ -5,20 +5,59 @@
 	let {
 		wordIdx,
 		lastKnownScrollPosition,
-		annotations=$bindable(),
 		word,
 		verse,
 		footnotes,
 		chapterKey,
-		pane = $bindable()
+		pane = $bindable(),
+		annotations = $bindable(),
+		mode = $bindable()
 	} = $props();
 
 	let track: any = {};
-	let verseNumber = $state(0)
-	let wordAnnotations: any = $state()
+	let verseNumber = $state(0);
+	let wordAnnotations: any = $state();
+
+	$effect(() => {
+		annotations;
+		wordAnnotations = initWordAnnotations(wordIdx);
+	});
+
+	function initWordAnnotations(wordIndex: number) {
+		verseNumber = verse['number'];
+		if (!annotations[verseNumber]) {
+			annotations[verseNumber] = {};
+		}
+
+		if (!annotations[verseNumber].words) {
+			annotations[verseNumber].words = {};
+		}
+
+		if (!annotations[verseNumber].words) {
+			annotations[verseNumber].words = {};
+			annotations[verseNumber].words[wordIndex] = {};
+		}
+
+		if (!annotations[verseNumber].words[wordIndex]) {
+			annotations[verseNumber].words[wordIndex] = {};
+		}
+
+		if (!annotations[verseNumber].words[wordIndex].class) {
+			annotations[verseNumber].words[wordIndex].class = [];
+		}
+
+		return annotations[verseNumber].words[wordIndex];
+	}
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
+
+		console.log('click edit', mode.value);
+		if (mode.value != '') {
+			console.log(mode.value);
+			onEditClick();
+			return;
+		}
 
 		pane.buffer.bag.lastVerse = verse.number;
 		let verseNumber = verse['number'];
@@ -56,11 +95,10 @@
 
 	onMount(() => {
 		verseNumber = verse['number'];
-		if (annotations && annotations[verseNumber] && annotations[verseNumber].words){
-			wordAnnotations = annotations[verseNumber].words[wordIdx]
-			wordAnnotations.class=['bg-green-900']
-		}
 
+		if (annotations && annotations[verseNumber] && annotations[verseNumber].words) {
+			wordAnnotations = annotations[verseNumber].words[wordIdx];
+		}
 	});
 
 	function onMouseDownTouchStart() {
@@ -81,26 +119,77 @@
 			}
 
 			console.log('2000 ms', word.text);
+			mode.value = 'edit';
 			track[wordIdx].finished = true;
 		}, 2000);
 		console.log('touchstart', word.text);
 	}
 
 	function onMouseUpTouchEnd() {
-		const differenceInMilliseconds = Date.now() - track[wordIdx].startTime;
-		const differenceInSeconds = differenceInMilliseconds / 1000;
-		if (differenceInSeconds < 2) {
-			clearTimeout(track[wordIdx].timeoutID);
+		if (track[wordIdx]) {
+			const differenceInMilliseconds = Date.now() - track[wordIdx].startTime;
+			const differenceInSeconds = differenceInMilliseconds / 1000;
+			if (differenceInSeconds < 2) {
+				clearTimeout(track[wordIdx].timeoutID);
+			}
 		}
 	}
-</script>
 
+	function onEditClick() {
+		if (mode.value == '') {
+			return;
+		}
+
+		let widxs = [];
+		if (word.class?.includes('vno')) {
+			for (let i = 0; i < verse.words.length; i++) {
+				widxs.push(i);
+			}
+		} else {
+			widxs.push(wordIdx);
+		}
+
+		let shouldAdd = true
+		if (widxs.length > 1){
+			let w = initWordAnnotations(0);
+			w.class.forEach((c: string) => {
+				if (c.startsWith('bg')){
+					shouldAdd = false
+				}
+			});
+			
+		}
+
+	
+		widxs.forEach((i) => {
+			let w = initWordAnnotations(i);
+
+			let indexOf: number | undefined;
+			w.class.forEach((c: string, idx: number) => {
+				if (c.startsWith('bg')) {
+					indexOf = idx;
+				}
+			});
+
+			if (indexOf !== undefined || !shouldAdd) {
+				w.class.splice(indexOf, 1);
+			} else {
+				w.class.push('bg-primary-200');
+			}
+		});
+	}
+</script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
-	&nbsp;<span
+	<span class="inline-block {wordAnnotations?.class?.join(' ')}">&nbsp;</span><span
 		onclick={(e) => {
+			if (mode.value !== '') {
+				onEditClick();
+				return;
+			}
+
 			if (track[wordIdx] && track[wordIdx].finished) {
 				return;
 			}
@@ -115,14 +204,17 @@
 		ontouchend={onMouseUpTouchEnd}
 		onmousedown={onMouseDownTouchStart}
 		onmouseup={onMouseUpTouchEnd}
-		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}">{word.text}</span
+		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}"
+		>{word.text}</span
 	>
-{:else}&nbsp;<span
+{:else}<span class="inline-block {wordAnnotations?.class?.join(' ')}">&nbsp;</span><span
 		ontouchstart={onMouseDownTouchStart}
 		ontouchend={onMouseUpTouchEnd}
 		onmousedown={onMouseDownTouchStart}
 		onmouseup={onMouseUpTouchEnd}
-		class="inline-block {word.class?.join(' ')} {annotations?.class?.join(' ')}">{word.text}</span
+		onclick={onEditClick}
+		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}"
+		>{word.text}</span
 	>
 {/if}
 
@@ -132,7 +224,8 @@
 		vertical-align: baseline;
 		position: relative;
 		top: -0.6em;
-		@apply me-2 ms-1 text-xs text-neutral-700 md:text-base;
+		height: 100%;
+		@apply pe-2 ps-1 text-xs text-neutral-700 md:text-base;
 	}
 
 	.redtxt {

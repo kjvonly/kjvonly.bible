@@ -75,7 +75,6 @@
 	onMount(async () => {});
 </script>
 
-{JSON.stringify(annotations)}
 <div class="{fadeClass} flex-col leading-loose">
 	{#if showChapter}
 		<p class="px-4">

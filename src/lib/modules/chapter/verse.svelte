@@ -1,21 +1,23 @@
 <script lang="ts">
 	import Word from './word.svelte';
-
+	let mode: any = $state({value: ''})
 	let {
-		annotations = $bindable(),
+		
 		lastKnownScrollPosition,
 		chapterKey,
 		footnotes,
 		verse,
-		pane = $bindable()
+		pane = $bindable(),
+		annotations = $bindable(),
+		
 	} = $props();
 </script>
-
 {#if verse}
 	{#each verse.words as word, idx}
 		<Word
 			bind:pane
 			bind:annotations={annotations}
+			bind:mode
 			{verse}
 			{word}
 			{footnotes}
