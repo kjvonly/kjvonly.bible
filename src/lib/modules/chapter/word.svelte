@@ -171,7 +171,7 @@
 			if (indexOf !== undefined || !shouldAdd) {
 				w.class.splice(indexOf, 1);
 			} else {
-				w.class.push('bg-primary-200');
+				w.class.push('bg-highlighte');
 			}
 		});
 	}
