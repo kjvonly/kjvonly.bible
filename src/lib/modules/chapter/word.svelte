@@ -5,7 +5,7 @@
 	let {
 		wordIdx,
 		lastKnownScrollPosition,
-		annotations,
+		annotations=$bindable(),
 		word,
 		verse,
 		footnotes,
@@ -14,6 +14,8 @@
 	} = $props();
 
 	let track: any = {};
+	let verseNumber = $state(0)
+	let wordAnnotations: any = $state()
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
@@ -52,7 +54,14 @@
 		}
 	}
 
-	onMount(() => {});
+	onMount(() => {
+		verseNumber = verse['number'];
+		if (annotations && annotations[verseNumber] && annotations[verseNumber].words){
+			wordAnnotations = annotations[verseNumber].words[wordIdx]
+			wordAnnotations.class=['bg-green-900']
+		}
+
+	});
 
 	function onMouseDownTouchStart() {
 		track[wordIdx] = {
@@ -86,6 +95,7 @@
 	}
 </script>
 
+
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
@@ -105,7 +115,7 @@
 		ontouchend={onMouseUpTouchEnd}
 		onmousedown={onMouseDownTouchStart}
 		onmouseup={onMouseUpTouchEnd}
-		class="inline-block {word.class?.join(' ')} {annotations?.class?.join(' ')}">{word.text}</span
+		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}">{word.text}</span
 	>
 {:else}&nbsp;<span
 		ontouchstart={onMouseDownTouchStart}

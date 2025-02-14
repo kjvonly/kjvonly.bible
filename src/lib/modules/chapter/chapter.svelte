@@ -40,24 +40,25 @@
 		if (chapterKey) {
 			let el = document.getElementById(id);
 			el?.scrollTo(0, 0);
-			loadChapter();
 			loadAnnotations();
+			loadChapter();
 		}
 	});
 
 	let verses: any = $state();
 	let keys: string[] = $state([]);
-	let annotations: any = $state({})
+	let annotations: any = $state({});
 
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);
 
-		annotations   = { 1: {
-			words: {
-				0: 'bg-red-500'
+		annotations = {
+			1: {
+				words: {
+					0: {class: ['bg-red-500']}
+				}
 			}
-		}
-		}
+		};
 	}
 
 	async function loadChapter() {
@@ -74,6 +75,7 @@
 	onMount(async () => {});
 </script>
 
+{JSON.stringify(annotations)}
 <div class="{fadeClass} flex-col leading-loose">
 	{#if showChapter}
 		<p class="px-4">
@@ -82,7 +84,7 @@
 				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
 					<Verse
 						bind:pane
-						annotations={annotations ? annotations[idx]?.words : undefined}
+						bind:annotations={annotations}
 						verse={verses[k]}
 						{footnotes}
 						{chapterKey}
