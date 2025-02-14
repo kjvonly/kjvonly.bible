@@ -52,14 +52,6 @@
 
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);
-
-		annotations = {
-			1: {
-				words: {
-					0: {class: ['bg-red-500']}
-				}
-			}
-		};
 	}
 
 	async function loadChapter() {

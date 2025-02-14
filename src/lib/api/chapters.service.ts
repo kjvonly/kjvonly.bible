@@ -125,6 +125,9 @@ export class ChapterService {
         //     return await api.get(`data/json.gz/${chapterKey}.json`);
         // }
 
+        if(annotations === undefined){
+            annotations = {}
+        }
         return annotations;
     }
 }

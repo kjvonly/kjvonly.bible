@@ -23,13 +23,6 @@
 		wordAnnotations = initWordAnnotations(wordIdx);
 	});
 
-	$effect(() =>{
-		mode;
-
-		if(mode !== ''){
-			console.log('mode changed',word, )
-		}
-	})
 
 	function updateMode(m: string){
 		mode.value = m
@@ -63,13 +56,6 @@
 
 	function onWordClicked(e: Event, word: any) {
 		e.stopPropagation();
-
-		console.log('click edit', mode.value);
-		if (mode.value != '') {
-			console.log(mode.value);
-			onEditClick();
-			return;
-		}
 
 		pane.buffer.bag.lastVerse = verse.number;
 		let verseNumber = verse['number'];
