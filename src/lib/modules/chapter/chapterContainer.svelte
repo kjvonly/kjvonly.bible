@@ -148,7 +148,7 @@
 </script>
 
 <div
-	class="overflow-hidden"
+	class="overflow-hidden kjvonly-noselect"
 >
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
@@ -240,3 +240,23 @@
 		</div>
 	</div>
 </div>
+
+<style>
+
+
+.kjvonly-noselect {
+	-webkit-touch-callout: none;
+	/* iOS Safari */
+	-webkit-user-select: none;
+	/* Safari */
+	-khtml-user-select: none;
+	/* Konqueror HTML */
+	-moz-user-select: none;
+	/* Old versions of Firefox */
+	-ms-user-select: none;
+	/* Internet Explorer/Edge */
+	user-select: none;
+	/* Non-prefixed version, currently
+								  supported by Chrome, Edge, Opera and Firefox */
+}
+</style>
