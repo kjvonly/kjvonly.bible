@@ -1,16 +1,17 @@
 <script lang="ts">
 	import ChevronDown from '$lib/components/chevronDown.svelte';
+	import { numberToLetters } from '$lib/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
 	let { isVerseRef, footnotes, chapterFootnotes } = $props();
 
 	let fs: any[] = $state([]);
 	let toggle = $state(false);
-	
+
 	onMount(() => {
 		footnotes.forEach((f: any) => {
 			let key = f?.split('_')[2];
-			fs.push({ key: String.fromCharCode(parseInt(key) + 96), html: chapterFootnotes[key] });
+			fs.push({ key: numberToLetters(key), html: chapterFootnotes[key] });
 		});
 	});
 </script>

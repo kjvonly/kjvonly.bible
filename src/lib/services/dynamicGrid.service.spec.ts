@@ -1,5 +1,5 @@
 import { assert, describe, expect, it } from 'vitest'
-import { renderGridTemplateAreas } from './dynamicGrid.service'
+import { numberToLetters, renderGridTemplateAreas } from './dynamicGrid.service'
 
 describe('suite name', () => {
     it('large grid vertical', () => {
@@ -474,4 +474,14 @@ describe('suite name', () => {
           ]
           )
     })
+
+    it('should convert numbers to letters', () => {
+        let result = numberToLetters(13)
+        expect(result).toEqual('m')
+
+        result = numberToLetters(27)
+        expect(result).toEqual('aa')
+
+    })
+
 })

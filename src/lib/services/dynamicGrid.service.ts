@@ -7,7 +7,7 @@ export function numberToLetters(number: number) {
         number -= 1
         let remainder = number % 26
         result = String.fromCharCode(97 + remainder) + result
-        number = (number - remainder) // 26
+        number = (number - remainder) / 26
     }
     return result
 }
