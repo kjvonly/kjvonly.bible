@@ -12,10 +12,10 @@
 		'split horizontal': () => {
 			onSplitHorizontal();
 		},
-		export: () => {
+		'export annotations': () => {
 			onExport();
 		},
-		import: () => {
+		'import annotations': () => {
 			onImport();
 		},
 		'': () => {},
