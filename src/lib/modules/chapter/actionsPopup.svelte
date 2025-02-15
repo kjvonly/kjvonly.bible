@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { json } from '@sveltejs/kit';
 
 	let { showActionsDropdown = $bindable(), paneId } = $props();
 
@@ -13,6 +14,9 @@
 		},
 		export: () => {
 			onExport();
+		},
+		import: () => {
+			onImport();
 		},
 		'': () => {},
 		close: () => {
@@ -37,7 +41,10 @@
 	async function onExport() {
 		let data = await chapterService.getAllAnnotations();
 		var element = document.createElement('a');
-		element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data)));
+		element.setAttribute(
+			'href',
+			'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data))
+		);
 		element.setAttribute('download', 'annotations');
 
 		element.style.display = 'none';
@@ -46,6 +53,37 @@
 		element.click();
 
 		document.body.removeChild(element);
+	}
+
+	function doImport(e) {
+		const reader = new FileReader();
+		reader.onload = (e2) => {
+			let result: any = e2?.target?.result;
+			try{
+				let annotations = JSON.parse(result)
+				chapterService.putAllAnnotations(annotations)
+				document.getElementById('kjvonly-import')?.remove()
+			}catch(ex){
+				console.log(`error importing file ${e.target.files[0]}`)
+				document.getElementById('kjvonly-import')?.remove()
+			}
+		};
+		reader.readAsText(e.target.files[0]);
+	}
+
+	async function onImport() {
+		var element = document.createElement('input');
+		element.setAttribute('id', 'kjvonly-import')
+		element.setAttribute('type', 'file');
+		element.setAttribute('accept', '.json');
+		element.onchange = doImport;
+
+		element.style.display = 'none';
+		document.body.appendChild(element);
+
+		element.click();
+
+		
 	}
 
 	let containerHeight = $state(0);
