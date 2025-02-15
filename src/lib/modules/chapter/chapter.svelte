@@ -50,10 +50,6 @@
 	let verses: any = $state();
 	let keys: string[] = $state([]);
 
-	$effect(() => {
-		annotations;
-		console.log(annotations);
-	});
 
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);

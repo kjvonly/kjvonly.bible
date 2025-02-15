@@ -1,28 +1,46 @@
 <script lang="ts">
-	import { chapterService } from "$lib/api/chapters.service";
+	import { chapterService } from '$lib/api/chapters.service';
 
 	let { mode = $bindable(), annotations = $bindable() } = $props();
 	let selectedColor = $state('a');
-	let selectAnnotation = $state('bg');
+	let selectedAnnotation = $state('bg');
+	let selectedType = $state(1);
+
 	function onSelectColor(color: string) {
-		mode.colorAnnotation = 'bg-highlight' + color;
 		selectedColor = color;
+		onType(selectedType);
+		updateColorAnnotation();
 	}
 
-    async function onSave(){
-        await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)))
-        mode.value = ''
-    }
-	let fill = [
-		'fill-highlighta',
-		'fill-highlightb',
-		'fill-highlightc',
-		'fill-highlightd',
-		'fill-highlighte'
-	];
+	async function onSave() {
+		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		mode.value = '';
+	}
+
+	function updateColorAnnotation() {
+		mode.colorAnnotation = selectedAnnotation + '-highlight' + selectedColor;
+	}
+
+	function onType(index: number) {
+		for (let i = 0; i < fill.length; i++) {
+			if (i == index) {
+				fill[i] = 'fill-highlight' + selectedColor;
+				selectedType = index;
+				selectedAnnotation = types[index];
+				mode.type = selectedAnnotation;
+				updateColorAnnotation();
+			} else {
+				fill[i] = 'fill-neutral-700';
+			}
+		}
+		console.log(fill);
+	}
+
+	let fill = $state(['fill-neutral-700', 'fill-highlighta']);
+	let types = ['text', 'bg'];
 </script>
 
-<div class="flex h-24 w-full flex-col items-center space-x-3 bg-neutral-100 px-2 py-1">
+<div class="flex h-24 w-full flex-col items-center space-x-3 border bg-neutral-50 px-2 py-1">
 	<div class="space-x-3">
 		<button
 			onclick={() => {
@@ -73,7 +91,32 @@
 	<div class="space-x-3">
 		<button
 			onclick={() => {
-				//onSelectColor('bg');
+				onType(0);
+			}}
+			aria-label="color-a"
+			class="h-8 w-8 {'ring-highlight' + selectedColor} rouded-full"
+		>
+			<svg
+				version="1.1"
+				width="100%"
+				height="100%"
+				viewBox="0 0 85.333336 96"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<g id="g654" transform="translate(-21.333333,-16)">
+					<path
+						class={fill[0]}
+						style="stroke-width:1.33333"
+						d="m 48,106.66667 v -5.33334 h 5.333333 5.333334 V 64 26.666667 H 45.333333 32 V 32 37.333333 H 26.666667 21.333333 V 26.666667 16 H 64 106.66667 V 26.666667 37.333333 H 101.33333 96 V 32 26.666667 H 82.666667 69.333333 V 64 101.33333 H 74.666667 80 V 106.66667 112 H 64 48 Z"
+						id="path775"
+					/>
+				</g>
+			</svg>
+		</button>
+
+		<button
+			onclick={() => {
+				onType(1);
 			}}
 			aria-label="color-a"
 			class="h-8 w-8 {'ring-highlight' + selectedColor} rouded-full"
@@ -88,7 +131,7 @@
 			>
 				<g id="g354" transform="translate(-10.582809,-11.007537)">
 					<path
-						class="{fill[selectedColor.charCodeAt(0) - 97]}"
+						class={fill[1]}
 						style="stroke-width:1.33333"
 						d="m 17.624737,109.56005 -7.041928,-3.64747 3.772671,-3.61444 3.772671,-3.614452 5.610614,5.716802 c 4.379363,4.46224 5.257734,6.06968 4.002591,7.32482 -2.068111,2.06811 -1.85582,2.11355 -10.116619,-2.16526 z m 31.817166,-4.76257 c -2.280786,-2.74817 -7.410176,-3.66367 -11.600587,-2.07048 -3.329411,1.26584 -4.163505,0.91159 -8.821708,-3.746608 -4.658203,-4.658203 -5.012445,-5.492297 -3.746607,-8.821708 1.593192,-4.190411 0.677692,-9.319801 -2.070485,-11.600587 -2.984575,-2.476977 -2.193788,-5.720366 2.505137,-10.274744 l 4.37432,-4.239758 16.986019,17.023806 16.986017,17.023807 -4.423814,4.287732 c -4.791455,4.64406 -7.757027,5.34804 -10.188292,2.41854 z M 54.321531,73.642925 37.395579,56.666667 66.544992,33.837101 95.694405,11.007537 106.36019,21.673317 117.02597,32.339099 94.999115,60.502883 c -12.114768,15.490081 -22.414928,28.6031 -22.889243,29.140042 -0.474315,0.536943 -8.479068,-6.663057 -17.788341,-16 z"
 						id="path475"
@@ -110,3 +153,10 @@
 		</button>
 	</div>
 </div>
+
+<!-- typescript will optimize these out if not used. Must keep them in dom -->
+<span class="hidded text-highlighta"></span>
+<span class="hidded text-highlightb"></span>
+<span class="hidded text-highlightc"></span>
+<span class="hidded text-highlightd"></span>
+<span class="hidded text-highlighte"></span>

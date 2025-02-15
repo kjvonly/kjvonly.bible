@@ -13,7 +13,7 @@
 
 	let id = uuid4();
 	let chapterKey: string | null = $state(null);
-	let mode: any = $state({ value: '', colorAnnotation: 'bg-highlighta' });
+	let mode: any = $state({ value: 'edit', colorAnnotation: 'bg-highlighta' });
 	let annotations: any = $state({});
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
@@ -247,6 +247,12 @@
 		</div>
 	</div>
 </div>
+
+<span class="hidded text-highlighta"></span>
+<span class="hidded text-highlightb"></span>
+<span class="hidded text-highlightc"></span>
+<span class="hidded text-highlightd"></span>
+<span class="hidded text-highlighte"></span>
 
 <style>
 	.kjvonly-noselect {

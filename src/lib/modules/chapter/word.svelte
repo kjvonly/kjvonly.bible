@@ -200,7 +200,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
-	<span class="inline-block {wordAnnotations?.class?.join(' ')}">&nbsp;</span><span
+	<span class="inline-block  {wordAnnotations?.class?.join(' ')}">&nbsp;</span><span
 		onclick={(e) => {
 			if (mode.value !== '') {
 				onEditClick();
