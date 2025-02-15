@@ -129,6 +129,7 @@
 	<div class="space-x-3">
 		<button onclick={() => {
             notePopup.show = true
+            notePopup.chapterKey = mode.chapterKey
         }} aria-label="note" class="h-8 w-8">
 			<svg
 				version="1.1"

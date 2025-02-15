@@ -15,7 +15,7 @@
 	>
 		<button
 			onclick={() => {
-				notePopup = false;
+				notePopup.show = false;
 			}}
 			class="float-end px-2 pt-2 text-neutral-700">Cancel</button
 		>
@@ -26,5 +26,6 @@
 		class="flex w-full max-w-lg flex-col overflow-y-scroll border"
 	>
 		<p>notes</p>
+        <p>{notePopup.chapterKey}</p>
 	</div>
 </div>
