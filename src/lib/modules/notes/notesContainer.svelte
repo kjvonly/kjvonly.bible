@@ -1,7 +1,16 @@
 <script lang="ts">
+	
+	// import Editor from '@tinymce/tinymce-svelte';
+
+	const quill = new Quill('#editor', {
+		theme: 'snow'
+	});
+
 	let { containerHeight, notePopup = $bindable() } = $props();
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
+
+	let value = $state('');
 </script>
 
 <div
@@ -26,6 +35,12 @@
 		class="flex w-full max-w-lg flex-col overflow-y-scroll border"
 	>
 		<p>notes</p>
-        <p>{notePopup.chapterKey}</p>
+		<p>{notePopup.chapterKey}</p>
+		<!-- Create the editor container -->
+		<div id="editor">
+			<p>Hello World!</p>
+			<p>Some initial <strong>bold</strong> text</p>
+			<p><br /></p>
+		</div>
 	</div>
 </div>
