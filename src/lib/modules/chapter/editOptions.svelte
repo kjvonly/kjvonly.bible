@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { chapterService } from "$lib/api/chapters.service";
+
 	let { mode = $bindable(), annotations = $bindable() } = $props();
 	let selectedColor = $state('a');
 	let selectAnnotation = $state('bg');
@@ -7,8 +9,9 @@
 		selectedColor = color;
 	}
 
-    function onSave(){
-        console.log(JSON.stringify(annotations))
+    async function onSave(){
+        await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)))
+        mode.value = ''
     }
 	let fill = [
 		'fill-highlighta',

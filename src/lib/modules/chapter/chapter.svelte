@@ -92,6 +92,10 @@
 			{/each}
 		</p>
 		<div class="mt-16"></div>
+
+		{#if mode.value !== ''}
+			<div class="mt-32"></div>
+		{/if}
 	{/if}
 </div>
 
