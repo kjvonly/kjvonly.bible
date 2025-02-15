@@ -35,8 +35,8 @@ export class ChapterService {
 
     async getChapter(chapterKey: string): Promise<any> {
         let chapter = undefined
-        let bcv= chapterKey.split('_')
-        if (bcv.length === 3 ){
+        let bcv = chapterKey.split('_')
+        if (bcv.length === 3) {
             chapterKey = `${bcv[0]}_${bcv[1]}`
         }
 
@@ -100,6 +100,80 @@ export class ChapterService {
         }
 
         return strongs;
+    }
+
+
+    async getAnnotations(chapterKey: string): Promise<any> {
+        let annotations = undefined
+        let bcv = chapterKey.split('_')
+        if (bcv.length === 3) {
+            chapterKey = `${bcv[0]}_${bcv[1]}`
+        }
+
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+
+            await bibleDB.ready
+            annotations = await bibleDB.getValue('annotations', chapterKey)
+
+
+        } catch (error) {
+            console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
+        }
+
+        // update when/if storing remote
+        // if (chapter === undefined) {
+        //     return await api.get(`data/json.gz/${chapterKey}.json`);
+        // }
+
+        if (annotations === undefined) {
+            annotations = { id: chapterKey }
+        }
+        return annotations;
+    }
+
+    async putAnnotations(data: any): Promise<any> {
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                await bibleDB.putValue('annotations', data)
+            }
+
+        } catch (error) {
+            console.log(`error putting  ${data?.id} from indexedDB: ${error}`)
+        }
+
+    }
+
+    async getAllAnnotations(): Promise<any> {
+        let data: any = undefined
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                data = await bibleDB.getAllValue('annotations')
+            }
+
+        } catch (error) {
+            console.log(`error getting all annotations from indexedDB: ${error}`)
+        }
+
+        return data
+
+    }
+
+    async putAllAnnotations(objects: any): Promise<any> {
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                await bibleDB.putBulkValue('annotations', objects)
+            }
+
+        } catch (error) {
+            console.log(`error importing all annotations from indexedDB: ${error}`)
+        }
     }
 }
 

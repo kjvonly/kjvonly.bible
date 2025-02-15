@@ -290,6 +290,11 @@ export default {
 				bg: 'hsl(var(--color-bg-minor-prophets))',
 				text: 'hsl(var(--color-text-minor-prophets))'
 			},
+			highlighta: 'hsl(var(--color-highlight-a))',
+			highlightb: 'hsl(var(--color-highlight-b))',
+			highlightc: 'hsl(var(--color-highlight-c))',
+			highlightd: 'hsl(var(--color-highlight-d))',
+			highlighte: 'hsl(var(--color-highlight-e))',
 
 		}),
 		columns: {
