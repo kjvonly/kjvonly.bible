@@ -135,13 +135,12 @@
 				delete track[wordIdx];
 				return;
 			}
-
-			console.log('2000 ms', word.text);
+		
 			updateMode('edit');
 
 			track[wordIdx].finished = true;
 		}, 2000);
-		console.log('touchstart', word.text);
+		
 	}
 
 	function onMouseUpTouchEnd() {
