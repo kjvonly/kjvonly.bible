@@ -4,8 +4,16 @@
 	import BookChapterPopup from './bookChapterPopup.svelte';
 	import ActionDropdown from './actionsPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
+	import NotesContainer from '../notes/notesContainer.svelte';
 
-	let { chapterKey = $bindable(), bookName, bookChapter, containerHeight, paneId } = $props();
+	let {
+		notePopup = $bindable(),
+		chapterKey = $bindable(),
+		bookName,
+		bookChapter,
+		containerHeight,
+		paneId
+	} = $props();
 
 	let showBookChapterPopup: Boolean = $state(false);
 	let showSettingsPopup: Boolean = $state(false);
@@ -96,22 +104,27 @@
 </div>
 
 {#if showBookChapterPopup}
-	<div style={containerHeight} class="absolute z-[10000] w-full  shadow-lg">
+	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
 		<BookChapterPopup bind:showBookChapterPopup bind:chapterKey></BookChapterPopup>
 	</div>
 {/if}
 {#if showSettingsPopup}
-	<div style={containerHeight} class="absolute z-[10000] w-full  shadow-lg">
+	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
 		<SettingsPopup bind:showSettingsPopup></SettingsPopup>
 	</div>
 {/if}
 
 {#if showActionsPopup}
-<div style={containerHeight} class="absolute z-[10000] w-full  shadow-lg">
+	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
 		<ActionDropdown {paneId} bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
 	</div>
 {/if}
 
+{#if notePopup.show}
+	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
+		<NotesContainer containerHeight bind:notePopup></NotesContainer>
+	</div>
+{/if}
 
 <style>
 	.bookChapter {

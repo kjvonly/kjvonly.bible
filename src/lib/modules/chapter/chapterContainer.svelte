@@ -18,6 +18,7 @@
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
+	let notePopup = $state({ show: false });
 
 	let chapterSettings: Settings | null = $state(null);
 
@@ -32,7 +33,6 @@
 		paneId;
 		pane = paneService.findNode(paneService.rootPane, paneId);
 	});
-
 
 	$effect(() => {
 		chapterSettings;
@@ -54,10 +54,6 @@
 			paneService.save();
 		}
 	});
-
-	function goto(key: any) {
-		chapterKey = key;
-	}
 
 	async function _nextChapter(e: Event) {
 		e.stopPropagation();
@@ -153,10 +149,17 @@
 		}
 	});
 </script>
+
 <div class="kjvonly-noselect overflow-hidden">
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
-			<ChapterActions bind:chapterKey {bookName} {bookChapter} {containerHeight} paneId={pane.id}
+			<ChapterActions
+				bind:notePopup
+				bind:chapterKey
+				{bookName}
+				{bookChapter}
+				{containerHeight}
+				paneId={pane.id}
 			></ChapterActions>
 		</div>
 		<div class="flex justify-center">
@@ -240,15 +243,13 @@
 			{:else}
 				<div style="transform: translate3d(0px, 0px, 0px); " class="sticky z-10">
 					<div class="absolute bottom-0 w-full">
-						<EditOptions bind:mode bind:annotations></EditOptions>
+						<EditOptions bind:notePopup bind:mode bind:annotations></EditOptions>
 					</div>
 				</div>
 			{/if}
 		</div>
 	</div>
 </div>
-
-
 
 <style>
 	.kjvonly-noselect {
