@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { mode = $bindable() } = $props();
+	let { mode = $bindable(), annotations = $bindable() } = $props();
 	let selectedColor = $state('a');
 	let selectAnnotation = $state('bg');
 	function onSelectColor(color: string) {
@@ -7,6 +7,9 @@
 		selectedColor = color;
 	}
 
+    function onSave(){
+        console.log(JSON.stringify(annotations))
+    }
 	let fill = [
 		'fill-highlighta',
 		'fill-highlightb',
@@ -90,7 +93,7 @@
 				</g>
 			</svg>
 		</button>
-		<button aria-label="save" class="h-8 w-8">
+		<button onclick={onSave} aria-label="save" class="h-8 w-8">
 			<svg width="100%" height="100%" viewBox="0 0 96.130432 96" xmlns="http://www.w3.org/2000/svg">
 				<g id="g8" transform="translate(-16,-16)">
 					<path

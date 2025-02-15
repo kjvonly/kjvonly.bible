@@ -20,12 +20,32 @@
 
 	$effect(() => {
 		annotations;
-		wordAnnotations = initWordAnnotations(wordIdx);
+		wordAnnotations = getWordAnnotations();
 	});
 
+	function updateMode(m: string) {
+		mode.value = m;
+	}
 
-	function updateMode(m: string){
-		mode.value = m
+	function getWordAnnotations() {
+		verseNumber = verse['number'];
+		if (!annotations[verseNumber]) {
+			return
+		}
+
+		if (!annotations[verseNumber].words) {
+			return
+		}
+
+		if (!annotations[verseNumber].words) {
+			return
+		}
+
+		if (!annotations[verseNumber].words[wordIdx]) {
+			return
+		}
+		
+		return annotations[verseNumber].words[wordIdx];
 	}
 
 	function initWordAnnotations(wordIndex: number) {
@@ -118,7 +138,7 @@
 
 			console.log('2000 ms', word.text);
 			updateMode('edit');
-			
+
 			track[wordIdx].finished = true;
 		}, 2000);
 		console.log('touchstart', word.text);
@@ -176,7 +196,6 @@
 		});
 	}
 </script>
-
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->

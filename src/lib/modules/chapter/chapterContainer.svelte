@@ -14,6 +14,7 @@
 	let id = uuid4();
 	let chapterKey: string | null = $state(null);
 	let mode: any = $state({ value: 'edit', colorAnnotation: 'bg-highlighta' });
+	let annotations: any = $state({});
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
@@ -31,6 +32,7 @@
 		paneId;
 		pane = paneService.findNode(paneService.rootPane, paneId);
 	});
+
 
 	$effect(() => {
 		chapterSettings;
@@ -151,7 +153,6 @@
 		}
 	});
 </script>
-
 <div class="kjvonly-noselect overflow-hidden">
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
@@ -168,6 +169,7 @@
 						bind:id
 						bind:pane
 						bind:mode
+						bind:annotations
 						{lastKnownScrollPosition}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>
@@ -238,7 +240,7 @@
 			{:else}
 				<div style="transform: translate3d(0px, 0px, 0px); " class="sticky z-10">
 					<div class="absolute bottom-0 w-full">
-							<EditOptions bind:mode></EditOptions>
+						<EditOptions bind:mode bind:annotations></EditOptions>
 					</div>
 				</div>
 			{/if}

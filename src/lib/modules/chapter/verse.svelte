@@ -16,7 +16,7 @@
 	{#each verse.words as word, idx}
 		<Word
 			bind:pane
-			bind:annotations={annotations}
+			bind:annotations
 			bind:mode={mode}
 			{verse}
 			{word}
