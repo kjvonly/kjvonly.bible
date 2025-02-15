@@ -183,7 +183,7 @@
 
 			let indexOf: number | undefined;
 			w.class.forEach((c: string, idx: number) => {
-				if (c.startsWith('bg')) {
+				if (c.startsWith(mode.type)) {
 					indexOf = idx;
 				}
 			});
