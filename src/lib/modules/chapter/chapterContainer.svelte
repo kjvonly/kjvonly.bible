@@ -248,11 +248,7 @@
 	</div>
 </div>
 
-<span class="hidded text-highlighta"></span>
-<span class="hidded text-highlightb"></span>
-<span class="hidded text-highlightc"></span>
-<span class="hidded text-highlightd"></span>
-<span class="hidded text-highlighte"></span>
+
 
 <style>
 	.kjvonly-noselect {

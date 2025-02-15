@@ -190,8 +190,19 @@
 
 			if (indexOf !== undefined || !shouldAdd) {
 				w.class.splice(indexOf, 1);
+				if (mode.type === 'decoration'){
+					w.class = w.class.filter((c: string)=>{
+						if (c === 'underline' || c.startsWith('decoration')){
+							return
+						}
+						return c
+					})
+				}
 			} else {
 				w.class.push(mode.colorAnnotation);
+				if (mode.type === 'decoration'){
+					w.class.push('underline', 'decoration-solid')
+				}
 			}
 		});
 	}
@@ -249,10 +260,6 @@
 		@apply text-redtxt;
 	}
 
-	u {
-		text-decoration: none;
-	}
-
 	.vno {
 		vertical-align: baseline;
 		position: relative;
@@ -262,7 +269,7 @@
 	}
 
 	.xref {
-		@apply underline decoration-dotted;
+		@apply underline decoration-dotted !important;
 		cursor: pointer;
 	}
 </style>

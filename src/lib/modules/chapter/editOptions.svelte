@@ -33,11 +33,10 @@
 				fill[i] = 'fill-neutral-700';
 			}
 		}
-		console.log(fill);
 	}
 
-	let fill = $state(['fill-neutral-700', 'fill-highlighta']);
-	let types = ['text', 'bg'];
+	let fill = $state(['fill-neutral-700', 'fill-highlighta', 'fill-neutral-700']);
+	let types = ['text', 'bg', 'decoration'];
 </script>
 
 <div class="flex h-24 w-full flex-col items-center space-x-3 border bg-neutral-50 px-2 py-1">
@@ -139,6 +138,31 @@
 				</g>
 			</svg>
 		</button>
+
+		<button
+			onclick={() => {
+				onType(2);
+			}}
+			aria-label="color-a"
+			class="h-8 w-8 "
+		>
+			<svg
+				version="1.1"
+				width="100%"
+				height="100%"
+				viewBox="0 0 64 106.66666"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<g id="g504" transform="translate(-32,-10.666667)">
+					<path
+						class={fill[2]}
+						style="stroke-width:1.33333"
+						d="m 32,112 v -5.33333 H 64 96 V 112 117.33333 H 64 32 Z M 51.333333,92.822279 C 43.320797,89.034348 38.421883,84.057477 34.774551,76 32.306672,70.548101 32.055891,67.289941 32.029283,40.333333 L 32,10.666667 h 5.263653 5.263654 l 0.403013,30.572578 c 0.442683,33.581879 0.520475,33.91209 9.583172,40.67837 5.16292,3.854676 17.810096,3.854676 22.973016,0 9.062697,-6.76628 9.140489,-7.096491 9.583172,-40.67837 L 85.472693,10.666667 H 90.736347 96 L 95.98698,40.333333 C 95.97451,68.738613 95.83995,70.283457 92.822284,76.666667 84.960028,93.297543 67.072372,100.26292 51.333338,92.822279 Z"
+						id="path625"
+					/>
+				</g>
+			</svg>
+		</button>
 		<button onclick={onSave} aria-label="save" class="h-8 w-8">
 			<svg width="100%" height="100%" viewBox="0 0 96.130432 96" xmlns="http://www.w3.org/2000/svg">
 				<g id="g8" transform="translate(-16,-16)">
@@ -155,8 +179,16 @@
 </div>
 
 <!-- typescript will optimize these out if not used. Must keep them in dom -->
+
+
 <span class="hidded text-highlighta"></span>
 <span class="hidded text-highlightb"></span>
 <span class="hidded text-highlightc"></span>
 <span class="hidded text-highlightd"></span>
 <span class="hidded text-highlighte"></span>
+
+<span class="hidded underline decoration-highlighta"></span>
+<span class="hidded underline decoration-highlightb"></span>
+<span class="hidded underline decoration-highlightc"></span>
+<span class="hidded underline decoration-highlightd"></span>
+<span class="hidded underline decoration-highlighte"></span>
