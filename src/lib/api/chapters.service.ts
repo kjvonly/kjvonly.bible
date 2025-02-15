@@ -145,6 +145,23 @@ export class ChapterService {
         }
 
     }
+
+    async getAllAnnotations(): Promise<any> {
+        let data: any = undefined
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                data = await bibleDB.getAllValue('annotations')
+            }
+
+        } catch (error) {
+            console.log(`error getting all annotations from indexedDB: ${error}`)
+        }
+
+        return data
+
+    }
 }
 
 export let chapterService = new ChapterService()
