@@ -13,7 +13,7 @@
 
 	let id = uuid4();
 	let chapterKey: string | null = $state(null);
-	let mode: any = $state({ value: 'edit' });
+	let mode: any = $state({ value: 'edit', colorAnnotation: 'bg-highlighta' });
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
