@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
+	import { text } from '@sveltejs/kit';
 	import Quill from 'quill';
 	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
@@ -9,7 +10,7 @@
 	let headerHeight = $state(0);
 
 	let editor = uuid4().replaceAll('-', '');
-	let note;
+	let note: any;
 	let chapterNotes: any;
 	let quill: Quill;
 	let verseIdx = 0;
@@ -17,14 +18,20 @@
 	let booknames: any = {};
 	let title = $state('');
 
-    
+	async function onSave() {
+		chapterNotes[verseIdx].words[wordIdx][0] = note;
+        await chapterService.putNotes(chapterNotes)
+	}
+
 	onMount(async () => {
+        console.log('on mount')
 		let element = document.getElementById(editor);
 
 		booknames = await chapterService.getBooknames();
 		chapterNotes = await chapterService.getNotes(notePopup.chapterKey);
+        console.log(chapterNotes)
 		let keys = notePopup.chapterKey?.split('_');
-        title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
+		title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 		if (keys?.length > 3) {
 			verseIdx = keys[2];
 			if (!chapterNotes[verseIdx]) {
@@ -45,7 +52,6 @@
 			console.log('error chapterKey does not contain verse and wordIdx');
 		}
 
-		
 		note = chapterNotes[verseIdx].words[wordIdx][0];
 		console.log(note.html);
 
@@ -58,7 +64,8 @@
 				if (source == 'api') {
 					console.log('An API call triggered this change.');
 				} else if (source == 'user') {
-					console.log('A user action triggered this change.', quill.getSemanticHTML());
+					note.html = quill.getSemanticHTML();
+                    note.text = quill.getText();
 				}
 			});
 
@@ -77,12 +84,12 @@
 >
 	<header
 		bind:clientHeight={headerHeight}
-		class=" w-full max-w-lg flex-row flex items-center justify-between bg-neutral-100 text-neutral-700"
+		class=" flex w-full max-w-lg flex-row items-center justify-between bg-neutral-100 text-neutral-700"
 	>
 		<button
 			aria-label="close"
 			onclick={() => {
-				//save
+				onSave()
 			}}
 			class="h-12 w-12 px-2 pt-2 text-neutral-700"
 		>
@@ -104,7 +111,7 @@
 				</g>
 			</svg>
 		</button>
-        <span class="inline-block font-bold">{title}</span>
+		<span class="inline-block font-bold">{title}</span>
 		<button
 			aria-label="close"
 			onclick={() => {
@@ -125,7 +132,6 @@
 		style="height: {clientHeight - headerHeight}px"
 		class="flex w-full max-w-lg flex-col overflow-y-scroll border"
 	>
-		
 		<!-- Create the editor container -->
 		<div id={editor}></div>
 	</div>

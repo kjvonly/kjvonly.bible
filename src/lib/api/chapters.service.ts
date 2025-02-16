@@ -177,7 +177,7 @@ export class ChapterService {
     }
 
     async getNotes(chapterKey: string): Promise<any> {
-        let annotations = undefined
+        let notes = undefined
         let bcvw = chapterKey.split('_')
         if (bcvw.length > 2) {
             chapterKey = `${bcvw[0]}_${bcvw[1]}`
@@ -187,11 +187,11 @@ export class ChapterService {
             // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
 
             await bibleDB.ready
-            annotations = await bibleDB.getValue('annotations', chapterKey)
+            notes = await bibleDB.getValue('notes', chapterKey)
 
 
         } catch (error) {
-            console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
+            console.log(`error getting note ${chapterKey} from indexdb: ${error}`)
         }
 
         // update when/if storing remote
@@ -199,11 +199,25 @@ export class ChapterService {
         //     return await api.get(`data/json.gz/${chapterKey}.json`);
         // }
 
-        if (annotations === undefined) {
-            annotations = { id: chapterKey }
+        if (notes === undefined) {
+            notes = { id: chapterKey }
         }
-        return annotations;
+        return notes;
     }
+
+    async putNotes(data: any): Promise<any> {
+        try {
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                await bibleDB.putValue('notes', data)
+            }
+
+        } catch (error) {
+            console.log(`error putting note ${data?.id} in indexedDB: ${error}`)
+        }
+
+    }
+
 }
 
 export let chapterService = new ChapterService()
