@@ -15,12 +15,13 @@
 	let id = uuid4();
 	let chapterKey: string | null = $state(null);
 	let mode: any = $state({
-		value: 'edit',
+		value: '',
 		colorAnnotation: 'bg-highlighta',
-		chapterKey: '73_1_1_1'
+		chapterKey: '73_1_1_1',
+		notePopup: { show: false, onSaveNotes: onSaveNotes  }
 	});
 	let annotations: any = $state({});
-	let notePopup = $state({ show: false, onSaveNotes: onSaveNotes });
+	let notePopup = $state();
 	let notes: any = $state({});
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
@@ -62,8 +63,7 @@
 	});
 
 	async function onSaveNotes() {
-		if (chapterKey){
-			console.log('on save notes')
+		if (chapterKey) {
 			notes = await chapterService.getNotes(chapterKey);
 		}
 	}
@@ -167,7 +167,7 @@
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
 			<ChapterActions
-				bind:notePopup
+				bind:mode
 				bind:chapterKey
 				{bookName}
 				{bookChapter}
@@ -257,7 +257,7 @@
 			{:else}
 				<div style="transform: translate3d(0px, 0px, 0px); " class="sticky z-10">
 					<div class="absolute bottom-0 w-full">
-						<EditOptions bind:notePopup bind:mode bind:annotations></EditOptions>
+						<EditOptions bind:mode bind:annotations></EditOptions>
 					</div>
 				</div>
 			{/if}

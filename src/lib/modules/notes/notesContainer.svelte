@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
 
-	let { containerHeight, notePopup = $bindable() } = $props();
+	let { containerHeight, mode = $bindable() } = $props();
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
@@ -21,17 +21,15 @@
 	async function onSave() {
 		chapterNotes[verseIdx].words[wordIdx][0] = note;
 		await chapterService.putNotes(chapterNotes);
-		notePopup?.onSaveNotes();
+		mode?.notePopup?.onSaveNotes();
 	}
 
 	onMount(async () => {
-		console.log('on mount');
 		let element = document.getElementById(editor);
 
 		booknames = await chapterService.getBooknames();
-		chapterNotes = await chapterService.getNotes(notePopup.chapterKey);
-		console.log(chapterNotes);
-		let keys = notePopup.chapterKey?.split('_');
+		chapterNotes = await chapterService.getNotes(mode.chapterKey);
+		let keys = mode.chapterKey?.split('_');
 		title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 		if (keys?.length > 3) {
 			verseIdx = keys[2];
@@ -43,7 +41,7 @@
 
 			wordIdx = keys[3];
 			if (!chapterNotes[verseIdx].words[wordIdx]) {
-				let chapter = await chapterService.getChapter(notePopup.chapterKey);
+				let chapter = await chapterService.getChapter(mode.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
 				chapterNotes[verseIdx].words[wordIdx] = {
 					'0': { text: `${title}\n${verse}`, html: `<h1>${title}</h1><p><italic>${verse}</italic></p>` }
@@ -53,8 +51,7 @@
 			console.log('error chapterKey does not contain verse and wordIdx');
 		}
 
-		note = chapterNotes[verseIdx].words[wordIdx][0];
-		console.log(note.html);
+		note = chapterNotes[verseIdx].words[wordIdx]['0'];
 
 		if (element) {
 			quill = new Quill(element, {
@@ -71,8 +68,6 @@
 			});
 
 			let d = quill.clipboard.convert({ html: note.html });
-			console.log(d);
-
 			quill.setContents(d, 'silent');
 		}
 	});
@@ -116,7 +111,7 @@
 		<button
 			aria-label="close"
 			onclick={() => {
-				notePopup.show = false;
+				mode.notePopup.show = false;
 			}}
 			class="h-12 w-12 px-2 pt-2 text-neutral-700"
 		>

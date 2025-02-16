@@ -2,7 +2,7 @@
 	import { chapterService } from '$lib/api/chapters.service';
 	import { onMount } from 'svelte';
 
-	let { mode = $bindable(), annotations = $bindable(),  notePopup = $bindable() } = $props();
+	let { mode = $bindable(), annotations = $bindable() } = $props();
 
 	onMount(() => {
 		mode.colorAnnotation = 'bg-highlighta';
@@ -128,8 +128,8 @@
 	</div>
 	<div class="space-x-3">
 		<button onclick={() => {
-            notePopup.show = true
-            notePopup.chapterKey = mode.chapterKey
+            mode.notePopup.show = true
+            mode.notePopup.chapterKey = mode.chapterKey
         }} aria-label="note" class="h-8 w-8">
 			<svg
 				version="1.1"

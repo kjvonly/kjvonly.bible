@@ -238,10 +238,15 @@
 			}
 		});
 	}
+
+	function onNotesClicked(){
+		mode.chapterKey = `${chapterKey}_${verseNumber}_${wordIdx}`
+		mode.notePopup.show = true
+	}
 </script>
 
 {#if notesAnnotations}
-<button aria-label="note" class="inline-block h-4 w-4">
+&nbsp;<button onclick={onNotesClicked} aria-label="note" class="inline-block h-4 w-4">
 	<svg
 	version="1.1"
 	id="svg798"
@@ -254,19 +259,15 @@
 	  id="g804"
 	  transform="translate(-16,-16)">
 	 <path
-	 	class="bg-supporta-500"
+	 	class="fill-redtxt"
 		style="stroke-width:1.33333"
 		d="M 19.272727,108.72727 16,105.45455 V 64 22.545455 L 19.272727,19.272727 22.545455,16 H 64 105.45455 l 3.27272,3.272727 C 111.99725,22.542709 112,22.569285 112,50.959401 V 79.373349 L 95.647413,95.686675 79.294825,112 H 50.92014 c -28.348432,0 -28.377713,-0.003 -31.647413,-3.27273 z M 74.666667,88 V 74.666667 H 88 101.33333 v -24 -24 H 64 26.666667 V 64 101.33333 h 24 24 z M 37.333333,64 V 58.666667 H 50.666667 64 V 64 69.333333 H 50.666667 37.333333 Z m 0,-21.333333 V 37.333333 H 64 90.666667 V 42.666667 48 H 64 37.333333 Z"
 		id="path925" />
    </g>
  </svg>
- 
 </button>
-{/if}
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-{#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
-	<span class="inline-block  {wordAnnotations?.class?.join(' ')}">&nbsp;</span><span
+{/if}{#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
+	<span class="inline-block  {wordAnnotations?.class?.join(' ')}">&nbsp;</span><!-- svelte-ignore a11y_no_static_element_interactions --><!-- svelte-ignore a11y_click_events_have_key_events --><span
 		onclick={(e) => {
 			if (mode.value !== '') {
 				onEditClick();

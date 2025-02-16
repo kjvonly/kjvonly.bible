@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.service';
-	import { onMount } from 'svelte';
 	import BookChapterPopup from './bookChapterPopup.svelte';
 	import ActionDropdown from './actionsPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
 	import NotesContainer from '../notes/notesContainer.svelte';
 
 	let {
-		notePopup = $bindable(),
+		mode = $bindable(),
 		chapterKey = $bindable(),
 		bookName,
 		bookChapter,
@@ -120,9 +118,9 @@
 	</div>
 {/if}
 
-{#if notePopup.show}
+{#if mode.notePopup.show}
 	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
-		<NotesContainer containerHeight bind:notePopup></NotesContainer>
+		<NotesContainer containerHeight bind:mode></NotesContainer>
 	</div>
 {/if}
 
