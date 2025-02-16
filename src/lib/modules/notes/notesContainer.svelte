@@ -15,13 +15,16 @@
 	let verseIdx = 0;
 	let wordIdx = 0;
 	let booknames: any = {};
+	let title = $state('');
+
+    
 	onMount(async () => {
 		let element = document.getElementById(editor);
 
 		booknames = await chapterService.getBooknames();
 		chapterNotes = await chapterService.getNotes(notePopup.chapterKey);
 		let keys = notePopup.chapterKey?.split('_');
-
+        title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 		if (keys?.length > 3) {
 			verseIdx = keys[2];
 			if (!chapterNotes[verseIdx]) {
@@ -32,15 +35,17 @@
 
 			wordIdx = keys[3];
 			if (!chapterNotes[verseIdx].words[wordIdx]) {
-                let chapter = await chapterService.getChapter(notePopup.chapterKey);
-                let verse = chapter['verseMap'][verseIdx]
-
-				let title = `${booknames['booknamesById'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
-				chapterNotes[verseIdx].words[wordIdx] = [{ text: '', html: `<h1>${title}</h1><p><italic>${verse}</italic></p>` }];
+				let chapter = await chapterService.getChapter(notePopup.chapterKey);
+				let verse = chapter['verseMap'][verseIdx];
+				chapterNotes[verseIdx].words[wordIdx] = [
+					{ text: '', html: `<h1>${title}</h1><p><italic>${verse}</italic></p>` }
+				];
 			}
 		} else {
 			console.log('error chapterKey does not contain verse and wordIdx');
 		}
+
+		
 		note = chapterNotes[verseIdx].words[wordIdx][0];
 		console.log(note.html);
 
@@ -72,22 +77,55 @@
 >
 	<header
 		bind:clientHeight={headerHeight}
-		class=" w-full max-w-lg flex-row bg-neutral-100 text-neutral-700"
+		class=" w-full max-w-lg flex-row flex items-center justify-between bg-neutral-100 text-neutral-700"
 	>
 		<button
+			aria-label="close"
+			onclick={() => {
+				//save
+			}}
+			class="h-12 w-12 px-2 pt-2 text-neutral-700"
+		>
+			<svg
+				version="1.1"
+				id="svg2"
+				width="100%"
+				height="100%"
+				viewBox="0 0 96.130432 96"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<g id="g8" transform="translate(-16,-16)">
+					<path
+						class="fill-neutral-700"
+						style="stroke-width:1.33333"
+						d="M 19.272727,108.72727 16,105.45455 V 64 22.545455 L 19.272727,19.272727 22.545455,16 h 33.641558 33.641559 l 11.150928,11.150928 11.15093,11.150928 -0.39855,34.302125 c -0.3976,34.220589 -0.40603,34.308179 -3.54626,36.849069 C 105.2389,111.83737 102.4042,112 63.791681,112 H 22.545455 Z m 55.9361,-12.654045 c 3.502058,-3.50206 4.124506,-5.122865 4.124506,-10.739892 0,-5.693716 -0.607301,-7.222686 -4.358974,-10.974358 C 71.222687,70.607301 69.693716,70 64,70 c -5.693716,0 -7.222687,0.607301 -10.974359,4.358975 -3.737012,3.73701 -4.358974,5.291226 -4.358974,10.892581 0,6.853933 3.398442,12.271284 9.333333,14.877974 4.985283,2.1896 12.806448,0.34607 17.208827,-4.056305 z M 78.4,46.4 c 2.077387,-2.077387 2.077387,-16.055947 0,-18.133333 -2.250848,-2.250848 -47.882485,-2.250848 -50.133333,0 -2.077387,2.077386 -2.077387,16.055946 0,18.133333 2.250848,2.250848 47.882485,2.250848 50.133333,0 z"
+						id="path293"
+					/>
+				</g>
+			</svg>
+		</button>
+        <span class="inline-block font-bold">{title}</span>
+		<button
+			aria-label="close"
 			onclick={() => {
 				notePopup.show = false;
 			}}
-			class="float-end px-2 pt-2 text-neutral-700">Cancel</button
+			class="h-12 w-12 px-2 pt-2 text-neutral-700"
 		>
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%">
+				<path
+					class="fill-neutral-700"
+					d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10s10-4.47,10-10S17.53,2,12,2z M17,15.59L15.59,17L12,13.41L8.41,17L7,15.59 L10.59,12L7,8.41L8.41,7L12,10.59L15.59,7L17,8.41L13.41,12L17,15.59z"
+				/>
+			</svg>
+		</button>
 	</header>
 
 	<div
 		style="height: {clientHeight - headerHeight}px"
 		class="flex w-full max-w-lg flex-col overflow-y-scroll border"
 	>
-		<p>notes</p>
-		<p>{notePopup.chapterKey}</p>
+		
 		<!-- Create the editor container -->
 		<div id={editor}></div>
 	</div>
