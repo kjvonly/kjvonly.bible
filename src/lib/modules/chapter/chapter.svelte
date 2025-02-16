@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	import Verse from './verse.svelte';
 
@@ -18,6 +18,7 @@
 		pane = $bindable(),
 		mode = $bindable(),
 		annotations = $bindable(),
+		notes = $bindable(),
 		lastKnownScrollPosition
 	} = $props();
 
@@ -42,17 +43,23 @@
 		if (chapterKey) {
 			let el = document.getElementById(id);
 			el?.scrollTo(0, 0);
+			annotations = {};
 			loadAnnotations();
+			loadNotes();
 			loadChapter();
 		}
 	});
 
+
 	let verses: any = $state();
 	let keys: string[] = $state([]);
 
-
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);
+	}
+
+	async function loadNotes() {
+		notes = await chapterService.getNotes(chapterKey);
 	}
 
 	async function loadChapter() {

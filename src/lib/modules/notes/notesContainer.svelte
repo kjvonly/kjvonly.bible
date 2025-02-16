@@ -21,6 +21,7 @@
 	async function onSave() {
 		chapterNotes[verseIdx].words[wordIdx][0] = note;
         await chapterService.putNotes(chapterNotes)
+        notePopup?.onSaveNotes()
 	}
 
 	onMount(async () => {

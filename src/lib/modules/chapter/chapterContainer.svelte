@@ -10,15 +10,21 @@
 	import type { Pane } from '$lib/models/pane.model';
 	import uuid4 from 'uuid4';
 	import EditOptions from './editOptions.svelte';
+	import { chapterService } from '$lib/api/chapters.service';
 
 	let id = uuid4();
 	let chapterKey: string | null = $state(null);
-	let mode: any = $state({ value: 'edit', colorAnnotation: 'bg-highlighta', chapterKey: '73_1_1_1' });
+	let mode: any = $state({
+		value: 'edit',
+		colorAnnotation: 'bg-highlighta',
+		chapterKey: '73_1_1_1'
+	});
 	let annotations: any = $state({});
+	let notePopup = $state({ show: false, onSaveNotes: onSaveNotes });
+	let notes: any = $state({});
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
-	let notePopup = $state({ show: false });
 
 	let chapterSettings: Settings | null = $state(null);
 
@@ -54,6 +60,13 @@
 			paneService.save();
 		}
 	});
+
+	async function onSaveNotes() {
+		if (chapterKey){
+			console.log('on save notes')
+			notes = await chapterService.getNotes(chapterKey);
+		}
+	}
 
 	async function _nextChapter(e: Event) {
 		e.stopPropagation();
@@ -173,6 +186,7 @@
 						bind:pane
 						bind:mode
 						bind:annotations
+						bind:notes
 						{lastKnownScrollPosition}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>
