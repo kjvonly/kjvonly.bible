@@ -219,6 +219,8 @@
 	});
 </script>
 
+
+
 <div class="flex h-[100vh] w-full flex-col">
 	<div style="max-height: 100vh; min-width: 1px; {template};" class="w-full">
 		{#each paneIds as paneId}
@@ -230,3 +232,9 @@
 		{/each}
 	</div>
 </div>
+
+<aside
+	class="fixed bottom-4 end-4 z-[2000] flex items-center justify-center gap-4 rounded-lg border bg-neutral-100 px-5 py-3"
+>
+	Hey! Come Check This Out 👋
+</aside>
