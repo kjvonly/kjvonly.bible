@@ -20,17 +20,17 @@
 
 	async function onSave() {
 		chapterNotes[verseIdx].words[wordIdx][0] = note;
-        await chapterService.putNotes(chapterNotes)
-        notePopup?.onSaveNotes()
+		await chapterService.putNotes(chapterNotes);
+		notePopup?.onSaveNotes();
 	}
 
 	onMount(async () => {
-        console.log('on mount')
+		console.log('on mount');
 		let element = document.getElementById(editor);
 
 		booknames = await chapterService.getBooknames();
 		chapterNotes = await chapterService.getNotes(notePopup.chapterKey);
-        console.log(chapterNotes)
+		console.log(chapterNotes);
 		let keys = notePopup.chapterKey?.split('_');
 		title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 		if (keys?.length > 3) {
@@ -45,9 +45,9 @@
 			if (!chapterNotes[verseIdx].words[wordIdx]) {
 				let chapter = await chapterService.getChapter(notePopup.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
-				chapterNotes[verseIdx].words[wordIdx] = [
-					{ text: '', html: `<h1>${title}</h1><p><italic>${verse}</italic></p>` }
-				];
+				chapterNotes[verseIdx].words[wordIdx] = {
+					'0': { text: `${title}\n${verse}`, html: `<h1>${title}</h1><p><italic>${verse}</italic></p>` }
+				};
 			}
 		} else {
 			console.log('error chapterKey does not contain verse and wordIdx');
@@ -66,7 +66,7 @@
 					console.log('An API call triggered this change.');
 				} else if (source == 'user') {
 					note.html = quill.getSemanticHTML();
-                    note.text = quill.getText();
+					note.text = quill.getText();
 				}
 			});
 
@@ -90,7 +90,7 @@
 		<button
 			aria-label="close"
 			onclick={() => {
-				onSave()
+				onSave();
 			}}
 			class="h-12 w-12 px-2 pt-2 text-neutral-700"
 		>

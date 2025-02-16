@@ -85,6 +85,7 @@
 					<Verse
 						bind:pane
 						bind:annotations
+						bind:notes
 						bind:mode
 						verse={verses[k]}
 						{footnotes}

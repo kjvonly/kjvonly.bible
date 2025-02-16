@@ -8,6 +8,7 @@
 		verse,
 		pane = $bindable(),
 		annotations = $bindable(),
+		notes = $bindable(),
 		mode = $bindable()
 	} = $props();
 </script>
@@ -17,6 +18,7 @@
 		<Word
 			bind:pane
 			bind:annotations
+			bind:notes
 			bind:mode={mode}
 			{verse}
 			{word}
