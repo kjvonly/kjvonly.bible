@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
+	import { toastService } from '$lib/services/toast.service';
 	import { text } from '@sveltejs/kit';
 	import Quill from 'quill';
 	import { onMount } from 'svelte';
@@ -22,6 +23,7 @@
 		chapterNotes[verseIdx].words[wordIdx][0] = note;
 		await chapterService.putNotes(chapterNotes);
 		mode?.notePopup?.onSaveNotes();
+		toastService.showToast(`saved ${title}`)
 	}
 
 	onMount(async () => {

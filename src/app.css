@@ -248,6 +248,28 @@
         --color-neutral-100: 214deg 15% 91%;
         --color-neutral-50: 216deg 33% 97%;
 
+        --color-support-a-900: 320deg 100% 19%;
+        --color-support-a-800: 322deg 93% 27%;
+        --color-support-a-700: 324deg 93% 33%;
+        --color-support-a-600: 326deg 90% 39%;
+        --color-support-a-500: 328deg 85% 46%;
+        --color-support-a-400: 330deg 79% 56%;
+        --color-support-a-300: 334deg 86% 67%;
+        --color-support-a-200: 336deg 100% 77%;
+        --color-support-a-100: 338deg 100% 86%;
+        --color-support-a-50: 341deg 100% 95%;
+
+        --color-support-b-900: 348deg 94% 20%;
+        --color-support-b-800: 350deg 94% 28%;
+        --color-support-b-700: 352deg 90% 35%;
+        --color-support-b-600: 354deg 85% 44%;
+        --color-support-b-500: 356deg 75% 53%;
+        --color-support-b-400: 360deg 83% 62%;
+        --color-support-b-300: 360deg 91% 69%;
+        --color-support-b-200: 360deg 100% 80%;
+        --color-support-b-100: 360deg 100% 87%;
+        --color-support-b-50: 360deg 100% 95%;
+
         --color-vivid-a-900: 320deg 100% 19%;
         --color-vivid-a-800: 322deg 93% 27%;
         --color-vivid-a-700: 324deg 93% 33%;
@@ -342,6 +364,29 @@
         --color-neutral-700: 210deg 16% 82%;
         --color-neutral-800: 214deg 15% 91%;
         --color-neutral-900: 216deg 33% 97%;
+
+        --color-support-a-900: 320deg 100% 19%;
+        --color-support-a-800: 322deg 93% 27%;
+        --color-support-a-700: 324deg 93% 33%;
+        --color-support-a-600: 326deg 90% 39%;
+        --color-support-a-500: 328deg 85% 46%;
+        --color-support-a-400: 330deg 79% 56%;
+        --color-support-a-300: 334deg 86% 67%;
+        --color-support-a-200: 336deg 100% 77%;
+        --color-support-a-100: 338deg 100% 86%;
+        --color-support-a-50: 341deg 100% 95%;
+
+        --color-support-b-900: 348deg 94% 20%;
+        --color-support-b-800: 350deg 94% 28%;
+        --color-support-b-700: 352deg 90% 35%;
+        --color-support-b-600: 354deg 85% 44%;
+        --color-support-b-500: 356deg 75% 53%;
+        --color-support-b-400: 360deg 83% 62%;
+        --color-support-b-300: 360deg 91% 69%;
+        --color-support-b-200: 360deg 100% 80%;
+        --color-support-b-100: 360deg 100% 87%;
+        --color-support-b-50: 360deg 100% 95%;
+
 
         --color-vivid-a-900: 320deg 100% 19%;
         --color-vivid-a-800: 322deg 93% 27%;
