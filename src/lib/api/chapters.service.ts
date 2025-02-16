@@ -217,6 +217,35 @@ export class ChapterService {
         }
 
     }
+    async getAllNotes(): Promise<any> {
+        let data: any = undefined
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                data = await bibleDB.getAllValue('notes')
+            }
+
+        } catch (error) {
+            console.log(`error getting all notes from indexedDB: ${error}`)
+        }
+
+        return data
+
+    }
+
+    async putAllNotes(objects: any): Promise<any> {
+        try {
+            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                await bibleDB.putBulkValue('notes', objects)
+            }
+
+        } catch (error) {
+            console.log(`error importing all Notes from indexedDB: ${error}`)
+        }
+    }
 
 }
 
