@@ -180,13 +180,15 @@
 				</button>
 			{/each}
 		</div>
-	{:else}
-		<div
-			style="height: {clientHeight - headerHeight}px"
-			class="flex w-full max-w-lg flex-col overflow-y-scroll border"
-		>
-			<!-- Create the editor container -->
-			<div id={editor}></div>
-		</div>
 	{/if}
+
+	<div
+		style="height: {clientHeight - headerHeight}px"
+		class=" {showNoteActions
+			? 'hidden'
+			: ''} flex w-full max-w-lg flex-col overflow-y-scroll border"
+	>
+		<!-- Create the editor container -->
+		<div id={editor}></div>
+	</div>
 </div>

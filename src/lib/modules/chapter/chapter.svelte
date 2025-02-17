@@ -27,6 +27,8 @@
 			return;
 		}
 
+		mode.value = ''
+
 		let bcv = chapterKey.split('_');
 		if (bcv.length === 3) {
 			chapterKey = `${bcv[0]}_${bcv[1]}`;
