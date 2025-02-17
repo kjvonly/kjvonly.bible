@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
 	import { toastService } from '$lib/services/toast.service';
-	import { text } from '@sveltejs/kit';
 	import Quill from 'quill';
 	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
@@ -19,10 +18,11 @@
 	let booknames: any = {};
 	let title = $state('');
 	let showNoteActions = $state(false);
+	let noteID: string = '';
 
 	let noteActions: any = {
 		delete: () => {
-			delete chapterNotes[verseIdx].words[wordIdx]['0'];
+			delete chapterNotes[verseIdx].words[wordIdx][noteID];
 			chapterService.putNotes(chapterNotes);
 			mode?.notePopup?.onSaveNotes();
 			mode.notePopup.show = false;
@@ -58,18 +58,26 @@
 			) {
 				let chapter = await chapterService.getChapter(mode.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
-				chapterNotes[verseIdx].words[wordIdx] = {
-					'0': {
-						text: `${title}\n${verse}`,
-						html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`
-					}
+				noteID = uuid4();
+				let now = Date.now();
+				chapterNotes[verseIdx].words[wordIdx] = {};
+				chapterNotes[verseIdx].words[wordIdx][noteID] = {
+					text: `${title}\n${verse}`,
+					html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
+					created: now,
+					modified: now
 				};
 			}
 		} else {
 			console.log('error chapterKey does not contain verse and wordIdx');
 		}
 
-		note = chapterNotes[verseIdx].words[wordIdx]['0'];
+		let notes = chapterNotes[verseIdx].words[wordIdx];
+		let noteKeys = Object.keys(notes).sort((a, b) => {
+			return notes[a].modified - notes[b].modified;
+		});
+
+		note = chapterNotes[verseIdx].words[wordIdx][noteKeys[0]];
 
 		if (element) {
 			quill = new Quill(element, {
