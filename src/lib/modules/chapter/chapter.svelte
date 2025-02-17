@@ -18,7 +18,6 @@
 		pane = $bindable(),
 		mode = $bindable(),
 		annotations = $bindable(),
-		notes = $bindable(),
 		lastKnownScrollPosition
 	} = $props();
 
@@ -47,7 +46,6 @@
 			el?.scrollTo(0, 0);
 			annotations = {};
 			loadAnnotations();
-			loadNotes();
 			loadChapter();
 		}
 	});
@@ -58,10 +56,6 @@
 
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);
-	}
-
-	async function loadNotes() {
-		notes = await chapterService.getNotes(chapterKey);
 	}
 
 	async function loadChapter() {
@@ -87,7 +81,6 @@
 					<Verse
 						bind:pane
 						bind:annotations
-						bind:notes
 						bind:mode
 						verse={verses[k]}
 						{footnotes}

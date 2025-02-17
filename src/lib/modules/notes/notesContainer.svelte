@@ -5,13 +5,12 @@
 	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
 
-	let { containerHeight, mode = $bindable() } = $props();
+	let { containerHeight, mode = $bindable(), annotations = $bindable() } = $props();
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
 	let editor = uuid4().replaceAll('-', '');
 	let note: any;
-	let chapterNotes: any;
 	let quill: Quill;
 	let verseIdx = 0;
 	let wordIdx = 0;
@@ -20,19 +19,23 @@
 	let showNoteActions = $state(false);
 	let noteID: string = '';
 
+	
+	
+		mode.value = '';
+	
 	let noteActions: any = {
 		delete: () => {
-			delete chapterNotes[verseIdx].notes.words[wordIdx][noteID];
-			chapterService.putNotes(chapterNotes);
+			delete annotations[verseIdx].notes.words[wordIdx][noteID];
+			
+			chapterService.putNotes(annotations);
 			mode?.notePopup?.onSaveNotes();
 			mode.notePopup.show = false;
 		}
 	};
 
 	async function onSave() {
-		chapterNotes[verseIdx].notes.words[wordIdx][0] = note;
-		await chapterService.putNotes(chapterNotes);
-		mode?.notePopup?.onSaveNotes();
+		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
+		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		toastService.showToast(`saved ${title}`);
 	}
 
@@ -40,30 +43,34 @@
 		let element = document.getElementById(editor);
 
 		booknames = await chapterService.getBooknames();
-		chapterNotes = await chapterService.getNotes(mode.chapterKey);
 		let keys = mode.chapterKey?.split('_');
 		title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 		if (keys?.length > 3) {
 			verseIdx = keys[2];
-			if (!chapterNotes[verseIdx]) {
-				chapterNotes[verseIdx] = {
-					notes: {
-						words: {}
-					}
-				};
+			if (!annotations[verseIdx]) {
+				annotations[verseIdx] ={};
+			}
+
+			if (!annotations[verseIdx].notes) {
+				annotations[verseIdx].notes ={};
+			}
+
+
+			if (!annotations[verseIdx].notes.words) {
+				annotations[verseIdx].notes.words ={};
 			}
 
 			wordIdx = keys[3];
 			if (
-				!chapterNotes[verseIdx].notes.words[wordIdx] ||
-				(chapterNotes[verseIdx].notes.words[wordIdx] && !chapterNotes[verseIdx].notes.words[wordIdx]['0'])
+				!annotations[verseIdx].notes.words[wordIdx] ||
+				(annotations[verseIdx].notes.words[wordIdx])
 			) {
 				let chapter = await chapterService.getChapter(mode.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
 				noteID = uuid4();
 				let now = Date.now();
-				chapterNotes[verseIdx].notes.words[wordIdx] = {};
-				chapterNotes[verseIdx].notes.words[wordIdx][noteID] = {
+				annotations[verseIdx].notes.words[wordIdx] = {};
+				annotations[verseIdx].notes.words[wordIdx][noteID] = {
 					text: `${title}\n${verse}`,
 					html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
 					created: now,
@@ -74,12 +81,12 @@
 			console.log('error chapterKey does not contain verse and wordIdx');
 		}
 
-		let notes = chapterNotes[verseIdx].notes.words[wordIdx];
+		let notes = annotations[verseIdx].notes.words[wordIdx];
 		let noteKeys = Object.keys(notes).sort((a, b) => {
 			return notes[a].modified - notes[b].modified;
 		});
 
-		note = chapterNotes[verseIdx].notes.words[wordIdx][noteKeys[0]];
+		note = annotations[verseIdx].notes.words[wordIdx][noteKeys[0]];
 
 		if (element) {
 			quill = new Quill(element, {

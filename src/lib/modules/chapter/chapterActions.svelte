@@ -6,6 +6,7 @@
 
 	let {
 		mode = $bindable(),
+		annotations = $bindable(),
 		chapterKey = $bindable(),
 		bookName,
 		bookChapter,
@@ -120,7 +121,7 @@
 
 {#if mode.notePopup.show}
 	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
-		<NotesContainer containerHeight bind:mode></NotesContainer>
+		<NotesContainer containerHeight bind:mode bind:annotations></NotesContainer>
 	</div>
 {/if}
 

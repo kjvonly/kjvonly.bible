@@ -18,11 +18,9 @@
 		value: '',
 		colorAnnotation: 'bg-highlighta',
 		chapterKey: '73_1_1_1',
-		notePopup: { show: false, onSaveNotes: onSaveNotes  }
+		notePopup: { show: false  }
 	});
 	let annotations: any = $state({});
-	let notePopup = $state();
-	let notes: any = $state({});
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
@@ -62,11 +60,6 @@
 		}
 	});
 
-	async function onSaveNotes() {
-		if (chapterKey) {
-			notes = await chapterService.getNotes(chapterKey);
-		}
-	}
 
 	async function _nextChapter(e: Event) {
 		e.stopPropagation();
@@ -169,6 +162,7 @@
 			<ChapterActions
 				bind:mode
 				bind:chapterKey
+				bind:annotations
 				{bookName}
 				{bookChapter}
 				{containerHeight}
@@ -186,7 +180,6 @@
 						bind:pane
 						bind:mode
 						bind:annotations
-						bind:notes
 						{lastKnownScrollPosition}
 					></Chapter>
 					<span class="h-16 md:hidden"></span>

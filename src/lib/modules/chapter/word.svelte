@@ -11,7 +11,6 @@
 		chapterKey,
 		pane = $bindable(),
 		annotations = $bindable(),
-		notes = $bindable(),
 		mode = $bindable()
 	} = $props();
 
@@ -23,13 +22,10 @@
 	$effect(() => {
 		annotations;
 		wordAnnotations = getWordAnnotations();
-	});
-
-	$effect(() => {
-		notes;
 		notesAnnotations = getNotesAnnotations();
 	});
 
+	
 	function updateMode(m: string) {
 		mode.value = m;
 		mode.chapterKey = `${chapterKey}_${verse['number']}_${wordIdx}`
@@ -62,27 +58,27 @@
 
 	function getNotesAnnotations() {
 		verseNumber = verse['number'];
-		if (!notes[verseNumber]) {
+		if (!annotations[verseNumber]) {
 			return
 		}
 		
-		if (!notes[verseNumber].notes) {
+		if (!annotations[verseNumber].notes) {
 			return
 		}
 
-		if (!notes[verseNumber].notes.words) {
+		if (!annotations[verseNumber].notes.words) {
 			return
 		}
 
-		if (!notes[verseNumber].notes.words) {
+		if (!annotations[verseNumber].notes.words) {
 			return
 		}
 
-		if (!notes[verseNumber].notes.words[wordIdx]) {
+		if (!annotations[verseNumber].notes.words[wordIdx]) {
 			return
 		}
 		
-		return Object.keys(notes[verseNumber].notes.words[wordIdx]).length > 0;
+		return Object.keys(annotations[verseNumber].notes.words[wordIdx]).length > 0;
 }
 
 
@@ -159,8 +155,8 @@
 		if (annotations && annotations[verseNumber] && annotations[verseNumber].decorations &&annotations[verseNumber].decorations.words) {
 			wordAnnotations = annotations[verseNumber].decorations.words[wordIdx];
 		}
-		if (notes && notes[verseNumber] && notes[verseNumber].notes && notes[verseNumber].notes.words) {
-			notesAnnotations = notes[verseNumber].notes.words[wordIdx];
+		if (annotations && annotations[verseNumber] && annotations[verseNumber].notes && annotations[verseNumber].notes.words) {
+			notesAnnotations = annotations[verseNumber].notes.words[wordIdx];
 		}
 	});
 
