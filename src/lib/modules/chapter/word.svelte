@@ -41,19 +41,23 @@
 			return
 		}
 
-		if (!annotations[verseNumber].words) {
+		if (!annotations[verseNumber].decorations) {
 			return
 		}
 
-		if (!annotations[verseNumber].words) {
+		if (!annotations[verseNumber].decorations.words) {
 			return
 		}
 
-		if (!annotations[verseNumber].words[wordIdx]) {
+		if (!annotations[verseNumber].decorations.words) {
+			return
+		}
+
+		if (!annotations[verseNumber].decorations.words[wordIdx]) {
 			return
 		}
 		
-		return annotations[verseNumber].words[wordIdx];
+		return annotations[verseNumber].decorations.words[wordIdx];
 	}
 
 	function getNotesAnnotations() {
@@ -88,24 +92,28 @@
 			annotations[verseNumber] = {};
 		}
 
-		if (!annotations[verseNumber].words) {
-			annotations[verseNumber].words = {};
+		if (!annotations[verseNumber].decorations) {
+			annotations[verseNumber].decorations = {};
 		}
 
-		if (!annotations[verseNumber].words) {
-			annotations[verseNumber].words = {};
-			annotations[verseNumber].words[wordIndex] = {};
+		if (!annotations[verseNumber].decorations.words) {
+			annotations[verseNumber].decorations.words = {};
 		}
 
-		if (!annotations[verseNumber].words[wordIndex]) {
-			annotations[verseNumber].words[wordIndex] = {};
+		if (!annotations[verseNumber].decorations.words) {
+			annotations[verseNumber].decorations.words = {};
+			annotations[verseNumber].decorations.words[wordIndex] = {};
 		}
 
-		if (!annotations[verseNumber].words[wordIndex].class) {
-			annotations[verseNumber].words[wordIndex].class = [];
+		if (!annotations[verseNumber].decorations.words[wordIndex]) {
+			annotations[verseNumber].decorations.words[wordIndex] = {};
 		}
 
-		return annotations[verseNumber].words[wordIndex];
+		if (!annotations[verseNumber].decorations.words[wordIndex].class) {
+			annotations[verseNumber].decorations.words[wordIndex].class = [];
+		}
+
+		return annotations[verseNumber].decorations.words[wordIndex];
 	}
 
 	function onWordClicked(e: Event, word: any) {
@@ -148,11 +156,11 @@
 	onMount(() => {
 		verseNumber = verse['number'];
 
-		if (annotations && annotations[verseNumber] && annotations[verseNumber].words) {
-			wordAnnotations = annotations[verseNumber].words[wordIdx];
+		if (annotations && annotations[verseNumber] && annotations[verseNumber].decorations &&annotations[verseNumber].decorations.words) {
+			wordAnnotations = annotations[verseNumber].decorations.words[wordIdx];
 		}
-		if (notes && notes[verseNumber] && notes[verseNumber].words) {
-			notesAnnotations = notes[verseNumber].words[wordIdx];
+		if (notes && notes[verseNumber] && notes[verseNumber].notes && notes[verseNumber].notes.words) {
+			notesAnnotations = notes[verseNumber].notes.words[wordIdx];
 		}
 	});
 
