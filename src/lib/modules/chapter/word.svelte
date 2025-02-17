@@ -74,7 +74,7 @@
 			return
 		}
 		
-		return notes[verseNumber].words[wordIdx];
+		return Object.keys(notes[verseNumber].words[wordIdx]).length > 0;
 }
 
 

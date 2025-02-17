@@ -18,12 +18,22 @@
 	let wordIdx = 0;
 	let booknames: any = {};
 	let title = $state('');
+	let showNoteActions = $state(false);
+
+	let noteActions: any = {
+		delete: () => {
+			delete chapterNotes[verseIdx].words[wordIdx]['0'];
+			chapterService.putNotes(chapterNotes);
+			mode?.notePopup?.onSaveNotes();
+			mode.notePopup.show = false;
+		}
+	};
 
 	async function onSave() {
 		chapterNotes[verseIdx].words[wordIdx][0] = note;
 		await chapterService.putNotes(chapterNotes);
 		mode?.notePopup?.onSaveNotes();
-		toastService.showToast(`saved ${title}`)
+		toastService.showToast(`saved ${title}`);
 	}
 
 	onMount(async () => {
@@ -42,11 +52,17 @@
 			}
 
 			wordIdx = keys[3];
-			if (!chapterNotes[verseIdx].words[wordIdx]) {
+			if (
+				!chapterNotes[verseIdx].words[wordIdx] ||
+				(chapterNotes[verseIdx].words[wordIdx] && !chapterNotes[verseIdx].words[wordIdx]['0'])
+			) {
 				let chapter = await chapterService.getChapter(mode.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
 				chapterNotes[verseIdx].words[wordIdx] = {
-					'0': { text: `${title}\n${verse}`, html: `<h1>${title}</h1><p><italic>${verse}</italic></p>` }
+					'0': {
+						text: `${title}\n${verse}`,
+						html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`
+					}
 				};
 			}
 		} else {
@@ -109,7 +125,33 @@
 				</g>
 			</svg>
 		</button>
-		<span class="inline-block font-bold">{title}</span>
+		<p>
+			<span class="inline-block font-bold">{title}</span>
+			<button
+				onclick={() => {
+					showNoteActions = !showNoteActions;
+				}}
+				aria-label="chevron down"
+				class="h-4 w-4"
+			>
+				<svg
+					width="100%"
+					height="100%"
+					viewBox="0 0 25.4 14.098638"
+					version="1.1"
+					xml:space="preserve"
+					xmlns="http://www.w3.org/2000/svg"
+					><g transform="translate(-53.644677,-127.79211)"
+						><path
+							class="fill-neutral-700"
+							style="stroke-width:0.352778"
+							d="m 59.906487,137.65245 -6.26181,-4.21622 v -2.82206 -2.82206 l 6.35,4.24282 6.35,4.24283 6.35,-4.24283 6.35,-4.24282 v 2.82222 2.82222 l -6.3429,4.23808 c -3.48859,2.33094 -6.38578,4.22817 -6.43819,4.21606 -0.0524,-0.0121 -2.91311,-1.91931 -6.3571,-4.23824 z"
+							id="path179"
+						/></g
+					></svg
+				>
+			</button>
+		</p>
 		<button
 			aria-label="close"
 			onclick={() => {
@@ -126,11 +168,25 @@
 		</button>
 	</header>
 
-	<div
-		style="height: {clientHeight - headerHeight}px"
-		class="flex w-full max-w-lg flex-col overflow-y-scroll border"
-	>
-		<!-- Create the editor container -->
-		<div id={editor}></div>
-	</div>
+	{#if showNoteActions}
+		<div class="flex w-full max-w-lg flex-col items-start justify-start">
+			{#each Object.keys(noteActions) as na}
+				<button
+					class="w-full py-4 text-left capitalize hover:bg-primary-50"
+					aria-label="note action button"
+					onclick={() => noteActions[na]()}
+				>
+					{na}
+				</button>
+			{/each}
+		</div>
+	{:else}
+		<div
+			style="height: {clientHeight - headerHeight}px"
+			class="flex w-full max-w-lg flex-col overflow-y-scroll border"
+		>
+			<!-- Create the editor container -->
+			<div id={editor}></div>
+		</div>
+	{/if}
 </div>
