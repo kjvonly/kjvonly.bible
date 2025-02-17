@@ -61,20 +61,24 @@
 		if (!notes[verseNumber]) {
 			return
 		}
-
-		if (!notes[verseNumber].words) {
+		
+		if (!notes[verseNumber].notes) {
 			return
 		}
 
-		if (!notes[verseNumber].words) {
+		if (!notes[verseNumber].notes.words) {
 			return
 		}
 
-		if (!notes[verseNumber].words[wordIdx]) {
+		if (!notes[verseNumber].notes.words) {
+			return
+		}
+
+		if (!notes[verseNumber].notes.words[wordIdx]) {
 			return
 		}
 		
-		return Object.keys(notes[verseNumber].words[wordIdx]).length > 0;
+		return Object.keys(notes[verseNumber].notes.words[wordIdx]).length > 0;
 }
 
 

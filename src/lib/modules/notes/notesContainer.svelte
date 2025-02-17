@@ -22,7 +22,7 @@
 
 	let noteActions: any = {
 		delete: () => {
-			delete chapterNotes[verseIdx].words[wordIdx][noteID];
+			delete chapterNotes[verseIdx].notes.words[wordIdx][noteID];
 			chapterService.putNotes(chapterNotes);
 			mode?.notePopup?.onSaveNotes();
 			mode.notePopup.show = false;
@@ -30,7 +30,7 @@
 	};
 
 	async function onSave() {
-		chapterNotes[verseIdx].words[wordIdx][0] = note;
+		chapterNotes[verseIdx].notes.words[wordIdx][0] = note;
 		await chapterService.putNotes(chapterNotes);
 		mode?.notePopup?.onSaveNotes();
 		toastService.showToast(`saved ${title}`);
@@ -47,21 +47,23 @@
 			verseIdx = keys[2];
 			if (!chapterNotes[verseIdx]) {
 				chapterNotes[verseIdx] = {
-					words: {}
+					notes: {
+						words: {}
+					}
 				};
 			}
 
 			wordIdx = keys[3];
 			if (
-				!chapterNotes[verseIdx].words[wordIdx] ||
-				(chapterNotes[verseIdx].words[wordIdx] && !chapterNotes[verseIdx].words[wordIdx]['0'])
+				!chapterNotes[verseIdx].notes.words[wordIdx] ||
+				(chapterNotes[verseIdx].notes.words[wordIdx] && !chapterNotes[verseIdx].notes.words[wordIdx]['0'])
 			) {
 				let chapter = await chapterService.getChapter(mode.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
 				noteID = uuid4();
 				let now = Date.now();
-				chapterNotes[verseIdx].words[wordIdx] = {};
-				chapterNotes[verseIdx].words[wordIdx][noteID] = {
+				chapterNotes[verseIdx].notes.words[wordIdx] = {};
+				chapterNotes[verseIdx].notes.words[wordIdx][noteID] = {
 					text: `${title}\n${verse}`,
 					html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
 					created: now,
@@ -72,12 +74,12 @@
 			console.log('error chapterKey does not contain verse and wordIdx');
 		}
 
-		let notes = chapterNotes[verseIdx].words[wordIdx];
+		let notes = chapterNotes[verseIdx].notes.words[wordIdx];
 		let noteKeys = Object.keys(notes).sort((a, b) => {
 			return notes[a].modified - notes[b].modified;
 		});
 
-		note = chapterNotes[verseIdx].words[wordIdx][noteKeys[0]];
+		note = chapterNotes[verseIdx].notes.words[wordIdx][noteKeys[0]];
 
 		if (element) {
 			quill = new Quill(element, {
