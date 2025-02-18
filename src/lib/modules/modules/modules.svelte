@@ -5,7 +5,8 @@
 
 	let components: any = {
 		bible: 'ChapterContainer',
-		search: 'Search'
+		search: 'Search',
+		notes: 'Notes'
 	};
 	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 

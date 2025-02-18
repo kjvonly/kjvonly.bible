@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
+	import { paneService } from '$lib/services/pane.service.svelte';
 	import { toastService } from '$lib/services/toast.service';
 	import Quill from 'quill';
 	import { onMount } from 'svelte';
@@ -41,6 +42,14 @@
 		noteID = '';
 	}
 
+	function updateNotesKeys(){
+
+		noteKeys = Object.keys(notes).sort((a, b) => {
+				return (notes[a].modified - notes[b].modified) * -1;
+			});
+
+	}
+
 	async function updateNotes() {
 		/**
 		 * if all notes:
@@ -50,6 +59,7 @@
 		 
 		 */
 		if (allNotes) {
+			noteKeys = []
 			notes = {};
 			let annotations = await chapterService.getAllAnnotations();
 			Object.keys(annotations).forEach((ch) => {
@@ -63,15 +73,14 @@
 					}
 				});
 			});
+			updateNotesKeys()
 		} else {
 			let keys = mode.chapterKey?.split('_');
 			verseIdx = keys[2];
 			wordIdx = keys[3];
 			initNotes();
 			notes = annotations[verseIdx].notes.words[wordIdx];
-			noteKeys = Object.keys(notes).sort((a, b) => {
-				return notes[a].modified - notes[b].modified;
-			});
+			updateNotesKeys()
 		}
 	}
 
@@ -79,12 +88,14 @@
 		delete annotations[verseIdx].notes.words[wordIdx][noteID];
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		updateNotes();
+		delete notes[noteID]
 		onCloseNote();
 	}
 
 	async function onSave(toastMessage: string) {
 		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
 		notes[noteID] = note;
+
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		toastService.showToast(toastMessage);
 	}
@@ -116,7 +127,7 @@
 	async function onAdd() {
 		let title;
 		let keys = mode.chapterKey?.split('_');
-		if (keys[0] === 0) {
+		if (keys[0] === '0') {
 			/** 0 is our all note bookID */
 			title = 'notes';
 		} else {
@@ -125,20 +136,34 @@
 
 		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
 		initNotes();
-		let chapter = await chapterService.getChapter(mode.chapterKey);
-		let verse = chapter['verseMap'][verseIdx];
+
 		noteID = uuid4();
 		let now = Date.now();
 
-		annotations[verseIdx].notes.words[wordIdx][noteID] = {
-			chapterKey: mode.chapterKey,
-			text: `${title}\n${verse}`,
-			html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
-			title: `${title}`,
-			created: now,
-			modified: now,
-			tags: {}
-		};
+		if (keys[0] === '0') {
+			annotations[verseIdx].notes.words[wordIdx][noteID] = {
+				chapterKey: mode.chapterKey,
+				text: ``,
+				html: ``,
+				title: `Note`,
+				created: now,
+				modified: now,
+				tags: {}
+			};
+		} else {
+			let chapter = await chapterService.getChapter(mode.chapterKey);
+			let verse = chapter['verseMap'][verseIdx];
+
+			annotations[verseIdx].notes.words[wordIdx][noteID] = {
+				chapterKey: mode.chapterKey,
+				text: `${title}\n${verse}`,
+				html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
+				title: `${title}`,
+				created: now,
+				modified: now,
+				tags: {}
+			};
+		}
 		note = annotations[verseIdx].notes.words[wordIdx][noteID];
 
 		// add new note to notes
@@ -319,7 +344,7 @@
 				<div
 					class="flex h-full w-full max-w-lg flex-col items-center justify-center border border-neutral-100"
 				>
-					<p class="p-4 capitalize">confirm delete <span class="font-semibold">{title}</span></p>
+					<p class="p-4 capitalize">confirm delete <span class="font-semibold">{note.title}</span></p>
 					<div class="flex flex-row space-x-5">
 						<button
 							onclick={() => {
@@ -339,7 +364,7 @@
 				</div>
 			{/if}
 		{:else}
-			<div class="flex w-full max-w-lg flex-col items-start justify-start ">
+			<div class="flex w-full max-w-lg flex-col items-start justify-start">
 				<div class="flex justify-center">
 					<label
 						for="tags"
@@ -448,7 +473,11 @@
 			<button
 				aria-label="close"
 				onclick={() => {
-					mode.notePopup.show = false;
+					if (allNotes) {
+						paneService.onDeletePane(paneService.rootPane, mode.paneId);
+					} else {
+						mode.notePopup.show = false;
+					}
 				}}
 				class="h-12 w-12 px-2 pt-2 text-neutral-700"
 			>
@@ -462,14 +491,14 @@
 		</header>
 
 		<div
-			class="flex h-full w-full max-w-lg flex-col border border-neutral-100 overflow-hidden overflow-y-scroll"
+			class="flex h-full w-full max-w-lg flex-col overflow-hidden overflow-y-scroll border border-neutral-100"
 		>
 			{#each noteKeys as nk}
 				<button
 					onclick={() => {
 						onSelectedNote(nk);
 					}}
-					class="flex w-full flex-nowrap  p-2 text-left hover:bg-neutral-100"
+					class="flex w-full flex-nowrap p-2 text-left hover:bg-neutral-100"
 				>
 					<div class="flex flex-col">
 						<span>{notes[nk].title}</span>

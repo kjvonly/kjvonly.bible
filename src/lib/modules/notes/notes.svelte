@@ -11,12 +11,11 @@
 		containerWidth = $bindable()
 	} = $props();
 
-
-    let mode ={
-        chapterKey: '0_0_0_0',
-		notePopup: { show: false  }, 
-        paneId: paneId
-    }
+	let mode = $state({
+		chapterKey: '0_0_0_0',
+		notePopup: { show: false },
+		paneId: paneId
+	});
 	let pane: Pane | any = $state();
 	$effect(() => {
 		paneId;
@@ -26,7 +25,6 @@
 
 <div class="kjvonly-noselect overflow-hidden">
 	<div {id} style="{containerHeight} {containerWidth}">
-        <NotesContainer annotations={{}} allNotes={true} containerHeight={containerHeight} ></NotesContainer>
-
-    </div>
+		<NotesContainer annotations={{}} allNotes={true} {containerHeight} bind:mode></NotesContainer>
+	</div>
 </div>
