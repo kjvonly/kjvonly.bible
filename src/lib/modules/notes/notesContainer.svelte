@@ -22,7 +22,7 @@
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
 
-	let tagInput = $state('');
+	let tagInput = $state();
 
 	let noteActions: any = {
 		delete: () => {
@@ -77,22 +77,26 @@
 	}
 
 	function onAddTag() {
-		if (tagInput.length < 1){
-			return 
+		if (tagInput.length < 1) {
+			return;
 		}
 
 		let tagId = uuid4();
 		if (!note.tags) {
 			note.tags = {};
 		}
-		let now = Date.now()
+		let now = Date.now();
 		note.tags[tagId] = {
 			created: now,
 			modified: now,
 			tag: tagInput
 		};
 
-		tagInput = ''
+		tagInput = '';
+	}
+
+	function onDeleteTag(tagID: string) {
+		delete note?.tags[tagID];
 	}
 
 	function onSelectedNote(nk: string) {
@@ -277,9 +281,9 @@
 							<input
 								type="tags"
 								id="tags"
-								placeholder="Tags"
+								placeholder="add tags..."
 								bind:value={tagInput}
-								class="focus:outline-hidden focus:ring-none peer h-8 w-full border-none bg-transparent p-0 placeholder-transparent outline-none focus:border-transparent"
+								class="focus:outline-hidden focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent"
 							/>
 
 							<button
@@ -308,16 +312,10 @@
 								</svg>
 							</button>
 						</div>
-
-						<span
-							class="absolute start-0 top-2 -translate-y-1/2 text-xs text-neutral-700 transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs"
-						>
-							Add Tags...
-						</span>
 					</label>
 				</div>
 				{#if note?.tags}
-					<div class="flex flex-row items-end py-4">
+					<div class="flex flex-row items-end space-x-2 space-y-2 py-2">
 						{#each Object.keys(note?.tags) as tk}
 							<span
 								class="inline-flex h-8 items-center justify-center rounded-full border border-primary-500 px-2.5 py-0.5 text-primary-700"
@@ -325,10 +323,12 @@
 								<p class="whitespace-nowrap text-sm">{note.tags[tk].tag}</p>
 
 								<button
+									aria-label="delete tag"
+									onclick={() => {
+										onDeleteTag(tk);
+									}}
 									class="-me-1 ms-1.5 inline-block rounded-full bg-primary-200 p-0.5 text-primary-700 transition hover:bg-primary-300"
 								>
-									<span class="sr-only">Remove badge</span>
-
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										fill="none"
