@@ -37,6 +37,13 @@
 	}
 
 	function updateNotes() {
+		/**
+		 * if all notes:
+		 *  grab notes from index
+		 * else grab from annotations of current key
+		 *
+		 *
+		 */
 		notes = annotations[verseIdx].notes.words[wordIdx];
 		noteKeys = Object.keys(notes).sort((a, b) => {
 			return notes[a].modified - notes[b].modified;
@@ -57,19 +64,58 @@
 	}
 
 	async function onAdd() {
+		let keys = mode.chapterKey?.split('_');
+		if (keys[0] === 0){
+			/** 0 is our all note bookID */
+			title = 'notes'
+		} else {
+			title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
+		}
+		
+
+		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
+
+		if (keys?.length > 3) {
+			verseIdx = keys[2];
+			wordIdx = keys[3];
+			if (!annotations[verseIdx]) {
+				annotations[verseIdx] = {};
+			}
+
+			if (!annotations[verseIdx].notes) {
+				annotations[verseIdx].notes = {};
+			}
+
+			if (!annotations[verseIdx].notes.words) {
+				annotations[verseIdx].notes.words = {};
+			}
+
+			if (!annotations[verseIdx].notes.words[wordIdx]) {
+				annotations[verseIdx].notes.words[wordIdx] = {};
+			}
+		} else {
+			toastService.showToast(`invalid chapter key: ${mode.chapterKey}`);
+		}
+
 		let chapter = await chapterService.getChapter(mode.chapterKey);
 		let verse = chapter['verseMap'][verseIdx];
 		noteID = uuid4();
 		let now = Date.now();
 
 		annotations[verseIdx].notes.words[wordIdx][noteID] = {
+			chapterKey: mode.chapterKey,
 			text: `${title}\n${verse}`,
 			html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
 			title: `${title}`,
 			created: now,
-			modified: now
+			modified: now,
+			tags: {}
 		};
 		note = annotations[verseIdx].notes.words[wordIdx][noteID];
+		
+		// add new note to notes
+		notes[noteID] = note
+
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 		await onSave(`Created Note ${title}`);
@@ -99,8 +145,20 @@
 		delete note?.tags[tagID];
 	}
 
-	function onSelectedNote(nk: string) {
+	async function onSelectedNote(nk: string) {
 		noteID = nk;
+		note = notes[nk]
+		let keys = note.chapterKey?.split('_');
+
+		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
+		verseIdx = keys[2]
+		wordIdx = keys[3]
+
+		/**
+		 * update this to include verseIdx and the wordIdx for this note
+		 * were also going to need to grab the annotations for that note again
+		 *
+		 */
 		note = annotations[verseIdx].notes.words[wordIdx][nk];
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
@@ -108,30 +166,7 @@
 
 	onMount(async () => {
 		let element = document.getElementById(editor);
-
 		booknames = await chapterService.getBooknames();
-		let keys = mode.chapterKey?.split('_');
-		title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
-
-		if (keys?.length > 3) {
-			verseIdx = keys[2];
-			wordIdx = keys[3];
-			if (!annotations[verseIdx]) {
-				annotations[verseIdx] = {};
-			}
-
-			if (!annotations[verseIdx].notes) {
-				annotations[verseIdx].notes = {};
-			}
-
-			if (!annotations[verseIdx].notes.words) {
-				annotations[verseIdx].notes.words = {};
-			}
-
-			if (!annotations[verseIdx].notes.words[wordIdx]) {
-				annotations[verseIdx].notes.words[wordIdx] = {};
-			}
-		}
 
 		updateNotes();
 		if (element) {
@@ -393,7 +428,9 @@
 			</button>
 		</header>
 
-		<div class="flex h-full w-full max-w-lg flex-col border border-neutral-100 overflow-hidden overflow-y-scroll">
+		<div
+			class="flex h-full w-full max-w-lg flex-col overflow-hidden overflow-y-scroll border border-neutral-100"
+		>
 			{#each noteKeys as nk}
 				<button
 					onclick={() => {
@@ -403,9 +440,12 @@
 				>
 					<div class="flex flex-col">
 						<span>{notes[nk].title}</span>
-						<span class="text-neutral-400">{new Date(notes[nk].modified).toLocaleDateString()} {new Date(notes[nk].modified).toLocaleTimeString()}</span>
+						<span class="text-neutral-400"
+							>{new Date(notes[nk].modified).toLocaleDateString()}
+							{new Date(notes[nk].modified).toLocaleTimeString()}</span
+						>
 						<div class="flex flex-row justify-start space-x-2 pt-2">
-							{#each Object.keys(notes[nk]?.tags) as tk}
+							{#each Object.keys(notes[nk].tags) as tk}
 								<span
 									class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
 								>
