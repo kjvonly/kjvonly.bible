@@ -20,8 +20,6 @@
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
 
-	mode.value = '';
-
 	let noteActions: any = {
 		delete: () => {
 			showConfirmDelete = true;
@@ -63,7 +61,7 @@
 			wordIdx = keys[3];
 			if (
 				!annotations[verseIdx].notes.words[wordIdx] ||
-				annotations[verseIdx].notes.words[wordIdx]
+				Object.keys(annotations[verseIdx].notes.words[wordIdx]).length === 0
 			) {
 				let chapter = await chapterService.getChapter(mode.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
@@ -86,6 +84,7 @@
 			return notes[a].modified - notes[b].modified;
 		});
 		noteID = noteKeys[0]
+
 		note = annotations[verseIdx].notes.words[wordIdx][noteID];
 		
 
