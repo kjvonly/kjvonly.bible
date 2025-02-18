@@ -10,7 +10,9 @@
 	let headerHeight = $state(0);
 
 	let editor = uuid4().replaceAll('-', '');
-	let note: any;
+	let note: any = $state();
+	let notes: any = $state();
+	let noteKeys: string[] = $state([]);
 	let quill: Quill;
 	let verseIdx = 0;
 	let wordIdx = 0;
@@ -32,10 +34,29 @@
 		mode.notePopup.show = false;
 	}
 
-	async function onSave() {
+	async function onSave(toastMessage: string) {
 		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-		toastService.showToast(`saved ${title}`);
+		toastService.showToast(toastMessage);
+	}
+
+	async function onAdd() {
+		let chapter = await chapterService.getChapter(mode.chapterKey);
+		let verse = chapter['verseMap'][verseIdx];
+		noteID = uuid4();
+		let now = Date.now();
+
+		annotations[verseIdx].notes.words[wordIdx][noteID] = {
+			text: `${title}\n${verse}`,
+			html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
+			title: `${title}`,
+			created: now,
+			modified: now
+		};
+		note = annotations[verseIdx].notes.words[wordIdx][noteID];
+		let d = quill.clipboard.convert({ html: note?.html });
+		quill.setContents(d, 'silent');
+		await onSave(`Created Note ${title}`);
 	}
 
 	onMount(async () => {
@@ -44,8 +65,10 @@
 		booknames = await chapterService.getBooknames();
 		let keys = mode.chapterKey?.split('_');
 		title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
+
 		if (keys?.length > 3) {
 			verseIdx = keys[2];
+			wordIdx = keys[3];
 			if (!annotations[verseIdx]) {
 				annotations[verseIdx] = {};
 			}
@@ -58,34 +81,39 @@
 				annotations[verseIdx].notes.words = {};
 			}
 
-			wordIdx = keys[3];
-			if (
-				!annotations[verseIdx].notes.words[wordIdx] ||
-				Object.keys(annotations[verseIdx].notes.words[wordIdx]).length === 0
-			) {
-				let chapter = await chapterService.getChapter(mode.chapterKey);
-				let verse = chapter['verseMap'][verseIdx];
-				noteID = uuid4();
-				let now = Date.now();
+			if (!annotations[verseIdx].notes.words[wordIdx]) {
 				annotations[verseIdx].notes.words[wordIdx] = {};
-				annotations[verseIdx].notes.words[wordIdx][noteID] = {
-					text: `${title}\n${verse}`,
-					html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
-					created: now,
-					modified: now
-				};
 			}
-		} else {
-			console.log('error chapterKey does not contain verse and wordIdx');
 		}
 
-		let notes = annotations[verseIdx].notes.words[wordIdx];
-		let noteKeys = Object.keys(notes).sort((a, b) => {
+		// 	if (
+		// 		!annotations[verseIdx].notes.words[wordIdx] ||
+		// 		Object.keys(annotations[verseIdx].notes.words[wordIdx]).length === 0
+		// 	) {
+		// 		let chapter = await chapterService.getChapter(mode.chapterKey);
+		// 		let verse = chapter['verseMap'][verseIdx];
+		// 		noteID = uuid4();
+		// 		let now = Date.now();
+		// 		annotations[verseIdx].notes.words[wordIdx] = {};
+		// 		annotations[verseIdx].notes.words[wordIdx][noteID] = {
+		// 			text: `${title}\n${verse}`,
+		// 			html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
+		// 			created: now,
+		// 			modified: now
+		// 		};
+		// 	}
+		// } else {
+		// 	console.log('error chapterKey does not contain verse and wordIdx');
+		// }
+
+		notes = annotations[verseIdx].notes.words[wordIdx];
+		noteKeys = Object.keys(notes).sort((a, b) => {
 			return notes[a].modified - notes[b].modified;
 		});
-		noteID = noteKeys[0];
+		console.log(noteKeys);
+		// noteID = noteKeys[0];
 
-		note = annotations[verseIdx].notes.words[wordIdx][noteID];
+		//note = annotations[verseIdx].notes.words[wordIdx][noteID];
 
 		if (element) {
 			quill = new Quill(element, {
@@ -98,10 +126,11 @@
 				} else if (source == 'user') {
 					note.html = quill.getSemanticHTML();
 					note.text = quill.getText();
+					note.title = note.text.split('\n')[0];
 				}
 			});
 
-			let d = quill.clipboard.convert({ html: note.html });
+			let d = quill.clipboard.convert({ html: note?.html });
 			quill.setContents(d, 'silent');
 		}
 	});
@@ -113,6 +142,7 @@
 	class="flex h-full w-full flex-col items-center bg-neutral-50"
 >
 	{#if note}
+		note
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<header
 			bind:clientHeight={headerHeight}
@@ -121,7 +151,7 @@
 			<button
 				aria-label="close"
 				onclick={() => {
-					onSave();
+					onSave(`Saved Note ${title}`);
 				}}
 				class="h-12 w-12 px-2 pt-2 text-neutral-700"
 			>
@@ -227,16 +257,6 @@
 				</div>
 			{/if}
 		{/if}
-
-		<div
-			style="height: {clientHeight - headerHeight}px"
-			class=" {showNoteActions
-				? 'hidden'
-				: ''} flex w-full max-w-lg flex-col overflow-y-scroll border"
-		>
-			<!-- Create the editor container -->
-			<div id={editor}></div>
-		</div>
 	{:else}
 		<header
 			bind:clientHeight={headerHeight}
@@ -245,20 +265,18 @@
 			<button
 				aria-label="close"
 				onclick={() => {
-					onSave();
+					onAdd();
 				}}
 				class="h-12 w-12 px-2 pt-2 text-neutral-700"
 			>
 				<svg
-				class="p-0.5"
+					class="p-0.5"
 					version="1.1"
 					width="100%"
 					height="100%"
 					viewBox="0 0 105.50072 106.78786"
 					xmlns="http://www.w3.org/2000/svg"
-					
 				>
-					
 					<g id="g8" transform="translate(-11.214067,-10.602166)">
 						<path
 							class="fill-neutral-700"
@@ -268,7 +286,7 @@
 					</g>
 				</svg>
 			</button>
-			<p>Notes</p>
+			<p>Notes: {title}</p>
 			<button
 				aria-label="close"
 				onclick={() => {
@@ -284,5 +302,24 @@
 				</svg>
 			</button>
 		</header>
+
+		<div class="flex h-full w-full max-w-lg flex-col border border-neutral-100">
+			{#each noteKeys as nk}
+				<button class="flex w-full flex-nowrap overflow-x-hidden p-4 text-left hover:bg-primary-50">
+					
+						<span>{notes[nk].title}</span>
+					
+				</button>
+			{/each}
+		</div>
 	{/if}
+	<div
+		style="height: {clientHeight - headerHeight}px"
+		class=" {showNoteActions || !note
+			? 'hidden'
+			: ''} flex w-full max-w-lg flex-col overflow-y-scroll border"
+	>
+		<!-- Create the editor container -->
+		<div id={editor}></div>
+	</div>
 </div>
