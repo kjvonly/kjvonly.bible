@@ -71,14 +71,15 @@ async function search(id: string, text: string) {
 let notesDocument = new FlexSearch.Document({
     document: {
         id: "id",
-        index: ["title", "text", "tags"]
+        index: ["title", "text", "tags:tag"]
     }
 }
 );
 
+let notes: any = {}
+
 async function initNotes() {
 
-    let notes: any = {};
     let annotations = await chapterService.getAllAnnotations();
 
     /**this will pull independent notes from 0_0_0_0 and all notes  */
@@ -87,8 +88,8 @@ async function initNotes() {
             if (annotations[ch][v].notes && annotations[ch][v].notes) {
                 Object.keys(annotations[ch][v].notes.words).forEach((w) => {
                     Object.keys(annotations[ch][v].notes.words[w]).forEach((n) => {
-                        notesDocument.addAsync(notes[n], annotations[ch][v].notes.words[w][n]);
-                        console.log('added')
+                        notesDocument.addAsync(n, annotations[ch][v].notes.words[w][n]);
+                        notes[n] = annotations[ch][v].notes.words[w][n]
                     });
                 });
             }
@@ -105,6 +106,33 @@ function deleteNote(id: string) {
     notesDocument.removeAsync(id);
 }
 
+async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
+
+    const results = await notesDocument.searchAsync(searchTerm, {
+        index: indexes
+    });
+
+    
+
+    let filteredNotes: any = {}
+    results.forEach(r => {
+        r.result.forEach(id =>{
+            filteredNotes[id] = notes[id]
+        })
+    })
+    console.log('results', results)
+    console.log('fgilted results', filteredNotes)
+    if (Object.keys(filteredNotes).length > 0) {
+        postMessage({ id: id, notes: filteredNotes })
+    }
+}
+
+function getAllNotes(id: string){
+    postMessage({ id: id, notes: notes})
+
+}
+
+
 onmessage = async (e) => {
     switch (e.data.action) {
         case 'init':
@@ -120,6 +148,12 @@ onmessage = async (e) => {
         case 'deleteNote':
             deleteNote(e.data.id)
             break;
+        case 'searchNotes':
+            console.log('search ntoes called')
+            await searchNotes(e.data.id, e.data.text, e.data.indexes);
+            break
+        case 'getAllNotes':
+            getAllNotes(e.data.id)
     }
 }
 

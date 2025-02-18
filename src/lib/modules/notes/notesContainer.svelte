@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
 	import Quill from 'quill';
 	import { onMount } from 'svelte';
@@ -15,6 +16,7 @@
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
+	let searchID = uuid4();
 	let editor = uuid4().replaceAll('-', '');
 	let note: any = $state();
 	let notes: any = $state({});
@@ -26,7 +28,7 @@
 	let showNoteActions = $state(false);
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
-
+	let searchTerm = $state('')
 	let tagInput = $state();
 
 	let noteActions: any = {
@@ -42,43 +44,36 @@
 		noteID = '';
 	}
 
-	function updateNotesKeys(){
-
+	function updateNotesKeys() {
 		noteKeys = Object.keys(notes).sort((a, b) => {
-				return (notes[a].modified - notes[b].modified) * -1;
-			});
+			return (notes[a].modified - notes[b].modified) * -1;
+		});
+	}
 
+	function onSearchResults(results: any) {
+		if (results.id === searchID) {
+			notes = results.notes
+			updateNotesKeys();
+		}
 	}
 
 	async function updateNotes() {
 		if (allNotes) {
-			noteKeys = []
+			noteKeys = [];
 			notes = {};
-			let annotations = await chapterService.getAllAnnotations();
-
-			/** if this becomes slow we can use flexsearch to quickly retrieve the notes.
-			 * I think a user would need to have a lot of annotations for this to be slow.
-			 * we could also pivot this to a singleton class.
-			*/
-			Object.keys(annotations).forEach((ch) => {
-				Object.keys(annotations[ch]).forEach((v) => {
-					if (annotations[ch][v].notes && annotations[ch][v].notes) {
-						Object.keys(annotations[ch][v].notes.words).forEach((w) => {
-							Object.keys(annotations[ch][v].notes.words[w]).forEach((n) => {
-								notes[n] = annotations[ch][v].notes.words[w][n];
-							});
-						});
-					}
-				});
-			});
-			updateNotesKeys()
+			if (searchTerm.length < 1 ){
+				await searchService.getAllNotes(searchID)
+			} else {
+				await searchService.searchNotes(searchID, searchTerm, ['title', 'text', 'tags:tag']);
+			}
+			
 		} else {
 			let keys = mode.chapterKey?.split('_');
 			verseIdx = keys[2];
 			wordIdx = keys[3];
 			initNotes();
 			notes = annotations[verseIdx].notes.words[wordIdx];
-			updateNotesKeys()
+			updateNotesKeys();
 		}
 	}
 
@@ -86,7 +81,7 @@
 		delete annotations[verseIdx].notes.words[wordIdx][noteID];
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		updateNotes();
-		delete notes[noteID]
+		delete notes[noteID];
 		onCloseNote();
 	}
 
@@ -240,6 +235,8 @@
 				}
 			});
 		}
+
+		searchService.subscribe(searchID, onSearchResults);
 	});
 </script>
 
@@ -342,7 +339,9 @@
 				<div
 					class="flex h-full w-full max-w-lg flex-col items-center justify-center border border-neutral-100"
 				>
-					<p class="p-4 capitalize">confirm delete <span class="font-semibold">{note.title}</span></p>
+					<p class="p-4 capitalize">
+						confirm delete <span class="font-semibold">{note.title}</span>
+					</p>
 					<div class="flex flex-row space-x-5">
 						<button
 							onclick={() => {
