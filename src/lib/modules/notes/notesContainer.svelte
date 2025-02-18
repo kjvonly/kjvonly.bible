@@ -22,6 +22,8 @@
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
 
+	let tagInput = $state('');
+
 	let noteActions: any = {
 		delete: () => {
 			showConfirmDelete = true;
@@ -71,7 +73,26 @@
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 		await onSave(`Created Note ${title}`);
-		updateNotes()
+		updateNotes();
+	}
+
+	function onAddTag() {
+		if (tagInput.length < 1){
+			return 
+		}
+
+		let tagId = uuid4();
+		if (!note.tags) {
+			note.tags = {};
+		}
+		let now = Date.now()
+		note.tags[tagId] = {
+			created: now,
+			modified: now,
+			tag: tagInput
+		};
+
+		tagInput = ''
 	}
 
 	function onSelectedNote(nk: string) {
@@ -107,8 +128,8 @@
 				annotations[verseIdx].notes.words[wordIdx] = {};
 			}
 		}
-		
-		updateNotes()
+
+		updateNotes();
 		if (element) {
 			quill = new Quill(element, {
 				theme: 'snow'
@@ -245,6 +266,85 @@
 					</div>
 				</div>
 			{/if}
+		{:else}
+			<div class="flex w-full max-w-lg flex-col items-start justify-start">
+				<div class="flex justify-center">
+					<label
+						for="tags"
+						class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-primary-600"
+					>
+						<div class="flex items-center">
+							<input
+								type="tags"
+								id="tags"
+								placeholder="Tags"
+								bind:value={tagInput}
+								class="focus:outline-hidden focus:ring-none peer h-8 w-full border-none bg-transparent p-0 placeholder-transparent outline-none focus:border-transparent"
+							/>
+
+							<button
+								onclick={() => {
+									onAddTag();
+								}}
+								class="float-end h-8 w-8"
+								aria-label="add tag button"
+							>
+								<svg
+									version="1.1"
+									id="svg2"
+									width="100%"
+									height="100%"
+									viewBox="0 0 105.50072 106.78786"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<defs id="defs6" />
+									<g id="g8" transform="translate(-11.214067,-10.602166)">
+										<path
+											id="path478"
+											style="fill:#000000;stroke-width:4.20363;stroke-linejoin:round"
+											d="M 63.952348,10.627557 A 52.737736,53.368481 0 0 0 11.214067,63.996697 52.737736,53.368481 0 0 0 63.952348,117.36388 52.737736,53.368481 0 0 0 116.68868,63.996697 52.737736,53.368481 0 0 0 63.952348,10.627557 Z m -4.40625,34.925781 h 8.884766 v 14.335937 h 12.917969 v 8.138672 H 68.430864 V 82.438103 H 59.546098 V 68.027947 H 46.553911 v -8.138672 h 12.992187 z"
+										/>
+									</g>
+								</svg>
+							</button>
+						</div>
+
+						<span
+							class="absolute start-0 top-2 -translate-y-1/2 text-xs text-neutral-700 transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs"
+						>
+							Add Tags...
+						</span>
+					</label>
+				</div>
+				{#if note?.tags}
+					<div class="flex flex-row items-end py-4">
+						{#each Object.keys(note?.tags) as tk}
+							<span
+								class="inline-flex h-8 items-center justify-center rounded-full border border-primary-500 px-2.5 py-0.5 text-primary-700"
+							>
+								<p class="whitespace-nowrap text-sm">{note.tags[tk].tag}</p>
+
+								<button
+									class="-me-1 ms-1.5 inline-block rounded-full bg-primary-200 p-0.5 text-primary-700 transition hover:bg-primary-300"
+								>
+									<span class="sr-only">Remove badge</span>
+
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke-width="1.5"
+										stroke="currentColor"
+										class="size-3"
+									>
+										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+									</svg>
+								</button>
+							</span>
+						{/each}
+					</div>
+				{/if}
+			</div>
 		{/if}
 	{:else}
 		<header
