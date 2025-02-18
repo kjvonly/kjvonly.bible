@@ -51,17 +51,15 @@
 	}
 
 	async function updateNotes() {
-		/**
-		 * if all notes:
-		 *  grab notes from index
-		 * else grab from annotations of current key
-		 *
-		 
-		 */
 		if (allNotes) {
 			noteKeys = []
 			notes = {};
 			let annotations = await chapterService.getAllAnnotations();
+
+			/** if this becomes slow we can use flexsearch to quickly retrieve the notes.
+			 * I think a user would need to have a lot of annotations for this to be slow.
+			 * we could also pivot this to a singleton class.
+			*/
 			Object.keys(annotations).forEach((ch) => {
 				Object.keys(annotations[ch]).forEach((v) => {
 					if (annotations[ch][v].notes && annotations[ch][v].notes) {

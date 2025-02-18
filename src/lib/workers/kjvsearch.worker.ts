@@ -1,3 +1,4 @@
+import { chapterService } from "$lib/api/chapters.service";
 import { bibleDB } from "$lib/db/bible.db"
 import FlexSearch, { type Id } from 'flexsearch';
 
@@ -66,14 +67,59 @@ async function search(id: string, text: string) {
     }
 }
 
+
+let notesDocument = new FlexSearch.Document({
+    document: {
+        id: "id",
+        index: ["title", "text", "tags"]
+    }
+}
+);
+
+async function initNotes() {
+
+    let notes: any = {};
+    let annotations = await chapterService.getAllAnnotations();
+
+    /**this will pull independent notes from 0_0_0_0 and all notes  */
+    Object.keys(annotations).forEach((ch) => {
+        Object.keys(annotations[ch]).forEach((v) => {
+            if (annotations[ch][v].notes && annotations[ch][v].notes) {
+                Object.keys(annotations[ch][v].notes.words).forEach((w) => {
+                    Object.keys(annotations[ch][v].notes.words[w]).forEach((n) => {
+                        notesDocument.addAsync(notes[n], annotations[ch][v].notes.words[w][n]);
+                        console.log('added')
+                    });
+                });
+            }
+        });
+    });
+}
+
+
+function addNote(id: string, note: any) {
+    notesDocument.addAsync(id, note);
+}
+
+function deleteNote(id: string) {
+    notesDocument.removeAsync(id);
+}
+
 onmessage = async (e) => {
     switch (e.data.action) {
         case 'init':
             await init()
+            await initNotes()
             break;
         case 'search':
             await search(e.data.id, e.data.text)
-            break
+            break;
+        case 'addNote':
+            addNote(e.data.id, e.data.note)
+            break;
+        case 'deleteNote':
+            deleteNote(e.data.id)
+            break;
     }
 }
 
