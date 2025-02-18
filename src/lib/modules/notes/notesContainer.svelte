@@ -31,7 +31,13 @@
 	async function onConfirmDelete() {
 		delete annotations[verseIdx].notes.words[wordIdx][noteID];
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-		mode.notePopup.show = false;
+		notes = annotations[verseIdx].notes.words[wordIdx];
+		noteKeys = Object.keys(notes).sort((a, b) => {
+			return notes[a].modified - notes[b].modified;
+		});
+		showNoteActions = false;
+		note = undefined;
+		noteID = '';
 	}
 
 	async function onSave(toastMessage: string) {
@@ -57,6 +63,17 @@
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 		await onSave(`Created Note ${title}`);
+		notes = annotations[verseIdx].notes.words[wordIdx];
+		noteKeys = Object.keys(notes).sort((a, b) => {
+			return notes[a].modified - notes[b].modified;
+		});
+	}
+
+	function onSelectedNote(nk: string) {
+		noteID = nk;
+		note = annotations[verseIdx].notes.words[wordIdx][nk];
+		let d = quill.clipboard.convert({ html: note?.html });
+		quill.setContents(d, 'silent');
 	}
 
 	onMount(async () => {
@@ -142,8 +159,6 @@
 	class="flex h-full w-full flex-col items-center bg-neutral-50"
 >
 	{#if note}
-		note
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<header
 			bind:clientHeight={headerHeight}
 			class=" flex w-full max-w-lg flex-row items-center justify-between bg-neutral-100 text-neutral-700"
@@ -151,7 +166,7 @@
 			<button
 				aria-label="close"
 				onclick={() => {
-					onSave(`Saved Note ${title}`);
+					onSave(`Saved Note: ${note.title}`);
 				}}
 				class="h-12 w-12 px-2 pt-2 text-neutral-700"
 			>
@@ -204,7 +219,9 @@
 			<button
 				aria-label="close"
 				onclick={() => {
-					mode.notePopup.show = false;
+					showNoteActions = false;
+					note = undefined;
+					noteID = '';
 				}}
 				class="h-12 w-12 px-2 pt-2 text-neutral-700"
 			>
@@ -305,10 +322,13 @@
 
 		<div class="flex h-full w-full max-w-lg flex-col border border-neutral-100">
 			{#each noteKeys as nk}
-				<button class="flex w-full flex-nowrap overflow-x-hidden p-4 text-left hover:bg-primary-50">
-					
-						<span>{notes[nk].title}</span>
-					
+				<button
+					onclick={() => {
+						onSelectedNote(nk);
+					}}
+					class="flex w-full flex-nowrap overflow-x-hidden p-4 text-left hover:bg-primary-50"
+				>
+					<span>{notes[nk].title}</span>
 				</button>
 			{/each}
 		</div>
