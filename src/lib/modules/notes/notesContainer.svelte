@@ -18,20 +18,21 @@
 	let title = $state('');
 	let showNoteActions = $state(false);
 	let noteID: string = '';
+	let showConfirmDelete = $state(false);
 
-	
-	
-		mode.value = '';
-	
+	mode.value = '';
+
 	let noteActions: any = {
 		delete: () => {
-			delete annotations[verseIdx].notes.words[wordIdx][noteID];
-			
-			chapterService.putNotes(annotations);
-			mode?.notePopup?.onSaveNotes();
-			mode.notePopup.show = false;
+			showConfirmDelete = true;
 		}
 	};
+
+	async function onConfirmDelete() {
+		delete annotations[verseIdx].notes.words[wordIdx][noteID];
+		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		mode.notePopup.show = false;
+	}
 
 	async function onSave() {
 		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
@@ -48,22 +49,21 @@
 		if (keys?.length > 3) {
 			verseIdx = keys[2];
 			if (!annotations[verseIdx]) {
-				annotations[verseIdx] ={};
+				annotations[verseIdx] = {};
 			}
 
 			if (!annotations[verseIdx].notes) {
-				annotations[verseIdx].notes ={};
+				annotations[verseIdx].notes = {};
 			}
 
-
 			if (!annotations[verseIdx].notes.words) {
-				annotations[verseIdx].notes.words ={};
+				annotations[verseIdx].notes.words = {};
 			}
 
 			wordIdx = keys[3];
 			if (
 				!annotations[verseIdx].notes.words[wordIdx] ||
-				(annotations[verseIdx].notes.words[wordIdx])
+				annotations[verseIdx].notes.words[wordIdx]
 			) {
 				let chapter = await chapterService.getChapter(mode.chapterKey);
 				let verse = chapter['verseMap'][verseIdx];
@@ -85,8 +85,9 @@
 		let noteKeys = Object.keys(notes).sort((a, b) => {
 			return notes[a].modified - notes[b].modified;
 		});
-
-		note = annotations[verseIdx].notes.words[wordIdx][noteKeys[0]];
+		noteID = noteKeys[0]
+		note = annotations[verseIdx].notes.words[wordIdx][noteID];
+		
 
 		if (element) {
 			quill = new Quill(element, {
@@ -111,8 +112,9 @@
 <div
 	bind:clientHeight
 	style={containerHeight}
-	class="flex h-full w-full flex-col items-center bg-neutral-50"
+	class="flex h-full w-full flex-col items-center border border-neutral-100 bg-neutral-50"
 >
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<header
 		bind:clientHeight={headerHeight}
 		class=" flex w-full max-w-lg flex-row items-center justify-between bg-neutral-100 text-neutral-700"
@@ -142,15 +144,16 @@
 				</g>
 			</svg>
 		</button>
-		<p>
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+		<p
+			onclick={() => {
+				showNoteActions = !showNoteActions;
+			}}
+			class="hover:cursor-pointer"
+		>
 			<span class="inline-block font-bold">{title}</span>
-			<button
-				onclick={() => {
-					showNoteActions = !showNoteActions;
-				}}
-				aria-label="chevron down"
-				class="h-4 w-4"
-			>
+			<button aria-label="chevron down" class="h-4 w-4">
 				<svg
 					width="100%"
 					height="100%"
@@ -186,17 +189,44 @@
 	</header>
 
 	{#if showNoteActions}
-		<div class="flex w-full max-w-lg flex-col items-start justify-start">
-			{#each Object.keys(noteActions) as na}
-				<button
-					class="w-full py-4 text-left capitalize hover:bg-primary-50"
-					aria-label="note action button"
-					onclick={() => noteActions[na]()}
-				>
-					{na}
-				</button>
-			{/each}
-		</div>
+		{#if !showConfirmDelete}
+			<div
+				class="flex h-full w-full max-w-lg flex-col items-start justify-start border border-neutral-100"
+			>
+				{#each Object.keys(noteActions) as na}
+					<button
+						class="w-full py-4 ps-2 text-left capitalize hover:bg-primary-50"
+						aria-label="note action button"
+						onclick={() => noteActions[na]()}
+					>
+						{na}
+					</button>
+				{/each}
+			</div>
+		{/if}
+		{#if showConfirmDelete}
+			<div
+				class="flex h-full w-full max-w-lg flex-col items-center justify-center border border-neutral-100"
+			>
+				<p class="p-4 capitalize">confirm delete <span class="font-semibold">{title}</span></p>
+				<div class="flex flex-row space-x-5">
+					<button
+						onclick={() => {
+							onConfirmDelete();
+						}}
+						aria-label="delete button"
+						class="rounded-lg bg-neutral-100 p-4 capitalize hover:bg-primary-50">delete</button
+					>
+					<button
+						onclick={() => {
+							showConfirmDelete = false;
+						}}
+						aria-label="cancel button"
+						class="rounded-lg bg-neutral-100 p-4 capitalize hover:bg-primary-50">cancel</button
+					>
+				</div>
+			</div>
+		{/if}
 	{/if}
 
 	<div
