@@ -28,16 +28,24 @@
 		}
 	};
 
-	async function onConfirmDelete() {
-		delete annotations[verseIdx].notes.words[wordIdx][noteID];
-		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+	function onCloseNote() {
+		showNoteActions = false;
+		note = undefined;
+		noteID = '';
+	}
+
+	function updateNotes() {
 		notes = annotations[verseIdx].notes.words[wordIdx];
 		noteKeys = Object.keys(notes).sort((a, b) => {
 			return notes[a].modified - notes[b].modified;
 		});
-		showNoteActions = false;
-		note = undefined;
-		noteID = '';
+	}
+
+	async function onConfirmDelete() {
+		delete annotations[verseIdx].notes.words[wordIdx][noteID];
+		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		updateNotes();
+		onCloseNote();
 	}
 
 	async function onSave(toastMessage: string) {
@@ -63,10 +71,7 @@
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 		await onSave(`Created Note ${title}`);
-		notes = annotations[verseIdx].notes.words[wordIdx];
-		noteKeys = Object.keys(notes).sort((a, b) => {
-			return notes[a].modified - notes[b].modified;
-		});
+		updateNotes()
 	}
 
 	function onSelectedNote(nk: string) {
@@ -102,36 +107,8 @@
 				annotations[verseIdx].notes.words[wordIdx] = {};
 			}
 		}
-
-		// 	if (
-		// 		!annotations[verseIdx].notes.words[wordIdx] ||
-		// 		Object.keys(annotations[verseIdx].notes.words[wordIdx]).length === 0
-		// 	) {
-		// 		let chapter = await chapterService.getChapter(mode.chapterKey);
-		// 		let verse = chapter['verseMap'][verseIdx];
-		// 		noteID = uuid4();
-		// 		let now = Date.now();
-		// 		annotations[verseIdx].notes.words[wordIdx] = {};
-		// 		annotations[verseIdx].notes.words[wordIdx][noteID] = {
-		// 			text: `${title}\n${verse}`,
-		// 			html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
-		// 			created: now,
-		// 			modified: now
-		// 		};
-		// 	}
-		// } else {
-		// 	console.log('error chapterKey does not contain verse and wordIdx');
-		// }
-
-		notes = annotations[verseIdx].notes.words[wordIdx];
-		noteKeys = Object.keys(notes).sort((a, b) => {
-			return notes[a].modified - notes[b].modified;
-		});
-		console.log(noteKeys);
-		// noteID = noteKeys[0];
-
-		//note = annotations[verseIdx].notes.words[wordIdx][noteID];
-
+		
+		updateNotes()
 		if (element) {
 			quill = new Quill(element, {
 				theme: 'snow'
@@ -146,9 +123,6 @@
 					note.title = note.text.split('\n')[0];
 				}
 			});
-
-			let d = quill.clipboard.convert({ html: note?.html });
-			quill.setContents(d, 'silent');
 		}
 	});
 </script>
@@ -219,9 +193,7 @@
 			<button
 				aria-label="close"
 				onclick={() => {
-					showNoteActions = false;
-					note = undefined;
-					noteID = '';
+					onCloseNote();
 				}}
 				class="h-12 w-12 px-2 pt-2 text-neutral-700"
 			>
