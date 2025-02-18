@@ -5,19 +5,23 @@
 	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
 
-	let { containerHeight, mode = $bindable(), annotations = $bindable() } = $props();
+	let {
+		containerHeight,
+		mode = $bindable(),
+		annotations = $bindable(),
+		allNotes = false
+	} = $props();
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
 	let editor = uuid4().replaceAll('-', '');
 	let note: any = $state();
-	let notes: any = $state();
+	let notes: any = $state({});
 	let noteKeys: string[] = $state([]);
 	let quill: Quill;
 	let verseIdx = 0;
 	let wordIdx = 0;
 	let booknames: any = {};
-	let title = $state('');
 	let showNoteActions = $state(false);
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
@@ -32,22 +36,43 @@
 
 	function onCloseNote() {
 		showNoteActions = false;
+		showConfirmDelete = false;
 		note = undefined;
 		noteID = '';
 	}
 
-	function updateNotes() {
+	async function updateNotes() {
 		/**
 		 * if all notes:
 		 *  grab notes from index
 		 * else grab from annotations of current key
 		 *
-		 *
+		 
 		 */
-		notes = annotations[verseIdx].notes.words[wordIdx];
-		noteKeys = Object.keys(notes).sort((a, b) => {
-			return notes[a].modified - notes[b].modified;
-		});
+		if (allNotes) {
+			notes = {};
+			let annotations = await chapterService.getAllAnnotations();
+			Object.keys(annotations).forEach((ch) => {
+				Object.keys(annotations[ch]).forEach((v) => {
+					if (annotations[ch][v].notes && annotations[ch][v].notes) {
+						Object.keys(annotations[ch][v].notes.words).forEach((w) => {
+							Object.keys(annotations[ch][v].notes.words[w]).forEach((n) => {
+								notes[n] = annotations[ch][v].notes.words[w][n];
+							});
+						});
+					}
+				});
+			});
+		} else {
+			let keys = mode.chapterKey?.split('_');
+			verseIdx = keys[2];
+			wordIdx = keys[3];
+			initNotes();
+			notes = annotations[verseIdx].notes.words[wordIdx];
+			noteKeys = Object.keys(notes).sort((a, b) => {
+				return notes[a].modified - notes[b].modified;
+			});
+		}
 	}
 
 	async function onConfirmDelete() {
@@ -59,22 +84,13 @@
 
 	async function onSave(toastMessage: string) {
 		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
+		notes[noteID] = note;
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		toastService.showToast(toastMessage);
 	}
 
-	async function onAdd() {
+	function initNotes() {
 		let keys = mode.chapterKey?.split('_');
-		if (keys[0] === 0){
-			/** 0 is our all note bookID */
-			title = 'notes'
-		} else {
-			title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
-		}
-		
-
-		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
-
 		if (keys?.length > 3) {
 			verseIdx = keys[2];
 			wordIdx = keys[3];
@@ -96,7 +112,19 @@
 		} else {
 			toastService.showToast(`invalid chapter key: ${mode.chapterKey}`);
 		}
+	}
+	async function onAdd() {
+		let title;
+		let keys = mode.chapterKey?.split('_');
+		if (keys[0] === 0) {
+			/** 0 is our all note bookID */
+			title = 'notes';
+		} else {
+			title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
+		}
 
+		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
+		initNotes();
 		let chapter = await chapterService.getChapter(mode.chapterKey);
 		let verse = chapter['verseMap'][verseIdx];
 		noteID = uuid4();
@@ -112,9 +140,9 @@
 			tags: {}
 		};
 		note = annotations[verseIdx].notes.words[wordIdx][noteID];
-		
+
 		// add new note to notes
-		notes[noteID] = note
+		notes[noteID] = note;
 
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
@@ -145,14 +173,19 @@
 		delete note?.tags[tagID];
 	}
 
+	/**
+	 * This function makes it possible for us to reuse the notes container in the chapter and notes module
+	 *
+	 * @param nk note key
+	 */
 	async function onSelectedNote(nk: string) {
 		noteID = nk;
-		note = notes[nk]
+		note = notes[nk];
 		let keys = note.chapterKey?.split('_');
 
 		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
-		verseIdx = keys[2]
-		wordIdx = keys[3]
+		verseIdx = keys[2];
+		wordIdx = keys[3];
 
 		/**
 		 * update this to include verseIdx and the wordIdx for this note
@@ -230,7 +263,7 @@
 				}}
 				class="hover:cursor-pointer"
 			>
-				<span class="inline-block font-bold">{title}</span>
+				<span class="inline-block font-bold">{note.title}</span>
 				<button aria-label="chevron down" class="h-4 w-4">
 					<svg
 						width="100%"
@@ -306,7 +339,7 @@
 				</div>
 			{/if}
 		{:else}
-			<div class="flex w-full max-w-lg flex-col items-start justify-start">
+			<div class="flex w-full max-w-lg flex-col items-start justify-start ">
 				<div class="flex justify-center">
 					<label
 						for="tags"
@@ -411,7 +444,7 @@
 					</g>
 				</svg>
 			</button>
-			<p>Notes: {title}</p>
+			<p>Notes</p>
 			<button
 				aria-label="close"
 				onclick={() => {
@@ -429,14 +462,14 @@
 		</header>
 
 		<div
-			class="flex h-full w-full max-w-lg flex-col overflow-hidden overflow-y-scroll border border-neutral-100"
+			class="flex h-full w-full max-w-lg flex-col border border-neutral-100 overflow-hidden overflow-y-scroll"
 		>
 			{#each noteKeys as nk}
 				<button
 					onclick={() => {
 						onSelectedNote(nk);
 					}}
-					class="flex w-full flex-nowrap overflow-x-hidden p-2 text-left hover:bg-neutral-100"
+					class="flex w-full flex-nowrap  p-2 text-left hover:bg-neutral-100"
 				>
 					<div class="flex flex-col">
 						<span>{notes[nk].title}</span>
