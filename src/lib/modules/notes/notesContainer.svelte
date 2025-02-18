@@ -418,13 +418,14 @@
 			{/each}
 		</div>
 	{/if}
+
+	<!-- keep the editor in the dom the while notes container is open. toggle the hidden params. Otherwise we'd need to keep creating this. -->
 	<div
 		style="height: {clientHeight - headerHeight}px"
 		class=" {showNoteActions || !note
 			? 'hidden'
 			: ''} flex w-full max-w-lg flex-col overflow-y-scroll border"
 	>
-		<!-- Create the editor container -->
 		<div id={editor}></div>
 	</div>
 </div>
