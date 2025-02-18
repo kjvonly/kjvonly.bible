@@ -40,13 +40,8 @@
 
 	async function onExport() {
 		toastService.showToast('starting export data')
-		let annotations = await chapterService.getAllAnnotations();
-		let notes = await chapterService.getAllNotes();
+		let data = await chapterService.getAllAnnotations();
 
-		let data = {
-			annotations: annotations,
-			notes: notes
-		};
 		var element = document.createElement('a');
 		element.setAttribute(
 			'href',
@@ -72,7 +67,6 @@
 				toastService.showToast('starting import data')
 				let data = JSON.parse(result);
 				chapterService.putAllAnnotations(data.annotations);
-				chapterService.putAllNotes(data.notes);
 				document.getElementById('kjvonly-import')?.remove();
 				toastService.showToast('finished import data')
 			} catch (ex) {
