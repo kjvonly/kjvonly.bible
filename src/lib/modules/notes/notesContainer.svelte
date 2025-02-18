@@ -77,7 +77,7 @@
 	}
 
 	function onAddTag() {
-		if (tagInput.length < 1) {
+		if (tagInput && tagInput.length < 1) {
 			return;
 		}
 
@@ -275,7 +275,7 @@
 				<div class="flex justify-center">
 					<label
 						for="tags"
-						class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-primary-600"
+						class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-supporta-600"
 					>
 						<div class="flex items-center">
 							<input
@@ -290,7 +290,7 @@
 								onclick={() => {
 									onAddTag();
 								}}
-								class="float-end h-8 w-8"
+								class="float-end h-8 w-8 p-0.5"
 								aria-label="add tag button"
 							>
 								<svg
@@ -305,7 +305,8 @@
 									<g id="g8" transform="translate(-11.214067,-10.602166)">
 										<path
 											id="path478"
-											style="fill:#000000;stroke-width:4.20363;stroke-linejoin:round"
+											class="fill-neutral-700"
+											style="stroke-width:4.20363;stroke-linejoin:round"
 											d="M 63.952348,10.627557 A 52.737736,53.368481 0 0 0 11.214067,63.996697 52.737736,53.368481 0 0 0 63.952348,117.36388 52.737736,53.368481 0 0 0 116.68868,63.996697 52.737736,53.368481 0 0 0 63.952348,10.627557 Z m -4.40625,34.925781 h 8.884766 v 14.335937 h 12.917969 v 8.138672 H 68.430864 V 82.438103 H 59.546098 V 68.027947 H 46.553911 v -8.138672 h 12.992187 z"
 										/>
 									</g>
@@ -318,7 +319,7 @@
 					<div class="flex flex-row items-end space-x-2 space-y-2 py-2">
 						{#each Object.keys(note?.tags) as tk}
 							<span
-								class="inline-flex h-8 items-center justify-center rounded-full border border-primary-500 px-2.5 py-0.5 text-primary-700"
+								class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
 							>
 								<p class="whitespace-nowrap text-sm">{note.tags[tk].tag}</p>
 
@@ -327,7 +328,7 @@
 									onclick={() => {
 										onDeleteTag(tk);
 									}}
-									class="-me-1 ms-1.5 inline-block rounded-full bg-primary-200 p-0.5 text-primary-700 transition hover:bg-primary-300"
+									class="-me-1 ms-1.5 inline-block rounded-full bg-supporta-200 p-0.5 text-supporta-700 transition hover:bg-supporta-300"
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -392,15 +393,27 @@
 			</button>
 		</header>
 
-		<div class="flex h-full w-full max-w-lg flex-col border border-neutral-100">
+		<div class="flex h-full w-full max-w-lg flex-col border border-neutral-100 overflow-hidden overflow-y-scroll">
 			{#each noteKeys as nk}
 				<button
 					onclick={() => {
 						onSelectedNote(nk);
 					}}
-					class="flex w-full flex-nowrap overflow-x-hidden p-4 text-left hover:bg-primary-50"
+					class="flex w-full flex-nowrap overflow-x-hidden p-2 text-left hover:bg-neutral-100"
 				>
-					<span>{notes[nk].title}</span>
+					<div class="flex flex-col">
+						<span>{notes[nk].title}</span>
+						<span class="text-neutral-400">{new Date(notes[nk].modified).toLocaleDateString()} {new Date(notes[nk].modified).toLocaleTimeString()}</span>
+						<div class="flex flex-row justify-start space-x-2 pt-2">
+							{#each Object.keys(notes[nk]?.tags) as tk}
+								<span
+									class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
+								>
+									<p class="whitespace-nowrap text-sm">{notes[nk].tags[tk].tag}</p>
+								</span>
+							{/each}
+						</div>
+					</div>
 				</button>
 			{/each}
 		</div>
