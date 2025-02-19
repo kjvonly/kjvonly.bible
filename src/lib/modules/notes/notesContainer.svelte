@@ -39,6 +39,9 @@
 	};
 
 	let noteListActions: any = {
+		filter: () => {
+			
+		},
 		'split vertical': () => {
 			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});
 			showNoteListActions = false;
