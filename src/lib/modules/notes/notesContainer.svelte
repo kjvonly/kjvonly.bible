@@ -19,6 +19,19 @@ let annotations = getAnnotations('1_1')
 // annotations[1].notes.words[0] means note annotations at verse 1 word 0
 let notes = annotations[1].notes.words[0] 
 
+Now we have the second type of note, the independent note. To keep things simple
+we create a new chapterKey 0_0_0_0. Theres not a bible chapter associated to this but 
+it's a clean way to use the chapter key as the index for all other notes.
+
+let annotations = getAnnotations('0_0')
+// annotations[0].notes.words[0] would contain all independent note. We specify this 
+// chapterKey in the notes.svelte component
+let notes = annotations[1].notes.words[0] 
+
+We added in the boolean of allNotes to signal we are displaying all notes to the user. 
+Users can edit verse word notes as well as independent notes. If a user clicks on the 
+note icon in the Bible only the notes associated to that word will be displayed to the user.
+
 -->
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
