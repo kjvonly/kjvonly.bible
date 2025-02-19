@@ -228,7 +228,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 		noteID = uuid4();
 		let now = Date.now();
-		
+
 		if (keys[0] === '0') {
 			annotations[verseIdx].notes.words[wordIdx][noteID] = {
 				chapterKey: mode.chapterKey,
@@ -311,7 +311,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	};
 
 	async function onSelectedNote(noteId: string) {
-		noteID = noteId
+		noteID = noteId;
 		note = notes[noteId];
 		let keys = note.chapterKey?.split('_');
 
@@ -345,7 +345,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				} else if (source == 'user') {
 					note.html = quill.getSemanticHTML();
 					note.text = quill.getText();
-					note.title = note.text.split('\n')[0];
+					note.title = note.text.split('\n')[0].substring(0, 20);
 				}
 			});
 		}
@@ -391,7 +391,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			}}
 			class="hover:cursor-pointer"
 		>
-			<span class="inline-block font-bold">{note.title}</span>
+			<span class="inline-block font-bold">{note.title}{note.title?.length === 20 ? '...' : ''}</span>
 			<button aria-label="chevron down" class="h-4 w-4">
 				<svg
 					width="100%"
@@ -449,7 +449,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		class="flex h-full w-full max-w-lg flex-col items-center justify-center border border-neutral-100"
 	>
 		<p class="p-4 capitalize">
-			confirm delete <span class="font-semibold">{note.title}</span>
+			confirm delete <span class="font-semibold"
+				>{note.title} {note.title?.length === 20 ? '...' : ''}</span
+			>
 		</p>
 		<div class="flex flex-row space-x-5">
 			<button
@@ -682,7 +684,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			class="flex w-full flex-nowrap p-2 text-left hover:bg-neutral-100"
 		>
 			<div class="flex flex-col">
-				<span>{notes[nk].title}</span>
+				<span>{notes[nk].title}{notes[nk].title.length === 20 ? '...' : ''}</span>
 				<span class="text-neutral-400"
 					>{new Date(notes[nk].modified).toLocaleDateString()}
 					{new Date(notes[nk].modified).toLocaleTimeString()}</span
