@@ -36,11 +36,11 @@ class SearchService {
     }
 
     deleteNote(id:string, noteID: string){
-        this.webWorker.postMessage({ action: 'deleteNote', id: id, noteID: noteID})
+        this.webWorker.postMessage({ action: 'deleteNote', noteID: noteID})
     }
 
     addNote(id: string, noteID:string, note: any){
-        this.webWorker.postMessage({ action: 'addNote', id: id, noteID: noteID, note: note})
+        this.webWorker.postMessage({ action: 'addNote', noteID: noteID, note: note})
     }
 }
 

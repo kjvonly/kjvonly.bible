@@ -98,13 +98,13 @@ async function initNotes() {
 }
 
 
-function addNote(id: string, noteID: string, note: any) {
+function addNote(noteID: string, note: any) {
     notes[noteID] = note
     notesDocument.add(noteID, note);
     getAllNotes('*')
 }
 
-function deleteNote(id: string, noteID: string) {
+function deleteNote(noteID: string) {
     delete notes[noteID]
     notesDocument.remove(noteID);
     getAllNotes('*')
@@ -143,10 +143,10 @@ onmessage = async (e) => {
             await search(e.data.id, e.data.text)
             break;
         case 'addNote':
-            addNote(e.data.id, e.data.noteID, e.data.note)
+            addNote(e.data.noteID, e.data.note)
             break;
         case 'deleteNote':
-            deleteNote(e.data.id, e.data.noteID)
+            deleteNote(e.data.noteID)
             break;
         case 'searchNotes':
             await searchNotes(e.data.id, e.data.text, e.data.indexes);
