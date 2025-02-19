@@ -105,12 +105,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			notes = results.notes;
 			onFilterInputChanged();
 		} else {
-			notes = {};
-			let keys = mode.chapterKey?.split('_');
-			verseIdx = keys[2];
-			wordIdx = keys[3];
-			initNotes();
 			noteKeys = [];
+			notes = {};
+			initNotes();
+			/** filter to keys with the same chapterKey*/
 			Object.keys(results.notes).forEach((k) => {
 				if (results.notes[k].chapterKey == mode.chapterKey) {
 					notes[k] = results.notes[k];
@@ -164,27 +162,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	/**
-	 * Notes
+	 * Note Actions
 	 */
 	let noteActions: any = {
 		delete: () => {
 			showConfirmDelete = true;
-		}
-	};
-
-	let noteListActions: any = {
-		filter: () => {
-			showNoteListFilter = !showNoteListFilter;
-			showNoteListActions = false;
-		},
-		'split vertical': () => {
-			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});
-			showNoteListActions = false;
-		},
-
-		'split horizontal': () => {
-			paneService.onSplitPane(mode.paneId, 'h', 'Modules', {});
-			showNoteListActions = false;
 		}
 	};
 
@@ -237,22 +219,17 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			toastService.showToast(`invalid chapter key: ${mode.chapterKey}`);
 		}
 	}
+
 	async function onAdd() {
 		let title;
 		let keys = mode.chapterKey?.split('_');
-		if (keys[0] === '0') {
-			/** 0 is our all note bookID */
-			title = 'notes';
-		} else {
-			title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
-		}
 
 		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
 		initNotes();
 
 		noteID = uuid4();
 		let now = Date.now();
-
+		
 		if (keys[0] === '0') {
 			annotations[verseIdx].notes.words[wordIdx][noteID] = {
 				chapterKey: mode.chapterKey,
@@ -266,6 +243,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		} else {
 			let chapter = await chapterService.getChapter(mode.chapterKey);
 			let verse = chapter['verseMap'][verseIdx];
+			let title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 
 			annotations[verseIdx].notes.words[wordIdx][noteID] = {
 				chapterKey: mode.chapterKey,
@@ -278,10 +256,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			};
 		}
 		note = annotations[verseIdx].notes.words[wordIdx][noteID];
-
-		// add new note to notes
-		notes[noteID] = note;
-
+		
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 		await onSave(`Created Note ${title}`);
@@ -318,25 +293,33 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	/**
-	 * This function makes it possible for us to reuse the notes container in the chapter and notes module
-	 *
-	 * @param nk note key
+	 * Note List
 	 */
-	async function onSelectedNote(nk: string) {
-		noteID = nk;
-		note = notes[nk];
+	let noteListActions: any = {
+		filter: () => {
+			showNoteListFilter = !showNoteListFilter;
+			showNoteListActions = false;
+		},
+		'split vertical': () => {
+			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});
+			showNoteListActions = false;
+		},
+
+		'split horizontal': () => {
+			paneService.onSplitPane(mode.paneId, 'h', 'Modules', {});
+			showNoteListActions = false;
+		}
+	};
+
+	async function onSelectedNote(noteId: string) {
+		note = notes[noteId];
 		let keys = note.chapterKey?.split('_');
 
 		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
 		verseIdx = keys[2];
 		wordIdx = keys[3];
 
-		/**
-		 * update this to include verseIdx and the wordIdx for this note
-		 * were also going to need to grab the annotations for that note again
-		 *
-		 */
-		note = annotations[verseIdx].notes.words[wordIdx][nk];
+		note = annotations[verseIdx].notes.words[wordIdx][noteId];
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 	}
