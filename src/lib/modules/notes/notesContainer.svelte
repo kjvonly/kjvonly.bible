@@ -28,7 +28,7 @@
 	let showNoteActions = $state(false);
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
-	let searchTerm = $state('')
+	let searchTerm = $state('');
 	let tagInput = $state();
 
 	let noteActions: any = {
@@ -52,7 +52,8 @@
 
 	function onSearchResults(results: any) {
 		if (results.id === searchID) {
-			notes = results.notes
+			noteKeys = [];
+			notes = results.notes;
 			updateNotesKeys();
 		}
 	}
@@ -61,17 +62,17 @@
 		if (allNotes) {
 			noteKeys = [];
 			notes = {};
-			if (searchTerm.length < 1 ){
-				await searchService.getAllNotes(searchID)
+			if (searchTerm.length < 1) {
+				await searchService.getAllNotes(searchID);
 			} else {
 				await searchService.searchNotes(searchID, searchTerm, ['title', 'text', 'tags:tag']);
 			}
-			
 		} else {
 			let keys = mode.chapterKey?.split('_');
 			verseIdx = keys[2];
 			wordIdx = keys[3];
 			initNotes();
+			noteKeys = [];
 			notes = annotations[verseIdx].notes.words[wordIdx];
 			updateNotesKeys();
 		}
@@ -80,8 +81,10 @@
 	async function onConfirmDelete() {
 		delete annotations[verseIdx].notes.words[wordIdx][noteID];
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-		updateNotes();
+		noteKeys = [];
 		delete notes[noteID];
+		searchService.deleteNote(searchID, noteID);
+		updateNotes();
 		onCloseNote();
 	}
 
@@ -91,6 +94,8 @@
 
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		toastService.showToast(toastMessage);
+		searchService.addNote(searchID, noteID, JSON.parse(JSON.stringify(note)));
+		updateNotes();
 	}
 
 	function initNotes() {
@@ -362,7 +367,7 @@
 			{/if}
 		{:else}
 			<div class="flex w-full max-w-lg flex-col items-start justify-start">
-				<div class="flex justify-center">
+				<div class="flex justify-center px-2">
 					<label
 						for="tags"
 						class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-supporta-600"
@@ -406,7 +411,7 @@
 					</label>
 				</div>
 				{#if note?.tags}
-					<div class="flex flex-row items-end space-x-2 space-y-2 py-2">
+					<div class="flex flex-row items-end space-x-2 space-y-2 p-2">
 						{#each Object.keys(note?.tags) as tk}
 							<span
 								class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"

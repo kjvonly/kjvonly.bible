@@ -98,12 +98,16 @@ async function initNotes() {
 }
 
 
-function addNote(id: string, note: any) {
-    notesDocument.addAsync(id, note);
+function addNote(id: string, noteID: string, note: any) {
+    notes[noteID] = note
+    notesDocument.add(noteID, note);
 }
 
-function deleteNote(id: string) {
-    notesDocument.removeAsync(id);
+function deleteNote(id: string, noteID: string) {
+    console.log('note is', notes[noteID])
+    delete notes[noteID]
+    console.log('deleted', noteID, 'note is', notes[noteID])
+    notesDocument.remove(noteID);
 }
 
 async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
@@ -112,23 +116,21 @@ async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
         index: indexes
     });
 
-    
+
 
     let filteredNotes: any = {}
     results.forEach(r => {
-        r.result.forEach(id =>{
+        r.result.forEach(id => {
             filteredNotes[id] = notes[id]
         })
     })
-    console.log('results', results)
-    console.log('fgilted results', filteredNotes)
     if (Object.keys(filteredNotes).length > 0) {
         postMessage({ id: id, notes: filteredNotes })
     }
 }
 
-function getAllNotes(id: string){
-    postMessage({ id: id, notes: notes})
+function getAllNotes(id: string) {
+    postMessage({ id: id, notes: notes })
 
 }
 
@@ -143,10 +145,10 @@ onmessage = async (e) => {
             await search(e.data.id, e.data.text)
             break;
         case 'addNote':
-            addNote(e.data.id, e.data.note)
+            addNote(e.data.id, e.data.noteID, e.data.note)
             break;
         case 'deleteNote':
-            deleteNote(e.data.id)
+            deleteNote(e.data.id, e.data.noteID)
             break;
         case 'searchNotes':
             console.log('search ntoes called')

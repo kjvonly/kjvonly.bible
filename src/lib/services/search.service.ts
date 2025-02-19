@@ -34,6 +34,14 @@ class SearchService {
     getAllNotes(id: string) {
         this.webWorker.postMessage({ action: 'getAllNotes', id: id})
     }
+
+    deleteNote(id:string, noteID: string){
+        this.webWorker.postMessage({ action: 'deleteNote', id: id, noteID: noteID})
+    }
+
+    addNote(id: string, noteID:string, note: any){
+        this.webWorker.postMessage({ action: 'addNote', id: id, noteID: noteID, note: note})
+    }
 }
 
 export const searchService = new SearchService()
