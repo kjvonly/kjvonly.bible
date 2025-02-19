@@ -39,7 +39,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
 	import Quill from 'quill';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
 
 	let {
@@ -48,27 +48,81 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		annotations = $bindable(),
 		allNotes = false
 	} = $props();
+
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
-	let searchID = uuid4();
-	let editor = uuid4().replaceAll('-', '');
+	let booknames: any = {};
+
+	/**
+	 * These variables are set once a user
+	 * adds a new note or selects an existing
+	 * note.
+	 */
+	let noteID: string = '';
 	let note: any = $state();
 	let notes: any = $state({});
 	let noteKeys: string[] = $state([]);
-	let quill: Quill;
 	let verseIdx = 0;
 	let wordIdx = 0;
-	let booknames: any = {};
+
+	/**
+	 * view toggles
+	 */
 	let showNoteActions = $state(false);
 	let showNoteListActions = $state(false);
 	let showNoteListFilter = $state(false);
-	let noteID: string = '';
 	let showConfirmDelete = $state(false);
-	let searchTerm = $state('');
+
+	/**
+	 * search ID. This id is for filter search
+	 * We also subscribe to the '*' searchID
+	 * to alway retrieve the latest notes
+	 */
+	let searchID = uuid4();
+
+	let editor = uuid4().replaceAll('-', '');
+	let quill: Quill;
+
+	/**
+	 * inputs
+	 */
 	let tagInput: string = $state('');
 	let filterInput: string = $state('');
 
+	/**
+	 * Note List
+	 */
+	function updateNotesKeys() {
+		noteKeys = Object.keys(notes).sort((a, b) => {
+			return (notes[a].modified - notes[b].modified) * -1;
+		});
+	}
+
+	function onSearchResults(results: any) {
+		if (allNotes) {
+			noteKeys = [];
+			notes = results.notes;
+			onFilterInputChanged();
+		} else {
+			notes = {};
+			let keys = mode.chapterKey?.split('_');
+			verseIdx = keys[2];
+			wordIdx = keys[3];
+			initNotes();
+			noteKeys = [];
+			Object.keys(results.notes).forEach((k) => {
+				if (results.notes[k].chapterKey == mode.chapterKey) {
+					notes[k] = results.notes[k];
+				}
+			});
+			onFilterInputChanged();
+		}
+	}
+
+	/**
+	 * Filters
+	 */
 	let filterParams = $state([
 		{
 			option: 'title',
@@ -109,6 +163,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 	}
 
+	/**
+	 * Notes
+	 */
 	let noteActions: any = {
 		delete: () => {
 			showConfirmDelete = true;
@@ -136,33 +193,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		showConfirmDelete = false;
 		note = undefined;
 		noteID = '';
-	}
-
-	function updateNotesKeys() {
-		noteKeys = Object.keys(notes).sort((a, b) => {
-			return (notes[a].modified - notes[b].modified) * -1;
-		});
-	}
-
-	function onSearchResults(results: any) {
-		if (allNotes) {
-			noteKeys = [];
-			notes = results.notes;
-			onFilterInputChanged();
-		} else {
-			notes = {};
-			let keys = mode.chapterKey?.split('_');
-			verseIdx = keys[2];
-			wordIdx = keys[3];
-			initNotes();
-			noteKeys = [];
-			Object.keys(results.notes).forEach((k) => {
-				if (results.notes[k].chapterKey == mode.chapterKey) {
-					notes[k] = results.notes[k];
-				}
-			});
-			onFilterInputChanged();
-		}
 	}
 
 	async function onConfirmDelete() {
@@ -320,7 +350,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		searchService.subscribe('*', onSearchResults);
 		searchService.getAllNotes('*');
 
-		/* editor */ 
+		/* editor */
 		if (element) {
 			quill = new Quill(element, {
 				theme: 'snow'
