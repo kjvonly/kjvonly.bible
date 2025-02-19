@@ -71,7 +71,7 @@ async function search(id: string, text: string) {
 let notesDocument = new FlexSearch.Document({
     document: {
         id: "id",
-        index: ["title", "text", "tags:tag"]
+        index: ["title", "text", "tags[]:tag"]
     }
 }
 );

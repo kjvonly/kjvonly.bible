@@ -37,6 +37,8 @@
 	function onFilterInputChanged() {
 		if (filterInput.length > 0) {
 			searchService.searchNotes(searchID, filterInput, ['title', 'text', 'tags[]:tag']);
+		} else {
+			updateNotesKeys()
 		}
 	}
 
@@ -191,7 +193,7 @@
 				title: `Note`,
 				created: now,
 				modified: now,
-				tags: {}
+				tags: []
 			};
 		} else {
 			let chapter = await chapterService.getChapter(mode.chapterKey);
@@ -204,7 +206,7 @@
 				title: `${title}`,
 				created: now,
 				modified: now,
-				tags: {}
+				tags: []
 			};
 		}
 		note = annotations[verseIdx].notes.words[wordIdx][noteID];
@@ -224,20 +226,27 @@
 
 		let tagId = uuid4();
 		if (!note.tags) {
-			note.tags = {};
+			note.tags =[];
 		}
 		let now = Date.now();
-		note.tags[tagId] = {
+		note.tags.push({
+			id: tagId,
 			created: now,
 			modified: now,
 			tag: tagInput
-		};
+		});
 
 		tagInput = '';
 	}
 
 	function onDeleteTag(tagID: string) {
-		delete note?.tags[tagID];
+		if(note){
+			note.tags = note.tags.forEach((t: any) => {
+			if (t.id !== tagID){
+				return t
+			}
+		});
+		}
 	}
 
 	/**
@@ -458,16 +467,16 @@
 				</div>
 				{#if note?.tags}
 					<div class="flex flex-row items-end space-x-2 space-y-2 p-2">
-						{#each Object.keys(note?.tags) as tk}
+						{#each note.tags as tk}
 							<span
 								class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
 							>
-								<p class="whitespace-nowrap text-sm">{note.tags[tk].tag}</p>
+								<p class="whitespace-nowrap text-sm">{tk.tag}</p>
 
 								<button
 									aria-label="delete tag"
 									onclick={() => {
-										onDeleteTag(tk);
+										onDeleteTag(tk.id);
 									}}
 									class="-me-1 ms-1.5 inline-block rounded-full bg-supporta-200 p-0.5 text-supporta-700 transition hover:bg-supporta-300"
 								>
@@ -602,11 +611,11 @@
 								{new Date(notes[nk].modified).toLocaleTimeString()}</span
 							>
 							<div class="flex flex-row justify-start space-x-2 pt-2">
-								{#each Object.keys(notes[nk].tags) as tk}
+								{#each notes[nk].tags as tk}
 									<span
 										class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
 									>
-										<p class="whitespace-nowrap text-sm">{notes[nk].tags[tk].tag}</p>
+										<p class="whitespace-nowrap text-sm">{tk.tag}</p>
 									</span>
 								{/each}
 							</div>
