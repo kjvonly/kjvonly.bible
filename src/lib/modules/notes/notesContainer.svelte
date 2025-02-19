@@ -34,16 +34,39 @@
 	let tagInput: string = $state('');
 	let filterInput: string = $state('');
 
+	let filterParams = $state([
+		{
+			option: 'title',
+			index: 'title',
+			checked: true
+		},
+		{
+			option: 'text',
+			index: 'text',
+			checked: true
+		},
+		{
+			option: 'tags',
+			index: 'tags[]:tag',
+			checked: true
+		}
+	]);
+
 	function onFilterInputChanged() {
 		if (filterInput.length > 0) {
-			searchService.searchNotes(searchID, filterInput, ['title', 'text', 'tags[]:tag']);
+			let indexes: any = [];
+			filterParams.forEach((fp: any) => {
+				if (fp.checked) {
+					return indexes.push(fp.index);
+				}
+			});
+			searchService.searchNotes(searchID, filterInput, indexes);
 		} else {
-			updateNotesKeys()
+			updateNotesKeys();
 		}
 	}
 
 	function onFilterInputResults(results: any) {
-		console.log('filter results called')
 		if (results.id === searchID) {
 			noteKeys = Object.keys(results.notes).sort((a, b) => {
 				return (notes[a].modified - notes[b].modified) * -1;
@@ -226,7 +249,7 @@
 
 		let tagId = uuid4();
 		if (!note.tags) {
-			note.tags =[];
+			note.tags = [];
 		}
 		let now = Date.now();
 		note.tags.push({
@@ -240,12 +263,12 @@
 	}
 
 	function onDeleteTag(tagID: string) {
-		if(note){
+		if (note) {
 			note.tags = note.tags.forEach((t: any) => {
-			if (t.id !== tagID){
-				return t
-			}
-		});
+				if (t.id !== tagID) {
+					return t;
+				}
+			});
 		}
 	}
 
@@ -579,7 +602,7 @@
 				class="flex h-full w-full max-w-lg flex-col overflow-hidden overflow-y-scroll border border-neutral-100"
 			>
 				{#if showNoteListFilter}
-					<div class="flex justify-start px-2">
+					<div class="flex flex-col justify-start px-2">
 						<label
 							for="tags"
 							class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-supporta-600"
@@ -595,6 +618,32 @@
 								/>
 							</div>
 						</label>
+						<div>
+							<fieldset>
+								<legend class="sr-only">Checkboxes</legend>
+								{#each filterParams as fp}
+									<div class="space-y-2">
+										<label for="Option1" class="flex cursor-pointer items-start gap-4">
+											<div class="flex items-center">
+												&#8203;
+												<input
+													bind:checked={fp.checked}
+													type="checkbox"
+													class="size-4 rounded-sm border-neutral-200 accent-supporta-300"
+													id="Option1"
+												/>
+											</div>
+
+											<div>
+												<strong class="capitalize text-neutral-500">
+													{fp.option}
+												</strong>
+											</div>
+										</label>
+									</div>
+								{/each}
+							</fieldset>
+						</div>
 					</div>
 				{/if}
 				{#each noteKeys as nk}

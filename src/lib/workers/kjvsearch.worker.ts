@@ -116,10 +116,6 @@ async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
         index: indexes
     });
 
-
-    console.log('results notes ', results)
-
-
     let filteredNotes: any = {}
     results.forEach(r => {
         r.result.forEach(id => {
@@ -153,7 +149,6 @@ onmessage = async (e) => {
             deleteNote(e.data.id, e.data.noteID)
             break;
         case 'searchNotes':
-            console.log('search ntoes called')
             await searchNotes(e.data.id, e.data.text, e.data.indexes);
             break
         case 'getAllNotes':
