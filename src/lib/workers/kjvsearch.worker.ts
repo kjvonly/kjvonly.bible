@@ -101,11 +101,13 @@ async function initNotes() {
 function addNote(id: string, noteID: string, note: any) {
     notes[noteID] = note
     notesDocument.add(noteID, note);
+    getAllNotes('*')
 }
 
 function deleteNote(id: string, noteID: string) {
     delete notes[noteID]
     notesDocument.remove(noteID);
+    getAllNotes('*')
 }
 
 async function searchNotes(id: string, searchTerm: string, indexes: string[]) {

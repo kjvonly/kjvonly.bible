@@ -16,7 +16,7 @@
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
-	let searchID = uuid4();
+	let searchID = '*'; /** we want all updates for notes*/
 	let editor = uuid4().replaceAll('-', '');
 	let note: any = $state();
 	let notes: any = $state({});
@@ -26,14 +26,27 @@
 	let wordIdx = 0;
 	let booknames: any = {};
 	let showNoteActions = $state(false);
+	let showNoteListActions = $state(false);
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
 	let searchTerm = $state('');
-	let tagInput = $state();
+	let tagInput: string = $state('');
 
 	let noteActions: any = {
 		delete: () => {
 			showConfirmDelete = true;
+		}
+	};
+
+	let noteListActions: any = {
+		'split vertical': () => {
+			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});
+			showNoteListActions = false;
+		},
+
+		'split horizontal': () => {
+			paneService.onSplitPane(mode.paneId, 'h', 'Modules', {});
+			showNoteListActions = false;
 		}
 	};
 
@@ -51,32 +64,45 @@
 	}
 
 	function onSearchResults(results: any) {
-		if (results.id === searchID) {
+		if (allNotes) {
 			noteKeys = [];
 			notes = results.notes;
 			updateNotesKeys();
-		}
-	}
-
-	async function updateNotes() {
-		if (allNotes) {
-			noteKeys = [];
-			notes = {};
-			if (searchTerm.length < 1) {
-				await searchService.getAllNotes(searchID);
-			} else {
-				await searchService.searchNotes(searchID, searchTerm, ['title', 'text', 'tags:tag']);
-			}
 		} else {
+			notes = {};
 			let keys = mode.chapterKey?.split('_');
 			verseIdx = keys[2];
 			wordIdx = keys[3];
 			initNotes();
 			noteKeys = [];
-			notes = annotations[verseIdx].notes.words[wordIdx];
+			Object.keys(results.notes).forEach((k) => {
+				if (results.notes[k].chapterKey == mode.chapterKey) {
+					notes[k] = results.notes[k];
+				}
+			});
 			updateNotesKeys();
 		}
 	}
+
+	// async function updateNotes() {
+	// 	if (allNotes) {
+	// 		noteKeys = [];
+	// 		notes = {};
+	// 		if (searchTerm.length < 1) {
+	// 			await searchService.getAllNotes(searchID);
+	// 		} else {
+	// 			await searchService.searchNotes(searchID, searchTerm, ['title', 'text', 'tags:tag']);
+	// 		}
+	// 	} else {
+	// 		let keys = mode.chapterKey?.split('_');
+	// 		verseIdx = keys[2];
+	// 		wordIdx = keys[3];
+	// 		initNotes();
+	// 		noteKeys = [];
+	// 		notes = annotations[verseIdx].notes.words[wordIdx];
+	// 		updateNotesKeys();
+	// 	}
+	// }
 
 	async function onConfirmDelete() {
 		delete annotations[verseIdx].notes.words[wordIdx][noteID];
@@ -84,7 +110,6 @@
 		noteKeys = [];
 		delete notes[noteID];
 		searchService.deleteNote(searchID, noteID);
-		updateNotes();
 		onCloseNote();
 	}
 
@@ -95,7 +120,6 @@
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		toastService.showToast(toastMessage);
 		searchService.addNote(searchID, noteID, JSON.parse(JSON.stringify(note)));
-		updateNotes();
 	}
 
 	function initNotes() {
@@ -170,7 +194,6 @@
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 		await onSave(`Created Note ${title}`);
-		updateNotes();
 	}
 
 	function onAddTag() {
@@ -224,7 +247,9 @@
 		let element = document.getElementById(editor);
 		booknames = await chapterService.getBooknames();
 
-		updateNotes();
+		searchService.subscribe(searchID, onSearchResults);
+		searchService.getAllNotes(searchID);
+
 		if (element) {
 			quill = new Quill(element, {
 				theme: 'snow'
@@ -240,8 +265,6 @@
 				}
 			});
 		}
-
-		searchService.subscribe(searchID, onSearchResults);
 	});
 </script>
 
@@ -471,7 +494,34 @@
 					</g>
 				</svg>
 			</button>
-			<p>Notes</p>
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+			<p
+				onclick={() => {
+					showNoteListActions = !showNoteListActions;
+				}}
+				class="hover:cursor-pointer"
+			>
+				<span class="inline-block font-bold">Note</span>
+				<button aria-label="chevron down" class="h-4 w-4">
+					<svg
+						width="100%"
+						height="100%"
+						viewBox="0 0 25.4 14.098638"
+						version="1.1"
+						xml:space="preserve"
+						xmlns="http://www.w3.org/2000/svg"
+						><g transform="translate(-53.644677,-127.79211)"
+							><path
+								class="fill-neutral-700"
+								style="stroke-width:0.352778"
+								d="m 59.906487,137.65245 -6.26181,-4.21622 v -2.82206 -2.82206 l 6.35,4.24282 6.35,4.24283 6.35,-4.24283 6.35,-4.24282 v 2.82222 2.82222 l -6.3429,4.23808 c -3.48859,2.33094 -6.38578,4.22817 -6.43819,4.21606 -0.0524,-0.0121 -2.91311,-1.91931 -6.3571,-4.23824 z"
+								id="path179"
+							/></g
+						></svg
+					>
+				</button>
+			</p>
 			<button
 				aria-label="close"
 				onclick={() => {
@@ -492,35 +542,52 @@
 			</button>
 		</header>
 
-		<div
-			class="flex h-full w-full max-w-lg flex-col overflow-hidden overflow-y-scroll border border-neutral-100"
-		>
-			{#each noteKeys as nk}
-				<button
-					onclick={() => {
-						onSelectedNote(nk);
-					}}
-					class="flex w-full flex-nowrap p-2 text-left hover:bg-neutral-100"
-				>
-					<div class="flex flex-col">
-						<span>{notes[nk].title}</span>
-						<span class="text-neutral-400"
-							>{new Date(notes[nk].modified).toLocaleDateString()}
-							{new Date(notes[nk].modified).toLocaleTimeString()}</span
-						>
-						<div class="flex flex-row justify-start space-x-2 pt-2">
-							{#each Object.keys(notes[nk].tags) as tk}
-								<span
-									class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
-								>
-									<p class="whitespace-nowrap text-sm">{notes[nk].tags[tk].tag}</p>
-								</span>
-							{/each}
+		{#if !showNoteListActions}
+			<div
+				class="flex h-full w-full max-w-lg flex-col overflow-hidden overflow-y-scroll border border-neutral-100"
+			>
+				{#each noteKeys as nk}
+					<button
+						onclick={() => {
+							onSelectedNote(nk);
+						}}
+						class="flex w-full flex-nowrap p-2 text-left hover:bg-neutral-100"
+					>
+						<div class="flex flex-col">
+							<span>{notes[nk].title}</span>
+							<span class="text-neutral-400"
+								>{new Date(notes[nk].modified).toLocaleDateString()}
+								{new Date(notes[nk].modified).toLocaleTimeString()}</span
+							>
+							<div class="flex flex-row justify-start space-x-2 pt-2">
+								{#each Object.keys(notes[nk].tags) as tk}
+									<span
+										class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
+									>
+										<p class="whitespace-nowrap text-sm">{notes[nk].tags[tk].tag}</p>
+									</span>
+								{/each}
+							</div>
 						</div>
-					</div>
-				</button>
-			{/each}
-		</div>
+					</button>
+				{/each}
+			</div>
+		{/if}
+		{#if showNoteListActions}
+			<div
+				class="flex h-full w-full max-w-lg flex-col items-start justify-start border border-neutral-100"
+			>
+				{#each Object.keys(noteListActions) as na}
+					<button
+						class="w-full py-4 ps-2 text-left capitalize hover:bg-primary-50"
+						aria-label="note action button"
+						onclick={() => noteListActions[na]()}
+					>
+						{na}
+					</button>
+				{/each}
+			</div>
+		{/if}
 	{/if}
 
 	<!-- keep the editor in the dom the while notes container is open. toggle the hidden params. Otherwise we'd need to keep creating this. -->
