@@ -153,6 +153,9 @@
 				});
 			}, 50);
 		}
+
+		let cc = document.getElementById(`chapter-container-${id}`)
+		cc?.addEventListener('contextmenu', e => e.preventDefault())
 	});
 </script>
 
@@ -170,9 +173,9 @@
 				paneId={pane.id}
 			></ChapterActions>
 		</div>
-		<div class="flex justify-center">
+		<div class="flex justify-center kjvonly-noselect"  oncontextmenu={"return false;"}>
 			<div class="max-w-lg">
-				<div bind:clientWidth={chapterWidth}>
+				<div id="chapter-container-{id}" bind:clientWidth={chapterWidth}>
 					<Chapter
 						bind:bookName
 						bind:bookChapter
