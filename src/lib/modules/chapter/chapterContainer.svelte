@@ -156,7 +156,8 @@
 	});
 </script>
 
-<div class="kjvonly-noselect overflow-hidden">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="overflow-hidden" oncontextmenu="{() => {return false;}}">
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
 			<ChapterActions
