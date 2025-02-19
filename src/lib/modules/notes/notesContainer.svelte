@@ -113,7 +113,8 @@
 		if (allNotes) {
 			noteKeys = [];
 			notes = results.notes;
-			updateNotesKeys();
+			onFilterInputChanged()
+			
 		} else {
 			notes = {};
 			let keys = mode.chapterKey?.split('_');
@@ -126,29 +127,9 @@
 					notes[k] = results.notes[k];
 				}
 			});
-			updateNotesKeys();
+			onFilterInputChanged()
 		}
 	}
-
-	// async function updateNotes() {
-	// 	if (allNotes) {
-	// 		noteKeys = [];
-	// 		notes = {};
-	// 		if (searchTerm.length < 1) {
-	// 			await searchService.getAllNotes(searchID);
-	// 		} else {
-	// 			await searchService.searchNotes(searchID, searchTerm, ['title', 'text', 'tags:tag']);
-	// 		}
-	// 	} else {
-	// 		let keys = mode.chapterKey?.split('_');
-	// 		verseIdx = keys[2];
-	// 		wordIdx = keys[3];
-	// 		initNotes();
-	// 		noteKeys = [];
-	// 		notes = annotations[verseIdx].notes.words[wordIdx];
-	// 		updateNotesKeys();
-	// 	}
-	// }
 
 	async function onConfirmDelete() {
 		delete annotations[verseIdx].notes.words[wordIdx][noteID];
