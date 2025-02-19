@@ -10,6 +10,8 @@ async function init() {
         await bibleDB.waitForIndexDB()
 
         let keys = await bibleDB.getAllKeys('chapters')
+        let booknames: any = await bibleDB.getValue('booknames', 'booknames')
+
         keys.forEach(async (key: IDBValidKey) => {
             let chapter = await bibleDB.getValue('chapters', key.toString())
             if (key === 'booknames') {
@@ -17,7 +19,8 @@ async function init() {
             }
 
             Object.keys(chapter['verseMap']).forEach((k) => {
-                index.addAsync(`${key}_${k}`, `${chapter['verseMap'][k]}`)
+                let bookChapter = key.toString().split('_')
+                index.addAsync(`${key}_${k}`, `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${k} ${chapter['verseMap'][k]}`)
             })
         });
     } else {
