@@ -8,7 +8,7 @@
 	let verseKeys: string[] = $state([]);
 	let verses: any = $state({});
 	let booknames: any;
-    let checkAll  = $state(false)
+	let checkAll = $state(false);
 
 	let title = $state('');
 	onMount(() => {
@@ -91,11 +91,11 @@
 		toastService.showToast('Copied Verses');
 	}
 
-    function toggleSelects(){
-        Object.keys(verses).forEach(v => {
-            verses[v].checked = checkAll
-        })
-    }
+	function toggleSelects() {
+		Object.keys(verses).forEach((v) => {
+			verses[v].checked = checkAll;
+		});
+	}
 
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
@@ -168,7 +168,9 @@
 					type="checkbox"
 					class="mx-4 mt-5 h-5 w-5 accent-supporta-500"
 					bind:checked={checkAll}
-					onchange={()=> {console.log('changed'); toggleSelects()}}
+					onchange={() => {
+						toggleSelects();
+					}}
 				/>
 			</div>
 			{#each verseKeys as k}
