@@ -3,6 +3,7 @@
 	import ActionDropdown from './actionsPopup.svelte';
 	import SettingsPopup from './settingsPopup.svelte';
 	import NotesContainer from '../notes/notesContainer.svelte';
+	import CopyVersePopup from './copyVersePopup.svelte';
 
 	let {
 		mode = $bindable(),
@@ -17,6 +18,7 @@
 	let showBookChapterPopup: Boolean = $state(false);
 	let showSettingsPopup: Boolean = $state(false);
 	let showActionsPopup: Boolean = $state(false);
+	let showCopyVersePopup: boolean  = $state(false)
 
 	function onBookChapterClick(event: Event) {
 		event.stopPropagation();
@@ -115,13 +117,19 @@
 
 {#if showActionsPopup}
 	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
-		<ActionDropdown {paneId} bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
+		<ActionDropdown {paneId} bind:showCopyVersePopup bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
 	</div>
 {/if}
 
 {#if mode.notePopup.show}
 	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
 		<NotesContainer containerHeight bind:mode bind:annotations></NotesContainer>
+	</div>
+{/if}
+
+{#if showCopyVersePopup}
+	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
+		<CopyVersePopup bind:showCopyVersePopup {chapterKey}></CopyVersePopup>
 	</div>
 {/if}
 
