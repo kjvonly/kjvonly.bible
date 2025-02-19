@@ -1,5 +1,6 @@
 import ChapterContainer from '$lib/modules/chapter/chapterContainer.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
+import Notes from '$lib/modules/notes/notes.svelte';
 import StrongsVersesRefs from '$lib/modules/refs/strongs-verses-refs/strongsVersesRefs.svelte';
 import Search from '../modules/search/search.svelte';
 
@@ -25,12 +26,14 @@ export class ComponentMapping {
 			case 'Search':
 				return Search;
 			case 'Modules':
-				return Modules
+				return Modules;
+			case "Notes":
+				return Notes;
 		}
 
 		return ChapterContainer;
 	}
-	
+
 
 }
 

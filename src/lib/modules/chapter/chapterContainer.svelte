@@ -10,10 +10,16 @@
 	import type { Pane } from '$lib/models/pane.model';
 	import uuid4 from 'uuid4';
 	import EditOptions from './editOptions.svelte';
+	import { chapterService } from '$lib/api/chapters.service';
 
 	let id = uuid4();
 	let chapterKey: string | null = $state(null);
-	let mode: any = $state({ value: '', colorAnnotation: 'bg-highlighta' });
+	let mode: any = $state({
+		value: '',
+		colorAnnotation: 'bg-highlighta',
+		chapterKey: '73_1_1_1',
+		notePopup: { show: false  }
+	});
 	let annotations: any = $state({});
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
@@ -32,7 +38,6 @@
 		paneId;
 		pane = paneService.findNode(paneService.rootPane, paneId);
 	});
-
 
 	$effect(() => {
 		chapterSettings;
@@ -55,9 +60,6 @@
 		}
 	});
 
-	function goto(key: any) {
-		chapterKey = key;
-	}
 
 	async function _nextChapter(e: Event) {
 		e.stopPropagation();
@@ -153,10 +155,19 @@
 		}
 	});
 </script>
-<div class="kjvonly-noselect overflow-hidden">
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="overflow-hidden" oncontextmenu="{() => {return false;}}">
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
-			<ChapterActions bind:chapterKey {bookName} {bookChapter} {containerHeight} paneId={pane.id}
+			<ChapterActions
+				bind:mode
+				bind:chapterKey
+				bind:annotations
+				{bookName}
+				{bookChapter}
+				{containerHeight}
+				paneId={pane.id}
 			></ChapterActions>
 		</div>
 		<div class="flex justify-center">
@@ -247,8 +258,6 @@
 		</div>
 	</div>
 </div>
-
-
 
 <style>
 	.kjvonly-noselect {

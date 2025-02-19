@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { chapterService } from '$lib/api/chapters.service';
 	import Verse from './verse.svelte';
 
@@ -26,6 +26,8 @@
 			return;
 		}
 
+		mode.value = ''
+
 		let bcv = chapterKey.split('_');
 		if (bcv.length === 3) {
 			chapterKey = `${bcv[0]}_${bcv[1]}`;
@@ -42,14 +44,15 @@
 		if (chapterKey) {
 			let el = document.getElementById(id);
 			el?.scrollTo(0, 0);
+			annotations = {};
 			loadAnnotations();
 			loadChapter();
 		}
 	});
 
+
 	let verses: any = $state();
 	let keys: string[] = $state([]);
-
 
 	async function loadAnnotations() {
 		annotations = await chapterService.getAnnotations(chapterKey);

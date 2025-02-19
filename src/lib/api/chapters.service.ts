@@ -35,9 +35,9 @@ export class ChapterService {
 
     async getChapter(chapterKey: string): Promise<any> {
         let chapter = undefined
-        let bcv = chapterKey.split('_')
-        if (bcv.length === 3) {
-            chapterKey = `${bcv[0]}_${bcv[1]}`
+        let bcvw = chapterKey.split('_')
+        if (bcvw.length > 2) {
+            chapterKey = `${bcvw[0]}_${bcvw[1]}`
         }
 
         try {

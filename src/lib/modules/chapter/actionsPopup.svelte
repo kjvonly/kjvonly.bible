@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import { json } from '@sveltejs/kit';
+	import { toastService } from '$lib/services/toast.service';
 
 	let { showActionsDropdown = $bindable(), paneId } = $props();
 
@@ -12,10 +12,10 @@
 		'split horizontal': () => {
 			onSplitHorizontal();
 		},
-		'export annotations': () => {
+		'export data': () => {
 			onExport();
 		},
-		'import annotations': () => {
+		'import data': () => {
 			onImport();
 		},
 		'': () => {},
@@ -39,7 +39,9 @@
 	}
 
 	async function onExport() {
+		toastService.showToast('starting export data')
 		let data = await chapterService.getAllAnnotations();
+
 		var element = document.createElement('a');
 		element.setAttribute(
 			'href',
@@ -53,19 +55,23 @@
 		element.click();
 
 		document.body.removeChild(element);
+		toastService.showToast('finished export data')
 	}
 
 	function doImport(e) {
+		
 		const reader = new FileReader();
 		reader.onload = (e2) => {
 			let result: any = e2?.target?.result;
-			try{
-				let annotations = JSON.parse(result)
-				chapterService.putAllAnnotations(annotations)
-				document.getElementById('kjvonly-import')?.remove()
-			}catch(ex){
-				console.log(`error importing file ${e.target.files[0]}`)
-				document.getElementById('kjvonly-import')?.remove()
+			try {
+				toastService.showToast('starting import data')
+				let data = JSON.parse(result);
+				chapterService.putAllAnnotations(data.annotations);
+				document.getElementById('kjvonly-import')?.remove();
+				toastService.showToast('finished import data')
+			} catch (ex) {
+				console.log(`error importing file ${e.target.files[0]}`);
+				document.getElementById('kjvonly-import')?.remove();
 			}
 		};
 		reader.readAsText(e.target.files[0]);
@@ -73,7 +79,7 @@
 
 	async function onImport() {
 		var element = document.createElement('input');
-		element.setAttribute('id', 'kjvonly-import')
+		element.setAttribute('id', 'kjvonly-import');
 		element.setAttribute('type', 'file');
 		element.setAttribute('accept', '.json');
 		element.onchange = doImport;
@@ -82,8 +88,6 @@
 		document.body.appendChild(element);
 
 		element.click();
-
-		
 	}
 
 	let containerHeight = $state(0);

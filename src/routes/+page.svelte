@@ -6,6 +6,7 @@
 	import { Buffer } from '$lib/models/buffer.model';
 	import PaneContainer from '$lib/components/pane.svelte';
 	import { type Pane } from '$lib/models/pane.model';
+	import { toastService } from '$lib/services/toast.service';
 
 	let template = $state();
 	let paneIds: string[] = $state([]);
@@ -216,7 +217,19 @@
 		paneService.onDeletePane = deletePane;
 		paneService.onSplitPane = splitPane;
 		onGridUpdate();
+
+		toastService.showToast = showToast;
 	});
+
+	let toasts: string[] = $state([]);
+	let timeoutId = 0;
+	function showToast(message: string) {
+		clearTimeout(timeoutId);
+		toasts = [message];
+		timeoutId = setTimeout(() => {
+			toasts = [];
+		}, 2500);
+	}
 </script>
 
 <div class="flex h-[100vh] w-full flex-col">
@@ -230,3 +243,13 @@
 		{/each}
 	</div>
 </div>
+
+{#if toasts.length > 0}
+	{#each toasts as t}
+		<aside
+			class="fixed bottom-4 end-4 z-[2000] flex items-center justify-center gap-4 rounded-lg border bg-neutral-100 px-5 py-3"
+		>
+			{t}
+		</aside>
+	{/each}
+{/if}
