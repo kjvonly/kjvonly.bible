@@ -104,9 +104,7 @@ function addNote(id: string, noteID: string, note: any) {
 }
 
 function deleteNote(id: string, noteID: string) {
-    console.log('note is', notes[noteID])
     delete notes[noteID]
-    console.log('deleted', noteID, 'note is', notes[noteID])
     notesDocument.remove(noteID);
 }
 
