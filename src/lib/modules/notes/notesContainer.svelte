@@ -182,7 +182,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		noteKeys = [];
 		delete notes[noteID];
-		searchService.deleteNote(searchID, noteID);
+		searchService.deleteNote('*', noteID);
 		onCloseNote();
 	}
 
@@ -192,7 +192,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		toastService.showToast(toastMessage);
-		searchService.addNote(searchID, noteID, JSON.parse(JSON.stringify(note)));
+		searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
 	}
 
 	function initNotes() {
@@ -221,10 +221,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onAdd() {
-		let title;
 		let keys = mode.chapterKey?.split('_');
-
 		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
+
 		initNotes();
 
 		noteID = uuid4();
@@ -256,10 +255,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			};
 		}
 		note = annotations[verseIdx].notes.words[wordIdx][noteID];
-		
+
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
-		await onSave(`Created Note ${title}`);
+		await onSave(`Created New Note`);
 	}
 
 	function onAddTag() {
@@ -312,6 +311,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	};
 
 	async function onSelectedNote(noteId: string) {
+		noteID = noteId
 		note = notes[noteId];
 		let keys = note.chapterKey?.split('_');
 
