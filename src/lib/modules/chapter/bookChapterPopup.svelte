@@ -452,7 +452,7 @@
 			bind:clientHeight={headerHeight}
 			class="sticky top-0 w-full flex-col border-b-2 bg-neutral-100 text-neutral-700"
 		>
-			<div class="flex w-full justify-between p-2">
+			<div class="flex w-full items-center justify-between p-2">
 				{#if !selectedBook}
 					<button
 						onclick={() => {
@@ -461,6 +461,7 @@
 						class="h-8 w-8"
 					>
 						{#if !group}
+						
 							<svg
 								version="1.1"
 								id="svg2"
@@ -480,6 +481,7 @@
 							</svg>
 						{:else}
 							<svg
+							
 								version="1.1"
 								id="svg252"
 								width="100%"
@@ -535,13 +537,20 @@
 						<h1 class=" text-center">Book</h1>
 					{/if}
 				</div>
+
 				<button
+					aria-label="close"
 					onclick={() => {
 						showBookChapterPopup = false;
 					}}
-					class="m-0 p-0"
+					class="h-12 w-12 px-2 text-neutral-700"
 				>
-					Cancel
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%">
+						<path
+							class="fill-neutral-700"
+							d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10s10-4.47,10-10S17.53,2,12,2z M17,15.59L15.59,17L12,13.41L8.41,17L7,15.59 L10.59,12L7,8.41L8.41,7L12,10.59L15.59,7L17,8.41L13.41,12L17,15.59z"
+						/>
+					</svg>
 				</button>
 			</div>
 
@@ -559,7 +568,11 @@
 			{/if}
 		</header>
 
-		<div bind:clientWidth style="height: {clientHeight - headerHeight}px" class="flex w-full flex-col overflow-y-scroll border">
+		<div
+			bind:clientWidth
+			style="height: {clientHeight - headerHeight}px"
+			class="flex w-full flex-col overflow-y-scroll border"
+		>
 			{#if selectedBook}
 				<div class="grid w-[100%] grid-cols-5">
 					{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}

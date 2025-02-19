@@ -158,13 +158,21 @@
 		<div bind:clientHeight={headerHeight} class="flex w-full flex-col items-center">
 			<div class="flex w-full max-w-lg justify-end bg-neutral-100">
 				<button
+					aria-label="close"
 					onclick={() => {
 						paneService.onDeletePane(paneService.rootPane, paneId);
 					}}
-					class="px-2 pt-2 text-neutral-700">Close</button
+					class="h-12 w-12 px-2 pt-2 text-neutral-700"
 				>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%">
+						<path
+							class="fill-neutral-700"
+							d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10s10-4.47,10-10S17.53,2,12,2z M17,15.59L15.59,17L12,13.41L8.41,17L7,15.59 L10.59,12L7,8.41L8.41,7L12,10.59L15.59,7L17,8.41L13.41,12L17,15.59z"
+						/>
+					</svg>
+				</button>
 			</div>
-			<div class="flex w-full max-w-lg justify-center px-4">
+			<div class="flex w-full max-w-lg justify-center px-4 pt-2">
 				<input
 					bind:clientHeight={searchInputHeight}
 					class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
@@ -182,8 +190,8 @@
                   "
 			>
 				{#each searchResults as v}
-					<span class="py-2 text-left font-bold">{v.bookName} {v.number}:{v.verseNumber}</span
-					><br />
+					<span class="py-2 text-left font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br
+					/>
 					{#each v.text.split(' ') as w}
 						{#if match(w)}
 							<span class="inline-block text-redtxt">{w}</span>&nbsp;
