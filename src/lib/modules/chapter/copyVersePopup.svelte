@@ -8,6 +8,7 @@
 	let verseKeys: string[] = $state([]);
 	let verses: any = $state({});
 	let booknames: any;
+    let checkAll  = $state(false)
 
 	let title = $state('');
 	onMount(() => {
@@ -44,8 +45,8 @@
 				return parseInt(a) - parseInt(b);
 			});
 		} else {
-            sortedKeys = checked
-        }
+			sortedKeys = checked;
+		}
 
 		let startKey = sortedKeys[0];
 		let lastKey = sortedKeys[0];
@@ -58,7 +59,7 @@
 			if (k - lastKey > 1) {
 				buckets.push(range);
 				range = [k];
-                lastKey = k
+				lastKey = k;
 			} else {
 				range.push(k);
 				lastKey = k;
@@ -86,9 +87,15 @@
 			copyText += text;
 		});
 
-        navigator.clipboard.writeText(copyText);
-        toastService.showToast('Copied Verses')
+		navigator.clipboard.writeText(copyText);
+		toastService.showToast('Copied Verses');
 	}
+
+    function toggleSelects(){
+        Object.keys(verses).forEach(v => {
+            verses[v].checked = checkAll
+        })
+    }
 
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
@@ -134,24 +141,6 @@
 					<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 					<p onclick={() => {}} class="hover:cursor-pointer">
 						<span class="inline-block font-bold">{title}</span>
-						<button aria-label="chevron down" class="h-4 w-4">
-							<svg
-								width="100%"
-								height="100%"
-								viewBox="0 0 25.4 14.098638"
-								version="1.1"
-								xml:space="preserve"
-								xmlns="http://www.w3.org/2000/svg"
-								><g transform="translate(-53.644677,-127.79211)"
-									><path
-										class="fill-neutral-700"
-										style="stroke-width:0.352778"
-										d="m 59.906487,137.65245 -6.26181,-4.21622 v -2.82206 -2.82206 l 6.35,4.24282 6.35,4.24283 6.35,-4.24283 6.35,-4.24282 v 2.82222 2.82222 l -6.3429,4.23808 c -3.48859,2.33094 -6.38578,4.22817 -6.43819,4.21606 -0.0524,-0.0121 -2.91311,-1.91931 -6.3571,-4.23824 z"
-										id="path179"
-									/></g
-								></svg
-							>
-						</button>
 					</p>
 					<button
 						aria-label="close"
@@ -174,6 +163,14 @@
 			style="height: {clientHeight - headerHeight}px"
 			class="flex w-full flex-col overflow-y-scroll border"
 		>
+			<div>
+				<input
+					type="checkbox"
+					class="mx-4 mt-5 h-5 w-5 accent-supporta-500"
+					bind:checked={checkAll}
+					onchange={()=> {console.log('changed'); toggleSelects()}}
+				/>
+			</div>
 			{#each verseKeys as k}
 				<div class="flex flex-row items-start space-y-4">
 					<div>
