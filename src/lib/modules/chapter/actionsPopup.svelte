@@ -3,9 +3,13 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { toastService } from '$lib/services/toast.service';
 
-	let { showActionsDropdown = $bindable(), paneId } = $props();
+	let { showActionsDropdown = $bindable(), showCopyVersePopup = $bindable(), paneId } = $props();
 
 	let actions: any = {
+		'copy verses': () => {
+			showActionsDropdown = false
+			showCopyVersePopup = true
+		},
 		'split vertical': () => {
 			onSplitVertical();
 		},
