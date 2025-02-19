@@ -4,7 +4,7 @@
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
 	import Quill from 'quill';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import uuid4 from 'uuid4';
 
 	let {
@@ -16,7 +16,7 @@
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
-	let searchID = '*'; /** we want all updates for notes*/
+	let searchID = uuid4();
 	let editor = uuid4().replaceAll('-', '');
 	let note: any = $state();
 	let notes: any = $state({});
@@ -27,10 +27,27 @@
 	let booknames: any = {};
 	let showNoteActions = $state(false);
 	let showNoteListActions = $state(false);
+	let showNoteListFilter = $state(false);
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
 	let searchTerm = $state('');
 	let tagInput: string = $state('');
+	let filterInput: string = $state('');
+
+	function onFilterInputChanged() {
+		if (filterInput.length > 0) {
+			searchService.searchNotes(searchID, filterInput, ['title', 'text', 'tags[]:tag']);
+		}
+	}
+
+	function onFilterInputResults(results: any) {
+		console.log('filter results called')
+		if (results.id === searchID) {
+			noteKeys = Object.keys(results.notes).sort((a, b) => {
+				return (notes[a].modified - notes[b].modified) * -1;
+			});
+		}
+	}
 
 	let noteActions: any = {
 		delete: () => {
@@ -40,7 +57,8 @@
 
 	let noteListActions: any = {
 		filter: () => {
-			
+			showNoteListFilter = !showNoteListFilter;
+			showNoteListActions = false;
 		},
 		'split vertical': () => {
 			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});
@@ -250,8 +268,10 @@
 		let element = document.getElementById(editor);
 		booknames = await chapterService.getBooknames();
 
-		searchService.subscribe(searchID, onSearchResults);
-		searchService.getAllNotes(searchID);
+		searchService.subscribe(searchID, onFilterInputResults);
+
+		searchService.subscribe('*', onSearchResults);
+		searchService.getAllNotes('*');
 
 		if (element) {
 			quill = new Quill(element, {
@@ -549,6 +569,25 @@
 			<div
 				class="flex h-full w-full max-w-lg flex-col overflow-hidden overflow-y-scroll border border-neutral-100"
 			>
+				{#if showNoteListFilter}
+					<div class="flex justify-start px-2">
+						<label
+							for="tags"
+							class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-supporta-600"
+						>
+							<div class="flex items-center">
+								<input
+									type="tags"
+									id="tags"
+									placeholder="Search Notes..."
+									bind:value={filterInput}
+									oninput={onFilterInputChanged}
+									class="focus:outline-hidden focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent"
+								/>
+							</div>
+						</label>
+					</div>
+				{/if}
 				{#each noteKeys as nk}
 					<button
 						onclick={() => {

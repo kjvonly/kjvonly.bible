@@ -117,6 +117,8 @@ async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
     });
 
 
+    console.log('results notes ', results)
+
 
     let filteredNotes: any = {}
     results.forEach(r => {
