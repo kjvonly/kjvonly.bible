@@ -173,7 +173,7 @@
 				paneId={pane.id}
 			></ChapterActions>
 		</div>
-		<div class="flex justify-center kjvonly-noselect"  oncontextmenu={"return false;"}>
+		<div class="flex justify-center kjvonly-noselect">
 			<div class="max-w-lg">
 				<div id="chapter-container-{id}" bind:clientWidth={chapterWidth}>
 					<Chapter
