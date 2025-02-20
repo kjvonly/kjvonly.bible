@@ -71,14 +71,49 @@
 		toastService.showToast('finished export data');
 	}
 
+
+	// pulled from https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
+	/**
+	 * Simple object check.
+	 * @param item
+	 * @returns {boolean}
+	 */
+	export function isObject(item: any) {
+		return item && typeof item === 'object' && !Array.isArray(item);
+	}
+
+	/**
+	 * Deep merge two objects.
+	 * @param target
+	 * @param ...sources
+	 */
+	export function mergeDeep(target:any , ...sources:any) {
+		if (!sources.length) return target;
+		const source = sources.shift();
+
+		if (isObject(target) && isObject(source)) {
+			for (const key in source) {
+				if (isObject(source[key])) {
+					if (!target[key]) Object.assign(target, { [key]: {} });
+					mergeDeep(target[key], source[key]);
+				} else {
+					Object.assign(target, { [key]: source[key] });
+				}
+			}
+		}
+
+		return mergeDeep(target, ...sources);
+	}
 	function doImport(e) {
 		const reader = new FileReader();
 		reader.onload = (e2) => {
 			let result: any = e2?.target?.result;
 			try {
 				toastService.showToast('starting import data');
-				let data = JSON.parse(result);
-				chapterService.putAllAnnotations(data.annotations);
+				let newAnnotations = JSON.parse(result);
+				let annotations = chapterService.getAllAnnotations();
+				const merged = mergeDeep(annotations, newAnnotations)
+				chapterService.putAllAnnotations(merged);
 				document.getElementById('kjvonly-import')?.remove();
 				toastService.showToast('finished import data');
 			} catch (ex) {

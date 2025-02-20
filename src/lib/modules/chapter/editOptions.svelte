@@ -127,10 +127,15 @@
 		></button>
 	</div>
 	<div class="space-x-3">
-		<button onclick={() => {
-            mode.notePopup.show = true
-            mode.notePopup.chapterKey = mode.chapterKey
-        }} aria-label="note" class="h-8 w-8">
+		<button
+			onclick={() => {
+				mode.notePopup.show = true;
+				mode.notePopup.chapterKey = mode.chapterKey;
+				mode.value = '';
+			}}
+			aria-label="note"
+			class="h-8 w-8"
+		>
 			<svg
 				version="1.1"
 				id="svg798"
