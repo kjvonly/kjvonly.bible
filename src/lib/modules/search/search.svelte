@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import uuid4 from 'uuid4';
+	import { toastService } from '$lib/services/toast.service';
 
 	let searchID = uuid4();
 	let searchInputHeight: number = $state(0);
@@ -37,6 +38,7 @@
 	function copyToClipboard(v: any) {
 		let verse = `${v.bookName} ${v.number}:${v.verseNumber}\n${v.text}`;
 		navigator.clipboard.writeText(verse);
+		toastService.showToast(`Copied ${v.bookName} ${v.number}:${v.verseNumber}`)
 	}
 </script>
 
@@ -45,8 +47,10 @@
 		<!-- copy -->
 		<button
 			aria-label="copy button"
-			onclick={() => {
+			onclick={(e) => {
+				e.stopPropagation();
 				copyToClipboard(v);
+
 			}}
 		>
 			<svg
@@ -71,7 +75,8 @@
 		<!-- horizontal split -->
 		<button
 			aria-label="horizontal split"
-			onclick={() => {
+			onclick={(e) => {
+				e.stopPropagation();
 				paneService.onSplitPane(paneId, 'h', 'ChapterComponent', {
 					chapterKey: v.key
 				});
@@ -111,7 +116,8 @@
 		<!-- vertical split -->
 		<button
 			aria-label="vertical split"
-			onclick={() => {
+			onclick={(e) => {
+				e.stopPropagation();
 				paneService.onSplitPane(paneId, 'v', 'ChapterComponent', {
 					chapterKey: v.key
 				});
@@ -190,17 +196,33 @@
                   "
 			>
 				{#each searchResults as v}
-					<span class="py-2 text-left font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br
-					/>
-					{#each v.text.split(' ') as w}
-						{#if match(w)}
-							<span class="inline-block text-redtxt">{w}</span>&nbsp;
-						{:else}
-							<span class="inline-block">{w}</span>&nbsp;
-						{/if}
-					{/each}
-					{@render actions(v)}
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<div
+						class="hover:cursor-pointer"
+						onclick={() => {
+							let pane = paneService.findNode(paneService.rootPane, paneId);
+							if (pane) {
+								pane.buffer.bag = {
+									chapterKey: v.key
+								};
+								pane?.updateBuffer('ChapterContainer');
+							}
+						}}
+					>
+						<span class="py-2 text-left font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br
+						/>
+						{#each v.text.split(' ') as w}
+							{#if match(w)}
+								<span class="inline-block text-redtxt">{w}</span>&nbsp;
+							{:else}
+								<span class="inline-block">{w}</span>&nbsp;
+							{/if}
+						{/each}
+						{@render actions(v)}
+					</div>
 				{/each}
+
 				<div class="h-6"></div>
 			</div>
 		</div>

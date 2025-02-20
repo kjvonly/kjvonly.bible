@@ -120,7 +120,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 
 		if (noteIDToOpen.length > 0) {
-			console.log('noteID to open', noteIDToOpen);
 			onSelectedNote(noteIDToOpen);
 			noteIDToOpen = '';
 		}
