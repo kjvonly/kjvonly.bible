@@ -18,7 +18,7 @@
 		value: '',
 		colorAnnotation: 'bg-highlighta',
 		chapterKey: '73_1_1_1',
-		notePopup: { show: false  }
+		notePopup: { show: false }
 	});
 	let annotations: any = $state({});
 	let bookName: string = $state('');
@@ -59,7 +59,6 @@
 			paneService.save();
 		}
 	});
-
 
 	async function _nextChapter(e: Event) {
 		e.stopPropagation();
@@ -103,6 +102,11 @@
 	}
 
 	onMount(() => {
+		/*
+		set paneId for popup actions
+		*/
+		mode.paneId = paneId;
+
 		let cs = localStorage.getItem('settings');
 		if (cs !== null) {
 			chapterSettings = JSON.parse(cs);
@@ -154,13 +158,18 @@
 			}, 50);
 		}
 
-		let cc = document.getElementById(`chapter-container-${id}`)
-		cc?.addEventListener('contextmenu', e => e.preventDefault())
+		let cc = document.getElementById(`chapter-container-${id}`);
+		cc?.addEventListener('contextmenu', (e) => e.preventDefault());
 	});
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="overflow-hidden" oncontextmenu="{() => {return false;}}">
+<div
+	class="overflow-hidden"
+	oncontextmenu={() => {
+		return false;
+	}}
+>
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
 		<div class="sticky top-0 z-popover flex w-full justify-center">
 			<ChapterActions
@@ -173,7 +182,7 @@
 				paneId={pane.id}
 			></ChapterActions>
 		</div>
-		<div class="flex justify-center kjvonly-noselect">
+		<div class="kjvonly-noselect flex justify-center">
 			<div class="max-w-lg">
 				<div id="chapter-container-{id}" bind:clientWidth={chapterWidth}>
 					<Chapter

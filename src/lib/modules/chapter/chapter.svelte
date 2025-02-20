@@ -29,7 +29,7 @@
 		mode.value = ''
 
 		let bcv = chapterKey.split('_');
-		if (bcv.length === 3) {
+		if (bcv.length > 2) {
 			chapterKey = `${bcv[0]}_${bcv[1]}`;
 			setTimeout(() => {
 				let e = document.getElementById(`${id}-vno-${bcv[2]}`);

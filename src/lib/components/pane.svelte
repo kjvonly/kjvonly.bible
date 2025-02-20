@@ -19,8 +19,12 @@
 	});
 
 	function updateHeightWidth(hw: any) {
-		containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
-		containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
+		if (hw[pane.id]) {
+			containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
+			containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
+		} else {
+			console.log('error should have update height and width')
+		}
 	}
 
 	onMount(() => {

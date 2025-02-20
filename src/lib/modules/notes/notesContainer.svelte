@@ -46,7 +46,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		containerHeight,
 		mode = $bindable(),
 		annotations = $bindable(),
-		allNotes = false
+		allNotes = false,
+		noteIDToOpen = ''
 	} = $props();
 
 	let clientHeight = $state(0);
@@ -116,6 +117,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				}
 			});
 			onFilterInputChanged();
+		}
+
+		if (noteIDToOpen.length > 0) {
+			onSelectedNote(noteIDToOpen);
+			noteIDToOpen = '';
 		}
 	}
 
@@ -280,6 +286,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 			annotations[verseIdx].notes.words[wordIdx][noteID] = {
 				chapterKey: mode.chapterKey,
+				bcv: `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}`,
 				text: `${title}\n${verse}`,
 				html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
 				title: `${title}`,
@@ -716,20 +723,146 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	</div>
 {/snippet}
 
+{#snippet actions(note: any, nk: string)}
+	<div class="flex w-full flex-row justify-end space-x-4">
+		<!-- bible -->
+		{#if !note?.chapterKey?.startsWith('0')}
+			<button
+				aria-label="bible"
+				onclick={(e) => {
+					e.stopPropagation();
+					paneService.onSplitPane(mode.paneId, 'h', 'ChapterComponent', {
+						chapterKey: note.chapterKey
+					});
+				}}
+			>
+				<svg
+					class="h-8 w-8"
+					version="1.1"
+					id="svg2"
+					width="100%"
+					height="100%"
+					viewBox="0 0 96.115854 120.69053"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<g id="g8" transform="translate(-18.550806,-7.6146084)">
+						<path
+							class="fill-none stroke-neutral-400"
+							style="stroke-width:6"
+							d="m 114.66666,128 v -5.33334 H 45.333332 C 37.756666,122.66613 24.609066,122.9868 24.609066,112 c 0,-10.9868 13.1476,-10.66614 20.724266,-10.66667 H 114.66666 V 7.9999998 H 53.333332 c -8.2976,0 -19.27,-1.8839866 -26.641999,2.6790132 -9.203733,5.696853 -8.024667,15.89592 -8.024667,25.320986 v 62.666665 c 0,9.123866 -1.5564,19.638396 6.739733,25.796266 C 32.656666,129.84466 43.508266,128 51.999999,128 H 114.66666 M 74.666665,26.666666 v 16 H 87.999998 V 53.333332 H 74.666665 V 82.666665 H 63.999998 V 53.333332 H 50.666665 V 42.666666 h 13.333333 v -16 z"
+							id="path293"
+						/>
+					</g>
+				</svg>
+			</button>
+		{/if}
+
+		<!-- horizontal split -->
+		<button
+			aria-label="horizontal split"
+			onclick={(e) => {
+				e.stopPropagation();
+				paneService.onSplitPane(mode.paneId, 'h', 'Notes', {
+					noteID: nk
+				});
+			}}
+		>
+			<svg
+				class=" h-8 w-8"
+				version="1.1"
+				width="100%"
+				height="100%"
+				viewBox="0 0 94.018994 99.168052"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<g id="g8" transform="translate(-16.573607,-13.492392)">
+					<rect
+						style="stroke-width:5;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+						class="fill-none stroke-neutral-400"
+						width="90"
+						height="42.665619"
+						x="-108.58311"
+						y="-58.167511"
+						transform="scale(-1)"
+					/>
+					<rect
+						style="stroke-width:5;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+						class="fill-none stroke-neutral-400"
+						width="90"
+						height="42.665619"
+						x="-108.58311"
+						y="-110.65095"
+						transform="scale(-1)"
+					/>
+				</g>
+			</svg>
+		</button>
+
+		<!-- vertical split -->
+		<button
+			aria-label="vertical split"
+			onclick={(e) => {
+				e.stopPropagation();
+				paneService.onSplitPane(mode.paneId, 'v', 'Notes', {
+					noteID: nk
+				});
+			}}
+		>
+			<svg
+				class="h-8 w-8"
+				version="1.1"
+				id="svg2"
+				width="100%"
+				height="100%"
+				viewBox="0 0 94.018994 99.168052"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<g class="" id="g8" transform="translate(-16.898488,-13.804183)">
+					<rect
+						style="stroke-width:5;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+						class="fill-none stroke-neutral-400"
+						id="rect2158"
+						width="90"
+						height="42.665619"
+						x="-105.81368"
+						y="18.907988"
+						transform="rotate(-90)"
+					/>
+					<rect
+						style="stroke-width:5;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+						class="fill-none stroke-neutral-400"
+						id="rect2330"
+						width="90"
+						height="42.665619"
+						x="-105.81368"
+						y="70.164314"
+						transform="rotate(-90)"
+					/>
+				</g>
+			</svg>
+		</button>
+	</div>
+{/snippet}
+
 {#snippet noteListSnippet()}
 	{#each noteKeys as nk}
-		<button
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
 			onclick={() => {
 				onSelectedNote(nk);
 			}}
-			class="flex w-full flex-nowrap p-2 text-left hover:bg-neutral-100"
+			class="flex w-full flex-nowrap p-2 text-left hover:cursor-pointer hover:bg-neutral-100"
 		>
-			<div class="flex flex-col">
+			<div class="flex w-full flex-col">
 				<span>{notes[nk].title}{notes[nk].title.length === 20 ? '...' : ''}</span>
 				<span class="text-neutral-400"
 					>{new Date(notes[nk].modified).toLocaleDateString()}
 					{new Date(notes[nk].modified).toLocaleTimeString()}</span
 				>
+				{#if notes[nk].bcv}
+					<span class="text-neutral-400">{notes[nk].bcv}</span>
+				{/if}
 				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
 					{#each notes[nk].tags as t}
 						<span
@@ -739,8 +872,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 						</span>
 					{/each}
 				</div>
+				<div class="flex flex-wrap items-center justify-end space-x-2 pt-2">
+					{@render actions(notes[nk], nk)}
+				</div>
 			</div>
-		</button>
+		</div>
 	{/each}
 {/snippet}
 
