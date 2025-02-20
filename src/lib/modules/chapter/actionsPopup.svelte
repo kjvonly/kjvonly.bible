@@ -136,7 +136,7 @@
 
 					// order of params mater, (target, source) source will update target.
 					//const merged = mergeDeep(annotationsMap, newAnnotations);
-					const merged = deepMerge(annotationsMap, newAnnotationsMap);
+					const merged = deepMerge(annotationsMap, newAnnotationsMap, {arrays: 'replace'});
 					console.log('annomap', annotationsMap);
 					console.log('newanno', newAnnotations);
 					console.log(merged);
