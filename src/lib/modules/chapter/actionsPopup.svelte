@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
+	import { deepMerge } from '$lib/utils/deepmerge';
 
 	let { showActionsDropdown = $bindable(), showCopyVersePopup = $bindable(), paneId } = $props();
 
@@ -71,20 +73,81 @@
 		toastService.showToast('finished export data');
 	}
 
+	// pulled from https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
+	/**
+	 * Simple object check.
+	 * @param item
+	 * @returns {boolean}
+	 */
+	export function isObject(item: any) {
+		return item && typeof item === 'object' && !Array.isArray(item);
+	}
+
+	/**
+	 * Deep merge two objects.
+	 * @param target
+	 * @param ...sources
+	 */
+	export function mergeDeep(target: any, ...sources: any) {
+		if (!sources.length) return target;
+		const source = sources.shift();
+
+		if (isObject(target) && isObject(source)) {
+			for (const key in source) {
+				if (isObject(source[key])) {
+					if (!target[key]) Object.assign(target, { [key]: {} });
+					mergeDeep(target[key], source[key]);
+				} else {
+					Object.assign(target, { [key]: source[key] });
+				}
+			}
+		}
+
+		return mergeDeep(target, ...sources);
+	}
+
 	function doImport(e) {
 		const reader = new FileReader();
 		reader.onload = (e2) => {
 			let result: any = e2?.target?.result;
-			try {
-				toastService.showToast('starting import data');
-				let data = JSON.parse(result);
-				chapterService.putAllAnnotations(data.annotations);
-				document.getElementById('kjvonly-import')?.remove();
-				toastService.showToast('finished import data');
-			} catch (ex) {
-				console.log(`error importing file ${e.target.files[0]}`);
-				document.getElementById('kjvonly-import')?.remove();
-			}
+			(async () => {
+				try {
+					toastService.showToast('starting import data');
+					let newAnnotations = JSON.parse(result);
+					let annotations = await chapterService.getAllAnnotations();
+
+					if (!annotations) {
+						annotations = {};
+					}
+					let annotationsMap: any = {};
+
+					annotations.forEach((a: any) => {
+						annotationsMap[a.id] = a;
+					});
+
+					let newAnnotationsMap: any = {};
+
+					newAnnotations.forEach((a: any) => {
+						newAnnotationsMap[a.id] = a;
+					});
+
+					// order of params mater, (target, source) source will update target.
+					//const merged = mergeDeep(annotationsMap, newAnnotations);
+					const merged = deepMerge(annotationsMap, newAnnotationsMap, {arrays: 'replace'});
+					let mergedList: any[] = [];
+					Object.keys(merged).forEach((k) => {
+						mergedList.push(merged[k]);
+					});
+
+					await chapterService.putAllAnnotations(mergedList);
+					searchService.initNotes();
+					document.getElementById('kjvonly-import')?.remove();
+					toastService.showToast('finished import data');
+				} catch (ex) {
+					console.log(`error importing file ${e.target.files[0]}`, ex);
+					document.getElementById('kjvonly-import')?.remove();
+				}
+			})();
 		};
 		reader.readAsText(e.target.files[0]);
 	}

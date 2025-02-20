@@ -186,6 +186,59 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 	};
 
+	async function onExport() {
+		toastService.showToast('starting export data');
+
+		let data: any = {};
+		noteKeys.forEach((k) => {
+			let n = notes[k];
+			let keys = n.chapterKey.split('_');
+			let chapterKey = `${keys[0]}_${keys[1]}`;
+			let verseNumber = `${keys[2]}`;
+			let wordIdx = `${keys[3]}`;
+
+			if (!data[chapterKey]) {
+				data[chapterKey] = {
+					id: chapterKey
+				};
+			}
+
+			if (!data[chapterKey][verseNumber]) {
+				data[chapterKey][verseNumber] = {
+					notes: {
+						words: {}
+					}
+				};
+			}
+
+			if (!data[chapterKey][verseNumber].notes.words[wordIdx]) {
+				data[chapterKey][verseNumber].notes.words[wordIdx] = {};
+			}
+
+			data[chapterKey][verseNumber].notes.words[wordIdx][k] = n;
+		});
+
+		let dataList: any[] = [];
+		Object.keys(data).forEach((k) => {
+			dataList.push(data[k]);
+		});
+
+		var element = document.createElement('a');
+		element.setAttribute(
+			'href',
+			'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dataList))
+		);
+		element.setAttribute('download', 'annotations');
+
+		element.style.display = 'none';
+		document.body.appendChild(element);
+
+		element.click();
+
+		document.body.removeChild(element);
+		toastService.showToast('finished export data');
+	}
+
 	function onCloseNote() {
 		if (!isShowingOptions()) {
 			showNoteActions = false;
@@ -339,6 +392,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		filter: () => {
 			showNoteListFilter = !showNoteListFilter;
 			showNoteListActions = false;
+		},
+		'export filtered notes': () => {
+			onExport();
 		},
 		'split vertical': () => {
 			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});

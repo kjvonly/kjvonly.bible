@@ -42,6 +42,10 @@ class SearchService {
     addNote(id: string, noteID:string, note: any){
         this.webWorker.postMessage({ action: 'addNote', noteID: noteID, note: note})
     }
+
+    initNotes(){
+        this.webWorker.postMessage({ action: 'initNotes'})
+    }  
 }
 
 export const searchService = new SearchService()

@@ -83,8 +83,9 @@ let notes: any = {}
 
 async function initNotes() {
 
-    let annotations = await chapterService.getAllAnnotations();
 
+    let annotations = await chapterService.getAllAnnotations();
+    notes = {}
     /**this will pull independent notes from 0_0_0_0 and all notes  */
     Object.keys(annotations).forEach((ch) => {
         Object.keys(annotations[ch]).forEach((v) => {
@@ -98,6 +99,8 @@ async function initNotes() {
             }
         });
     });
+
+    getAllNotes('*')
 }
 
 
@@ -144,6 +147,9 @@ onmessage = async (e) => {
             break;
         case 'search':
             await search(e.data.id, e.data.text)
+            break;
+        case 'initNotes':
+            initNotes()
             break;
         case 'addNote':
             addNote(e.data.noteID, e.data.note)
