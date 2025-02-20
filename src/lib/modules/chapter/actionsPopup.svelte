@@ -124,7 +124,8 @@
 						annotationsMap[a.id] = a;
 					});
 
-					const merged = mergeDeep(newAnnotations, annotationsMap);
+					// order of params mater, (target, source) source will update target.
+					const merged = mergeDeep(annotationsMap, newAnnotations);
 					let mergedList: any[] = [];
 					Object.keys(merged).forEach((k) => {
 						mergedList.push(merged[k]);
