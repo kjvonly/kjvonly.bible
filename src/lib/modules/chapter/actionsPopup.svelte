@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
 
 	let { showActionsDropdown = $bindable(), showCopyVersePopup = $bindable(), paneId } = $props();
@@ -71,7 +72,6 @@
 		toastService.showToast('finished export data');
 	}
 
-
 	// pulled from https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
 	/**
 	 * Simple object check.
@@ -87,7 +87,7 @@
 	 * @param target
 	 * @param ...sources
 	 */
-	export function mergeDeep(target:any , ...sources:any) {
+	export function mergeDeep(target: any, ...sources: any) {
 		if (!sources.length) return target;
 		const source = sources.shift();
 
@@ -104,22 +104,41 @@
 
 		return mergeDeep(target, ...sources);
 	}
+
 	function doImport(e) {
 		const reader = new FileReader();
 		reader.onload = (e2) => {
 			let result: any = e2?.target?.result;
-			try {
-				toastService.showToast('starting import data');
-				let newAnnotations = JSON.parse(result);
-				let annotations = chapterService.getAllAnnotations();
-				const merged = mergeDeep(annotations, newAnnotations)
-				chapterService.putAllAnnotations(merged);
-				document.getElementById('kjvonly-import')?.remove();
-				toastService.showToast('finished import data');
-			} catch (ex) {
-				console.log(`error importing file ${e.target.files[0]}`);
-				document.getElementById('kjvonly-import')?.remove();
-			}
+			(async () => {
+				try {
+					toastService.showToast('starting import data');
+					let newAnnotations = JSON.parse(result);
+					let annotations = await chapterService.getAllAnnotations();
+
+					if (!annotations) {
+						annotations = {};
+					}
+					let annotationsMap: any = {};
+
+					annotations.forEach((a: any) => {
+						annotationsMap[a.id] = a;
+					});
+
+					const merged = mergeDeep(newAnnotations, annotationsMap);
+					let mergedList: any[] = [];
+					Object.keys(merged).forEach((k) => {
+						mergedList.push(merged[k]);
+					});
+
+					await chapterService.putAllAnnotations(mergedList);
+					searchService.initNotes();
+					document.getElementById('kjvonly-import')?.remove();
+					toastService.showToast('finished import data');
+				} catch (ex) {
+					console.log(`error importing file ${e.target.files[0]}`, ex);
+					document.getElementById('kjvonly-import')?.remove();
+				}
+			})();
 		};
 		reader.readAsText(e.target.files[0]);
 	}

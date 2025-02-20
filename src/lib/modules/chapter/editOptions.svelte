@@ -129,6 +129,7 @@
 	<div class="space-x-3">
 		<button
 			onclick={() => {
+				onSave()
 				mode.notePopup.show = true;
 				mode.notePopup.chapterKey = mode.chapterKey;
 				mode.value = '';

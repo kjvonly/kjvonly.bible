@@ -198,7 +198,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			let wordIdx = `${keys[3]}`;
 
 			if (!data[chapterKey]) {
-				data[chapterKey] = {};
+				data[chapterKey] = {
+					id: chapterKey
+				};
 			}
 
 			if (!data[chapterKey][verseNumber]) {
