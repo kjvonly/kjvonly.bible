@@ -218,10 +218,15 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			data[chapterKey][verseNumber].notes.words[wordIdx][k] = n;
 		});
 
+		let dataList: any[] = [];
+		Object.keys(data).forEach((k) => {
+			dataList.push(data[k]);
+		});
+
 		var element = document.createElement('a');
 		element.setAttribute(
 			'href',
-			'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data))
+			'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dataList))
 		);
 		element.setAttribute('download', 'annotations');
 

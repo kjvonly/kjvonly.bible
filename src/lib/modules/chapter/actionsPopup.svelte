@@ -130,16 +130,10 @@
 					newAnnotations.forEach((a: any) => {
 						newAnnotationsMap[a.id] = a;
 					});
-					const o1 = { a: 1, c: { d: 'e' } };
-					const o2 = { a: 2, b: [1, 2, 3], c: { d: 'f' } };
-					console.log(deepMerge(o2, o1));
 
 					// order of params mater, (target, source) source will update target.
 					//const merged = mergeDeep(annotationsMap, newAnnotations);
 					const merged = deepMerge(annotationsMap, newAnnotationsMap, {arrays: 'replace'});
-					console.log('annomap', annotationsMap);
-					console.log('newanno', newAnnotations);
-					console.log(merged);
 					let mergedList: any[] = [];
 					Object.keys(merged).forEach((k) => {
 						mergedList.push(merged[k]);
