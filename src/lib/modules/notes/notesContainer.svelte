@@ -168,6 +168,15 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	let noteActions: any = {
 		delete: () => {
 			showConfirmDelete = true;
+		},
+		'split vertical': () => {
+			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});
+			showNoteActions = false;
+		},
+
+		'split horizontal': () => {
+			paneService.onSplitPane(mode.paneId, 'h', 'Modules', {});
+			showNoteActions = false;
 		}
 	};
 
