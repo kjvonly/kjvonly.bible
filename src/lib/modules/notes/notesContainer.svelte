@@ -46,7 +46,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		containerHeight,
 		mode = $bindable(),
 		annotations = $bindable(),
-		allNotes = false
+		allNotes = false,
+		noteIDToOpen = ''
 	} = $props();
 
 	let clientHeight = $state(0);
@@ -116,6 +117,12 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				}
 			});
 			onFilterInputChanged();
+		}
+
+		if (noteIDToOpen.length > 0) {
+			console.log('noteID to open', noteIDToOpen);
+			onSelectedNote(noteIDToOpen);
+			noteIDToOpen = '';
 		}
 	}
 
@@ -717,16 +724,19 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	</div>
 {/snippet}
 
-{#snippet actions(note: any)}
+{#snippet actions(note: any, nk: string)}
 	<div class="flex w-full flex-row justify-end space-x-4">
 		<!-- bible -->
 		{#if !note?.chapterKey?.startsWith('0')}
-			<button aria-label="bible" onclick={(e) => {
-				e.stopPropagation()
-				paneService.onSplitPane(mode.paneId, 'h', 'ChapterComponent', {
-					chapterKey: note.chapterKey
-				});
-			}}>
+			<button
+				aria-label="bible"
+				onclick={(e) => {
+					e.stopPropagation();
+					paneService.onSplitPane(mode.paneId, 'h', 'ChapterComponent', {
+						chapterKey: note.chapterKey
+					});
+				}}
+			>
 				<svg
 					class="h-8 w-8"
 					version="1.1"
@@ -751,9 +761,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		<!-- horizontal split -->
 		<button
 			aria-label="horizontal split"
-			onclick={() => {
-				paneService.onSplitPane(mode.paneId, 'h', 'ChapterComponent', {
-					chapterKey: note.chapterKey
+			onclick={(e) => {
+				e.stopPropagation();
+				paneService.onSplitPane(mode.paneId, 'h', 'Notes', {
+					noteID: nk
 				});
 			}}
 		>
@@ -791,9 +802,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		<!-- vertical split -->
 		<button
 			aria-label="vertical split"
-			onclick={() => {
-				paneService.onSplitPane(mode.paneId, 'v', 'ChapterComponent', {
-					chapterKey: note.chapterKey
+			onclick={(e) => {
+				e.stopPropagation();
+				paneService.onSplitPane(mode.paneId, 'v', 'Notes', {
+					noteID: nk
 				});
 			}}
 		>
@@ -862,7 +874,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 					{/each}
 				</div>
 				<div class="flex flex-wrap items-center justify-end space-x-2 pt-2">
-					{@render actions(notes[nk])}
+					{@render actions(notes[nk], nk)}
 				</div>
 			</div>
 		</div>
