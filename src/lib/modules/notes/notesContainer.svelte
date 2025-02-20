@@ -172,10 +172,34 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	};
 
 	function onCloseNote() {
-		showNoteActions = false;
-		showConfirmDelete = false;
-		note = undefined;
-		noteID = '';
+		if (!isShowingOptions()) {
+			showNoteActions = false;
+			showConfirmDelete = false;
+			note = undefined;
+			noteID = '';
+		}
+	}
+
+	/** if an options menu is open close it instead
+	 * of closing the view
+	 */
+	function isShowingOptions() {
+		if (showConfirmDelete) {
+			showConfirmDelete = false;
+			return true;
+		}
+
+		if (showNoteActions) {
+			showNoteActions = false;
+			return true;
+		}
+
+		if (showNoteListActions) {
+			showNoteListActions = false;
+			return true;
+		}
+
+		return false;
 	}
 
 	async function onConfirmDelete() {
@@ -617,9 +641,13 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			aria-label="close"
 			onclick={() => {
 				if (allNotes) {
-					paneService.onDeletePane(paneService.rootPane, mode.paneId);
+					if (!isShowingOptions()) {
+						paneService.onDeletePane(paneService.rootPane, mode.paneId);
+					}
 				} else {
-					mode.notePopup.show = false;
+					if (!isShowingOptions()) {
+						mode.notePopup.show = false;
+					}
 				}
 			}}
 			class="h-12 w-12 px-2 pt-2 text-neutral-700"
@@ -694,11 +722,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 					>{new Date(notes[nk].modified).toLocaleDateString()}
 					{new Date(notes[nk].modified).toLocaleTimeString()}</span
 				>
-				<div class="flex flex-row justify-start space-x-2 pt-2">
-
+				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
 					{#each notes[nk].tags as t}
 						<span
-							class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
+							class="mt-2 inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-2.5 text-supporta-700"
 						>
 							<p class="whitespace-nowrap text-sm">{t.tag}</p>
 						</span>
