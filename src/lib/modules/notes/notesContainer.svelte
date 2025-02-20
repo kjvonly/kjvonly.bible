@@ -626,7 +626,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			}}
 			class="hover:cursor-pointer"
 		>
-			<span class="inline-block font-bold">Note</span>
+			<span class="inline-block font-bold">Notes</span>
 			<button aria-label="chevron down" class="h-4 w-4">
 				<svg
 					width="100%"
@@ -690,7 +690,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		</label>
 		<div>
 			<fieldset>
-				<legend class="sr-only">Checkboxes</legend>
 				{#each filterParams as fp}
 					<div class="space-y-2">
 						<label for="Option1" class="flex cursor-pointer items-start gap-4">
