@@ -50,6 +50,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	} = $props();
 
 	let clientHeight = $state(0);
+	let clientWidth = $state(0);
 	let headerHeight = $state(0);
 
 	let booknames: any = {};
@@ -167,14 +168,47 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	let noteActions: any = {
 		delete: () => {
 			showConfirmDelete = true;
+		},
+		'split vertical': () => {
+			paneService.onSplitPane(mode.paneId, 'v', 'Modules', {});
+			showNoteActions = false;
+		},
+
+		'split horizontal': () => {
+			paneService.onSplitPane(mode.paneId, 'h', 'Modules', {});
+			showNoteActions = false;
 		}
 	};
 
 	function onCloseNote() {
-		showNoteActions = false;
-		showConfirmDelete = false;
-		note = undefined;
-		noteID = '';
+		if (!isShowingOptions()) {
+			showNoteActions = false;
+			showConfirmDelete = false;
+			note = undefined;
+			noteID = '';
+		}
+	}
+
+	/** if an options menu is open close it instead
+	 * of closing the view
+	 */
+	function isShowingOptions() {
+		if (showConfirmDelete) {
+			showConfirmDelete = false;
+			return true;
+		}
+
+		if (showNoteActions) {
+			showNoteActions = false;
+			return true;
+		}
+
+		if (showNoteListActions) {
+			showNoteListActions = false;
+			return true;
+		}
+
+		return false;
 	}
 
 	async function onConfirmDelete() {
@@ -283,7 +317,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	function onDeleteTag(tagID: string) {
 		if (note) {
-			note.tags = note.tags.forEach((t: any) => {
+			note.tags = note.tags.filter((t: any) => {
 				if (t.id !== tagID) {
 					return t;
 				}
@@ -391,7 +425,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			}}
 			class="hover:cursor-pointer"
 		>
-			<span class="inline-block font-bold">{note.title}{note.title?.length === 20 ? '...' : ''}</span>
+			<span class="inline-block font-bold"
+				>{note.title}{note.title?.length === 20 ? '...' : ''}</span
+			>
 			<button aria-label="chevron down" class="h-4 w-4">
 				<svg
 					width="100%"
@@ -519,33 +555,35 @@ note icon in the Bible only the notes associated to that word will be displayed 
 {/snippet}
 
 {#snippet noteTagsSnippet()}
-	<div class="flex flex-row items-end space-x-2 space-y-2 p-2">
-		{#each note.tags as tk}
-			<span
-				class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
-			>
-				<p class="whitespace-nowrap text-sm">{tk.tag}</p>
-
-				<button
-					aria-label="delete tag"
-					onclick={() => {
-						onDeleteTag(tk.id);
-					}}
-					class="-me-1 ms-1.5 inline-block rounded-full bg-supporta-200 p-0.5 text-supporta-700 transition hover:bg-supporta-300"
+	<div style="width: {clientWidth}px" class="max-w-lg overflow-hidden">
+		<div class="flex flex-row items-end space-x-2 space-y-2 overflow-x-scroll p-2">
+			{#each [...note.tags].reverse() as t}
+				<span
+					class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
 				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						stroke="currentColor"
-						class="size-3"
+					<p class="whitespace-nowrap text-sm">{t.tag}</p>
+
+					<button
+						aria-label="delete tag"
+						onclick={() => {
+							onDeleteTag(t.id);
+						}}
+						class="-me-1 ms-1.5 inline-block rounded-full bg-supporta-200 p-0.5 text-supporta-700 transition hover:bg-supporta-300"
 					>
-						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-					</svg>
-				</button>
-			</span>
-		{/each}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke-width="1.5"
+							stroke="currentColor"
+							class="size-3"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
+				</span>
+			{/each}
+		</div>
 	</div>
 {/snippet}
 <!-- END NOTE SNIPPETS -->
@@ -588,7 +626,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			}}
 			class="hover:cursor-pointer"
 		>
-			<span class="inline-block font-bold">Note</span>
+			<span class="inline-block font-bold">Notes</span>
 			<button aria-label="chevron down" class="h-4 w-4">
 				<svg
 					width="100%"
@@ -612,9 +650,13 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			aria-label="close"
 			onclick={() => {
 				if (allNotes) {
-					paneService.onDeletePane(paneService.rootPane, mode.paneId);
+					if (!isShowingOptions()) {
+						paneService.onDeletePane(paneService.rootPane, mode.paneId);
+					}
 				} else {
-					mode.notePopup.show = false;
+					if (!isShowingOptions()) {
+						mode.notePopup.show = false;
+					}
 				}
 			}}
 			class="h-12 w-12 px-2 pt-2 text-neutral-700"
@@ -648,7 +690,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		</label>
 		<div>
 			<fieldset>
-				<legend class="sr-only">Checkboxes</legend>
 				{#each filterParams as fp}
 					<div class="space-y-2">
 						<label for="Option1" class="flex cursor-pointer items-start gap-4">
@@ -689,12 +730,12 @@ note icon in the Bible only the notes associated to that word will be displayed 
 					>{new Date(notes[nk].modified).toLocaleDateString()}
 					{new Date(notes[nk].modified).toLocaleTimeString()}</span
 				>
-				<div class="flex flex-row justify-start space-x-2 pt-2">
-					{#each notes[nk].tags as tk}
+				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
+					{#each notes[nk].tags as t}
 						<span
-							class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
+							class="mt-2 inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-2.5 text-supporta-700"
 						>
-							<p class="whitespace-nowrap text-sm">{tk.tag}</p>
+							<p class="whitespace-nowrap text-sm">{t.tag}</p>
 						</span>
 					{/each}
 				</div>
@@ -722,6 +763,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 <div
 	bind:clientHeight
+	bind:clientWidth
 	style={containerHeight}
 	class="flex h-full w-full flex-col items-center bg-neutral-50"
 >
