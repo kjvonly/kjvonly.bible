@@ -379,24 +379,24 @@ describe('suite name', () => {
     }
 }`
 
-       let root = JSON.parse(json)
+        let root = JSON.parse(json)
 
 
         let gta = renderGridTemplateAreas(root)
         console.log(gta)
         expect(gta).toEqual([
-            [ 'a', 'b' ],
-            [ 'a', 'b' ],
-            [ 'd', 'b' ],
-            [ 'd', 'c' ],
-            [ 'e', 'c' ],
-            [ 'e', 'c' ]
-          ]
-          )
+            ['a', 'b'],
+            ['a', 'b'],
+            ['d', 'b'],
+            ['d', 'c'],
+            ['e', 'c'],
+            ['e', 'c']
+        ]
+        )
     })
 
     it('failing grid', () => {
-        
+
         let json = `{
     "split": "v",
     "left": {
@@ -459,20 +459,20 @@ describe('suite name', () => {
     }
 }`
 
-       let root = JSON.parse(json)
+        let root = JSON.parse(json)
 
 
         let gta = renderGridTemplateAreas(root)
         console.log(gta)
         expect(gta).toEqual([
-            [ 'a', 'b' ],
-            [ 'a', 'b' ],
-            [ 'd', 'b' ],
-            [ 'd', 'c' ],
-            [ 'e', 'c' ],
-            [ 'e', 'c' ]
-          ]
-          )
+            ['a', 'b'],
+            ['a', 'b'],
+            ['d', 'b'],
+            ['d', 'c'],
+            ['e', 'c'],
+            ['e', 'c']
+        ]
+        )
     })
 
     it('should convert numbers to letters', () => {

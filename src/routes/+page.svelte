@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { numberToLetters, renderGridTemplateAreas } from '$lib/services/dynamicGrid.service';
+	import {
+		base26ToDecimal,
+		numberToLetters,
+		renderGridTemplateAreas
+	} from '$lib/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
 	import { paneService } from '$lib/services/pane.service.svelte';
@@ -30,15 +34,8 @@
 		paneIds = Object.keys(areas)
 			.concat(Object.keys(deletedPaneIds))
 			.sort((a: string, b: string) => {
-				let aval = 0,
-					bval = 0;
-
-				for (let i = 0; i < a.length; i++) {
-					aval += a.charCodeAt(i) - 96;
-				}
-				for (let i = 0; i < b.length; i++) {
-					bval += b.charCodeAt(i) - 96;
-				}
+				let aval = base26ToDecimal(a);
+				let bval = base26ToDecimal(b);
 				return aval - bval;
 			});
 
@@ -107,11 +104,7 @@
 		}
 
 		let lastPaneId: string = paneIds[paneIds.length - 1];
-		let val = 0;
-		for (let i = 0; i < lastPaneId.length; i++) {
-			val += lastPaneId.charCodeAt(i) - 96;
-		}
-
+		let val = base26ToDecimal(lastPaneId);
 		let pid = numberToLetters(val + 1);
 
 		p.split = split;
