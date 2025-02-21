@@ -12,6 +12,16 @@ export function numberToLetters(number: number) {
     return result
 }
 
+
+export function base26ToDecimal(base26: string): number {
+    let decimal = 0;
+    for (let i = 0; i < base26.length; i++) {
+        const digitValue = base26.charCodeAt(i) - 96;
+        decimal += digitValue * Math.pow(26, base26.length - i - 1);
+    }
+    return decimal;
+}
+
 function gcd(a: number, b: number): number {
     while (b !== 0) {
         let temp = b;
