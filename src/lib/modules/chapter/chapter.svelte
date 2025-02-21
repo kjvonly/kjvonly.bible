@@ -86,6 +86,7 @@
 						{footnotes}
 						{chapterKey}
 						{lastKnownScrollPosition}
+
 					></Verse>
 				</span>
 			{/each}

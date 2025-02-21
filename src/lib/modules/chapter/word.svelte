@@ -11,14 +11,14 @@
 		chapterKey,
 		pane = $bindable(),
 		annotations = $bindable(),
-		mode = $bindable()
+		mode = $bindable(),
 	} = $props();
 
 	let track: any = {};
 	let verseNumber = $state(0);
 	let wordAnnotations: any = $state();
 	let notesAnnotations: any = $state();
-
+	let hasVerseReferences = $state(false)
 	$effect(() => {
 		annotations;
 		wordAnnotations = getWordAnnotations();
@@ -166,6 +166,20 @@
 		) {
 			notesAnnotations = annotations[verseNumber].notes.words[wordIdx];
 		}
+
+		if (wordIdx === 0) {
+			verse?.words?.forEach((w:any) => {
+				if (hasVerseReferences) {
+					return;
+				}
+				w.href?.forEach((h: any) => {
+					if (h.includes('/')) {
+						hasVerseReferences = true;
+						return;
+					}
+				});
+			});
+		}
 	});
 
 	let pressThresholdInMilliseconds = 1000;
@@ -304,8 +318,9 @@
 		ontouchend={onMouseUpTouchEnd}
 		onmousedown={onMouseDownTouchStart}
 		onmouseup={onMouseUpTouchEnd}
-		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}"
-		>{word.text}</span
+		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(
+			' '
+		)} {hasVerseReferences && word.class.includes('vno') ? 'vno-refs' : ''} ">{word.text}</span
 	>
 {:else}<span class="inline-block {wordAnnotations?.class?.join(' ')}">&nbsp;</span><span
 		ontouchstart={onMouseDownTouchStart}
@@ -338,6 +353,10 @@
 		top: -0.6em;
 		cursor: pointer;
 		@apply text-xs text-neutral-700 sm:text-base;
+	}
+
+	.vno-refs {
+		@apply underline decoration-dotted;
 	}
 
 	.xref {

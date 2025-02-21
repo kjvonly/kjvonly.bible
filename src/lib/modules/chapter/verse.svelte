@@ -1,15 +1,18 @@
 <script lang="ts">
+	import { onMount, untrack } from 'svelte';
 	import Word from './word.svelte';
 	let {
-		
 		lastKnownScrollPosition,
 		chapterKey,
 		footnotes,
 		verse,
 		pane = $bindable(),
 		annotations = $bindable(),
-		mode = $bindable()
+		mode = $bindable(),
 	} = $props();
+
+	function a() {}
+
 </script>
 
 {#if verse}
@@ -17,7 +20,7 @@
 		<Word
 			bind:pane
 			bind:annotations
-			bind:mode={mode}
+			bind:mode
 			{verse}
 			{word}
 			{footnotes}
