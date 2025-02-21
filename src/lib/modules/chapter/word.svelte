@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
 	let {
 		wordIdx,
@@ -11,18 +11,38 @@
 		chapterKey,
 		pane = $bindable(),
 		annotations = $bindable(),
-		mode = $bindable(),
+		mode = $bindable()
 	} = $props();
 
 	let track: any = {};
 	let verseNumber = $state(0);
 	let wordAnnotations: any = $state();
 	let notesAnnotations: any = $state();
-	let hasVerseReferences = $state(false)
+	let hasVerseReferences = $state(false);
 	$effect(() => {
 		annotations;
 		wordAnnotations = getWordAnnotations();
 		notesAnnotations = getNotesAnnotations();
+	});
+
+	$effect(() => {
+		word;
+		untrack(() => {
+			hasVerseReferences = false;
+			if (wordIdx === 0) {
+				verse?.words?.forEach((w: any) => {
+					if (hasVerseReferences) {
+						return;
+					}
+					w.href?.forEach((h: any) => {
+						if (h.includes('/')) {
+							hasVerseReferences = true;
+							return;
+						}
+					});
+				});
+			}
+		});
 	});
 
 	function updateMode(m: string) {
@@ -165,20 +185,6 @@
 			annotations[verseNumber].notes.words
 		) {
 			notesAnnotations = annotations[verseNumber].notes.words[wordIdx];
-		}
-
-		if (wordIdx === 0) {
-			verse?.words?.forEach((w:any) => {
-				if (hasVerseReferences) {
-					return;
-				}
-				w.href?.forEach((h: any) => {
-					if (h.includes('/')) {
-						hasVerseReferences = true;
-						return;
-					}
-				});
-			});
 		}
 	});
 
