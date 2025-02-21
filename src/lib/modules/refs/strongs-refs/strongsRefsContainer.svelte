@@ -5,7 +5,7 @@
 
 	let { isVerseRef, strongsRefs, strongsWords, text } = $props();
 
-	let toggle = $state(false);
+	let toggleStrongs = $state(false);
 
 	let strongs: any[] | undefined = $state([]);
 	onMount(async () => {
@@ -20,7 +20,7 @@
 	});
 </script>
 
-{#snippet header(s, idx)}
+{#snippet header(s: any, idx: number)}
 	<div class="flex flex-row items-center ps-2 pt-2">
 		{#if strongsWords && strongsWords.length > 0}
 			<span class="pe-4">{s['number']}: {strongsWords[idx]}</span>
@@ -49,7 +49,45 @@
 	</div>
 {/snippet}
 
-{#snippet strongsHtml(s)}
+{#snippet thayersContainer(s: any)}
+	{#if s.thayersDef}
+		<div class="max-w-lg pt-4">
+			<p class="text-neutral-600">Thayers Definition:</p>
+			<p class="max-w-lg ps-2">
+				{@render recursiveDef(s.thayersDef)}
+			</p>
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet brownContainer(s)}
+	{#if s.brownDef}
+		<div class="max-w-lg pt-4">
+			<p class="text-neutral-600">Brown Definition:</p>
+			<p class="max-w-lg ps-2">
+				{@render recursiveDef(s.brownDef)}
+			</p>
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet recursiveDef(def: any)}
+	{#if def.text}
+		<li>
+			{def.text}
+		</li>
+	{/if}
+
+	{#if def.children}
+		<ol>
+			{#each def.children as d2}
+				{@render recursiveDef(d2)}
+			{/each}
+		</ol>
+	{/if}
+{/snippet}
+
+{#snippet strongsHtml(s: any)}
 	<div class="ps-4">
 		{#if s['strongsDef']}
 			<div class="">
@@ -61,7 +99,7 @@
 		{/if}
 
 		<div class="">
-			<h1 class="pt-4 font-bold text-neutral-600">Linguistic Elements:</h1>
+			<h1 class="pt-4 text-neutral-600">Linguistic Elements:</h1>
 			<div class="flex flex-shrink">
 				<div class="flex flex-col p-2">
 					{#if s['originalWord']}
@@ -86,23 +124,26 @@
 				</div>
 			</div>
 		</div>
+
+		{@render thayersContainer(s)}
+		{@render brownContainer(s)}
 	</div>
 {/snippet}
 
 <div class="pt-4">
 	{#if strongs.length > 1 || isVerseRef}
 		<div class="flex flex-row items-center">
-			<p class="pe-4 capitalize">strong's:</p>
+			<p class="pe-4 capitalize">definitions:</p>
 			<button
 				onclick={() => {
-					toggle = !toggle;
+					toggleStrongs = !toggleStrongs;
 				}}
 				aria-label="toggle drop down"
 			>
 				<ChevronDown className="w-4 h-4" fill="fill-neutral-700"></ChevronDown>
 			</button>
 		</div>
-		{#if toggle}
+		{#if toggleStrongs}
 			{#each strongs as s, idx}
 				{@render header(s, idx)}
 				{#if s.toggle}
@@ -117,4 +158,31 @@
 </div>
 
 <style>
+	ol {
+		counter-reset: item;
+	}
+	ol {
+		list-style-type: decimal;
+		padding-left: 23px;
+	}
+
+	ol ol {
+		list-style-type: lower-alpha;
+	}
+
+	ol ol ol {
+		list-style-type: upper-roman;
+	}
+
+	ol ol ol ol {
+		list-style-type: decimal;
+	}
+
+	ol ol ol ol ol {
+		list-style-type: lower-alpha;
+	}
+
+	ol ol ol ol ol ol {
+		list-style-type: upper-roman;
+	}
 </style>
