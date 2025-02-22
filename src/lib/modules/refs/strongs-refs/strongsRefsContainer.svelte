@@ -11,8 +11,8 @@
 	let showByBook = $state(false);
 	let showByWord = $state(false);
 	let searchTerms = $state('');
-	let booknames: any= {};
-	let startsWithBookId = ''
+	let booknames: any = {};
+	let startsWithBookId = '';
 
 	let strongs: any[] | undefined = $state([]);
 
@@ -34,27 +34,30 @@
 	});
 
 	function onFilterBookIndexes(indexes: string[]) {
-		return indexes.filter(bookId => {
-			if (bookId.startsWith(startsWithBookId)){
-				console.log(bookId)
-				return bookId
+		return indexes.filter((bookId) => {
+			if (bookId.startsWith(startsWithBookId)) {
+				return bookId;
 			}
-		})
+		});
 	}
 
 	function onByBook(b: any, idx: number) {
-		
-		if (strongsWords && strongsWords.length > 0){
-			searchTerms = sanatize(strongsWords[idx])
+		if (strongsWords && strongsWords.length > 0) {
+			searchTerms = sanatize(strongsWords[idx]);
 		} else {
 			searchTerms = sanatize(text);
 		}
-		
+
 		let bookid = booknames['booknamesByName'][b.text];
-		if (bookid){
-			startsWithBookId = `${bookid}_`
+		if (bookid) {
+			startsWithBookId = `${bookid}_`;
 		}
 		showByBook = true;
+	}
+
+	function onByWord(b: any, idx: number) {
+		searchTerms = sanatize(b.text);
+		showByWord = true;
 	}
 </script>
 
@@ -158,9 +161,14 @@
 	{#if s['usageByWord']}
 		<h1 class="pt-4 text-neutral-600">By Word:</h1>
 
-		<div class="space-y-2 ps-4">
-			{#each s['usageByBook'] as b, idx}
-				{#if idx !== 0}&shy;,&nbsp;{/if}<span class="inline-block">{b.text}</span>
+		<div class="space-y-2 pb-4 ps-4">
+			{#each s['usageByWord'] as b, idx}
+				{#if idx !== 0}&shy;,&nbsp;{/if}<span
+					onclick={() => {
+						onByWord(b, idx);
+					}}
+					class="inline-block hover:cursor-pointer hover:text-neutral-400">{b.text}</span
+				>
 			{/each}
 		</div>
 	{/if}
@@ -207,7 +215,7 @@
 		{@render thayersContainer(s)}
 		{@render brownContainer(s)}
 		{@render byBook(s, idx)}
-		<!-- {@render byWord(s, idx)} -->
+		{@render byWord(s, idx)}
 	</div>
 {/snippet}
 
@@ -215,8 +223,6 @@
 	{#if showByBook}
 		<div class="sticky top-0 z-popover flex w-full justify-center">
 			<div style={containerHeight} class="absolute z-[10000] w-full bg-neutral-50">
-				<!-- <div class="flex h-full w-full justify-center bg-neutral-50">
-						<div class="w-full md:max-w-lg"> -->
 				<Search
 					{paneId}
 					{containerHeight}
@@ -229,8 +235,22 @@
 					onFilterIndex={onFilterBookIndexes}
 				></Search>
 			</div>
-			<!-- </div>
-				</div> -->
+		</div>
+	{/if}
+	{#if showByWord}
+		<div class="sticky top-0 z-popover flex w-full justify-center">
+			<div style={containerHeight} class="absolute z-[10000] w-full bg-neutral-50">
+				<Search
+					{paneId}
+					{containerHeight}
+					showInput={true}
+					{searchTerms}
+					onClose={() => {
+						showByWord = false;
+						searchTerms = '';
+					}}
+				></Search>
+			</div>
 		</div>
 	{/if}
 
