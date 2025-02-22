@@ -88,11 +88,28 @@
 	{/if}
 {/snippet}
 
-{#snippet byBook(def)}
-	<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={def}></Search>
+{#snippet byBook(s: any, idx: number)}
+	{#if s['usageByBook']}
+		<h1 class="pt-4 text-neutral-600">By Book:</h1>
+
+		<div class="flex flex-col space-y-2 ps-4">
+			{#each s['usageByBook'] as b, idx}
+				<p>{b.text}</p>
+			{/each}
+		</div>
+
+		{#if strongsWords && strongsWords.length > 0}
+			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={strongsWords[idx]}
+			></Search>
+		{:else}
+		{text}
+			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={text}
+			></Search>
+		{/if}
+	{/if}
 {/snippet}
 
-{#snippet strongsHtml(s: any)}
+{#snippet strongsHtml(s: any, idx: number)}
 	<div class="ps-4">
 		{#if s['strongsDef']}
 			<div class="">
@@ -132,11 +149,9 @@
 
 		{@render thayersContainer(s)}
 		{@render brownContainer(s)}
+		{@render byBook(s, idx)}
 	</div>
 {/snippet}
-
-
-// here todo idx to searchhtml
 
 <div class="pt-4">
 	{#if strongs.length > 1 || isVerseRef}

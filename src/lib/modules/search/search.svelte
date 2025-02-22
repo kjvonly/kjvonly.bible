@@ -38,6 +38,7 @@
 	onMount(() => {
 		searchService.subscribe(searchID, onSearchResult);
 		if (!showInput && searchTerms?.length > 0){
+			searchText = searchTerms
 			searchService.search(searchID, searchTerms)
 		}
 	});
