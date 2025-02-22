@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { chapterService } from '$lib/api/chapters.service';
 	import ChevronDown from '$lib/components/chevronDown.svelte';
 	import { bibleDB } from '$lib/db/bible.db';
 	import Search from '$lib/modules/search/search.svelte';
@@ -10,6 +11,8 @@
 	let showByBook = $state(false);
 	let showByWord = $state(false);
 	let searchTerms = $state('');
+	let booknames: any= {};
+	let startsWithBookId = ''
 
 	let strongs: any[] | undefined = $state([]);
 
@@ -26,10 +29,31 @@
 				}
 			});
 		}
+
+		booknames = await chapterService.getBooknames();
 	});
 
-	function onByBook(text: string) {
-		searchTerms = sanatize(text);
+	function onFilterBookIndexes(indexes: string[]) {
+		return indexes.filter(bookId => {
+			if (bookId.startsWith(startsWithBookId)){
+				console.log(bookId)
+				return bookId
+			}
+		})
+	}
+
+	function onByBook(b: any, idx: number) {
+		
+		if (strongsWords && strongsWords.length > 0){
+			searchTerms = sanatize(strongsWords[idx])
+		} else {
+			searchTerms = sanatize(text);
+		}
+		
+		let bookid = booknames['booknamesByName'][b.text];
+		if (bookid){
+			startsWithBookId = `${bookid}_`
+		}
 		showByBook = true;
 	}
 </script>
@@ -121,7 +145,7 @@
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				{#if idx !== 0}&shy;,&nbsp;{/if}<span
 					onclick={() => {
-						onByBook(b.text);
+						onByBook(b, idx);
 					}}
 					class="inline-block hover:cursor-pointer hover:text-neutral-400">{b.text}</span
 				>
@@ -202,6 +226,7 @@
 						showByBook = false;
 						searchTerms = '';
 					}}
+					onFilterIndex={onFilterBookIndexes}
 				></Search>
 			</div>
 			<!-- </div>

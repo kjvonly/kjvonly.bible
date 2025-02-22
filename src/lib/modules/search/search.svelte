@@ -5,6 +5,7 @@
 	import uuid4 from 'uuid4';
 	import { toastService } from '$lib/services/toast.service';
 	import { bibleDB } from '$lib/db/bible.db';
+	import { on } from 'svelte/events';
 
 	let searchID = uuid4();
 	let searchInputHeight: number = $state(0);
@@ -19,10 +20,12 @@
 		containerWidth = $bindable(),
 		showInput = true,
 		searchTerms,
-		onClose = undefined
+		onClose = undefined,
+		onFilterIndex = undefined
 	} = $props();
 
 	function onSearchTextChanged() {
+		onFilterIndex = undefined
 		if (searchText.length < 3) {
 			loadedVerses = 0;
 			searchResults = [];
@@ -64,6 +67,10 @@
 	}
 
 	async function onSearchResult(data: any) {
+		if (onFilterIndex){
+			console.log()
+			data.indexes = onFilterIndex(data.indexes)
+		}
 		searchResultsObj = data;
 		loadedVerses = 0;
 		searchResults = [];
@@ -90,7 +97,7 @@
 
 	onMount(() => {
 		searchService.subscribe(searchID, onSearchResult);
-		if (!showInput && searchTerms?.length > 0) {
+		if (searchTerms?.length > 0) {
 			searchText = searchTerms;
 			searchService.search(searchID, searchTerms);
 		}
