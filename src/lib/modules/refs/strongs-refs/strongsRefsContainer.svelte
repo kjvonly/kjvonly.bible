@@ -4,9 +4,12 @@
 	import Search from '$lib/modules/search/search.svelte';
 	import { onMount } from 'svelte';
 
-	let { isVerseRef, strongsRefs, strongsWords, text, paneId } = $props();
+	let { containerHeight, isVerseRef, strongsRefs, strongsWords, text, paneId } = $props();
 
 	let toggleStrongs = $state(false);
+	let showByBook = $state(false);
+	let showByWord = $state(false);
+	let searchTerms = $state('');
 
 	let strongs: any[] | undefined = $state([]);
 
@@ -24,6 +27,11 @@
 			});
 		}
 	});
+
+	function onByBook(text: string) {
+		searchTerms = sanatize(text);
+		showByBook = true;
+	}
 </script>
 
 {#snippet header(s: any, idx: number)}
@@ -109,23 +117,16 @@
 
 		<div class="space-y-2 ps-4 pt-2">
 			{#each s['usageByBook'] as b, idx}
-				{#if idx !== 0}&shy;,&nbsp;{/if}<span class="inline-block">{b.text}</span>
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				{#if idx !== 0}&shy;,&nbsp;{/if}<span
+					onclick={() => {
+						onByBook(b.text);
+					}}
+					class="inline-block hover:cursor-pointer hover:text-neutral-400">{b.text}</span
+				>
 			{/each}
 		</div>
-
-		{#if s.toggleBooks}
-			<div class="overflow-hidden">
-				<div class="overflow-y-scroll">
-					{#if strongsWords && strongsWords.length > 0}
-						{@const sw = sanatize(strongsWords[idx])}
-						<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
-					{:else}
-						{@const sw = sanatize(text)}
-						<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
-					{/if}
-				</div>p
-			</div>
-		{/if}
 	{/if}
 {/snippet}
 
@@ -138,13 +139,6 @@
 				{#if idx !== 0}&shy;,&nbsp;{/if}<span class="inline-block">{b.text}</span>
 			{/each}
 		</div>
-		{#each s['usageByWord'] as w, idx}
-			{#if strongsWords && strongsWords.length > 0}
-				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}></Search>
-			{:else}
-				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}></Search>
-			{/if}
-		{/each}
 	{/if}
 {/snippet}
 
@@ -193,7 +187,28 @@
 	</div>
 {/snippet}
 
-<div class="pt-4">
+<div class="">
+	{#if showByBook}
+		<div class="sticky top-0 z-popover flex w-full justify-center">
+			<div style={containerHeight} class="absolute z-[10000] w-full bg-neutral-50">
+				<!-- <div class="flex h-full w-full justify-center bg-neutral-50">
+						<div class="w-full md:max-w-lg"> -->
+				<Search
+					{paneId}
+					{containerHeight}
+					showInput={true}
+					{searchTerms}
+					onClose={() => {
+						showByBook = false;
+						searchTerms = '';
+					}}
+				></Search>
+			</div>
+			<!-- </div>
+				</div> -->
+		</div>
+	{/if}
+
 	{#if strongs.length > 1 || isVerseRef}
 		<div class="flex flex-row items-center">
 			<p class="pe-4 capitalize">definitions:</p>

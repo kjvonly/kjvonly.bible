@@ -18,14 +18,15 @@
 		containerHeight = $bindable(),
 		containerWidth = $bindable(),
 		showInput = true,
-		searchTerms
+		searchTerms,
+		onClose = undefined
 	} = $props();
 
 	function onSearchTextChanged() {
 		if (searchText.length < 3) {
-			loadedVerses = 0
-			searchResults = []
-			searchResultsObj = {}
+			loadedVerses = 0;
+			searchResults = [];
+			searchResultsObj = {};
 		} else {
 			searchService.search(searchID, searchText);
 		}
@@ -37,7 +38,11 @@
 	}
 
 	async function loadMoreVerses() {
-		for (let j = 0; j < 10 && loadedVerses  !== searchResultsObj.indexes?.length; j++, loadedVerses++ ) {
+		for (
+			let j = 0;
+			j < 10 && loadedVerses !== searchResultsObj.indexes?.length;
+			j++, loadedVerses++
+		) {
 			let bcvKey = searchResultsObj.indexes[loadedVerses];
 
 			let chatperKeyIndex = bcvKey.lastIndexOf('_');
@@ -60,9 +65,9 @@
 
 	async function onSearchResult(data: any) {
 		searchResultsObj = data;
-		loadedVerses = 0
-		searchResults = []
-		await loadMoreVerses()
+		loadedVerses = 0;
+		searchResults = [];
+		await loadMoreVerses();
 	}
 
 	function handleScroll() {
@@ -79,7 +84,7 @@
 			if (pos < 0) {
 				return;
 			}
-			loadMoreVerses()
+			loadMoreVerses();
 		}
 	}
 
@@ -222,7 +227,6 @@
 {/snippet}
 
 {#snippet searchResultsSnippet()}
-
 	{#each searchResults as v}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -259,7 +263,11 @@
 					<button
 						aria-label="close"
 						onclick={() => {
-							paneService.onDeletePane(paneService.rootPane, paneId);
+							if (onClose) {
+								onClose();
+							} else {
+								paneService.onDeletePane(paneService.rootPane, paneId);
+							}
 						}}
 						class="h-12 w-12 px-2 pt-2 text-neutral-700"
 					>
@@ -281,9 +289,8 @@
 					/>
 				</div>
 				{#if searchResultsObj?.indexes && searchResultsObj?.indexes.length > 0}
-				<p>Showing {loadedVerses} of {searchResultsObj?.indexes.length}</p>
+					<p>Showing {loadedVerses} of {searchResultsObj?.indexes.length}</p>
 				{/if}
-				
 			</div>
 			<div class="p-4">
 				<div
