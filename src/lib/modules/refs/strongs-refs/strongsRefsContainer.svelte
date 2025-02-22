@@ -99,13 +99,33 @@
 		</div>
 
 		{#if strongsWords && strongsWords.length > 0}
-			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={strongsWords[idx]}
+		idx :{strongsWords[idx]}
+			<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={strongsWords[idx]}
 			></Search>
 		{:else}
-		{text}
-			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={text}
-			></Search>
+		text: {text}
+			<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={text}></Search>
 		{/if}
+	{/if}
+{/snippet}
+
+{#snippet byWord(s: any, idx: number)}
+	{#if s['usageByWord']}
+		<h1 class="pt-4 text-neutral-600">By Word:</h1>
+
+		<div class="flex flex-col space-y-2 ps-4">
+			{#each s['usageByWord'] as w, idx}
+				<p>{w.text}</p>
+			{/each}
+		</div>
+		{#each s['usageByWord'] as w, idx}
+			{#if strongsWords && strongsWords.length > 0}
+				<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={w.text}
+				></Search>
+			{:else}
+				<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={w.text}></Search>
+			{/if}
+		{/each}
 	{/if}
 {/snippet}
 
@@ -150,6 +170,7 @@
 		{@render thayersContainer(s)}
 		{@render brownContainer(s)}
 		{@render byBook(s, idx)}
+		{@render byWord(s, idx)}
 	</div>
 {/snippet}
 
