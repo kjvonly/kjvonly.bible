@@ -95,7 +95,7 @@ export class ChapterService {
         }
 
         if (searchIndex === undefined) {
-            return await api.get(`data/json.gz/.json`);
+            return await api.get(`data/json.gz/bibleindex.json`);
         }
 
         return searchIndex;

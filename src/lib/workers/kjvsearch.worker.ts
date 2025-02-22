@@ -5,47 +5,52 @@ import FlexSearch, { type Id } from 'flexsearch';
 let index = new FlexSearch.Index();
 
 let verses: any = {}
+
+
+/** if bible data ever changes we can use this function to 
+ * export the flexsearch index and copy it to the data repo.
+ */
+async function exportIndexToConsole() {
+    let keys = await bibleDB.getAllKeys('chapters')
+    let booknames: any = await bibleDB.getValue('booknames', 'booknames')
+
+    for (const key of keys) {
+        let chapter = await bibleDB.getValue('chapters', key.toString())
+        if (key === 'booknames') {
+            continue
+        }
+
+        for (const verseNumber of Object.keys(chapter['verseMap'])) {
+            let bookChapter = key.toString().split('_')
+            let text = `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${verseNumber} ${chapter['verseMap'][verseNumber]}`
+            let id = `${key}_${verseNumber}`
+            await index.addAsync(id, text)
+
+
+        }
+        console.log('here')
+    }
+
+    console.log('exporting')
+
+    await index.export(
+        (key, data) => { verses[key] = data !== undefined ? data : '' }
+    )
+    console.log('verses', verses)
+}
+
 async function init() {
     let indexes = index.search('for god so')
     if (indexes.length === 0) {
-        await bibleDB.waitForIndexDB()
+        await bibleDB.waitForSearchIndex()
 
-        let keys = await bibleDB.getAllKeys('chapters')
-        let booknames: any = await bibleDB.getValue('booknames', 'booknames')
+        let bibleIndex = await bibleDB.getValue('search', 'v1')
+        delete bibleIndex['id']
 
-        for (const key of keys) {
-            let chapter = await bibleDB.getValue('chapters', key.toString())
-            if (key === 'booknames') {
-                continue
-            }
-
-            for (const verseNumber of Object.keys(chapter['verseMap'])) {
-                let bookChapter = key.toString().split('_')
-                let text = `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${verseNumber} ${chapter['verseMap'][verseNumber]}`
-                let id = `${key}_${verseNumber}`
-                await index.addAsync(id, text)
-
-                // verses[id] = {
-                //     id: id,
-                //     bookId: bookChapter[0],
-                //     order: (parseInt(bookChapter[0]) * 1000000) + (parseInt(bookChapter[1]) * 1000) + parseInt(verseNumber),
-                //     text: text,
-                //     bookName: chapter['bookName'],
-                //     number: chapter['number'],
-                //     verseNumber: verseNumber,
-                //     verse: verse
-                // }
-
-            }
-            console.log('here')
+        for (const key of Object.keys(bibleIndex)){
+            await index.import(key, bibleIndex[key])
         }
-
-        console.log('exporting')
-
-        await index.export(
-            (key, data) => { verses[key] = data !== undefined ? data : '' }
-        )
-        console.log('verses', verses)
+        
         postMessage({ id: 'init', verses: verses })
 
     } else {
