@@ -1,9 +1,10 @@
 <script lang="ts">
 	import ChevronDown from '$lib/components/chevronDown.svelte';
 	import { bibleDB } from '$lib/db/bible.db';
+	import Search from '$lib/modules/search/search.svelte';
 	import { onMount } from 'svelte';
 
-	let { isVerseRef, strongsRefs, strongsWords, text } = $props();
+	let { isVerseRef, strongsRefs, strongsWords, text, paneId } = $props();
 
 	let toggleStrongs = $state(false);
 
@@ -87,6 +88,10 @@
 	{/if}
 {/snippet}
 
+{#snippet byBook(def)}
+	<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={def}></Search>
+{/snippet}
+
 {#snippet strongsHtml(s: any)}
 	<div class="ps-4">
 		{#if s['strongsDef']}
@@ -130,6 +135,9 @@
 	</div>
 {/snippet}
 
+
+// here todo idx to searchhtml
+
 <div class="pt-4">
 	{#if strongs.length > 1 || isVerseRef}
 		<div class="flex flex-row items-center">
@@ -147,13 +155,13 @@
 			{#each strongs as s, idx}
 				{@render header(s, idx)}
 				{#if s.toggle}
-					{@render strongsHtml(s)}
+					{@render strongsHtml(s, idx)}
 				{/if}
 			{/each}
 		{/if}
 	{:else if strongs.length > 0}
 		{@render header(strongs[0], 0)}
-		{@render strongsHtml(strongs[0])}
+		{@render strongsHtml(strongs[0], 0)}
 	{/if}
 </div>
 

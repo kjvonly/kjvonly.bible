@@ -102,6 +102,7 @@
 								strongsWords={pane?.buffer?.bag?.strongsWords}
 								{text}
 								{strongsRefs}
+								{paneId}
 							></StrongsRefsContainer>
 						{/if}
 
