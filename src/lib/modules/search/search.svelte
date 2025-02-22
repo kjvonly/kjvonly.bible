@@ -4,11 +4,14 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import uuid4 from 'uuid4';
 	import { toastService } from '$lib/services/toast.service';
+	import { bibleDB } from '$lib/db/bible.db';
 
 	let searchID = uuid4();
 	let searchInputHeight: number = $state(0);
 	let searchText = $state('');
 	let searchResults: any[] = $state([]);
+	let searchResultsObj: any = $state({});
+	let loadedVerses: number = $state(0);
 
 	let {
 		paneId,
@@ -31,8 +34,33 @@
 		return new RegExp('\\b' + stripWord + '\\b').test(searchText.toLowerCase());
 	}
 
-	function onSearchResult(data: any) {
-		searchResults = data.verses;
+	async function loadMoreVerses() {
+		for (let j = 0; j < 10 && loadedVerses  !== searchResultsObj.indexes?.length; j++, loadedVerses++ ) {
+			let bcvKey = searchResultsObj.indexes[loadedVerses];
+
+			let chatperKeyIndex = bcvKey.lastIndexOf('_');
+			let chapterKey = bcvKey.substring(0, chatperKeyIndex);
+			let verseNumber = bcvKey.substring(chatperKeyIndex + 1, bcvKey.length);
+			let chapter = await bibleDB.getValue('chapters', chapterKey);
+			let verse = chapter['verseMap'][verseNumber];
+
+			let data = {
+				key: bcvKey,
+				bookName: chapter['bookName'],
+				number: chapter['number'],
+				verseNumber: verseNumber,
+				text: verse
+			};
+
+			searchResults.push(data);
+		}
+	}
+
+	async function onSearchResult(data: any) {
+		searchResultsObj = data;
+		loadedVerses = 0
+		searchResults = []
+		await loadMoreVerses()
 	}
 
 	function handleScroll() {
@@ -49,6 +77,7 @@
 			if (pos < 0) {
 				return;
 			}
+			loadMoreVerses()
 			console.log('reached bottom');
 		}
 	}
@@ -192,6 +221,7 @@
 {/snippet}
 
 {#snippet searchResultsSnippet()}
+
 	{#each searchResults as v}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -249,6 +279,10 @@
 						placeholder="search"
 					/>
 				</div>
+				{#if searchResultsObj?.indexes && searchResultsObj?.indexes.length > 0}
+				<p>Showing {loadedVerses} of {searchResultsObj?.indexes.length}</p>
+				{/if}
+				
 			</div>
 			<div class="p-4">
 				<div

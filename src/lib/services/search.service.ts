@@ -3,14 +3,6 @@ class SearchService {
         type: 'module'
     });
 
-    verses = {}
-
-    initVerses(data: any){
-        this.verses = data.verses
-        console.log('init verses!!!')
-        console.log(this.verses)
-    }
-
     // TODO: unsubscribe
 
     subscribers: any[] = []
@@ -24,7 +16,6 @@ class SearchService {
         
         }
 
-        this.subscribe('init', this.initVerses)
 
         this.webWorker.postMessage({ action: 'init' })
     }

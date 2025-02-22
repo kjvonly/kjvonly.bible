@@ -8,7 +8,8 @@ let verses: any = {}
 
 
 /** if bible data ever changes we can use this function to 
- * export the flexsearch index and copy it to the data repo.
+ * export the flexsearch index and copy it to the data repo
+ * to be copied to static dir on build.
  */
 async function exportIndexToConsole() {
     let keys = await bibleDB.getAllKeys('chapters')
@@ -25,18 +26,13 @@ async function exportIndexToConsole() {
             let text = `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${verseNumber} ${chapter['verseMap'][verseNumber]}`
             let id = `${key}_${verseNumber}`
             await index.addAsync(id, text)
-
-
         }
-        console.log('here')
     }
-
-    console.log('exporting')
 
     await index.export(
         (key, data) => { verses[key] = data !== undefined ? data : '' }
     )
-    console.log('verses', verses)
+    console.log('export Index', verses)
 }
 
 async function init() {
@@ -47,10 +43,10 @@ async function init() {
         let bibleIndex = await bibleDB.getValue('search', 'v1')
         delete bibleIndex['id']
 
-        for (const key of Object.keys(bibleIndex)){
+        for (const key of Object.keys(bibleIndex)) {
             await index.import(key, bibleIndex[key])
         }
-        
+
         postMessage({ id: 'init', verses: verses })
 
     } else {
@@ -80,28 +76,18 @@ async function search(id: string, text: string) {
 
     let endTime: any = new Date();
     var timeDiff = endTime - startTime; //in ms
-    // strip the ms
-    //timeDiff /= 1000;
 
+    let stats = {
+        count: indexes.length,
+        time: `${timeDiff} ms`
+    }
     // get seconds 
 
     console.log(timeDiff + " ms", 'indexes length: ', indexes.length);
-    return indexes
-    for (const i of indexes) {
-        let chatperKeyIndex = i.toString().lastIndexOf('_');
-        let chapterKey = i.toString().substring(0, chatperKeyIndex);
-        let verseNumber = i.toString().substring(chatperKeyIndex + 1, i.toString().length);
-        let chapter = await bibleDB.getValue('chapters', chapterKey);
-        let verse = chapter['verseMap'][verseNumber];
 
-        let data = { key: i.toString(), bookName: chapter['bookName'], number: chapter['number'], verseNumber: verseNumber, text: verse };
 
-        verses.push(data);
-    }
+    postMessage({ id: id, indexes: indexes, stats: stats })
 
-    if (verses.length > 0) {
-        postMessage({ id: id, verses: verses })
-    }
 }
 
 
