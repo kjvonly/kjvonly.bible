@@ -4,6 +4,7 @@ import FlexSearch, { type Id } from 'flexsearch';
 
 let index = new FlexSearch.Index();
 
+let verses: any = {}
 async function init() {
     let indexes = index.search('for god so')
     if (indexes.length === 0) {
@@ -12,25 +13,50 @@ async function init() {
         let keys = await bibleDB.getAllKeys('chapters')
         let booknames: any = await bibleDB.getValue('booknames', 'booknames')
 
-        keys.forEach(async (key: IDBValidKey) => {
+        for (const key of keys) {
             let chapter = await bibleDB.getValue('chapters', key.toString())
             if (key === 'booknames') {
-                return
+                continue
             }
 
-            Object.keys(chapter['verseMap']).forEach((k) => {
+            for (const verseNumber of Object.keys(chapter['verseMap'])) {
                 let bookChapter = key.toString().split('_')
-                index.addAsync(`${key}_${k}`, `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${k} ${chapter['verseMap'][k]}`)
-            })
-        });
+                let text = `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${verseNumber} ${chapter['verseMap'][verseNumber]}`
+                let id = `${key}_${verseNumber}`
+                await index.addAsync(id, text)
+
+                // verses[id] = {
+                //     id: id,
+                //     bookId: bookChapter[0],
+                //     order: (parseInt(bookChapter[0]) * 1000000) + (parseInt(bookChapter[1]) * 1000) + parseInt(verseNumber),
+                //     text: text,
+                //     bookName: chapter['bookName'],
+                //     number: chapter['number'],
+                //     verseNumber: verseNumber,
+                //     verse: verse
+                // }
+
+            }
+            console.log('here')
+        }
+
+        console.log('exporting')
+
+        await index.export(
+            (key, data) => { verses[key] = data !== undefined ? data : '' }
+        )
+        console.log('verses', verses)
+        postMessage({ id: 'init', verses: verses })
+
     } else {
         postMessage(`already indexed ${indexes}`)
     }
 }
 
 async function search(id: string, text: string) {
-    
-    let indexes = await index.searchAsync(text, 100)
+    let startTime: any = new Date();
+
+    let indexes = await index.searchAsync(text, 1000000)
     let verses: any[] = []
 
     indexes = indexes.sort((a: Id, b: Id) => {
@@ -42,18 +68,20 @@ async function search(id: string, text: string) {
             return parseInt(i)
         })
 
-        if (asplit[0] === bsplit[0]) {
-            if (asplit[1] === bsplit[1]) {
-                return asplit[2] - bsplit[2]
-            } else {
-                return asplit[1] - bsplit[1]
-            }
-        } else {
-            return asplit[0] - bsplit[0]
-        }
-
+        let aval = (asplit[0] * 1000000) + (asplit[1] * 1000) + asplit[2]
+        let bval = (bsplit[0] * 1000000) + (bsplit[1] * 1000) + bsplit[2]
+        return aval - bval
     })
 
+    let endTime: any = new Date();
+    var timeDiff = endTime - startTime; //in ms
+    // strip the ms
+    //timeDiff /= 1000;
+
+    // get seconds 
+
+    console.log(timeDiff + " ms", 'indexes length: ', indexes.length);
+    return indexes
     for (const i of indexes) {
         let chatperKeyIndex = i.toString().lastIndexOf('_');
         let chapterKey = i.toString().substring(0, chatperKeyIndex);

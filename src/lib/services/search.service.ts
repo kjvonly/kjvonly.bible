@@ -3,6 +3,16 @@ class SearchService {
         type: 'module'
     });
 
+    verses = {}
+
+    initVerses(data: any){
+        this.verses = data.verses
+        console.log('init verses!!!')
+        console.log(this.verses)
+    }
+
+    // TODO: unsubscribe
+
     subscribers: any[] = []
     constructor() {
         this.webWorker.onmessage = (e) => {
@@ -11,11 +21,12 @@ class SearchService {
                     s.fn(e.data)
                 }
             })
-
+        
         }
 
-        this.webWorker.postMessage({ action: 'init' })
+        this.subscribe('init', this.initVerses)
 
+        this.webWorker.postMessage({ action: 'init' })
     }
 
     subscribe(id: any, fn: any) {
