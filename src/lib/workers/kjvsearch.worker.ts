@@ -29,6 +29,7 @@ async function init() {
 }
 
 async function search(id: string, text: string) {
+    
     let indexes = await index.searchAsync(text, 100)
     let verses: any[] = []
 

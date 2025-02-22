@@ -15,7 +15,7 @@
 		containerHeight = $bindable(),
 		containerWidth = $bindable(),
 		showInput = true,
-		searchTerms = $bindable()
+		searchTerms
 	} = $props();
 
 	function onSearchTextChanged() {

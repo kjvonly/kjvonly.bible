@@ -9,6 +9,11 @@
 	let toggleStrongs = $state(false);
 
 	let strongs: any[] | undefined = $state([]);
+
+	function sanatize(w: string) {
+		return w.replace(/[^a-zA-Z0-9]/g, '');
+	}
+
 	onMount(async () => {
 		if (strongsRefs) {
 			strongsRefs.forEach(async (ref: string) => {
@@ -99,12 +104,11 @@
 		</div>
 
 		{#if strongsWords && strongsWords.length > 0}
-		idx :{strongsWords[idx]}
-			<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={strongsWords[idx]}
-			></Search>
+			{@const sw = sanatize(strongsWords[idx])}
+			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
 		{:else}
-		text: {text}
-			<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={text}></Search>
+			{@const sw = sanatize(text)}
+			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
 		{/if}
 	{/if}
 {/snippet}
@@ -120,10 +124,11 @@
 		</div>
 		{#each s['usageByWord'] as w, idx}
 			{#if strongsWords && strongsWords.length > 0}
-				<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={w.text}
+				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}
 				></Search>
 			{:else}
-				<Search {paneId} containerHeight="100vh" showInput={false} bind:searchTerms={w.text}></Search>
+				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}
+				></Search>
 			{/if}
 		{/each}
 	{/if}
@@ -170,7 +175,7 @@
 		{@render thayersContainer(s)}
 		{@render brownContainer(s)}
 		{@render byBook(s, idx)}
-		{@render byWord(s, idx)}
+		<!-- {@render byWord(s, idx)} -->
 	</div>
 {/snippet}
 
