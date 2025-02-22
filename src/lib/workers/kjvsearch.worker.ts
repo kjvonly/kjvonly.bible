@@ -81,11 +81,6 @@ async function search(id: string, text: string) {
         count: indexes.length,
         time: `${timeDiff} ms`
     }
-    // get seconds 
-
-    console.log(timeDiff + " ms", 'indexes length: ', indexes.length);
-
-
     postMessage({ id: id, indexes: indexes, stats: stats })
 
 }

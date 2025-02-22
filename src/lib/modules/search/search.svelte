@@ -23,7 +23,9 @@
 
 	function onSearchTextChanged() {
 		if (searchText.length < 3) {
-			searchResults = [];
+			loadedVerses = 0
+			searchResults = []
+			searchResultsObj = {}
 		} else {
 			searchService.search(searchID, searchText);
 		}
@@ -78,7 +80,6 @@
 				return;
 			}
 			loadMoreVerses()
-			console.log('reached bottom');
 		}
 	}
 
@@ -270,7 +271,7 @@
 						</svg>
 					</button>
 				</div>
-				<div class="flex w-full max-w-lg justify-center px-4 pt-2">
+				<div class="flex w-full max-w-lg justify-center px-2 pt-2">
 					<input
 						bind:clientHeight={searchInputHeight}
 						class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
