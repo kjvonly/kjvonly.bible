@@ -81,6 +81,27 @@ export class ChapterService {
     }
 
 
+    async getSearchIndex(): Promise<any> {
+        let searchIndex = undefined;
+
+        try {
+            if (bibleDB.isReady) {
+                await bibleDB.ready
+                searchIndex = await bibleDB.getValue('searchIndex', 'v1')
+            }
+
+        } catch (error) {
+            console.log(`error getting searchIndex from indexedDB: ${error}`)
+        }
+
+        if (searchIndex === undefined) {
+            return await api.get(`data/json.gz/bibleindex.json`);
+        }
+
+        return searchIndex;
+    }
+
+
     async getStrongs(key: string): Promise<any> {
         let strongs = undefined
 

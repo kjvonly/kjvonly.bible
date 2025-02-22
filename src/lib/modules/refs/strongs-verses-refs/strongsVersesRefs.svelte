@@ -86,7 +86,7 @@
 					</div>
 				</div>
 
-				<div class="flex w-full max-w-lg px-4">
+				<div class="flex w-full max-w-lg">
 					<div class="">
 						{#if footnotes.length > 0}
 							<FootnoteContainer
@@ -102,6 +102,8 @@
 								strongsWords={pane?.buffer?.bag?.strongsWords}
 								{text}
 								{strongsRefs}
+								{paneId}
+								{containerHeight}
 							></StrongsRefsContainer>
 						{/if}
 

@@ -4,32 +4,60 @@ import FlexSearch, { type Id } from 'flexsearch';
 
 let index = new FlexSearch.Index();
 
+let verses: any = {}
+
+
+/** if bible data ever changes we can use this function to 
+ * export the flexsearch index and copy it to the data repo
+ * to be copied to static dir on build.
+ */
+async function exportIndexToConsole() {
+    let keys = await bibleDB.getAllKeys('chapters')
+    let booknames: any = await bibleDB.getValue('booknames', 'booknames')
+
+    for (const key of keys) {
+        let chapter = await bibleDB.getValue('chapters', key.toString())
+        if (key === 'booknames') {
+            continue
+        }
+
+        for (const verseNumber of Object.keys(chapter['verseMap'])) {
+            let bookChapter = key.toString().split('_')
+            let text = `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${verseNumber} ${chapter['verseMap'][verseNumber]}`
+            let id = `${key}_${verseNumber}`
+            await index.addAsync(id, text)
+        }
+    }
+
+    await index.export(
+        (key, data) => { verses[key] = data !== undefined ? data : '' }
+    )
+    console.log('export Index', verses)
+}
+
 async function init() {
     let indexes = index.search('for god so')
     if (indexes.length === 0) {
-        await bibleDB.waitForIndexDB()
+        await bibleDB.waitForSearchIndex()
 
-        let keys = await bibleDB.getAllKeys('chapters')
-        let booknames: any = await bibleDB.getValue('booknames', 'booknames')
+        let bibleIndex = await bibleDB.getValue('search', 'v1')
+        delete bibleIndex['id']
 
-        keys.forEach(async (key: IDBValidKey) => {
-            let chapter = await bibleDB.getValue('chapters', key.toString())
-            if (key === 'booknames') {
-                return
-            }
+        for (const key of Object.keys(bibleIndex)) {
+            await index.import(key, bibleIndex[key])
+        }
 
-            Object.keys(chapter['verseMap']).forEach((k) => {
-                let bookChapter = key.toString().split('_')
-                index.addAsync(`${key}_${k}`, `${booknames['shortNames'][bookChapter[0]]} ${bookChapter[1]}:${k} ${chapter['verseMap'][k]}`)
-            })
-        });
+        postMessage({ id: 'init', verses: verses })
+
     } else {
         postMessage(`already indexed ${indexes}`)
     }
 }
 
 async function search(id: string, text: string) {
-    let indexes = await index.searchAsync(text, 100)
+    let startTime: any = new Date();
+
+    let indexes = await index.searchAsync(text, 1000000)
     let verses: any[] = []
 
     indexes = indexes.sort((a: Id, b: Id) => {
@@ -41,33 +69,20 @@ async function search(id: string, text: string) {
             return parseInt(i)
         })
 
-        if (asplit[0] === bsplit[0]) {
-            if (asplit[1] === bsplit[1]) {
-                return asplit[2] - bsplit[2]
-            } else {
-                return asplit[1] - bsplit[1]
-            }
-        } else {
-            return asplit[0] - bsplit[0]
-        }
-
+        let aval = (asplit[0] * 1000000) + (asplit[1] * 1000) + asplit[2]
+        let bval = (bsplit[0] * 1000000) + (bsplit[1] * 1000) + bsplit[2]
+        return aval - bval
     })
 
-    for (const i of indexes) {
-        let chatperKeyIndex = i.toString().lastIndexOf('_');
-        let chapterKey = i.toString().substring(0, chatperKeyIndex);
-        let verseNumber = i.toString().substring(chatperKeyIndex + 1, i.toString().length);
-        let chapter = await bibleDB.getValue('chapters', chapterKey);
-        let verse = chapter['verseMap'][verseNumber];
+    let endTime: any = new Date();
+    var timeDiff = endTime - startTime; //in ms
 
-        let data = { key: i.toString(), bookName: chapter['bookName'], number: chapter['number'], verseNumber: verseNumber, text: verse };
-
-        verses.push(data);
+    let stats = {
+        count: indexes.length,
+        time: `${timeDiff} ms`
     }
+    postMessage({ id: id, indexes: indexes, stats: stats })
 
-    if (verses.length > 0) {
-        postMessage({ id: id, verses: verses })
-    }
 }
 
 

@@ -40,6 +40,21 @@ async function onBooknames() {
 	});;
 }
 
+
+async function onSearch() {
+	let db = await new BibleDB()
+	fetch(`${base}data/json.gz/bibleindex.json`, {
+		headers: myHeaders
+	}).then((res) => {
+
+		res.json().then((json) => {
+			db.putValue('search', json);
+		});
+	}).catch((err) => {
+		console.log(`error: ${err}`)
+	});;
+}
+
 async function onStrongs() {
 	let db = await new BibleDB()
 	fetch(`${base}data/strongs.json.gz/all.json`, {
@@ -68,6 +83,8 @@ onmessage = async (e) => {
 		case 'strongs':
 			onStrongs();
 			break;
+		case 'search':
+			onSearch();
 	}
 
 };

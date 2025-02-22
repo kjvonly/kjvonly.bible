@@ -27,21 +27,14 @@ export class BibleDB extends IndexedDB {
 
 	constructor() {
 		super('bible');
-		this.createAndOrOpenObjectStores(['chapters', 'booknames', 'strongs', 'annotations', 'notes']);
+		this.createAndOrOpenObjectStores(['chapters', 'booknames', 'strongs', 'annotations', 'notes', 'search']);
 	}
 
-	async waitForIndexDB(): Promise<boolean> {
+	async waitForSearchIndex(): Promise<boolean> {
 		while (1) {
-			let chapterKeys = await this.getAllKeys('chapters');
-			let booknamesKeys = await this.getAllKeys('booknames');
-			/** 
-			 * NOTE chapterKeys.length >= TOTAL_CHAPTERS_KEYS 
-			 * becuase version 1 indexedDB also included booknames
-			 * version 2 we moved booknames to booknames store
-			*/
+			let searchIndex = await this.getValue('search', 'v1');
 			if (
-				booknamesKeys.length === TOTAL_BOOKNAMES_KEYS &&
-				chapterKeys.length >= TOTAL_CHAPTERS_KEYS
+				searchIndex
 			) {
 				this.resolve(true)
 				this.isReady = true
@@ -74,6 +67,7 @@ export class BibleDB extends IndexedDB {
 		 * defs that need to be cached
 		 */
 		await this.syncStrongs()
+		await this.syncSearchIndex()
 
 	}
 
@@ -112,6 +106,30 @@ export class BibleDB extends IndexedDB {
 
 				await sleep(1000);
 				keys = await this.getAllKeys('booknames');
+				retries = retries + 1;
+			}
+
+			if (retries === retryMax) {
+				return false;
+			}
+		}
+
+		return true
+	}
+
+	async syncSearchIndex() {
+		let searchIndex = await this.getValue('search', 'v1');
+
+		if (!searchIndex) {
+			this.worker?.postMessage({ sync: 'search' });
+
+			let retries = 0;
+			let retryMax = 10;
+
+			while (!searchIndex || retries == retryMax) {
+
+				await sleep(1000);
+				searchIndex = await this.getValue('search', 'v1');
 				retries = retries + 1;
 			}
 

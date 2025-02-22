@@ -3,6 +3,8 @@ class SearchService {
         type: 'module'
     });
 
+    // TODO: unsubscribe
+
     subscribers: any[] = []
     constructor() {
         this.webWorker.onmessage = (e) => {
@@ -11,11 +13,11 @@ class SearchService {
                     s.fn(e.data)
                 }
             })
-
+        
         }
 
-        this.webWorker.postMessage({ action: 'init' })
 
+        this.webWorker.postMessage({ action: 'init' })
     }
 
     subscribe(id: any, fn: any) {
