@@ -83,14 +83,10 @@
 			return;
 		}
 
-		const threshold = 0; // Adjust this value as needed
+		const threshold = 20; // Adjust this value as needed
 		const isReachBottom = el.scrollHeight - el.clientHeight - el.scrollTop <= threshold;
 
 		if (isReachBottom) {
-			let pos = (el.scrollTop + el.clientHeight - el.scrollHeight) * -1;
-			if (pos < 0) {
-				return;
-			}
 			loadMoreVerses();
 		}
 	}
