@@ -35,12 +35,34 @@
 		searchResults = data.verses;
 	}
 
+	function handleScroll() {
+		let el = document.getElementById(`${searchID}-scroll-container`);
+		if (el === null) {
+			return;
+		}
+
+		const threshold = 0; // Adjust this value as needed
+		const isReachBottom = el.scrollHeight - el.clientHeight - el.scrollTop <= threshold;
+
+		if (isReachBottom) {
+			let pos = (el.scrollTop + el.clientHeight - el.scrollHeight) * -1;
+			if (pos < 0) {
+				return;
+			}
+			console.log('reached bottom');
+		}
+	}
+
 	onMount(() => {
 		searchService.subscribe(searchID, onSearchResult);
-		if (!showInput && searchTerms?.length > 0){
-			searchText = searchTerms
-			searchService.search(searchID, searchTerms)
+		if (!showInput && searchTerms?.length > 0) {
+			searchText = searchTerms;
+			searchService.search(searchID, searchTerms);
 		}
+
+		let el = document.getElementById(`${searchID}-scroll-container`);
+
+		el?.addEventListener('scroll', handleScroll);
 	});
 
 	let clientHeight = $state(0);
@@ -230,6 +252,7 @@
 			</div>
 			<div class="p-4">
 				<div
+					id="{searchID}-scroll-container"
 					style="height: {clientHeight - headerHeight}px"
 					class="{searchResults?.length > 0 ? '' : 'hidden'}
                   -m-1 max-w-lg overflow-x-hidden overflow-y-scroll bg-neutral-50

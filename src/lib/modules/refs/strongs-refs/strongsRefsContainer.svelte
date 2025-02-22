@@ -95,20 +95,36 @@
 
 {#snippet byBook(s: any, idx: number)}
 	{#if s['usageByBook']}
-		<h1 class="pt-4 text-neutral-600">By Book:</h1>
+		<div class="flex flex-row items-center pt-4">
+			<p class="pe-4 capitalize">By Book:</p>
+			<button
+				onclick={() => {
+					s.toggleBooks = !s.toggleBooks;
+				}}
+				aria-label="toggle drop down"
+			>
+				<ChevronDown className="w-4 h-4" fill="fill-neutral-700"></ChevronDown>
+			</button>
+		</div>
 
-		<div class="flex flex-col space-y-2 ps-4">
+		<div class="space-y-2 ps-4 pt-2">
 			{#each s['usageByBook'] as b, idx}
-				<p>{b.text}</p>
+				{#if idx !== 0}&shy;,&nbsp;{/if}<span class="inline-block">{b.text}</span>
 			{/each}
 		</div>
 
-		{#if strongsWords && strongsWords.length > 0}
-			{@const sw = sanatize(strongsWords[idx])}
-			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
-		{:else}
-			{@const sw = sanatize(text)}
-			<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
+		{#if s.toggleBooks}
+			<div class="overflow-hidden">
+				<div class="overflow-y-scroll">
+					{#if strongsWords && strongsWords.length > 0}
+						{@const sw = sanatize(strongsWords[idx])}
+						<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
+					{:else}
+						{@const sw = sanatize(text)}
+						<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={sw}></Search>
+					{/if}
+				</div>p
+			</div>
 		{/if}
 	{/if}
 {/snippet}
@@ -117,18 +133,16 @@
 	{#if s['usageByWord']}
 		<h1 class="pt-4 text-neutral-600">By Word:</h1>
 
-		<div class="flex flex-col space-y-2 ps-4">
-			{#each s['usageByWord'] as w, idx}
-				<p>{w.text}</p>
+		<div class="space-y-2 ps-4">
+			{#each s['usageByBook'] as b, idx}
+				{#if idx !== 0}&shy;,&nbsp;{/if}<span class="inline-block">{b.text}</span>
 			{/each}
 		</div>
 		{#each s['usageByWord'] as w, idx}
 			{#if strongsWords && strongsWords.length > 0}
-				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}
-				></Search>
+				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}></Search>
 			{:else}
-				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}
-				></Search>
+				<Search {paneId} containerHeight="100vh" showInput={false} searchTerms={w.text}></Search>
 			{/if}
 		{/each}
 	{/if}
