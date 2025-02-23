@@ -163,6 +163,7 @@
 				n.id = n.right.id;
 				n.updateBuffer = n.right.updateBuffer;
 				n.toggle = n.right.toggle;
+				n.buffer = n.right.buffer;
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;
@@ -188,6 +189,7 @@
 				n.id = n.left.id;
 				n.updateBuffer = n.left.updateBuffer;
 				n.toggle = n.left.toggle;
+				n.buffer = n.left.buffer;
 				n.split = undefined;
 				n.left = undefined;
 				n.right = undefined;

@@ -7,16 +7,19 @@
 	import uuid4 from 'uuid4';
 
 	let id = uuid4();
-	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
+	let {
+		paneId,
+		pane = $bindable(),
+		containerHeight = $bindable(),
+		containerWidth = $bindable()
+	} = $props();
 
 	let strongsRefs: string[] = $state([]);
 	let footnotes: string[] = $state([]);
 	let verseRefs: string[] = $state([]);
 	let text = $state('');
-	let pane: any = $state();
 
 	onMount(() => {
-		pane = paneService.findNode(paneService.rootPane, paneId);
 
 		let refs: string[] = [];
 		if (pane?.buffer?.bag?.refs) {

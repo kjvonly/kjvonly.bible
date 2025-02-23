@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { bibleNavigationService } from '$lib/services/bibleNavigation.service';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import Chapter from './chapter.svelte';
 	import { newSettings, type Settings } from '../../models/settings.model';
 	import { settingsService } from '$lib/services/settings.service';
@@ -29,15 +29,11 @@
 
 	let {
 		paneId = $bindable<string>(),
+		pane = $bindable(),
 		containerHeight = $bindable(),
 		containerWidth = $bindable()
 	} = $props();
 
-	let pane: Pane | any = $state();
-	$effect(() => {
-		paneId;
-		pane = paneService.findNode(paneService.rootPane, paneId);
-	});
 
 	$effect(() => {
 		chapterSettings;
@@ -118,8 +114,6 @@
 			chapterSettings = newSettings();
 		}
 
-		pane = paneService.findNode(paneService.rootPane, paneId);
-
 		let ck = pane.buffer.bag.chapterKey;
 		if (ck) {
 			chapterKey = ck;
@@ -179,7 +173,7 @@
 				{bookName}
 				{bookChapter}
 				{containerHeight}
-				paneId={pane.id}
+				{paneId}
 			></ChapterActions>
 		</div>
 		<div class="kjvonly-noselect flex justify-center">

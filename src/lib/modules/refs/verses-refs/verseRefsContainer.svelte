@@ -225,7 +225,7 @@
 {/snippet}
 
 <div>
-	<div class="py-4">
+	<div class="">
 		<div class="flex flex-row items-center">
 			<p class="pe-4 capitalize">Verses:</p>
 			<button
