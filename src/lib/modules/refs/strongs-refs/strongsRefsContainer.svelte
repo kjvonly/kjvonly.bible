@@ -132,14 +132,6 @@
 	{#if s['usageByBook']}
 		<div class="flex flex-row items-center pt-4">
 			<p class="pe-4 capitalize">By Book:</p>
-			<button
-				onclick={() => {
-					s.toggleBooks = !s.toggleBooks;
-				}}
-				aria-label="toggle drop down"
-			>
-				<ChevronDown className="w-4 h-4" fill="fill-neutral-700"></ChevronDown>
-			</button>
 		</div>
 
 		<div class="space-y-2 ps-4 pt-2">
