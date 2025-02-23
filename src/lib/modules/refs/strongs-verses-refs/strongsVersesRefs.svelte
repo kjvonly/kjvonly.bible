@@ -20,7 +20,6 @@
 	let text = $state('');
 
 	onMount(() => {
-		pane = paneService.findNode(paneService.rootPane, paneId);
 
 		let refs: string[] = [];
 		if (pane?.buffer?.bag?.refs) {
