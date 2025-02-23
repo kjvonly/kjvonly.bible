@@ -13,10 +13,6 @@
 	let { paneId = $bindable<string>() } = $props();
 
 	let pane: Pane | any = $state();
-	$effect(() => {
-		paneId;
-		pane = paneService.findNode(paneService.rootPane, paneId);
-	});
 
 	function updateHeightWidth(hw: any) {
 		/** This is so important. What was happening in split pane was we'd

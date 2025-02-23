@@ -10,11 +10,6 @@
 	};
 	let { paneId, pane=$bindable(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-
-	// onMount(() => {
-	// 	pane = paneService.findNode(paneService.rootPane, paneId);
-	// });
-
 	let headerHeight = $state(0);
 	let clientHeight = $state(0)
 </script>

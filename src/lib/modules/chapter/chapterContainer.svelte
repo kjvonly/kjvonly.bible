@@ -34,10 +34,6 @@
 		containerWidth = $bindable()
 	} = $props();
 
-	// $effect(() => {
-	// 	paneId;
-	// 	pane = paneService.findNode(paneService.rootPane, paneId);
-	// });
 
 	$effect(() => {
 		chapterSettings;
@@ -117,8 +113,6 @@
 		} else {
 			chapterSettings = newSettings();
 		}
-
-		pane = paneService.findNode(paneService.rootPane, paneId);
 
 		let ck = pane.buffer.bag.chapterKey;
 		if (ck) {
