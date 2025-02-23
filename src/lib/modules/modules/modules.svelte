@@ -8,13 +8,12 @@
 		search: 'Search',
 		notes: 'Notes'
 	};
-	let { paneId, containerHeight = $bindable(), containerWidth = $bindable() } = $props();
+	let { paneId, pane=$bindable(), containerHeight = $bindable(), containerWidth = $bindable() } = $props();
 
-	let pane: Pane | any = $state();
 
-	onMount(() => {
-		pane = paneService.findNode(paneService.rootPane, paneId);
-	});
+	// onMount(() => {
+	// 	pane = paneService.findNode(paneService.rootPane, paneId);
+	// });
 
 	let headerHeight = $state(0);
 	let clientHeight = $state(0)

@@ -16,6 +16,7 @@
 
 	let {
 		paneId,
+		pane = $bindable(),
 		containerHeight = $bindable(),
 		containerWidth = $bindable(),
 		showInput = true,
@@ -25,7 +26,7 @@
 	} = $props();
 
 	function onSearchTextChanged() {
-		onFilterIndex = undefined
+		onFilterIndex = undefined;
 		if (searchText.length < 3) {
 			loadedVerses = 0;
 			searchResults = [];
@@ -67,9 +68,8 @@
 	}
 
 	async function onSearchResult(data: any) {
-		if (onFilterIndex){
-			console.log()
-			data.indexes = onFilterIndex(data.indexes)
+		if (onFilterIndex) {
+			data.indexes = onFilterIndex(data.indexes);
 		}
 		searchResultsObj = data;
 		loadedVerses = 0;

@@ -19,11 +19,41 @@
 	});
 
 	function updateHeightWidth(hw: any) {
-		if (hw[pane.id]) {
-			containerHeight = `height: ${hw[pane.id].height * 100}vh;`;
-			containerWidth = `width: ${hw[pane.id].width * 100}vw;`;
+		/** This is so important. What was happening in split pane was we'd
+		 * assign the pane vars to an new pane object and remove the pane.id
+		 * by setting it to undefined. i suppose we dont need unset pane id but
+		 * the idea is that the existing pane becomes a branch pane so we would
+		 * assign the pane vars to a new object and unset the pane id var.
+		 * eventually, svelte would update and the pane.id, which would be
+		 * undefined. The paneId was still correct. I'm thinking
+		 * on update this would be the place to reassign the pane.
+		 *
+		 * So what made this a very difficult bug to detect was when we assign
+		 * the pane to $state, its a new object, setting id = undefined did not
+		 * automatically trigger a state refresh. Eventually, when the object would
+		 * react to the change the pane.id would be undefined causing the code to flow
+		 * to the else block and not updating the height and width of the container.
+		 *
+		 * looking at the split code in +page.svelte it's obvious that we are creating 
+		 * an new object and the references of the original pane object would not change.
+		 * 
+		 * If paneId was bound with pane.id then when the pane.id was reset to undefined
+		 * then every child paneId bound with pane.id would be undefined causing w/e
+		 * issue.
+		 * 
+		 * I don't think a paneId ever changes. So we should make it a convention 
+		 * to use paneId instead of pane.id. There's a few moments when id is unset 
+		 * and the paneId would be undefined.
+		 * 
+		 * Also the vars except id are objects so those would have the same reference if bound
+		 * to a child component.
+		 */
+		pane = paneService.findNode(paneService.rootPane, paneId);
+		if (hw[paneId]) {
+			containerHeight = `height: ${hw[paneId].height * 100}vh;`;
+			containerWidth = `width: ${hw[paneId].width * 100}vw;`;
 		} else {
-			console.log('error should have update height and width')
+			console.log('error should have update height and width');
 		}
 	}
 
@@ -59,7 +89,7 @@
 		}
 
 		pane = p;
-		paneService.subscribe(pane.id, updateHeightWidth);
+		paneService.subscribe(paneId, updateHeightWidth);
 		updateHeightWidth(paneService.heightWidth);
 	});
 </script>
@@ -70,14 +100,14 @@
 	{#if pane?.toggle}
 		{#if pane?.buffer?.componentName}
 			{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-			<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
+			<Component bind:containerHeight bind:containerWidth bind:pane paneId={paneId}></Component>
 		{/if}
 	{/if}
 
 	{#if pane && !pane.toggle}
 		{#if pane?.buffer?.componentName}
 			{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-			<Component bind:containerHeight bind:containerWidth paneId={pane.id}></Component>
+			<Component bind:containerHeight bind:containerWidth bind:pane paneId={paneId}></Component>
 		{/if}
 	{/if}
 </div>

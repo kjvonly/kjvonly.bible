@@ -9,6 +9,7 @@
 	let noteID: string = $state('');
 	let {
 		paneId = $bindable<string>(),
+		pane = $bindable(),
 		containerHeight = $bindable(),
 		containerWidth = $bindable()
 	} = $props();
@@ -18,14 +19,13 @@
 		notePopup: { show: false },
 		paneId: paneId
 	});
-	let pane: Pane | any = $state();
+
 	$effect(() => {
 		paneId;
 
 		untrack(() => {
 			pane = paneService.findNode(paneService.rootPane, paneId);
 			if (pane.buffer && pane.buffer.bag) {
-				
 				noteID = pane.buffer.bag.noteID;
 			}
 		});
