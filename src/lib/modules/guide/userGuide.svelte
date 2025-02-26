@@ -134,7 +134,7 @@
 						width="100%"
 						height="100%"
 						src="https://www.youtube.com/embed/6sDZOjnfRMk?si=gOxKf8yMnvMZ3rCf"
-						title="YouTube video player"
+						title="Search"
 						frameborder="0"
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
 						referrerpolicy="strict-origin-when-cross-origin"
@@ -146,6 +146,53 @@
 						suffixes if the verse you are looking for is not returned. For example,
 						<span class="text-primary-500">love world</span>
 						would not return John 3:16 but <span class="text-primary-500">loved world</span> would.
+					</p>
+				</div>
+
+				<div class="max-w-lg">
+					<p class="-neutral-500 py-10">Search By Book:</p>
+					<iframe
+						class="min-h-[200px]"
+						width="100%"
+						height="100%"
+						src="https://www.youtube.com/embed/Qf4_IAzr2UI?si=_NvkzetEk2SFCeBJ"
+						title="Search By Book"
+						frameborder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+						referrerpolicy="strict-origin-when-cross-origin"
+						allowfullscreen
+					></iframe>
+
+					<p class="py-10">
+						Search by book by adding the short name of the Book. For example, add
+						<span class="text-primary-500">mat</span>
+						to filter results to the book of Matthew, <span class="text-primary-500">joh</span> to
+						filter results to the book of John. To find a specific verse, you can also search for
+						the short name of the book followed by the chapter and verse. For example,
+						<span class="text-primary-500">Joh 3 16</span> will return John 3:16.
+					</p>
+				</div>
+
+				<div class="max-w-lg">
+					<p class="-neutral-500 py-10">Annotations:</p>
+					<iframe
+						class="min-h-[200px]"
+						width="100%"
+						height="100%"
+						src="https://www.youtube.com/embed/K2GRUDh4yoc?si=UTqH4Ln41gztF4g8"
+						title="Annotations"
+						frameborder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+						referrerpolicy="strict-origin-when-cross-origin"
+						allowfullscreen
+					></iframe>
+
+					<p class="py-10">
+						Add annotations to a any word or verse number by clicking/pressing a word or verse
+						number for 1 second. This will activate annotation mode. In annotation mode, you can
+						click on any word or verse number to add text annotations. Select the highlighter to
+						highlight text, the T to change text color, or the U to underline text. Click the save
+						icon to save the annotations or the close button to discard changes.
 					</p>
 				</div>
 
