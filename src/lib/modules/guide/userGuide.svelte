@@ -32,7 +32,7 @@
 				</button>
 			</div>
 		</div>
-		<div class="flex w-full max-w-lg items-center p-4">
+		<div class="flex w-full max-w-lg items-center border-x border-neutral-700 p-4">
 			<div
 				style="height: {clientHeight - headerHeight}px"
 				class="
@@ -193,6 +193,47 @@
 						click on any word or verse number to add text annotations. Select the highlighter to
 						highlight text, the T to change text color, or the U to underline text. Click the save
 						icon to save the annotations or the close button to discard changes.
+					</p>
+					<p class="">
+						* Be sure to periodically export your annotations. You can
+						<span class="text-primary-500">Export Data</span> from the Bible drop down. If you ever
+						need to add annotations back to the app you can use the
+						<span class="text-primary-500">Import Data</span> option from the Bible drop down list.
+					</p>
+				</div>
+
+				<div class="max-w-lg">
+					<p class="-neutral-500 py-10">Notes:</p>
+					<iframe
+						class="min-h-[200px]"
+						width="100%"
+						height="100%"
+						src="https://www.youtube.com/embed/OKwHVB5tntI?si=8TSI7X3z4KHyoGAC"
+						title="Notes"
+						frameborder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+						referrerpolicy="strict-origin-when-cross-origin"
+						allowfullscreen
+					></iframe>
+
+					<p class="py-10">
+						Add a note to any word or verse number by clicking/pressing a word or verse number for
+						1 second. This will activate annotation mode. In annotation mode, you can click the note
+						icon below the color options. This will display the notes for this word. Click the add
+						button to add a new note associated to this word. A user can add as many notes to a word
+						as they like.
+					</p>
+
+					<p class="">
+						Navigate to the Notes module to view all exiting notes. You can also filter notes based
+						on text, title or tag.
+					</p>
+
+					<p class="py-10">
+						* Be sure to periodically export your data. You can
+						<span class="text-primary-500">Export Data</span> from the Bible drop down. If you ever
+						need to add annotations back to the app you can use the
+						<span class="text-primary-500">Import Data</span> option from the Bible drop down list.
 					</p>
 				</div>
 
