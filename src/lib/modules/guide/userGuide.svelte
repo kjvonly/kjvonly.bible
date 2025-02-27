@@ -32,7 +32,7 @@
 				</button>
 			</div>
 		</div>
-		<div class="flex w-full max-w-lg items-center border-x border-neutral-700 p-4">
+		<div class="flex w-full max-w-lg items-center p-4">
 			<div
 				style="height: {clientHeight - headerHeight}px"
 				class="
@@ -99,7 +99,7 @@
 					></iframe>
 					<p class="py-10">
 						Verses with a dotted underline signals the verse has verse references. Clicking the
-						verse will display all footnote, Strongs, and verse references for the verse. A user can
+						verse number will display all footnote, Strongs, and verse references for the verse. A user can
 						recursively search the verse references by clicking a verse reference. If the verse
 						reference clicked has verse references than those verse references will be displayed. A
 						breadcrumb trail will be displayed at the top of the references to identify the verses
@@ -164,7 +164,7 @@
 					></iframe>
 
 					<p class="py-10">
-						Search by book by adding the short name of the Book. For example, add
+						Search by book by adding the short name of the book. For example, add
 						<span class="text-primary-500">mat</span>
 						to filter results to the book of Matthew, <span class="text-primary-500">joh</span> to
 						filter results to the book of John. To find a specific verse, you can also search for
@@ -217,8 +217,8 @@
 					></iframe>
 
 					<p class="py-10">
-						Add a note to any word or verse number by clicking/pressing a word or verse number for
-						1 second. This will activate annotation mode. In annotation mode, you can click the note
+						Add a note to any word or verse number by clicking/pressing a word or verse number for 1
+						second. This will activate annotation mode. In annotation mode, you can click the note
 						icon below the color options. This will display the notes for this word. Click the add
 						button to add a new note associated to this word. A user can add as many notes to a word
 						as they like.
@@ -226,7 +226,7 @@
 
 					<p class="">
 						Navigate to the Notes module to view all exiting notes. You can also filter notes based
-						on text, title or tag.
+						on text, title, or tag.
 					</p>
 
 					<p class="py-10">
