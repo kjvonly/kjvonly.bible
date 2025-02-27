@@ -135,10 +135,10 @@
 		</div>
 
 		<div class="space-y-2 ps-4 pt-2">
-			{#each s['usageByBook'] as b, idx}
+			{#each s['usageByBook'] as b, bookidx}
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				{#if idx !== 0}&shy;,&nbsp;{/if}<span
+				{#if bookidx !== 0}&shy;,&nbsp;{/if}<span
 					onclick={() => {
 						onByBook(b, idx);
 					}}
