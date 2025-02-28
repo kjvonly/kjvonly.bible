@@ -133,7 +133,7 @@
 {#snippet byBook(s: any, idx: number)}
 	{#if s['usageByBook']}
 		<div class="flex flex-row items-center pt-4">
-			<p class="pe-4 capitalize">By Book:</p>
+			<p class="pe-4 capitalize text-neutral-600">By Book:</p>
 		</div>
 
 		<div class="space-y-2 ps-4 pt-2">
