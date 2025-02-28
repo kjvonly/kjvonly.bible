@@ -54,13 +54,23 @@ async function init() {
     }
 }
 
+function onlyUnique(value, index, array) {
+    return array.indexOf(value) === index;
+}
+
 async function search(id: string, text: string) {
     let startTime: any = new Date();
 
-    let indexes = await index.searchAsync(text, 1000000)
-    let verses: any[] = []
+    let indexes = []
+    let terms = text.split('OR')
+    for (let i = 0; i < terms.length; i++) {
+        let matches = await index.searchAsync(terms[i], 1000000)
+        indexes.push(...matches)
+    }
 
-    indexes = indexes.sort((a: Id, b: Id) => {
+    let unique = indexes.filter(onlyUnique)
+
+    unique = unique.sort((a: Id, b: Id) => {
         let asplit = a.toString().split('_').map(i => {
             return parseInt(i)
         })
@@ -78,10 +88,10 @@ async function search(id: string, text: string) {
     var timeDiff = endTime - startTime; //in ms
 
     let stats = {
-        count: indexes.length,
+        count: unique.length,
         time: `${timeDiff} ms`
     }
-    postMessage({ id: id, indexes: indexes, stats: stats })
+    postMessage({ id: id, indexes: unique, stats: stats })
 
 }
 

@@ -38,7 +38,8 @@
 
 	function match(word: string) {
 		let stripWord = word.toLowerCase().replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
-		return new RegExp('\\b' + stripWord + '\\b').test(searchText.toLowerCase());
+		let matchText = searchText.replaceAll('OR', '')
+		return new RegExp('\\b' + stripWord + '\\b').test(matchText.toLowerCase());
 	}
 
 	async function loadMoreVerses() {
