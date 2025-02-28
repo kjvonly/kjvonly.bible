@@ -17,7 +17,7 @@
 	let strongs: any[] | undefined = $state([]);
 
 	function sanatize(w: string) {
-		return w.replace(/[^a-zA-Z0-9]/g, '');
+		return w.replace(/[^a-zA-Z0-9 ]/g, '');
 	}
 
 	onMount(async () => {
@@ -41,17 +41,19 @@
 		});
 	}
 
-	function onByBook(b: any, idx: number) {
-		if (strongsWords && strongsWords.length > 0) {
-			searchTerms = sanatize(strongsWords[idx]);
-		} else {
-			searchTerms = sanatize(text);
-		}
-
+	function onByBook(s: any, b: any, idx: number) {
 		let bookid = booknames['booknamesByName'][b.text];
-		if (bookid) {
-			startsWithBookId = `${bookid}_`;
-		}
+		let shortName = booknames['shortNames'][bookid];
+
+		let byWord = s['usageByWord'];
+
+		let searchText = '';
+		byWord?.forEach((w) => {
+			searchText += `${shortName} ${w.text} OR `;
+		});
+
+		let lidx = searchText.lastIndexOf('OR');
+		searchTerms =  sanatize(searchText.substring(0, lidx));
 		showByBook = true;
 	}
 
@@ -140,7 +142,7 @@
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				{#if bookidx !== 0}&shy;,&nbsp;{/if}<span
 					onclick={() => {
-						onByBook(b, idx);
+						onByBook(s, b, idx);
 					}}
 					class="inline-block hover:cursor-pointer hover:text-neutral-400">{b.text}</span
 				>
@@ -154,12 +156,12 @@
 		<h1 class="pt-4 text-neutral-600">By Word:</h1>
 
 		<div class="space-y-2 pb-4 ps-4">
-			{#each s['usageByWord'] as b, idx}
+			{#each s['usageByWord'] as w, idx}
 				{#if idx !== 0}&shy;,&nbsp;{/if}<span
 					onclick={() => {
-						onByWord(b, idx);
+						onByWord(w, idx);
 					}}
-					class="inline-block hover:cursor-pointer hover:text-neutral-400">{b.text}</span
+					class="inline-block hover:cursor-pointer hover:text-neutral-400">{w.text}</span
 				>
 			{/each}
 		</div>
