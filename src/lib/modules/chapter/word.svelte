@@ -344,8 +344,9 @@
 	.FOOTNO {
 		cursor: pointer;
 		vertical-align: baseline;
-		/* position: relative; */
+		 position: relative; 
 		top: -0.6em;
+		z-index: 0;
 		height: 100%;
 		@apply ps-1 pe-2 text-xs text-neutral-700 md:text-base;
 	}
@@ -356,7 +357,7 @@
 
 	.vno {
 		vertical-align: baseline;
-		/* position: relative; */
+		position: relative;
 		top: -0.6em;
 		cursor: pointer;
 		@apply text-xs text-neutral-700 sm:text-base;

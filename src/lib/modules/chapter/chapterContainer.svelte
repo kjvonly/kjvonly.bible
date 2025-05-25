@@ -165,7 +165,7 @@
 	}}
 >
 	<div {id} style="{containerHeight} {containerWidth}" class="overflow-y-scroll">
-		<div class="sticky top-0 z-popover flex w-full justify-center">
+		<div class="sticky top-0 z-[1500] flex w-full justify-center">
 			<ChapterActions
 				bind:mode
 				bind:chapterKey

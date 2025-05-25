@@ -14,6 +14,13 @@
 
 
 :root {
+    --color-abc: #00ff00;
+}
+
+@theme {
+
+
+
     --color-primary-surface: hsl(0 0% 100%);
 
     --color-primary-900: hsl(360deg 62% 20%);
@@ -118,14 +125,117 @@
     --color-highlight-c: hsl(8deg 64% 42%);
     --color-highlight-d: hsl(48deg 95% 76%);
     --color-highlight-e: hsl(195deg 97% 75%);
-
-    --zIndex-popover: 1500
 }
 
-@theme {
-    --color-redtxt: var(--color-primary-50);
+@layer base {
+    body {
+        @apply text-2xl bg-neutral-50 text-neutral-700 selection:bg-primary-100; 
+    }
+}
 
-    /* --color-redtxt: hsl(var(--color-redtxt)) */
+@layer theme {
+    [data-theme="color-theme-dark-red"] {
+        --color-primary-50: hsl(360deg 62% 20%);
+        --color-primary-100: hsl(360deg 85% 25%);
+        --color-primary-200: hsl(360deg 79% 32%);
+        --color-primary-300: hsl(360deg 72% 38%);
+        --color-primary-400: hsl(360deg 67% 44%);
+        --color-primary-500: hsl(360deg 64% 55%);
+        --color-primary-600: hsl(360deg 71% 66%);
+        --color-primary-700: hsl(360deg 77% 78%);
+        --color-primary-800: hsl(360deg 82% 89%);
+        --color-primary-900: hsl(360deg 100% 97%);
+
+        --color-vivid-a-50: hsl(15deg 86% 30%);
+        --color-vivid-a-100: hsl(22deg 82% 39%);
+        --color-vivid-a-200: hsl(29deg 80% 44%);
+        --color-vivid-a-300: hsl(36deg 77% 49%);
+        --color-vivid-a-400: hsl(42deg 87% 55%);
+        --color-vivid-a-500: hsl(44deg 92% 63%);
+        --color-vivid-a-600: hsl(48deg 94% 68%);
+        --color-vivid-a-700: hsl(48deg 95% 76%);
+        --color-vivid-a-800: hsl(48deg 100% 88%);
+        --color-vivid-a-900: hsl(49deg 100% 96%);
+
+        --color-neutral-50: hsl(42deg 15% 13%);
+        --color-neutral-100: hsl(40deg 13% 23%);
+        --color-neutral-200: hsl(37deg 11% 28%);
+        --color-neutral-300: hsl(41deg 9% 35%);
+        --color-neutral-400: hsl(41deg 8% 48%);
+        --color-neutral-500: hsl(41deg 8% 61%);
+        --color-neutral-600: hsl(39deg 11% 69%);
+        --color-neutral-700: hsl(40deg 15% 80%);
+        --color-neutral-800: hsl(43deg 13% 90%);
+        --color-neutral-900: hsl(40deg 23% 97%);
+
+        --color-support-a-50: hsl(184deg 91% 17%);
+        --color-support-a-100: hsl(185deg 84% 25%);
+        --color-support-a-200: hsl(185deg 81% 29%);
+        --color-support-a-300: hsl(184deg 77% 34%);
+        --color-support-a-400: hsl(185deg 62% 45%);
+        --color-support-a-500: hsl(185deg 57% 50%);
+        --color-support-a-600: hsl(184deg 65% 59%);
+        --color-support-a-700: hsl(184deg 80% 74%);
+        --color-support-a-800: hsl(185deg 94% 87%);
+        --color-support-a-900: hsl(186deg 100% 94%);
+
+        --color-support-b-50: hsl(8deg 86% 14%);
+        --color-support-b-100: hsl(8deg 78% 21%);
+        --color-support-b-200: hsl(8deg 74% 27%);
+        --color-support-b-300: hsl(8deg 70% 34%);
+        --color-support-b-400: hsl(8deg 64% 42%);
+        --color-support-b-500: hsl(8deg 55% 52%);
+        --color-support-b-600: hsl(8deg 63% 61%);
+        --color-support-b-700: hsl(8deg 68% 74%);
+        --color-support-b-800: hsl(8deg 77% 86%);
+        --color-support-b-900: hsl(8deg 88% 94%);
+
+        /* support b 500*/
+         --color-redtxt: hsl(8deg 55% 52%); 
+        
+            /* primary-200 */
+            --color-header-from: hsl(360deg 79% 32%);
+        /* primary-500 */
+        --color-header-to: hsl(360deg 67% 44%);
+        /* neutral 800 */
+        --color-header-title: hsl(360deg 82% 89%);
+
+        /**
+        * colored groups for chapter select light mode
+        */
+
+        /* primary 700 */
+        --color-bg-law: hsl(360deg 67% 44%);
+        /* neutral 50 */
+        --color-text-law: hsl(40deg 23% 97%);
+
+        /* supporta 700 */
+        --color-bg-history: hsl(185deg 81% 29%);
+        /* neutral 50 */
+        --color-text-history: hsl(40deg 23% 97%);
+
+        /* supportb 700 */
+        --color-bg-poetry: hsl(8deg 74% 27%);
+        /* neutral 50 */
+        --color-text-poetry: hsl(40deg 23% 97%);
+
+        /* vivida 700 */
+        --color-bg-major-prophets: hsl(29deg 80% 44%);
+        /* neutral 50 */
+        --color-text-major-prophets: hsl(40deg 23% 97%);
+
+        /* vividb 700 */
+        --color-bg-minor-prophets: hsl(100deg 20% 44%);
+        /* neutral 50 */
+        --color-text-minor-prophets: hsl(40deg 23% 97%);
+
+        --color-highlight-a: hsl(360deg 79% 32%);
+        --color-highlight-b: hsl(185deg 81% 29%);
+        --color-highlight-c: hsl(8deg 74% 27%);
+        --color-highlight-d: hsl(29deg 80% 44%);
+        --color-highlight-e: hsl(202deg 83% 41%);
+    }
+
 }
 
 
