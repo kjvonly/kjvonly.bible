@@ -40,7 +40,8 @@
 	"dependencies": {
 		"@tailwindcss/postcss": "^4.1.7",
 		"@tailwindcss/typography": "^0.5.16",
-		"flexsearch": "^0.8.204",
+		"@tailwindcss/vite": "^4.1.7",
+		"flexsearch": "^0.7.43",
 		"idb": "^8.0.3",
 		"quill": "^2.0.3",
 		"uuid4": "^2.0.3"

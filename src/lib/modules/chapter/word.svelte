@@ -340,13 +340,14 @@
 {/if}
 
 <style>
+	@reference "../../../app.css";
 	.FOOTNO {
 		cursor: pointer;
 		vertical-align: baseline;
-		position: relative;
+		/* position: relative; */
 		top: -0.6em;
 		height: 100%;
-		@apply pe-2 ps-1 text-xs text-neutral-700 md:text-base;
+		@apply ps-1 pe-2 text-xs text-neutral-700 md:text-base;
 	}
 
 	.redtxt {
@@ -355,7 +356,7 @@
 
 	.vno {
 		vertical-align: baseline;
-		position: relative;
+		/* position: relative; */
 		top: -0.6em;
 		cursor: pointer;
 		@apply text-xs text-neutral-700 sm:text-base;
@@ -366,7 +367,8 @@
 	}
 
 	.xref {
-		@apply underline decoration-dotted !important;
+		/* @apply underline decoration-dotted !important; */
+		@apply underline decoration-dotted;
 		cursor: pointer;
 	}
 </style>

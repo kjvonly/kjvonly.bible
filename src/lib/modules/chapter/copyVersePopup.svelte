@@ -194,6 +194,7 @@
 </div>
 
 <style>
+	 @reference "../../../app.css";
 	.vno {
 		vertical-align: baseline;
 		position: relative;

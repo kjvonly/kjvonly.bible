@@ -134,6 +134,7 @@
 {/if}
 
 <style>
+	@reference "../../../app.css";
 	.bookChapter {
 		font-size: min(5cqw, 1rem);
 	}

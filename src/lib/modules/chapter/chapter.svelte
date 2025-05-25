@@ -101,6 +101,6 @@
 
 <style>
 	.scrolled-to {
-		@apply animate-pulse;
+		/* @apply animate-pulse; */
 	}
 </style>
