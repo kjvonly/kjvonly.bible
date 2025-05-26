@@ -1,27 +1,48 @@
-node_modules
+# Project
+app/services/sales-api/sales-api
+app/services/metrics/metrics
+app/tooling/sales-admin/sales-admin
+app/tooling/sales-admin/logfmt
+app/tooling/sales-admin/docs
+.excalidraw
+database-data/
 
-# Output
-.output
-.vercel
-.netlify
-.wrangler
-/.svelte-kit
-/build
-/site
+# Environment
+api/cmd/frontends/admin/.env
 
-# OS
+# Mac
 .DS_Store
-Thumbs.db
 
-# Env
-.env
-.env.*
-!.env.example
-!.env.test
+# Backup files
+*~*
 
-# Vite
-.vite
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
 
-static/data
+# Folders
+_obj
+_test
+
+# Editor files
+.idea/
+*.iml
+*.swp
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+
+*.exe
+//*.test
+.vscode/tasks.json
+zarf/compose/database-data/data
