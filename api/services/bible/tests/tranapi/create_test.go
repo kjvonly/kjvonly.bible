@@ -3,10 +3,10 @@ package tran_test
 import (
 	"net/http"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/tranapp"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/apitest"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
-	"github.com/google/go-cmp/cmp"
 )
 
 func create200(sd apitest.SeedData) []apitest.Table {
@@ -25,7 +25,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 				},
 				User: tranapp.NewUser{
 					Name:            "Bill Kennedy",
-					Email:           "bill@ardanlabs.com",
+					Email:           "bill@gmail.com",
 					Roles:           []string{"ADMIN"},
 					Department:      "ITO",
 					Password:        "123",
@@ -88,7 +88,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 				},
 				User: tranapp.NewUser{
 					Name:            "Bill Kennedy",
-					Email:           "bill@ardanlabs.com",
+					Email:           "bill@gmail.com",
 					Roles:           []string{"ADMIN"},
 					Department:      "ITO",
 					Password:        "123",

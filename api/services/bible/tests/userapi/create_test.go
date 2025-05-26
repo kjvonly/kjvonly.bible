@@ -3,10 +3,10 @@ package user_test
 import (
 	"net/http"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/userapp"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/apitest"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
-	"github.com/google/go-cmp/cmp"
 )
 
 func create200(sd apitest.SeedData) []apitest.Table {
@@ -19,7 +19,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusOK,
 			Input: &userapp.NewUser{
 				Name:            "Bill Kennedy",
-				Email:           "bill@ardanlabs.com",
+				Email:           "bill@gmail.com",
 				Roles:           []string{"ADMIN"},
 				Department:      "ITO",
 				Password:        "123",
@@ -28,7 +28,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			GotResp: &userapp.User{},
 			ExpResp: &userapp.User{
 				Name:       "Bill Kennedy",
-				Email:      "bill@ardanlabs.com",
+				Email:      "bill@gmail.com",
 				Roles:      []string{"ADMIN"},
 				Department: "ITO",
 				Enabled:    true,
@@ -76,7 +76,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input: &userapp.NewUser{
 				Name:            "Bill Kennedy",
-				Email:           "bill@ardanlabs.com",
+				Email:           "bill@gmail.com",
 				Roles:           []string{"SUPER"},
 				Department:      "ITO",
 				Password:        "123",
@@ -96,7 +96,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input: &userapp.NewUser{
 				Name:            "Bi",
-				Email:           "bill@ardanlabs.com",
+				Email:           "bill@gmail.com",
 				Roles:           []string{"USER"},
 				Department:      "ITO",
 				Password:        "123",

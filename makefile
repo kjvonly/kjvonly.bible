@@ -119,11 +119,11 @@ TEMPO           := grafana/tempo:2.7.0
 LOKI            := grafana/loki:3.4.0
 PROMTAIL        := grafana/promtail:3.4.0
 
-KIND_CLUSTER    := ardan-starter-cluster
+KIND_CLUSTER    := kjvonly-cluster
 NAMESPACE       := bible-system
 BIBLE_APP       := bible
 AUTH_APP        := auth
-BASE_IMAGE_NAME := localhost/ardanlabs
+BASE_IMAGE_NAME := localhost/kjvonly
 VERSION         := 0.0.1
 BIBLE_IMAGE     := $(BASE_IMAGE_NAME)/$(BIBLE_APP):$(VERSION)
 METRICS_IMAGE   := $(BASE_IMAGE_NAME)/metrics:$(VERSION)

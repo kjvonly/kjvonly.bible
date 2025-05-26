@@ -8,14 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/dbtest"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/page"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/unitest"
 	"github.com/kjvonly/kjvonly.bible/business/types/name"
 	"github.com/kjvonly/kjvonly.bible/business/types/role"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -170,7 +170,7 @@ func query(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 }
 
 func create(busDomain dbtest.BusDomain) []unitest.Table {
-	email, _ := mail.ParseAddress("bill@ardanlabs.com")
+	email, _ := mail.ParseAddress("bill@gmail.com")
 
 	table := []unitest.Table{
 		{
@@ -224,7 +224,7 @@ func create(busDomain dbtest.BusDomain) []unitest.Table {
 }
 
 func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
-	email, _ := mail.ParseAddress("jack@ardanlabs.com")
+	email, _ := mail.ParseAddress("jack@gmail.com")
 
 	table := []unitest.Table{
 		{

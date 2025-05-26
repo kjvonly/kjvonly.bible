@@ -1,4 +1,4 @@
-package ardan.rego
+package kjvonly.rego
 
 import rego.v1
 
