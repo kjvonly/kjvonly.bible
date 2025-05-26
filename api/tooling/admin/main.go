@@ -9,10 +9,10 @@ import (
 	"os"
 
 	"github.com/ardanlabs/conf/v3"
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/api/tooling/admin/commands"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/sqldb"
 	"github.com/kjvonly/kjvonly.bible/foundation/logger"
-	"github.com/google/uuid"
 )
 
 var build = "develop"
@@ -54,7 +54,7 @@ func run(log *logger.Logger) error {
 		},
 	}
 
-	const prefix = "SALES"
+	const prefix = "BIBLE"
 	help, err := conf.Parse(prefix, &cfg)
 	if err != nil {
 		if errors.Is(err, conf.ErrHelpWanted) {

@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/bible/
+  - ./dev-bible-configmap.yaml
+patches:
+  - path: ./dev-bible-patch-deploy.yaml
+  - path: ./dev-bible-patch-service.yaml
+images:
+  - name: bible-image
+    newName: localhost/kjvonly/bible
+    newTag: 0.0.1
+  - name: metrics-image
+    newName: localhost/kjvonly/metrics
+    newTag: 0.0.1

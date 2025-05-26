@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: sales-system
+  name: bible-system
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth
-  namespace: sales-system
+  namespace: bible-system
 
 spec:
   selector:
@@ -106,7 +106,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: auth-service
-  namespace: sales-system
+  namespace: bible-system
 
 spec:
   selector:

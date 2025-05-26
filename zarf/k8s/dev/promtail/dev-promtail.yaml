@@ -8,13 +8,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: sales-system
+  name: bible-system
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: promtail-conf
-  namespace: sales-system
+  namespace: bible-system
 data:
   promtail.yaml: |
     server:
@@ -104,7 +104,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: promtail
-  namespace: sales-system
+  namespace: bible-system
 spec:
   selector:
     matchLabels:
@@ -171,7 +171,7 @@ metadata:
   labels:
     app: promtail
   name: promtail
-  namespace: sales-system
+  namespace: bible-system
 rules:
   - apiGroups:
       - ""
@@ -192,7 +192,7 @@ metadata:
   labels:
     app: promtail
   name: promtail
-  namespace: sales-system
+  namespace: bible-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -200,11 +200,11 @@ metadata:
   labels:
     app: promtail
   name: promtail
-  namespace: sales-system
+  namespace: bible-system
 subjects:
   - kind: ServiceAccount
     name: promtail
-    namespace: sales-system
+    namespace: bible-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

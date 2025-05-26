@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sales-service
-  namespace: sales-system
+  name: bible-service
+  namespace: bible-system
 
 spec:
   type: ClusterIP
 
   ports:
-  - name: sales
+  - name: bible
     port: 3000
-    targetPort: sales
-  - name: sales-debug
+    targetPort: bible
+  - name: bible-debug
     port: 3010
-    targetPort: sales-debug
+    targetPort: bible-debug
   - name: metrics
     port: 4000
     targetPort: metrics

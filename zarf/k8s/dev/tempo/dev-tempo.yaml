@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: sales-system
+  name: bible-system
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tempo-conf
-  namespace: sales-system
+  namespace: bible-system
 data:
   tempo.yaml: |
     usage_report:
@@ -80,7 +80,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tempo
-  namespace: sales-system
+  namespace: bible-system
 spec:
   replicas: 1
   strategy:
@@ -91,7 +91,7 @@ spec:
       app: tempo
   template:
     metadata:
-      namespace: sales-system
+      namespace: bible-system
       labels:
         app: tempo
     spec:
@@ -129,7 +129,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: tempo
-  namespace: sales-system
+  namespace: bible-system
 spec:
   type: ClusterIP
   selector:

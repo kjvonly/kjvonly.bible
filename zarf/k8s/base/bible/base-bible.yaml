@@ -16,52 +16,52 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: sales-system
+  name: bible-system
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sales
-  namespace: sales-system
+  name: bible
+  namespace: bible-system
 
 spec:
   selector:
     matchLabels:
-      app: sales
+      app: bible
 
   template:
     metadata:
       labels:
-        app: sales
+        app: bible
 
     spec:
       terminationGracePeriodSeconds: 60
 
       initContainers:
         - name: init-migrate-seed
-          image: sales-image
+          image: bible-image
           command: ["./admin", "migrate-seed"]
           env:
-            - name: SALES_DB_USER
+            - name: BIBLE_DB_USER
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: db_user
                   optional: true
-            - name: SALES_DB_PASSWORD
+            - name: BIBLE_DB_PASSWORD
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: db_password
                   optional: true
-            - name: SALES_DB_HOST_PORT
+            - name: BIBLE_DB_HOST_PORT
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: db_hostport
                   optional: true
-            - name: SALES_DB_DISABLE_TLS
+            - name: BIBLE_DB_DISABLE_TLS
               valueFrom:
                 configMapKeyRef:
                   name: app-config
@@ -69,13 +69,13 @@ spec:
                   optional: true
 
       containers:
-        - name: sales
-          image: sales-image
+        - name: bible
+          image: bible-image
 
           ports:
-            - name: sales
+            - name: bible
               containerPort: 3000
-            - name: sales-debug
+            - name: bible-debug
               containerPort: 3010
 
           readinessProbe: # readiness probes mark the service available to accept traffic.
@@ -112,25 +112,25 @@ spec:
                 resourceFieldRef:
                   resource: limits.memory
 
-            - name: SALES_DB_USER # here as an example for configuring a hosted db.
+            - name: BIBLE_DB_USER # here as an example for configuring a hosted db.
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: db_user
                   optional: true
-            - name: SALES_DB_PASSWORD
+            - name: BIBLE_DB_PASSWORD
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: db_password
                   optional: true
-            - name: SALES_DB_HOST_PORT
+            - name: BIBLE_DB_HOST_PORT
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: db_hostport
                   optional: true
-            - name: SALES_DB_DISABLE_TLS
+            - name: BIBLE_DB_DISABLE_TLS
               valueFrom:
                 configMapKeyRef:
                   name: app-config
@@ -175,9 +175,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sales-service
-  namespace: sales-system
+  name: bible-service
+  namespace: bible-system
 
 spec:
   selector:
-    app: sales
+    app: bible

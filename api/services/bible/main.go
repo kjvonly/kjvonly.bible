@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf/v3"
-	"github.com/kjvonly/kjvonly.bible/api/services/sales/build/all"
-	"github.com/kjvonly/kjvonly.bible/api/services/sales/build/crud"
-	"github.com/kjvonly/kjvonly.bible/api/services/sales/build/reporting"
+	"github.com/kjvonly/kjvonly.bible/api/services/bible/build/all"
+	"github.com/kjvonly/kjvonly.bible/api/services/bible/build/crud"
+	"github.com/kjvonly/kjvonly.bible/api/services/bible/build/reporting"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/debug"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mux"
@@ -62,7 +62,7 @@ func main() {
 		return otel.GetTraceID(ctx)
 	}
 
-	log = logger.NewWithEvents(os.Stdout, logger.LevelInfo, "SALES", traceIDFn, events)
+	log = logger.NewWithEvents(os.Stdout, logger.LevelInfo, "BIBLE", traceIDFn, events)
 
 	// -------------------------------------------------------------------------
 
@@ -109,7 +109,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 		}
 		Tempo struct {
 			Host        string  `conf:"default:tempo:4317"`
-			ServiceName string  `conf:"default:sales"`
+			ServiceName string  `conf:"default:bible"`
 			Probability float64 `conf:"default:0.05"`
 			// Shouldn't use a high Probability value in non-developer systems.
 			// 0.05 should be enough for most systems. Some might want to have
@@ -118,11 +118,11 @@ func run(ctx context.Context, log *logger.Logger) error {
 	}{
 		Version: conf.Version{
 			Build: build,
-			Desc:  "Sales",
+			Desc:  "Bible",
 		},
 	}
 
-	const prefix = "SALES"
+	const prefix = "BIBLE"
 	help, err := conf.Parse(prefix, &cfg)
 	if err != nil {
 		if errors.Is(err, conf.ErrHelpWanted) {
@@ -242,7 +242,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 			HomeBus:     homeBus,
 			VProductBus: vproductBus,
 		},
-		SalesConfig: mux.SalesConfig{
+		BibleConfig: mux.BibleConfig{
 			AuthClient: authClient,
 		},
 	}

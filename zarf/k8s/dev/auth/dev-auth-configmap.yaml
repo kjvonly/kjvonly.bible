@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: app-config
-  namespace: sales-system
+  namespace: bible-system
 data:
   db_host: "database-service"
   db_user: "postgres"

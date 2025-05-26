@@ -6,6 +6,7 @@ import (
 	"embed"
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mid"
@@ -16,7 +17,6 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/domain/vproductbus"
 	"github.com/kjvonly/kjvonly.bible/foundation/logger"
 	"github.com/kjvonly/kjvonly.bible/foundation/web"
-	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -53,8 +53,8 @@ func WithFileServer(react bool, static embed.FS, dir string, path string) func(o
 	}
 }
 
-// SalesConfig contains sales service specific config.
-type SalesConfig struct {
+// BibleConfig contains bible service specific config.
+type BibleConfig struct {
 	AuthClient *authclient.Client
 }
 
@@ -78,7 +78,7 @@ type Config struct {
 	DB          *sqlx.DB
 	Tracer      trace.Tracer
 	BusConfig   BusConfig
-	SalesConfig SalesConfig
+	BibleConfig BibleConfig
 	AuthConfig  AuthConfig
 }
 

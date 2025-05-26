@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/userapp"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/apitest"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/dbtest"
-	"github.com/google/go-cmp/cmp"
 )
 
 func update200(sd apitest.SeedData) []apitest.Table {
@@ -22,7 +22,7 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusOK,
 			Input: &userapp.UpdateUser{
 				Name:            dbtest.StringPointer("Jack Kennedy"),
-				Email:           dbtest.StringPointer("jack@ardanlabs.com"),
+				Email:           dbtest.StringPointer("jack@gmail.com"),
 				Department:      dbtest.StringPointer("ITO"),
 				Password:        dbtest.StringPointer("123"),
 				PasswordConfirm: dbtest.StringPointer("123"),
@@ -31,7 +31,7 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			ExpResp: &userapp.User{
 				ID:          sd.Users[0].ID.String(),
 				Name:        "Jack Kennedy",
-				Email:       "jack@ardanlabs.com",
+				Email:       "jack@gmail.com",
 				Roles:       []string{"USER"},
 				Department:  "ITO",
 				Enabled:     true,
@@ -159,7 +159,7 @@ func update401(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusUnauthorized,
 			Input: &userapp.UpdateUser{
 				Name:            dbtest.StringPointer("Bill Kennedy"),
-				Email:           dbtest.StringPointer("bill@ardanlabs.com"),
+				Email:           dbtest.StringPointer("bill@gmail.com"),
 				Department:      dbtest.StringPointer("ITO"),
 				Password:        dbtest.StringPointer("123"),
 				PasswordConfirm: dbtest.StringPointer("123"),

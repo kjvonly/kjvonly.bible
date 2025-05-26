@@ -18,22 +18,22 @@ services:
       start_period: 30s
     cpu_count: 2
     networks:
-      sales-system-network:
+      bible-system-network:
         ipv4_address: 10.5.0.2
 
   init-migrate-seed:
-    image: localhost/ardanlabs/sales:0.0.1
+    image: localhost/kjvonly/bible:0.0.1
     pull_policy: never
     container_name: init-migrate-seed
     restart: unless-stopped
     entrypoint: ['./admin', 'migrate-seed']
     environment:
-      - SALES_DB_USER=postgres
-      - SALES_DB_PASSWORD=postgres
-      - SALES_DB_HOST=database
-      - SALES_DB_DISABLE_TLS=true
+      - BIBLE_DB_USER=postgres
+      - BIBLE_DB_PASSWORD=postgres
+      - BIBLE_DB_HOST=database
+      - BIBLE_DB_DISABLE_TLS=true
     networks:
-      sales-system-network:
+      bible-system-network:
         ipv4_address: 10.5.0.10
     deploy:
       restart_policy:
@@ -42,7 +42,7 @@ services:
       - database
 
   auth:
-    image: localhost/ardanlabs/auth:0.0.1
+    image: localhost/kjvonly/auth:0.0.1
     pull_policy: never
     container_name: auth
     restart: unless-stopped
@@ -63,22 +63,22 @@ services:
       - AUTH_DB_HOST=database
       - AUTH_DB_DISABLE_TLS=true
       - KUBERNETES_NAMESPACE=compose
-      - KUBERNETES_NAME=sales-system
+      - KUBERNETES_NAME=bible-system
       - KUBERNETES_POD_IP=10.5.0.5
       - KUBERNETES_NODE_NAME=auth
     expose:
       - "6000:6000"
       - "6010:6010"
     networks:
-      sales-system-network:
+      bible-system-network:
         ipv4_address: 10.5.0.5
     depends_on:
       - database
 
-  sales:
-    image: localhost/ardanlabs/sales:0.0.1
+  bible:
+    image: localhost/kjvonly/bible:0.0.1
     pull_policy: never
-    container_name: sales
+    container_name: bible
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -87,11 +87,11 @@ services:
       - GOMAXPROCS
       - GOGC=off
       - GOMEMLIMIT
-      - SALES_DB_USER=postgres
-      - SALES_DB_PASSWORD=postgres
-      - SALES_DB_HOST=database
-      - SALES_DB_DISABLE_TLS=true
-      - SALES_AUTH_HOST=http://auth:6000
+      - BIBLE_DB_USER=postgres
+      - BIBLE_DB_PASSWORD=postgres
+      - BIBLE_DB_HOST=database
+      - BIBLE_DB_DISABLE_TLS=true
+      - BIBLE_AUTH_HOST=http://auth:6000
       - KUBERNETES_NAMESPACE
       - KUBERNETES_NAME
       - KUBERNETES_POD_IP
@@ -103,13 +103,13 @@ services:
       retries: 2
       start_period: 2s
     networks:
-      sales-system-network:
+      bible-system-network:
         ipv4_address: 10.5.0.15
     depends_on:
       - init-migrate-seed
 
   metrics:
-    image: localhost/ardanlabs/metrics:0.0.1
+    image: localhost/kjvonly/metrics:0.0.1
     pull_policy: never
     container_name: metrics
     restart: unless-stopped
@@ -120,18 +120,18 @@ services:
     cpus: 1
     environment:
       - GOMAXPROCS=1
-      - METRICS_COLLECT_FROM=http://sales:3010/debug/vars
+      - METRICS_COLLECT_FROM=http://bible:3010/debug/vars
     networks:
-      sales-system-network:
+      bible-system-network:
         ipv4_address: 10.5.0.20
     depends_on:
-      - sales
+      - bible
 
 volumes:
   database: {}
 
 networks:
-  sales-system-network:
+  bible-system-network:
     driver: bridge
     ipam:
       config:
