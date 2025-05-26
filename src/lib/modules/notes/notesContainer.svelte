@@ -575,7 +575,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	<div class="flex justify-center px-2">
 		<label
 			for="tags"
-			class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-supporta-600"
+			class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-support-a-600"
 		>
 			<div class="flex items-center">
 				<input
@@ -622,7 +622,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		<div class="flex flex-row items-end space-x-2 space-y-2 overflow-x-scroll p-2">
 			{#each [...note.tags].reverse() as t}
 				<span
-					class="inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-0.5 text-supporta-700"
+					class="inline-flex h-8 items-center justify-center rounded-full border border-support-a-500 px-2.5 py-0.5 text-support-a-700"
 				>
 					<p class="whitespace-nowrap text-sm">{t.tag}</p>
 
@@ -631,7 +631,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 						onclick={() => {
 							onDeleteTag(t.id);
 						}}
-						class="-me-1 ms-1.5 inline-block rounded-full bg-supporta-200 p-0.5 text-supporta-700 transition hover:bg-supporta-300"
+						class="-me-1 ms-1.5 inline-block rounded-full bg-support-a-200 p-0.5 text-support-a-700 transition hover:bg-support-a-300"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -738,7 +738,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	<div class="flex flex-col justify-start px-2">
 		<label
 			for="tags"
-			class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-supporta-600"
+			class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-support-a-600"
 		>
 			<div class="flex items-center">
 				<input
@@ -761,7 +761,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 								<input
 									bind:checked={fp.checked}
 									type="checkbox"
-									class="size-4 rounded-sm border-neutral-200 accent-supporta-300"
+									class="size-4 rounded-sm border-neutral-200 accent-support-a-300"
 									id="Option1"
 								/>
 							</div>
@@ -922,7 +922,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
 					{#each notes[nk].tags as t}
 						<span
-							class="mt-2 inline-flex h-8 items-center justify-center rounded-full border border-supporta-500 px-2.5 py-2.5 text-supporta-700"
+							class="mt-2 inline-flex h-8 items-center justify-center rounded-full border border-support-a-500 px-2.5 py-2.5 text-support-a-700"
 						>
 							<p class="whitespace-nowrap text-sm">{t.tag}</p>
 						</span>
