@@ -15,29 +15,21 @@ class SettingsService {
         if (!this.VALID_COLOR_THEMES.includes(theme)) {
             theme = this.VALID_COLOR_THEMES[0]
         }
-        let html = document.getElementById('kjvonly-html');
-        html?.classList.forEach((className: string) => {
-            if (className.includes('color-theme')) {
-                html?.classList.remove(className);
-            }
-        })
+
 
         let cs = this.getSettings()
         if (!cs) {
             return
         }
 
-
-        let classes = []
+        let html = document.getElementById('kjvonly-html');
         if (cs.isDarkTheme) {
-            //    html?.classList.add(`color-theme-dark-${theme}`)
-            classes.push(`color-theme-dark-${theme}`)
+            html?.setAttribute('data-theme', `color-theme-dark-${theme}`)
         } else {
-            //  html?.classList.add(`color-theme-${theme}`)
-            classes.push(`color-theme-${theme}`)
+            html?.setAttribute('data-theme', `color-theme-${theme}`)
         }
 
-
+        let classes = []
         classes.push(cs.fontSize)
         classes.push(cs.fontFamily)
 

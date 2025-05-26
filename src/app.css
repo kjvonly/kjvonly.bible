@@ -9,10 +9,6 @@
 }
 
 
-:root {
-    --color-abc: #00ff00;
-}
-
 @theme {
     --color-primary-surface: hsl(0 0% 100%);
 
