@@ -210,7 +210,7 @@ export default {
 				'900': 'hsl(var(--color-neutral-900))',
 			},
 
-			supporta: {
+			support-a: {
 				'50': 'hsl(var(--color-support-a-50))',
 				'100': 'hsl(var(--color-support-a-100))',
 				'200': 'hsl(var(--color-support-a-200))',

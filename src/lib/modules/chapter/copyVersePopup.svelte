@@ -167,7 +167,7 @@
 			<div>
 				<input
 					type="checkbox"
-					class="mx-4 mt-5 h-5 w-5 accent-supporta-500"
+					class="mx-4 mt-5 h-5 w-5 accent-support-a-500"
 					bind:checked={checkAll}
 					onchange={() => {
 						toggleSelects();
@@ -179,7 +179,7 @@
 					<div>
 						<input
 							type="checkbox"
-							class="mx-4 mt-5 h-5 w-5 accent-supporta-500"
+							class="mx-4 mt-5 h-5 w-5 accent-support-a-500"
 							bind:checked={verses[k].checked}
 						/>
 					</div>
