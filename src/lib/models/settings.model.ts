@@ -1,6 +1,6 @@
 export interface Settings {
     fontSize: string
-    fontFamily: string
+    fontTheme: string
     colorTheme?: string
     isDarkTheme?: boolean
 }
@@ -8,7 +8,7 @@ export interface Settings {
 export function newSettings(): Settings{
     return {
         fontSize: 'text-base',
-        fontFamily: 'font-sans',
+        fontTheme: 'sans',
         colorTheme: 'red',
         isDarkTheme: false
     };

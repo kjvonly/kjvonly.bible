@@ -12,6 +12,7 @@
 
 	let { children } = $props();
 </script>
+
 <Container>
 	{@render children?.()}
 </Container>

@@ -29,9 +29,11 @@ class SettingsService {
             html?.setAttribute('data-theme', `color-theme-${theme}`)
         }
 
+
+        html?.setAttribute('font-theme', cs.fontTheme)
+
         let classes = []
         classes.push(cs.fontSize)
-        classes.push(cs.fontFamily)
 
 
         let currentClasses: string[] = []

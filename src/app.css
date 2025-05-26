@@ -10,6 +10,11 @@
 
 
 @theme {
+
+    --font-kjv: KJV1611;
+    --font-primary: sans;
+    
+    /* default color scheme */
     --color-primary-surface: hsl(0 0% 100%);
 
     --color-primary-900: hsl(360deg 62% 20%);
@@ -118,11 +123,21 @@
 
 @layer base {
     body {
-        @apply text-2xl bg-neutral-50 text-neutral-700 selection:bg-primary-100;
+        @apply text-2xl font-primary bg-neutral-50 text-neutral-700 selection:bg-primary-100;
     }
 }
 
 @layer theme {
+
+    [font-theme="kjv"] {
+        --font-primary: KJV1611
+    }
+
+    [font-theme="sans"] {
+        --font-primary: sans
+    }
+
+
     [data-theme="color-theme-red"] {
         --color-primary-surface: hsl(0 0% 100%);
 

@@ -24,11 +24,13 @@
 	let fontFamilies = [
 		{
 			name: 'sans',
-			fontFamily: 'font-sans'
+			fontFamily: 'font-sans',
+			fontTheme: 'sans'
 		},
 		{
 			name: 'KJV1611',
-			fontFamily: 'font-KJV1611'
+			fontFamily: 'font-kjv',
+			fontTheme: 'kjv'
 		}
 	];
 
@@ -55,8 +57,8 @@
 		settings.fontSize = fontSize;
 	}
 
-	function onFontFamilySelected(fontFamily: string) {
-		settings.fontFamily = fontFamily;
+	function onFontThemeSelected(fontTheme: string) {
+		settings.fontTheme = fontTheme;
 	}
 </script>
 
@@ -192,8 +194,8 @@
 			<div class="flex w-full flex-row pt-4">
 				{#each fontFamilies as ff}
 					<button
-						onclick={() => onFontFamilySelected(ff.fontFamily)}
-						class="{settings?.fontFamily === ff.fontFamily
+						onclick={() => onFontThemeSelected(ff.fontTheme)}
+						class="{settings?.fontTheme === ff.fontTheme
 							? 'bg-primary-500 text-neutral-100 '
 							: ' '} {ff.fontFamily} flex h-16 w-1/2 items-center justify-center border text-lg font-bold"
 						aria-label="font-size button"
