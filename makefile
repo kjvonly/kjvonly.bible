@@ -493,6 +493,12 @@ curl-create:
 	-d '{"name":"bill","email":"b@gmail.com","roles":["ADMIN"],"department":"ITO","password":"123","passwordConfirm":"123"}' \
 	http://localhost:3000/v1/users
 
+run-ui:
+	cd api/frontends/bible && npm run dev > /dev/null 2>&1 & cd -
+
+kill-ui:
+	 ps aux  | grep 'npm run dev'  | awk '{print $2 }' | head -n1 | xargs kill
+
 # ==============================================================================
 # Talk commands
 
