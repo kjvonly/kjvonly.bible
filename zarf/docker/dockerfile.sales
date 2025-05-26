@@ -1,5 +1,5 @@
 # Build the Go Binary.
-FROM golang:1.24 AS build_sales
+FROM golang:1.24 AS build_bible
 ENV CGO_ENABLED=0
 ARG BUILD_REF
 
@@ -19,7 +19,7 @@ WORKDIR /service/api/tooling/admin
 RUN go build -ldflags "-X main.build=${BUILD_REF}"
 
 # Build the service binary.
-WORKDIR /service/api/services/sales
+WORKDIR /service/api/services/bible
 RUN go build -ldflags "-X main.build=${BUILD_REF}"
 
 
@@ -27,17 +27,17 @@ RUN go build -ldflags "-X main.build=${BUILD_REF}"
 FROM alpine:3.21
 ARG BUILD_DATE
 ARG BUILD_REF
-RUN addgroup -g 1000 -S sales && \
-    adduser -u 1000 -h /service -G sales -S sales
-COPY --from=build_sales --chown=sales:sales /service/api/tooling/admin/admin /service/admin
-COPY --from=build_sales --chown=sales:sales /service/api/services/sales/sales /service/sales
+RUN addgroup -g 1000 -S bible && \
+    adduser -u 1000 -h /service -G bible -S bible
+COPY --from=build_bible --chown=bible:bible /service/api/tooling/admin/admin /service/admin
+COPY --from=build_bible --chown=bible:bible /service/api/services/bible/bible /service/bible
 WORKDIR /service
-USER sales
-CMD ["./sales"]
+USER bible
+CMD ["./bible"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.title="sales-api" \
+      org.opencontainers.image.title="bible-api" \
       org.opencontainers.image.authors="William Kennedy <bill@ardanlabs.com>" \
-      org.opencontainers.image.source="https://github.com/ardanlabs/service/tree/master/a/services/sales" \
+      org.opencontainers.image.source="https://github.com/ardanlabs/service/tree/master/a/services/bible" \
       org.opencontainers.image.revision="${BUILD_REF}" \
       org.opencontainers.image.vendor="Ardan Labs"

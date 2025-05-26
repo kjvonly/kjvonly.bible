@@ -1,9 +1,9 @@
 # Project
-app/services/sales-api/sales-api
+app/services/bible-api/bible-api
 app/services/metrics/metrics
-app/tooling/sales-admin/sales-admin
-app/tooling/sales-admin/logfmt
-app/tooling/sales-admin/docs
+app/tooling/bible-admin/bible-admin
+app/tooling/bible-admin/logfmt
+app/tooling/bible-admin/docs
 .excalidraw
 database-data/
 

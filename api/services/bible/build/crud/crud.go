@@ -1,15 +1,13 @@
-// Package all binds all the routes into the specified app.
-package all
+// Package crud binds the crud domain set of routes into the specified app.
+package crud
 
 import (
 	"github.com/kjvonly/kjvonly.bible/app/domain/auditapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/checkapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/homeapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/productapp"
-	"github.com/kjvonly/kjvonly.bible/app/domain/rawapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/tranapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/userapp"
-	"github.com/kjvonly/kjvonly.bible/app/domain/vproductapp"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mux"
 	"github.com/kjvonly/kjvonly.bible/foundation/web"
 )
@@ -31,43 +29,31 @@ func (add) Add(app *web.App, cfg mux.Config) {
 	})
 
 	homeapp.Routes(app, homeapp.Config{
-		Log:        cfg.Log,
 		HomeBus:    cfg.BusConfig.HomeBus,
-		AuthClient: cfg.SalesConfig.AuthClient,
+		AuthClient: cfg.BibleConfig.AuthClient,
 	})
 
 	productapp.Routes(app, productapp.Config{
-		Log:        cfg.Log,
 		ProductBus: cfg.BusConfig.ProductBus,
-		AuthClient: cfg.SalesConfig.AuthClient,
+		AuthClient: cfg.BibleConfig.AuthClient,
 	})
 
-	rawapp.Routes(app)
-
 	tranapp.Routes(app, tranapp.Config{
-		Log:        cfg.Log,
-		DB:         cfg.DB,
 		UserBus:    cfg.BusConfig.UserBus,
 		ProductBus: cfg.BusConfig.ProductBus,
-		AuthClient: cfg.SalesConfig.AuthClient,
+		Log:        cfg.Log,
+		AuthClient: cfg.BibleConfig.AuthClient,
+		DB:         cfg.DB,
 	})
 
 	userapp.Routes(app, userapp.Config{
-		Log:        cfg.Log,
 		UserBus:    cfg.BusConfig.UserBus,
-		AuthClient: cfg.SalesConfig.AuthClient,
+		AuthClient: cfg.BibleConfig.AuthClient,
 	})
 
 	auditapp.Routes(app, auditapp.Config{
 		Log:        cfg.Log,
 		AuditBus:   cfg.BusConfig.AuditBus,
-		AuthClient: cfg.SalesConfig.AuthClient,
-	})
-
-	vproductapp.Routes(app, vproductapp.Config{
-		Log:         cfg.Log,
-		UserBus:     cfg.BusConfig.UserBus,
-		VProductBus: cfg.BusConfig.VProductBus,
-		AuthClient:  cfg.SalesConfig.AuthClient,
+		AuthClient: cfg.BibleConfig.AuthClient,
 	})
 }

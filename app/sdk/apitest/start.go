@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	authbuild "github.com/kjvonly/kjvonly.bible/api/services/auth/build/all"
-	salesbuild "github.com/kjvonly/kjvonly.bible/api/services/sales/build/all"
+	biblebuild "github.com/kjvonly/kjvonly.bible/api/services/bible/build/all"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mux"
@@ -54,10 +54,10 @@ func New(t *testing.T, testName string) *Test {
 			HomeBus:     db.BusDomain.Home,
 			VProductBus: db.BusDomain.VProduct,
 		},
-		SalesConfig: mux.SalesConfig{
+		BibleConfig: mux.BibleConfig{
 			AuthClient: authClient,
 		},
-	}, salesbuild.Routes())
+	}, biblebuild.Routes())
 
 	return &Test{
 		DB:   db,

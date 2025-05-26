@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: sales-system
+  name: bible-system
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-conf-datasources
-  namespace: sales-system
+  namespace: bible-system
 data:
   sources.yaml: |
     apiVersion: 1
@@ -19,7 +19,7 @@ data:
     datasources:
       - name: Tempo
         type: tempo
-        url: http://tempo.sales-system.svc:3200
+        url: http://tempo.bible-system.svc:3200
         access: proxy
         isDefault: true
         jsonData:
@@ -42,7 +42,7 @@ data:
         editable: true
       - name: Prometheus
         type: prometheus
-        url: http://prometheus.sales-system.svc:9090
+        url: http://prometheus.bible-system.svc:9090
         access: proxy
         jsonData:
           httpMethod: POST
@@ -60,7 +60,7 @@ data:
       - name: Loki
         type: loki
         access: proxy
-        url: http://loki.sales-system.svc:3101
+        url: http://loki.bible-system.svc:3101
         jsonData:
           maxLines: 1000
 ---
@@ -68,7 +68,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-conf-dashboards
-  namespace: sales-system
+  namespace: bible-system
 data:
   dashboards.yaml: |
     apiVersion: 1
@@ -86,9 +86,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboards
-  namespace: sales-system
+  namespace: bible-system
 data:
-  sales.json: |
+  bible.json: |
     {
       "annotations": {
         "list": [
@@ -106,7 +106,7 @@ data:
           }
         ]
       },
-      "description": "Sales API",
+      "description": "Bible API",
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
@@ -197,7 +197,7 @@ data:
                 "uid": "PBFA97CFB590B2093"
               },
               "editorMode": "builder",
-              "expr": "requests{job=\"sales\"}",
+              "expr": "requests{job=\"bible\"}",
               "hide": false,
               "legendFormat": "__auto",
               "range": true,
@@ -209,7 +209,7 @@ data:
                 "uid": "PBFA97CFB590B2093"
               },
               "editorMode": "builder",
-              "expr": "errors{job=\"sales\"}",
+              "expr": "errors{job=\"bible\"}",
               "hide": false,
               "legendFormat": "__auto",
               "range": true,
@@ -221,7 +221,7 @@ data:
                 "uid": "PBFA97CFB590B2093"
               },
               "editorMode": "builder",
-              "expr": "goroutines{job=\"sales\"}",
+              "expr": "goroutines{job=\"bible\"}",
               "hide": false,
               "legendFormat": "__auto",
               "range": true,
@@ -233,14 +233,14 @@ data:
                 "uid": "PBFA97CFB590B2093"
               },
               "editorMode": "builder",
-              "expr": "panics{job=\"sales\"}",
+              "expr": "panics{job=\"bible\"}",
               "hide": false,
               "legendFormat": "__auto",
               "range": true,
               "refId": "D"
             }
           ],
-          "title": "Sales API - Metrics",
+          "title": "Bible API - Metrics",
           "type": "timeseries"
         },
         {
@@ -304,10 +304,10 @@ data:
               "limit": 20,
               "queryType": "nativeSearch",
               "refId": "A",
-              "serviceName": "sales"
+              "serviceName": "bible"
             }
           ],
-          "title": "Sales API - Traces",
+          "title": "Bible API - Traces",
           "type": "table"
         },
         {
@@ -339,13 +339,13 @@ data:
                 "uid": "P8E80F9AEF21F6940"
               },
               "editorMode": "builder",
-              "expr": "{app=\"sales\", container=\"sales\"} | json",
+              "expr": "{app=\"bible\", container=\"bible\"} | json",
               "key": "Q-844e3db6-67df-45db-8abb-dc8d357d6ce2-0",
               "queryType": "range",
               "refId": "A"
             }
           ],
-          "title": "Sales API - Logs",
+          "title": "Bible API - Logs",
           "type": "logs"
         }
       ],
@@ -362,7 +362,7 @@ data:
       },
       "timepicker": {},
       "timezone": "",
-      "title": "Sales API",
+      "title": "Bible API",
       "uid": "ccad8cb7-1592-4328-b38b-b4226a5d00a6",
       "version": 1,
       "weekStart": ""
@@ -372,7 +372,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: sales-system
+  namespace: bible-system
   labels:
     app: grafana
 spec:
@@ -385,7 +385,7 @@ spec:
   revisionHistoryLimit: 0
   template:
     metadata:
-      namespace: sales-system
+      namespace: bible-system
       labels:
         app: grafana
     spec:
@@ -414,7 +414,7 @@ spec:
             - name: GF_AUTH_ANONYMOUS_ORG_ROLE
               value: 'Admin'
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
-              value: "/etc/dashboards/sales.json"
+              value: "/etc/dashboards/bible.json"
           ports:
             - containerPort: 3100
               name: http-grafana
@@ -463,7 +463,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana-service
-  namespace: sales-system
+  namespace: bible-system
 spec:
   type: ClusterIP
   selector:

@@ -27,6 +27,6 @@ func (add) Add(app *web.App, cfg mux.Config) {
 	vproductapp.Routes(app, vproductapp.Config{
 		UserBus:     cfg.BusConfig.UserBus,
 		VProductBus: cfg.BusConfig.VProductBus,
-		AuthClient:  cfg.SalesConfig.AuthClient,
+		AuthClient:  cfg.BibleConfig.AuthClient,
 	})
 }
