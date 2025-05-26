@@ -38,7 +38,7 @@
 
 	function match(word: string) {
 		let stripWord = word.toLowerCase().replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
-		let matchText = searchText.replaceAll('OR', '')
+		let matchText = searchText.replaceAll('OR', '');
 		return new RegExp('\\b' + stripWord + '\\b').test(matchText.toLowerCase());
 	}
 
@@ -249,7 +249,7 @@
 			<span class="py-2 text-left font-bold">{v.bookName} {v.number}:{v.verseNumber}</span><br />
 			{#each v.text.split(' ') as w}
 				{#if match(w)}
-					<span class="inline-block text-redtxt">{w}</span>&nbsp;
+					<span class="text-redtxt inline-block">{w}</span>&nbsp;
 				{:else}
 					<span class="inline-block">{w}</span>&nbsp;
 				{/if}
@@ -286,7 +286,7 @@
 				<div class="flex w-full max-w-lg justify-center px-2 pt-2">
 					<input
 						bind:clientHeight={searchInputHeight}
-						class=" w-full max-w-3xl border-b border-primary-500 bg-neutral-50 outline-none"
+						class=" border-primary-500 w-full max-w-3xl border-b bg-neutral-50 outline-none"
 						oninput={onSearchTextChanged}
 						bind:value={searchText}
 						placeholder="search"
@@ -314,3 +314,7 @@
 {:else}
 	{@render searchResultsSnippet()}
 {/if}
+
+<style>
+	@reference "../../../app.css";
+</style>
