@@ -7,14 +7,11 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
-// Address represents an individual address.
-type Address struct {
-	Address1 string // We should create types for these fields.
-	Address2 string
-	ZipCode  string
-	City     string
-	State    string
-	Country  string
+// Tag represents an individual address.
+type Tag struct {
+	ID          uuid.UUID // We should create types for these fields.
+	Tag         string
+	DateCreated time.Time
 }
 
 // Note represents an individual note.
@@ -22,26 +19,21 @@ type Note struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
 	Type        notetype.NoteType
-	Address     Address
+	Tags        Tag
 	DateCreated time.Time
 	DateUpdated time.Time
 }
 
 // NewNote is what we require from clients when adding a Note.
 type NewNote struct {
-	UserID  uuid.UUID
-	Type    notetype.NoteType
-	Address Address
+	UserID uuid.UUID
+	Type   notetype.NoteType
+	Tags   Tag
 }
 
-// UpdateAddress is what fields can be updated in the store.
-type UpdateAddress struct {
-	Address1 *string
-	Address2 *string
-	ZipCode  *string
-	City     *string
-	State    *string
-	Country  *string
+// UpdateTags is what fields can be updated in the store.
+type UpdateTags struct {
+	Tags string
 }
 
 // UpdateNote defines what information may be provided to modify an existing
@@ -51,6 +43,6 @@ type UpdateAddress struct {
 // we do not want to use pointers to basic types but we make exception around
 // marshalling/unmarshalling.
 type UpdateNote struct {
-	Type    *notetype.NoteType
-	Address *UpdateAddress
+	Type *notetype.NoteType
+	Tags *Tag
 }

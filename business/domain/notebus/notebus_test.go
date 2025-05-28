@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/dbtest"
@@ -45,14 +46,14 @@ func insertSeedData(busDomain dbtest.BusDomain) (unitest.SeedData, error) {
 		return unitest.SeedData{}, fmt.Errorf("seeding users : %w", err)
 	}
 
-	hmes, err := notebus.TestGenerateSeedNotes(ctx, 2, busDomain.Note, usrs[0].ID)
+	ntes, err := notebus.TestGenerateSeedNotes(ctx, 2, busDomain.Note, usrs[0].ID)
 	if err != nil {
 		return unitest.SeedData{}, fmt.Errorf("seeding notes : %w", err)
 	}
 
 	tu1 := unitest.User{
 		User:  usrs[0],
-		Notes: hmes,
+		Notes: ntes,
 	}
 
 	// -------------------------------------------------------------------------
@@ -73,14 +74,14 @@ func insertSeedData(busDomain dbtest.BusDomain) (unitest.SeedData, error) {
 		return unitest.SeedData{}, fmt.Errorf("seeding users : %w", err)
 	}
 
-	hmes, err = notebus.TestGenerateSeedNotes(ctx, 2, busDomain.Note, usrs[0].ID)
+	ntes, err = notebus.TestGenerateSeedNotes(ctx, 2, busDomain.Note, usrs[0].ID)
 	if err != nil {
 		return unitest.SeedData{}, fmt.Errorf("seeding notes : %w", err)
 	}
 
 	tu3 := unitest.User{
 		User:  usrs[0],
-		Notes: hmes,
+		Notes: ntes,
 	}
 
 	// -------------------------------------------------------------------------
@@ -107,18 +108,18 @@ func insertSeedData(busDomain dbtest.BusDomain) (unitest.SeedData, error) {
 // =============================================================================
 
 func query(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
-	hmes := make([]notebus.Note, 0, len(sd.Admins[0].Notes)+len(sd.Users[0].Notes))
-	hmes = append(hmes, sd.Admins[0].Notes...)
-	hmes = append(hmes, sd.Users[0].Notes...)
+	ntes := make([]notebus.Note, 0, len(sd.Admins[0].Notes)+len(sd.Users[0].Notes))
+	ntes = append(ntes, sd.Admins[0].Notes...)
+	ntes = append(ntes, sd.Users[0].Notes...)
 
-	sort.Slice(hmes, func(i, j int) bool {
-		return hmes[i].ID.String() <= hmes[j].ID.String()
+	sort.Slice(ntes, func(i, j int) bool {
+		return ntes[i].ID.String() <= ntes[j].ID.String()
 	})
 
 	table := []unitest.Table{
 		{
 			Name:    "all",
-			ExpResp: hmes,
+			ExpResp: ntes,
 			ExcFunc: func(ctx context.Context) any {
 				resp, err := busDomain.Note.Query(ctx, notebus.QueryFilter{}, notebus.DefaultOrderBy, page.MustParse("1", "10"))
 				if err != nil {
@@ -190,24 +191,16 @@ func create(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 			ExpResp: notebus.Note{
 				UserID: sd.Users[0].ID,
 				Type:   notetype.Private,
-				Address: notebus.Address{
-					Address1: "123 Mocking Bird Lane",
-					ZipCode:  "35810",
-					City:     "Huntsville",
-					State:    "AL",
-					Country:  "US",
+				Tags: notebus.Tag{
+					ID: uuid.UUID{},
 				},
 			},
 			ExcFunc: func(ctx context.Context) any {
 				nh := notebus.NewNote{
 					UserID: sd.Users[0].ID,
 					Type:   notetype.Private,
-					Address: notebus.Address{
-						Address1: "123 Mocking Bird Lane",
-						ZipCode:  "35810",
-						City:     "Huntsville",
-						State:    "AL",
-						Country:  "US",
+					Tags: notebus.Tag{
+						ID: uuid.UUID{},
 					},
 				}
 
@@ -246,13 +239,9 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 				ID:     sd.Users[0].Notes[0].ID,
 				UserID: sd.Users[0].ID,
 				Type:   notetype.Private,
-				Address: notebus.Address{
-					Address1: "123 Mocking Bird Lane",
-					Address2: "apt 105",
-					ZipCode:  "35810",
-					City:     "Huntsville",
-					State:    "AL",
-					Country:  "US",
+				Tags: notebus.Tag{
+					ID:  uuid.UUID{},
+					Tag: "ABC",
 				},
 				DateCreated: sd.Users[0].Notes[0].DateCreated,
 				DateUpdated: sd.Users[0].Notes[0].DateCreated,
@@ -260,13 +249,8 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 			ExcFunc: func(ctx context.Context) any {
 				uh := notebus.UpdateNote{
 					Type: &notetype.Private,
-					Address: &notebus.UpdateAddress{
-						Address1: dbtest.StringPointer("123 Mocking Bird Lane"),
-						Address2: dbtest.StringPointer("apt 105"),
-						ZipCode:  dbtest.StringPointer("35810"),
-						City:     dbtest.StringPointer("Huntsville"),
-						State:    dbtest.StringPointer("AL"),
-						Country:  dbtest.StringPointer("US"),
+					Tags: &notebus.Tag{
+						Tag: "ABC",
 					},
 				}
 

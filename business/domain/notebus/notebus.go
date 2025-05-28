@@ -27,9 +27,9 @@ var (
 // retrieve data.
 type Storer interface {
 	NewWithTx(tx sqldb.CommitRollbacker) (Storer, error)
-	Create(ctx context.Context, hme Note) error
-	Update(ctx context.Context, hme Note) error
-	Delete(ctx context.Context, hme Note) error
+	Create(ctx context.Context, nte Note) error
+	Update(ctx context.Context, nte Note) error
+	Delete(ctx context.Context, nte Note) error
 	Query(ctx context.Context, filter QueryFilter, orderBy order.By, page page.Page) ([]Note, error)
 	Count(ctx context.Context, filter QueryFilter) (int, error)
 	QueryByID(ctx context.Context, noteID uuid.UUID) (Note, error)
@@ -97,79 +97,56 @@ func (b *Business) Create(ctx context.Context, nh NewNote) (Note, error) {
 
 	now := time.Now()
 
-	hme := Note{
+	nte := Note{
 		ID:   uuid.New(),
 		Type: nh.Type,
-		Address: Address{
-			Address1: nh.Address.Address1,
-			Address2: nh.Address.Address2,
-			ZipCode:  nh.Address.ZipCode,
-			City:     nh.Address.City,
-			State:    nh.Address.State,
-			Country:  nh.Address.Country,
+		Tags: Tag{
+			ID:          nh.Tags.ID,
+			Tag:         nh.Tags.Tag,
+			DateCreated: nh.Tags.DateCreated,
 		},
 		UserID:      nh.UserID,
 		DateCreated: now,
 		DateUpdated: now,
 	}
 
-	if err := b.storer.Create(ctx, hme); err != nil {
+	if err := b.storer.Create(ctx, nte); err != nil {
 		return Note{}, fmt.Errorf("create: %w", err)
 	}
 
-	return hme, nil
+	return nte, nil
 }
 
 // Update modifies information about a note.
-func (b *Business) Update(ctx context.Context, hme Note, uh UpdateNote) (Note, error) {
+func (b *Business) Update(ctx context.Context, nte Note, un UpdateNote) (Note, error) {
 	ctx, span := otel.AddSpan(ctx, "business.notebus.update")
 	defer span.End()
 
-	if uh.Type != nil {
-		hme.Type = *uh.Type
+	if un.Type != nil {
+		nte.Type = *un.Type
 	}
 
-	if uh.Address != nil {
-		if uh.Address.Address1 != nil {
-			hme.Address.Address1 = *uh.Address.Address1
-		}
-
-		if uh.Address.Address2 != nil {
-			hme.Address.Address2 = *uh.Address.Address2
-		}
-
-		if uh.Address.ZipCode != nil {
-			hme.Address.ZipCode = *uh.Address.ZipCode
-		}
-
-		if uh.Address.City != nil {
-			hme.Address.City = *uh.Address.City
-		}
-
-		if uh.Address.State != nil {
-			hme.Address.State = *uh.Address.State
-		}
-
-		if uh.Address.Country != nil {
-			hme.Address.Country = *uh.Address.Country
+	if un.Tags != nil {
+		if un.Tags != nil {
+			nte.Tags = *un.Tags
 		}
 	}
 
-	hme.DateUpdated = time.Now()
+	nte.DateUpdated = time.Now()
 
-	if err := b.storer.Update(ctx, hme); err != nil {
+	if err := b.storer.Update(ctx, nte); err != nil {
 		return Note{}, fmt.Errorf("update: %w", err)
 	}
 
-	return hme, nil
+	return nte, nil
 }
 
 // Delete removes the specified note.
-func (b *Business) Delete(ctx context.Context, hme Note) error {
+func (b *Business) Delete(ctx context.Context, nte Note) error {
 	ctx, span := otel.AddSpan(ctx, "business.notebus.delete")
 	defer span.End()
 
-	if err := b.storer.Delete(ctx, hme); err != nil {
+	if err := b.storer.Delete(ctx, nte); err != nil {
 		return fmt.Errorf("delete: %w", err)
 	}
 
@@ -181,12 +158,12 @@ func (b *Business) Query(ctx context.Context, filter QueryFilter, orderBy order.
 	ctx, span := otel.AddSpan(ctx, "business.notebus.query")
 	defer span.End()
 
-	hmes, err := b.storer.Query(ctx, filter, orderBy, page)
+	ntes, err := b.storer.Query(ctx, filter, orderBy, page)
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
 
-	return hmes, nil
+	return ntes, nil
 }
 
 // Count returns the total number of notes.
@@ -202,12 +179,12 @@ func (b *Business) QueryByID(ctx context.Context, noteID uuid.UUID) (Note, error
 	ctx, span := otel.AddSpan(ctx, "business.notebus.querybyid")
 	defer span.End()
 
-	hme, err := b.storer.QueryByID(ctx, noteID)
+	nte, err := b.storer.QueryByID(ctx, noteID)
 	if err != nil {
 		return Note{}, fmt.Errorf("query: noteID[%s]: %w", noteID, err)
 	}
 
-	return hme, nil
+	return nte, nil
 }
 
 // QueryByUserID finds the notes by a specified User ID.
@@ -215,10 +192,10 @@ func (b *Business) QueryByUserID(ctx context.Context, userID uuid.UUID) ([]Note,
 	ctx, span := otel.AddSpan(ctx, "business.notebus.querybyuserid")
 	defer span.End()
 
-	hmes, err := b.storer.QueryByUserID(ctx, userID)
+	ntes, err := b.storer.QueryByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
 
-	return hmes, nil
+	return ntes, nil
 }

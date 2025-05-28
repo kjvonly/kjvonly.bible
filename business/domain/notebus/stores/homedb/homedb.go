@@ -47,14 +47,14 @@ func (s *Store) NewWithTx(tx sqldb.CommitRollbacker) (notebus.Storer, error) {
 }
 
 // Create inserts a new note into the database.
-func (s *Store) Create(ctx context.Context, hme notebus.Note) error {
+func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
 	const q = `
     INSERT INTO notes
         (note_id, user_id, type, address_1, address_2, zip_code, city, state, country, date_created, date_updated)
     VALUES
         (:note_id, :user_id, :type, :address_1, :address_2, :zip_code, :city, :state, :country, :date_created, :date_updated)`
 
-	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, toDBNote(hme)); err != nil {
+	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, toDBNote(nte)); err != nil {
 		return fmt.Errorf("namedexeccontext: %w", err)
 	}
 
@@ -62,11 +62,11 @@ func (s *Store) Create(ctx context.Context, hme notebus.Note) error {
 }
 
 // Delete removes a note from the database.
-func (s *Store) Delete(ctx context.Context, hme notebus.Note) error {
+func (s *Store) Delete(ctx context.Context, nte notebus.Note) error {
 	data := struct {
 		ID string `db:"note_id"`
 	}{
-		ID: hme.ID.String(),
+		ID: nte.ID.String(),
 	}
 
 	const q = `
@@ -83,7 +83,7 @@ func (s *Store) Delete(ctx context.Context, hme notebus.Note) error {
 }
 
 // Update replaces a note document in the database.
-func (s *Store) Update(ctx context.Context, hme notebus.Note) error {
+func (s *Store) Update(ctx context.Context, nte notebus.Note) error {
 	const q = `
     UPDATE
         notes
@@ -99,7 +99,7 @@ func (s *Store) Update(ctx context.Context, hme notebus.Note) error {
     WHERE
         note_id = :note_id`
 
-	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, toDBNote(hme)); err != nil {
+	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, toDBNote(nte)); err != nil {
 		return fmt.Errorf("namedexeccontext: %w", err)
 	}
 
@@ -130,17 +130,17 @@ func (s *Store) Query(ctx context.Context, filter notebus.QueryFilter, orderBy o
 	buf.WriteString(orderByClause)
 	buf.WriteString(" OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY")
 
-	var dbHmes []note
-	if err := sqldb.NamedQuerySlice(ctx, s.log, s.db, buf.String(), data, &dbHmes); err != nil {
+	var dbNtes []note
+	if err := sqldb.NamedQuerySlice(ctx, s.log, s.db, buf.String(), data, &dbNtes); err != nil {
 		return nil, fmt.Errorf("namedqueryslice: %w", err)
 	}
 
-	hmes, err := toBusNotes(dbHmes)
+	ntes, err := toBusNotes(dbNtes)
 	if err != nil {
 		return nil, err
 	}
 
-	return hmes, nil
+	return ntes, nil
 }
 
 // Count returns the total number of notes in the DB.
@@ -182,15 +182,15 @@ func (s *Store) QueryByID(ctx context.Context, noteID uuid.UUID) (notebus.Note, 
     WHERE
         note_id = :note_id`
 
-	var dbHme note
-	if err := sqldb.NamedQueryStruct(ctx, s.log, s.db, q, data, &dbHme); err != nil {
+	var dbNte note
+	if err := sqldb.NamedQueryStruct(ctx, s.log, s.db, q, data, &dbNte); err != nil {
 		if errors.Is(err, sqldb.ErrDBNotFound) {
 			return notebus.Note{}, fmt.Errorf("db: %w", notebus.ErrNotFound)
 		}
 		return notebus.Note{}, fmt.Errorf("db: %w", err)
 	}
 
-	return toBusNote(dbHme)
+	return toBusNote(dbNte)
 }
 
 // QueryByUserID gets the specified note from the database by user id.
@@ -209,10 +209,10 @@ func (s *Store) QueryByUserID(ctx context.Context, userID uuid.UUID) ([]notebus.
 	WHERE
 		user_id = :user_id`
 
-	var dbHmes []note
-	if err := sqldb.NamedQuerySlice(ctx, s.log, s.db, q, data, &dbHmes); err != nil {
+	var dbNtes []note
+	if err := sqldb.NamedQuerySlice(ctx, s.log, s.db, q, data, &dbNtes); err != nil {
 		return nil, fmt.Errorf("db: %w", err)
 	}
 
-	return toBusNotes(dbHmes)
+	return toBusNotes(dbNtes)
 }

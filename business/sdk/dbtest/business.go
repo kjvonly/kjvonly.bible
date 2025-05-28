@@ -3,10 +3,12 @@ package dbtest
 import (
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus/stores/auditdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus/stores/homedb"
+	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus/stores/productdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
@@ -18,7 +20,6 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/domain/vproductbus/stores/vproductdb"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/delegate"
 	"github.com/kjvonly/kjvonly.bible/foundation/logger"
-	"github.com/jmoiron/sqlx"
 )
 
 // BusDomain represents all the business domain apis needed for testing.
@@ -26,6 +27,7 @@ type BusDomain struct {
 	Delegate *delegate.Delegate
 	Audit    *auditbus.Business
 	Home     *homebus.Business
+	Note     *notebus.Business
 	Product  *productbus.Business
 	User     userbus.ExtBusiness
 	VProduct *vproductbus.Business
