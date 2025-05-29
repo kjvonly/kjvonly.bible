@@ -16,17 +16,15 @@ type Tag struct {
 
 // Note represents an individual note.
 type Note struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
-	Type   notetype.NoteType
-
-	BCV        string
-	ChapterKey string
-	Title      string
-	Html       string
-	Text       string
-	Tags       Tag
-
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Type        notetype.NoteType
+	BCV         string
+	ChapterKey  string
+	Title       string
+	Html        string
+	Text        string
+	Tags        []Tag
 	DateCreated time.Time
 	DateUpdated time.Time
 }
@@ -35,7 +33,7 @@ type Note struct {
 type NewNote struct {
 	UserID uuid.UUID
 	Type   notetype.NoteType
-	Tags   Tag
+	Tags   []Tag
 }
 
 // UpdateTags is what fields can be updated in the store.
@@ -51,5 +49,5 @@ type UpdateTags struct {
 // marshalling/unmarshalling.
 type UpdateNote struct {
 	Type *notetype.NoteType
-	Tags *Tag
+	Tags []Tag
 }

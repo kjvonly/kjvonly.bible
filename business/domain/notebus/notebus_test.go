@@ -191,16 +191,20 @@ func create(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 			ExpResp: notebus.Note{
 				UserID: sd.Users[0].ID,
 				Type:   notetype.Private,
-				Tags: notebus.Tag{
-					ID: uuid.UUID{},
+				Tags: []notebus.Tag{
+					{
+						ID: uuid.UUID{},
+					},
 				},
 			},
 			ExcFunc: func(ctx context.Context) any {
 				nh := notebus.NewNote{
 					UserID: sd.Users[0].ID,
 					Type:   notetype.Private,
-					Tags: notebus.Tag{
-						ID: uuid.UUID{},
+					Tags: []notebus.Tag{
+						{
+							ID: uuid.UUID{},
+						},
 					},
 				}
 
@@ -239,9 +243,11 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 				ID:     sd.Users[0].Notes[0].ID,
 				UserID: sd.Users[0].ID,
 				Type:   notetype.Private,
-				Tags: notebus.Tag{
-					ID:  uuid.UUID{},
-					Tag: "ABC",
+				Tags: []notebus.Tag{
+					{
+						ID:  uuid.UUID{},
+						Tag: "ABC",
+					},
 				},
 				DateCreated: sd.Users[0].Notes[0].DateCreated,
 				DateUpdated: sd.Users[0].Notes[0].DateCreated,
@@ -249,8 +255,11 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 			ExcFunc: func(ctx context.Context) any {
 				uh := notebus.UpdateNote{
 					Type: &notetype.Private,
-					Tags: &notebus.Tag{
-						Tag: "ABC",
+					Tags: []notebus.Tag{
+						{
+							ID:  uuid.UUID{},
+							Tag: "ABC",
+						},
 					},
 				}
 

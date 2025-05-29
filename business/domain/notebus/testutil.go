@@ -25,10 +25,12 @@ func TestGenerateNewNotes(n int, userID uuid.UUID) []NewNote {
 
 		nh := NewNote{
 			Type: t,
-			Tags: Tag{
-				ID:          uuid.New(),
-				Tag:         fmt.Sprintf("Address%d", idx),
-				DateCreated: time.Now(),
+			Tags: []Tag{
+				{
+					ID:          uuid.New(),
+					Tag:         fmt.Sprintf("Address%d", idx),
+					DateCreated: time.Now(),
+				},
 			},
 			UserID: userID,
 		}

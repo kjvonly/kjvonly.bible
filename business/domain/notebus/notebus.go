@@ -98,13 +98,9 @@ func (b *Business) Create(ctx context.Context, nh NewNote) (Note, error) {
 	now := time.Now()
 
 	nte := Note{
-		ID:   uuid.New(),
-		Type: nh.Type,
-		Tags: Tag{
-			ID:          nh.Tags.ID,
-			Tag:         nh.Tags.Tag,
-			DateCreated: nh.Tags.DateCreated,
-		},
+		ID:          uuid.New(),
+		Type:        nh.Type,
+		Tags:        nh.Tags,
 		UserID:      nh.UserID,
 		DateCreated: now,
 		DateUpdated: now,
@@ -128,7 +124,7 @@ func (b *Business) Update(ctx context.Context, nte Note, un UpdateNote) (Note, e
 
 	if un.Tags != nil {
 		if un.Tags != nil {
-			nte.Tags = *un.Tags
+			nte.Tags = un.Tags
 		}
 	}
 
