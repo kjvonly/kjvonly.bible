@@ -1,3 +1,4 @@
+
 // Package notedb contains note related CRUD functionality.
 package notedb
 

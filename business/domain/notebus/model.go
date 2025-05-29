@@ -16,10 +16,17 @@ type Tag struct {
 
 // Note represents an individual note.
 type Note struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Type        notetype.NoteType
-	Tags        Tag
+	ID     uuid.UUID
+	UserID uuid.UUID
+	Type   notetype.NoteType
+
+	BCV        string
+	ChapterKey string
+	Title      string
+	Html       string
+	Text       string
+	Tags       Tag
+
 	DateCreated time.Time
 	DateUpdated time.Time
 }

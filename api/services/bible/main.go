@@ -43,7 +43,7 @@ import (
 	Need to figure out timeouts for http service.
 */
 
-//go:embed static
+// //go:embed static
 var static embed.FS
 
 var build = "develop"
