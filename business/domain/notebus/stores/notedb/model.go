@@ -1,30 +1,36 @@
 package notedb
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx/types"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
-	"github.com/kjvonly/kjvonly.bible/business/sdk/sqldb/dbarray"
 	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
 type note struct {
-	ID          uuid.UUID       `db:"note_id"`
-	UserID      uuid.UUID       `db:"user_id"`
-	Type        string          `db:"type"`
-	BCV         string          `db:"bcv"`
-	ChapterKey  string          `db:"chapter_key"`
-	Html        string          `db:"html"`
-	Text        string          `db:"text"`
-	Title       string          `db:"title"`
-	Tags        dbarray.Generic `db:"tags"`
-	DateCreated time.Time       `db:"date_created"`
-	DateUpdated time.Time       `db:"date_updated"`
+	ID          uuid.UUID      `db:"note_id"`
+	UserID      uuid.UUID      `db:"user_id"`
+	Type        string         `db:"type"`
+	BCV         string         `db:"bcv"`
+	ChapterKey  string         `db:"chapter_key"`
+	Html        string         `db:"html"`
+	Text        string         `db:"text"`
+	Title       string         `db:"title"`
+	Tags        types.JSONText `db:"tags"`
+	DateCreated time.Time      `db:"date_created"`
+	DateUpdated time.Time      `db:"date_updated"`
 }
 
-func toDBNote(bus notebus.Note) note {
+func toDBNote(bus notebus.Note) (note, error) {
+	jsonTags, err := json.MarshalIndent(bus.Tags, "", "  ")
+	if err != nil {
+		return note{}, fmt.Errorf("parse type: %w", err)
+	}
+
 	db := note{
 		ID:          bus.ID,
 		UserID:      bus.UserID,
@@ -34,12 +40,12 @@ func toDBNote(bus notebus.Note) note {
 		Title:       bus.Title,
 		Html:        bus.Html,
 		Text:        bus.Text,
-		Tags:        dbarray.Generic{A: bus.Tags},
+		Tags:        jsonTags,
 		DateCreated: bus.DateCreated.UTC(),
 		DateUpdated: bus.DateUpdated.UTC(),
 	}
 
-	return db
+	return db, nil
 }
 
 func toBusNote(db note) (notebus.Note, error) {
@@ -48,17 +54,15 @@ func toBusNote(db note) (notebus.Note, error) {
 		return notebus.Note{}, fmt.Errorf("parse type: %w", err)
 	}
 
-	// TODO validate this or store as json
-	tags, ok := db.Tags.A.([]notebus.Tag)
-	if !ok {
-		return notebus.Note{}, fmt.Errorf("parse type Tags")
+	var tags []notebus.Tag
+	if err := json.Unmarshal(db.Tags, &tags); err != nil {
+		return notebus.Note{}, fmt.Errorf("parse type: %w", err)
 	}
 
 	bus := notebus.Note{
-		ID:     db.ID,
-		UserID: db.UserID,
-		Type:   typ,
-
+		ID:          db.ID,
+		UserID:      db.UserID,
+		Type:        typ,
 		BCV:         db.BCV,
 		ChapterKey:  db.ChapterKey,
 		Title:       db.Title,

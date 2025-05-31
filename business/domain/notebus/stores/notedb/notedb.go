@@ -1,4 +1,3 @@
-
 // Package notedb contains note related CRUD functionality.
 package notedb
 
@@ -55,7 +54,11 @@ func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
     VALUES
         (:note_id, :user_id, :type, :address_1, :address_2, :zip_code, :city, :state, :country, :date_created, :date_updated)`
 
-	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, toDBNote(nte)); err != nil {
+	dbNte, err := toDBNote(nte)
+	if err != nil {
+		return fmt.Errorf("toDBNote: %w", err)
+	}
+	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, dbNte); err != nil {
 		return fmt.Errorf("namedexeccontext: %w", err)
 	}
 
@@ -100,7 +103,11 @@ func (s *Store) Update(ctx context.Context, nte notebus.Note) error {
     WHERE
         note_id = :note_id`
 
-	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, toDBNote(nte)); err != nil {
+	dbNte, err := toDBNote(nte)
+	if err != nil {
+		return fmt.Errorf("toDBNote: %w", err)
+	}
+	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, dbNte); err != nil {
 		return fmt.Errorf("namedexeccontext: %w", err)
 	}
 
