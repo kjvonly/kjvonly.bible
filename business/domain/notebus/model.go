@@ -7,7 +7,7 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
-// Tag represents an individual address.
+// Tag represents an tag.
 type Tag struct {
 	ID          uuid.UUID // We should create types for these fields.
 	Tag         string

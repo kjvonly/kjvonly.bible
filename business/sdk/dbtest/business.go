@@ -9,6 +9,7 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus/stores/homedb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/notebus/stores/notedb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus/stores/productdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
@@ -43,12 +44,16 @@ func newBusDomains(log *logger.Logger, db *sqlx.DB) BusDomain {
 	userBus := userbus.NewBusiness(log, delegate, userStorage, userOtelExt, userAuditExt)
 	productBus := productbus.NewBusiness(log, userBus, delegate, productdb.NewStore(log, db))
 	homeBus := homebus.NewBusiness(log, userBus, delegate, homedb.NewStore(log, db))
+
+	noteBus := notebus.NewBusiness(log, userBus, delegate, notedb.NewStore(log, db))
+
 	vproductBus := vproductbus.NewBusiness(vproductdb.NewStore(log, db))
 
 	return BusDomain{
 		Delegate: delegate,
 		Audit:    auditBus,
 		Home:     homeBus,
+		Note:     noteBus,
 		Product:  productBus,
 		User:     userBus,
 		VProduct: vproductBus,
