@@ -50,9 +50,33 @@ func (s *Store) NewWithTx(tx sqldb.CommitRollbacker) (notebus.Storer, error) {
 func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
 	const q = `
     INSERT INTO notes
-        (note_id, user_id, type, address_1, address_2, zip_code, city, state, country, date_created, date_updated)
+        (
+            note_id,
+            user_id,
+            type,
+            bcv,
+            chapter_key,
+            html,
+            text,
+            title,
+            tags,
+            date_created,
+            date_updated
+		)
     VALUES
-        (:note_id, :user_id, :type, :address_1, :address_2, :zip_code, :city, :state, :country, :date_created, :date_updated)`
+        (
+            :note_id,
+            :user_id,
+            :type,
+            :bcv,
+            :chapter_key,
+            :html,
+            :text,
+            :title,
+            :tags,
+            :date_created,
+            :date_updated
+		)`
 
 	dbNte, err := toDBNote(nte)
 	if err != nil {
@@ -92,14 +116,14 @@ func (s *Store) Update(ctx context.Context, nte notebus.Note) error {
     UPDATE
         notes
     SET
-        "address_1"     = :address_1,
-        "address_2"     = :address_2,
-        "zip_code"      = :zip_code,
-        "city"          = :city,
-        "state"         = :state,
-        "country"       = :country,
-        "type"          = :type,
-        "date_updated"  = :date_updated
+        "type"          =   :type,
+        "bcv"           =   :bcv,
+        "chapter_key"   =   :chapter_key,
+        "html"          =   :html,
+        "text"          =   :text,
+        "title"         =   :title,
+        "tags"          =   :tags,
+        "date_updated"  =   :date_updated
     WHERE
         note_id = :note_id`
 
@@ -123,7 +147,17 @@ func (s *Store) Query(ctx context.Context, filter notebus.QueryFilter, orderBy o
 
 	const q = `
     SELECT
-	    note_id, user_id, type, address_1, address_2, zip_code, city, state, country, date_created, date_updated
+        note_id,
+        user_id,
+        type,
+        bcv,
+        chapter_key,
+        html,
+        text,
+        title,
+        tags,
+        date_created,
+        date_updated
 	FROM
 	  	notes`
 
@@ -184,7 +218,17 @@ func (s *Store) QueryByID(ctx context.Context, noteID uuid.UUID) (notebus.Note, 
 
 	const q = `
     SELECT
-	  	note_id, user_id, type, address_1, address_2, zip_code, city, state, country, date_created, date_updated
+        note_id,
+        user_id,
+        type,
+        bcv,
+        chapter_key,
+        html,
+        text,
+        title,
+        tags,
+        date_created,
+        date_updated
     FROM
         notes
     WHERE
@@ -211,7 +255,17 @@ func (s *Store) QueryByUserID(ctx context.Context, userID uuid.UUID) ([]notebus.
 
 	const q = `
 	SELECT
-	    note_id, user_id, type, address_1, address_2, zip_code, city, state, country, date_created, date_updated
+        note_id,
+        user_id,
+        type,
+        bcv,
+        chapter_key,
+        html,
+        text,
+        title,
+        tags,
+        date_created,
+        date_updated
 	FROM
 		notes
 	WHERE

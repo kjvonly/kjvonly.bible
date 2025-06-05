@@ -80,3 +80,22 @@ CREATE TABLE audit (
 
     PRIMARY KEY (id)
 );
+
+-- Version: 1.06
+-- Description: Create table notes
+CREATE TABLE notes (
+    note_id             UUID        NOT NULL,
+    user_id             UUID        NOT NULL,
+    type                TEXT        NOT NULL,
+    bcv                 TEXT        NOT NULL,
+    chapter_key         TEXT        NOT NULL,
+    html                TEXT        NOT NULL,
+    text                TEXT        NOT NULL,
+    title               TEXT        NOT NULL,
+    tags                JSON        NOT NULL,
+    date_created        TIMESTAMP   NOT NULL,
+    date_updated        TIMESTAMP   NOT NULL,
+
+    PRIMARY KEY (note_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
