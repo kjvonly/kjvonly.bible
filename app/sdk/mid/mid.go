@@ -5,13 +5,14 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/sqldb"
 	"github.com/kjvonly/kjvonly.bible/foundation/web"
-	"github.com/google/uuid"
 )
 
 // isError tests if the Encoder has an error inside of it.
@@ -34,6 +35,7 @@ const (
 	productKey
 	homeKey
 	trKey
+	noteKey
 )
 
 func setClaims(ctx context.Context, claims auth.Claims) context.Context {
@@ -126,6 +128,20 @@ func GetTran(ctx context.Context) (sqldb.CommitRollbacker, error) {
 	v, ok := ctx.Value(trKey).(sqldb.CommitRollbacker)
 	if !ok {
 		return nil, errors.New("transaction not found in context")
+	}
+
+	return v, nil
+}
+
+func setNote(ctx context.Context, nte notebus.Note) context.Context {
+	return context.WithValue(ctx, noteKey, nte)
+}
+
+// GetNote returns the notes from the context.
+func GetNote(ctx context.Context) (notebus.Note, error) {
+	v, ok := ctx.Value(noteKey).(notebus.Note)
+	if !ok {
+		return notebus.Note{}, errors.New("home not found in context")
 	}
 
 	return v, nil
