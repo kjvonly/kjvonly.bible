@@ -12,24 +12,26 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
-// Address represents information about an individual address.
-type Address struct {
-	Address1 string `json:"address1"`
-	Address2 string `json:"address2"`
-	ZipCode  string `json:"zipCode"`
-	City     string `json:"city"`
-	State    string `json:"state"`
-	Country  string `json:"country"`
+// Tag represents a tag.
+type Tag struct {
+	ID          string `json:"id"` // We should create types for these fields.
+	Tag         string `json:"tag"`
+	DateCreated string `json:"dateCreated"`
 }
 
 // Note represents information about an individual note.
 type Note struct {
-	ID          string  `json:"id"`
-	UserID      string  `json:"userID"`
-	Type        string  `json:"type"`
-	Address     Address `json:"address"`
-	DateCreated string  `json:"dateCreated"`
-	DateUpdated string  `json:"dateUpdated"`
+	ID          string `json:"id"`
+	UserID      string `json:"userID"`
+	Type        string `json:"type"`
+	BCV         string `json:"bcv"`
+	ChapterKey  string `json:"chapterKey"`
+	Title       string `json:"title"`
+	Html        string `json:"html"`
+	Text        string `json:"text"`
+	Tags        []Tag  `json:"tags"`
+	DateCreated string `json:"dateCreated"`
+	DateUpdated string `json:"dateUpdated"`
 }
 
 // Encode implements the encoder interface.
@@ -38,12 +40,31 @@ func (app Note) Encode() ([]byte, string, error) {
 	return data, "application/json", err
 }
 
+func toAppTags(bus []notebus.Tag) []Tag {
+	app := []Tag{}
+
+	for _, t := range bus {
+		app = append(app, Tag{
+			ID:          t.ID.String(),
+			Tag:         t.Tag,
+			DateCreated: t.DateCreated.Format(time.RFC3339),
+		})
+	}
+
+	return app
+}
+
 func toAppNote(nte notebus.Note) Note {
 	return Note{
-		ID:     nte.ID.String(),
-		UserID: nte.UserID.String(),
-		Type:   nte.Type.String(),
-
+		ID:          nte.ID.String(),
+		UserID:      nte.UserID.String(),
+		Type:        nte.Type.String(),
+		BCV:         nte.BCV,
+		ChapterKey:  nte.ChapterKey,
+		Title:       nte.Title,
+		Html:        nte.Html,
+		Text:        nte.Text,
+		Tags:        toAppTags(nte.Tags),
 		DateCreated: nte.DateCreated.Format(time.RFC3339),
 		DateUpdated: nte.DateUpdated.Format(time.RFC3339),
 	}
@@ -74,6 +95,7 @@ type NewAddress struct {
 type NewNote struct {
 	Type    string     `json:"type" validate:"required"`
 	Address NewAddress `json:"address"`
+	Tags    []Tag
 }
 
 // Decode implements the decoder interface.
