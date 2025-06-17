@@ -220,7 +220,7 @@ func AuthorizeHome(client *authclient.Client, homeBus *homebus.Business) web.Mid
 func AuthorizeNote(client *authclient.Client, noteBus *notebus.Business) web.MidFunc {
 	m := func(next web.HandlerFunc) web.HandlerFunc {
 		h := func(ctx context.Context, r *http.Request) web.Encoder {
-			id := web.Param(r, "ntoe_id")
+			id := web.Param(r, "note_id")
 
 			var userID uuid.UUID
 
