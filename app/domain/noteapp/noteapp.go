@@ -30,12 +30,12 @@ func (a *app) create(ctx context.Context, r *http.Request) web.Encoder {
 		return errs.New(errs.InvalidArgument, err)
 	}
 
-	nh, err := toBusNewNote(ctx, app)
+	nt, err := toBusNewNote(ctx, app)
 	if err != nil {
 		return errs.New(errs.InvalidArgument, err)
 	}
 
-	nte, err := a.noteBus.Create(ctx, nh)
+	nte, err := a.noteBus.Create(ctx, nt)
 	if err != nil {
 		return errs.Newf(errs.Internal, "create: nte[%+v]: %s", app, err)
 	}

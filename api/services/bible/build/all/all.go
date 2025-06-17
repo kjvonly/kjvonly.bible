@@ -5,6 +5,7 @@ import (
 	"github.com/kjvonly/kjvonly.bible/app/domain/auditapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/checkapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/homeapp"
+	"github.com/kjvonly/kjvonly.bible/app/domain/noteapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/productapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/rawapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/tranapp"
@@ -33,6 +34,12 @@ func (add) Add(app *web.App, cfg mux.Config) {
 	homeapp.Routes(app, homeapp.Config{
 		Log:        cfg.Log,
 		HomeBus:    cfg.BusConfig.HomeBus,
+		AuthClient: cfg.BibleConfig.AuthClient,
+	})
+
+	noteapp.Routes(app, noteapp.Config{
+		Log:        cfg.Log,
+		NoteBus:    cfg.BusConfig.NoteBus,
 		AuthClient: cfg.BibleConfig.AuthClient,
 	})
 

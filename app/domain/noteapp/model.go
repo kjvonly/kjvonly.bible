@@ -81,21 +81,15 @@ func toAppNotes(notes []notebus.Note) []Note {
 
 // =============================================================================
 
-// NewAddress defines the data needed to add a new address.
-type NewAddress struct {
-	Address1 string `json:"address1" validate:"required,min=1,max=70"`
-	Address2 string `json:"address2" validate:"omitempty,max=70"`
-	ZipCode  string `json:"zipCode" validate:"required,numeric"`
-	City     string `json:"city" validate:"required"`
-	State    string `json:"state" validate:"required,min=1,max=48"`
-	Country  string `json:"country" validate:"required,iso3166_1_alpha2"`
-}
-
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
-	Type    string     `json:"type" validate:"required"`
-	Address NewAddress `json:"address"`
-	Tags    []Tag
+	Type       string `json:"type" validate:"required"`
+	BCV        string `json:"bcv"`
+	ChapterKey string `json:"chapterKey"`
+	Title      string `json:"title"`
+	Html       string `json:"html"`
+	Text       string `json:"text"`
+	Tags       []Tag  `json:"tags"`
 }
 
 // Decode implements the decoder interface.

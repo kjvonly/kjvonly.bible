@@ -18,19 +18,13 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.NewNote{
-				Type: "SINGLE FAMILY",
-				Address: noteapp.NewAddress{
-					Address1: "123 Mocking Bird Lane",
-					ZipCode:  "35810",
-					City:     "Huntsville",
-					State:    "AL",
-					Country:  "US",
-				},
+				Type: "private",
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
 				UserID: sd.Users[0].ID.String(),
-				Type:   "SINGLE FAMILY",
+				Type:   "private",
+				Tags:   []noteapp.Tag{},
 			},
 			CmpFunc: func(got any, exp any) string {
 				gotResp, exists := got.(*noteapp.Note)
@@ -75,13 +69,6 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input: &noteapp.NewNote{
 				Type: "BAD TYPE",
-				Address: noteapp.NewAddress{
-					Address1: "123 Mocking Bird Lane",
-					ZipCode:  "35810",
-					City:     "Huntsville",
-					State:    "AL",
-					Country:  "US",
-				},
 			},
 			GotResp: &errs.Error{},
 			ExpResp: errs.Newf(errs.InvalidArgument, "parse: invalid note type \"BAD TYPE\""),
