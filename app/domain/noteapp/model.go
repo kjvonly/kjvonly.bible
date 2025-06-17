@@ -84,8 +84,8 @@ func toAppNotes(notes []notebus.Note) []Note {
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
 	Type       string `json:"type" validate:"required"`
+	ChapterKey string `json:"chapterKey" validate:"required"`
 	BCV        string `json:"bcv"`
-	ChapterKey string `json:"chapterKey"`
 	Title      string `json:"title"`
 	Html       string `json:"html"`
 	Text       string `json:"text"`
