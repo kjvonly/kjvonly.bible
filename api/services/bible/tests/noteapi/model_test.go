@@ -7,11 +7,26 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 )
 
+func toAppTags(bus []notebus.Tag) []noteapp.Tag {
+	app := []noteapp.Tag{}
+
+	for _, t := range bus {
+		app = append(app, noteapp.Tag{
+			ID:          t.ID.String(),
+			Tag:         t.Tag,
+			DateCreated: t.DateCreated.Format(time.RFC3339),
+		})
+	}
+
+	return app
+}
+
 func toAppNote(nte notebus.Note) noteapp.Note {
 	return noteapp.Note{
 		ID:          nte.ID.String(),
 		UserID:      nte.UserID.String(),
 		Type:        nte.Type.String(),
+		Tags:        toAppTags(nte.Tags),
 		DateCreated: nte.DateCreated.Format(time.RFC3339),
 		DateUpdated: nte.DateUpdated.Format(time.RFC3339),
 	}
