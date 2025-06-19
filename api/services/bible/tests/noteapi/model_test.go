@@ -1,8 +1,6 @@
 package note_test
 
 import (
-	"time"
-
 	"github.com/kjvonly/kjvonly.bible/app/domain/noteapp"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 )
@@ -14,7 +12,7 @@ func toAppTags(bus []notebus.Tag) []noteapp.Tag {
 		app = append(app, noteapp.Tag{
 			ID:          t.ID.String(),
 			Tag:         t.Tag,
-			DateCreated: t.DateCreated.Format(time.RFC3339),
+			DateCreated: t.DateCreated.Unix(),
 		})
 	}
 
@@ -27,8 +25,8 @@ func toAppNote(nte notebus.Note) noteapp.Note {
 		UserID:      nte.UserID.String(),
 		Type:        nte.Type.String(),
 		Tags:        toAppTags(nte.Tags),
-		DateCreated: nte.DateCreated.Format(time.RFC3339),
-		DateUpdated: nte.DateUpdated.Format(time.RFC3339),
+		DateCreated: nte.DateCreated.Unix(),
+		DateUpdated: nte.DateUpdated.Unix(),
 	}
 }
 

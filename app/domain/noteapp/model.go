@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mid"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
@@ -14,9 +15,9 @@ import (
 
 // Tag represents a tag.
 type Tag struct {
-	ID          string `json:"id"` // We should create types for these fields.
+	ID          string `json:"id" validate:"uuid"` // We should create types for these fields.
 	Tag         string `json:"tag"`
-	DateCreated string `json:"dateCreated"`
+	DateCreated int64  `json:"dateCreated"`
 }
 
 // Note represents information about an individual note.
@@ -30,8 +31,8 @@ type Note struct {
 	Html        string `json:"html"`
 	Text        string `json:"text"`
 	Tags        []Tag  `json:"tags"`
-	DateCreated string `json:"dateCreated"`
-	DateUpdated string `json:"dateUpdated"`
+	DateCreated int64  `json:"dateCreated"`
+	DateUpdated int64  `json:"dateUpdated"`
 }
 
 // Encode implements the encoder interface.
@@ -47,7 +48,7 @@ func toAppTags(bus []notebus.Tag) []Tag {
 		app = append(app, Tag{
 			ID:          t.ID.String(),
 			Tag:         t.Tag,
-			DateCreated: t.DateCreated.Format(time.RFC3339),
+			DateCreated: t.DateCreated.Unix(),
 		})
 	}
 
@@ -65,8 +66,8 @@ func toAppNote(nte notebus.Note) Note {
 		Html:        nte.Html,
 		Text:        nte.Text,
 		Tags:        toAppTags(nte.Tags),
-		DateCreated: nte.DateCreated.Format(time.RFC3339),
-		DateUpdated: nte.DateUpdated.Format(time.RFC3339),
+		DateCreated: nte.DateCreated.Unix(),
+		DateUpdated: nte.DateUpdated.Unix(),
 	}
 }
 
@@ -106,6 +107,24 @@ func (app NewNote) Validate() error {
 	return nil
 }
 
+func toBusTags(app []Tag) []notebus.Tag {
+	bus := []notebus.Tag{}
+
+	for _, a := range app {
+		// TODO Should we go ahead and check the err here
+		// Validate checks
+		id, _ := uuid.Parse(a.ID)
+		b := notebus.Tag{
+			ID:          id,
+			Tag:         a.Tag,
+			DateCreated: time.Unix(a.DateCreated, 0),
+		}
+		bus = append(bus, b)
+	}
+
+	return bus
+}
+
 func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 	userID, err := mid.GetUserID(ctx)
 	if err != nil {
@@ -118,8 +137,14 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 	}
 
 	bus := notebus.NewNote{
-		UserID: userID,
-		Type:   typ,
+		UserID:     userID,
+		Type:       typ,
+		BCV:        app.BCV,
+		ChapterKey: app.ChapterKey,
+		Title:      app.Title,
+		Html:       app.Html,
+		Text:       app.Text,
+		Tags:       toBusTags(app.Tags),
 	}
 
 	return bus, nil

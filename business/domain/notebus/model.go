@@ -31,9 +31,14 @@ type Note struct {
 
 // NewNote is what we require from clients when adding a Note.
 type NewNote struct {
-	UserID uuid.UUID
-	Type   notetype.NoteType
-	Tags   []Tag
+	UserID     uuid.UUID
+	Type       notetype.NoteType
+	BCV        string
+	ChapterKey string
+	Title      string
+	Html       string
+	Text       string
+	Tags       []Tag
 }
 
 // UpdateTags is what fields can be updated in the store.

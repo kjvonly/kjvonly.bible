@@ -82,13 +82,13 @@ func (b *Business) NewWithTx(tx sqldb.CommitRollbacker) (*Business, error) {
 }
 
 // Create adds a new note to the system.
-func (b *Business) Create(ctx context.Context, nh NewNote) (Note, error) {
+func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 	ctx, span := otel.AddSpan(ctx, "business.notebus.create")
 	defer span.End()
 
-	usr, err := b.userBus.QueryByID(ctx, nh.UserID)
+	usr, err := b.userBus.QueryByID(ctx, nn.UserID)
 	if err != nil {
-		return Note{}, fmt.Errorf("user.querybyid: %s: %w", nh.UserID, err)
+		return Note{}, fmt.Errorf("user.querybyid: %s: %w", nn.UserID, err)
 	}
 
 	if !usr.Enabled {
@@ -98,10 +98,16 @@ func (b *Business) Create(ctx context.Context, nh NewNote) (Note, error) {
 	now := time.Now()
 
 	nte := Note{
-		ID:          uuid.New(),
-		Type:        nh.Type,
-		Tags:        nh.Tags,
-		UserID:      nh.UserID,
+		ID:         uuid.New(),
+		Type:       nn.Type,
+		Tags:       nn.Tags,
+		UserID:     nn.UserID,
+		BCV:        nn.BCV,
+		ChapterKey: nn.ChapterKey,
+		Title:      nn.Title,
+		Html:       nn.Html,
+		Text:       nn.Text,
+
 		DateCreated: now,
 		DateUpdated: now,
 	}

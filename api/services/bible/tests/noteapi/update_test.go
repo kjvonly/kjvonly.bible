@@ -3,7 +3,6 @@ package note_test
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/noteapp"
@@ -36,8 +35,8 @@ func update200(sd apitest.SeedData) []apitest.Table {
 				ID:          sd.Users[0].Notes[0].ID.String(),
 				UserID:      sd.Users[0].ID.String(),
 				Type:        "SINGLE FAMILY",
-				DateCreated: sd.Users[0].Notes[0].DateCreated.Format(time.RFC3339),
-				DateUpdated: sd.Users[0].Notes[0].DateCreated.Format(time.RFC3339),
+				DateCreated: sd.Users[0].Notes[0].DateCreated.Unix(),
+				DateUpdated: sd.Users[0].Notes[0].DateCreated.Unix(),
 			},
 			CmpFunc: func(got any, exp any) string {
 				gotResp, exists := got.(*noteapp.Note)

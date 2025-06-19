@@ -2,8 +2,10 @@ package note_test
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/domain/noteapp"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/apitest"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
@@ -18,13 +20,32 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.NewNote{
-				Type: "private",
+				Type:       "private",
+				ChapterKey: "0_0_0_0",
+				Html:       "<h1>Christ is King!</h1>",
+				Text:       "Christ is King!",
+				Tags: []noteapp.Tag{
+					{
+						ID:          uuid.UUID{}.String(),
+						Tag:         "Jesus",
+						DateCreated: time.Now().Unix(),
+					},
+				},
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
-				UserID: sd.Users[0].ID.String(),
-				Type:   "private",
-				Tags:   []noteapp.Tag{},
+				UserID:     sd.Users[0].ID.String(),
+				Type:       "private",
+				ChapterKey: "0_0_0_0",
+				Html:       "<h1>Christ is King!</h1>",
+				Text:       "Christ is King!",
+				Tags: []noteapp.Tag{
+					{
+						ID:          uuid.UUID{}.String(),
+						Tag:         "Jesus",
+						DateCreated: time.Now().Unix(),
+					},
+				},
 			},
 			CmpFunc: func(got any, exp any) string {
 				gotResp, exists := got.(*noteapp.Note)
