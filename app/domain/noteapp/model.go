@@ -152,16 +152,6 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 
 // =============================================================================
 
-// UpdateAddress defines the data needed to update an address.
-type xUpdateAddress struct {
-	Address1 *string `json:"address1" validate:"omitempty,min=1,max=70"`
-	Address2 *string `json:"address2" validate:"omitempty,max=70"`
-	ZipCode  *string `json:"zipCode" validate:"omitempty,numeric"`
-	City     *string `json:"city"`
-	State    *string `json:"state" validate:"omitempty,min=1,max=48"`
-	Country  *string `json:"country" validate:"omitempty,iso3166_1_alpha2"`
-}
-
 // UpdateNote defines the data needed to update a note.
 type UpdateNote struct {
 	Type  *string `json:"type"`
