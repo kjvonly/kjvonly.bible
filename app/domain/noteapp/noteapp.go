@@ -59,12 +59,12 @@ func (a *app) update(ctx context.Context, r *http.Request) web.Encoder {
 		return errs.Newf(errs.Internal, "note missing in context: %s", err)
 	}
 
-	updUsr, err := a.noteBus.Update(ctx, nte, uh)
+	updNte, err := a.noteBus.Update(ctx, nte, uh)
 	if err != nil {
 		return errs.Newf(errs.Internal, "update: noteID[%s] uh[%+v]: %s", nte.ID, uh, err)
 	}
 
-	return toAppNote(updUsr)
+	return toAppNote(updNte)
 }
 
 func (a *app) delete(ctx context.Context, _ *http.Request) web.Encoder {

@@ -3,6 +3,7 @@ package note_test
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/noteapp"
@@ -20,21 +21,13 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPut,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.UpdateNote{
-				Type: dbtest.StringPointer("SINGLE FAMILY"),
-				Address: &noteapp.UpdateAddress{
-					Address1: dbtest.StringPointer("123 Mocking Bird Lane"),
-					Address2: dbtest.StringPointer("apt 105"),
-					ZipCode:  dbtest.StringPointer("35810"),
-					City:     dbtest.StringPointer("Huntsville"),
-					State:    dbtest.StringPointer("AL"),
-					Country:  dbtest.StringPointer("US"),
-				},
+				Type: dbtest.StringPointer("private"),
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
 				ID:          sd.Users[0].Notes[0].ID.String(),
 				UserID:      sd.Users[0].ID.String(),
-				Type:        "SINGLE FAMILY",
+				Type:        "private",
 				DateCreated: sd.Users[0].Notes[0].DateCreated.Unix(),
 				DateUpdated: sd.Users[0].Notes[0].DateCreated.Unix(),
 			},
@@ -45,6 +38,7 @@ func update200(sd apitest.SeedData) []apitest.Table {
 				}
 
 				expResp := exp.(*noteapp.Note)
+				expResp.Tags = gotResp.Tags
 				gotResp.DateUpdated = expResp.DateUpdated
 
 				return cmp.Diff(gotResp, expResp)
@@ -64,17 +58,12 @@ func update400(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPut,
 			StatusCode: http.StatusBadRequest,
 			Input: &noteapp.UpdateNote{
-				Address: &noteapp.UpdateAddress{
-					Address1: dbtest.StringPointer(""),
-					Address2: dbtest.StringPointer(""),
-					ZipCode:  dbtest.StringPointer(""),
-					City:     dbtest.StringPointer(""),
-					State:    dbtest.StringPointer(""),
-					Country:  dbtest.StringPointer(""),
+				Tags: []noteapp.Tag{
+					{ID: "000", Tag: "tag", DateCreated: time.Now().Unix()},
 				},
 			},
 			GotResp: &errs.Error{},
-			ExpResp: errs.Newf(errs.InvalidArgument, "validate: [{\"field\":\"address1\",\"error\":\"address1 must be at least 1 character in length\"},{\"field\":\"zipCode\",\"error\":\"zipCode must be a valid numeric value\"},{\"field\":\"state\",\"error\":\"state must be at least 1 character in length\"},{\"field\":\"country\",\"error\":\"Key: 'UpdateNote.address.country' Error:Field validation for 'country' failed on the 'iso3166_1_alpha2' tag\"}]"),
+			ExpResp: errs.Newf(errs.InvalidArgument, `validate: [{"field":"id","error":"id must be a valid UUID"}]`),
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)
 			},
@@ -86,8 +75,7 @@ func update400(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPut,
 			StatusCode: http.StatusBadRequest,
 			Input: &noteapp.UpdateNote{
-				Type:    dbtest.StringPointer("BAD TYPE"),
-				Address: &noteapp.UpdateAddress{},
+				Type: dbtest.StringPointer("BAD TYPE"),
 			},
 			GotResp: &errs.Error{},
 			ExpResp: errs.Newf(errs.InvalidArgument, "parse: invalid note type \"BAD TYPE\""),
@@ -133,15 +121,7 @@ func update401(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPut,
 			StatusCode: http.StatusUnauthorized,
 			Input: &noteapp.UpdateNote{
-				Type: dbtest.StringPointer("SINGLE FAMILY"),
-				Address: &noteapp.UpdateAddress{
-					Address1: dbtest.StringPointer("123 Mocking Bird Lane"),
-					Address2: dbtest.StringPointer("apt 105"),
-					ZipCode:  dbtest.StringPointer("35810"),
-					City:     dbtest.StringPointer("Huntsville"),
-					State:    dbtest.StringPointer("AL"),
-					Country:  dbtest.StringPointer("US"),
-				},
+				Type: dbtest.StringPointer("shared"),
 			},
 			GotResp: &errs.Error{},
 			ExpResp: errs.Newf(errs.Unauthenticated, "authorize: you are not authorized for that action, claims[[USER]] rule[rule_admin_or_subject]: rego evaluation failed : bindings results[[{[true] map[x:false]}]] ok[true]"),

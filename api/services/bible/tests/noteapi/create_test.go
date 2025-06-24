@@ -89,7 +89,8 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusBadRequest,
 			Input: &noteapp.NewNote{
-				Type: "BAD TYPE",
+				Type:       "BAD TYPE",
+				ChapterKey: "0_0_0_0",
 			},
 			GotResp: &errs.Error{},
 			ExpResp: errs.Newf(errs.InvalidArgument, "parse: invalid note type \"BAD TYPE\""),

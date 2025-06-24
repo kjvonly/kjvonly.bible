@@ -15,7 +15,7 @@ import (
 
 // Tag represents a tag.
 type Tag struct {
-	ID          string `json:"id" validate:"uuid"` // We should create types for these fields.
+	ID          string `json:"id" validate:"required,uuid"` // We should create types for these fields.
 	Tag         string `json:"tag"`
 	DateCreated int64  `json:"dateCreated"`
 }
@@ -153,7 +153,7 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 // =============================================================================
 
 // UpdateAddress defines the data needed to update an address.
-type UpdateAddress struct {
+type xUpdateAddress struct {
 	Address1 *string `json:"address1" validate:"omitempty,min=1,max=70"`
 	Address2 *string `json:"address2" validate:"omitempty,max=70"`
 	ZipCode  *string `json:"zipCode" validate:"omitempty,numeric"`
@@ -164,8 +164,11 @@ type UpdateAddress struct {
 
 // UpdateNote defines the data needed to update a note.
 type UpdateNote struct {
-	Type    *string        `json:"type"`
-	Address *UpdateAddress `json:"address"`
+	Type  *string `json:"type"`
+	Title *string `json:"title"`
+	Html  *string `json:"html"`
+	Text  *string `json:"text"`
+	Tags  []Tag   `json:"tags" validate:"dive"`
 }
 
 // Decode implements the decoder interface.

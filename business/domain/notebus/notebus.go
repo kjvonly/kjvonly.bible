@@ -125,13 +125,12 @@ func (b *Business) Update(ctx context.Context, nte Note, un UpdateNote) (Note, e
 	defer span.End()
 
 	if un.Type != nil {
+
 		nte.Type = *un.Type
 	}
 
 	if un.Tags != nil {
-		if un.Tags != nil {
-			nte.Tags = un.Tags
-		}
+		nte.Tags = un.Tags
 	}
 
 	nte.DateUpdated = time.Now()
