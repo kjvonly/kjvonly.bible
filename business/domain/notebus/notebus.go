@@ -129,6 +129,16 @@ func (b *Business) Update(ctx context.Context, nte Note, un UpdateNote) (Note, e
 		nte.Type = *un.Type
 	}
 
+	if un.Title != nil {
+		nte.Title = *un.Title
+	}
+	if un.Html != nil {
+		nte.Html = *un.Html
+	}
+	if un.Text != nil {
+		nte.Text = *un.Text
+	}
+
 	if un.Tags != nil {
 		nte.Tags = un.Tags
 	}

@@ -20,6 +20,7 @@ type Tag struct {
 	DateCreated int64  `json:"dateCreated"`
 }
 
+// TODO Add Validate rules. Min Max.
 // Note represents information about an individual note.
 type Note struct {
 	ID          string `json:"id"`
@@ -186,7 +187,11 @@ func toBusUpdateNote(app UpdateNote) (notebus.UpdateNote, error) {
 	}
 
 	bus := notebus.UpdateNote{
-		Type: &t,
+		Type:  &t,
+		Title: app.Title,
+		Html:  app.Html,
+		Text:  app.Text,
+		Tags:  toBusTags(app.Tags),
 	}
 	return bus, nil
 }

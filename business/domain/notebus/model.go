@@ -31,9 +31,13 @@ type Note struct {
 
 // NewNote is what we require from clients when adding a Note.
 type NewNote struct {
-	UserID     uuid.UUID
-	Type       notetype.NoteType
-	BCV        string
+	UserID uuid.UUID
+	Type   notetype.NoteType
+	// TODO move this to doc repo
+	// BCV aka Book Chapter Verse Joh 3:16
+	BCV string
+	// TODO move this to doc repo
+	// 50_3_16_0 50 is John ID, 3 is the chapter, 16 is the verse, 0 is the word index
 	ChapterKey string
 	Title      string
 	Html       string
@@ -53,6 +57,9 @@ type UpdateTags struct {
 // we do not want to use pointers to basic types but we make exception around
 // marshalling/unmarshalling.
 type UpdateNote struct {
-	Type *notetype.NoteType
-	Tags []Tag
+	Type  *notetype.NoteType
+	Title *string
+	Html  *string
+	Text  *string
+	Tags  []Tag
 }

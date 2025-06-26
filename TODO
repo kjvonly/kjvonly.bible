@@ -1,3 +1,5 @@
-[-] update note schema
-[-] add notes app layer
-[+] update note app layer models i.e. add missing struct variables
+- ~~update note schema~~
+- ~~add notes app layer~~
+- ~~update note app layer models i.e. add missing struct variables~~
+- add version to note struct
+- define offline sync workflow
