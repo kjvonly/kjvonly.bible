@@ -18,6 +18,7 @@ type Tag struct {
 type Note struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
+	OfflineID   uuid.UUID
 	Type        notetype.NoteType
 	BCV         string
 	ChapterKey  string
@@ -31,8 +32,9 @@ type Note struct {
 
 // NewNote is what we require from clients when adding a Note.
 type NewNote struct {
-	UserID uuid.UUID
-	Type   notetype.NoteType
+	UserID    uuid.UUID
+	OfflineID uuid.UUID
+	Type      notetype.NoteType
 	// TODO move this to doc repo
 	// BCV aka Book Chapter Verse Joh 3:16
 	BCV string

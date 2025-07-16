@@ -25,6 +25,7 @@ type Tag struct {
 type Note struct {
 	ID          string `json:"id"`
 	UserID      string `json:"userID"`
+	OfflineID   string `json:"offlineID"`
 	Type        string `json:"type"`
 	BCV         string `json:"bcv"`
 	ChapterKey  string `json:"chapterKey"`
@@ -60,6 +61,7 @@ func toAppNote(nte notebus.Note) Note {
 	return Note{
 		ID:          nte.ID.String(),
 		UserID:      nte.UserID.String(),
+		OfflineID:   nte.OfflineID.String(),
 		Type:        nte.Type.String(),
 		BCV:         nte.BCV,
 		ChapterKey:  nte.ChapterKey,
@@ -85,13 +87,14 @@ func toAppNotes(notes []notebus.Note) []Note {
 
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
+	OfflineID  string `json:"offlineID" validate:"required,uuid"`
 	Type       string `json:"type" validate:"required"`
 	ChapterKey string `json:"chapterKey" validate:"required"`
 	BCV        string `json:"bcv"`
 	Title      string `json:"title"`
 	Html       string `json:"html"`
 	Text       string `json:"text"`
-	Tags       []Tag  `json:"tags"`
+	Tags       []Tag  `json:"tags" validate:"dive"`
 }
 
 // Decode implements the decoder interface.
@@ -137,8 +140,14 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 		return notebus.NewNote{}, fmt.Errorf("parse: %w", err)
 	}
 
+	offlineID, err := uuid.ParseBytes([]byte(app.OfflineID))
+	if err != nil {
+		return notebus.NewNote{}, fmt.Errorf("getofflineid: %w", err)
+	}
+
 	bus := notebus.NewNote{
 		UserID:     userID,
+		OfflineID:  offlineID,
 		Type:       typ,
 		BCV:        app.BCV,
 		ChapterKey: app.ChapterKey,
