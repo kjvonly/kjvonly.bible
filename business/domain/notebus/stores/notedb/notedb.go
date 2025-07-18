@@ -53,6 +53,7 @@ func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
         (
             note_id,
             user_id,
+			offline_id,
             type,
             bcv,
             chapter_key,
@@ -67,6 +68,7 @@ func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
         (
             :note_id,
             :user_id,
+			:offline_id,
             :type,
             :bcv,
             :chapter_key,

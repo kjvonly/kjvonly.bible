@@ -14,6 +14,7 @@ import (
 type note struct {
 	ID          uuid.UUID      `db:"note_id"`
 	UserID      uuid.UUID      `db:"user_id"`
+	OfflineID   uuid.UUID      `db:"offline_id"`
 	Type        string         `db:"type"`
 	BCV         string         `db:"bcv"`
 	ChapterKey  string         `db:"chapter_key"`
@@ -34,6 +35,7 @@ func toDBNote(bus notebus.Note) (note, error) {
 	db := note{
 		ID:          bus.ID,
 		UserID:      bus.UserID,
+		OfflineID:   bus.OfflineID,
 		Type:        bus.Type.String(),
 		BCV:         bus.BCV,
 		ChapterKey:  bus.ChapterKey,
@@ -62,6 +64,7 @@ func toBusNote(db note) (notebus.Note, error) {
 	bus := notebus.Note{
 		ID:          db.ID,
 		UserID:      db.UserID,
+		OfflineID:   db.OfflineID,
 		Type:        typ,
 		BCV:         db.BCV,
 		ChapterKey:  db.ChapterKey,

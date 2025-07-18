@@ -99,9 +99,10 @@ func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 
 	nte := Note{
 		ID:         uuid.New(),
+		UserID:     nn.UserID,
+		OfflineID:  nn.OfflineID,
 		Type:       nn.Type,
 		Tags:       nn.Tags,
-		UserID:     nn.UserID,
 		BCV:        nn.BCV,
 		ChapterKey: nn.ChapterKey,
 		Title:      nn.Title,

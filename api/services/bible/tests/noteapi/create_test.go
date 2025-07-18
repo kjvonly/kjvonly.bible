@@ -22,6 +22,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Input: &noteapp.NewNote{
 				Type:       "private",
 				ChapterKey: "0_0_0_0",
+				OfflineID:  "747760c7-0fcf-49fe-a204-28c3fc0ffabc",
 				Html:       "<h1>Christ is King!</h1>",
 				Text:       "Christ is King!",
 				Tags: []noteapp.Tag{
@@ -35,6 +36,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
 				UserID:     sd.Users[0].ID.String(),
+				OfflineID:  "747760c7-0fcf-49fe-a204-28c3fc0ffabc",
 				Type:       "private",
 				ChapterKey: "0_0_0_0",
 				Html:       "<h1>Christ is King!</h1>",
@@ -56,6 +58,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 				expResp := exp.(*noteapp.Note)
 
 				expResp.ID = gotResp.ID
+
 				expResp.DateCreated = gotResp.DateCreated
 				expResp.DateUpdated = gotResp.DateUpdated
 
