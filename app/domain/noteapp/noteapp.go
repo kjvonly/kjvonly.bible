@@ -88,6 +88,13 @@ func (a *app) query(ctx context.Context, r *http.Request) web.Encoder {
 		return errs.NewFieldErrors("page", err)
 	}
 
+	userID, err := mid.GetUserID(ctx)
+	if err != nil {
+		return err.(*errs.Error)
+	}
+
+	qp.UserID = userID.String()
+
 	filter, err := parseFilter(qp)
 	if err != nil {
 		return err.(*errs.Error)
@@ -108,7 +115,8 @@ func (a *app) query(ctx context.Context, r *http.Request) web.Encoder {
 		return errs.Newf(errs.Internal, "count: %s", err)
 	}
 
-	return query.NewResult(toAppNotes(ntes), total, page)
+	ntess := toAppNotes(ntes)
+	return query.NewResult(ntess, total, page)
 }
 
 func (a *app) queryByID(ctx context.Context, _ *http.Request) web.Encoder {

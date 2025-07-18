@@ -23,6 +23,7 @@ func toAppNote(nte notebus.Note) noteapp.Note {
 	return noteapp.Note{
 		ID:          nte.ID.String(),
 		UserID:      nte.UserID.String(),
+		OfflineID:   nte.OfflineID.String(),
 		Type:        nte.Type.String(),
 		Tags:        toAppTags(nte.Tags),
 		DateCreated: nte.DateCreated.Unix(),

@@ -151,6 +151,7 @@ func (s *Store) Query(ctx context.Context, filter notebus.QueryFilter, orderBy o
     SELECT
         note_id,
         user_id,
+		offline_id,
         type,
         bcv,
         chapter_key,
@@ -222,6 +223,7 @@ func (s *Store) QueryByID(ctx context.Context, noteID uuid.UUID) (notebus.Note, 
     SELECT
         note_id,
         user_id,
+		offline_id,
         type,
         bcv,
         chapter_key,
@@ -259,6 +261,7 @@ func (s *Store) QueryByUserID(ctx context.Context, userID uuid.UUID) ([]notebus.
 	SELECT
         note_id,
         user_id,
+		offline_id,
         type,
         bcv,
         chapter_key,

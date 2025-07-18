@@ -30,6 +30,7 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			ExpResp: &noteapp.Note{
 				ID:          sd.Users[0].Notes[0].ID.String(),
 				UserID:      sd.Users[0].ID.String(),
+				OfflineID:   sd.Users[0].Notes[0].OfflineID.String(),
 				Type:        "private",
 				Title:       "Updated Title",
 				Html:        "Updated HTML",

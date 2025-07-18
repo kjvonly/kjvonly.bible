@@ -80,7 +80,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input:      &noteapp.NewNote{},
 			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"type","error":"type is a required field"},{"field":"chapterKey","error":"chapterKey is a required field"}]`),
+			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"offlineID","error":"offlineID is a required field"},{"field":"type","error":"type is a required field"},{"field":"chapterKey","error":"chapterKey is a required field"}]`),
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)
 			},
@@ -94,6 +94,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			Input: &noteapp.NewNote{
 				Type:       "BAD TYPE",
 				ChapterKey: "0_0_0_0",
+				OfflineID:  uuid.NewString(),
 			},
 			GotResp: &errs.Error{},
 			ExpResp: errs.Newf(errs.InvalidArgument, "parse: invalid note type \"BAD TYPE\""),

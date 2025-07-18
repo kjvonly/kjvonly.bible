@@ -18,23 +18,30 @@ func query200(sd apitest.SeedData) []apitest.Table {
 	ntes = append(ntes, sd.Admins[0].Notes...)
 	ntes = append(ntes, sd.Users[0].Notes...)
 
+	usrNtes := make([]notebus.Note, 0, len(sd.Users[0].Notes))
+	usrNtes = append(usrNtes, sd.Users[0].Notes...)
+
 	sort.Slice(ntes, func(i, j int) bool {
 		return ntes[i].ID.String() <= ntes[j].ID.String()
+	})
+
+	sort.Slice(usrNtes, func(i, j int) bool {
+		return usrNtes[i].ID.String() <= usrNtes[j].ID.String()
 	})
 
 	table := []apitest.Table{
 		{
 			Name:       "basic",
 			URL:        "/v1/notes?page=1&rows=10&orderBy=note_id,ASC",
-			Token:      sd.Admins[0].Token,
+			Token:      sd.Users[0].Token,
 			StatusCode: http.StatusOK,
 			Method:     http.MethodGet,
 			GotResp:    &query.Result[noteapp.Note]{},
 			ExpResp: &query.Result[noteapp.Note]{
 				Page:        1,
 				RowsPerPage: 10,
-				Total:       len(ntes),
-				Items:       toAppNotes(ntes),
+				Total:       len(usrNtes),
+				Items:       toAppNotes(usrNtes),
 			},
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)

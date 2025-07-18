@@ -32,7 +32,8 @@ func TestGenerateNewNotes(n int, userID uuid.UUID) []NewNote {
 					DateCreated: time.Now(),
 				},
 			},
-			UserID: userID,
+			UserID:    userID,
+			OfflineID: uuid.New(),
 		}
 
 		newNtes[i] = nh
