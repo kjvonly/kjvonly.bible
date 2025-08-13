@@ -240,9 +240,10 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 		{
 			Name: "basic",
 			ExpResp: notebus.Note{
-				ID:     sd.Users[0].Notes[0].ID,
-				UserID: sd.Users[0].ID,
-				Type:   notetype.Private,
+				ID:        sd.Users[0].Notes[0].ID,
+				UserID:    sd.Users[0].ID,
+				OfflineID: sd.Users[0].Notes[0].OfflineID,
+				Type:      notetype.Private,
 				Tags: []notebus.Tag{
 					{
 						ID:  uuid.UUID{},
