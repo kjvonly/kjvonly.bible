@@ -243,6 +243,10 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 				ID:        sd.Users[0].Notes[0].ID,
 				UserID:    sd.Users[0].ID,
 				OfflineID: sd.Users[0].Notes[0].OfflineID,
+				BookID:    0,
+				Chapter:   0,
+				Verse:     0,
+				WordIndex: 0,
 				Type:      notetype.Private,
 				Tags: []notebus.Tag{
 					{

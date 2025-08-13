@@ -18,6 +18,10 @@ type note struct {
 	Type        string         `db:"type"`
 	BCV         string         `db:"bcv"`
 	ChapterKey  string         `db:"chapter_key"`
+	BookID      int            `db:"book_id"`
+	Chapter     int            `db:"chapter"`
+	Verse       int            `db:"verse"`
+	WordIndex   int            `db:"word_index"`
 	Html        string         `db:"html"`
 	Text        string         `db:"text"`
 	Title       string         `db:"title"`
@@ -39,6 +43,10 @@ func toDBNote(bus notebus.Note) (note, error) {
 		Type:        bus.Type.String(),
 		BCV:         bus.BCV,
 		ChapterKey:  bus.ChapterKey,
+		BookID:      bus.BookID,
+		Chapter:     bus.Chapter,
+		Verse:       bus.Verse,
+		WordIndex:   bus.WordIndex,
 		Title:       bus.Title,
 		Html:        bus.Html,
 		Text:        bus.Text,
@@ -68,6 +76,10 @@ func toBusNote(db note) (notebus.Note, error) {
 		Type:        typ,
 		BCV:         db.BCV,
 		ChapterKey:  db.ChapterKey,
+		BookID:      db.BookID,
+		Chapter:     db.Chapter,
+		Verse:       db.Chapter,
+		WordIndex:   db.WordIndex,
 		Title:       db.Title,
 		Html:        db.Html,
 		Text:        db.Text,

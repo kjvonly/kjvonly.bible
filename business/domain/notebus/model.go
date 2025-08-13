@@ -22,6 +22,10 @@ type Note struct {
 	Type        notetype.NoteType
 	BCV         string
 	ChapterKey  string
+	BookID      int
+	Chapter     int
+	Verse       int
+	WordIndex   int
 	Title       string
 	Html        string
 	Text        string
