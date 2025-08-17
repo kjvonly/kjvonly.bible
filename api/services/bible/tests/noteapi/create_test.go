@@ -20,13 +20,10 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.NewNote{
-				BookID:    0,
-				Chapter:   0,
-				Verse:     0,
-				WordIndex: 0,
-				Title:     "Chirst is King",
-				Html:      "<h1>Christ is King!</h1>",
-				Text:      "Christ is King!",
+				ChapterKey: "0_0_0_0",
+				Title:      "Chirst is King",
+				Html:       "<h1>Christ is King!</h1>",
+				Text:       "Christ is King!",
 				Tags: []noteapp.Tag{
 					{
 						ID:          uuid.UUID{}.String(),
@@ -37,14 +34,11 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
-				UserID:    sd.Users[0].ID.String(),
-				BookID:    0,
-				Chapter:   0,
-				Verse:     0,
-				WordIndex: 0,
-				Title:     "Chirst is King",
-				Html:      "<h1>Christ is King!</h1>",
-				Text:      "Christ is King!",
+				UserID:     sd.Users[0].ID.String(),
+				ChapterKey: "0_0_0_0",
+				Title:      "Chirst is King",
+				Html:       "<h1>Christ is King!</h1>",
+				Text:       "Christ is King!",
 				Tags: []noteapp.Tag{
 					{
 						ID:          uuid.UUID{}.String(),
@@ -84,7 +78,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input:      &noteapp.NewNote{},
 			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"title","error":"title is a required field"},{"field":"html","error":"html is a required field"},{"field":"text","error":"text is a required field"}]`),
+			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"chapter_key","error":"chapter_key is a required field"},{"field":"title","error":"title is a required field"},{"field":"html","error":"html is a required field"},{"field":"text","error":"text is a required field"}]`),
 
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)

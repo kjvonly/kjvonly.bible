@@ -29,6 +29,7 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			ExpResp: &noteapp.Note{
 				ID:          sd.Users[0].Notes[0].ID.String(),
 				UserID:      sd.Users[0].ID.String(),
+				ChapterKey:  fmt.Sprintf("%d_%d_%d_%d", sd.Users[0].Notes[0].BookID, sd.Users[0].Notes[0].Chapter, sd.Users[0].Notes[0].Verse, sd.Users[0].Notes[0].WordIndex),
 				Title:       "Updated Title",
 				Html:        "Updated HTML",
 				Text:        "Updated Text",

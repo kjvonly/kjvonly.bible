@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,10 +26,7 @@ type Tag struct {
 type Note struct {
 	ID          string `json:"id"`
 	UserID      string `json:"userID"`
-	BookID      int    `json:"bookID"`
-	Chapter     int    `json:"chapter"`
-	Verse       int    `json:"verse"`
-	WordIndex   int    `json:"wordIndex"`
+	ChapterKey  string `json:"chapter_key"`
 	Title       string `json:"title"`
 	Html        string `json:"html"`
 	Text        string `json:"text"`
@@ -60,10 +59,7 @@ func toAppNote(nte notebus.Note) Note {
 	return Note{
 		ID:          nte.ID.String(),
 		UserID:      nte.UserID.String(),
-		BookID:      nte.BookID,
-		Chapter:     nte.Chapter,
-		Verse:       nte.Verse,
-		WordIndex:   nte.WordIndex,
+		ChapterKey:  fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
 		Title:       nte.Title,
 		Html:        nte.Html,
 		Text:        nte.Text,
@@ -86,14 +82,11 @@ func toAppNotes(notes []notebus.Note) []Note {
 
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
-	BookID    int
-	Chapter   int
-	Verse     int
-	WordIndex int
-	Title     string `json:"title" validate:"required"`
-	Html      string `json:"html" validate:"required"`
-	Text      string `json:"text" validate:"required"`
-	Tags      []Tag  `json:"tags" validate:"dive"`
+	ChapterKey string `json:"chapter_key" validate:"required"`
+	Title      string `json:"title" validate:"required"`
+	Html       string `json:"html" validate:"required"`
+	Text       string `json:"text" validate:"required"`
+	Tags       []Tag  `json:"tags" validate:"dive"`
 }
 
 // Decode implements the decoder interface.
@@ -134,12 +127,38 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 		return notebus.NewNote{}, fmt.Errorf("getuserid: %w", err)
 	}
 
+	keys := strings.Split(app.ChapterKey, "_")
+
+	if len(keys) != 4 {
+		return notebus.NewNote{}, fmt.Errorf("parsechapterkey: %w", err)
+	}
+
+	bookID, err := strconv.ParseInt(keys[0], 10, 0)
+	if err != nil {
+		return notebus.NewNote{}, fmt.Errorf("parsebookid: %w", err)
+	}
+
+	chapter, err := strconv.ParseInt(keys[1], 10, 0)
+	if err != nil {
+		return notebus.NewNote{}, fmt.Errorf("parsechapter: %w", err)
+	}
+
+	verse, err := strconv.ParseInt(keys[2], 10, 0)
+	if err != nil {
+		return notebus.NewNote{}, fmt.Errorf("parseverse: %w", err)
+	}
+
+	wordIndex, err := strconv.ParseInt(keys[1], 10, 0)
+	if err != nil {
+		return notebus.NewNote{}, fmt.Errorf("parsewordindex: %w", err)
+	}
+
 	bus := notebus.NewNote{
 		UserID:    userID,
-		BookID:    app.BookID,
-		Chapter:   app.Chapter,
-		Verse:     app.Verse,
-		WordIndex: app.WordIndex,
+		BookID:    int(bookID),
+		Chapter:   int(chapter),
+		Verse:     int(verse),
+		WordIndex: int(wordIndex),
 		Title:     app.Title,
 		Html:      app.Html,
 		Text:      app.Text,

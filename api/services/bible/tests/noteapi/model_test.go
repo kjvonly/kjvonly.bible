@@ -1,6 +1,8 @@
 package note_test
 
 import (
+	"fmt"
+
 	"github.com/kjvonly/kjvonly.bible/app/domain/noteapp"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 )
@@ -23,6 +25,7 @@ func toAppNote(nte notebus.Note) noteapp.Note {
 	return noteapp.Note{
 		ID:          nte.ID.String(),
 		UserID:      nte.UserID.String(),
+		ChapterKey:  fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
 		Tags:        toAppTags(nte.Tags),
 		DateCreated: nte.DateCreated.Unix(),
 		DateUpdated: nte.DateUpdated.Unix(),
