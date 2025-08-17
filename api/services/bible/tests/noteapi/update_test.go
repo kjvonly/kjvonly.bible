@@ -27,14 +27,14 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
-				ID:          sd.Users[0].Notes[0].ID.String(),
-				UserID:      sd.Users[0].ID.String(),
-				ChapterKey:  fmt.Sprintf("%d_%d_%d_%d", sd.Users[0].Notes[0].BookID, sd.Users[0].Notes[0].Chapter, sd.Users[0].Notes[0].Verse, sd.Users[0].Notes[0].WordIndex),
-				Title:       "Updated Title",
-				Html:        "Updated HTML",
-				Text:        "Updated Text",
-				DateCreated: sd.Users[0].Notes[0].DateCreated.Unix(),
-				DateUpdated: sd.Users[0].Notes[0].DateCreated.Unix(),
+				ID:              sd.Users[0].Notes[0].ID.String(),
+				UserID:          sd.Users[0].ID.String(),
+				ReferenceVector: fmt.Sprintf("%d_%d_%d_%d", sd.Users[0].Notes[0].BookID, sd.Users[0].Notes[0].Chapter, sd.Users[0].Notes[0].Verse, sd.Users[0].Notes[0].WordIndex),
+				Title:           "Updated Title",
+				Html:            "Updated HTML",
+				Text:            "Updated Text",
+				DateCreated:     sd.Users[0].Notes[0].DateCreated.Unix(),
+				DateUpdated:     sd.Users[0].Notes[0].DateCreated.Unix(),
 			},
 			CmpFunc: func(got any, exp any) string {
 				gotResp, exists := got.(*noteapp.Note)

@@ -24,15 +24,15 @@ type Tag struct {
 // TODO Add Validate rules. Min Max.
 // Note represents information about an individual note.
 type Note struct {
-	ID          string `json:"id"`
-	UserID      string `json:"userID"`
-	ChapterKey  string `json:"chapter_key"`
-	Title       string `json:"title"`
-	Html        string `json:"html"`
-	Text        string `json:"text"`
-	Tags        []Tag  `json:"tags"`
-	DateCreated int64  `json:"dateCreated"`
-	DateUpdated int64  `json:"dateUpdated"`
+	ID              string `json:"id"`
+	UserID          string `json:"userID"`
+	ReferenceVector string `json:"chapter_key"`
+	Title           string `json:"title"`
+	Html            string `json:"html"`
+	Text            string `json:"text"`
+	Tags            []Tag  `json:"tags"`
+	DateCreated     int64  `json:"dateCreated"`
+	DateUpdated     int64  `json:"dateUpdated"`
 }
 
 // Encode implements the encoder interface.
@@ -57,15 +57,15 @@ func toAppTags(bus []notebus.Tag) []Tag {
 
 func toAppNote(nte notebus.Note) Note {
 	return Note{
-		ID:          nte.ID.String(),
-		UserID:      nte.UserID.String(),
-		ChapterKey:  fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
-		Title:       nte.Title,
-		Html:        nte.Html,
-		Text:        nte.Text,
-		Tags:        toAppTags(nte.Tags),
-		DateCreated: nte.DateCreated.Unix(),
-		DateUpdated: nte.DateUpdated.Unix(),
+		ID:              nte.ID.String(),
+		UserID:          nte.UserID.String(),
+		ReferenceVector: fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
+		Title:           nte.Title,
+		Html:            nte.Html,
+		Text:            nte.Text,
+		Tags:            toAppTags(nte.Tags),
+		DateCreated:     nte.DateCreated.Unix(),
+		DateUpdated:     nte.DateUpdated.Unix(),
 	}
 }
 
@@ -82,11 +82,11 @@ func toAppNotes(notes []notebus.Note) []Note {
 
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
-	ChapterKey string `json:"chapter_key" validate:"required"`
-	Title      string `json:"title" validate:"required"`
-	Html       string `json:"html" validate:"required"`
-	Text       string `json:"text" validate:"required"`
-	Tags       []Tag  `json:"tags" validate:"dive"`
+	ReferenceVector string `json:"chapter_key" validate:"required"`
+	Title           string `json:"title" validate:"required"`
+	Html            string `json:"html" validate:"required"`
+	Text            string `json:"text" validate:"required"`
+	Tags            []Tag  `json:"tags" validate:"dive"`
 }
 
 // Decode implements the decoder interface.
@@ -127,7 +127,7 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 		return notebus.NewNote{}, fmt.Errorf("getuserid: %w", err)
 	}
 
-	keys := strings.Split(app.ChapterKey, "_")
+	keys := strings.Split(app.ReferenceVector, "_")
 
 	if len(keys) != 4 {
 		return notebus.NewNote{}, fmt.Errorf("parsechapterkey: %w", err)

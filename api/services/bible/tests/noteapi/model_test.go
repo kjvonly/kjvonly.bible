@@ -23,12 +23,12 @@ func toAppTags(bus []notebus.Tag) []noteapp.Tag {
 
 func toAppNote(nte notebus.Note) noteapp.Note {
 	return noteapp.Note{
-		ID:          nte.ID.String(),
-		UserID:      nte.UserID.String(),
-		ChapterKey:  fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
-		Tags:        toAppTags(nte.Tags),
-		DateCreated: nte.DateCreated.Unix(),
-		DateUpdated: nte.DateUpdated.Unix(),
+		ID:              nte.ID.String(),
+		UserID:          nte.UserID.String(),
+		ReferenceVector: fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
+		Tags:            toAppTags(nte.Tags),
+		DateCreated:     nte.DateCreated.Unix(),
+		DateUpdated:     nte.DateUpdated.Unix(),
 	}
 }
 

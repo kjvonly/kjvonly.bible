@@ -20,10 +20,10 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.NewNote{
-				ChapterKey: "0_0_0_0",
-				Title:      "Chirst is King",
-				Html:       "<h1>Christ is King!</h1>",
-				Text:       "Christ is King!",
+				ReferenceVector: "0_0_0_0",
+				Title:           "Chirst is King",
+				Html:            "<h1>Christ is King!</h1>",
+				Text:            "Christ is King!",
 				Tags: []noteapp.Tag{
 					{
 						ID:          uuid.UUID{}.String(),
@@ -34,11 +34,11 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
-				UserID:     sd.Users[0].ID.String(),
-				ChapterKey: "0_0_0_0",
-				Title:      "Chirst is King",
-				Html:       "<h1>Christ is King!</h1>",
-				Text:       "Christ is King!",
+				UserID:          sd.Users[0].ID.String(),
+				ReferenceVector: "0_0_0_0",
+				Title:           "Chirst is King",
+				Html:            "<h1>Christ is King!</h1>",
+				Text:            "Christ is King!",
 				Tags: []noteapp.Tag{
 					{
 						ID:          uuid.UUID{}.String(),
