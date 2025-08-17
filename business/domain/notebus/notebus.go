@@ -121,6 +121,10 @@ func (b *Business) Update(ctx context.Context, nte Note, un UpdateNote) (Note, e
 	ctx, span := otel.AddSpan(ctx, "business.notebus.update")
 	defer span.End()
 
+	if un.Version-nte.Version != 1 {
+		return Note{}, fmt.Errorf("update: trying to update stale version. Current version is %d but trying to update to %d", nte.Version, un.Version)
+	}
+
 	if un.Title != nil {
 		nte.Title = *un.Title
 	}
