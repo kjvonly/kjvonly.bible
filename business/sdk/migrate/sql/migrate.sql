@@ -86,10 +86,6 @@ CREATE TABLE audit (
 CREATE TABLE notes (
     note_id             UUID        NOT NULL,
     user_id             UUID        NOT NULL,
-    offline_id          UUID        NOT NULL,
-    type                TEXT        NOT NULL,
-    bcv                 TEXT        NOT NULL,
-    chapter_key         TEXT        NOT NULL,
     book_id             INT         NOT NULL,
     chapter             INT         NOT NULL,
     verse               INT         NOT NULL,

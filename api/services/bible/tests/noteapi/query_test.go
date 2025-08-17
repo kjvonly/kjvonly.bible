@@ -56,12 +56,13 @@ func query400(sd apitest.SeedData) []apitest.Table {
 	table := []apitest.Table{
 		{
 			Name:       "bad-query-filter",
-			URL:        "/v1/notes?page=1&rows=10&type=bungalow",
+			URL:        "/v1/notes?page=1&rows=10&note_id=0000-00000",
 			Token:      sd.Users[0].Token,
 			StatusCode: http.StatusBadRequest,
 			Method:     http.MethodGet,
 			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.InvalidArgument, "[{\"field\":\"type\",\"error\":\"invalid note type \\\"bungalow\\\"\"}]"),
+			ExpResp:    errs.Newf(errs.InvalidArgument, `[{"field":"note_id","error":"invalid UUID length: 10"}]`),
+
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)
 			},

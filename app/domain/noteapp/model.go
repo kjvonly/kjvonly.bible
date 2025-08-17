@@ -10,7 +10,6 @@ import (
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mid"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
-	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
 // Tag represents a tag.
@@ -25,10 +24,10 @@ type Tag struct {
 type Note struct {
 	ID          string `json:"id"`
 	UserID      string `json:"userID"`
-	OfflineID   string `json:"offlineID"`
-	Type        string `json:"type"`
-	BCV         string `json:"bcv"`
-	ChapterKey  string `json:"chapterKey"`
+	BookID      int    `json:"bookID"`
+	Chapter     int    `json:"chapter"`
+	Verse       int    `json:"verse"`
+	WordIndex   int    `json:"wordIndex"`
 	Title       string `json:"title"`
 	Html        string `json:"html"`
 	Text        string `json:"text"`
@@ -61,10 +60,10 @@ func toAppNote(nte notebus.Note) Note {
 	return Note{
 		ID:          nte.ID.String(),
 		UserID:      nte.UserID.String(),
-		OfflineID:   nte.OfflineID.String(),
-		Type:        nte.Type.String(),
-		BCV:         nte.BCV,
-		ChapterKey:  nte.ChapterKey,
+		BookID:      nte.BookID,
+		Chapter:     nte.Chapter,
+		Verse:       nte.Verse,
+		WordIndex:   nte.WordIndex,
 		Title:       nte.Title,
 		Html:        nte.Html,
 		Text:        nte.Text,
@@ -87,14 +86,14 @@ func toAppNotes(notes []notebus.Note) []Note {
 
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
-	OfflineID  string `json:"offlineID" validate:"required,uuid"`
-	Type       string `json:"type" validate:"required"`
-	ChapterKey string `json:"chapterKey" validate:"required"`
-	BCV        string `json:"bcv"`
-	Title      string `json:"title"`
-	Html       string `json:"html"`
-	Text       string `json:"text"`
-	Tags       []Tag  `json:"tags" validate:"dive"`
+	BookID    int
+	Chapter   int
+	Verse     int
+	WordIndex int
+	Title     string `json:"title" validate:"required"`
+	Html      string `json:"html" validate:"required"`
+	Text      string `json:"text" validate:"required"`
+	Tags      []Tag  `json:"tags" validate:"dive"`
 }
 
 // Decode implements the decoder interface.
@@ -135,26 +134,16 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 		return notebus.NewNote{}, fmt.Errorf("getuserid: %w", err)
 	}
 
-	typ, err := notetype.Parse(app.Type)
-	if err != nil {
-		return notebus.NewNote{}, fmt.Errorf("parse: %w", err)
-	}
-
-	offlineID, err := uuid.ParseBytes([]byte(app.OfflineID))
-	if err != nil {
-		return notebus.NewNote{}, fmt.Errorf("getofflineid: %w", err)
-	}
-
 	bus := notebus.NewNote{
-		UserID:     userID,
-		OfflineID:  offlineID,
-		Type:       typ,
-		BCV:        app.BCV,
-		ChapterKey: app.ChapterKey,
-		Title:      app.Title,
-		Html:       app.Html,
-		Text:       app.Text,
-		Tags:       toBusTags(app.Tags),
+		UserID:    userID,
+		BookID:    app.BookID,
+		Chapter:   app.Chapter,
+		Verse:     app.Verse,
+		WordIndex: app.WordIndex,
+		Title:     app.Title,
+		Html:      app.Html,
+		Text:      app.Text,
+		Tags:      toBusTags(app.Tags),
 	}
 
 	return bus, nil
@@ -186,17 +175,7 @@ func (app UpdateNote) Validate() error {
 }
 
 func toBusUpdateNote(app UpdateNote) (notebus.UpdateNote, error) {
-	var t notetype.NoteType
-	if app.Type != nil {
-		var err error
-		t, err = notetype.Parse(*app.Type)
-		if err != nil {
-			return notebus.UpdateNote{}, fmt.Errorf("parse: %w", err)
-		}
-	}
-
 	bus := notebus.UpdateNote{
-		Type:  &t,
 		Title: app.Title,
 		Html:  app.Html,
 		Text:  app.Text,

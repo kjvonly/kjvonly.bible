@@ -98,16 +98,12 @@ func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 	now := time.Now()
 
 	nte := Note{
-		ID:         uuid.New(),
-		UserID:     nn.UserID,
-		OfflineID:  nn.OfflineID,
-		Type:       nn.Type,
-		Tags:       nn.Tags,
-		BCV:        nn.BCV,
-		ChapterKey: nn.ChapterKey,
-		Title:      nn.Title,
-		Html:       nn.Html,
-		Text:       nn.Text,
+		ID:     uuid.New(),
+		UserID: nn.UserID,
+		Tags:   nn.Tags,
+		Title:  nn.Title,
+		Html:   nn.Html,
+		Text:   nn.Text,
 
 		DateCreated: now,
 		DateUpdated: now,
@@ -124,11 +120,6 @@ func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 func (b *Business) Update(ctx context.Context, nte Note, un UpdateNote) (Note, error) {
 	ctx, span := otel.AddSpan(ctx, "business.notebus.update")
 	defer span.End()
-
-	if un.Type != nil {
-
-		nte.Type = *un.Type
-	}
 
 	if un.Title != nil {
 		nte.Title = *un.Title

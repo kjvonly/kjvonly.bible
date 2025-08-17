@@ -20,11 +20,13 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.NewNote{
-				Type:       "private",
-				ChapterKey: "0_0_0_0",
-				OfflineID:  "747760c7-0fcf-49fe-a204-28c3fc0ffabc",
-				Html:       "<h1>Christ is King!</h1>",
-				Text:       "Christ is King!",
+				BookID:    0,
+				Chapter:   0,
+				Verse:     0,
+				WordIndex: 0,
+				Title:     "Chirst is King",
+				Html:      "<h1>Christ is King!</h1>",
+				Text:      "Christ is King!",
 				Tags: []noteapp.Tag{
 					{
 						ID:          uuid.UUID{}.String(),
@@ -35,12 +37,14 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
-				UserID:     sd.Users[0].ID.String(),
-				OfflineID:  "747760c7-0fcf-49fe-a204-28c3fc0ffabc",
-				Type:       "private",
-				ChapterKey: "0_0_0_0",
-				Html:       "<h1>Christ is King!</h1>",
-				Text:       "Christ is King!",
+				UserID:    sd.Users[0].ID.String(),
+				BookID:    0,
+				Chapter:   0,
+				Verse:     0,
+				WordIndex: 0,
+				Title:     "Chirst is King",
+				Html:      "<h1>Christ is King!</h1>",
+				Text:      "Christ is King!",
 				Tags: []noteapp.Tag{
 					{
 						ID:          uuid.UUID{}.String(),
@@ -80,24 +84,8 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input:      &noteapp.NewNote{},
 			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"offlineID","error":"offlineID is a required field"},{"field":"type","error":"type is a required field"},{"field":"chapterKey","error":"chapterKey is a required field"}]`),
-			CmpFunc: func(got any, exp any) string {
-				return cmp.Diff(got, exp)
-			},
-		},
-		{
-			Name:       "bad-type",
-			URL:        "/v1/notes",
-			Token:      sd.Users[0].Token,
-			Method:     http.MethodPost,
-			StatusCode: http.StatusBadRequest,
-			Input: &noteapp.NewNote{
-				Type:       "BAD TYPE",
-				ChapterKey: "0_0_0_0",
-				OfflineID:  uuid.NewString(),
-			},
-			GotResp: &errs.Error{},
-			ExpResp: errs.Newf(errs.InvalidArgument, "parse: invalid note type \"BAD TYPE\""),
+			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"title","error":"title is a required field"},{"field":"html","error":"html is a required field"},{"field":"text","error":"text is a required field"}]`),
+
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)
 			},

@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
-	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
 type queryParams struct {
@@ -30,7 +29,6 @@ func parseQueryParams(r *http.Request) queryParams {
 		OrderBy:          values.Get("orderBy"),
 		ID:               values.Get("note_id"),
 		UserID:           values.Get("user_id"),
-		Type:             values.Get("type"),
 		StartCreatedDate: values.Get("start_created_date"),
 		EndCreatedDate:   values.Get("end_created_date"),
 	}
@@ -59,16 +57,6 @@ func parseFilter(qp queryParams) (notebus.QueryFilter, error) {
 			filter.UserID = &id
 		default:
 			fieldErrors.Add("user_id", err)
-		}
-	}
-
-	if qp.Type != "" {
-		typ, err := notetype.Parse(qp.Type)
-		switch err {
-		case nil:
-			filter.Type = &typ
-		default:
-			fieldErrors.Add("type", err)
 		}
 	}
 

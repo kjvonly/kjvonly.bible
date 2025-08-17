@@ -21,7 +21,6 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPut,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.UpdateNote{
-				Type:  dbtest.StringPointer("private"),
 				Title: dbtest.StringPointer("Updated Title"),
 				Html:  dbtest.StringPointer("Updated HTML"),
 				Text:  dbtest.StringPointer("Updated Text"),
@@ -30,8 +29,6 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			ExpResp: &noteapp.Note{
 				ID:          sd.Users[0].Notes[0].ID.String(),
 				UserID:      sd.Users[0].ID.String(),
-				OfflineID:   sd.Users[0].Notes[0].OfflineID.String(),
-				Type:        "private",
 				Title:       "Updated Title",
 				Html:        "Updated HTML",
 				Text:        "Updated Text",
@@ -71,21 +68,6 @@ func update400(sd apitest.SeedData) []apitest.Table {
 			},
 			GotResp: &errs.Error{},
 			ExpResp: errs.Newf(errs.InvalidArgument, `validate: [{"field":"id","error":"id must be a valid UUID"}]`),
-			CmpFunc: func(got any, exp any) string {
-				return cmp.Diff(got, exp)
-			},
-		},
-		{
-			Name:       "bad-type",
-			URL:        fmt.Sprintf("/v1/notes/%s", sd.Users[0].Notes[0].ID),
-			Token:      sd.Users[0].Token,
-			Method:     http.MethodPut,
-			StatusCode: http.StatusBadRequest,
-			Input: &noteapp.UpdateNote{
-				Type: dbtest.StringPointer("BAD TYPE"),
-			},
-			GotResp: &errs.Error{},
-			ExpResp: errs.Newf(errs.InvalidArgument, "parse: invalid note type \"BAD TYPE\""),
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)
 			},

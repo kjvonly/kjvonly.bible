@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
 // Tag represents an tag.
@@ -18,10 +17,6 @@ type Tag struct {
 type Note struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
-	OfflineID   uuid.UUID
-	Type        notetype.NoteType
-	BCV         string
-	ChapterKey  string
 	BookID      int
 	Chapter     int
 	Verse       int
@@ -37,18 +32,14 @@ type Note struct {
 // NewNote is what we require from clients when adding a Note.
 type NewNote struct {
 	UserID    uuid.UUID
-	OfflineID uuid.UUID
-	Type      notetype.NoteType
-	// TODO move this to doc repo
-	// BCV aka Book Chapter Verse Joh 3:16
-	BCV string
-	// TODO move this to doc repo
-	// 50_3_16_0 50 is John ID, 3 is the chapter, 16 is the verse, 0 is the word index
-	ChapterKey string
-	Title      string
-	Html       string
-	Text       string
-	Tags       []Tag
+	BookID    int
+	Chapter   int
+	Verse     int
+	WordIndex int
+	Title     string
+	Html      string
+	Text      string
+	Tags      []Tag
 }
 
 // UpdateTags is what fields can be updated in the store.
@@ -63,7 +54,6 @@ type UpdateTags struct {
 // we do not want to use pointers to basic types but we make exception around
 // marshalling/unmarshalling.
 type UpdateNote struct {
-	Type  *notetype.NoteType
 	Title *string
 	Html  *string
 	Text  *string

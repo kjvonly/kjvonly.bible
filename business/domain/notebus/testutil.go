@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
 // TestGenerateNewNotes is a helper method for testing.
@@ -18,13 +17,7 @@ func TestGenerateNewNotes(n int, userID uuid.UUID) []NewNote {
 	for i := range n {
 		idx++
 
-		t := notetype.Private
-		if v := (idx + i) % 2; v == 0 {
-			t = notetype.Shared
-		}
-
 		nh := NewNote{
-			Type: t,
 			Tags: []Tag{
 				{
 					ID:          uuid.New(),
@@ -32,8 +25,7 @@ func TestGenerateNewNotes(n int, userID uuid.UUID) []NewNote {
 					DateCreated: time.Now(),
 				},
 			},
-			UserID:    userID,
-			OfflineID: uuid.New(),
+			UserID: userID,
 		}
 
 		newNtes[i] = nh

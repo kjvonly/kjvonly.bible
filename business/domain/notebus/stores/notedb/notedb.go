@@ -53,10 +53,6 @@ func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
         (
             note_id,
             user_id,
-			offline_id,
-            type,
-            bcv,
-            chapter_key,
 			book_id,
 			chapter,
 			verse,
@@ -72,10 +68,6 @@ func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
         (
             :note_id,
             :user_id,
-			:offline_id,
-            :type,
-            :bcv,
-            :chapter_key,
 			:book_id,
 			:chapter,
 			:verse,
@@ -126,9 +118,6 @@ func (s *Store) Update(ctx context.Context, nte notebus.Note) error {
     UPDATE
         notes
     SET
-        "type"          =   :type,
-        "bcv"           =   :bcv,
-        "chapter_key"   =   :chapter_key,
 		"book_id"		=	:book_id,
 		"chapter"		= 	:chapter,
 		"verse"			=	:verse,
@@ -163,10 +152,6 @@ func (s *Store) Query(ctx context.Context, filter notebus.QueryFilter, orderBy o
     SELECT
         note_id,
         user_id,
-		offline_id,
-        type,
-        bcv,
-        chapter_key,
 		book_id,
 		chapter,
 		verse,
@@ -239,10 +224,6 @@ func (s *Store) QueryByID(ctx context.Context, noteID uuid.UUID) (notebus.Note, 
     SELECT
         note_id,
         user_id,
-		offline_id,
-        type,
-        bcv,
-        chapter_key,
 		book_id,
 		chapter,
 		verse,
@@ -281,10 +262,6 @@ func (s *Store) QueryByUserID(ctx context.Context, userID uuid.UUID) ([]notebus.
 	SELECT
         note_id,
         user_id,
-		offline_id,
-        type,
-        bcv,
-        chapter_key,
 		book_id,
 		chapter,
 		verse,

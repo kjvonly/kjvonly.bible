@@ -8,16 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx/types"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
-	"github.com/kjvonly/kjvonly.bible/business/types/notetype"
 )
 
 type note struct {
 	ID          uuid.UUID      `db:"note_id"`
 	UserID      uuid.UUID      `db:"user_id"`
-	OfflineID   uuid.UUID      `db:"offline_id"`
-	Type        string         `db:"type"`
-	BCV         string         `db:"bcv"`
-	ChapterKey  string         `db:"chapter_key"`
 	BookID      int            `db:"book_id"`
 	Chapter     int            `db:"chapter"`
 	Verse       int            `db:"verse"`
@@ -39,10 +34,6 @@ func toDBNote(bus notebus.Note) (note, error) {
 	db := note{
 		ID:          bus.ID,
 		UserID:      bus.UserID,
-		OfflineID:   bus.OfflineID,
-		Type:        bus.Type.String(),
-		BCV:         bus.BCV,
-		ChapterKey:  bus.ChapterKey,
 		BookID:      bus.BookID,
 		Chapter:     bus.Chapter,
 		Verse:       bus.Verse,
@@ -59,10 +50,6 @@ func toDBNote(bus notebus.Note) (note, error) {
 }
 
 func toBusNote(db note) (notebus.Note, error) {
-	typ, err := notetype.Parse(db.Type)
-	if err != nil {
-		return notebus.Note{}, fmt.Errorf("parse type: %w", err)
-	}
 
 	var tags []notebus.Tag
 	if err := json.Unmarshal(db.Tags, &tags); err != nil {
@@ -72,10 +59,6 @@ func toBusNote(db note) (notebus.Note, error) {
 	bus := notebus.Note{
 		ID:          db.ID,
 		UserID:      db.UserID,
-		OfflineID:   db.OfflineID,
-		Type:        typ,
-		BCV:         db.BCV,
-		ChapterKey:  db.ChapterKey,
 		BookID:      db.BookID,
 		Chapter:     db.Chapter,
 		Verse:       db.Chapter,
