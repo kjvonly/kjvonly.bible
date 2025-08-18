@@ -1,0 +1,8 @@
+- ~~update note schema~~
+- ~~add notes app layer~~
+- ~~update note app layer models i.e. add missing struct variables~~
+- add version to note struct
+- remove chatper key from bus note struct
+- define offline sync workflow
+- in web app split decorations and notes. remove words object.`
+- determine how to store decorations and notes in database/indexdb

@@ -5,6 +5,7 @@ import (
 
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 )
@@ -14,6 +15,7 @@ type User struct {
 	userbus.User
 	Products []productbus.Product
 	Homes    []homebus.Home
+	Notes    []notebus.Note
 	Audits   []auditbus.Audit
 }
 

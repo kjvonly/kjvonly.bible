@@ -28,7 +28,7 @@ run this in the static/data/(json.gz|strongs.json.gz) directories in your dev en
 
 
 ```bash
-for i in $(ls -1); do zcat $i > ${i%%.gz} ; done 
+for i in $(ls -1); do zcat < $i > ${i%%.gz} ; done
 ```
 
 ```bash

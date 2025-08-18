@@ -24,6 +24,8 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus/stores/auditdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus/stores/homedb"
+	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/notebus/stores/notedb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus/stores/productdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
@@ -43,7 +45,7 @@ import (
 	Need to figure out timeouts for http service.
 */
 
-//go:embed static
+// //go:embed static
 var static embed.FS
 
 var build = "develop"
@@ -180,6 +182,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 	userBus := userbus.NewBusiness(log, delegate, userStorage, userOtelExt, userAuditExt)
 	productBus := productbus.NewBusiness(log, userBus, delegate, productdb.NewStore(log, db))
 	homeBus := homebus.NewBusiness(log, userBus, delegate, homedb.NewStore(log, db))
+	noteBus := notebus.NewBusiness(log, userBus, delegate, notedb.NewStore(log, db))
 	vproductBus := vproductbus.NewBusiness(vproductdb.NewStore(log, db))
 
 	// -------------------------------------------------------------------------
@@ -240,6 +243,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 			UserBus:     userBus,
 			ProductBus:  productBus,
 			HomeBus:     homeBus,
+			NoteBus:     noteBus,
 			VProductBus: vproductBus,
 		},
 		BibleConfig: mux.BibleConfig{

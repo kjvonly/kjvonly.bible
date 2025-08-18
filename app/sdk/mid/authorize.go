@@ -6,14 +6,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 	"github.com/kjvonly/kjvonly.bible/foundation/web"
-	"github.com/google/uuid"
 )
 
 // ErrInvalidID represents a condition where the id is not a uuid.
@@ -187,6 +188,61 @@ func AuthorizeHome(client *authclient.Client, homeBus *homebus.Business) web.Mid
 
 				userID = hme.UserID
 				ctx = setHome(ctx, hme)
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+
+			auth := authclient.Authorize{
+				Claims: GetClaims(ctx),
+				UserID: userID,
+				Rule:   auth.RuleAdminOrSubject,
+			}
+
+			if err := client.Authorize(ctx, auth); err != nil {
+				return errs.New(errs.Unauthenticated, err)
+			}
+
+			return next(ctx, r)
+		}
+
+		return h
+	}
+
+	return m
+}
+
+// TODO update when sharing notes is implemented.
+// AuthorizeNote executes the specified role and extracts the specified
+// note from the DB if a note id is specified in the call. Depending on
+// the rule specified, the userid from the claims may be compared with the
+// specified user id from the note.
+func AuthorizeNote(client *authclient.Client, noteBus *notebus.Business) web.MidFunc {
+	m := func(next web.HandlerFunc) web.HandlerFunc {
+		h := func(ctx context.Context, r *http.Request) web.Encoder {
+			id := web.Param(r, "note_id")
+
+			var userID uuid.UUID
+
+			if id != "" {
+				var err error
+				noteID, err := uuid.Parse(id)
+				if err != nil {
+					return errs.New(errs.Unauthenticated, ErrInvalidID)
+				}
+
+				nte, err := noteBus.QueryByID(ctx, noteID)
+				if err != nil {
+					switch {
+					case errors.Is(err, notebus.ErrNotFound):
+						return errs.New(errs.Unauthenticated, err)
+					default:
+						return errs.Newf(errs.Unauthenticated, "querybyid: noteID[%s]: %s", noteID, err)
+					}
+				}
+
+				userID = nte.UserID
+				ctx = setNote(ctx, nte)
 			}
 
 			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
