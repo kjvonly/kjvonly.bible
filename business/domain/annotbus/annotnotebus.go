@@ -32,7 +32,7 @@ type Storer interface {
 	Delete(ctx context.Context, ant Annot) error
 	Query(ctx context.Context, filter QueryFilter, orderBy order.By, page page.Page) ([]Annot, error)
 	Count(ctx context.Context, filter QueryFilter) (int, error)
-	QueryByID(ctx context.Context, annotID uuid.UUID) (Annot, error)
+	QueryByID(ctx context.Context, userID uuid.UUID, bookID int, chapter int) (Annot, error)
 	QueryByUserID(ctx context.Context, userID uuid.UUID) ([]Annot, error)
 }
 
@@ -82,13 +82,13 @@ func (b *Business) NewWithTx(tx sqldb.CommitRollbacker) (*Business, error) {
 }
 
 // Create adds a new annot to the system.
-func (b *Business) Create(ctx context.Context, nn NewAnnot) (Annot, error) {
+func (b *Business) Create(ctx context.Context, na NewAnnot) (Annot, error) {
 	ctx, span := otel.AddSpan(ctx, "business.annotbus.create")
 	defer span.End()
 
-	usr, err := b.userBus.QueryByID(ctx, nn.UserID)
+	usr, err := b.userBus.QueryByID(ctx, na.UserID)
 	if err != nil {
-		return Annot{}, fmt.Errorf("user.querybyid: %s: %w", nn.UserID, err)
+		return Annot{}, fmt.Errorf("user.querybyid: %s: %w", na.UserID, err)
 	}
 
 	if !usr.Enabled {
@@ -98,13 +98,11 @@ func (b *Business) Create(ctx context.Context, nn NewAnnot) (Annot, error) {
 	now := time.Now()
 
 	ant := Annot{
-		ID:          uuid.New(),
-		UserID:      nn.UserID,
-		Tags:        nn.Tags,
-		Title:       nn.Title,
-		Html:        nn.Html,
-		Text:        nn.Text,
-		Version:     nn.Version,
+		UserID:      na.UserID,
+		Annots:      na.Annots,
+		BookID:      na.BookID,
+		Chapter:     na.Chapter,
+		Version:     na.Version,
 		DateCreated: now,
 		DateUpdated: now,
 	}
@@ -127,18 +125,8 @@ func (b *Business) Update(ctx context.Context, ant Annot, ua UpdateAnnot) (Annot
 
 	ant.Version = ua.Version
 
-	if ua.Title != nil {
-		ant.Title = *ua.Title
-	}
-	if ua.Html != nil {
-		ant.Html = *ua.Html
-	}
-	if ua.Text != nil {
-		ant.Text = *ua.Text
-	}
-
-	if ua.Tags != nil {
-		ant.Tags = ua.Tags
+	if ua.Annots != nil {
+		ant.Annots = ua.Annots
 	}
 
 	ant.DateUpdated = time.Now()
@@ -184,13 +172,13 @@ func (b *Business) Count(ctx context.Context, filter QueryFilter) (int, error) {
 }
 
 // QueryByID finds the annot by the specified ID.
-func (b *Business) QueryByID(ctx context.Context, annotID uuid.UUID) (Annot, error) {
+func (b *Business) QueryByID(ctx context.Context, userID uuid.UUID, bookID int, chapter int) (Annot, error) {
 	ctx, span := otel.AddSpan(ctx, "business.annotbus.querybyid")
 	defer span.End()
 
-	ant, err := b.storer.QueryByID(ctx, annotID)
+	ant, err := b.storer.QueryByID(ctx, userID, bookID, chapter)
 	if err != nil {
-		return Annot{}, fmt.Errorf("query: annotID[%s]: %w", annotID, err)
+		return Annot{}, fmt.Errorf("query: userID[%s] bookID[%d] chapter[%d]: %w", userID, bookID, chapter, err)
 	}
 
 	return ant, nil

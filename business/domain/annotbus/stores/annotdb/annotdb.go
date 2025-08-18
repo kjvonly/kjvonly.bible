@@ -51,32 +51,20 @@ func (s *Store) Create(ctx context.Context, ant annotbus.Annot) error {
 	const q = `
     INSERT INTO annots
         (
-            annot_id,
             user_id,
 			book_id,
 			chapter,
-			verse,
-			word_index,
-            html,
-            text,
-            title,
-            tags,
+            annots,
 			version,
             date_created,
             date_updated
 		)
     VALUES
         (
-            :annot_id,
             :user_id,
 			:book_id,
 			:chapter,
-			:verse,
-			:word_index,
-            :html,
-            :text,
-            :title,
-            :tags,
+            :annots,
 			:version,
             :date_created,
             :date_updated
@@ -96,16 +84,20 @@ func (s *Store) Create(ctx context.Context, ant annotbus.Annot) error {
 // Delete removes a annot from the database.
 func (s *Store) Delete(ctx context.Context, ant annotbus.Annot) error {
 	data := struct {
-		ID string `db:"annot_id"`
+		UserID  string `db:"user_id"`
+		BookID  int    `db:"book_id"`
+		Chapter int    `db:"chapter"`
 	}{
-		ID: ant.ID.String(),
+		UserID:  ant.UserID.String(),
+		BookID:  ant.BookID,
+		Chapter: ant.Chapter,
 	}
 
 	const q = `
     DELETE FROM
 	    annots
 	WHERE
-	  	annot_id = :annot_id`
+	  	user_id = :user_id AND book_id = :book_id AND chapter = :chapter`
 
 	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, data); err != nil {
 		return fmt.Errorf("namedexeccontext: %w", err)
@@ -120,18 +112,14 @@ func (s *Store) Update(ctx context.Context, ant annotbus.Annot) error {
     UPDATE
         annots
     SET
+	    "user_id".      =   :user_id,
 		"book_id"		=	:book_id,
 		"chapter"		= 	:chapter,
-		"verse"			=	:verse,
-		"word_index"	=	:word_index,
-        "html"          =   :html,
-        "text"          =   :text,
-        "title"         =   :title,
-        "tags"          =   :tags,
+        "annots"          = :annots,
 		"version"		=	:version,
         "date_updated"  =   :date_updated
     WHERE
-        annot_id = :annot_id`
+        user_id = :user_id AND book_id = :book_id AND chapter = :chapter`
 
 	dbNte, err := toDBAnnot(ant)
 	if err != nil {
@@ -153,16 +141,10 @@ func (s *Store) Query(ctx context.Context, filter annotbus.QueryFilter, orderBy 
 
 	const q = `
     SELECT
-        annot_id,
         user_id,
 		book_id,
 		chapter,
-		verse,
-		word_index,
-        html,
-        text,
-        title,
-        tags,
+        anots,
 		version,
         date_created,
         date_updated
@@ -217,32 +199,30 @@ func (s *Store) Count(ctx context.Context, filter annotbus.QueryFilter) (int, er
 }
 
 // QueryByID gets the specified annot from the database.
-func (s *Store) QueryByID(ctx context.Context, annotID uuid.UUID) (annotbus.Annot, error) {
+func (s *Store) QueryByID(ctx context.Context, userID uuid.UUID, bookID int, chapter int) (annotbus.Annot, error) {
 	data := struct {
-		ID string `db:"annot_id"`
+		UserID  string `db:"user_id"`
+		BookID  int    `db:"book_id"`
+		Chapter int    `db:"chapter"`
 	}{
-		ID: annotID.String(),
+		UserID:  userID.String(),
+		BookID:  bookID,
+		Chapter: chapter,
 	}
 
 	const q = `
     SELECT
-        annot_id,
         user_id,
 		book_id,
 		chapter,
-		verse,
-		word_index,
-        html,
-        text,
-        title,
-        tags,
+        annots,
 		version,
         date_created,
         date_updated
     FROM
         annots
     WHERE
-        annot_id = :annot_id`
+        user_id = :user_id AND book_id = :book_id AND chapter = :chapter`
 
 	var dbNte annot
 	if err := sqldb.NamedQueryStruct(ctx, s.log, s.db, q, data, &dbNte); err != nil {
@@ -265,16 +245,10 @@ func (s *Store) QueryByUserID(ctx context.Context, userID uuid.UUID) ([]annotbus
 
 	const q = `
 	SELECT
-        annot_id,
         user_id,
 		book_id,
 		chapter,
-		verse,
-		word_index,
-        html,
-        text,
-        title,
-        tags,
+		annots,
 		version,
         date_created,
         date_updated

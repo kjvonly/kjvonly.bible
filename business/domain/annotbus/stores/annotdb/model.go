@@ -11,38 +11,26 @@ import (
 )
 
 type annot struct {
-	ID          uuid.UUID      `db:"annot_id"`
 	UserID      uuid.UUID      `db:"user_id"`
 	BookID      int            `db:"book_id"`
 	Chapter     int            `db:"chapter"`
-	Verse       int            `db:"verse"`
-	WordIndex   int            `db:"word_index"`
-	Html        string         `db:"html"`
-	Text        string         `db:"text"`
-	Title       string         `db:"title"`
-	Tags        types.JSONText `db:"tags"`
+	Annots      types.JSONText `db:"annots"`
 	Version     int            `db:"version"`
 	DateCreated time.Time      `db:"date_created"`
 	DateUpdated time.Time      `db:"date_updated"`
 }
 
 func toDBAnnot(bus annotbus.Annot) (annot, error) {
-	jsonTags, err := json.MarshalIndent(bus.Tags, "", "  ")
+	jsonAnnots, err := json.MarshalIndent(bus.Annots, "", "  ")
 	if err != nil {
 		return annot{}, fmt.Errorf("parse type: %w", err)
 	}
 
 	db := annot{
-		ID:          bus.ID,
 		UserID:      bus.UserID,
 		BookID:      bus.BookID,
 		Chapter:     bus.Chapter,
-		Verse:       bus.Verse,
-		WordIndex:   bus.WordIndex,
-		Title:       bus.Title,
-		Html:        bus.Html,
-		Text:        bus.Text,
-		Tags:        jsonTags,
+		Annots:      jsonAnnots,
 		Version:     bus.Version,
 		DateCreated: bus.DateCreated.UTC(),
 		DateUpdated: bus.DateUpdated.UTC(),
@@ -53,22 +41,16 @@ func toDBAnnot(bus annotbus.Annot) (annot, error) {
 
 func toBusAnnot(db annot) (annotbus.Annot, error) {
 
-	var tags []annotbus.Tag
-	if err := json.Unmarshal(db.Tags, &tags); err != nil {
+	var annots annotbus.Annots
+	if err := json.Unmarshal(db.Annots, &annots); err != nil {
 		return annotbus.Annot{}, fmt.Errorf("parse type: %w", err)
 	}
 
 	bus := annotbus.Annot{
-		ID:          db.ID,
 		UserID:      db.UserID,
 		BookID:      db.BookID,
 		Chapter:     db.Chapter,
-		Verse:       db.Chapter,
-		WordIndex:   db.WordIndex,
-		Title:       db.Title,
-		Html:        db.Html,
-		Text:        db.Text,
-		Tags:        tags,
+		Annots:      annots,
 		Version:     db.Version,
 		DateCreated: db.DateCreated.In(time.Local),
 		DateUpdated: db.DateUpdated.In(time.Local),

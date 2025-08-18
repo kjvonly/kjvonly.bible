@@ -3,8 +3,6 @@ package annotbus
 import (
 	"context"
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -13,19 +11,24 @@ import (
 func TestGenerateNewAnnots(n int, userID uuid.UUID) []NewAnnot {
 	newNtes := make([]NewAnnot, n)
 
-	idx := rand.Intn(10000)
+	idx := 2
 	for i := range n {
 		idx++
 
 		nh := NewAnnot{
-			Tags: []Tag{
-				{
-					ID:          uuid.New(),
-					Tag:         fmt.Sprintf("Address%d", idx),
-					DateCreated: time.Now(),
+			Annots: Annots{
+				16: {
+					1: {
+						Class: []string{"bg-highlighta"},
+					},
+					2: {
+						Class: []string{"bg-highlighta"},
+					},
 				},
 			},
 			UserID:  userID,
+			BookID:  50, // John
+			Chapter: idx,
 			Version: 1,
 		}
 

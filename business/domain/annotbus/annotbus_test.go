@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/dbtest"
@@ -112,7 +111,7 @@ func query(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 	ants = append(ants, sd.Users[0].Annots...)
 
 	sort.Slice(ants, func(i, j int) bool {
-		return ants[i].ID.String() <= ants[j].ID.String()
+		return ants[i].BookID*1000+ants[i].Chapter <= ants[j].BookID*1000+ants[j].Chapter
 	})
 
 	table := []unitest.Table{
@@ -152,7 +151,7 @@ func query(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 			Name:    "byid",
 			ExpResp: sd.Users[0].Annots[0],
 			ExcFunc: func(ctx context.Context) any {
-				resp, err := busDomain.Annot.QueryByID(ctx, sd.Users[0].Annots[0].ID)
+				resp, err := busDomain.Annot.QueryByID(ctx, sd.Users[0].Annots[0].UserID, sd.Users[0].Annots[0].BookID, sd.Users[0].Annots[0].Chapter)
 				if err != nil {
 					return err
 				}
@@ -189,18 +188,28 @@ func create(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 			Name: "basic",
 			ExpResp: annotbus.Annot{
 				UserID: sd.Users[0].ID,
-				Tags: []annotbus.Tag{
-					{
-						ID: uuid.UUID{},
+				Annots: annotbus.Annots{
+					16: {
+						1: {
+							Class: []string{"bg-highlighta"},
+						},
+						2: {
+							Class: []string{"bg-highlighta"},
+						},
 					},
 				},
 			},
 			ExcFunc: func(ctx context.Context) any {
 				nh := annotbus.NewAnnot{
 					UserID: sd.Users[0].ID,
-					Tags: []annotbus.Tag{
-						{
-							ID: uuid.UUID{},
+					Annots: annotbus.Annots{
+						16: {
+							1: {
+								Class: []string{"bg-highlighta"},
+							},
+							2: {
+								Class: []string{"bg-highlighta"},
+							},
 						},
 					},
 				}
@@ -220,7 +229,6 @@ func create(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 
 				expResp := exp.(annotbus.Annot)
 
-				expResp.ID = gotResp.ID
 				expResp.DateCreated = gotResp.DateCreated
 				expResp.DateUpdated = gotResp.DateUpdated
 
@@ -237,29 +245,33 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 		{
 			Name: "basic",
 			ExpResp: annotbus.Annot{
-				ID:        sd.Users[0].Annots[0].ID,
-				UserID:    sd.Users[0].ID,
-				BookID:    0,
-				Chapter:   0,
-				Verse:     0,
-				WordIndex: 0,
-				Tags: []annotbus.Tag{
-					{
-						ID:  uuid.UUID{},
-						Tag: "ABC",
+				UserID:  sd.Users[0].ID,
+				BookID:  50,
+				Chapter: 3,
+				Annots: annotbus.Annots{
+					16: {
+						1: {
+							Class: []string{"bg-highlighta"},
+						},
+						2: {
+							Class: []string{"bg-highlighta"},
+						},
 					},
-				},
-				Version:     2,
+				}, Version: 2,
 				DateCreated: sd.Users[0].Annots[0].DateCreated,
 				DateUpdated: sd.Users[0].Annots[0].DateCreated,
 			},
 			ExcFunc: func(ctx context.Context) any {
 				uh := annotbus.UpdateAnnot{
 					Version: 2,
-					Tags: []annotbus.Tag{
-						{
-							ID:  uuid.UUID{},
-							Tag: "ABC",
+					Annots: annotbus.Annots{
+						16: {
+							1: {
+								Class: []string{"bg-highlighta"},
+							},
+							2: {
+								Class: []string{"bg-highlighta"},
+							},
 						},
 					},
 				}
