@@ -249,11 +249,13 @@ func update(busDomain dbtest.BusDomain, sd unitest.SeedData) []unitest.Table {
 						Tag: "ABC",
 					},
 				},
+				Version:     2,
 				DateCreated: sd.Users[0].Notes[0].DateCreated,
 				DateUpdated: sd.Users[0].Notes[0].DateCreated,
 			},
 			ExcFunc: func(ctx context.Context) any {
 				uh := notebus.UpdateNote{
+					Version: 2,
 					Tags: []notebus.Tag{
 						{
 							ID:  uuid.UUID{},

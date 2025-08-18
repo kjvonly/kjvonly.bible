@@ -61,6 +61,7 @@ func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
             text,
             title,
             tags,
+			version,
             date_created,
             date_updated
 		)
@@ -76,6 +77,7 @@ func (s *Store) Create(ctx context.Context, nte notebus.Note) error {
             :text,
             :title,
             :tags,
+			:version,
             :date_created,
             :date_updated
 		)`
@@ -126,6 +128,7 @@ func (s *Store) Update(ctx context.Context, nte notebus.Note) error {
         "text"          =   :text,
         "title"         =   :title,
         "tags"          =   :tags,
+		"version"		=	:version,
         "date_updated"  =   :date_updated
     WHERE
         note_id = :note_id`
@@ -160,6 +163,7 @@ func (s *Store) Query(ctx context.Context, filter notebus.QueryFilter, orderBy o
         text,
         title,
         tags,
+		version,
         date_created,
         date_updated
 	FROM
@@ -232,6 +236,7 @@ func (s *Store) QueryByID(ctx context.Context, noteID uuid.UUID) (notebus.Note, 
         text,
         title,
         tags,
+		version,
         date_created,
         date_updated
     FROM
@@ -270,6 +275,7 @@ func (s *Store) QueryByUserID(ctx context.Context, userID uuid.UUID) ([]notebus.
         text,
         title,
         tags,
+		version,
         date_created,
         date_updated
 	FROM

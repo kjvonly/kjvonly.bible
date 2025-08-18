@@ -21,6 +21,7 @@ type note struct {
 	Text        string         `db:"text"`
 	Title       string         `db:"title"`
 	Tags        types.JSONText `db:"tags"`
+	Version     int            `db:"version"`
 	DateCreated time.Time      `db:"date_created"`
 	DateUpdated time.Time      `db:"date_updated"`
 }
@@ -42,6 +43,7 @@ func toDBNote(bus notebus.Note) (note, error) {
 		Html:        bus.Html,
 		Text:        bus.Text,
 		Tags:        jsonTags,
+		Version:     bus.Version,
 		DateCreated: bus.DateCreated.UTC(),
 		DateUpdated: bus.DateUpdated.UTC(),
 	}
@@ -67,6 +69,7 @@ func toBusNote(db note) (notebus.Note, error) {
 		Html:        db.Html,
 		Text:        db.Text,
 		Tags:        tags,
+		Version:     db.Version,
 		DateCreated: db.DateCreated.In(time.Local),
 		DateUpdated: db.DateUpdated.In(time.Local),
 	}

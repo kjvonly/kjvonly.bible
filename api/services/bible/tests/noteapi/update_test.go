@@ -21,9 +21,10 @@ func update200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPut,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.UpdateNote{
-				Title: dbtest.StringPointer("Updated Title"),
-				Html:  dbtest.StringPointer("Updated HTML"),
-				Text:  dbtest.StringPointer("Updated Text"),
+				Title:   dbtest.StringPointer("Updated Title"),
+				Html:    dbtest.StringPointer("Updated HTML"),
+				Text:    dbtest.StringPointer("Updated Text"),
+				Version: 2,
 			},
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
@@ -33,6 +34,7 @@ func update200(sd apitest.SeedData) []apitest.Table {
 				Title:           "Updated Title",
 				Html:            "Updated HTML",
 				Text:            "Updated Text",
+				Version:         2,
 				DateCreated:     sd.Users[0].Notes[0].DateCreated.Unix(),
 				DateUpdated:     sd.Users[0].Notes[0].DateCreated.Unix(),
 			},

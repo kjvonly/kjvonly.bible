@@ -94,6 +94,7 @@ CREATE TABLE notes (
     text                TEXT        NOT NULL,
     title               TEXT        NOT NULL,
     tags                JSON        NOT NULL,
+    version             INT        NOT NULL,
     date_created        TIMESTAMP   NOT NULL,
     date_updated        TIMESTAMP   NOT NULL,
 

@@ -98,13 +98,13 @@ func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 	now := time.Now()
 
 	nte := Note{
-		ID:     uuid.New(),
-		UserID: nn.UserID,
-		Tags:   nn.Tags,
-		Title:  nn.Title,
-		Html:   nn.Html,
-		Text:   nn.Text,
-
+		ID:          uuid.New(),
+		UserID:      nn.UserID,
+		Tags:        nn.Tags,
+		Title:       nn.Title,
+		Html:        nn.Html,
+		Text:        nn.Text,
+		Version:     nn.Version,
 		DateCreated: now,
 		DateUpdated: now,
 	}
@@ -124,6 +124,8 @@ func (b *Business) Update(ctx context.Context, nte Note, un UpdateNote) (Note, e
 	if un.Version-nte.Version != 1 {
 		return Note{}, fmt.Errorf("update: trying to update stale version. Current version is %d but trying to update to %d", nte.Version, un.Version)
 	}
+
+	nte.Version = un.Version
 
 	if un.Title != nil {
 		nte.Title = *un.Title

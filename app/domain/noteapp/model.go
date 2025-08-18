@@ -31,6 +31,7 @@ type Note struct {
 	Html            string `json:"html"`
 	Text            string `json:"text"`
 	Tags            []Tag  `json:"tags"`
+	Version         int    `json:"version"`
 	DateCreated     int64  `json:"dateCreated"`
 	DateUpdated     int64  `json:"dateUpdated"`
 }
@@ -64,6 +65,7 @@ func toAppNote(nte notebus.Note) Note {
 		Html:            nte.Html,
 		Text:            nte.Text,
 		Tags:            toAppTags(nte.Tags),
+		Version:         nte.Version,
 		DateCreated:     nte.DateCreated.Unix(),
 		DateUpdated:     nte.DateUpdated.Unix(),
 	}
@@ -87,6 +89,7 @@ type NewNote struct {
 	Html            string `json:"html" validate:"required"`
 	Text            string `json:"text" validate:"required"`
 	Tags            []Tag  `json:"tags" validate:"dive"`
+	Version         int    `json:"version" validate:"required"`
 }
 
 // Decode implements the decoder interface.
@@ -163,6 +166,7 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 		Html:      app.Html,
 		Text:      app.Text,
 		Tags:      toBusTags(app.Tags),
+		Version:   app.Version,
 	}
 
 	return bus, nil
@@ -172,11 +176,12 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 
 // UpdateNote defines the data needed to update a note.
 type UpdateNote struct {
-	Type  *string `json:"type"`
-	Title *string `json:"title"`
-	Html  *string `json:"html"`
-	Text  *string `json:"text"`
-	Tags  []Tag   `json:"tags" validate:"dive"`
+	Type    *string `json:"type"`
+	Title   *string `json:"title"`
+	Html    *string `json:"html"`
+	Text    *string `json:"text"`
+	Version int     `json:"version"`
+	Tags    []Tag   `json:"tags" validate:"dive"`
 }
 
 // Decode implements the decoder interface.
@@ -195,10 +200,11 @@ func (app UpdateNote) Validate() error {
 
 func toBusUpdateNote(app UpdateNote) (notebus.UpdateNote, error) {
 	bus := notebus.UpdateNote{
-		Title: app.Title,
-		Html:  app.Html,
-		Text:  app.Text,
-		Tags:  toBusTags(app.Tags),
+		Title:   app.Title,
+		Html:    app.Html,
+		Text:    app.Text,
+		Tags:    toBusTags(app.Tags),
+		Version: app.Version,
 	}
 	return bus, nil
 }

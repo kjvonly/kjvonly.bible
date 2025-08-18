@@ -27,6 +27,7 @@ func toAppNote(nte notebus.Note) noteapp.Note {
 		UserID:          nte.UserID.String(),
 		ReferenceVector: fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
 		Tags:            toAppTags(nte.Tags),
+		Version:         nte.Version,
 		DateCreated:     nte.DateCreated.Unix(),
 		DateUpdated:     nte.DateUpdated.Unix(),
 	}
