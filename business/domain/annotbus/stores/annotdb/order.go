@@ -1,15 +1,15 @@
-package notedb
+package annotdb
 
 import (
 	"fmt"
 
-	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/order"
 )
 
 var orderByFields = map[string]string{
-	notebus.OrderByID:     "note_id",
-	notebus.OrderByUserID: "user_id",
+	annotbus.OrderByID:     "annot_id",
+	annotbus.OrderByUserID: "user_id",
 }
 
 func orderByClause(orderBy order.By) (string, error) {

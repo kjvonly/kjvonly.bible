@@ -101,3 +101,23 @@ CREATE TABLE notes (
     PRIMARY KEY (note_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE annots (
+    annot_id             UUID        NOT NULL,
+    user_id             UUID        NOT NULL,
+    book_id             INT         NOT NULL,
+    chapter             INT         NOT NULL,
+    verse               INT         NOT NULL,
+    word_index          INT         NOT NULL,
+    html                TEXT        NOT NULL,
+    text                TEXT        NOT NULL,
+    title               TEXT        NOT NULL,
+    tags                JSON        NOT NULL,
+    version             INT        NOT NULL,
+    date_created        TIMESTAMP   NOT NULL,
+    date_updated        TIMESTAMP   NOT NULL,
+
+    PRIMARY KEY (annot_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+

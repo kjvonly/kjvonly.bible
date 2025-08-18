@@ -1,4 +1,4 @@
-package notebus
+package annotbus
 
 import "github.com/kjvonly/kjvonly.bible/business/sdk/order"
 

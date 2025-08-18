@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus/stores/annotdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus/stores/auditdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
@@ -29,6 +31,7 @@ type BusDomain struct {
 	Audit    *auditbus.Business
 	Home     *homebus.Business
 	Note     *notebus.Business
+	Annot    *annotbus.Business
 	Product  *productbus.Business
 	User     userbus.ExtBusiness
 	VProduct *vproductbus.Business
@@ -46,6 +49,7 @@ func newBusDomains(log *logger.Logger, db *sqlx.DB) BusDomain {
 	homeBus := homebus.NewBusiness(log, userBus, delegate, homedb.NewStore(log, db))
 
 	noteBus := notebus.NewBusiness(log, userBus, delegate, notedb.NewStore(log, db))
+	annotBus := annotbus.NewBusiness(log, userBus, delegate, annotdb.NewStore(log, db))
 
 	vproductBus := vproductbus.NewBusiness(vproductdb.NewStore(log, db))
 
@@ -54,6 +58,7 @@ func newBusDomains(log *logger.Logger, db *sqlx.DB) BusDomain {
 		Audit:    auditBus,
 		Home:     homeBus,
 		Note:     noteBus,
+		Annot:    annotBus,
 		Product:  productBus,
 		User:     userBus,
 		VProduct: vproductBus,
