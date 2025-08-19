@@ -10,9 +10,14 @@ import (
 func (s *Store) applyFilter(filter annotbus.QueryFilter, data map[string]any, buf *bytes.Buffer) {
 	var wc []string
 
-	if filter.ID != nil {
-		data["annot_id"] = filter.ID
-		wc = append(wc, "annot_id = :annot_id")
+	if filter.BookID != nil {
+		data["book_id"] = filter.BookID
+		wc = append(wc, "book_id = :book_id")
+	}
+
+	if filter.Chapter != nil {
+		data["chapter"] = filter.Chapter
+		wc = append(wc, "chapter = :chapter")
 	}
 
 	if filter.UserID != nil {

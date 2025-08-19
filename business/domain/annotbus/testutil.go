@@ -13,7 +13,7 @@ func TestGenerateNewAnnots(n int, userID uuid.UUID) []NewAnnot {
 
 	idx := 2
 	for i := range n {
-		idx++
+		idx += 1
 
 		nh := NewAnnot{
 			Annots: Annots{

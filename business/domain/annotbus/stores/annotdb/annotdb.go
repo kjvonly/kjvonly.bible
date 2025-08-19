@@ -112,10 +112,10 @@ func (s *Store) Update(ctx context.Context, ant annotbus.Annot) error {
     UPDATE
         annots
     SET
-	    "user_id".      =   :user_id,
+	    "user_id"      =   :user_id,
 		"book_id"		=	:book_id,
 		"chapter"		= 	:chapter,
-        "annots"          = :annots,
+        "annots"        =   :annots,
 		"version"		=	:version,
         "date_updated"  =   :date_updated
     WHERE
@@ -144,7 +144,7 @@ func (s *Store) Query(ctx context.Context, filter annotbus.QueryFilter, orderBy 
         user_id,
 		book_id,
 		chapter,
-        anots,
+        annots,
 		version,
         date_created,
         date_updated

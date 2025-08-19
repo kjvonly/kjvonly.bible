@@ -9,7 +9,8 @@ import (
 // QueryFilter holds the available fields a query can be filtered on.
 // We are using poiantr semantics because the With API mutates the value.
 type QueryFilter struct {
-	ID               *uuid.UUID
+	BookID           *int
+	Chapter          *int
 	UserID           *uuid.UUID
 	StartCreatedDate *time.Time
 	EndCreatedDate   *time.Time

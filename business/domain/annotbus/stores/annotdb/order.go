@@ -8,8 +8,8 @@ import (
 )
 
 var orderByFields = map[string]string{
-	annotbus.OrderByID:     "annot_id",
-	annotbus.OrderByUserID: "user_id",
+	annotbus.OrderByBookIDAndChapter: "book_id, chapter",
+	annotbus.OrderByUserID:           "user_id",
 }
 
 func orderByClause(orderBy order.By) (string, error) {
