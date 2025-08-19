@@ -22,6 +22,7 @@ import (
 
 // ErrInvalidID represents a condition where the id is not a uuid.
 var ErrInvalidID = errors.New("ID is not in its proper form")
+var ErrInvalidUserID = errors.New("UserID is not retrievable ")
 
 // Authorize validates authorization via the auth service.
 func Authorize(client *authclient.Client, rule string) web.MidFunc {
@@ -280,7 +281,10 @@ func AuthorizeAnnot(client *authclient.Client, annotBus *annotbus.Business) web.
 		h := func(ctx context.Context, r *http.Request) web.Encoder {
 			id := web.Param(r, "annot_id")
 
-			userID := GetSubjectID(ctx)
+			userID, err := GetUserID(ctx)
+			if err != nil {
+				return errs.New(errs.Unauthenticated, ErrInvalidUserID)
+			}
 
 			if id != "" {
 				var err error
@@ -311,7 +315,6 @@ func AuthorizeAnnot(client *authclient.Client, annotBus *annotbus.Business) web.
 					}
 				}
 
-				userID = ant.UserID
 				ctx = setAnnot(ctx, ant)
 			}
 

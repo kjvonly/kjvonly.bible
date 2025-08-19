@@ -29,6 +29,7 @@ func Routes(app *web.App, cfg Config) {
 
 	api := newApp(cfg.AnnotBus)
 
+	// TODO Fix rules
 	app.HandlerFunc(http.MethodGet, version, "/annots", api.query, authen, ruleAny)
 	app.HandlerFunc(http.MethodGet, version, "/annots/{annot_id}", api.queryByID, authen, ruleAuthorizeAnnot)
 	app.HandlerFunc(http.MethodPost, version, "/annots", api.create, authen, ruleUserOnly)

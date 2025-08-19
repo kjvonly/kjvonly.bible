@@ -29,6 +29,7 @@ func Routes(app *web.App, cfg Config) {
 
 	api := newApp(cfg.NoteBus)
 
+	// TODO Fix rules
 	app.HandlerFunc(http.MethodGet, version, "/notes", api.query, authen, ruleAny)
 	app.HandlerFunc(http.MethodGet, version, "/notes/{note_id}", api.queryByID, authen, ruleAuthorizeNote)
 	app.HandlerFunc(http.MethodPost, version, "/notes", api.create, authen, ruleUserOnly)

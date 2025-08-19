@@ -61,7 +61,7 @@ func (a *app) update(ctx context.Context, r *http.Request) web.Encoder {
 
 	updAnt, err := a.annotBus.Update(ctx, ant, uh)
 	if err != nil {
-		return errs.Newf(errs.Internal, "update: annotID[%s_%s] uh[%+v]: %s", ant.BookID, ant.Chapter, uh, err)
+		return errs.Newf(errs.Internal, "update: annotID[%d_%d] uh[%+v]: %s", ant.BookID, ant.Chapter, uh, err)
 	}
 
 	return toAppAnnot(updAnt)
@@ -74,7 +74,7 @@ func (a *app) delete(ctx context.Context, _ *http.Request) web.Encoder {
 	}
 
 	if err := a.annotBus.Delete(ctx, ant); err != nil {
-		return errs.Newf(errs.Internal, "delete: annotID[%s_%s]: %s", ant.BookID, ant.Chapter, err)
+		return errs.Newf(errs.Internal, "delete: annotID[%d_%d]: %s", ant.BookID, ant.Chapter, err)
 	}
 
 	return nil
