@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
@@ -36,6 +37,7 @@ const (
 	homeKey
 	trKey
 	noteKey
+	annotKey
 )
 
 func setClaims(ctx context.Context, claims auth.Claims) context.Context {
@@ -141,7 +143,21 @@ func setNote(ctx context.Context, nte notebus.Note) context.Context {
 func GetNote(ctx context.Context) (notebus.Note, error) {
 	v, ok := ctx.Value(noteKey).(notebus.Note)
 	if !ok {
-		return notebus.Note{}, errors.New("home not found in context")
+		return notebus.Note{}, errors.New("note not found in context")
+	}
+
+	return v, nil
+}
+
+func setAnnot(ctx context.Context, annot annotbus.Annot) context.Context {
+	return context.WithValue(ctx, annotKey, annot)
+}
+
+// GetNote returns the notes from the context.
+func GetAnnot(ctx context.Context) (annotbus.Annot, error) {
+	v, ok := ctx.Value(noteKey).(annotbus.Annot)
+	if !ok {
+		return annotbus.Annot{}, errors.New("annot not found in context")
 	}
 
 	return v, nil
