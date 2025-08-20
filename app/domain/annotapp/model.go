@@ -23,7 +23,6 @@ type Annots map[int]map[int]WordAnnots
 // TODO Add Validate rules. Min Max.
 // Annot represents information about an individual annot.
 type Annot struct {
-	ID              string `json:"id"`
 	UserID          string `json:"userID"`
 	ReferenceVector string `json:"chapter_key"`
 	Annots          Annots `json:"annots"`
@@ -38,10 +37,10 @@ func (app Annot) Encode() ([]byte, string, error) {
 	return data, "application/json", err
 }
 
-func toAppAnnot(nte annotbus.Annot) Annot {
-	var annots Annots
+func toAppAnnot(bus annotbus.Annot) Annot {
+	annots := make(map[int]map[int]WordAnnots)
 
-	for k1, v1 := range nte.Annots {
+	for k1, v1 := range bus.Annots {
 		for k2, v2 := range v1 {
 			annots[k1][k2] = WordAnnots{
 				Class: v2.Class,
@@ -50,12 +49,12 @@ func toAppAnnot(nte annotbus.Annot) Annot {
 	}
 
 	return Annot{
-		UserID:          nte.UserID.String(),
-		ReferenceVector: fmt.Sprintf("%d_%d", nte.BookID, nte.Chapter),
+		UserID:          bus.UserID.String(),
+		ReferenceVector: fmt.Sprintf("%d_%d", bus.BookID, bus.Chapter),
 		Annots:          annots,
-		Version:         nte.Version,
-		DateCreated:     nte.DateCreated.Unix(),
-		DateUpdated:     nte.DateUpdated.Unix(),
+		Version:         bus.Version,
+		DateCreated:     bus.DateCreated.Unix(),
+		DateUpdated:     bus.DateUpdated.Unix(),
 	}
 }
 

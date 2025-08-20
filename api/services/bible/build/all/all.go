@@ -2,6 +2,7 @@
 package all
 
 import (
+	"github.com/kjvonly/kjvonly.bible/app/domain/annotapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/auditapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/checkapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/homeapp"
@@ -40,6 +41,12 @@ func (add) Add(app *web.App, cfg mux.Config) {
 	noteapp.Routes(app, noteapp.Config{
 		Log:        cfg.Log,
 		NoteBus:    cfg.BusConfig.NoteBus,
+		AuthClient: cfg.BibleConfig.AuthClient,
+	})
+
+	annotapp.Routes(app, annotapp.Config{
+		Log:        cfg.Log,
+		AnnotBus:   cfg.BusConfig.AnnotBus,
 		AuthClient: cfg.BibleConfig.AuthClient,
 	})
 
