@@ -41,7 +41,7 @@ func toDBAnnot(bus annotbus.Annot) (annot, error) {
 
 func toBusAnnot(db annot) (annotbus.Annot, error) {
 
-	var annots annotbus.Annots
+	annots := annotbus.Annots{}
 	if err := json.Unmarshal(db.Annots, &annots); err != nil {
 		return annotbus.Annot{}, fmt.Errorf("parse type: %w", err)
 	}

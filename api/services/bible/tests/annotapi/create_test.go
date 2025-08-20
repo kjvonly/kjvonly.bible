@@ -18,7 +18,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &annotapp.NewAnnot{
-				ReferenceVector: "50_3",
+				ReferenceVector: "50_10",
 				Annots: annotapp.Annots{
 					16: {
 						0: annotapp.WordAnnots{
@@ -31,7 +31,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			GotResp: &annotapp.Annot{},
 			ExpResp: &annotapp.Annot{
 				UserID:          sd.Users[0].ID.String(),
-				ReferenceVector: "50_3",
+				ReferenceVector: "50_10",
 				Annots: annotapp.Annots{
 					16: {
 						0: annotapp.WordAnnots{

@@ -42,6 +42,10 @@ func toAppAnnot(bus annotbus.Annot) Annot {
 
 	for k1, v1 := range bus.Annots {
 		for k2, v2 := range v1 {
+			_, ok := annots[k1]
+			if !ok {
+				annots[k1] = map[int]WordAnnots{}
+			}
 			annots[k1][k2] = WordAnnots{
 				Class: v2.Class,
 			}
@@ -112,9 +116,13 @@ func toBusNewAnnot(ctx context.Context, app NewAnnot) (annotbus.NewAnnot, error)
 		return annotbus.NewAnnot{}, fmt.Errorf("parsechapter: %w", err)
 	}
 
-	var annots annotbus.Annots
+	annots := annotbus.Annots{}
 	for k1, v1 := range app.Annots {
 		for k2, v2 := range v1 {
+			_, ok := annots[k1]
+			if !ok {
+				annots[k1] = map[int]annotbus.WordAnnots{}
+			}
 			annots[k1][k2] = annotbus.WordAnnots{
 				Class: v2.Class,
 			}
