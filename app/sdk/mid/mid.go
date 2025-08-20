@@ -155,7 +155,7 @@ func setAnnot(ctx context.Context, annot annotbus.Annot) context.Context {
 
 // GetNote returns the notes from the context.
 func GetAnnot(ctx context.Context) (annotbus.Annot, error) {
-	v, ok := ctx.Value(noteKey).(annotbus.Annot)
+	v, ok := ctx.Value(annotKey).(annotbus.Annot)
 	if !ok {
 		return annotbus.Annot{}, errors.New("annot not found in context")
 	}

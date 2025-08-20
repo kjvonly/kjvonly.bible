@@ -271,11 +271,11 @@ func AuthorizeNote(client *authclient.Client, noteBus *notebus.Business) web.Mid
 	return m
 }
 
-// TODO update when sharing notes is implemented.
-// AuthorizeNote executes the specified role and extracts the specified
-// note from the DB if a note id is specified in the call. Depending on
-// the rule specified, the userid from the claims may be compared with the
-// specified user id from the note.
+// CORE NOTE: Breaks the existing pattern of calling the auth service.
+// Don't need to do that since annots are per user
+// a sharedannot service could be added in the future to allow
+// users to share annots with other users but would go through
+// a different authorize func
 func AuthorizeAnnot(client *authclient.Client, annotBus *annotbus.Business) web.MidFunc {
 	m := func(next web.HandlerFunc) web.HandlerFunc {
 		h := func(ctx context.Context, r *http.Request) web.Encoder {
@@ -311,24 +311,11 @@ func AuthorizeAnnot(client *authclient.Client, annotBus *annotbus.Business) web.
 					case errors.Is(err, notebus.ErrNotFound):
 						return errs.New(errs.Unauthenticated, err)
 					default:
-						return errs.Newf(errs.Unauthenticated, "querybyid: bookID[%s] chapter[%s]: %s", bookID, chapter, err)
+						return errs.Newf(errs.Unauthenticated, "querybyid: bookID[%d] chapter[%d]: %s", bookID, chapter, err)
 					}
 				}
 
 				ctx = setAnnot(ctx, ant)
-			}
-
-			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-
-			auth := authclient.Authorize{
-				Claims: GetClaims(ctx),
-				UserID: userID,
-				Rule:   auth.RuleAdminOrSubject,
-			}
-
-			if err := client.Authorize(ctx, auth); err != nil {
-				return errs.New(errs.Unauthenticated, err)
 			}
 
 			return next(ctx, r)

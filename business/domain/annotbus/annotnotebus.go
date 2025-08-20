@@ -23,6 +23,14 @@ var (
 	ErrUserDisabled = errors.New("user disabled")
 )
 
+type ErrStaleVersion struct {
+	Message string
+}
+
+func (e ErrStaleVersion) Error() string {
+	return e.Message
+}
+
 // Storer interface declares the behaviour this package needs to persist and
 // retrieve data.
 type Storer interface {
@@ -120,7 +128,9 @@ func (b *Business) Update(ctx context.Context, ant Annot, ua UpdateAnnot) (Annot
 	defer span.End()
 
 	if ua.Version-ant.Version != 1 {
-		return Annot{}, fmt.Errorf("update: trying to update stale version. Current version is %d but trying to update to %d", ant.Version, ua.Version)
+		err := ErrStaleVersion{}
+		err.Message = fmt.Sprintf("trying to update stale version. Current version is %d but trying to update to %d", ant.Version, ua.Version)
+		return Annot{}, err
 	}
 
 	ant.Version = ua.Version

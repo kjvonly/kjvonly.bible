@@ -1,8 +1,10 @@
 package annotapp
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +17,7 @@ type queryParams struct {
 	Rows             string
 	OrderBy          string
 	UserID           string
+	AnnotID          string
 	BookID           string
 	Chapter          string
 	Type             string
@@ -30,6 +33,7 @@ func parseQueryParams(r *http.Request) queryParams {
 		Rows:             values.Get("rows"),
 		OrderBy:          values.Get("orderBy"),
 		UserID:           values.Get("user_id"),
+		AnnotID:          values.Get("annot_id"),
 		BookID:           values.Get("book_id"),
 		Chapter:          values.Get("chapter"),
 		StartCreatedDate: values.Get("start_created_date"),
@@ -50,6 +54,34 @@ func parseFilter(qp queryParams) (annotbus.QueryFilter, error) {
 			filter.UserID = &id
 		default:
 			fieldErrors.Add("user_id", err)
+		}
+	}
+
+	if qp.AnnotID != "" {
+		bc := strings.Split(qp.AnnotID, "_")
+		if len(bc) != 2 {
+			fieldErrors.Add("annot_id", fmt.Errorf("should be length 2 but was %d", len(bc)))
+			return annotbus.QueryFilter{}, fieldErrors.ToError()
+		}
+
+		bookid, err := strconv.ParseInt(bc[0], 10, 0)
+		switch err {
+		case nil:
+			smallInt := int(bookid)
+			filter.BookID = &smallInt
+		default:
+			fieldErrors.Add("annot_id: book_id", err)
+			return annotbus.QueryFilter{}, fieldErrors.ToError()
+		}
+
+		chapter, err := strconv.ParseInt(bc[0], 10, 0)
+		switch err {
+		case nil:
+			smallInt := int(chapter)
+			filter.Chapter = &smallInt
+		default:
+			fieldErrors.Add("annot_id: chapter", err)
+			return annotbus.QueryFilter{}, fieldErrors.ToError()
 		}
 	}
 

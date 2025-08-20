@@ -62,7 +62,7 @@ func query400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Method:     http.MethodGet,
 			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.InvalidArgument, `[{"field":"annot_id","error":"invalid UUID length: 10"}]`),
+			ExpResp:    errs.Newf(errs.InvalidArgument, `[{"field":"annot_id","error":"should be length 2 but was 1"}]`),
 
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)

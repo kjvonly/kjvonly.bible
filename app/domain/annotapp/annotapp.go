@@ -3,6 +3,7 @@ package annotapp
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
@@ -49,7 +50,7 @@ func (a *app) update(ctx context.Context, r *http.Request) web.Encoder {
 		return errs.New(errs.InvalidArgument, err)
 	}
 
-	uh, err := toBusUpdateAnnot(app)
+	ua, err := toBusUpdateAnnot(app)
 	if err != nil {
 		return errs.New(errs.InvalidArgument, err)
 	}
@@ -59,9 +60,12 @@ func (a *app) update(ctx context.Context, r *http.Request) web.Encoder {
 		return errs.Newf(errs.Internal, "annot missing in context: %s", err)
 	}
 
-	updAnt, err := a.annotBus.Update(ctx, ant, uh)
+	updAnt, err := a.annotBus.Update(ctx, ant, ua)
 	if err != nil {
-		return errs.Newf(errs.Internal, "update: annotID[%d_%d] uh[%+v]: %s", ant.BookID, ant.Chapter, uh, err)
+		if errors.As(err, &annotbus.ErrStaleVersion{}) {
+			return errs.Newf(errs.InvalidArgument, "update: annotID[%d_%d]: %s", ant.BookID, ant.Chapter, err)
+		}
+		return errs.Newf(errs.Internal, "update: annotID[%d_%d] uh[%+v]: %s", ant.BookID, ant.Chapter, ua, err)
 	}
 
 	return toAppAnnot(updAnt)

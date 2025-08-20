@@ -20,7 +20,7 @@ func delete200(sd apitest.SeedData) []apitest.Table {
 		},
 		{
 			Name:       "asadmin",
-			URL:        fmt.Sprintf("/v1/annots/%d_%d", sd.Users[0].Annots[0].BookID, sd.Users[0].Annots[0].Chapter),
+			URL:        fmt.Sprintf("/v1/annots/%d_%d", sd.Admins[0].Annots[0].BookID, sd.Admins[0].Annots[0].Chapter),
 			Token:      sd.Admins[0].Token,
 			Method:     http.MethodDelete,
 			StatusCode: http.StatusNoContent,
@@ -52,18 +52,6 @@ func delete401(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusUnauthorized,
 			GotResp:    &errs.Error{},
 			ExpResp:    errs.Newf(errs.Unauthenticated, "authentication failed : bindings results[[{[true] map[x:false]}]] ok[true]"),
-			CmpFunc: func(got any, exp any) string {
-				return cmp.Diff(got, exp)
-			},
-		},
-		{
-			Name:       "wronguser",
-			URL:        fmt.Sprintf("/v1/annots/%d_%d", sd.Users[0].Annots[1].BookID, sd.Users[0].Annots[1].Chapter),
-			Token:      sd.Users[1].Token,
-			Method:     http.MethodDelete,
-			StatusCode: http.StatusUnauthorized,
-			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.Unauthenticated, "authorize: you are not authorized for that action, claims[[USER]] rule[rule_admin_or_subject]: rego evaluation failed : bindings results[[{[true] map[x:false]}]] ok[true]"),
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)
 			},

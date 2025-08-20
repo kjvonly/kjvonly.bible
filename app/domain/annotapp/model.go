@@ -163,9 +163,13 @@ func (app UpdateAnnot) Validate() error {
 }
 
 func toBusUpdateAnnot(app UpdateAnnot) (annotbus.UpdateAnnot, error) {
-	var annots annotbus.Annots
+	annots := annotbus.Annots{}
 	for k1, v1 := range app.Annots {
 		for k2, v2 := range v1 {
+			_, ok := annots[k1]
+			if !ok {
+				annots[k1] = map[int]annotbus.WordAnnots{}
+			}
 			annots[k1][k2] = annotbus.WordAnnots{
 				Class: v2.Class,
 			}
