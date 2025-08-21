@@ -84,6 +84,8 @@ func (a *app) delete(ctx context.Context, _ *http.Request) web.Encoder {
 	return nil
 }
 
+// CORE NOTE: We override or set userid query param here so that only users
+// can retreive their own annots from this endpoint.
 func (a *app) query(ctx context.Context, r *http.Request) web.Encoder {
 	qp := parseQueryParams(r)
 
