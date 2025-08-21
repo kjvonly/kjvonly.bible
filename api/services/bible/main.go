@@ -20,6 +20,8 @@ import (
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/debug"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mux"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus/stores/annotdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus/stores/auditdb"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
@@ -183,6 +185,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 	productBus := productbus.NewBusiness(log, userBus, delegate, productdb.NewStore(log, db))
 	homeBus := homebus.NewBusiness(log, userBus, delegate, homedb.NewStore(log, db))
 	noteBus := notebus.NewBusiness(log, userBus, delegate, notedb.NewStore(log, db))
+	annotBus := annotbus.NewBusiness(log, userBus, delegate, annotdb.NewStore(log, db))
 	vproductBus := vproductbus.NewBusiness(vproductdb.NewStore(log, db))
 
 	// -------------------------------------------------------------------------
@@ -244,6 +247,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 			ProductBus:  productBus,
 			HomeBus:     homeBus,
 			NoteBus:     noteBus,
+			AnnotBus:    annotBus,
 			VProductBus: vproductBus,
 		},
 		BibleConfig: mux.BibleConfig{

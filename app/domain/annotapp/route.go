@@ -1,4 +1,4 @@
-package noteapp
+package annotapp
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mid"
-	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
 	"github.com/kjvonly/kjvonly.bible/foundation/logger"
 	"github.com/kjvonly/kjvonly.bible/foundation/web"
 )
@@ -14,7 +14,7 @@ import (
 // Config contains all the mandatory systems required by handlers.
 type Config struct {
 	Log        *logger.Logger
-	NoteBus    *notebus.Business
+	AnnotBus   *annotbus.Business
 	AuthClient *authclient.Client
 }
 
@@ -25,14 +25,14 @@ func Routes(app *web.App, cfg Config) {
 	authen := mid.Authenticate(cfg.AuthClient)
 	ruleAny := mid.Authorize(cfg.AuthClient, auth.RuleAny)
 	ruleUserOnly := mid.Authorize(cfg.AuthClient, auth.RuleUserOnly)
-	ruleAuthorizeNote := mid.AuthorizeNote(cfg.AuthClient, cfg.NoteBus)
+	ruleAuthorizeAnnot := mid.AuthorizeAnnot(cfg.AuthClient, cfg.AnnotBus)
 
-	api := newApp(cfg.NoteBus)
+	api := newApp(cfg.AnnotBus)
 
 	// TODO Fix rules
-	app.HandlerFunc(http.MethodGet, version, "/notes", api.query, authen, ruleAny)
-	app.HandlerFunc(http.MethodGet, version, "/notes/{note_id}", api.queryByID, authen, ruleAuthorizeNote)
-	app.HandlerFunc(http.MethodPost, version, "/notes", api.create, authen, ruleUserOnly)
-	app.HandlerFunc(http.MethodPut, version, "/notes/{note_id}", api.update, authen, ruleAuthorizeNote)
-	app.HandlerFunc(http.MethodDelete, version, "/notes/{note_id}", api.delete, authen, ruleAuthorizeNote)
+	app.HandlerFunc(http.MethodGet, version, "/annots", api.query, authen, ruleAny)
+	app.HandlerFunc(http.MethodGet, version, "/annots/{annot_id}", api.queryByID, authen, ruleAuthorizeAnnot)
+	app.HandlerFunc(http.MethodPost, version, "/annots", api.create, authen, ruleUserOnly)
+	app.HandlerFunc(http.MethodPut, version, "/annots/{annot_id}", api.update, authen, ruleAuthorizeAnnot)
+	app.HandlerFunc(http.MethodDelete, version, "/annots/{annot_id}", api.delete, authen, ruleAuthorizeAnnot)
 }

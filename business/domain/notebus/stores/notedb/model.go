@@ -63,7 +63,7 @@ func toBusNote(db note) (notebus.Note, error) {
 		UserID:      db.UserID,
 		BookID:      db.BookID,
 		Chapter:     db.Chapter,
-		Verse:       db.Chapter,
+		Verse:       db.Verse,
 		WordIndex:   db.WordIndex,
 		Title:       db.Title,
 		Html:        db.Html,

@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/productbus"
@@ -19,6 +22,7 @@ import (
 
 // ErrInvalidID represents a condition where the id is not a uuid.
 var ErrInvalidID = errors.New("ID is not in its proper form")
+var ErrInvalidUserID = errors.New("UserID is not retrievable ")
 
 // Authorize validates authorization via the auth service.
 func Authorize(client *authclient.Client, rule string) web.MidFunc {
@@ -256,6 +260,62 @@ func AuthorizeNote(client *authclient.Client, noteBus *notebus.Business) web.Mid
 
 			if err := client.Authorize(ctx, auth); err != nil {
 				return errs.New(errs.Unauthenticated, err)
+			}
+
+			return next(ctx, r)
+		}
+
+		return h
+	}
+
+	return m
+}
+
+// CORE NOTE: Breaks the existing pattern of calling the auth service.
+// Don't need to do that since annots are per user
+// a sharedannot service could be added in the future to allow
+// users to share annots with other users but would go through
+// a different authorize func
+func AuthorizeAnnot(client *authclient.Client, annotBus *annotbus.Business) web.MidFunc {
+	m := func(next web.HandlerFunc) web.HandlerFunc {
+		h := func(ctx context.Context, r *http.Request) web.Encoder {
+			id := web.Param(r, "annot_id")
+
+			userID, err := GetUserID(ctx)
+			if err != nil {
+				return errs.New(errs.Unauthenticated, ErrInvalidUserID)
+			}
+
+			if id != "" {
+				var err error
+
+				annotID := strings.Split(id, "_")
+
+				if len(annotID) != 2 {
+					return errs.New(errs.Unauthenticated, ErrInvalidID)
+				}
+
+				bookID, err := strconv.ParseInt(annotID[0], 0, 0)
+				if err != nil {
+					return errs.New(errs.Unauthenticated, ErrInvalidID)
+				}
+
+				chapter, err := strconv.ParseInt(annotID[1], 0, 0)
+				if err != nil {
+					return errs.New(errs.Unauthenticated, ErrInvalidID)
+				}
+
+				ant, err := annotBus.QueryByID(ctx, userID, int(bookID), int(chapter))
+				if err != nil {
+					switch {
+					case errors.Is(err, notebus.ErrNotFound):
+						return errs.New(errs.Unauthenticated, err)
+					default:
+						return errs.Newf(errs.Unauthenticated, "querybyid: bookID[%d] chapter[%d]: %s", bookID, chapter, err)
+					}
+				}
+
+				ctx = setAnnot(ctx, ant)
 			}
 
 			return next(ctx, r)

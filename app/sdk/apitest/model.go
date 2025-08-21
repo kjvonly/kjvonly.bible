@@ -1,6 +1,7 @@
 package apitest
 
 import (
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
@@ -14,6 +15,7 @@ type User struct {
 	Products []productbus.Product
 	Homes    []homebus.Home
 	Notes    []notebus.Note
+	Annots   []annotbus.Annot
 	Audits   []auditbus.Audit
 	Token    string
 }

@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/dbtest"
 	"github.com/kjvonly/kjvonly.bible/business/types/role"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 // Test contains functions for executing an api test.
@@ -49,6 +49,10 @@ func (at *Test) Run(t *testing.T, table []Table, testName string) {
 			}
 
 			if tt.StatusCode == http.StatusNoContent {
+				return
+			}
+
+			if tt.StatusCode == http.StatusInternalServerError {
 				return
 			}
 

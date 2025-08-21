@@ -10,6 +10,7 @@ import (
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mid"
+	"github.com/kjvonly/kjvonly.bible/business/domain/annotbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/auditbus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/homebus"
 	"github.com/kjvonly/kjvonly.bible/business/domain/notebus"
@@ -70,6 +71,7 @@ type BusConfig struct {
 	ProductBus  *productbus.Business
 	HomeBus     *homebus.Business
 	NoteBus     *notebus.Business
+	AnnotBus    *annotbus.Business
 	VProductBus *vproductbus.Business
 }
 
