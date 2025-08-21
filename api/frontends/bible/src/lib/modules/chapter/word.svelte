@@ -22,7 +22,7 @@
 	$effect(() => {
 		annotations;
 		wordAnnotations = getWordAnnotations();
-		notesAnnotations = getNotesAnnotations();
+		//notesAnnotations = getNotesAnnotations();
 	});
 
 	$effect(() => {
@@ -56,23 +56,11 @@
 			return;
 		}
 
-		if (!annotations[verseNumber].decorations) {
+		if (!annotations[verseNumber][wordIdx]) {
 			return;
 		}
 
-		if (!annotations[verseNumber].decorations.words) {
-			return;
-		}
-
-		if (!annotations[verseNumber].decorations.words) {
-			return;
-		}
-
-		if (!annotations[verseNumber].decorations.words[wordIdx]) {
-			return;
-		}
-
-		return annotations[verseNumber].decorations.words[wordIdx];
+		return annotations[verseNumber][wordIdx];
 	}
 
 	function getNotesAnnotations() {
@@ -102,32 +90,20 @@
 
 	function initWordAnnotations(wordIndex: number) {
 		verseNumber = verse['number'];
+
 		if (!annotations[verseNumber]) {
 			annotations[verseNumber] = {};
 		}
 
-		if (!annotations[verseNumber].decorations) {
-			annotations[verseNumber].decorations = {};
+		if (!annotations[verseNumber][wordIndex]) {
+			annotations[verseNumber][wordIndex] = {};
 		}
 
-		if (!annotations[verseNumber].decorations.words) {
-			annotations[verseNumber].decorations.words = {};
+		if (!annotations[verseNumber][wordIndex].class) {
+			annotations[verseNumber][wordIndex].class = [];
 		}
 
-		if (!annotations[verseNumber].decorations.words) {
-			annotations[verseNumber].decorations.words = {};
-			annotations[verseNumber].decorations.words[wordIndex] = {};
-		}
-
-		if (!annotations[verseNumber].decorations.words[wordIndex]) {
-			annotations[verseNumber].decorations.words[wordIndex] = {};
-		}
-
-		if (!annotations[verseNumber].decorations.words[wordIndex].class) {
-			annotations[verseNumber].decorations.words[wordIndex].class = [];
-		}
-
-		return annotations[verseNumber].decorations.words[wordIndex];
+		return annotations[verseNumber][wordIndex];
 	}
 
 	function onWordClicked(e: Event, word: any) {
@@ -178,14 +154,14 @@
 		) {
 			wordAnnotations = annotations[verseNumber].decorations.words[wordIdx];
 		}
-		if (
-			annotations &&
-			annotations[verseNumber] &&
-			annotations[verseNumber].notes &&
-			annotations[verseNumber].notes.words
-		) {
-			notesAnnotations = annotations[verseNumber].notes.words[wordIdx];
-		}
+		// if (
+		// 	annotations &&
+		// 	annotations[verseNumber] &&
+		// 	annotations[verseNumber].notes &&
+		// 	annotations[verseNumber].notes.words
+		// ) {
+		// 	notesAnnotations = annotations[verseNumber].notes.words[wordIdx];
+		// }
 	});
 
 	let pressThresholdInMilliseconds = 1000;
