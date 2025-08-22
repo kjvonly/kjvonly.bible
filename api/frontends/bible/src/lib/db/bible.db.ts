@@ -88,6 +88,9 @@ export class BibleDB extends IndexedDB {
 
 	}
 
+
+	// TODO update syncs to be generic.
+	// implement a count call to index db to just return the count.
 	async syncChapters() {
 		let keys = await this.getAllKeys('chapters');
 		if (keys.length < TOTAL_CHAPTERS_KEYS) {

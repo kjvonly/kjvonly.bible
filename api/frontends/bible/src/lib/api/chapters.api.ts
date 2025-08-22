@@ -1,7 +1,6 @@
 import { api } from './api'
 import { bibleService } from '../db/bible.service';
 
-
 export class ChapterService {
 
     async getChapter(chapterKey: string): Promise<any> {
@@ -24,12 +23,10 @@ export class ChapterService {
         return chapter;
     }
 
-
     async getBooknames(): Promise<any> {
         let booknames = undefined;
 
         try {
-            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
             booknames = await bibleService.getValue('booknames', 'booknames')
 
         } catch (error) {
@@ -66,9 +63,7 @@ export class ChapterService {
         let strongs = undefined
 
         try {
-            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
             strongs = await bibleService.getValue('strongs', key)
-
         } catch (error) {
             console.log(`error getting chapter ${key} from indexdb: ${error}`)
         }
@@ -89,17 +84,11 @@ export class ChapterService {
         }
 
         try {
-            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
             annotations = await bibleService.getValue('annotations', chapterKey)
 
         } catch (error) {
             console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
         }
-
-        // update when/if storing remote
-        // if (chapter === undefined) {
-        //     return await api.get(`data/json.gz/${chapterKey}.json`);
-        // }
 
         if (annotations === undefined) {
             annotations = {
@@ -142,23 +131,16 @@ export class ChapterService {
     async getAllAnnotations(): Promise<any> {
         let data: any = undefined
         try {
-            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
-
             data = await bibleService.getAllValue('annotations')
-
         } catch (error) {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
-
         return data
-
     }
 
     async putAllAnnotations(objects: any): Promise<any> {
         try {
-            // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
             await bibleService.putBulkValue('annotations', objects)
-
         } catch (error) {
             console.log(`error importing all annotations from indexedDB: ${error}`)
         }
