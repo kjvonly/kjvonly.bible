@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 	import { onMount } from 'svelte';
 
 	let { mode = $bindable(), annotations = $bindable() } = $props();

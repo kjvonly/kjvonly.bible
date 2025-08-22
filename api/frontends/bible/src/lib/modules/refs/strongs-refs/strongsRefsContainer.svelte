@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 	import ChevronDown from '$lib/components/chevronDown.svelte';
 	import { bibleDB } from '$lib/db/bible.db';
 	import Search from '$lib/modules/search/search.svelte';

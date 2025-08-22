@@ -22,6 +22,13 @@ export class BibleDB extends IndexedDB {
 	ready: Promise<boolean | undefined> = new Promise((resolve, reject) => {
 		this.resolve = resolve;
 	});
+
+	/** 
+	 * isReady is a check to see if the cacheIsReady. 
+	 * This allows the caller to check this status to determine 
+	 * if they want to wait for the cache to sync or if they want 
+	 * to make a REST call to retrieve the data. 
+	 * */
 	isReady = false
 	worker: Worker | undefined = undefined
 

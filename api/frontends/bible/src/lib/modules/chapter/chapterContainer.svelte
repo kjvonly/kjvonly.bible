@@ -10,7 +10,7 @@
 	import type { Pane } from '$lib/models/pane.model';
 	import uuid4 from 'uuid4';
 	import EditOptions from './editOptions.svelte';
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 
 	type WordAnnots = {
 		class: string[];

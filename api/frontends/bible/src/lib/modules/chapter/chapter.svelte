@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 	import Verse from './verse.svelte';
 
 	let showChapter: boolean = $state(true);

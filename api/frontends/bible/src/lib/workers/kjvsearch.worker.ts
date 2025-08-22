@@ -1,4 +1,4 @@
-import { chapterService } from "$lib/api/chapters.service";
+import { chapterService } from "$lib/api/chapters.api";
 import { bibleDB } from "$lib/db/bible.db"
 import FlexSearch, { type Id } from 'flexsearch';
 

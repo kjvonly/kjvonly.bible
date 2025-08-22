@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';

@@ -1,5 +1,5 @@
 import { bibleDB } from '../db/bible.db';
-import { chapterService } from '../api/chapters.service';
+import { chapterService } from '../api/chapters.api';
 
 var chapters: string[] = [
 	'1_1',
