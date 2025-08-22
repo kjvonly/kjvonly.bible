@@ -52,15 +52,20 @@
 
 	function getWordAnnotations() {
 		verseNumber = verse['number'];
-		if (!annotations[verseNumber]) {
+
+		if (!annotations.annots) {
+			return;
+		}
+		
+		if (!annotations.annots[verseNumber]) {
 			return;
 		}
 
-		if (!annotations[verseNumber][wordIdx]) {
+		if (!annotations.annots[verseNumber][wordIdx]) {
 			return;
 		}
 
-		return annotations[verseNumber][wordIdx];
+		return annotations.annots[verseNumber][wordIdx];
 	}
 
 	function getNotesAnnotations() {
@@ -91,19 +96,19 @@
 	function initWordAnnotations(wordIndex: number) {
 		verseNumber = verse['number'];
 
-		if (!annotations[verseNumber]) {
-			annotations[verseNumber] = {};
+		if (!annotations.annots[verseNumber]) {
+			annotations.annots[verseNumber] = {};
 		}
 
-		if (!annotations[verseNumber][wordIndex]) {
-			annotations[verseNumber][wordIndex] = {};
+		if (!annotations.annots[verseNumber][wordIndex]) {
+			annotations.annots[verseNumber][wordIndex] = {};
 		}
 
-		if (!annotations[verseNumber][wordIndex].class) {
-			annotations[verseNumber][wordIndex].class = [];
+		if (!annotations.annots[verseNumber][wordIndex].class) {
+			annotations.annots[verseNumber][wordIndex].class = [];
 		}
 
-		return annotations[verseNumber][wordIndex];
+		return annotations.annots[verseNumber][wordIndex];
 	}
 
 	function onWordClicked(e: Event, word: any) {

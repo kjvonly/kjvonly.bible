@@ -24,7 +24,10 @@
 	}
 
 	async function onSave() {
-		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		let resp = await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		if(resp !== undefined) {
+			annotations.version = resp.version
+		}
 		mode.value = '';
 	}
 

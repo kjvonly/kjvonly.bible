@@ -148,7 +148,11 @@ export class ChapterService {
         // }
 
         if (annotations === undefined) {
-            annotations = { id: chapterKey }
+            annotations = {
+                id: chapterKey,
+                version: 0,
+                annots: {}
+            }
         }
         return annotations;
     }
@@ -156,10 +160,30 @@ export class ChapterService {
     async putAnnotations(data: any): Promise<any> {
         try {
             // chapter = await this.timeout(bibleDB.getValue('chapters', chapterKey), 1000)
+
+            // post to server
+            
+            data.version = data.version + 1
+
+            var result: Response
+
+            if (data.version == 1) {
+                result = await api.postapi('/annots', data)
+            } else {
+                result = await api.updateapi(`/annots/${data.id}`, data)
+            }
+
+            if (!result.ok) {
+                console.log(`error putting  ${data?.id} from indexedDB: ${JSON.stringify(await result.json())}`)
+                return
+            }
+
             if (bibleDB.isReady) {
                 await bibleDB.ready
                 await bibleDB.putValue('annotations', data)
             }
+
+            return result.json()
 
         } catch (error) {
             console.log(`error putting  ${data?.id} from indexedDB: ${error}`)
