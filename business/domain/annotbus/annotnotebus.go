@@ -31,6 +31,14 @@ func (e ErrStaleVersion) Error() string {
 	return e.Message
 }
 
+type ErrDuplicateEntry struct {
+	Message string
+}
+
+func (e ErrDuplicateEntry) Error() string {
+	return e.Message
+}
+
 // Storer interface declares the behaviour this package needs to persist and
 // retrieve data.
 type Storer interface {
@@ -116,6 +124,9 @@ func (b *Business) Create(ctx context.Context, na NewAnnot) (Annot, error) {
 	}
 
 	if err := b.storer.Create(ctx, ant); err != nil {
+		if errors.As(err, &ErrDuplicateEntry{}) {
+			return Annot{}, err
+		}
 		return Annot{}, fmt.Errorf("create: %w", err)
 	}
 

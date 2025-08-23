@@ -30,18 +30,22 @@ export class Api {
 
 
     // Temp function while combinding frontend to backend
-     async getapi(path: string) {
+     async getapi(path: string): Promise<Response> {
         const myHeaders = new Headers();
         myHeaders.append('Content-Type', 'application/json');
         myHeaders.append('Transfer-Encoding', 'gzip');
 
-        let response = await fetch(`${API_URL}${path}`,
+           let token = localStorage.getItem('token')
+        if (token !== undefined) {
+            myHeaders.append('Authorization',`Bearer ${token}`)
+        }
+
+        return await fetch(`${API_URL}${path}`,
             {
 				headers: myHeaders
 			}
         );
-        let data = await response.json();
-        return data;
+        
     }
 
     // Temp function while combinding frontend to backend

@@ -27,6 +27,7 @@
 		let resp = await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
 		if(resp !== undefined) {
 			annotations.version = resp.version
+			annotations = resp
 		}
 		mode.value = '';
 	}

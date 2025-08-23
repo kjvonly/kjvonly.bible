@@ -38,6 +38,9 @@ func (a *app) create(ctx context.Context, r *http.Request) web.Encoder {
 
 	ant, err := a.annotBus.Create(ctx, nt)
 	if err != nil {
+		if errors.As(err, &annotbus.ErrDuplicateEntry{}) {
+			return errs.Newf(errs.AlreadyExists, "create: ant[%+v]: %s", app, err)
+		}
 		return errs.Newf(errs.Internal, "create: ant[%+v]: %s", app, err)
 	}
 

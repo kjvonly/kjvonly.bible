@@ -45,7 +45,6 @@ export class BibleService {
     async putValue(objectStoreName: string, data: any): Promise<any> {
         await bibleDB.ready
         await bibleDB.putValue(objectStoreName, data)
-
     }
 
     /**
@@ -57,6 +56,17 @@ export class BibleService {
     async putBulkValue(objectStoreName: string, data: any): Promise<any> {
         await bibleDB.ready
         await bibleDB.putBulkValue(objectStoreName, data)
+    }
+
+        /**
+    * 
+    * @param objectStoreName 
+    * @param data to store. id variable of data is the key.
+    * @returns 
+    */
+    async deleteValue(objectStoreName: string, id: string): Promise<any> {
+        await bibleDB.ready
+        await bibleDB.deleteValue(objectStoreName, id)
     }
 
 }

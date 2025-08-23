@@ -1,6 +1,28 @@
 import { sleep } from '$lib/utils/sleep';
 import IndexedDB from './idb.db';
 
+
+export const enum STORES {
+	CHAPTERS,
+	BOOKNAMES,
+	STRONGS,
+	ANNOTATIONS,
+	NOTES,
+	SEARCH,
+	UNSYNCED_ANNOTATIONS,
+	UNSYNCED_NOTES
+}
+
+export const DB_NAME = 'bible'
+export const CHAPTERS = 'chapters'
+export const BOOKNAMES = 'booknames'
+export const STRONGS = 'strongs'
+export const ANNOTATIONS = 'annotations'
+export const NOTES = 'notes'
+export const SEARCH = 'search'
+export const UNSYNCED_ANNOTATIONS = 'unsynced_annotations'
+export const UNSYNCED_NOTES = 'unsynced_notes'
+
 /*
 * NOTE: github does not ungzip your files so we zcat them to .json on
 * build/deploy. do the same thing in your dev environment
@@ -33,23 +55,23 @@ export class BibleDB extends IndexedDB {
 	worker: Worker | undefined = undefined
 
 	constructor() {
-		super('bible');
+		super(DB_NAME);
 		this.createAndOrOpenObjectStores(
 			[
-				'chapters', 
-				'booknames', 
-				'strongs', 
-				'annotations', 
-				'notes', 
-				'search',
-				'staged_annotations',
-				'staged_notes'
+				CHAPTERS,
+				BOOKNAMES,
+				STRONGS,
+				ANNOTATIONS,
+				NOTES,
+				SEARCH,
+				UNSYNCED_ANNOTATIONS,
+				UNSYNCED_NOTES,
 			]);
 	}
 
 	async waitForSearchIndex(): Promise<boolean> {
 		while (1) {
-			let searchIndex = await this.getValue('search', 'v1');
+			let searchIndex = await this.getValue(SEARCH, 'v1');
 			if (
 				searchIndex
 			) {
@@ -92,16 +114,16 @@ export class BibleDB extends IndexedDB {
 	// TODO update syncs to be generic.
 	// implement a count call to index db to just return the count.
 	async syncChapters() {
-		let keys = await this.getAllKeys('chapters');
+		let keys = await this.getAllKeys(CHAPTERS);
 		if (keys.length < TOTAL_CHAPTERS_KEYS) {
-			this.worker?.postMessage({ sync: 'chapters' });
+			this.worker?.postMessage({ sync: CHAPTERS });
 
 			let retries = 0;
 			let retryMax = 10;
 
 			while (keys.length < TOTAL_CHAPTERS_KEYS || retries == retryMax) {
 				await sleep(1000);
-				keys = await this.getAllKeys('chapters');
+				keys = await this.getAllKeys(CHAPTERS);
 				retries = retries + 1;
 			}
 
@@ -114,10 +136,10 @@ export class BibleDB extends IndexedDB {
 	}
 
 	async syncBooknames() {
-		let keys = await this.getAllKeys('booknames');
+		let keys = await this.getAllKeys(BOOKNAMES);
 
 		if (keys.length < TOTAL_BOOKNAMES_KEYS) {
-			this.worker?.postMessage({ sync: 'booknames' });
+			this.worker?.postMessage({ sync: BOOKNAMES });
 
 			let retries = 0;
 			let retryMax = 10;
@@ -125,7 +147,7 @@ export class BibleDB extends IndexedDB {
 			while (keys.length < TOTAL_BOOKNAMES_KEYS || retries == retryMax) {
 
 				await sleep(1000);
-				keys = await this.getAllKeys('booknames');
+				keys = await this.getAllKeys(BOOKNAMES);
 				retries = retries + 1;
 			}
 
@@ -138,10 +160,10 @@ export class BibleDB extends IndexedDB {
 	}
 
 	async syncSearchIndex() {
-		let searchIndex = await this.getValue('search', 'v1');
+		let searchIndex = await this.getValue(SEARCH, 'v1');
 
 		if (!searchIndex) {
-			this.worker?.postMessage({ sync: 'search' });
+			this.worker?.postMessage({ sync: SEARCH });
 
 			let retries = 0;
 			let retryMax = 10;
@@ -149,7 +171,7 @@ export class BibleDB extends IndexedDB {
 			while (!searchIndex || retries == retryMax) {
 
 				await sleep(1000);
-				searchIndex = await this.getValue('search', 'v1');
+				searchIndex = await this.getValue(SEARCH, 'v1');
 				retries = retries + 1;
 			}
 
@@ -163,16 +185,16 @@ export class BibleDB extends IndexedDB {
 
 
 	async syncStrongs() {
-		let keys = await this.getAllKeys('strongs');
+		let keys = await this.getAllKeys(STRONGS);
 		if (keys.length < TOTAL_STRONGS_KEYS) {
-			this.worker?.postMessage({ sync: 'strongs' });
+			this.worker?.postMessage({ sync: STRONGS });
 
 			let retries = 0;
 			let retryMax = 10;
 
 			while (keys.length < TOTAL_STRONGS_KEYS || retries == retryMax) {
 				await sleep(1000);
-				keys = await this.getAllKeys('strongs');
+				keys = await this.getAllKeys(STRONGS);
 				retries = retries + 1;
 			}
 
