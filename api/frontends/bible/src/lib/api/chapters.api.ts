@@ -3,6 +3,14 @@ import { bibleService } from '../db/bible.service';
 
 export class ChapterService {
 
+    api = api
+    bibleService = bibleService
+
+    constructor(api: any, bibleService: any){
+        this.api = api
+        this.bibleService = bibleService
+    }
+   
     async getChapter(chapterKey: string): Promise<any> {
         let chapter = undefined
         let bcvw = chapterKey.split('_')
@@ -11,13 +19,13 @@ export class ChapterService {
         }
 
         try {
-            chapter = await bibleService.getValueIfCacheIsReady('chapters', chapterKey)
+            chapter = await this.bibleService.getValueIfCacheIsReady('chapters', chapterKey)
         } catch (error) {
             console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
         }
 
         if (chapter === undefined) {
-            return await api.get(`data/json.gz/${chapterKey}.json`);
+            return await this.api.get(`data/json.gz/${chapterKey}.json`);
         }
 
         return chapter;
@@ -27,14 +35,14 @@ export class ChapterService {
         let booknames = undefined;
 
         try {
-            booknames = await bibleService.getValue('booknames', 'booknames')
+            booknames = await this.bibleService.getValue('booknames', 'booknames')
 
         } catch (error) {
             console.log(`error getting booknames from indexedDB: ${error}`)
         }
 
         if (booknames === undefined) {
-            return await api.get(`data/json.gz/booknames.json`);
+            return await this.api.get(`data/json.gz/booknames.json`);
         }
 
         return booknames;
@@ -45,14 +53,14 @@ export class ChapterService {
         let searchIndex = undefined;
 
         try {
-            searchIndex = await bibleService.getValue('searchIndex', 'v1')
+            searchIndex = await this.bibleService.getValue('searchIndex', 'v1')
 
         } catch (error) {
             console.log(`error getting searchIndex from indexedDB: ${error}`)
         }
 
         if (searchIndex === undefined) {
-            return await api.get(`data/json.gz/bibleindex.json`);
+            return await this.api.get(`data/json.gz/bibleindex.json`);
         }
 
         return searchIndex;
@@ -63,13 +71,13 @@ export class ChapterService {
         let strongs = undefined
 
         try {
-            strongs = await bibleService.getValue('strongs', key)
+            strongs = await this.bibleService.getValue('strongs', key)
         } catch (error) {
             console.log(`error getting chapter ${key} from indexdb: ${error}`)
         }
 
         if (strongs === undefined) {
-            return await api.get(`data/strongs.json.gz/${key}.json`);
+            return await this.api.get(`data/strongs.json.gz/${key}.json`);
         }
 
         return strongs;
@@ -84,7 +92,7 @@ export class ChapterService {
         }
 
         try {
-            annotations = await bibleService.getValue('annotations', chapterKey)
+            annotations = await this.bibleService.getValue('annotations', chapterKey)
 
         } catch (error) {
             console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
@@ -106,9 +114,9 @@ export class ChapterService {
             var result: Response
 
             if (data.version == 1) {
-                result = await api.postapi('/annots', data)
+                result = await this.api.postapi('/annots', data)
             } else {
-                result = await api.updateapi(`/annots/${data.id}`, data)
+                result = await this.api.updateapi(`/annots/${data.id}`, data)
             }
 
             if (!result.ok) {
@@ -118,7 +126,7 @@ export class ChapterService {
 
             let ua = await result.json()
 
-            await bibleService.putValue('annotations', ua)
+            await this.bibleService.putValue('annotations', ua)
 
             return ua
 
@@ -131,7 +139,7 @@ export class ChapterService {
     async getAllAnnotations(): Promise<any> {
         let data: any = undefined
         try {
-            data = await bibleService.getAllValue('annotations')
+            data = await this.bibleService.getAllValue('annotations')
         } catch (error) {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
@@ -140,11 +148,11 @@ export class ChapterService {
 
     async putAllAnnotations(objects: any): Promise<any> {
         try {
-            await bibleService.putBulkValue('annotations', objects)
+            await this.bibleService.putBulkValue('annotations', objects)
         } catch (error) {
             console.log(`error importing all annotations from indexedDB: ${error}`)
         }
     }
 }
 
-export let chapterService = new ChapterService()
+export let chapterService = new ChapterService(api, bibleService)
