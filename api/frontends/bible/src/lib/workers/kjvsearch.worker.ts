@@ -54,7 +54,7 @@ async function init() {
     }
 }
 
-function onlyUnique(value, index, array) {
+function onlyUnique(value: any, index: number, array: any[]) {
     return array.indexOf(value) === index;
 }
 

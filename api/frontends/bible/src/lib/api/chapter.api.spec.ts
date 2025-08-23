@@ -59,10 +59,10 @@ describe('chapterService', () => {
 
 
  tt = [
-    
     { startVersion: 1, endVersion: 2 },
     { startVersion: 3, endVersion: 4 }
   ]
+  
   tt.forEach((t) => {
     it(`should post annot incrementing the vesion from ${t.startVersion} to ${t.endVersion}`, async () => {
       let data = {

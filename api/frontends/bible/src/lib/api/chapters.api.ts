@@ -120,7 +120,7 @@ export class ChapterService {
             }
 
             if (!result.ok) {
-                console.log(`error putting  ${data?.id} from indexedDB: ${JSON.stringify(await result.json())}`)
+                console.log(`status code: ${result.status}: ${JSON.stringify(await result.json())}`)
                 return
             }
 
