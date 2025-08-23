@@ -188,6 +188,7 @@ export class ChapterService {
     async onFailurePutAnnotations(data: any, error: any) {
         console.log(`error putting  ${data?.id}: storing to unsynced cache:  ${error}: `)
         data.version = data.version - 1
+        toastService.showToast("Offline Mode: sync will occur when service is reachable.")
         await this.bibleService.putValue(db.UNSYNCED_ANNOTATIONS, data)
     }
 
