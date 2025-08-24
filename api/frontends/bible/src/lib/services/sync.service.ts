@@ -30,7 +30,7 @@ export class SyncService {
 					action: 'sync',
 					token: token
 				}
-            )   
+            )
     }
     
 }
