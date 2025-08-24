@@ -13,4 +13,5 @@ type QueryFilter struct {
 	UserID           *uuid.UUID
 	StartCreatedDate *time.Time
 	EndCreatedDate   *time.Time
+	StartUpdatedDate *time.Time
 }
