@@ -155,44 +155,50 @@ export class ChapterService {
         return annotations;
     }
 
-    async fetchAnnotations(chapterKey: string): Promise<any> {
+    async fetchAnnotations(id: string, path:string): Promise<any> {
         let annotations = undefined
 
-        let bcv = chapterKey.split('_')
-        if (bcv.length === 3) {
-            chapterKey = `${bcv[0]}_${bcv[1]}`
-        }
+        // let bcv = id.split('_')
+        // if (bcv.length === 3) {
+        //     id = `${bcv[0]}_${bcv[1]}`
+        // }
 
         try {
-            let resp = await this.api.getapi(`/annots/${chapterKey}`)
-            if (!resp.ok) {
-                if (resp.status === 404) {
-                    annotations = {
-                        id: chapterKey,
-                        version: 0,
-                        annots: {}
-                    }
-                }
-            } else {
+            let resp = await this.api.getapi(`${path}/${id}`)
+            if (resp.ok) {
                 annotations = await resp.json()
             }
-
         } catch (error) {
-            console.log(`error getting annotations ${chapterKey} from server: ${error}`)
+            console.log(`error getting annotations ${id} from server: ${error}`)
         }
         return annotations;
     }
 
 
     async putAnnotations(data: any): Promise<any> {
+        let path = '/annots'
+        let unsyncedDB = db.UNSYNCED_ANNOTATIONS
+        let syncedDB = db.ANNOTATIONS
+        let annotations = await this.put(data, path, unsyncedDB, syncedDB)
+        if (annotations === undefined){
+              annotations = {
+                        id: data.id,
+                        version: 0,
+                        annots: {}
+                    }
+        }
+        return annotations
+    }
+
+    async put(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
         try {
             data.version = data.version + 1
             var result: Response
 
             if (data.version == 1) {
-                result = await this.api.postapi('/annots', data)
+                result = await this.api.postapi(path, data)
             } else {
-                result = await this.api.updateapi(`/annots/${data.id}`, data)
+                result = await this.api.updateapi(`${path}/${data.id}`, data)
             }
 
             if (!result.ok) {
@@ -200,34 +206,34 @@ export class ChapterService {
                     // BAD REQUEST or Already Exists
                     // remove unsynced versions
                     // sync the annotation
-                    let annots = await this.fetchAnnotations(data.id)
+                    let annots = await this.fetchAnnotations(data.id, path)
                     if (annots !== undefined) {
-                        this.bibleService.deleteValue(db.UNSYNCED_ANNOTATIONS, data.id)
-                        this.bibleService.putValue(db.ANNOTATIONS, annots)
+                        this.bibleService.deleteValue(unsyncedDB, data.id)
+                        this.bibleService.putValue(syncedDB, annots)
                     }
-                    toastService.showToast("Discarded stale versions. Please update lastest annotations.")
+                    toastService.showToast("Discarded stale versions. Please update lastest version.")
                     return annots
                 } else {
-                    await this.onFailurePutAnnotations(data, `status code ${result.status}, expected 200`)
+                    await this.onFailurePutAnnotations(data, unsyncedDB, `status code ${result.status}, expected 200`)
                 }
             }
 
-            let ua = await result.json()
+            let obj = await result.json()
 
-            await this.bibleService.putValue(db.ANNOTATIONS, ua)
+            await this.bibleService.putValue(syncedDB, obj)
 
-            return ua
+            return obj
 
         } catch (error) {
-            await this.onFailurePutAnnotations(data, error)
+            await this.onFailurePutAnnotations(data, unsyncedDB, error)
         }
     }
 
-    async onFailurePutAnnotations(data: any, error: any) {
+    async onFailurePutAnnotations(data: any, unsyncedDB:string,  error: any) {
         console.log(`error putting  ${data?.id}: storing to unsynced cache:  ${error}: `)
         data.version = data.version - 1
         toastService.showToast("Offline Mode: sync will occur when service is reachable.")
-        await this.bibleService.putValue(db.UNSYNCED_ANNOTATIONS, data)
+        await this.bibleService.putValue(unsyncedDB, data)
     }
 
     async getAllAnnotations(): Promise<any> {

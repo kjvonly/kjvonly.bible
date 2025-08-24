@@ -279,7 +279,25 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		onCloseNote();
 	}
 
+	async function NEWonConfirmDelete() {
+		delete annotations[verseIdx].notes.words[wordIdx][noteID];
+		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		noteKeys = [];
+		delete notes[noteID];
+		searchService.deleteNote('*', noteID);
+		onCloseNote();
+	}
+
 	async function onSave(toastMessage: string) {
+		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
+		notes[noteID] = note;
+
+		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		toastService.showToast(toastMessage);
+		searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
+	}
+
+	async function NEWonSave(toastMessage: string) {
 		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
 		notes[noteID] = note;
 
