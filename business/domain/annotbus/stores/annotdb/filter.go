@@ -35,6 +35,11 @@ func (s *Store) applyFilter(filter annotbus.QueryFilter, data map[string]any, bu
 		wc = append(wc, "date_created <= :end_date_created")
 	}
 
+	if filter.StartUpdatedDate != nil {
+		data["start_date_updated"] = filter.StartUpdatedDate.UTC()
+		wc = append(wc, "date_updated >= :start_date_updated")
+	}
+
 	if len(wc) > 0 {
 		buf.WriteString(" WHERE ")
 		buf.WriteString(strings.Join(wc, " AND "))

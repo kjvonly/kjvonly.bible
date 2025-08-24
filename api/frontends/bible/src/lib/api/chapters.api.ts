@@ -10,9 +10,9 @@ export class ChapterService {
     api = api
     bibleService = bibleService
 
-    constructor(api: any, bibleService: any) {
+    constructor(api: any, bs: any) {
         this.api = api
-        this.bibleService = bibleService
+        this.bibleService = bs
     }
 
     async getChapter(chapterKey: string): Promise<any> {
@@ -87,7 +87,46 @@ export class ChapterService {
         return strongs;
     }
 
+    async syncAnnotatoins() {
+        let annotations = undefined
+        let lastDateUpdated = 0
 
+        try {
+
+            let ldu = await this.bibleService.getValue(db.ANNOTATIONS, this.bibleService.LAST_DATE_UPDATED_ID)
+            if (ldu !== undefined) {
+                lastDateUpdated = ldu.timestamp + 1
+            }
+            let shouldContinue = true
+            let page = 1
+            let rows = 1
+            while (shouldContinue) {
+                let resp = await this.api.getapi(`/annots?start_updated_date=${lastDateUpdated}&order_by=date_updated,ASC&page=${page}&rows=${rows}`)
+                if (resp.ok) {
+                    annotations = await resp.json()
+                    for (let i = 0; i < annotations.items.length; i++){
+                        await this.bibleService.putValue(db.ANNOTATIONS, annotations.items[i])
+                    }
+                    
+                    if ( page < Math.round(annotations.total / rows)) {
+                        page = page + 1
+                    } else {
+                        shouldContinue = false
+                    }
+
+                } else {
+                    shouldContinue = false
+                    console.log(`error syncing annotations from server: ${await resp.json()}`)
+                }
+            }
+
+        } catch (error) {
+            console.log(`error getting annotations from ${lastDateUpdated} from server: ${error}`)
+        }
+        return annotations;
+    }
+
+    // TODO generalize this for all requests.
     async getAnnotations(chapterKey: string): Promise<any> {
         let annotations = undefined
 

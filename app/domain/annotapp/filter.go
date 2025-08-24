@@ -23,6 +23,7 @@ type queryParams struct {
 	Type             string
 	StartCreatedDate string
 	EndCreatedDate   string
+	StartUpdatedDate string
 }
 
 func parseQueryParams(r *http.Request) queryParams {
@@ -38,6 +39,7 @@ func parseQueryParams(r *http.Request) queryParams {
 		Chapter:          values.Get("chapter"),
 		StartCreatedDate: values.Get("start_created_date"),
 		EndCreatedDate:   values.Get("end_created_date"),
+		StartUpdatedDate: values.Get("start_updated_date"),
 	}
 
 	return filter
@@ -124,6 +126,16 @@ func parseFilter(qp queryParams) (annotbus.QueryFilter, error) {
 			filter.EndCreatedDate = &t
 		default:
 			fieldErrors.Add("end_created_date", err)
+		}
+	}
+
+	if qp.StartUpdatedDate != "" {
+		t, err := strconv.ParseInt(qp.StartUpdatedDate, 0, 64)
+		if err != nil {
+			fieldErrors.Add("start_updated_date", err)
+		} else {
+			ti := time.Unix(t, 0)
+			filter.StartUpdatedDate = &ti
 		}
 	}
 

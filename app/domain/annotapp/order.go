@@ -5,6 +5,7 @@ import (
 )
 
 var orderByFields = map[string]string{
-	"annot_id": annotbus.OrderByBookIDAndChapter,
-	"user_id":  annotbus.OrderByUserID,
+	"annot_id":     annotbus.OrderByBookIDAndChapter,
+	"user_id":      annotbus.OrderByUserID,
+	"date_updated": annotbus.OrderDateUpdated,
 }

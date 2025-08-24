@@ -2,6 +2,16 @@ import { bibleDB } from './bible.db';
 
 export class BibleService {
 
+    LAST_DATE_UPDATED_ID = 'lastDateUpdated'
+
+    bibleDB = bibleDB
+    /**
+     *
+     */
+    constructor(db: any) {
+        this.bibleDB = db
+    }
+
     /**
      * 
      * @param objectStoreName 
@@ -9,8 +19,8 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getValue(objectStoreName: string, id: string): Promise<any> {
-        await bibleDB.ready
-        return await bibleDB.getValue(objectStoreName, id)
+        await this.bibleDB.ready
+        return await this.bibleDB.getValue(objectStoreName, id)
     }
 
         /**
@@ -20,7 +30,7 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getValueIfCacheIsReady(objectStoreName: string, id: string): Promise<any> {
-        if (bibleDB.isReady){
+        if (this.bibleDB.isReady){
             return this.getValue(objectStoreName, id)
         }
     }
@@ -31,8 +41,8 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getAllValue(objectStoreName: string): Promise<any> {
-        await bibleDB.ready
-        return await bibleDB.getAllValue(objectStoreName)
+        await this.bibleDB.ready
+        return await this.bibleDB.getAllValue(objectStoreName)
 
     }
 
@@ -43,15 +53,15 @@ export class BibleService {
     * @returns 
     */
     async putValue(objectStoreName: string, data: any): Promise<any> {
-        await bibleDB.ready
-        await bibleDB.putValue(objectStoreName, data)
+        await this.bibleDB.ready
+        await this.bibleDB.putValue(objectStoreName, data)
 
         if (data.dateUpdated){
             let dateUpdatedData ={
                 id: 'lastDateUpdated',
                 timestamp: data.dateUpdated
             }
-            await bibleDB.putValue(objectStoreName, dateUpdatedData)
+            await this.bibleDB.putValue(objectStoreName, dateUpdatedData)
         }
     }
 
@@ -62,8 +72,8 @@ export class BibleService {
      * @returns 
      */
     async putBulkValue(objectStoreName: string, data: any): Promise<any> {
-        await bibleDB.ready
-        await bibleDB.putBulkValue(objectStoreName, data)
+        await this.bibleDB.ready
+        await this.bibleDB.putBulkValue(objectStoreName, data)
     }
 
         /**
@@ -73,10 +83,10 @@ export class BibleService {
     * @returns 
     */
     async deleteValue(objectStoreName: string, id: string): Promise<any> {
-        await bibleDB.ready
-        await bibleDB.deleteValue(objectStoreName, id)
+        await this.bibleDB.ready
+        await this.bibleDB.deleteValue(objectStoreName, id)
     }
 
 }
 
-export let bibleService = new BibleService()
+export let bibleService = new BibleService(bibleDB)

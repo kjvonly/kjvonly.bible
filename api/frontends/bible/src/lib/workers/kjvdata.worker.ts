@@ -23,7 +23,7 @@ async function onChapters() {
 	}).catch((err) => {
 		console.log(`error: ${err}`)
 	});
-}
+}	
 
 async function onBooknames() {
 	let db = await new BibleDB()

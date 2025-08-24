@@ -9,11 +9,8 @@
 	function register() {
 		// Listen for connection coming online
 		window.addEventListener('online', () => {
-			syncService.postMessage({
-				action: 'sync'
-			})
+			syncService.sync()
 			console.log('Network connection restored.');
-			// Optionally update UI or retry failed operations
 		});
 
 		// Listen for connection going offline
@@ -23,7 +20,8 @@
 		});
 
 		document.addEventListener('visibilitychange', () => {
-			if (!document.hidden) {
+			if (!document.hidden) {				
+				syncService.sync();
 				console.log('Page is now visible (returned to foreground)');
 			}
 		});
@@ -32,7 +30,6 @@
 	onMount(async () => {
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		bibleDB.init();
-		syncService.init();
 		register();
 	});
 
