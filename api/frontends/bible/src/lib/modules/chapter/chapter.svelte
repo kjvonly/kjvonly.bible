@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 	import Verse from './verse.svelte';
+	import { syncService } from '$lib/services/sync.service';
 
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
@@ -69,7 +70,11 @@
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
-	onMount(async () => {});
+	onMount(async () => {
+		syncService.subscribe('annotations', ()=> {
+			loadAnnotations()
+		})
+	});
 </script>
 
 <div class="{fadeClass} flex-col leading-loose">

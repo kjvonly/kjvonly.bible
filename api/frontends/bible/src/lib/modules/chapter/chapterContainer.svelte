@@ -10,7 +10,17 @@
 	import type { Pane } from '$lib/models/pane.model';
 	import uuid4 from 'uuid4';
 	import EditOptions from './editOptions.svelte';
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
+	import { syncService } from '$lib/services/sync.service';
+
+	type WordAnnots = {
+		class: string[];
+	};
+
+	export class Annotations {
+		version: number = 0;
+		annots: Map<number, Map<number, WordAnnots>> = new Map();
+	}
 
 	let id = uuid4();
 	let chapterKey: string | null = $state(null);
@@ -20,7 +30,7 @@
 		chapterKey: '73_1_1_1',
 		notePopup: { show: false }
 	});
-	let annotations: any = $state({});
+	let annotations: Annotations = $state(new Annotations());
 	let bookName: string = $state('');
 	let bookChapter: string = $state('');
 	let chapterWidth = $state(0);
@@ -33,7 +43,6 @@
 		containerHeight = $bindable(),
 		containerWidth = $bindable()
 	} = $props();
-
 
 	$effect(() => {
 		chapterSettings;
@@ -227,7 +236,7 @@
 					</div>
 				</div>
 				<div style="transform: translate3d(0px, {buttonTopOffset}px, 0px); " class="sticky z-10">
-					<div class="absolute bottom-4 right-4">
+					<div class="absolute right-4 bottom-4">
 						<button
 							onclick={_nextChapter}
 							class="h-12 w-12 rounded-full bg-neutral-100 text-neutral-700 ring-2 ring-neutral-300"

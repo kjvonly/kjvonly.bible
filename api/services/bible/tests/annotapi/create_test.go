@@ -70,7 +70,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input:      &annotapp.NewAnnot{},
 			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"chapter_key","error":"chapter_key is a required field"},{"field":"annots","error":"annots is a required field"},{"field":"version","error":"version is a required field"}]`),
+			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"id","error":"id is a required field"},{"field":"annots","error":"annots is a required field"},{"field":"version","error":"version is a required field"}]`),
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)
 			},

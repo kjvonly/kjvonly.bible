@@ -242,7 +242,7 @@
 {#if toasts.length > 0}
 	{#each toasts as t}
 		<aside
-			class="fixed bottom-4 end-4 z-[2000] flex items-center justify-center gap-4 rounded-lg border bg-neutral-100 px-5 py-3"
+			class="fixed end-4 bottom-4 z-[2000] flex items-center justify-center gap-4 rounded-lg border bg-neutral-100 px-5 py-3"
 		>
 			{t}
 		</aside>

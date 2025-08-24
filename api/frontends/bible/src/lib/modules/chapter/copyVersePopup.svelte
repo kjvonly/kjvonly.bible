@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 	import { toastService } from '$lib/services/toast.service';
 	import { onMount } from 'svelte';
 

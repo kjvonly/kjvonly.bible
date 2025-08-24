@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.service';
+	import { chapterService } from '$lib/api/chapters.api';
 	import { onMount } from 'svelte';
 
 	let { mode = $bindable(), annotations = $bindable() } = $props();
@@ -24,7 +24,11 @@
 	}
 
 	async function onSave() {
-		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		let resp = await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		if(resp !== undefined) {
+			annotations.version = resp.version
+			annotations = resp
+		}
 		mode.value = '';
 	}
 

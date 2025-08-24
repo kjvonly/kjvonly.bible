@@ -10,6 +10,7 @@ import (
 var orderByFields = map[string]string{
 	annotbus.OrderByBookIDAndChapter: "book_id, chapter",
 	annotbus.OrderByUserID:           "user_id",
+	annotbus.OrderDateUpdated:        "date_updated",
 }
 
 func orderByClause(orderBy order.By) (string, error) {

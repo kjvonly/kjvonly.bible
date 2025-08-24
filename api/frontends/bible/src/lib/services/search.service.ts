@@ -13,9 +13,7 @@ class SearchService {
                     s.fn(e.data)
                 }
             })
-        
         }
-
 
         this.webWorker.postMessage({ action: 'init' })
     }

@@ -24,7 +24,7 @@ type Annots map[int]map[int]WordAnnots
 // Annot represents information about an individual annot.
 type Annot struct {
 	UserID          string `json:"userID"`
-	ReferenceVector string `json:"chapter_key"`
+	ReferenceVector string `json:"id"`
 	Annots          Annots `json:"annots"`
 	Version         int    `json:"version"`
 	DateCreated     int64  `json:"dateCreated"`
@@ -75,7 +75,7 @@ func toAppAnnots(annots []annotbus.Annot) []Annot {
 
 // NewAnnot defines the data needed to add a new annot.
 type NewAnnot struct {
-	ReferenceVector string `json:"chapter_key" validate:"required"`
+	ReferenceVector string `json:"id" validate:"required"`
 	Annots          Annots `json:"annots" validate:"required"`
 	Version         int    `json:"version" validate:"required"`
 }

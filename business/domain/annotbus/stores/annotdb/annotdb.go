@@ -75,6 +75,9 @@ func (s *Store) Create(ctx context.Context, ant annotbus.Annot) error {
 		return fmt.Errorf("toDBAnnot: %w", err)
 	}
 	if err := sqldb.NamedExecContext(ctx, s.log, s.db, q, dbNte); err != nil {
+		if errors.Is(err, sqldb.ErrDBDuplicatedEntry) {
+			return annotbus.ErrDuplicateEntry{Message: "duplicate entry found"}
+		}
 		return fmt.Errorf("namedexeccontext: %w", err)
 	}
 

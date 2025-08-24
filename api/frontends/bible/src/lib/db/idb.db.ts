@@ -18,7 +18,7 @@ class IndexedDB {
 	 */
 	public async createAndOrOpenObjectStores(tableNames: string[]) {
 		try {
-			this.db = await openDB(this.database, 6, {
+			this.db = await openDB(this.database, 7, {
 				upgrade(db: IDBPDatabase) {
 					for (const tableName of tableNames) {
 						if (db.objectStoreNames.contains(tableName)) {
@@ -98,7 +98,7 @@ class IndexedDB {
 	 * @param id id/key of to delete
 	 * @returns id of result or undefined
 	 */
-	public async deleteValue(tableName: string, id: number) {
+	public async deleteValue(tableName: string, id: string) {
 		const tx = this.db?.transaction(tableName, 'readwrite');
 		const store = tx?.objectStore(tableName);
 		const result = await store?.get(id);

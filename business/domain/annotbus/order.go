@@ -9,4 +9,5 @@ var DefaultOrderBy = order.NewBy(OrderByBookIDAndChapter, order.ASC)
 const (
 	OrderByBookIDAndChapter = "a"
 	OrderByUserID           = "b"
+	OrderDateUpdated        = "c"
 )
