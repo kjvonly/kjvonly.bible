@@ -106,24 +106,36 @@ let notesDocument = new FlexSearch.Document({
 
 let notes: any = {}
 
+// async function initNotes() {
+//     let annotations = await chapterService.getAllAnnotations();
+//     notes = {}
+//     /**this will pull independent notes from 0_0_0_0 and all notes  */
+//     Object.keys(annotations).forEach((ch) => {
+//         Object.keys(annotations[ch]).forEach((v) => {
+//             if (annotations[ch][v].notes && annotations[ch][v].notes) {
+//                 Object.keys(annotations[ch][v].notes.words).forEach((w) => {
+//                     Object.keys(annotations[ch][v].notes.words[w]).forEach((n) => {
+//                         notesDocument.addAsync(n, annotations[ch][v].notes.words[w][n]);
+//                         notes[n] = annotations[ch][v].notes.words[w][n]
+//                     });
+//                 });
+//             }
+//         });
+//     });
+
+//     getAllNotes('*')
+// }
+
 async function initNotes() {
-
-
-    let annotations = await chapterService.getAllAnnotations();
+    let annotations = await chapterService.getAllNotes();
     notes = {}
-    /**this will pull independent notes from 0_0_0_0 and all notes  */
-    Object.keys(annotations).forEach((ch) => {
-        Object.keys(annotations[ch]).forEach((v) => {
-            if (annotations[ch][v].notes && annotations[ch][v].notes) {
-                Object.keys(annotations[ch][v].notes.words).forEach((w) => {
-                    Object.keys(annotations[ch][v].notes.words[w]).forEach((n) => {
-                        notesDocument.addAsync(n, annotations[ch][v].notes.words[w][n]);
-                        notes[n] = annotations[ch][v].notes.words[w][n]
-                    });
-                });
-            }
-        });
-    });
+    for (let i = 0; i < annotations.length; i++) {
+        let nn = annotations[i]
+        notesDocument.addAsync(nn.id, nn);
+        let ck = nn.chapterKey.split('_')
+        nn.bookChapter = `${ck[0]}_${ck[1]}`
+        notes[nn.id] = nn
+    }
 
     getAllNotes('*')
 }
@@ -142,7 +154,6 @@ function deleteNote(noteID: string) {
 }
 
 async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
-
     const results = await notesDocument.searchAsync(searchTerm, {
         index: indexes
     });
@@ -160,7 +171,6 @@ async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
 
 function getAllNotes(id: string) {
     postMessage({ id: id, notes: notes })
-
 }
 
 

@@ -26,7 +26,7 @@ type Tag struct {
 type Note struct {
 	ID              string `json:"id"`
 	UserID          string `json:"userID"`
-	ReferenceVector string `json:"chapter_key"`
+	ReferenceVector string `json:"chapterKey"`
 	Title           string `json:"title"`
 	Html            string `json:"html"`
 	Text            string `json:"text"`
@@ -84,10 +84,10 @@ func toAppNotes(notes []notebus.Note) []Note {
 
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
-	ReferenceVector string `json:"chapter_key" validate:"required"`
-	Title           string `json:"title" validate:"required"`
-	Html            string `json:"html" validate:"required"`
-	Text            string `json:"text" validate:"required"`
+	ReferenceVector string `json:"chapterKey" validate:"required"`
+	Title           string `json:"title"`
+	Text            string `json:"text"`
+	Html            string `json:"html"`
 	Tags            []Tag  `json:"tags" validate:"dive"`
 	Version         int    `json:"version" validate:"required"`
 }

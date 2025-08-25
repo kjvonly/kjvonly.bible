@@ -288,22 +288,24 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		onCloseNote();
 	}
 
+	// async function onSave(toastMessage: string) {
+	// 	annotations[verseIdx].notes.words[wordIdx][noteID] = note;
+	// 	notes[noteID] = note;
+
+	// 	await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+	// 	toastService.showToast(toastMessage);
+	// 	searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
+	// }
+
 	async function onSave(toastMessage: string) {
-		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
-		notes[noteID] = note;
+		let savedNote = await chapterService.putNote(JSON.parse(JSON.stringify(note)));
 
-		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-		toastService.showToast(toastMessage);
-		searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
-	}
-
-	async function NEWonSave(toastMessage: string) {
-		annotations[verseIdx].notes.words[wordIdx][noteID] = note;
-		notes[noteID] = note;
-
-		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-		toastService.showToast(toastMessage);
-		searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
+		if (savedNote !== undefined) {
+			noteID = savedNote.id;
+			notes[noteID] = note;
+			toastService.showToast(toastMessage);
+			searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
+		}
 	}
 
 	function initNotes() {
@@ -333,29 +335,29 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	async function onAdd() {
 		let keys = mode.chapterKey?.split('_');
-		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
 
-		initNotes();
-
-		noteID = uuid4();
 		let now = Date.now();
 
 		if (keys[0] === '0') {
-			annotations[verseIdx].notes.words[wordIdx][noteID] = {
+			note = {
+				id: noteID,
 				chapterKey: mode.chapterKey,
 				text: ``,
 				html: ``,
 				title: `Note`,
 				created: now,
 				modified: now,
-				tags: []
+				tags: [],
+				version: 0
 			};
 		} else {
+			// This adds the verse to the note body
 			let chapter = await chapterService.getChapter(mode.chapterKey);
 			let verse = chapter['verseMap'][verseIdx];
 			let title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 
-			annotations[verseIdx].notes.words[wordIdx][noteID] = {
+			note = {
+				id: noteID,
 				chapterKey: mode.chapterKey,
 				bcv: `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}`,
 				text: `${title}\n${verse}`,
@@ -363,10 +365,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				title: `${title}`,
 				created: now,
 				modified: now,
-				tags: []
+				tags: [],
+				version: 0
 			};
 		}
-		note = annotations[verseIdx].notes.words[wordIdx][noteID];
 
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
@@ -551,7 +553,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	>
 		{#each Object.keys(noteActions) as na}
 			<button
-				class="w-full py-4 ps-2 text-left capitalize hover:bg-primary-50"
+				class="hover:bg-primary-50 w-full py-4 ps-2 text-left capitalize"
 				aria-label="note action button"
 				onclick={() => noteActions[na]()}
 			>
@@ -576,14 +578,14 @@ note icon in the Bible only the notes associated to that word will be displayed 
 					onConfirmDelete();
 				}}
 				aria-label="delete button"
-				class="rounded-lg bg-neutral-100 p-4 capitalize hover:bg-primary-50">delete</button
+				class="hover:bg-primary-50 rounded-lg bg-neutral-100 p-4 capitalize">delete</button
 			>
 			<button
 				onclick={() => {
 					showConfirmDelete = false;
 				}}
 				aria-label="cancel button"
-				class="rounded-lg bg-neutral-100 p-4 capitalize hover:bg-primary-50">cancel</button
+				class="hover:bg-primary-50 rounded-lg bg-neutral-100 p-4 capitalize">cancel</button
 			>
 		</div>
 	</div>
@@ -593,7 +595,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	<div class="flex justify-center px-2">
 		<label
 			for="tags"
-			class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-support-a-600"
+			class="focus-within:border-support-a-600 relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3"
 		>
 			<div class="flex items-center">
 				<input
@@ -601,7 +603,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 					id="tags"
 					placeholder="add tags..."
 					bind:value={tagInput}
-					class="focus:outline-hidden focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent"
+					class="focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent focus:outline-hidden"
 				/>
 
 				<button
@@ -637,19 +639,19 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 {#snippet noteTagsSnippet()}
 	<div style="width: {clientWidth}px" class="max-w-lg overflow-hidden">
-		<div class="flex flex-row items-end space-x-2 space-y-2 overflow-x-scroll p-2">
+		<div class="flex flex-row items-end space-y-2 space-x-2 overflow-x-scroll p-2">
 			{#each [...note.tags].reverse() as t}
 				<span
-					class="inline-flex h-8 items-center justify-center rounded-full border border-support-a-500 px-2.5 py-0.5 text-support-a-700"
+					class="border-support-a-500 text-support-a-700 inline-flex h-8 items-center justify-center rounded-full border px-2.5 py-0.5"
 				>
-					<p class="whitespace-nowrap text-sm">{t.tag}</p>
+					<p class="text-sm whitespace-nowrap">{t.tag}</p>
 
 					<button
 						aria-label="delete tag"
 						onclick={() => {
 							onDeleteTag(t.id);
 						}}
-						class="-me-1 ms-1.5 inline-block rounded-full bg-support-a-200 p-0.5 text-support-a-700 transition hover:bg-support-a-300"
+						class="bg-support-a-200 text-support-a-700 hover:bg-support-a-300 ms-1.5 -me-1 inline-block rounded-full p-0.5 transition"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -756,7 +758,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	<div class="flex flex-col justify-start px-2">
 		<label
 			for="tags"
-			class="relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3 focus-within:border-support-a-600"
+			class="focus-within:border-support-a-600 relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3"
 		>
 			<div class="flex items-center">
 				<input
@@ -765,7 +767,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 					placeholder="Search Notes..."
 					bind:value={filterInput}
 					oninput={onFilterInputChanged}
-					class="focus:outline-hidden focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent"
+					class="focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent focus:outline-hidden"
 				/>
 			</div>
 		</label>
@@ -779,13 +781,13 @@ note icon in the Bible only the notes associated to that word will be displayed 
 								<input
 									bind:checked={fp.checked}
 									type="checkbox"
-									class="size-4 rounded-sm border-neutral-200 accent-support-a-300"
+									class="accent-support-a-300 size-4 rounded-sm border-neutral-200"
 									id="Option1"
 								/>
 							</div>
 
 							<div>
-								<strong class="capitalize text-neutral-500">
+								<strong class="text-neutral-500 capitalize">
 									{fp.option}
 								</strong>
 							</div>
@@ -940,9 +942,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
 					{#each notes[nk].tags as t}
 						<span
-							class="mt-2 inline-flex h-8 items-center justify-center rounded-full border border-support-a-500 px-2.5 py-2.5 text-support-a-700"
+							class="border-support-a-500 text-support-a-700 mt-2 inline-flex h-8 items-center justify-center rounded-full border px-2.5 py-2.5"
 						>
-							<p class="whitespace-nowrap text-sm">{t.tag}</p>
+							<p class="text-sm whitespace-nowrap">{t.tag}</p>
 						</span>
 					{/each}
 				</div>
@@ -960,7 +962,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	>
 		{#each Object.keys(noteListActions) as na}
 			<button
-				class="w-full py-4 ps-2 text-left capitalize hover:bg-primary-50"
+				class="hover:bg-primary-50 w-full py-4 ps-2 text-left capitalize"
 				aria-label="note action button"
 				onclick={() => noteListActions[na]()}
 			>

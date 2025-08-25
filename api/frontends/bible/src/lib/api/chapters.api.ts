@@ -155,7 +155,7 @@ export class ChapterService {
         return annotations;
     }
 
-    async fetchAnnotations(id: string, path:string): Promise<any> {
+    async fetch(id: string, path:string): Promise<any> {
         let annotations = undefined
 
         // let bcv = id.split('_')
@@ -190,6 +190,21 @@ export class ChapterService {
         return annotations
     }
 
+    async putNote(data: any): Promise<any> {
+        let path = '/notes'
+        let unsyncedDB = db.UNSYNCED_NOTES
+        let syncedDB = db.NOTES
+        let notes = await this.put(data, path, unsyncedDB, syncedDB)
+        if (notes === undefined){
+              notes = {
+                        id: data.id,
+                        version: 0,
+                        annots: {}
+                    }
+        }
+        return notes
+    }
+
     async put(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
         try {
             data.version = data.version + 1
@@ -206,7 +221,7 @@ export class ChapterService {
                     // BAD REQUEST or Already Exists
                     // remove unsynced versions
                     // sync the annotation
-                    let annots = await this.fetchAnnotations(data.id, path)
+                    let annots = await this.fetch(data.id, path)
                     if (annots !== undefined) {
                         this.bibleService.deleteValue(unsyncedDB, data.id)
                         this.bibleService.putValue(syncedDB, annots)
@@ -214,7 +229,7 @@ export class ChapterService {
                     toastService.showToast("Discarded stale versions. Please update lastest version.")
                     return annots
                 } else {
-                    await this.onFailurePutAnnotations(data, unsyncedDB, `status code ${result.status}, expected 200`)
+                    await this.onFailurePut(data, unsyncedDB, `status code ${result.status}, expected 200`)
                 }
             }
 
@@ -225,11 +240,11 @@ export class ChapterService {
             return obj
 
         } catch (error) {
-            await this.onFailurePutAnnotations(data, unsyncedDB, error)
+            await this.onFailurePut(data, unsyncedDB, error)
         }
     }
 
-    async onFailurePutAnnotations(data: any, unsyncedDB:string,  error: any) {
+    async onFailurePut(data: any, unsyncedDB:string,  error: any) {
         console.log(`error putting  ${data?.id}: storing to unsynced cache:  ${error}: `)
         data.version = data.version - 1
         toastService.showToast("Offline Mode: sync will occur when service is reachable.")
@@ -239,7 +254,17 @@ export class ChapterService {
     async getAllAnnotations(): Promise<any> {
         let data: any = undefined
         try {
-            data = await this.bibleService.getAllValue('annotations')
+            data = await this.bibleService.getAllValue(db.ANNOTATIONS)
+        } catch (error) {
+            console.log(`error getting all annotations from indexedDB: ${error}`)
+        }
+        return data
+    }
+
+    async getAllNotes(): Promise<any> {
+        let data: any = undefined
+        try {
+            data = await this.bibleService.getAllValue(db.NOTES)
         } catch (error) {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
@@ -248,7 +273,7 @@ export class ChapterService {
 
     async putAllAnnotations(objects: any): Promise<any> {
         try {
-            await this.bibleService.putBulkValue('annotations', objects)
+            await this.bibleService.putBulkValue(db.ANNOTATIONS, objects)
         } catch (error) {
             console.log(`error importing all annotations from indexedDB: ${error}`)
         }
