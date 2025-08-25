@@ -56,17 +56,6 @@ export class BibleDB extends IndexedDB {
 
 	constructor() {
 		super(DB_NAME);
-		this.createAndOrOpenObjectStores(
-			[
-				CHAPTERS,
-				BOOKNAMES,
-				STRONGS,
-				ANNOTATIONS,
-				NOTES,
-				SEARCH,
-				UNSYNCED_ANNOTATIONS,
-				UNSYNCED_NOTES,
-			]);
 	}
 
 	async waitForSearchIndex(): Promise<boolean> {
@@ -205,7 +194,23 @@ export class BibleDB extends IndexedDB {
 
 		return true
 	}
+
+	   public static async CreateAsync(): Promise<BibleDB> {
+        const instance = new BibleDB();
+        await instance.createAndOrOpenObjectStores(
+			[
+				CHAPTERS,
+				BOOKNAMES,
+				STRONGS,
+				ANNOTATIONS,
+				NOTES,
+				SEARCH,
+				UNSYNCED_ANNOTATIONS,
+				UNSYNCED_NOTES,
+			]);
+        return instance;
+    }
 }
 
 
-export const bibleDB = new BibleDB();
+export const bibleDB = await BibleDB.CreateAsync();

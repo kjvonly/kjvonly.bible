@@ -103,11 +103,11 @@ export class ChapterService {
                 let resp = await this.api.getapi(`/annots?start_updated_date=${lastDateUpdated}&order_by=date_updated,ASC&page=${page}&rows=${rows}`)
                 if (resp.ok) {
                     annotations = await resp.json()
-                    for (let i = 0; i < annotations.items.length; i++){
+                    for (let i = 0; i < annotations.items.length; i++) {
                         await this.bibleService.putValue(db.ANNOTATIONS, annotations.items[i])
                     }
-                    
-                    if ( page < Math.round(annotations.total / rows)) {
+
+                    if (page < Math.round(annotations.total / rows)) {
                         page = page + 1
                     } else {
                         shouldContinue = false
@@ -155,7 +155,7 @@ export class ChapterService {
         return annotations;
     }
 
-    async fetch(id: string, path:string): Promise<any> {
+    async fetch(id: string, path: string): Promise<any> {
         let annotations = undefined
 
         // let bcv = id.split('_')
@@ -180,13 +180,6 @@ export class ChapterService {
         let unsyncedDB = db.UNSYNCED_ANNOTATIONS
         let syncedDB = db.ANNOTATIONS
         let annotations = await this.put(data, path, unsyncedDB, syncedDB)
-        if (annotations === undefined){
-              annotations = {
-                        id: data.id,
-                        version: 0,
-                        annots: {}
-                    }
-        }
         return annotations
     }
 
@@ -195,13 +188,6 @@ export class ChapterService {
         let unsyncedDB = db.UNSYNCED_NOTES
         let syncedDB = db.NOTES
         let notes = await this.put(data, path, unsyncedDB, syncedDB)
-        if (notes === undefined){
-              notes = {
-                        id: data.id,
-                        version: 0,
-                        annots: {}
-                    }
-        }
         return notes
     }
 
@@ -244,7 +230,7 @@ export class ChapterService {
         }
     }
 
-    async onFailurePut(data: any, unsyncedDB:string,  error: any) {
+    async onFailurePut(data: any, unsyncedDB: string, error: any) {
         console.log(`error putting  ${data?.id}: storing to unsynced cache:  ${error}: `)
         data.version = data.version - 1
         toastService.showToast("Offline Mode: sync will occur when service is reachable.")
@@ -269,6 +255,16 @@ export class ChapterService {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
         return data
+    }
+
+    async deleteNote(noteID: string): Promise<any> {
+        let path: string = `/notes/${noteID}`
+        let resp = await this.api.deleteapi(path)
+        if (!resp.ok) {
+            this.bibleService.putValue(db.NOTES, noteID)
+        }
+
+        this.bibleService.deleteValue(db.NOTES, noteID)
     }
 
     async putAllAnnotations(objects: any): Promise<any> {

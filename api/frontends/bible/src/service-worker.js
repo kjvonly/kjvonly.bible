@@ -41,6 +41,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
 	// ignore POST requests etc
 	if (event.request.method !== 'GET') return;
+	const url = new URL(event.request.url);
+	if (url.pathname.startsWith('/v1')) return;
 
 	async function respond() {
 		const url = new URL(event.request.url);

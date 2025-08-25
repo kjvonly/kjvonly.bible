@@ -5,6 +5,7 @@
 	import Container from '$lib/components/container.svelte';
 	import '../../node_modules/quill/dist/quill.snow.css';
 	import { syncService } from '$lib/services/sync.service';
+	import { timeout } from '$lib/utils/timeout';
 
 	function register() {
 		// Listen for connection coming online

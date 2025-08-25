@@ -65,6 +65,21 @@ export class Api {
 
     }
 
+    // Temp function while combinding frontend to backend
+    async deleteapi(path: string): Promise<Response> {
+        let headers: any = {}
+
+        let token = localStorage.getItem('token')
+        if (token !== undefined) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+
+        return fetch(`${API_URL}${path}`, {
+            method: 'DELETE',
+            headers: headers,
+        });
+    }
+
 
     // Temp function while combinding frontend to backend
     async updateapi(path: string, data: any): Promise<Response> {

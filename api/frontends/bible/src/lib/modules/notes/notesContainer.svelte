@@ -5,28 +5,11 @@ The challenge to solve stemmed from two types of notes.
 1. There are notes associated to verse words
 2. There are notes independent of verse words i.e sermon notes, bible study etc...
 
-Bible data is grouped by chapter. Since this is the case we also grouped our
-annotations by chapter. All annotations for Genesis 1 will exist in indexedDB
-and have a key of 1_1 i.e the chapterKey. To associate the note to a verse and 
-a word we extend the chapterKey to include the verse and word index. For example,
-the chapter key of the first word in verse 1 of Genesis 1 is 1_1_1_0.
+ChapterKey variable maps to a location in the bible. <book>_<chapter>_<verse>_<word>. 0_0_0_0 
+key is a standalone/independent note.
 
-In the annotations we group by verse meaning the verse object will have a type of 
-annotations associated with it. At 1_1_1, the object will have a notes object. That
-notes object will have a words object with keys of the word index.
-
-let annotations = getAnnotations('1_1')
-// annotations[1].notes.words[0] means note annotations at verse 1 word 0
-let notes = annotations[1].notes.words[0] 
-
-Now we have the second type of note, the independent note. To keep things simple
-we create a new chapterKey 0_0_0_0. Theres not a bible chapter associated to this but 
-it's a clean way to use the chapter key as the index for all other notes.
-
-let annotations = getAnnotations('0_0')
-// annotations[0].notes.words[0] would contain all independent note. We specify this 
-// chapterKey in the notes.svelte component
-let notes = annotations[1].notes.words[0] 
+kjvsearch worker uses flexsearch to index all the notes. We store all notes in indexdb and 
+load the notes into a flexsearch index to quickly query notes locally.
 
 We added in the boolean of allNotes to signal we are displaying all notes to the user. 
 Users can edit verse word notes as well as independent notes. If a user clicks on the 
@@ -109,7 +92,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		} else {
 			noteKeys = [];
 			notes = {};
-			initNotes();
 			/** filter to keys with the same chapterKey*/
 			Object.keys(results.notes).forEach((k) => {
 				if (results.notes[k].chapterKey == mode.chapterKey) {
@@ -279,24 +261,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		onCloseNote();
 	}
 
-	async function NEWonConfirmDelete() {
-		delete annotations[verseIdx].notes.words[wordIdx][noteID];
-		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-		noteKeys = [];
-		delete notes[noteID];
-		searchService.deleteNote('*', noteID);
-		onCloseNote();
-	}
-
-	// async function onSave(toastMessage: string) {
-	// 	annotations[verseIdx].notes.words[wordIdx][noteID] = note;
-	// 	notes[noteID] = note;
-
-	// 	await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-	// 	toastService.showToast(toastMessage);
-	// 	searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
-	// }
-
 	async function onSave(toastMessage: string) {
 		let savedNote = await chapterService.putNote(JSON.parse(JSON.stringify(note)));
 
@@ -305,31 +269,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			notes[noteID] = note;
 			toastService.showToast(toastMessage);
 			searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
-		}
-	}
-
-	function initNotes() {
-		let keys = mode.chapterKey?.split('_');
-		if (keys?.length > 3) {
-			verseIdx = keys[2];
-			wordIdx = keys[3];
-			if (!annotations[verseIdx]) {
-				annotations[verseIdx] = {};
-			}
-
-			if (!annotations[verseIdx].notes) {
-				annotations[verseIdx].notes = {};
-			}
-
-			if (!annotations[verseIdx].notes.words) {
-				annotations[verseIdx].notes.words = {};
-			}
-
-			if (!annotations[verseIdx].notes.words[wordIdx]) {
-				annotations[verseIdx].notes.words[wordIdx] = {};
-			}
-		} else {
-			toastService.showToast(`invalid chapter key: ${mode.chapterKey}`);
 		}
 	}
 
