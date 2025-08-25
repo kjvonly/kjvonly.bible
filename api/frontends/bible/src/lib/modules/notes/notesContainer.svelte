@@ -97,7 +97,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	 */
 	function updateNotesKeys() {
 		noteKeys = Object.keys(notes).sort((a, b) => {
-			return (notes[a].modified - notes[b].modified) * -1;
+			return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
 		});
 	}
 
@@ -163,7 +163,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	function onFilterInputResults(results: any) {
 		if (results.id === searchID) {
 			noteKeys = Object.keys(results.notes).sort((a, b) => {
-				return (notes[a].modified - notes[b].modified) * -1;
+				return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
 			});
 		}
 	}
@@ -345,8 +345,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				text: ``,
 				html: ``,
 				title: `Note`,
-				created: now,
-				modified: now,
+				dateCreated: now,
+				dateModified: now,
 				tags: [],
 				version: 0
 			};
@@ -363,8 +363,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 				text: `${title}\n${verse}`,
 				html: `<h1>${title}</h1><p><italic>${verse}</italic></p>`,
 				title: `${title}`,
-				created: now,
-				modified: now,
+				dateCreated: now,
+				dateModified: now,
 				tags: [],
 				version: 0
 			};
@@ -430,13 +430,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	async function onSelectedNote(noteId: string) {
 		noteID = noteId;
 		note = notes[noteId];
-		let keys = note.chapterKey?.split('_');
-
-		annotations = await chapterService.getAnnotations(`${keys[0]}_${keys[1]}`);
-		verseIdx = keys[2];
-		wordIdx = keys[3];
-
-		note = annotations[verseIdx].notes.words[wordIdx][noteId];
 		let d = quill.clipboard.convert({ html: note?.html });
 		quill.setContents(d, 'silent');
 	}
@@ -933,8 +926,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			<div class="flex w-full flex-col">
 				<span>{notes[nk].title}{notes[nk].title.length === 20 ? '...' : ''}</span>
 				<span class="text-neutral-400"
-					>{new Date(notes[nk].modified).toLocaleDateString()}
-					{new Date(notes[nk].modified).toLocaleTimeString()}</span
+					>{new Date(notes[nk].dateUpdated * 1000).toLocaleDateString() }
+					{new Date(notes[nk].dateUpdated * 1000).toLocaleTimeString()}</span
 				>
 				{#if notes[nk].bcv}
 					<span class="text-neutral-400">{notes[nk].bcv}</span>

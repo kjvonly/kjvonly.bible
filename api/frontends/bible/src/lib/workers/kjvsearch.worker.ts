@@ -127,14 +127,17 @@ let notes: any = {}
 // }
 
 async function initNotes() {
-    let annotations = await chapterService.getAllNotes();
+    let cahcedNotes = await chapterService.getAllNotes();
     notes = {}
-    for (let i = 0; i < annotations.length; i++) {
-        let nn = annotations[i]
-        notesDocument.addAsync(nn.id, nn);
-        let ck = nn.chapterKey.split('_')
-        nn.bookChapter = `${ck[0]}_${ck[1]}`
-        notes[nn.id] = nn
+    for (let i = 0; i < cahcedNotes.length; i++) {
+        let nn = cahcedNotes[i]
+        if (nn?.chapterKey) {
+            notesDocument.addAsync(nn.id, nn);
+            let ck = nn.chapterKey.split('_')
+            nn.bookChapter = `${ck[0]}_${ck[1]}`
+            notes[nn.id] = nn
+        }
+
     }
 
     getAllNotes('*')
