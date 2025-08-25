@@ -88,7 +88,6 @@ export class ChapterService {
     }
 
     async syncAnnotatoins() {
-        let annotations = undefined
         let lastDateUpdated = 0
 
         try {
@@ -102,7 +101,7 @@ export class ChapterService {
             while (shouldContinue) {
                 let resp = await this.api.getapi(`/annots?start_updated_date=${lastDateUpdated}&order_by=date_updated,ASC&page=${page}&rows=${rows}`)
                 if (resp.ok) {
-                    annotations = await resp.json()
+                    let annotations = await resp.json()
                     for (let i = 0; i < annotations.items.length; i++) {
                         await this.bibleService.putValue(db.ANNOTATIONS, annotations.items[i])
                     }
@@ -122,7 +121,15 @@ export class ChapterService {
         } catch (error) {
             console.log(`error getting annotations from ${lastDateUpdated} from server: ${error}`)
         }
-        return annotations;
+
+
+        let annotations = await this.bibleService.getAllValue(db.UNSYNCED_ANNOTATIONS)
+        for (let i = 0; i < annotations.length; i++) {
+            await this.putAnnotations(annotations[i])
+        }
+
+
+
     }
 
     // TODO generalize this for all requests.
@@ -217,6 +224,8 @@ export class ChapterService {
                 } else {
                     await this.onFailurePut(data, unsyncedDB, `status code ${result.status}, expected 200`)
                 }
+            } else {
+                this.bibleService.deleteValue(unsyncedDB, data.id)
             }
 
             let obj = await result.json()

@@ -22,6 +22,41 @@ class Api {
         );
     }
 
+        // Temp function while combinding frontend to backend
+    async postapi(path: string, data: any): Promise<Response> {
+        let headers: any = {
+            'Content-Type': 'application/json'
+        }
+
+        if (token !== undefined) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+
+        return fetch(`${API_URL}${path}`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+    }
+
+      async updateapi(path: string, data: any): Promise<Response> {
+        let headers: any = {
+            'Content-Type': 'application/json'
+        }
+
+        if (token !== undefined) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+
+        return fetch(`${API_URL}${path}`, {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+    }
+
 }
 
 let db: BibleDB | undefined = undefined
