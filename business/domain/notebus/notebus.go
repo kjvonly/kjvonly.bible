@@ -107,6 +107,7 @@ func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 		Version:     nn.Version,
 		DateCreated: now,
 		DateUpdated: now,
+		DateDeleted: time.Time{},
 	}
 
 	if err := b.storer.Create(ctx, nte); err != nil {

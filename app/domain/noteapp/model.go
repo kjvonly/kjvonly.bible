@@ -34,6 +34,7 @@ type Note struct {
 	Version         int    `json:"version"`
 	DateCreated     int64  `json:"dateCreated"`
 	DateUpdated     int64  `json:"dateUpdated"`
+	DateDeleted     int64  `json:"dateDeleted"`
 }
 
 // Encode implements the encoder interface.
@@ -57,7 +58,7 @@ func toAppTags(bus []notebus.Tag) []Tag {
 }
 
 func toAppNote(nte notebus.Note) Note {
-	return Note{
+	appNte := Note{
 		ID:              nte.ID.String(),
 		UserID:          nte.UserID.String(),
 		ReferenceVector: fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
@@ -68,7 +69,14 @@ func toAppNote(nte notebus.Note) Note {
 		Version:         nte.Version,
 		DateCreated:     nte.DateCreated.Unix(),
 		DateUpdated:     nte.DateUpdated.Unix(),
+		DateDeleted:     nte.DateDeleted.Unix(),
 	}
+
+	if nte.DateDeleted.IsZero() {
+		appNte.DateDeleted = 0
+	}
+
+	return appNte
 }
 
 func toAppNotes(notes []notebus.Note) []Note {
