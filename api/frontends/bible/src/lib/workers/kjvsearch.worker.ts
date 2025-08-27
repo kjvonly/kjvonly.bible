@@ -132,7 +132,7 @@ async function initNotes() {
     for (let i = 0; i < cahcedNotes.length; i++) {
         let nn = cahcedNotes[i]
         if (nn?.chapterKey) {
-            notesDocument.addAsync(nn.id, nn);
+            await notesDocument.addAsync(nn.id, nn);
             let ck = nn.chapterKey.split('_')
             nn.bookChapter = `${ck[0]}_${ck[1]}`
             notes[nn.id] = nn

@@ -38,6 +38,17 @@ const TOTAL_BOOKNAMES_KEYS = 1
 
 const TOTAL_STRONGS_KEYS = 14058
 
+let kjvDataWorker:  Worker
+
+function createWorker() {
+  if (!kjvDataWorker) {
+	 kjvDataWorker = new Worker(new URL('../workers/kjvdata.worker?worker', import.meta.url), {
+			type: 'module'
+		});
+  }
+  return kjvDataWorker;
+}
+
 export class BibleDB extends IndexedDB {
 	instance: any;
 	resolve: any;
@@ -52,7 +63,6 @@ export class BibleDB extends IndexedDB {
 	 * to make a REST call to retrieve the data. 
 	 * */
 	isReady = false
-	worker: Worker | undefined = undefined
 
 	constructor() {
 		super(DB_NAME);
@@ -74,11 +84,9 @@ export class BibleDB extends IndexedDB {
 	}
 
 	async init() {
-		this.worker = new Worker(new URL('../workers/kjvdata.worker?worker', import.meta.url), {
-			type: 'module'
-		});
 
-		if (!this.worker) {
+
+		if (!kjvDataWorker) {
 			return
 		}
 
@@ -105,7 +113,7 @@ export class BibleDB extends IndexedDB {
 	async syncChapters() {
 		let keys = await this.getAllKeys(CHAPTERS);
 		if (keys.length < TOTAL_CHAPTERS_KEYS) {
-			this.worker?.postMessage({ sync: CHAPTERS });
+			kjvDataWorker.postMessage({ sync: CHAPTERS });
 
 			let retries = 0;
 			let retryMax = 10;
@@ -128,7 +136,7 @@ export class BibleDB extends IndexedDB {
 		let keys = await this.getAllKeys(BOOKNAMES);
 
 		if (keys.length < TOTAL_BOOKNAMES_KEYS) {
-			this.worker?.postMessage({ sync: BOOKNAMES });
+			kjvDataWorker.postMessage({ sync: BOOKNAMES });
 
 			let retries = 0;
 			let retryMax = 10;
@@ -152,7 +160,7 @@ export class BibleDB extends IndexedDB {
 		let searchIndex = await this.getValue(SEARCH, 'v1');
 
 		if (!searchIndex) {
-			this.worker?.postMessage({ sync: SEARCH });
+			kjvDataWorker.postMessage({ sync: SEARCH });
 
 			let retries = 0;
 			let retryMax = 10;
@@ -176,7 +184,7 @@ export class BibleDB extends IndexedDB {
 	async syncStrongs() {
 		let keys = await this.getAllKeys(STRONGS);
 		if (keys.length < TOTAL_STRONGS_KEYS) {
-			this.worker?.postMessage({ sync: STRONGS });
+			kjvDataWorker.postMessage({ sync: STRONGS });
 
 			let retries = 0;
 			let retryMax = 10;
@@ -196,6 +204,7 @@ export class BibleDB extends IndexedDB {
 	}
 
 	   public static async CreateAsync(): Promise<BibleDB> {
+		createWorker()
         const instance = new BibleDB();
         await instance.createAndOrOpenObjectStores(
 			[

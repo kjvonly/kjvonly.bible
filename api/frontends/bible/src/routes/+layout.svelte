@@ -6,6 +6,7 @@
 	import '../../node_modules/quill/dist/quill.snow.css';
 	import { syncService } from '$lib/services/sync.service';
 	import { timeout } from '$lib/utils/timeout';
+	import { searchService } from '$lib/services/search.service';
 
 	function register() {
 		// Listen for connection coming online
@@ -31,6 +32,8 @@
 	onMount(async () => {
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		bibleDB.init();
+		searchService.init()
+		syncService.sync()
 		register();
 	});
 
