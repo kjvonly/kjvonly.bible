@@ -1,5 +1,5 @@
 import { ChapterService } from "$lib/api/chapters.api";
-import { BibleDB } from "$lib/db/bible.db";
+import { BibleDB, ANNOTATIONS, UNSYNCED_ANNOTATIONS, NOTES, UNSYNCED_NOTES } from "$lib/db/bible.db";
 import { BibleService } from "$lib/db/bible.service";
 import type { IDBPDatabase } from "idb";
 export const API_URL = `${import.meta.env.VITE_API_URL}`
@@ -70,7 +70,7 @@ async function sync(data: any) {
 
     token = data.token
     let chapterService = new ChapterService(api, new BibleService(db))
-    await chapterService.syncAnnotatoins()
+    await chapterService.sync('/annots', ANNOTATIONS, UNSYNCED_ANNOTATIONS)
     postMessage({ id: 'annotations' })
 }
 

@@ -87,27 +87,32 @@ export class ChapterService {
         return strongs;
     }
 
-    async syncAnnotatoins() {
+    async sync(path: string, unsyncedDB: string, syncedDB: string) {
         let lastDateUpdated = 0
 
         try {
-            let ldu = await this.bibleService.getValue(db.ANNOTATIONS, this.bibleService.LAST_DATE_UPDATED_ID)
+            let ldu = await this.bibleService.getValue(syncedDB, this.bibleService.LAST_DATE_UPDATED_ID)
             if (ldu !== undefined) {
                 lastDateUpdated = ldu.timestamp + 1
             }
             let shouldContinue = true
-            let page = 1
+            let currentPage = 1
             let rows = 10
             while (shouldContinue) {
-                let resp = await this.api.getapi(`/annots?start_updated_date=${lastDateUpdated}&order_by=date_updated,ASC&page=${page}&rows=${rows}`)
+                let resp = await this.api.getapi(`${path}?start_updated_date=${lastDateUpdated}&order_by=date_updated,ASC&page=${currentPage}&rows=${rows}`)
                 if (resp.ok) {
-                    let annotations = await resp.json()
-                    for (let i = 0; i < annotations.items.length; i++) {
-                        await this.bibleService.putValue(db.ANNOTATIONS, annotations.items[i])
+                    let page = await resp.json()
+                    for (let i = 0; i < page.items.length; i++) {
+                        if (page.items[i].dateDeleted > 0) {
+                            await this.bibleService.deleteValue(syncedDB, page.items[i].id)
+                            await this.bibleService.deleteValue(unsyncedDB, page.items[i].id)
+                        } else {
+                            await this.bibleService.putValue(syncedDB, page.items[i])
+                        }
                     }
 
-                    if (page < Math.round(annotations.total / rows)) {
-                        page = page + 1
+                    if (currentPage < Math.round(page.total / rows)) {
+                        currentPage = currentPage + 1
                     } else {
                         shouldContinue = false
                     }
@@ -119,13 +124,17 @@ export class ChapterService {
             }
 
         } catch (error) {
-            console.log(`error getting annotations from ${lastDateUpdated} from server: ${error}`)
+            console.log(`error getting ${path} from ${lastDateUpdated} from server: ${error}`)
         }
 
 
-        let annotations = await this.bibleService.getAllValue(db.UNSYNCED_ANNOTATIONS)
-        for (let i = 0; i < annotations.length; i++) {
-            await this.putAnnotations(annotations[i])
+        let unsyncedEntries = await this.bibleService.getAllValue(unsyncedDB)
+        for (let i = 0; i < unsyncedEntries.length; i++) {
+            let e = unsyncedEntries[i]
+            if (e.dateDeleted > 0){
+                this.delete(e, path, unsyncedDB, syncedDB)
+            }
+            await this.put(e, path, unsyncedDB, syncedDB)
         }
     }
 
@@ -243,6 +252,24 @@ export class ChapterService {
         await this.bibleService.putValue(unsyncedDB, data)
     }
 
+    async delete(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
+        try {
+            let result = await this.api.deleteapi(`${path}/{data.id}`)
+      
+            if (result.ok) {
+                await this.bibleService.deleteValue(unsyncedDB, data.id)
+                await this.bibleService.deleteValue(syncedDB, data.id)
+            } else {
+                    await this.bibleService.putValue(unsyncedDB, data)
+                    await this.bibleService.deleteValue(syncedDB, data.id)
+                    console.log(`Failed to delete ${path}/${data.id}`)
+            }
+        } catch (error) {
+                    console.log(`Failed to delete ${path}/${data.id}: ${error}`)
+        }
+    }
+
+
     async getAllAnnotations(): Promise<any> {
         let data: any = undefined
         try {
@@ -264,16 +291,12 @@ export class ChapterService {
     }
 
     async deleteNote(noteID: string): Promise<any> {
-        let path: string = `/notes/${noteID}`
-        let resp = await this.api.deleteapi(path)
-        if (!resp.ok) {
-            let delNte = {
+        let path: string = `/notes`
+        let delNte = {
                 id: noteID,
                 dateDeleted: Date.now()
             }
-            await this.bibleService.putValue(db.UNSYNCED_ANNOTATIONS, delNte)
-        }
-        this.bibleService.deleteValue(db.NOTES, noteID)
+        await this.delete(delNte, path, db.UNSYNCED_NOTES, db.NOTES)
     }
 
     async putAllAnnotations(objects: any): Promise<any> {

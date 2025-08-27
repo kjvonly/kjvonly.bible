@@ -106,7 +106,7 @@
 		return mergeDeep(target, ...sources);
 	}
 
-	function doImport(e) {
+	function doImport(e: any) {
 		const reader = new FileReader();
 		reader.onload = (e2) => {
 			let result: any = e2?.target?.result;
