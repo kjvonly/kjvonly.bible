@@ -8,8 +8,9 @@ import (
 )
 
 var orderByFields = map[string]string{
-	notebus.OrderByID:     "note_id",
-	notebus.OrderByUserID: "user_id",
+	notebus.OrderByID:          "note_id",
+	notebus.OrderByUserID:      "user_id",
+	notebus.OrderByDateUpdated: "date_updated",
 }
 
 func orderByClause(orderBy order.By) (string, error) {

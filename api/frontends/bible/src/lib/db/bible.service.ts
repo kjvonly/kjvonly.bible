@@ -55,14 +55,6 @@ export class BibleService {
     async putValue(objectStoreName: string, data: any): Promise<any> {
         await this.bibleDB.ready
         await this.bibleDB.putValue(objectStoreName, data)
-
-        if (data.dateUpdated){
-            let dateUpdatedData ={
-                id: 'lastDateUpdated',
-                timestamp: data.dateUpdated
-            }
-            await this.bibleDB.putValue(objectStoreName, dateUpdatedData)
-        }
     }
 
     /**

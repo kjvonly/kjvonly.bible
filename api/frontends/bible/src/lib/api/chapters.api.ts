@@ -89,7 +89,7 @@ export class ChapterService {
 
     async sync(path: string, unsyncedDB: string, syncedDB: string) {
         let lastDateUpdated = 0
-
+        let dateUpdatedSynced = 0
         try {
             let ldu = await this.bibleService.getValue(syncedDB, this.bibleService.LAST_DATE_UPDATED_ID)
             if (ldu !== undefined) {
@@ -98,16 +98,20 @@ export class ChapterService {
             let shouldContinue = true
             let currentPage = 1
             let rows = 10
+
+            
             while (shouldContinue) {
-                let resp = await this.api.getapi(`${path}?start_updated_date=${lastDateUpdated}&order_by=date_updated,ASC&page=${currentPage}&rows=${rows}`)
+                let resp = await this.api.getapi(`${path}?start_updated_date=${lastDateUpdated}&orderBy=date_updated,ASC&page=${currentPage}&rows=${rows}`)
                 if (resp.ok) {
                     let page = await resp.json()
                     for (let i = 0; i < page.items.length; i++) {
                         if (page.items[i].dateDeleted > 0) {
                             await this.bibleService.deleteValue(syncedDB, page.items[i].id)
                             await this.bibleService.deleteValue(unsyncedDB, page.items[i].id)
+                            dateUpdatedSynced = page.items[i].dateUpdated
                         } else {
                             await this.bibleService.putValue(syncedDB, page.items[i])
+                            dateUpdatedSynced = page.items[i].dateUpdated
                         }
                     }
 
@@ -127,6 +131,13 @@ export class ChapterService {
             console.log(`error getting ${path} from ${lastDateUpdated} from server: ${error}`)
         }
 
+        if (dateUpdatedSynced){
+            let dateUpdatedData ={
+                id: bibleService.LAST_DATE_UPDATED_ID,
+                timestamp:dateUpdatedSynced
+            }
+            await this.bibleService.putValue(syncedDB, dateUpdatedData)
+        }
 
         let unsyncedEntries = await this.bibleService.getAllValue(unsyncedDB)
         for (let i = 0; i < unsyncedEntries.length; i++) {
