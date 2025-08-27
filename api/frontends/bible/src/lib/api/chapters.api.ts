@@ -127,9 +127,6 @@ export class ChapterService {
         for (let i = 0; i < annotations.length; i++) {
             await this.putAnnotations(annotations[i])
         }
-
-
-
     }
 
     // TODO generalize this for all requests.
@@ -270,9 +267,12 @@ export class ChapterService {
         let path: string = `/notes/${noteID}`
         let resp = await this.api.deleteapi(path)
         if (!resp.ok) {
-            this.bibleService.putValue(db.NOTES, noteID)
+            let delNte = {
+                id: noteID,
+                dateDeleted: Date.now()
+            }
+            await this.bibleService.putValue(db.UNSYNCED_ANNOTATIONS, delNte)
         }
-
         this.bibleService.deleteValue(db.NOTES, noteID)
     }
 

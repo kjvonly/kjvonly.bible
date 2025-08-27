@@ -253,8 +253,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onConfirmDelete() {
-		delete annotations[verseIdx].notes.words[wordIdx][noteID];
-		await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		chapterService.deleteNote(noteID)
 		noteKeys = [];
 		delete notes[noteID];
 		searchService.deleteNote('*', noteID);
