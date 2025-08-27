@@ -70,8 +70,11 @@ async function sync(data: any) {
 
     token = data.token
     let chapterService = new ChapterService(api, new BibleService(db))
-    await chapterService.sync('/annots', ANNOTATIONS, UNSYNCED_ANNOTATIONS)
+    await chapterService.sync('/annots',  UNSYNCED_ANNOTATIONS, ANNOTATIONS)
     postMessage({ id: 'annotations' })
+
+    await chapterService.sync('/notes',  UNSYNCED_NOTES, NOTES)
+    postMessage({ id: 'notes' })
 }
 
 onmessage = async (e) => {

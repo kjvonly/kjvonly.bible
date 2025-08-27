@@ -265,6 +265,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 		if (savedNote !== undefined) {
 			noteID = savedNote.id;
+			note.id = savedNote.id
+			note.version = savedNote.version
 			notes[noteID] = note;
 			toastService.showToast(toastMessage);
 			searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));

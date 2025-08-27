@@ -200,8 +200,7 @@ export class ChapterService {
         let path = '/notes'
         let unsyncedDB = db.UNSYNCED_NOTES
         let syncedDB = db.NOTES
-        let notes = await this.put(data, path, unsyncedDB, syncedDB)
-        return notes
+        return await this.put(data, path, unsyncedDB, syncedDB)
     }
 
     async put(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
