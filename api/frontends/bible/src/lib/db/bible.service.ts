@@ -19,7 +19,6 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getValue(objectStoreName: string, id: string): Promise<any> {
-        await this.bibleDB.ready
         return await this.bibleDB.getValue(objectStoreName, id)
     }
 
@@ -30,9 +29,7 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getValueIfCacheIsReady(objectStoreName: string, id: string): Promise<any> {
-        if (this.bibleDB.isReady){
             return this.getValue(objectStoreName, id)
-        }
     }
 
     /**
@@ -41,7 +38,6 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getAllValue(objectStoreName: string): Promise<any> {
-        await this.bibleDB.ready
         return await this.bibleDB.getAllValue(objectStoreName)
 
     }
@@ -53,7 +49,6 @@ export class BibleService {
     * @returns 
     */
     async putValue(objectStoreName: string, data: any): Promise<any> {
-        await this.bibleDB.ready
         await this.bibleDB.putValue(objectStoreName, data)
     }
 
@@ -64,7 +59,6 @@ export class BibleService {
      * @returns 
      */
     async putBulkValue(objectStoreName: string, data: any): Promise<any> {
-        await this.bibleDB.ready
         await this.bibleDB.putBulkValue(objectStoreName, data)
     }
 
@@ -75,7 +69,6 @@ export class BibleService {
     * @returns 
     */
     async deleteValue(objectStoreName: string, id: string): Promise<any> {
-        await this.bibleDB.ready
         await this.bibleDB.deleteValue(objectStoreName, id)
     }
 

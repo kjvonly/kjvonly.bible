@@ -1,5 +1,6 @@
 import { chapterService } from "$lib/api/chapters.api";
-import { bibleDB } from "$lib/db/bible.db"
+import { bibleDB, SEARCH } from "$lib/db/bible.db"
+import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
 
 let index = new FlexSearch.Index();
@@ -35,12 +36,26 @@ async function exportIndexToConsole() {
     console.log('export Index', verses)
 }
 
+    async function waitForSearchIndex(): Promise<boolean> {
+		while (1) {
+			let searchIndex = await bibleDB.getValue(SEARCH, 'v1');
+			if (
+				searchIndex
+			) {
+				return true
+			}
+			await sleep(1000)
+		}
+		return false
+	}
+
+
 async function init() {
     let indexes = index.search('for god so')
     if (indexes.length === 0) {
-        await bibleDB.waitForSearchIndex()
+        await waitForSearchIndex()
 
-        let bibleIndex = await bibleDB.getValue('search', 'v1')
+        let bibleIndex = await bibleDB.getValue(SEARCH, 'v1')
         delete bibleIndex['id']
 
         for (const key of Object.keys(bibleIndex)) {

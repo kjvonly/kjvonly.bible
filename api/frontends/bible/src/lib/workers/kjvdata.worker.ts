@@ -40,7 +40,6 @@ async function onBooknames() {
 	});;
 }
 
-
 async function onSearch() {
 	let db = await new BibleDB()
 	fetch(`${BASE_URL}data/json.gz/bibleindex.json`, {

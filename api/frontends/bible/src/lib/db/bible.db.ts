@@ -38,175 +38,14 @@ const TOTAL_BOOKNAMES_KEYS = 1
 
 const TOTAL_STRONGS_KEYS = 14058
 
-let kjvDataWorker:  Worker
-
-function createWorker() {
-  if (!kjvDataWorker) {
-	 kjvDataWorker = new Worker(new URL('../workers/kjvdata.worker?worker', import.meta.url), {
-			type: 'module'
-		});
-  }
-  return kjvDataWorker;
-}
-
 export class BibleDB extends IndexedDB {
-	instance: any;
-	resolve: any;
-	ready: Promise<boolean | undefined> = new Promise((resolve, reject) => {
-		this.resolve = resolve;
-	});
-
-	/** 
-	 * isReady is a check to see if the cacheIsReady. 
-	 * This allows the caller to check this status to determine 
-	 * if they want to wait for the cache to sync or if they want 
-	 * to make a REST call to retrieve the data. 
-	 * */
-	isReady = false
-
 	constructor() {
 		super(DB_NAME);
 	}
 
-	async waitForSearchIndex(): Promise<boolean> {
-		while (1) {
-			let searchIndex = await this.getValue(SEARCH, 'v1');
-			if (
-				searchIndex
-			) {
-				this.resolve(true)
-				this.isReady = true
-				return true
-			}
-			await sleep(1000)
-		}
-		return false
-	}
-
-	async init() {
-
-
-		if (!kjvDataWorker) {
-			return
-		}
-
-		let syncedChapters = await this.syncChapters()
-		let syncedBooknames = await this.syncBooknames()
-
-		if (syncedChapters && syncedBooknames) {
-			this.resolve(true);
-			this.isReady = true
-		}
-
-		/** this is after resolving since i want the user to be able to start
-		 * reading/searching the app as soon as possible. There 14k strong
-		 * defs that need to be cached
-		 */
-		await this.syncStrongs()
-		await this.syncSearchIndex()
-
-	}
-
-
-	// TODO update syncs to be generic.
-	// implement a count call to index db to just return the count.
-	async syncChapters() {
-		let keys = await this.getAllKeys(CHAPTERS);
-		if (keys.length < TOTAL_CHAPTERS_KEYS) {
-			kjvDataWorker.postMessage({ sync: CHAPTERS });
-
-			let retries = 0;
-			let retryMax = 10;
-
-			while (keys.length < TOTAL_CHAPTERS_KEYS || retries == retryMax) {
-				await sleep(1000);
-				keys = await this.getAllKeys(CHAPTERS);
-				retries = retries + 1;
-			}
-
-			if (retries === retryMax) {
-				return false;
-			}
-		}
-
-		return true
-	}
-
-	async syncBooknames() {
-		let keys = await this.getAllKeys(BOOKNAMES);
-
-		if (keys.length < TOTAL_BOOKNAMES_KEYS) {
-			kjvDataWorker.postMessage({ sync: BOOKNAMES });
-
-			let retries = 0;
-			let retryMax = 10;
-
-			while (keys.length < TOTAL_BOOKNAMES_KEYS || retries == retryMax) {
-
-				await sleep(1000);
-				keys = await this.getAllKeys(BOOKNAMES);
-				retries = retries + 1;
-			}
-
-			if (retries === retryMax) {
-				return false;
-			}
-		}
-
-		return true
-	}
-
-	async syncSearchIndex() {
-		let searchIndex = await this.getValue(SEARCH, 'v1');
-
-		if (!searchIndex) {
-			kjvDataWorker.postMessage({ sync: SEARCH });
-
-			let retries = 0;
-			let retryMax = 10;
-
-			while (!searchIndex || retries == retryMax) {
-
-				await sleep(1000);
-				searchIndex = await this.getValue(SEARCH, 'v1');
-				retries = retries + 1;
-			}
-
-			if (retries === retryMax) {
-				return false;
-			}
-		}
-
-		return true
-	}
-
-
-	async syncStrongs() {
-		let keys = await this.getAllKeys(STRONGS);
-		if (keys.length < TOTAL_STRONGS_KEYS) {
-			kjvDataWorker.postMessage({ sync: STRONGS });
-
-			let retries = 0;
-			let retryMax = 10;
-
-			while (keys.length < TOTAL_STRONGS_KEYS || retries == retryMax) {
-				await sleep(1000);
-				keys = await this.getAllKeys(STRONGS);
-				retries = retries + 1;
-			}
-
-			if (retries === retryMax) {
-				return false;
-			}
-		}
-
-		return true
-	}
-
-	   public static async CreateAsync(): Promise<BibleDB> {
-		createWorker()
-        const instance = new BibleDB();
-        await instance.createAndOrOpenObjectStores(
+	public static async CreateAsync(): Promise<BibleDB> {
+		const instance = new BibleDB();
+		await instance.createAndOrOpenObjectStores(
 			[
 				CHAPTERS,
 				BOOKNAMES,
@@ -217,8 +56,8 @@ export class BibleDB extends IndexedDB {
 				UNSYNCED_ANNOTATIONS,
 				UNSYNCED_NOTES,
 			]);
-        return instance;
-    }
+		return instance;
+	}
 }
 
 
