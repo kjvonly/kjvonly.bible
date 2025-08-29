@@ -10,7 +10,7 @@ myHeaders.append('Transfer-Encoding', 'gzip');
 async function onChapters() {
 	let db = await new BibleDB()
 
-	fetch(`${BASE_URL}data/json.gz/all.json`, {
+	fetch(`${BASE_URL}/data/json.gz/all.json`, {
 		headers: myHeaders
 	}).then((res) => {
 		res.json().then((json) => {
@@ -27,7 +27,7 @@ async function onChapters() {
 
 async function onBooknames() {
 	let db = await new BibleDB()
-	fetch(`${BASE_URL}data/json.gz/booknames.json`, {
+	fetch(`${BASE_URL}/data/json.gz/booknames.json`, {
 		headers: myHeaders
 	}).then((res) => {
 
@@ -42,7 +42,7 @@ async function onBooknames() {
 
 async function onSearch() {
 	let db = await new BibleDB()
-	fetch(`${BASE_URL}data/json.gz/bibleindex.json`, {
+	fetch(`${BASE_URL}/data/json.gz/bibleindex.json`, {
 		headers: myHeaders
 	}).then((res) => {
 
@@ -56,7 +56,7 @@ async function onSearch() {
 
 async function onStrongs() {
 	let db = await new BibleDB()
-	fetch(`${BASE_URL}data/strongs.json.gz/all.json`, {
+	fetch(`${BASE_URL}/data/strongs.json.gz/all.json`, {
 		headers: myHeaders
 	}).then((res) => {
 		res.json().then((json) => {

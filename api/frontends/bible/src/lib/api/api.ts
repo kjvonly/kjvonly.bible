@@ -1,7 +1,32 @@
 import { BASE_URL, API_URL } from "$lib/utils/paths";
 
 export class Api {
-    async get(path: string) {
+    BEARER_TOKEN: string | null = null
+
+    static withBerarToken(bearerToken: string): Api {
+        let api = new Api()
+        api.setBearerToekn(bearerToken)
+        return api
+    }
+
+    loadBearerToken() {
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            try {
+                let token = localStorage.getItem('token')
+                if (token) {
+                    api.setBearerToekn(token)
+                }
+            } catch (e) {
+                console.warn('Failed to access localStorage:', e);
+            }
+        }
+    }
+
+    setBearerToekn(bearerToken: string) {
+        this.BEARER_TOKEN = bearerToken
+    }
+
+    async getstatic(path: string) {
         const myHeaders = new Headers();
         myHeaders.append('Content-Type', 'application/json');
         myHeaders.append('Transfer-Encoding', 'gzip');
@@ -15,46 +40,30 @@ export class Api {
         return data;
     }
 
-    async post(path: string, data: any): Promise<any> {
-        const response = await fetch(`${BASE_URL}${path}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        return result;
-
-    }
+    async get(path: string): Promise<Response> {
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        headers.append('Transfer-Encoding', 'gzip');
 
 
-    // Temp function while combinding frontend to backend
-    async getapi(path: string): Promise<Response> {
-        const myHeaders = new Headers();
-        myHeaders.append('Content-Type', 'application/json');
-        myHeaders.append('Transfer-Encoding', 'gzip');
-
-        let token = localStorage.getItem('token')
-        if (token !== undefined) {
-            myHeaders.append('Authorization', `Bearer ${token}`)
+        if (this.BEARER_TOKEN) {
+            headers.append('Authorization', `Bearer ${this.BEARER_TOKEN}`)
         }
 
         return await fetch(`${API_URL}${path}`,
             {
-                headers: myHeaders
+                headers: headers
             }
         );
 
     }
 
-    // Temp function while combinding frontend to backend
-    async postapi(path: string, data: any): Promise<Response> {
-        let headers: any = {
-            'Content-Type': 'application/json'
-        }
+    async post(path: string, data: any): Promise<Response> {
+        const headers = new Headers()
+        headers.append('Content-Type', 'application/json');
 
-        let token = localStorage.getItem('token')
-        if (token !== undefined) {
-            headers['Authorization'] = `Bearer ${token}`
+        if (this.BEARER_TOKEN) {
+            headers.append('Authorization', `Bearer ${this.BEARER_TOKEN}`)
         }
 
         return fetch(`${API_URL}${path}`, {
@@ -65,13 +74,10 @@ export class Api {
 
     }
 
-    // Temp function while combinding frontend to backend
-    async deleteapi(path: string): Promise<Response> {
-        let headers: any = {}
-
-        let token = localStorage.getItem('token')
-        if (token !== undefined) {
-            headers['Authorization'] = `Bearer ${token}`
+    async delete(path: string): Promise<Response> {
+        let headers = new Headers()
+        if (this.BEARER_TOKEN) {
+            headers.append('Authorization', `Bearer ${this.BEARER_TOKEN}`)
         }
 
         return fetch(`${API_URL}${path}`, {
@@ -81,15 +87,12 @@ export class Api {
     }
 
 
-    // Temp function while combinding frontend to backend
-    async updateapi(path: string, data: any): Promise<Response> {
-        let headers: any = {
-            'Content-Type': 'application/json'
-        }
+    async update(path: string, data: any): Promise<Response> {
+        const headers = new Headers()
+        headers.append('Content-Type', 'application/json');
 
-        let token = localStorage.getItem('token')
-        if (token !== undefined) {
-            headers['Authorization'] = `Bearer ${token}`
+        if (this.BEARER_TOKEN) {
+            headers.append('Authorization', `Bearer ${this.BEARER_TOKEN}`)
         }
 
         return fetch(`${API_URL}${path}`, {
@@ -102,4 +105,4 @@ export class Api {
 
 }
 
-export let api = new Api();
+export let api = new Api()

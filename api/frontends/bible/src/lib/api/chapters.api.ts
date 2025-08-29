@@ -1,13 +1,12 @@
-import { api } from './api'
+import { Api } from './api'
 import { bibleService } from '../db/bible.service';
-import { deepMerge } from '$lib/utils/deepmerge';
+import { BASE_URL, API_URL } from "$lib/utils/paths";
 
 import * as db from '../db/bible.db';
 import { toastService } from '$lib/services/toast.service';
 
 export class ChapterService {
-
-    api = api
+    api
     bibleService = bibleService
 
     constructor(api: any, bs: any) {
@@ -29,7 +28,7 @@ export class ChapterService {
         }
 
         if (chapter === undefined) {
-            return await this.api.get(`data/json.gz/${chapterKey}.json`);
+            return await this.api.getstatic(`/data/json.gz/${chapterKey}.json`);
         }
 
         return chapter;
@@ -46,7 +45,7 @@ export class ChapterService {
         }
 
         if (booknames === undefined) {
-            return await this.api.get(`data/json.gz/booknames.json`);
+            return await this.api.getstatic(`/data/json.gz/booknames.json`);
         }
 
         return booknames;
@@ -64,7 +63,7 @@ export class ChapterService {
         }
 
         if (searchIndex === undefined) {
-            return await this.api.get(`data/json.gz/bibleindex.json`);
+            return await this.api.getstatic(`/data/json.gz/bibleindex.json`);
         }
 
         return searchIndex;
@@ -81,7 +80,7 @@ export class ChapterService {
         }
 
         if (strongs === undefined) {
-            return await this.api.get(`data/strongs.json.gz/${key}.json`);
+            return await this.api.getstatic(`/data/strongs.json.gz/${key}.json`);
         }
 
         return strongs;
@@ -101,7 +100,7 @@ export class ChapterService {
 
             
             while (shouldContinue) {
-                let resp = await this.api.getapi(`${path}?start_updated_date=${lastDateUpdated}&orderBy=date_updated,ASC&page=${currentPage}&rows=${rows}`)
+                let resp = await this.api.get(`${path}?start_updated_date=${lastDateUpdated}&orderBy=date_updated,ASC&page=${currentPage}&rows=${rows}`)
                 if (resp.ok) {
                     let page = await resp.json()
                     for (let i = 0; i < page.items.length; i++) {
@@ -188,7 +187,7 @@ export class ChapterService {
         // }
 
         try {
-            let resp = await this.api.getapi(`${path}/${id}`)
+            let resp = await this.api.get(`${path}/${id}`)
             if (resp.ok) {
                 annotations = await resp.json()
             }
@@ -220,9 +219,9 @@ export class ChapterService {
             var result: Response
 
             if (data.version == 1) {
-                result = await this.api.postapi(path, data)
+                result = await this.api.post(path, data)
             } else {
-                result = await this.api.updateapi(`${path}/${data.id}`, data)
+                result = await this.api.update(`${path}/${data.id}`, data)
             }
 
             if (!result.ok) {
@@ -264,7 +263,7 @@ export class ChapterService {
 
     async delete(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
         try {
-            let result = await this.api.deleteapi(`${path}/{data.id}`)
+            let result = await this.api.delete(`${path}/{data.id}`)
       
             if (result.ok) {
                 await this.bibleService.deleteValue(unsyncedDB, data.id)
@@ -318,4 +317,4 @@ export class ChapterService {
     }
 }
 
-export let chapterService = new ChapterService(api, bibleService)
+export let chapterService = new ChapterService(new Api(), bibleService)
