@@ -29,14 +29,14 @@
 	}
 
 	onMount(async () => {
-		api.loadBearerToken()
-		
+		api.loadBearerToken();
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		await syncService.init();
 		searchService.init();
 		syncService.sync();
 		register();
 	});
+
 
 	let { children } = $props();
 </script>

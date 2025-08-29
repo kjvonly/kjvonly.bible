@@ -1,6 +1,6 @@
 import { BibleService } from "$lib/db/bible.service";
 import { ChapterService } from "$lib/api/chapters.api";
-import {Api} from '$lib/api/api'
+import {api} from '$lib/api/api'
 import {
     BibleDB,
     ANNOTATIONS,
@@ -37,7 +37,7 @@ onmessage = async (e) => {
 }
 
 let db = await BibleDB.CreateAsync()
-let api = new Api()
+
 
 async function syncAnnotsAndNotesFromServer(data: any) {
     api.setBearerToekn(data.token)

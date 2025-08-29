@@ -4,13 +4,6 @@ export class BibleService {
 
     LAST_DATE_UPDATED_ID = 'lastDateUpdated'
 
-    bibleDB = bibleDB
-    /**
-     *
-     */
-    constructor(db: any) {
-        this.bibleDB = db
-    }
 
     /**
      * 
@@ -19,7 +12,7 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getValue(objectStoreName: string, id: string): Promise<any> {
-        return await this.bibleDB.getValue(objectStoreName, id)
+        return await bibleDB.getValue(objectStoreName, id)
     }
 
         /**
@@ -38,7 +31,7 @@ export class BibleService {
      * @returns data of the id in that objectstorename
      */
     async getAllValue(objectStoreName: string): Promise<any> {
-        return await this.bibleDB.getAllValue(objectStoreName)
+        return await bibleDB.getAllValue(objectStoreName)
 
     }
 
@@ -49,7 +42,7 @@ export class BibleService {
     * @returns 
     */
     async putValue(objectStoreName: string, data: any): Promise<any> {
-        await this.bibleDB.putValue(objectStoreName, data)
+        await bibleDB.putValue(objectStoreName, data)
     }
 
     /**
@@ -59,7 +52,7 @@ export class BibleService {
      * @returns 
      */
     async putBulkValue(objectStoreName: string, data: any): Promise<any> {
-        await this.bibleDB.putBulkValue(objectStoreName, data)
+        await bibleDB.putBulkValue(objectStoreName, data)
     }
 
         /**
@@ -69,9 +62,9 @@ export class BibleService {
     * @returns 
     */
     async deleteValue(objectStoreName: string, id: string): Promise<any> {
-        await this.bibleDB.deleteValue(objectStoreName, id)
+        await bibleDB.deleteValue(objectStoreName, id)
     }
 
 }
 
-export let bibleService = new BibleService(bibleDB)
+export let bibleService = new BibleService()
