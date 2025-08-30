@@ -13,6 +13,7 @@ import {
     STRONGS
 } from "$lib/storer/bible.db";
 import { authService } from "$lib/services/auth.service";
+import { offlineApi } from "$lib/api/offline.api";
 
 
 onmessage = async (e) => {
@@ -41,14 +42,13 @@ let db = await BibleDB.CreateAsync()
 
 async function syncAnnotsAndNotesFromServer(data: any) {
     authService.setBearerToekn(data.token)
-    let chapterService = new ChapterService()
 
     // ----------------- SYNC ANNOTS ------------------------------------------
-    await chapterService.sync('/annots', UNSYNCED_ANNOTATIONS, ANNOTATIONS)
+    await  offlineApi.sync('/annots', UNSYNCED_ANNOTATIONS, ANNOTATIONS)
     postMessage({ id: 'annotations' })
 
     // ----------------- SYNC NOTES -------------------------------------------
-    await chapterService.sync('/notes', UNSYNCED_NOTES, NOTES)
+    await offlineApi.sync('/notes', UNSYNCED_NOTES, NOTES)
     postMessage({ id: 'notes' })
 }
 

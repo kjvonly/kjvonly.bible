@@ -1,10 +1,14 @@
 import { api } from './api'
 import { bibleStorer } from '../storer/bible.storer';
-import { BASE_URL, API_URL } from "$lib/utils/paths";
 
-import * as db from '../storer/bible.db';
-import { toastService } from '$lib/services/toast.service';
-import { authService } from '$lib/services/auth.service';
+import {
+    ANNOTATIONS,
+    UNSYNCED_ANNOTATIONS,
+    NOTES,
+    UNSYNCED_NOTES,
+} from "$lib/storer/bible.db";
+
+import { offlineApi } from './offline.api';
 
 export class ChapterService {
 
@@ -80,67 +84,7 @@ export class ChapterService {
         return strongs;
     }
 
-    async sync(path: string, unsyncedDB: string, syncedDB: string) {
-        let lastDateUpdated = 0
-        let dateUpdatedSynced = 0
-        try {
-            let ldu = await bibleStorer.getValue(syncedDB, bibleStorer.LAST_DATE_UPDATED_ID)
-            if (ldu !== undefined) {
-                lastDateUpdated = ldu.timestamp + 1
-            }
-            let shouldContinue = true
-            let currentPage = 1
-            let rows = 10
-
-
-            while (shouldContinue) {
-                let resp = await api.get(`${path}?start_updated_date=${lastDateUpdated}&orderBy=date_updated,ASC&page=${currentPage}&rows=${rows}`)
-                if (resp.ok) {
-                    let page = await resp.json()
-                    for (let i = 0; i < page.items.length; i++) {
-                        if (page.items[i].dateDeleted > 0) {
-                            await bibleStorer.deleteValue(syncedDB, page.items[i].id)
-                            await bibleStorer.deleteValue(unsyncedDB, page.items[i].id)
-                            dateUpdatedSynced = page.items[i].dateUpdated
-                        } else {
-                            await bibleStorer.putValue(syncedDB, page.items[i])
-                            dateUpdatedSynced = page.items[i].dateUpdated
-                        }
-                    }
-
-                    if (currentPage < Math.round(page.total / rows)) {
-                        currentPage = currentPage + 1
-                    } else {
-                        shouldContinue = false
-                    }
-
-                } else {
-                    shouldContinue = false
-                    console.log(`error syncing annotations from server: ${await resp.json()}`)
-                }
-            }
-
-        } catch (error) {
-            console.log(`error getting ${path} from ${lastDateUpdated} from server: ${error}`)
-        }
-
-        if (dateUpdatedSynced) {
-            let dateUpdatedData = {
-                id: bibleStorer.LAST_DATE_UPDATED_ID,
-                timestamp: dateUpdatedSynced
-            }
-            await bibleStorer.putValue(syncedDB, dateUpdatedData)
-        }
-
-        let unsyncedEntries = await bibleStorer.getAllValue(unsyncedDB)
-        for (let i = 0; i < unsyncedEntries.length; i++) {
-            let e = unsyncedEntries[i]
-            if (e.dateDeleted > 0) {
-                this.delete(e, path, unsyncedDB, syncedDB)
-            }
-            await this.put(e, path, unsyncedDB, syncedDB)
-        }
-    }
+    
 
     // TODO generalize this for all requests.
     async getAnnotations(chapterKey: string): Promise<any> {
@@ -152,10 +96,10 @@ export class ChapterService {
         }
 
         try {
-            annotations = await bibleStorer.getValue(db.UNSYNCED_ANNOTATIONS, chapterKey)
+            annotations = await bibleStorer.getValue(UNSYNCED_ANNOTATIONS, chapterKey)
 
             if (annotations === undefined) {
-                annotations = await bibleStorer.getValue(db.ANNOTATIONS, chapterKey)
+                annotations = await bibleStorer.getValue(ANNOTATIONS, chapterKey)
             }
 
             if (annotations === undefined) {
@@ -172,114 +116,29 @@ export class ChapterService {
         return annotations;
     }
 
-    async fetch(id: string, path: string): Promise<any> {
-        let annotations = undefined
 
-        try {
-            let resp = await api.get(`${path}/${id}`)
-            if (resp.ok) {
-                annotations = await resp.json()
-            }
-        } catch (error) {
-            console.log(`error getting annotations ${id} from server: ${error}`)
-        }
-        return annotations;
-    }
 
 
     async putAnnotations(data: any): Promise<any> {
         let path = '/annots'
-        let unsyncedDB = db.UNSYNCED_ANNOTATIONS
-        let syncedDB = db.ANNOTATIONS
-        return await this.put(data, path, unsyncedDB, syncedDB)
+        let unsyncedDB = UNSYNCED_ANNOTATIONS
+        let syncedDB = ANNOTATIONS
+        return await offlineApi.put(data, path, unsyncedDB, syncedDB)
 
     }
 
     async putNote(data: any): Promise<any> {
         let path = '/notes'
-        let unsyncedDB = db.UNSYNCED_NOTES
-        let syncedDB = db.NOTES
-        return await this.put(data, path, unsyncedDB, syncedDB)
+        let unsyncedDB = UNSYNCED_NOTES
+        let syncedDB = NOTES
+        return await offlineApi.put(data, path, unsyncedDB, syncedDB)
     }
 
-    async put(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
-        try {
-            data.version = data.version + 1
-            var result: Response
-
-            if (data.version == 1) {
-                result = await api.post(path, data)
-            } else {
-                result = await api.update(`${path}/${data.id}`, data)
-            }
-
-            if (!result.ok) {
-                // BAD REQUEST or Already Exists
-                if (result.status === 400 || result.status === 409) {
-                    let annots = await this.fetch(data.id, path)
-                    if (annots !== undefined) {
-                        bibleStorer.deleteValue(unsyncedDB, data.id)
-                        bibleStorer.putValue(syncedDB, annots)
-                    }
-                    toastService.showToast("Discarded stale versions. Please update lastest version.")
-                    return annots
-                } else {
-                    return await this.onFailurePut(result.status, data, unsyncedDB, `status code ${result.status}, expected 200`)
-                }
-            }
-            else {
-                bibleStorer.deleteValue(unsyncedDB, data.id)
-            }
-
-            let obj = await result.json()
-
-            await bibleStorer.putValue(syncedDB, obj)
-
-            return obj
-
-        } catch (error) {
-            return await this.onFailurePut(undefined, data, unsyncedDB, error)
-        }
-    }
-
-    async onFailurePut(statusCode: number | undefined, data: any, unsyncedDB: string, error: any): Promise<any> {
-        console.log(`error putting  ${data?.id}: storing to unsynced cache:  ${error}: `)
-        data.version = data.version - 1
-
-        let toastMessage = "Offline Mode: sync will occur when service is reachable."
-        if (statusCode === 401) {
-            if (authService.hasLoggedIn()) {
-                toastMessage = "Offline Mode: sign in again to save changes."
-            } else {
-                toastMessage = "Offline Mode: sign in to save changes."
-            }
-        }
-        toastService.showToast(toastMessage)
-        await bibleStorer.putValue(unsyncedDB, data)
-        return data
-    }
-
-    async delete(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
-        try {
-            let result = await api.delete(`${path}/${data.id}`)
-
-            if (result.ok) {
-                await bibleStorer.deleteValue(unsyncedDB, data.id)
-                await bibleStorer.deleteValue(syncedDB, data.id)
-            } else {
-                await bibleStorer.putValue(unsyncedDB, data)
-                await bibleStorer.deleteValue(syncedDB, data.id)
-                console.log(`Failed to delete ${path}/${data.id}`)
-            }
-        } catch (error) {
-            console.log(`Failed to delete ${path}/${data.id}: ${error}`)
-        }
-    }
 
     async getAllAnnotations(): Promise<any> {
         let data: any = undefined
         try {
-            data = await bibleStorer.getAllValue(db.ANNOTATIONS)
+            data = await bibleStorer.getAllValue(ANNOTATIONS)
         } catch (error) {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
@@ -289,7 +148,7 @@ export class ChapterService {
     async getAllNotes(): Promise<any> {
         let data: any = undefined
         try {
-            data = await bibleStorer.getAllValue(db.NOTES)
+            data = await bibleStorer.getAllValue(NOTES)
         } catch (error) {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
@@ -302,12 +161,12 @@ export class ChapterService {
             id: noteID,
             dateDeleted: Date.now()
         }
-        await this.delete(delNte, path, db.UNSYNCED_NOTES, db.NOTES)
+        await offlineApi.delete(delNte, path, UNSYNCED_NOTES, NOTES)
     }
 
     async putAllAnnotations(objects: any): Promise<any> {
         try {
-            await bibleStorer.putBulkValue(db.ANNOTATIONS, objects)
+            await bibleStorer.putBulkValue(ANNOTATIONS, objects)
         } catch (error) {
             console.log(`error importing all annotations from indexedDB: ${error}`)
         }
