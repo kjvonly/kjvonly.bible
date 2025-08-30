@@ -4,6 +4,7 @@ import { BASE_URL, API_URL } from "$lib/utils/paths";
 
 import * as db from '../db/bible.db';
 import { toastService } from '$lib/services/toast.service';
+import { authService } from '$lib/services/auth.service';
 
 export class ChapterService {
 
@@ -91,7 +92,7 @@ export class ChapterService {
             let currentPage = 1
             let rows = 10
 
-            
+
             while (shouldContinue) {
                 let resp = await api.get(`${path}?start_updated_date=${lastDateUpdated}&orderBy=date_updated,ASC&page=${currentPage}&rows=${rows}`)
                 if (resp.ok) {
@@ -123,10 +124,10 @@ export class ChapterService {
             console.log(`error getting ${path} from ${lastDateUpdated} from server: ${error}`)
         }
 
-        if (dateUpdatedSynced){
-            let dateUpdatedData ={
+        if (dateUpdatedSynced) {
+            let dateUpdatedData = {
                 id: bibleService.LAST_DATE_UPDATED_ID,
-                timestamp:dateUpdatedSynced
+                timestamp: dateUpdatedSynced
             }
             await bibleService.putValue(syncedDB, dateUpdatedData)
         }
@@ -134,7 +135,7 @@ export class ChapterService {
         let unsyncedEntries = await bibleService.getAllValue(unsyncedDB)
         for (let i = 0; i < unsyncedEntries.length; i++) {
             let e = unsyncedEntries[i]
-            if (e.dateDeleted > 0){
+            if (e.dateDeleted > 0) {
                 this.delete(e, path, unsyncedDB, syncedDB)
             }
             await this.put(e, path, unsyncedDB, syncedDB)
@@ -190,8 +191,8 @@ export class ChapterService {
         let path = '/annots'
         let unsyncedDB = db.UNSYNCED_ANNOTATIONS
         let syncedDB = db.ANNOTATIONS
-        let annotations = await this.put(data, path, unsyncedDB, syncedDB)
-        return annotations
+        return await this.put(data, path, unsyncedDB, syncedDB)
+
     }
 
     async putNote(data: any): Promise<any> {
@@ -213,10 +214,8 @@ export class ChapterService {
             }
 
             if (!result.ok) {
+                // BAD REQUEST or Already Exists
                 if (result.status === 400 || result.status === 409) {
-                    // BAD REQUEST or Already Exists
-                    // remove unsynced versions
-                    // sync the annotation
                     let annots = await this.fetch(data.id, path)
                     if (annots !== undefined) {
                         bibleService.deleteValue(unsyncedDB, data.id)
@@ -225,9 +224,10 @@ export class ChapterService {
                     toastService.showToast("Discarded stale versions. Please update lastest version.")
                     return annots
                 } else {
-                    await this.onFailurePut(data, unsyncedDB, `status code ${result.status}, expected 200`)
+                    return await this.onFailurePut(result.status, data, unsyncedDB, `status code ${result.status}, expected 200`)
                 }
-            } else {
+            }
+            else {
                 bibleService.deleteValue(unsyncedDB, data.id)
             }
 
@@ -238,34 +238,43 @@ export class ChapterService {
             return obj
 
         } catch (error) {
-            await this.onFailurePut(data, unsyncedDB, error)
+            return await this.onFailurePut(undefined, data, unsyncedDB, error)
         }
     }
 
-    async onFailurePut(data: any, unsyncedDB: string, error: any) {
+    async onFailurePut(statusCode: number | undefined, data: any, unsyncedDB: string, error: any): Promise<any> {
         console.log(`error putting  ${data?.id}: storing to unsynced cache:  ${error}: `)
         data.version = data.version - 1
-        toastService.showToast("Offline Mode: sync will occur when service is reachable.")
+
+        let toastMessage = "Offline Mode: sync will occur when service is reachable."
+        if (statusCode === 401) {
+            if (authService.hasLoggedIn()) {
+                toastMessage = "Offline Mode: sign in again to save changes."
+            } else {
+                toastMessage = "Offline Mode: sign in to save changes."
+            }
+        }
+        toastService.showToast(toastMessage)
         await bibleService.putValue(unsyncedDB, data)
+        return data
     }
 
     async delete(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
         try {
             let result = await api.delete(`${path}/${data.id}`)
-      
+
             if (result.ok) {
                 await bibleService.deleteValue(unsyncedDB, data.id)
                 await bibleService.deleteValue(syncedDB, data.id)
             } else {
-                    await bibleService.putValue(unsyncedDB, data)
-                    await bibleService.deleteValue(syncedDB, data.id)
-                    console.log(`Failed to delete ${path}/${data.id}`)
+                await bibleService.putValue(unsyncedDB, data)
+                await bibleService.deleteValue(syncedDB, data.id)
+                console.log(`Failed to delete ${path}/${data.id}`)
             }
         } catch (error) {
-                    console.log(`Failed to delete ${path}/${data.id}: ${error}`)
-        } 
+            console.log(`Failed to delete ${path}/${data.id}: ${error}`)
+        }
     }
-
 
     async getAllAnnotations(): Promise<any> {
         let data: any = undefined
@@ -290,9 +299,9 @@ export class ChapterService {
     async deleteNote(noteID: string): Promise<any> {
         let path: string = `/notes`
         let delNte = {
-                id: noteID,
-                dateDeleted: Date.now()
-            }
+            id: noteID,
+            dateDeleted: Date.now()
+        }
         await this.delete(delNte, path, db.UNSYNCED_NOTES, db.NOTES)
     }
 

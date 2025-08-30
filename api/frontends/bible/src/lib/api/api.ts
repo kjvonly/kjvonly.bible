@@ -1,25 +1,20 @@
 import { BASE_URL, API_URL } from "$lib/utils/paths";
 import { authService } from "$lib/services/auth.service";
 
-export class NotLoggedIn extends Error {
-  constructor(message = "", ...args: any[]) {
-    super(message, ...args);
-    this.message = message + " user is not logged in";
-  }
-}
-
-export class HasNotLoggedIn extends Error {
-  constructor(message = "", ...args: any[]) {
-    super(message, ...args);
-    this.message = message + " user has not logged in";
-  }
-}
-
-
 export class Api {
     async fetchWithAuth(path: string, data: any): Promise<Response> {
-        if (authService.hasLoggedIn() && !authService.isLoggedIn()){
-            // TODO
+        if (!authService.isLoggedIn()) {
+            return new Promise((resolve, reject) => {
+                resolve(new Response(JSON.stringify({
+                    error: 'Unauthorized',
+                    message: 'Authentication required.'
+                }), {
+                    status: 401,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }))
+            });
         }
 
         if (data.headers) {

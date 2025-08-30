@@ -6,6 +6,7 @@
 	import { syncService } from '$lib/services/sync.service';
 	import { searchService } from '$lib/services/search.service';
 	import { api } from '$lib/api/api';
+	import { authService } from '$lib/services/auth.service';
 
 	function register() {
 		// Listen for connection coming online
@@ -30,12 +31,13 @@
 
 	onMount(async () => {
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
-		await syncService.init();
-		searchService.init();
-		syncService.sync();
-		register();
+		if (authService.isLoggedIn()) {
+			await syncService.init();
+			searchService.init();
+			syncService.sync();
+			register();
+		}
 	});
-
 
 	let { children } = $props();
 </script>

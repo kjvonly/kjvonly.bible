@@ -55,7 +55,7 @@ export class BibleService {
         await bibleDB.putBulkValue(objectStoreName, data)
     }
 
-        /**
+    /**
     * 
     * @param objectStoreName 
     * @param data to store. id variable of data is the key.
