@@ -13,7 +13,6 @@ import { offlineApi } from './offline.api';
 import { extractBookChapter } from '$lib/utils/chapter';
 
 export class ChapterApi {
-
     async getChapter(chapterKey: string): Promise<any> {
         chapterKey = extractBookChapter(chapterKey)
         return offlineApi.cacheHitThenFetch(
@@ -49,35 +48,6 @@ export class ChapterApi {
             STRONGS,
             STRONGS
         )
-    }
-
-
-    async putNote(data: any): Promise<any> {
-        let path = '/notes'
-        let unsyncedDB = UNSYNCED_NOTES
-        let syncedDB = NOTES
-        return offlineApi.put(data, path, unsyncedDB, syncedDB)
-    }
-
-    
-
-    async getAllNotes(): Promise<any> {
-        let data: any = undefined
-        try {
-            data = await bibleStorer.getAllValue(NOTES)
-        } catch (error) {
-            console.log(`error getting all annotations from indexedDB: ${error}`)
-        }
-        return data
-    }
-
-    async deleteNote(noteID: string): Promise<any> {
-        let path: string = `/notes`
-        let delNte = {
-            id: noteID,
-            dateDeleted: Date.now()
-        }
-        await offlineApi.delete(delNte, path, UNSYNCED_NOTES, NOTES)
     }
 }
 

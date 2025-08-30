@@ -1,4 +1,5 @@
 import { chapterApi } from "$lib/api/chapters.api";
+import { notesApi } from "$lib/api/notes.api";
 import { bibleDB, SEARCH } from "$lib/storer/bible.db"
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
@@ -121,28 +122,8 @@ let notesDocument = new FlexSearch.Document({
 
 let notes: any = {}
 
-// async function initNotes() {
-//     let annotations = await chapterService.getAllAnnotations();
-//     notes = {}
-//     /**this will pull independent notes from 0_0_0_0 and all notes  */
-//     Object.keys(annotations).forEach((ch) => {
-//         Object.keys(annotations[ch]).forEach((v) => {
-//             if (annotations[ch][v].notes && annotations[ch][v].notes) {
-//                 Object.keys(annotations[ch][v].notes.words).forEach((w) => {
-//                     Object.keys(annotations[ch][v].notes.words[w]).forEach((n) => {
-//                         notesDocument.addAsync(n, annotations[ch][v].notes.words[w][n]);
-//                         notes[n] = annotations[ch][v].notes.words[w][n]
-//                     });
-//                 });
-//             }
-//         });
-//     });
-
-//     getAllNotes('*')
-// }
-
 async function initNotes() {
-    let cahcedNotes = await chapterApi.getAllNotes();
+    let cahcedNotes = await notesApi.getAllNotes();
     notes = {}
     for (let i = 0; i < cahcedNotes.length; i++) {
         let nn = cahcedNotes[i]

@@ -18,6 +18,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 -->
 <script lang="ts">
 	import { chapterApi } from '$lib/api/chapters.api';
+	import { notesApi } from '$lib/api/notes.api';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
@@ -259,7 +260,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onConfirmDelete() {
-		chapterApi.deleteNote(noteID)
+		notesApi.deleteNote(noteID)
 		noteKeys = [];
 		delete notes[noteID];		
 		searchService.deleteNote('*', noteID);
@@ -268,7 +269,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onSave(toastMessage: string) {
-		let savedNote = await chapterApi.putNote(JSON.parse(JSON.stringify(note)));
+		let savedNote = await notesApi.putNote(JSON.parse(JSON.stringify(note)));
 
 		if (savedNote !== undefined) {
 			noteID = savedNote.id;
