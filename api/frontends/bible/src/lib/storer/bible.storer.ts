@@ -1,6 +1,6 @@
 import { bibleDB } from './bible.db';
 
-export class BibleService {
+export class BibleStorer {
 
     LAST_DATE_UPDATED_ID = 'lastDateUpdated'
 
@@ -67,4 +67,4 @@ export class BibleService {
 
 }
 
-export let bibleService = new BibleService()
+export let bibleStorer = new BibleStorer()

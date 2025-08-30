@@ -1,5 +1,5 @@
 import { api } from './api'
-import { bibleService } from '../storer/bible.service';
+import { bibleStorer } from '../storer/bible.storer';
 import { BASE_URL, API_URL } from "$lib/utils/paths";
 
 import * as db from '../storer/bible.db';
@@ -16,7 +16,7 @@ export class ChapterService {
         }
 
         try {
-            chapter = await bibleService.getValueIfCacheIsReady('chapters', chapterKey)
+            chapter = await bibleStorer.getValueIfCacheIsReady('chapters', chapterKey)
         } catch (error) {
             console.log(`error getting chapter ${chapterKey} from indexdb: ${error}`)
         }
@@ -32,7 +32,7 @@ export class ChapterService {
         let booknames = undefined;
 
         try {
-            booknames = await bibleService.getValue('booknames', 'booknames')
+            booknames = await bibleStorer.getValue('booknames', 'booknames')
 
         } catch (error) {
             console.log(`error getting booknames from indexedDB: ${error}`)
@@ -50,7 +50,7 @@ export class ChapterService {
         let searchIndex = undefined;
 
         try {
-            searchIndex = await bibleService.getValue('searchIndex', 'v1')
+            searchIndex = await bibleStorer.getValue('searchIndex', 'v1')
 
         } catch (error) {
             console.log(`error getting searchIndex from indexedDB: ${error}`)
@@ -68,7 +68,7 @@ export class ChapterService {
         let strongs = undefined
 
         try {
-            strongs = await bibleService.getValue('strongs', key)
+            strongs = await bibleStorer.getValue('strongs', key)
         } catch (error) {
             console.log(`error getting chapter ${key} from indexdb: ${error}`)
         }
@@ -84,7 +84,7 @@ export class ChapterService {
         let lastDateUpdated = 0
         let dateUpdatedSynced = 0
         try {
-            let ldu = await bibleService.getValue(syncedDB, bibleService.LAST_DATE_UPDATED_ID)
+            let ldu = await bibleStorer.getValue(syncedDB, bibleStorer.LAST_DATE_UPDATED_ID)
             if (ldu !== undefined) {
                 lastDateUpdated = ldu.timestamp + 1
             }
@@ -99,11 +99,11 @@ export class ChapterService {
                     let page = await resp.json()
                     for (let i = 0; i < page.items.length; i++) {
                         if (page.items[i].dateDeleted > 0) {
-                            await bibleService.deleteValue(syncedDB, page.items[i].id)
-                            await bibleService.deleteValue(unsyncedDB, page.items[i].id)
+                            await bibleStorer.deleteValue(syncedDB, page.items[i].id)
+                            await bibleStorer.deleteValue(unsyncedDB, page.items[i].id)
                             dateUpdatedSynced = page.items[i].dateUpdated
                         } else {
-                            await bibleService.putValue(syncedDB, page.items[i])
+                            await bibleStorer.putValue(syncedDB, page.items[i])
                             dateUpdatedSynced = page.items[i].dateUpdated
                         }
                     }
@@ -126,13 +126,13 @@ export class ChapterService {
 
         if (dateUpdatedSynced) {
             let dateUpdatedData = {
-                id: bibleService.LAST_DATE_UPDATED_ID,
+                id: bibleStorer.LAST_DATE_UPDATED_ID,
                 timestamp: dateUpdatedSynced
             }
-            await bibleService.putValue(syncedDB, dateUpdatedData)
+            await bibleStorer.putValue(syncedDB, dateUpdatedData)
         }
 
-        let unsyncedEntries = await bibleService.getAllValue(unsyncedDB)
+        let unsyncedEntries = await bibleStorer.getAllValue(unsyncedDB)
         for (let i = 0; i < unsyncedEntries.length; i++) {
             let e = unsyncedEntries[i]
             if (e.dateDeleted > 0) {
@@ -152,10 +152,10 @@ export class ChapterService {
         }
 
         try {
-            annotations = await bibleService.getValue(db.UNSYNCED_ANNOTATIONS, chapterKey)
+            annotations = await bibleStorer.getValue(db.UNSYNCED_ANNOTATIONS, chapterKey)
 
             if (annotations === undefined) {
-                annotations = await bibleService.getValue(db.ANNOTATIONS, chapterKey)
+                annotations = await bibleStorer.getValue(db.ANNOTATIONS, chapterKey)
             }
 
             if (annotations === undefined) {
@@ -218,8 +218,8 @@ export class ChapterService {
                 if (result.status === 400 || result.status === 409) {
                     let annots = await this.fetch(data.id, path)
                     if (annots !== undefined) {
-                        bibleService.deleteValue(unsyncedDB, data.id)
-                        bibleService.putValue(syncedDB, annots)
+                        bibleStorer.deleteValue(unsyncedDB, data.id)
+                        bibleStorer.putValue(syncedDB, annots)
                     }
                     toastService.showToast("Discarded stale versions. Please update lastest version.")
                     return annots
@@ -228,12 +228,12 @@ export class ChapterService {
                 }
             }
             else {
-                bibleService.deleteValue(unsyncedDB, data.id)
+                bibleStorer.deleteValue(unsyncedDB, data.id)
             }
 
             let obj = await result.json()
 
-            await bibleService.putValue(syncedDB, obj)
+            await bibleStorer.putValue(syncedDB, obj)
 
             return obj
 
@@ -255,7 +255,7 @@ export class ChapterService {
             }
         }
         toastService.showToast(toastMessage)
-        await bibleService.putValue(unsyncedDB, data)
+        await bibleStorer.putValue(unsyncedDB, data)
         return data
     }
 
@@ -264,11 +264,11 @@ export class ChapterService {
             let result = await api.delete(`${path}/${data.id}`)
 
             if (result.ok) {
-                await bibleService.deleteValue(unsyncedDB, data.id)
-                await bibleService.deleteValue(syncedDB, data.id)
+                await bibleStorer.deleteValue(unsyncedDB, data.id)
+                await bibleStorer.deleteValue(syncedDB, data.id)
             } else {
-                await bibleService.putValue(unsyncedDB, data)
-                await bibleService.deleteValue(syncedDB, data.id)
+                await bibleStorer.putValue(unsyncedDB, data)
+                await bibleStorer.deleteValue(syncedDB, data.id)
                 console.log(`Failed to delete ${path}/${data.id}`)
             }
         } catch (error) {
@@ -279,7 +279,7 @@ export class ChapterService {
     async getAllAnnotations(): Promise<any> {
         let data: any = undefined
         try {
-            data = await bibleService.getAllValue(db.ANNOTATIONS)
+            data = await bibleStorer.getAllValue(db.ANNOTATIONS)
         } catch (error) {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
@@ -289,7 +289,7 @@ export class ChapterService {
     async getAllNotes(): Promise<any> {
         let data: any = undefined
         try {
-            data = await bibleService.getAllValue(db.NOTES)
+            data = await bibleStorer.getAllValue(db.NOTES)
         } catch (error) {
             console.log(`error getting all annotations from indexedDB: ${error}`)
         }
@@ -307,7 +307,7 @@ export class ChapterService {
 
     async putAllAnnotations(objects: any): Promise<any> {
         try {
-            await bibleService.putBulkValue(db.ANNOTATIONS, objects)
+            await bibleStorer.putBulkValue(db.ANNOTATIONS, objects)
         } catch (error) {
             console.log(`error importing all annotations from indexedDB: ${error}`)
         }

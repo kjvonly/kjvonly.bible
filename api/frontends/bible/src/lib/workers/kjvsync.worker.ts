@@ -1,4 +1,4 @@
-import { BibleService } from "$lib/storer/bible.service";
+import { BibleStorer } from "$lib/storer/bible.storer";
 import { ChapterService } from "$lib/api/chapters.api";
 import {api} from '$lib/api/api'
 import {
