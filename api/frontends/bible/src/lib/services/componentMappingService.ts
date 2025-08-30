@@ -11,8 +11,6 @@ import Search from '../modules/search/search.svelte';
  *
  */
 export class ComponentMapping {
-
-
 	/**
 	 *
 	 * @param componentName string of class to be returned

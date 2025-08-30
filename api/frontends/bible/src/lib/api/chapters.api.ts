@@ -263,7 +263,7 @@ export class ChapterService {
             }
         } catch (error) {
                     console.log(`Failed to delete ${path}/${data.id}: ${error}`)
-        }
+        } 
     }
 
 

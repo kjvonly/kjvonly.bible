@@ -12,6 +12,7 @@ import {
     SEARCH,
     STRONGS
 } from "$lib/db/bible.db";
+import { authService } from "$lib/services/auth.service";
 
 
 onmessage = async (e) => {
@@ -38,10 +39,9 @@ onmessage = async (e) => {
 
 let db = await BibleDB.CreateAsync()
 
-
 async function syncAnnotsAndNotesFromServer(data: any) {
-    api.setBearerToekn(data.token)
-    let chapterService = new ChapterService(api, new BibleService(db))
+    authService.setBearerToekn(data.token)
+    let chapterService = new ChapterService()
 
     // ----------------- SYNC ANNOTS ------------------------------------------
     await chapterService.sync('/annots', UNSYNCED_ANNOTATIONS, ANNOTATIONS)

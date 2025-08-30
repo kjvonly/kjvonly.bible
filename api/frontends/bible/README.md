@@ -22,7 +22,7 @@ Once you've created a project and installed dependencies with `npm install` (or 
 
 > [!NOTE]
 > github does not ungzip your files so we zcat them to .json on
-build/deploy. do the same thing in your dev environment.
+> build/deploy. do the same thing in your dev environment.
 
 run this in the static/data/(json.gz|strongs.json.gz) directories in your dev environment
 

@@ -1,43 +1,34 @@
 import { BASE_URL, API_URL } from "$lib/utils/paths";
+import { authService } from "$lib/services/auth.service";
+
+export class NotLoggedIn extends Error {
+  constructor(message = "", ...args: any[]) {
+    super(message, ...args);
+    this.message = message + " user is not logged in";
+  }
+}
+
+export class HasNotLoggedIn extends Error {
+  constructor(message = "", ...args: any[]) {
+    super(message, ...args);
+    this.message = message + " user has not logged in";
+  }
+}
+
 
 export class Api {
-    BEARER_TOKEN: string | null = null
-
-    static withBerarToken(bearerToken: string): Api {
-        let api = new Api()
-        api.setBearerToekn(bearerToken)
-        return api
-    }
-
-    loadBearerToken() {
-        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-            try {
-                let token = localStorage.getItem('token')
-                if (token) {
-                    api.setBearerToekn(token)
-                }
-            } catch (e) {
-                console.warn('Failed to access localStorage:', e);
-            }
-        }
-    }
-
     async fetchWithAuth(path: string, data: any): Promise<Response> {
-        this.loadBearerToken()
+        if (authService.hasLoggedIn() && !authService.isLoggedIn()){
+            // TODO
+        }
 
-        if (data.headers && this.BEARER_TOKEN){
-            data.headers.append('Authorization', `Bearer ${this.BEARER_TOKEN}`)
+        if (data.headers) {
+            data.headers.append('Authorization', `Bearer ${authService.getBearerToken()}`)
         }
 
         return await fetch(path,
             data
         );
-
-
-    }
-
-    setBearerToekn(bearerToken: string) {
-        this.BEARER_TOKEN = bearerToken
     }
 
     async getstatic(path: string) {
