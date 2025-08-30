@@ -31,9 +31,9 @@
 
 	onMount(async () => {
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
+		await syncService.init();
+		searchService.init();
 		if (authService.isLoggedIn()) {
-			await syncService.init();
-			searchService.init();
 			syncService.sync();
 			register();
 		}

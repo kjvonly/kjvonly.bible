@@ -67,18 +67,40 @@ export class OfflineApi {
         }
     }
 
-    async fetch(id: string, path: string): Promise<any> {
-        let annotations = undefined
-
+    async fetch(path: string): Promise<any> {
+        let data
         try {
-            let resp = await api.get(`${path}/${id}`)
+            let resp = await api.get(path)
             if (resp.ok) {
-                annotations = await resp.json()
+                data = await resp.json()
             }
         } catch (error) {
-            console.log(`error getting annotations ${id} from server: ${error}`)
+            console.log(`error getting ${path} from server: ${error}`)
         }
-        return annotations;
+        return data;
+    }
+
+    async cacheHitThenFetch(path: string, key: string, unsyncedDB: string, syncedDB: string): Promise<any> {
+        let data = await this.cacheHit(key, unsyncedDB, syncedDB)
+     
+        if (!data) {
+            return await api.getstatic(path);
+        }
+
+        return data;
+    }
+
+    async cacheHit(key: string, unsyncedDB: string, syncedDB: string): Promise<any> {
+        let data
+        try {
+            data = await storer.getValue(unsyncedDB, key)
+            if (!data) {
+                data = await storer.getValue(syncedDB, key)
+            }
+        } catch (error) {
+            console.log(`error getting value from cache [${unsyncedDB}|${syncedDB}]/${key} from indexdb: ${error}`)
+        }
+        return data;
     }
 
 
@@ -96,7 +118,7 @@ export class OfflineApi {
             if (!result.ok) {
                 // BAD REQUEST or Already Exists
                 if (result.status === 400 || result.status === 409) {
-                    let annots = await this.fetch(data.id, path)
+                    let annots = await this.fetch(`${path}/${data.id}`)
                     if (annots !== undefined) {
                         storer.deleteValue(unsyncedDB, data.id)
                         storer.putValue(syncedDB, annots)

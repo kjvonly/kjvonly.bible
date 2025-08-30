@@ -1,8 +1,9 @@
 import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH } from "$lib/storer/bible.db";
 import { sleep } from '$lib/utils/sleep';
 import { bibleDB } from "$lib/storer/bible.db";
+import { authService } from "./auth.service";
 const syncWorker = new Worker(new URL('../workers/kjvsync.worker?worker', import.meta.url), {
-    type: 'module'
+	type: 'module'
 });
 
 
@@ -23,36 +24,32 @@ const TOTAL_STRONGS_KEYS = 14058
 
 
 export class SyncService {
-    
-    //todo unsubscribe
-    subscribers: any[] = []
 
-    constructor() {
-        syncWorker.onmessage = (e) => {
-            this.subscribers.forEach((s) => {
-                if (s.id === e.data.id) {
-                    s.fn(e.data)
-                }
-            })
-        }
+	//todo unsubscribe
+	subscribers: any[] = []
 
-        let token = localStorage.getItem('token')
-        syncWorker.postMessage({ action: 'init', token: token })
-    }
+	constructor() {
+		syncWorker.onmessage = (e) => {
+			this.subscribers.forEach((s) => {
+				if (s.id === e.data.id) {
+					s.fn(e.data)
+				}
+			})
+		}
+	}
 
-    subscribe(id: any, fn: any) {
-        this.subscribers.push({ id: id, fn: fn })
-    }
+	subscribe(id: any, fn: any) {
+		this.subscribers.push({ id: id, fn: fn })
+	}
 
-    sync() {
-        let token = localStorage.getItem('token')
-        syncWorker.postMessage({
-            action: 'sync',
-            token: token
-        }
-        )
-    }
-
+	sync() {
+		let token = localStorage.getItem('token')
+		syncWorker.postMessage({
+			action: 'sync',
+			token: token
+		}
+		)
+	}
 
 	async init() {
 		await this.syncChapters()
