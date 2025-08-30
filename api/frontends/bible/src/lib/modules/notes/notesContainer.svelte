@@ -252,12 +252,19 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		return false;
 	}
 
+	function showNoteList(){
+		showConfirmDelete = false;
+		showNoteActions = false;
+		showNoteListActions = false;
+	}
+
 	async function onConfirmDelete() {
 		chapterService.deleteNote(noteID)
 		noteKeys = [];
-		delete notes[noteID];
+		delete notes[noteID];		
 		searchService.deleteNote('*', noteID);
-		onCloseNote();
+		note = null
+		showNoteList();
 	}
 
 	async function onSave(toastMessage: string) {
@@ -267,6 +274,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			noteID = savedNote.id;
 			note.id = savedNote.id
 			note.version = savedNote.version
+			note.dateCreated = savedNote.dateCreated
+			note.dateUpdated = savedNote.dateUpdated
 			notes[noteID] = note;
 			toastService.showToast(toastMessage);
 			searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));

@@ -251,7 +251,7 @@ export class ChapterService {
 
     async delete(data: any, path: string, unsyncedDB: string, syncedDB: string): Promise<any> {
         try {
-            let result = await api.delete(`${path}/{data.id}`)
+            let result = await api.delete(`${path}/${data.id}`)
       
             if (result.ok) {
                 await bibleService.deleteValue(unsyncedDB, data.id)
