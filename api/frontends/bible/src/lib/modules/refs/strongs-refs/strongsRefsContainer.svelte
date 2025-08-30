@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { chapterService } from '$lib/api/chapters.api';
 	import ChevronDown from '$lib/components/chevronDown.svelte';
-	import { bibleDB } from '$lib/db/bible.db';
+	import { bibleDB } from '$lib/storer/bible.db';
 	import Search from '$lib/modules/search/search.svelte';
 	import { onMount } from 'svelte';
 

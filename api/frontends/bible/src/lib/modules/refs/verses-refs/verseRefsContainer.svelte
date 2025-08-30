@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ChevronDown from '$lib/components/chevronDown.svelte';
-	import { bibleDB } from '$lib/db/bible.db';
+	import { bibleDB } from '$lib/storer/bible.db';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 

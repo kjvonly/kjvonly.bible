@@ -1,4 +1,4 @@
-import { bibleDB } from '../db/bible.db';
+import { bibleDB } from '../storer/bible.db';
 import { chapterService } from '../api/chapters.api';
 
 var chapters: string[] = [

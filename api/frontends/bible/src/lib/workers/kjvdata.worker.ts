@@ -1,4 +1,4 @@
-import { BibleDB, bibleDB } from '$lib/db/bible.db';
+import { BibleDB, bibleDB } from '$lib/storer/bible.db';
 import { BASE_URL } from '../utils/paths'
 
 

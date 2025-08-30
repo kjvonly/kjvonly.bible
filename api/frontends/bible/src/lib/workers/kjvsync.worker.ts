@@ -1,4 +1,4 @@
-import { BibleService } from "$lib/db/bible.service";
+import { BibleService } from "$lib/storer/bible.service";
 import { ChapterService } from "$lib/api/chapters.api";
 import {api} from '$lib/api/api'
 import {
@@ -11,7 +11,7 @@ import {
     BOOKNAMES,
     SEARCH,
     STRONGS
-} from "$lib/db/bible.db";
+} from "$lib/storer/bible.db";
 import { authService } from "$lib/services/auth.service";
 
 

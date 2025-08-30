@@ -4,7 +4,7 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import uuid4 from 'uuid4';
 	import { toastService } from '$lib/services/toast.service';
-	import { bibleDB } from '$lib/db/bible.db';
+	import { bibleDB } from '$lib/storer/bible.db';
 	import { on } from 'svelte/events';
 
 	let searchID = uuid4();

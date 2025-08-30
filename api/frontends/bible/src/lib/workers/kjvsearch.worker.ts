@@ -1,5 +1,5 @@
 import { chapterService } from "$lib/api/chapters.api";
-import { bibleDB, SEARCH } from "$lib/db/bible.db"
+import { bibleDB, SEARCH } from "$lib/storer/bible.db"
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
 

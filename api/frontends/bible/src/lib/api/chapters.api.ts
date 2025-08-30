@@ -1,8 +1,8 @@
 import { api } from './api'
-import { bibleService } from '../db/bible.service';
+import { bibleService } from '../storer/bible.service';
 import { BASE_URL, API_URL } from "$lib/utils/paths";
 
-import * as db from '../db/bible.db';
+import * as db from '../storer/bible.db';
 import { toastService } from '$lib/services/toast.service';
 import { authService } from '$lib/services/auth.service';
 

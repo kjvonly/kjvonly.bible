@@ -1,6 +1,6 @@
-import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH } from "$lib/db/bible.db";
+import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH } from "$lib/storer/bible.db";
 import { sleep } from '$lib/utils/sleep';
-import { bibleDB } from "$lib/db/bible.db";
+import { bibleDB } from "$lib/storer/bible.db";
 const syncWorker = new Worker(new URL('../workers/kjvsync.worker?worker', import.meta.url), {
     type: 'module'
 });
