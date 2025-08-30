@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import { chapterService } from '$lib/api/chapters.api';
+	import { chapterApi } from '$lib/api/chapters.api';
 	import Verse from './verse.svelte';
 	import { syncService } from '$lib/services/sync.service';
+	import { annotsApi } from '$lib/api/annots.api';
 
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
@@ -56,11 +57,11 @@
 	let keys: string[] = $state([]);
 
 	async function loadAnnotations() {
-		annotations = await chapterService.getAnnotations(chapterKey);
+		annotations = await annotsApi.getAnnotations(chapterKey);
 	}
 
 	async function loadChapter() {
-		let data = await chapterService.getChapter(chapterKey);
+		let data = await chapterApi.getChapter(chapterKey);
 		bookName = data['bookName'];
 		bookChapter = data['number'];
 		loadedBookName = bookName;

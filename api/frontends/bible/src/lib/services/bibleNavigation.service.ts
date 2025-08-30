@@ -1,5 +1,5 @@
 import { bibleDB } from '../storer/bible.db';
-import { chapterService } from '../api/chapters.api';
+import { chapterApi } from '../api/chapters.api';
 
 var chapters: string[] = [
 	'1_1',
@@ -1231,7 +1231,7 @@ export class BibleNavigationService {
 	}
 	async goto(shortBook: string, chapter: string) {
 		if (!this.bookNames) {
-			await chapterService.getChapter("booknames").then((data: any) => {
+			await chapterApi.getChapter("booknames").then((data: any) => {
 				this.bookNames = data;
 			});
 		}

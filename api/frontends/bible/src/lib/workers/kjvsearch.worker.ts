@@ -1,4 +1,4 @@
-import { chapterService } from "$lib/api/chapters.api";
+import { chapterApi } from "$lib/api/chapters.api";
 import { bibleDB, SEARCH } from "$lib/storer/bible.db"
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
@@ -142,7 +142,7 @@ let notes: any = {}
 // }
 
 async function initNotes() {
-    let cahcedNotes = await chapterService.getAllNotes();
+    let cahcedNotes = await chapterApi.getAllNotes();
     notes = {}
     for (let i = 0; i < cahcedNotes.length; i++) {
         let nn = cahcedNotes[i]

@@ -1,9 +1,7 @@
 import { bibleStorer } from '../storer/bible.storer';
 
 import {
-    ANNOTATIONS,
-    UNSYNCED_ANNOTATIONS,
-    NOTES,
+        NOTES,
     UNSYNCED_NOTES,
     CHAPTERS,
     BOOKNAMES,
@@ -12,19 +10,12 @@ import {
 } from "$lib/storer/bible.db";
 
 import { offlineApi } from './offline.api';
+import { extractBookChapter } from '$lib/utils/chapter';
 
-export class ChapterService {
-
-    extractBookChapter(chapterKey: string): string {
-        let bcvw = chapterKey.split('_')
-        if (bcvw.length > 2) {
-            chapterKey = `${bcvw[0]}_${bcvw[1]}`
-        }
-        return chapterKey
-    }
+export class ChapterApi {
 
     async getChapter(chapterKey: string): Promise<any> {
-        chapterKey = this.extractBookChapter(chapterKey)
+        chapterKey = extractBookChapter(chapterKey)
         return offlineApi.cacheHitThenFetch(
             `/data/json.gz/${chapterKey}.json`,
             chapterKey,
@@ -60,39 +51,6 @@ export class ChapterService {
         )
     }
 
-    async getAnnotations(chapterKey: string): Promise<any> {
-        chapterKey = this.extractBookChapter(chapterKey)
-        let annotations = await offlineApi.cacheHit(
-            chapterKey,
-            UNSYNCED_ANNOTATIONS,
-            ANNOTATIONS
-        )
-        
-        if (!annotations) {
-            annotations = {
-                id: chapterKey,
-                version: 0,
-                annots: {}
-            }
-        }
-        return annotations;
-    }
-
-    async putAnnotations(data: any): Promise<any> {
-        let path = '/annots'
-        let unsyncedDB = UNSYNCED_ANNOTATIONS
-        let syncedDB = ANNOTATIONS
-        return await offlineApi.put(data, path, unsyncedDB, syncedDB)
-    }
-
-    // TODO update import export
-    async putAllAnnotations(objects: any): Promise<any> {
-        try {
-            await bibleStorer.putBulkValue(ANNOTATIONS, objects)
-        } catch (error) {
-            console.log(`error importing all annotations from indexedDB: ${error}`)
-        }
-    }
 
     async putNote(data: any): Promise<any> {
         let path = '/notes'
@@ -101,15 +59,7 @@ export class ChapterService {
         return offlineApi.put(data, path, unsyncedDB, syncedDB)
     }
 
-    async getAllAnnotations(): Promise<any> {
-        let data: any = undefined
-        try {
-            data = await bibleStorer.getAllValue(ANNOTATIONS)
-        } catch (error) {
-            console.log(`error getting all annotations from indexedDB: ${error}`)
-        }
-        return data
-    }
+    
 
     async getAllNotes(): Promise<any> {
         let data: any = undefined
@@ -131,4 +81,4 @@ export class ChapterService {
     }
 }
 
-export let chapterService = new ChapterService()
+export let chapterApi = new ChapterApi()

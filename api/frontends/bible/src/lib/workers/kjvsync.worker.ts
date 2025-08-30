@@ -1,5 +1,5 @@
 import { BibleStorer } from "$lib/storer/bible.storer";
-import { ChapterService } from "$lib/api/chapters.api";
+import { ChapterApi } from "$lib/api/chapters.api";
 import {api} from '$lib/api/api'
 import {
     BibleDB,

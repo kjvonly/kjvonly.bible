@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { chapterApi } from '$lib/api/chapters.api';
 	import { toastService } from '$lib/services/toast.service';
 	import { onMount } from 'svelte';
 
@@ -18,8 +18,8 @@
 		}
 
 		(async () => {
-			let chapter = await chapterService.getChapter(`${keys[0]}_${keys[1]}`);
-			booknames = await chapterService.getBooknames();
+			let chapter = await chapterApi.getChapter(`${keys[0]}_${keys[1]}`);
+			booknames = await chapterApi.getBooknames();
 			verses = chapter.verses;
 			if (chapter) {
 				verseKeys = Object.keys(chapter.verseMap).sort((a, b) => {

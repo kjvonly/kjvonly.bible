@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { annotsApi } from '$lib/api/annots.api';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
@@ -55,7 +55,7 @@
 
 	async function onExport() {
 		toastService.showToast('starting export data');
-		let data = await chapterService.getAllAnnotations();
+		let data = await annotsApi.getAllAnnotations();
 
 		var element = document.createElement('a');
 		element.setAttribute(
@@ -114,7 +114,7 @@
 				try {
 					toastService.showToast('starting import data');
 					let newAnnotations = JSON.parse(result);
-					let annotations = await chapterService.getAllAnnotations();
+					let annotations = await annotsApi.getAllAnnotations();
 
 					if (!annotations) {
 						annotations = {};
@@ -139,7 +139,7 @@
 						mergedList.push(merged[k]);
 					});
 
-					await chapterService.putAllAnnotations(mergedList);
+					await annotsApi.putAllAnnotations(mergedList);
 					searchService.initNotes();
 					document.getElementById('kjvonly-import')?.remove();
 					toastService.showToast('finished import data');

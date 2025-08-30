@@ -17,7 +17,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 -->
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { chapterApi } from '$lib/api/chapters.api';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
@@ -259,7 +259,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onConfirmDelete() {
-		chapterService.deleteNote(noteID)
+		chapterApi.deleteNote(noteID)
 		noteKeys = [];
 		delete notes[noteID];		
 		searchService.deleteNote('*', noteID);
@@ -268,7 +268,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onSave(toastMessage: string) {
-		let savedNote = await chapterService.putNote(JSON.parse(JSON.stringify(note)));
+		let savedNote = await chapterApi.putNote(JSON.parse(JSON.stringify(note)));
 
 		if (savedNote !== undefined) {
 			noteID = savedNote.id;
@@ -301,7 +301,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			};
 		} else {
 			// This adds the verse to the note body
-			let chapter = await chapterService.getChapter(mode.chapterKey);
+			let chapter = await chapterApi.getChapter(mode.chapterKey);
 			let verse = chapter['verseMap'][verseIdx];
 			let title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 
@@ -385,7 +385,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	onMount(async () => {
 		let element = document.getElementById(editor);
-		booknames = await chapterService.getBooknames();
+		booknames = await chapterApi.getBooknames();
 
 		/* search */
 		searchService.subscribe(searchID, onFilterInputResults);

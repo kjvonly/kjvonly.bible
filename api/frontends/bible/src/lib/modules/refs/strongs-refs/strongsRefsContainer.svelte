@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { chapterApi } from '$lib/api/chapters.api';
 	import ChevronDown from '$lib/components/chevronDown.svelte';
 	import { bibleDB } from '$lib/storer/bible.db';
 	import Search from '$lib/modules/search/search.svelte';
@@ -30,7 +30,7 @@
 			});
 		}
 
-		booknames = await chapterService.getBooknames();
+		booknames = await chapterApi.getBooknames();
 	});
 
 	function onFilterBookIndexes(indexes: string[]) {

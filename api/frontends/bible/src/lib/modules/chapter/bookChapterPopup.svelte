@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { chapterApi } from '$lib/api/chapters.api';
 	import { onMount } from 'svelte';
 
 	let { chapterKey = $bindable(), showBookChapterPopup = $bindable() } = $props();
@@ -421,7 +421,7 @@
 	});
 
 	onMount(async () => {
-		bookNames = await chapterService.getBooknames();
+		bookNames = await chapterApi.getBooknames();
 		bookIds = Object.keys(bookNames['booknamesById']).sort((a, b) =>
 			Number(a) < Number(b) ? -1 : 1
 		);
