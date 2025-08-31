@@ -100,9 +100,8 @@
 	});
 </script>
 
-<div class="{fadeClass} flex-col leading-loose">
+<div class="{fadeClass} leading-loose px-4">
 	{#if showChapter}
-		<p class="px-4">
 			{#each keys as k, idx}
 				<!-- w-full required for safari. -->
 				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
@@ -118,7 +117,7 @@
 					></Verse>
 				</span>
 			{/each}
-		</p>
+
 		<div class="mt-16"></div>
 
 		{#if mode.value !== ''}

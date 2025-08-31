@@ -319,10 +319,8 @@
 	}
 
 	.vno {
-		vertical-align: baseline;
-		transform: translateY(-0.6em);
-		cursor: pointer;
-		@apply text-xs text-neutral-700 sm:text-base;
+
+		@apply text-neutral-700 italic cursor-pointer;
 	}
 
 	.vno-refs {
