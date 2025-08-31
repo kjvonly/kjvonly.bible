@@ -159,7 +159,7 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 		return notebus.NewNote{}, fmt.Errorf("parseverse: %w", err)
 	}
 
-	wordIndex, err := strconv.ParseInt(keys[1], 10, 0)
+	wordIndex, err := strconv.ParseInt(keys[3], 10, 0)
 	if err != nil {
 		return notebus.NewNote{}, fmt.Errorf("parsewordindex: %w", err)
 	}

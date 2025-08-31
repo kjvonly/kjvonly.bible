@@ -134,9 +134,9 @@
 		<button
 			onclick={() => {
 				onSave()
-				mode.notePopup.show = true;
 				mode.notePopup.chapterKey = mode.chapterKey;
 				mode.value = '';
+				mode.notePopup.show = true;
 			}}
 			aria-label="note"
 			class="h-8 w-8"

@@ -47,8 +47,8 @@
 	});
 
 	function updateMode(m: string) {
-		mode.value = m;
 		mode.chapterKey = `${chapterKey}_${verse['number']}_${wordIdx}`;
+		mode.value = m;
 	}
 
 	function getWordAnnotations() {

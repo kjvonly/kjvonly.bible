@@ -94,7 +94,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			notes = {};
 			/** filter to keys with the same chapterKey*/
 			Object.keys(results.notes).forEach((k) => {
-				if (results.notes[k].chapterKey == mode.notePopup.chapterKey) {
+								
+
+				console.log('res chapkey', results.notes[k].chapterKey)
+				if (results.notes[k].chapterKey == mode.chapterKey) {
 					notes[k] = results.notes[k];
 				}
 			});
