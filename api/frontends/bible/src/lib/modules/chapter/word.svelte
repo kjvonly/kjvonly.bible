@@ -12,18 +12,27 @@
 		chapterKey,
 		pane = $bindable(),
 		annotations = $bindable(),
+		notes = $bindable(),
 		mode = $bindable()
 	} = $props();
 
 	let track: any = {};
 	let verseNumber = $state(0);
 	let wordAnnotations: any = $state();
-	let notesAnnotations: any = $state();
+	let notesAnnotations: any = $state(false);
 	let hasVerseReferences = $state(false);
 	$effect(() => {
 		annotations;
-		wordAnnotations = getWordAnnotations();
-		//notesAnnotations = getNotesAnnotations();
+		untrack(() => {
+			wordAnnotations = getWordAnnotations();
+		});
+	});
+
+	$effect(() => {
+		notes;
+		if (notes) {
+			getNotesAnnotations();
+		}
 	});
 
 	$effect(() => {
@@ -57,7 +66,7 @@
 		if (!annotations.annots) {
 			return;
 		}
-		
+
 		if (!annotations.annots[verseNumber]) {
 			return;
 		}
@@ -70,28 +79,9 @@
 	}
 
 	function getNotesAnnotations() {
-		verseNumber = verse['number'];
-		if (!annotations[verseNumber]) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes.words) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes.words) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes.words[wordIdx]) {
-			return;
-		}
-
-		return Object.keys(annotations[verseNumber].notes.words[wordIdx]).length > 0;
+		let verseNumber = verse['number'];
+		let wordKey = `${chapterKey}_${verseNumber}_${wordIdx}`;
+		notesAnnotations = notes[wordKey];
 	}
 
 	function initWordAnnotations(wordIndex: number) {
@@ -151,23 +141,6 @@
 
 	onMount(() => {
 		verseNumber = verse['number'];
-
-		if (
-			annotations &&
-			annotations[verseNumber] &&
-			annotations[verseNumber].decorations &&
-			annotations[verseNumber].decorations.words
-		) {
-			wordAnnotations = annotations[verseNumber].decorations.words[wordIdx];
-		}
-		// if (
-		// 	annotations &&
-		// 	annotations[verseNumber] &&
-		// 	annotations[verseNumber].notes &&
-		// 	annotations[verseNumber].notes.words
-		// ) {
-		// 	notesAnnotations = annotations[verseNumber].notes.words[wordIdx];
-		// }
 	});
 
 	let pressThresholdInMilliseconds = 1000;
@@ -326,7 +299,7 @@
 	.FOOTNO {
 		cursor: pointer;
 		vertical-align: baseline;
-		 position: relative; 
+		position: relative;
 		top: -0.6em;
 		z-index: 0;
 		height: 100%;

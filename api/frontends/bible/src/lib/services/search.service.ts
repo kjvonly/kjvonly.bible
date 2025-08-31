@@ -2,6 +2,9 @@ const searchWorker = new Worker(new URL('../workers/kjvsearch.worker?worker', im
         type: 'module'
 });
 
+/**
+ * Note the * character is wildcard for get all notes. Will change in the future.
+ */
 class SearchService {
     // TODO: unsubscribe
     subscribers: any[] = []

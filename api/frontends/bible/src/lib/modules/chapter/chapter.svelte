@@ -17,6 +17,8 @@
 	let loadedChapter = $state();
 	let footnotes: any = $state();
 
+	let notes: any = $state();
+
 	let {
 		chapterKey = $bindable(),
 		bookName = $bindable(),
@@ -33,7 +35,7 @@
 			return;
 		}
 
-		mode.value = ''
+		mode.value = '';
 
 		let bcv = chapterKey.split('_');
 		if (bcv.length > 2) {
@@ -58,7 +60,6 @@
 		}
 	});
 
-
 	let verses: any = $state();
 	let keys: string[] = $state([]);
 
@@ -67,9 +68,8 @@
 	}
 
 	async function loadNotes() {
-		searchService.searchNotes(searchID, extractBookChapter(chapterKey), ['bookChapter'] )
+		searchService.searchNotes(searchID, extractBookChapter(chapterKey), ['bookChapter']);
 	}
-
 
 	async function loadChapter() {
 		let data = await chapterApi.getChapter(chapterKey);
@@ -82,16 +82,21 @@
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
-	function onSearchResults(data: any){
-		console.log('data', data)
+	function onSearchResults(data: any) {
+		if (data) {
+			let tempNotes:any = {}
+			Object.keys(data.notes).forEach((id) => tempNotes[data.notes[id].chapterKey]=  true)
+			notes = tempNotes
+		}
 	}
 
 	onMount(async () => {
-		syncService.subscribe('annotations', ()=> {
-			loadAnnotations()
-		})
+		syncService.subscribe('annotations', () => {
+			loadAnnotations();
+		});
 
 		searchService.subscribe(searchID, onSearchResults);
+		searchService.subscribe('*', loadNotes);
 	});
 </script>
 
@@ -104,12 +109,12 @@
 					<Verse
 						bind:pane
 						bind:annotations
+						bind:notes
 						bind:mode
 						verse={verses[k]}
 						{footnotes}
 						{chapterKey}
 						{lastKnownScrollPosition}
-
 					></Verse>
 				</span>
 			{/each}
