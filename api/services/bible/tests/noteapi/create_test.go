@@ -20,7 +20,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.NewNote{
-				ReferenceVector: "0_0_0_0",
+				ReferenceVector: "1_1_1_1",
 				Title:           "Chirst is King",
 				Html:            "<h1>Christ is King!</h1>",
 				Text:            "Christ is King!",
@@ -36,7 +36,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
 				UserID:          sd.Users[0].ID.String(),
-				ReferenceVector: "0_0_0_0",
+				ReferenceVector: "1_1_1_1",
 				Title:           "Chirst is King",
 				Html:            "<h1>Christ is King!</h1>",
 				Text:            "Christ is King!",

@@ -123,7 +123,7 @@
 
 {#if mode.notePopup.show}
 	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
-		<NotesContainer containerHeight bind:mode bind:annotations></NotesContainer>
+		<NotesContainer containerHeight bind:mode allNotes={false} bind:annotations></NotesContainer>
 	</div>
 {/if}
 

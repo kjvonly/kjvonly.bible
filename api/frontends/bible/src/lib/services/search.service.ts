@@ -3,10 +3,7 @@ const searchWorker = new Worker(new URL('../workers/kjvsearch.worker?worker', im
 });
 
 class SearchService {
-
-
     // TODO: unsubscribe
-
     subscribers: any[] = []
     constructor() {
         searchWorker.onmessage = (e) => {

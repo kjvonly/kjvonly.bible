@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { searchService } from '$lib/services/search.service';
 	import { onMount, untrack } from 'svelte';
 
 	let {

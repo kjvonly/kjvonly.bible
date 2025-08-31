@@ -22,6 +22,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
+	import { extractBookChapter } from '$lib/utils/chapter';
 	import Quill from 'quill';
 	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
@@ -30,7 +31,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		containerHeight,
 		mode = $bindable(),
 		annotations = $bindable(),
-		allNotes = false,
+		allNotes,
 		noteIDToOpen = ''
 	} = $props();
 
@@ -49,8 +50,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	let note: any = $state();
 	let notes: any = $state({});
 	let noteKeys: string[] = $state([]);
-	let verseIdx = 0;
-	let wordIdx = 0;
 
 	/**
 	 * view toggles
@@ -95,7 +94,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			notes = {};
 			/** filter to keys with the same chapterKey*/
 			Object.keys(results.notes).forEach((k) => {
-				if (results.notes[k].chapterKey == mode.chapterKey) {
+				if (results.notes[k].chapterKey == mode.notePopup.chapterKey) {
 					notes[k] = results.notes[k];
 				}
 			});
@@ -253,30 +252,31 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		return false;
 	}
 
-	function showNoteList(){
+	function showNoteList() {
 		showConfirmDelete = false;
 		showNoteActions = false;
 		showNoteListActions = false;
 	}
 
 	async function onConfirmDelete() {
-		notesApi.deleteNote(noteID)
+		notesApi.deleteNote(noteID);
 		noteKeys = [];
-		delete notes[noteID];		
+		delete notes[noteID];
 		searchService.deleteNote('*', noteID);
-		note = null
+		note = null;
 		showNoteList();
 	}
 
 	async function onSave(toastMessage: string) {
 		let savedNote = await notesApi.putNote(JSON.parse(JSON.stringify(note)));
 
-		if (savedNote !== undefined) {
+		if (savedNote) {
 			noteID = savedNote.id;
-			note.id = savedNote.id
-			note.version = savedNote.version
-			note.dateCreated = savedNote.dateCreated
-			note.dateUpdated = savedNote.dateUpdated
+			note.id = savedNote.id;
+			note.chapterKey = savedNote.chapterKey;
+			note.version = savedNote.version;
+			note.dateCreated = savedNote.dateCreated;
+			note.dateUpdated = savedNote.dateUpdated;
 			notes[noteID] = note;
 			toastService.showToast(toastMessage);
 			searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
@@ -303,7 +303,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		} else {
 			// This adds the verse to the note body
 			let chapter = await chapterApi.getChapter(mode.chapterKey);
-			let verse = chapter['verseMap'][verseIdx];
+			let verse = chapter['verseMap'][keys[2]];
 			let title = `${booknames['shortNames'][keys[0]]} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 
 			note = {
@@ -876,7 +876,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			<div class="flex w-full flex-col">
 				<span>{notes[nk].title}{notes[nk].title.length === 20 ? '...' : ''}</span>
 				<span class="text-neutral-400"
-					>{new Date(notes[nk].dateUpdated * 1000).toLocaleDateString() }
+					>{new Date(notes[nk].dateUpdated * 1000).toLocaleDateString()}
 					{new Date(notes[nk].dateUpdated * 1000).toLocaleTimeString()}</span
 				>
 				{#if notes[nk].bcv}

@@ -3,15 +3,12 @@ import { bibleStorer } from "$lib/storer/bible.storer"
 import { offlineApi } from "./offline.api"
 
 export class NotesApi {
-
     async putNote(data: any): Promise<any> {
         let path = '/notes'
         let unsyncedDB = UNSYNCED_NOTES
         let syncedDB = NOTES
         return offlineApi.put(data, path, unsyncedDB, syncedDB)
     }
-
-
 
     async getAllNotes(): Promise<any> {
         let data: any = undefined

@@ -1,6 +1,7 @@
 import { chapterApi } from "$lib/api/chapters.api";
 import { notesApi } from "$lib/api/notes.api";
 import { bibleDB, SEARCH } from "$lib/storer/bible.db"
+import { extractBookChapter } from "$lib/utils/chapter";
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
 
@@ -115,7 +116,7 @@ async function search(id: string, text: string) {
 let notesDocument = new FlexSearch.Document({
     document: {
         id: "id",
-        index: ["title", "text", "tags[]:tag"]
+        index: ["title", "text", "tags[]:tag", "bookChapter", "chapterKey"]
     }
 }
 );
@@ -128,12 +129,11 @@ async function initNotes() {
     for (let i = 0; i < cahcedNotes.length; i++) {
         let nn = cahcedNotes[i]
         if (nn?.chapterKey) {
-            await notesDocument.addAsync(nn.id, nn);
             let ck = nn.chapterKey.split('_')
             nn.bookChapter = `${ck[0]}_${ck[1]}`
+            await notesDocument.addAsync(nn.id, nn);
             notes[nn.id] = nn
         }
-
     }
 
     getAllNotes('*')
@@ -141,6 +141,7 @@ async function initNotes() {
 
 
 function addNote(noteID: string, note: any) {
+    note.bookChapter = extractBookChapter(note.chapterKey)
     notes[noteID] = note
     notesDocument.add(noteID, note);
     getAllNotes('*')

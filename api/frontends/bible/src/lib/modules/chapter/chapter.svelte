@@ -4,6 +4,11 @@
 	import Verse from './verse.svelte';
 	import { syncService } from '$lib/services/sync.service';
 	import { annotsApi } from '$lib/api/annots.api';
+	import { searchService } from '$lib/services/search.service';
+	import { extractBookChapter } from '$lib/utils/chapter';
+	import uuid4 from 'uuid4';
+
+	let searchID = uuid4();
 
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
@@ -48,6 +53,7 @@
 			el?.scrollTo(0, 0);
 			annotations = {};
 			loadAnnotations();
+			loadNotes();
 			loadChapter();
 		}
 	});
@@ -60,6 +66,11 @@
 		annotations = await annotsApi.getAnnotations(chapterKey);
 	}
 
+	async function loadNotes() {
+		searchService.searchNotes(searchID, extractBookChapter(chapterKey), ['bookChapter'] )
+	}
+
+
 	async function loadChapter() {
 		let data = await chapterApi.getChapter(chapterKey);
 		bookName = data['bookName'];
@@ -71,10 +82,16 @@
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
+	function onSearchResults(data: any){
+		console.log('data', data)
+	}
+
 	onMount(async () => {
 		syncService.subscribe('annotations', ()=> {
 			loadAnnotations()
 		})
+
+		searchService.subscribe(searchID, onSearchResults);
 	});
 </script>
 
