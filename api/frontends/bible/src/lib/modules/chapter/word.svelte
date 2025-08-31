@@ -23,15 +23,13 @@
 	let hasVerseReferences = $state(false);
 	$effect(() => {
 		annotations;
-		untrack(() => {
-			wordAnnotations = getWordAnnotations();
-		});
+		wordAnnotations = getWordAnnotations();
 	});
 
 	$effect(() => {
 		notes;
 		if (notes) {
-			getNotesAnnotations();
+			wordHasNotes();
 		}
 	});
 
@@ -78,7 +76,7 @@
 		return annotations.annots[verseNumber][wordIdx];
 	}
 
-	function getNotesAnnotations() {
+	function wordHasNotes() {
 		let verseNumber = verse['number'];
 		let wordKey = `${chapterKey}_${verseNumber}_${wordIdx}`;
 		notesAnnotations = notes[wordKey];
@@ -237,7 +235,11 @@
 </script>
 
 {#if notesAnnotations}
-	&nbsp;<button onclick={onNotesClicked} aria-label="note" class="inline-block h-4 w-4">
+	&nbsp;<button
+		onclick={onNotesClicked}
+		aria-label="note"
+		class="inline-block h-4 w-4 hover:cursor-pointer"
+	>
 		<svg
 			version="1.1"
 			id="svg798"
