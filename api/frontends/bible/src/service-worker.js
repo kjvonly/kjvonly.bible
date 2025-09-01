@@ -6,21 +6,21 @@ const CACHE = `cache-${version}`;
 
 const ASSETS = [
 	...build, // the app itself
-	...files  // everything in `static`
+	...files // everything in `static`
 ];
 
 const FILTERED_ASSETS = ASSETS.filter((a) => {
-	if (a === '/.nojekyll'){
-		return false
+	if (a === '/.nojekyll') {
+		return false;
 	}
-	return !(a.endsWith('.json') || a.endsWith('.json.gz'))
-})
+	return !(a.endsWith('.json') || a.endsWith('.json.gz'));
+});
 
 self.addEventListener('install', (event) => {
 	// Create a new cache and add all files to it
 	async function addFilesToCache() {
 		const cache = await caches.open(CACHE);
-		
+
 		await cache.addAll(FILTERED_ASSETS);
 	}
 
@@ -41,6 +41,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
 	// ignore POST requests etc
 	if (event.request.method !== 'GET') return;
+	const url = new URL(event.request.url);
+	if (url.pathname.startsWith('/v1')) return;
 
 	async function respond() {
 		const url = new URL(event.request.url);

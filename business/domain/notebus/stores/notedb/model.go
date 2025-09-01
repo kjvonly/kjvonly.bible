@@ -24,6 +24,7 @@ type note struct {
 	Version     int            `db:"version"`
 	DateCreated time.Time      `db:"date_created"`
 	DateUpdated time.Time      `db:"date_updated"`
+	DateDeleted time.Time      `db:"date_deleted"`
 }
 
 func toDBNote(bus notebus.Note) (note, error) {
@@ -46,6 +47,7 @@ func toDBNote(bus notebus.Note) (note, error) {
 		Version:     bus.Version,
 		DateCreated: bus.DateCreated.UTC(),
 		DateUpdated: bus.DateUpdated.UTC(),
+		DateDeleted: bus.DateDeleted.UTC(),
 	}
 
 	return db, nil
@@ -72,6 +74,7 @@ func toBusNote(db note) (notebus.Note, error) {
 		Version:     db.Version,
 		DateCreated: db.DateCreated.In(time.Local),
 		DateUpdated: db.DateUpdated.In(time.Local),
+		DateDeleted: db.DateDeleted.In(time.Local),
 	}
 
 	return bus, nil

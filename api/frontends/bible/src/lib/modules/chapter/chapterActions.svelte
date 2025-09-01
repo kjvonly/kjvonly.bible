@@ -18,7 +18,7 @@
 	let showBookChapterPopup: Boolean = $state(false);
 	let showSettingsPopup: Boolean = $state(false);
 	let showActionsPopup: Boolean = $state(false);
-	let showCopyVersePopup: boolean  = $state(false)
+	let showCopyVersePopup: boolean = $state(false);
 
 	function onBookChapterClick(event: Event) {
 		event.stopPropagation();
@@ -45,7 +45,7 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<span
 		class="flex items-center
-		justify-between rounded-e-full rounded-s-full bg-neutral-100 px-1 text-neutral-700 hover:cursor-pointer"
+		justify-between rounded-s-full rounded-e-full bg-neutral-100 px-1 text-neutral-700 hover:cursor-pointer"
 	>
 		<span
 			onclick={(e) => {
@@ -117,13 +117,14 @@
 
 {#if showActionsPopup}
 	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
-		<ActionDropdown {paneId} bind:showCopyVersePopup bind:showActionsDropdown={showActionsPopup}></ActionDropdown>
+		<ActionDropdown {paneId} bind:showCopyVersePopup bind:showActionsDropdown={showActionsPopup}
+		></ActionDropdown>
 	</div>
 {/if}
 
 {#if mode.notePopup.show}
 	<div style={containerHeight} class="absolute z-[10000] w-full shadow-lg">
-		<NotesContainer containerHeight bind:mode bind:annotations></NotesContainer>
+		<NotesContainer containerHeight bind:mode allNotes={false} bind:annotations></NotesContainer>
 	</div>
 {/if}
 

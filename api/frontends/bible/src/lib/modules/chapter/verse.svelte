@@ -8,25 +8,41 @@
 		verse,
 		pane = $bindable(),
 		annotations = $bindable(),
-		mode = $bindable(),
+		notes = $bindable(),
+		mode = $bindable()
 	} = $props();
 
 	function a() {}
-
 </script>
 
 {#if verse}
-	{#each verse.words as word, idx}
+	<span class="inline-block">
+		{#each verse.words.slice(0, 2) as word, idx}
+			<Word
+				bind:pane
+				bind:annotations
+				bind:notes
+				bind:mode
+				{verse}
+				{word}
+				{footnotes}
+				{chapterKey}
+				{lastKnownScrollPosition}
+				wordIdx={idx}
+			></Word>
+		{/each}
+	</span>{#each verse.words.slice(2) as word, idx}
 		<Word
 			bind:pane
 			bind:annotations
+			bind:notes
 			bind:mode
 			{verse}
 			{word}
 			{footnotes}
 			{chapterKey}
 			{lastKnownScrollPosition}
-			wordIdx={idx}
+			wordIdx={idx + 2}
 		></Word>
 	{/each}
 {/if}

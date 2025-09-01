@@ -219,11 +219,10 @@
 	let toasts: string[] = $state([]);
 	let timeoutId = 0;
 	function showToast(message: string) {
-		clearTimeout(timeoutId);
-		toasts = [message];
+		toasts.push(message);
 		timeoutId = setTimeout(() => {
-			toasts = [];
-		}, 2500);
+			toasts.shift();
+		}, 2500 * toasts.length);
 	}
 </script>
 
@@ -240,11 +239,13 @@
 </div>
 
 {#if toasts.length > 0}
-	{#each toasts as t}
-		<aside
-			class="fixed end-4 bottom-4 z-[2000] flex items-center justify-center gap-4 rounded-lg border bg-neutral-100 px-5 py-3"
-		>
-			{t}
-		</aside>
-	{/each}
+	<div class="fixed end-4 bottom-4 z-[10000] flex flex-col">
+		{#each [...toasts].reverse() as t}
+			<aside
+				class="my-2 flex items-center justify-center gap-4 rounded-lg border bg-neutral-100 px-5 py-3"
+			>
+				{t}
+			</aside>
+		{/each}
+	</div>
 {/if}

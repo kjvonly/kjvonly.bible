@@ -1,8 +1,15 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
-	import { chapterService } from '$lib/api/chapters.api';
+	import { onMount } from 'svelte';
+	import { chapterApi } from '$lib/api/chapters.api';
 	import Verse from './verse.svelte';
 	import { syncService } from '$lib/services/sync.service';
+	import { annotsApi } from '$lib/api/annots.api';
+
+	import { extractBookChapter } from '$lib/utils/chapter';
+	import uuid4 from 'uuid4';
+	import { notesService } from '$lib/services/notes.service';
+
+	let searchID = uuid4();
 
 	let showChapter: boolean = $state(true);
 	let fadeClass: string = $state('');
@@ -10,6 +17,8 @@
 	let loadedBookName = $state();
 	let loadedChapter = $state();
 	let footnotes: any = $state();
+
+	let notes: any = $state();
 
 	let {
 		chapterKey = $bindable(),
@@ -27,7 +36,7 @@
 			return;
 		}
 
-		mode.value = ''
+		mode.value = '';
 
 		let bcv = chapterKey.split('_');
 		if (bcv.length > 2) {
@@ -47,20 +56,24 @@
 			el?.scrollTo(0, 0);
 			annotations = {};
 			loadAnnotations();
+			loadNotes();
 			loadChapter();
 		}
 	});
-
 
 	let verses: any = $state();
 	let keys: string[] = $state([]);
 
 	async function loadAnnotations() {
-		annotations = await chapterService.getAnnotations(chapterKey);
+		annotations = await annotsApi.getAnnotations(chapterKey);
+	}
+
+	async function loadNotes() {
+		notesService.searchNotes(searchID, extractBookChapter(chapterKey), ['bookChapter']);
 	}
 
 	async function loadChapter() {
-		let data = await chapterService.getChapter(chapterKey);
+		let data = await chapterApi.getChapter(chapterKey);
 		bookName = data['bookName'];
 		bookChapter = data['number'];
 		loadedBookName = bookName;
@@ -70,32 +83,42 @@
 		keys = Object.keys(verses).sort((a, b) => (Number(a) < Number(b) ? -1 : 1));
 	}
 
+	function onSearchResults(data: any) {
+		if (data) {
+			let tempNotes: any = {};
+			Object.keys(data.notes).forEach((id) => (tempNotes[data.notes[id].chapterKey] = true));
+			notes = tempNotes;
+		}
+	}
+
 	onMount(async () => {
-		syncService.subscribe('annotations', ()=> {
-			loadAnnotations()
-		})
+		syncService.subscribe('annotations', () => {
+			loadAnnotations();
+		});
+
+		notesService.subscribe(searchID, onSearchResults);
+		notesService.subscribe('*', loadNotes);
 	});
 </script>
 
-<div class="{fadeClass} flex-col leading-loose">
+<div class="{fadeClass} px-4 leading-loose">
 	{#if showChapter}
-		<p class="px-4">
-			{#each keys as k, idx}
-				<!-- w-full required for safari. -->
-				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
-					<Verse
-						bind:pane
-						bind:annotations
-						bind:mode
-						verse={verses[k]}
-						{footnotes}
-						{chapterKey}
-						{lastKnownScrollPosition}
+		{#each keys as k, idx}
+			<!-- w-full required for safari. -->
+			<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
+				<Verse
+					bind:pane
+					bind:annotations
+					bind:notes
+					bind:mode
+					verse={verses[k]}
+					{footnotes}
+					{chapterKey}
+					{lastKnownScrollPosition}
+				></Verse>
+			</span>
+		{/each}
 
-					></Verse>
-				</span>
-			{/each}
-		</p>
 		<div class="mt-16"></div>
 
 		{#if mode.value !== ''}

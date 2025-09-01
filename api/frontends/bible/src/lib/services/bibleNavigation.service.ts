@@ -1,5 +1,5 @@
-import { bibleDB } from '../db/bible.db';
-import { chapterService } from '../api/chapters.api';
+import { bibleDB } from '../storer/bible.db';
+import { chapterApi } from '../api/chapters.api';
 
 var chapters: string[] = [
 	'1_1',
@@ -1196,14 +1196,14 @@ var chapters: string[] = [
 export class BibleNavigationService {
 	chapterList: string[];
 	bookNames: any;
-	subscribers: any[] = []
+	subscribers: any[] = [];
 
 	constructor() {
 		this.chapterList = chapters;
 	}
 
 	subscribe(id: string, fn: any) {
-		this.subscribers.push({ id: id, fn: fn })
+		this.subscribers.push({ id: id, fn: fn });
 	}
 
 	next(currentKey: string): string {
@@ -1225,13 +1225,13 @@ export class BibleNavigationService {
 	}
 
 	async publish(idKey: any) {
-		this.subscribers.forEach(s => {
-			s.fn(idKey)
-		})
+		this.subscribers.forEach((s) => {
+			s.fn(idKey);
+		});
 	}
 	async goto(shortBook: string, chapter: string) {
 		if (!this.bookNames) {
-			await chapterService.getChapter("booknames").then((data: any) => {
+			await chapterApi.getChapter('booknames').then((data: any) => {
 				this.bookNames = data;
 			});
 		}

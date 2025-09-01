@@ -4,6 +4,7 @@ package noteapp
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mid"
@@ -73,11 +74,20 @@ func (a *app) delete(ctx context.Context, _ *http.Request) web.Encoder {
 		return errs.Newf(errs.Internal, "noteID missing in context: %s", err)
 	}
 
-	if err := a.noteBus.Delete(ctx, nte); err != nil {
+	softDelete := notebus.Note{}
+	softDelete.ID = nte.ID
+	softDelete.UserID = nte.UserID
+	softDelete.DateCreated = nte.DateCreated
+	softDelete.DateUpdated = nte.DateUpdated
+	softDelete.DateDeleted = time.Now()
+	softDelete.Version = -1
+
+	updNte, err := a.noteBus.Update(ctx, softDelete, notebus.UpdateNote{})
+	if err != nil {
 		return errs.Newf(errs.Internal, "delete: noteID[%s]: %s", nte.ID, err)
 	}
 
-	return nil
+	return toAppNote(updNte)
 }
 
 func (a *app) query(ctx context.Context, r *http.Request) web.Encoder {

@@ -20,7 +20,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			Method:     http.MethodPost,
 			StatusCode: http.StatusOK,
 			Input: &noteapp.NewNote{
-				ReferenceVector: "0_0_0_0",
+				ReferenceVector: "1_2_3_4",
 				Title:           "Chirst is King",
 				Html:            "<h1>Christ is King!</h1>",
 				Text:            "Christ is King!",
@@ -36,7 +36,7 @@ func create200(sd apitest.SeedData) []apitest.Table {
 			GotResp: &noteapp.Note{},
 			ExpResp: &noteapp.Note{
 				UserID:          sd.Users[0].ID.String(),
-				ReferenceVector: "0_0_0_0",
+				ReferenceVector: "1_2_3_4",
 				Title:           "Chirst is King",
 				Html:            "<h1>Christ is King!</h1>",
 				Text:            "Christ is King!",
@@ -80,7 +80,7 @@ func create400(sd apitest.SeedData) []apitest.Table {
 			StatusCode: http.StatusBadRequest,
 			Input:      &noteapp.NewNote{},
 			GotResp:    &errs.Error{},
-			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"chapter_key","error":"chapter_key is a required field"},{"field":"title","error":"title is a required field"},{"field":"html","error":"html is a required field"},{"field":"text","error":"text is a required field"},{"field":"version","error":"version is a required field"}]`),
+			ExpResp:    errs.Newf(errs.InvalidArgument, `validate: [{"field":"chapterKey","error":"chapterKey is a required field"},{"field":"version","error":"version is a required field"}]`),
 
 			CmpFunc: func(got any, exp any) string {
 				return cmp.Diff(got, exp)

@@ -99,6 +99,10 @@ func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 
 	nte := Note{
 		ID:          uuid.New(),
+		BookID:      nn.BookID,
+		Chapter:     nn.Chapter,
+		Verse:       nn.Verse,
+		WordIndex:   nn.WordIndex,
 		UserID:      nn.UserID,
 		Tags:        nn.Tags,
 		Title:       nn.Title,
@@ -107,6 +111,7 @@ func (b *Business) Create(ctx context.Context, nn NewNote) (Note, error) {
 		Version:     nn.Version,
 		DateCreated: now,
 		DateUpdated: now,
+		DateDeleted: time.Time{},
 	}
 
 	if err := b.storer.Create(ctx, nte); err != nil {

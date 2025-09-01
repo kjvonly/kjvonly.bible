@@ -11,8 +11,6 @@ import Search from '../modules/search/search.svelte';
  *
  */
 export class ComponentMapping {
-
-
 	/**
 	 *
 	 * @param componentName string of class to be returned
@@ -28,16 +26,14 @@ export class ComponentMapping {
 				return Search;
 			case 'Modules':
 				return Modules;
-			case "Notes":
+			case 'Notes':
 				return Notes;
-			case "UserGuide":
+			case 'UserGuide':
 				return UserGuide;
 		}
 
 		return ChapterContainer;
 	}
-
-
 }
 
 export let componentMapping = new ComponentMapping();

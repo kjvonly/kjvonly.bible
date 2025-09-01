@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { annotsApi } from '$lib/api/annots.api';
 	import { onMount } from 'svelte';
 
 	let { mode = $bindable(), annotations = $bindable() } = $props();
@@ -24,16 +24,16 @@
 	}
 
 	async function onSave() {
-		let resp = await chapterService.putAnnotations(JSON.parse(JSON.stringify(annotations)));
-		if(resp !== undefined) {
-			annotations.version = resp.version
-			annotations = resp
+		let resp = await annotsApi.putAnnotations(JSON.parse(JSON.stringify(annotations)));
+		if (resp !== undefined) {
+			annotations.version = resp.version;
+			annotations = resp;
 		}
 		mode.value = '';
 	}
 
 	async function onClose() {
-		let data = await chapterService.getAnnotations(annotations.id);
+		let data = await annotsApi.getAnnotations(annotations.id);
 		annotations = data;
 		mode.value = '';
 	}
@@ -89,7 +89,7 @@
 				onSelectColor('a');
 			}}
 			aria-label="color-a"
-			class="h-8 w-8 rounded-full bg-highlighta {selectedColor === 'a'
+			class="bg-highlighta h-8 w-8 rounded-full {selectedColor === 'a'
 				? 'ring-2 ring-neutral-700'
 				: ''}"
 		></button>
@@ -98,7 +98,7 @@
 				onSelectColor('b');
 			}}
 			aria-label="color-b"
-			class="h-8 w-8 rounded-full bg-highlightb {selectedColor === 'b'
+			class="bg-highlightb h-8 w-8 rounded-full {selectedColor === 'b'
 				? 'ring-2 ring-neutral-700'
 				: ''}"
 		></button>
@@ -107,7 +107,7 @@
 				onSelectColor('c');
 			}}
 			aria-label="color-c"
-			class="h-8 w-8 rounded-full bg-highlightc {selectedColor === 'c'
+			class="bg-highlightc h-8 w-8 rounded-full {selectedColor === 'c'
 				? 'ring-2 ring-neutral-700'
 				: ''}"
 		></button>
@@ -116,7 +116,7 @@
 				onSelectColor('d');
 			}}
 			aria-label="color-d"
-			class="h-8 w-8 rounded-full bg-highlightd {selectedColor === 'd'
+			class="bg-highlightd h-8 w-8 rounded-full {selectedColor === 'd'
 				? 'ring-2 ring-neutral-700'
 				: ''}"
 		></button>
@@ -125,7 +125,7 @@
 				onSelectColor('e');
 			}}
 			aria-label="color-e"
-			class="h-8 w-8 rounded-full bg-highlighte {selectedColor === 'e'
+			class="bg-highlighte h-8 w-8 rounded-full {selectedColor === 'e'
 				? 'ring-2 ring-neutral-700'
 				: ''}"
 		></button>
@@ -133,10 +133,10 @@
 	<div class="space-x-3">
 		<button
 			onclick={() => {
-				onSave()
-				mode.notePopup.show = true;
+				onSave();
 				mode.notePopup.chapterKey = mode.chapterKey;
 				mode.value = '';
+				mode.notePopup.show = true;
 			}}
 			aria-label="note"
 			class="h-8 w-8"
@@ -258,8 +258,8 @@
 <span class="hidded text-highlightd"></span>
 <span class="hidded text-highlighte"></span>
 
-<span class="hidded underline decoration-highlighta"></span>
-<span class="hidded underline decoration-highlightb"></span>
-<span class="hidded underline decoration-highlightc"></span>
-<span class="hidded underline decoration-highlightd"></span>
-<span class="hidded underline decoration-highlighte"></span>
+<span class="hidded decoration-highlighta underline"></span>
+<span class="hidded decoration-highlightb underline"></span>
+<span class="hidded decoration-highlightc underline"></span>
+<span class="hidded decoration-highlightd underline"></span>
+<span class="hidded decoration-highlighte underline"></span>

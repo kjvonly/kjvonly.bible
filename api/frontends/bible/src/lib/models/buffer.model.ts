@@ -1,5 +1,4 @@
-import uuid4 from "uuid4";
-
+import uuid4 from 'uuid4';
 
 export class Buffer {
 	key: string = uuid4();

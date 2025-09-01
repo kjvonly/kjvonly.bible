@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { annotsApi } from '$lib/api/annots.api';
+	import { notesService } from '$lib/services/notes.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
@@ -55,7 +56,7 @@
 
 	async function onExport() {
 		toastService.showToast('starting export data');
-		let data = await chapterService.getAllAnnotations();
+		let data = await annotsApi.getAllAnnotations();
 
 		var element = document.createElement('a');
 		element.setAttribute(
@@ -106,7 +107,7 @@
 		return mergeDeep(target, ...sources);
 	}
 
-	function doImport(e) {
+	function doImport(e: any) {
 		const reader = new FileReader();
 		reader.onload = (e2) => {
 			let result: any = e2?.target?.result;
@@ -114,7 +115,7 @@
 				try {
 					toastService.showToast('starting import data');
 					let newAnnotations = JSON.parse(result);
-					let annotations = await chapterService.getAllAnnotations();
+					let annotations = await annotsApi.getAllAnnotations();
 
 					if (!annotations) {
 						annotations = {};
@@ -133,14 +134,14 @@
 
 					// order of params mater, (target, source) source will update target.
 					//const merged = mergeDeep(annotationsMap, newAnnotations);
-					const merged = deepMerge(annotationsMap, newAnnotationsMap, {arrays: 'replace'});
+					const merged = deepMerge(annotationsMap, newAnnotationsMap, { arrays: 'replace' });
 					let mergedList: any[] = [];
 					Object.keys(merged).forEach((k) => {
 						mergedList.push(merged[k]);
 					});
 
-					await chapterService.putAllAnnotations(mergedList);
-					searchService.initNotes();
+					await annotsApi.putAllAnnotations(mergedList);
+					notesService.init();
 					document.getElementById('kjvonly-import')?.remove();
 					toastService.showToast('finished import data');
 				} catch (ex) {
@@ -201,7 +202,7 @@
 				<div class="w-full">
 					<button
 						onclick={(event) => actions[a]()}
-						class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-primary-50">{a}</button
+						class="hover:bg-primary-50 w-full bg-neutral-50 p-4 text-start capitalize">{a}</button
 					>
 				</div>
 			{/each}

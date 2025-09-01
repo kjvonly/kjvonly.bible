@@ -99,11 +99,11 @@
 					></iframe>
 					<p class="py-10">
 						Verses with a dotted underline signals the verse has verse references. Clicking the
-						verse number will display all footnote, Strongs, and verse references for the verse. A user can
-						recursively search the verse references by clicking a verse reference. If the verse
-						reference clicked has verse references than those verse references will be displayed. A
-						breadcrumb trail will be displayed at the top of the references to identify the verses
-						the user has clicked thus far.
+						verse number will display all footnote, Strongs, and verse references for the verse. A
+						user can recursively search the verse references by clicking a verse reference. If the
+						verse reference clicked has verse references than those verse references will be
+						displayed. A breadcrumb trail will be displayed at the top of the references to identify
+						the verses the user has clicked thus far.
 					</p>
 				</div>
 

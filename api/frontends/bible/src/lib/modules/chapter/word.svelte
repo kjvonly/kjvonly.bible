@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { searchService } from '$lib/services/search.service';
 	import { onMount, untrack } from 'svelte';
 
 	let {
@@ -11,18 +12,25 @@
 		chapterKey,
 		pane = $bindable(),
 		annotations = $bindable(),
+		notes = $bindable(),
 		mode = $bindable()
 	} = $props();
 
 	let track: any = {};
 	let verseNumber = $state(0);
 	let wordAnnotations: any = $state();
-	let notesAnnotations: any = $state();
+	let notesAnnotations: any = $state(false);
 	let hasVerseReferences = $state(false);
 	$effect(() => {
 		annotations;
 		wordAnnotations = getWordAnnotations();
-		//notesAnnotations = getNotesAnnotations();
+	});
+
+	$effect(() => {
+		notes;
+		if (notes) {
+			wordHasNotes();
+		}
 	});
 
 	$effect(() => {
@@ -46,8 +54,8 @@
 	});
 
 	function updateMode(m: string) {
-		mode.value = m;
 		mode.chapterKey = `${chapterKey}_${verse['number']}_${wordIdx}`;
+		mode.value = m;
 	}
 
 	function getWordAnnotations() {
@@ -56,7 +64,7 @@
 		if (!annotations.annots) {
 			return;
 		}
-		
+
 		if (!annotations.annots[verseNumber]) {
 			return;
 		}
@@ -68,29 +76,10 @@
 		return annotations.annots[verseNumber][wordIdx];
 	}
 
-	function getNotesAnnotations() {
-		verseNumber = verse['number'];
-		if (!annotations[verseNumber]) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes.words) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes.words) {
-			return;
-		}
-
-		if (!annotations[verseNumber].notes.words[wordIdx]) {
-			return;
-		}
-
-		return Object.keys(annotations[verseNumber].notes.words[wordIdx]).length > 0;
+	function wordHasNotes() {
+		let verseNumber = verse['number'];
+		let wordKey = `${chapterKey}_${verseNumber}_${wordIdx}`;
+		notesAnnotations = notes[wordKey];
 	}
 
 	function initWordAnnotations(wordIndex: number) {
@@ -150,23 +139,6 @@
 
 	onMount(() => {
 		verseNumber = verse['number'];
-
-		if (
-			annotations &&
-			annotations[verseNumber] &&
-			annotations[verseNumber].decorations &&
-			annotations[verseNumber].decorations.words
-		) {
-			wordAnnotations = annotations[verseNumber].decorations.words[wordIdx];
-		}
-		// if (
-		// 	annotations &&
-		// 	annotations[verseNumber] &&
-		// 	annotations[verseNumber].notes &&
-		// 	annotations[verseNumber].notes.words
-		// ) {
-		// 	notesAnnotations = annotations[verseNumber].notes.words[wordIdx];
-		// }
 	});
 
 	let pressThresholdInMilliseconds = 1000;
@@ -263,60 +235,70 @@
 </script>
 
 {#if notesAnnotations}
-	&nbsp;<button onclick={onNotesClicked} aria-label="note" class="inline-block h-4 w-4">
-		<svg
-			version="1.1"
-			id="svg798"
-			width="100%"
-			height="100%"
-			viewBox="0 0 96 96"
-			xmlns="http://www.w3.org/2000/svg"
+	<span class={wordAnnotations?.class?.join(' ')}>
+		&nbsp;<button
+			onclick={onNotesClicked}
+			aria-label="note"
+			class="inline-block h-4 w-4 hover:cursor-pointer"
 		>
-			<g id="g804" transform="translate(-16,-16)">
-				<path
-					class="fill-support-a-500"
-					style="stroke-width:1.33333"
-					d="M 19.272727,108.72727 16,105.45455 V 64 22.545455 L 19.272727,19.272727 22.545455,16 H 64 105.45455 l 3.27272,3.272727 C 111.99725,22.542709 112,22.569285 112,50.959401 V 79.373349 L 95.647413,95.686675 79.294825,112 H 50.92014 c -28.348432,0 -28.377713,-0.003 -31.647413,-3.27273 z M 74.666667,88 V 74.666667 H 88 101.33333 v -24 -24 H 64 26.666667 V 64 101.33333 h 24 24 z M 37.333333,64 V 58.666667 H 50.666667 64 V 64 69.333333 H 50.666667 37.333333 Z m 0,-21.333333 V 37.333333 H 64 90.666667 V 42.666667 48 H 64 37.333333 Z"
-					id="path925"
-				/>
-			</g>
-		</svg>
-	</button>
+			<svg
+				version="1.1"
+				id="svg798"
+				width="100%"
+				height="100%"
+				viewBox="0 0 96 96"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<g id="g804" transform="translate(-16,-16)">
+					<path
+						class="fill-support-a-500"
+						style="stroke-width:1.33333"
+						d="M 19.272727,108.72727 16,105.45455 V 64 22.545455 L 19.272727,19.272727 22.545455,16 H 64 105.45455 l 3.27272,3.272727 C 111.99725,22.542709 112,22.569285 112,50.959401 V 79.373349 L 95.647413,95.686675 79.294825,112 H 50.92014 c -28.348432,0 -28.377713,-0.003 -31.647413,-3.27273 z M 74.666667,88 V 74.666667 H 88 101.33333 v -24 -24 H 64 26.666667 V 64 101.33333 h 24 24 z M 37.333333,64 V 58.666667 H 50.666667 64 V 64 69.333333 H 50.666667 37.333333 Z m 0,-21.333333 V 37.333333 H 64 90.666667 V 42.666667 48 H 64 37.333333 Z"
+						id="path925"
+					/>
+				</g>
+			</svg>
+		</button>
+	</span>
 {/if}{#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
-	<span class="inline-block {wordAnnotations?.class?.join(' ')}">&nbsp;</span
-	><!-- svelte-ignore a11y_no_static_element_interactions --><!-- svelte-ignore a11y_click_events_have_key_events --><span
-		onclick={(e) => {
-			if (mode.value !== '') {
-				onEditClick();
-				return;
-			}
+	<span class={wordAnnotations?.class?.join(' ')}>
+		<span class="">&nbsp;</span
+		><!-- svelte-ignore a11y_no_static_element_interactions --><!-- svelte-ignore a11y_click_events_have_key_events --><span
+			onclick={(e) => {
+				if (mode.value !== '') {
+					onEditClick();
+					return;
+				}
 
-			if (track[wordIdx] && track[wordIdx].finished) {
-				return;
-			}
+				if (track[wordIdx] && track[wordIdx].finished) {
+					return;
+				}
 
-			if (track[wordIdx]) {
-				track[wordIdx].finished = true;
-			}
+				if (track[wordIdx]) {
+					track[wordIdx].finished = true;
+				}
 
-			onWordClicked(e, word);
-		}}
-		ontouchstart={onMouseDownTouchStart}
-		ontouchend={onMouseUpTouchEnd}
-		onmousedown={onMouseDownTouchStart}
-		onmouseup={onMouseUpTouchEnd}
-		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(
-			' '
-		)} {hasVerseReferences && word.class.includes('vno') ? 'vno-refs' : ''} ">{word.text}</span
+				onWordClicked(e, word);
+			}}
+			ontouchstart={onMouseDownTouchStart}
+			ontouchend={onMouseUpTouchEnd}
+			onmousedown={onMouseDownTouchStart}
+			onmouseup={onMouseUpTouchEnd}
+			class="{word.class?.join(' ')} {hasVerseReferences && word.class.includes('vno')
+				? 'vno-refs'
+				: ''} ">{word.text}</span
+		></span
 	>
-{:else}<span class="inline-block {wordAnnotations?.class?.join(' ')}">&nbsp;</span><span
-		ontouchstart={onMouseDownTouchStart}
-		ontouchend={onMouseUpTouchEnd}
-		onmousedown={onMouseDownTouchStart}
-		onmouseup={onMouseUpTouchEnd}
-		onclick={onEditClick}
-		class="inline-block {word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}"
-		>{word.text}</span
+{:else}
+	<span class=" {wordAnnotations?.class?.join(' ')}">
+		<span class="">&nbsp;</span><span
+			ontouchstart={onMouseDownTouchStart}
+			ontouchend={onMouseUpTouchEnd}
+			onmousedown={onMouseDownTouchStart}
+			onmouseup={onMouseUpTouchEnd}
+			onclick={onEditClick}
+			class={word.class?.join(' ')}>{word.text}</span
+		></span
 	>
 {/if}
 
@@ -325,7 +307,7 @@
 	.FOOTNO {
 		cursor: pointer;
 		vertical-align: baseline;
-		 position: relative; 
+		position: relative;
 		top: -0.6em;
 		z-index: 0;
 		height: 100%;
@@ -337,11 +319,7 @@
 	}
 
 	.vno {
-		vertical-align: baseline;
-		position: relative;
-		top: -0.6em;
-		cursor: pointer;
-		@apply text-xs text-neutral-700 sm:text-base;
+		@apply cursor-pointer text-neutral-700 italic;
 	}
 
 	.vno-refs {
@@ -352,5 +330,9 @@
 		/* @apply underline decoration-dotted !important; */
 		@apply underline decoration-dotted;
 		cursor: pointer;
+	}
+
+	span {
+		display: inline-block;
 	}
 </style>

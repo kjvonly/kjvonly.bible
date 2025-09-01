@@ -20,7 +20,6 @@
 	let text = $state('');
 
 	onMount(() => {
-
 		let refs: string[] = [];
 		if (pane?.buffer?.bag?.refs) {
 			refs = pane?.buffer?.bag?.refs;

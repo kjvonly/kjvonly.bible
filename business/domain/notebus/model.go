@@ -28,6 +28,7 @@ type Note struct {
 	Version     int
 	DateCreated time.Time
 	DateUpdated time.Time
+	DateDeleted time.Time
 }
 
 // NewNote is what we require from clients when adding a Note.

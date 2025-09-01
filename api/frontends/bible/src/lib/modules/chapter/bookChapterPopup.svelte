@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { chapterService } from '$lib/api/chapters.api';
+	import { chapterApi } from '$lib/api/chapters.api';
 	import { onMount } from 'svelte';
 
 	let { chapterKey = $bindable(), showBookChapterPopup = $bindable() } = $props();
@@ -421,7 +421,7 @@
 	});
 
 	onMount(async () => {
-		bookNames = await chapterService.getBooknames();
+		bookNames = await chapterApi.getBooknames();
 		bookIds = Object.keys(bookNames['booknamesById']).sort((a, b) =>
 			Number(a) < Number(b) ? -1 : 1
 		);
@@ -461,7 +461,6 @@
 						class="h-8 w-8"
 					>
 						{#if !group}
-						
 							<svg
 								version="1.1"
 								id="svg2"
@@ -481,7 +480,6 @@
 							</svg>
 						{:else}
 							<svg
-							
 								version="1.1"
 								id="svg252"
 								width="100%"
@@ -578,7 +576,7 @@
 					{#each new Array(bookNames['maxChapterById'][selectedBook.id]).keys() as ch}
 						<button
 							onclick={() => chapterSelected(ch + 1)}
-							class="row-span-1 bg-neutral-50 p-4 hover:bg-primary-50">{ch + 1}</button
+							class="hover:bg-primary-50 row-span-1 bg-neutral-50 p-4">{ch + 1}</button
 						>
 					{/each}
 				</div>
@@ -587,7 +585,7 @@
 					{#each filteredBooks as bn}
 						<button
 							onclick={(event) => bookSelected(event, bn)}
-							class="cols-span-1 text-wrap py-6 text-center hover:cursor-pointer
+							class="cols-span-1 py-6 text-center text-wrap hover:cursor-pointer
 							{bookGroups[bn.id].bgcolor}  {bookGroups[bn.id].textcolor}
 							"
 						>
@@ -600,7 +598,7 @@
 					<div class="w-full">
 						<button
 							onclick={(event) => bookSelected(event, bn)}
-							class="w-full bg-neutral-50 p-4 text-start hover:bg-primary-50">{bn.name}</button
+							class="hover:bg-primary-50 w-full bg-neutral-50 p-4 text-start">{bn.name}</button
 						>
 					</div>
 				{/each}

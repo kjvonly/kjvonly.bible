@@ -26,7 +26,7 @@ type Tag struct {
 type Note struct {
 	ID              string `json:"id"`
 	UserID          string `json:"userID"`
-	ReferenceVector string `json:"chapter_key"`
+	ReferenceVector string `json:"chapterKey"`
 	Title           string `json:"title"`
 	Html            string `json:"html"`
 	Text            string `json:"text"`
@@ -34,6 +34,7 @@ type Note struct {
 	Version         int    `json:"version"`
 	DateCreated     int64  `json:"dateCreated"`
 	DateUpdated     int64  `json:"dateUpdated"`
+	DateDeleted     int64  `json:"dateDeleted"`
 }
 
 // Encode implements the encoder interface.
@@ -57,7 +58,7 @@ func toAppTags(bus []notebus.Tag) []Tag {
 }
 
 func toAppNote(nte notebus.Note) Note {
-	return Note{
+	appNte := Note{
 		ID:              nte.ID.String(),
 		UserID:          nte.UserID.String(),
 		ReferenceVector: fmt.Sprintf("%d_%d_%d_%d", nte.BookID, nte.Chapter, nte.Verse, nte.WordIndex),
@@ -68,7 +69,14 @@ func toAppNote(nte notebus.Note) Note {
 		Version:         nte.Version,
 		DateCreated:     nte.DateCreated.Unix(),
 		DateUpdated:     nte.DateUpdated.Unix(),
+		DateDeleted:     nte.DateDeleted.Unix(),
 	}
+
+	if nte.DateDeleted.IsZero() {
+		appNte.DateDeleted = 0
+	}
+
+	return appNte
 }
 
 func toAppNotes(notes []notebus.Note) []Note {
@@ -84,10 +92,10 @@ func toAppNotes(notes []notebus.Note) []Note {
 
 // NewNote defines the data needed to add a new note.
 type NewNote struct {
-	ReferenceVector string `json:"chapter_key" validate:"required"`
-	Title           string `json:"title" validate:"required"`
-	Html            string `json:"html" validate:"required"`
-	Text            string `json:"text" validate:"required"`
+	ReferenceVector string `json:"chapterKey" validate:"required"`
+	Title           string `json:"title"`
+	Text            string `json:"text"`
+	Html            string `json:"html"`
 	Tags            []Tag  `json:"tags" validate:"dive"`
 	Version         int    `json:"version" validate:"required"`
 }
@@ -151,7 +159,7 @@ func toBusNewNote(ctx context.Context, app NewNote) (notebus.NewNote, error) {
 		return notebus.NewNote{}, fmt.Errorf("parseverse: %w", err)
 	}
 
-	wordIndex, err := strconv.ParseInt(keys[1], 10, 0)
+	wordIndex, err := strconv.ParseInt(keys[3], 10, 0)
 	if err != nil {
 		return notebus.NewNote{}, fmt.Errorf("parsewordindex: %w", err)
 	}
