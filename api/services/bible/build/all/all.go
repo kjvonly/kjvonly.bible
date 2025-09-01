@@ -4,6 +4,7 @@ package all
 import (
 	"github.com/kjvonly/kjvonly.bible/app/domain/annotapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/auditapp"
+	"github.com/kjvonly/kjvonly.bible/app/domain/authapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/checkapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/homeapp"
 	"github.com/kjvonly/kjvonly.bible/app/domain/noteapp"
@@ -83,5 +84,10 @@ func (add) Add(app *web.App, cfg mux.Config) {
 		UserBus:     cfg.BusConfig.UserBus,
 		VProductBus: cfg.BusConfig.VProductBus,
 		AuthClient:  cfg.BibleConfig.AuthClient,
+	})
+
+	authapp.Routes(app, authapp.Config{
+		UserBus: cfg.BusConfig.UserBus,
+		Auth:    cfg.AuthConfig.Auth,
 	})
 }

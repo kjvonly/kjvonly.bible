@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { authService } from '$lib/services/auth.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { toastService } from '$lib/services/toast.service';
 
 	let {
 		paneId,
@@ -11,6 +13,16 @@
 
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
+
+    let email = $state('')
+    let password = $state('')
+
+    async function onsubmit(){
+        let isSuccessful = await authService.login(email, password)
+        if (!isSuccessful){
+            toastService.showToast('Error logging in')
+        }
+    }
 </script>
 
 <div bind:clientHeight style={containerHeight} class="overflow-hidden">
@@ -55,13 +67,14 @@
 				</div>
 
 				<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-					<form action="#" method="POST" class="space-y-6">
+					<form class="space-y-6">
 						<div>
 							<label for="email" class="block text-base font-medium text-neutral-700"
 								>Email address</label
 							>
 							<div class="mt-2">
 								<input
+                                    bind:value={email}
 									id="email"
 									type="email"
 									name="email"
@@ -86,6 +99,7 @@
 							<div class="mt-2">
 								<input
 									id="password"
+                                    bind:value={password}
 									type="password"
 									name="password"
 									required
@@ -97,7 +111,7 @@
 
 						<div>
 							<button
-								type="submit"
+								onclick="{onsubmit}"
 								class="flex w-full justify-center rounded-md bg-support-a-500 px-3 py-1.5 text-sm/6 font-semibold text-neutral-100 hover:bg-support-a-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-support-a-300
                                 hover:cursor-pointer"
 								>Sign in</button

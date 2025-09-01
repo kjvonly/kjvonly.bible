@@ -3,19 +3,20 @@ package mid
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"net/mail"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/errs"
 	"github.com/kjvonly/kjvonly.bible/business/domain/userbus"
 	"github.com/kjvonly/kjvonly.bible/business/types/role"
 	"github.com/kjvonly/kjvonly.bible/foundation/web"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 )
 
 // Authenticate is a middleware function that integrates with an authentication client
@@ -88,6 +89,67 @@ func Basic(ath *auth.Auth, userBus userbus.ExtBusiness) web.MidFunc {
 			}
 
 			usr, err := userBus.Authenticate(ctx, *addr, pass)
+			if err != nil {
+				return errs.New(errs.Unauthenticated, err)
+			}
+
+			claims := auth.Claims{
+				RegisteredClaims: jwt.RegisteredClaims{
+					Subject:   usr.ID.String(),
+					Issuer:    ath.Issuer(),
+					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(8760 * time.Hour)),
+					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+				},
+				Roles: role.ParseToString(usr.Roles),
+			}
+
+			subjectID, err := uuid.Parse(claims.Subject)
+			if err != nil {
+				return errs.Newf(errs.Unauthenticated, "parsing subject: %s", err)
+			}
+
+			ctx = setUserID(ctx, subjectID)
+			ctx = setClaims(ctx, claims)
+
+			return next(ctx, r)
+		}
+
+		return h
+	}
+
+	return m
+}
+
+type Creds struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// Decode implements the decoder interface.
+func (app *Creds) Decode(data []byte) error {
+	return json.Unmarshal(data, app)
+}
+
+// Basic processes basic authentication logic.
+func BasicPost(ath *auth.Auth, userBus userbus.ExtBusiness) web.MidFunc {
+	m := func(next web.HandlerFunc) web.HandlerFunc {
+		h := func(ctx context.Context, r *http.Request) web.Encoder {
+			var creds Creds
+			if err := web.Decode(r, &creds); err != nil {
+				return errs.Newf(errs.Unauthenticated, "invalid body")
+			}
+
+			addr, err := mail.ParseAddress(creds.Email)
+			if err != nil {
+				return errs.New(errs.Unauthenticated, err)
+			}
+
+			c, err := base64.StdEncoding.DecodeString(creds.Password)
+			if err != nil {
+				return errs.Newf(errs.Unauthenticated, "invalid password encoding")
+			}
+
+			usr, err := userBus.Authenticate(ctx, *addr, string(c))
 			if err != nil {
 				return errs.New(errs.Unauthenticated, err)
 			}
