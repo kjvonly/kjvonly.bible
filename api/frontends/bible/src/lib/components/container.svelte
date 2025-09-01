@@ -1,12 +1,9 @@
 <script lang="ts">
-
-    let {children} = $props()
+	let { children } = $props();
 </script>
 
-<div class="w-full h-[100vh] flex justify-center">
-
-    <div class="w-full">
-        {@render children?.()}
-    </div>
-
+<div class="flex h-[100vh] w-full justify-center">
+	<div class="w-full">
+		{@render children?.()}
+	</div>
 </div>

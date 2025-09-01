@@ -1,61 +1,57 @@
-import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH } from "$lib/storer/bible.db";
+import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
-import { bibleDB } from "$lib/storer/bible.db";
-import { authService } from "./auth.service";
+import { bibleDB } from '$lib/storer/bible.db';
+import { authService } from './auth.service';
 const syncWorker = new Worker(new URL('../workers/kjvsync.worker?worker', import.meta.url), {
 	type: 'module'
 });
 
-
 /*
-* NOTE: github does not ungzip your files so we zcat them to .json on
-* build/deploy. do the same thing in your dev environment
-* 
-*  for i in $(ls -1); do zcat $i > ${i%%.gz} ; done 
-*  run this in the static/data/(json.gz|strongs.gz.gz) directories in
-*  your dev environment
-*/
-const TOTAL_CHAPTERS_KEYS = 1189
+ * NOTE: github does not ungzip your files so we zcat them to .json on
+ * build/deploy. do the same thing in your dev environment
+ *
+ *  for i in $(ls -1); do zcat $i > ${i%%.gz} ; done
+ *  run this in the static/data/(json.gz|strongs.gz.gz) directories in
+ *  your dev environment
+ */
+const TOTAL_CHAPTERS_KEYS = 1189;
 
 /** BOOKNAMES is metadata on all bible chapters. */
-const TOTAL_BOOKNAMES_KEYS = 1
+const TOTAL_BOOKNAMES_KEYS = 1;
 
-const TOTAL_STRONGS_KEYS = 14058
-
+const TOTAL_STRONGS_KEYS = 14058;
 
 export class SyncService {
-
 	//todo unsubscribe
-	subscribers: any[] = []
+	subscribers: any[] = [];
 
 	constructor() {
 		syncWorker.onmessage = (e) => {
 			this.subscribers.forEach((s) => {
 				if (s.id === e.data.id) {
-					s.fn(e.data)
+					s.fn(e.data);
 				}
-			})
-		}
+			});
+		};
 	}
 
 	subscribe(id: any, fn: any) {
-		this.subscribers.push({ id: id, fn: fn })
+		this.subscribers.push({ id: id, fn: fn });
 	}
 
 	sync() {
-		let token = localStorage.getItem('token')
+		let token = localStorage.getItem('token');
 		syncWorker.postMessage({
 			action: 'sync',
 			token: token
-		}
-		)
+		});
 	}
 
 	async init() {
-		await this.syncChapters()
-		await this.syncBooknames()
-		await this.syncStrongs()
-		await this.syncSearchIndex()
+		await this.syncChapters();
+		await this.syncBooknames();
+		await this.syncStrongs();
+		await this.syncSearchIndex();
 	}
 
 	// TODO update syncs to be generic.
@@ -79,7 +75,7 @@ export class SyncService {
 			}
 		}
 
-		return true
+		return true;
 	}
 
 	async syncBooknames() {
@@ -92,7 +88,6 @@ export class SyncService {
 			let retryMax = 10;
 
 			while (keys.length < TOTAL_BOOKNAMES_KEYS || retries == retryMax) {
-
 				await sleep(1000);
 				keys = await bibleDB.getAllKeys(BOOKNAMES);
 				retries = retries + 1;
@@ -103,7 +98,7 @@ export class SyncService {
 			}
 		}
 
-		return true
+		return true;
 	}
 
 	async syncSearchIndex() {
@@ -116,7 +111,6 @@ export class SyncService {
 			let retryMax = 10;
 
 			while (!searchIndex || retries == retryMax) {
-
 				await sleep(1000);
 				searchIndex = await bibleDB.getValue(SEARCH, 'v1');
 				retries = retries + 1;
@@ -127,9 +121,8 @@ export class SyncService {
 			}
 		}
 
-		return true
+		return true;
 	}
-
 
 	async syncStrongs() {
 		let keys = await bibleDB.getAllKeys(STRONGS);
@@ -150,8 +143,8 @@ export class SyncService {
 			}
 		}
 
-		return true
+		return true;
 	}
 }
 
-export let syncService = new SyncService() 
+export let syncService = new SyncService();

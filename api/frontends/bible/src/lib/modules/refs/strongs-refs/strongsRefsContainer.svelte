@@ -53,7 +53,7 @@
 		});
 
 		let lidx = searchText.lastIndexOf('OR');
-		searchTerms =  sanatize(searchText.substring(0, lidx));
+		searchTerms = sanatize(searchText.substring(0, lidx));
 		showByBook = true;
 	}
 
@@ -133,7 +133,7 @@
 {#snippet byBook(s: any, idx: number)}
 	{#if s['usageByBook']}
 		<div class="flex flex-row items-center pt-4">
-			<p class="pe-4 capitalize text-neutral-600">By Book:</p>
+			<p class="pe-4 text-neutral-600 capitalize">By Book:</p>
 		</div>
 
 		<div class="space-y-2 ps-4 pt-2">
@@ -155,7 +155,7 @@
 	{#if s['usageByWord']}
 		<h1 class="pt-4 text-neutral-600">By Word:</h1>
 
-		<div class="space-y-2 pb-4 ps-4">
+		<div class="space-y-2 ps-4 pb-4">
 			{#each s['usageByWord'] as w, idx}
 				{#if idx !== 0}&shy;,&nbsp;{/if}<span
 					onclick={() => {

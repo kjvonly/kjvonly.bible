@@ -26,16 +26,14 @@ export class ComponentMapping {
 				return Search;
 			case 'Modules':
 				return Modules;
-			case "Notes":
+			case 'Notes':
 				return Notes;
-			case "UserGuide":
+			case 'UserGuide':
 				return UserGuide;
 		}
 
 		return ChapterContainer;
 	}
-
-
 }
 
 export let componentMapping = new ComponentMapping();

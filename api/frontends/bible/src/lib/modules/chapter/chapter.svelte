@@ -4,7 +4,7 @@
 	import Verse from './verse.svelte';
 	import { syncService } from '$lib/services/sync.service';
 	import { annotsApi } from '$lib/api/annots.api';
-	
+
 	import { extractBookChapter } from '$lib/utils/chapter';
 	import uuid4 from 'uuid4';
 	import { notesService } from '$lib/services/notes.service';
@@ -85,9 +85,9 @@
 
 	function onSearchResults(data: any) {
 		if (data) {
-			let tempNotes:any = {}
-			Object.keys(data.notes).forEach((id) => tempNotes[data.notes[id].chapterKey]=  true)
-			notes = tempNotes
+			let tempNotes: any = {};
+			Object.keys(data.notes).forEach((id) => (tempNotes[data.notes[id].chapterKey] = true));
+			notes = tempNotes;
 		}
 	}
 
@@ -101,23 +101,23 @@
 	});
 </script>
 
-<div class="{fadeClass} leading-loose px-4">
+<div class="{fadeClass} px-4 leading-loose">
 	{#if showChapter}
-			{#each keys as k, idx}
-				<!-- w-full required for safari. -->
-				<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
-					<Verse
-						bind:pane
-						bind:annotations
-						bind:notes
-						bind:mode
-						verse={verses[k]}
-						{footnotes}
-						{chapterKey}
-						{lastKnownScrollPosition}
-					></Verse>
-				</span>
-			{/each}
+		{#each keys as k, idx}
+			<!-- w-full required for safari. -->
+			<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
+				<Verse
+					bind:pane
+					bind:annotations
+					bind:notes
+					bind:mode
+					verse={verses[k]}
+					{footnotes}
+					{chapterKey}
+					{lastKnownScrollPosition}
+				></Verse>
+			</span>
+		{/each}
 
 		<div class="mt-16"></div>
 

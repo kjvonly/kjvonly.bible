@@ -211,7 +211,7 @@
 				updateRefs(vref);
 			}}
 		>
-			<p class="cursor-pointer px-4 py-2 text-left hover:bg-primary-100">
+			<p class="hover:bg-primary-100 cursor-pointer px-4 py-2 text-left">
 				<span class="font-bold text-neutral-500"
 					>{vref.bookName} {vref.chapterNumber}:{vref.verseNumber}</span
 				><br />

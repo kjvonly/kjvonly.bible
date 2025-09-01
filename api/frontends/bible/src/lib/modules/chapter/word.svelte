@@ -319,8 +319,7 @@
 	}
 
 	.vno {
-
-		@apply text-neutral-700 italic cursor-pointer;
+		@apply cursor-pointer text-neutral-700 italic;
 	}
 
 	.vno-refs {

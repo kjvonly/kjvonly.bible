@@ -30,17 +30,17 @@
 		 * react to the change the pane.id would be undefined causing the code to flow
 		 * to the else block and not updating the height and width of the container.
 		 *
-		 * looking at the split code in +page.svelte it's obvious that we are creating 
+		 * looking at the split code in +page.svelte it's obvious that we are creating
 		 * an new object and the references of the original pane object would not change.
-		 * 
+		 *
 		 * If paneId was bound with pane.id then when the pane.id was reset to undefined
 		 * then every child paneId bound with pane.id would be undefined causing w/e
 		 * issue.
-		 * 
-		 * I don't think a paneId ever changes. So we should make it a convention 
-		 * to use paneId instead of pane.id. There's a few moments when id is unset 
+		 *
+		 * I don't think a paneId ever changes. So we should make it a convention
+		 * to use paneId instead of pane.id. There's a few moments when id is unset
 		 * and the paneId would be undefined.
-		 * 
+		 *
 		 * Also the vars except id are objects so those would have the same reference if bound
 		 * to a child component.
 		 */
@@ -96,14 +96,14 @@
 	{#if pane?.toggle}
 		{#if pane?.buffer?.componentName}
 			{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-			<Component bind:containerHeight bind:containerWidth bind:pane paneId={paneId}></Component>
+			<Component bind:containerHeight bind:containerWidth bind:pane {paneId}></Component>
 		{/if}
 	{/if}
 
 	{#if pane && !pane.toggle}
 		{#if pane?.buffer?.componentName}
 			{@const Component = componentMapping.getComponent(pane?.buffer?.componentName)}
-			<Component bind:containerHeight bind:containerWidth bind:pane paneId={paneId}></Component>
+			<Component bind:containerHeight bind:containerWidth bind:pane {paneId}></Component>
 		{/if}
 	{/if}
 </div>

@@ -134,7 +134,7 @@
 
 					// order of params mater, (target, source) source will update target.
 					//const merged = mergeDeep(annotationsMap, newAnnotations);
-					const merged = deepMerge(annotationsMap, newAnnotationsMap, {arrays: 'replace'});
+					const merged = deepMerge(annotationsMap, newAnnotationsMap, { arrays: 'replace' });
 					let mergedList: any[] = [];
 					Object.keys(merged).forEach((k) => {
 						mergedList.push(merged[k]);
@@ -202,7 +202,7 @@
 				<div class="w-full">
 					<button
 						onclick={(event) => actions[a]()}
-						class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-primary-50">{a}</button
+						class="hover:bg-primary-50 w-full bg-neutral-50 p-4 text-start capitalize">{a}</button
 					>
 				</div>
 			{/each}

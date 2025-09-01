@@ -6,7 +6,7 @@ import type { IDBPDatabase } from 'idb';
  */
 class IndexedDB {
 	private database: string;
-	protected db: IDBPDatabase<unknown> | undefined
+	protected db: IDBPDatabase<unknown> | undefined;
 	constructor(database: string) {
 		this.database = database;
 	}
@@ -30,14 +30,14 @@ class IndexedDB {
 			});
 			return true;
 		} catch (error) {
-			console.log(error)
+			console.log(error);
 			return false;
 		}
 	}
 
 	/**
 	 * Get value from indexDB
-	 * 
+	 *
 	 * @param tableName table to get value from
 	 * @param id index id or key
 	 * @returns the value at that key
@@ -51,7 +51,7 @@ class IndexedDB {
 
 	/**
 	 * Get all objects from a table
-	 * 
+	 *
 	 * @param tableName table to get all values from
 	 * @returns all objects
 	 */
@@ -62,13 +62,12 @@ class IndexedDB {
 		return result;
 	}
 
-
 	/**
 	 * Put value in table
-	 * 
+	 *
 	 * @param tableName table to put values
 	 * @param value value to put
-	 * @returns 
+	 * @returns
 	 */
 	public async putValue(tableName: string, value: object) {
 		const tx = this.db?.transaction(tableName, 'readwrite');
@@ -81,7 +80,7 @@ class IndexedDB {
 	 * Puts all objects in table
 	 * @param tableName talbe to put values
 	 * @param values array of values to put in table
-	 * @returns 
+	 * @returns
 	 */
 	public async putBulkValue(tableName: string, values: object[]) {
 		const tx = this.db?.transaction(tableName, 'readwrite');
@@ -93,7 +92,7 @@ class IndexedDB {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param tableName table to delete value from
 	 * @param id id/key of to delete
 	 * @returns id of result or undefined
@@ -109,11 +108,9 @@ class IndexedDB {
 		return id;
 	}
 
-
-
 	/**
 	 * Get's all keys from a table
-	 * 
+	 *
 	 * @param tableName table to get all index keys
 	 * @returns list of keys
 	 */
@@ -121,7 +118,7 @@ class IndexedDB {
 		if (this.db) {
 			return await this.db.getAllKeys(tableName);
 		}
-		return []
+		return [];
 	}
 }
 

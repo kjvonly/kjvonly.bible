@@ -3,15 +3,12 @@
 	import { numberToLetters } from '$lib/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
-	let { isVerseRef, def  } = $props();
+	let { isVerseRef, def } = $props();
 
 	let fs: any[] = $state([]);
 	let toggle = $state(false);
 
-	onMount(() => {
-		
-
-	});
+	onMount(() => {});
 </script>
 
 {#if fs.length > 0}

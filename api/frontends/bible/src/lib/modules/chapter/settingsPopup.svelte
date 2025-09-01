@@ -145,7 +145,7 @@
 					<select
 						name="HeadlineAct"
 						id="HeadlineAct"
-						class="w-full flex-1 rounded-lg bg-primary-500 p-4 font-bold uppercase text-neutral-50"
+						class="bg-primary-500 w-full flex-1 rounded-lg p-4 font-bold text-neutral-50 uppercase"
 						bind:value={settings.colorTheme}
 						onchange={() => {
 							settings = settings;

@@ -167,7 +167,7 @@
 			<div>
 				<input
 					type="checkbox"
-					class="mx-4 mt-5 h-5 w-5 accent-support-a-500"
+					class="accent-support-a-500 mx-4 mt-5 h-5 w-5"
 					bind:checked={checkAll}
 					onchange={() => {
 						toggleSelects();
@@ -179,7 +179,7 @@
 					<div>
 						<input
 							type="checkbox"
-							class="mx-4 mt-5 h-5 w-5 accent-support-a-500"
+							class="accent-support-a-500 mx-4 mt-5 h-5 w-5"
 							bind:checked={verses[k].checked}
 						/>
 					</div>
@@ -194,7 +194,7 @@
 </div>
 
 <style>
-	 @reference "../../../app.css";
+	@reference "../../../app.css";
 	.vno {
 		vertical-align: baseline;
 		position: relative;

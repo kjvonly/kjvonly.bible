@@ -2,14 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	onMount(()=> {
-        goto('/')
-    });
+	onMount(() => {
+		goto('/');
+	});
 
 	let { children } = $props();
-    
-    
 </script>
-
 
 {@render children?.()}

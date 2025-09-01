@@ -37,7 +37,6 @@
 			setTimeout(() => {
 				// Give the sync worker time to start up
 				syncService.sync();
-
 			}, 5000);
 		}
 	});
