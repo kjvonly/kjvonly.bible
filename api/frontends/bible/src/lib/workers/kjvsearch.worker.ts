@@ -1,14 +1,10 @@
-import { chapterApi } from "$lib/api/chapters.api";
-import { notesApi } from "$lib/api/notes.api";
 import { bibleDB, SEARCH } from "$lib/storer/bible.db"
-import { extractBookChapter } from "$lib/utils/chapter";
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
 
 let index = new FlexSearch.Index();
 
 let verses: any = {}
-
 
 /** if bible data ever changes we can use this function to 
  * export the flexsearch index and copy it to the data repo
@@ -112,92 +108,15 @@ async function search(id: string, text: string) {
 
 }
 
-
-let notesDocument = new FlexSearch.Document({
-    document: {
-        id: "id",
-        index: ["title", "text", "tags[]:tag", "bookChapter", "chapterKey"]
-    }
-}
-);
-
-let notes: any = {}
-
-async function initNotes() {
-    let cahcedNotes = await notesApi.getAllNotes();
-    notes = {}
-    for (let i = 0; i < cahcedNotes.length; i++) {
-        let nn = cahcedNotes[i]
-        if (nn?.chapterKey) {
-            let ck = nn.chapterKey.split('_')
-            nn.bookChapter = `${ck[0]}_${ck[1]}`
-            await notesDocument.addAsync(nn.id, nn);
-            notes[nn.id] = nn
-        }
-    }
-
-    getAllNotes('*')
-}
-
-
-function addNote(noteID: string, note: any) {
-    note.bookChapter = extractBookChapter(note.chapterKey)
-    notes[noteID] = note
-    notesDocument.add(noteID, note);
-    getAllNotes('*')
-}
-
-function deleteNote(noteID: string) {
-    delete notes[noteID]
-    notesDocument.remove(noteID);
-    getAllNotes('*')
-}
-
-async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
-    const results = await notesDocument.searchAsync(searchTerm, {
-        index: indexes
-    });
-
-    let filteredNotes: any = {}
-    results.forEach(r => {
-        r.result.forEach(id => {
-            filteredNotes[id] = notes[id]
-        })
-    })
-    if (Object.keys(filteredNotes).length > 0) {
-        postMessage({ id: id, notes: filteredNotes })
-    }
-}
-
-function getAllNotes(id: string) {
-    postMessage({ id: id, notes: notes })
-}
-
-
 onmessage = async (e) => {
     switch (e.data.action) {
         case 'init':
             await init()
-            await initNotes()
             break;
         case 'search':
             await search(e.data.id, e.data.text)
             break;
-        case 'initNotes':
-            initNotes()
-            break;
-        case 'addNote':
-            addNote(e.data.noteID, e.data.note)
-            break;
-        case 'deleteNote':
-            deleteNote(e.data.noteID)
-            break;
-        case 'searchNotes':
-            await searchNotes(e.data.id, e.data.text, e.data.indexes);
-            break
-        case 'getAllNotes':
-            getAllNotes(e.data.id)
     }
 }
 
-export { };
+init()

@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import { chapterApi } from '$lib/api/chapters.api';
 	import Verse from './verse.svelte';
 	import { syncService } from '$lib/services/sync.service';
 	import { annotsApi } from '$lib/api/annots.api';
-	import { searchService } from '$lib/services/search.service';
+	
 	import { extractBookChapter } from '$lib/utils/chapter';
 	import uuid4 from 'uuid4';
+	import { notesService } from '$lib/services/notes.service';
 
 	let searchID = uuid4();
 
@@ -68,7 +69,7 @@
 	}
 
 	async function loadNotes() {
-		searchService.searchNotes(searchID, extractBookChapter(chapterKey), ['bookChapter']);
+		notesService.searchNotes(searchID, extractBookChapter(chapterKey), ['bookChapter']);
 	}
 
 	async function loadChapter() {
@@ -95,8 +96,8 @@
 			loadAnnotations();
 		});
 
-		searchService.subscribe(searchID, onSearchResults);
-		searchService.subscribe('*', loadNotes);
+		notesService.subscribe(searchID, onSearchResults);
+		notesService.subscribe('*', loadNotes);
 	});
 </script>
 

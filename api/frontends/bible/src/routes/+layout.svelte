@@ -5,8 +5,8 @@
 	import '../../node_modules/quill/dist/quill.snow.css';
 	import { syncService } from '$lib/services/sync.service';
 	import { searchService } from '$lib/services/search.service';
-	import { api } from '$lib/api/api';
 	import { authService } from '$lib/services/auth.service';
+	import { notesService } from '$lib/services/notes.service';
 
 	function register() {
 		// Listen for connection coming online
@@ -32,10 +32,13 @@
 	onMount(async () => {
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		await syncService.init();
-		searchService.init();
 		if (authService.isLoggedIn()) {
-			syncService.sync();
 			register();
+			setTimeout(() => {
+				// Give the sync worker time to start up
+				syncService.sync();
+
+			}, 5000);
 		}
 	});
 

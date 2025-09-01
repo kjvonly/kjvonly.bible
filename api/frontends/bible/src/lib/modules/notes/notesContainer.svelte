@@ -19,10 +19,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 <script lang="ts">
 	import { chapterApi } from '$lib/api/chapters.api';
 	import { notesApi } from '$lib/api/notes.api';
+	import { notesService } from '$lib/services/notes.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
-	import { extractBookChapter } from '$lib/utils/chapter';
 	import Quill from 'quill';
 	import { onMount } from 'svelte';
 	import uuid4 from 'uuid4';
@@ -136,7 +135,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 					return indexes.push(fp.index);
 				}
 			});
-			searchService.searchNotes(searchID, filterInput, indexes);
+			notesService.searchNotes(searchID, filterInput, indexes);
 		} else {
 			updateNotesKeys();
 		}
@@ -262,7 +261,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		notesApi.deleteNote(noteID);
 		noteKeys = [];
 		delete notes[noteID];
-		searchService.deleteNote('*', noteID);
+		notesService.deleteNote('*', noteID);
 		note = null;
 		showNoteList();
 	}
@@ -279,7 +278,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			note.dateUpdated = savedNote.dateUpdated;
 			notes[noteID] = note;
 			toastService.showToast(toastMessage);
-			searchService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
+			notesService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
 		}
 	}
 
@@ -389,9 +388,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		booknames = await chapterApi.getBooknames();
 
 		/* search */
-		searchService.subscribe(searchID, onFilterInputResults);
-		searchService.subscribe('*', onSearchResults);
-		searchService.getAllNotes('*');
+		notesService.subscribe(searchID, onFilterInputResults);
+		notesService.subscribe('*', onSearchResults);
+		notesService.getAllNotes('*');
 
 		/* editor */
 		if (element) {

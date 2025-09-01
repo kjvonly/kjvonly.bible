@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { annotsApi } from '$lib/api/annots.api';
+	import { notesService } from '$lib/services/notes.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
 	import { toastService } from '$lib/services/toast.service';
@@ -140,7 +141,7 @@
 					});
 
 					await annotsApi.putAllAnnotations(mergedList);
-					searchService.initNotes();
+					notesService.init();
 					document.getElementById('kjvonly-import')?.remove();
 					toastService.showToast('finished import data');
 				} catch (ex) {
