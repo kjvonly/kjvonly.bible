@@ -21,7 +21,11 @@
         let isSuccessful = await authService.login(email, password)
         if (!isSuccessful){
             toastService.showToast('Error logging in')
+        }else {
+            toastService.showToast('Login Success')
         }
+        pane.updateBuffer('ChapterContainer')
+
     }
 </script>
 
