@@ -21,10 +21,12 @@ func Routes(app *web.App, cfg Config) {
 
 	bearer := mid.Bearer(cfg.Auth)
 	basic := mid.Basic(cfg.Auth, cfg.UserBus)
+	basicPost := mid.BasicPost(cfg.Auth, cfg.UserBus)
 
 	api := newApp(cfg.Auth)
 
 	app.HandlerFunc(http.MethodGet, version, "/auth/token/{kid}", api.token, basic)
+	app.HandlerFunc(http.MethodPost, version, "/auth/token/{kid}", api.login, basicPost)
 	app.HandlerFunc(http.MethodGet, version, "/auth/authenticate", api.authenticate, bearer)
 	app.HandlerFunc(http.MethodPost, version, "/auth/authorize", api.authorize)
 }

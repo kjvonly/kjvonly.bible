@@ -17,6 +17,7 @@ import (
 	"github.com/kjvonly/kjvonly.bible/api/services/bible/build/all"
 	"github.com/kjvonly/kjvonly.bible/api/services/bible/build/crud"
 	"github.com/kjvonly/kjvonly.bible/api/services/bible/build/reporting"
+	"github.com/kjvonly/kjvonly.bible/app/sdk/auth"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/authclient"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/debug"
 	"github.com/kjvonly/kjvonly.bible/app/sdk/mux"
@@ -39,6 +40,7 @@ import (
 	"github.com/kjvonly/kjvonly.bible/business/domain/vproductbus/stores/vproductdb"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/delegate"
 	"github.com/kjvonly/kjvonly.bible/business/sdk/sqldb"
+	"github.com/kjvonly/kjvonly.bible/foundation/keystore"
 	"github.com/kjvonly/kjvonly.bible/foundation/logger"
 	"github.com/kjvonly/kjvonly.bible/foundation/otel"
 )
@@ -100,7 +102,11 @@ func run(ctx context.Context, log *logger.Logger) error {
 			CORSAllowedOrigins []string      `conf:"default:*"`
 		}
 		Auth struct {
-			Host string `conf:"default:http://auth-service:6000"`
+			Host       string `conf:"default:http://auth-service:6000"`
+			KeysEnvVar string
+			KeysFolder string `conf:"default:zarf/keys/"`
+			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
+			Issuer     string `conf:"default:service project"`
 		}
 		DB struct {
 			User         string `conf:"default:postgres"`
@@ -195,6 +201,41 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	authClient := authclient.New(log, cfg.Auth.Host)
 
+	log.Info(ctx, "startup", "status", "initializing authentication support")
+
+	// Check the enviornment first to see if a key is being provided. Then
+	// load any private keys files from disk. We can assume some system like
+	// Vault has created these files already. How that happens is not our
+	// concern.
+
+	ks := keystore.New()
+
+	n1, err := ks.LoadByJSON(cfg.Auth.KeysEnvVar)
+	if err != nil {
+		return fmt.Errorf("loading keys by env: %w", err)
+	}
+
+	n2, err := ks.LoadByFileSystem(os.DirFS(cfg.Auth.KeysFolder))
+	if err != nil {
+		return fmt.Errorf("loading keys by fs: %w", err)
+	}
+
+	if n1+n2 == 0 {
+		return errors.New("no keys exist")
+	}
+
+	authCfg := auth.Config{
+		Log:       log,
+		UserBus:   userBus,
+		KeyLookup: ks,
+		Issuer:    cfg.Auth.Issuer,
+	}
+
+	ath, err := auth.New(authCfg)
+	if err != nil {
+		return fmt.Errorf("constructing auth: %w", err)
+	}
+
 	// -------------------------------------------------------------------------
 	// Start Tracing Support
 
@@ -252,6 +293,9 @@ func run(ctx context.Context, log *logger.Logger) error {
 		},
 		BibleConfig: mux.BibleConfig{
 			AuthClient: authClient,
+		},
+		AuthConfig: mux.AuthConfig{
+			Auth: ath,
 		},
 	}
 

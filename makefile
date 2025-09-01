@@ -411,7 +411,7 @@ test-race: test-r lint vuln-check
 
 token:
 	curl -i \
-	--user "admin@example.com:gophers" http://localhost:6000/v1/auth/token/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
+	--user "admin@example.com:gophers" http://localhost:3000/v1/auth/token/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 
 token-user:
 	curl -i \

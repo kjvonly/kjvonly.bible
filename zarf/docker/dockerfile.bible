@@ -29,6 +29,7 @@ ARG BUILD_DATE
 ARG BUILD_REF
 RUN addgroup -g 1000 -S bible && \
     adduser -u 1000 -h /service -G bible -S bible
+COPY --from=build_bible --chown=bible:bible /service/zarf/keys/. /service/zarf/keys/.
 COPY --from=build_bible --chown=bible:bible /service/api/tooling/admin/admin /service/admin
 COPY --from=build_bible --chown=bible:bible /service/api/services/bible/bible /service/bible
 WORKDIR /service

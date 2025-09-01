@@ -1,3 +1,5 @@
+import { authApi } from "$lib/api/auth.api";
+
 const LOCAL_STORAGE_BEARER_TOKEN_NAME = 'token';
 
 class AuthService {
@@ -65,6 +67,23 @@ class AuthService {
 			console.error('Invalid token:', error);
 			this.clearBearerToken();
 			return null;
+		}
+	}
+
+	async login(email: string, password: string): Promise<boolean> {
+		try {
+			let res = await authApi.login(email, password)
+			if (!res.ok) {
+				return false
+			}
+			let json  = await res.json()
+			if (json.token) {
+				localStorage.setItem('token', json.token)
+			}
+			return true
+		} catch (err) {
+			console.log(`error logging in ${err}`)
+			return false
 		}
 	}
 }

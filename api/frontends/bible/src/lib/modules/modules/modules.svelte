@@ -7,7 +7,8 @@
 		bible: 'ChapterContainer',
 		search: 'Search',
 		notes: 'Notes',
-		'user guide': 'UserGuide'
+		'user guide': 'UserGuide',
+		'login': 'Login'
 	};
 	let {
 		paneId,

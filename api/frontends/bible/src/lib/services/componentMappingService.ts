@@ -1,5 +1,6 @@
 import ChapterContainer from '$lib/modules/chapter/chapterContainer.svelte';
 import UserGuide from '$lib/modules/guide/userGuide.svelte';
+import Login from '$lib/modules/login/login.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
 import Notes from '$lib/modules/notes/notes.svelte';
 import StrongsVersesRefs from '$lib/modules/refs/strongs-verses-refs/strongsVersesRefs.svelte';
@@ -30,6 +31,8 @@ export class ComponentMapping {
 				return Notes;
 			case 'UserGuide':
 				return UserGuide;
+			case 'Login':
+				return Login;				
 		}
 
 		return ChapterContainer;
