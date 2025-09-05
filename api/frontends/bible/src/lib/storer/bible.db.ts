@@ -1,6 +1,6 @@
 import IndexedDB from './idb.db';
 
-const DB_VERSION = 7
+const DB_VERSION = 8
 
 export const enum STORES {
 	CHAPTERS,
