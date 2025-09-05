@@ -16,9 +16,9 @@ class IndexedDB {
 	 * @param tableNames list of tables that should exist in db
 	 * @returns boolean if creation/opening was successfull
 	 */
-	public async createAndOrOpenObjectStores(tableNames: string[]) {
+	public async createAndOrOpenObjectStores(tableNames: string[], versionNumber: number) {
 		try {
-			this.db = await openDB(this.database, 7, {
+			this.db = await openDB(this.database, versionNumber, {
 				upgrade(db: IDBPDatabase) {
 					for (const tableName of tableNames) {
 						if (db.objectStoreNames.contains(tableName)) {
