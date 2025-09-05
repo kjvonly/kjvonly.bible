@@ -7,6 +7,7 @@
 	import { searchService } from '$lib/services/search.service';
 	import { authService } from '$lib/services/auth.service';
 	import { notesService } from '$lib/services/notes.service';
+	import { plansApi } from '$lib/api/plans.api';
 
 	function register() {
 		// Listen for connection coming online
@@ -36,9 +37,16 @@
 			register();
 			setTimeout(() => {
 				// Give the sync worker time to start up
+				// we could sync from the worker if the 
+				// BEARER token was stored in indexed db
+				// instead of local storage
 				syncService.sync();
 			}, 5000);
 		}
+
+		// let plan = localStorage.getItem('tmp')
+		// await plansApi.putPlan(JSON.parse(plan))
+
 	});
 
 	let { children } = $props();

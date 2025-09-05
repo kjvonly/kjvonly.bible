@@ -11,6 +11,8 @@ export class NotesApi {
 	}
 
 	async getAllNotes(): Promise<any> {
+        // TODO READ from unsycneddb as well
+        // look at Plans api
 		let data: any = undefined;
 		try {
 			data = await bibleStorer.getAllValue(NOTES);
