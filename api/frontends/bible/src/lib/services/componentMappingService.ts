@@ -3,6 +3,7 @@ import UserGuide from '$lib/modules/guide/userGuide.svelte';
 import Login from '$lib/modules/login/login.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
 import Notes from '$lib/modules/notes/notes.svelte';
+import Plans from '$lib/modules/plans/plans.svelte';
 import StrongsVersesRefs from '$lib/modules/refs/strongs-verses-refs/strongsVersesRefs.svelte';
 import Search from '../modules/search/search.svelte';
 
@@ -33,6 +34,8 @@ export class ComponentMapping {
 				return UserGuide;
 			case 'Login':
 				return Login;				
+			case 'Plans':
+				return Plans;
 		}
 
 		return ChapterContainer;

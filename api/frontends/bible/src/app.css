@@ -1283,20 +1283,20 @@
 }
 
 span.bg-highlighta {
-	box-shadow: 0.15rem 0.15rem 0 0 var(--color-highlighta);
+	box-shadow: 0.15rem 0 0 0 var(--color-highlighta);
 }
 span.bg-highlightb {
-	box-shadow: 0.15rem 0.15rem 0 0 var(--color-highlightb);
+	box-shadow: 0.15rem 0 0 0 var(--color-highlightb);
 }
 
 span.bg-highlightc {
-	box-shadow: 0.15rem 0.15rem 0 0 var(--color-highlightc);
+	box-shadow: 0.15rem 0 0 0 var(--color-highlightc);
 }
 
 span.bg-highlightd {
-	box-shadow: 0.15rem 0.15rem 0 0 var(--color-highlightd);
+	box-shadow: 0.15rem 0 0 0 var(--color-highlightd);
 }
 
 span.bg-highlighte {
-	box-shadow: 0.15rem 0.15rem 0 0 var(--color-highlighte);
+	box-shadow: 0.15rem 0 0 0 var(--color-highlighte);
 }

@@ -1,26 +1,19 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { paneService } from '$lib/services/pane.service.svelte';
-	import type { Pane } from '$lib/models/pane.model';
 
-	let components: any = {
-		bible: 'ChapterContainer',
-		search: 'Search',
-		notes: 'Notes',
-		'plans': 'Plans',
-		'user guide': 'UserGuide',
-		'login': 'Login',
-	};
-	let {
-		paneId,
-		pane = $bindable(),
-		containerHeight = $bindable(),
-		containerWidth = $bindable()
-	} = $props();
+	let { containerHeight, paneId } = $props();
 
-	let headerHeight = $state(0);
 	let clientHeight = $state(0);
+	let headerHeight = $state(0);
 </script>
+
+{#snippet today()}
+	<div>
+        no reading for today.
+
+        Discover
+    </div>
+{/snippet}
 
 <div bind:clientHeight style={containerHeight} class="overflow-hidden">
 	<div class="flex flex-col items-center">
@@ -46,20 +39,6 @@
 			</div>
 		</header>
 
-		<div
-			style="height: {clientHeight - headerHeight}px"
-			class="flex w-full flex-col items-center justify-start overflow-hidden md:max-w-lg"
-		>
-			<div class="flex w-full flex-col overflow-y-scroll">
-				{#each Object.keys(components) as c}
-					<div class="w-full">
-						<button
-							onclick={(event) => pane.updateBuffer(components[c])}
-							class="hover:bg-primary-50 w-full bg-neutral-50 p-4 text-start capitalize">{c}</button
-						>
-					</div>
-				{/each}
-			</div>
-		</div>
+		<div class="flex w-full max-w-lg justify-center px-2 pt-2">{@render today()}</div>
 	</div>
 </div>
