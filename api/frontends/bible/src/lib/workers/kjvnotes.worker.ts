@@ -25,7 +25,7 @@ let notesDocument = new FlexSearch.Document({
 let notes: any = {};
 
 async function init() {
-	let cahcedNotes = await notesApi.getAllNotes();
+	let cahcedNotes = await notesApi.gets();
 	notes = {};
 	for (let i = 0; i < cahcedNotes.length; i++) {
 		let nn = cahcedNotes[i];

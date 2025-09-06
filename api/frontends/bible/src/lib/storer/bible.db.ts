@@ -1,6 +1,6 @@
 import IndexedDB from './idb.db';
 
-const DB_VERSION = 8
+const DB_VERSION = 9
 
 export const enum STORES {
 	CHAPTERS,
@@ -13,10 +13,10 @@ export const enum STORES {
 	UNSYNCED_NOTES,
 	PLANS,
 	UNSYNCED_PLANS,
-	PLAN_SUBSCRIPTIONS,
-	UNSYNCED_PLAN_SUBSCRIPTIONS,
-	PLAN_TRACKER,
-	UNSYNCED_PLAN_TRACKER,
+	SUBSCRIPTIONS,
+	UNSYNCED_SUBSCRIPTIONS,
+	READINGS,
+	UNSYNCED_READINGS,
 }
 
 export const DB_NAME = 'bible';
@@ -35,11 +35,11 @@ export const UNSYNCED_NOTES = 'unsynced_notes';
 export const PLANS = 'plans';
 export const UNSYNCED_PLANS = 'unsynced_plans';
 
-export const PLAN_SUBSCRIPTIONS = 'plan_subscription';
-export const UNSYNCED_PLAN_SUBSCRIPTIONS = 'unsynced_plan_subscription';
+export const SUBSCRIPTIONS = 'subscriptions';
+export const UNSYNCED_SUBSCRIPTIONS = 'unsynced_subscriptions';
 
-export const PLAN_TRACKER = 'plan_tracker';
-export const UNSYNCED_PLAN_TRACKER = 'unsynced_plan_tracker';
+export const READINGS = 'readings';
+export const UNSYNCED_READINGS = 'readings';
 
 
 export class BibleDB extends IndexedDB {
@@ -64,11 +64,11 @@ export class BibleDB extends IndexedDB {
 			PLANS,
 			UNSYNCED_PLANS,
 
-			PLAN_SUBSCRIPTIONS,
-			UNSYNCED_PLAN_SUBSCRIPTIONS,
+			SUBSCRIPTIONS,
+			UNSYNCED_SUBSCRIPTIONS,
 
-			PLAN_TRACKER,
-			UNSYNCED_PLAN_TRACKER
+			READINGS,
+			UNSYNCED_READINGS
 		], DB_VERSION);
 		return this.instance;
 	}

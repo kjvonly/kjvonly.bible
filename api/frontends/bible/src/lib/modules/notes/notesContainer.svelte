@@ -258,7 +258,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onConfirmDelete() {
-		notesApi.deleteNote(noteID);
+		notesApi.delete(noteID);
 		noteKeys = [];
 		delete notes[noteID];
 		notesService.deleteNote('*', noteID);
@@ -267,7 +267,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onSave(toastMessage: string) {
-		let savedNote = await notesApi.putNote(JSON.parse(JSON.stringify(note)));
+		let savedNote = await notesApi.put(JSON.parse(JSON.stringify(note)));
 
 		if (savedNote) {
 			noteID = savedNote.id;
