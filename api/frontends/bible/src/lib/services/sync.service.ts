@@ -1,7 +1,6 @@
 import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
 import { bibleDB } from '$lib/storer/bible.db';
-import { authService } from './auth.service';
 const syncWorker = new Worker(new URL('../workers/kjvsync.worker?worker', import.meta.url), {
 	type: 'module'
 });
