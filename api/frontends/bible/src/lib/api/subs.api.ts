@@ -21,11 +21,11 @@ export class SubscriptionsApi {
 
 			let concatSubscription: any = new Map()
 			syncedSubscriptions.forEach((p: any) => {
-				concatSubscription.append(p.id, p)
+				concatSubscription.set(p.id, p)
 			})
 
 			unsyncedSubscription.forEach((p: any) => {
-				concatSubscription.append(p.id, p)
+				concatSubscription.set(p.id, p)
 			})
 
 			data = Array.from(concatSubscription.values());

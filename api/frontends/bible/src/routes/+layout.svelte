@@ -8,6 +8,8 @@
 	import { authService } from '$lib/services/auth.service';
 	import { notesService } from '$lib/services/notes.service';
 	import { plansApi } from '$lib/api/plans.api';
+	import { plansService } from '$lib/services/plans.service';
+	import { subsApi } from '$lib/api/subs.api';
 
 	function register() {
 		// Listen for connection coming online
@@ -33,6 +35,7 @@
 	onMount(async () => {
 		/* This pulls the chapter and strongs data from api and stores in indexdb for offline use. */
 		await syncService.init();
+		await plansService.init()
 		if (authService.isLoggedIn()) {
 			register();
 			setTimeout(() => {
@@ -44,8 +47,8 @@
 			}, 5000);
 		}
 
-		// let plan = localStorage.getItem('tmp')
-		// await plansApi.putPlan(JSON.parse(plan))
+		// let sub = localStorage.getItem('tmp')
+		// await subsApi.put(JSON.parse(sub))
 
 	});
 

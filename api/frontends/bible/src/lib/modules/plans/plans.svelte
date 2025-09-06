@@ -1,7 +1,30 @@
 <script lang="ts">
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { plansService } from '$lib/services/plans.service';
+	import { onMount } from 'svelte';
+	import uuid4 from 'uuid4';
 
 	let { containerHeight, paneId } = $props();
+
+	let readingSearchID = uuid4()
+
+	function onGetAllSubs(data: any){
+		console.log(data)
+	}
+
+	function onGetAllPlans(data: any){
+		console.log(data)
+	}
+
+	let subID = ''
+
+	onMount(()=>{
+			plansService.subscribe('getAllPlans', onGetAllPlans);
+			plansService.getAllPlans();
+
+			plansService.subscribe('getAllSubs', onGetAllSubs);
+			plansService.getAllSubs();			
+	})
 
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);

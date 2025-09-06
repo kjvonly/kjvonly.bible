@@ -21,11 +21,11 @@ export class PlansApi {
 
 			let concatPlans: any = new Map()
 			syncedPlans.forEach((p: any) => {
-				concatPlans.append(p.id, p)
+				concatPlans.set(p.id, p)
 			})
 
 			unsyncedPlans.forEach((p: any) => {
-				concatPlans.append(p.id, p)
+				concatPlans.set(p.id, p)
 			})
 
 			data = Array.from(concatPlans.values());

@@ -27,7 +27,7 @@ let plansDocument = new FlexSearch.Document({
 	}
 });
 
-let subDocument = new FlexSearch.Document({
+let subsDocument = new FlexSearch.Document({
 	document: {
 		id: 'id',
 		index: []
@@ -48,46 +48,59 @@ let readings: any = {}
 
 let booknames: any = {}
 
-async function init() {
-	booknames = await chapterApi.getBooknames()
 
-	let chachedPlans = await plansApi.gets()
+function parseReadingEntries(reading: any): any[] {
+	let entries = []
+	let readingGroup = reading.split(';')
 
-	for (let i = 0; i < chachedPlans.length; i++) {
-		let p = chachedPlans[i]
-
-		let prs = p.readings
-		let bc = []
-		// fill in with booknames
-		for (let j = 0; j < prs.length; j++) {
-			let r = prs[j]
-			let rs = r.split(';')
-
-			for (let k = 0; k < rs.length; k++) {
-				let bcv = rs[k].split('/')
-				let bookName = booknames['booknamesById'][bcv[0]]
-				let chapter = bcv[1]
-				let verses = bcv[2]
-				let reading  = {
-					bookName: bookName,
-					chapter: chapter,
-					verses: verses,
-					bcv: bcv
-				}
-				bc.push(reading)
-			}
+	for (let i = 0; i < readingGroup.length; i++) {
+		let bcv = readingGroup[i].split('/')
+		let bookName = booknames['booknamesById'][bcv[0]]
+		let chapter = bcv[1]
+		let verses = bcv[2]
+		let entry = {
+			bookName: bookName,
+			bookID: bcv[0],
+			chapter: chapter,
+			verses: verses,
+			bcv: readingGroup[i]
 		}
-		p.readings = bc
-		console.log(bc)
-		await chachedPlans.addAsync(p.id, p);
-		plans[p.id] = p
+		entries.push(entry)
+	}
+	return entries
+}
+
+function parsePlanReadings(planReadings: any): any[] {
+	let readings = []
+	for (let i = 0; i < planReadings.length; i++) {
+		let entries = parseReadingEntries(planReadings[i])
+		readings.push(entries)
+	}
+	return readings
+}
+
+async function parsePlans() {
+	let chachedPlans = await plansApi.gets()
+	for (let i = 0; i < chachedPlans.length; i++) {
+		let plan = chachedPlans[i]
+		let planReadings = plan.readings
+		readings = parsePlanReadings(planReadings)
+		plan.readings = readings
+		await plansDocument.addAsync(plan.id, plan);
+		plans[plan.id] = plan
 	}
 
+	console.log(plans)
+}
+
+async function init() {
+	booknames = await chapterApi.getBooknames()
+	await parsePlans()
 
 	let cachedSubs = await subsApi.gets()
 	for (let i = 0; i < cachedSubs.length; i++) {
 		let s = cachedSubs[i]
-		await cachedSubs.addAsync(s.id, s);
+		await subsDocument.addAsync(s.id, s);
 		subs[s.id] = s
 	}
 
@@ -97,66 +110,81 @@ async function init() {
 	let cachedReadings = await subsApi.gets()
 	for (let i = 0; i < cachedReadings.length; i++) {
 		let r = cachedReadings[i]
-		await cachedReadings.addAsync(`${r.subID}/${r.id}`, r);
+		await readingsDocument.addAsync(`${r.subID}/${r.id}`, r);
 		readings[r.id] = r
 	}
 
-
-
-
-	chachedPlans.forEach((p: any) => {
-		plans[p.id] = p
-	});
-
-
-
-
-	let cahcedNotes = await notesApi.gets();
-	notes = {};
-	for (let i = 0; i < cahcedNotes.length; i++) {
-		let nn = cahcedNotes[i];
-		if (nn?.chapterKey) {
-			let ck = nn.chapterKey.split('_');
-			nn.bookChapter = `${ck[0]}_${ck[1]}`;
-			await readingsDocument.addAsync(nn.id, nn);
-			notes[nn.id] = nn;
-		}
-	}
-
-	getAllNotes('*');
+	getAllPlans();
+	getAllSubs()
 }
 
-function addNote(noteID: string, note: any) {
-	note.bookChapter = extractBookChapter(note.chapterKey);
-	notes[noteID] = note;
-	readingsDocument.add(noteID, note);
-	getAllNotes('*');
+function addPlan(planID: string, plan: any) {	
+	plans[planID] = plan;
+	plansDocument.add(planID, plan);
+	getAllPlans();
 }
 
-function deleteNote(noteID: string) {
-	delete notes[noteID];
-	readingsDocument.remove(noteID);
-	getAllNotes('*');
+function deletePlan(planID: string) {
+	delete plans[planID];
+	plansDocument.remove(planID);
+	getAllPlans();
 }
 
-async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
-	const results = await readingsDocument.searchAsync(searchTerm, {
+
+function addSubs(subID: string, sub: any) {	
+	subs[subID] = sub;
+	subsDocument.add(subID, sub);
+	getAllSubs();
+}
+
+function deleteSub(subID: string) {
+	delete subs[subID];
+	subsDocument.remove(subID);
+	getAllSubs();
+}
+
+function addReadings(readingID: string, reading: any) {	
+	readings[readingID] = reading;
+	readingsDocument.add(readingID, reading);
+	getAllReadings();
+}
+
+function deleteReadings(readingID: string) {
+	delete subs[readingID];
+	readingsDocument.remove(readingID);
+	getAllReadings();
+}
+
+
+async function search(id: string, searchTerm: string, indexes: string[], flexDocument: any, map: any) {
+	const results = await flexDocument.searchAsync(searchTerm, {
 		index: indexes
 	});
 
-	let filteredNotes: any = {};
-	results.forEach((r) => {
-		r.result.forEach((id) => {
-			filteredNotes[id] = notes[id];
+	let filtered: any = {};
+	results.forEach((r: any) => {
+		r.result.forEach((id: any) => {
+			filtered[id] = map[id];
 		});
 	});
-	if (Object.keys(filteredNotes).length > 0) {
-		postMessage({ id: id, notes: filteredNotes });
+
+	if (Object.keys(filtered).length > 0) {
+		postMessage({ id: id, results: filtered });
 	}
 }
 
-function getAllNotes(id: string) {
-	postMessage({ id: id, notes: notes });
+function getAllPlans() {
+	postMessage({ id: 'getAllPlans', plans: plans });
+}
+
+
+function getAllSubs() {
+	postMessage({ id: 'getAllSubs', subs: subs });
+}
+
+
+function getAllReadings() {
+	postMessage({ id: 'getAllReadings', readings: readings });
 }
 
 onmessage = async (e) => {
@@ -164,17 +192,23 @@ onmessage = async (e) => {
 		case 'init':
 			await init();
 			break;
-		case 'addNote':
-			addNote(e.data.noteID, e.data.note);
+		case 'addPlan':
+			addPlan(e.data.planID, e.data.plan);
 			break;
-		case 'deleteNote':
-			deleteNote(e.data.noteID);
+		case 'deletePlan':
+			deletePlan(e.data.planID);
 			break;
-		case 'searchNotes':
-			await searchNotes(e.data.id, e.data.text, e.data.indexes);
+		case 'searchPlans':
+			await search(e.data.id, e.data.text, e.data.indexes, plansDocument, plans);
 			break;
-		case 'getAllNotes':
-			getAllNotes(e.data.id);
+		case 'searchSubs':
+			await search(e.data.id, e.data.text, e.data.indexes, subsDocument, subs);
+			break;			
+		case 'searchReadings':
+			await search(e.data.id, e.data.text, e.data.indexes, readingsDocument, readings);
+			break;						
+		case 'getAllPlans':
+			getAllPlans();
 	}
 };
 

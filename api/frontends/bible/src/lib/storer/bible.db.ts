@@ -47,7 +47,7 @@ export class BibleDB extends IndexedDB {
 		super(DB_NAME);
 	}
 
-	static instance = new BibleDB();
+	static instance: BibleDB = new BibleDB();
 	public static async CreateAsync(): Promise<BibleDB> {
 		await this.instance.createAndOrOpenObjectStores([
 			CHAPTERS,
