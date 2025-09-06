@@ -207,8 +207,14 @@
 		document.getElementById('kjvonly-head')?.appendChild(link);
 
 		paneService.rootPane.buffer = new Buffer();
-		paneService.rootPane.buffer.componentName = 'ChapterContainer';
-		paneService.rootPane.buffer.name = 'ChapterContainer';
+
+		// DEV NOTE: Update the component to w/e you are working on
+		// Save you a few clicks on reload.
+//		paneService.rootPane.buffer.componentName = 'ChapterContainer';
+//		paneService.rootPane.buffer.name = 'ChapterContainer';
+		paneService.rootPane.buffer.componentName = 'Plans';
+		paneService.rootPane.buffer.name = 'Plans';
+
 		paneService.onDeletePane = deletePane;
 		paneService.onSplitPane = splitPane;
 		onGridUpdate();
