@@ -25,7 +25,7 @@
 	import { toastService } from '$lib/services/toast.service';
 
 	// APIS
-	import { notesApi } from '$lib/nostr/notes.nostr';
+	import { notesApi } from '$lib/nostr/events/notes.nostr';
 
 	// OTHER
 	import Quill from 'quill';

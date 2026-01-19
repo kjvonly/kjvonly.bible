@@ -3,7 +3,7 @@ import {
   type CachedSub,
   type Sub
 } from '$lib/models/plans.model';
-import { plansApi } from '$lib/nostr/plans.nostr';
+import { plansApi } from '$lib/nostr/events/plans.nostr';
 import { relayService } from '../relay.service';
 
 const isBrowser = typeof window !== 'undefined';

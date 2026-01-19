@@ -21,7 +21,7 @@
 	import { plansPubSubService } from '$lib/services/plans/plansPubSub.service';
 
 	// API
-	import { plansApi } from '$lib/nostr/plans.nostr';
+	import { plansApi } from '$lib/nostr/events/plans.nostr';
 
 	// OTHER
 	import uuid4 from 'uuid4';

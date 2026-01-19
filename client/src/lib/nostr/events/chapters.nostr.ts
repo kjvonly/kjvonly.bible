@@ -1,4 +1,4 @@
-import { bibleStorer } from '../storer/bible.storer';
+import { bibleStorer } from '$lib/storer/bible.storer';
 
 import {
   CHAPTERS,

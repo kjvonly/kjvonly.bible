@@ -23,7 +23,6 @@ export class CompletedReadingsApi {
       sig: ''
     }
     return await offlineApi.put(event, data, unsyncedDB, syncedDB);
-
   }
 
   async gets(): Promise<any> {

@@ -1,4 +1,4 @@
-import { bibleStorer } from '../storer/bible.storer';
+import { bibleStorer } from '$lib/storer/bible.storer';
 import { offlineApi } from './offline.nostr';
 import { ANNOTATIONS, UNSYNCED_ANNOTATIONS } from '$lib/storer/bible.db';
 import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';

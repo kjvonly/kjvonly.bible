@@ -73,6 +73,7 @@ export class RelayService {
       });
     })
   }
+
   createOnAuth(url: string, publicKey: string, privateKey: string) {
     return async function onAuth(challenge: string): Promise<VerifiedEvent> {
       const event = {

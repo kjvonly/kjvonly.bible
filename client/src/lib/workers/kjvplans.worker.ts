@@ -1,6 +1,6 @@
-import { plansApi } from '$lib/nostr/plans.nostr';
-import { completedReadingsApi } from '$lib/nostr/completedReadings.nostr';
-import { subsApi } from '$lib/nostr/subs.nostr';
+import { plansApi } from '$lib/nostr/events/plans.nostr';
+import { completedReadingsApi } from '$lib/nostr/events/completedReadings.nostr';
+import { subsApi } from '$lib/nostr/events/subs.nostr';
 import {
   cachedPlanToPlan,
   cachedSubToSub,

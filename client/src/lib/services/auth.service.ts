@@ -1,4 +1,4 @@
-import { authApi } from "$lib/nostr/auth.api";
+import { authApi } from "$lib/nostr/events/auth.api";
 
 const LOCAL_STORAGE_BEARER_TOKEN_NAME = 'token';
 
