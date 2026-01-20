@@ -1,7 +1,6 @@
 import { Modules as modules } from '$lib/models/modules.model';
 import BibleContainer from '$lib/modules/bible/bibleContainer.svelte';
-import UserGuide from '$lib/modules/guide/userGuide.svelte';
-import Login from '$lib/modules/login/login.svelte';
+import LoginContainer from '$lib/modules/login/loginContainer.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
 import NotesContainer from '$lib/modules/notes/notesContainer.svelte';
 import PlansContainer from '$lib/modules/plans/plansContainer.svelte';
@@ -32,10 +31,8 @@ export class ComponentMapping {
 				return Modules;
 			case modules.NOTES:
 				return NotesContainer;
-			case modules.USER_GUIDE:
-				return UserGuide;
 			case modules.LOGIN:
-				return Login;
+				return LoginContainer;
 			case modules.SETTINGS:
 				return SettingsContainer;
 			case modules.PLANS:

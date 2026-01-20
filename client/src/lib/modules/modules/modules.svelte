@@ -31,7 +31,6 @@
 		notes: Modules.NOTES,
 		plans: Modules.PLANS,
 		settings: Modules.SETTINGS,
-		'user guide': Modules.USER_GUIDE,
 		login: Modules.LOGIN
 	};
 
