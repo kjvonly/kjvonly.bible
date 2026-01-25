@@ -1,7 +1,7 @@
 <script lang="ts">
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import { onMount } from 'svelte';
-	import NsecLogin from '../unauthed/nsecLogin.svelte';
+	import NsecLogin from '../nsec/nsecLogin.svelte';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import LoginOptionsHeader from './loginOptionsHeader.svelte';
@@ -10,7 +10,7 @@
 		paneID,
 		clientHeight = $bindable(),
 		obj = $bindable(),
-		nav = $bindable()
+		navService = $bindable()
 	} = $props();
 
 	let headerHeight: number = $state(0);
@@ -24,7 +24,7 @@
 	}
 	function createAccount() {}
 	function nsecLogin() {
-		nav.push({ component: NsecLogin, obj: {} });
+		navService.push({ component: NsecLogin, obj: {} });
 	}
 </script>
 

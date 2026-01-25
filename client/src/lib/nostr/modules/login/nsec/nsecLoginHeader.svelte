@@ -6,16 +6,23 @@
 
 	// SERVICES
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// =============================== BINDINGS ================================
 
-	let { paneID, clientHeight = $bindable<number>() } = $props();
+	let {
+		navService = $bindable(),
+		clientHeight = $bindable<number>()
+	}: {
+		navService: any;
+		clientHeight: number;
+	} = $props();
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onClose(e: Event): void {
+	function onBack(e: Event): void {
 		e.stopPropagation();
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		navService.pop();
 	}
 </script>
 
@@ -23,15 +30,13 @@
 {#snippet header()}
 	<div
 		bind:clientHeight
-		class="flex w-full max-w-lg flex-row bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
+		class="grid w-full grid-cols-3 bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
 	>
-		<span class="flex-1"></span>
-		<span class="text-center">Login</span>
-		<div class="flex flex-1 justify-end pe-4">
-			<KJVButton onClick={onClose} classes="">
-				<Close classes=""></Close>
-			</KJVButton>
-		</div>
+		<KJVButton onClick={onBack} classes="ps-4">
+			<ArrowBack></ArrowBack>
+		</KJVButton>
+
+		<span class="text-center">NSEC Login</span>
 	</div>
 {/snippet}
 
