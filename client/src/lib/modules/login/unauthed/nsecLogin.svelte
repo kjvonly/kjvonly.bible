@@ -2,6 +2,7 @@
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import { authService } from '$lib/nostr/services/auth.service';
 
+	let { obj = $bindable(), nav = $bindable() } = $props();
 	let nsec = $state('');
 	function nsecLogin() {
 		console.debug('[nsec]', nsec);
@@ -16,6 +17,7 @@
 			bind:value={nsec}
 			type="text"
 			id="nsecText"
+			placeholder="nsec1..."
 			class=" border-primary-500 w-full border-b-1 outline-none"
 		/>
 		<KJVButtonRounded onClick={nsecLogin}>NSEC Login</KJVButtonRounded>

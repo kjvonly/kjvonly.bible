@@ -4,6 +4,7 @@
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import BufferContainer from '$lib/components/bufferContainer.svelte';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
+	import NsecLogin from './unauthed/nsecLogin.svelte';
 
 	// MODELS
 	import { Modules } from '$lib/models/modules.model';
@@ -14,11 +15,11 @@
 	import { toastService } from '$lib/services/toast.service';
 	import { onMount } from 'svelte';
 	import LoginHeader from './loginHeader.svelte';
-	import LoginOptions from './unauthed/loginOptions.svelte';
+	import LoginOptions from './loginOptions/loginOptions.svelte';
 	import { localStorageService } from '$lib/nostr/services/localStorage.service';
 	import { identityService } from '$lib/nostr/services/identity.service';
-	import NsecLogin from './unauthed/nsecLogin.svelte';
 
+	// =============================== BINDINGS ================================
 	let {
 		paneID,
 		pane = $bindable(),
@@ -27,15 +28,24 @@
 		onClose = undefined
 	} = $props();
 
+	// ================================== VARS =================================
 	let clientHeight: number = $state(0);
-	let headerHeight: number = $state(0);
+	const VIEW_STATES = {
+		LOGIN_OPTIONS: 0,
+		NSEC: 1
+	} as const;
 
+	let VIEW_STATE = $state(VIEW_STATES.LOGIN_OPTIONS);
+
+	let nav = $state([{ component: LoginOptions, obj: {} }]);
+	// =============================== LIFECYCLE ===============================
 	onMount(async () => {
 		let authenticated = await hasIdentity();
 		if (authenticated) {
 		}
 	});
 
+	// ================================ FUNCS ==================================
 	async function hasIdentity(): Promise<boolean> {
 		const storedIdentity = identityService.getIdentity();
 		console.debug('[loginContainer storedIdentites]', storedIdentity);
@@ -46,26 +56,23 @@
 
 		return true;
 	}
+
+	// ============================== CLICK FUNCS ==============================
+	function stopPropagation(e: Event) {
+		e.stopPropagation();
+	}
 </script>
 
-{#snippet body()}
-	<!-- <LoginOptions></LoginOptions> -->
-	<NsecLogin></NsecLogin>
-{/snippet}
-{#snippet header()}
-	<LoginHeader {paneID} bind:clientHeight></LoginHeader>
-{/snippet}
-
 <!-- ============================== CONTAINER ============================== -->
-
 <BufferContainer bind:clientHeight>
-	<BufferHeader
-		bind:headerHeight
-		classes="flex w-full justify-between outline outline-neutral-400 text-neutral-700"
-	>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
-		{@render body()}
-	</BufferBody>
+	{#each nav as n, index}
+		{@const Component = n.component}
+		<div
+			class="{index === nav.length - 1 ? '' : 'hidden'} h-full w-full"
+			onclick={stopPropagation}
+		>
+			<Component {paneID} bind:clientHeight bind:obj={n.obj} bind:nav
+			></Component>
+		</div>
+	{/each}
 </BufferContainer>
