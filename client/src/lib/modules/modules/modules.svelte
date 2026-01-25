@@ -13,6 +13,8 @@
 
 	// SERVICES
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { onMount } from 'svelte';
+	import { identityService } from '$lib/nostr/services/identity.service';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -36,6 +38,19 @@
 
 	let headerHeight = $state(0);
 	let clientHeight = $state(0);
+
+	// =============================== LIFECYCLE ===============================
+
+	onMount(() => {
+		removeLoginModuleIfLoggedin();
+	});
+
+	// ================================ FUNCS ==================================
+	function removeLoginModuleIfLoggedin() {
+		if (identityService.getIdentity()) {
+			delete components['login'];
+		}
+	}
 
 	// ============================== CLICK FUNCS ==============================
 	function onClose(): void {

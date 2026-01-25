@@ -13,7 +13,6 @@
 	import { syncService } from '$lib/services/sync.service';
 	import { authService } from '$lib/services/auth.service';
 	import { relayService } from '$lib/services/relay.service';
-	import { WebStorage } from '$lib/nostr/webstorage';
 
 	function register() {
 		// Listen for connection coming online
@@ -53,21 +52,7 @@
 				//				syncService.sync();
 			}, 5000);
 		}
-
-		await tryLogin();
 	});
-
-	async function tryLogin(): Promise<boolean> {
-		const storage = new WebStorage(localStorage);
-		const savedLogin = storage.get('login');
-		console.debug('[layout login]', savedLogin);
-
-		if (savedLogin === null) {
-			return false;
-		}
-
-		return true;
-	}
 
 	let { children } = $props();
 </script>
