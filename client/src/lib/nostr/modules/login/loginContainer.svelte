@@ -34,7 +34,9 @@
 		{#each $nav as n, index}
 			{@const Component = n.component}
 			<div
-				class="{index === $nav.length - 1 ? '' : 'hidden'} h-full w-full"
+				class="{$nav && index === $nav.length - 1
+					? ''
+					: 'hidden'} h-full w-full"
 				onclick={stopPropagation}
 			>
 				<Component {paneID} bind:clientHeight bind:obj={n.obj} bind:navService

@@ -13,6 +13,7 @@
 	import { syncService } from '$lib/services/sync.service';
 	import { authService } from '$lib/services/auth.service';
 	import { relayService } from '$lib/services/relay.service';
+	import { identityService } from '$lib/nostr/services/identity.service';
 
 	function register() {
 		// Listen for connection coming online
@@ -37,6 +38,7 @@
 
 	onMount(async () => {
 		await relayService.init();
+		identityService.init();
 
 		setTimeout(() => {
 			syncService.init();

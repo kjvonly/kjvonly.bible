@@ -7,6 +7,7 @@ import PlansContainer from '$lib/modules/plans/plansContainer.svelte';
 import RefsContainer from '$lib/modules/refs/refsContainer.svelte';
 import SettingsContainer from '$lib/modules/settings/settingsContainer.svelte';
 import Search from '../modules/search/search.svelte';
+import ProfileContainer from '$lib/nostr/modules/profile/profileContainer.svelte';
 
 /**
  * Component Mapping is responsible for converting the
@@ -37,6 +38,8 @@ export class ComponentMapping {
         return SettingsContainer;
       case modules.PLANS:
         return PlansContainer;
+      case modules.PROFILE:
+        return ProfileContainer;
     }
 
     return BibleContainer;

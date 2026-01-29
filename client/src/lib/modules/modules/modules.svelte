@@ -15,6 +15,9 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 	import { identityService } from '$lib/nostr/services/identity.service';
+	import PlansContainer from '../plans/plansContainer.svelte';
+	import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
+	import ProfileContainer from '$lib/nostr/modules/profile/profileContainer.svelte';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -32,8 +35,7 @@
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
 		plans: Modules.PLANS,
-		settings: Modules.SETTINGS,
-		login: Modules.LOGIN
+		settings: Modules.SETTINGS
 	};
 
 	let headerHeight = $state(0);
@@ -42,13 +44,15 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		removeLoginModuleIfLoggedin();
+		addDynamicModules();
 	});
 
 	// ================================ FUNCS ==================================
-	function removeLoginModuleIfLoggedin() {
+	function addDynamicModules() {
 		if (identityService.getIdentity()) {
-			delete components['login'];
+			components['profile'] = Modules.PROFILE;
+		} else {
+			components['login'] = Modules.LOGIN;
 		}
 	}
 

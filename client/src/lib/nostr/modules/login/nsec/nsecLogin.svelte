@@ -2,7 +2,9 @@
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
+	import { Modules } from '$lib/models/modules.model';
 	import { authService } from '$lib/nostr/services/auth.service';
+	import { paneService } from '$lib/services/pane.service.svelte';
 	import NsecLoginHeader from './nsecLoginHeader.svelte';
 
 	let {
@@ -15,8 +17,14 @@
 	let headerHeight: number = $state(0);
 
 	let nsec = $state('');
-	function nsecLogin() {
-		authService.withNsec(nsec);
+	async function nsecLogin() {
+		let success = await authService.withNsec(nsec);
+		if (success) {
+			let pane = paneService.findNode(paneService.rootPane, paneID);
+			if (pane) {
+				pane?.updateBuffer(Modules.PROFILE);
+			}
+		}
 	}
 </script>
 
