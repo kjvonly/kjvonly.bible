@@ -3,7 +3,7 @@
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import { Modules } from '$lib/models/modules.model';
-	import { identityService } from '$lib/nostr/services/identity.service';
+	import { loginService } from '$lib/nostr/services/login.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import NsecLoginHeader from './nsecLoginHeader.svelte';
 
@@ -18,7 +18,7 @@
 
 	let nsec = $state('');
 	async function nsecLogin() {
-		let success = await identityService.withNsec(nsec);
+		let success = await loginService.withNsec(nsec);
 		if (success) {
 			let pane = paneService.findNode(paneService.rootPane, paneID);
 			if (pane) {

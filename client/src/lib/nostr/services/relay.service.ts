@@ -1,16 +1,16 @@
 import { finalizeEvent, generateSecretKey, getPublicKey, type NostrEvent } from 'nostr-tools/pure'
 import { SimplePool } from 'nostr-tools/pool'
 import { getTags, KJVONLY_PUBKEY, KJVONLY_REALY_URL } from '$lib/utils/nostr';
-import type { Event, EventTemplate, Filter, VerifiedEvent } from 'nostr-tools';
+import type { Event, EventTemplate, Filter, UnsignedEvent, VerifiedEvent } from 'nostr-tools';
 import { hexDecode, hexDecodeAndUngzip, hexEncode } from '$lib/utils/gzip';
 import { Deferred } from '$lib/utils/deferred';
+import { signerService } from './signer.service';
+import { authorService } from './author.service';
 
 export class RelayService {
   subscribers: any[] = [];
   pool = new SimplePool()
   relays = [KJVONLY_REALY_URL]
-  privateKey: Uint8Array | undefined;
-  publicKey: string | undefined;
 
   atLeastOnerelayIsReady = new Deferred<string>();
   constructor() {
@@ -44,18 +44,6 @@ export class RelayService {
   }
 
   async init() {
-    // this.pool.destroy()
-    // this.pool = new SimplePool()
-    let privateKeyString = localStorage.getItem('nostr-private-key')
-    if (privateKeyString) {
-      this.privateKey = hexDecode(privateKeyString)
-    }
-    if (!this.privateKey) {
-      this.privateKey = generateSecretKey()
-      let hexEncoded = hexEncode(this.privateKey)
-      localStorage.setItem('nostr-private-key', hexEncoded)
-    }
-    this.publicKey = getPublicKey(this.privateKey)
     let deferred = this.atLeastOnerelayIsReady
     this.relays.forEach(url => {
       this.pool.subscribeMany([url], {
@@ -78,11 +66,9 @@ export class RelayService {
 
   createOnAuth(url: string) {
     return async (et: EventTemplate): Promise<VerifiedEvent> => {
-      const event: Event = {
-        id: '',
-        sig: '',
+      const unsignedEvent: UnsignedEvent = {
         kind: 22242,
-        pubkey: this.publicKey || '',
+        pubkey: authorService.pubkey,
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['relay', url],
@@ -90,7 +76,9 @@ export class RelayService {
         ],
         content: ''
       };
-      return finalizeEvent(event, this.privateKey || new Uint8Array());
+
+      // TODO - SUPPORT OTHER SIGNING OPTIONS
+      return signerService.signEvent(unsignedEvent)
     };
   }
 
@@ -162,7 +150,7 @@ export class RelayService {
   // NOTE: if a promise is rejected in pool.publish the 
   // caller is responsible for catching the error.
   async publishEvent(event: NostrEvent): Promise<void> {
-    const signedEvent = finalizeEvent(event, this.privateKey || new Uint8Array());
+    const signedEvent = finalizeEvent(event, this.privateKey);
     // force an error to test logic
     // let results = await Promise.all([...this.pool.publish(this.relays, signedEvent), Promise.reject('test issue')])
     await Promise.all(this.pool.publish(this.relays, signedEvent))

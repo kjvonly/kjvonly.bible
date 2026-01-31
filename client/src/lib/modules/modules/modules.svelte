@@ -14,10 +14,7 @@
 	// SERVICES
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
-	import { identityService } from '$lib/nostr/services/identity.service';
-	import PlansContainer from '../plans/plansContainer.svelte';
-	import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
-	import ProfileContainer from '$lib/nostr/modules/profile/profileContainer.svelte';
+	import { loginService } from '$lib/nostr/services/login.service';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -49,7 +46,7 @@
 
 	// ================================ FUNCS ==================================
 	function addDynamicModules() {
-		if (identityService.getIdentity()) {
+		if (loginService.getLogin()) {
 			components['profile'] = Modules.PROFILE;
 		} else {
 			components['login'] = Modules.LOGIN;
