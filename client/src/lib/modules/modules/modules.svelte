@@ -46,7 +46,7 @@
 
 	// ================================ FUNCS ==================================
 	function addDynamicModules() {
-		if (loginService.getLogin()) {
+		if (loginService.isLoggedIn()) {
 			components['profile'] = Modules.PROFILE;
 		} else {
 			components['login'] = Modules.LOGIN;

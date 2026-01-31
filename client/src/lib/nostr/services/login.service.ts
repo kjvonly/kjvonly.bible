@@ -2,42 +2,32 @@ import { generateSecretKey, getPublicKey, nip19 } from "nostr-tools"
 import { localStorageService } from "./localStorage.service"
 import { authorService } from "./author.service"
 
+export const LOGIN_KEY: string = 'login'
+export const ANONYMOUS_PREFIX = 'anonymous_'
+
 
 export class LoginService {
-
-  LOGIN_KEY: string = 'login'
-  ANONYMOUS_LOGIN_KEY = 'anonymous-login'
-
   init(): void {
-    this.initAnonymous()
-    this.initSavedLogin()
-  }
-
-  initAnonymous() {
-    if (!this.isLoggedIn() || !this.isAnonymouslyLoggedIn()) {
-      this.withAnonymous()
-    }
-  }
-
-  initSavedLogin() {
     let savedLogin = this.getLogin()
-    if (savedLogin.startsWith("nsec")) {
+
+    if (!savedLogin || this.isAnonymouslyLoggedIn()) {
+      this.withNsecAnonymous()
+    } else if (savedLogin?.startsWith("nsec")) {
       this.withNsec(savedLogin)
     }
   }
 
-  withAnonymous() {
-    let privateKey = generateSecretKey()
-    let nsec = nip19.nsecEncode(privateKey)
-    localStorageService.set(this.ANONYMOUS_LOGIN_KEY, nsec)
-  }
 
   getLogin(): string | null {
-    if (this.isLoggedIn()) {
-      return localStorageService.get(this.LOGIN_KEY)
-    } else {
-      return localStorageService.get(this.ANONYMOUS_LOGIN_KEY)
-    }
+    return localStorageService.get(LOGIN_KEY)
+  }
+
+  withNsecAnonymous(): void {
+    console.debug('[LoginService withNsecAnonymous]')
+    let privateKey = generateSecretKey()
+    let nsec = nip19.nsecEncode(privateKey)
+    localStorageService.set(LOGIN_KEY, `${ANONYMOUS_PREFIX}${nsec}`)
+    this.setAuthorPubkey(privateKey)
   }
 
   withNsec(key: string): boolean {
@@ -48,7 +38,7 @@ export class LoginService {
       console.error('Invalid nsec');
       return false;
     }
-    localStorageService.set('login', key);
+    localStorageService.set(LOGIN_KEY, key);
 
     this.setAuthorPubkey(privateKey)
     return true
@@ -61,13 +51,12 @@ export class LoginService {
     console.debug('[LoginService setAuthorPubkey pubkey]', pubKey)
   }
 
-
   isLoggedIn() {
-    return localStorageService.get(this.LOGIN_KEY) ? true : false
+    return !this.isAnonymouslyLoggedIn();
   }
 
   isAnonymouslyLoggedIn(): boolean {
-    return localStorageService.get(this.ANONYMOUS_LOGIN_KEY) ? true : false
+    return this.getLogin()?.startsWith(ANONYMOUS_PREFIX) ? true : false;
   }
 }
 
