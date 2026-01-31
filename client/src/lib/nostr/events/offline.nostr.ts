@@ -4,7 +4,7 @@ import { toastService } from '$lib/services/toast.service';
 import { authService } from '$lib/services/auth.service';
 import uuid4 from 'uuid4';
 import type { Event, Filter, NostrEvent } from 'nostr-tools';
-import { relayService } from '$lib/services/relay.service';
+import { relayService } from '$lib/nostr/services/relay.service';
 import { gzipAndHexEncode } from '$lib/utils/gzip';
 
 export class OfflineApi {

@@ -2,17 +2,10 @@ import { getPublicKey, nip19 } from "nostr-tools"
 import { localStorageService } from "./localStorage.service"
 import { authorService } from "./author.service"
 
-export interface Identity {
-  type: string
-  pubkey: string
-}
+
 export class IdentityService {
 
-  getIdentity(): string | null {
-    return localStorageService.get('login')
-  }
-
-  init() {
+  init(): void {
     let savedIdentity = this.getIdentity()
     if (!savedIdentity) {
       return
@@ -23,15 +16,8 @@ export class IdentityService {
     }
   }
 
-  isLoggedIn() {
-    const savedLogin = localStorageService.get('login');
-    console.debug('[IdentityService isLoggedIn]', savedLogin);
-
-    if (savedLogin === null) {
-      return false;
-    }
-
-    return true;
+  getIdentity(): string | null {
+    return localStorageService.get('login')
   }
 
   withNsec(key: string): boolean {
@@ -43,18 +29,29 @@ export class IdentityService {
       return false;
     }
     localStorageService.set('login', key);
-    let pubKey =
-      getPublicKey(privateKey)
-    authorService.pubkey = pubKey
 
-    console.debug('[IdentityService withNsec pubkey]', pubKey)
+    this.setAuthorPubkey(privateKey)
     return true
   }
 
+  private setAuthorPubkey(privateKey: Uint8Array): void {
+    let pubKey = getPublicKey(privateKey)
+    authorService.pubkey = pubKey
+
+    console.debug('[IdentityService setAuthorPubkey pubkey]', pubKey)
+  }
 
 
+  isLoggedIn() {
+    const savedLogin = localStorageService.get('login');
+    console.debug('[IdentityService isLoggedIn]', savedLogin);
 
+    if (savedLogin === null) {
+      return false;
+    }
 
+    return true;
+  }
 
 
 }

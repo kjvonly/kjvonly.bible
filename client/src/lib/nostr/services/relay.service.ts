@@ -1,7 +1,7 @@
 import { finalizeEvent, generateSecretKey, getPublicKey, type NostrEvent } from 'nostr-tools/pure'
 import { SimplePool } from 'nostr-tools/pool'
 import { getTags, KJVONLY_PUBKEY, KJVONLY_REALY_URL } from '$lib/utils/nostr';
-import type { Filter, VerifiedEvent } from 'nostr-tools';
+import type { Event, EventTemplate, Filter, VerifiedEvent } from 'nostr-tools';
 import { hexDecode, hexDecodeAndUngzip, hexEncode } from '$lib/utils/gzip';
 import { Deferred } from '$lib/utils/deferred';
 
@@ -44,6 +44,8 @@ export class RelayService {
   }
 
   async init() {
+    // this.pool.destroy()
+    // this.pool = new SimplePool()
     let privateKeyString = localStorage.getItem('nostr-private-key')
     if (privateKeyString) {
       this.privateKey = hexDecode(privateKeyString)
@@ -67,26 +69,28 @@ export class RelayService {
           deferred.resolve('Done!')
           console.log('End of stored events (EOSE)');
         },
-        onauth: this.createOnAuth(url, this.publicKey, this.privateKey),
+        onauth: this.createOnAuth(url),
 
-        doauth: this.createOnAuth(url, this.publicKey, this.privateKey),
+        doauth: this.createOnAuth(url),
       });
     })
   }
 
-  createOnAuth(url: string, publicKey: string, privateKey: string) {
-    return async function onAuth(challenge: string): Promise<VerifiedEvent> {
-      const event = {
+  createOnAuth(url: string) {
+    return async (et: EventTemplate): Promise<VerifiedEvent> => {
+      const event: Event = {
+        id: '',
+        sig: '',
         kind: 22242,
-        pubkey: publicKey,
+        pubkey: this.publicKey || '',
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['relay', url],
-          ['challenge', challenge.tags.find(t => t[0] === 'challenge')?.[1]]
+          ['challenge', et.tags.find(t => t[0] === 'challenge')?.[1] || '']
         ],
         content: ''
       };
-      return finalizeEvent(event, privateKey);
+      return finalizeEvent(event, this.privateKey || new Uint8Array());
     };
   }
 
@@ -105,9 +109,9 @@ export class RelayService {
         onclose() {
           console.log('End of stored events (EOSE)');
         },
-        onauth: this.createOnAuth(KJVONLY_REALY_URL, this.publicKey, this.privateKey),
+        onauth: this.createOnAuth(KJVONLY_REALY_URL),
 
-        doauth: this.createOnAuth(KJVONLY_REALY_URL, this.publicKey, this.privateKey),
+        doauth: this.createOnAuth(KJVONLY_REALY_URL),
       }
     )
   }
@@ -158,7 +162,7 @@ export class RelayService {
   // NOTE: if a promise is rejected in pool.publish the 
   // caller is responsible for catching the error.
   async publishEvent(event: NostrEvent): Promise<void> {
-    const signedEvent = finalizeEvent(event, this.privateKey);
+    const signedEvent = finalizeEvent(event, this.privateKey || new Uint8Array());
     // force an error to test logic
     // let results = await Promise.all([...this.pool.publish(this.relays, signedEvent), Promise.reject('test issue')])
     await Promise.all(this.pool.publish(this.relays, signedEvent))

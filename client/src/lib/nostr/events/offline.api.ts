@@ -3,7 +3,7 @@ import { bibleStorer as storer } from '$lib/storer/bible.storer';
 import { toastService } from '$lib/services/toast.service';
 import { authService } from '$lib/services/auth.service';
 import uuid4 from 'uuid4';
-import { relayService } from '$lib/services/relay.service';
+import { relayService } from '$lib/nostr/services/relay.service';
 import type { Nostr, NostrEvent } from 'nostr-tools';
 import { gzipAndHexEncode } from '$lib/utils/gzip';
 

@@ -11,8 +11,7 @@
 
 	// SERVICES
 	import { syncService } from '$lib/services/sync.service';
-	import { authService } from '$lib/services/auth.service';
-	import { relayService } from '$lib/services/relay.service';
+	import { relayService } from '$lib/nostr/services/relay.service';
 	import { identityService } from '$lib/nostr/services/identity.service';
 
 	function register() {
@@ -37,23 +36,14 @@
 	}
 
 	onMount(async () => {
-		await relayService.init();
 		identityService.init();
+		await relayService.init();
 
 		setTimeout(() => {
 			syncService.init();
 		}, 5000);
 
-		if (authService.isLoggedIn()) {
-			register();
-			setTimeout(() => {
-				// Give the sync worker time to start up
-				// we could sync from the worker if the
-				// BEARER token was stored in indexed db
-				// instead of local storage
-				//				syncService.sync();
-			}, 5000);
-		}
+		//register();
 	});
 
 	let { children } = $props();

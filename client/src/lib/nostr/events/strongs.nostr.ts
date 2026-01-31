@@ -1,4 +1,4 @@
-import { relayService } from '$lib/services/relay.service';
+import { relayService } from '$lib/nostr/services/relay.service';
 import { STRONGS } from '$lib/storer/bible.db';
 import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
 import { offlineApi } from './offline.api';

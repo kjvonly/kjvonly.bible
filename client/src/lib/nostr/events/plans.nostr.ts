@@ -3,7 +3,7 @@ import { bibleStorer } from '$lib/storer/bible.storer';
 import type { NostrEvent } from 'nostr-tools';
 import { offlineApi } from './offline.api';
 import { PLANS_KIND } from './kinds';
-import { relayService } from '$lib/services/relay.service';
+import { relayService } from '$lib/nostr/services/relay.service';
 import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
 
 export class PlansApi {

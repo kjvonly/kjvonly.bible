@@ -1,7 +1,6 @@
 <script lang="ts">
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
-	import { authService } from '$lib/nostr/services/auth.service';
 	import { onMount } from 'svelte';
 	import ProfileHeader from './profileHeader.svelte';
 

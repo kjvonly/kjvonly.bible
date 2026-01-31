@@ -10,7 +10,7 @@ import {
 import { offlineApi } from './offline.nostr';
 import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
 import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
-import { relayService } from '$lib/services/relay.service';
+import { relayService } from '$lib/nostr/services/relay.service';
 
 export class ChapterApi {
   async getChapter(key: string): Promise<any> {
