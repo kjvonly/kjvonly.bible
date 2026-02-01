@@ -3,17 +3,19 @@
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
 	import { onMount } from 'svelte';
 	import ProfileHeader from './profileHeader.svelte';
+	import { authorService } from '$lib/nostr/services/author.service';
+	import { nip19 } from 'nostr-tools';
+	import Pubkey from './components/pubkey.svelte';
+	import Relays from './components/relays.svelte';
 
 	let {
 		paneID,
-		clientHeight = $bindable(),
 		obj = $bindable(),
+		clientHeight = $bindable(),
 		navService = $bindable()
 	} = $props();
 
 	let headerHeight: number = $state(0);
-
-	onMount(() => {});
 </script>
 
 {#snippet header()}
@@ -22,7 +24,10 @@
 {/snippet}
 
 {#snippet body()}
-	<div class="flex h-full flex-col items-center justify-center">profile</div>
+	<div class="flex h-full flex-col items-start justify-start space-y-2">
+		<Pubkey></Pubkey>
+		<Relays></Relays>
+	</div>
 {/snippet}
 
 <BufferHeader

@@ -17,8 +17,9 @@
 	} = $props();
 
 	// ================================== VARS =================================
-	let clientHeight: number = $state(0);
 
+	let clientHeight: number = $state(0);
+	let clientwidth: number = $state(0);
 	let nav: Writable<any[]> | undefined = $state();
 	let navService: NavigationService = new NavigationService();
 
