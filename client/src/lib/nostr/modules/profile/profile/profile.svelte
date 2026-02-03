@@ -1,12 +1,9 @@
 <script lang="ts">
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
-	import { onMount } from 'svelte';
 	import ProfileHeader from './profileHeader.svelte';
-	import { authorService } from '$lib/nostr/services/author.service';
-	import { nip19 } from 'nostr-tools';
-	import Pubkey from './components/pubkey.svelte';
-	import Relays from './components/relays.svelte';
+	import Pubkey from './home/pubkey.svelte';
+	import Relays from './home/relays.svelte';
 
 	let {
 		paneID,
@@ -24,16 +21,13 @@
 {/snippet}
 
 {#snippet body()}
-	<div class="flex h-full flex-col items-start justify-start space-y-2">
+	<div class="flex h-full flex-col items-start justify-start space-y-2 py-4">
 		<Pubkey></Pubkey>
 		<Relays></Relays>
 	</div>
 {/snippet}
 
-<BufferHeader
-	bind:headerHeight
-	classes="flex w-full justify-between outline outline-neutral-400 text-neutral-700"
->
+<BufferHeader bind:headerHeight>
 	{@render header()}
 </BufferHeader>
 <BufferBody bind:clientHeight bind:headerHeight>

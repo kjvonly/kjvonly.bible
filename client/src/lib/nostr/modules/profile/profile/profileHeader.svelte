@@ -6,6 +6,7 @@
 
 	// SERVICES
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import Edit from '$lib/components/svgs/edit.svelte';
 
 	// =============================== BINDINGS ================================
 
@@ -25,13 +26,15 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<div
-		bind:clientHeight
-		class="flex w-full flex-row bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
-	>
-		<span class="flex-1"></span>
+	<div class="grid w-full grid-cols-3 place-items-center">
+		<div class="flex justify-center justify-self-start pe-4">
+			<KJVButton onClick={onClose} classes="">
+				<Edit classes=""></Edit>
+			</KJVButton>
+		</div>
+
 		<span class="text-center">Profile</span>
-		<div class="flex flex-1 justify-end pe-4">
+		<div class="flex justify-center justify-self-end pe-4">
 			<KJVButton onClick={onClose} classes="">
 				<Close classes=""></Close>
 			</KJVButton>
