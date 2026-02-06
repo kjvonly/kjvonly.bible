@@ -52,6 +52,7 @@ onmessage = async (e) => {
 
 let db = await BibleDB.CreateAsync();
 
+// TODO sync ANNOTS and NOTES
 async function syncAnnotsAndNotesFromServer(data: any) {
   authService.setBearerToekn(data.token);
 

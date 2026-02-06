@@ -1,7 +1,6 @@
-import { relayService } from '$lib/nostr/services/relay.service';
 import { STRONGS } from '$lib/storer/bible.db';
 import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
-import { offlineApi } from './offline.api';
+import { offlineApi } from './offline.nostr';
 
 export class StrongsApi {
 

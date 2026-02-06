@@ -7,6 +7,7 @@ import { Deferred } from '$lib/utils/deferred';
 import { signerService } from './signer.service';
 import { authorService } from './author.service';
 
+// TODO MUST VALIDATE
 export class RelayService {
   subscribers: any[] = [];
   pool = new SimplePool()
