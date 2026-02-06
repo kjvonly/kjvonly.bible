@@ -1,6 +1,7 @@
+import type { Relay } from "$lib/nostr/services/constants.service";
 import { localStorageService } from "$lib/nostr/services/localStorage.service";
 import { relayService } from "$lib/nostr/services/relay.service";
-import { kinds as Kind, type Event } from "nostr-tools";
+import { kinds as Kind, type Event, type UnsignedEvent } from "nostr-tools";
 
 export interface IUser {
   name: string;
@@ -83,6 +84,9 @@ export interface NostrFilter {
 
 export class UserService {
 
+
+  // =================== GET CurrentUser Data =================================
+
   dayInMilliseconds = 24 * 60 * 60 * 1000;
 
   async getCurrentUserData(pubkey: string): Promise<Event[] | null> {
@@ -113,12 +117,21 @@ export class UserService {
       kinds: [Kind.Metadata, Kind.RelayList]
     }
 
-    return await relayService.getEvents(filter)
+    let events = await relayService.getEvents(filter)
+    this.cacheEvents(events)
+    return events
+  }
+
+  cacheEvents(events: Event[] | null) {
+    events?.forEach((e: Event) => {
+      localStorageService.set(`kind:${e.kind}`, JSON.stringify(e))
+    })
+    localStorageService.set('cached_at', `${Date.now()}`)
   }
 
   isCacheHot(): boolean {
     let cachedAt = localStorageService.get('cached_at')
-    const time1 = parseInt(cachedAt, 10);
+    const time1 = parseInt(cachedAt ? cachedAt : '', 10);
 
     if (isNaN(time1)) {
       console.error("[Invalid cached_at time]");
@@ -128,4 +141,52 @@ export class UserService {
     const diffInMs = Math.abs(Date.now() - time1);
     return diffInMs < this.dayInMilliseconds
   }
+
+  // =================== PUT CurrentUser Data =================================
+
+  async putCurrentUserMetadata(user: IUser): Promise<Event> {
+
+    // create kind 1 event and publish and cache 
+    let event: UnsignedEvent = {
+      kind: Kind.Metadata,
+      content: JSON.stringify(user),
+      tags: [],
+      created_at: 0,
+      pubkey: '',
+    }
+
+    return await relayService.publishEvent(event);
+  }
+
+  async putCurrentUserRelayList(relays: Relay[]): Promise<Event> {
+
+    let tags = relays.map((r: Relay) => {
+      return this.getRelayTag(r)
+    })
+
+    // create kind 1 event and publish and cache 
+    let event: UnsignedEvent = {
+      kind: Kind.RelayList,
+      content: "",
+      tags: tags,
+      created_at: 0,
+      pubkey: '',
+    }
+
+    return await relayService.publishEvent(event);
+  }
+
+
+  getRelayTag(r: Relay) {
+    let type = ""
+    if (r.read && r.write) { type = ""; }
+    else if (r.read) { type = "read"; }
+    else if (r.write) { type = "write"; }
+
+    return ["r", r.url, type]
+  }
+
+
+
+
 }

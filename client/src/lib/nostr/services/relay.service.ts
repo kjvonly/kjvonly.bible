@@ -150,12 +150,12 @@ export class RelayService {
 
   // NOTE: if a promise is rejected in pool.publish the 
   // caller is responsible for catching the error.
-  async publishEvent(event: NostrEvent): Promise<void> {
-    const signedEvent = finalizeEvent(event, this.privateKey);
+  async publishEvent(event: NostrEvent | UnsignedEvent): Promise<Event> {
+    const signedEvent = await signerService.signEvent(event);
     // force an error to test logic
     // let results = await Promise.all([...this.pool.publish(this.relays, signedEvent), Promise.reject('test issue')])
     await Promise.all(this.pool.publish(this.relays, signedEvent))
-
+    return signedEvent
   }
 }
 
