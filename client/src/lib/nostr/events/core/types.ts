@@ -1,6 +1,7 @@
 import type { Relay } from "$lib/nostr/services/constants.service";
 import { localStorageService } from "$lib/nostr/services/localStorage.service";
 import { relayService } from "$lib/nostr/services/relay.service";
+import { getTag } from "$lib/utils/nostr";
 import { kinds as Kind, type Event, type Nostr, type UnsignedEvent } from "nostr-tools";
 
 import { z } from "zod";
@@ -169,6 +170,57 @@ class RelayList extends NostrKind {
 
 }
 
+
+type EventMap = { [key: string]: Event }
+
+class EventMapsByCategory {
+
+  regular: EventMap = {}
+  replaceable: EventMap = {}
+  ephemeral: EventMap = {}
+  addressable: EventMap = {}
+
+
+  regularKey(e: Event): string {
+    return `${e.pubkey}:${e.kind}`
+  }
+
+  replaceableKey(e: Event): string {
+    return `${e.pubkey}:${e.kind}`
+  }
+
+  ephemeralKey(e: Event): string {
+    return `${e.pubkey}:${e.kind}`
+  }
+
+  addressableKey(e: Event): string {
+    let d = getTag(e, "d")
+    return `${e.pubkey}:${e.kind}:${d}`
+  }
+
+
+
+
+
+  add(e: Event) {
+    let n = e.kind
+    if ((n >= 1000 && n < 10002) || (n >= 4 && n < 45) || n == 1 || n == 2) {
+      this.regular[this.regularKey(e)] = e
+    }
+    // 10000 <= n < 20000 || n == 0 || n == 3 
+    if ((n >= 10000 && n < 20000) || n == 0 || n == 3) {
+
+      this.replaceable[this.replaceableKey(e)] = e
+    }
+
+    if (n >= 20000 && n < 30000) {
+      this.ephemeral[this.ephemeralKey(e)] = e
+    }
+    if (n >= 30000 && n < 40000) {
+      this.addressable[this.addressableKey(e)] = e
+    }
+  }
+}
 
 export class UserService implements IUserService {
 
