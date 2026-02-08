@@ -1,7 +1,7 @@
 import type { Relay } from "$lib/nostr/services/constants.service";
 import { localStorageService } from "$lib/nostr/services/localStorage.service";
 import { relayService } from "$lib/nostr/services/relay.service";
-import { kinds as Kind, type Event, type UnsignedEvent } from "nostr-tools";
+import { kinds as Kind, type Event, type Nostr, type UnsignedEvent } from "nostr-tools";
 
 import { z } from "zod";
 
@@ -64,11 +64,7 @@ export interface IUserService {
 
 }
 
-interface IKind {
-  kind: number
-}
-
-export interface IMetadata {
+export interface NostrMetadata {
   name?: string;
   about?: string;
   picture?: string;
@@ -77,50 +73,99 @@ export interface IMetadata {
 interface ISerialize {
   json(): string;
 }
-interface IValidate {
-  validate(): boolean
-}
-class Metadata implements IKind, ISerialize, IValidate {
-  kind: number = 0;
 
-  content: IMetadata = {}
+class NostrKindFactory {
+  kinds: { [kind: number]: any } = {}
 
-  private event: Event
-  constructor(e: Event) {
-    this.event = e
+  register(kind: number, newFn: (e: Event) => NostrKind): void {
+    this.kinds[kind] = newFn;
   }
 
-  validate(): boolean {
-    let result = NSchema.event().safeParse(this.event)
+  get(e: Event): NostrKind {
+    // TODO good place to verify event too
+    if (this.validate(e)) {
+      let fn = this.kinds[e.kind]
+      if (fn) {
+        let nk: NostrKind = fn(e)
+        nk.validate()
+        return nk
+      }
+    }
+    return new NullKind(e)
+  }
+
+  validate(e: Event): boolean {
+    let result = NSchema.event().safeParse(e)
     if (!result.success) {
       console.error('[Metadata validate]', result.error)
       return false
     }
     return true
   }
+}
 
-  parseContent(): void {
+const nostrKindFactory = new NostrKindFactory();
+
+abstract class NostrKind implements ISerialize {
+  event: Event
+  content: any = {}
+
+  constructor(e: Event) {
+    this.event = e
+  }
+
+  json(): string {
+    return JSON.stringify(this.event.content)
+  }
+
+  abstract validate(): boolean;
+}
+
+class NullKind extends NostrKind {
+  constructor() {
+    super({
+      kind: 0,
+      tags: [],
+      content: "",
+      created_at: 0,
+      pubkey: "",
+      id: "",
+      sig: ""
+    })
+  }
+
+  validate(): boolean {
+    throw new Error("Method not implemented.");
+  }
+}
+
+class Metadata extends NostrKind {
+  static kind: number = Kind.Metadata;
+  content: NostrMetadata = {}
+
+  constructor(e: Event) {
+    super(e)
+  }
+
+  validate(): boolean {
     let result = NSchema.metadata().safeParse(this.event.content)
     if (result.success) {
       this.content = result.data;
     }
+    return result.success
   }
-
-  json(): string {
-
-    return JSON.stringify(this.content)
-  }
-
 }
-class RelayList implements IKind {
-  private event: Event
+
+nostrKindFactory.register(Metadata.kind, (e: Event) => { return new Metadata(e) })
+
+class RelayList extends NostrKind {
   constructor(e: Event) {
-    this.event = e
-  }
-  parseContent(): void {
-    throw new Error("Method not implemented.");
+    super(e)
   }
 
+  validate(): boolean {
+    return true
+  }
 
 }
 
@@ -131,39 +176,26 @@ export class UserService implements IUserService {
 
   dayInMilliseconds = 24 * 60 * 60 * 1000;
 
-  async getCurrentUserData(pubkey: string): Promise<()> {
-    let events = this.getCurrentUserDataFromCache()
-    if (events) {
-      return events
+  async getCurrentUserData(pubkey: string): Promise<[Metadata, RelayList]> {
+    let [metadata, relayList] = this.getCurrentUserDataFromCache()
+    if (metadata instanceof NullKind || relayList instanceof NullKind) {
+      return this.getCurrentUserDataFromRelay(pubkey)
     }
-    return this.getCurrentUserDataFromRelay(pubkey)
+    return [metadataEvent, relayList]
   }
 
-  buildUser(events: Event[]) {
-
-    events?.forEach((e: Event) => {
-      switch (e.kind) {
-        case Kind.Metadata:
-          return new Metadata(e)
-        case Kind.RelayList:
-          return new RelayList(e)
-      }
-    })
-
-  }
-
-  getCurrentUserDataFromCache(): Event[] | null {
+  getCurrentUserDataFromCache(): [Metadata, RelayList] {
     let metadata = localStorageService.get('kind:0')
     let relayList = localStorageService.get('kind:10002')
 
     if (metadata && relayList && this.isCacheHot()) {
-      let metadataEvent = JSON.parse(metadata) as Event
-      let relayListEvent = JSON.parse(relayList) as Event
+      let metadataEvent = nostrKindFactory.get(JSON.parse(metadata))
+      let relayListEvent = nostrKindFactory.get(JSON.parse(relayList))
 
       return [metadataEvent, relayListEvent]
     }
 
-    return null
+    return [new NullKind(), new NullKind()]
   }
 
   async getCurrentUserDataFromRelay(pubkey: string): Promise<Event[] | null> {
@@ -328,7 +360,22 @@ export interface NostrEvent {
  * const nsec: `nsec1${string}` = n.bech32('nsec').parse(token);
  * ```
  */
-class NSchema {
+export class NSchema {
+
+  static relayList() {
+    return z.array(z.tuple([
+      z.literal('r'),
+      z.string().url().refine((url) => url.startsWith('ws://') || url.startsWith('wss://')),
+    ]).rest(
+      z.union([
+        z.literal(''),
+        z.literal('read'),
+        z.literal('write')
+      ]).optional()
+    ));
+  }
+
+
   /** Schema to validate Nostr hex IDs such as event IDs and pubkeys. */
   static id() {
     return z.string().regex(/^[0-9a-f]{64}$/);
