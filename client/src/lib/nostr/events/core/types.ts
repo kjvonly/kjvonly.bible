@@ -170,26 +170,19 @@ class RelayList extends NostrKind {
 
 }
 
-
 type EventMap = { [key: string]: Event }
 
 class EventMapsByCategory {
-
   regular: EventMap = {}
   replaceable: EventMap = {}
-  ephemeral: EventMap = {}
   addressable: EventMap = {}
 
 
   regularKey(e: Event): string {
-    return `${e.pubkey}:${e.kind}`
+    return `${e.id}`
   }
 
   replaceableKey(e: Event): string {
-    return `${e.pubkey}:${e.kind}`
-  }
-
-  ephemeralKey(e: Event): string {
     return `${e.pubkey}:${e.kind}`
   }
 
@@ -197,10 +190,6 @@ class EventMapsByCategory {
     let d = getTag(e, "d")
     return `${e.pubkey}:${e.kind}:${d}`
   }
-
-
-
-
 
   add(e: Event) {
     let n = e.kind
@@ -213,9 +202,6 @@ class EventMapsByCategory {
       this.replaceable[this.replaceableKey(e)] = e
     }
 
-    if (n >= 20000 && n < 30000) {
-      this.ephemeral[this.ephemeralKey(e)] = e
-    }
     if (n >= 30000 && n < 40000) {
       this.addressable[this.addressableKey(e)] = e
     }
