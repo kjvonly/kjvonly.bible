@@ -1,7 +1,22 @@
-import { type EventTemplate, type UnsignedEvent, type Event, nip19, finalizeEvent } from "nostr-tools";
+import { type EventTemplate, type UnsignedEvent, type Event, nip19, finalizeEvent, getPublicKey } from "nostr-tools";
 import { ANONYMOUS_PREFIX, loginService } from "./login.service";
+import { localStorageService } from "./localStorage.service";
 
 class SignerService {
+
+  public async getPublicKey(): Promise<string> {
+    const login = localStorageService.get('login');
+    if (login === null || login.startsWith('npub')) {
+      throw new Error('[logic error]');
+    }
+
+    if (login.startsWith('nsec')) {
+      const { data: seckey } = nip19.decode(login);
+      return getPublicKey(seckey as Uint8Array);
+    } else {
+      throw new Error('[logic error]');
+    }
+  }
 
   public async signEvent(unsignedEvent: EventTemplate | UnsignedEvent): Promise<Event> {
     const login = loginService.getLogin()
