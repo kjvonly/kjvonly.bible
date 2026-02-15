@@ -83,6 +83,17 @@ export const categoriesKinds = {
 };
 
 export const categories = Object.keys(categoriesKinds);
+
+export const defaultRelays = `${import.meta.env.VITE_NOSTR_COMMA_DELIMITED_RELAY_URLS}`.split(',').map((relayUrl: string) => {
+  return {
+    url: relayUrl,
+    read: true,
+    write: true
+  }
+})
+
+export const fileStorageServers: string[] = []
+
 /*
 export const defaultRelays = [
   {

@@ -4,7 +4,7 @@ import { createVerificationServiceClient, createNoopClient } from "rx-nostr-cryp
 import workerUrl from '$lib/Worker?worker&url';
 import type { Event, EventParameters } from "nostr-typedef";
 import { signerService } from "$lib/nostr/services/signer.service";
-import { createTie } from "./RxNostrTie";
+import { createTie } from "../RxNostrTie";
 import { get, writable } from "svelte/store";
 import { addressRegexp, filterLimitItems, hexRegexp } from "$lib/nostr/Constants";
 import { sleep } from "$lib/nostr/Helper";
