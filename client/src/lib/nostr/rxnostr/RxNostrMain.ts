@@ -1,15 +1,20 @@
-iCport { browser } from "$app/environment";
-import { createRxBackwardReq, createRxNostr, filterByType, now, type ConnectionState } from "rx-nostr";
+import { browser } from "$app/environment";
+import { createRxBackwardReq, createRxNostr, filterByType, now, type ConnectionState, type LazyFilter } from "rx-nostr";
 import { createVerificationServiceClient, createNoopClient } from "rx-nostr-crypto";
 import workerUrl from '$lib/Worker?worker&url';
 import type { Event, EventParameters } from "nostr-typedef";
-import { signerService } from "../services/signer.service";
+import { signerService } from "$lib/nostr/services/signer.service";
 import { createTie } from "./RxNostrTie";
 import { get, writable } from "svelte/store";
-import { filterLimitItems } from "$lib/nostr/Constants";
+import { addressRegexp, filterLimitItems, hexRegexp } from "$lib/nostr/Constants";
 import { sleep } from "$lib/nostr/Helper";
-import { metadataStore } from "$lib/nostr/cache/Events";
-import { chunk } from "../Array";
+import { eventItemStore, metadataStore, replaceableEventsStore } from "$lib/nostr/cache/Events";
+import { chunk } from "$lib/nostr/Array";
+import { Metadata } from "$lib/nostr/Items";
+import { browser } from '$app/environment';
+import { filterTags } from "../EventHelper";
+import { Content } from "../Content";
+import { isReplaceableKind } from "nostr-tools/kinds";
 
 export const timeout = 5000;
 
@@ -115,12 +120,17 @@ const metadataReq = createRxBackwardReq();
 const referencesReq = createRxBackwardReq();
 const replaceableEventsReq = createRxBackwardReq();
 
-
+/**
+ * Gets Kind 0 of pubkeys not in metadataStore cache
+ *
+ * @param pubkeys pubkeys of authors metadata needed
+ */
 export async function metadataReqEmit(pubkeys: string[]): Promise<void> {
   const groupedPubkeys = chunk(
     pubkeys.filter((pubkey) => !get(metadataStore).has(pubkey)),
     filterLimitItems
   );
+
   for (const pubkeys of groupedPubkeys) {
     console.debug('[rx-nostr metadata REQ emit]', pubkeys);
     metadataReq.emit({
@@ -128,6 +138,106 @@ export async function metadataReqEmit(pubkeys: string[]): Promise<void> {
       authors: pubkeys
     });
     await sleep(0); // UI thread
+  }
+}
+
+
+export function referencesReqEmit(event: Event, metadataOnly: boolean = false): void {
+  console.debug('[rx-nostr references REQ emit]', event);
+  const content = event.kind > 0 ? event.content : (new Metadata(event).content?.about ?? '');
+  metadataReqEmit([
+    ...new Set([
+      event.pubkey,
+      ...filterTags('p', event.tags),
+      ...Content.findNpubsAndNprofilesToPubkeys(content)
+    ])
+  ]);
+
+  if (metadataOnly) {
+    return;
+  }
+
+  const $eventItemStore = get(eventItemStore);
+  const ids = [
+    ...new Set([
+      ...filterTags('e', event.tags),
+      ...Content.findNotesAndNeventsToIds(content),
+      ...event.tags
+        .filter(([tagName, id]) => tagName === 'q' && id && hexRegexp.test(id))
+        .map(([, id]) => id)
+    ])
+  ].filter((id) => !$eventItemStore.has(id));
+
+  if (ids.length > 0) {
+    referencesReq.emit({ ids });
+
+    const referenceTags = event.tags.filter(
+      ([tagName, id, relay]) =>
+        typeof tagName === 'string' &&
+        ['e', 'q'].includes(tagName) &&
+        typeof id === 'string' &&
+        hexRegexp.test(id) &&
+        typeof relay === 'string' &&
+        relay.startsWith('wss://') &&
+        URL.canParse(relay)
+    );
+    if (referenceTags.length > 0) {
+      // If not found, look up from the relay hint
+      setTimeout(() => {
+        const undiscoveredReferenceTags = referenceTags.filter(
+          ([, id]) => !$eventItemStore.has(id)
+        );
+        if (undiscoveredReferenceTags.length === 0) {
+          return;
+        }
+        referencesReq.emit(
+          { ids: undiscoveredReferenceTags.map(([, id]) => id) },
+          { relays: undiscoveredReferenceTags.map(([, , relay]) => relay) }
+        );
+      }, timeout);
+    }
+  }
+
+  const $replaceableEventsStore = get(replaceableEventsStore);
+  const aTags = event.tags.filter(
+    ([tagName, address]) =>
+      tagName === 'a' && address !== undefined && !$replaceableEventsStore.has(address)
+  );
+  const qTags = event.tags.filter(
+    ([tagName, address]) =>
+      tagName === 'q' &&
+      address &&
+      addressRegexp.test(address) &&
+      !$replaceableEventsStore.has(address)
+  );
+  aTags.push(...qTags);
+  if (aTags.length > 0) {
+    const filters: LazyFilter[] = aTags.map(([, a]) => {
+      const [kind, pubkey, identifier] = a.split(':');
+      return isReplaceableKind(Number(kind))
+        ? {
+          kinds: [Number(kind)],
+          authors: [pubkey]
+        }
+        : {
+          kinds: [Number(kind)],
+          authors: [pubkey],
+          '#d': [identifier]
+        };
+    });
+    replaceableEventsReq.emit(filters);
+    const relays = aTags
+      .map(([, , relayUrl]) => relayUrl)
+      .filter(
+        (relayUrl) =>
+          typeof relayUrl === 'string' &&
+          relayUrl.startsWith('wss://') &&
+          URL.canParse(relayUrl) &&
+          !Object.entries(rxNostr.getDefaultRelays()).some(([url]) => url === relayUrl)
+      );
+    if (relays.length > 0) {
+      replaceableEventsReq.emit(filters, { relays });
+    }
   }
 }
 
