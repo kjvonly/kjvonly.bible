@@ -83,7 +83,7 @@ export const categoriesKinds = {
 };
 
 export const categories = Object.keys(categoriesKinds);
-
+/*
 export const defaultRelays = [
   {
     url: 'wss://relay.nostr.band/',
@@ -157,7 +157,7 @@ export const imageOptimizerServers = [
   'https://api.yabu.me/v0/images/optimize/',
   'https://nostr-image-optimizer.ocknamo.com/image/'
 ];
-
+*/
 export const httpProxy = 'https://proxy.nostter.app';
 
 export const chronological = (x: NostrEvent, y: NostrEvent) => x.created_at - y.created_at;

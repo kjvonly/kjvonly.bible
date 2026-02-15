@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import { createRxBackwardReq, createRxNostr, filterByType, now, type ConnectionState, type LazyFilter } from "rx-nostr";
+import { batch, createRxBackwardReq, createRxNostr, filterByType, latestEach, now, uniq, type ConnectionState, type LazyFilter } from "rx-nostr";
 import { createVerificationServiceClient, createNoopClient } from "rx-nostr-crypto";
 import workerUrl from '$lib/Worker?worker&url';
 import type { Event, EventParameters } from "nostr-typedef";
@@ -8,13 +8,14 @@ import { createTie } from "./RxNostrTie";
 import { get, writable } from "svelte/store";
 import { addressRegexp, filterLimitItems, hexRegexp } from "$lib/nostr/Constants";
 import { sleep } from "$lib/nostr/Helper";
-import { eventItemStore, metadataStore, replaceableEventsStore } from "$lib/nostr/cache/Events";
+import { eventItemStore, metadataStore, replaceableEventsStore, seenOnStore, storeEventItem, storeMetadata } from "$lib/nostr/cache/Events";
 import { chunk } from "$lib/nostr/Array";
 import { Metadata } from "$lib/nostr/Items";
 import { browser } from '$app/environment';
-import { filterTags } from "../EventHelper";
+import { aTagContent, filterTags } from "../EventHelper";
 import { Content } from "../Content";
 import { isReplaceableKind } from "nostr-tools/kinds";
+import { bufferTime, tap } from "rxjs";
 
 export const timeout = 5000;
 
@@ -239,5 +240,60 @@ export function referencesReqEmit(event: Event, metadataOnly: boolean = false): 
       replaceableEventsReq.emit(filters, { relays });
     }
   }
+}
+
+
+rxNostr
+  .use(metadataReq.pipe(bufferTime(1000, null, 10), batch()))
+  .pipe(
+    tie,
+    uniq(),
+    latestEach(({ event }) => event.pubkey)
+  )
+  .subscribe(({ event }) => storeMetadata(event));
+
+
+rxNostr
+  .use(referencesReq.pipe(bufferTime(1000, null, 10), batch()))
+  .pipe(
+    tie,
+    uniq(),
+    tap(({ event }) => referencesReqEmit(event, true))
+  )
+  .subscribe(({ event }) => storeEventItem(event));
+
+
+
+rxNostr
+  .use(replaceableEventsReq.pipe(bufferTime(1000, null, 10), batch()))
+  .pipe(
+    tie,
+    uniq(),
+    latestEach(({ event }) => aTagContent(event)),
+    tap(({ event }) => referencesReqEmit(event, true))
+  )
+  .subscribe((packet) => {
+    console.debug('[rx-nostr replaceable event]', packet);
+    const a = aTagContent(packet.event);
+    const $replaceableEventsStore = get(replaceableEventsStore);
+    const cache = $replaceableEventsStore.get(a);
+    if (cache === undefined || cache.created_at < packet.event.created_at) {
+      $replaceableEventsStore.set(a, packet.event);
+      replaceableEventsStore.set($replaceableEventsStore);
+      storeSeenOn(a, packet.from);
+    }
+  });
+
+// key = id | a
+export function storeSeenOn(key: string, relay: string): void {
+  const $seenOnStore = get(seenOnStore);
+  const relays = $seenOnStore.get(key);
+  if (relays === undefined) {
+    $seenOnStore.set(key, new Set<string>([relay]));
+  } else {
+    relays.add(relay);
+    $seenOnStore.set(key, relays);
+  }
+  seenOnStore.set($seenOnStore);
 }
 
