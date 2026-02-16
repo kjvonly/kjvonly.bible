@@ -17,15 +17,15 @@ export class WebStorage {
   public constructor(private readonly storage: Storage) { }
 
   public get(key: string): string | null {
-    return this.storage.getItem(`nostter:${key}`);
+    return this.storage.getItem(`${appName}:${key}`);
   }
 
   public set(key: string, value: string): void {
-    this.storage.setItem(`nostter:${key}`, value);
+    this.storage.setItem(`${appName}:${key}`, value);
   }
 
   public remove(key: string): void {
-    this.storage.removeItem(`nostter:${key}`);
+    this.storage.removeItem(`${appName}:${key}`);
   }
 
   public clear(): void {

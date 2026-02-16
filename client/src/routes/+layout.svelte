@@ -86,6 +86,10 @@
 			authenticated = await tryLogin();
 		}
 
+		if (!authenticated) {
+			console.debug('[layout load] not logged in');
+		}
+
 		setTimeout(() => {
 			syncService.init();
 		}, 5000);
