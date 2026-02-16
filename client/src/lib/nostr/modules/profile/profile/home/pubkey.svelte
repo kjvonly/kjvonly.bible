@@ -2,10 +2,13 @@
 	import { authorService } from '$lib/nostr/services/author.service';
 	import { nip19 } from 'nostr-tools';
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
+	import { pubkey } from '$lib/nostr/stores/Author';
 
-	let pubkey = $state('');
+	let pk = $state('');
 	onMount(() => {
-		pubkey = nip19.npubEncode(authorService.pubkey);
+		let p = get(pubkey);
+		pk = nip19.npubEncode(p);
 	});
 </script>
 
@@ -15,6 +18,6 @@
 	<!-- 	{pubkey} -->
 	<!-- </div> -->
 	<div class="grid grid-cols-1">
-		<span class="break-words">{pubkey}</span>
+		<span class="break-words">{pk}</span>
 	</div>
 </div>
