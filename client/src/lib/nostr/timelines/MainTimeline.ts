@@ -1,7 +1,7 @@
 import { browser } from "$app/environment";
 import { batch, createRxBackwardReq, createRxNostr, filterByType, latestEach, now, uniq, type ConnectionState, type LazyFilter } from "rx-nostr";
 import { createVerificationServiceClient, createNoopClient } from "rx-nostr-crypto";
-import workerUrl from '$lib/Worker?worker&url';
+import workerUrl from '$lib/nostr/Worker?worker&url';
 import type { Event, EventParameters } from "nostr-typedef";
 import { signerService } from "$lib/nostr/services/signer.service";
 import { createTie } from "../RxNostrTie";
@@ -11,7 +11,6 @@ import { sleep } from "$lib/nostr/Helper";
 import { eventItemStore, metadataStore, replaceableEventsStore, seenOnStore, storeEventItem, storeMetadata } from "$lib/nostr/cache/Events";
 import { chunk } from "$lib/nostr/Array";
 import { Metadata } from "$lib/nostr/Items";
-import { browser } from '$app/environment';
 import { aTagContent, filterTags } from "../EventHelper";
 import { Content } from "../Content";
 import { isReplaceableKind } from "nostr-tools/kinds";
