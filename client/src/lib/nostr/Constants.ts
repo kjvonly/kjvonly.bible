@@ -95,6 +95,15 @@ export const defaultRelays = `${import.meta.env.VITE_NOSTR_COMMA_DELIMITED_RELAY
   })
 
 export const fileStorageServers: string[] = []
+export const metadataRelays = `${import.meta.env.VITE_NOSTR_COMMA_DELIMITED_RELAY_URLS}`
+  .split(',')
+  .map((relayUrl: string) => {
+    return {
+      url: relayUrl,
+      read: true,
+      write: true
+    }
+  })
 
 /*
 export const defaultRelays = [
