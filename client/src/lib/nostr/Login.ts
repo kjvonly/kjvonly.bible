@@ -14,11 +14,9 @@ export class Login {
   public async saveBasicInfo(name: string): Promise<void> {
     console.log('[relays]', rxNostr.getDefaultRelays());
 
-    const pubkey = await Signer.getPublicKey();
     const user = {
       name,
       display_name: name,
-      picture: robohash(pubkey)
     } as User;
     const metadataEvent = await Signer.signEvent({
       kind: 0,

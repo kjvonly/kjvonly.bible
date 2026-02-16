@@ -14,9 +14,6 @@
 
 <div>
 	<p class="capitalize underline">Pubkey</p>
-	<!-- <div class="break-words italic" -->
-	<!-- 	{pubkey} -->
-	<!-- </div> -->
 	<div class="grid grid-cols-1">
 		<span class="break-words">{pk}</span>
 	</div>
