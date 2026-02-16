@@ -6,6 +6,9 @@ import { hexDecode, hexDecodeAndUngzip, hexEncode } from '$lib/utils/gzip';
 import { Deferred } from '$lib/utils/deferred';
 import { signerService } from './signer.service';
 import { authorService } from './author.service';
+import { createRxBackwardReq, uniq, type EventPacket } from 'rx-nostr';
+import { rxNostr, tie } from '../timelines/MainTimeline';
+import type { EventParameters } from 'nostr-typedef';
 
 // TODO MUST VALIDATE
 export class RelayService {
@@ -90,19 +93,48 @@ export class RelayService {
   };
 
   async getEvents(filter: Filter): Promise<NostrEvent[] | null> {
-    await this.atLeastOnerelayIsReady.promise
-    return await this.pool.querySync(
-      this.relays,
-      filter,
-      {
-        onclose() {
-          console.log('End of stored events (EOSE)');
-        },
-        onauth: this.createOnAuth(KJVONLY_REALY_URL),
+    // await this.atLeastOnerelayIsReady.promise
+    // return await this.pool.querySync(
+    //   this.relays,
+    //   filter,
+    //   {
+    //     onclose() {
+    //       console.log('End of stored events (EOSE)');
+    //     },
+    //     onauth: this.createOnAuth(KJVONLY_REALY_URL),
+    //
+    //     doauth: this.createOnAuth(KJVONLY_REALY_URL),
+    //   }
+    // )
 
-        doauth: this.createOnAuth(KJVONLY_REALY_URL),
-      }
-    )
+    let events: any = [];
+    await new Promise<void>((resolve, reject) => {
+      const rxReq = createRxBackwardReq();
+      rxNostr
+        .use(rxReq)
+        .pipe(
+          tie,
+          uniq()
+        )
+        .subscribe({
+          next: (packet) => {
+            console.log("Received:", packet);
+            events.push(packet.event);
+          },
+          complete: () => {
+            console.log('[relay service getEvents complete]', filter);
+            resolve()
+          },
+          error: (error) => {
+            console.error('[relay service get events error]', filter, error);
+            reject()
+          }
+        });
+
+      rxReq.emit(filter);
+    })
+
+    return events
   }
 
   async getContents(filter: Filter): Promise<string[]> {
@@ -119,11 +151,16 @@ export class RelayService {
   }
 
   async getEvent(filter: Filter): Promise<NostrEvent | null> {
-    await this.atLeastOnerelayIsReady.promise
-    return await this.pool.get(
-      this.relays,
-      filter,
-    )
+    // await this.atLeastOnerelayIsReady.promise
+    // return await this.pool.get(
+    //   this.relays,
+    //   filter,
+    // )
+    let events = await this.getEvents(filter)
+    if (events && events.length > 0) {
+      return events[0]
+    }
+    return null
   }
 
   async getContent(filter: Filter): Promise<any> {
@@ -150,12 +187,13 @@ export class RelayService {
 
   // NOTE: if a promise is rejected in pool.publish the 
   // caller is responsible for catching the error.
-  async publishEvent(event: NostrEvent | UnsignedEvent): Promise<Event> {
-    const signedEvent = await signerService.signEvent(event);
-    // force an error to test logic
-    // let results = await Promise.all([...this.pool.publish(this.relays, signedEvent), Promise.reject('test issue')])
-    await Promise.all(this.pool.publish(this.relays, signedEvent))
-    return signedEvent
+  async publishEvent(event: NostrEvent | UnsignedEvent | EventParameters): Promise<any> {
+    rxNostr.send(event).subscribe((packet) => {
+      console.log(
+        `Sending to ${packet.from} ${packet.ok ? "succeeded" : "failed"}.`,
+      );
+    });
+    return event
   }
 }
 
