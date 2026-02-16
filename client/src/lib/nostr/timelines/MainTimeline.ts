@@ -3,7 +3,6 @@ import { batch, createRxBackwardReq, createRxNostr, filterByType, latestEach, no
 import { createVerificationServiceClient, createNoopClient } from "rx-nostr-crypto";
 import workerUrl from '$lib/nostr/Worker?worker&url';
 import type { Event, EventParameters } from "nostr-typedef";
-import { signerService } from "$lib/nostr/services/signer.service";
 import { createTie } from "../RxNostrTie";
 import { get, writable } from "svelte/store";
 import { addressRegexp, filterLimitItems, hexRegexp } from "$lib/nostr/Constants";
@@ -15,6 +14,7 @@ import { aTagContent, filterTags } from "../EventHelper";
 import { Content } from "../Content";
 import { isReplaceableKind } from "nostr-tools/kinds";
 import { bufferTime, tap } from "rxjs";
+import { Signer } from "$lib/nostr/Signer";
 
 export const timeout = 5000;
 
@@ -26,6 +26,7 @@ export const verificationClient = browser
   : createNoopClient();
 verificationClient.start();
 
+
 export const rxNostr = createRxNostr({
   verifier: verificationClient.verifier,
   connectionStrategy: 'lazy-keep',
@@ -34,13 +35,13 @@ export const rxNostr = createRxNostr({
   retry: { strategy: 'exponential', maxCount: 5, initialDelay: 1000, polite: true },
   authenticator: 'auto',
   signer: {
-    getPublicKey: () => signerService.getPublicKey(),
+    getPublicKey: () => Signer.getPublicKey(),
     signEvent: async <K extends number>(params: EventParameters<K>): Promise<Event<K>> => {
       if (params.sig) {
         return params as Event<K>;
       }
 
-      const event = await signerService.signEvent({
+      const event = await Signer.signEvent({
         ...params,
         tags: params.tags ?? [],
         created_at: params.created_at ?? now()
@@ -49,7 +50,6 @@ export const rxNostr = createRxNostr({
     }
   }
 }); // Based on NIP-65
-
 
 //---------------------------------------------------------------------------------------------------------------------
 // Relay Hints
@@ -112,6 +112,10 @@ observable.pipe(filterByType('NOTICE')).subscribe((packet) => {
 observable.pipe(filterByType('CLOSED')).subscribe((packet) => {
   console.error('[rx-nostr closed]', packet);
 });
+observable.pipe(filterByType('AUTH')).subscribe((packet) => {
+  console.info('[rx-nostr AUTH]', packet);
+});
+
 
 //---------------------------------------------------------------------------------------------------------------------
 // REQs

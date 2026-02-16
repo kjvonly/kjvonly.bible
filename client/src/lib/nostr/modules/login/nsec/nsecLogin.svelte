@@ -18,9 +18,11 @@
 	let headerHeight: number = $state(0);
 
 	let nsec = $state('');
+	let name = $state('');
 	async function nsecLogin() {
 		let login = new Login();
 		await login.withNsec(nsec);
+		await login.saveBasicInfo(name);
 		let pane = paneService.findNode(paneService.rootPane, paneID);
 		if (pane) {
 			pane?.updateBuffer(Modules.PROFILE);
@@ -35,8 +37,14 @@
 
 {#snippet body()}
 	<div class="flex h-full flex-col items-center justify-center">
-		<p class="p-2">Input your nsec key</p>
-		<div class="flex max-w-72 flex-col space-y-2">
+		<div class="flex max-w-72 flex-col space-y-6">
+			<input
+				bind:value={name}
+				type="text"
+				id="name"
+				placeholder="Name"
+				class=" border-primary-500 w-full border-b-1 outline-none"
+			/>
 			<input
 				bind:value={nsec}
 				type="text"

@@ -82,6 +82,7 @@ export class Signer {
       return await bunkerSigner!.signEvent(unsignedEvent);
     } else if (login.startsWith('nsec')) {
       const { data: seckey } = nip19.decode(login);
+      console.debug('[ signing event with nsec ]')
       return finalizeEvent(unsignedEvent, seckey as Uint8Array);
     } else {
       throw new Error('[logic error]');

@@ -54,6 +54,7 @@ export class Author {
   }
 
   // TODO: Ensure created_at
+  // Store Followee relays
   public storeRelays(replaceableEvents: Map<number, Event>) {
     const contactsEvent = replaceableEvents.get(Kind.Contacts);
     if (contactsEvent !== undefined) {
