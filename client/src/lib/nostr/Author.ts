@@ -257,9 +257,14 @@ export class Author {
         });
       authorReq.emit([
         {
-          kinds: [...replaceableKinds, ...parameterizedReplaceableKinds],
+          kinds: [...replaceableKinds],
+          authors: [pubkey]
+        },
+        {
+          kinds: [...parameterizedReplaceableKinds],
           authors: [pubkey]
         }
+
       ]);
       authorReq.over();
     });
