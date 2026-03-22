@@ -13,6 +13,6 @@
 <div>
 	<p class="capitalize underline">name</p>
 	<div class="grid grid-cols-1">
-		<span class="break-words">{profile.name}</span>
+		<span class="break-words">{profile?.name}</span>
 	</div>
 </div>

@@ -97,6 +97,7 @@ async function publish(): Promise<void> {
   }
 }
 
+// check if cache is outdated
 async function validate(event: Event | undefined): Promise<boolean> {
   const $pubkey = get(pubkey);
   const lastEvent = await fetchLastEvent({ kinds: [kind], authors: [$pubkey], limit: 1 });

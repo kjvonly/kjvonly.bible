@@ -3,14 +3,20 @@ import { author, authorProfile, loginType, pubkey, rom } from './stores/Author';
 import { Signer } from './Signer';
 import { Author } from './Author';
 import { getPublicKey, nip19 } from 'nostr-tools';
-import { robohash } from './Items';
 import { WebStorage } from './WebStorage';
 import { rxNostr } from './timelines/MainTimeline';
 import { now } from 'rx-nostr';
 import type { User } from './Types';
 import { remoteSigner } from './RemoteSigner';
+import { follow } from './author/Follow';
 
 export class Login {
+
+  /**
+   * APP NOTE: save basic info is called on create account to save user basic info to relays 
+   * Save kind 0 and kind 10002
+   * @param name 
+   */
   public async saveBasicInfo(name: string): Promise<void> {
     console.log('[relays]', rxNostr.getDefaultRelays());
 
@@ -48,6 +54,9 @@ export class Login {
     rxNostr.send(relayListEvent).subscribe((packet) => {
       console.log('[save relay list]', packet);
     });
+
+    // Follow pubkey of app
+    await follow(import.meta.env.VITE_NOSTR_KJVONLY_PUBKEY)
   }
 
   public async withNip07() {

@@ -15,6 +15,8 @@
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 	import { loginService } from '$lib/nostr/services/login.service';
+	import { get } from 'svelte/store';
+	import { pubkey } from '$lib/nostr/stores/Author';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -27,13 +29,13 @@
 
 	// ================================== VARS =================================
 
-	let components: any = {
+	let components: any = $state({
 		bible: Modules.BIBLE,
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
 		plans: Modules.PLANS,
 		settings: Modules.SETTINGS
-	};
+	});
 
 	let headerHeight = $state(0);
 	let clientHeight = $state(0);
@@ -46,7 +48,8 @@
 
 	// ================================ FUNCS ==================================
 	function addDynamicModules() {
-		if (loginService.isLoggedIn()) {
+		let pk = get(pubkey);
+		if (pk?.length > 0) {
 			components['profile'] = Modules.PROFILE;
 		} else {
 			components['login'] = Modules.LOGIN;
