@@ -21,7 +21,7 @@
 	import uuid4 from 'uuid4';
 	import { sleep } from '$lib/utils/sleep';
 	import { onMount } from 'svelte';
-	import { subsApi } from '$lib/nostr/subs.nostr';
+	import { subsApi } from '$lib/nostr/events/subs.nostr';
 	import { plansPubSubService } from '$lib/services/plans/plansPubSub.service';
 	// =============================== BINDINGS ================================
 	let {

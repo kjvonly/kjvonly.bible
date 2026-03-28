@@ -1,4 +1,4 @@
-import { paragraphsApi } from '$lib/nostr/paragraphs.nostr';
+import { paragraphsApi } from '$lib/nostr/events/paragraphs.nostr';
 
 class ParagraphsService {
   async get(ref: string): Promise<{}> {

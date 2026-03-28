@@ -3,8 +3,8 @@ import {
   type CachedSub,
   type Sub
 } from '$lib/models/plans.model';
-import { plansApi } from '$lib/nostr/plans.nostr';
-import { relayService } from '../relay.service';
+import { plansApi } from '$lib/nostr/events/plans.nostr';
+import { relayService } from '../../nostr/services/relay.service';
 
 const isBrowser = typeof window !== 'undefined';
 let plansWorker: any;

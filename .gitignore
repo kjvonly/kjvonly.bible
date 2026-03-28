@@ -50,3 +50,5 @@ zarf/docker/data/postgres_data
 zarf/docker/data/minio_data
 
 __debug*
+
+scratch

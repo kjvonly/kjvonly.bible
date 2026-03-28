@@ -1,4 +1,4 @@
-import { paragraphsApi } from '$lib/nostr/paragraphs.nostr';
+import { paragraphsApi } from '$lib/nostr/events/paragraphs.nostr';
 import { BIBLE_VERSIONS, bibleDB } from '$lib/storer/bible.db';
 import { syncService } from '../sync.service';
 

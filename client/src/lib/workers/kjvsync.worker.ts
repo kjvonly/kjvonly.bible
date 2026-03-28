@@ -1,4 +1,4 @@
-import { api } from '$lib/nostr/api';
+import { api } from '$lib/nostr/events/api';
 import {
   BibleDB,
   ANNOTATIONS,
@@ -16,7 +16,7 @@ import {
   bibleDB
 } from '$lib/storer/bible.db';
 import { authService } from '$lib/services/auth.service';
-import { offlineApi } from '$lib/nostr/offline.nostr';
+import { offlineApi } from '$lib/nostr/events/offline.nostr';
 import { downloadAndDecompressGzip } from '$lib/utils/gzip';
 
 onmessage = async (e) => {
@@ -52,6 +52,7 @@ onmessage = async (e) => {
 
 let db = await BibleDB.CreateAsync();
 
+// TODO sync ANNOTS and NOTES
 async function syncAnnotsAndNotesFromServer(data: any) {
   authService.setBearerToekn(data.token);
 

@@ -1,8 +1,8 @@
 import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
 import { bibleDB } from '$lib/storer/bible.db';
-import { relayService } from './relay.service';
-import { BLOSSOM_KIND } from '$lib/nostr/kinds';
+import { relayService } from '../nostr/services/relay.service';
+import { BLOSSOM_KIND } from '$lib/nostr/events/kinds';
 import { getTag, getTags, KJVONLY_PUBKEY } from '$lib/utils/nostr';
 const syncWorker = new Worker(
   new URL('../workers/kjvsync.worker?worker', import.meta.url),

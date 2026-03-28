@@ -1,4 +1,4 @@
-import { notesApi } from '$lib/nostr/notes.nostr';
+import { notesApi } from '$lib/nostr/events/notes.nostr';
 import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
 import { bibleDB, SEARCH } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';

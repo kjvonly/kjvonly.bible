@@ -1,5 +1,8 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	// SVELTE
+	import { get } from 'svelte/store';
+
 	// COMPONENTS
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import BufferContainer from '$lib/components/bufferContainer.svelte';
@@ -13,6 +16,10 @@
 
 	// SERVICES
 	import { paneService } from '$lib/services/pane.service.svelte';
+	import { onMount } from 'svelte';
+
+	// NOSTR
+	import { pubkey } from '$lib/nostr/stores/Author';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -25,18 +32,34 @@
 
 	// ================================== VARS =================================
 
-	let components: any = {
+	let components: any = $state({
 		bible: Modules.BIBLE,
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
 		plans: Modules.PLANS,
-		settings: Modules.SETTINGS,
-		'user guide': Modules.USER_GUIDE,
-		login: Modules.LOGIN
-	};
+		settings: Modules.SETTINGS
+	});
 
 	let headerHeight = $state(0);
 	let clientHeight = $state(0);
+
+	// =============================== LIFECYCLE ===============================
+
+	onMount(() => {
+		addDynamicModules();
+	});
+
+	// ================================ FUNCS ==================================
+	function addDynamicModules() {
+		// TODO: i really dont like importing like this. It should really follow a
+		//       DI w/ a service.
+		let pk = get(pubkey);
+		if (pk?.length > 0) {
+			components['profile'] = Modules.PROFILE;
+		} else {
+			components['login'] = Modules.LOGIN;
+		}
+	}
 
 	// ============================== CLICK FUNCS ==============================
 	function onClose(): void {
