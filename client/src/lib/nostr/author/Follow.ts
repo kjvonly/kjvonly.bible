@@ -1,15 +1,28 @@
+
+// SVELTE
 import { get } from 'svelte/store';
+
+// MODELS
+import type { Event } from 'nostr-typedef';
+import { Signer } from '$lib/nostr/Signer';
+import { Queue } from '$lib/nostr/Queue';
+import { WebStorage } from '$lib/nostr/WebStorage';
+
+
+// DEPS 
 import { now } from 'rx-nostr';
 import { filter, firstValueFrom } from 'rxjs';
-import type { Event } from 'nostr-typedef';
+
+
+// STORES
 import { metadataStore } from '$lib/nostr/cache/Events';
-import { metadataReqEmit, rxNostr } from '$lib/nostr/timelines/MainTimeline';
 import { updateFolloweesStore } from '$lib/nostr/Contacts';
-import { Queue } from '$lib/nostr/Queue';
-import { fetchLastEvent } from '$lib/nostr/RxNostrHelper';
-import { Signer } from '$lib/nostr/Signer';
-import { WebStorage } from '$lib/nostr/WebStorage';
 import { followees, pubkey } from '../stores/Author';
+
+// LIB
+import { metadataReqEmit, rxNostr } from '$lib/nostr/timelines/MainTimeline';
+import { fetchLastEvent } from '$lib/nostr/RxNostrHelper';
+
 // import { timeline as homeTimeline } from '$lib/nostr/timelines/HomeTimeline';
 
 type DataType = 'follow' | 'unfollow';
@@ -92,7 +105,7 @@ async function publish(): Promise<void> {
   if (queue.length > 0) {
     await publish();
   } else {
-    // TODO home timeline
+    // TODO: home timeline
     //homeTimeline.subscribe();
   }
 }

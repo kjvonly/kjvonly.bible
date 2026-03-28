@@ -1,5 +1,8 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	// SVELTE
+	import { get } from 'svelte/store';
+
 	// COMPONENTS
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import BufferContainer from '$lib/components/bufferContainer.svelte';
@@ -14,8 +17,8 @@
 	// SERVICES
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { onMount } from 'svelte';
-	import { loginService } from '$lib/nostr/services/login.service';
-	import { get } from 'svelte/store';
+
+	// NOSTR
 	import { pubkey } from '$lib/nostr/stores/Author';
 
 	// =============================== BINDINGS ================================
@@ -48,6 +51,8 @@
 
 	// ================================ FUNCS ==================================
 	function addDynamicModules() {
+		// TODO: i really dont like importing like this. It should really follow a
+		//       DI w/ a service.
 		let pk = get(pubkey);
 		if (pk?.length > 0) {
 			components['profile'] = Modules.PROFILE;
