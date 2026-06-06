@@ -1,0 +1,58 @@
+go get github.com/fiatjaf/mergesortedslices
+
+if you have any number of sorted slices you can merge them all in a single sorted slice.
+
+this orders bigger elements first rather than the opposite -- if you want it the other way please copy-paste the code and change.
+
+this sometimes is faster than just mashing them together like a madman and calling `slices.Sort()` then `slices.Reverse()`, but sometimes not.
+
+goos: linux
+goarch: amd64
+pkg: github.com/fiatjaf/merge-sorted-slices
+cpu: AMD Ryzen 3 3200G with Radeon Vega Graphics
+
+BenchmarkMergeVsQuicksort/many-small/mergeall-4                    10000            121018 ns/op
+BenchmarkMergeVsQuicksort/many-small/quicksort-4                   30464             38996 ns/op
+BenchmarkMergeVsQuicksort/few-big/mergeall-4                       22197             56067 ns/op
+BenchmarkMergeVsQuicksort/few-big/quicksort-4                      10000            111113 ns/op
+BenchmarkMergeVsQuicksort/fewest-big/mergeall-4                    38775             37689 ns/op
+BenchmarkMergeVsQuicksort/fewest-big/quicksort-4                   15337             91172 ns/op
+BenchmarkMergeVsQuicksort/many-big/mergeall-4                        409           2578229 ns/op
+BenchmarkMergeVsQuicksort/many-big/quicksort-4                       904           1616955 ns/op
+BenchmarkMergeVsQuicksort/few-small/mergeall-4                    797331              2328 ns/op
+BenchmarkMergeVsQuicksort/few-small/quicksort-4                   600583              2941 ns/op
+
+for some reason using a custom comparator is significantly slower than using the hardcoded `cmp.Compare()` -- even when you actually pass in `cmp.Compare` as an argument. don't ask me why. the same performance hit (or bigger) also affects `slices.SortFunc()`.
+
+BenchmarkMergeVsQuicksortFunc/many-small/mergeall-4                 9319            151554 ns/op
+BenchmarkMergeVsQuicksortFunc/many-small/quicksort-4               14011             93110 ns/op
+BenchmarkMergeVsQuicksortFunc/few-big/mergeall-4                   14103             82564 ns/op
+BenchmarkMergeVsQuicksortFunc/few-big/quicksort-4                   7546            224849 ns/op
+BenchmarkMergeVsQuicksortFunc/fewest-big/mergeall-4                21457             53450 ns/op
+BenchmarkMergeVsQuicksortFunc/fewest-big/quicksort-4                9021            181349 ns/op
+BenchmarkMergeVsQuicksortFunc/many-big/mergeall-4                    290           4231061 ns/op
+BenchmarkMergeVsQuicksortFunc/many-big/quicksort-4                   406           2704375 ns/op
+BenchmarkMergeVsQuicksortFunc/few-small/mergeall-4                488162              3385 ns/op
+BenchmarkMergeVsQuicksortFunc/few-small/quicksort-4               256736              6720 ns/op
+
+this will work better on a smaller number of slices that have a bigger number of sequential values that are not interlaced, i.e.,
+
+merging {1, 2, 4, 6, 7, 8, 13, 16, 19, 20} with {18, 22, 25, 28, 29, 30, 31} will work better than
+merging {1, 1, 2, 3, 3, 5, 7, 8, 10, 12, 15} with {1, 2, 4, 5, 6, 9, 11, 13, 14, 16}.
+
+now where it excels is when you need to take just the first N of the values, so you can stop the iteration at some point (which you can't do with quicksort):
+
+BenchmarkMergeVsQuicksortLimit/many-small/mergeall-4               53628             23622 ns/op
+BenchmarkMergeVsQuicksortLimit/many-small/quicksort-4              28882             43004 ns/op
+BenchmarkMergeVsQuicksortLimit/few-big/mergeall-4                 281392              5951 ns/op
+BenchmarkMergeVsQuicksortLimit/few-big/quicksort-4                  9242            115081 ns/op
+BenchmarkMergeVsQuicksortLimit/fewest-big/mergeall-4              442494              4093 ns/op
+BenchmarkMergeVsQuicksortLimit/fewest-big/quicksort-4              10000            102202 ns/op
+BenchmarkMergeVsQuicksortLimit/many-big/mergeall-4                 24458             51888 ns/op
+BenchmarkMergeVsQuicksortLimit/many-big/quicksort-4                  639           1568560 ns/op
+BenchmarkMergeVsQuicksortLimit/few-small/mergeall-4              1286480              1074 ns/op
+BenchmarkMergeVsQuicksortLimit/few-small/quicksort-4              377631              2668 ns/op
+
+---
+
+this may or may not be called a "k-way" merge algorithm.

@@ -46,6 +46,9 @@ _testmain.go
 //*.test
 .vscode/tasks.json
 zarf/compose/database-data/data
-
+zarf/docker/data/postgres_data
+zarf/docker/data/minio_data
 
 __debug*
+
+scratch

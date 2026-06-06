@@ -1,0 +1,7 @@
+export let CHAPTER_KIND = 37770
+export let ANNOTATIONS_KIND = 37772
+export let NOTES_KIND = 37773
+export let PLANS_KIND = 37775
+export let SUBSCRIPTIONS_KIND = 37776
+export let COMPLETED_READINGS_KIND = 37777
+export let BLOSSOM_KIND = 37778

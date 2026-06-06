@@ -1,0 +1,24 @@
+◊ replace all booknames references with bible metadata service
+◊ move BCV interface to common models
+◊ show completed subscription
+◊ edit subscription
+◊ add next reading button to sub list
+◊ make bufferContainer, header, and body component for all buffers.
+◊ extract all buttons to common component
+◊ copy verse - extra space after chapter number
+◊ does paneID need to be bindable?
+◊ after moving everything to bufferContainer component remove bind:containerHeight
+note needed with h-full on the bufferContainer
+◊ get all annotations does not include unsynced annots
+◊ import and export need to be refactored with new indexedDB stores
+◊ add strongs ref split pane to search
+◊ update title in notes for verse notes to display the book chapter and verse
+◊ add icon size setting in settings apply via app.css
+◊ keep dynamic grid-cols
+◊ a little movement in search in showing n of search result size
+◊ add triangle/chevron to left side of strongs words.
+◊ remove Map type back to dict for all bound objects
+◊ Create a strongs module allowing users to search for strongs words. this will
+launch the existing strongs module when strongs word is selected.
+◊ it seems the plans worker did not register on its own? console.log inside the
+worker registered it? Investigate.

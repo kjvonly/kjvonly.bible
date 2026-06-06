@@ -1,4 +1,0 @@
-ignore:
-  - "clock.go"
-  - "errors.go"
-  - "examples"
