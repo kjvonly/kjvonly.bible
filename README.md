@@ -28,4 +28,13 @@ git submodule update --init --recursive
 make up
 ```
 
+# NOSTR
+
+Read [README.NOSTR.md](README.NOSTR.md).
+
+
+# SEED
+
+Read [README.SEED.md](zarf/scripts/seed/README.SEED.md)
+
 

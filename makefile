@@ -1,10 +1,32 @@
+###############################################################################
+
+# VARS
+NOSTR_SECRET_KEY := $(shell cat ~/.config/nostr/dev.key)
+
+
+###############################################################################
+# KJVOnly
+seed-chapters:
+	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./chapters.sh
+
+seed-plans:
+	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./plans.sh
+
+seed-strongs:
+	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./strongs.sh
+
+seed-all: seed-chapters seed-plans seed-strongs
+
+###############################################################################
+
+# DOCKER
+
+## Docker Compose
+.PHONY: minio postgres up
+
 up:
 	docker compose -f zarf/docker/docker-compose.yml up -d
 
-seedPlans:
-	cd zarf/scripts/seed && echo $$NOSTR_SECRET_KEY && ./plans.sh
-
-.PHONY: minio postgres
 
 minio:
 	docker run -d \
@@ -26,7 +48,7 @@ postgres:
 		-v postgres-data:/var/lib/postgresql/data \
 		postgres:17
 
-
+###############################################################################
 
 # NOSTR
 
