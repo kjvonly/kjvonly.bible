@@ -25,3 +25,26 @@ postgres:
 		-e POSTGRES_DB=blossom \
 		-v postgres-data:/var/lib/postgresql/data \
 		postgres:17
+
+
+
+# NOSTR
+
+## NOSTR KEY
+
+.PHONY: nostr-key nostr-pub nostr-load nostr-show
+
+nostr-keygen:
+	@mkdir -p ~/.config/nostr
+	@test -f ~/.config/nostr/dev.key || nak key generate > ~/.config/nostr/dev.key
+	@chmod 600 ~/.config/nostr/dev.key
+	@echo "Nostr key saved to ~/.config/nostr/dev.key"
+
+nostr-pub:
+	@nak key public $$(cat ~/.config/nostr/dev.key)
+
+nostr-show:
+	@cat ~/.config/nostr/dev.key
+
+nostr-load:
+	@echo 'export NOSTR_SECRET_KEY=$$(cat ~/.config/nostr/dev.key)'
