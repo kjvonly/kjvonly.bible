@@ -26,6 +26,18 @@ docker run -p 9000:9000 -p 9001:9001 \
   minio/minio server /data --console-address ":9001"   
 ```
 
+### persistent data
+```
+docker run -d \
+  --name minio \
+  -p 9000:9000 \
+  -p 9001:9001 \
+  -e MINIO_ROOT_USER=minioadmin \
+  -e MINIO_ROOT_PASSWORD=minioadmin \
+  -v minio-data:/data \
+  minio/minio server /data --console-address ":9001"
+  ```
+
 ```
 nak blossom upload --server http://localhost:3335 ../data/json.gz/bibleindex.json.gz
 /bin/ls -1  | grep 'gz' | xargs -I {} -P 12 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37775 -d kjvonly/plans/readings/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {} 
