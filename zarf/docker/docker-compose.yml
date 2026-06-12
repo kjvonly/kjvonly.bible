@@ -1,8 +1,6 @@
-version: "3"
-
 services:
   postgres:
-    image: postgres:17.4
+    image: postgres:18.1-bookworm
     container_name: postgres_db
     ports:
       - "5432:5432"
@@ -11,16 +9,16 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: kjvonly
     volumes:
-      - ./data/postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pg_isready", "-q", "-d", "myapp_db", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-q", "-d", "kjvonly", "-U", "postgres"]
       interval: 10s
       timeout: 45s
       retries: 10
 
   minio:
-    image: minio/minio
+    image: minio/minio:RELEASE.2025-05-24T17-08-30Z
     container_name: minio_server
     ports:
       - "9000:9000"
@@ -28,9 +26,9 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    command: server --console-address ":9001" /data
+    command: server /data --console-address ":9001"
     volumes:
-      - ./data/minio_data:/data
+      - minio_data:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]

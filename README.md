@@ -1,12 +1,29 @@
 # KJVonly.bible
 
-```bash
-git clone --recursive
+KJVOnly is an offline-first PWA Bible app built with Svelte and Tailwind.
 
+Features include:
+
+* Strong's Concordance
+* Cross references
+* Light and dark themes
+* Fast local search
+* Offline reading
+
+In development:
+
+* Decentralized relay network built on the Nostr protocol
+
+## Setup
+
+```bash
+git clone --recursive <repo-url>
 ```
 
 ```bash
-git submodule init
-git submodule update --init
+git submodule update --init --recursive
 ```
 
+```bash
+make up
+```
