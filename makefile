@@ -27,6 +27,20 @@ seed-all: seed-chapters seed-plans seed-strongs
 up:
 	docker compose -f zarf/docker/docker-compose.yml up -d
 
+down:
+	docker compose -f zarf/docker/docker-compose.yml down
+
+down-clean:
+	docker compose -f zarf/docker/docker-compose.yml down -v
+
+logs:
+	docker compose -f zarf/docker/docker-compose.yml logs -f
+
+logs-postgres:
+	docker compose -f zarf/docker/docker-compose.yml logs -f postgres
+
+logs-minio:
+	docker compose -f zarf/docker/docker-compose.yml logs -f minio
 
 minio:
 	docker run -d \

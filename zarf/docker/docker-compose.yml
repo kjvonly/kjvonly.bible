@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: kjvonly
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-d", "kjvonly", "-U", "postgres"]
