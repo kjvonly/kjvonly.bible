@@ -10,6 +10,7 @@ services:
       POSTGRES_DB: kjvonly
     volumes:
       - postgres_data:/var/lib/postgresql
+      - ./postgres-init:/docker-entrypoint-initdb.d
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-d", "kjvonly", "-U", "postgres"]
