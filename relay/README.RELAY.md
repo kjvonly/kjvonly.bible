@@ -1,5 +1,5 @@
 ```
-/bin/ls -1 | head -n 1 | xargs -I {} -P 10 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37770 -d kjvonly/bible/kjvs/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {}
+/bin/ls 1_1.json.gz | head -n 1 | xargs -I {} -P 10 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37770 -d kjvonly/bible/kjvs/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {}
 
 nak req  -l 3 -d kjvonly/bible/kjvs/1_1   --auth ws://localhost:3334  | jq -r '.content' | xxd -p -r | zcat  | jq
 ```

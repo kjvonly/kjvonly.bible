@@ -42,6 +42,13 @@ logs-postgres:
 logs-minio:
 	docker compose -f zarf/docker/docker-compose.yml logs -f minio
 
+psql:
+	docker exec -it postgres_db psql -U postgres -d kjvonly
+
+psql-blossom:
+	docker exec -it postgres_db psql -U postgres -d blossom
+
+# USE Docker Compose at zarf/docker/docker-compose.yml
 minio:
 	docker run -d \
 		--name minio \
@@ -52,6 +59,7 @@ minio:
 		-v minio-data:/data \
 		minio/minio server /data --console-address ":9001"
 
+# USE Docker Compose at zarf/docker/docker-compose.yml
 postgres:
 	docker run -d \
 		--name postgres \
