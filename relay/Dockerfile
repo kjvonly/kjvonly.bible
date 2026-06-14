@@ -15,6 +15,6 @@ WORKDIR /app
 
 COPY --from=builder /app/relay /app/relay
 
-EXPOSE 8080
+EXPOSE 3334
 
 CMD ["/app/relay"]

@@ -15,6 +15,6 @@ WORKDIR /app
 
 COPY --from=builder /app/blossom /app/blossom
 
-EXPOSE 8081
+EXPOSE 3335
 
 CMD ["/app/blossom"]
