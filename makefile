@@ -48,28 +48,6 @@ psql:
 psql-blossom:
 	docker exec -it postgres_db psql -U postgres -d blossom
 
-# USE Docker Compose at zarf/docker/docker-compose.yml
-minio:
-	docker run -d \
-		--name minio \
-		-p 9000:9000 \
-		-p 9001:9001 \
-		-e MINIO_ROOT_USER=devuser \
-		-e MINIO_ROOT_PASSWORD=devpassword \
-		-v minio-data:/data \
-		minio/minio server /data --console-address ":9001"
-
-# USE Docker Compose at zarf/docker/docker-compose.yml
-postgres:
-	docker run -d \
-		--name postgres \
-		-p 5432:5432 \
-		-e POSTGRES_USER=postgres \
-		-e POSTGRES_PASSWORD=postgres \
-		-e POSTGRES_DB=blossom \
-		-v postgres-data:/var/lib/postgresql/data \
-		postgres:17
-
 ###############################################################################
 
 # NOSTR
@@ -92,3 +70,81 @@ nostr-show:
 
 nostr-load:
 	@echo 'export NOSTR_SECRET_KEY=$$(cat ~/.config/nostr/dev.key)'
+
+relay-build:
+	cd relay && go build -o relay .
+
+relay-run:
+	cd relay && go run .
+
+relay-test:
+	cd relay && go test ./...
+
+relay-docker-build:
+	docker compose -f zarf/docker/docker-compose.yml build relay
+
+relay-docker-up:
+	docker compose -f zarf/docker/docker-compose.yml up -d relay
+
+relay-docker-rebuild:
+	docker compose -f zarf/docker/docker-compose.yml up -d --build relay
+
+relay-logs:
+	docker compose -f zarf/docker/docker-compose.yml logs -f relay
+
+relay-shell:
+	docker exec -it relay_server sh
+
+###############################################################################
+# RELAY
+
+relay-build:
+	cd relay && go build -o relay .
+
+relay-run:
+	cd relay && go run .
+
+relay-test:
+	cd relay && go test ./...
+
+relay-docker-build:
+	docker compose -f zarf/docker/docker-compose.yml build relay
+
+relay-docker-up:
+	docker compose -f zarf/docker/docker-compose.yml up -d relay
+
+relay-docker-rebuild:
+	docker compose -f zarf/docker/docker-compose.yml up -d --build relay
+
+relay-logs:
+	docker compose -f zarf/docker/docker-compose.yml logs -f relay
+
+relay-shell:
+	docker exec -it relay_server sh
+
+###############################################################################
+# BLOSSOM
+
+blossom-build:
+	cd blossom && go build -o blossom .
+
+blossom-run:
+	cd blossom && go run .
+
+blossom-test:
+	cd blossom && go test ./...
+
+blossom-docker-build:
+	docker compose -f zarf/docker/docker-compose.yml build blossom
+
+blossom-docker-up:
+	docker compose -f zarf/docker/docker-compose.yml up -d blossom
+
+blossom-docker-rebuild:
+	docker compose -f zarf/docker/docker-compose.yml up -d --build blossom
+
+blossom-logs:
+	docker compose -f zarf/docker/docker-compose.yml logs -f blossom
+
+blossom-shell:
+	docker exec -it blossom_server sh
