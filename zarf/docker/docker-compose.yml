@@ -17,7 +17,6 @@ services:
       interval: 10s
       timeout: 45s
       retries: 10
-
   minio:
     image: minio/minio:RELEASE.2025-05-24T17-08-30Z
     container_name: minio_server
@@ -42,7 +41,7 @@ services:
       dockerfile: Dockerfile
     container_name: relay_server
     ports:
-      - "8080:8080"
+      - "3334:3334"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
     depends_on:
@@ -55,7 +54,7 @@ services:
       dockerfile: Dockerfile
     container_name: blossom_server
     ports:
-      - "8081:8081"
+      - "3335:3335"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/blossom?sslmode=disable
       MINIO_ENDPOINT: minio:9000

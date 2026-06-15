@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/fiatjaf/eventstore/postgresql"
 	"github.com/fiatjaf/khatru"
@@ -22,7 +23,9 @@ func main() {
 	relay.Info.Description = "this is my custom relay"
 	relay.Info.Icon = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fliquipedia.net%2Fcommons%2Fimages%2F3%2F35%2FSCProbe.jpg&f=1&nofb=1&ipt=0cbbfef25bce41da63d910e86c3c343e6c3b9d63194ca9755351bb7c2efa3359&ipo=images"
 
-	db := postgresql.PostgresBackend{DatabaseURL: "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"}
+	databaseURL := env("DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable")
+
+	db := postgresql.PostgresBackend{DatabaseURL: databaseURL}
 
 	if err := db.Init(); err != nil {
 		panic(err)
@@ -81,4 +84,11 @@ func main() {
 	if err := http.ListenAndServe(":3334", relay); err != nil {
 		fmt.Println(err)
 	}
+}
+
+func env(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
 }

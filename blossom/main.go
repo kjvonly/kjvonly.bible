@@ -20,19 +20,14 @@ import (
 
 func main() {
 
-	///////////////////////////////////////////////////////////////////////////
-	// ENV VARS
-
-	endpoint := os.Getenv("MINIO_ENDPOINT")
-	accessKey := os.Getenv("MINIO_ACCESS_KEY")
-	secretKey := os.Getenv("MINIO_SECRET_KEY")
-
 	//////////////////////////////////////////////////////////////////////////
 	// RELAY
 
+	databaseURL := env("DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/blossom?sslmode=disable")
+
 	relay := khatru.NewRelay()
 
-	db := postgresql.PostgresBackend{DatabaseURL: "postgresql://postgres:postgres@localhost:5432/blossom?sslmode=disable"}
+	db := postgresql.PostgresBackend{DatabaseURL: databaseURL}
 
 	if err := db.Init(); err != nil {
 		panic(err)
@@ -81,10 +76,17 @@ func main() {
 	//////////////////////////////////////////////////////////////////////////
 	// MINIO
 
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: false,
-	})
+	client, err := minio.New(
+		env("MINIO_ENDPOINT", "minio:9000"),
+		&minio.Options{
+			Creds: credentials.NewStaticV4(
+				env("MINIO_ACCESS_KEY", "minioadmin"),
+				env("MINIO_SECRET_KEY", "minioadmin"),
+				"",
+			),
+			Secure: env("MINIO_SECURE", "false") == "true",
+		},
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,4 +120,11 @@ func main() {
 
 	fmt.Println("running on :3335")
 	http.ListenAndServe(":3335", relay)
+}
+
+func env(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
 }

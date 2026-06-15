@@ -71,31 +71,7 @@ nostr-show:
 nostr-load:
 	@echo 'export NOSTR_SECRET_KEY=$$(cat ~/.config/nostr/dev.key)'
 
-relay-build:
-	cd relay && go build -o relay .
-
-relay-run:
-	cd relay && go run .
-
-relay-test:
-	cd relay && go test ./...
-
-relay-docker-build:
-	docker compose -f zarf/docker/docker-compose.yml build relay
-
-relay-docker-up:
-	docker compose -f zarf/docker/docker-compose.yml up -d relay
-
-relay-docker-rebuild:
-	docker compose -f zarf/docker/docker-compose.yml up -d --build relay
-
-relay-logs:
-	docker compose -f zarf/docker/docker-compose.yml logs -f relay
-
-relay-shell:
-	docker exec -it relay_server sh
-
-###############################################################################
+##############################################################################
 # RELAY
 
 relay-build:
