@@ -2,10 +2,30 @@
 
 # VARS
 NOSTR_SECRET_KEY := $(shell cat ~/.config/nostr/dev.key)
-
+export NOSTR_SECRET_KEY
 
 ###############################################################################
-# KJVOnly
+# SEED 
+seed-chapters:
+	cd zarf/scripts/seed && \
+	./chapters.sh all
+
+seed-chapters-relay:
+	cd zarf/scripts/seed && \
+	./chapters.sh relay
+
+seed-chapters-blossom:
+	cd zarf/scripts/seed && \
+	./chapters.sh blossom
+
+seed-kjv:
+	cd zarf/scripts/seed && \
+	./chapters.sh file ../../../data/json.gz/kjv.json.gz "KJV Bible"
+
+seed-kjvs:
+	cd zarf/scripts/seed && \
+	./chapters.sh file ../../../data/json.gz/kjvs.json.gz "KJV Bible with Strongs Concordance"
+
 seed-chapters:
 	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./chapters.sh
 
