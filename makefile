@@ -6,6 +6,8 @@ export NOSTR_SECRET_KEY
 
 ###############################################################################
 # SEED 
+
+## CHAPTERS
 seed-chapters:
 	cd zarf/scripts/seed && \
 	./chapters.sh all
@@ -26,6 +28,7 @@ seed-kjvs:
 	cd zarf/scripts/seed && \
 	./chapters.sh file ../../../data/json.gz/kjvs.json.gz "KJV Bible with Strongs Concordance"
 
+## STRONGS
 seed-strongs:
 	cd zarf/scripts/seed && ./strongs.sh all
 
@@ -38,14 +41,12 @@ seed-strongs-blossom:
 seed-strongs-all-file:
 	cd zarf/scripts/seed && ./strongs.sh file ../../../data/strongs.json.gz/all.json.gz "Strong's Concordance"
 
-seed-chapters:
-	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./chapters.sh
-
-seed-plans:
+## PLANS
+seed-plans-relay:
+	cd zarf/scripts/seed && ./plans.sh relay
 	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./plans.sh
 
 ###############################################################################
-
 # DOCKER
 
 ## Docker Compose
