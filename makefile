@@ -152,3 +152,77 @@ blossom-logs:
 
 blossom-shell:
 	docker exec -it blossom_server sh
+
+
+###############################################################################
+# CLIENT
+
+## NPM
+client-install:
+	cd $(CLIENT_DIR) && npm install
+
+client-build:
+	cd $(CLIENT_DIR) && npm run build
+
+client-dev:
+	cd $(CLIENT_DIR) && npm run dev > ../client.log 2>&1 &
+
+client-dev-logs:
+	tail -f client.log
+
+client-dev-stop:
+	pkill -f "npm run dev"
+
+client-dev-restart: client-dev-stop client-dev
+
+## CERTS
+
+CLIENT_DIR := client
+CERT_DIR := $(CLIENT_DIR)/.certs
+SSL_DOMAIN := app.local
+
+ssl: ssl-root-ca ssl-app-cert
+
+ssl-root-ca:
+	mkdir -p $(CERT_DIR)
+	openssl req -x509 -nodes -new -sha256 -days 390 -newkey rsa:2048 \
+		-keyout $(CERT_DIR)/RootCA.key \
+		-out $(CERT_DIR)/RootCA.pem \
+		-subj "/C=US/CN=Local Development CA"
+	openssl x509 -outform pem \
+		-in $(CERT_DIR)/RootCA.pem \
+		-out $(CERT_DIR)/RootCA.crt
+
+ssl-app-ext:
+	mkdir -p $(CERT_DIR)
+	printf '%s\n' \
+		'authorityKeyIdentifier=keyid,issuer' \
+		'basicConstraints=CA:FALSE' \
+		'keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment' \
+		'subjectAltName = @alt_names' \
+		'' \
+		'[alt_names]' \
+		'DNS.1 = $(SSL_DOMAIN)' \
+		'DNS.2 = *.$(SSL_DOMAIN)' \
+		> $(CERT_DIR)/$(SSL_DOMAIN).ext
+
+ssl-app-cert: ssl-app-ext
+	openssl req -new -nodes -newkey rsa:2048 \
+		-keyout $(CERT_DIR)/$(SSL_DOMAIN).key \
+		-out $(CERT_DIR)/$(SSL_DOMAIN).csr \
+		-subj "/C=US/ST=State/L=City/O=Dev/CN=$(SSL_DOMAIN)"
+	openssl x509 -req -sha256 -days 390 \
+		-in $(CERT_DIR)/$(SSL_DOMAIN).csr \
+		-CA $(CERT_DIR)/RootCA.pem \
+		-CAkey $(CERT_DIR)/RootCA.key \
+		-CAcreateserial \
+		-extfile $(CERT_DIR)/$(SSL_DOMAIN).ext \
+		-out $(CERT_DIR)/$(SSL_DOMAIN).crt
+
+ssl-trust:
+	sudo security add-trusted-cert -d -r trustRoot \
+		-k /Library/Keychains/System.keychain \
+		$(CERT_DIR)/RootCA.crt
+
+ssl-clean:
+	rm -rf $(CERT_DIR)

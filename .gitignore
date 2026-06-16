@@ -1,14 +1,6 @@
 # Project
-app/services/bible-api/bible-api
-app/services/metrics/metrics
-app/tooling/bible-admin/bible-admin
-app/tooling/bible-admin/logfmt
-app/tooling/bible-admin/docs
 .excalidraw
 database-data/
-
-# Environment
-api/cmd/frontends/admin/.env
 
 # Mac
 .DS_Store
