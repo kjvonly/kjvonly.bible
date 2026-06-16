@@ -26,16 +26,23 @@ seed-kjvs:
 	cd zarf/scripts/seed && \
 	./chapters.sh file ../../../data/json.gz/kjvs.json.gz "KJV Bible with Strongs Concordance"
 
+seed-strongs:
+	cd zarf/scripts/seed && ./strongs.sh all
+
+seed-strongs-relay:
+	cd zarf/scripts/seed && ./strongs.sh relay
+
+seed-strongs-blossom:
+	cd zarf/scripts/seed && ./strongs.sh blossom
+
+seed-strongs-all-file:
+	cd zarf/scripts/seed && ./strongs.sh file ../../../data/strongs.json.gz/all.json.gz "Strong's Concordance"
+
 seed-chapters:
 	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./chapters.sh
 
 seed-plans:
 	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./plans.sh
-
-seed-strongs:
-	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./strongs.sh
-
-seed-all: seed-chapters seed-plans seed-strongs
 
 ###############################################################################
 
