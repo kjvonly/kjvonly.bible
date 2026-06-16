@@ -1,18 +1,16 @@
-# Seeding Data
+## Seeding Data
 
-The seed scripts publish Bible content to the relay and Blossom storage.
+The seed scripts publish Bible content, Strong's Concordance data, and reading plans to the relay and Blossom storage.
 
 ### Environment Variables
-
-The following variables are used by the seed scripts:
 
 | Variable           | Description                           | Default                 |
 | ------------------ | ------------------------------------- | ----------------------- |
 | `NOSTR_SECRET_KEY` | Nostr private key used to sign events | Required                |
 | `RELAY_URL`        | Relay websocket endpoint              | `ws://localhost:3334`   |
 | `BLOSSOM_URL`      | Blossom HTTP endpoint                 | `http://localhost:3335` |
-| `DATA_DIR`         | Directory containing source files     | `../../../data/json.gz` |
-| `PARALLEL`         | Number of parallel uploads/events     | `10`                    |
+| `DATA_DIR`         | Source data directory                 | Script specific         |
+| `PARALLEL`         | Number of parallel workers            | `10`                    |
 
 ### Nostr Key
 
@@ -34,51 +32,110 @@ The key is stored at:
 ~/.config/nostr/dev.key
 ```
 
-The Makefile automatically exports `NOSTR_SECRET_KEY` for all seed targets.
+The Makefile exports `NOSTR_SECRET_KEY` for all seed targets.
 
-### Seed Chapter Events
+---
 
-Publish chapter content directly to the relay:
+## Bible Chapters
+
+Chapter files are published directly to the relay using Kind `37770`.
+
+### Relay
 
 ```bash
 make seed-chapters-relay
 ```
 
-### Seed Blossom Files
+### Blossom
 
-Upload aggregated files to Blossom and publish reference events to the relay:
+Uploads aggregated Bible files to Blossom and publishes reference events.
 
 ```bash
 make seed-chapters-blossom
 ```
 
-### Seed Everything
+### Everything
 
 ```bash
 make seed-chapters
 ```
 
-### Seed Individual Bundle Files
-
-Upload a single file to Blossom and publish its metadata event:
+### Individual Bible Bundles
 
 ```bash
 make seed-kjv
 make seed-kjvs
 ```
 
-### Custom Nostr Kinds
+---
 
-| Kind    | Purpose                                         |
-| ------- | ----------------------------------------------- |
-| `37770` | Chapter content stored directly in relay events |
-| `37778` | Blossom file reference events                   |
+## Strong's Concordance
 
-Large files are uploaded to Blossom first. A corresponding Kind `37778` event is then published containing:
+Individual Strong's entries are published directly to the relay using Kind `37770`.
+
+### Relay
+
+```bash
+make seed-strongs-relay
+```
+
+### Blossom
+
+Uploads the aggregated concordance file and publishes a reference event.
+
+```bash
+make seed-strongs-blossom
+```
+
+### Everything
+
+```bash
+make seed-strongs
+```
+
+### Individual Bundle
+
+```bash
+make seed-strongs-all-file
+```
+
+---
+
+## Reading Plans
+
+Reading plans are published directly to the relay using Kind `37775`.
+
+```bash
+make seed-plans-relay
+```
+
+---
+
+## Custom Nostr Kinds
+
+| Kind    | Purpose                                  |
+| ------- | ---------------------------------------- |
+| `37770` | Bible chapter and Strong's entry content |
+| `37775` | Reading plans                            |
+| `37778` | Blossom file reference events            |
+
+### Relay Content Events
+
+Small files are stored directly in Nostr events.
+
+* Content is hex-encoded `json.gz`
+* Data is immediately available from the relay
+* Used for chapters, Strong's entries, and reading plans
+
+### Blossom Reference Events
+
+Large files are uploaded to Blossom first.
+
+A Kind `37778` event is then published containing:
 
 * SHA256 hash (`x` tag)
 * File URL (`url` tag)
-* File type metadata
+* MIME/type metadata
 * Deterministic identifier (`d` tag)
 
-This allows clients to discover files through the relay while retrieving the actual content from Blossom.
+The relay stores metadata and discovery information while Blossom stores the actual file bytes.
