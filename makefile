@@ -99,6 +99,9 @@ nostr-show:
 nostr-load:
 	@echo 'export NOSTR_SECRET_KEY=$$(cat ~/.config/nostr/dev.key)'
 
+nostr-nsec:
+	@cat ~/.config/nostr/dev.key | xargs nak encode nsec
+
 ##############################################################################
 # RELAY
 
