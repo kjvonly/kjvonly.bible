@@ -31,8 +31,82 @@ func main() {
 		panic(err)
 	}
 
+	relay.QueryEvents = append(relay.QueryEvents,
+		func(ctx context.Context, filter nostr.Filter) (chan *nostr.Event, error) {
+			log.Printf("[relay] query start filter=%+v", filter)
+
+			events, err := db.QueryEvents(ctx, filter)
+			if err != nil {
+				log.Printf("[relay] query error err=%v", err)
+				return events, err
+			}
+
+			out := make(chan *nostr.Event)
+
+			go func() {
+				defer close(out)
+
+				count := 0
+				for event := range events {
+					count++
+
+					log.Printf(
+						"[relay] query event kind=%d pubkey=%s d=%s id=%s",
+						event.Kind,
+						event.PubKey,
+						event.Tags.GetD(),
+						event.ID,
+					)
+
+					out <- event
+				}
+
+				log.Printf("[relay] query done count=%d filter=%+v", count, filter)
+			}()
+
+			return out, nil
+		},
+	)
+
 	relay.StoreEvent = append(relay.StoreEvent, db.SaveEvent)
-	relay.QueryEvents = append(relay.QueryEvents, db.QueryEvents)
+
+	relay.QueryEvents = append(relay.QueryEvents,
+		func(ctx context.Context, filter nostr.Filter) (chan *nostr.Event, error) {
+			log.Printf("[relay] query start filter=%+v", filter)
+
+			events, err := db.QueryEvents(ctx, filter)
+			if err != nil {
+				log.Printf("[relay] query error err=%v", err)
+				return events, err
+			}
+
+			out := make(chan *nostr.Event)
+
+			go func() {
+				defer close(out)
+
+				count := 0
+				for event := range events {
+					count++
+
+					log.Printf(
+						"[relay] query event kind=%d pubkey=%s d=%s id=%s",
+						event.Kind,
+						event.PubKey,
+						event.Tags.GetD(),
+						event.ID,
+					)
+
+					out <- event
+				}
+
+				log.Printf("[relay] query done count=%d filter=%+v", count, filter)
+			}()
+
+			return out, nil
+		},
+	)
+
 	relay.CountEvents = append(relay.CountEvents, db.CountEvents)
 	relay.DeleteEvent = append(relay.DeleteEvent, db.DeleteEvent)
 	relay.ReplaceEvent = append(relay.ReplaceEvent, db.ReplaceEvent)
