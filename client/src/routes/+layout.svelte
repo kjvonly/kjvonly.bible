@@ -91,6 +91,8 @@
 		}
 
 		setTimeout(() => {
+			// [DEV NOTE]: Sync Services is the entry point to sync data for the app...
+			//             default data like bible chapters etc.
 			syncService.init();
 		}, 5000);
 
