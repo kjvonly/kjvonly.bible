@@ -56,20 +56,37 @@ func main() {
 
 	// you can request auth by rejecting an event or a request with the prefix "auth-required: "
 	relay.RejectFilter = append(relay.RejectFilter,
-		// built-in policies
 		policies.NoComplexFilters,
 
-		// define your own policies
 		func(ctx context.Context, filter nostr.Filter) (reject bool, msg string) {
-			if pubkey := khatru.GetAuthed(ctx); pubkey != "" {
-				log.Printf("request from %s\n", pubkey)
+			pubkey := khatru.GetAuthed(ctx)
+
+			log.Printf("[relay] incoming REQ filter=%+v authed=%t pubkey=%s",
+				filter,
+				pubkey != "",
+				pubkey,
+			)
+
+			if pubkey != "" {
+				log.Printf("[relay] accepted REQ from pubkey=%s", pubkey)
 				return false, ""
 			}
+
+			log.Printf("[relay] rejected REQ: auth required filter=%+v", filter)
+
 			return true, "auth-required: only authenticated users can read from this relay"
-			// (this will cause an AUTH message to be sent and then a CLOSED message such that clients can
-			//  authenticate and then request again)
 		},
 	)
+
+	relay.OnConnect = append(relay.OnConnect, func(ctx context.Context) {
+		log.Printf("[relay] client connected")
+	})
+
+	relay.OnDisconnect = append(relay.OnDisconnect, func(ctx context.Context) {
+		pubkey := khatru.GetAuthed(ctx)
+		log.Printf("[relay] client disconnected pubkey=%s", pubkey)
+	})
+
 	// check the docs for more goodies!
 
 	mux := relay.Router()
