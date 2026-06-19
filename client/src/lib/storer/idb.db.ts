@@ -19,13 +19,45 @@ class IndexedDB {
 	public async createAndOrOpenObjectStores(tableNames: string[], versionNumber: number) {
 		try {
 			this.db = await openDB(this.database, versionNumber, {
-				upgrade(db: IDBPDatabase) {
+				upgrade(db, oldVersion, newVersion, transaction, event) {
+					console.log('[IndexedDB upgrade]', {
+						name: db.name,
+						oldVersion,
+						newVersion
+					});
+
 					for (const tableName of tableNames) {
 						if (db.objectStoreNames.contains(tableName)) {
+							console.log('[IndexedDB store exists]', tableName);
 							continue;
 						}
-						db.createObjectStore(tableName, { autoIncrement: true, keyPath: 'id' });
+
+						console.log('[IndexedDB create store]', tableName);
+						db.createObjectStore(tableName, {
+							autoIncrement: true,
+							keyPath: 'id'
+						});
 					}
+				},
+
+				blocked(currentVersion, blockedVersion, event) {
+					console.warn('[IndexedDB blocked]', {
+						currentVersion,
+						blockedVersion,
+						event
+					});
+				},
+
+				blocking(currentVersion, blockedVersion, event) {
+					console.warn('[IndexedDB blocking]', {
+						currentVersion,
+						blockedVersion,
+						event
+					});
+				},
+
+				terminated() {
+					console.error('[IndexedDB terminated]');
 				}
 			});
 			return true;

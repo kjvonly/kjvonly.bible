@@ -68,7 +68,6 @@ export class BibleDB extends IndexedDB {
     super(DB_NAME);
   }
 
-  ID = uuid4()
   static instance: BibleDB = new BibleDB();
 
   private static createPromise: Promise<BibleDB> | null = null;
@@ -79,8 +78,6 @@ export class BibleDB extends IndexedDB {
     }
 
     this.createPromise = (async () => {
-      console.log(`[ CreateAsync BibleDB ${this.instance.ID} ]`);
-
       await this.instance.createAndOrOpenObjectStores([
         CHAPTERS,
         BIBLE_VERSIONS,
@@ -114,4 +111,4 @@ export class BibleDB extends IndexedDB {
   }
 }
 
- const bibleDB = await getBibleDB();
+const bibleDB = await getBibleDB();
