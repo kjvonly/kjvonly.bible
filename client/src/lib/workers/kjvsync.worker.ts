@@ -79,11 +79,17 @@ async function fetchAndStoreAllBibleChapters(urls: string[]) {
       } else {
         throw new Error(`can only process gzip for chapters but got ${u}`)
       }
+
+      // Loop through all chapters by key (bibleLocationRef)
+      // and add chapter to chapters to Chapters indexedDB
       let chapters = new Map<string, any>(Object.entries(JSON.parse(json)));
       chapters.forEach((chapter: any, bibleLocationRef: string) => {
         chapter['id'] = bibleLocationRef;
         db.putValue(CHAPTERS, chapter);
       });
+
+      // Add bible version to bible versions table to track what bible versions
+      // the user has installed on device.
       let key = chapters.keys().next().value
       let bibleVersion = key?.split('/')[0]
       await db.putValue(BIBLE_VERSIONS, { id: bibleVersion })
