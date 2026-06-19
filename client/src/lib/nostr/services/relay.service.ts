@@ -93,20 +93,6 @@ export class RelayService {
   };
 
   async getEvents(filter: Filter): Promise<NostrEvent[] | null> {
-    // await this.atLeastOnerelayIsReady.promise
-    // return await this.pool.querySync(
-    //   this.relays,
-    //   filter,
-    //   {
-    //     onclose() {
-    //       console.log('End of stored events (EOSE)');
-    //     },
-    //     onauth: this.createOnAuth(KJVONLY_REALY_URL),
-    //
-    //     doauth: this.createOnAuth(KJVONLY_REALY_URL),
-    //   }
-    // )
-
     let events: any = [];
     await new Promise<void>((resolve, reject) => {
       const rxReq = createRxBackwardReq();
@@ -118,8 +104,13 @@ export class RelayService {
         )
         .subscribe({
           next: (packet) => {
-            console.log("Received:", packet);
-            events.push(packet.event);
+            // console.log("Received:", packet);
+            // events.push(packet.event);
+            console.log('[rx packet]', packet.type, packet);
+
+            if (packet.event) {
+              events.push(packet.event);
+            }
           },
           complete: () => {
             console.log('[relay service getEvents complete]', filter);
@@ -132,6 +123,7 @@ export class RelayService {
         });
 
       rxReq.emit(filter);
+      rxReq.over()
     })
 
     return events

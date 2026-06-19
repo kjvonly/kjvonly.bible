@@ -110,5 +110,3 @@ export class BibleDB extends IndexedDB {
     return this.createPromise;
   }
 }
-
-const bibleDB = await getBibleDB();
