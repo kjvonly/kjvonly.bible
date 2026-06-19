@@ -12,7 +12,19 @@ Some resources are too large to store directly in event content, so they are sto
 
 As the platform evolves, resources may be stored in multiple backends. Storage location should not be encoded into Nostr kinds.
 
-Resources should be independently identifiable, reusable, and composable across datasets.
+Resources should be independently identifiable, reusable, composable across datasets, and distributable at different levels of granularity.
+
+For example:
+
+```text
+Full Bible:
+kjvonly/bible/chapters/kjv
+
+Single Chapter:
+kjvonly/bible/chapters/kjv/1_1
+```
+
+Both should be valid resources that follow the same naming convention.
 
 ## Decision
 
@@ -31,7 +43,7 @@ Storage is handled per resource using a strategy.
 Resources are identified using the canonical resource naming convention:
 
 ```text
-namespace/domain/resource-type/resource-id
+namespace/domain/resource-type/...resource-id
 ```
 
 Examples:
@@ -40,14 +52,24 @@ Examples:
 kjvonly/bible/chapters/kjv
 kjvonly/bible/chapters/kjvs
 
+kjvonly/bible/chapters/kjv/1_1
+kjvonly/bible/chapters/kjv/43_3
+
 kjvonly/bible/index/default
 kjvonly/bible/booknames/default
+
+kjvonly/bible/strongs/default
 
 kjvonly/overlays/paragraphs/default
 kjvonly/overlays/pericopes/default
 
+kjvonly/overlays/paragraphs/default/1_1
+kjvonly/overlays/pericopes/default/1_1
+
 kjvonly/plans/readings/chronological
 ```
+
+Everything after `resource-type` is considered part of the resource identity.
 
 The combination of:
 
@@ -181,6 +203,22 @@ Example manifest for the KJV Bible dataset:
 }
 ```
 
+### Chapter-Level Distribution
+
+A manifest may also reference individual chapter resources.
+
+Example:
+
+```json
+{
+  "resource": "kjvonly/bible/chapters/kjv/1_1",
+  "type": "bible-chapters",
+  "strategy": "event"
+}
+```
+
+This allows clients to load only the resources they need.
+
 ## Resource Fields
 
 | Field       | Description                         |
@@ -199,10 +237,12 @@ Example manifest for the KJV Bible dataset:
 Resources follow:
 
 ```text
-namespace/domain/resource-type/resource-id
+namespace/domain/resource-type/...resource-id
 ```
 
 Examples:
+
+### Bundle Resources
 
 ```text
 kjvonly/bible/chapters/kjv
@@ -211,26 +251,63 @@ kjvonly/bible/chapters/kjvs
 kjvonly/bible/index/default
 kjvonly/bible/booknames/default
 
+kjvonly/bible/strongs/default
+
 kjvonly/overlays/paragraphs/default
 kjvonly/overlays/pericopes/default
 
 kjvonly/plans/readings/chronological
 ```
 
-The final segment is the resource identity.
-
-It may represent:
+### Item Resources
 
 ```text
-A Bible version
+kjvonly/bible/chapters/kjv/1_1
+kjvonly/bible/chapters/kjv/43_3
+
+kjvonly/overlays/paragraphs/default/1_1
+kjvonly/overlays/pericopes/default/1_1
+```
+
+The final path segments collectively form the resource identity.
+
+Examples:
+
+```text
+resource-type = chapters
+resource-id   = kjv
+```
+
+```text
+resource-type = chapters
+resource-id   = kjv/1_1
+```
+
+This allows a resource to represent either:
+
+```text
+A complete dataset
+A single chapter
+A paragraph overlay
+A pericope overlay
 A reading plan
-A paragraph scheme
-A pericope scheme
 A study guide
 A user-created resource
 ```
 
-It is not limited to version identifiers.
+## Applicability
+
+Resources may be reusable across multiple Bible versions.
+
+Example:
+
+```json
+{
+  "appliesTo": ["kjv", "kjvs"]
+}
+```
+
+Applicability is metadata and should not be encoded into the resource identifier.
 
 ## Client Flow
 
@@ -246,13 +323,53 @@ for each resource:
   store in IndexedDB
 ```
 
+## Distribution Models
+
+### Offline First
+
+```text
+manifest
+↓
+download bundle resources
+↓
+store locally
+```
+
+Example:
+
+```text
+kjvonly/bible/chapters/kjv
+kjvonly/overlays/paragraphs/default
+kjvonly/overlays/pericopes/default
+```
+
+### On Demand
+
+```text
+manifest
+↓
+request individual resources
+↓
+render
+```
+
+Example:
+
+```text
+kjvonly/bible/chapters/kjv/1_1
+kjvonly/overlays/paragraphs/default/1_1
+kjvonly/overlays/pericopes/default/1_1
+```
+
 ## Design Rules
 
 * Manifest events describe datasets.
 * Manifest kind does not imply Blossom.
 * Resource identifiers are canonical and globally meaningful.
 * Resource identifiers follow the format:
-  `namespace/domain/resource-type/resource-id`
+  `namespace/domain/resource-type/...resource-id`
+* Everything after `resource-type` is part of the resource identity.
+* Resources may represent bundles or individual items.
 * Storage strategy is declared per resource.
 * Applicability is metadata, not part of the resource identifier.
 * Every remote resource must include a hash.
@@ -269,4 +386,5 @@ for each resource:
 * New resources can be added without creating new kinds.
 * Clients can selectively download resources.
 * Overlay resources can be reused across Bible versions.
+* Full datasets and individual chapters can coexist.
 * Future storage strategies can be introduced without modifying resource identifiers.

@@ -56,17 +56,37 @@ Resource identifiers follow this convention:
 namespace/domain/resource-type/resource-id
 ```
 
+For fine-grained resources, the resource id may contain additional path segments:
+
+```text
+namespace/domain/resource-type/resource-id/item-id
+```
+
+or more generally:
+
+```text
+namespace/domain/resource-type/...resource-id
+```
+
+Everything after `resource-type` is considered the resource identity.
+
 Examples:
 
 ```text
 kjvonly/bible/chapters/kjv
 kjvonly/bible/chapters/kjvs
 
+kjvonly/bible/chapters/kjv/1_1
+kjvonly/bible/chapters/kjvs/43_3
+
 kjvonly/bible/index/default
 kjvonly/bible/booknames/default
 
 kjvonly/overlays/paragraphs/default
+kjvonly/overlays/paragraphs/default/1_1
+
 kjvonly/overlays/pericopes/default
+kjvonly/overlays/pericopes/default/1_1
 
 kjvonly/plans/readings/chronological
 kjvonly/plans/readings/yearly
@@ -84,6 +104,15 @@ resource-id   = kjv
 ```
 
 ```text
+kjvonly/bible/chapters/kjv/1_1
+
+namespace     = kjvonly
+domain        = bible
+resource-type = chapters
+resource-id   = kjv/1_1
+```
+
+```text
 kjvonly/overlays/pericopes/90-day-reading
 
 namespace     = kjvonly
@@ -92,20 +121,30 @@ resource-type = pericopes
 resource-id   = 90-day-reading
 ```
 
-The final segment is the resource identity.
-
-It may represent:
+The resource id may represent:
 
 ```text
-A Bible version
+A full Bible version
+A single chapter
 A reading plan
 A paragraph scheme
 A pericope scheme
+A pericope entry for one chapter
 A study guide
 A user-created resource
 ```
 
-It is not limited to version identifiers.
+This allows both bundle-level and item-level resources.
+
+Examples:
+
+```text
+Bundle resource:
+kjvonly/bible/chapters/kjv
+
+Item resource:
+kjvonly/bible/chapters/kjv/1_1
+```
 
 The combination of:
 
@@ -114,6 +153,45 @@ pubkey + d
 ```
 
 acts as the canonical resource identifier.
+
+## Granularity
+
+Resources may exist at different levels of granularity.
+
+A client may download a full Bible bundle:
+
+```text
+kjvonly/bible/chapters/kjv
+```
+
+or request a single chapter:
+
+```text
+kjvonly/bible/chapters/kjv/1_1
+```
+
+Both follow the same resource convention.
+
+The storage strategy decides how the resource is resolved.
+
+Examples:
+
+```text
+Full bundle:
+strategy = blossom
+
+Single chapter:
+strategy = event
+```
+
+This allows the app to support both:
+
+```text
+Offline-first bulk download
+On-demand chapter loading
+```
+
+without changing the domain model.
 
 ## Applicability
 
@@ -211,6 +289,11 @@ Manifest content:
       "sha256": "..."
     },
     {
+      "type": "chapters",
+      "resource": "kjvonly/bible/chapters/kjv/1_1",
+      "strategy": "event"
+    },
+    {
       "type": "paragraphs",
       "resource": "kjvonly/overlays/paragraphs/default",
       "strategy": "blossom",
@@ -244,7 +327,9 @@ Store in IndexedDB
 * Kinds represent domains.
 * `d` tags represent resources.
 * Resource identifiers follow the format:
-  `namespace/domain/resource-type/resource-id`
+  `namespace/domain/resource-type/...resource-id`
+* Everything after `resource-type` is part of the resource identity.
+* Resource identifiers may represent bundles or individual items.
 * Resource applicability is metadata.
 * Storage is not encoded in kinds.
 * Storage is resolved through strategies.
