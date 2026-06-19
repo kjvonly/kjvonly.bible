@@ -21,12 +21,12 @@ import { downloadAndDecompressGzip } from '$lib/utils/gzip';
 
 onmessage = async (e) => {
   switch (e.data.action) {
-    case 'init':
-      await syncAnnotsAndNotesFromServer(e.data);
-      break;
-    case 'sync':
-      await syncAnnotsAndNotesFromServer(e.data);
-      break;
+    // case 'init':
+    //   await syncAnnotsAndNotesFromServer(e.data);
+    //   break;
+    // case 'sync':
+    //   await syncAnnotsAndNotesFromServer(e.data);
+    //   break;
     case 'chapters':
       fetchAndStoreAllBibleChapters(e.data.urls);
       break;
@@ -50,20 +50,21 @@ onmessage = async (e) => {
   }
 };
 
-let db = await BibleDB.CreateAsync();
+//let db = await BibleDB.CreateAsync();
+let db = bibleDB
 
-// TODO sync ANNOTS and NOTES
-async function syncAnnotsAndNotesFromServer(data: any) {
-  authService.setBearerToekn(data.token);
+// // TODO sync ANNOTS and NOTES
+// async function syncAnnotsAndNotesFromServer(data: any) {
+//   authService.setBearerToekn(data.token);
 
-  // ----------------- SYNC ANNOTS ------------------------------------------
-  await offlineApi.sync('/annots', UNSYNCED_ANNOTATIONS, ANNOTATIONS);
-  postMessage({ id: 'annotations' });
+//   // ----------------- SYNC ANNOTS ------------------------------------------
+//   await offlineApi.sync('/annots', UNSYNCED_ANNOTATIONS, ANNOTATIONS);
+//   postMessage({ id: 'annotations' });
 
-  // ----------------- SYNC NOTES -------------------------------------------
-  await offlineApi.sync('/notes', UNSYNCED_NOTES, NOTES);
-  postMessage({ id: 'notes' });
-}
+//   // ----------------- SYNC NOTES -------------------------------------------
+//   await offlineApi.sync('/notes', UNSYNCED_NOTES, NOTES);
+//   postMessage({ id: 'notes' });
+// }
 
 // --------------------- SYNC STATIC DATA -------------------------------------
 
