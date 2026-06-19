@@ -13,11 +13,13 @@ import {
   PERICOPES,
   BIBLE_VERSIONS,
   ACTION_DELETE_VERSION,
-  bibleDB
+  getBibleDB
 } from '$lib/storer/bible.db';
 import { authService } from '$lib/services/auth.service';
 import { offlineApi } from '$lib/nostr/events/offline.nostr';
 import { downloadAndDecompressGzip } from '$lib/utils/gzip';
+
+let bibleDB = await getBibleDB()
 
 onmessage = async (e) => {
   switch (e.data.action) {

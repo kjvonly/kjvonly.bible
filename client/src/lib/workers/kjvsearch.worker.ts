@@ -1,7 +1,9 @@
 import type { SearchResultResponse } from '$lib/models/search.model';
-import { bibleDB, SEARCH } from '$lib/storer/bible.db';
+import { getBibleDB, SEARCH } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
+
+let bibleDB = await getBibleDB()
 
 /**
  * Index ID is <BookID>_<Chapter>_<Verse>

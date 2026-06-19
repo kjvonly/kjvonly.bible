@@ -1,9 +1,12 @@
-import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION } from '$lib/storer/bible.db';
+import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION, getBibleDB } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
-import { bibleDB } from '$lib/storer/bible.db';
 import { relayService } from '../nostr/services/relay.service';
 import { BLOSSOM_KIND } from '$lib/nostr/events/kinds';
 import { getTag, getTags, KJVONLY_PUBKEY } from '$lib/utils/nostr';
+
+let bibleDB = await getBibleDB()
+
+
 const syncWorker = new Worker(
   new URL('../workers/kjvsync.worker?worker', import.meta.url),
   {
