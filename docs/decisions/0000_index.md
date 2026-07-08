@@ -12,6 +12,7 @@
 | [0008](./0008-sync-outbox-strategy.md)       | Sync / Outbox Strategy              | Defines the asynchronous synchronization model, outbox lifecycle, retries, conflict handling, and offline-first publishing. |
 | [0009](./0009-trusted-publishers.md)         | Trusted Publishers                  | Defines the trust model for publisher discovery and separates trust, discovery, and resource installation. |
 | [0010](./0010-import-export-format.md)       | Import / Export Format              | Defines archive resources as manifests with associated resources, enabling portable backups, migration, and installation reuse. |
+| [0011](./0011-search-index-strategy.md)      | Search Index Strategy               | Defines search indexes as reusable resources, supporting incremental updates, distribution, and offline-first search.            |
 ---
 
 ### 0001 — Data Distribution Strategy
@@ -393,7 +394,43 @@ An export archive is a manifest with associated resources.
 
 Import is simply another source feeding the same installation pipeline.
 ```
+---
 
+### 0011 — Search Index Strategy
+
+**Problem:** How can search remain fast without rebuilding indexes every time the application starts?
+
+**Decision:**
+
+Search indexes are treated as both derived data and reusable resources.
+
+```text
+Resources
+↓
+Build Index
+↓
+Store Snapshot
+↓
+Incremental Updates
+↓
+Search
+```
+
+Publisher-provided indexes may be downloaded.
+
+User-generated indexes are maintained locally through incremental indexing and periodic snapshot updates.
+
+Search indexes participate in the same discovery, installation, import/export, and resource lifecycle as every other application resource.
+
+**Big takeaway:**
+
+```text
+Search indexes are derived resources.
+
+Build once.
+Reuse many times.
+Update incrementally.
+```
 ---
 
 ## Architectural Layers
