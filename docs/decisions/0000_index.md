@@ -8,7 +8,10 @@
 | [0004](./0004-resource-resolution.md)        | Resource Resolution                 | Defines how clients resolve resources, cache content locally, manage synchronization, and maintain offline-first behavior.       |
 | [0005](./0005-resource-discovery.md)         | Resource Discovery                  | Defines trust-based resource discovery using manifests, trusted publishers, and offline-capable manifest caching.                |
 | [0006](./0006-resource-versioning.md)        | Resource Versioning                 | Defines stable resource identities, content-based version detection, update behavior, and the resource forking model.            |
-
+| [0007](./0007-indexeddb-schema.md)           | IndexedDB Schema                    | Defines the client-side persistence model using domain stores, resource metadata, manifests, trusted publishers, and the outbox. |
+| [0008](./0008-sync-outbox-strategy.md)       | Sync / Outbox Strategy              | Defines the asynchronous synchronization model, outbox lifecycle, retries, conflict handling, and offline-first publishing. |
+| [0009](./0009-trusted-publishers.md)         | Trusted Publishers                  | Defines the trust model for publisher discovery and separates trust, discovery, and resource installation. |
+| [0010](./0010-import-export-format.md)       | Import / Export Format              | Defines archive resources as manifests with associated resources, enabling portable backups, migration, and installation reuse. |
 ---
 
 ### 0001 — Data Distribution Strategy
@@ -259,21 +262,152 @@ Content versions are determined by hashes or event IDs.
 Shared resources are updated.
 Customized resources are forked.
 ```
+---
+
+### 0007 — IndexedDB Schema
+
+**Problem:** How should the client persist application state while remaining resource-oriented and offline-first?
+
+**Decision:**
+
+Separate persistence into three responsibilities:
+
+```text
+Domain Stores
+↓
+Resources & Manifests
+↓
+Outbox
+```
+
+Domain stores contain application state.
+
+Resources and manifests contain metadata and installation information.
+
+The outbox manages synchronization.
+
+**Big takeaway:**
+
+```text
+IndexedDB stores application state.
+
+Resources describe it.
+
+The Outbox synchronizes it.
+```
+
+---
+
+### 0008 — Sync / Outbox Strategy
+
+**Problem:** How are local changes synchronized without depending on network connectivity?
+
+**Decision:**
+
+Every write is committed locally first.
+
+```text
+User Action
+↓
+Domain Store
+↓
+Outbox
+↓
+Background Sync
+```
+
+Synchronization is asynchronous.
+
+Operations are coalesced for replaceable events.
+
+Retries use exponential backoff with circuit breakers.
+
+Last-write-wins is the default conflict strategy.
+
+**Big takeaway:**
+
+```text
+Users save locally.
+
+The Outbox eventually publishes those changes to Nostr.
+```
+
+---
+
+### 0009 — Trusted Publishers
+
+**Problem:** How does the application know whose resources it may discover?
+
+**Decision:**
+
+Trust is binary.
+
+```text
+Trusted Publisher
+↓
+Manifest Discovery
+↓
+Available Resources
+```
+
+Trust enables discovery.
+
+Subscriptions determine which discovered resources become installed.
+
+Resources always remain owned by their publisher.
+
+**Big takeaway:**
+
+```text
+Trust enables discovery.
+
+Subscriptions enable installation.
+```
+
+---
+
+### 0010 — Import / Export Format
+
+**Problem:** How can application data be backed up, migrated, and shared without introducing a separate backup architecture?
+
+**Decision:**
+
+Exports are Archive Resources.
+
+```text
+Archive
+↓
+Manifest
+↓
+Resources
+```
+
+Imports reuse the same manifest verification, resource resolution, and installation pipeline used throughout the application.
+
+Search indexes, metadata, and resources may all participate in an archive.
+
+**Big takeaway:**
+
+```text
+An export archive is a manifest with associated resources.
+
+Import is simply another source feeding the same installation pipeline.
+```
 
 ---
 
 ## Architectural Layers
 
 ```text
-Nostr Kind (Domain)
-        ↓
-Resource Identifier
+Trusted Publishers
         ↓
 Manifest Discovery
         ↓
 Resource Resolution
         ↓
-Storage Strategy
+Verification
+        ↓
+Installation
         ↓
 Domain Stores
         ↓
@@ -289,27 +423,31 @@ Define domains
 
 Resources
 ↓
-Identify content
+Provide stable identities
 
 Manifests
 ↓
-Bootstrap datasets
+Describe collections of resources
 
-Discovery
+Trusted Publishers
 ↓
-Find trusted content
+Enable discovery
+
+Subscriptions
+↓
+Select what to install
 
 Resolution
 ↓
-Load content
+Locate resources
 
-Versioning
+Verification
 ↓
-Track content changes
+Validate integrity
 
-Strategies
+Installation
 ↓
-Determine storage backend
+Populate domain stores
 
 Domain Stores
 ↓
@@ -317,5 +455,9 @@ Render application state
 
 Outbox
 ↓
-Synchronize user changes
+Synchronize local changes
+
+Archives
+↓
+Package and transport resources
 ```
