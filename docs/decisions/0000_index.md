@@ -433,7 +433,7 @@ Update incrementally.
 ```
 ---
 
-## Architectural Layers
+## Architectural Pipeline
 
 ```text
 Trusted Publishers
@@ -451,7 +451,7 @@ Domain Stores
 Outbox Synchronization
 ```
 
-## Current Architecture Summary
+## Current Architecture Overview
 
 ```text
 Kinds
