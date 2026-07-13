@@ -13,6 +13,7 @@
 | [0009](./0009-trusted-publishers.md)         | Trusted Publishers                  | Defines the trust model for publisher discovery and separates trust, discovery, and resource installation. |
 | [0010](./0010-import-export-format.md)       | Import / Export Format              | Defines archive resources as manifests with associated resources, enabling portable backups, migration, and installation reuse. |
 | [0011](./0011-search-index-strategy.md)      | Search Index Strategy               | Defines search indexes as reusable resources, supporting incremental updates, distribution, and offline-first search.            |
+| [0012](./0012-resource-installation.md)      | Resource Installation               | Defines the source-independent installation pipeline, resource dependencies, atomic updates, deduplication, and offline-first installation lifecycle. |
 ---
 
 ### 0001 — Data Distribution Strategy
@@ -433,6 +434,45 @@ Update incrementally.
 ```
 ---
 
+---
+
+### 0012 — Resource Installation
+
+**Problem:** How do discovered resources become usable local application data while remaining reliable, efficient, and offline-first?
+
+**Decision:**
+
+Resource installation uses a single, source-independent pipeline.
+
+```text
+Source
+↓
+Manifest
+↓
+Resolve Resources
+↓
+Download
+↓
+Verify
+↓
+Install
+↓
+Domain Stores
+```
+
+Both bundled and individual resources are installable.
+
+Dependencies are installed automatically.
+
+Installations are atomic, updates preserve the last valid version until complete, and identical content is deduplicated using content hashes.
+
+**Big takeaway:**
+
+```text
+Resource installation is source-independent.
+
+Every resource follows the same installation pipeline regardless of where it originated.
+```
 ## Architectural Pipeline
 
 ```text
