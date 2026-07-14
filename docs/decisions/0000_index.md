@@ -434,8 +434,6 @@ Update incrementally.
 ```
 ---
 
----
-
 ### 0012 — Resource Installation
 
 **Problem:** How do discovered resources become usable local application data while remaining reliable, efficient, and offline-first?
@@ -473,6 +471,46 @@ Resource installation is source-independent.
 
 Every resource follows the same installation pipeline regardless of where it originated.
 ```
+---
+
+---
+
+### 0013 — Event Model
+
+**Problem:** How does the application use Nostr without exposing protocol details throughout the codebase?
+
+**Decision:**
+
+The Event Model forms the boundary between KJVOnly and the Nostr protocol.
+
+```text
+Relay
+↓
+Event Strategy
+↓
+Domain Object
+↓
+Domain Store
+```
+
+Incoming events are parsed and validated through event strategies.
+
+Outgoing domain objects are serialized, optionally encrypted, signed, and published through event factories.
+
+Application code works exclusively with domain models and resources.
+
+**Big takeaway:**
+
+```text
+The Event Model isolates the Nostr protocol.
+
+Application code works with resources and domain models.
+
+Event strategies handle parsing, serialization, validation, encryption, and signing.
+```
+
+---
+
 ## Architectural Pipeline
 
 ```text
