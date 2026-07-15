@@ -14,6 +14,7 @@
 | [0010](./0010-import-export-format.md)       | Import / Export Format              | Defines archive resources as manifests with associated resources, enabling portable backups, migration, and installation reuse. |
 | [0011](./0011-search-index-strategy.md)      | Search Index Strategy               | Defines search indexes as reusable resources, supporting incremental updates, distribution, and offline-first search.            |
 | [0012](./0012-resource-installation.md)      | Resource Installation               | Defines the source-independent installation pipeline, resource dependencies, atomic updates, deduplication, and offline-first installation lifecycle. |
+| [0014](./0014-application-lifecycle.md)      | Application Lifecycle               | Defines application startup, bootstrap, background services, and the offline-first lifecycle from launch to a ready application state. |
 ---
 
 ### 0001 — Data Distribution Strategy
@@ -508,8 +509,42 @@ Application code works with resources and domain models.
 
 Event strategies handle parsing, serialization, validation, encryption, and signing.
 ```
-
 ---
+
+### 0014 — Application Lifecycle
+
+**Problem:** How does the application become usable immediately while continuing resource installation, synchronization, and updates in the background?
+
+**Decision:**
+
+The application renders as soon as the current reading context and its required dependencies are available.
+
+```text
+Open Application
+↓
+Open IndexedDB
+↓
+Resolve Current Reading
+↓
+Render
+↓
+Background Services
+```
+
+Synchronization, updates, search indexing, and resource installation continue independently after the application reaches the Ready state.
+
+**Big takeaway:**
+
+```text
+Render first.
+
+Everything else happens in the background.
+
+The application is usable before synchronization completes.
+```
+---
+
+
 
 ## Architectural Pipeline
 
