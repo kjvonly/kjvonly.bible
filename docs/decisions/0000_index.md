@@ -15,6 +15,7 @@
 | [0011](./0011-search-index-strategy.md)      | Search Index Strategy               | Defines search indexes as reusable resources, supporting incremental updates, distribution, and offline-first search.            |
 | [0012](./0012-resource-installation.md)      | Resource Installation               | Defines the source-independent installation pipeline, resource dependencies, atomic updates, deduplication, and offline-first installation lifecycle. |
 | [0014](./0014-application-lifecycle.md)      | Application Lifecycle               | Defines application startup, bootstrap, background services, and the offline-first lifecycle from launch to a ready application state. |
+| [0015](./0015-resource-update-policy.md)     | Resource Update Policy              | Defines how installed resources receive publisher updates through Auto Sync while separating installation, ownership, and forking. |
 ---
 
 ### 0001 — Data Distribution Strategy
@@ -541,6 +542,39 @@ Render first.
 Everything else happens in the background.
 
 The application is usable before synchronization completes.
+```
+---
+
+### 0015 — Resource Update Policy
+
+**Problem:** How should installed resources receive updates while preserving publisher ownership and supporting independent user copies?
+
+**Decision:**
+
+Installation, ownership, and update behavior are independent concepts.
+
+```text
+Discovered
+↓
+Installed
+↓
+Auto Sync
+↓
+Fork (optional)
+```
+
+Auto Sync determines whether installed publisher resources automatically receive updates.
+
+Forking creates an independent user-owned resource without affecting the original publisher-owned installation.
+
+**Big takeaway:**
+
+```text
+Install makes a resource available.
+
+Auto Sync controls future updates.
+
+Forking creates independent ownership.
 ```
 ---
 
