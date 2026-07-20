@@ -162,6 +162,26 @@ Each published version receives its own immutable event identifier.
 
 ---
 
+### Resource Identity and Versions
+
+```mermaid
+flowchart TD
+    RID["Stable Resource Identity<br/>(publisher pubkey, d tag)"]
+
+    RID --> V1["Resource Version 1<br/>Nostr event ID"]
+    RID --> V2["Resource Version 2<br/>Nostr event ID"]
+    RID --> V3["Resource Version 3<br/>Nostr event ID"]
+
+    V1 --> H1["Content Hash"]
+    V2 --> H2["Content Hash"]
+    V3 --> H3["Content Hash"]
+
+    H1 --> L1["Event Content or External Blob"]
+    H2 --> L2["Event Content or External Blob"]
+    H3 --> L3["Event Content or External Blob"]
+```
+---
+
 # Manifest Resources
 
 A manifest bootstraps a collection of resources.
