@@ -1,31 +1,78 @@
-# KJVOnly Data Distribution Strategy
+# ADR 0001 — Data Distribution Strategy
 
-## Goals
+**Status**
 
-* Keep Nostr kinds focused on resource domains, not storage mechanisms.
-* Support bootstrapping the app from a single manifest.
-* Support both bundle-level and item-level resource distribution.
-* Allow resources to be stored in multiple backends (Blossom, event content, future providers).
-* Verify integrity using hashes.
+Accepted
+
+---
+
+# Problem
+
+KJVOnly distributes application resources through Nostr while remaining independent of any specific storage backend.
+
+The architecture must support offline-first operation, efficient bootstrap, multiple storage strategies, and flexible resource granularity without changing the application's resource model.
+
+---
+
+# Decision
+
+Resources are distributed through manifests.
+
+Manifests describe resources.
+
+Resources describe how they are resolved.
+
+Storage strategies determine where resource content is retrieved.
+
+This separates:
+
+* Resource identity
+* Resource discovery
+* Resource transport
+* Resource installation
+
+Each concern evolves independently.
+
+---
+
+# Goals
+
+* Keep Nostr kinds focused on protocol structures rather than storage mechanisms.
+* Bootstrap application state from manifests.
+* Support both bundled and individual resource distribution.
+* Allow multiple storage strategies.
+* Verify downloaded content using hashes.
+* Preserve stable resource identities regardless of transport.
 * Remain compatible with existing Nostr conventions.
 
-## Kinds
+---
+
+# Kinds
+
+Kinds represent broad protocol structures rather than individual application resource types.
 
 ```text
-37770 bible resources
-37772 annotations
-37773 notes
-37775 reading plans
-37776 subscriptions
-37777 completed readings
-37778 manifests
+37770 Bible Resources
+37772 Annotations
+37773 Notes
+37775 Reading Plans
+37777 Completed Readings
+37778 Manifests
 ```
 
-## Resource Identity
+Resource identity provides the application's logical organization.
 
-Use parameterized replaceable events with semantic `d` tags.
+Kinds define how events are interpreted by the Event Model.
 
-Resource identifiers follow this convention:
+---
+
+# Resource Identity
+
+Resources are represented using parameterized replaceable events.
+
+The `d` tag contains the semantic resource identifier.
+
+Resource identifiers follow the convention:
 
 ```text
 namespace/domain/resource-type/...resource-id
@@ -39,7 +86,8 @@ Examples:
 kjvonly/bible/chapters/kjv
 kjvonly/bible/chapters/kjvs
 
-kjvonly/bible/index/default
+kjvonly/search/bible/kjv
+
 kjvonly/bible/booknames/default
 
 kjvonly/bible/strongs/default
@@ -51,7 +99,7 @@ kjvonly/plans/readings/chronological
 kjvonly/plans/readings/yearly
 ```
 
-### Item Resources
+### Individual Resources
 
 ```text
 kjvonly/bible/chapters/kjv/1_1
@@ -61,35 +109,44 @@ kjvonly/overlays/paragraphs/default/1_1
 kjvonly/overlays/pericopes/default/1_1
 ```
 
-This allows resources to exist at different levels of granularity.
+Both bundled resources and individual resources share the same identity model.
 
 For example:
 
 ```text
-Full Bible:
-kjvonly/bible/chapters/kjv
+Entire Bible
 
-Single Chapter:
-kjvonly/bible/chapters/kjv/1_1
+kjvonly/bible/chapters/kjv
 ```
 
-Ownership is determined by the event pubkey.
+```text
+Single Chapter
+
+kjvonly/bible/chapters/kjv/43_3
+```
+
+Ownership is determined by the publisher's public key.
 
 The combination of:
 
 ```text
-pubkey + d
+(pubkey, d)
 ```
 
-acts as the canonical resource identifier.
+defines the stable logical identity of a publisher-owned resource.
 
-## Manifest Events
+Each published version receives its own immutable event identifier.
 
-A manifest acts as the bootstrap entrypoint for a dataset.
+---
+
+# Manifest Resources
+
+A manifest bootstraps a collection of resources.
 
 ```text
-kind=37778
-d=kjvonly/bible/kjv
+kind = 37778
+
+d = kjvonly/bible/kjv
 ```
 
 Example:
@@ -100,21 +157,18 @@ Example:
   "resources": [
     {
       "resource": "kjvonly/bible/chapters/kjv",
-      "type": "bible-chapters",
       "strategy": "blossom",
       "url": "https://...",
       "sha256": "..."
     },
     {
       "resource": "kjvonly/overlays/paragraphs/default",
-      "type": "paragraphs",
       "strategy": "blossom",
       "url": "https://...",
       "sha256": "..."
     },
     {
       "resource": "kjvonly/overlays/pericopes/default",
-      "type": "pericopes",
       "strategy": "blossom",
       "url": "https://...",
       "sha256": "..."
@@ -125,19 +179,22 @@ Example:
 
 A manifest may describe:
 
-```text
-An entire Bible dataset
-A reading plan
-A study guide
-A collection of overlays
-A collection of individual chapter resources
-```
+* An entire Bible
+* Reading plans
+* Search indexes
+* Overlay collections
+* Individual chapter resources
+* Any future resource collection
 
-## Strategy Pattern
+---
 
-Resources define how they are loaded.
+# Storage Strategies
 
-### Blossom
+Resources declare how they are resolved.
+
+The application resolves resources without knowing where the underlying content is stored.
+
+## Blossom
 
 ```json
 {
@@ -147,7 +204,7 @@ Resources define how they are loaded.
 }
 ```
 
-### Event
+## Event
 
 ```json
 {
@@ -155,19 +212,11 @@ Resources define how they are loaded.
 }
 ```
 
-A chapter-sized resource may be stored directly in a Nostr event:
+Small resources such as a single Bible chapter may be stored directly in a Nostr event.
 
-```text
-kjvonly/bible/chapters/kjv/1_1
-```
+Large resources such as an entire Bible or search index may be stored in Blossom.
 
-while a complete Bible may be stored in Blossom:
-
-```text
-kjvonly/bible/chapters/kjv
-```
-
-Both resources share the same identity model.
+Both approaches use the same resource identity.
 
 Future strategies may include:
 
@@ -179,64 +228,105 @@ ipfs
 local
 ```
 
-## Bootstrap Flow
+---
+
+# Resource Installation
+
+Regardless of the storage strategy, resources follow the same installation pipeline.
 
 ```text
-load manifest
-↓
-iterate resources
-↓
-resolve strategy
-↓
-download/load resource
-↓
-verify hash
-↓
-store in IndexedDB
+Manifest
+        ↓
+Resolve Resource
+        ↓
+Resolve Strategy
+        ↓
+Retrieve Content
+        ↓
+Verify Hash
+        ↓
+Install Resource
 ```
 
-## Distribution Models
+The installation process is independent of the storage backend.
 
-### Offline First
+---
 
-Download an entire dataset.
+# Distribution Models
+
+## Offline First
+
+Install complete resource collections.
 
 ```text
-manifest
+Manifest
+
 ↓
-bible bundle
+
+Bible Bundle
+
 ↓
-paragraph bundle
+
+Overlay Bundles
+
 ↓
-pericope bundle
+
+Search Index
+
 ↓
-store locally
+
+Install
 ```
 
-### On Demand
+---
 
-Load only what is needed.
+## On Demand
+
+Install only the resources required by the current application state.
 
 ```text
-manifest
+Manifest
+
 ↓
-request chapter resource
+
+Chapter Resource
+
 ↓
-request paragraph resource
+
+Overlay Resource
+
 ↓
-render
+
+Render
 ```
 
-Both models use the same resource identifier convention.
+Both approaches use identical resource identifiers and installation behavior.
 
-## Design Notes
+---
 
-* Kinds represent domains, not storage locations.
-* Storage is an implementation detail handled by strategies.
-* Manifests provide a bootstrap entrypoint for datasets.
+# Design Notes
+
+* Resources are discovered through manifests.
+* Kinds define protocol structures rather than storage backends.
+* Resource identity is independent of transport.
+* Storage is an implementation detail isolated behind strategies.
 * Resources may represent bundles or individual items.
-* Resource descriptors should remain NIP-94-inspired where possible.
-* Author pubkeys determine ownership and sharing.
-* `(pubkey, d)` acts as the canonical resource identifier.
-* Resource identity remains stable regardless of storage backend.
-* Clients are free to choose between bulk download and lazy loading strategies.
+* Publishers own resources.
+* `(pubkey, d)` defines stable logical identity.
+* Event identifiers represent immutable published versions.
+* Hashes verify downloaded content.
+* Clients may choose full installation or on-demand installation without changing the resource model.
+
+---
+
+# Big Takeaway
+
+The application distributes resources rather than files.
+
+Manifests describe resources.
+
+Resources describe how they are resolved.
+
+Storage strategies retrieve content.
+
+The installation pipeline transforms those resources into local application state while preserving stable identities regardless of where or how the content is stored.
