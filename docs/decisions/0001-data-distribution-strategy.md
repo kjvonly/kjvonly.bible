@@ -32,7 +32,30 @@ This separates:
 * Resource installation
 
 Each concern evolves independently.
+---
+# Resource Distribution Overview
 
+```mermaid
+flowchart TD
+    P[Publisher] --> M[Manifest]
+
+    M --> R1[Bundle Resource]
+    M --> R2[Individual Resource]
+    M --> R3[Search Index]
+
+    R1 --> S1[Blossom Strategy]
+    R2 --> S2[Event Strategy]
+    R3 --> S1
+
+    S1 --> C[Resource Content]
+    S2 --> C
+
+    C --> V[Verify Integrity]
+    V --> I[Install Resource]
+    I --> D[Domain Stores]
+
+    D --> U[Application UI]
+```
 ---
 
 # Goals
