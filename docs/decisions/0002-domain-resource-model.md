@@ -457,3 +457,125 @@ The `d` tag identifies one logical resource.
 The classification tag identifies a class of related resources.
 
 Together they provide a consistent mechanism for discovery, synchronization, installation, and filtering while allowing the application to use a minimal number of protocol kinds.
+
+# Resource Versioning
+
+A resource may evolve at two independent levels:
+
+1. **Resource Version**
+2. **Event Revision**
+
+These represent different concerns and should not be confused.
+
+This ADR defines how these concepts relate to resource identity.
+
+The complete versioning model, including compatibility, migration, and lifecycle management, is defined in ADR 0006.
+
+---
+
+## Resource Version
+
+A Resource Version identifies a distinct version of a logical resource.
+
+The version forms part of the resource's logical identity and is therefore included in the resource identifier.
+
+For example:
+
+```text
+kjvonly/plans/readings/365-bible/v1
+kjvonly/plans/readings/365-bible/v2
+```
+
+These represent two distinct resources.
+
+Each Resource Version may:
+
+- exist simultaneously
+- be installed independently
+- be updated independently
+- be referenced independently
+
+Resource Versions are not limited to publisher-provided content.
+
+They may also represent application-generated or user-created resources.
+
+For example:
+
+```text
+kjvonly/notes/default/v1
+kjvonly/notes/default/v2
+
+kjvonly/highlights/default/v1
+kjvonly/highlights/default/v2
+```
+
+The rules governing when a new Resource Version should be created are defined by ADR 0006.
+
+---
+
+## Event Revision
+
+Nostr addressable events are identified by:
+
+```text
+(kind, pubkey, d)
+```
+
+Publishing another event using the same values creates a new event with a different event identifier.
+
+The Resource Version remains unchanged.
+
+The newly published event replaces the previously published event for that Resource Version.
+
+For example:
+
+```text
+kind   = RESOURCE_KIND
+pubkey = publisher
+d      = kjvonly/plans/readings/365-bible/v1
+```
+
+Publishing another event using the same address replaces the previous event while preserving the Resource Version.
+
+Although previous revisions may continue to exist on some relays temporarily, clients treat the most recent event as the authoritative representation of the Resource Version.
+
+This mechanism allows resources to be corrected, updated, or republished without changing their logical identity.
+
+---
+
+## Resource Version and Event Revision
+
+Resource Versions and Event Revisions exist independently.
+
+```mermaid
+flowchart TD
+
+    RV1["Resource Version<br/>365-bible/v1"]
+
+    RV2["Resource Version<br/>365-bible/v2"]
+
+    RV1 --> E1["Current Addressable Event"]
+
+    RV2 --> E2["Current Addressable Event"]
+```
+
+Each Resource Version has its own addressable event.
+
+Publishing a newer event using the same `(kind, pubkey, d)` replaces the current event for that Resource Version without creating a new Resource Version.
+
+Creating a new Resource Version creates a new logical resource with its own independent addressable event.
+
+---
+
+## Summary
+
+Resource Versioning and Event Revision solve different problems.
+
+- **Resource Version** identifies a distinct version of a logical resource.
+- **Event Revision** identifies successive publications of the same Resource Version.
+
+A new Event Revision updates the current representation of an existing Resource Version.
+
+A new Resource Version creates a new logical resource with its own independent identity.
+
+Keeping these concepts separate allows resources to evolve over time while preserving stable logical identities and predictable update behavior.
