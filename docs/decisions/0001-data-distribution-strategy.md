@@ -162,23 +162,30 @@ Each published version receives its own immutable event identifier.
 
 ---
 
-### Resource Identity and Versions
+### Replaceable and Versioned Resource Identity
 
 ```mermaid
-flowchart TD
-    RID["Stable Resource Identity<br/>(publisher pubkey, d tag)"]
+flowchart LR
+    subgraph Replaceable["Stable Identity — Same d Tag"]
+        direction TB
 
-    RID --> V1["Resource Version 1<br/>Nostr event ID"]
-    RID --> V2["Resource Version 2<br/>Nostr event ID"]
-    RID --> V3["Resource Version 3<br/>Nostr event ID"]
+        R1["Earlier Event<br/>d = kjvonly/bible/chapters/kjv"]
+        R2["Newer Event<br/>d = kjvonly/bible/chapters/kjv"]
+        CURRENT["Current Resource<br/>(publisher, kind, d)"]
 
-    V1 --> H1["Content Hash"]
-    V2 --> H2["Content Hash"]
-    V3 --> H3["Content Hash"]
+        R1 -. replaced by .-> R2
+        R2 --> CURRENT
+    end
 
-    H1 --> L1["Event Content or External Blob"]
-    H2 --> L2["Event Content or External Blob"]
-    H3 --> L3["Event Content or External Blob"]
+    subgraph Versioned["Independent Identities — Version in d Tag"]
+        direction TB
+
+        V1["Version 1 Resource<br/>d = kjvonly/bible/chapters/kjv/v1"]
+        V2["Version 2 Resource<br/>d = kjvonly/bible/chapters/kjv/v2"]
+
+        V1 --> E1["Independent Event"]
+        V2 --> E2["Independent Event"]
+    end
 ```
 ---
 

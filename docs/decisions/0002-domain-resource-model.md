@@ -1,339 +1,459 @@
-# Domain, Resource, and Storage Model
+# ADR 0002 — Domain, Resource, and Storage Model
 
-## Overview
+**Status**
 
-KJVOnly separates three concepts:
+Accepted
+
+---
+
+# Problem
+
+KJVOnly distributes many different types of application data.
+
+Examples include:
+
+- Bible text
+- Overlays
+- Reading plans
+- Notes
+- Annotations
+- Search indexes
+- Completed readings
+- Publisher metadata
+- Manifests
+
+These resources may be:
+
+- Published by different publishers
+- Stored using different backends
+- Installed independently
+- Updated independently
+- Shared across datasets
+- Retrieved at different levels of granularity
+
+Without a clear separation of concerns, concepts such as domains, resources, storage, and protocol details become tightly coupled. This makes the architecture difficult to evolve as new resource types, storage providers, or distribution models are introduced.
+
+The application therefore needs a model that clearly separates:
+
+- What the data represents.
+- How the data is identified.
+- How the data is transported.
+- How the data is stored.
+- How the application consumes the data.
+
+---
+
+# Decision
+
+KJVOnly separates the following concepts:
 
 1. Domain
 2. Resource
-3. Storage Strategy
+3. Application Version
+4. Event Revision
+5. Domain Object
+6. Protocol Representation
+7. Storage Strategy
 
-These concepts should remain independent.
+Each concept has a single responsibility.
 
-## Domain
+No concept should imply another.
 
-A domain represents a category of data.
+For example:
 
-Domains map directly to Nostr kinds.
+- A domain does not determine storage.
+- A storage backend does not determine resource identity.
+- A resource identifier does not determine the application object.
+- A Nostr event is not the application's domain model.
 
-```ts
-export const BIBLE_KIND = 37770
+This separation allows the application to evolve each layer independently while reusing the same installation, synchronization, and discovery pipelines.
 
-export const ANNOTATIONS_KIND = 37772
-export const NOTES_KIND = 37773
+---
 
-export const PLANS_KIND = 37775
-export const SUBSCRIPTIONS_KIND = 37776
-export const COMPLETED_READINGS_KIND = 37777
+## Architectural Overview
 
-export const MANIFEST_KIND = 37778
+```mermaid
+flowchart TD
+
+    D["Domain"]
+    R["Resource"]
+    AV["Application Version"]
+    ER["Event Revision"]
+    DO["Domain Object"]
+    EM["Event Model"]
+    NE["Nostr Event"]
+
+    D --> R
+    R --> AV
+    AV --> ER
+    ER --> EM
+    EM --> NE
+
+    SS["Storage Strategy"]
+
+    SS -. resolves .-> R
 ```
 
-Examples:
+The application primarily works with **resources** and **domain objects**.
+
+The Event Model translates between application objects and protocol events.
+
+Storage strategies resolve resource content without changing the logical identity of the resource.
+
+---
+
+# Domain
+
+A domain represents a broad category of application data.
+
+Examples include:
 
 ```text
 Bible
+Overlays
 Plans
 Notes
 Annotations
-Subscriptions
+Search
 Completed Readings
+Publishers
+Manifests
 ```
 
-Kinds describe what a thing is.
+Domains organize the application.
 
-Kinds do not describe where data is stored.
+They answer the question:
 
-## Resource
+> **What category of data does this belong to?**
 
-A resource is a specific piece of content within a domain.
+A domain does **not** describe:
 
-Resources are identified using the `d` tag.
+- where data is stored,
+- how it is synchronized,
+- who owns it,
+- how it is retrieved,
+- or how it is represented on the network.
 
-Resource identifiers follow this convention:
+Those concerns belong elsewhere in the architecture.
 
-```text
-namespace/domain/resource-type/resource-id
+---
+
+# Domains and Protocol Kinds
+
+A domain is an application concept.
+
+A Nostr kind is a protocol concept.
+
+Although the two are related, they serve different purposes.
+
+KJVOnly intentionally minimizes the number of protocol kinds used by the application.
+
+Kinds distinguish fundamentally different protocol structures rather than application features.
+
+For example:
+
+```ts
+export const RESOURCE_KIND = 37770
+export const MANIFEST_KIND = 37778
 ```
 
-For fine-grained resources, the resource id may contain additional path segments:
+Most application resources use the generic `RESOURCE_KIND`.
 
-```text
-namespace/domain/resource-type/resource-id/item-id
+The specific type of resource is determined by its resource identifier and classification tags rather than by allocating additional kinds.
+
+This approach provides several advantages:
+
+- New resource types can be introduced without allocating new kinds.
+- Generic resource discovery becomes simpler.
+- Installation and synchronization pipelines can be reused.
+- Application concepts remain independent of protocol details.
+
+Protocol kinds answer the question:
+
+> **How should this event be interpreted?**
+
+Domains answer the question:
+
+> **What category of application data does this represent?**
+
+These are intentionally different concerns.
+
+# Resource
+
+A resource is an independently identifiable unit of application data and the primary unit of distribution in KJVOnly.
+
+Everything that can be discovered, installed, synchronized, exported, imported, or shared is represented as a resource.
+
+Examples include:
+
+- A complete Bible
+- A single Bible chapter
+- A reading plan
+- A search index
+- A paragraph overlay
+- A pericope overlay
+- Publisher metadata
+- A note collection
+- A single note
+- A manifest
+
+A resource is a logical concept.
+
+It defines **what** the application distributes, but not **how** that data is represented, stored, or retrieved.
+
+---
+
+## Resource Representation
+
+Resources are represented by Nostr events.
+
+A Nostr event may represent a resource in one of two ways:
+
+1. **Content Representation**
+2. **Descriptor Representation**
+
+Both represent the same logical resource.
+
+The remainder of the application is unaware of which representation was used.
+
+---
+
+## Content Representation
+
+A Content Representation stores the resource directly in the event `content`.
+
+For example:
+
+```json
+{
+  "kind": 37770,
+  "tags": [
+    ["d", "kjvonly/plans/readings/365-bible/v1"],
+    ["t", "kjvonly/plans/readings"],
+    ["representation", "content"],
+    ["m", "application/json"]
+  ],
+  "content": "{ ... resource data ... }"
+}
 ```
 
-or more generally:
+The resource content is parsed directly from the event.
+
+No additional retrieval step is required.
+
+---
+
+## Descriptor Representation
+
+A Descriptor Representation stores metadata describing how to retrieve the resource content.
+
+For example:
+
+```json
+{
+  "kind": 37770,
+  "tags": [
+    ["d", "kjvonly/bible/chapters/kjv"],
+    ["t", "kjvonly/bible/chapters"],
+    ["representation", "descriptor"],
+    ["m", "application/json"]
+  ],
+  "content": "{
+    \"strategy\":\"blossom\",
+    \"url\":\"https://...\",
+    \"sha256\":\"...\",
+    \"mediaType\":\"application/json+gzip\"
+  }"
+}
+```
+
+The descriptor does not contain the resource itself.
+
+Instead, it describes how the resource content can be retrieved.
+
+Possible descriptor strategies include:
+
+- Blossom
+- HTTP
+- IPFS
+- Local Archive
+- Future storage providers
+
+Both Content and Descriptor representations ultimately produce the same resource data.
+
+---
+
+## Resource Resolution
+
+Every resource follows the same installation pipeline.
+
+```mermaid
+flowchart TD
+
+    EVENT["Nostr Event"]
+
+    EVENT --> REP{"representation"}
+
+    REP -->|content| CONTENT["Read Event Content"]
+
+    REP -->|descriptor| DESC["Parse Descriptor"]
+
+    DESC --> STRATEGY["Select Descriptor Strategy"]
+
+    STRATEGY --> FETCH["Retrieve Resource Content"]
+
+    FETCH --> VERIFY["Verify Integrity"]
+
+    VERIFY --> CONTENT
+
+    CONTENT --> TYPE["Determine Resource Type"]
+
+    TYPE --> PARSER["Select Resource Parser"]
+
+    PARSER --> DOMAIN["Create Domain Object"]
+
+    DOMAIN --> STORE["Install into Domain Store"]
+```
+
+Representation determines **how the resource content is obtained**.
+
+Resource type determines **how the resolved content is interpreted**.
+
+This separation allows publishers to choose the most appropriate representation for each resource while keeping the remainder of the application architecture independent of storage implementation.
+
+---
+
+## Resource Identity
+
+Every resource has a stable logical identity.
+
+KJVOnly stores this identity in the Nostr `d` tag.
+
+Resource identifiers follow the convention:
 
 ```text
 namespace/domain/resource-type/...resource-id
 ```
 
-Everything after `resource-type` is considered the resource identity.
+The first three path segments classify the resource.
 
-Examples:
-
-```text
-kjvonly/bible/chapters/kjv
-kjvonly/bible/chapters/kjvs
-
-kjvonly/bible/chapters/kjv/1_1
-kjvonly/bible/chapters/kjvs/43_3
-
-kjvonly/bible/index/default
-kjvonly/bible/booknames/default
-
-kjvonly/overlays/paragraphs/default
-kjvonly/overlays/paragraphs/default/1_1
-
-kjvonly/overlays/pericopes/default
-kjvonly/overlays/pericopes/default/1_1
-
-kjvonly/plans/readings/chronological
-kjvonly/plans/readings/yearly
-```
-
-The segments have the following meaning:
-
-```text
-kjvonly/bible/chapters/kjv
-
-namespace     = kjvonly
-domain        = bible
-resource-type = chapters
-resource-id   = kjv
-```
-
-```text
-kjvonly/bible/chapters/kjv/1_1
-
-namespace     = kjvonly
-domain        = bible
-resource-type = chapters
-resource-id   = kjv/1_1
-```
-
-```text
-kjvonly/overlays/pericopes/90-day-reading
-
-namespace     = kjvonly
-domain        = overlays
-resource-type = pericopes
-resource-id   = 90-day-reading
-```
-
-The resource id may represent:
-
-```text
-A full Bible version
-A single chapter
-A reading plan
-A paragraph scheme
-A pericope scheme
-A pericope entry for one chapter
-A study guide
-A user-created resource
-```
-
-This allows both bundle-level and item-level resources.
-
-Examples:
-
-```text
-Bundle resource:
-kjvonly/bible/chapters/kjv
-
-Item resource:
-kjvonly/bible/chapters/kjv/1_1
-```
-
-The combination of:
-
-```text
-pubkey + d
-```
-
-acts as the canonical resource identifier.
-
-## Granularity
-
-Resources may exist at different levels of granularity.
-
-A client may download a full Bible bundle:
-
-```text
-kjvonly/bible/chapters/kjv
-```
-
-or request a single chapter:
-
-```text
-kjvonly/bible/chapters/kjv/1_1
-```
-
-Both follow the same resource convention.
-
-The storage strategy decides how the resource is resolved.
-
-Examples:
-
-```text
-Full bundle:
-strategy = blossom
-
-Single chapter:
-strategy = event
-```
-
-This allows the app to support both:
-
-```text
-Offline-first bulk download
-On-demand chapter loading
-```
-
-without changing the domain model.
-
-## Applicability
-
-Resources may be reusable across multiple Bible versions.
+Everything after `resource-type` identifies the specific resource.
 
 For example:
 
 ```text
-kjvonly/overlays/paragraphs/default
+kjvonly/bible/chapters/kjv
 ```
 
-may apply to both:
+represents:
 
 ```text
-kjv
-kjvs
+namespace      = kjvonly
+domain         = bible
+resource-type  = chapters
+resource-id    = kjv
 ```
 
-Applicability should be stored as metadata rather than encoded into the resource identifier.
-
-Example:
-
-```json
-{
-  "appliesTo": ["kjv", "kjvs"]
-}
-```
-
-This allows overlays and other resources to be shared across datasets.
-
-## Storage Strategy
-
-Storage is an implementation detail.
-
-A resource may be stored:
+A more granular resource may contain additional identity segments:
 
 ```text
-Inside the event content
-In Blossom
-In IPFS
-In another backend
+kjvonly/bible/chapters/kjv/1_1
 ```
 
-The resource itself should not care.
+which becomes:
 
-Instead, the client resolves a storage strategy.
+```text
+namespace      = kjvonly
+domain         = bible
+resource-type  = chapters
+resource-id    = kjv/1_1
+```
+
+Additional path segments are part of the logical resource identity.
+
+They are not interpreted as filesystem paths.
+
+> **Resource Type**
+>
+> The first three path segments (`namespace/domain/resource-type`) also identify
+> the strategy responsible for parsing the resolved resource content.
+>
+> For example:
+>
+> ```text
+> kjvonly/plans/readings/365-bible/v1
+> ```
+>
+> selects the parser registered for:
+>
+> ```text
+> kjvonly/plans/readings
+> ```
+>
+> The remaining path segments identify the specific resource instance and do not
+> affect parser selection.
+
+---
+
+## Resource Classification
+
+While the `d` tag uniquely identifies a resource, clients frequently need to discover groups of related resources.
+
+Every resource therefore also includes a classification tag.
+
+The classification tag contains only the namespace, domain, and resource type.
 
 Examples:
 
-```json
-{
-  "strategy": "blossom",
-  "url": "https://...",
-  "sha256": "..."
-}
+```text
+t = kjvonly/bible/chapters
 ```
-
-```json
-{
-  "strategy": "event"
-}
-```
-
-Future strategies:
 
 ```text
-event
-blossom
-ipfs
-local
-http
+t = kjvonly/search/bible
 ```
-
-## Manifests
-
-Manifests provide a bootstrap mechanism for datasets.
-
-Example:
 
 ```text
-kind=37778
-d=kjvonly/bible/kjv
+t = kjvonly/plans/readings
 ```
 
-Manifest content:
+The `d` tag answers:
 
-```json
-{
-  "resources": [
-    {
-      "type": "chapters",
-      "resource": "kjvonly/bible/chapters/kjv",
-      "strategy": "blossom",
-      "url": "...",
-      "sha256": "..."
-    },
-    {
-      "type": "chapters",
-      "resource": "kjvonly/bible/chapters/kjv/1_1",
-      "strategy": "event"
-    },
-    {
-      "type": "paragraphs",
-      "resource": "kjvonly/overlays/paragraphs/default",
-      "strategy": "blossom",
-      "url": "...",
-      "sha256": "..."
-    }
-  ]
-}
+> Which resource is this?
+
+The classification tag answers:
+
+> What class of resource is this?
+
+The classification tag exists solely to support efficient relay filtering and discovery.
+
+The `d` tag remains the authoritative resource identifier.
+
+---
+
+## Resource Identity and Classification
+
+```mermaid
+flowchart LR
+
+    D["d tag<br/>kjvonly/bible/chapters/kjv"]
+
+    T["classification tag<br/>kjvonly/bible/chapters"]
+
+    D --> RID["Specific Resource"]
+
+    T --> CLASS["Resource Class"]
+
+    RID --> INSTALL["Install"]
+    RID --> UPDATE["Update"]
+    RID --> EXPORT["Export"]
+
+    CLASS --> DISCOVER["Discovery"]
+    CLASS --> FILTER["Filtering"]
 ```
 
-The client loads a manifest first, then resolves each resource.
+The `d` tag identifies one logical resource.
 
-## Client Flow
+The classification tag identifies a class of related resources.
 
-```text
-Load manifest
-↓
-Enumerate resources
-↓
-Resolve storage strategy
-↓
-Download or load resource
-↓
-Verify integrity
-↓
-Store in IndexedDB
-```
-
-## Design Rules
-
-* Kinds represent domains.
-* `d` tags represent resources.
-* Resource identifiers follow the format:
-  `namespace/domain/resource-type/...resource-id`
-* Everything after `resource-type` is part of the resource identity.
-* Resource identifiers may represent bundles or individual items.
-* Resource applicability is metadata.
-* Storage is not encoded in kinds.
-* Storage is resolved through strategies.
-* Manifests are bootstrap entrypoints.
-* Resource ownership is determined by event pubkey.
-* Resource integrity is verified using hashes.
-* Resource identifiers should describe logical content, not filesystem layout.
+Together they provide a consistent mechanism for discovery, synchronization, installation, and filtering while allowing the application to use a minimal number of protocol kinds.
