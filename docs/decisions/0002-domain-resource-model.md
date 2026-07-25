@@ -20,7 +20,6 @@ Examples include:
 - Search indexes
 - Completed readings
 - Publisher metadata
-- Manifests
 
 These resources may be:
 
@@ -117,7 +116,6 @@ Annotations
 Search
 Completed Readings
 Publishers
-Manifests
 ```
 
 Domains organize the application.
@@ -154,7 +152,6 @@ For example:
 
 ```ts
 export const RESOURCE_KIND = 37770
-export const MANIFEST_KIND = 37778
 ```
 
 Most application resources use the generic `RESOURCE_KIND`.
@@ -195,7 +192,6 @@ Examples include:
 - Publisher metadata
 - A note collection
 - A single note
-- A manifest
 
 A resource is a logical concept.
 
@@ -207,14 +203,19 @@ It defines **what** the application distributes, but not **how** that data is re
 
 Resources are represented by Nostr events.
 
-A Nostr event may represent a resource in one of two ways:
+A Nostr event may represent a resource in one of three ways:
 
 1. **Content Representation**
 2. **Descriptor Representation**
+3. **Descriptors Representation**
 
-Both represent the same logical resource.
+The representation identifies the shape and resolution behavior of the event payload.
 
-The remainder of the application is unaware of which representation was used.
+- `content` contains the resource content directly.
+- `descriptor` contains one descriptor that resolves the resource content.
+- `descriptors` contains a collection of descriptors for independently resolvable resources.
+
+The resource identifier continues to describe the logical resource. Representation does not define the resource domain or resource type.
 
 ---
 
@@ -279,7 +280,49 @@ Possible descriptor strategies include:
 - Local Archive
 - Future storage providers
 
-Both Content and Descriptor representations ultimately produce the same resource data.
+Content and Descriptor representations ultimately produce the same resolved resource content.
+
+---
+
+## Descriptors Representation
+
+A Descriptors Representation stores a collection of complete Descriptor Representations in the event `content`.
+
+For example:
+
+```json
+{
+  "kind": 37770,
+  "tags": [
+    ["d", "kjvonly/notes/shared-sermon-series-notes"],
+    ["t", "kjvonly/notes"],
+    ["representation", "descriptors"],
+    ["m", "application/json"]
+  ],
+  "content": "[
+    {
+      \"resource\":\"kjvonly/notes/shared-sermon-series-notes/sermon-1\",
+      \"strategy\":\"blossom\",
+      \"url\":\"https://...\",
+      \"sha256\":\"...\",
+      \"mediaType\":\"application/json+gzip\"
+    },
+    {
+      \"resource\":\"kjvonly/notes/shared-sermon-series-notes/sermon-2\",
+      \"strategy\":\"blossom\",
+      \"url\":\"https://...\",
+      \"sha256\":\"...\",
+      \"mediaType\":\"application/json+gzip\"
+    }
+  ]"
+}
+```
+
+Each entry is the same descriptor structure used by a singular Descriptor Representation. The collection contains descriptors only; it does not mix descriptors with inline resource content.
+
+Each descriptor is processed independently. Already installed resources are skipped, and failure to resolve one descriptor does not prevent the remaining descriptors from being processed.
+
+A descriptor may resolve to a resource represented by `descriptors`, allowing descriptor collections to be composed recursively.
 
 ---
 
@@ -294,30 +337,54 @@ flowchart TD
 
     EVENT --> REP{"representation"}
 
-    REP -->|content| CONTENT["Read Event Content"]
+    REP -->|content| CONTENT["Read Resource Content"]
 
     REP -->|descriptor| DESC["Parse Descriptor"]
 
-    DESC --> STRATEGY["Select Descriptor Strategy"]
+    REP -->|descriptors| DESCS["Parse Descriptor Collection"]
+
+    DESC --> STRATEGY["Select Resolution Strategy"]
+
+    DESCS --> EACH["For Each Descriptor"]
+
+    EACH --> INSTALLED{"Already Installed?"}
+
+    INSTALLED -->|Yes| SKIP["Skip Resource"]
+
+    INSTALLED -->|No| STRATEGY
 
     STRATEGY --> FETCH["Retrieve Resource Content"]
 
     FETCH --> VERIFY["Verify Integrity"]
 
-    VERIFY --> CONTENT
+    VERIFY --> NESTED{"Resolved Representation"}
+
+    NESTED -->|descriptors| DESCS
+
+    NESTED -->|content| CONTENT
 
     CONTENT --> TYPE["Determine Resource Type"]
 
     TYPE --> PARSER["Select Resource Parser"]
 
-    PARSER --> DOMAIN["Create Domain Object"]
+    PARSER --> DOMAIN["Create Domain Objects"]
 
     DOMAIN --> STORE["Install into Domain Store"]
+
+    STRATEGY -. failure .-> FAILURE["Record Failure and Continue"]
+    FETCH -. failure .-> FAILURE
+    VERIFY -. failure .-> FAILURE
 ```
 
-Representation determines **how the resource content is obtained**.
+Representation determines **how the event payload is processed**.
 
-Resource type determines **how the resolved content is interpreted**.
+- `content` provides resource content directly.
+- `descriptor` resolves one resource.
+- `descriptors` expands into independently resolved resources.
+
+Resource type determines **how resolved resource content is interpreted**.
+
+Descriptor collections are best effort: already installed resources are skipped, failures are recorded without stopping unrelated resources, and nested descriptor collections are processed recursively.
 
 This separation allows publishers to choose the most appropriate representation for each resource while keeping the remainder of the application architecture independent of storage implementation.
 
