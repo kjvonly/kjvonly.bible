@@ -8,375 +8,262 @@ Accepted
 
 # Problem
 
-KJVOnly distributes application resources through Nostr while remaining independent of any specific storage backend.
+KJVOnly distributes application data through Nostr.
 
-The architecture must support offline-first operation, efficient bootstrap, multiple storage strategies, and flexible resource granularity without changing the application's resource model.
+Some resources are small enough to be stored directly in Nostr events. Others are too large or are better suited to external storage such as Blossom, HTTP, local archives, or future storage providers.
+
+The distribution architecture must therefore:
+
+* use Nostr for publishing and discovering resources,
+* remain independent of any specific content storage provider,
+* support both small and large resources,
+* support bundled and fine-grained distribution,
+* preserve stable resource identity across storage strategies,
+* and remain compatible with offline-first installation.
+
+The application should not require different resource models or installation pipelines for each storage backend.
 
 ---
 
 # Decision
 
-Resources are distributed through manifests.
+KJVOnly distributes application data as resources published through Nostr.
 
-Manifests describe resources.
+Nostr provides:
 
-Resources describe how they are resolved.
+* publisher identity,
+* event signing,
+* resource addressing,
+* discovery metadata,
+* and revision publication.
 
-Storage strategies determine where resource content is retrieved.
+A resource's representation determines how its content is obtained.
 
-This separates:
+Resource content may be:
 
-* Resource identity
-* Resource discovery
-* Resource transport
-* Resource installation
+* embedded directly in a Nostr event,
+* resolved through a descriptor,
+* or described as a collection of independently resolvable descriptors.
 
-Each concern evolves independently.
----
-# Resource Distribution Overview
+External storage providers are accessed through Resource Resolution Strategies.
 
-```mermaid
-flowchart TD
-    P[Publisher] --> M[Manifest]
+The storage provider does not affect:
 
-    M --> R1[Bundle Resource]
-    M --> R2[Individual Resource]
-    M --> R3[Search Index]
+* resource identity,
+* resource type,
+* ownership,
+* parsing,
+* installation,
+* or application behavior.
 
-    R1 --> S1[Blossom Strategy]
-    R2 --> S2[Event Strategy]
-    R3 --> S1
-
-    S1 --> C[Resource Content]
-    S2 --> C
-
-    C --> V[Verify Integrity]
-    V --> I[Install Resource]
-    I --> D[Domain Stores]
-
-    D --> U[Application UI]
-```
----
-
-# Goals
-
-* Keep Nostr kinds focused on protocol structures rather than storage mechanisms.
-* Bootstrap application state from manifests.
-* Support both bundled and individual resource distribution.
-* Allow multiple storage strategies.
-* Verify downloaded content using hashes.
-* Preserve stable resource identities regardless of transport.
-* Remain compatible with existing Nostr conventions.
+This allows KJVOnly to use Nostr as the distribution protocol without coupling application resources to Blossom or any other storage backend.
 
 ---
 
-# Kinds
+# Distribution Boundary
 
-Kinds represent broad protocol structures rather than individual application resource types.
+Nostr events distribute resource representations.
 
-```text
-37770 Bible Resources
-37772 Annotations
-37773 Notes
-37775 Reading Plans
-37777 Completed Readings
-37778 Manifests
-```
-
-Resource identity provides the application's logical organization.
-
-Kinds define how events are interpreted by the Event Model.
-
----
-
-# Resource Identity
-
-Resources are represented using parameterized replaceable events.
-
-The `d` tag contains the semantic resource identifier.
-
-Resource identifiers follow the convention:
-
-```text
-namespace/domain/resource-type/...resource-id
-```
-
-Examples:
-
-### Bundle Resources
-
-```text
-kjvonly/bible/chapters/kjv
-kjvonly/bible/chapters/kjvs
-
-kjvonly/search/bible/kjv
-
-kjvonly/bible/booknames/default
-
-kjvonly/bible/strongs/default
-
-kjvonly/overlays/paragraphs/default
-kjvonly/overlays/pericopes/default
-
-kjvonly/plans/readings/chronological
-kjvonly/plans/readings/yearly
-```
-
-### Individual Resources
-
-```text
-kjvonly/bible/chapters/kjv/1_1
-kjvonly/bible/chapters/kjv/43_3
-
-kjvonly/overlays/paragraphs/default/1_1
-kjvonly/overlays/pericopes/default/1_1
-```
-
-Both bundled resources and individual resources share the same identity model.
-
-For example:
-
-```text
-Entire Bible
-
-kjvonly/bible/chapters/kjv
-```
-
-```text
-Single Chapter
-
-kjvonly/bible/chapters/kjv/43_3
-```
-
-Ownership is determined by the publisher's public key.
-
-The combination of:
-
-```text
-(pubkey, d)
-```
-
-defines the stable logical identity of a publisher-owned resource.
-
-Each published version receives its own immutable event identifier.
-
----
-
-### Replaceable and Versioned Resource Identity
+They are not the application's working data model.
 
 ```mermaid
 flowchart LR
-    subgraph Replaceable["Stable Identity — Same d Tag"]
-        direction TB
 
-        R1["Earlier Event<br/>d = kjvonly/bible/chapters/kjv"]
-        R2["Newer Event<br/>d = kjvonly/bible/chapters/kjv"]
-        CURRENT["Current Resource<br/>(publisher, kind, d)"]
+    PUBLISHER["Publisher"]
 
-        R1 -. replaced by .-> R2
-        R2 --> CURRENT
-    end
+    PUBLISHER --> EVENT["Nostr Resource Event"]
 
-    subgraph Versioned["Independent Identities — Version in d Tag"]
-        direction TB
+    EVENT --> REPRESENTATION["Resource Representation"]
 
-        V1["Version 1 Resource<br/>d = kjvonly/bible/chapters/kjv/v1"]
-        V2["Version 2 Resource<br/>d = kjvonly/bible/chapters/kjv/v2"]
-
-        V1 --> E1["Independent Event"]
-        V2 --> E2["Independent Event"]
-    end
+    REPRESENTATION --> CONTENT["Resolved Resource Content"]
 ```
+
+The event establishes the publisher and resource identity.
+
+The representation determines how the resource content is obtained.
+
+The resolved content is then processed by the resource installation pipeline.
+
+The details of resource identity and representation are defined in ADR 0002.
+
 ---
 
-# Manifest Resources
+# Representation-Independent Distribution
 
-A manifest bootstraps a collection of resources.
+A publisher may choose the most appropriate representation for each resource.
 
 ```text
-kind = 37778
+content
 
-d = kjvonly/bible/kjv
+descriptor
+
+descriptors
 ```
 
-Example:
+A small resource may be embedded directly in an event.
 
-```json
-{
-  "name": "KJV Bible",
-  "resources": [
-    {
-      "resource": "kjvonly/bible/chapters/kjv",
-      "strategy": "blossom",
-      "url": "https://...",
-      "sha256": "..."
-    },
-    {
-      "resource": "kjvonly/overlays/paragraphs/default",
-      "strategy": "blossom",
-      "url": "https://...",
-      "sha256": "..."
-    },
-    {
-      "resource": "kjvonly/overlays/pericopes/default",
-      "strategy": "blossom",
-      "url": "https://...",
-      "sha256": "..."
-    }
-  ]
-}
+A large resource may be stored externally and referenced by a descriptor.
+
+A collection may be represented as multiple descriptors.
+
+These choices affect transport only.
+
+They do not create different resource types or application models.
+
+```mermaid
+flowchart TD
+
+    RESOURCE["Logical Resource"]
+
+    RESOURCE --> CONTENT["Content Representation"]
+    RESOURCE --> DESCRIPTOR["Descriptor Representation"]
+    RESOURCE --> DESCRIPTORS["Descriptors Representation"]
+
+    CONTENT --> RESOLVED["Resolved Resource Content"]
+    DESCRIPTOR --> RESOLVED
+    DESCRIPTORS --> MANY["Independently Resolved Resources"]
 ```
-
-A manifest may describe:
-
-* An entire Bible
-* Reading plans
-* Search indexes
-* Overlay collections
-* Individual chapter resources
-* Any future resource collection
 
 ---
 
-# Storage Strategies
+# Storage Strategy Independence
 
-Resources declare how they are resolved.
+External resource content is retrieved through a Resource Resolution Strategy.
 
-The application resolves resources without knowing where the underlying content is stored.
-
-## Blossom
-
-```json
-{
-  "strategy": "blossom",
-  "url": "https://...",
-  "sha256": "..."
-}
-```
-
-## Event
-
-```json
-{
-  "strategy": "event"
-}
-```
-
-Small resources such as a single Bible chapter may be stored directly in a Nostr event.
-
-Large resources such as an entire Bible or search index may be stored in Blossom.
-
-Both approaches use the same resource identity.
-
-Future strategies may include:
+Possible strategies include:
 
 ```text
-blossom
-event
-http
-ipfs
-local
+Blossom
+
+HTTP
+
+IPFS
+
+Local Archive
+
+Future Providers
 ```
+
+Storage strategies answer:
+
+> Where and how can the content be retrieved?
+
+They do not answer:
+
+* what the resource represents,
+* who owns the resource,
+* how the resource is identified,
+* or how the application interprets it.
+
+Adding a new storage provider therefore requires a new resolution strategy rather than a new domain, resource type, protocol kind, or installation pipeline.
 
 ---
 
-# Resource Installation
+# Resource Granularity
 
-Regardless of the storage strategy, resources follow the same installation pipeline.
+The distribution model supports resources at different levels of granularity.
+
+Examples include:
 
 ```text
-Manifest
-        ↓
-Resolve Resource
-        ↓
-Resolve Strategy
-        ↓
-Retrieve Content
-        ↓
-Verify Hash
-        ↓
-Install Resource
+Complete Bible
+
+Individual Bible Chapter
+
+Complete Search Index
+
+Individual Note
+
+Collection of Notes
 ```
 
-The installation process is independent of the storage backend.
+Publishers may choose coarse-grained resources for efficient bootstrap or fine-grained resources for selective installation and smaller updates.
+
+The distribution architecture does not require one granularity.
+
+Every published unit remains an independently identifiable resource.
+
+The resource naming and granularity model are defined in ADR 0002.
 
 ---
 
-# Distribution Models
+# Protocol Kinds
 
-## Offline First
+Nostr kinds identify protocol-level event structures.
 
-Install complete resource collections.
+They do not identify storage providers.
 
-```text
-Manifest
+A resource stored through Blossom does not require a Blossom-specific kind.
 
-↓
+A resource stored directly in event content does not require a content-specific kind.
 
-Bible Bundle
+Representation and resource metadata provide the information needed to resolve and interpret the resource.
 
-↓
-
-Overlay Bundles
-
-↓
-
-Search Index
-
-↓
-
-Install
-```
+This keeps the protocol model stable as storage providers and resource types evolve.
 
 ---
 
-## On Demand
+# Integrity
 
-Install only the resources required by the current application state.
+Externally resolved content must be verifiable before installation.
 
-```text
-Manifest
+Descriptors may include content identity such as a cryptographic hash.
 
-↓
+The resolution process verifies retrieved content before it is passed to resource parsing and installation.
 
-Chapter Resource
-
-↓
-
-Overlay Resource
-
-↓
-
-Render
-```
-
-Both approaches use identical resource identifiers and installation behavior.
+Integrity verification belongs to resource resolution and installation rather than to any specific storage provider.
 
 ---
 
-# Design Notes
+# Offline-First Distribution
 
-* Resources are discovered through manifests.
-* Kinds define protocol structures rather than storage backends.
-* Resource identity is independent of transport.
-* Storage is an implementation detail isolated behind strategies.
-* Resources may represent bundles or individual items.
-* Publishers own resources.
-* `(pubkey, d)` defines stable logical identity.
-* Event identifiers represent immutable published versions.
-* Hashes verify downloaded content.
-* Clients may choose full installation or on-demand installation without changing the resource model.
+Network distribution and local application use are separate concerns.
+
+Nostr and external storage providers are used to discover and retrieve resources.
+
+Once installed, the application reads from local Domain Stores.
+
+```mermaid
+flowchart LR
+
+    NETWORK["Nostr and External Storage"]
+
+    NETWORK --> INSTALL["Resource Installation"]
+
+    INSTALL --> LOCAL["Local Domain Stores"]
+
+    LOCAL --> APP["Application"]
+```
+
+The application does not depend on an active network connection after the required resources have been installed.
+
+---
+
+# Scope
+
+This ADR establishes the overall distribution strategy.
+
+It does not define:
+
+* canonical resource identity,
+* representation payload schemas,
+* resource discovery rules,
+* resolution strategy implementation,
+* installation behavior,
+* local persistence schema,
+* update policy,
+* or synchronization behavior.
+
+Those concerns are defined by later ADRs.
 
 ---
 
 # Big Takeaway
 
-The application distributes resources rather than files.
+KJVOnly uses Nostr to publish, identify, sign, and discover resources while allowing resource content to live in any supported storage backend.
 
-Manifests describe resources.
+Representation determines how content is obtained.
 
-Resources describe how they are resolved.
+Storage strategy determines where external content is retrieved.
 
-Storage strategies retrieve content.
-
-The installation pipeline transforms those resources into local application state while preserving stable identities regardless of where or how the content is stored.
+Neither changes the identity or meaning of the resource.
