@@ -1,4 +1,4 @@
-# ADR 0002 — Domain, Resource, and Storage Model
+# ADR 0002 — Domain and Resource Model
 
 **Status**
 
@@ -8,37 +8,24 @@ Accepted
 
 # Problem
 
-KJVOnly distributes many different types of application data.
+KJVOnly works with many categories of application data.
 
 Examples include:
 
-- Bible text
-- Overlays
-- Reading plans
-- Notes
-- Annotations
-- Search indexes
-- Completed readings
-- Publisher metadata
+* Bible text
+* Overlays
+* Reading plans
+* Notes
+* Annotations
+* Search indexes
+* Completed readings
+* Publisher metadata
 
-These resources may be:
+These resources may be published by different publishers, represented in different formats, stored through different providers, and distributed at different levels of granularity.
 
-- Published by different publishers
-- Stored using different backends
-- Installed independently
-- Updated independently
-- Shared across datasets
-- Retrieved at different levels of granularity
+Without a shared conceptual model, concerns such as application behavior, resource identity, protocol representation, storage, and persistence can become tightly coupled.
 
-Without a clear separation of concerns, concepts such as domains, resources, storage, and protocol details become tightly coupled. This makes the architecture difficult to evolve as new resource types, storage providers, or distribution models are introduced.
-
-The application therefore needs a model that clearly separates:
-
-- What the data represents.
-- How the data is identified.
-- How the data is transported.
-- How the data is stored.
-- How the application consumes the data.
+The architecture therefore needs clear definitions for the concepts used throughout the system.
 
 ---
 
@@ -48,62 +35,60 @@ KJVOnly separates the following concepts:
 
 1. Domain
 2. Resource
-3. Application Version
-4. Event Revision
-5. Domain Object
-6. Protocol Representation
-7. Storage Strategy
+3. Resource Representation
+4. Resource Identity
+5. Resource Classification
+6. Resource Version
+7. Event Revision
+8. Domain Object
+9. Domain Store
 
-Each concept has a single responsibility.
+Each concept has one responsibility.
 
-No concept should imply another.
+No concept should implicitly determine another.
 
 For example:
 
-- A domain does not determine storage.
-- A storage backend does not determine resource identity.
-- A resource identifier does not determine the application object.
-- A Nostr event is not the application's domain model.
-
-This separation allows the application to evolve each layer independently while reusing the same installation, synchronization, and discovery pipelines.
+* A domain does not determine storage.
+* A storage provider does not determine resource identity.
+* A resource identifier does not determine its network representation.
+* A Nostr event is not a Domain Object.
+* Resource granularity does not determine Domain Object granularity.
 
 ---
 
-## Architectural Overview
+# Conceptual Model
 
 ```mermaid
 flowchart TD
 
-    D["Domain"]
-    R["Resource"]
-    AV["Application Version"]
-    ER["Event Revision"]
-    DO["Domain Object"]
-    EM["Event Model"]
-    NE["Nostr Event"]
+    DOMAIN["Domain"]
 
-    D --> R
-    R --> AV
-    AV --> ER
-    ER --> EM
-    EM --> NE
+    DOMAIN --> RESOURCE["Resource"]
 
-    SS["Storage Strategy"]
+    RESOURCE --> IDENTITY["Resource Identity"]
+    RESOURCE --> CLASSIFICATION["Resource Classification"]
+    RESOURCE --> REPRESENTATION["Resource Representation"]
 
-    SS -. resolves .-> R
+    REPRESENTATION --> RESOLVED["Resolved Resource Content"]
+
+    RESOLVED --> OBJECTS["Domain Objects"]
+
+    OBJECTS --> STORE["Domain Store"]
+    STORE --> APPLICATION["Application"]
 ```
 
-The application primarily works with **resources** and **domain objects**.
+The application works primarily with Domain Objects stored in Domain Stores.
 
-The Event Model translates between application objects and protocol events.
+Resources are the units through which those objects are distributed.
 
-Storage strategies resolve resource content without changing the logical identity of the resource.
+Representations describe how resource content is made available.
 
 ---
 
 # Domain
 
-A domain represents a broad category of application data.
+A Domain represents a broad category of application data.
 
 Examples include:
 
@@ -118,112 +103,136 @@ Completed Readings
 Publishers
 ```
 
-Domains organize the application.
+A Domain answers:
 
-They answer the question:
+> What category of application data does this belong to?
 
-> **What category of data does this belong to?**
+A Domain may own:
 
-A domain does **not** describe:
+* Domain Objects
+* Resource parsers
+* Domain Stores
+* repositories
+* application services
+* domain-specific validation
 
-- where data is stored,
-- how it is synchronized,
-- who owns it,
-- how it is retrieved,
-- or how it is represented on the network.
+A Domain does not define:
 
-Those concerns belong elsewhere in the architecture.
+* where resource content is stored,
+* how resource content is retrieved,
+* who publishes a resource,
+* how a resource is represented on the network,
+* or how synchronization occurs.
 
 ---
 
 # Domains and Protocol Kinds
 
-A domain is an application concept.
+A Domain is an application concept.
 
 A Nostr kind is a protocol concept.
 
-Although the two are related, they serve different purposes.
+They serve different purposes.
 
-KJVOnly intentionally minimizes the number of protocol kinds used by the application.
+KJVOnly minimizes the number of protocol kinds used by the application.
 
-Kinds distinguish fundamentally different protocol structures rather than application features.
-
-For example:
+Most application resources use a generic resource kind:
 
 ```ts
 export const RESOURCE_KIND = 37770
 ```
 
-Most application resources use the generic `RESOURCE_KIND`.
+The resource identifier and classification metadata determine the application meaning of a resource.
 
-The specific type of resource is determined by its resource identifier and classification tags rather than by allocating additional kinds.
+The kind determines how the protocol event should be validated and interpreted at the event boundary.
 
-This approach provides several advantages:
+```mermaid
+flowchart LR
 
-- New resource types can be introduced without allocating new kinds.
-- Generic resource discovery becomes simpler.
-- Installation and synchronization pipelines can be reused.
-- Application concepts remain independent of protocol details.
+    KIND["Nostr Kind"]
 
-Protocol kinds answer the question:
+    KIND --> PROTOCOL["Protocol Structure"]
 
-> **How should this event be interpreted?**
+    DOMAIN["Domain"]
 
-Domains answer the question:
+    DOMAIN --> APPLICATION["Application Meaning"]
+```
 
-> **What category of application data does this represent?**
+Protocol kinds answer:
 
-These are intentionally different concerns.
+> What event structure is this?
 
-# Resource
+Domains answer:
 
-A resource is an independently identifiable unit of application data and the primary unit of distribution in KJVOnly.
-
-Everything that can be discovered, installed, synchronized, exported, imported, or shared is represented as a resource.
-
-Examples include:
-
-- A complete Bible
-- A single Bible chapter
-- A reading plan
-- A search index
-- A paragraph overlay
-- A pericope overlay
-- Publisher metadata
-- A note collection
-- A single note
-
-A resource is a logical concept.
-
-It defines **what** the application distributes, but not **how** that data is represented, stored, or retrieved.
+> What application category does this belong to?
 
 ---
 
-## Resource Representation
+# Resource
 
-Resources are represented by Nostr events.
+A Resource is an independently identifiable unit of application data.
 
-A Nostr event may represent a resource in one of three ways:
+Resources are the primary units of distribution in KJVOnly.
 
-1. **Content Representation**
-2. **Descriptor Representation**
-3. **Descriptors Representation**
+Anything that may be independently discovered, installed, synchronized, exported, imported, or shared is represented as a Resource.
 
-The representation identifies the shape and resolution behavior of the event payload.
+Examples include:
 
-- `content` contains the resource content directly.
-- `descriptor` contains one descriptor that resolves the resource content.
-- `descriptors` contains a collection of descriptors for independently resolvable resources.
+* a complete Bible,
+* a Bible chapter,
+* a reading plan,
+* a search index,
+* a paragraph overlay,
+* publisher metadata,
+* a collection of notes,
+* or an individual note.
 
-The resource identifier continues to describe the logical resource. Representation does not define the resource domain or resource type.
+A Resource is a logical concept.
+
+It defines what is being distributed, but it does not define:
+
+* how the content is transported,
+* where the content is stored,
+* how the content is serialized,
+* or how the application persists the resulting Domain Objects.
+
+---
+
+# Resource Representation
+
+A Resource Representation describes how a resource is represented by a Nostr event.
+
+KJVOnly supports three representations:
+
+1. `content`
+2. `descriptor`
+3. `descriptors`
+
+```mermaid
+flowchart TD
+
+    RESOURCE["Resource"]
+
+    RESOURCE --> CONTENT["content"]
+    RESOURCE --> DESCRIPTOR["descriptor"]
+    RESOURCE --> DESCRIPTORS["descriptors"]
+```
+
+Representation determines how resource content becomes available for resolution.
+
+It does not determine:
+
+* the Domain,
+* the resource type,
+* the publisher,
+* the resource identity,
+* or the Domain Objects produced from the content.
 
 ---
 
 ## Content Representation
 
-A Content Representation stores the resource directly in the event `content`.
-
-For example:
+A `content` representation stores serialized resource content directly in the event `content`.
 
 ```json
 {
@@ -234,21 +243,17 @@ For example:
     ["representation", "content"],
     ["m", "application/json"]
   ],
-  "content": "{ ... resource data ... }"
+  "content": "{ ... resource content ... }"
 }
 ```
 
-The resource content is parsed directly from the event.
-
-No additional retrieval step is required.
+No external storage provider is required to obtain the serialized resource content.
 
 ---
 
 ## Descriptor Representation
 
-A Descriptor Representation stores metadata describing how to retrieve the resource content.
-
-For example:
+A `descriptor` representation stores metadata describing how resource content may be retrieved.
 
 ```json
 {
@@ -268,27 +273,27 @@ For example:
 }
 ```
 
-The descriptor does not contain the resource itself.
+The descriptor is not the resource content.
 
-Instead, it describes how the resource content can be retrieved.
+It describes where the serialized resource content is located and how it may be verified.
 
-Possible descriptor strategies include:
+Possible strategies include:
 
-- Blossom
-- HTTP
-- IPFS
-- Local Archive
-- Future storage providers
-
-Content and Descriptor representations ultimately produce the same resolved resource content.
+```text
+Blossom
+HTTP
+IPFS
+Local Archive
+Future Providers
+```
 
 ---
 
 ## Descriptors Representation
 
-A Descriptors Representation stores a collection of complete Descriptor Representations in the event `content`.
+A `descriptors` representation contains a collection of descriptors.
 
-For example:
+Each descriptor identifies an independently resolvable resource.
 
 ```json
 {
@@ -318,91 +323,29 @@ For example:
 }
 ```
 
-Each entry is the same descriptor structure used by a singular Descriptor Representation. The collection contains descriptors only; it does not mix descriptors with inline resource content.
+The collection contains descriptors only.
 
-Each descriptor is processed independently. Already installed resources are skipped, and failure to resolve one descriptor does not prevent the remaining descriptors from being processed.
+It does not mix descriptors with inline resource content.
 
-A descriptor may resolve to a resource represented by `descriptors`, allowing descriptor collections to be composed recursively.
+Descriptor collections may reference resources that are themselves represented as `descriptors`, allowing collections to be composed recursively.
 
----
-
-## Resource Resolution
-
-Every resource follows the same installation pipeline.
-
-```mermaid
-flowchart TD
-
-    EVENT["Nostr Event"]
-
-    EVENT --> REP{"representation"}
-
-    REP -->|content| CONTENT["Read Resource Content"]
-
-    REP -->|descriptor| DESC["Parse Descriptor"]
-
-    REP -->|descriptors| DESCS["Parse Descriptor Collection"]
-
-    DESC --> STRATEGY["Select Resolution Strategy"]
-
-    DESCS --> EACH["For Each Descriptor"]
-
-    EACH --> INSTALLED{"Already Installed?"}
-
-    INSTALLED -->|Yes| SKIP["Skip Resource"]
-
-    INSTALLED -->|No| STRATEGY
-
-    STRATEGY --> FETCH["Retrieve Resource Content"]
-
-    FETCH --> VERIFY["Verify Integrity"]
-
-    VERIFY --> NESTED{"Resolved Representation"}
-
-    NESTED -->|descriptors| DESCS
-
-    NESTED -->|content| CONTENT
-
-    CONTENT --> TYPE["Determine Resource Type"]
-
-    TYPE --> PARSER["Select Resource Parser"]
-
-    PARSER --> DOMAIN["Create Domain Objects"]
-
-    DOMAIN --> STORE["Install into Domain Store"]
-
-    STRATEGY -. failure .-> FAILURE["Record Failure and Continue"]
-    FETCH -. failure .-> FAILURE
-    VERIFY -. failure .-> FAILURE
-```
-
-Representation determines **how the event payload is processed**.
-
-- `content` provides resource content directly.
-- `descriptor` resolves one resource.
-- `descriptors` expands into independently resolved resources.
-
-Resource type determines **how resolved resource content is interpreted**.
-
-Descriptor collections are best effort: already installed resources are skipped, failures are recorded without stopping unrelated resources, and nested descriptor collections are processed recursively.
-
-This separation allows publishers to choose the most appropriate representation for each resource while keeping the remainder of the application architecture independent of storage implementation.
+The behavior for resolving singular and collection representations is defined in ADR 0004.
 
 ---
 
-## Resource Identity
+# Resource Identity
 
-Every resource has a stable logical identity.
+Every Resource has a stable logical identity.
 
 KJVOnly stores this identity in the Nostr `d` tag.
 
-Resource identifiers follow the convention:
+Resource identifiers follow this convention:
 
 ```text
 namespace/domain/resource-type/...resource-id
 ```
 
-The first three path segments classify the resource.
+The first three segments classify the resource.
 
 Everything after `resource-type` identifies the specific resource.
 
@@ -427,7 +370,7 @@ A more granular resource may contain additional identity segments:
 kjvonly/bible/chapters/kjv/1_1
 ```
 
-which becomes:
+which represents:
 
 ```text
 namespace      = kjvonly
@@ -436,115 +379,153 @@ resource-type  = chapters
 resource-id    = kjv/1_1
 ```
 
-Additional path segments are part of the logical resource identity.
+Additional segments are part of the logical identity.
 
 They are not interpreted as filesystem paths.
 
-> **Resource Type**
->
-> The first three path segments (`namespace/domain/resource-type`) also identify
-> the strategy responsible for parsing the resolved resource content.
->
-> For example:
->
-> ```text
-> kjvonly/plans/readings/365-bible/v1
-> ```
->
-> selects the parser registered for:
->
-> ```text
-> kjvonly/plans/readings
-> ```
->
-> The remaining path segments identify the specific resource instance and do not
-> affect parser selection.
+---
+
+## Publisher and Resource Identity
+
+A `d` tag is unique only within a publisher's address space.
+
+The complete identity of a published resource is therefore:
+
+```text
+publisher public key + resource identifier
+```
+
+In Nostr addressable-event terms:
+
+```text
+kind + publisher public key + d tag
+```
+
+Within the application model, the publisher and resource identifier identify the origin of the resource.
+
+```mermaid
+flowchart LR
+
+    PUBLISHER["Publisher Public Key"]
+
+    RESOURCE_ID["Resource Identifier"]
+
+    PUBLISHER --> IDENTITY["Published Resource Identity"]
+    RESOURCE_ID --> IDENTITY
+```
+
+The same resource identifier published by two publishers represents two independently owned resources.
 
 ---
 
-## Resource Classification
+# Resource Classification
 
-While the `d` tag uniquely identifies a resource, clients frequently need to discover groups of related resources.
+The `d` tag identifies one specific Resource.
 
-Every resource therefore also includes a classification tag.
+Clients also need to discover classes of related Resources.
 
-The classification tag contains only the namespace, domain, and resource type.
-
-Examples:
+Every Resource therefore includes a classification tag containing:
 
 ```text
-t = kjvonly/bible/chapters
+namespace/domain/resource-type
 ```
 
-```text
-t = kjvonly/search/bible
-```
+Examples include:
 
 ```text
-t = kjvonly/plans/readings
+kjvonly/bible/chapters
+kjvonly/search/bible
+kjvonly/plans/readings
+```
+
+For example:
+
+```json
+["t", "kjvonly/bible/chapters"]
 ```
 
 The `d` tag answers:
 
-> Which resource is this?
+> Which Resource is this?
 
 The classification tag answers:
 
-> What class of resource is this?
-
-The classification tag exists solely to support efficient relay filtering and discovery.
-
-The `d` tag remains the authoritative resource identifier.
-
----
-
-## Resource Identity and Classification
+> What class of Resource is this?
 
 ```mermaid
 flowchart LR
 
     D["d tag<br/>kjvonly/bible/chapters/kjv"]
 
-    T["classification tag<br/>kjvonly/bible/chapters"]
+    T["t tag<br/>kjvonly/bible/chapters"]
 
-    D --> RID["Specific Resource"]
-
+    D --> SPECIFIC["Specific Resource"]
     T --> CLASS["Resource Class"]
-
-    RID --> INSTALL["Install"]
-    RID --> UPDATE["Update"]
-    RID --> EXPORT["Export"]
-
-    CLASS --> DISCOVER["Discovery"]
-    CLASS --> FILTER["Filtering"]
 ```
 
-The `d` tag identifies one logical resource.
+The `d` tag remains the authoritative logical resource identifier.
 
-The classification tag identifies a class of related resources.
+The classification tag supports relay filtering and discovery.
 
-Together they provide a consistent mechanism for discovery, synchronization, installation, and filtering while allowing the application to use a minimal number of protocol kinds.
+It does not replace or redefine Resource Identity.
 
-# Resource Versioning
+---
 
-A resource may evolve at two independent levels:
+# Resource Type
 
-1. **Resource Version**
-2. **Event Revision**
+The first three segments of a Resource Identifier define the Resource Type:
 
-These represent different concerns and should not be confused.
+```text
+namespace/domain/resource-type
+```
 
-This ADR defines how these concepts relate to resource identity.
+For example:
 
-The complete versioning model, including compatibility, migration, and lifecycle management, is defined in ADR 0006.
+```text
+kjvonly/plans/readings
+kjvonly/bible/chapters
+kjvonly/overlays/pericopes
+```
+
+The Resource Type identifies the application component responsible for interpreting resolved resource content.
+
+The remaining identifier segments select the specific Resource instance.
+
+For example:
+
+```text
+kjvonly/plans/readings/365-bible/v1
+```
+
+contains:
+
+```text
+resource type = kjvonly/plans/readings
+resource id   = 365-bible/v1
+```
+
+Resource Type is an application-level classification.
+
+It is independent of representation and storage strategy.
+
+---
+
+# Resource Version and Event Revision
+
+Resources may evolve at two separate levels:
+
+1. Resource Version
+2. Event Revision
+
+These concepts address different kinds of change.
 
 ---
 
 ## Resource Version
 
-A Resource Version identifies a distinct version of a logical resource.
+A Resource Version is a distinct logical Resource.
 
-The version forms part of the resource's logical identity and is therefore included in the resource identifier.
+When a version segment is included in a Resource Identifier, it forms part of that Resource's identity.
 
 For example:
 
@@ -553,578 +534,318 @@ kjvonly/plans/readings/365-bible/v1
 kjvonly/plans/readings/365-bible/v2
 ```
 
-These represent two distinct resources.
+These are separate Resources.
 
-Each Resource Version may:
+They may:
 
-- exist simultaneously
-- be installed independently
-- be updated independently
-- be referenced independently
+* exist simultaneously,
+* be installed independently,
+* be referenced independently,
+* and have different compatibility requirements.
 
-Resource Versions are not limited to publisher-provided content.
+An explicit Resource Version is appropriate when multiple versions need independent identity or coexistence.
 
-They may also represent application-generated or user-created resources.
-
-For example:
-
-```text
-kjvonly/notes/default/v1
-kjvonly/notes/default/v2
-
-kjvonly/highlights/default/v1
-kjvonly/highlights/default/v2
-```
-
-The rules governing when a new Resource Version should be created are defined by ADR 0006.
+Not every Resource requires an explicit version segment.
 
 ---
 
 ## Event Revision
 
-Nostr addressable events are identified by:
+A Nostr addressable event is identified by:
 
 ```text
-(kind, pubkey, d)
+kind + publisher public key + d tag
 ```
 
-Publishing another event using the same values creates a new event with a different event identifier.
+Publishing a newer event with the same address produces a new Event Revision of the same Resource.
 
-The Resource Version remains unchanged.
-
-The newly published event replaces the previously published event for that Resource Version.
-
-For example:
-
-```text
-kind   = RESOURCE_KIND
-pubkey = publisher
-d      = kjvonly/plans/readings/365-bible/v1
-```
-
-Publishing another event using the same address replaces the previous event while preserving the Resource Version.
-
-Although previous revisions may continue to exist on some relays temporarily, clients treat the most recent event as the authoritative representation of the Resource Version.
-
-This mechanism allows resources to be corrected, updated, or republished without changing their logical identity.
-
----
-
-## Resource Version and Event Revision
-
-Resource Versions and Event Revisions exist independently.
+The Event Revision has a new event identifier, but the Resource Identity remains unchanged.
 
 ```mermaid
 flowchart TD
 
-    RV1["Resource Version<br/>365-bible/v1"]
+    RESOURCE["Published Resource<br/>publisher + d"]
 
-    RV2["Resource Version<br/>365-bible/v2"]
-
-    RV1 --> E1["Current Addressable Event"]
-
-    RV2 --> E2["Current Addressable Event"]
+    RESOURCE --> REVISION1["Earlier Event Revision"]
+    RESOURCE --> REVISION2["Current Event Revision"]
 ```
 
-Each Resource Version has its own addressable event.
+Event Revisions allow a publisher to:
 
-Publishing a newer event using the same `(kind, pubkey, d)` replaces the current event for that Resource Version without creating a new Resource Version.
+* correct content,
+* update metadata,
+* replace a descriptor,
+* or republish the same logical Resource.
 
-Creating a new Resource Version creates a new logical resource with its own independent addressable event.
+A new Event Revision does not create a new Resource Version.
 
 ---
 
-## Summary
+## Versioning Relationship
 
-Resource Versioning and Event Revision solve different problems.
+```mermaid
+flowchart TD
 
-- **Resource Version** identifies a distinct version of a logical resource.
-- **Event Revision** identifies successive publications of the same Resource Version.
+    V1["Resource Version v1"]
 
-A new Event Revision updates the current representation of an existing Resource Version.
+    V2["Resource Version v2"]
 
-A new Resource Version creates a new logical resource with its own independent identity.
+    V1 --> V1_EVENT["Current Event Revision"]
 
-Keeping these concepts separate allows resources to evolve over time while preserving stable logical identities and predictable update behavior.
+    V2 --> V2_EVENT["Current Event Revision"]
+```
+
+A new Event Revision updates an existing Resource.
+
+A new Resource Version creates a separate Resource Identity.
+
+Detailed compatibility, update, and fork policies are defined in ADR 0006.
+
+---
 
 # Resource Granularity
 
-Resources should be sized according to how they are expected to evolve.
+Resource Granularity describes how much application data is distributed as one Resource.
 
-A resource should represent a logical unit that can be independently discovered, installed, synchronized, and updated.
-
-Choosing an appropriate level of granularity improves synchronization efficiency while minimizing unnecessary data transfer.
+A Resource may be coarse-grained or fine-grained.
 
 ---
 
 ## Coarse-Grained Resources
 
-Coarse-grained resources group related data into a single resource.
-
 Examples include:
 
-- Complete Bibles
-- Reading plans
-- Search indexes
-- Publisher metadata
-- Large collections
+* a complete Bible,
+* a complete search index,
+* publisher metadata,
+* or a large note collection.
 
-Advantages include:
+Advantages may include:
 
-- Fewer resources to manage
-- Simpler installation
-- Lower protocol overhead
-
-Disadvantages include:
-
-- Larger updates
-- Less selective synchronization
+* fewer resources,
+* simpler distribution,
+* and lower protocol overhead.
 
 ---
 
 ## Fine-Grained Resources
 
-Fine-grained resources divide content into smaller independently addressable units.
-
 Examples include:
 
-- Individual Bible chapters
-- Single notes
-- Individual annotations
-- Paragraph overlays
-- Pericope overlays
+* an individual Bible chapter,
+* a single note,
+* one annotation,
+* or one overlay segment.
 
-Advantages include:
+Advantages may include:
 
-- Smaller updates
-- Efficient synchronization
-- Independent caching
-- Selective installation
-
-Disadvantages include:
-
-- Increased resource count
-- Additional discovery overhead
-
----
-
-## Choosing Resource Granularity
-
-Granularity should reflect how content changes over time rather than how it is displayed.
-
-For example:
-
-A Bible may be published as:
-
-```text
-kjvonly/bible/chapters/kjv
-```
-
-or as individual chapter resources:
-
-```text
-kjvonly/bible/chapters/kjv/1_1
-kjvonly/bible/chapters/kjv/1_2
-...
-```
-
-Both approaches are valid.
-
-The choice depends on the desired synchronization and distribution characteristics.
-
-Applications should not assume a particular level of granularity.
-
-Instead, clients should treat each discovered resource as an independent unit.
+* selective installation,
+* smaller updates,
+* and independent synchronization.
 
 ---
 
 ## Granularity Independence
 
-The application architecture is intentionally independent of resource granularity.
+The architecture does not require one granularity.
 
-Regardless of whether a publisher distributes:
+For example, Bible chapters may be represented as one resource:
 
-- one resource
-- one hundred resources
-- one thousand resources
-
-the installation and synchronization pipeline remains unchanged.
-
-```mermaid
-flowchart LR
-
-    DISCOVER["Discover Resources"]
-
-    DISCOVER --> INSTALL["Install Resource"]
-
-    INSTALL --> DOMAIN["Create Domain Object"]
-
-    DOMAIN --> STORE["Store in Domain"]
+```text
+kjvonly/bible/chapters/kjv
 ```
 
-Each resource is processed independently.
+or as many resources:
 
-This allows publishers to optimize resource organization without affecting client behavior.
+```text
+kjvonly/bible/chapters/kjv/1_1
+kjvonly/bible/chapters/kjv/1_2
+kjvonly/bible/chapters/kjv/1_3
+```
 
-# Domain Objects
+Both models use the same identity and representation concepts.
 
-A Domain Object is the application-facing representation created from resolved resource content.
+```mermaid
+flowchart TD
 
-Domain Objects encapsulate application behavior and are the primary data structures used throughout the application.
+    DATASET["Bible Dataset"]
 
-Unlike resources, Domain Objects are independent of transport protocols, storage providers, and serialization formats.
+    DATASET --> BUNDLE["One Bundle Resource"]
+    DATASET --> ITEMS["Many Chapter Resources"]
+```
+
+Granularity should reflect distribution, installation, and update needs rather than presentation structure.
 
 ---
 
-## Resource Data and Domain Objects
+# Domain Object
 
-Resources are the unit of distribution.
+A Domain Object is the application-facing representation created from resolved Resource content.
 
-Domain Objects are the unit of application behavior.
+Domain Objects are the primary data structures used by application features.
 
-A resource is parsed into one or more Domain Objects according to its resource type.
+Examples include:
+
+```text
+BibleChapter
+ReadingPlan
+ReadingPlanDay
+Note
+Annotation
+Publisher
+CompletedReading
+```
+
+A Domain Object is independent of:
+
+* Nostr events,
+* Resource Representations,
+* storage providers,
+* network serialization,
+* and transport protocols.
 
 ```mermaid
 flowchart LR
 
-    RESOURCE["Resolved Resource"]
+    RESOURCE["Resolved Resource Content"]
 
     RESOURCE --> PARSER["Resource Parser"]
 
     PARSER --> OBJECTS["Domain Objects"]
 ```
 
-The Resource Parser is selected using the resource type defined by the resource identifier.
-
-For example:
-
-```text
-kjvonly/plans/readings
-    → ReadingPlanParser
-
-kjvonly/bible/chapters
-    → BibleChapterParser
-
-kjvonly/overlays/pericopes
-    → PericopeParser
-```
-
-The resulting Domain Objects are independent of how the resource was represented or retrieved.
+The Resource Type identifies the parser responsible for creating the Domain Objects.
 
 ---
 
 ## Domain Object Identity
 
-Every Domain Object retains the identity of the resource from which it was created.
+A Domain Object retains the origin of the Resource from which it was created.
 
-A Domain Object is identified by:
-
-```text
-publisher + resource identifier
-```
-
-where:
+Its resource origin includes:
 
 ```text
-publisher
-    The publisher's public key.
-
+publisher public key
 resource identifier
-    The resource's logical identifier (d tag).
 ```
 
-For example:
+Event identifiers are revision metadata.
 
-```text
-publisher = npub1...
-resource = kjvonly/plans/readings/365-bible/v1
-```
+They do not define Domain Object identity.
 
-Together these uniquely identify the origin of the Domain Object.
-
-Event identifiers are operational metadata and do not define Domain Object identity.
-
----
-
-## Resource and Object Granularity
-
-Resource granularity and Domain Object granularity are independent.
-
-A single resource may produce one or many Domain Objects.
-
-For example:
-
-```text
-Reading Plan Resource
-        │
-        ▼
-ReadingPlan
-        │
-        ├── ReadingPlanDay
-        ├── ReadingPlanDay
-        └── ReadingPlanDay
-```
-
-Likewise:
-
-```text
-Complete Bible Resource
-        │
-        ▼
-BibleChapter
-BibleChapter
-BibleChapter
-...
-```
-
-Resources define how data is distributed.
-
-Domain Objects define how data is represented within the application.
-
-Applications should not assume any fixed relationship between the two.
-
----
-
-## Installation
-
-For application resources, successful resolution and parsing results in installation.
-
-```mermaid
-flowchart LR
-
-    EVENT["Nostr Event"]
-
-    EVENT --> RESOLVE["Resolve Resource"]
-
-    RESOLVE --> PARSE["Parse Resource"]
-
-    PARSE --> DOMAIN["Create Domain Objects"]
-
-    DOMAIN --> STORE["Store in IndexedDB"]
-```
-
-From the user's perspective, downloading a resource installs it.
-
-Installation is therefore an inherent part of the resource resolution pipeline.
-
-Individual domains may define different installation policies where appropriate.
-
----
-
-## Authored Domain Objects
-
-Domain Objects are also used when creating new application data.
-
-The publication pipeline is the inverse of the installation pipeline.
-
-```mermaid
-flowchart LR
-
-    USER["User"]
-
-    USER --> DOMAIN["Domain Object"]
-
-    DOMAIN --> STORE["Store in IndexedDB"]
-
-    STORE --> OUTBOX["Outbox"]
-
-    OUTBOX --> SERIALIZE["Serialize Resource"]
-
-    SERIALIZE --> EVENT["Publish Nostr Event"]
-```
-
-This architecture allows the application to use the same Domain Objects regardless of whether data originated locally or from another publisher.
-
----
-
-## Validation
-
-Creating Domain Objects consists of three independent stages.
-
-```text
-1. Event Validation
-
-    Validate the Nostr event.
-
-2. Resource Resolution
-
-    Resolve and verify the resource representation.
-
-3. Resource Parsing
-
-    Validate the resource schema and create Domain Objects.
-```
-
-Only after these stages succeed are Domain Objects installed into the application.
-
-Each Domain Object may then enforce additional domain-specific invariants.
-
----
-
-## Storage Independence
-
-Domain Objects are independent of both transport and storage implementation.
-
-The Resource Resolution Strategy determines how resource content is obtained.
-
-The Resource Parser determines how resolved content is interpreted.
-
-The Domain Storage Strategy determines how Domain Objects are stored locally.
+A Resource may produce one or many Domain Objects.
 
 ```mermaid
 flowchart TD
 
-    EVENT["Nostr Event"]
+    RESOURCE["Reading Plan Resource"]
 
-    EVENT --> RESOLUTION["Resource Resolution Strategy"]
-
-    RESOLUTION --> PARSER["Resource Parser"]
-
-    PARSER --> DOMAIN["Domain Objects"]
-
-    DOMAIN --> STORAGE["Domain Storage Strategy"]
-
-    STORAGE --> INDEXEDDB["IndexedDB"]
+    RESOURCE --> PLAN["ReadingPlan"]
+    RESOURCE --> DAY1["ReadingPlanDay"]
+    RESOURCE --> DAY2["ReadingPlanDay"]
+    RESOURCE --> DAY3["ReadingPlanDay"]
 ```
 
-Separating these responsibilities allows the application to evolve each layer independently.
+Resource Granularity and Domain Object Granularity are independent.
 
-Changes to resource representation, transport protocols, or storage providers do not require changes to the application's domain model.
+Resources define distribution boundaries.
 
-# Domain Storage
-
-Once a resource has been resolved, parsed, and validated, the resulting Domain Objects are persisted by the application.
-
-The application stores Domain Objects rather than Nostr events, resource descriptors, or serialized resource data.
-
-This allows the application to operate independently of transport protocols and storage providers.
+Domain Objects define application behavior.
 
 ---
 
-## Domain Stores
+# Domain Store
 
-Each domain owns its own persistent storage.
+A Domain Store persists Domain Objects for application use.
 
-For example:
+Each Domain owns the storage interface for its Domain Objects.
+
+Examples include:
 
 ```text
 Bible Store
 Reading Plan Store
 Notes Store
-Highlights Store
+Annotation Store
 Publisher Store
 ```
 
-The internal storage structure of each domain is an implementation detail.
-
-Domains are responsible for storing and retrieving their own Domain Objects.
-
----
-
-## Installation
-
-Installing a resource consists of creating or updating the corresponding Domain Objects within their respective Domain Stores.
+The application reads Domain Objects from Domain Stores rather than reading Nostr events or descriptor payloads directly.
 
 ```mermaid
 flowchart LR
 
-    RESOURCE["Resolved Resource"]
+    UI["Application"]
 
-    RESOURCE --> PARSER["Resource Parser"]
-
-    PARSER --> OBJECTS["Domain Objects"]
+    UI --> OBJECTS["Domain Objects"]
 
     OBJECTS --> STORE["Domain Store"]
 ```
 
-Once installed, the application interacts exclusively with Domain Objects.
+A Domain Store is a conceptual boundary.
 
-The original resource representation is no longer required for normal application behavior.
-
----
-
-## Resource Updates
-
-When a newer version of a resource is installed, the corresponding Domain Objects are updated within the Domain Store.
-
-```mermaid
-flowchart LR
-
-    OLD["Installed Domain Objects"]
-
-    UPDATE["Updated Resource"]
-
-    UPDATE --> PARSER["Resource Parser"]
-
-    PARSER --> NEW["Updated Domain Objects"]
-
-    NEW --> STORE["Replace Installed Objects"]
-```
-
-The installation process is responsible for applying additions, updates, or removals required by the new resource.
-
-The exact update behavior is domain-specific and is outside the scope of this ADR.
+Its physical persistence model is defined separately in ADR 0007.
 
 ---
 
-## Local Application Data
-
-User-created application data follows the same architecture.
-
-```mermaid
-flowchart LR
-
-    USER["User"]
-
-    USER --> DOMAIN["Domain Objects"]
-
-    DOMAIN --> STORE["Domain Store"]
-
-    STORE --> OUTBOX["Outbox"]
-
-    OUTBOX --> SERIALIZE["Serialize Resource"]
-
-    SERIALIZE --> EVENT["Publish Nostr Event"]
-```
-
-Changes made by the user are immediately reflected in the local Domain Store.
-
-Publication is performed asynchronously through the Outbox.
-
-This allows the application to remain responsive while synchronizing changes with publishers.
-
----
-
-## Storage Independence
-
-Applications interact only with Domain Objects.
-
-The persistence mechanism is hidden behind each Domain Store.
+# Concept Boundaries
 
 ```mermaid
 flowchart TD
 
-    UI["Application"]
+    EVENT["Nostr Event"]
 
-    UI --> DOMAIN["Domain Objects"]
+    EVENT --> REPRESENTATION["Resource Representation"]
 
-    DOMAIN --> STORE["Domain Store"]
+    REPRESENTATION --> CONTENT["Resolved Resource Content"]
 
-    STORE --> INDEXEDDB["IndexedDB"]
+    CONTENT --> OBJECTS["Domain Objects"]
+
+    OBJECTS --> STORE["Domain Store"]
+
+    STORE --> APP["Application"]
 ```
 
-This separation allows storage implementations to evolve without affecting the remainder of the application.
+Each concept answers a different question:
 
-For example, future implementations may replace or supplement IndexedDB with alternative persistence technologies while preserving the same domain model.
+* **Domain:** What category of application data is this?
+* **Resource:** What independently identifiable data is distributed?
+* **Representation:** How is the Resource represented for resolution?
+* **Resource Identity:** Which logical Resource is this?
+* **Classification:** What class of Resources does it belong to?
+* **Resource Version:** Is this a separately identifiable version?
+* **Event Revision:** Is this a newer publication of the same Resource?
+* **Domain Object:** What application-facing object does the content produce?
+* **Domain Store:** Where does the application access those objects?
+
+Behavior such as discovery, resolution, installation, persistence, updates, and synchronization is defined by later ADRs.
+
+---
+
+# Scope
+
+This ADR defines the conceptual vocabulary used throughout the architecture.
+
+It does not define:
+
+* how Resources are discovered,
+* how representations are resolved,
+* how integrity is verified,
+* how Domain Objects are installed,
+* how Domain Stores are implemented,
+* how Resource updates are selected,
+* or how changes are synchronized.
+
+Those behaviors are defined in later ADRs.
 
 ---
 
 # Big Takeaway
 
-The architecture separates application behavior from transport and persistence concerns.
+KJVOnly separates the unit of distribution from the application's working model.
 
 ```mermaid
-flowchart TD
+flowchart LR
 
     DOMAIN["Domain"]
 
@@ -1132,25 +853,17 @@ flowchart TD
 
     RESOURCE --> REPRESENTATION["Representation"]
 
-    REPRESENTATION --> RESOLUTION["Resource Resolution Strategy"]
+    REPRESENTATION --> CONTENT["Resolved Content"]
 
-    RESOLUTION --> PARSER["Resource Parser"]
+    CONTENT --> OBJECTS["Domain Objects"]
 
-    PARSER --> OBJECTS["Domain Objects"]
-
-    OBJECTS --> STORAGE["Domain Store"]
-
-    STORAGE --> APP["Application"]
+    OBJECTS --> STORE["Domain Store"]
 ```
 
-Each layer has a single responsibility:
+Resources define what is distributed.
 
-- **Domain** defines the application's logical organization.
-- **Resource** defines the unit of distribution.
-- **Representation** defines how a resource is represented.
-- **Resource Resolution Strategy** obtains the resource content.
-- **Resource Parser** creates Domain Objects.
-- **Domain Objects** provide the application's working model.
-- **Domain Store** persists Domain Objects for application use.
+Representations define how serialized content is made available.
 
-By separating these responsibilities, the application remains independent of transport protocols, storage providers, and serialization formats while maintaining a consistent and extensible programming model.
+Domain Objects define how the application works with that content.
+
+Domain Stores make those objects available to the application.
