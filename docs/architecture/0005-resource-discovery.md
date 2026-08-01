@@ -35,7 +35,7 @@ Without a clear boundary, querying relays can become coupled to decisions about 
 
 # Decision
 
-Resource Discovery finds Resource Representations published by known publishers.
+Resource Discovery finds Resource Representations starting from one or more Discovery Roots.
 
 ```mermaid
 flowchart LR
@@ -53,7 +53,7 @@ Discovery is responsible for:
 * filtering by publisher,
 * filtering by Resource Identity,
 * filtering by Resource Classification,
-* discovering current addressable-event revisions,
+* discovering the current publication of addressable Resources,
 * following references from descriptor collections,
 * deduplicating discovered resources,
 * and reporting discovery failures.
@@ -308,28 +308,28 @@ Narrow queries reduce relay load, transferred data, and client-side filtering.
 
 ---
 
-# Addressable Event Revisions
+# Addressable Resource Publications
 
 Application resources are published as addressable Nostr events.
 
-A published Resource Identity may have multiple Event Revisions over time.
+A Published Resource Identity may have multiple publications over time.
 
-Discovery returns the current valid revision available from the queried relays.
+Discovery returns the current publication available from the queried relays.
 
 ```mermaid
 flowchart TD
 
     IDENTITY["Publisher + Resource Identifier"]
 
-    IDENTITY --> OLD["Older Event Revision"]
-    IDENTITY --> CURRENT["Current Event Revision"]
+    IDENTITY --> OLD["Older Publication"]
+    IDENTITY --> CURRENT["Current Publication"]
 
     CURRENT --> DISCOVERED["Discovered Representation"]
 ```
 
-When multiple candidate events are returned for the same address, discovery selects the latest valid revision according to Nostr addressable-event semantics.
+When multiple candidate events are returned for the same address, discovery selects the current publication according to Nostr addressable-event semantics.
 
-Event identifiers remain revision metadata.
+Event identifiers remain publication metadata.
 
 They do not create new Resource Identities.
 
@@ -360,7 +360,7 @@ Typical query shapes include:
 | Exact published resource                 | `authors`, `kinds`, `#d` |
 | Resources of one class                   | `authors`, `kinds`, `#t` |
 | All application resources from publisher | `authors`, `kinds`       |
-| Exact event revision                     | `ids`                    |
+| Exact event                              | `ids`                    |
 
 Queries should include publisher filtering whenever the publisher is known.
 
@@ -487,7 +487,7 @@ publisher public key
 
 Resource Identifier
 
-optional expected Event Revision or content hash
+optional expected event ID or content hash
 ```
 
 The discovery process uses the referenced publisher and Resource Identifier to perform direct Resource Discovery.
@@ -651,7 +651,7 @@ The exact implementation may differ.
 A discovery result must contain enough information for:
 
 * Resource Resolution,
-* revision comparison,
+* publication comparison,
 * provenance,
 * diagnostics,
 * and future discovery references.
@@ -771,7 +771,7 @@ Discovery reports what exists.
 
 Trust policy determines whether the application may use a publisher as a discovery or installation source.
 
-Trusted Publisher behavior is defined in ADR 0009.
+Discovery Roots are defined in ADR 0009.
 
 ---
 
@@ -800,7 +800,7 @@ flowchart LR
 
 Discovering a Resource does not imply that it should be downloaded or installed.
 
-Resource Installation is defined in ADR 0012.
+Resource Installation is defined in ADR 0008.
 
 ---
 
@@ -813,7 +813,7 @@ Examples include:
 * application bootstrap,
 * publisher browsing,
 * manual installation,
-* Auto Sync,
+* application startup,
 * import validation,
 * diagnostics,
 * or direct resource navigation.
@@ -824,17 +824,17 @@ flowchart TD
     BOOTSTRAP["Bootstrap"]
     BROWSE["Publisher Browser"]
     INSTALL["Manual Installation"]
-    AUTOSYNC["Auto Sync"]
+    STARTUP["Application Startup"]
     IMPORT["Import"]
 
     BOOTSTRAP --> DISCOVERY["Resource Discovery"]
     BROWSE --> DISCOVERY
     INSTALL --> DISCOVERY
-    AUTOSYNC --> DISCOVERY
+    STARTUP --> DISCOVERY
     IMPORT --> DISCOVERY
 ```
 
-Each workflow supplies its own trust, retry, installation, and update policies.
+Each workflow supplies its own trust, retry, installation, and publication update policies.
 
 Discovery itself remains unchanged.
 
@@ -850,7 +850,7 @@ This ADR defines:
 * Resource Classification filtering,
 * relay query shapes,
 * multi-relay discovery,
-* Event Revision selection,
+* selection of the current publication,
 * event and Resource deduplication,
 * discovery through descriptors,
 * recursive discovery,
@@ -866,13 +866,13 @@ This ADR does not define:
 * Nostr event schema validation,
 * external content retrieval,
 * integrity verification,
-* Resource Parsing,
+* Domain Object creation,
 * Domain Object creation,
 * installation,
 * local persistence,
 * dependency handling,
 * update acceptance,
-* Auto Sync,
+* application startup,
 * or outbound synchronization.
 
 Those concerns are defined by other ADRs.
@@ -903,4 +903,4 @@ Descriptor collections may reveal additional Resources.
 
 Discovery finds what is available.
 
-Trust, resolution, installation, and Auto Sync decide what happens next.
+Trust, resolution, installation, and synchronization determine what happens next.
