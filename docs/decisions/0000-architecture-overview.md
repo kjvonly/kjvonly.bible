@@ -8,446 +8,264 @@ Accepted
 
 # Purpose
 
-This document introduces the architectural concepts that define KJVOnly.
+KJVOnly is an offline-first application built around Resources and Domain Objects.
 
-It is intended to be read before the remaining Architecture Decision Records (ADRs).
+This document provides a high-level overview of the architecture and introduces the core concepts used throughout the Architecture Decision Records (ADRs).
 
-The purpose of this document is not to describe implementation details, but to establish the vocabulary, guiding principles, and relationships used throughout the architecture.
+Each subsequent ADR defines one architectural responsibility.
 
-Each subsequent ADR expands on one of the concepts introduced here.
+Together they form the architecture specification for the application.
 
 ---
 
-# Design Philosophy
+# Core Principles
 
-KJVOnly is built around a small set of architectural concepts.
+The architecture is guided by the following principles.
 
-Rather than introducing new abstractions for every feature, the architecture favors composing existing concepts into more capable systems.
+- Offline-first.
+- Domain Objects are the application's working model.
+- Resources are the unit of distribution.
+- Every architectural component has a single responsibility.
+- Existing pipelines are reused whenever possible.
+- Distribution, storage, synchronization, and application behavior remain independent concerns.
+- Simplicity is preferred over architectural complexity.
 
-The architecture is:
+---
 
-* Resource-oriented
-* Offline-first
-* Publisher-owned
-* Manifest-driven
-* Event-synchronized
-* Strategy-based
-* Composable
+# High-Level Architecture
 
-New capabilities should be expressed by combining existing concepts before introducing new ones.
+The architecture intentionally separates distribution from the application's working model.
 
-This keeps the architecture small, understandable, and consistent over time.
+Incoming Resources are transformed into Domain Objects.
+
+Outgoing Domain Objects are transformed back into Resources.
+
+```mermaid
+flowchart LR
+
+    subgraph Distribution
+
+        DISCOVERY["Resource Discovery"]
+
+        RESOLUTION["Resource Resolution"]
+
+    end
+
+    subgraph Domain
+
+        FACTORY["Domain Object Factory"]
+
+        STORE["Domain Stores"]
+
+        SERIALIZER["Resource Serializer"]
+
+    end
+
+    subgraph Publishing
+
+        OUTBOX["Outbox"]
+
+    end
+
+    DISCOVERY --> RESOLUTION
+
+    RESOLUTION --> FACTORY
+
+    FACTORY --> STORE
+
+    STORE --> SERIALIZER
+
+    SERIALIZER --> OUTBOX
+```
+
+Each component has one responsibility and communicates through well-defined architectural boundaries.
+
+---
+
+# Architecture Organization
+
+The architecture is organized into three logical areas.
+
+Each area builds on the concepts introduced by the previous one.
+
+## Foundations
+
+Defines the architectural vocabulary and core concepts.
+
+- Data Distribution Strategy
+- Domain & Resource Model
+- Nostr Event Model
+- Nostr Resource Identity
+
+These ADRs establish the terminology and architectural boundaries used throughout the remainder of the specification.
+
+---
+
+## Resource Lifecycle
+
+Defines how Resources move through the application.
+
+- Resource Discovery
+- Resource Resolution
+- Domain Storage Model
+- Resource Installation Lifecycle
+- Discovery Roots
+
+These ADRs describe how Resources are discovered, resolved, transformed into Domain Objects, installed, and persisted.
+
+---
+
+## Synchronization & Application
+
+Defines how application state evolves over time.
+
+- Outbox and Publishing
+- Multi-Device Synchronization
+- Resource Archives
+- Search Indexes
+- Application Lifecycle
+
+These ADRs describe publishing, synchronization, backup, search, and application startup.
+
+---
+
+# Architectural Pipelines
+
+The architecture is intentionally symmetrical.
+
+## Incoming Pipeline
+
+Published Resources become Domain Objects through the installation pipeline.
+
+```mermaid
+flowchart LR
+
+    RESOURCE["Published Resource"]
+
+    --> RESOLUTION["Resource Resolution"]
+
+    --> FACTORY["Domain Object Factory"]
+
+    --> STORE["Domain Store"]
+```
+
+---
+
+## Outgoing Pipeline
+
+Domain Objects become Published Resources through the publishing pipeline.
+
+```mermaid
+flowchart LR
+
+    STORE["Domain Store"]
+
+    --> SERIALIZER["Resource Serializer"]
+
+    --> OUTBOX["Outbox"]
+
+    --> RESOURCE["Published Resource"]
+```
+
+The architecture reuses these pipelines throughout the application.
+
+Import, export, synchronization, and installation all build upon these same flows.
 
 ---
 
 # Core Concepts
 
+## Domain
+
+A Domain organizes related application behavior and owns:
+
+- Domain Objects,
+- Domain Object Factories,
+- Resource Serializers,
+- and Domain Stores.
+
+---
+
 ## Resource
 
-A resource is the fundamental unit of application data.
+A Resource is the unit of distribution.
 
-Resources have stable identities and may represent Bible text, overlays, notes, reading plans, search indexes, manifests, publisher metadata, or other application content.
-
-Resources are identified independently of where they are stored or how they are transported.
+Resources are discovered, installed, synchronized, archived, and published independently.
 
 ---
 
-## Manifest
+## Resource Representation
 
-A manifest describes a collection of resources.
+A Resource Representation defines how Resource content is represented.
 
-It tells the application:
-
-* what resources exist
-* how they are resolved
-* how they are verified
-* how they should be installed
-
-Manifests bootstrap application state.
-
----
-
-## Publisher
-
-Publishers own resources.
-
-Ownership is determined by the publisher's public key.
-
-Installing a resource never transfers ownership.
-
-Users create independent ownership only by forking a resource.
+Representations may contain the content directly or describe how to retrieve it.
 
 ---
 
 ## Domain Object
 
-A domain object is the application's in-memory representation of a resource.
+A Domain Object is the application's working representation of Resource content.
 
-Domain objects contain application data only.
-
-They do not expose protocol-specific structures.
+The application operates exclusively on Domain Objects.
 
 ---
 
 ## Domain Store
 
-Domain stores contain the application's local state.
+A Domain Store persists Domain Objects.
 
-The user interface renders entirely from domain stores.
-
-Synchronization and installation update domain stores.
+The application does not persist Nostr events or serialized Resources.
 
 ---
 
-## Event Model
+## Published Resource
 
-The Event Model forms the boundary between the application and the Nostr protocol.
-
-It translates between domain objects and Nostr events.
-
-Application features never operate directly on raw Nostr events.
+A Published Resource is a Resource that has been serialized and made available for distribution.
 
 ---
 
-## Strategies
+# Relationship Between ADRs
 
-Strategies isolate behavior that varies independently.
+Each ADR owns one architectural responsibility.
 
-Examples include:
+Concepts are defined once and referenced by later ADRs rather than repeated.
 
-* Storage Strategy
-* Event Strategy
-* Search Strategy
-
-Using strategies allows new implementations without changing higher architectural layers.
+The architecture intentionally favors small, focused ADRs that compose into a complete system.
 
 ---
 
-# Architectural Layers
+# Reading Order
 
-The architecture is composed of independent layers.
+The ADRs are intended to be read sequentially.
 
-```text
-Application
-        ↓
-Domain Stores
-        ↓
-Domain Objects
-        ↓
-Resources
-        ↓
-Event Model
-        ↓
-Nostr Protocol
+Each document introduces concepts required by the next.
+
+Readers unfamiliar with the architecture should begin with the Foundations before moving into the Resource Lifecycle and Synchronization sections.
+
+---
+
+# Big Takeaway
+
+KJVOnly is an offline-first, Resource-oriented architecture.
+
+Domain Objects are the application's source of truth.
+
+Resources exist to distribute those Domain Objects between publishers, devices, and users through a small number of reusable architectural pipelines.
+
+```mermaid
+flowchart LR
+
+    RESOURCE["Published Resource"]
+
+    --> RESOLUTION["Resource Resolution"]
+
+    --> FACTORY["Domain Object Factory"]
+
+    --> STORE["Domain Store"]
+
+    --> SERIALIZER["Resource Serializer"]
+
+    --> OUTBOX["Outbox"]
+
+    --> RESOURCE2["Published Resource"]
 ```
-
-Each layer communicates only with the adjacent layers.
-
-Responsibilities are not shared across layers.
-
----
-
-# Resource Lifecycle
-
-Resources move through a predictable lifecycle.
-
-```text
-Publisher
-
-↓
-
-Trust
-
-↓
-
-Discovery
-
-↓
-
-Installation
-
-↓
-
-Auto Sync
-
-↓
-
-Fork (optional)
-
-↓
-
-Removal
-```
-
-Each stage represents an independent architectural decision.
-
-Trust determines discovery.
-
-Installation determines local availability.
-
-Auto Sync determines update behavior.
-
-Forking creates independent ownership.
-
----
-
-# Installation Pipeline
-
-Regardless of where resources originate, installation follows the same pipeline.
-
-```text
-Source
-
-↓
-
-Manifest
-
-↓
-
-Resolve Resources
-
-↓
-
-Download
-
-↓
-
-Verify
-
-↓
-
-Install
-
-↓
-
-Domain Stores
-```
-
-The source may be:
-
-* Trusted publisher
-* Archive
-* Local file
-* Future resource source
-
-Only the source changes.
-
-The installation pipeline remains the same.
-
----
-
-# Application Lifecycle
-
-The application becomes usable as soon as the current reading context is available.
-
-Everything else continues independently.
-
-```text
-Open Application
-
-↓
-
-Initialize
-
-↓
-
-Render
-
-↓
-
-Background Services
-```
-
-Background services include:
-
-* synchronization
-* updates
-* search indexing
-* resource installation
-* discovery
-
-Application responsiveness always takes priority over background work.
-
----
-
-# Ownership Model
-
-Publisher-owned resources remain owned by their publisher.
-
-Forking creates a new user-owned resource.
-
-The original publisher resource remains unchanged.
-
-```text
-Publisher Resource
-        │
-        ├── Installed
-        │
-        └── Fork
-                │
-                ▼
-        User-Owned Resource
-```
-
-Ownership is never transferred.
-
-Only new ownership is created.
-
----
-
-# Layer Responsibilities
-
-Each architectural layer validates its own responsibilities.
-
-Examples include:
-
-* Event Model validates protocol structure.
-* Event Strategies validate event types.
-* Domain models validate application rules.
-* Resource Installation validates downloads and installation completeness.
-
-Validation is distributed throughout the architecture rather than centralized into a single subsystem.
-
----
-
-# Guiding Principles
-
-## Resource-Oriented Design
-
-Everything important is represented as a resource.
-
----
-
-## Stable Identity
-
-Resources maintain stable identities.
-
-Versions change.
-
-Identity does not.
-
----
-
-## Offline First
-
-The application always prefers local operation.
-
-Network connectivity enhances the application but should never be required for normal use.
-
----
-
-## Separation of Concerns
-
-Each architectural layer has one responsibility.
-
-Responsibilities should not overlap.
-
----
-
-## Composition Over New Concepts
-
-Before introducing a new architectural concept, determine whether the capability can be expressed by composing existing concepts.
-
-Prefer:
-
-```text
-Manifest
-
-+
-
-Resources
-
-=
-
-Archive
-```
-
-over inventing a separate backup architecture.
-
-Architectural concepts should be reused before new ones are created.
-
----
-
-## Strategy-Based Extensibility
-
-Behavior that varies independently should be isolated behind strategy interfaces.
-
-This allows storage providers, event formats, search implementations, and future extensions to evolve independently.
-
----
-
-## Publisher Ownership
-
-Resources always belong to their publisher.
-
-Users modify publisher content by creating forks rather than editing publisher resources directly.
-
----
-
-## Local First
-
-The user interface renders from local domain stores.
-
-Synchronization updates local state rather than driving the user interface directly.
-
----
-
-# ADR Roadmap
-
-The remaining ADRs expand upon the concepts introduced here.
-
-| ADR  | Concept                             |
-| ---- | ----------------------------------- |
-| 0001 | Data Distribution Strategy          |
-| 0002 | Domain, Resource, and Storage Model |
-| 0003 | Manifest Events                     |
-| 0004 | Resource Resolution                 |
-| 0005 | Resource Discovery                  |
-| 0006 | Resource Versioning                 |
-| 0007 | IndexedDB Schema                    |
-| 0008 | Sync / Outbox Strategy              |
-| 0009 | Trusted Publishers                  |
-| 0010 | Import / Export Format              |
-| 0011 | Search Index Strategy               |
-| 0012 | Resource Installation               |
-| 0013 | Event Model                         |
-| 0014 | Application Lifecycle               |
-| 0015 | Resource Update Policy              |
-
----
-
-# Big Picture
-
-Every architectural decision in KJVOnly builds upon a small number of core concepts.
-
-```text
-Resources
-
-↓
-
-Manifests
-
-↓
-
-Discovery
-
-↓
-
-Installation
-
-↓
-
-Domain Stores
-
-↓
-
-Rendering
-
-↓
-
-Synchronization
-```
-
-The architecture favors composition over specialization.
-
-By keeping the number of architectural concepts intentionally small, new capabilities can be added without increasing conceptual complexity, resulting in a system that remains understandable, maintainable, and extensible as it evolves.
