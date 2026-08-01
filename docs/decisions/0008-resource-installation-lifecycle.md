@@ -172,6 +172,20 @@ It does not describe publishing or synchronization.
 
 ---
 
+# Reinstallation
+
+Installing a newer publication of the same Published Resource replaces the previously installed Domain Objects produced by that Resource.
+
+Installed publisher Resources follow future publications of the same Published Resource Identity by default.
+
+Resources that should no longer follow future publications must become independent Published Resources, typically by creating a fork.
+
+Installing a different Published Resource creates an independent installation.
+
+Determining whether two publications represent the same Published Resource is defined by ADR 0004.
+
+---
+
 # Relationship to Other ADRs
 
 This ADR coordinates concepts defined elsewhere.
