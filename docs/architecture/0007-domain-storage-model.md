@@ -177,7 +177,7 @@ This ADR does not define:
 * Resource Resolution,
 * installation,
 * synchronization,
-* Auto Sync,
+* Multi-Device Synchronization,
 * search indexing,
 * caching strategies,
 * or storage engine implementation.
