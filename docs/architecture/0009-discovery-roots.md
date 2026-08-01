@@ -27,7 +27,7 @@ Discovery Roots define where discovery starts.
 They do not imply:
 
 - installation,
-- Resource Auto Sync,
+-  Auto Sync,
 - ownership,
 - authenticity,
 - or endorsement.
@@ -102,7 +102,6 @@ It does not:
 
 - uninstall previously installed Resources,
 - remove Domain Objects,
-- disable Resource Auto Sync,
 - or affect publisher ownership.
 
 Those behaviors are defined by other ADRs.
@@ -131,7 +130,6 @@ It relies on:
 It intentionally does not define:
 
 - Resource Installation,
-- Resource Auto Sync,
 - publishing,
 - synchronization,
 - or local persistence.
@@ -151,7 +149,6 @@ This ADR does not define:
 
 - Resource Discovery,
 - Resource Installation,
-- Resource Auto Sync,
 - publishing,
 - or synchronization.
 

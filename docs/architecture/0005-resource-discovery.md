@@ -804,28 +804,6 @@ Resource Installation is defined in ADR 0012.
 
 ---
 
-# Discovery Does Not Enable Auto Sync
-
-Discovery may find a newer Event Revision of a previously installed Resource.
-
-It does not decide whether that revision should replace the installed version.
-
-```mermaid
-flowchart LR
-
-    DISCOVERY["New Revision Discovered"]
-
-    DISCOVERY --> POLICY["Auto Sync Policy"]
-
-    POLICY --> ACTION["Ignore, Prompt, or Install"]
-```
-
-The decision to follow future revisions belongs to Resource Auto Sync.
-
-That behavior is defined separately in ADR 0015.
-
----
-
 # Discovery Independence
 
 The same discovery model may be used by different workflows.

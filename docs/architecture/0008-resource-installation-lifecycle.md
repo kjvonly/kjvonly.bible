@@ -63,7 +63,7 @@ Resources may be installed after being obtained through:
 - Resource Discovery
 - Application bootstrap
 - Import
-- Resource Auto Sync
+- Resource Updates 
 - Future installation mechanisms
 
 Regardless of origin, every Resource follows the same installation lifecycle.
@@ -219,7 +219,6 @@ This ADR does not define:
 - Resource Resolution
 - Domain Object creation
 - Domain Storage
-- Resource Auto Sync
 - publishing
 - synchronization
 
