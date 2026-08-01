@@ -63,7 +63,7 @@ Resources may be installed after being obtained through:
 - Resource Discovery
 - Application bootstrap
 - Import
-- Resource Updates 
+- Resource Updates
 - Future installation mechanisms
 
 Regardless of origin, every Resource follows the same installation lifecycle.
@@ -123,16 +123,6 @@ Either all Domain Objects produced by a Resource are successfully persisted, or 
 The application must never expose partially installed Domain Objects.
 
 This guarantees that the application always operates on a consistent installation.
-
----
-
-# Reinstallation
-
-Installing a newer publication of the same Published Resource replaces the previously installed Domain Objects produced by that Resource.
-
-Installing a different Published Resource creates an independent installation.
-
-Determining whether two publications represent the same Published Resource is defined by ADR 0004.
 
 ---
 
