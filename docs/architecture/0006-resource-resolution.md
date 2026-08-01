@@ -76,7 +76,7 @@ At minimum, that context includes:
 publisher
 resource identifier
 resource representation
-event revision
+event publication
 media type
 representation payload
 ```
@@ -132,7 +132,7 @@ application/json+gzip
 application/octet-stream
 ```
 
-remain serialized content until the installation pipeline selects the appropriate Resource Parser.
+remain serialized content until the Resource Installation pipeline selects the appropriate Domain Object Factory.
 
 ---
 
@@ -399,7 +399,7 @@ Each descriptor identifies a distinct Resource and produces an independent resul
 
 Descriptor collection order does not define installation order or dependencies.
 
-Dependencies, if any, are installation metadata and are handled by ADR 0012.
+Dependencies, if any, are installation metadata and are handled by ADR 0008.
 
 ---
 
@@ -574,7 +574,7 @@ Long-lived retry policy belongs to the workflow that requested resolution, such 
 * Resource Installation,
 * background downloading,
 * application bootstrap,
-* or Auto Sync.
+* or application startup.
 
 A Resolution Strategy may perform limited transport-level retry when appropriate, but Resource Resolution does not own persistent retry queues, exponential backoff schedules, or circuit-breaker state.
 
@@ -647,7 +647,7 @@ Resource Resolution owns:
 
 Resource Installation owns:
 
-* selecting a Resource Parser,
+* selecting the appropriate Domain Object Factory,
 * decompressing or decoding content as required,
 * validating the resource schema,
 * creating Domain Objects,
