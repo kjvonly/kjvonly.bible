@@ -8,278 +8,316 @@ Accepted
 
 # Problem
 
-KJVOnly is an offline-first application that synchronizes resources over Nostr.
+KJVOnly is an offline-first application.
 
-The application must provide a responsive user experience while simultaneously performing background work such as resource discovery, installation, synchronization, search indexing, and update checking.
+The application must become usable quickly while continuing to discover, synchronize, install, publish, and index Resources in the background.
 
-The architecture requires a consistent application lifecycle that prioritizes immediate usability while allowing long-running tasks to execute independently.
+Application startup should coordinate the architectural pipelines defined by earlier ADRs without redefining their responsibilities.
 
 ---
 
 # Decision
 
-The application becomes usable as soon as the current reading context and its required dependencies are available.
+The Application Lifecycle coordinates the initialization of the application.
 
-All remaining work occurs independently in the background.
+It is responsible for orchestrating the existing architecture so that users can begin interacting with the application as quickly as possible.
 
-The application should never delay rendering while waiting for synchronization, updates, or optional resources.
+The Application Lifecycle does not perform Resource Discovery, Resource Resolution, Resource Installation, publishing, synchronization, or indexing itself.
+
+It coordinates those processes.
+
 
 ---
 
-# Application Startup
+# Startup Sequence
 
-Application startup follows a consistent sequence.
+The application restores the requested application state and determines the minimum Resources required for the current view.
 
-```text
-Open Application
-        │
-        ▼
-Open IndexedDB
-        │
-        ▼
-Run Migrations
-        │
-        ▼
-Ensure Application Publisher Trusted
-        │
-        ▼
-Resolve Current Reading Resource
-        │
-        ▼
-Resolve Required Dependencies
-        │
-        ▼
-Render Application
-        │
-        ▼
-Start Background Services
+If those Domain Objects are already installed, the application renders them immediately.
+
+If they are not installed, the application discovers and installs only the required Resources before rendering.
+
+```mermaid
+flowchart TD
+
+    START["Application Startup"]
+
+    START --> RESTORE["Restore Requested Application State"]
+
+    RESTORE --> REQUIRED["Determine Required Resources"]
+
+    REQUIRED --> LOCAL{"Required Domain Objects Installed?"}
+
+    LOCAL -->|Yes| READY["Application Ready"]
+
+    LOCAL -->|No| DISCOVER["Discover Required Resources"]
+
+    DISCOVER --> INSTALL["Install Required Resources"]
+
+    INSTALL --> READY
+
+    READY --> BACKGROUND["Start Background Tasks"]
 ```
 
-Rendering begins as soon as the current reading context is available.
+Application readiness is based on the current view, not on completion of global bootstrap or synchronization.
 
-The application does not wait for complete resource installation before becoming usable.
+For example, if the current reading context is John 3, the application may discover and install only the John 3 chapter Resource before rendering.
 
----
-
-# First Launch
-
-During the first application launch, the application publisher provides the initial bootstrap resources.
-
-The application ensures the application publisher exists within the trusted publisher list.
-
-The application may automatically install its default resources.
-
-For the initial implementation, the application publisher's manifest may be downloaded and installed automatically.
-
-Future implementations may optimize startup by installing only the immediate reading context before continuing background installation.
+Larger Bible bundles, search indexes, overlays, and other optional Resources continue installing in the background.
 
 ---
 
-# Reading Context
+# Background Tasks
 
-The application starts from a predefined or previously viewed reading location.
+Once the application is ready, background work begins.
 
-The startup pipeline is:
+```mermaid
+flowchart TD
 
-```text
-Reading Location
+    READY["Application Ready"]
 
-↓
+    READY --> DISCOVERY["Resource Discovery"]
 
-Check Domain Store
+    READY --> SYNC["Multi-Device Synchronization"]
 
-↓
+    READY --> OUTBOX["Outbox Publishing"]
 
-Resolve Resource
+    READY --> INDEX["Search Index Builder"]
 
-↓
+    DISCOVERY --> INSTALL["Resource Installation"]
 
-Install if Needed
-
-↓
-
-Render
+    INSTALL --> STORE["Domain Stores"]
 ```
 
-This allows chapter-level resources to provide immediate rendering while larger resources continue downloading in the background.
+Each background task is independent.
+
+Failure of one task does not prevent the others from continuing.
 
 ---
 
-# Required Dependencies
+# Resource Discovery
 
-Resources required to render the current reading context are resolved automatically.
+Resource Discovery begins using the configured Discovery Roots.
+
+New or updated Resources are processed through the normal installation pipeline.
+
+The Application Lifecycle coordinates when discovery occurs.
+
+Resource Discovery remains responsible for determining what Resources are available.
+
+---
+
+# Resource Installation
+
+Discovered Resources are installed using the existing Resource Installation Lifecycle.
+
+The Application Lifecycle does not install Resources directly.
+
+It schedules installation work and monitors progress.
+
+---
+
+# Multi-Device Synchronization
+
+The Application Lifecycle periodically synchronizes installed Resources with remote publications.
+
+Incoming publications are processed through the normal installation pipeline.
+
+Outgoing publications continue through the Outbox.
+
+Synchronization remains independent of startup.
+
+---
+
+# Outbox Publishing
+
+Pending Outbox entries resume automatically during startup.
+
+Publishing continues in the background until the Outbox is empty or connectivity is unavailable.
+
+The application never blocks startup while waiting for publication.
+
+---
+
+# Search Indexes
+
+Generated search indexes may be rebuilt during startup if required.
+
+Published search indexes become available after installation.
+
+Search indexing is performed in the background and does not block application readiness.
+
+---
+
+# Startup Recovery
+
+Interrupted work resumes automatically after application restart.
 
 Examples include:
 
-* Bible text
-* Book metadata
-* Chapter metadata
-* Rendering overlays required for the current view
+- pending Resource installations,
+- pending Outbox publications,
+- search index generation,
+- and synchronization.
 
-Optional resources such as search indexes or Strong's data are not required for application startup.
-
----
-
-# Background Services
-
-Once the application has rendered, independent background services begin.
-
-Examples include:
-
-* Manifest discovery
-* Resource installation
-* Resource updates
-* Outbox synchronization
-* Search index generation
-* Search index refresh
-* Optional resource downloads
-
-These services execute independently without blocking user interaction.
+The Application Lifecycle resumes existing work rather than restarting from the beginning.
 
 ---
 
 # Offline Startup
 
-Offline startup relies entirely upon previously installed resources.
+If the required Domain Objects are already installed, the application starts normally while offline.
 
-If the required reading resources exist locally, the application behaves normally.
+If required content is not installed and the network is unavailable, the application displays an offline-unavailable state for that content while preserving access to all other installed data.
 
-If a requested resource has not yet been installed and no network connection is available, that resource cannot be resolved until connectivity returns.
+```mermaid
+flowchart TD
 
-The remainder of the application continues functioning using available local resources.
+    START["Application Startup"]
 
----
+    START --> REQUIRED["Determine Required Resources"]
 
-# Interrupted Installation
+    REQUIRED --> LOCAL{"Required Domain Objects Installed?"}
 
-Resource downloads may be interrupted by application termination or device failure.
+    LOCAL -->|Yes| READY["Application Ready"]
 
-Downloaded blobs are staged until installation completes successfully.
+    LOCAL -->|No| ONLINE{"Network Available?"}
 
-On startup the application checks for previously downloaded blobs before downloading resources again.
+    ONLINE -->|Yes| INSTALL["Discover and Install Required Resources"]
 
-```text
-Restart
+    INSTALL --> READY
 
-↓
-
-Check Staged Blobs
-
-↓
-
-Reuse Existing Downloads
-
-↓
-
-Download Missing Resources
-
-↓
-
-Install
+    ONLINE -->|No| UNAVAILABLE["Show Offline-Unavailable State"]
 ```
-
-This minimizes unnecessary network activity while preserving atomic installation.
-
 ---
 
-# Search
+# Optional Resources
 
-Search indexes are restored or updated independently of application startup.
+The application may start before every optional Resource has been installed.
 
-Search work may execute in background workers.
+Examples include:
 
-If an index is unavailable, the application may offer to install or generate the required search resource.
+- search indexes,
+- commentaries,
+- overlays,
+- dictionaries,
+- and other optional content.
 
-Search never blocks application startup.
+Optional Resources become available as installation completes.
 
----
-
-# Synchronization
-
-Synchronization begins after the application is ready.
-
-The Outbox resumes automatically.
-
-Manifest discovery, update checking, and synchronization occur independently of the user interface.
-
-Changes are reflected through updates to the domain stores.
-
----
-
-# Resource Validation
-
-Resource hashes are validated when content is downloaded.
-
-Previously installed resources are not revalidated during every application startup.
-
-Integrity validation occurs during installation rather than application launch.
+The application should continue functioning without them whenever possible.
 
 ---
 
 # Application State
 
-The application maintains a simple lifecycle.
-
-```text
-Initializing
-
-↓
-
-Ready
-```
-
-Once the application reaches the Ready state, multiple background activities may execute simultaneously.
+The Application Lifecycle restores application state before user interaction.
 
 Examples include:
 
-* Downloading
-* Synchronizing
-* Updating
-* Indexing
-* Offline operation
+- current reading position,
+- open notes,
+- user settings,
+- window state,
+- and other application preferences.
 
-These are independent service states rather than mutually exclusive application states.
+Application state restoration is independent of Resource Discovery and synchronization.
 
 ---
 
-# Relationship to the Architecture
+# Browser Environment
 
-Application startup coordinates previously defined architectural concepts.
+The application is designed for a browser environment.
 
-```text
-Trusted Publishers
+The architecture assumes:
 
-↓
+- offline operation,
+- local persistence,
+- background workers,
+- and asynchronous network communication.
 
-Manifest Discovery
+The application does not require server-side rendering.
 
-↓
+---
 
-Resource Resolution
+# Relationship to Other ADRs
 
-↓
+This ADR coordinates the architecture defined by:
 
-Installation
+- **ADR 0005** — Resource Discovery
+- **ADR 0007** — Domain Storage Model
+- **ADR 0008** — Resource Installation Lifecycle
+- **ADR 0009** — Discovery Roots
+- **ADR 0010** — Outbox and Publishing
+- **ADR 0011** — Multi-Device Synchronization
+- **ADR 0012** — Resource Archives
+- **ADR 0013** — Search Indexes
 
-↓
+It intentionally does not redefine those responsibilities.
 
-Domain Stores
+---
 
-↓
+# Scope
 
-Background Services
-```
+This ADR defines:
 
-The lifecycle introduces no new architectural concepts.
+- application startup,
+- background orchestration,
+- startup recovery,
+- offline startup,
+- optional Resources,
+- and application readiness.
 
-It orchestrates the existing resource-oriented architecture into a consistent application startup experience.
+This ADR does not define:
+
+- Resource Discovery,
+- Resource Installation,
+- publishing,
+- synchronization,
+- search indexing,
+- or local persistence.
+
+Those responsibilities remain defined by their respective ADRs.
 
 ---
 
 # Big Takeaway
 
-The application becomes usable as quickly as possible.
+The Application Lifecycle coordinates the existing architectural pipelines to make the application usable as quickly as possible.
 
-Only the resources required for the current reading context participate in startup.
+The application restores the requested state and ensures the minimum Resources required for the current view are installed before rendering.
 
-Everything else—including synchronization, updates, indexing, and optional resource installation—continues independently in the background, preserving both responsiveness and the offline-first design of the application.
+If those Resources are already installed, rendering occurs immediately.
+
+If they are not installed, the application discovers and installs only the required Resources before rendering.
+
+All other work—including Resource Discovery, Resource Installation, Multi-Device Synchronization, Outbox Publishing, and Search Index generation—continues independently in the background.
+
+```mermaid
+flowchart TD
+
+    START["Application Startup"]
+
+    START --> STATE["Restore Application State"]
+
+    STATE --> REQUIRED["Determine Required Resources"]
+
+    REQUIRED --> LOCAL{"Resources Installed?"}
+
+    LOCAL -->|Yes| READY["Application Ready"]
+
+    LOCAL -->|No| DISCOVERY["Resource Discovery"]
+
+    DISCOVERY --> INSTALL["Resource Installation"]
+
+    INSTALL --> READY
+
+    READY --> BACKGROUND["Background Tasks"]
+
+    BACKGROUND --> SYNC["Synchronization"]
+
+    BACKGROUND --> OUTBOX["Publishing"]
+
+    BACKGROUND --> INDEX["Search Indexes"]
+```
+---
