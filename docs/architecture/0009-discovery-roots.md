@@ -27,7 +27,7 @@ Discovery Roots define where discovery starts.
 They do not imply:
 
 - installation,
--  Auto Sync,
+- future publication updates,
 - ownership,
 - authenticity,
 - or endorsement.
