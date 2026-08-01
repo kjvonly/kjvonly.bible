@@ -681,7 +681,7 @@ This ADR does not define:
 * Resource discovery,
 * publisher trust,
 * Nostr event validation,
-* Resource Parser selection,
+* Domain Object Factory selection,
 * resource-schema validation,
 * decompression or domain decoding,
 * Domain Object creation,

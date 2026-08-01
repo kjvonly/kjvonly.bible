@@ -270,16 +270,6 @@ Individual Resource formats evolve independently through their own serializers a
 
 ---
 
-# Scope
-
-Version 1 of the archive format supports JSON Resource content.
-
-Binary Resource content is outside the scope of this ADR.
-
-Future archive versions may support additional content types without changing the overall archive architecture.
-
----
-
 # Relationship to Other ADRs
 
 This ADR builds on:

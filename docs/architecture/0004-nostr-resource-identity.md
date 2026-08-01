@@ -220,7 +220,7 @@ This ADR does not define:
 * Resource discovery,
 * Resource Resolution,
 * installation,
-* Auto Sync,
+* Multi-Device Synchronization,
 * update-selection behavior,
 * historical event archival,
 * synchronization,
