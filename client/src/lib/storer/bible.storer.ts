@@ -1,4 +1,5 @@
-import { bibleDB } from './bible.db';
+import { getBibleDB } from './bible.db';
+let bibleDB = await getBibleDB()
 
 export class BibleStorer {
 	LAST_DATE_UPDATED_ID = 'lastDateUpdated';

@@ -13,20 +13,22 @@ import {
   PERICOPES,
   BIBLE_VERSIONS,
   ACTION_DELETE_VERSION,
-  bibleDB
+  getBibleDB
 } from '$lib/storer/bible.db';
 import { authService } from '$lib/services/auth.service';
 import { offlineApi } from '$lib/nostr/events/offline.nostr';
 import { downloadAndDecompressGzip } from '$lib/utils/gzip';
 
+let bibleDB = await getBibleDB()
+
 onmessage = async (e) => {
   switch (e.data.action) {
-    case 'init':
-      await syncAnnotsAndNotesFromServer(e.data);
-      break;
-    case 'sync':
-      await syncAnnotsAndNotesFromServer(e.data);
-      break;
+    // case 'init':
+    //   await syncAnnotsAndNotesFromServer(e.data);
+    //   break;
+    // case 'sync':
+    //   await syncAnnotsAndNotesFromServer(e.data);
+    //   break;
     case 'chapters':
       fetchAndStoreAllBibleChapters(e.data.urls);
       break;
@@ -50,20 +52,21 @@ onmessage = async (e) => {
   }
 };
 
-let db = await BibleDB.CreateAsync();
+//let db = await BibleDB.CreateAsync();
+let db = bibleDB
 
-// TODO sync ANNOTS and NOTES
-async function syncAnnotsAndNotesFromServer(data: any) {
-  authService.setBearerToekn(data.token);
+// // TODO sync ANNOTS and NOTES
+// async function syncAnnotsAndNotesFromServer(data: any) {
+//   authService.setBearerToekn(data.token);
 
-  // ----------------- SYNC ANNOTS ------------------------------------------
-  await offlineApi.sync('/annots', UNSYNCED_ANNOTATIONS, ANNOTATIONS);
-  postMessage({ id: 'annotations' });
+//   // ----------------- SYNC ANNOTS ------------------------------------------
+//   await offlineApi.sync('/annots', UNSYNCED_ANNOTATIONS, ANNOTATIONS);
+//   postMessage({ id: 'annotations' });
 
-  // ----------------- SYNC NOTES -------------------------------------------
-  await offlineApi.sync('/notes', UNSYNCED_NOTES, NOTES);
-  postMessage({ id: 'notes' });
-}
+//   // ----------------- SYNC NOTES -------------------------------------------
+//   await offlineApi.sync('/notes', UNSYNCED_NOTES, NOTES);
+//   postMessage({ id: 'notes' });
+// }
 
 // --------------------- SYNC STATIC DATA -------------------------------------
 
@@ -76,11 +79,17 @@ async function fetchAndStoreAllBibleChapters(urls: string[]) {
       } else {
         throw new Error(`can only process gzip for chapters but got ${u}`)
       }
+
+      // Loop through all chapters by key (bibleLocationRef)
+      // and add chapter to chapters to Chapters indexedDB
       let chapters = new Map<string, any>(Object.entries(JSON.parse(json)));
       chapters.forEach((chapter: any, bibleLocationRef: string) => {
         chapter['id'] = bibleLocationRef;
         db.putValue(CHAPTERS, chapter);
       });
+
+      // Add bible version to bible versions table to track what bible versions
+      // the user has installed on device.
       let key = chapters.keys().next().value
       let bibleVersion = key?.split('/')[0]
       await db.putValue(BIBLE_VERSIONS, { id: bibleVersion })

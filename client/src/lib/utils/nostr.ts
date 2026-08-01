@@ -5,8 +5,8 @@ export const KJVONLY_REALY_URL = `${import.meta.env.VITE_NOSTR_RELAY_URL}`;
 
 
 
-export function getTags(event: Event, tagName: string): string[] {
-  return event.tags
+export function getTags(event: Event | null, tagName: string): string[] {
+  return event?.tags
     .filter(tag => tag[0] === tagName)
     .map(tag => tag[1]) || [];
 }

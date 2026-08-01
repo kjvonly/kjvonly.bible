@@ -1,51 +1,48 @@
-# SETUP LOCAL SSL
+## Local SSL
 
-```
-openssl req -x509 -nodes -new -sha256 -days 390 -newkey rsa:2048 \
- -keyout RootCA.key -out RootCA.pem -subj "/C=US/CN=Local Development CA"
-openssl x509 -outform pem -in RootCA.pem -out RootCA.crt
-```
+Local HTTPS uses a dev root CA and an `app.local` certificate.
 
-```
+Certs are written to:
 
+```text
+.certs/
 ```
 
-cp app.local.ext .certs/
+### Generate certificates
 
+```bash
+make ssl
 ```
 
+This creates:
 
+```text
+.certs/RootCA.key
+.certs/RootCA.pem
+.certs/RootCA.crt
+.certs/app.local.key
+.certs/app.local.csr
+.certs/app.local.crt
+.certs/app.local.ext
 ```
 
-authorityKeyIdentifier=keyid,issuer
-basicConstraints=CA:FALSE
-keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
-subjectAltName = @alt_names
+### Trust the local CA on macOS
 
-[alt_names]
-DNS.1 = app.local
-DNS.2 = \*.app.local
-
+```bash
+make ssl-trust
 ```
 
+### Clean certificates
+
+```bash
+make ssl-clean
 ```
 
-# Generate private key and CSR
+### Domains
 
-openssl req -new -nodes -newkey rsa:2048 \
- -keyout app.local.key -out app.local.csr \
- -subj "/C=US/ST=State/L=City/O=Dev/CN=app.local"
+The generated cert supports:
 
-# Sign the CSR with your root CA
-
-openssl x509 -req -sha256 -days 1024 \
- -in app.local.csr -CA RootCA.pem -CAkey RootCA.key -CAcreateserial \
- -extfile app.local.ext -out app.local.crt
-
-```
-
-```
-
-```
-
+```text
+app.local
+*.app.local
 ```

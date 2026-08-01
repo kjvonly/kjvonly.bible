@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/fiatjaf/eventstore/postgresql"
 	"github.com/fiatjaf/khatru"
@@ -18,9 +19,15 @@ import (
 )
 
 func main() {
+
+	//////////////////////////////////////////////////////////////////////////
+	// RELAY
+
+	databaseURL := env("DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/blossom?sslmode=disable")
+
 	relay := khatru.NewRelay()
 
-	db := postgresql.PostgresBackend{DatabaseURL: "postgresql://postgres:postgres@localhost:5432/blossom?sslmode=disable"}
+	db := postgresql.PostgresBackend{DatabaseURL: databaseURL}
 
 	if err := db.Init(); err != nil {
 		panic(err)
@@ -66,14 +73,24 @@ func main() {
 		},
 	)
 
-	// inialize MinIO client
-	client, err := minio.New("localhost:9000", &minio.Options{
-		Creds:  credentials.NewStaticV4("minioadmin", "minioadmin", ""),
-		Secure: false, // Set to true if using HTTPS
-	})
+	//////////////////////////////////////////////////////////////////////////
+	// MINIO
+
+	client, err := minio.New(
+		env("MINIO_ENDPOINT", "minio:9000"),
+		&minio.Options{
+			Creds: credentials.NewStaticV4(
+				env("MINIO_ACCESS_KEY", "minioadmin"),
+				env("MINIO_SECRET_KEY", "minioadmin"),
+				"",
+			),
+			Secure: env("MINIO_SECURE", "false") == "true",
+		},
+	)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+
 	bucketName := "kjvonly"
 
 	bl := blossom.New(relay, "http://localhost:3335")
@@ -103,4 +120,11 @@ func main() {
 
 	fmt.Println("running on :3335")
 	http.ListenAndServe(":3335", relay)
+}
+
+func env(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
 }

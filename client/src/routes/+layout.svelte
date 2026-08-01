@@ -18,6 +18,7 @@
 	import { defaultRelays } from '$lib/nostr/Constants';
 	import { WebStorage } from '$lib/nostr/WebStorage';
 	import { Login } from '$lib/nostr/Login';
+	import { getBibleDB } from '$lib/storer/bible.db';
 
 	function register() {
 		// Listen for connection coming online
@@ -79,6 +80,7 @@
 	onMount(async () => {
 		// loginService.init();
 		// await relayService.init();
+		await getBibleDB()
 		console.debug('[layout load]');
 		let authenticated = false;
 		if (browser) {
@@ -91,6 +93,8 @@
 		}
 
 		setTimeout(() => {
+			// [DEV NOTE]: Sync Services is the entry point to sync data for the app...
+			//             default data like bible chapters etc.
 			syncService.init();
 		}, 5000);
 

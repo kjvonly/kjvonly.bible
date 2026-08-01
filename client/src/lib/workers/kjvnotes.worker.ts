@@ -1,8 +1,10 @@
 import { notesApi } from '$lib/nostr/events/notes.nostr';
 import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
-import { bibleDB, SEARCH } from '$lib/storer/bible.db';
+import {  getBibleDB, SEARCH } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
+
+let bibleDB = await getBibleDB()
 
 async function waitForSearchIndex(): Promise<boolean> {
   while (1) {

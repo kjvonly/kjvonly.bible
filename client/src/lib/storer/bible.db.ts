@@ -1,3 +1,4 @@
+import uuid4 from 'uuid4';
 import IndexedDB from './idb.db';
 
 const DB_VERSION = 15;
@@ -52,15 +53,32 @@ export const UNSYNCED_COMPLETED_READINGS = 'unsynced_completed_readings';
 
 export const ACTION_DELETE_VERSION = 'DELETE_VERSION'
 
+let bibleDBPromise: Promise<BibleDB> | null = null;
+
+export function getBibleDB(): Promise<BibleDB> {
+  if (!bibleDBPromise) {
+    bibleDBPromise = BibleDB.CreateAsync();
+  }
+
+  return bibleDBPromise;
+}
+
 export class BibleDB extends IndexedDB {
   constructor() {
     super(DB_NAME);
   }
 
   static instance: BibleDB = new BibleDB();
+
+  private static createPromise: Promise<BibleDB> | null = null;
+
   public static async CreateAsync(): Promise<BibleDB> {
-    await this.instance.createAndOrOpenObjectStores(
-      [
+    if (this.createPromise) {
+      return this.createPromise;
+    }
+
+    this.createPromise = (async () => {
+      await this.instance.createAndOrOpenObjectStores([
         CHAPTERS,
         BIBLE_VERSIONS,
         PARAGRAPHS,
@@ -84,10 +102,11 @@ export class BibleDB extends IndexedDB {
         COMPLETED_READINGS,
         UNSYNCED_COMPLETED_READINGS
       ],
-      DB_VERSION
-    );
-    return this.instance;
+        DB_VERSION);
+
+      return this.instance;
+    })();
+
+    return this.createPromise;
   }
 }
-
-export const bibleDB = await BibleDB.CreateAsync();

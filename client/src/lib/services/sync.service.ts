@@ -1,9 +1,12 @@
-import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION } from '$lib/storer/bible.db';
+import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION, getBibleDB } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
-import { bibleDB } from '$lib/storer/bible.db';
 import { relayService } from '../nostr/services/relay.service';
-import { BLOSSOM_KIND } from '$lib/nostr/events/kinds';
+import { MANIFEST_KIND } from '$lib/nostr/events/kinds';
 import { getTag, getTags, KJVONLY_PUBKEY } from '$lib/utils/nostr';
+
+let bibleDB = await getBibleDB()
+
+
 const syncWorker = new Worker(
   new URL('../workers/kjvsync.worker?worker', import.meta.url),
   {
@@ -76,7 +79,7 @@ export class SyncService {
     if (keys.length === 0 || keys.length % TOTAL_CHAPTERS_KEYS !== 0) {
       let filter = {
         "authors": [KJVONLY_PUBKEY],
-        kinds: [BLOSSOM_KIND]
+        kinds: [MANIFEST_KIND]
       }
 
       let events = await relayService.getEvents(filter)
@@ -115,7 +118,7 @@ export class SyncService {
       let filter = {
         "#d": [`kjvonly/bible/kjvs/paragraphs`],
         "authors": [KJVONLY_PUBKEY],
-        kinds: [BLOSSOM_KIND]
+        kinds: [MANIFEST_KIND]
 
       }
 
@@ -146,7 +149,7 @@ export class SyncService {
       let filter = {
         "#d": [`kjvonly/bible/kjvs/pericopes`],
         "authors": [KJVONLY_PUBKEY],
-        kinds: [BLOSSOM_KIND]
+        kinds: [MANIFEST_KIND]
       }
 
       let event = await relayService.getEvent(filter)
@@ -177,7 +180,7 @@ export class SyncService {
       let filter = {
         "#d": [`kjvonly/bible/kjvs/booknames`],
         "authors": [KJVONLY_PUBKEY],
-        kinds: [BLOSSOM_KIND]
+        kinds: [MANIFEST_KIND]
       }
 
       let event = await relayService.getEvent(filter)
@@ -210,7 +213,7 @@ export class SyncService {
       let filter = {
         "#d": [`kjvonly/bible/kjvs/bibleindex`],
         "authors": [KJVONLY_PUBKEY],
-        kinds: [BLOSSOM_KIND]
+        kinds: [MANIFEST_KIND]
       }
 
       let event = await relayService.getEvent(filter)
@@ -242,7 +245,7 @@ export class SyncService {
       let filter = {
         "#d": [`kjvonly/bible/strongs/all`],
         "authors": [KJVONLY_PUBKEY],
-        kinds: [BLOSSOM_KIND]
+        kinds: [MANIFEST_KIND]
       }
 
       let event = await relayService.getEvent(filter)

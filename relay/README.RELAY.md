@@ -1,22 +1,19 @@
 ```
-
-/bin/ls -1 | head -n 1 | xargs -I {} -P 10 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37770 -d kjvonly/bible/kjvs/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {}
+/bin/ls 1_1.json.gz | head -n 1 | xargs -I {} -P 10 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37770 -d kjvonly/bible/kjvs/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {}
 
 nak req  -l 3 -d kjvonly/bible/kjvs/1_1   --auth ws://localhost:3334  | jq -r '.content' | xxd -p -r | zcat  | jq
 ```
 
 # strongs
-
 ```
 /bin/ls -1 | grep -E '^(g|h)' |  xargs -I {} -P 10 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37770 -d kjvonly/bible/strongs/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {} 
 
 nak req  -l 3 -d kjvonly/bible/strongs/H1   --auth ws://localhost:3334  | jq -r '.content' | xxd -p -r | zcat  | jq
 ```
 
+# Readings
 ```
 /bin/ls -1  | grep 'gz' | xargs -I {} -P 12 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37775 -d kjvonly/plans/readings/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {} 
-
-
 ```
 
 ```
@@ -25,6 +22,18 @@ docker run -p 9000:9000 -p 9001:9001 \
   -e MINIO_ROOT_PASSWORD=dev \
   minio/minio server /data --console-address ":9001"   
 ```
+
+### persistent data
+```
+docker run -d \
+  --name minio \
+  -p 9000:9000 \
+  -p 9001:9001 \
+  -e MINIO_ROOT_USER=minioadmin \
+  -e MINIO_ROOT_PASSWORD=minioadmin \
+  -v minio-data:/data \
+  minio/minio server /data --console-address ":9001"
+  ```
 
 ```
 nak blossom upload --server http://localhost:3335 ../data/json.gz/bibleindex.json.gz

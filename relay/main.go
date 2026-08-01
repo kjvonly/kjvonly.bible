@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/fiatjaf/eventstore/postgresql"
 	"github.com/fiatjaf/khatru"
@@ -22,14 +23,90 @@ func main() {
 	relay.Info.Description = "this is my custom relay"
 	relay.Info.Icon = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fliquipedia.net%2Fcommons%2Fimages%2F3%2F35%2FSCProbe.jpg&f=1&nofb=1&ipt=0cbbfef25bce41da63d910e86c3c343e6c3b9d63194ca9755351bb7c2efa3359&ipo=images"
 
-	db := postgresql.PostgresBackend{DatabaseURL: "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"}
+	databaseURL := env("DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable")
+
+	db := postgresql.PostgresBackend{DatabaseURL: databaseURL}
 
 	if err := db.Init(); err != nil {
 		panic(err)
 	}
 
+	relay.QueryEvents = append(relay.QueryEvents,
+		func(ctx context.Context, filter nostr.Filter) (chan *nostr.Event, error) {
+			log.Printf("[relay] query start filter=%+v", filter)
+
+			events, err := db.QueryEvents(ctx, filter)
+			if err != nil {
+				log.Printf("[relay] query error err=%v", err)
+				return events, err
+			}
+
+			out := make(chan *nostr.Event)
+
+			go func() {
+				defer close(out)
+
+				count := 0
+				for event := range events {
+					count++
+
+					log.Printf(
+						"[relay] query event kind=%d pubkey=%s d=%s id=%s",
+						event.Kind,
+						event.PubKey,
+						event.Tags.GetD(),
+						event.ID,
+					)
+
+					out <- event
+				}
+
+				log.Printf("[relay] query done count=%d filter=%+v", count, filter)
+			}()
+
+			return out, nil
+		},
+	)
+
 	relay.StoreEvent = append(relay.StoreEvent, db.SaveEvent)
-	relay.QueryEvents = append(relay.QueryEvents, db.QueryEvents)
+
+	relay.QueryEvents = append(relay.QueryEvents,
+		func(ctx context.Context, filter nostr.Filter) (chan *nostr.Event, error) {
+			log.Printf("[relay] query start filter=%+v", filter)
+
+			events, err := db.QueryEvents(ctx, filter)
+			if err != nil {
+				log.Printf("[relay] query error err=%v", err)
+				return events, err
+			}
+
+			out := make(chan *nostr.Event)
+
+			go func() {
+				defer close(out)
+
+				count := 0
+				for event := range events {
+					count++
+
+					log.Printf(
+						"[relay] query event kind=%d pubkey=%s d=%s id=%s",
+						event.Kind,
+						event.PubKey,
+						event.Tags.GetD(),
+						event.ID,
+					)
+
+					out <- event
+				}
+
+				log.Printf("[relay] query done count=%d filter=%+v", count, filter)
+			}()
+
+			return out, nil
+		},
+	)
+
 	relay.CountEvents = append(relay.CountEvents, db.CountEvents)
 	relay.DeleteEvent = append(relay.DeleteEvent, db.DeleteEvent)
 	relay.ReplaceEvent = append(relay.ReplaceEvent, db.ReplaceEvent)
@@ -53,20 +130,37 @@ func main() {
 
 	// you can request auth by rejecting an event or a request with the prefix "auth-required: "
 	relay.RejectFilter = append(relay.RejectFilter,
-		// built-in policies
 		policies.NoComplexFilters,
 
-		// define your own policies
 		func(ctx context.Context, filter nostr.Filter) (reject bool, msg string) {
-			if pubkey := khatru.GetAuthed(ctx); pubkey != "" {
-				log.Printf("request from %s\n", pubkey)
+			pubkey := khatru.GetAuthed(ctx)
+
+			log.Printf("[relay] incoming REQ filter=%+v authed=%t pubkey=%s",
+				filter,
+				pubkey != "",
+				pubkey,
+			)
+
+			if pubkey != "" {
+				log.Printf("[relay] accepted REQ from pubkey=%s", pubkey)
 				return false, ""
 			}
+
+			log.Printf("[relay] rejected REQ: auth required filter=%+v", filter)
+
 			return true, "auth-required: only authenticated users can read from this relay"
-			// (this will cause an AUTH message to be sent and then a CLOSED message such that clients can
-			//  authenticate and then request again)
 		},
 	)
+
+	relay.OnConnect = append(relay.OnConnect, func(ctx context.Context) {
+		log.Printf("[relay] client connected")
+	})
+
+	relay.OnDisconnect = append(relay.OnDisconnect, func(ctx context.Context) {
+		pubkey := khatru.GetAuthed(ctx)
+		log.Printf("[relay] client disconnected pubkey=%s", pubkey)
+	})
+
 	// check the docs for more goodies!
 
 	mux := relay.Router()
@@ -81,4 +175,11 @@ func main() {
 	if err := http.ListenAndServe(":3334", relay); err != nil {
 		fmt.Println(err)
 	}
+}
+
+func env(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
 }

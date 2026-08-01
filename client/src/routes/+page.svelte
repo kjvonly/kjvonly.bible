@@ -233,7 +233,7 @@
 	});
 
 	let toasts: string[] = $state([]);
-	let timeoutId = 0;
+	let timeoutId = {};
 	function showToast(message: string) {
 		toasts.push(message);
 		timeoutId = setTimeout(() => {
