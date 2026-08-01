@@ -1,4 +1,4 @@
-# ADR 0004 — Resource Resolution
+# ADR 0006 — Resource Resolution
 
 **Status**
 

@@ -1,4 +1,4 @@
-# ADR 0006 — Nostr Resource Identity
+# ADR 0004 — Nostr Resource Identity
 
 **Status**
 

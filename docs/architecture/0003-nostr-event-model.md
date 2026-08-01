@@ -1,4 +1,4 @@
-# ADR 0013 — Event Model
+# ADR 0003 — Event Model
 
 **Status**
 
