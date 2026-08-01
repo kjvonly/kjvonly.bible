@@ -1,4 +1,4 @@
-# ADR 0008 — Sync / Outbox Strategy
+# ADR 0010 — Outbox and Publishing
 
 **Status**
 
@@ -10,234 +10,426 @@ Accepted
 
 KJVOnly is an offline-first application.
 
-Users should be able to create notes, annotations, highlights, reading progress, and other personal data regardless of network connectivity.
+Users must be able to create and update local application data without waiting for network availability or relay acknowledgements.
 
-The application cannot assume that a relay is available when a user performs an action.
+Once a local change has been committed, the application requires a reliable mechanism for publishing the corresponding Resource Representation to Nostr.
 
-Synchronization must therefore be reliable, resilient, and independent of the user interface.
+Publishing should remain independent of:
 
-The architecture needs a consistent model for converting local changes into Nostr events while handling retries, temporary failures, duplicate submissions, and multi-relay publishing.
+- user interaction,
+- Domain Object creation,
+- serialization,
+- synchronization,
+- and conflict resolution.
+
+Without a clear architectural boundary, transport concerns become coupled to application behavior and synchronization policy.
 
 ---
 
 # Decision
 
-The application adopts an asynchronous synchronization model built around a persistent Outbox.
+KJVOnly uses a persistent **Outbox** for asynchronous publishing.
 
-The Outbox is responsible for publishing locally committed changes to Nostr relays.
+The Outbox accepts serialized Resource Representations and reliably publishes them to one or more Nostr relays.
 
-A user action is considered successful once the local domain store has been updated and the corresponding synchronization operation has been queued.
+The Outbox is transport-focused.
 
-Publishing to relays is never part of the user interaction.
+It does not understand Domain Objects, determine whether a queued publication is still authoritative, or participate in synchronization decisions.
 
-Synchronization occurs independently in the background whenever connectivity is available.
+---
+
+# Publishing Pipeline
+
+The outbound pipeline is the inverse of Resource Installation.
+
+```mermaid
+flowchart LR
+
+    APPLICATION["Application"]
+
+    --> STORAGE["Domain Store"]
+
+    --> SERIALIZER["Resource Serializer"]
+
+    --> REPRESENTATION["Resource Representation"]
+
+    --> OUTBOX["Outbox"]
+
+    --> RELAYS["Nostr Relays"]
+```
+
+The Resource Serializer converts Domain Objects into a publishable Resource Representation.
+
+The Outbox receives the completed representation and manages transport to relays.
+
+---
+
+# Resource Serializer
+
+A Resource Serializer converts one or more Domain Objects into a serialized Resource Representation suitable for publication.
+
+```mermaid
+flowchart LR
+
+    OBJECTS["Domain Objects"]
+
+    --> SERIALIZER["Resource Serializer"]
+
+    --> REPRESENTATION["Resource Representation"]
+```
+
+The serializer is responsible for:
+
+- selecting the appropriate resource schema,
+- serializing Domain Object state,
+- preserving the Published Resource Identity,
+- and producing the final Resource Representation.
+
+The serializer does not publish to relays.
+
+The Outbox does not serialize Domain Objects.
 
 ---
 
 # Local-First Writes
 
-Every write follows the same lifecycle.
+User actions are committed locally before publication.
 
-```text
-User Action
-        │
-        ▼
-Update Domain Store
-        │
-        ▼
-Queue Outbox Operation
-        │
-        ▼
-Return Success
-        │
-        ▼
-Background Synchronization
+A local write is complete only when both the Domain Store update and corresponding Outbox entry have been persisted.
+
+```mermaid
+flowchart TD
+
+    ACTION["User Action"]
+
+    --> TRANSACTION["Atomic Local Transaction"]
+
+    TRANSACTION
+
+    --> STORAGE["Update Domain Store"]
+
+    TRANSACTION
+
+    --> OUTBOX["Queue Resource Representation"]
+
+    STORAGE --> SUCCESS["Local Write Complete"]
+
+    OUTBOX --> SUCCESS
 ```
 
-The user interface never waits for relay acknowledgements before reporting success.
+This guarantees that local application state and pending publication cannot become inconsistent.
 
-This preserves the application's offline-first behavior and ensures that network availability does not affect normal interaction.
+The user interface never waits for relay acknowledgement before reporting success.
 
 ---
 
-# The Outbox
+# Outbox Entry
 
-The Outbox is a persistent synchronization queue.
+Each Outbox entry contains everything required to perform one publication.
 
-Its purpose is to ensure that local changes are eventually published to one or more relays.
+Conceptually, an entry contains:
 
-The Outbox is **not** an event history or audit log.
+- Published Resource Identity
+- Resource Representation
+- target relays
+- publication status
+- retry metadata
+- last failure
 
-It only contains operations that still require synchronization.
+The persistence format is implementation-defined.
 
-Once an operation has been successfully synchronized, it is removed from the queue.
+An Outbox entry must be self-contained and require no additional serialization before publication.
+
+---
+
+# Outbox Lifecycle
+
+Each publication progresses through a simple lifecycle.
+
+```mermaid
+stateDiagram-v2
+
+    [*] --> Pending
+
+    Pending --> Publishing
+
+    Publishing --> Published : Success
+
+    Publishing --> Pending : Retryable Failure
+
+    Publishing --> Failed : Non-Retryable Failure
+
+    Failed --> Pending : Retry Requested
+```
+
+Published entries may be removed once publication requirements have been satisfied.
+
+Pending and failed entries remain durable across application restarts.
+
+---
+
+# Background Publishing
+
+Publishing occurs independently of the user interface.
+
+```mermaid
+flowchart LR
+
+    OUTBOX["Pending Outbox Entries"]
+
+    --> WORKER["Background Publisher"]
+
+    --> RELAYS["Configured Relays"]
+
+    --> RESULT["Publication Result"]
+```
+
+Publishing may occur:
+
+- immediately after a local write,
+- when network connectivity returns,
+- during application startup,
+- or according to an implementation-defined schedule.
+
+Application behavior never depends on immediate publication success.
+
+---
+
+# Relay Success
+
+A Resource Representation may be published to multiple relays.
+
+Publication is considered successful once at least one configured relay has accepted the event.
+
+Additional relays provide replication but do not delay completion.
+
+```mermaid
+flowchart TD
+
+    PUBLISH["Publish"]
+
+    --> R1["Relay A"]
+
+    PUBLISH --> R2["Relay B"]
+
+    PUBLISH --> R3["Relay C"]
+
+    R1 --> RESULT{"Accepted?"}
+
+    R2 --> RESULT
+
+    R3 --> RESULT
+
+    RESULT -->|Yes| SUCCESS["Published"]
+
+    RESULT -->|No| RETRY["Remain Pending"]
+```
+
+Per-relay publication state may be retained for diagnostics or future replication.
 
 ---
 
 # Operation Coalescing
 
-Most user data is represented using replaceable Nostr events.
+Most application Resources are represented by Nostr addressable events.
 
-Multiple edits to the same logical object before synchronization do not provide additional architectural value.
+When multiple unpublished Resource Representations target the same Published Resource Identity, only the most recent representation needs to be published.
 
-The Outbox therefore maintains at most one pending operation per synchronization target.
-
-If a queued operation already exists for the same target, it is replaced by the newer operation.
-
-For example:
+The Outbox may therefore coalesce pending entries using:
 
 ```text
-Edit Note
-
-↓
-
-Edit Note
-
-↓
-
-Edit Note
-
-↓
-
-Single Pending Outbox Entry
+kind + publisher public key + d tag
 ```
 
-This keeps synchronization efficient while ensuring that only the most recent state is published.
+```mermaid
+flowchart LR
 
-Non-replaceable event types may define different behavior where appropriate.
+    OLD["Queued Representation"]
+
+    NEW["Newer Representation"]
+
+    OLD --> COALESCE["Coalesce"]
+
+    NEW --> COALESCE
+
+    COALESCE --> LATEST["Latest Pending Representation"]
+```
+
+Coalescing is only valid when replacing the older entry preserves the protocol semantics.
+
+Append-only event types may require independent publications.
 
 ---
 
-# Synchronization Lifecycle
+# Retry Behavior
 
-Every Outbox operation follows a consistent lifecycle.
+Retryable publication failures remain in the Outbox.
 
-```text
-Queued
+Retries should use exponential backoff to avoid excessive network traffic during prolonged outages.
 
-↓
+A circuit breaker may temporarily suspend publication attempts against relays that repeatedly fail.
 
-Publishing
+```mermaid
+flowchart TD
 
-↓
+    FAILURE["Publication Failure"]
 
-Succeeded
+    --> BACKOFF["Exponential Backoff"]
+
+    --> BREAKER{"Circuit Open?"}
+
+    BREAKER -->|Yes| WAIT["Pause Attempts"]
+
+    BREAKER -->|No| RETRY["Retry"]
+
+    WAIT --> RETRY
 ```
 
-If publishing fails:
-
-```text
-Queued
-
-↓
-
-Publishing
-
-↓
-
-Failed
-
-↓
-
-Waiting
-
-↓
-
-Retry
-```
-
-This lifecycle is independent of the domain being synchronized.
-
----
-
-# Success Criteria
-
-Users may publish to multiple relays.
-
-Synchronization is considered successful once a single configured relay has accepted the event.
-
-Remaining relays provide additional replication but do not block completion.
-
-This follows the distributed nature of Nostr while avoiding unnecessary failures caused by individual relay outages.
-
----
-
-# Retry Strategy
-
-Synchronization retries occur automatically.
-
-Retries use exponential backoff to reduce unnecessary network traffic during prolonged outages.
-
-A circuit breaker temporarily suspends attempts against relays that are consistently failing.
-
-When the circuit breaker resets, publishing resumes automatically.
-
-Operations remain in the Outbox until synchronization succeeds.
-
-The application never silently discards pending user data.
+Retry limits may suspend automatic publication, but they must never silently discard pending Outbox entries.
 
 ---
 
 # Application Restart
 
-The Outbox is persisted in IndexedDB.
+The Outbox is persistent.
 
-If the application closes or the device restarts, synchronization resumes automatically the next time the application starts.
+Pending publications survive application shutdown and resume automatically after restart.
 
-No user intervention is required.
+```mermaid
+flowchart LR
 
----
+    PENDING["Pending Publication"]
 
-# Conflict Resolution
+    --> SHUTDOWN["Application Shutdown"]
 
-The synchronization pipeline does not attempt to merge conflicting changes.
+    --> STARTUP["Application Startup"]
 
-The default conflict strategy is Last Write Wins.
+    --> RESUME["Resume Publishing"]
+```
 
-Domains that require more sophisticated conflict handling may define additional behavior in future architectural decisions.
-
----
-
-# Deletes
-
-Delete operations are treated like any other synchronization operation.
-
-Objects are first marked as deleted locally.
-
-The corresponding delete event is queued in the Outbox.
-
-Permanent cleanup may occur after successful synchronization according to the needs of the domain.
-
-This guarantees that deletions can be retried if connectivity is unavailable.
+The user is never required to recreate unpublished local changes.
 
 ---
 
-# Replaceable Events
+# Delete Operations
 
-Most synchronized data uses replaceable Nostr events.
+Deletion uses the same publication pipeline.
 
-Publishing an updated event naturally replaces earlier versions of the same logical object.
+A delete first updates the local Domain Store according to domain policy and then queues the corresponding Resource Representation in the Outbox.
 
-This aligns with the Outbox's coalescing behavior by ensuring that only the latest representation of a resource is synchronized.
+The Outbox treats delete operations like any other publication payload.
 
 ---
 
-# Relationship to Nostr
+# Stale Publications
 
-Synchronization is built around the Nostr protocol.
+A queued Resource Representation may become stale relative to newer local or remote state.
 
-The Outbox publishes Nostr events to configured relays using the application's synchronization strategy.
+The Outbox does not determine whether a queued representation is still authoritative.
 
-While the implementation may evolve, Nostr is the architectural protocol used for synchronization throughout the application.
+It does not:
+
+- fetch remote state before publishing,
+- compare local and remote state,
+- merge concurrent edits,
+- overwrite Domain Objects,
+- or resolve multi-device conflicts.
+
+```mermaid
+flowchart LR
+
+    OUTBOX["Queued Publication"]
+
+    --> PUBLISH["Publishing"]
+
+    STALE["Potentially Stale"]
+
+    STALE -. outside Outbox responsibility .-> PUBLISH
+```
+
+Detecting and resolving stale publications is the responsibility of Multi-Device Synchronization.
+
+The Outbox remains a reliable transport queue regardless of synchronization policy.
+
+---
+
+# Publication Status
+
+The application must distinguish between:
+
+- locally saved,
+- pending publication,
+- publishing,
+- published,
+- and failed publication.
+
+Publication status does not affect the availability of local Domain Objects.
+
+The Domain Store always represents the application's current local state.
+
+---
+
+# Relationship to Other ADRs
+
+This ADR builds on:
+
+- **ADR 0002** — Domain & Resource Model
+- **ADR 0003** — Event Model
+- **ADR 0004** — Nostr Resource Identity
+- **ADR 0007** — Domain Storage Model
+- **ADR 0008** — Resource Installation Lifecycle
+
+Synchronization and conflict resolution are defined separately.
+
+---
+
+# Scope
+
+This ADR defines:
+
+- Resource serialization,
+- the persistent Outbox,
+- local-first publishing,
+- atomic Domain Store and Outbox persistence,
+- background publishing,
+- relay success policy,
+- operation coalescing,
+- retry behavior,
+- restart recovery,
+- delete publication,
+- and publication status.
+
+This ADR does not define:
+
+- Resource Discovery,
+- Resource Resolution,
+- Resource Installation,
+- incoming synchronization,
+- remote state comparison,
+- conflict resolution,
+- multi-device reconciliation,
+- or application-specific merge behavior.
 
 ---
 
 # Big Takeaway
 
-The Outbox makes synchronization asynchronous, reliable, and independent of the user interface.
+The Resource Serializer converts Domain Objects into publishable Resource Representations.
 
-Users interact only with local domain data.
+The Outbox reliably transports those serialized representations to Nostr relays.
 
-The Outbox ensures that those local changes are eventually published to Nostr using automatic retries, efficient operation coalescing, and resilient background synchronization.
+```mermaid
+flowchart LR
 
-By treating synchronization as an independent architectural concern, the application remains responsive, offline-first, and resilient to network failures.
+    OBJECTS["Domain Objects"]
+
+    --> SERIALIZER["Resource Serializer"]
+
+    --> OUTBOX["Persistent Outbox"]
+
+    --> RELAYS["Nostr Relays"]
+```
+
+The Outbox is a durable transport queue.
+
+It does not understand Domain Objects or resolve synchronization conflicts.
