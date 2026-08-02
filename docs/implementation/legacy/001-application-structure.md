@@ -171,3 +171,178 @@ Each directory has a clearly defined responsibility.
 | `workers/` | Background processing including synchronization, downloading, indexing, and long-running operations. |
 
 This organization separates reusable technical infrastructure from the application's domains while allowing domains to remain the primary organizational concept throughout the application.
+
+# Application Runtime
+
+The application is implemented as a single-page application (SPA).
+
+Although SvelteKit provides the routing framework, the application itself is not organized around routes.
+
+Instead, nearly all user interaction occurs within a single application workspace that remains active for the lifetime of the application.
+
+Navigation, layout, and application state are managed entirely within that workspace.
+
+This approach minimizes unnecessary rerendering, preserves application state, and allows multiple application views to remain active simultaneously.
+
+---
+
+# Application Shell
+
+The root route acts primarily as the application's bootstrap.
+
+Its responsibilities include:
+
+- creating the application runtime,
+- initializing global application state,
+- constructing the workspace,
+- and hosting the application's rendering engine.
+
+Once initialized, the application rarely relies on route changes to present different application views.
+
+Instead, the workspace dynamically composes the visible application from panes and buffers.
+
+Conceptually the application behaves more like a desktop application than a traditional website.
+
+```mermaid
+flowchart TD
+
+    ROOT["SvelteKit Application"]
+
+    PAGE["+page.svelte"]
+
+    RUNTIME["Application Runtime"]
+
+    ROOT --> PAGE
+
+    PAGE --> RUNTIME
+```
+
+The routing layer therefore remains intentionally small.
+
+Its primary responsibility is bootstrapping the application rather than controlling application navigation.
+
+---
+
+# Workspace
+
+The workspace represents the active application session.
+
+It manages the visible application layout while coordinating the domains currently presented to the user.
+
+Rather than replacing the current page during navigation, the workspace maintains multiple active views simultaneously.
+
+This allows users to interact with several areas of the application without repeatedly constructing and destroying interface state.
+
+The workspace is responsible for:
+
+- pane layout,
+- buffer management,
+- view composition,
+- and interaction between visible domains.
+
+---
+
+# Panes
+
+A pane represents a visible region of the workspace.
+
+Each pane occupies a position within the application's layout and hosts exactly one active buffer.
+
+Panes are responsible only for presentation.
+
+They do not own application behavior or domain data.
+
+Instead, they provide stable containers in which application domains execute.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Workspace --> Pane
+
+    Pane --> Buffer
+```
+
+The workspace may contain multiple panes simultaneously.
+
+The layout of those panes is managed independently from the domains they display.
+
+---
+
+# Buffers
+
+Buffers provide the runtime abstraction used to host application domains.
+
+Each buffer maintains the state associated with a particular application view.
+
+Rather than repeatedly constructing domain modules during navigation, buffers remain active while the workspace changes which panes are visible.
+
+This allows application state to persist naturally throughout the user's session.
+
+Conceptually a buffer behaves similarly to an editor buffer.
+
+It represents an active piece of application state rather than a page.
+
+A buffer may therefore remain alive even when it is not currently visible.
+
+---
+
+# Domain Modules
+
+Application functionality is implemented by domain modules.
+
+Examples include:
+
+- Bible
+- Notes
+- Reading Plans
+- References
+- Search
+- Settings
+
+Each domain module owns the user interface and behavior associated with its domain.
+
+Domain modules operate on Domain Objects exposed by the application's services.
+
+They do not communicate directly with infrastructure components such as IndexedDB or Nostr.
+
+Instead, those responsibilities remain behind shared infrastructure layers.
+
+```mermaid
+flowchart TD
+
+    Buffer
+
+    Module["Domain Module"]
+
+    Services["Domain Services"]
+
+    Models["Domain Objects"]
+
+    Buffer --> Module
+
+    Module --> Services
+
+    Services --> Models
+```
+
+This separation allows the user interface to remain focused on application behavior while technical infrastructure evolves independently.
+
+---
+
+# Rendering Strategy
+
+One of the defining characteristics of the application is its rendering strategy.
+
+Rather than relying on route changes to reconstruct the interface, the application maintains a persistent runtime that dynamically composes panes within a single workspace.
+
+The layout is managed through CSS Grid while the application runtime maintains a mapping between panes and their active buffers.
+
+Because buffers remain associated with panes, domain modules generally remain mounted throughout normal application use.
+
+This minimizes rerendering while naturally preserving interface state.
+
+The result is a responsive application that behaves more like a desktop workspace than a traditional web application.
+
+Subsequent implementation documents describe the services, persistence, synchronization, and resource-loading infrastructure that support this runtime.
