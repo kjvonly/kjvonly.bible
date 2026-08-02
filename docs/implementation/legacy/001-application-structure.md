@@ -199,6 +199,12 @@ Its responsibilities include:
 
 Once initialized, the application rarely relies on route changes to present different application views.
 
+The application workspace is managed directly by `+page.svelte`.
+
+Rather than introducing a separate workspace manager, the root application component owns the pane layout, buffer mapping, and workspace state. User interactions, such as opening, closing, or rearranging panes, are processed as application events that update the workspace before Svelte re-renders the affected portions of the interface.
+
+This keeps the application's runtime simple while providing a single location responsible for coordinating the visible workspace.
+
 Instead, the workspace dynamically composes the visible application from panes and buffers.
 
 Conceptually the application behaves more like a desktop application than a traditional website.
