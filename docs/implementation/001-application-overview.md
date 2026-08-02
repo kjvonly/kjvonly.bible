@@ -588,3 +588,138 @@ The application runtime, workspace model, pane tree, buffers, modules, and domai
 The primary evolution occurs below the Domain Object boundary.
 
 This allows the application's user experience to remain stable while the underlying resource lifecycle becomes more modular, maintainable, and consistent.
+
+# Shared Application Responsibilities
+
+Not every application responsibility belongs to a specific domain.
+
+Some responsibilities represent concepts shared across the application and are used by multiple domains.
+
+Examples include:
+
+- workspace management,
+- pane management,
+- Bible location references,
+- application settings,
+- navigation,
+- theme management,
+- and other application-wide capabilities.
+
+These responsibilities exist because they express concepts understood by the application itself rather than a particular domain.
+
+For example, a Bible location reference is used by Bible reading, Notes, Reading Plans, References, and Search.
+
+Although it describes Bible data, it is an application-wide concept rather than a responsibility owned exclusively by the Bible domain.
+
+Likewise, workspace management is independent of every application domain.
+
+It provides the runtime in which domains are presented but has no knowledge of Bible chapters, notes, reading plans, or other domain-specific behavior.
+
+Shared application responsibilities provide common capabilities that remain meaningful regardless of how application data is stored, transported, or synchronized.
+
+---
+
+# Technical Infrastructure
+
+Technical infrastructure provides the implementation capabilities required by the application.
+
+Unlike application responsibilities, technical infrastructure exists to support the application rather than define its behavior.
+
+Examples include:
+
+- Nostr relay communication,
+- Blossom integration,
+- IndexedDB,
+- background workers,
+- compression,
+- serialization,
+- networking,
+- and other implementation technologies.
+
+These responsibilities may change as implementation technologies evolve.
+
+The application should therefore depend upon their capabilities rather than their implementations.
+
+---
+
+# Ownership
+
+The implementation is organized around three ownership models.
+
+**Application Runtime**
+
+Owns the presentation and coordination of the application.
+
+Examples include:
+
+- workspace management,
+- panes,
+- buffers,
+- layout,
+- and module composition.
+
+**Application and Domain Responsibilities**
+
+Own the application's concepts, behavior, and business rules.
+
+Examples include:
+
+- domains,
+- modules,
+- Domain Objects,
+- Bible location references,
+- navigation,
+- settings,
+- and other shared application services.
+
+**Technical Infrastructure**
+
+Owns the mechanisms used to support the application.
+
+Examples include:
+
+- Nostr,
+- Blossom,
+- IndexedDB,
+- workers,
+- serialization,
+- compression,
+- and networking.
+
+These ownership models intentionally separate application concepts from implementation technologies.
+
+This distinction allows implementation details to evolve while preserving the application's conceptual design.
+
+---
+
+# Repository Organization
+
+The repository contains several projects that together form the complete KJVOnly system.
+
+```text
+client/
+relay/
+blossom/
+docs/
+zarf/
+```
+
+The client application is the primary focus of this implementation documentation.
+
+Most application code resides under:
+
+```text
+client/src/lib/
+```
+
+The current repository organization reflects the evolution of the application over time.
+
+Some responsibilities are organized by technical role while others are organized by application behavior.
+
+As the implementation continues to evolve, ownership should take precedence over physical location.
+
+Files may move.
+
+Packages may change.
+
+Responsibilities should remain owned by the same application concept.
