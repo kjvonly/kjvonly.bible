@@ -315,3 +315,164 @@ It continues to provide the same responsibilities:
 - and workspace management.
 
 The modules provide the application behavior.
+
+# Domains
+
+The application organizes its functionality into domains.
+
+A domain represents a cohesive area of application data and behavior.
+
+Examples include:
+
+- Bible
+- Notes
+- Reading Plans
+- Search (future organization may move search beneath individual domains)
+
+Domains define the concepts understood by the application.
+
+They own the application's business data, operations, and rules.
+
+The user interface does not interact directly with infrastructure.
+
+Instead, modules interact with their corresponding domain through strongly typed application models and domain services.
+
+This separation allows the user experience to remain independent from the mechanisms used to retrieve, store, or synchronize application data.
+
+---
+
+# Modules
+
+Modules provide the visible functionality presented to the user.
+
+A module is an instantiable application feature hosted within a buffer.
+
+Unlike a domain, which represents a category of application behavior, modules represent individual user interactions.
+
+Examples include:
+
+- Bible Reader
+- Bible Search
+- Notes Editor
+- Reading Plans
+- Publisher Browser
+
+Multiple instances of the same module may exist simultaneously.
+
+For example, a user may open several Bible Reader modules displaying different chapters while also opening one or more Bible Search modules.
+
+Each module instance maintains its own runtime state through its associated buffer.
+
+```mermaid
+flowchart TD
+
+    Buffer
+
+    Buffer --> Module
+
+    Module --> Domain
+```
+
+The buffer owns the runtime state.
+
+The module owns the user interaction.
+
+The domain owns the application behavior.
+
+---
+
+# Modules and Domains
+
+A module belongs to exactly one domain.
+
+A domain may provide one or more modules.
+
+Conceptually:
+
+```text
+Bible Domain
+
+    Bible Reader Module
+
+    Bible Search Module
+
+    Bible References Module
+
+
+Notes Domain
+
+    Notes Module
+
+    Notes Search Module
+
+
+Reading Plans Domain
+
+    Reading Plans Module
+```
+
+This distinction is important.
+
+The user opens modules.
+
+The application operates on domains.
+
+For example, a user does not open "the Bible domain."
+
+The user opens a Bible Reader module.
+
+That module presents and manipulates data owned by the Bible domain.
+
+Likewise, searching Scripture is not a separate application domain.
+
+It is another interaction with Bible-domain data.
+
+Separating domains from modules allows new application functionality to be introduced without changing the application's overall organization.
+
+---
+
+# Domain Objects
+
+Domain Objects are the application's primary data model.
+
+Every application domain exposes strongly typed Domain Objects representing the data required by its modules.
+
+Modules operate exclusively on these Domain Objects.
+
+They do not operate on serialized Resources, Nostr events, Blossom descriptors, or IndexedDB records.
+
+This separation isolates application behavior from transport and persistence concerns.
+
+The Resource Architecture is responsible for producing and maintaining Domain Objects.
+
+The application is responsible for presenting and manipulating them.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Resources["Resource Architecture"]
+
+    Factory["Domain Object Factory"]
+
+    Objects["Domain Objects"]
+
+    Domain["Domain"]
+
+    Module["Module"]
+
+    Resources --> Factory
+
+    Factory --> Objects
+
+    Objects --> Domain
+
+    Domain --> Module
+```
+
+The Domain Object therefore forms the boundary between the application's runtime and the Resource Architecture.
+
+Everything above this boundary is application behavior.
+
+Everything below this boundary is responsible for retrieving, installing, storing, or synchronizing application data.
