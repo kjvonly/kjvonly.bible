@@ -289,3 +289,350 @@ Supporting multiple Workspaces enables capabilities such as:
 These capabilities require no fundamental changes to the runtime model.
 
 They represent natural extensions of the existing Workspace abstraction rather than new architectural concepts.
+
+# Panes
+
+A Pane is a node within the Workspace pane tree.
+
+Panes define how the visible workspace is divided.
+
+Every Workspace owns one root Pane. All other Panes are reachable recursively through that root.
+
+The Pane structure is independent of the modules displayed within it.
+
+A Pane does not understand Bible chapters, notes, search results, reading plans, or other application behavior.
+
+It understands only:
+
+* its position within the tree,
+* whether it divides into child Panes,
+* the direction of that division,
+* and the Buffer hosted by a leaf Pane.
+
+This separation allows the same Pane model to host any current or future Module.
+
+---
+
+# Pane Types
+
+There are two conceptual Pane types:
+
+* Branch Pane
+* Leaf Pane
+
+## Branch Pane
+
+A Branch Pane divides its available area between two child Panes.
+
+It contains:
+
+* a left child Pane,
+* a right child Pane,
+* and a split direction.
+
+A Branch Pane does not directly host a Buffer.
+
+Its responsibility is to define the relationship between its child Panes.
+
+Conceptually:
+
+```text
+Branch Pane
+
+    Left Pane
+
+    Right Pane
+```
+
+The terms `left` and `right` describe the two child positions in the tree.
+
+Their visual arrangement is determined by the Branch Pane's split direction.
+
+Depending on that direction, the children may appear beside one another or above and below one another.
+
+## Leaf Pane
+
+A Leaf Pane represents one visible region of the Workspace.
+
+It contains:
+
+* a stable Pane identifier,
+* and one Buffer.
+
+The Buffer determines which Module Instance is presented within the Pane.
+
+Conceptually:
+
+```text
+Leaf Pane
+
+    Buffer
+
+        Module Instance
+```
+
+Only Leaf Panes are directly rendered as visible application regions.
+
+---
+
+# Recursive Pane Tree
+
+Branch and Leaf Panes form a recursive tree.
+
+A Branch Pane may contain:
+
+* two Leaf Panes,
+* two Branch Panes,
+* or one Branch Pane and one Leaf Pane.
+
+This allows the Workspace to represent nested layouts of arbitrary depth.
+
+For example:
+
+```mermaid
+flowchart TD
+
+    ROOT["Branch Pane"]
+
+    ROOT --> LEFT["Leaf Pane A"]
+    ROOT --> RIGHT["Branch Pane"]
+
+    LEFT --> BUFFER_A["Buffer A"]
+
+    RIGHT --> TOP["Leaf Pane B"]
+    RIGHT --> BOTTOM["Leaf Pane C"]
+
+    TOP --> BUFFER_B["Buffer B"]
+    BOTTOM --> BUFFER_C["Buffer C"]
+```
+
+The tree is the logical Workspace layout.
+
+The visual layout is derived from this tree.
+
+The rendering technology does not define the Workspace structure; it presents the structure already described by the Pane tree.
+
+---
+
+# Pane Runtime Object
+
+The current Pane runtime object is represented by a recursive interface.
+
+```typescript
+export interface Pane {
+  id: string | any;
+  left: Pane | any;
+  right: Pane | any;
+  split: string | any;
+  buffer: any;
+  updateBuffer: Function | any;
+  toggle: boolean | any;
+}
+```
+
+The same interface currently represents both Branch and Leaf Panes.
+
+A Branch Pane is identified by its child Panes and split direction.
+
+A Leaf Pane is identified by its Pane identifier and Buffer.
+
+Conceptually:
+
+| Property | Branch Pane | Leaf Pane |
+| -------- | ----------: | --------: |
+| `id`     |          No |       Yes |
+| `left`   |         Yes |        No |
+| `right`  |         Yes |        No |
+| `split`  |         Yes |        No |
+| `buffer` |          No |       Yes |
+
+Some current properties support the rendering implementation rather than the conceptual Pane model.
+
+Future refactoring may introduce more precise runtime types without changing the recursive Pane-tree architecture.
+
+For example, Branch and Leaf Panes could eventually be represented as distinct types.
+
+The ownership and responsibilities would remain the same.
+
+---
+
+# Pane Identity
+
+Every Leaf Pane has a stable identifier.
+
+Pane identifiers allow the Workspace Runtime to:
+
+* find a Pane,
+* update its Buffer,
+* split it,
+* delete it,
+* associate it with a rendered region,
+* and preserve its identity across layout changes.
+
+Stable identity is essential because changing the surrounding Workspace should not recreate unaffected Pane components.
+
+A Pane may change its size or position while continuing to represent the same active Module Instance.
+
+For example, splitting a neighboring Pane may change the available area of an existing Bible Pane.
+
+The Bible Module should remain mounted with its current state intact.
+
+Its chapter, scroll position, selection state, and Buffer state should not be reset merely because the Workspace layout changed.
+
+Pane identity allows layout to evolve independently from Module identity.
+
+---
+
+# Pane Data and Pane Component
+
+The Pane runtime object and the Pane component are separate concepts.
+
+The **Pane runtime object** is a node in the recursive Workspace model.
+
+It describes:
+
+* tree relationships,
+* split direction,
+* Pane identity,
+* and Buffer assignment.
+
+The **Pane component** presents a Leaf Pane in the user interface.
+
+It is responsible for:
+
+* applying the Pane's current dimensions,
+* resolving the Module associated with its Buffer,
+* and rendering that Module Instance.
+
+Conceptually:
+
+```text
+Pane Runtime Object
+        ↓
+Pane Component
+        ↓
+Buffer
+        ↓
+Module Instance
+```
+
+The runtime object belongs to the Workspace model.
+
+The component belongs to the rendering implementation.
+
+Keeping these responsibilities separate allows the Workspace model to remain independent from the framework used to render it.
+
+---
+
+# Pane Operations
+
+The Workspace Runtime modifies the application through operations on the Pane tree.
+
+The primary Pane operations are:
+
+* finding a Pane,
+* splitting a Pane,
+* replacing a Pane's Buffer,
+* and deleting a Pane.
+
+These operations modify runtime state rather than application data.
+
+## Find
+
+A Pane is located recursively from the root Pane using its stable identifier.
+
+Finding a Pane allows other Workspace operations to target one specific region without requiring knowledge of the entire rendered layout.
+
+## Split
+
+Splitting a Leaf Pane converts it into a Branch Pane.
+
+The existing Pane state becomes one child.
+
+A new Leaf Pane and Buffer become the other child.
+
+Conceptually:
+
+```text
+Before
+
+Leaf Pane A
+    Buffer A
+```
+
+```text
+After
+
+Branch Pane
+    Left: Leaf Pane A
+        Buffer A
+
+    Right: Leaf Pane B
+        Buffer B
+```
+
+The existing Buffer is preserved.
+
+The split introduces a new Pane without recreating the Module Instance already hosted by the original Pane.
+
+## Replace Buffer
+
+Replacing a Buffer changes the Module Instance displayed by an existing Leaf Pane without changing the surrounding Pane tree.
+
+The Pane retains its position and identity while presenting a different application feature.
+
+## Delete
+
+Deleting a Leaf Pane removes it from the tree.
+
+Its sibling replaces the parent Branch Pane so the remaining tree stays valid.
+
+The Workspace then reorganizes itself around the remaining Panes.
+
+Conceptually:
+
+```text
+Before
+
+Branch Pane
+    Leaf Pane A
+    Leaf Pane B
+```
+
+```text
+Delete Pane B
+```
+
+```text
+After
+
+Leaf Pane A
+```
+
+Deletion affects the targeted Pane and the minimum surrounding tree structure required to close the gap.
+
+Unrelated Panes and Module Instances remain intact.
+
+---
+
+# Pane Responsibility
+
+A Pane owns one structural responsibility:
+
+> A Pane defines one node in the visible Workspace hierarchy.
+
+A Pane does not own:
+
+* Module behavior,
+* Domain Objects,
+* application services,
+* resource loading,
+* persistence,
+* synchronization,
+* or publishing.
+
+A Leaf Pane hosts a Buffer.
+
+A Branch Pane organizes child Panes.
+
+The Workspace Runtime owns operations across the complete Pane tree.
