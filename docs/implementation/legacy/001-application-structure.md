@@ -48,7 +48,7 @@ Those responsibilities are described by their own implementation documents.
 
 The KJVOnly application was originally developed as an offline-first Progressive Web Application (PWA).
 
-The application initially distributed publisher-provided resources as statically hosted files while storing all application data locally within the browser.
+The application initially distributed app-provided resources as statically hosted files while storing all application data locally within the browser.
 
 As the application evolved, support for Nostr was introduced to replace static distribution with decentralized resource discovery and publishing while preserving the application's existing behavior and offline-first design.
 
