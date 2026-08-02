@@ -352,3 +352,146 @@ This minimizes rerendering while naturally preserving interface state.
 The result is a responsive application that behaves more like a desktop workspace than a traditional web application.
 
 Subsequent implementation documents describe the services, persistence, synchronization, and resource-loading infrastructure that support this runtime.
+
+# Domain Organization
+
+The application is organized around functional domains.
+
+Each domain represents a cohesive area of application behavior and contains the user interface, state, and operations necessary to present that behavior to the user.
+
+Examples include:
+
+- Bible
+- Notes
+- Reading Plans
+- References
+- Search
+- Settings
+
+Although supporting code may exist elsewhere in the repository, domains represent the primary organizational boundary of the application.
+
+Each domain is responsible for implementing user-facing behavior rather than infrastructure concerns.
+
+---
+
+# Domain Boundaries
+
+Application domains are intentionally isolated from the underlying implementation details used to retrieve, persist, or synchronize data.
+
+Instead, domains interact with shared services that expose strongly typed Domain Objects.
+
+This separation allows the application to evolve its infrastructure independently from the user-facing functionality provided by each domain.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Domain
+
+    Services
+
+    DomainObjects["Domain Objects"]
+
+    Infrastructure
+
+    Domain --> Services
+
+    Services --> DomainObjects
+
+    Services --> Infrastructure
+```
+
+Domains depend on services.
+
+Services expose Domain Objects.
+
+Infrastructure supports the services.
+
+---
+
+# Shared Infrastructure
+
+The application separates reusable technical capabilities from the domains that consume them.
+
+These capabilities are implemented as shared infrastructure packages.
+
+Examples include:
+
+- Nostr communication
+- IndexedDB persistence
+- background workers
+- utility libraries
+- reusable user interface components
+
+These packages are intentionally reusable across multiple domains.
+
+Individual domains should remain focused on application behavior rather than infrastructure implementation.
+
+---
+
+# Infrastructure Responsibilities
+
+The shared infrastructure provides common capabilities used throughout the application.
+
+Examples include:
+
+| Package | Responsibility |
+|----------|----------------|
+| `nostr/` | Relay communication, event retrieval, publishing, and protocol support. |
+| `storer/` | Local persistence through IndexedDB. |
+| `workers/` | Background processing and long-running operations. |
+| `components/` | Reusable user interface elements shared by multiple domains. |
+| `utils/` | General-purpose utility functions used throughout the application. |
+
+These packages support the application but do not define its behavior.
+
+Instead, they provide reusable capabilities that individual domains consume through the service layer.
+
+---
+
+# Dependency Direction
+
+Dependencies within the application follow a consistent direction.
+
+Application behavior originates within the domains.
+
+Shared services provide access to Domain Objects and coordinate interactions with supporting infrastructure.
+
+Infrastructure packages remain implementation details that support, but do not control, application behavior.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Domains
+
+    Services
+
+    Models["Domain Objects"]
+
+    Infrastructure
+
+    Domains --> Services
+
+    Services --> Models
+
+    Services --> Infrastructure
+```
+
+This organization keeps user-facing behavior centered within the domains while allowing infrastructure implementations to evolve independently.
+
+---
+
+# Notes
+
+Although the repository separates infrastructure into shared packages, the application itself is fundamentally domain-oriented.
+
+Infrastructure exists to support the domains.
+
+It should not become the organizing principle of the application.
+
+This distinction is important when evolving the implementation toward the target architecture.
+
+Future implementation documents describe how responsibilities currently implemented within shared infrastructure become aligned with the architectural boundaries defined by the ADRs.
