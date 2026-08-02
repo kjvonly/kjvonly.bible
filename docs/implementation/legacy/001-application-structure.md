@@ -201,7 +201,7 @@ Once initialized, the application rarely relies on route changes to present diff
 
 The application workspace is managed directly by `+page.svelte`.
 
-Rather than introducing a separate workspace manager, the root application component owns the pane layout, buffer mapping, and workspace state. User interactions, such as opening, closing, or rearranging panes, are processed as application events that update the workspace before Svelte re-renders the affected portions of the interface.
+Rather than introducing a separate workspace manager, the root application component owns the pane layout, buffer mapping, and workspace state. User interactions, such as opening, closing, or rearranging panes, are processed as application events that update the workspace allowing Svelte's reactive rendering model to update only the portions of the interface affected by the change. 
 
 This keeps the application's runtime simple while providing a single location responsible for coordinating the visible workspace.
 
