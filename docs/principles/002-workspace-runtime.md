@@ -636,3 +636,331 @@ A Leaf Pane hosts a Buffer.
 A Branch Pane organizes child Panes.
 
 The Workspace Runtime owns operations across the complete Pane tree.
+
+# Buffers
+
+A Buffer represents one active Module Instance and its runtime state.
+
+Every Leaf Pane hosts exactly one Buffer.
+
+The Pane determines where the Module Instance appears within the Workspace.
+
+The Buffer determines what is displayed there and preserves the state required by that Module Instance.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    PANE["Leaf Pane"]
+
+    BUFFER["Buffer"]
+
+    MODULE["Module Instance"]
+
+    STATE["Module Runtime State"]
+
+    PANE --> BUFFER
+
+    BUFFER --> MODULE
+
+    BUFFER --> STATE
+```
+
+This separation allows Pane layout and Module behavior to evolve independently.
+
+A Pane may change position or size without changing its Buffer.
+
+A Buffer may display a different Module Instance without changing the surrounding Pane tree.
+
+---
+
+# Buffer Responsibility
+
+A Buffer owns the runtime state associated with one Module Instance.
+
+This includes:
+
+* the Module type,
+* the mounted component,
+* Module initialization data,
+* Module-specific runtime state,
+* keyboard bindings,
+* selection state,
+* and a stable Buffer identity.
+
+The Buffer does not own the visible layout.
+
+The Pane owns the Buffer's position within the Workspace.
+
+The Buffer does not own domain behavior.
+
+The Module and its associated Domain own that behavior.
+
+The Buffer connects these responsibilities by hosting a Module Instance within a Pane.
+
+---
+
+# Buffer Runtime Object
+
+The current Buffer runtime object is represented by a class.
+
+```typescript
+export class Buffer {
+  key: string = uuid4();
+  name: string = '';
+  component: any;
+  componentName: Modules = Modules.NULL;
+  keyboardBindings: Map<string, Function> = new Map<string, Function>();
+  selected: boolean = false;
+  bag: any = {};
+  onFocus: Function = () => {};
+}
+```
+
+The Buffer contains both identity and runtime state.
+
+| Property           | Responsibility                                               |
+| ------------------ | ------------------------------------------------------------ |
+| `key`              | Provides stable identity for the Buffer.                     |
+| `name`             | Provides a readable name for the active Buffer.              |
+| `component`        | References the currently mounted component.                  |
+| `componentName`    | Identifies the Module type hosted by the Buffer.             |
+| `keyboardBindings` | Stores keyboard actions associated with the Module Instance. |
+| `selected`         | Tracks whether the Buffer is currently selected.             |
+| `bag`              | Stores Module initialization and runtime state.              |
+| `onFocus`          | Defines behavior invoked when the Buffer receives focus.     |
+
+Some of these properties reflect the current implementation rather than the essential Buffer model.
+
+The essential responsibility remains stable:
+
+> A Buffer identifies and preserves one active Module Instance and its runtime state.
+
+---
+
+# Buffer Identity
+
+Every Buffer has a stable identity independent of the Pane that displays it.
+
+Stable Buffer identity allows the application to distinguish between multiple instances of the same Module type.
+
+For example, two Buffers may both host Bible Reader Modules while displaying different chapters.
+
+```text
+Buffer A
+
+    Bible Reader Module
+
+    Genesis 1
+
+
+Buffer B
+
+    Bible Reader Module
+
+    Romans 8
+```
+
+The Module type is the same.
+
+The Buffer identity and runtime state are different.
+
+This allows multiple independent Module Instances to coexist within one Workspace.
+
+---
+
+# Buffer State
+
+The Buffer's `bag` provides general-purpose state associated with its Module Instance.
+
+Examples include:
+
+* a Bible location reference,
+* a selected Bible version,
+* reading plan navigation state,
+* search context,
+* Module initialization parameters,
+* and other state required to restore or continue the interaction.
+
+The Buffer does not define the meaning of this state.
+
+The hosted Module interprets the values stored within the Buffer.
+
+For example, a Bible Module may interpret:
+
+```typescript
+{
+  bibleLocationRef: '1_1',
+  bibleVersion: 'kjv'
+}
+```
+
+while a Search Module may use an entirely different structure.
+
+This keeps the Workspace Runtime independent from Module-specific behavior.
+
+The Workspace can create, move, preserve, or restore a Buffer without understanding the contents of its state.
+
+---
+
+# Buffer and Pane Independence
+
+Panes and Buffers have separate identities and responsibilities.
+
+A Pane is a structural node in the Workspace.
+
+A Buffer is an active application view hosted by a Leaf Pane.
+
+This distinction supports several Workspace operations.
+
+## Replace
+
+The Buffer associated with an existing Leaf Pane may be replaced.
+
+The Pane retains its position within the tree while displaying a new Module Instance.
+
+```text
+Before
+
+Leaf Pane A
+
+    Buffer
+
+        Bible Reader Module
+```
+
+```text
+After
+
+Leaf Pane A
+
+    Buffer
+
+        Notes Module
+```
+
+The surrounding Workspace layout does not change.
+
+## Split
+
+When a Leaf Pane is split, its existing Buffer is preserved within one of the resulting child Panes.
+
+A new Buffer is created for the new child Pane.
+
+```text
+Before
+
+Leaf Pane A
+
+    Buffer A
+```
+
+```text
+After
+
+Branch Pane
+
+    Leaf Pane A
+
+        Buffer A
+
+    Leaf Pane B
+
+        Buffer B
+```
+
+The original Module Instance remains associated with its existing Buffer.
+
+## Delete
+
+When a Leaf Pane is deleted, the Buffer hosted by that Pane is removed from the active Workspace.
+
+The sibling Pane replaces the surrounding Branch Pane.
+
+Buffers belonging to unrelated Panes remain unchanged.
+
+---
+
+# Buffer Persistence
+
+Buffer state may be persisted as part of the Workspace runtime state.
+
+Persisting Buffers allows the application to restore:
+
+* which Modules were open,
+* the initialization state of each Module,
+* the active Bible locations,
+* search context,
+* reading plan navigation,
+* and other Module-specific state.
+
+A persisted Buffer represents the state required to reconstruct a Module Instance.
+
+It does not persist the rendered component itself.
+
+When the Workspace is restored, the application uses the persisted Buffer state to recreate the appropriate Module Instance.
+
+This distinction separates serializable runtime state from framework-specific component instances.
+
+---
+
+# Buffer and Module Relationship
+
+A Buffer hosts exactly one Module Instance at a time.
+
+The Buffer owns the identity and runtime state of that instance.
+
+The Module owns the user interaction and application behavior.
+
+Conceptually:
+
+```text
+Buffer
+
+    Identity
+
+    Runtime State
+
+    Module Type
+
+        Module Instance
+
+            Domain Behavior
+```
+
+The Buffer does not need to understand the Domain used by the Module.
+
+It only needs enough information to identify, initialize, and preserve the Module Instance.
+
+This allows the Buffer abstraction to support any current or future Module without requiring changes to the Workspace Runtime.
+
+---
+
+# Buffer Responsibility Boundary
+
+A Buffer owns:
+
+* Module Instance identity,
+* Module selection,
+* initialization state,
+* runtime state,
+* keyboard bindings,
+* and focus behavior.
+
+A Buffer does not own:
+
+* Pane layout,
+* Workspace structure,
+* Module behavior,
+* Domain Objects,
+* data persistence,
+* resource resolution,
+* synchronization,
+* or publishing.
+
+The Pane hosts the Buffer.
+
+The Buffer hosts the Module Instance.
+
+The Module interacts with the Domain.
