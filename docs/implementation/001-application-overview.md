@@ -476,3 +476,115 @@ The Domain Object therefore forms the boundary between the application's runtime
 Everything above this boundary is application behavior.
 
 Everything below this boundary is responsible for retrieving, installing, storing, or synchronizing application data.
+
+# Resource Architecture
+
+The application runtime is responsible for presenting and manipulating Domain Objects.
+
+It is not responsible for determining where those Domain Objects originate.
+
+That responsibility belongs to the Resource Architecture.
+
+The Resource Architecture provides the mechanisms required to identify, discover, retrieve, install, publish, and synchronize application resources.
+
+Its primary responsibility is transforming externally distributed Resources into strongly typed Domain Objects that can be consumed by the application.
+
+The complete Resource Architecture is defined by the Architecture Decision Records (ADRs).
+
+This document describes only how the application integrates with that architecture.
+
+---
+
+# Resource Boundary
+
+The application and the Resource Architecture share a common domain model.
+
+The application is responsible for creating, reading, updating, and deleting Domain Objects.
+
+The Resource Architecture is responsible for transforming Published Resources into Domain Objects and serializing Domain Objects back into Published Resources.
+
+This separation allows the application to operate entirely on strongly typed Domain Objects without depending on how those objects are serialized, transported, discovered, or persisted.
+
+Likewise, the Resource Architecture has no knowledge of panes, buffers, modules, or user interface behavior.
+
+Instead, both architectures meet at a single boundary.
+
+```mermaid
+flowchart LR
+
+    RESOURCES["Published Resources"]
+
+    RESOLUTION["Resource Resolution"]
+
+    FACTORY["Domain Object Factory"]
+
+    OBJECTS["Domain Objects"]
+
+    DOMAINS["Application Domains"]
+
+    MODULES["Modules"]
+
+    MODULES --> DOMAINS
+
+    DOMAINS --> OBJECTS
+
+    OBJECTS --> FACTORY
+
+    FACTORY --> RESOLUTION
+
+    RESOLUTION --> RESOURCES
+```
+
+The flow above illustrates the relationship between the application and the Resource Architecture.
+
+The application creates and manipulates Domain Objects.
+
+When application data is published, Domain Objects are serialized into Published Resources.
+
+When application data is retrieved, Published Resources are resolved and transformed back into Domain Objects.
+
+The Domain Object therefore forms the architectural boundary between the application runtime and the Resource Architecture.
+
+Everything above this boundary represents application behavior.
+
+Everything below this boundary represents the lifecycle of distributed application resources.
+
+---
+
+# Current Implementation
+
+The current implementation predates the Resource Architecture defined by the ADRs.
+
+Application data is currently accessed through a combination of domain services, transport adapters, local persistence, and background workers.
+
+The `nostr/` package provides the transport implementation responsible for communicating with relays and publishing events.
+
+Shared services coordinate data retrieval, serialization, caching, and persistence before exposing strongly typed application models to the rest of the application.
+
+Local storage is provided through IndexedDB.
+
+Background workers perform long-running operations such as downloading, indexing, and synchronization.
+
+Collectively these packages form the application's current data-access layer.
+
+Although several responsibilities remain combined within the current implementation, the separation between the application runtime and the transport implementation is already present.
+
+Modules operate on typed application models rather than directly manipulating Nostr events or IndexedDB records.
+
+This existing separation provides the foundation for implementing the Resource Architecture defined by the ADRs.
+
+---
+
+# Evolution
+
+The Resource Architecture does not replace the application runtime.
+
+Instead, it refines the implementation beneath the domain layer.
+
+As the application evolves, responsibilities currently implemented across the `nostr/`, `services/`, `storer/`, and `workers/` packages will gradually align with the architectural boundaries defined by the ADRs.
+
+The application runtime, workspace model, pane tree, buffers, modules, and domains remain largely unchanged.
+
+The primary evolution occurs below the Domain Object boundary.
+
+This allows the application's user experience to remain stable while the underlying resource lifecycle becomes more modular, maintainable, and consistent.
