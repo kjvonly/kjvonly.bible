@@ -181,3 +181,112 @@ Over time, these direct dependencies would increase coupling throughout the appl
 Application Services prevent this by owning shared concepts once and exposing them through stable interfaces.
 
 This preserves the independence of both the Workspace Runtime and individual Domains while allowing them to collaborate through well-defined application behavior.
+
+# Application Service Ownership
+
+Application Services own responsibilities that represent shared application concepts rather than domain-specific behavior.
+
+Ownership is determined by meaning rather than implementation.
+
+A responsibility belongs to an Application Service when it exists to support multiple Domains or multiple parts of the Workspace Runtime without naturally belonging to any one owner.
+
+Application Services should become the single owner of these shared concepts.
+
+Examples include:
+
+* Bible location references,
+* pane management,
+* workspace management,
+* navigation,
+* application settings,
+* theme management,
+* and other shared application capabilities.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Modules["Module Instances"]
+
+    Bible["Bible Domain"]
+
+    Notes["Notes Domain"]
+
+    Plans["Reading Plans Domain"]
+
+    Services["Application Services"]
+
+    Modules --> Services
+
+    Bible --> Services
+
+    Notes --> Services
+
+    Plans --> Services
+
+    Services --> Runtime
+```
+
+Application Services become the shared owner of concepts that would otherwise be duplicated throughout the application.
+
+---
+
+# Ownership Heuristic
+
+When introducing a new responsibility, determine whether it represents a shared application concept before assigning it to a Domain.
+
+A useful heuristic is:
+
+> **Would multiple Domains or Runtime components naturally depend upon this responsibility?**
+
+If the answer is **yes**, it likely belongs to an Application Service.
+
+If the answer is **no**, it should generally remain within its owning Domain or another existing owner.
+
+Ownership should reflect the meaning of the responsibility rather than the technology used to implement it.
+
+---
+
+# Shared Application Concepts
+
+A shared application concept is meaningful regardless of which Domain is currently using it.
+
+For example, a Bible location reference is used by:
+
+* the Bible Domain,
+* the Notes Domain,
+* the Reading Plans Domain,
+* search,
+* navigation,
+* and other application features.
+
+Although the concept originated from Bible data, it has become a shared application identifier.
+
+Its ownership therefore belongs to an Application Service rather than exclusively to the Bible Domain.
+
+Likewise, workspace operations such as opening, replacing, or closing Module Instances are shared application behaviors.
+
+Individual Domains may request these operations, but they do not own how the Workspace Runtime performs them.
+
+Application Services provide the stable boundary between these responsibilities.
+
+---
+
+# Application Services as Stable Boundaries
+
+Application Services intentionally separate application behavior from implementation details.
+
+Domains request shared capabilities.
+
+Modules request runtime operations.
+
+The Workspace Runtime performs runtime operations.
+
+Each owner remains responsible only for the behavior it owns.
+
+Application Services coordinate these interactions without taking ownership of Domain behavior or Runtime behavior.
+
+This separation allows each part of the application to evolve independently while preserving a consistent collaboration model.
