@@ -377,3 +377,169 @@ The runtime model remains the single source of truth.
 
 This greatly simplifies layout management while ensuring the visible Workspace always reflects the current runtime state.
 
+# Stable Component Identity
+
+One of the primary goals of the rendering implementation is to preserve the identity of existing Module Instances while the Workspace evolves.
+
+Workspace operations such as:
+
+* splitting a Pane,
+* deleting a Pane,
+* replacing a Buffer,
+* or restoring a Workspace,
+
+should affect only the Runtime Objects directly involved in the operation.
+
+Existing Module Instances should remain active whenever possible.
+
+---
+
+# Identity Before Rendering
+
+The rendering implementation treats Runtime Object identity as more important than visual position.
+
+A Pane may:
+
+* change size,
+* change position,
+* gain or lose neighboring Panes,
+* or become part of a different layout,
+
+while continuing to represent the same Runtime Object.
+
+Likewise, a Buffer continues to represent the same Module Instance regardless of where its Pane appears within the Workspace.
+
+Conceptually:
+
+```text
+Before
+
+Pane A
+
+    Buffer A
+
+        Bible Reader
+```
+
+```text
+After Split
+
+Branch
+
+    Pane A
+
+        Buffer A
+
+            Bible Reader
+
+    Pane B
+
+        Buffer B
+
+            Notes
+```
+
+The Bible Reader has not been recreated.
+
+Only the Workspace structure has changed.
+
+---
+
+# Stable Runtime Identity
+
+Each Runtime Object maintains a stable identity throughout its lifetime.
+
+Examples include:
+
+* Pane identifiers,
+* Buffer identifiers,
+* and Module Instance state.
+
+Rendering is driven by these identities rather than by the visual layout.
+
+This allows the rendering implementation to recognize when an existing Runtime Object should continue to exist even though the surrounding Workspace has changed.
+
+Stable identity allows the rendering layer to preserve:
+
+* component state,
+* scroll position,
+* focus,
+* user selections,
+* keyboard state,
+* and other runtime information.
+
+---
+
+# Minimal Rendering
+
+Workspace operations modify only the Runtime Objects directly affected by the operation.
+
+The rendering implementation then updates only the corresponding portions of the visible application.
+
+For example, splitting one Pane should not recreate unrelated Module Instances elsewhere in the Workspace.
+
+Likewise, deleting a neighboring Pane should not reset an active Bible Reader or Notes editor.
+
+The rendering implementation therefore strives to preserve existing component instances whenever their corresponding Runtime Objects remain unchanged.
+
+---
+
+# Runtime-Driven Rendering
+
+The visible application is always derived from the current Runtime Objects.
+
+Rendering decisions are based upon changes to Runtime Object identity rather than changes to the surrounding layout.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Runtime Objects"]
+
+    Identity["Stable Identity"]
+
+    Rendering["Rendering"]
+
+    UI["Visible Application"]
+
+    Runtime --> Identity
+
+    Identity --> Rendering
+
+    Rendering --> UI
+```
+
+This allows the Workspace layout to evolve independently from the lifetime of individual Module Instances.
+
+Layout may change.
+
+Runtime Object identity remains stable.
+
+---
+
+# Rendering Performance
+
+Preserving Runtime Object identity minimizes unnecessary rendering work.
+
+Only Runtime Objects that have actually changed require corresponding updates to the visible application.
+
+Unchanged Runtime Objects continue to reuse their existing rendered components.
+
+This approach improves both rendering performance and user experience.
+
+Users experience a continuous Workspace rather than a collection of pages that are repeatedly recreated as the layout changes.
+
+---
+
+# Responsibility Boundary
+
+The Workspace Runtime owns Runtime Object identity.
+
+The rendering implementation respects that identity while presenting the visible application.
+
+Neither the rendering implementation nor the Workspace Runtime owns the behavior of Module Instances.
+
+Module behavior remains the responsibility of the Module and its associated Domain.
+
+This separation allows the Workspace to evolve without unnecessarily disrupting the user's current interaction.
