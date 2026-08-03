@@ -1604,3 +1604,93 @@ Domains remain independent from Workspace structure.
 The Resource Architecture remains independent from Workspace operations.
 
 This keeps runtime coordination centralized without coupling the Workspace Runtime to application-specific behavior.
+
+# Rendering Boundary
+
+The Workspace Runtime defines the logical structure of the visible application.
+
+It does not define how that structure is rendered.
+
+Rendering is a separate responsibility.
+
+The rendering implementation presents the Runtime Objects managed by the Workspace Runtime.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    subgraph Runtime["Workspace Runtime"]
+        Workspace["Workspace"]
+        Pane["Pane"]
+        Buffer["Buffer"]
+        Module["Module Instance"]
+
+        Workspace --> Pane
+        Pane --> Buffer
+        Buffer --> Module
+    end
+
+    Runtime --> Rendering["Rendering Implementation"]
+
+    Rendering --> UI["Visible Application"]
+```
+
+The current implementation realizes the Workspace Runtime using recursive components and CSS Grid.
+
+These technologies implement the runtime model but do not define it.
+
+The rendering implementation is intentionally separated from the Workspace Runtime so that presentation technologies may evolve without changing the runtime architecture.
+
+The rendering implementation is described by **003-runtime-rendering.md**.
+
+---
+
+# Future Evolution
+
+The Workspace Runtime has been intentionally designed around a small collection of Runtime Objects with clearly defined responsibilities.
+
+This simplicity allows the runtime model to support future capabilities without changing its fundamental architecture.
+
+Examples include:
+
+* multiple independent Workspaces,
+* saved Workspace snapshots,
+* restoring previous study sessions,
+* detachable Workspaces,
+* additional Module types,
+* and alternative rendering implementations.
+
+Each capability naturally extends the existing runtime model.
+
+None require changes to the relationships between:
+
+* Workspace,
+* Pane,
+* Buffer,
+* Module Instance,
+* and Domain.
+
+As the application evolves, new functionality should extend the Workspace Runtime rather than replace it.
+
+---
+
+# Big Takeaway
+
+The Workspace Runtime is responsible for presenting and coordinating the visible application.
+
+It models the application as a hierarchy of Runtime Objects.
+
+A Workspace owns the visible application.
+
+Panes organize that Workspace into a recursive hierarchy.
+
+Buffers preserve the runtime state of individual Module Instances.
+
+Module Instances present the capabilities of application Domains.
+
+Each Runtime Object owns one responsibility.
+
+Together they form a simple runtime model that remains independent from application behavior, the Resource Architecture, and the rendering implementation.
+
+This separation allows the application to evolve through new Modules, Domains, Workspaces, and rendering technologies while preserving a stable and consistent runtime architecture.
