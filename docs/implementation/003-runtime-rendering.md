@@ -543,3 +543,161 @@ Neither the rendering implementation nor the Workspace Runtime owns the behavior
 Module behavior remains the responsibility of the Module and its associated Domain.
 
 This separation allows the Workspace to evolve without unnecessarily disrupting the user's current interaction.
+
+# Module Resolution
+
+The Workspace Runtime does not understand how individual Modules are implemented.
+
+Its responsibility ends with assigning a Buffer to a Leaf Pane.
+
+The rendering implementation is responsible for resolving the appropriate Module component for that Buffer.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Buffer["Buffer"]
+
+    ModuleType["Module Type"]
+
+    Resolver["Module Resolver"]
+
+    Component["Module Component"]
+
+    Buffer --> ModuleType
+
+    ModuleType --> Resolver
+
+    Resolver --> Component
+```
+
+The Buffer identifies which Module should be presented.
+
+The rendering implementation resolves that Module into the appropriate user interface component.
+
+This separation keeps the Workspace Runtime independent from application-specific presentation.
+
+---
+
+# Dynamic Module Composition
+
+The Workspace Runtime does not maintain a fixed set of visible Modules.
+
+Instead, the visible application is composed dynamically from the Buffers currently present within the Workspace.
+
+Each Leaf Pane renders the Module associated with its Buffer.
+
+As Buffers are added, removed, or replaced, the rendering implementation naturally composes a different visible application without changing the underlying runtime architecture.
+
+For example:
+
+```text
+Workspace
+
+    Bible Reader
+
+    Notes
+
+    Search
+```
+
+may later become:
+
+```text
+Workspace
+
+    Bible Reader
+
+    Bible Reader
+
+    Reading Plan
+
+    Notes
+```
+
+The Workspace Runtime does not distinguish between these layouts.
+
+It simply presents the Runtime Objects currently contained within the Workspace.
+
+---
+
+# Module Independence
+
+Each Module Instance is resolved independently.
+
+The rendering implementation does not require knowledge of neighboring Modules.
+
+A Module is rendered solely from the information contained within its associated Buffer.
+
+This allows multiple instances of the same Module type to coexist naturally.
+
+For example:
+
+```text
+Bible Reader
+
+Genesis 1
+```
+
+and
+
+```text
+Bible Reader
+
+Romans 8
+```
+
+represent two independent Module Instances.
+
+Each is resolved independently despite sharing the same Module type.
+
+---
+
+# Extensible Composition
+
+The rendering implementation is intentionally open to new Module types.
+
+Adding a new Module requires:
+
+* registering the Module,
+* associating it with a Module type,
+* and providing the corresponding rendering component.
+
+No changes are required to:
+
+* the Workspace Runtime,
+* Pane rendering,
+* Buffer management,
+* or the layout algorithm.
+
+The rendering implementation simply resolves the new Module when requested by a Buffer.
+
+This allows the application to grow through composition rather than modification.
+
+---
+
+# Responsibility Boundary
+
+The Workspace Runtime owns:
+
+* Runtime Objects,
+* Pane relationships,
+* Buffer assignment,
+* and Module placement.
+
+The rendering implementation owns:
+
+* Module resolution,
+* component creation,
+* and presentation.
+
+Modules own:
+
+* user interaction,
+* application behavior,
+* and communication with Domains.
+
+Each layer owns a distinct responsibility.
+
+Together they produce a runtime that is both extensible and independent from individual Module implementations.
