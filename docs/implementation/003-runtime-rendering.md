@@ -820,3 +820,105 @@ Modules request changes through Application Services.
 The rendering implementation simply reflects the resulting runtime state.
 
 This separation ensures the visible application always remains a faithful presentation of the Workspace Runtime.
+
+# Future Evolution
+
+The rendering architecture has been intentionally designed to evolve independently from the Workspace Runtime.
+
+Because rendering is a projection of the runtime model, improvements to the rendering implementation do not require changes to the Runtime Objects or their relationships.
+
+Future capabilities extend the rendering layer while preserving the Workspace Runtime.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Projection["Rendering Implementation"]
+
+    UI["Visible Application"]
+
+    Runtime --> Projection
+
+    Projection --> UI
+
+    Projection -.-> Multi["Multiple Workspaces"]
+
+    Projection -.-> Snapshots["Workspace Snapshots"]
+
+    Projection -.-> Virtual["Virtualized Rendering"]
+
+    Projection -.-> Windows["Detached Windows"]
+
+    Projection -.-> Modules["Additional Module Types"]
+
+    Projection -.-> Frameworks["Alternative Rendering Technologies"]
+```
+
+The Workspace Runtime remains the source of truth.
+
+New rendering capabilities extend the projection layer rather than changing the runtime model.
+
+As the application evolves, this separation allows the rendering implementation to adopt new technologies while preserving the same Workspace architecture.
+
+---
+
+# Big Takeaway
+
+The rendering implementation is not the application.
+
+It is a projection of the application's runtime model.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Projection["Rendering Implementation"]
+
+    Presentation["Visible Application"]
+
+    User["User"]
+
+    Runtime --> Projection
+
+    Projection --> Presentation
+
+    User --> Presentation
+```
+
+The Workspace Runtime owns the Runtime Objects.
+
+The rendering implementation projects those Runtime Objects into a visible application.
+
+The user interacts with that presentation while the Workspace Runtime remains the source of truth.
+
+This architecture intentionally separates:
+
+```mermaid
+flowchart LR
+
+    Runtime["Runtime"]
+
+    Projection["Projection"]
+
+    Presentation["Presentation"]
+
+    Runtime --> Projection
+
+    Projection --> Presentation
+```
+
+This separation allows the application to evolve independently at each layer.
+
+The runtime model defines the application.
+
+The rendering implementation realizes that model.
+
+The visible application presents it to the user.
+
+As long as each layer preserves its responsibility, the application can evolve through new Runtime Objects, rendering technologies, and presentation capabilities without changing its underlying architecture.
