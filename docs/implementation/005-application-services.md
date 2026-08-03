@@ -290,3 +290,131 @@ Each owner remains responsible only for the behavior it owns.
 Application Services coordinate these interactions without taking ownership of Domain behavior or Runtime behavior.
 
 This separation allows each part of the application to evolve independently while preserving a consistent collaboration model.
+
+# Application Services and Domains
+
+Application Services and Domains have different ownership responsibilities.
+
+Domains own application behavior.
+
+Application Services own shared application concepts.
+
+A Domain may depend upon an Application Service when it requires a capability shared across multiple Domains.
+
+An Application Service should never own Domain behavior.
+
+Conceptually:
+
+```mermaid id="t7x2mk"
+flowchart LR
+
+    Service["Application Service"]
+
+    Bible["Bible Domain"]
+
+    Notes["Notes Domain"]
+
+    Plans["Reading Plans Domain"]
+
+    Service --> Bible
+
+    Service --> Notes
+
+    Service --> Plans
+```
+
+Application Services expose shared capabilities.
+
+Each Domain remains responsible for interpreting and applying those capabilities within its own area of application behavior.
+
+For example:
+
+* the Bible Domain interprets Bible location references,
+* the Notes Domain associates Notes with Bible locations,
+* the Reading Plans Domain schedules Bible locations,
+
+while the Bible location reference itself remains a shared application concept.
+
+Application Services therefore enable collaboration without transferring ownership.
+
+---
+
+# Application Services and the Workspace Runtime
+
+Application Services also provide the boundary between Module Instances and the Workspace Runtime.
+
+Modules and their nested presentation components express application intent.
+
+The Workspace Runtime performs runtime operations.
+
+Application Services translate between the two.
+
+Conceptually:
+
+```mermaid id="9m7q2x"
+sequenceDiagram
+
+    participant Module
+    participant Service as Pane Service
+    participant Runtime as Workspace Runtime
+
+    Module->>Service: Open Bible Module
+
+    Service->>Runtime: Create Pane and Buffer
+
+    Runtime-->>Service: Runtime updated
+
+    Service-->>Module: Operation complete
+```
+Application Services may be imported directly, passed through component properties, provided through context, or supplied through dependency injection.
+
+The delivery mechanism is an implementation choice.
+
+The architectural requirement is that callers depend on the Application Service's public capability rather than the implementation details of the Workspace Runtime.
+
+The Module does not manipulate Runtime Objects directly.
+
+Instead, it requests application behavior through an Application Service.
+
+The Workspace Runtime remains responsible for:
+
+* Pane creation,
+* Buffer management,
+* Workspace composition,
+* and layout evolution.
+
+Application Services preserve this separation by preventing Modules from becoming coupled to runtime implementation details.
+
+---
+
+# Application Services and Technical Infrastructure
+
+Application Services should remain independent from implementation technologies.
+
+An Application Service owns the application concept.
+
+Technical Infrastructure provides the implementation technologies required to support it.
+
+Conceptually:
+
+```mermaid id="6s1mvh"
+flowchart TD
+
+    Service["Application Service"]
+
+    Infrastructure["Technical Infrastructure"]
+
+    Technology["Implementation Technology"]
+
+    Service --> Infrastructure
+
+    Infrastructure --> Technology
+```
+
+For example, an Application Service may depend upon persistence, networking, or browser APIs to fulfill its responsibilities.
+
+Those technologies remain implementation details.
+
+The meaning of the Application Service should remain unchanged if those technologies are replaced.
+
+This separation allows Application Services to present stable application behavior while Technical Infrastructure continues to evolve independently.
