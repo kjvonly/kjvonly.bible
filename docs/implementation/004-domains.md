@@ -937,30 +937,39 @@ The factory understands the Domain Object.
 
 It does not perform Resource discovery or relay communication.
 
-Those responsibilities belong to the Resource Architecture.
+The Domain Object Factory receives resolved Resource content.
+
+It does not retrieve Resources, communicate with relays, download blobs, or perform generic decoding.
+
+Those responsibilities belong to the Resource Architecture and Technical Infrastructure.
 
 ---
 
 # Resource Serializer
 
-A Resource Serializer belongs to the Domain whose objects it serializes.
+A domain-specific Resource Serializer belongs to the Domain whose objects it serializes.
 
 It converts a Domain Object into the content required for a Published Resource.
 
 The serializer understands:
 
-* the Domain Object,
-* the Domain's serialization format,
-* and the representation required for publication.
+- the Domain Object,
+- the Domain's serialization format,
+- and the representation required for publication.
+
+Shared encoding, compression, hashing, and other generic serialization technologies belong to Technical Infrastructure.
+
+The Resource Serializer owns the Domain's mapping to a published representation.
 
 It does not own:
 
-* signing,
-* relay publication,
-* outbox processing,
-* or transport retries.
+- signing,
+- relay publication,
+- outbox processing,
+- transport retries,
+- or generic serialization technologies.
 
-Those responsibilities belong to the Resource Architecture and its supporting infrastructure.
+Those responsibilities belong to the Resource Architecture and Technical Infrastructure.
 
 ---
 
@@ -991,12 +1000,11 @@ flowchart LR
 
     Store --> Persistence
 ```
+The Domain owns the Store interface and the persistence semantics required by its Domain Objects.
 
-The Domain owns the Store interface.
+Technical Infrastructure owns the implementation used to satisfy that interface, such as IndexedDB.
 
-Technical Infrastructure provides its persistence implementation.
-
-This allows storage technology to evolve without changing Domain behavior.
+This separation allows persistence technologies to evolve without changing Domain behavior.
 
 ---
 
