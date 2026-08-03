@@ -118,3 +118,147 @@ The rendering implementation derives the visible layout from that structure befo
 The visible application is therefore a presentation of the Workspace Runtime rather than the source of truth itself.
 
 This distinction allows the runtime model and rendering implementation to evolve independently while preserving a consistent application architecture.
+
+# Recursive Rendering
+
+The Workspace Runtime models the visible application as a recursive Pane tree.
+
+The rendering implementation preserves this model by rendering the Pane tree recursively.
+
+Each Pane is responsible for rendering only itself.
+
+If the Pane is a Branch Pane, it renders its child Panes.
+
+If the Pane is a Leaf Pane, it renders its hosted Buffer.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Workspace["Workspace"]
+
+    Root["Root Pane"]
+
+    Branch["Branch Pane"]
+
+    Leaf["Leaf Pane"]
+
+    Buffer["Buffer"]
+
+    Module["Module Instance"]
+
+    Workspace --> Root
+
+    Root --> Branch
+
+    Branch --> Branch
+
+    Branch --> Leaf
+
+    Leaf --> Buffer
+
+    Buffer --> Module
+```
+
+The rendering hierarchy therefore mirrors the runtime hierarchy.
+
+No separate rendering model is required.
+
+The recursive Workspace model naturally produces a recursive component tree.
+
+---
+
+# Recursive Component Composition
+
+The current implementation realizes the recursive Pane tree using recursive components.
+
+Each rendered Branch Pane creates child Pane components.
+
+Each rendered Leaf Pane creates the component associated with its Buffer.
+
+Conceptually:
+
+```text
+Pane Component
+
+    Branch Pane
+
+        Pane Component
+
+        Pane Component
+
+    Leaf Pane
+
+        Module Component
+```
+
+Each component is responsible only for rendering the Runtime Object it represents.
+
+No component requires knowledge of the complete Workspace.
+
+The Workspace emerges naturally from recursive composition.
+
+---
+
+# Branch and Leaf Rendering
+
+Branch Panes and Leaf Panes have different rendering responsibilities.
+
+A Branch Pane:
+
+* divides available space,
+* renders its child Panes,
+* and coordinates recursive rendering.
+
+A Leaf Pane:
+
+* renders one Buffer,
+* hosts one Module Instance,
+* and presents one visible application region.
+
+This distinction mirrors the responsibilities defined by the Workspace Runtime.
+
+The rendering implementation therefore follows the runtime model rather than introducing an alternative rendering hierarchy.
+
+---
+
+# Rendering Ownership
+
+The rendering implementation never constructs the Workspace model.
+
+It consumes the Runtime Objects already owned by the Workspace Runtime.
+
+The rendering layer is responsible only for presentation.
+
+Workspace operations continue to belong to the Workspace Runtime.
+
+Application behavior continues to belong to Modules and Domains.
+
+This separation allows the runtime model to remain independent from the rendering framework.
+
+A future rendering implementation could adopt a different UI framework while preserving the same recursive Workspace architecture.
+
+---
+
+# Rendering Responsibility Boundary
+
+The rendering implementation owns:
+
+* recursive component composition,
+* visual presentation,
+* layout realization,
+* and Module component rendering.
+
+It does not own:
+
+* Pane-tree modification,
+* Buffer management,
+* Workspace operations,
+* Domain behavior,
+* Application Services,
+* or the Resource Architecture.
+
+The rendering implementation presents the Workspace Runtime.
+
+It does not define it.
