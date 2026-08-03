@@ -774,6 +774,8 @@ This allows multiple independent Module Instances to coexist within one Workspac
 
 The Buffer's `bag` provides general-purpose state associated with its Module Instance.
 
+The Buffer bag is the current implementation of Module navigation context.
+
 Examples include:
 
 * a Bible location reference,
@@ -964,3 +966,235 @@ The Pane hosts the Buffer.
 The Buffer hosts the Module Instance.
 
 The Module interacts with the Domain.
+
+# Module Instances
+
+A Module Instance provides one user interaction within the Workspace.
+
+Every Module Instance is hosted by exactly one Buffer.
+
+A Module Instance presents the capabilities of one application Domain while maintaining its own independent runtime state.
+
+Examples include:
+
+* a Bible Reader,
+* a Bible Search,
+* a Notes editor,
+* or a Reading Plan viewer.
+
+A Module Instance represents one active interaction rather than an application concept.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    BUFFER["Buffer"]
+
+    MODULE["Module Instance"]
+
+    DOMAIN["Domain"]
+
+    BUFFER --> MODULE
+
+    MODULE --> DOMAIN
+```
+
+The Buffer hosts the Module Instance.
+
+The Module Instance presents the Domain.
+
+The Domain owns the application's behavior.
+
+---
+
+# Module Responsibility
+
+A Module Instance owns the interaction between the user and a Domain.
+
+Its responsibilities include:
+
+* presenting user interface,
+* responding to user input,
+* requesting Domain operations,
+* maintaining interaction state,
+* and updating the Buffer when required.
+
+A Module Instance does not own:
+
+* Workspace layout,
+* Pane management,
+* Buffer identity,
+* Resource resolution,
+* synchronization,
+* or persistence.
+
+Its responsibility begins when it is hosted by a Buffer and ends when it is removed from the Workspace.
+
+---
+
+# Module Types
+
+A Module represents a reusable application feature.
+
+A Module Instance represents one execution of that feature.
+
+For example:
+
+```text
+Bible Reader Module
+
+    Instance A
+        Genesis 1
+
+    Instance B
+        Romans 8
+
+    Instance C
+        Psalms 23
+```
+
+All three Module Instances present the same Module type.
+
+Each maintains its own independent runtime state.
+
+This allows multiple interactions with the same Domain to exist simultaneously without interfering with one another.
+
+---
+
+# Modules and Domains
+
+A Module belongs to one Domain.
+
+A Domain may expose one or more Module types.
+
+Conceptually:
+
+```text
+Bible Domain
+
+    Bible Reader Module
+
+    Bible Search Module
+
+    Bible References Module
+
+
+Notes Domain
+
+    Notes Editor Module
+
+    Notes Search Module
+
+
+Reading Plans Domain
+
+    Reading Plan Module
+```
+
+The user opens Modules.
+
+Modules interact with Domains.
+
+Domains own the application's business behavior.
+
+This distinction separates user interaction from application logic.
+
+New Modules may be introduced without changing the Domain.
+
+Likewise, Domain behavior may evolve without fundamentally changing the Modules that present it.
+
+---
+
+# Module Independence
+
+Modules should remain loosely coupled.
+
+A Module may communicate with other parts of the application through:
+
+- Application Services,
+- application events,
+- shared Domain state,
+- or Buffer navigation context.
+
+A Module should not directly manipulate another Module Instance or depend on its component implementation.
+
+A Module should not directly manipulate another Module's runtime state.
+
+Communication between Modules should occur through Application Services, events, shared Domain state, or navigation context rather than direct component references.
+
+This allows each Module Instance to remain independently reusable within the Workspace.
+
+For example, opening a new Bible Reader Module should not affect an existing Notes Module or Reading Plan Module.
+
+Each Module continues operating within its own Buffer and runtime state.
+
+---
+
+# Module Lifecycle
+
+A Module Instance follows a simple lifecycle.
+
+```text
+Created
+    ↓
+Initialized
+    ↓
+Presented
+    ↓
+Interacts with User
+    ↓
+Destroyed
+```
+
+The Workspace Runtime owns this lifecycle.
+
+The Buffer preserves the runtime state associated with the Module Instance.
+
+The Module owns the interaction that occurs during its lifetime.
+
+---
+
+# Module Extensibility
+
+The Workspace Runtime does not need to understand individual Modules.
+
+A new Module can be introduced without changing the Workspace model.
+
+As long as a Module can be hosted within a Buffer, it naturally becomes part of the Workspace.
+
+This allows the application to grow through new Modules while preserving the same runtime architecture.
+
+The Workspace Runtime remains responsible for presentation.
+
+The Domain remains responsible for behavior.
+
+The Module provides the bridge between them.
+
+---
+
+# Module Responsibility Boundary
+
+A Module owns:
+
+* user interaction,
+* presentation,
+* interaction state,
+* and communication with its Domain.
+
+A Module does not own:
+
+* Workspace structure,
+* Pane layout,
+* Buffer identity,
+* Domain Objects,
+* Resource Architecture,
+* persistence,
+* synchronization,
+* or publishing.
+
+The Workspace Runtime hosts the Module.
+
+The Module presents the Domain.
+
+The Domain owns the application's behavior.
