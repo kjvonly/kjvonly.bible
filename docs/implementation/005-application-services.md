@@ -569,3 +569,93 @@ For example:
 * Theme preferences belong to an Application Service.
 
 Application Services provide the common language that allows these responsibilities to collaborate while preserving clear ownership boundaries.
+
+# Future Evolution
+
+Application Services have been intentionally designed around shared application concepts rather than implementation technologies.
+
+As the application evolves, new shared concepts should become Application Services only when they are meaningful across multiple Domains or Runtime components.
+
+Application Services should not become a collection of unrelated utilities or convenience functions.
+
+Each Application Service should represent a well-defined application concept with a clear owner and responsibility.
+
+Conceptually:
+
+```mermaid id="j6vf8h"
+flowchart TD
+
+    Services["Application Services"]
+
+    Runtime["Workspace Runtime"]
+
+    Bible["Bible Domain"]
+
+    Notes["Notes Domain"]
+
+    Plans["Reading Plans Domain"]
+
+    Future["Future Domains"]
+
+    Runtime --> Services
+
+    Bible --> Services
+
+    Notes --> Services
+
+    Plans --> Services
+
+    Future --> Services
+```
+
+As new Domains are introduced, existing Application Services should continue to provide stable collaboration boundaries.
+
+Likewise, new Application Services should be introduced only when a genuinely shared application concept emerges.
+
+The goal is not to minimize the number of services.
+
+The goal is to preserve clear ownership while preventing unnecessary coupling throughout the application.
+
+---
+
+# Big Takeaway
+
+Application Services own the application's shared concepts.
+
+They provide the collaboration boundaries that allow the Workspace Runtime, Module Instances, and Domains to work together while remaining independently owned.
+
+Conceptually:
+
+```mermaid id="1g0e8u"
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Modules["Module Instances"]
+
+    Services["Application Services"]
+
+    Domains["Domains"]
+
+    Runtime --> Modules
+
+    Modules --> Services
+
+    Domains --> Services
+
+    Services --> Runtime
+
+    Services --> Domains
+```
+
+The Workspace Runtime owns presentation.
+
+Domains own application behavior.
+
+Application Services own shared application concepts.
+
+Each responsibility collaborates through stable interfaces while preserving independent ownership.
+
+As the application grows, new capabilities should strengthen these collaboration boundaries rather than introduce direct dependencies between Runtime components, Modules, or Domains.
+
+Application Services therefore provide the shared language that allows the application to evolve while maintaining a clean and consistent architecture.
