@@ -1198,3 +1198,409 @@ The Workspace Runtime hosts the Module.
 The Module presents the Domain.
 
 The Domain owns the application's behavior.
+
+# Workspace Operations
+
+The Workspace Runtime evolves through a small set of operations applied to Runtime Objects.
+
+These operations modify the visible application without changing Domain Objects or application data.
+
+The primary Workspace operations are:
+
+* find a Pane,
+* split a Pane,
+* replace a Buffer,
+* delete a Pane,
+* open a Module,
+* select or focus a Buffer,
+* and update the Workspace layout.
+
+Each operation acts on the runtime model.
+
+The Workspace Runtime owns the operation.
+
+Modules may request Workspace changes through Application Services, but they do not directly manipulate the Pane tree.
+
+---
+
+# Find Pane
+
+Most Workspace operations begin by locating a Pane within the recursive Pane tree.
+
+A Pane is identified by its stable Pane identifier.
+
+The runtime begins at the root Pane and recursively searches its left and right children until the requested Pane is found.
+
+Conceptually:
+
+```text
+Root Pane
+    ↓
+Search left subtree
+    ↓
+Search right subtree
+    ↓
+Matching Pane
+```
+
+Finding a Pane is a structural operation.
+
+It does not depend on the Buffer or Module hosted within the Pane.
+
+This allows the Workspace Runtime to target one visible region without understanding the application behavior presented there.
+
+---
+
+# Split Pane
+
+Splitting a Pane creates an additional visible region within the Workspace.
+
+A split operation begins with an existing Leaf Pane.
+
+The existing Pane becomes a Branch Pane with two children:
+
+* one child preserves the existing Buffer,
+* the other child receives a new Buffer.
+
+Conceptually:
+
+```text
+Before
+
+Leaf Pane A
+
+    Buffer A
+```
+
+```text
+After
+
+Branch Pane
+
+    Leaf Pane A
+
+        Buffer A
+
+    Leaf Pane B
+
+        Buffer B
+```
+
+The Branch Pane records the split direction used to arrange its children.
+
+The existing Buffer and Module Instance remain intact.
+
+Only the minimum runtime structure required for the new Pane is introduced.
+
+This preserves the active state of the original Module Instance while extending the Workspace.
+
+---
+
+# Replace Buffer
+
+Replacing a Buffer changes the Module Instance displayed by an existing Leaf Pane.
+
+The Pane retains:
+
+* its identity,
+* its position within the Pane tree,
+* and its relationship to the surrounding Workspace.
+
+Only its Buffer changes.
+
+Conceptually:
+
+```text
+Before
+
+Leaf Pane A
+
+    Buffer
+
+        Bible Reader Module
+```
+
+```text
+After
+
+Leaf Pane A
+
+    Buffer
+
+        Notes Module
+```
+
+Buffer replacement provides a simple way to change the activity displayed in one region without restructuring the Workspace.
+
+It is distinct from splitting a Pane because it does not create an additional visible region.
+
+---
+
+# Delete Pane
+
+Deleting a Pane removes one Leaf Pane and its Buffer from the active Workspace.
+
+Because the Pane tree is recursive, removing a Leaf Pane also requires reorganizing its immediate parent Branch Pane.
+
+The deleted Pane's sibling replaces the parent Branch Pane.
+
+Conceptually:
+
+```text
+Before
+
+Branch Pane
+
+    Leaf Pane A
+
+    Leaf Pane B
+```
+
+```text
+Delete Pane B
+```
+
+```text
+After
+
+Leaf Pane A
+```
+
+If the sibling is itself a Branch Pane, its subtree replaces the deleted Pane's parent.
+
+Deletion therefore preserves a valid recursive Pane tree while removing only the targeted runtime state and the minimum surrounding structure required to close the gap.
+
+Unrelated Panes, Buffers, and Module Instances remain intact.
+
+---
+
+# Open Module
+
+Opening a Module creates or replaces Runtime Objects required to display a new Module Instance.
+
+A Module may be opened by:
+
+* splitting an existing Pane and creating a new Buffer,
+* or replacing the Buffer in an existing Leaf Pane.
+
+The requesting Module does not manipulate the Pane tree directly.
+
+Instead, it requests the operation through an Application Service such as the Pane Service.
+
+Conceptually:
+
+```text
+Module Instance
+
+    requests Module open
+
+        ↓
+
+Pane Service
+
+        ↓
+
+Workspace Runtime
+
+        ↓
+
+Split Pane or Replace Buffer
+```
+
+For example, selecting a reference from a Bible Module may request that another Module be opened in a new Pane.
+
+The Bible Module knows which Module should be opened and which navigation context should be supplied.
+
+The Workspace Runtime decides how that Module Instance is introduced into the visible Workspace.
+
+This preserves the ownership boundary between application behavior and runtime coordination.
+
+---
+
+# Navigation Context
+
+A Module may provide initialization context when requesting another Module.
+
+The current implementation carries this context through the Buffer's `bag`.
+
+The Buffer bag is therefore the current implementation of Module navigation context.
+
+Navigation context may contain information such as:
+
+* a Bible location reference,
+* a Bible version,
+* selected verses,
+* reading plan navigation state,
+* search results,
+* references,
+* or other Module initialization data.
+
+Conceptually:
+
+```text
+Source Module
+
+    Navigation Context
+
+        ↓
+
+New Buffer
+
+        ↓
+
+Target Module Instance
+```
+
+For example, a Reading Plan Module may open a Bible Reader Module with a navigation context describing the readings currently in progress.
+
+The Bible Reader interprets that context and presents only the requested chapters or verses.
+
+The Reading Plan Module does not directly control the Bible Reader.
+
+It provides context.
+
+The target Module determines how that context affects its behavior.
+
+This allows Modules to coordinate without depending directly on one another's component implementations.
+
+---
+
+# Focus and Selection
+
+The Workspace Runtime may track which Buffer or Pane is currently selected.
+
+Selection state supports application behavior such as:
+
+* keyboard input,
+* focus handling,
+* visual selection,
+* commands applied to the active Module,
+* and switching attention between Pane regions.
+
+The selected Buffer may expose focus behavior through its runtime state.
+
+Focus and selection remain runtime concerns.
+
+They do not change the Domain Objects presented by the Module.
+
+---
+
+# Module Communication
+
+Modules should remain loosely coupled.
+
+A Module may communicate with other parts of the application through:
+
+* Application Services,
+* application events,
+* shared Domain state,
+* or Buffer navigation context.
+
+A Module should not directly manipulate another Module Instance or depend on its component implementation.
+
+For example, when a Note is created, Notes Modules may refresh through an application event or shared Notes state.
+
+The Module creating the Note does not directly invoke rendering behavior on every open Notes Module.
+
+Likewise, a Reading Plan Module may provide navigation context to a Bible Reader without depending on the Bible Reader's internal component structure.
+
+This allows multiple Module Instances to respond consistently while remaining independently reusable.
+
+---
+
+# Runtime Events
+
+Workspace operations are event-driven.
+
+User actions and Module requests produce events that are handled by the Workspace Runtime or an Application Service coordinating with it.
+
+Examples include:
+
+* open a Module,
+* split a Pane,
+* close a Pane,
+* replace a Buffer,
+* select a Pane,
+* update the Workspace layout,
+* and notify Module Instances of shared application changes.
+
+Conceptually:
+
+```mermaid
+sequenceDiagram
+
+    participant User
+    participant Module
+    participant ApplicationService as Application Service
+    participant Runtime as Workspace Runtime
+
+    User->>Module: Perform action
+    Module->>ApplicationService: Request Workspace change
+    ApplicationService->>Runtime: Execute runtime operation
+    Runtime->>Runtime: Update Runtime Objects
+    Runtime-->>Module: Updated Workspace is presented
+```
+
+Events allow the requester to express intent without owning the operation that realizes it.
+
+The Module requests application behavior.
+
+The Application Service exposes the capability.
+
+The Workspace Runtime modifies the runtime model.
+
+---
+
+# Layout Update
+
+Operations that change the Pane tree require the visible Workspace layout to be recalculated.
+
+Examples include:
+
+* splitting a Pane,
+* deleting a Pane,
+* and restoring a Workspace.
+
+The runtime updates the logical Pane tree first.
+
+The rendering implementation then derives the visible layout from that updated model.
+
+Conceptually:
+
+```text
+Workspace Operation
+        ↓
+Update Pane Tree
+        ↓
+Derive Layout
+        ↓
+Present Updated Workspace
+```
+
+The runtime operation does not directly manipulate unrelated Module behavior.
+
+Existing Buffers and Module Instances remain associated with their stable identities wherever possible.
+
+This separation allows the Workspace layout to change without unnecessarily recreating unaffected parts of the application.
+
+---
+
+# Operation Ownership
+
+The Workspace Runtime owns:
+
+* Pane-tree modification,
+* Buffer assignment,
+* Module Instance placement,
+* selection and focus coordination,
+* and layout updates.
+
+Application Services expose these capabilities to Modules.
+
+Modules may request operations but do not own their implementation.
+
+Domains remain independent from Workspace structure.
+
+The Resource Architecture remains independent from Workspace operations.
+
+This keeps runtime coordination centralized without coupling the Workspace Runtime to application-specific behavior.
