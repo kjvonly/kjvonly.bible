@@ -366,6 +366,7 @@ sequenceDiagram
 
     Service-->>Module: Operation complete
 ```
+
 Application Services may be imported directly, passed through component properties, provided through context, or supplied through dependency injection.
 
 The delivery mechanism is an implementation choice.
@@ -418,3 +419,153 @@ Those technologies remain implementation details.
 The meaning of the Application Service should remain unchanged if those technologies are replaced.
 
 This separation allows Application Services to present stable application behavior while Technical Infrastructure continues to evolve independently.
+
+# Shared Application Concepts
+
+Application Services exist to own concepts that are meaningful across multiple Domains and Runtime components.
+
+These concepts are not defined by a single Domain.
+
+Instead, they become part of the application's shared language.
+
+Examples include:
+
+* Bible location references,
+* workspace management,
+* pane management,
+* navigation,
+* application settings,
+* theme management,
+* and other concepts shared throughout the application.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Modules["Module Instances"]
+
+    Services["Application Services"]
+
+    Bible["Bible Domain"]
+
+    Notes["Notes Domain"]
+
+    Plans["Reading Plans Domain"]
+
+    Runtime --> Modules
+
+    Modules --> Services
+
+    Bible --> Services
+
+    Notes --> Services
+
+    Plans --> Services
+```
+
+These shared concepts provide stable integration points throughout the application.
+
+Each participating owner understands the shared concept while remaining independent from the internal implementation of every other owner.
+
+---
+
+# Examples
+
+## Bible Location References
+
+Bible location references represent a shared application concept rather than Bible-specific behavior.
+
+They are used by multiple Domains including:
+
+* Bible,
+* Notes,
+* Reading Plans,
+* Search,
+* and other application features.
+
+Each Domain interprets the reference according to its own behavior while sharing a common representation.
+
+The ownership of the reference therefore belongs to an Application Service rather than exclusively to the Bible Domain.
+
+---
+
+## Pane Management
+
+Pane management is a Workspace capability.
+
+Modules may request operations such as:
+
+* opening a Module,
+* replacing the current Buffer,
+* splitting a Pane,
+* or closing a Pane.
+
+Those operations modify Runtime Objects owned by the Workspace Runtime.
+
+Application Services expose these operations without allowing Modules to manipulate the Pane tree directly.
+
+Conceptually:
+
+```mermaid
+sequenceDiagram
+
+    participant Module
+
+    participant PaneService
+
+    participant Runtime as Workspace Runtime
+
+    Module->>PaneService: Open Notes Module
+
+    PaneService->>Runtime: Modify Pane tree
+
+    Runtime-->>PaneService: Workspace updated
+
+    PaneService-->>Module: Complete
+```
+
+The Module expresses application intent.
+
+The Pane Service coordinates the request.
+
+The Workspace Runtime performs the operation.
+
+Each responsibility remains independently owned.
+
+---
+
+## Theme Management
+
+Theme management represents another shared application capability.
+
+Multiple Modules may:
+
+* toggle dark mode,
+* read the current theme,
+* or react to theme changes.
+
+The theme itself is not owned by any individual Domain.
+
+It represents an application-wide concept shared throughout the Workspace.
+
+Application Services provide the stable interface through which this shared capability is accessed.
+
+---
+
+# Shared Concepts, Not Shared Behavior
+
+Application Services own the shared concepts used throughout the application.
+
+They do not own the behavior performed by individual Domains.
+
+For example:
+
+* Bible location references belong to an Application Service.
+* Understanding Bible text belongs to the Bible Domain.
+* Pane operations belong to the Workspace Runtime.
+* Theme preferences belong to an Application Service.
+
+Application Services provide the common language that allows these responsibilities to collaborate while preserving clear ownership boundaries.
