@@ -701,3 +701,122 @@ Modules own:
 Each layer owns a distinct responsibility.
 
 Together they produce a runtime that is both extensible and independent from individual Module implementations.
+
+# Rendering Updates
+
+The rendering implementation reacts to changes made by the Workspace Runtime.
+
+The Workspace Runtime remains the source of truth.
+
+Rendering is a consequence of runtime changes rather than an independent process.
+
+Conceptually:
+
+```mermaid
+sequenceDiagram
+
+    participant User
+    participant Module
+    participant Runtime as Workspace Runtime
+    participant Renderer as Rendering Implementation
+
+    User->>Module: Perform action
+    Module->>Runtime: Request runtime operation
+    Runtime->>Runtime: Update Runtime Objects
+    Runtime-->>Renderer: Runtime changed
+    Renderer->>Renderer: Derive layout
+    Renderer->>Renderer: Resolve Modules
+    Renderer-->>User: Present updated Workspace
+```
+
+The rendering implementation does not initiate Workspace changes.
+
+It observes the current Runtime Objects and presents their latest state.
+
+---
+
+# Incremental Updates
+
+Most user interactions affect only a small portion of the Workspace.
+
+Examples include:
+
+* opening a Module,
+* closing a Pane,
+* replacing a Buffer,
+* changing the active Module,
+* or updating the Workspace layout.
+
+The rendering implementation updates only the Runtime Objects affected by the operation.
+
+Unchanged Runtime Objects continue to preserve their existing identity and rendered state.
+
+This minimizes unnecessary rendering work while preserving a continuous user experience.
+
+---
+
+# Runtime-Driven Presentation
+
+The visible application is always derived from the current Runtime Objects.
+
+Rendering does not maintain an independent representation of the Workspace.
+
+Instead, each rendering pass reflects the current runtime state.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Runtime Objects"]
+
+    Changes["Runtime Changes"]
+
+    Renderer["Rendering Implementation"]
+
+    UI["Visible Workspace"]
+
+    Runtime --> Changes
+    Changes --> Renderer
+    Renderer --> UI
+```
+
+This keeps the Workspace Runtime as the single source of truth for the application's visible structure.
+
+The rendering implementation remains a projection of that model.
+
+---
+
+# Event-Driven Rendering
+
+Rendering updates occur in response to runtime events.
+
+Examples include:
+
+* creating a Pane,
+* deleting a Pane,
+* replacing a Buffer,
+* restoring a Workspace,
+* or changing Module state.
+
+Each event updates the Runtime Objects.
+
+The rendering implementation then presents the resulting Workspace.
+
+Rendering therefore follows runtime events rather than driving them.
+
+This keeps presentation independent from application behavior while allowing the visible Workspace to remain synchronized with the underlying runtime model.
+
+---
+
+# Responsibility Boundary
+
+The Workspace Runtime owns the Runtime Objects and their evolution.
+
+The rendering implementation owns how those Runtime Objects are presented.
+
+Modules request changes through Application Services.
+
+The rendering implementation simply reflects the resulting runtime state.
+
+This separation ensures the visible application always remains a faithful presentation of the Workspace Runtime.
