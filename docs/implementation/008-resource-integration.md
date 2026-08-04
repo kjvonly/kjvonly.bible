@@ -661,3 +661,109 @@ Regardless of the source, every Published Resource follows the same integration 
 Only accepted candidates become part of the application's local state.
 
 This allows the application to maintain one authoritative installed Domain Object while continuing to participate in a decentralized resource network.
+
+# Architectural Independence
+
+Resource Integration intentionally separates the application architecture from the Resource Architecture.
+
+The application is concerned with Domain Objects and application behavior.
+
+The Resource Architecture is concerned with Published Resources and resource lifecycles.
+
+Neither architecture requires knowledge of the internal implementation of the other.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Application["Application"]
+
+    Integration["Resource Integration"]
+
+    Resources["Resource Architecture"]
+
+    Application --> Integration
+
+    Integration --> Resources
+```
+
+This separation allows each architecture to evolve independently while preserving a stable integration boundary.
+
+Changes to:
+
+* Resource representations,
+* publication mechanisms,
+* transport protocols,
+* synchronization strategies,
+* or discovery mechanisms
+
+should not require changes to application behavior.
+
+Likewise, changes to:
+
+* Workspace Runtime,
+* Modules,
+* Domains,
+* Application Services,
+* or Data Access
+
+should not require changes to the Resource Architecture.
+
+Each architecture owns its own responsibilities.
+
+Resource Integration coordinates the exchange between them.
+
+---
+
+# Stable Integration Model
+
+The Resource Integration boundary intentionally limits what crosses between the application and the Resource Architecture.
+
+The Resource Architecture supplies representations suitable for constructing Domain Objects.
+
+The application supplies representations suitable for publication.
+
+Neither architecture exchanges internal implementation details.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Published["Published Resource"]
+
+    Candidate["Candidate Domain Object"]
+
+    Installed["Installed Domain Object"]
+
+    Representation["Published Representation"]
+
+    Published --> Candidate
+
+    Candidate --> Installed
+
+    Installed --> Representation
+```
+
+The application never exposes its internal Domain Objects directly to the Resource Architecture.
+
+Likewise, the Resource Architecture never exposes Published Resources directly to Modules or Domain Services.
+
+Each architecture operates exclusively on its own model while exchanging only the representations required for integration.
+
+---
+
+# Benefits
+
+This separation provides several important architectural benefits.
+
+It allows:
+
+* the application to evolve independently of transport technologies,
+* the Resource Architecture to evolve independently of application behavior,
+* Domain Objects to remain stable regardless of representation changes,
+* Published Resources to evolve without affecting Modules,
+* and new transport implementations to be introduced without modifying application logic.
+
+By maintaining this separation, Resource Integration protects both architectures from unnecessary coupling while providing a consistent and predictable integration model.
