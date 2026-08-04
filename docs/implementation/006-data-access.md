@@ -350,3 +350,144 @@ The source may differ.
 The object returned to the application remains the same.
 
 This consistency greatly simplifies Module and Domain implementations because they operate on one stable representation rather than multiple storage-specific formats.
+
+# Domain Stores
+
+The primary responsibility of Data Access is to obtain Domain Objects.
+
+The first source consulted is the owning Domain Store.
+
+A Domain Store provides the local representation of one Domain's data.
+
+It is responsible for storing and retrieving Domain Objects for that Domain.
+
+Conceptually:
+
+```mermaid id="d3wrp8"
+flowchart LR
+
+    Module["Module"]
+
+    Service["Domain Service"]
+
+    Data["Data Access"]
+
+    Store["Domain Store"]
+
+    Object["Domain Object"]
+
+    Module --> Service
+
+    Service --> Data
+
+    Data --> Store
+
+    Store --> Object
+```
+
+A Domain Store does not own:
+
+* Domain behavior,
+* retrieval strategy,
+* transport,
+* synchronization,
+* or persistence technologies.
+
+Its responsibility is limited to the local management of Domain Objects owned by its Domain.
+
+---
+
+# Domain Store Independence
+
+A Domain Store defines the persistence boundary for a Domain.
+
+The application interacts with the Domain Store through a Domain-owned interface.
+
+The physical storage technology remains an implementation detail.
+
+Conceptually:
+
+```mermaid id="fj5q0d"
+flowchart TD
+
+    Store["Domain Store"]
+
+    Persistence["Persistence Implementation"]
+
+    IndexedDB["IndexedDB"]
+
+    Future["Future Storage"]
+
+    Store --> Persistence
+
+    Persistence --> IndexedDB
+
+    Persistence --> Future
+```
+
+The Domain Store should remain stable even if the persistence implementation changes.
+
+For example, replacing IndexedDB with another local storage technology should not require changes to Modules, Domain Services, or Data Access.
+
+---
+
+# Cache Misses
+
+If the requested Domain Object is not available within the Domain Store, Data Access requests the object through the Resource Architecture.
+
+Once obtained, the Domain Object is stored within the Domain Store before being returned to the caller.
+
+Conceptually:
+
+```mermaid id="5ptgkg"
+flowchart TD
+
+    Request["Request Domain Object"]
+
+    Store["Domain Store"]
+
+    Found{"Available?"}
+
+    Resource["Resource Architecture"]
+
+    Save["Store Domain Object"]
+
+    Object["Domain Object"]
+
+    Request --> Store
+
+    Store --> Found
+
+    Found -->|"Yes"| Object
+
+    Found -->|"No"| Resource
+
+    Resource --> Save
+
+    Save --> Store
+
+    Store --> Object
+```
+
+The caller receives the same Domain Object regardless of whether it originated locally or from the Resource Architecture.
+
+The retrieval path remains an implementation detail of Data Access.
+
+---
+
+# Consistent Application Behavior
+
+Because every request follows the same retrieval process, application behavior remains consistent.
+
+Modules and Domain Services never need to determine:
+
+* whether data is already available,
+* whether it must be retrieved,
+* where it was retrieved from,
+* or whether it has recently been synchronized.
+
+They simply request the required Domain Object.
+
+Data Access coordinates the remainder of the retrieval process.
+
+This separation greatly simplifies application logic while allowing persistence and synchronization strategies to evolve independently of the application's behavior.
