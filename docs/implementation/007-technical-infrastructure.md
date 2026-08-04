@@ -299,3 +299,159 @@ For example, the application depends upon:
 The specific technologies used to implement those capabilities may change over time.
 
 This separation allows the application architecture to remain stable while Technical Infrastructure evolves independently.
+
+# Technical Infrastructure and the Application
+
+Technical Infrastructure exists to support the application architecture.
+
+It provides implementation capabilities while remaining independent from application behavior.
+
+The application defines:
+
+* what should happen,
+* when it should happen,
+* and why it should happen.
+
+Technical Infrastructure defines:
+
+* how those decisions are realized on the underlying platform.
+
+Conceptually:
+
+```mermaid id="r5t9gb"
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Domains["Domains"]
+
+    Services["Application Services"]
+
+    Data["Data Access"]
+
+    Infrastructure["Technical Infrastructure"]
+
+    Platform["Browser Platform"]
+
+    Runtime --> Services
+
+    Domains --> Services
+
+    Services --> Data
+
+    Data --> Infrastructure
+
+    Infrastructure --> Platform
+```
+
+The application architecture owns behavior.
+
+Technical Infrastructure owns implementation.
+
+This separation allows application behavior to evolve without requiring changes to platform-specific code.
+
+---
+
+# Technical Infrastructure and Data Access
+
+Data Access requests technical capabilities from Technical Infrastructure without depending upon specific technologies.
+
+For example, Data Access may request:
+
+* persistent storage,
+* serialization,
+* compression,
+* networking,
+* or background execution.
+
+Technical Infrastructure determines how those capabilities are implemented.
+
+Conceptually:
+
+```mermaid id="6l2rda"
+flowchart LR
+
+    Data["Data Access"]
+
+    Infrastructure["Technical Infrastructure"]
+
+    Storage["Persistence"]
+
+    Network["Networking"]
+
+    Workers["Workers"]
+
+    Data --> Infrastructure
+
+    Infrastructure --> Storage
+
+    Infrastructure --> Network
+
+    Infrastructure --> Workers
+```
+
+Data Access remains independent from IndexedDB, browser APIs, HTTP, WebSockets, or any other implementation technology.
+
+It depends only upon the capabilities exposed by Technical Infrastructure.
+
+---
+
+# Technical Infrastructure and the Resource Architecture
+
+The Resource Architecture depends upon Technical Infrastructure to communicate with the outside world.
+
+Technical Infrastructure provides capabilities such as:
+
+* relay communication,
+* HTTP,
+* Blossom communication,
+* compression,
+* serialization,
+* cryptographic operations,
+* and browser networking.
+
+The Resource Architecture determines how those capabilities are used to satisfy the application's resource model.
+
+Conceptually:
+
+```mermaid id="2p7xzn"
+flowchart LR
+
+    Resources["Resource Architecture"]
+
+    Infrastructure["Technical Infrastructure"]
+
+    Network["Networking"]
+
+    Browser["Browser APIs"]
+
+    Resources --> Infrastructure
+
+    Infrastructure --> Network
+
+    Infrastructure --> Browser
+```
+
+Technical Infrastructure performs communication.
+
+The Resource Architecture determines the meaning of that communication.
+
+---
+
+# Technology Independence
+
+The application intentionally avoids coupling its architecture to individual technologies.
+
+For example:
+
+* Domains do not depend upon IndexedDB.
+* Application Services do not depend upon browser APIs.
+* Data Access does not depend upon HTTP.
+* The Workspace Runtime does not depend upon CSS Grid.
+* The Resource Architecture does not depend upon a particular relay implementation.
+
+Instead, each architectural responsibility depends upon stable capabilities provided by Technical Infrastructure.
+
+This separation allows technologies to evolve without affecting the application's conceptual architecture.
+
+As new technologies emerge, they become additional implementations of existing capabilities rather than new architectural responsibilities.
