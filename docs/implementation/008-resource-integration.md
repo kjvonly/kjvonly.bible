@@ -561,3 +561,103 @@ This distinction separates:
 * and installation decisions.
 
 The application therefore remains the owner of its local state while the Resource Architecture remains responsible for resource publication, discovery, and synchronization.
+
+# Local Authority
+
+The application is the authoritative owner of its installed Domain Objects.
+
+Published Resources represent information available from the Resource Architecture.
+
+They do not automatically replace the application's local state.
+
+Every Published Resource received by the application becomes a candidate for installation.
+
+The application determines whether that candidate should become the installed Domain Object.
+
+Conceptually:
+
+```mermaid id="jd5m8r"
+flowchart TD
+
+    Published["Published Resource"]
+
+    Candidate["Candidate Domain Object"]
+
+    Installed["Installed Domain Object"]
+
+    Decision["Installation Decision"]
+
+    Published --> Candidate
+
+    Candidate --> Decision
+
+    Decision -->|"Accept"| Installed
+
+    Decision -->|"Reject"| Installed
+```
+
+The installed Domain Object always remains the application's authoritative representation.
+
+Receiving a Published Resource does not imply that the application's local state should change.
+
+---
+
+# Version Decisions
+
+Installation decisions are made using the rules defined by the owning Domain and the application's synchronization model.
+
+One common example is version comparison.
+
+Conceptually:
+
+```mermaid id="u9fw0q"
+flowchart LR
+
+    Installed["Installed Domain Object"]
+
+    Candidate["Candidate Domain Object"]
+
+    Compare["Compare Versions"]
+
+    Decision["Install?"]
+
+    Installed --> Compare
+
+    Candidate --> Compare
+
+    Compare --> Decision
+```
+
+If the installed Domain Object already represents a newer version, the candidate is discarded.
+
+The application continues using the installed Domain Object without interruption.
+
+Likewise, if the candidate represents newer application data, it may replace the installed object.
+
+The decision belongs entirely to the application.
+
+The Resource Architecture simply provides valid Published Resources for consideration.
+
+---
+
+# Stable Local State
+
+This model intentionally separates:
+
+* resource discovery,
+* resource publication,
+* application state,
+* and installation decisions.
+
+The application therefore remains resilient when:
+
+* relays temporarily lag behind,
+* duplicate Resources are received,
+* older Published Resources are discovered,
+* or multiple publishers provide equivalent representations.
+
+Regardless of the source, every Published Resource follows the same integration process.
+
+Only accepted candidates become part of the application's local state.
+
+This allows the application to maintain one authoritative installed Domain Object while continuing to participate in a decentralized resource network.
