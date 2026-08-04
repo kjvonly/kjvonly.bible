@@ -103,13 +103,34 @@ This allows Modules and Domain Services to remain independent from storage techn
 
 ---
 
-# Local-First Design
+# Local-First Retrieval
 
-The application follows a local-first data access model.
+The application follows a local-first retrieval strategy.
 
 Whenever a Domain Object is requested, Data Access first attempts to satisfy that request using locally available data.
 
-Only when the requested object cannot be obtained locally does Data Access request it from the Resource Architecture.
+Only when the requested Domain Object cannot be obtained locally does Data Access request it from the Resource Architecture.
+
+The caller does not choose the retrieval source.
+
+The caller simply requests the required Domain Object.
+
+This separation allows application behavior to remain independent from storage technologies and transport implementations.
+
+One of the fundamental principles of the application is:
+
+> **Request data, not location.**
+
+Modules and Domain Services request the Domain Object they require.
+
+They do not request:
+
+* IndexedDB,
+* Nostr,
+* Blossom,
+* HTTP,
+* memory,
+* or any other storage or transport technology.
 
 Conceptually:
 
@@ -118,26 +139,64 @@ flowchart TD
 
     Request["Request Domain Object"]
 
-    Local["Domain Store"]
+    Store["Domain Store"]
 
-    Network["Resource Architecture"]
+    Found{"Available?"}
+
+    Resource["Resource Architecture"]
 
     Object["Domain Object"]
 
-    Request --> Local
+    Request --> Store
 
-    Local -->|"Hit"| Object
+    Store --> Found
 
-    Local -->|"Miss"| Network
+    Found -->|"Yes"| Object
 
-    Network --> Object
+    Found -->|"No"| Resource
+
+    Resource --> Object
 ```
 
-The caller receives the same Domain Object regardless of how it was obtained.
+If the requested Domain Object already exists locally, it is returned immediately.
 
-This behavior is intentionally hidden behind the Data Access abstraction.
+If it is unavailable locally, Data Access retrieves it through the Resource Architecture.
 
-Modules and Domain Services should not distinguish between local retrieval and network retrieval.
+The caller receives the resulting Domain Object without knowing which retrieval path was taken.
+
+The source of the data is therefore an implementation detail of Data Access rather than a concern of the caller.
+
+This allows storage technologies, transport protocols, and retrieval strategies to evolve without affecting Modules or Domain Services.
+
+Regardless of how a request is satisfied, Data Access always returns the same conceptual result:
+
+a Domain Object.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Store["Domain Store"]
+
+    Resource["Resource Architecture"]
+
+    Future["Future Source"]
+
+    Object["Domain Object"]
+
+    Store --> Object
+
+    Resource --> Object
+
+    Future --> Object
+```
+
+The source may differ.
+
+The Domain Object returned to the application remains the same.
+
+This consistency greatly simplifies the rest of the application because Modules and Domain Services operate on one stable representation rather than multiple storage-specific formats.
 
 ---
 
@@ -160,3 +219,134 @@ It does not own:
 * or presentation.
 
 Its responsibility is limited to obtaining Domain Objects for the application through a consistent interface.
+
+# Transparent Retrieval
+
+The purpose of Data Access is to make Domain Object retrieval transparent to the rest of the application.
+
+Modules and Domain Services request Domain Objects.
+
+They do not determine where those objects originate.
+
+Conceptually:
+
+```mermaid id="4z3n8p"
+flowchart LR
+
+    Module["Module"]
+
+    Service["Domain Service"]
+
+    Data["Data Access"]
+
+    Object["Domain Object"]
+
+    Module --> Service
+
+    Service --> Data
+
+    Data --> Object
+```
+
+Whether the Domain Object was obtained from:
+
+* a Domain Store,
+* the Resource Architecture,
+* previously cached application state,
+* or another future source,
+
+the caller receives the same result.
+
+Data retrieval is therefore defined by the requested Domain Object rather than by its location.
+
+---
+
+# Request Data, Not Location
+
+One of the fundamental principles of the application is:
+
+> **Request data, not location.**
+
+Callers request the Domain Object they require.
+
+They do not request:
+
+* IndexedDB,
+* Nostr,
+* Blossom,
+* HTTP,
+* memory,
+* or any other storage or transport technology.
+
+For example, a Module requests:
+
+```text id="ngyjlwm"
+Chapter
+
+John 3
+```
+
+rather than:
+
+```text id="bhx8b3"
+Read John 3 from IndexedDB.
+
+or
+
+Read John 3 from Relay X.
+```
+
+The responsibility of locating the requested Domain Object belongs entirely to Data Access.
+
+---
+
+# Stable Application Behavior
+
+Because callers never choose a retrieval source, application behavior remains stable as storage technologies evolve.
+
+For example, replacing:
+
+* IndexedDB,
+* relay implementations,
+* caching strategies,
+* or transport mechanisms
+
+should not require changes to Modules or Domain Services.
+
+Those implementation decisions remain behind the Data Access abstraction.
+
+This allows the application's behavior to remain independent from the technologies used to satisfy each request.
+
+---
+
+# Consistent Domain Objects
+
+Regardless of how a request is satisfied, Data Access always returns the same conceptual result:
+
+a Domain Object.
+
+Conceptually:
+
+```mermaid id="sqn5g7"
+flowchart LR
+
+    Store["Domain Store"]
+
+    Resource["Resource Architecture"]
+
+    Future["Future Source"]
+
+    Object["Domain Object"]
+
+    Store --> Object
+
+    Resource --> Object
+
+    Future --> Object
+```
+
+The source may differ.
+
+The object returned to the application remains the same.
+
+This consistency greatly simplifies Module and Domain implementations because they operate on one stable representation rather than multiple storage-specific formats.
