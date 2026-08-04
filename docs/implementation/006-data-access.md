@@ -23,7 +23,7 @@ This document defines:
 * Data Access,
 * Domain Object retrieval,
 * local-first access,
-* cache-first behavior,
+* local-store-first behavior,
 * interaction with Domain Stores,
 * interaction with the Resource Architecture,
 * and the responsibilities of the Data Access abstraction.
@@ -431,7 +431,7 @@ For example, replacing IndexedDB with another local storage technology should no
 
 ---
 
-# Cache Misses
+# Local Store Misses
 
 If the requested Domain Object is not available within the Domain Store, Data Access requests the object through the Resource Architecture.
 
