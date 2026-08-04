@@ -322,3 +322,155 @@ Likewise, the Resource Architecture should never depend upon:
 The only responsibilities exchanged across this boundary are those required to construct or serialize Domain Objects.
 
 This allows the application and the Resource Architecture to evolve independently while preserving a clear and consistent integration model.
+
+# Resource Integration and Data Access
+
+Data Access is the primary consumer of Resource Integration.
+
+When a requested Domain Object is not available from the owning Domain Store, Data Access delegates retrieval to the Resource Architecture through the Resource Integration boundary.
+
+Conceptually:
+
+```mermaid id="m1y4ht"
+flowchart LR
+
+    Module["Module"]
+
+    Service["Domain Service"]
+
+    Data["Data Access"]
+
+    Store["Domain Store"]
+
+    Integration["Resource Integration"]
+
+    Resources["Resource Architecture"]
+
+    Object["Domain Object"]
+
+    Module --> Service
+
+    Service --> Data
+
+    Data --> Store
+
+    Store -->|"Miss"| Integration
+
+    Integration --> Resources
+
+    Integration --> Object
+
+    Object --> Data
+```
+
+Data Access determines **when** Resource Integration is required.
+
+Resource Integration determines **how** Domain Objects are obtained from the Resource Architecture.
+
+The caller remains unaware that Resource retrieval occurred.
+
+---
+
+# Resource Installation
+
+The Resource Architecture is responsible for obtaining and resolving Published Resources.
+
+The application is responsible for deciding whether those Resources become installed Domain Objects.
+
+When Resource Integration successfully constructs a Domain Object, the owning Domain may choose to install that object into its Domain Store.
+
+Conceptually:
+
+```mermaid id="s0q4dj"
+flowchart LR
+
+    Resource["Published Resource"]
+
+    Factory["Domain Object Factory"]
+
+    Object["Domain Object"]
+
+    Store["Domain Store"]
+
+    Resource --> Factory
+
+    Factory --> Object
+
+    Object --> Store
+```
+
+Installation represents the point at which a Resource becomes part of the application's local state.
+
+The Resource Architecture does not install Domain Objects.
+
+It supplies the information required for the application to construct them.
+
+The application determines how those Domain Objects participate in its local runtime.
+
+---
+
+# Resource Integration and Domain Ownership
+
+Resource Integration does not own Domain Objects.
+
+It provides the boundary through which Domain Objects are constructed and serialized.
+
+Ownership always remains with the Domain.
+
+Conceptually:
+
+```mermaid id="9j6tx7"
+flowchart TD
+
+    Resources["Resource Architecture"]
+
+    Integration["Resource Integration"]
+
+    Domain["Owning Domain"]
+
+    Object["Domain Object"]
+
+    Resources --> Integration
+
+    Integration --> Domain
+
+    Domain --> Object
+```
+
+The Domain remains responsible for:
+
+* constructing Domain Objects,
+* validating Domain data,
+* interpreting application behavior,
+* storing Domain Objects,
+* and serializing Domain Objects for publication.
+
+Resource Integration coordinates the transformation.
+
+It does not become the owner of the resulting objects.
+
+---
+
+# Resource Independence
+
+The application architecture intentionally remains independent from the structure of Published Resources.
+
+Modules interact with Domain Objects.
+
+Domain Services coordinate Domain behavior.
+
+Application Services provide shared capabilities.
+
+Data Access retrieves Domain Objects.
+
+None of these responsibilities require knowledge of:
+
+* relay events,
+* Resource identifiers,
+* publication metadata,
+* transport protocols,
+* or serialized representations.
+
+Those concerns remain entirely within the Resource Architecture.
+
+This separation allows the transport architecture and the application architecture to evolve independently while preserving a stable integration boundary.
