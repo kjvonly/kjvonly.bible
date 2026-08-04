@@ -491,3 +491,133 @@ They simply request the required Domain Object.
 Data Access coordinates the remainder of the retrieval process.
 
 This separation greatly simplifies application logic while allowing persistence and synchronization strategies to evolve independently of the application's behavior.
+
+# Data Freshness
+
+Data Access is responsible for obtaining the best available Domain Object for the current request.
+
+It is not responsible for continuously keeping that Domain Object up to date.
+
+That responsibility belongs to Background Processing.
+
+Conceptually:
+
+```mermaid id="m7g4hf"
+flowchart TD
+
+    Module["Module"]
+
+    Data["Data Access"]
+
+    Store["Domain Store"]
+
+    Background["Background Processing"]
+
+    Resource["Resource Architecture"]
+
+    Module --> Data
+
+    Data --> Store
+
+    Background --> Resource
+
+    Resource --> Store
+```
+
+When a request is made, Data Access retrieves the currently available Domain Object.
+
+If the object is unavailable locally, Data Access retrieves it through the Resource Architecture.
+
+Background Processing independently refreshes Domain Objects over time and stores newer versions within the Domain Store.
+
+The next request automatically benefits from those updates.
+
+Data Access therefore remains focused on satisfying the current request while Background Processing maintains the quality and freshness of locally available data.
+
+This separation keeps request handling simple while allowing synchronization strategies to evolve independently.
+
+# Future Evolution
+
+The Data Access architecture has been intentionally designed around Domain Objects rather than storage technologies.
+
+As the application evolves, new persistence implementations, transport protocols, and retrieval strategies should integrate behind the existing Data Access abstraction.
+
+Conceptually:
+
+```mermaid id="j6vznq"
+flowchart TD
+
+    Data["Data Access"]
+
+    Store["Domain Store"]
+
+    Resource["Resource Architecture"]
+
+    Future["Future Data Sources"]
+
+    Object["Domain Object"]
+
+    Data --> Store
+
+    Data --> Resource
+
+    Data --> Future
+
+    Store --> Object
+
+    Resource --> Object
+
+    Future --> Object
+```
+
+The application should continue requesting Domain Objects rather than specific storage locations.
+
+As long as this abstraction remains stable, new data sources may be introduced without affecting Modules or Domain Services.
+
+---
+
+# Big Takeaway
+
+Data Access owns the responsibility of obtaining Domain Objects.
+
+It determines how requests are satisfied while hiding storage technologies, transport protocols, and retrieval strategies from the rest of the application.
+
+Conceptually:
+
+```mermaid id="4qp2mo"
+flowchart LR
+
+    Module["Module"]
+
+    Service["Domain Service"]
+
+    Data["Data Access"]
+
+    Store["Domain Store"]
+
+    Resource["Resource Architecture"]
+
+    Object["Domain Object"]
+
+    Module --> Service
+
+    Service --> Data
+
+    Data --> Store
+
+    Data --> Resource
+
+    Store --> Object
+
+    Resource --> Object
+```
+
+Modules and Domain Services request Domain Objects.
+
+They do not request IndexedDB, relays, Blossom, HTTP, or any other storage or transport technology.
+
+Data Access determines how each request is satisfied and always returns the same conceptual result:
+
+a Domain Object.
+
+By separating application behavior from retrieval strategy, the application remains local-first, transport-independent, and capable of evolving its persistence and synchronization technologies without changing the behavior of Modules or Domains.
