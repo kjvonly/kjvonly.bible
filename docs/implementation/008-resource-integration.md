@@ -474,3 +474,90 @@ None of these responsibilities require knowledge of:
 Those concerns remain entirely within the Resource Architecture.
 
 This separation allows the transport architecture and the application architecture to evolve independently while preserving a stable integration boundary.
+
+# Installation Decisions
+
+Constructing a Domain Object does not automatically make it part of the application's local state.
+
+Before a newly constructed Domain Object replaces an existing installed object, the application determines whether the new object should be installed.
+
+This decision belongs to the application rather than the Resource Architecture.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Resource["Published Resource"]
+
+    Factory["Domain Object Factory"]
+
+    Object["Domain Object"]
+
+    Compare["Installation Decision"]
+
+    Store["Domain Store"]
+
+    Discard["Discard"]
+
+    Resource --> Factory
+
+    Factory --> Object
+
+    Object --> Compare
+
+    Compare -->|"Install"| Store
+
+    Compare -->|"Ignore"| Discard
+```
+
+Installation decisions are based upon the application's current state.
+
+For example, the application may determine that:
+
+* no installed Domain Object currently exists,
+* the newly constructed Domain Object is newer,
+* the installed Domain Object is newer,
+* or another Domain-specific installation rule applies.
+
+The Resource Architecture is responsible for supplying valid Published Resources.
+
+The application is responsible for determining whether those Resources become installed Domain Objects.
+
+This distinction allows the application to maintain a consistent local state even when older or duplicate Published Resources are received from the network.
+
+---
+
+# Installed Domain Objects
+
+An installed Domain Object represents the application's authoritative local representation of a Resource.
+
+Modules, Domain Services, Application Services, and Data Access operate exclusively on installed Domain Objects.
+
+Published Resources are used only to construct candidate Domain Objects.
+
+Only after the application accepts a candidate does it become the installed Domain Object for that Domain.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Published["Published Resource"]
+
+    Candidate["Candidate Domain Object"]
+
+    Installed["Installed Domain Object"]
+
+    Published --> Candidate
+
+    Candidate --> Installed
+```
+
+This distinction separates:
+
+* transport,
+* application state,
+* and installation decisions.
+
+The application therefore remains the owner of its local state while the Resource Architecture remains responsible for resource publication, discovery, and synchronization.
