@@ -455,3 +455,172 @@ Instead, each architectural responsibility depends upon stable capabilities prov
 This separation allows technologies to evolve without affecting the application's conceptual architecture.
 
 As new technologies emerge, they become additional implementations of existing capabilities rather than new architectural responsibilities.
+
+# Infrastructure Capabilities
+
+Technical Infrastructure provides a collection of reusable implementation capabilities to the application architecture.
+
+Each capability represents one technical concern that may be reused throughout the application.
+
+Examples include:
+
+* persistence,
+* networking,
+* serialization,
+* compression,
+* background execution,
+* browser integration,
+* cryptography,
+* timing,
+* and platform abstraction.
+
+These capabilities remain independent from the application's Domains and business behavior.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Infrastructure["Technical Infrastructure"]
+
+    Storage["Persistence"]
+
+    Network["Networking"]
+
+    Workers["Background Execution"]
+
+    Serialization["Serialization"]
+
+    Compression["Compression"]
+
+    Crypto["Cryptography"]
+
+    Browser["Browser Integration"]
+
+    Infrastructure --> Storage
+
+    Infrastructure --> Network
+
+    Infrastructure --> Workers
+
+    Infrastructure --> Serialization
+
+    Infrastructure --> Compression
+
+    Infrastructure --> Crypto
+
+    Infrastructure --> Browser
+```
+
+Each capability should own one technical concern.
+
+Capabilities should remain cohesive and independent from one another whenever practical.
+
+---
+
+# Capability Composition
+
+Application behavior is often realized through the composition of several technical capabilities.
+
+For example, obtaining a Domain Object from the Resource Architecture may require:
+
+* networking,
+* compression,
+* serialization,
+* validation,
+* and persistence.
+
+Each capability performs one technical responsibility.
+
+Together they provide the implementation required by the application architecture.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Application["Application"]
+
+    Network["Networking"]
+
+    Compression["Compression"]
+
+    Serialization["Serialization"]
+
+    Persistence["Persistence"]
+
+    Application --> Network
+
+    Network --> Compression
+
+    Compression --> Serialization
+
+    Serialization --> Persistence
+```
+
+No individual capability understands the application's business behavior.
+
+Each performs only its own technical responsibility.
+
+---
+
+# Capability Independence
+
+Technical capabilities should remain reusable across the application.
+
+A capability should not become coupled to a particular Domain or Module.
+
+For example:
+
+* persistence should not understand Bible chapters,
+* compression should not understand Notes,
+* networking should not understand Reading Plans,
+* browser integration should not understand Domain Objects.
+
+Instead, each capability exposes a stable implementation interface that may be reused by any part of the application requiring that capability.
+
+This allows the implementation technologies supporting one area of the application to also support future Domains without modification.
+
+---
+
+# Technical Composition
+
+The application architecture composes technical capabilities to realize higher-level behavior.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Domains["Domains"]
+
+    Services["Application Services"]
+
+    Data["Data Access"]
+
+    Infrastructure["Technical Infrastructure"]
+
+    Capabilities["Technical Capabilities"]
+
+    Platform["Platform Technologies"]
+
+    Runtime --> Services
+
+    Domains --> Services
+
+    Services --> Data
+
+    Data --> Infrastructure
+
+    Infrastructure --> Capabilities
+
+    Capabilities --> Platform
+```
+
+Each layer depends only upon the layer immediately beneath it.
+
+This allows responsibilities to remain clearly separated while enabling the implementation to evolve independently at each level.
+
+Technical Infrastructure therefore acts as the implementation foundation upon which the application architecture is built.
