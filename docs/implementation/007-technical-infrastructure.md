@@ -624,3 +624,87 @@ Each layer depends only upon the layer immediately beneath it.
 This allows responsibilities to remain clearly separated while enabling the implementation to evolve independently at each level.
 
 Technical Infrastructure therefore acts as the implementation foundation upon which the application architecture is built.
+# Future Evolution
+
+Technical Infrastructure has been intentionally designed around technical capabilities rather than specific technologies.
+
+As browser APIs, storage engines, networking libraries, and platform capabilities evolve, they should be introduced as new implementations of existing technical capabilities rather than new architectural responsibilities.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Infrastructure["Technical Infrastructure"]
+
+    Capability["Technical Capability"]
+
+    Current["Current Technology"]
+
+    Future["Future Technology"]
+
+    Infrastructure --> Capability
+
+    Capability --> Current
+
+    Capability --> Future
+```
+
+The application architecture should continue to depend upon technical capabilities instead of individual technologies.
+
+This allows implementation technologies to evolve independently while preserving the application's conceptual architecture.
+
+New technologies should strengthen existing capability boundaries rather than introduce technology-specific dependencies throughout the application.
+
+---
+
+# Big Takeaway
+
+Technical Infrastructure owns the implementation technologies that realize the application's architecture.
+
+It provides reusable technical capabilities while remaining independent from application behavior.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Domains["Domains"]
+
+    Services["Application Services"]
+
+    Data["Data Access"]
+
+    Infrastructure["Technical Infrastructure"]
+
+    Capabilities["Technical Capabilities"]
+
+    Technologies["Platform Technologies"]
+
+    Runtime --> Services
+
+    Domains --> Services
+
+    Services --> Data
+
+    Data --> Infrastructure
+
+    Infrastructure --> Capabilities
+
+    Capabilities --> Technologies
+```
+
+The application architecture defines:
+
+* application behavior,
+* shared concepts,
+* data retrieval,
+* and resource lifecycles.
+
+Technical Infrastructure provides the technical capabilities required to implement those responsibilities.
+
+As technologies change, the application's architecture should remain stable because it depends upon capabilities rather than implementations.
+
+This separation allows the application to evolve while preserving clear ownership boundaries and a consistent architectural model.
