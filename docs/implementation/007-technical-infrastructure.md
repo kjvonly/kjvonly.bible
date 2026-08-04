@@ -159,3 +159,143 @@ Technical Infrastructure exposes implementation capabilities to the application 
 The application requests capabilities.
 
 Technical Infrastructure determines how those capabilities are implemented.
+
+# Technical Infrastructure Ownership
+
+Technical Infrastructure owns responsibilities that exist because of the platform or technology used to implement the application.
+
+Ownership is determined by implementation rather than application behavior.
+
+A responsibility belongs to Technical Infrastructure when it provides a technical capability that could be reused regardless of the application's Domains or business logic.
+
+Examples include:
+
+* browser APIs,
+* IndexedDB,
+* Web Workers,
+* HTTP,
+* WebSockets,
+* compression,
+* serialization,
+* cryptographic operations,
+* timers,
+* and platform-specific integration.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    Domains["Domains"]
+
+    Services["Application Services"]
+
+    Data["Data Access"]
+
+    Infrastructure["Technical Infrastructure"]
+
+    Runtime --> Infrastructure
+
+    Domains --> Infrastructure
+
+    Services --> Infrastructure
+
+    Data --> Infrastructure
+```
+
+Technical Infrastructure provides implementation capabilities to the application architecture.
+
+It does not own application behavior.
+
+---
+
+# Ownership Heuristic
+
+When introducing a new responsibility, first determine whether it represents application behavior or implementation technology.
+
+A useful heuristic is:
+
+> **Would this responsibility still exist if the application solved a completely different business problem?**
+
+If the answer is **yes**, it likely belongs to Technical Infrastructure.
+
+If the answer is **no**, it probably belongs elsewhere within the application architecture.
+
+For example:
+
+```text
+Compression
+
+Browser Storage
+
+HTTP
+
+Serialization
+
+Timers
+
+Logging
+```
+
+would still exist regardless of whether the application managed Bible study, accounting, or inventory.
+
+These are implementation capabilities rather than application concepts.
+
+---
+
+# Technical Infrastructure Boundaries
+
+Technical Infrastructure provides capabilities.
+
+It does not make application decisions.
+
+For example:
+
+* IndexedDB stores data.
+* It does not determine what should be stored.
+* HTTP performs requests.
+* It does not determine what should be requested.
+* Compression compresses data.
+* It does not determine what should be compressed.
+* Web Workers execute work.
+* They do not determine which work should be performed.
+
+Those decisions belong to the application architecture.
+
+Technical Infrastructure provides only the implementation required to carry them out.
+
+---
+
+# Stable Implementation Boundary
+
+The application architecture intentionally depends upon capabilities rather than technologies.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Application["Application Architecture"]
+
+    Capability["Technical Capability"]
+
+    Technology["Technology"]
+
+    Application --> Capability
+
+    Capability --> Technology
+```
+
+For example, the application depends upon:
+
+* persistent storage,
+* background execution,
+* networking,
+* serialization,
+* and compression.
+
+The specific technologies used to implement those capabilities may change over time.
+
+This separation allows the application architecture to remain stable while Technical Infrastructure evolves independently.
