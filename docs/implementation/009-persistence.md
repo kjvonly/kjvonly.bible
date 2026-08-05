@@ -421,3 +421,122 @@ Deleted Domain Objects are removed from the local Store rather than retained thr
 User-facing confirmation is handled by the presentation layer before the deletion occurs.
 
 Persistence simply records the resulting state.
+
+# Derived Data
+
+Not every persisted object represents authoritative application state.
+
+Some persisted data exists solely to improve application performance.
+
+This data is referred to as **derived data**.
+
+Derived data is produced from installed Domain Objects rather than representing application behavior itself.
+
+Examples include:
+
+* search indexes,
+* lookup tables,
+* cached projections,
+* and other generated structures.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Domain["Installed Domain Object"]
+
+    Derived["Derived Data"]
+
+    Search["Search Index"]
+
+    Domain --> Derived
+
+    Derived --> Search
+```
+
+Derived data may be persisted because rebuilding it can be expensive.
+
+Persisting derived data improves startup time, reduces unnecessary computation, and allows the application to resume work quickly after restarting.
+
+Unlike installed Domain Objects, derived data can always be regenerated from the application's authoritative local state.
+
+---
+
+# Incremental Updates
+
+Derived data does not always need to be rebuilt from scratch.
+
+Whenever possible, the application updates derived data incrementally as installed Domain Objects change.
+
+For example, when a new Note is created:
+
+* the Note is immediately persisted,
+* the Notes Domain becomes authoritative,
+* and the search index incorporates only the newly added Note.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Note["Installed Note"]
+
+    Index["Search Index"]
+
+    Updated["Updated Index"]
+
+    Note --> Index
+
+    Index --> Updated
+```
+
+This approach minimizes indexing work while keeping derived data synchronized with the application's authoritative local state.
+
+---
+
+# Authoritative and Derived State
+
+Persistence intentionally distinguishes between authoritative state and derived state.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    State["Local State"]
+
+    Domain["Installed Domain Objects"]
+
+    Derived["Derived Data"]
+
+    State --> Domain
+
+    State --> Derived
+```
+
+Installed Domain Objects represent the application's authoritative local model.
+
+Derived data exists only to support efficient application behavior.
+
+If derived data is lost or becomes invalid, it may be regenerated from the installed Domain Objects.
+
+If an installed Domain Object is lost, the application's local state has changed.
+
+This distinction allows the application to optimize performance without confusing optimization data with application state.
+
+---
+
+# Persistence Philosophy
+
+Persistence exists to preserve application state.
+
+Not every persisted object carries the same architectural significance.
+
+Installed Domain Objects preserve the application's behavior.
+
+Derived data preserves the application's performance.
+
+Understanding this distinction helps ensure that optimization strategies remain independent from the application's conceptual model.
+
+The application should always be capable of rebuilding derived data from its installed Domain Objects.
