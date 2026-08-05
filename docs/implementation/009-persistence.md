@@ -297,3 +297,127 @@ The Domain Service exposes Domain behavior.
 The Domain Store exposes persistence behavior.
 
 Technical Infrastructure implements the Store.
+
+# Immediate Persistence
+
+The application persists changes to installed Domain Objects immediately.
+
+When application behavior modifies a Domain Object, the updated object is written to its owning Domain Store before any remote publication occurs.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Domain["Domain"]
+
+    Object["Installed Domain Object"]
+
+    Store["Domain Store"]
+
+    Outbox["Outbox"]
+
+    Domain --> Object
+
+    Object --> Store
+
+    Store --> Outbox
+```
+
+Local persistence is synchronous with application behavior.
+
+Remote persistence is asynchronous.
+
+This allows the application to immediately adopt the updated Domain Object as its authoritative local state while remote publication occurs independently.
+
+---
+
+# Local and Remote Persistence
+
+Persistence within the application is divided into two complementary responsibilities.
+
+## Local Persistence
+
+Local persistence is responsible for:
+
+* storing installed Domain Objects,
+* preserving application state,
+* maintaining offline capability,
+* and providing durable local storage.
+
+Once a change has been written to the Domain Store, the application immediately considers that change authoritative.
+
+## Remote Persistence
+
+Remote persistence is responsible for publishing those locally accepted changes through the Resource Architecture.
+
+This responsibility is fulfilled through the outbox model.
+
+Persistence itself does not communicate with relays or external systems.
+
+Its responsibility ends when the updated Domain Object has been successfully stored locally.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Domain["Domain"]
+
+    Store["Local Persistence"]
+
+    Outbox["Outbox"]
+
+    Resource["Resource Architecture"]
+
+    Remote["Published Resource"]
+
+    Domain --> Store
+
+    Store --> Outbox
+
+    Outbox --> Resource
+
+    Resource --> Remote
+```
+
+The application therefore separates accepting a change from publishing that change.
+
+Local behavior never depends upon the success of remote persistence.
+
+---
+
+# Persistence Consistency
+
+Persistence guarantees that every installed Domain Object represents the application's current local model.
+
+When a Domain accepts a change, subsequent requests observe that updated object immediately.
+
+No additional synchronization step is required before the application begins operating on the new state.
+
+This behavior allows:
+
+* immediate user feedback,
+* reliable offline operation,
+* consistent application behavior,
+* and deterministic local state.
+
+Remote publication becomes an implementation concern rather than part of the application's behavior.
+
+---
+
+# Deletion
+
+Deletion follows the same persistence model as every other state change.
+
+When a Domain deletes an installed Domain Object, the deletion is immediately persisted to the local Store.
+
+The corresponding publication is then handled through the outbox and Resource Architecture.
+
+The application intentionally favors simple persistence semantics.
+
+Deleted Domain Objects are removed from the local Store rather than retained through application-level soft deletion.
+
+User-facing confirmation is handled by the presentation layer before the deletion occurs.
+
+Persistence simply records the resulting state.
