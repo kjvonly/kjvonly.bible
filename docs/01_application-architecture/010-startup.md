@@ -485,3 +485,87 @@ Critical failures should be isolated to the subsystem that owns them.
 The Workspace Runtime, Domains, and installed Domain Objects should continue operating using the application's authoritative local state until the affected subsystem recovers.
 
 This approach preserves the offline-first behavior of the application while minimizing startup dependencies.
+
+# Future Evolution
+
+The startup lifecycle has been intentionally designed around restoring the minimum application state required to become interactive.
+
+As the application evolves, the implementation of startup may change, but its architectural responsibilities should remain consistent.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Launch["Application Launch"]
+
+    Startup["Startup Lifecycle"]
+
+    Interactive["Interactive Application"]
+
+    Background["Background Processing"]
+
+    Launch --> Startup
+
+    Startup --> Interactive
+
+    Interactive --> Background
+```
+
+Future improvements may reorganize initialization logic, introduce additional startup capabilities, or simplify the startup sequence.
+
+These changes should strengthen the separation between startup and the long-running subsystems it initializes.
+
+Startup should continue to focus on restoring the application to an interactive state while leaving ongoing application behavior to the subsystems that own it.
+
+The startup implementation may evolve.
+
+The startup lifecycle should remain stable.
+
+---
+
+# Big Takeaway
+
+Startup transforms an unloaded application into an interactive Workspace.
+
+It prepares the minimum environment required for the user to begin working while allowing the remainder of the application to continue initializing independently.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Launch["Application Launch"]
+
+    Startup["Startup"]
+
+    Interactive["Interactive Workspace"]
+
+    Background["Background Processing"]
+
+    Launch --> Startup
+
+    Startup --> Interactive
+
+    Interactive --> Background
+```
+
+Startup restores the application.
+
+It does not rebuild it.
+
+It establishes the application's initial execution environment, restores locally available state, initializes the Workspace Runtime, and prepares the application for normal operation.
+
+Once the application becomes interactive, ownership transfers entirely to the initialized subsystems.
+
+The Workspace Runtime owns presentation.
+
+Domains own application behavior.
+
+Persistence owns durable local state.
+
+Background Processing owns deferred work.
+
+Startup's responsibility is complete.
+
+This separation keeps application startup predictable, responsive, and independent from long-running work while preserving the offline-first experience that defines the application architecture.
