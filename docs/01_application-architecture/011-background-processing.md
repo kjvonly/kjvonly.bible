@@ -256,3 +256,91 @@ Examples include:
 If verification determines that installed state is incomplete or invalid, Background Processing may return the Resource to an installation-required state.
 
 This allows the application to recover from partial installations, interrupted operations, or future platform-specific storage behavior without requiring user intervention.
+# Resource Refresh
+
+Background Processing periodically discovers Published Resources that have become available since the previous refresh.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Previous["Last Refresh"]
+
+    Discovery["Resource Discovery"]
+
+    Published["Published Resources"]
+
+    Install["Installation Pipeline"]
+
+    Domain["Installed Domain Objects"]
+
+    Previous --> Discovery
+
+    Discovery --> Published
+
+    Published --> Install
+
+    Install --> Domain
+```
+
+Rather than evaluating every installed Resource individually, Background Processing performs incremental discovery using the Resource Architecture.
+
+Only newly discovered Published Resources are evaluated.
+
+When a Published Resource is accepted, it enters the normal installation pipeline.
+
+The installation pipeline determines whether the newly discovered Resource represents:
+
+* a new installation,
+* an update to an existing installed Resource,
+* or a Resource that should not replace the current local state.
+
+This allows Resource refresh and Resource installation to share the same installation process while avoiding unnecessary evaluation of every installed Resource.
+
+Background Processing therefore maintains installed Resources by discovering newly available Published Resources rather than periodically rechecking every installed Resource.
+
+---
+
+# Application Update Propagation
+
+Background Processing also maintains consistency between installed Domain Objects and active Module instances.
+
+When installed application state changes, active Modules may need to present updated information.
+
+Conceptually:
+
+```mermaid id="qmgt8k"
+flowchart LR
+
+    Domain["Installed Domain Objects"]
+
+    Update["Application Update"]
+
+    Module["Active Module"]
+
+    Domain --> Update
+
+    Update --> Module
+```
+
+Background Processing propagates application updates after meaningful Domain changes.
+
+Examples include:
+
+* newly created Notes,
+* Reading Plan progress,
+* refreshed installed Resources,
+* or other changes that affect currently visible application state.
+
+Modules do not communicate directly with one another.
+
+Instead, they observe changes relevant to the Domains they present and request updated data through their Domain Services.
+
+This preserves the ownership boundaries established throughout the application architecture.
+
+Modules remain responsible for presentation.
+
+Domains remain responsible for application behavior.
+
+Background Processing coordinates the propagation of application updates between them.
