@@ -351,3 +351,137 @@ This implementation is expected to evolve as the Resource Architecture is integr
 Startup should therefore depend upon Resource and networking capabilities rather than upon the current Nostr-specific classes or timeline implementation.
 
 The architectural requirement is that remote Resource capabilities may be initialized without preventing the locally available application from becoming interactive.
+
+# Startup Coordination
+
+Application startup is a coordination lifecycle that initializes the minimum capabilities required for the application to become interactive.
+
+It does not become the owner of the subsystems it initializes.
+
+Each subsystem remains responsible for its own lifecycle after startup has completed.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Launch["Application Launch"]
+
+    Runtime["Initialize Workspace Runtime"]
+
+    Services["Initialize Application Services"]
+
+    Persistence["Open Local Persistence"]
+
+    Interactive["Interactive Application"]
+
+    Background["Begin Background Processing"]
+
+    Launch --> Persistence
+    Launch --> Services
+    Launch --> Runtime
+
+    Persistence --> Interactive
+    Services --> Interactive
+    Runtime --> Interactive
+
+    Interactive --> Background
+```
+
+The startup lifecycle establishes the initial application environment by invoking the initialization responsibilities owned by each subsystem.
+
+After initialization:
+
+* the Workspace Runtime owns the active Workspace,
+* Application Services own shared application behavior,
+* Persistence owns durable local state,
+* Background Processing owns deferred work,
+* and Domains own application behavior.
+
+Once initialization completes, normal application behavior is owned entirely by the initialized subsystems.
+---
+
+# Startup Boundaries
+
+Startup intentionally performs only the work required to transition the application into an interactive state.
+
+Responsibilities that continue beyond initialization belong to their owning subsystem.
+
+For example:
+
+| Responsibility           | Owner                   |
+| ------------------------ | ----------------------- |
+| Workspace initialization | Workspace Runtime       |
+| Pane initialization      | Workspace Runtime       |
+| Theme application        | Application Services    |
+| Local persistence        | Persistence             |
+| Domain behavior          | Domains                 |
+| Synchronization          | Background Processing   |
+| Resource publication     | Resource Architecture   |
+| Relay communication      | Resource Infrastructure |
+
+This separation allows startup to remain small even as the application grows.
+
+New capabilities should extend their existing subsystem rather than increasing startup complexity.
+
+---
+
+# Startup Philosophy
+
+Startup should restore.
+
+Not rebuild.
+
+Whenever possible, startup restores:
+
+* persisted application settings,
+* the user's Workspace,
+* installed Domain Objects,
+* and previously available application state.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Persisted["Persisted State"]
+
+    Startup["Startup"]
+
+    Interactive["Interactive Application"]
+
+    Background["Background Processing"]
+
+    Persisted --> Startup
+
+    Startup --> Interactive
+
+    Interactive --> Background
+```
+
+Once the application becomes interactive, remaining work proceeds independently.
+
+This allows startup to remain predictable, responsive, and largely independent from network availability.
+
+Users should be able to resume their work immediately while the application continues improving its local model in the background.
+
+---
+
+# Startup Failures
+
+Startup should degrade gracefully when optional capabilities are unavailable.
+
+Examples include:
+
+* relay connectivity,
+* authentication,
+* background synchronization,
+* or remote Resource availability.
+
+Failures within these subsystems should not prevent the application from presenting locally available state whenever possible.
+
+Critical failures should be isolated to the subsystem that owns them.
+
+The Workspace Runtime, Domains, and installed Domain Objects should continue operating using the application's authoritative local state until the affected subsystem recovers.
+
+This approach preserves the offline-first behavior of the application while minimizing startup dependencies.
