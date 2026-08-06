@@ -344,3 +344,130 @@ Modules remain responsible for presentation.
 Domains remain responsible for application behavior.
 
 Background Processing coordinates the propagation of application updates between them.
+
+# Derived Data Maintenance
+
+Not every persisted object represents application behavior.
+
+Some persisted data exists solely to improve application performance.
+
+Background Processing is responsible for maintaining this derived data as the application's installed Domain Objects evolve.
+
+Conceptually:
+
+```mermaid id="8fj0yw"
+flowchart LR
+
+    Domain["Installed Domain Objects"]
+
+    Derived["Derived Data"]
+
+    Search["Search Index"]
+
+    Domain --> Derived
+
+    Derived --> Search
+```
+
+Derived data is produced from installed Domain Objects rather than from Published Resources.
+
+Examples include:
+
+* search indexes,
+* lookup tables,
+* cached projections,
+* and other implementation-specific structures derived from installed application state.
+
+Whenever installed Domain Objects change, Background Processing determines whether derived data should be updated.
+
+Where possible, derived data should be maintained incrementally rather than rebuilt entirely.
+
+This minimizes unnecessary work while allowing the application to remain responsive as local state evolves.
+
+Background Processing maintains derived data independently of user interaction.
+
+Modules consume derived data through their Domain Services without assuming how or when that data was produced.
+
+---
+
+# Failure Recovery
+
+Background Processing is responsible for retrying deferred maintenance work that could not be completed successfully.
+
+Conceptually:
+
+```mermaid id="zhx3yn"
+flowchart LR
+
+    Work["Deferred Work"]
+
+    Failed["Failed"]
+
+    Retry["Retry Evaluation"]
+
+    Success["Completed"]
+
+    Work --> Failed
+
+    Failed --> Retry
+
+    Retry --> Success
+```
+
+Failures during background maintenance should be isolated to the work being performed.
+
+A failed installation should not prevent Resource refresh.
+
+A failed refresh should not prevent derived data maintenance.
+
+A failed search index update should not interrupt Resource installation.
+
+Each maintenance responsibility should recover independently whenever possible.
+
+This allows the application to continue improving its local state while minimizing the impact of transient failures.
+
+Background Processing therefore favors eventual completion over immediate completion.
+
+Deferred work remains deferred until it succeeds, is superseded, or is no longer required.
+
+---
+
+# Foreground and Background Boundary
+
+Background Processing complements foreground application behavior.
+
+Foreground responsibilities satisfy the user's current interaction.
+
+Background responsibilities maintain the application's long-term state.
+
+Conceptually:
+
+```mermaid id="xgoh4w"
+flowchart LR
+
+    User["User Interaction"]
+
+    Foreground["Foreground"]
+
+    Background["Background"]
+
+    State["Application State"]
+
+    User --> Foreground
+
+    Foreground --> State
+
+    Background --> State
+```
+
+Foreground operations execute because the user requests them.
+
+Background operations execute because the application requires ongoing maintenance.
+
+The two may cooperate, but they remain independent.
+
+For example, Data Access may retrieve a Resource immediately because a user requested it.
+
+Separately, Background Processing may later refresh that same Resource, rebuild its search indexes, or verify its installation state.
+
+This separation allows the application to remain responsive while continuously improving the quality and completeness of its local state.
