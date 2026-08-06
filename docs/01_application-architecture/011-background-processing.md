@@ -67,12 +67,7 @@ flowchart LR
 
 Background Processing should not delay startup.
 
-It should not interrupt user interaction.
-
-It should not require the application to become temporarily unavailable.
-
-Instead, background responsibilities execute independently while the user continues working.
-
+Background Processing should minimize disruption to the current user interaction.
 ---
 
 # Background Processing Definition
@@ -138,3 +133,126 @@ flowchart TD
 Each category owns one aspect of maintaining the application's local state.
 
 Together they allow the application to remain responsive while continuously improving the quality and completeness of its installed data.
+
+# Background Maintenance Responsibilities
+
+Background Processing maintains the application's long-term health by performing work that is not tied to a single user interaction.
+
+Each maintenance responsibility owns one aspect of preserving or improving the application's local state.
+
+Conceptually:
+
+```mermaid id="rxeqyh"
+flowchart TD
+
+    Background["Background Processing"]
+
+    Install["Resource Installation"]
+
+    Verify["Installation Verification"]
+
+    Refresh["Resource Refresh"]
+
+    Derived["Derived Data"]
+
+    Updates["Application Updates"]
+
+    Background --> Install
+
+    Background --> Verify
+
+    Background --> Refresh
+
+    Background --> Derived
+
+    Background --> Updates
+```
+
+These responsibilities operate independently while sharing the common goal of maintaining a complete, current, and consistent application.
+
+Each responsibility is described in the following sections.
+
+---
+
+# Resource Installation
+
+Background Processing is responsible for installing Resources that have been accepted for installation but have not yet been fully installed.
+
+Rather than immediately installing every discovered Resource, the application records installation state within a persistent Resource Installation Store.
+
+Conceptually:
+
+```mermaid id="dujlwm"
+flowchart LR
+
+    Resource["Required Resource"]
+
+    Store["Resource Installation Store"]
+
+    Pipeline["Installation Pipeline"]
+
+    Installed["Installed Domain Objects"]
+
+    Resource --> Store
+
+    Store --> Pipeline
+
+    Pipeline --> Installed
+```
+
+Each installation record represents the application's intention to install a Resource.
+
+Background Processing continuously evaluates these records and invokes the installation pipeline for Resources requiring installation.
+
+This allows installation to continue independently of the user while providing durable tracking of installation progress.
+
+Installation records may represent:
+
+* pending installation,
+* installation in progress,
+* successful installation,
+* failed installation,
+* or other implementation-specific installation states.
+
+The installation pipeline determines how each Resource representation is resolved and installed.
+
+Background Processing is responsible only for ensuring that required Resources eventually reach their intended installed state.
+
+---
+
+# Installation Verification
+
+Installing a Resource does not permanently guarantee that the expected local state still exists.
+
+Background Processing periodically verifies that installed Resources continue to satisfy the application's installation expectations.
+
+Conceptually:
+
+```mermaid id="n0mn9x"
+flowchart LR
+
+    Manifest["Installation Record"]
+
+    Verify["Verification"]
+
+    Installed["Installed Resource"]
+
+    Manifest --> Verify
+
+    Installed --> Verify
+```
+
+Verification may compare installed state against metadata recorded during installation.
+
+Examples include:
+
+* installation status,
+* expected Resource identity,
+* installed version,
+* integrity information,
+* expected record counts,
+* or other implementation-defined expectations.
+
+If verification determines that installed state is incomplete or invalid, Background Processing may return the Resource to an installation-required state.
+
+This allows the application to recover from partial installations, interrupted operations, or future platform-specific storage behavior without requiring user intervention.
