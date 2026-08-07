@@ -471,3 +471,205 @@ For example, Data Access may retrieve a Resource immediately because a user requ
 Separately, Background Processing may later refresh that same Resource, rebuild its search indexes, or verify its installation state.
 
 This separation allows the application to remain responsive while continuously improving the quality and completeness of its local state.
+
+# Maintenance Independence
+
+Backgruound Processing consists of multiple independent maintenance responsibilities.
+
+Each responsibility maintains one aspect of the application's local state without assuming ownership of the others.
+
+Conceptually:
+
+```mermaid id="7r9e3m"
+flowchart TD
+
+    Background["Background Processing"]
+
+    Install["Resource Installation"]
+
+    Refresh["Resource Refresh"]
+
+    Verify["Installation Verification"]
+
+    Derived["Derived Data"]
+
+    Updates["Application Updates"]
+
+    Background --> Install
+
+    Background --> Refresh
+
+    Background --> Verify
+
+    Background --> Derived
+
+    Background --> Updates
+```
+
+Although these responsibilities may cooperate, they should remain independently executable whenever possible.
+
+For example:
+
+* Resource refresh should continue if derived data maintenance is delayed.
+* Resource installation should continue if application update propagation is temporarily unavailable.
+* Installation verification should continue independently of Resource refresh.
+
+Maintaining this separation allows the application to continue improving itself even when one maintenance responsibility encounters temporary delays or failures.
+
+---
+
+# Deferred Maintenance
+
+Not every maintenance responsibility must execute immediately.
+
+Background Processing should schedule maintenance according to the needs of the application rather than the timing of individual user interactions.
+
+Examples include:
+
+* installing newly discovered Resources,
+* retrying previously failed installations,
+* refreshing installed Resources,
+* rebuilding derived data,
+* verifying installation integrity,
+* and propagating application updates.
+
+Conceptually:
+
+```mermaid id="2qlp9v"
+flowchart LR
+
+    Work["Maintenance Work"]
+
+    Queue["Deferred Maintenance"]
+
+    Execute["Execute"]
+
+    Complete["Completed"]
+
+    Work --> Queue
+
+    Queue --> Execute
+
+    Execute --> Complete
+```
+
+The exact scheduling strategy is an implementation detail.
+
+Some maintenance responsibilities may execute immediately.
+
+Others may execute periodically, opportunistically, or only when required.
+
+The architectural requirement is that deferred maintenance eventually converges toward a complete and consistent local application state.
+
+---
+
+# Background Processing Philosophy
+
+Background Processing exists to maintain the application's long-term health.
+
+It continuously improves the quality, completeness, and consistency of the application's authoritative local state while allowing users to continue interacting with the application.
+
+Background Processing complements foreground application behavior.
+
+Foreground interactions satisfy immediate user requests.
+
+Background Processing ensures those interactions become faster, more complete, and more reliable over time.
+
+Together they allow the application to remain responsive while continuously maintaining its local model.
+
+# Future Evolution
+
+Background Processing has been intentionally designed around independent maintenance responsibilities.
+
+As the application evolves, new maintenance responsibilities may be introduced without changing the architectural role of Background Processing.
+
+Conceptually:
+
+```mermaid id="lpx86u"
+flowchart TD
+
+    Background["Background Processing"]
+
+    Install["Resource Installation"]
+
+    Refresh["Resource Refresh"]
+
+    Verify["Installation Verification"]
+
+    Derived["Derived Data"]
+
+    Updates["Application Updates"]
+
+    Future["Future Maintenance"]
+
+    Background --> Install
+
+    Background --> Refresh
+
+    Background --> Verify
+
+    Background --> Derived
+
+    Background --> Updates
+
+    Background --> Future
+```
+
+Future implementations may improve how maintenance work is scheduled, coordinated, or prioritized.
+
+The mechanisms used to perform background work may evolve as application requirements change.
+
+These implementation details should strengthen the application's ability to maintain itself while preserving responsive foreground interactions.
+
+The architectural responsibility remains unchanged.
+
+Background Processing maintains the application after startup has completed.
+
+---
+
+# Big Takeaway
+
+Background Processing is responsible for maintaining the application's long-term health.
+
+It performs work that improves, repairs, refreshes, and verifies the application's authoritative local state independently of individual user interactions.
+
+Conceptually:
+
+```mermaid id="e2k6o8"
+flowchart LR
+
+    Startup["Startup"]
+
+    Interactive["Interactive Application"]
+
+    Background["Background Processing"]
+
+    Local["Authoritative Local State"]
+
+    Startup --> Interactive
+
+    Interactive --> Background
+
+    Background --> Local
+```
+
+Background Processing complements the rest of the application architecture.
+
+Startup restores the application.
+
+Domains own application behavior.
+
+Persistence preserves local state.
+
+Data Access satisfies foreground requests.
+
+Background Processing continuously maintains the application's local model by:
+
+* installing Resources,
+* refreshing installed Resources,
+* verifying installation integrity,
+* maintaining derived data,
+* propagating application updates,
+* and recovering from deferred maintenance work.
+
+This separation allows the application to remain responsive while continuously improving the quality, completeness, and consistency of its local state over time.
