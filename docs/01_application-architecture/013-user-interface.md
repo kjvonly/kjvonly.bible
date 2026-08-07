@@ -243,3 +243,105 @@ Modules present their capabilities within that environment.
 Changes to available presentation space should be handled by the shared presentation model rather than by introducing independent layout behavior within individual Modules.
 
 This allows Modules to focus on presenting Domain capabilities while the surrounding presentation environment remains consistent throughout the application.
+
+# Progressive Presentation
+
+The User Interface should present application capabilities as they become relevant to the user's current task.
+
+Rather than exposing every capability simultaneously, the interface should allow users to progressively discover additional functionality while preserving their current context.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Task["Current Task"]
+
+    Capability["Relevant Capability"]
+
+    Presentation["Present Capability"]
+
+    Continue["Continue Working"]
+
+    Task --> Capability
+
+    Capability --> Presentation
+
+    Presentation --> Continue
+```
+
+Additional capabilities should complement the user's current activity rather than interrupt or replace it.
+
+This allows the application to remain approachable while supporting increasingly sophisticated workflows.
+
+As new capabilities are introduced, they should integrate naturally into the existing presentation model rather than competing for the user's attention.
+
+---
+
+# Visual Continuity
+
+The User Interface should present a visually consistent environment regardless of the Domain capability currently being displayed.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Interface["User Interface"]
+
+    Bible["Bible"]
+
+    Notes["Notes"]
+
+    Plans["Reading Plans"]
+
+    Search["Search"]
+
+    Interface --> Bible
+
+    Interface --> Notes
+
+    Interface --> Plans
+
+    Interface --> Search
+```
+
+Visual continuity allows users to focus on application behavior rather than adapting to different presentation styles.
+
+Although individual Modules may present different information, they should participate in a shared visual language that provides consistency throughout the application.
+
+A cohesive presentation strengthens the perception that independently developed Modules belong to one unified application.
+
+---
+
+# Relationship to Module Presentation
+
+The User Interface and Module Presentation have complementary responsibilities.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    UI["User Interface"]
+
+    Modules["Module Presentation"]
+
+    Domains["Domains"]
+
+    UI --> Modules
+
+    Modules --> Domains
+```
+
+The User Interface establishes the shared presentation language used throughout the application.
+
+Module Presentation introduces individual Domain capabilities into that shared environment.
+
+Together they provide a consistent user experience while preserving the ownership boundaries established throughout the application architecture.
+
+The User Interface defines how the application feels.
+
+Module Presentation defines what capability is currently being presented.
+
+Domains define how that capability behaves.
