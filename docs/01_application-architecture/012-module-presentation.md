@@ -249,3 +249,117 @@ This allows multiple Module Instances to simultaneously present the same Domain 
 Presentation is temporary.
 
 Domain behavior is persistent.
+
+# Module Collaboration
+
+Modules collaborate through the application architecture rather than by communicating directly with one another.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    ModuleA["Module"]
+
+    Domain["Domain"]
+
+    Services["Application Services"]
+
+    ModuleB["Module"]
+
+    ModuleA --> Domain
+
+    ModuleA --> Services
+
+    Domain --> ModuleB
+
+    Services --> ModuleB
+```
+
+When a Module requires behavior outside its own Domain, it collaborates through shared application services or the appropriate Domain.
+
+Modules remain presentation objects.
+
+They do not own cross-Domain coordination or application-wide behavior.
+
+This separation allows Modules to evolve independently while preserving the ownership boundaries established throughout the application architecture.
+
+---
+
+# Relationship to Domains
+
+Modules present Domain capabilities.
+
+They do not define those capabilities.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Domain["Domain"]
+
+    CapabilityA["Capability"]
+
+    CapabilityB["Capability"]
+
+    ModuleA["Module"]
+
+    ModuleB["Module"]
+
+    Domain --> CapabilityA
+
+    Domain --> CapabilityB
+
+    CapabilityA --> ModuleA
+
+    CapabilityB --> ModuleB
+```
+
+The Domain owns:
+
+* application behavior,
+* Domain Objects,
+* Domain Services,
+* persistence,
+* and Resource integration.
+
+The Module owns only the presentation of one capability provided by that Domain.
+
+This separation allows Domains to evolve independently of their presentation while allowing presentation to evolve independently of application behavior.
+
+---
+
+# Module Extensibility
+
+The Module abstraction allows new application capabilities to be introduced without modifying the Workspace Runtime.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Module["New Module"]
+
+    Domain["Existing Domain"]
+
+    Runtime --> Module
+
+    Module --> Domain
+```
+
+A new Module may present:
+
+* a new Domain capability,
+* an alternative presentation of an existing capability,
+* or a future capability introduced by an existing or entirely new Domain.
+
+The Workspace Runtime remains unchanged.
+
+Its responsibility is limited to presenting Module Instances within Buffers.
+
+As the application grows, new functionality should be introduced by extending Domains with new capabilities and presenting those capabilities through new Modules rather than by modifying the Runtime itself.
+
+This architectural boundary allows the application to scale by adding capabilities instead of increasing infrastructure complexity.
