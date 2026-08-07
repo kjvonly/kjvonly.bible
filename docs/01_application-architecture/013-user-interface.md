@@ -345,3 +345,87 @@ The User Interface defines how the application feels.
 Module Presentation defines what capability is currently being presented.
 
 Domains define how that capability behaves.
+
+# Future Evolution
+
+The User Interface has been intentionally designed around consistency rather than individual presentation technologies.
+
+As the application evolves, new Domains, Module Instances, and application capabilities should participate in the same shared presentation model.
+
+Conceptually:
+
+```mermaid id="2l9lzf"
+flowchart TD
+
+    UI["User Interface"]
+
+    Existing["Existing Modules"]
+
+    Future["Future Modules"]
+
+    Domains["Domains"]
+
+    UI --> Existing
+
+    UI --> Future
+
+    Existing --> Domains
+
+    Future --> Domains
+```
+
+Future capabilities should strengthen the consistency of the application's user experience rather than introducing independent interaction models.
+
+Presentation technologies, visual styling, and implementation details may evolve over time.
+
+The architectural responsibility of the User Interface remains unchanged.
+
+The User Interface provides the shared presentation language that allows independently developed Modules to appear and behave as one cohesive application.
+
+---
+
+# Big Takeaway
+
+The User Interface establishes the application's shared presentation language.
+
+It allows independently developed Module Instances to participate in one consistent user experience while preserving the ownership boundaries established throughout the application architecture.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    UI["User Interface"]
+
+    Runtime["Workspace Runtime"]
+
+    Modules["Module Presentation"]
+
+    Domains["Domains"]
+
+    Objects["Domain Objects"]
+
+    UI --> Runtime
+
+    Runtime --> Modules
+
+    Modules --> Domains
+
+    Domains --> Objects
+```
+
+The User Interface defines how the application is experienced.
+
+The Workspace Runtime provides a consistent presentation environment.
+
+Module Presentation introduces individual Domain capabilities into that environment.
+
+Domains own application behavior.
+
+Domain Objects represent application data.
+
+Together these layers allow the application to grow by introducing new capabilities while preserving a familiar, predictable, and cohesive user experience.
+
+The presentation implementation may evolve.
+
+The user experience should remain consistent.
