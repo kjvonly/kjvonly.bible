@@ -124,3 +124,109 @@ Application behavior remains owned by the subsystem responsible for that behavio
 Application Events simply communicate that the behavior has already occurred.
 
 This preserves ownership while allowing independent parts of the application to remain synchronized.
+
+# Event Ownership
+
+Application Events do not own application behavior.
+
+Every Application Event originates from a meaningful change that has already occurred within an owning subsystem.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Owner["Owning Subsystem"]
+
+    Change["Meaningful Change"]
+
+    Event["Application Event"]
+
+    Owner --> Change
+
+    Change --> Event
+```
+
+The subsystem that owns the behavior remains responsible for performing that behavior.
+
+The Application Event simply communicates that the change has occurred.
+
+This separation allows communication to remain independent from ownership.
+
+Application Events never become the owner of application behavior.
+
+---
+
+# Event Observation
+
+Application Events allow other parts of the application to become aware of meaningful changes without requiring direct knowledge of the subsystem that produced them.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Event["Application Event"]
+
+    ObserverA["Interested Subsystem"]
+
+    ObserverB["Interested Subsystem"]
+
+    ObserverC["Interested Subsystem"]
+
+    Event --> ObserverA
+
+    Event --> ObserverB
+
+    Event --> ObserverC
+```
+
+Each subsystem independently determines whether an Application Event is relevant to its own responsibilities.
+
+Observing an event does not imply ownership of the originating behavior.
+
+Likewise, the subsystem that produced the event does not know which other parts of the application may respond.
+
+This independence allows application capabilities to evolve without introducing unnecessary dependencies between subsystems.
+
+---
+
+# Cross-Domain Coordination
+
+Application Events provide a coordination mechanism between independently owned Domains and application subsystems.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    DomainA["Domain"]
+
+    Event["Application Event"]
+
+    DomainB["Domain"]
+
+    Services["Application Services"]
+
+    Modules["Module Presentation"]
+
+    DomainA --> Event
+
+    Event --> DomainB
+
+    Event --> Services
+
+    Event --> Modules
+```
+
+Application Events communicate that application state has changed.
+
+The receiving subsystem determines whether that change is relevant to its own responsibilities.
+
+If additional work is required, the receiving subsystem performs that work through its own Domain, Domain Services, or Application Services.
+
+Application Events therefore coordinate application behavior without transferring ownership between architectural boundaries.
+
+They communicate change.
+
+They do not perform it.
