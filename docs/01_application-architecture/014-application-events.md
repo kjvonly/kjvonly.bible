@@ -230,3 +230,97 @@ Application Events therefore coordinate application behavior without transferrin
 They communicate change.
 
 They do not perform it.
+
+# Event Independence
+
+Application Events are independent from the work that may follow them.
+
+An Application Event communicates that a meaningful application change has occurred.
+
+It does not determine how other parts of the application respond.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Change["Application Change"]
+
+    Event["Application Event"]
+
+    Domain["Domain"]
+
+    Services["Application Services"]
+
+    Modules["Module Presentation"]
+
+    Change --> Event
+
+    Event --> Domain
+
+    Event --> Services
+
+    Event --> Modules
+```
+
+Each receiving subsystem independently determines whether the event is relevant to its own responsibilities.
+
+If no action is required, the event may simply be ignored.
+
+If additional work is required, the receiving subsystem performs that work through its own architectural responsibilities.
+
+Application Events therefore communicate opportunity rather than obligation.
+
+This preserves loose coupling while allowing independently owned parts of the application to evolve without introducing unnecessary dependencies.
+
+---
+
+# Relationship to Background Processing
+
+Background Processing may publish or observe Application Events as part of maintaining the application's local state.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Background["Background Processing"]
+
+    Events["Application Events"]
+
+    Domains["Domains"]
+
+    Modules["Module Presentation"]
+
+    Background --> Events
+
+    Events --> Domains
+
+    Events --> Modules
+```
+
+For example, Background Processing may discover newly installed Resources, refresh installed Domain Objects, complete deferred maintenance, or finish rebuilding derived data.
+
+These changes may be communicated through Application Events so that interested application subsystems become aware of the updated application state.
+
+Background Processing remains responsible for performing maintenance.
+
+Application Events remain responsible only for communicating that meaningful application changes have occurred.
+
+The responsibilities remain independent.
+
+---
+
+# Event Philosophy
+
+Application Events exist to communicate meaningful application changes while preserving architectural ownership.
+
+They allow independently owned subsystems to remain coordinated without requiring knowledge of each other's implementation or internal behavior.
+
+Application Events communicate that something has changed.
+
+The receiving subsystem determines whether that change is relevant.
+
+If additional work is required, it is performed through the receiving subsystem's own responsibilities.
+
+This allows communication to remain independent from ownership while enabling the application to evolve through loosely coupled architectural boundaries.
