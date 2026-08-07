@@ -135,3 +135,111 @@ Although Modules present different Domain capabilities, users should not need to
 Shared presentation patterns allow users to transfer knowledge naturally between Modules.
 
 Consistency improves discoverability, reduces cognitive load, and allows new capabilities to integrate naturally into the existing application without requiring users to learn an entirely new interface.
+
+# User Context Preservation
+
+The User Interface should preserve user context whenever practical.
+
+Changing application capabilities should not unnecessarily discard the user's current work or require the user to reconstruct their working environment.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Context["User Context"]
+
+    Action["User Action"]
+
+    Preserve["Preserve Context"]
+
+    Continue["Continue Working"]
+
+    Context --> Action
+
+    Action --> Preserve
+
+    Preserve --> Continue
+```
+
+Examples of user context include:
+
+* the active Workspace,
+* open Modules,
+* navigation state,
+* reading position,
+* selections,
+* filters,
+* and other presentation state associated with the current task.
+
+Preserving context reduces unnecessary interruption and allows users to remain focused on their current work.
+
+Whenever practical, presentation changes should extend the existing context rather than replacing it.
+
+---
+
+# Shared Interaction Patterns
+
+The User Interface establishes common interaction patterns that are shared across every Module.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    UI["User Interface"]
+
+    Navigation["Navigation"]
+
+    Toolbars["Toolbars"]
+
+    Overlays["Temporary Presentation"]
+
+    Feedback["User Feedback"]
+
+    UI --> Navigation
+
+    UI --> Toolbars
+
+    UI --> Overlays
+
+    UI --> Feedback
+```
+
+Shared interaction patterns create a predictable user experience regardless of the Domain capability currently being presented.
+
+Users should not need to learn a different interaction model for each Module.
+
+Individual Modules may present different capabilities while participating in the same interaction language.
+
+This consistency allows independently developed Modules to integrate naturally into the application.
+
+---
+
+# Responsive Presentation
+
+The User Interface should adapt to changes in the presentation environment without requiring individual Modules to manage application layout.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Workspace["Workspace Runtime"]
+
+    Presentation["Presentation Environment"]
+
+    Module["Module"]
+
+    Workspace --> Presentation
+
+    Presentation --> Module
+```
+
+The Workspace Runtime establishes the presentation environment.
+
+Modules present their capabilities within that environment.
+
+Changes to available presentation space should be handled by the shared presentation model rather than by introducing independent layout behavior within individual Modules.
+
+This allows Modules to focus on presenting Domain capabilities while the surrounding presentation environment remains consistent throughout the application.
