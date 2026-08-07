@@ -456,3 +456,93 @@ Modules should avoid becoming owners of application behavior.
 As the application evolves, additional functionality should be added by extending Domains and introducing new Module Instances rather than increasing the responsibilities of existing presentation infrastructure.
 
 This keeps presentation simple while allowing the application to grow through independently developed capabilities.
+
+# Future Evolution
+
+The Module Presentation architecture has been intentionally designed around Domain capabilities rather than presentation technologies.
+
+As the application evolves, new capabilities should be introduced by extending existing Domains or introducing new Domains and presenting those capabilities through additional Module Instances.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Domain["Domain"]
+
+    Capability["Domain Capability"]
+
+    Module["Module Instance"]
+
+    Runtime["Workspace Runtime"]
+
+    Future["Future Capabilities"]
+
+    Domain --> Capability
+
+    Capability --> Module
+
+    Runtime --> Module
+
+    Capability -.-> Future
+```
+
+The Workspace Runtime should remain independent from the capabilities it presents.
+
+Future Modules may introduce entirely new application behavior without requiring changes to the Runtime or the presentation model.
+
+As additional Domains and capabilities are introduced, the application grows by adding presentation rather than increasing infrastructure complexity.
+
+The implementation of individual Modules may evolve.
+
+The presentation architecture should remain stable.
+
+---
+
+# Big Takeaway
+
+Module Presentation provides the architectural boundary between the Workspace Runtime and the application's Domains.
+
+It allows the Runtime to present application behavior without understanding that behavior.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Module["Module Instance"]
+
+    Capability["Domain Capability"]
+
+    Domain["Domain"]
+
+    Objects["Domain Objects"]
+
+    Runtime --> Module
+
+    Module --> Capability
+
+    Capability --> Domain
+
+    Domain --> Objects
+```
+
+The Workspace Runtime presents Module Instances.
+
+Module Instances present one Domain capability.
+
+Domains own application behavior.
+
+Domain Objects represent application data.
+
+This separation allows the application to grow by introducing new capabilities rather than modifying presentation infrastructure.
+
+The Runtime remains stable.
+
+Domains evolve independently.
+
+New functionality is introduced by presenting additional Domain capabilities through new Module Instances.
+
+This architecture allows the application to scale through composition while preserving clear ownership boundaries between presentation, application behavior, and application data.
