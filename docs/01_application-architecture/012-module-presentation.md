@@ -135,3 +135,117 @@ This separation allows Domains to evolve by introducing new capabilities without
 The Runtime remains responsible only for presenting Module Instances.
 
 The Modules determine how individual Domain capabilities are presented.
+
+# Module Responsibility
+
+A Module Instance owns the presentation of one Domain capability.
+
+Its responsibility is to present application behavior to the user rather than implement that behavior.
+
+Conceptually:
+
+```mermaid id="1mddng"
+flowchart LR
+
+    Module["Module Instance"]
+
+    Domain["Domain"]
+
+    Objects["Domain Objects"]
+
+    Module --> Domain
+
+    Domain --> Objects
+```
+
+Modules present Domain capabilities by requesting behavior from their owning Domain.
+
+They do not own:
+
+* application state,
+* business rules,
+* persistence,
+* Resource management,
+* or cross-Domain coordination.
+
+Those responsibilities remain within the Domain and the shared application services.
+
+This separation allows presentation to evolve independently from application behavior.
+
+---
+
+# Module Independence
+
+The Workspace Runtime treats every Module Instance identically.
+
+The Runtime does not understand the capability being presented.
+
+Conceptually:
+
+```mermaid id="jn80sv"
+flowchart TD
+
+    Runtime["Workspace Runtime"]
+
+    ModuleA["Bible Chapter"]
+
+    ModuleB["Bible Search"]
+
+    ModuleC["Notes List"]
+
+    ModuleD["Reading Plans"]
+
+    Runtime --> ModuleA
+
+    Runtime --> ModuleB
+
+    Runtime --> ModuleC
+
+    Runtime --> ModuleD
+```
+
+Each Module conforms to the same presentation model regardless of the Domain capability it presents.
+
+This allows new Modules to be introduced without modifying the Runtime.
+
+The Runtime presents Modules.
+
+The Modules determine what is presented.
+
+---
+
+# Module Lifecycle
+
+Module Instances are transient presentation objects.
+
+They exist only while their Buffer is active within the Workspace.
+
+Conceptually:
+
+```mermaid id="jlwm9i"
+flowchart LR
+
+    Buffer["Buffer"]
+
+    Module["Module Instance"]
+
+    Present["Present Domain Capability"]
+
+    Close["Module Removed"]
+
+    Buffer --> Module
+
+    Module --> Present
+
+    Present --> Close
+```
+
+A Module may be created, replaced, or removed without affecting its owning Domain.
+
+The Domain continues to own application behavior independently of any active presentation.
+
+This allows multiple Module Instances to simultaneously present the same Domain capability while sharing the same underlying application behavior.
+
+Presentation is temporary.
+
+Domain behavior is persistent.
