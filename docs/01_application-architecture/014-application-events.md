@@ -324,3 +324,99 @@ The receiving subsystem determines whether that change is relevant.
 If additional work is required, it is performed through the receiving subsystem's own responsibilities.
 
 This allows communication to remain independent from ownership while enabling the application to evolve through loosely coupled architectural boundaries.
+
+# Future Evolution
+
+Application Events have been intentionally designed around communication rather than ownership.
+
+As the application evolves, new Domains, Application Services, and presentation capabilities may introduce additional Application Events without changing the architectural responsibilities defined by this document.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Events["Application Events"]
+
+    Runtime["Workspace Runtime"]
+
+    Modules["Module Presentation"]
+
+    Domains["Domains"]
+
+    Services["Application Services"]
+
+    Background["Background Processing"]
+
+    Future["Future Subsystems"]
+
+    Runtime --> Events
+
+    Modules --> Events
+
+    Domains --> Events
+
+    Services --> Events
+
+    Background --> Events
+
+    Events --> Future
+```
+
+Future application capabilities should participate in the existing communication model rather than introducing subsystem-specific communication mechanisms.
+
+The implementation used to communicate Application Events may evolve over time.
+
+The architectural responsibility remains unchanged.
+
+Application Events communicate meaningful application changes while preserving independent ownership throughout the application architecture.
+
+---
+
+# Big Takeaway
+
+Application Events provide the communication layer between independently owned architectural subsystems.
+
+They allow meaningful application changes to be communicated without transferring ownership or introducing unnecessary dependencies.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Events["Application Events"]
+
+    Modules["Module Presentation"]
+
+    Domains["Domains"]
+
+    Services["Application Services"]
+
+    Background["Background Processing"]
+
+    Runtime --> Events
+
+    Domains --> Events
+
+    Services --> Events
+
+    Background --> Events
+
+    Events --> Modules
+```
+
+Application Events communicate that meaningful application changes have occurred.
+
+The originating subsystem continues to own the behavior that produced the change.
+
+Receiving subsystems independently determine whether the change is relevant to their own responsibilities.
+
+If additional work is required, it is performed through the receiving subsystem's own architectural responsibilities.
+
+Application Events communicate change.
+
+They do not own behavior.
+
+This separation preserves loose coupling while allowing the application to grow through independently evolving architectural subsystems.
