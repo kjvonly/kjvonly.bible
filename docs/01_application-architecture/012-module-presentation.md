@@ -363,3 +363,96 @@ Its responsibility is limited to presenting Module Instances within Buffers.
 As the application grows, new functionality should be introduced by extending Domains with new capabilities and presenting those capabilities through new Modules rather than by modifying the Runtime itself.
 
 This architectural boundary allows the application to scale by adding capabilities instead of increasing infrastructure complexity.
+
+# Presentation Independence
+
+Module Presentation intentionally separates application presentation from application behavior.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Module["Module Instance"]
+
+    Domain["Domain"]
+
+    Objects["Domain Objects"]
+
+    Runtime --> Module
+
+    Module --> Domain
+
+    Domain --> Objects
+```
+
+The Workspace Runtime is responsible for presenting Module Instances.
+
+The Module Instance is responsible for presenting one Domain capability.
+
+The Domain remains responsible for application behavior.
+
+This separation allows each layer to evolve independently while preserving stable architectural boundaries.
+
+Changes to presentation should not require changes to Domain behavior.
+
+Changes to Domain behavior should not require changes to the Workspace Runtime.
+
+---
+
+# Module Composition
+
+Module Presentation encourages application functionality to be composed from many focused Module Instances rather than a small number of large application screens.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Domain["Bible Domain"]
+
+    Chapter["Bible Chapter"]
+
+    Search["Bible Search"]
+
+    Settings["Bible Settings"]
+
+    Strongs["Strong's Explorer"]
+
+    Domain --> Chapter
+
+    Domain --> Search
+
+    Domain --> Settings
+
+    Domain --> Strongs
+```
+
+Each Module presents one focused capability.
+
+Additional capabilities should normally be introduced by creating new Modules rather than expanding existing Modules beyond their intended responsibility.
+
+This keeps presentation focused, encourages reuse, and reduces coupling between unrelated application capabilities.
+
+---
+
+# Module Philosophy
+
+Modules are intentionally lightweight presentation objects.
+
+They exist to expose Domain capabilities through a consistent presentation model.
+
+They should remain focused on:
+
+* presenting information,
+* responding to user interaction,
+* requesting behavior from Domains,
+* and collaborating through shared application services when necessary.
+
+Modules should avoid becoming owners of application behavior.
+
+As the application evolves, additional functionality should be added by extending Domains and introducing new Module Instances rather than increasing the responsibilities of existing presentation infrastructure.
+
+This keeps presentation simple while allowing the application to grow through independently developed capabilities.
