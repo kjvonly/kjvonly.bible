@@ -81,7 +81,7 @@ These documents should be understood before evaluating implementation decisions.
 
 ### Application Architecture
 
-The Application Architecture describes the client application.
+The Application Architecture describes the application.
 
 It explains concepts such as:
 
@@ -98,7 +98,7 @@ These documents describe how the application behaves.
 
 ### Resource Architecture
 
-The Resource Architecture defines how application content exists independently of the client.
+The Resource Architecture defines how Domain Objects exists independently of the application.
 
 It explains concepts such as:
 
@@ -264,7 +264,7 @@ This separation allows each system to evolve independently while remaining conce
 
 ## Application Architecture
 
-The Application Architecture describes the client application itself.
+The Application Architecture describes the application itself.
 
 Its responsibility is to present Domain capabilities to the user while coordinating the interaction between Runtime, Domains, User Interface, Persistence, Background Processing, and Resource Integration.
 
@@ -284,7 +284,7 @@ Instead, it consumes Domain Objects produced by the Resource Architecture.
 
 ## Resource Architecture
 
-The Resource Architecture defines how application content exists independently of the client application.
+The Resource Architecture defines how Domain Objects exists independently of the application.
 
 It describes how information is identified, published, discovered, resolved, installed, updated, and transformed into Domain Objects.
 
