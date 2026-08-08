@@ -643,293 +643,321 @@ The architecture should make future change easier rather than merely accommodati
 
 # System Overview
 
-The KJVOnly project is composed of several independently designed architectural systems that together create a complete application platform.
+The KJVOnly project is built from three complementary architectural systems:
 
-Each system owns a distinct set of responsibilities.
+* Application Architecture
+* Resource Architecture
+* Service Architecture
 
-Together they form a layered architecture in which every layer builds upon the capabilities provided by the layer beneath it.
+Each architecture has a distinct purpose.
 
-The architecture intentionally separates application behavior, published content, and external services into independent concerns.
+Together they describe the complete system.
 
-This separation allows each system to evolve independently while maintaining clear responsibilities.
+The Application provides the user experience.
 
----
+The Resource Architecture defines how application data exists independently of any particular application.
 
-## The Complete System
+The Service Architecture provides the external capabilities required to publish, discover, retrieve, and synchronize those resources.
 
-At the highest level, the project can be viewed as four interacting layers.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    User["User"]
-
-    Application["Application Architecture"]
-
-    Resources["Resource Architecture"]
-
-    Services["Service Architecture"]
-
-    User --> Application
-
-    Application --> Resources
-
-    Resources --> Services
-```
-
-Each layer provides capabilities to the layer above it.
-
-The user interacts with the Application.
-
-The Application consumes Domain Objects provided by the Resource Architecture.
-
-The Resource Architecture obtains and manages Published Resources using capabilities provided by the Service Architecture.
-
-Each layer remains responsible for its own concerns.
+These architectures are intentionally independent while remaining closely integrated.
 
 ---
 
-## The User
+## Three Independent Architectures
 
-Everything begins with the user.
+Each architecture answers a different set of questions.
 
-The user interacts exclusively with the Application.
+### Application Architecture
 
-The user is intentionally isolated from:
+How should the application behave?
 
-* Published Resources,
-* networking,
-* storage providers,
-* synchronization,
-* resource discovery,
-* and transport protocols.
+### Resource Architecture
 
-These implementation concerns exist beneath the Application.
+How should application data exist independently of the application?
 
-The user interacts only with application concepts such as:
+### Service Architecture
 
-* Bible chapters,
-* Notes,
-* Reading Plans,
-* Search,
-* and other Domain capabilities.
+How should published resources be transported, stored, and discovered?
+
+Each architecture focuses on its own responsibilities.
+
+No architecture attempts to absorb the responsibilities of another.
 
 ---
 
 ## The Application
 
-The Application is responsible for presenting Domain capabilities to the user.
+The Application is responsible for everything the user experiences.
 
-It owns:
+It owns concepts such as:
 
 * Workspace Runtime,
+* Domains,
 * Module Presentation,
 * User Interface,
 * Persistence,
 * Background Processing,
 * and Resource Integration.
 
-The Application does not own Published Resources.
+The Application is also responsible for creating and managing Domain Objects.
 
-Instead, it consumes Domain Objects created from those Resources.
+Domain Objects represent the application's understanding of information.
+
+They are the primary concepts consumed throughout the application.
+
+---
+
+## The Resource Architecture
+
+The Resource Architecture defines the model by which application information exists outside the application.
+
+It establishes concepts such as:
+
+* Published Resources,
+* Resource Identity,
+* Discovery,
+* Resolution,
+* Resource Representations,
+* Installation,
+* Versioning,
+* and Persistence.
+
+These concepts describe **how Resources exist**.
+
+They do not describe how a particular application chooses to use those Resources.
+
+The Resource Architecture is intentionally application independent.
+
+Multiple applications may consume the same Published Resources while creating entirely different Domain Objects.
+
+---
+
+## The Service Architecture
+
+The Service Architecture provides the external capabilities required by the Resource Architecture.
+
+Examples include:
+
+* Nostr Relays,
+* Blossom servers,
+* storage providers,
+* synchronization services,
+* and other supporting infrastructure.
+
+These services provide transport, storage, and communication.
+
+They intentionally do not define application behavior.
+
+Specific service implementations may evolve without changing either the Application Architecture or the Resource Architecture.
+
+---
+
+## Resource Integration
+
+Resource Integration is the part of the Application responsible for implementing the Resource Architecture.
 
 Conceptually:
 
-```mermaid
+```mermaid id="j3s2pg"
+flowchart LR
+
+    Application
+
+    ResourceIntegration["Resource Integration"]
+
+    ResourceArchitecture["Resource Architecture"]
+
+    ServiceArchitecture["Service Architecture"]
+
+    Application --> ResourceIntegration
+
+    ResourceIntegration -.implements.-> ResourceArchitecture
+
+    ResourceArchitecture --> ServiceArchitecture
+```
+
+Resource Integration allows the Application to participate in the Resource lifecycle while preserving the boundaries defined by the Resource Architecture.
+
+Its responsibilities include coordinating:
+
+* discovery,
+* publication,
+* installation,
+* refresh,
+* synchronization,
+* installation state,
+* and Resource lifecycle management.
+
+Although these operations follow the rules defined by the Resource Architecture, they remain Application responsibilities.
+
+---
+
+## Domain Participation
+
+Each Domain participates in the Resource Architecture through its own Resource knowledge.
+
+For example, a Domain understands:
+
+* which Published Resources it consumes,
+* how those Resources are identified,
+* how they should be discovered,
+* how they become Domain Objects,
+* how Domain Objects should be serialized,
+* and which Resources should be published.
+
+Conceptually:
+
+```mermaid id="k8r91v"
+flowchart LR
+
+    Domain["Bible Domain"]
+
+    Knowledge["Domain Resource Knowledge"]
+
+    ResourceIntegration["Resource Integration"]
+
+    ResourceArchitecture["Resource Architecture"]
+
+    Domain --> Knowledge
+
+    Knowledge --> ResourceIntegration
+
+    ResourceIntegration -.implements.-> ResourceArchitecture
+```
+
+The Domain owns the mapping between Published Resources and Domain Objects.
+
+Generic Resource infrastructure cannot provide this knowledge because it belongs to the Domain itself.
+
+---
+
+## Domain Objects
+
+Domain Objects form the boundary between generic Resource concepts and application behavior.
+
+Published Resources are transformed into Domain Objects by application-owned behavior.
+
+Conceptually:
+
+```mermaid id="cf40qh"
+flowchart LR
+
+    Published["Published Resource"]
+
+    Resolution["Resource Resolution"]
+
+    Resource["Resolved Resource"]
+
+    Factory["Domain Object Factory"]
+
+    DomainObject["Domain Object"]
+
+    Published --> Resolution
+
+    Resolution --> Resource
+
+    Resource --> Factory
+
+    Factory --> DomainObject
+```
+
+The Domain Object Factory belongs to the Domain.
+
+Likewise, the serializer responsible for publishing a Domain Object also belongs to the Domain.
+
+The Resource Architecture defines the rules governing Resources.
+
+The Domain defines how its application concepts participate within those rules.
+
+---
+
+## Information Flow
+
+Information moves through several cooperating architectural systems.
+
+Conceptually:
+
+```mermaid id="g5kl2h"
 flowchart LR
 
     User
 
     Application
 
-    DomainObjects["Domain Objects"]
+    Domain
 
-    User --> Application
+    ResourceIntegration["Resource Integration"]
 
-    DomainObjects --> Application
-```
-
-The Application is intentionally unaware of how Domain Objects were published, transported, or discovered.
-
-Its responsibility begins once those Domain Objects exist.
-
----
-
-## The Resource Architecture
-
-The Resource Architecture exists independently of the Application.
-
-Its responsibility is to make Domain Objects available to applications through a standardized resource model.
-
-It defines concepts such as:
-
-* Published Resources,
-* Resource Identity,
-* Discovery,
-* Resolution,
-* Installation,
-* Versioning,
-* Persistence,
-* and Domain Object creation.
-
-Conceptually:
-
-```mermaid
-flowchart LR
+    Infrastructure["Service Infrastructure"]
 
     Published["Published Resources"]
 
-    Resolution["Resource Resolution"]
+    DomainObject["Domain Object"]
 
-    DomainObjects["Domain Objects"]
+    User --> Application
 
-    Published --> Resolution
+    Application --> Domain
 
-    Resolution --> DomainObjects
+    Domain --> ResourceIntegration
+
+    ResourceIntegration --> Infrastructure
+
+    Infrastructure --> Published
+
+    Published --> ResourceIntegration
+
+    ResourceIntegration --> DomainObject
+
+    DomainObject --> Domain
 ```
 
-The Resource Architecture transforms externally published information into application-ready Domain Objects.
+The Application initiates work.
 
-Applications consume those Domain Objects without needing to understand the underlying publication mechanisms.
+Domains determine what information they require.
 
----
+Resource Integration implements the Resource Architecture to retrieve and publish Resources.
 
-## The Service Architecture
+Service Infrastructure communicates with external systems.
 
-The Service Architecture provides the capabilities required by the Resource Architecture.
+The Domain ultimately creates and consumes Domain Objects.
 
-Examples include:
-
-* Nostr Relays,
-* Blossom servers,
-* storage services,
-* and other supporting infrastructure.
-
-These services provide communication and storage capabilities.
-
-They do not define application behavior.
-
-The Service Architecture intentionally remains replaceable.
-
-The Application depends upon capabilities rather than upon specific service implementations.
-
----
-
-## Domain Objects
-
-Domain Objects form the boundary between the Resource Architecture and the Application.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Resources["Published Resources"]
-
-    Resolution["Resource Resolution"]
-
-    Objects["Domain Objects"]
-
-    Application["Application"]
-
-    Resources --> Resolution
-
-    Resolution --> Objects
-
-    Objects --> Application
-```
-
-The Resource Architecture is responsible for producing Domain Objects.
-
-The Application is responsible for consuming them.
-
-Neither architecture attempts to take ownership of the other's responsibilities.
-
-This separation is one of the fundamental boundaries within the project.
+Each architectural system contributes its own responsibilities without taking ownership of another's.
 
 ---
 
 ## Independent Evolution
 
-Each architectural layer should evolve independently whenever practical.
+Because responsibilities are clearly separated, each architecture can evolve independently.
 
-Examples include:
+For example:
 
-* introducing new Resource representations,
-* improving Resource Resolution,
-* replacing storage providers,
-* redesigning Module Presentation,
-* extending Workspace Runtime,
-* or introducing new Domain capabilities.
+* a new Resource Representation may be introduced without changing Domain behavior,
+* a different relay implementation may replace the existing infrastructure,
+* a Domain may introduce additional Resource types,
+* or the Workspace Runtime may evolve without affecting Resource Resolution.
 
-Changes within one architectural layer should minimize their impact upon the others.
-
-Well-defined boundaries make this possible.
+This separation allows the project to grow incrementally while preserving clear architectural boundaries.
 
 ---
 
-## The Source Code
+## Repository Alignment
 
-The repository mirrors these architectural boundaries.
+The repository is organized to reflect these architectural responsibilities.
 
-Documentation, repository organization, Public APIs, and implementation all reinforce the same ownership model.
+Documentation, repository organization, Public APIs, and implementation should all communicate the same ownership model.
 
-This consistency allows the source code to communicate architectural intent rather than merely implementation details.
+The architecture should remain visible throughout the source code.
 
-The goal is that someone familiar with the architecture should be able to navigate the repository naturally.
-
-Likewise, someone exploring the repository should be able to infer the architecture from its organization.
-
----
-
-## The Flow Of Information
-
-The overall flow of information through the system is intentionally straightforward.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Services["Service Architecture"]
-
-    Resources["Published Resources"]
-
-    Resolution["Resource Resolution"]
-
-    Objects["Domain Objects"]
-
-    Application["Application"]
-
-    User["User"]
-
-    Services --> Resources
-
-    Resources --> Resolution
-
-    Resolution --> Objects
-
-    Objects --> Application
-
-    Application --> User
-```
-
-Each stage performs one responsibility.
-
-No stage attempts to absorb the responsibilities of another.
-
-This separation keeps the overall architecture understandable while allowing each subsystem to evolve independently.
+Repository organization should reinforce the architecture rather than obscure it.
 
 ---
 
 ## Key Takeaways
 
-* The project is composed of several independent architectural systems.
-* Each system owns a distinct set of responsibilities.
-* The Application consumes Domain Objects rather than Published Resources.
-* The Resource Architecture produces Domain Objects from Published Resources.
-* The Service Architecture provides capabilities used by the Resource Architecture.
-* Every architectural layer communicates through explicit boundaries.
-* Repository organization and implementation should reinforce these architectural boundaries.
+* The project consists of three complementary architectural systems.
+* The Resource Architecture defines how Resources exist independently of any application.
+* The Application implements the Resource Architecture through Resource Integration.
+* Domains contribute the application-specific knowledge required to discover, interpret, publish, and serialize their own Resources.
+* Domains own the creation of Domain Objects.
+* The Service Architecture provides the external capabilities used to implement the Resource Architecture.
+* Each architecture owns its own responsibilities while collaborating through explicit architectural boundaries.
