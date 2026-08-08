@@ -425,3 +425,218 @@ This separation encourages reuse, independent evolution, and long-term maintaina
 * Each architecture owns a distinct set of responsibilities.
 * Architectural boundaries are intentional and should remain visible throughout the repository.
 * Repository organization and implementation should reinforce these architectural boundaries rather than obscure them.
+
+# Design Philosophy
+
+Every software project eventually accumulates complexity.
+
+New features are added.
+
+Requirements evolve.
+
+Technologies change.
+
+Over time, the difficulty of maintaining a system rarely comes from implementing new functionality. More often, it comes from understanding how existing functionality fits together.
+
+The architecture of this project was designed with that observation in mind.
+
+Rather than organizing the application around implementation techniques, frameworks, or programming patterns, the architecture is organized around stable application concepts that are expected to remain meaningful throughout the lifetime of the project.
+
+The goal is not simply to produce working software.
+
+The goal is to produce software whose structure continues to make sense as it evolves.
+
+---
+
+## Architecture Before Implementation
+
+Implementation changes continuously.
+
+Architecture should change much more slowly.
+
+Programming languages evolve.
+
+Frameworks are replaced.
+
+Storage technologies improve.
+
+Networking protocols mature.
+
+User interface libraries come and go.
+
+These changes are expected.
+
+The architecture intentionally separates these implementation concerns from the responsibilities they fulfill.
+
+For this reason, architectural discussions should begin without reference to specific technologies whenever practical.
+
+The implementation exists to realize the architecture.
+
+The architecture should not emerge from the implementation.
+
+---
+
+## Organizing Around Meaning
+
+The project is organized around concepts that represent application meaning rather than technical implementation.
+
+Examples include:
+
+* Workspace Runtime,
+* Domains,
+* User Interface,
+* Resource Integration,
+* Background Processing,
+* and Technical Infrastructure.
+
+These concepts describe responsibilities that exist regardless of how they are implemented.
+
+Implementation techniques such as Services, Stores, Components, Workers, Events, Factories, and Repositories exist within those architectural owners.
+
+They support the architecture.
+
+They do not define it.
+
+This distinction keeps the architecture stable even when implementation evolves.
+
+---
+
+## Ownership Creates Clarity
+
+Every responsibility should have a clearly identifiable owner.
+
+Ownership establishes:
+
+* where behavior belongs,
+* where implementation should reside,
+* where changes should be made,
+* and how other parts of the application should collaborate.
+
+When ownership is clear, repository organization becomes straightforward.
+
+Architectural boundaries become easier to understand.
+
+Implementation naturally follows the structure established by the architecture.
+
+Many implementation decisions become obvious simply because ownership has already been established.
+
+---
+
+## Explicit Collaboration
+
+Architectural owners should collaborate deliberately.
+
+Responsibilities are shared through explicit Public APIs rather than through unrestricted implementation dependencies.
+
+Each owner remains responsible for its own concepts while exposing only the capabilities required by other architectural owners.
+
+This allows independently evolving parts of the application to collaborate without becoming tightly coupled.
+
+Well-defined boundaries make both the architecture and the repository easier to understand.
+
+---
+
+## Stable Concepts
+
+Technology changes faster than application concepts.
+
+The project therefore attempts to build its architecture around ideas that are expected to remain stable over time.
+
+For example:
+
+* Bible chapters remain Bible chapters regardless of storage technology.
+* Notes remain Notes regardless of presentation framework.
+* Workspaces remain Workspaces regardless of layout implementation.
+* Domain Objects remain Domain Objects regardless of how Resources are published or transported.
+
+By organizing around these enduring concepts, implementation can evolve without requiring the conceptual architecture to be rediscovered.
+
+---
+
+## Incremental Evolution
+
+The architecture is designed to support continuous evolution rather than periodic rewrites.
+
+Existing implementation is not discarded simply because a better organizational model has been developed.
+
+Instead, improvements are introduced incrementally.
+
+Architectural ownership is established first.
+
+Implementation then migrates toward that ownership over time.
+
+This approach minimizes disruption while allowing the repository to steadily converge toward the documented architecture.
+
+Evolution is preferred over replacement whenever practical.
+
+---
+
+## Simplicity Through Separation
+
+Complexity is reduced by allowing each architectural owner to focus on a single area of responsibility.
+
+The Workspace Runtime manages runtime behavior.
+
+Domains own application meaning.
+
+The User Interface presents information.
+
+Resource Integration bridges the Application and the Resource Architecture.
+
+Background Processing performs deferred application work.
+
+Technical Infrastructure provides implementation capabilities.
+
+Each owner has a limited set of responsibilities.
+
+Together they form a cohesive application.
+
+Separating responsibilities in this way allows individual parts of the system to remain understandable without requiring knowledge of the entire application.
+
+---
+
+## Architecture As A Communication Tool
+
+Architecture exists to communicate.
+
+A well-designed architecture should allow someone unfamiliar with the codebase to understand:
+
+* the major responsibilities,
+* how those responsibilities collaborate,
+* where new functionality belongs,
+* and how changes should be introduced.
+
+Repository organization, documentation, and source code should reinforce the same architectural model.
+
+When these representations remain aligned, understanding the system becomes significantly easier.
+
+---
+
+## Designing For The Future
+
+Every architectural decision should consider the long-term evolution of the project.
+
+Questions such as:
+
+* Will this responsibility still exist in five years?
+* Is this concept tied to a particular technology?
+* Does this abstraction represent application meaning?
+* Can this implementation evolve independently?
+
+are often more valuable than questions about immediate implementation.
+
+Architectural decisions should optimize for long-term clarity rather than short-term convenience.
+
+The architecture should make future change easier rather than merely accommodating present requirements.
+
+---
+
+## Key Takeaways
+
+* The architecture is organized around enduring application concepts rather than implementation technologies.
+* Implementation fulfills architectural responsibilities rather than defining them.
+* Clear ownership produces clear boundaries.
+* Public APIs provide explicit collaboration between independently owned parts of the application.
+* Stable concepts should outlive the technologies used to implement them.
+* The project is intended to evolve incrementally rather than through periodic rewrites.
+* Architecture should make the application easier to understand, easier to extend, and easier to maintain over time.
