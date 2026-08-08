@@ -1,4 +1,4 @@
-# ADR 0000 — Architecture Overview
+# ADR 0000 — Resource Architecture Overview
 
 **Status**
 
