@@ -2,9 +2,9 @@
 
 Welcome to the KJVOnly documentation.
 
-The documentation is organized into several layers.
+The documentation is organized into layers.
 
-Each layer builds upon the previous one and serves a different purpose.
+Each layer answers a different question about the project and builds upon the previous one.
 
 The recommended reading order is:
 
@@ -19,35 +19,38 @@ Service Architecture
     ↓
 Implementation
     ↓
+Developer Guide
+    ↓
 Reference
 ```
 
 ---
 
-# Principles
+# Documentation Overview
 
-The Principles describe the design philosophy used throughout the project.
+## 00 Principles
 
-They explain how architectural decisions are made.
+The Principles define the architectural philosophy used throughout the project.
 
-Examples include:
+They explain how design decisions are made without describing any specific implementation.
+
+Typical topics include:
 
 * Ownership
 * Shared Concepts
-* Responsibility Before Implementation
 * Local Authority
-* Capabilities Before Technologies
+* Responsibility Before Implementation
 * Request Data, Not Location
 
 Read these first.
 
 ---
 
-# Application Architecture
+## 01 Application Architecture
 
 The Application Architecture describes how the application is organized.
 
-It explains:
+These documents define the responsibilities and relationships between the application's major architectural subsystems, including:
 
 * Workspace Runtime
 * Runtime Rendering
@@ -61,16 +64,17 @@ It explains:
 * Background Processing
 * Module Presentation
 * User Interface
+* Application Events
 
-These documents define application responsibilities rather than implementation details.
+These documents intentionally describe architecture rather than implementation.
 
 ---
 
-# Resource Architecture
+## 02 Resource Architecture
 
-The Resource Architecture describes the decentralized resource model used by the application.
+The Resource Architecture defines the decentralized Resource model used by the application.
 
-These documents define:
+These Architecture Decision Records (ADRs) describe:
 
 * Published Resources
 * Resource Identity
@@ -79,17 +83,17 @@ These documents define:
 * Resource Synchronization
 * Discovery
 * Publication
-* and other architectural decisions governing Resources.
+* and related architectural decisions.
 
 The Resource Architecture is independent from any specific application or service implementation.
 
 ---
 
-# Service Architecture
+## 03 Service Architecture
 
-The Service Architecture describes how the project's services realize the Resource Architecture.
+The Service Architecture describes how the project's backend services realize the Resource Architecture.
 
-These documents explain:
+These documents describe:
 
 * Relay Architecture
 * Blossom Architecture
@@ -100,35 +104,49 @@ These documents explain:
 * Deployment
 * Service boundaries
 
-The services documented here are the project's current implementation.
-
-Alternative service implementations may provide the same Resource Architecture.
+These services are implementations of the Resource Architecture rather than requirements of it.
 
 ---
 
-# Implementation
+## 04 Implementation
 
-The Implementation guides describe how the current codebase realizes the documented architectures.
+Implementation documents explain how the current codebase realizes the documented architectures.
 
-Examples include:
+These documents describe implementation details such as:
 
-* Workspace Runtime implementation
-* Module development
-* Presentation Stack
-* Theme system
-* Tailwind conventions
-* Domain Store implementations
-* Relay implementation
-* Blossom implementation
+* Runtime implementation
+* Module implementation
+* Presentation stack
+* Domain stores
+* Persistence
+* UI implementation
+* Service implementation
 * Platform integration
 
-Implementation documents describe the current code.
-
-They may evolve without changing the architectural concepts defined elsewhere.
+Implementation documents may evolve as the code evolves while preserving the architectural concepts defined elsewhere.
 
 ---
 
-# Reference
+## 05 Developer Guide
+
+The Developer Guide explains how contributors should work within the existing architecture.
+
+These documents establish development conventions that help maintain consistency across the project.
+
+Typical topics include:
+
+* Repository organization
+* Coding standards
+* Testing
+* Documentation
+* Development workflow
+* Contribution guidelines
+
+These documents are intended for developers contributing to the project rather than describing the application's architecture.
+
+---
+
+## 06 Reference
 
 Reference documentation contains factual information used during development.
 
@@ -149,19 +167,22 @@ Reference documentation is intended for lookup rather than sequential reading.
 
 # Documentation Philosophy
 
-The documentation intentionally separates architectural concepts from implementation details.
+The documentation intentionally separates concepts from implementation.
 
 Each section answers a different question.
 
-| Documentation            | Primary Question                                                   |
-| ------------------------ | ------------------------------------------------------------------ |
-| Principles               | **How should we think?**                                           |
-| Application Architecture | **How is the application organized?**                              |
-| Resource Architecture    | **How are Resources modeled?**                                     |
-| Service Architecture     | **How do the project services realize the Resource Architecture?** |
-| Implementation           | **How does today's code realize these architectures?**             |
-| Reference                | **What facts should developers be able to quickly look up?**       |
+| Documentation            | Primary Question                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| Principles               | **How should we think?**                                                         |
+| Application Architecture | **How is the application organized?**                                            |
+| Resource Architecture    | **How are Resources modeled?**                                                   |
+| Service Architecture     | **How do the project services realize the Resource Architecture?**               |
+| Implementation           | **How is the architecture implemented today?**                                   |
+| Developer Guide          | **How should contributors work within the project?**                             |
+| Reference                | **What project-specific information should developers be able to quickly find?** |
 
 Maintaining these boundaries allows the implementation to evolve while preserving a stable conceptual architecture.
 
-The result is a documentation system that explains not only how the project is built today, but also the principles and architectural models that guide its future evolution.
+Developers new to the project should read the documentation in the order presented above.
+
+Each layer provides the foundation for understanding the layers that follow.
