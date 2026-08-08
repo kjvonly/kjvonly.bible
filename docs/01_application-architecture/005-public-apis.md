@@ -595,3 +595,214 @@ For example:
 Consumers continue interacting with the same Public API.
 
 This separation allows implementation to evolve while preserving stable architectural boundaries.
+
+# Future Evolution
+
+Public APIs define stable architectural boundaries rather than implementation mechanisms.
+
+As the application evolves, the implementation used to expose a Public API may change without affecting the architectural model.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Owner["Architectural Owner"]
+
+    API["Public API"]
+
+    Implementation["Implementation"]
+
+    Owner --> API
+
+    API --> Implementation
+```
+
+Future implementations may introduce new technologies, packaging strategies, language features, or deployment models.
+
+Regardless of implementation, every architectural owner should continue exposing a deliberate Public API that represents its stable application concepts.
+
+The mechanism used to publish that API may evolve.
+
+The architectural boundary should remain consistent.
+
+---
+
+# Public API Versioning
+
+Public APIs should evolve without unnecessarily disrupting existing consumers.
+
+Once an architectural owner exposes a Public API, other parts of the application may depend upon that contract.
+
+Changes to the Public API should therefore be treated deliberately.
+
+A new requirement should not automatically require every existing consumer to change at the same time.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Owner["Architectural Owner"]
+
+    V1["Public API v1"]
+
+    V2["Public API v2"]
+
+    ConsumerA["Existing Consumer"]
+
+    ConsumerB["Existing Consumer"]
+
+    NewConsumer["New Consumer"]
+
+    Owner --> V1
+    Owner --> V2
+
+    V1 --> ConsumerA
+    V1 --> ConsumerB
+
+    V2 --> NewConsumer
+```
+
+When a change cannot be introduced compatibly, the owner may expose a new version of the affected Public API.
+
+Existing consumers may continue using the previous version while new or migrated consumers use the newer contract.
+
+This allows migration to occur incrementally rather than requiring coordinated changes throughout the application.
+
+---
+
+# Compatibility
+
+Public API changes should preserve compatibility whenever practical.
+
+Prefer:
+
+* adding new capabilities,
+* adding new operations,
+* adding optional information,
+* or introducing a new API version,
+
+rather than changing the meaning of an existing contract.
+
+A Public API should not silently change behavior in a way that invalidates existing consumers.
+
+The meaning of an existing version should remain stable for as long as that version is supported.
+
+---
+
+# Incremental Migration
+
+Public API versioning allows architectural consumers to migrate independently.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    V1["Public API v1"]
+
+    V2["Public API v2"]
+
+    A["Consumer A"]
+
+    B["Consumer B"]
+
+    C["Consumer C"]
+
+    A --> V1
+    B --> V1
+    C --> V2
+
+    A -.-> V2
+    B -.-> V2
+```
+
+Consumers may move to the newer API as their implementation is updated.
+
+The architectural owner may support multiple API versions during the migration period.
+
+Once all consumers have migrated and the previous version is no longer required, the older API may be retired.
+
+Versioning therefore separates:
+
+* introducing a new contract,
+* migrating consumers,
+* and removing the previous contract.
+
+These should not be treated as one simultaneous change.
+
+---
+
+# Version Ownership
+
+The architectural owner owns the lifecycle of its Public API versions.
+
+Consumers select the version appropriate to their current implementation.
+
+The owner determines:
+
+* which versions are available,
+* the meaning of each version,
+* compatibility guarantees,
+* and when an obsolete version may be retired.
+
+Consumers should not redefine or adapt another owner's Public API independently.
+
+If a new capability is required, the owning subsystem should expose that capability through its own Public API.
+
+---
+
+# Versioning Philosophy
+
+Versioning exists to protect architectural boundaries from cascading change.
+
+A change inside one architectural owner should not require immediate modification throughout the entire application.
+
+Public APIs provide stable contracts.
+
+Versioned Public APIs provide stable evolution.
+
+The goal is not to version every change.
+
+The goal is to provide a controlled migration path when a public contract must change incompatibly.
+
+---
+
+# Big Takeaway
+
+Every architectural owner defines a Public API.
+
+The Public API establishes the boundary through which the rest of the application collaborates with that owner.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Consumer["Architectural Consumer"]
+
+    API["Public API"]
+
+    Owner["Architectural Owner"]
+
+    Internal["Internal Implementation"]
+
+    Consumer --> API
+
+    API --> Owner
+
+    Owner --> Internal
+```
+
+Public APIs preserve ownership while allowing collaboration.
+
+Consumers depend upon stable application concepts rather than implementation details.
+
+Ownership remains with the subsystem that gives those concepts meaning.
+
+Implementation remains free to evolve behind the Public API.
+
+Architecture defines the boundary.
+
+The Public API makes that boundary visible.
