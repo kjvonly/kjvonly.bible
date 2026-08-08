@@ -444,3 +444,154 @@ Consumers should continue interacting with the same application concepts regardl
 The architectural boundary remains stable.
 
 The implementation remains free to evolve.
+
+# Public API Composition
+
+A Public API is composed of the concepts an architectural owner intentionally makes available to the rest of the application.
+
+A Public API may expose different kinds of capabilities depending upon the responsibilities of the owner.
+
+Conceptually:
+
+```mermaid id="d9aq9m"
+flowchart TD
+
+    Owner["Architectural Owner"]
+
+    Objects["Domain Objects"]
+
+    Operations["Operations"]
+
+    Events["Application Events"]
+
+    Identifiers["Identifiers"]
+
+    Queries["Queries"]
+
+    Owner --> Objects
+
+    Owner --> Operations
+
+    Owner --> Events
+
+    Owner --> Identifiers
+
+    Owner --> Queries
+```
+
+Not every architectural owner exposes every kind of capability.
+
+A Public API should expose only those concepts that naturally belong to its responsibilities.
+
+---
+
+# Public APIs Reflect Architectural Meaning
+
+The structure of a Public API should reflect the meaning of the architectural owner rather than the technology used to implement it.
+
+For example, the Bible Domain may expose:
+
+* Bible Chapters,
+* Bible Verses,
+* Bible Location References,
+* Chapter operations,
+* and Bible-related events.
+
+The Workspace Runtime may expose:
+
+* Workspace operations,
+* Pane operations,
+* Buffer operations,
+* and runtime events.
+
+Background Processing may expose:
+
+* maintenance operations,
+* execution status,
+* and maintenance events.
+
+Each Public API reflects the concepts naturally owned by that subsystem.
+
+---
+
+# Public APIs Should Be Cohesive
+
+The capabilities exposed by a Public API should belong together conceptually.
+
+Conceptually:
+
+```mermaid id="2mnd6d"
+flowchart LR
+
+    Owner["Architectural Owner"]
+
+    API["Public API"]
+
+    Concepts["Related Concepts"]
+
+    Owner --> API
+
+    API --> Concepts
+```
+
+Consumers should be able to understand the purpose of an architectural owner by examining its Public API.
+
+Unrelated capabilities should not accumulate within a single Public API simply because they are convenient to expose.
+
+Cohesion should follow meaning rather than implementation convenience.
+
+---
+
+# Architectural Dependencies
+
+Public APIs establish the permitted dependencies between architectural owners.
+
+Conceptually:
+
+```mermaid id="mhygh7"
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Bible["Bible Domain"]
+
+    Notes["Notes Domain"]
+
+    Resources["Resource Integration"]
+
+    Runtime --> Bible
+
+    Notes --> Bible
+
+    Resources --> Bible
+```
+
+These dependencies communicate collaboration.
+
+They do not redefine ownership.
+
+An architectural owner remains responsible for its own concepts regardless of how many other parts of the application depend upon them.
+
+Dependencies should always point toward the owner of the concept.
+
+Ownership should never move toward the consumer.
+
+---
+
+# Public APIs Encourage Replaceable Implementations
+
+Consumers depend upon architectural concepts rather than implementation details.
+
+As long as the Public API remains consistent, an architectural owner may improve or replace its internal implementation without affecting consumers.
+
+For example:
+
+* persistence technologies may change,
+* networking implementations may change,
+* presentation frameworks may change,
+* algorithms may improve,
+* storage strategies may evolve.
+
+Consumers continue interacting with the same Public API.
+
+This separation allows implementation to evolve while preserving stable architectural boundaries.
