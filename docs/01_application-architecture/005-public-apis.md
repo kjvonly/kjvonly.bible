@@ -166,3 +166,144 @@ Usage creates a dependency.
 It does not transfer ownership.
 
 The owning subsystem exposes the capability through its Public API while retaining responsibility for its meaning and behavior.
+
+# Cross-Owner Collaboration
+
+Architectural owners collaborate through their Public APIs.
+
+An owner may depend upon another owner's Public API when that dependency reflects a genuine application concept.
+
+Conceptually:
+
+```mermaid id="x8qrl4"
+flowchart LR
+
+    Notes["Notes Domain"]
+
+    BibleAPI["Bible Public API"]
+
+    Bible["Bible Domain"]
+
+    Notes --> BibleAPI
+
+    BibleAPI --> Bible
+```
+
+For example, the Notes Domain may request Bible chapter information when creating a new Note.
+
+The Bible Domain remains responsible for Bible behavior.
+
+The Notes Domain remains responsible for Note behavior.
+
+The Public API provides the collaboration point while preserving ownership.
+
+---
+
+# Public and Internal Responsibilities
+
+Every architectural owner consists of two conceptual areas:
+
+* its Public API,
+* and its internal implementation.
+
+Conceptually:
+
+```mermaid id="5grkhg"
+flowchart LR
+
+    API["Public API"]
+
+    Owner["Architectural Owner"]
+
+    Internal["Internal Implementation"]
+
+    API --> Owner
+
+    Owner --> Internal
+```
+
+The Public API represents the stable contract available to the rest of the application.
+
+Internal implementation exists solely to fulfill the owner's responsibilities.
+
+Internal implementation may change without affecting consumers provided the Public API remains compatible.
+
+This separation allows architectural boundaries to remain stable while implementation continues to evolve.
+
+---
+
+# Public API Design
+
+Public APIs should expose application concepts rather than implementation details.
+
+Prefer exposing:
+
+* Domain Objects,
+* identifiers,
+* queries,
+* operations,
+* events,
+* and other meaningful concepts.
+
+Avoid exposing:
+
+* persistence implementations,
+* serialization details,
+* parsing logic,
+* presentation components,
+* networking mechanisms,
+* or other implementation-specific structures.
+
+Consumers should understand what an owner provides without needing to understand how that capability is implemented.
+
+---
+
+# Stable Boundaries
+
+The purpose of a Public API is to create a stable architectural boundary.
+
+Conceptually:
+
+```mermaid id="tz0bip"
+flowchart TD
+
+    Consumer["Consumer"]
+
+    API["Stable Public API"]
+
+    Owner["Architectural Owner"]
+
+    Implementation["Implementation"]
+
+    Consumer --> API
+
+    API --> Owner
+
+    Owner --> Implementation
+```
+
+As implementation evolves, the Public API should remain stable whenever practical.
+
+A stable Public API reduces unnecessary coupling between architectural owners and allows implementation to evolve independently.
+
+Consumers depend upon the capability being provided rather than the mechanism used to provide it.
+
+---
+
+# Public APIs Are Not Ownership Transfer
+
+Using another owner's Public API does not transfer ownership.
+
+For example, the Reading Plans Domain may use Bible Location References.
+
+The Notes Domain may request Bible verses.
+
+Background Processing may invoke Resource Installation.
+
+These usages create dependencies between architectural owners.
+
+They do not redefine who owns the underlying concepts.
+
+Ownership always remains with the subsystem responsible for the meaning of that concept.
+
+Public APIs provide controlled collaboration while preserving that ownership.
