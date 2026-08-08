@@ -215,3 +215,213 @@ This makes the application easier to understand, easier to evolve, and easier to
 * The source code implements those ideas.
 * The project is organized around meaning and architectural ownership rather than implementation patterns.
 * Understanding the architecture first makes every implementation decision easier to reason about.
+
+# Project Overview
+
+The KJVOnly project is a collection of systems that together provide a decentralized, offline-first application platform.
+
+Although these systems are developed together, they each have distinct responsibilities and evolve independently.
+
+Understanding the separation between these responsibilities is fundamental to understanding the architecture.
+
+The project is intentionally organized around these architectural boundaries rather than around technologies or deployment models.
+
+---
+
+## The Three Architectures
+
+The project consists of three primary architectural systems:
+
+1. Application Architecture
+2. Resource Architecture
+3. Service Architecture
+
+Each architecture solves a different problem.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Resource["Resource Architecture"]
+
+    Service["Service Architecture"]
+
+    Application["Application Architecture"]
+
+    Resource --> Application
+
+    Service --> Application
+```
+
+The Application consumes capabilities provided by the other two architectures.
+
+Neither the Resource Architecture nor the Service Architecture depends upon the Application.
+
+This separation allows each system to evolve independently while remaining conceptually aligned.
+
+---
+
+## Application Architecture
+
+The Application Architecture describes the client application itself.
+
+Its responsibility is to present Domain capabilities to the user while coordinating the interaction between Runtime, Domains, User Interface, Persistence, Background Processing, and Resource Integration.
+
+The Application is responsible for:
+
+* presenting information,
+* responding to user interaction,
+* managing application state,
+* coordinating background work,
+* and providing a consistent user experience.
+
+The Application does not define how content exists outside of the application.
+
+Instead, it consumes Domain Objects produced by the Resource Architecture.
+
+---
+
+## Resource Architecture
+
+The Resource Architecture defines how application content exists independently of the client application.
+
+It describes how information is identified, published, discovered, resolved, installed, updated, and transformed into Domain Objects.
+
+The Resource Architecture is intentionally independent of the Application.
+
+Any application capable of understanding the Resource Architecture could consume the same published content.
+
+This separation allows application behavior and published content to evolve independently.
+
+The Application does not own Resources.
+
+It owns the Domain Objects created from those Resources.
+
+---
+
+## Service Architecture
+
+The Service Architecture describes the external systems that support the application.
+
+Examples include:
+
+* Nostr Relays,
+* Blossom servers,
+* storage providers,
+* synchronization services,
+* and other supporting infrastructure.
+
+These services provide capabilities to the Resource Architecture.
+
+The Application communicates with these services through Resource Integration rather than directly coupling application behavior to individual service implementations.
+
+The Service Architecture intentionally remains replaceable.
+
+Supporting technologies may evolve without changing the Application Architecture.
+
+---
+
+## How The Architectures Collaborate
+
+Each architecture has a clearly defined responsibility.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Services["Service Architecture"]
+
+    Resources["Resource Architecture"]
+
+    Application["Application Architecture"]
+
+    User["User"]
+
+    Services --> Resources
+
+    Resources --> Application
+
+    Application --> User
+```
+
+Service Architecture enables Resource Architecture.
+
+Resource Architecture provides Domain Objects to the Application.
+
+The Application presents those Domain Objects to the user.
+
+Each architecture remains focused on its own responsibilities.
+
+No architecture attempts to absorb the responsibilities of another.
+
+---
+
+## Architectural Independence
+
+Although the three architectures collaborate closely, they should be understood independently.
+
+Changes within one architecture should minimize their impact on the others.
+
+For example:
+
+* introducing a new storage provider should primarily affect the Service Architecture,
+* extending Resource Resolution should primarily affect the Resource Architecture,
+* redesigning Module Presentation should primarily affect the Application Architecture.
+
+Well-defined boundaries allow each architecture to evolve without unnecessary coupling.
+
+---
+
+## The Documentation
+
+The repository documentation mirrors the architecture.
+
+Each architectural system has its own documentation describing:
+
+* its responsibilities,
+* its concepts,
+* its boundaries,
+* and the decisions that govern its evolution.
+
+Together, these documents form a complete description of the project.
+
+This Project Context document connects those architectural systems into a single mental model.
+
+---
+
+## The Source Code
+
+The repository implementation reflects these architectural boundaries.
+
+The source code should progressively evolve so that repository organization, Public APIs, and implementation responsibilities correspond to the architectural ownership model described throughout the documentation.
+
+Architecture drives repository organization.
+
+Repository organization should not redefine the architecture.
+
+---
+
+## Long-Term Vision
+
+The project is designed so that the three architectures remain useful beyond a single application.
+
+The Resource Architecture should be capable of supporting multiple applications.
+
+The Service Architecture should support different Resource implementations.
+
+The Application Architecture should remain focused on providing the best possible user experience while consuming those capabilities.
+
+This separation encourages reuse, independent evolution, and long-term maintainability.
+
+---
+
+## Key Takeaways
+
+* The project consists of three independent architectural systems.
+* The Application consumes Domain Objects produced by the Resource Architecture.
+* The Resource Architecture uses capabilities provided by the Service Architecture.
+* Each architecture owns a distinct set of responsibilities.
+* Architectural boundaries are intentional and should remain visible throughout the repository.
+* Repository organization and implementation should reinforce these architectural boundaries rather than obscure them.
