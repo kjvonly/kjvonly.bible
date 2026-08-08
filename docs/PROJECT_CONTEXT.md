@@ -640,3 +640,296 @@ The architecture should make future change easier rather than merely accommodati
 * Stable concepts should outlive the technologies used to implement them.
 * The project is intended to evolve incrementally rather than through periodic rewrites.
 * Architecture should make the application easier to understand, easier to extend, and easier to maintain over time.
+
+# System Overview
+
+The KJVOnly project is composed of several independently designed architectural systems that together create a complete application platform.
+
+Each system owns a distinct set of responsibilities.
+
+Together they form a layered architecture in which every layer builds upon the capabilities provided by the layer beneath it.
+
+The architecture intentionally separates application behavior, published content, and external services into independent concerns.
+
+This separation allows each system to evolve independently while maintaining clear responsibilities.
+
+---
+
+## The Complete System
+
+At the highest level, the project can be viewed as four interacting layers.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    User["User"]
+
+    Application["Application Architecture"]
+
+    Resources["Resource Architecture"]
+
+    Services["Service Architecture"]
+
+    User --> Application
+
+    Application --> Resources
+
+    Resources --> Services
+```
+
+Each layer provides capabilities to the layer above it.
+
+The user interacts with the Application.
+
+The Application consumes Domain Objects provided by the Resource Architecture.
+
+The Resource Architecture obtains and manages Published Resources using capabilities provided by the Service Architecture.
+
+Each layer remains responsible for its own concerns.
+
+---
+
+## The User
+
+Everything begins with the user.
+
+The user interacts exclusively with the Application.
+
+The user is intentionally isolated from:
+
+* Published Resources,
+* networking,
+* storage providers,
+* synchronization,
+* resource discovery,
+* and transport protocols.
+
+These implementation concerns exist beneath the Application.
+
+The user interacts only with application concepts such as:
+
+* Bible chapters,
+* Notes,
+* Reading Plans,
+* Search,
+* and other Domain capabilities.
+
+---
+
+## The Application
+
+The Application is responsible for presenting Domain capabilities to the user.
+
+It owns:
+
+* Workspace Runtime,
+* Module Presentation,
+* User Interface,
+* Persistence,
+* Background Processing,
+* and Resource Integration.
+
+The Application does not own Published Resources.
+
+Instead, it consumes Domain Objects created from those Resources.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    User
+
+    Application
+
+    DomainObjects["Domain Objects"]
+
+    User --> Application
+
+    DomainObjects --> Application
+```
+
+The Application is intentionally unaware of how Domain Objects were published, transported, or discovered.
+
+Its responsibility begins once those Domain Objects exist.
+
+---
+
+## The Resource Architecture
+
+The Resource Architecture exists independently of the Application.
+
+Its responsibility is to make Domain Objects available to applications through a standardized resource model.
+
+It defines concepts such as:
+
+* Published Resources,
+* Resource Identity,
+* Discovery,
+* Resolution,
+* Installation,
+* Versioning,
+* Persistence,
+* and Domain Object creation.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Published["Published Resources"]
+
+    Resolution["Resource Resolution"]
+
+    DomainObjects["Domain Objects"]
+
+    Published --> Resolution
+
+    Resolution --> DomainObjects
+```
+
+The Resource Architecture transforms externally published information into application-ready Domain Objects.
+
+Applications consume those Domain Objects without needing to understand the underlying publication mechanisms.
+
+---
+
+## The Service Architecture
+
+The Service Architecture provides the capabilities required by the Resource Architecture.
+
+Examples include:
+
+* Nostr Relays,
+* Blossom servers,
+* storage services,
+* and other supporting infrastructure.
+
+These services provide communication and storage capabilities.
+
+They do not define application behavior.
+
+The Service Architecture intentionally remains replaceable.
+
+The Application depends upon capabilities rather than upon specific service implementations.
+
+---
+
+## Domain Objects
+
+Domain Objects form the boundary between the Resource Architecture and the Application.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Resources["Published Resources"]
+
+    Resolution["Resource Resolution"]
+
+    Objects["Domain Objects"]
+
+    Application["Application"]
+
+    Resources --> Resolution
+
+    Resolution --> Objects
+
+    Objects --> Application
+```
+
+The Resource Architecture is responsible for producing Domain Objects.
+
+The Application is responsible for consuming them.
+
+Neither architecture attempts to take ownership of the other's responsibilities.
+
+This separation is one of the fundamental boundaries within the project.
+
+---
+
+## Independent Evolution
+
+Each architectural layer should evolve independently whenever practical.
+
+Examples include:
+
+* introducing new Resource representations,
+* improving Resource Resolution,
+* replacing storage providers,
+* redesigning Module Presentation,
+* extending Workspace Runtime,
+* or introducing new Domain capabilities.
+
+Changes within one architectural layer should minimize their impact upon the others.
+
+Well-defined boundaries make this possible.
+
+---
+
+## The Source Code
+
+The repository mirrors these architectural boundaries.
+
+Documentation, repository organization, Public APIs, and implementation all reinforce the same ownership model.
+
+This consistency allows the source code to communicate architectural intent rather than merely implementation details.
+
+The goal is that someone familiar with the architecture should be able to navigate the repository naturally.
+
+Likewise, someone exploring the repository should be able to infer the architecture from its organization.
+
+---
+
+## The Flow Of Information
+
+The overall flow of information through the system is intentionally straightforward.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Services["Service Architecture"]
+
+    Resources["Published Resources"]
+
+    Resolution["Resource Resolution"]
+
+    Objects["Domain Objects"]
+
+    Application["Application"]
+
+    User["User"]
+
+    Services --> Resources
+
+    Resources --> Resolution
+
+    Resolution --> Objects
+
+    Objects --> Application
+
+    Application --> User
+```
+
+Each stage performs one responsibility.
+
+No stage attempts to absorb the responsibilities of another.
+
+This separation keeps the overall architecture understandable while allowing each subsystem to evolve independently.
+
+---
+
+## Key Takeaways
+
+* The project is composed of several independent architectural systems.
+* Each system owns a distinct set of responsibilities.
+* The Application consumes Domain Objects rather than Published Resources.
+* The Resource Architecture produces Domain Objects from Published Resources.
+* The Service Architecture provides capabilities used by the Resource Architecture.
+* Every architectural layer communicates through explicit boundaries.
+* Repository organization and implementation should reinforce these architectural boundaries.
