@@ -307,3 +307,140 @@ They do not redefine who owns the underlying concepts.
 Ownership always remains with the subsystem responsible for the meaning of that concept.
 
 Public APIs provide controlled collaboration while preserving that ownership.
+
+# Public API Design Principles
+
+A Public API should expose the smallest set of capabilities necessary for meaningful collaboration.
+
+Every publicly exposed concept becomes part of the owner's architectural contract.
+
+Conceptually:
+
+```mermaid id="3lw03j"
+flowchart LR
+
+    Owner["Architectural Owner"]
+
+    API["Public API"]
+
+    Consumer["Consumer"]
+
+    Internal["Internal Implementation"]
+
+    Owner --> API
+
+    API --> Consumer
+
+    Owner --> Internal
+```
+
+Capabilities should become public because they represent stable application concepts rather than because they happen to be useful today.
+
+A small, intentional Public API is easier to understand, easier to evolve, and better preserves architectural ownership.
+
+---
+
+# Public APIs Should Be Intentional
+
+Public APIs should be designed.
+
+They should not emerge accidentally through unrestricted imports.
+
+When exposing a capability, ask:
+
+* Does another architectural owner genuinely require this concept?
+* Does this capability represent stable application meaning?
+* Does exposing it preserve ownership boundaries?
+
+If the answer is no, the capability should remain internal.
+
+The goal is not to expose implementation.
+
+The goal is to expose collaboration.
+
+---
+
+# Public APIs Evolve More Slowly
+
+Internal implementation changes frequently.
+
+Public APIs should change deliberately.
+
+Conceptually:
+
+```mermaid id="8j0zqv"
+flowchart TD
+
+    Public["Public API"]
+
+    Internal["Internal Implementation"]
+
+    Change["Implementation Changes"]
+
+    Public --> Internal
+
+    Change --> Internal
+```
+
+Architectural owners should be free to improve internal implementation without requiring changes throughout the rest of the application.
+
+Stable Public APIs reduce coupling by allowing consumers to depend upon enduring concepts rather than implementation details.
+
+Whenever practical, changes should occur behind the Public API instead of changing the Public API itself.
+
+---
+
+# Collaboration Through Concepts
+
+Architectural owners should collaborate through meaningful application concepts.
+
+For example:
+
+* Bible exposes Bible Location References.
+* Bible exposes Bible Chapters.
+* Notes exposes Notes.
+* Reading Plans expose Reading Plans.
+
+Consumers should collaborate using these concepts rather than reaching into another owner's implementation.
+
+Conceptually:
+
+```mermaid id="5qk6wa"
+flowchart LR
+
+    Notes["Notes"]
+
+    BibleAPI["Bible Public API"]
+
+    Bible["Bible"]
+
+    Notes --> BibleAPI
+
+    BibleAPI --> Bible
+```
+
+This keeps dependencies understandable while preserving the natural ownership of application concepts.
+
+---
+
+# Internal Freedom
+
+A well-defined Public API allows an architectural owner to change internally without affecting consumers.
+
+Implementation details such as:
+
+* storage,
+* algorithms,
+* parsing,
+* caching,
+* rendering,
+* networking,
+* or helper abstractions
+
+may evolve independently.
+
+Consumers should continue interacting with the same application concepts regardless of those internal changes.
+
+The architectural boundary remains stable.
+
+The implementation remains free to evolve.
