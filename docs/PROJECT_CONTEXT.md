@@ -1050,3 +1050,1164 @@ The Application Architecture follows several fundamental principles:
 * Domain Objects cross the Resource Boundary as portable Resources.
 * Communication technologies remain outside the Application Architecture.
 * Separating application behavior from external communication allows both to evolve independently.
+
+# Resource Boundary
+
+The Resource Boundary defines how Domain Objects leave and re-enter the application.
+
+Applications operate exclusively on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary separates these two models by defining how Domain Objects are represented outside the application and reconstructed when they return.
+
+It provides a stable communication boundary between the Application Architecture and external systems while allowing each to evolve independently.
+
+---
+
+## Purpose
+
+Applications rarely exist in isolation.
+
+Information must eventually be:
+
+* published,
+* synchronized,
+* discovered,
+* installed,
+* imported,
+* exported,
+* archived,
+* or shared.
+
+These activities require information to leave the application's internal runtime.
+
+Rather than exposing Domain Objects directly, the application represents them as portable Resources at the Resource Boundary.
+
+The Resource Boundary defines this transformation.
+
+---
+
+## Domain Objects And Resources
+
+A Domain Object is the application's internal representation of information.
+
+It contains behavior, relationships, and application semantics.
+
+A Resource is the external representation of that Domain Object.
+
+Resources are designed for communication rather than execution.
+
+They provide a stable representation suitable for storage, synchronization, transport, publication, and reconstruction.
+
+Applications operate on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary connects these two worlds.
+
+---
+
+## Responsibilities
+
+The Resource Boundary is responsible for concepts that exist outside the application's runtime.
+
+These include:
+
+* Resource Identity
+* Resource Representations
+* Discovery
+* Resolution
+* Installation
+* Publication
+* Synchronization
+* Resource Lifecycle
+* Resource Persistence
+
+These responsibilities define how Resources behave independently of the application's internal implementation.
+
+---
+
+## The Domain Resource Model
+
+The Domain Resource Model defines the conceptual model used by the Resource Boundary.
+
+It establishes the relationship between:
+
+* Domains,
+* Resources,
+* Resource Representations,
+* Domain Object Factories,
+* Domain Objects,
+* and Domain Stores.
+
+Every Resource crossing the boundary follows this model.
+
+The remaining Resource Boundary documents build upon these concepts.
+
+---
+
+## Boundary Independence
+
+The Resource Boundary intentionally separates application behavior from communication technology.
+
+The Application Architecture owns Domain Objects.
+
+The Resource Boundary owns Resources.
+
+Communication technologies implement the boundary.
+
+This separation allows the application to remain independent of any particular protocol or storage technology.
+
+---
+
+## Boundary Implementations
+
+The Resource Boundary may be implemented using different communication technologies.
+
+This application primarily implements the boundary using the Nostr protocol together with compatible decentralized services such as Blossom.
+
+Other implementations could communicate using:
+
+* REST
+* RPC
+* GraphQL
+* Local Files
+* Cloud Storage
+* or other communication mechanisms
+
+The Application Architecture remains unchanged.
+
+Only the boundary implementation changes.
+
+---
+
+## Information Flow
+
+Conceptually, information crosses the Resource Boundary as follows:
+
+```mermaid
+flowchart LR
+
+    Domain["Domain Object"]
+
+    Boundary["Resource Boundary"]
+
+    Resource["Resource"]
+
+    Implementation["Boundary Implementation"]
+
+    Domain --> Boundary
+
+    Boundary --> Resource
+
+    Resource --> Implementation
+
+    Implementation --> Resource
+
+    Resource --> Boundary
+
+    Boundary --> Domain
+```
+
+The application never communicates directly with external systems using Domain Objects.
+
+Every interaction occurs through Resources defined by the Resource Boundary.
+
+---
+
+## Why A Boundary Exists
+
+Separating Domain Objects from Resources provides several important benefits.
+
+The application's internal model remains focused on application behavior.
+
+External representations remain focused on communication.
+
+Communication technologies can evolve without affecting application behavior.
+
+Different boundary implementations can coexist while preserving the same Application Architecture.
+
+This separation reduces coupling and simplifies long-term evolution.
+
+---
+
+## Relationship To The Application Architecture
+
+The Application Architecture defines how the application behaves.
+
+The Resource Boundary defines how the application communicates beyond its own runtime.
+
+Neither replaces the other.
+
+Together they define the complete system.
+
+The Application owns behavior.
+
+The Resource Boundary owns communication.
+
+---
+
+## Relationship To Implementation
+
+The Resource Boundary does not require any particular implementation.
+
+Individual applications may implement the boundary using technologies appropriate for their environment.
+
+This application chooses Nostr because it naturally supports decentralized identity, replaceable resources, offline-first synchronization, and portable ownership.
+
+Those technologies implement the boundary.
+
+They do not define it.
+
+---
+
+## Key Principles
+
+The Resource Boundary follows several fundamental principles:
+
+* Applications operate exclusively on Domain Objects.
+* External communication occurs exclusively through Resources.
+* Domain Objects are never exposed directly outside the application.
+* Boundary implementations remain independent of the Application Architecture.
+* Communication technologies should be replaceable.
+* The Domain Resource Model provides the conceptual foundation for every Resource crossing the boundary.
+
+---
+
+## Key Takeaways
+
+* The Resource Boundary separates application behavior from external communication.
+* Domain Objects remain internal to the application.
+* Resources represent Domain Objects outside the application.
+* The Domain Resource Model defines the concepts used by the boundary.
+* Communication technologies implement the boundary rather than define it.
+* The Application Architecture and Resource Boundary evolve independently while collaborating through a stable communication model.
+# Resource Boundary
+
+The Resource Boundary defines how Domain Objects leave and re-enter the application.
+
+Applications operate exclusively on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary separates these two models by defining how Domain Objects are represented outside the application and reconstructed when they return.
+
+It provides a stable communication boundary between the Application Architecture and external systems while allowing each to evolve independently.
+
+---
+
+## Purpose
+
+Applications rarely exist in isolation.
+
+Information must eventually be:
+
+* published,
+* synchronized,
+* discovered,
+* installed,
+* imported,
+* exported,
+* archived,
+* or shared.
+
+These activities require information to leave the application's internal runtime.
+
+Rather than exposing Domain Objects directly, the application represents them as portable Resources at the Resource Boundary.
+
+The Resource Boundary defines this transformation.
+
+---
+
+## Domain Objects And Resources
+
+A Domain Object is the application's internal representation of information.
+
+It contains behavior, relationships, and application semantics.
+
+A Resource is the external representation of that Domain Object.
+
+Resources are designed for communication rather than execution.
+
+They provide a stable representation suitable for storage, synchronization, transport, publication, and reconstruction.
+
+Applications operate on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary connects these two worlds.
+
+---
+
+## Responsibilities
+
+The Resource Boundary is responsible for concepts that exist outside the application's runtime.
+
+These include:
+
+* Resource Identity
+* Resource Representations
+* Discovery
+* Resolution
+* Installation
+* Publication
+* Synchronization
+* Resource Lifecycle
+* Resource Persistence
+
+These responsibilities define how Resources behave independently of the application's internal implementation.
+
+---
+
+## The Domain Resource Model
+
+The Domain Resource Model defines the conceptual model used by the Resource Boundary.
+
+It establishes the relationship between:
+
+* Domains,
+* Resources,
+* Resource Representations,
+* Domain Object Factories,
+* Domain Objects,
+* and Domain Stores.
+
+Every Resource crossing the boundary follows this model.
+
+The remaining Resource Boundary documents build upon these concepts.
+
+---
+
+## Boundary Independence
+
+The Resource Boundary intentionally separates application behavior from communication technology.
+
+The Application Architecture owns Domain Objects.
+
+The Resource Boundary owns Resources.
+
+Communication technologies implement the boundary.
+
+This separation allows the application to remain independent of any particular protocol or storage technology.
+
+---
+
+## Boundary Implementations
+
+The Resource Boundary may be implemented using different communication technologies.
+
+This application primarily implements the boundary using the Nostr protocol together with compatible decentralized services such as Blossom.
+
+Other implementations could communicate using:
+
+* REST
+* RPC
+* GraphQL
+* Local Files
+* Cloud Storage
+* or other communication mechanisms
+
+The Application Architecture remains unchanged.
+
+Only the boundary implementation changes.
+
+---
+
+## Information Flow
+
+Conceptually, information crosses the Resource Boundary as follows:
+
+```mermaid
+flowchart LR
+
+    Domain["Domain Object"]
+
+    Boundary["Resource Boundary"]
+
+    Resource["Resource"]
+
+    Implementation["Boundary Implementation"]
+
+    Domain --> Boundary
+
+    Boundary --> Resource
+
+    Resource --> Implementation
+
+    Implementation --> Resource
+
+    Resource --> Boundary
+
+    Boundary --> Domain
+```
+
+The application never communicates directly with external systems using Domain Objects.
+
+Every interaction occurs through Resources defined by the Resource Boundary.
+
+---
+
+## Why A Boundary Exists
+
+Separating Domain Objects from Resources provides several important benefits.
+
+The application's internal model remains focused on application behavior.
+
+External representations remain focused on communication.
+
+Communication technologies can evolve without affecting application behavior.
+
+Different boundary implementations can coexist while preserving the same Application Architecture.
+
+This separation reduces coupling and simplifies long-term evolution.
+
+---
+
+## Relationship To The Application Architecture
+
+The Application Architecture defines how the application behaves.
+
+The Resource Boundary defines how the application communicates beyond its own runtime.
+
+Neither replaces the other.
+
+Together they define the complete system.
+
+The Application owns behavior.
+
+The Resource Boundary owns communication.
+
+---
+
+## Relationship To Implementation
+
+The Resource Boundary does not require any particular implementation.
+
+Individual applications may implement the boundary using technologies appropriate for their environment.
+
+This application chooses Nostr because it naturally supports decentralized identity, replaceable resources, offline-first synchronization, and portable ownership.
+
+Those technologies implement the boundary.
+
+They do not define it.
+
+---
+
+## Key Principles
+
+The Resource Boundary follows several fundamental principles:
+
+* Applications operate exclusively on Domain Objects.
+* External communication occurs exclusively through Resources.
+* Domain Objects are never exposed directly outside the application.
+* Boundary implementations remain independent of the Application Architecture.
+* Communication technologies should be replaceable.
+* The Domain Resource Model provides the conceptual foundation for every Resource crossing the boundary.
+
+---
+
+## Key Takeaways
+
+* The Resource Boundary separates application behavior from external communication.
+* Domain Objects remain internal to the application.
+* Resources represent Domain Objects outside the application.
+* The Domain Resource Model defines the concepts used by the boundary.
+* Communication technologies implement the boundary rather than define it.
+* The Application Architecture and Resource Boundary evolve independently while collaborating through a stable communication model.
+# Resource Boundary
+
+The Resource Boundary defines how Domain Objects leave and re-enter the application.
+
+Applications operate exclusively on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary separates these two models by defining how Domain Objects are represented outside the application and reconstructed when they return.
+
+It provides a stable communication boundary between the Application Architecture and external systems while allowing each to evolve independently.
+
+---
+
+## Purpose
+
+Applications rarely exist in isolation.
+
+Information must eventually be:
+
+* published,
+* synchronized,
+* discovered,
+* installed,
+* imported,
+* exported,
+* archived,
+* or shared.
+
+These activities require information to leave the application's internal runtime.
+
+Rather than exposing Domain Objects directly, the application represents them as portable Resources at the Resource Boundary.
+
+The Resource Boundary defines this transformation.
+
+---
+
+## Domain Objects And Resources
+
+A Domain Object is the application's internal representation of information.
+
+It contains behavior, relationships, and application semantics.
+
+A Resource is the external representation of that Domain Object.
+
+Resources are designed for communication rather than execution.
+
+They provide a stable representation suitable for storage, synchronization, transport, publication, and reconstruction.
+
+Applications operate on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary connects these two worlds.
+
+---
+
+## Responsibilities
+
+The Resource Boundary is responsible for concepts that exist outside the application's runtime.
+
+These include:
+
+* Resource Identity
+* Resource Representations
+* Discovery
+* Resolution
+* Installation
+* Publication
+* Synchronization
+* Resource Lifecycle
+* Resource Persistence
+
+These responsibilities define how Resources behave independently of the application's internal implementation.
+
+---
+
+## The Domain Resource Model
+
+The Domain Resource Model defines the conceptual model used by the Resource Boundary.
+
+It establishes the relationship between:
+
+* Domains,
+* Resources,
+* Resource Representations,
+* Domain Object Factories,
+* Domain Objects,
+* and Domain Stores.
+
+Every Resource crossing the boundary follows this model.
+
+The remaining Resource Boundary documents build upon these concepts.
+
+---
+
+## Boundary Independence
+
+The Resource Boundary intentionally separates application behavior from communication technology.
+
+The Application Architecture owns Domain Objects.
+
+The Resource Boundary owns Resources.
+
+Communication technologies implement the boundary.
+
+This separation allows the application to remain independent of any particular protocol or storage technology.
+
+---
+
+## Boundary Implementations
+
+The Resource Boundary may be implemented using different communication technologies.
+
+This application primarily implements the boundary using the Nostr protocol together with compatible decentralized services such as Blossom.
+
+Other implementations could communicate using:
+
+* REST
+* RPC
+* GraphQL
+* Local Files
+* Cloud Storage
+* or other communication mechanisms
+
+The Application Architecture remains unchanged.
+
+Only the boundary implementation changes.
+
+---
+
+## Information Flow
+
+Conceptually, information crosses the Resource Boundary as follows:
+
+```mermaid
+flowchart LR
+
+    Domain["Domain Object"]
+
+    Boundary["Resource Boundary"]
+
+    Resource["Resource"]
+
+    Implementation["Boundary Implementation"]
+
+    Domain --> Boundary
+
+    Boundary --> Resource
+
+    Resource --> Implementation
+
+    Implementation --> Resource
+
+    Resource --> Boundary
+
+    Boundary --> Domain
+```
+
+The application never communicates directly with external systems using Domain Objects.
+
+Every interaction occurs through Resources defined by the Resource Boundary.
+
+---
+
+## Why A Boundary Exists
+
+Separating Domain Objects from Resources provides several important benefits.
+
+The application's internal model remains focused on application behavior.
+
+External representations remain focused on communication.
+
+Communication technologies can evolve without affecting application behavior.
+
+Different boundary implementations can coexist while preserving the same Application Architecture.
+
+This separation reduces coupling and simplifies long-term evolution.
+
+---
+
+## Relationship To The Application Architecture
+
+The Application Architecture defines how the application behaves.
+
+The Resource Boundary defines how the application communicates beyond its own runtime.
+
+Neither replaces the other.
+
+Together they define the complete system.
+
+The Application owns behavior.
+
+The Resource Boundary owns communication.
+
+---
+
+## Relationship To Implementation
+
+The Resource Boundary does not require any particular implementation.
+
+Individual applications may implement the boundary using technologies appropriate for their environment.
+
+This application chooses Nostr because it naturally supports decentralized identity, replaceable resources, offline-first synchronization, and portable ownership.
+
+Those technologies implement the boundary.
+
+They do not define it.
+
+---
+
+## Key Principles
+
+The Resource Boundary follows several fundamental principles:
+
+* Applications operate exclusively on Domain Objects.
+* External communication occurs exclusively through Resources.
+* Domain Objects are never exposed directly outside the application.
+* Boundary implementations remain independent of the Application Architecture.
+* Communication technologies should be replaceable.
+* The Domain Resource Model provides the conceptual foundation for every Resource crossing the boundary.
+
+---
+
+## Key Takeaways
+
+* The Resource Boundary separates application behavior from external communication.
+* Domain Objects remain internal to the application.
+* Resources represent Domain Objects outside the application.
+* The Domain Resource Model defines the concepts used by the boundary.
+* Communication technologies implement the boundary rather than define it.
+* The Application Architecture and Resource Boundary evolve independently while collaborating through a stable communication model.
+# Resource Boundary
+
+The Resource Boundary defines how Domain Objects leave and re-enter the application.
+
+Applications operate exclusively on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary separates these two models by defining how Domain Objects are represented outside the application and reconstructed when they return.
+
+It provides a stable communication boundary between the Application Architecture and external systems while allowing each to evolve independently.
+
+---
+
+## Purpose
+
+Applications rarely exist in isolation.
+
+Information must eventually be:
+
+* published,
+* synchronized,
+* discovered,
+* installed,
+* imported,
+* exported,
+* archived,
+* or shared.
+
+These activities require information to leave the application's internal runtime.
+
+Rather than exposing Domain Objects directly, the application represents them as portable Resources at the Resource Boundary.
+
+The Resource Boundary defines this transformation.
+
+---
+
+## Domain Objects And Resources
+
+A Domain Object is the application's internal representation of information.
+
+It contains behavior, relationships, and application semantics.
+
+A Resource is the external representation of that Domain Object.
+
+Resources are designed for communication rather than execution.
+
+They provide a stable representation suitable for storage, synchronization, transport, publication, and reconstruction.
+
+Applications operate on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary connects these two worlds.
+
+---
+
+## Responsibilities
+
+The Resource Boundary is responsible for concepts that exist outside the application's runtime.
+
+These include:
+
+* Resource Identity
+* Resource Representations
+* Discovery
+* Resolution
+* Installation
+* Publication
+* Synchronization
+* Resource Lifecycle
+* Resource Persistence
+
+These responsibilities define how Resources behave independently of the application's internal implementation.
+
+---
+
+## The Domain Resource Model
+
+The Domain Resource Model defines the conceptual model used by the Resource Boundary.
+
+It establishes the relationship between:
+
+* Domains,
+* Resources,
+* Resource Representations,
+* Domain Object Factories,
+* Domain Objects,
+* and Domain Stores.
+
+Every Resource crossing the boundary follows this model.
+
+The remaining Resource Boundary documents build upon these concepts.
+
+---
+
+## Boundary Independence
+
+The Resource Boundary intentionally separates application behavior from communication technology.
+
+The Application Architecture owns Domain Objects.
+
+The Resource Boundary owns Resources.
+
+Communication technologies implement the boundary.
+
+This separation allows the application to remain independent of any particular protocol or storage technology.
+
+---
+
+## Boundary Implementations
+
+The Resource Boundary may be implemented using different communication technologies.
+
+This application primarily implements the boundary using the Nostr protocol together with compatible decentralized services such as Blossom.
+
+Other implementations could communicate using:
+
+* REST
+* RPC
+* GraphQL
+* Local Files
+* Cloud Storage
+* or other communication mechanisms
+
+The Application Architecture remains unchanged.
+
+Only the boundary implementation changes.
+
+---
+
+## Information Flow
+
+Conceptually, information crosses the Resource Boundary as follows:
+
+```mermaid
+flowchart LR
+
+    Domain["Domain Object"]
+
+    Boundary["Resource Boundary"]
+
+    Resource["Resource"]
+
+    Implementation["Boundary Implementation"]
+
+    Domain --> Boundary
+
+    Boundary --> Resource
+
+    Resource --> Implementation
+
+    Implementation --> Resource
+
+    Resource --> Boundary
+
+    Boundary --> Domain
+```
+
+The application never communicates directly with external systems using Domain Objects.
+
+Every interaction occurs through Resources defined by the Resource Boundary.
+
+---
+
+## Why A Boundary Exists
+
+Separating Domain Objects from Resources provides several important benefits.
+
+The application's internal model remains focused on application behavior.
+
+External representations remain focused on communication.
+
+Communication technologies can evolve without affecting application behavior.
+
+Different boundary implementations can coexist while preserving the same Application Architecture.
+
+This separation reduces coupling and simplifies long-term evolution.
+
+---
+
+## Relationship To The Application Architecture
+
+The Application Architecture defines how the application behaves.
+
+The Resource Boundary defines how the application communicates beyond its own runtime.
+
+Neither replaces the other.
+
+Together they define the complete system.
+
+The Application owns behavior.
+
+The Resource Boundary owns communication.
+
+---
+
+## Relationship To Implementation
+
+The Resource Boundary does not require any particular implementation.
+
+Individual applications may implement the boundary using technologies appropriate for their environment.
+
+This application chooses Nostr because it naturally supports decentralized identity, replaceable resources, offline-first synchronization, and portable ownership.
+
+Those technologies implement the boundary.
+
+They do not define it.
+
+---
+
+## Key Principles
+
+The Resource Boundary follows several fundamental principles:
+
+* Applications operate exclusively on Domain Objects.
+* External communication occurs exclusively through Resources.
+* Domain Objects are never exposed directly outside the application.
+* Boundary implementations remain independent of the Application Architecture.
+* Communication technologies should be replaceable.
+* The Domain Resource Model provides the conceptual foundation for every Resource crossing the boundary.
+
+---
+
+## Key Takeaways
+
+* The Resource Boundary separates application behavior from external communication.
+* Domain Objects remain internal to the application.
+* Resources represent Domain Objects outside the application.
+* The Domain Resource Model defines the concepts used by the boundary.
+* Communication technologies implement the boundary rather than define it.
+* The Application Architecture and Resource Boundary evolve independently while collaborating through a stable communication model.
+# Resource Boundary
+
+The Resource Boundary defines how Domain Objects leave and re-enter the application.
+
+Applications operate exclusively on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary separates these two models by defining how Domain Objects are represented outside the application and reconstructed when they return.
+
+It provides a stable communication boundary between the Application Architecture and external systems while allowing each to evolve independently.
+
+---
+
+## Purpose
+
+Applications rarely exist in isolation.
+
+Information must eventually be:
+
+* published,
+* synchronized,
+* discovered,
+* installed,
+* imported,
+* exported,
+* archived,
+* or shared.
+
+These activities require information to leave the application's internal runtime.
+
+Rather than exposing Domain Objects directly, the application represents them as portable Resources at the Resource Boundary.
+
+The Resource Boundary defines this transformation.
+
+---
+
+## Domain Objects And Resources
+
+A Domain Object is the application's internal representation of information.
+
+It contains behavior, relationships, and application semantics.
+
+A Resource is the external representation of that Domain Object.
+
+Resources are designed for communication rather than execution.
+
+They provide a stable representation suitable for storage, synchronization, transport, publication, and reconstruction.
+
+Applications operate on Domain Objects.
+
+External systems operate on Resources.
+
+The Resource Boundary connects these two worlds.
+
+---
+
+## Responsibilities
+
+The Resource Boundary is responsible for concepts that exist outside the application's runtime.
+
+These include:
+
+* Resource Identity
+* Resource Representations
+* Discovery
+* Resolution
+* Installation
+* Publication
+* Synchronization
+* Resource Lifecycle
+* Resource Persistence
+
+These responsibilities define how Resources behave independently of the application's internal implementation.
+
+---
+
+## The Domain Resource Model
+
+The Domain Resource Model defines the conceptual model used by the Resource Boundary.
+
+It establishes the relationship between:
+
+* Domains,
+* Resources,
+* Resource Representations,
+* Domain Object Factories,
+* Domain Objects,
+* and Domain Stores.
+
+Every Resource crossing the boundary follows this model.
+
+The remaining Resource Boundary documents build upon these concepts.
+
+---
+
+## Boundary Independence
+
+The Resource Boundary intentionally separates application behavior from communication technology.
+
+The Application Architecture owns Domain Objects.
+
+The Resource Boundary owns Resources.
+
+Communication technologies implement the boundary.
+
+This separation allows the application to remain independent of any particular protocol or storage technology.
+
+---
+
+## Boundary Implementations
+
+The Resource Boundary may be implemented using different communication technologies.
+
+This application primarily implements the boundary using the Nostr protocol together with compatible decentralized services such as Blossom.
+
+Other implementations could communicate using:
+
+* REST
+* RPC
+* GraphQL
+* Local Files
+* Cloud Storage
+* or other communication mechanisms
+
+The Application Architecture remains unchanged.
+
+Only the boundary implementation changes.
+
+---
+
+## Information Flow
+
+Conceptually, information crosses the Resource Boundary as follows:
+
+```mermaid
+flowchart LR
+
+    Domain["Domain Object"]
+
+    Boundary["Resource Boundary"]
+
+    Resource["Resource"]
+
+    Implementation["Boundary Implementation"]
+
+    Domain --> Boundary
+
+    Boundary --> Resource
+
+    Resource --> Implementation
+
+    Implementation --> Resource
+
+    Resource --> Boundary
+
+    Boundary --> Domain
+```
+
+The application never communicates directly with external systems using Domain Objects.
+
+Every interaction occurs through Resources defined by the Resource Boundary.
+
+---
+
+## Why A Boundary Exists
+
+Separating Domain Objects from Resources provides several important benefits.
+
+The application's internal model remains focused on application behavior.
+
+External representations remain focused on communication.
+
+Communication technologies can evolve without affecting application behavior.
+
+Different boundary implementations can coexist while preserving the same Application Architecture.
+
+This separation reduces coupling and simplifies long-term evolution.
+
+---
+
+## Relationship To The Application Architecture
+
+The Application Architecture defines how the application behaves.
+
+The Resource Boundary defines how the application communicates beyond its own runtime.
+
+Neither replaces the other.
+
+Together they define the complete system.
+
+The Application owns behavior.
+
+The Resource Boundary owns communication.
+
+---
+
+## Relationship To Implementation
+
+The Resource Boundary does not require any particular implementation.
+
+Individual applications may implement the boundary using technologies appropriate for their environment.
+
+This application chooses Nostr because it naturally supports decentralized identity, replaceable resources, offline-first synchronization, and portable ownership.
+
+Those technologies implement the boundary.
+
+They do not define it.
+
+---
+
+## Key Principles
+
+The Resource Boundary follows several fundamental principles:
+
+* Applications operate exclusively on Domain Objects.
+* External communication occurs exclusively through Resources.
+* Domain Objects are never exposed directly outside the application.
+* Boundary implementations remain independent of the Application Architecture.
+* Communication technologies should be replaceable.
+* The Domain Resource Model provides the conceptual foundation for every Resource crossing the boundary.
+
+---
+
+## Key Takeaways
+
+* The Resource Boundary separates application behavior from external communication.
+* Domain Objects remain internal to the application.
+* Resources represent Domain Objects outside the application.
+* The Domain Resource Model defines the concepts used by the boundary.
+* Communication technologies implement the boundary rather than define it.
+* The Application Architecture and Resource Boundary evolve independently while collaborating through a stable communication model.
