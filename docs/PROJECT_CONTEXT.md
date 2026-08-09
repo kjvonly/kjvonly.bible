@@ -1688,3 +1688,199 @@ This allows the application to continue growing without requiring fundamental ar
 * The Domain Resource Model defines the conceptual model used by the Resource Boundary.
 * Boundary implementations communicate Resources using technologies such as Nostr, Blossom, REST, or RPC.
 * Separating application behavior from communication technology allows both to evolve independently.
+
+# Application Runtime
+
+The Application Runtime provides the environment in which every Domain operates.
+
+Rather than defining application behavior itself, the Runtime is responsible for coordinating presentation, navigation, interaction, and user workflow while allowing each Domain to remain focused on its own responsibilities.
+
+The Runtime owns the study environment.
+
+Domains own the study content.
+
+Together they provide the complete application experience.
+
+---
+
+## Purpose
+
+The purpose of the Runtime is to provide a consistent environment in which Domains can present their capabilities without becoming responsible for application infrastructure.
+
+Rather than embedding presentation logic inside individual Domains, the Runtime provides a common execution model shared throughout the application.
+
+This separation allows Domains to focus exclusively on business behavior while the Runtime manages how that behavior is presented to the user.
+
+---
+
+## The Workspace
+
+A Workspace represents a complete study session.
+
+Everything the user interacts with exists within a Workspace.
+
+A Workspace defines:
+
+* the current layout,
+* the active panes,
+* the buffers assigned to each pane,
+* and the collection of active Module instances.
+
+Workspaces allow users to build complex study environments that can be preserved and restored over time.
+
+---
+
+## Panes
+
+A Pane represents a region within a Workspace.
+
+Each Pane hosts a single Module instance.
+
+Panes may be divided, replaced, resized, or removed without affecting the Domains themselves.
+
+The Runtime manages the pane layout.
+
+Domains remain unaware of how they are presented.
+
+This separation allows presentation to evolve independently from application behavior.
+
+---
+
+## Buffers
+
+A Buffer represents the navigation context assigned to a Pane.
+
+Rather than containing business behavior, a Buffer carries the information required for a Module to present a particular piece of Domain data.
+
+Examples include:
+
+* the current Bible location,
+* the selected reading plan,
+* the active note,
+* or any other navigation state required by a Module.
+
+Buffers allow Modules to be recreated, moved between panes, or restored without coupling presentation to Domain implementation.
+
+---
+
+## Module Instances
+
+A Module Instance presents the capabilities of a Domain within a Pane.
+
+Modules do not own business behavior.
+
+Instead, they request behavior from their owning Domain while presenting that behavior to the user.
+
+Multiple instances of the same Module may exist simultaneously.
+
+For example, a user may open several Bible readers, compare different passages, or search Scripture in one pane while reading another.
+
+Each Module instance operates independently while sharing the same Domain behavior.
+
+---
+
+## Runtime Responsibilities
+
+The Runtime is responsible for coordinating the study environment.
+
+Responsibilities include:
+
+* Workspace management
+* Pane management
+* Buffer management
+* Module lifecycle
+* Layout coordination
+* Runtime events
+* Session restoration
+* User interaction flow
+
+The Runtime intentionally avoids implementing Domain behavior.
+
+Its responsibility is to coordinate the environment in which Domains operate.
+
+---
+
+## Domain Participation
+
+Domains participate in the Runtime through Module instances.
+
+Each Domain exposes one or more Modules that present its capabilities.
+
+For example:
+
+* The Bible Domain provides reading and study Modules.
+* The Notes Domain provides note management Modules.
+* The Reading Plans Domain provides reading plan Modules.
+* The Settings Domain provides configuration Modules.
+
+The Runtime hosts these Modules without becoming responsible for their business logic.
+
+---
+
+## Collaboration
+
+Interaction within the Runtime follows a consistent pattern.
+
+The user interacts with a Module.
+
+The Module requests behavior from its Domain.
+
+The Domain operates on Domain Objects.
+
+The Runtime coordinates presentation without participating in Domain behavior.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    User
+
+    Workspace
+
+    Pane
+
+    Module
+
+    Domain
+
+    DomainObject["Domain Object"]
+
+    User --> Workspace
+    Workspace --> Pane
+    Pane --> Module
+    Module --> Domain
+    Domain --> DomainObject
+```
+
+The Runtime coordinates interaction.
+
+Domains provide behavior.
+
+This separation keeps both responsibilities focused and independently evolvable.
+
+---
+
+## Long-Term Evolution
+
+The Runtime is expected to evolve as the application grows.
+
+New presentation models, layout capabilities, workspace features, and interaction patterns may be introduced without affecting the Domains themselves.
+
+Likewise, Domains may introduce new capabilities without requiring changes to the Runtime beyond presenting additional Module instances.
+
+This separation allows both the Runtime and Domains to evolve independently while preserving a consistent user experience.
+
+---
+
+## Key Takeaways
+
+* The Runtime provides the environment in which Domains operate.
+* Workspaces represent complete study sessions.
+* Panes organize the visual layout.
+* Buffers provide navigation context.
+* Module instances present Domain capabilities.
+* Domains own business behavior.
+* The Runtime owns presentation and interaction.
+* Separating Runtime responsibilities from Domain responsibilities keeps the application flexible and easy to evolve.
+
