@@ -4,27 +4,31 @@
 
 Welcome to the KJVOnly project.
 
-This document is intended to provide the context required to understand the application as a whole before reading its source code.
+This document provides the context required to understand the application before exploring its source code.
 
-The project contains a significant amount of architectural, implementation, and developer documentation. Each document describes one aspect of the system in detail. This document exists to connect those pieces together into a single mental model.
+The repository contains architecture documents, implementation guides, developer documentation, and source code. Each describes a different aspect of the project. This document connects those pieces together into a single mental model so that the overall design can be understood before individual implementation details are examined.
 
-It is written for anyone who needs to understand how the application is organized, why particular architectural decisions were made, and how future development should proceed.
+Whether you are contributing to the project, returning after some time away, or using an AI assistant to assist with development, this document should be your starting point.
 
-Whether you are a new contributor, returning to the project after some time away, or using an AI assistant to help implement new features, this document should be the first thing you read.
+Rather than explaining every implementation detail, it explains how the application is organized, why particular architectural decisions were made, and how those decisions relate to one another.
+
+The goal is to understand the architecture first, allowing the source code to become significantly easier to navigate and reason about.
 
 ---
 
 ## What This Document Is
 
-This document is not intended to replace the architecture documentation.
+This document is a guide to the project's architecture.
 
-Instead, it explains how the architecture fits together.
+It does not replace the architecture documentation.
 
-The architecture documents define individual concepts such as Resource Resolution, Persistence, Workspace Runtime, Public APIs, and Repository Organization.
+Instead, it explains how the various architectural concepts fit together into a cohesive application.
 
-This document explains how those concepts relate to one another and why they exist.
+The architecture documents define individual concepts such as the Workspace Runtime, Domain Resource Model, Resource Boundary, Repository Organization, Public APIs, and Background Processing.
 
-Think of it as the guide that explains how to think about the project rather than how individual pieces are implemented.
+This document explains how those concepts collaborate and why they exist.
+
+Think of it as the guide that teaches you how to think about the project before learning how each individual part is implemented.
 
 ---
 
@@ -32,13 +36,13 @@ Think of it as the guide that explains how to think about the project rather tha
 
 This document is not a specification.
 
-It does not attempt to describe every class, every function, or every implementation detail.
+It does not attempt to describe every class, function, protocol, or implementation detail.
 
-Those responsibilities belong to the architecture documents, implementation documents, and ultimately the source code itself.
+Those responsibilities belong to the architecture documents, implementation guides, and ultimately the source code itself.
 
-Whenever detailed behavior is required, the individual architecture documents should be considered the authoritative reference.
+Whenever detailed behavior is required, those documents should be considered the authoritative reference.
 
-This document focuses on the larger picture.
+This document focuses on the larger architectural picture.
 
 ---
 
@@ -49,11 +53,11 @@ The goal of this document is to build a complete mental model of the application
 By the time you finish reading, you should understand:
 
 * what the application is trying to accomplish,
-* how the major architectural systems fit together,
+* how the major architectural concepts fit together,
 * why the repository is organized the way it is,
 * how different parts of the application collaborate,
 * how new functionality should be designed,
-* and how future development should evolve without compromising the architecture.
+* and how the project can continue evolving without compromising its architecture.
 
 The intent is that the architecture becomes understandable before the source code is explored.
 
@@ -69,59 +73,61 @@ Each layer answers a different set of questions.
 
 This document.
 
-Explains the overall philosophy of the project, introduces the major architectural concepts, and provides the mental model required to understand the system.
+It introduces the application, explains the overall architectural model, and provides the mental framework required to understand the rest of the repository.
 
 ### Principles
 
-The Principles describe the design philosophy used throughout the project.
+The Principles establish the design philosophy used throughout the project.
 
-They explain how architectural decisions are made and establish the rules that guide future development.
+They explain how architectural decisions are made and define the rules that guide future development.
 
 These documents should be understood before evaluating implementation decisions.
 
 ### Application Architecture
 
-The Application Architecture describes the application.
+The Application Architecture describes how the application behaves.
+
+It defines concepts such as:
+
+* Workspace Runtime
+* Module Presentation
+* Persistence
+* Background Processing
+* User Interface
+* Public APIs
+* Repository Organization
+* and the relationships between those systems
+
+These documents describe the application's runtime behavior.
+
+### Domain Resource Model
+
+The Domain Resource Model defines the conceptual model used at the application's Resource Boundary.
 
 It explains concepts such as:
 
-* Workspace Runtime,
-* Module Presentation,
-* Persistence,
-* Background Processing,
-* User Interface,
-* Public APIs,
-* Repository Organization,
-* and the relationships between those systems.
+* Resources
+* Resource Identity
+* Resource Representations
+* Discovery
+* Resolution
+* Installation
+* Publication
+* Synchronization
+* Resource Lifecycle
+* and Domain Object reconstruction
 
-These documents describe how the application behaves.
-
-### Resource Architecture
-
-The Resource Architecture defines how Domain Objects exists independently of the application.
-
-It explains concepts such as:
-
-* Published Resources,
-* Resource Identity,
-* Resource Resolution,
-* Installation,
-* Discovery,
-* Persistence,
-* Synchronization,
-* and Domain Object creation.
-
-These documents describe how application data exists independently of the application itself.
+These documents describe how Domain Objects are represented outside the application and reconstructed back into the application's internal model.
 
 ### Implementation
 
-The Implementation documents describe how the current application realizes the architecture.
+The Implementation documents describe how the current application realizes the documented architecture.
 
-They bridge the gap between architectural concepts and source code without redefining the architecture itself.
+They bridge the gap between architectural concepts and the source code without redefining the architecture itself.
 
 ### Developer Guide
 
-The Developer Guide provides implementation guidance, coding conventions, repository practices, and other information useful when contributing to the project.
+The Developer Guide provides implementation guidance, repository conventions, coding standards, migration strategy, and other information useful when contributing to the project.
 
 ---
 
@@ -132,14 +138,14 @@ The recommended reading order is:
 1. Project Context
 2. Principles
 3. Application Architecture
-4. Resource Architecture
+4. Domain Resource Model
 5. Implementation
 6. Developer Guide
 7. Source Code
 
 Each layer builds upon the previous one.
 
-Reading the repository in this order establishes the architectural reasoning before introducing implementation details.
+Following this order establishes the architectural reasoning before introducing implementation details.
 
 ---
 
@@ -147,7 +153,7 @@ Reading the repository in this order establishes the architectural reasoning bef
 
 Many software projects are organized around technologies.
 
-They begin with frameworks, libraries, patterns, or implementation techniques.
+They begin with frameworks, protocols, libraries, or implementation techniques.
 
 This project intentionally takes a different approach.
 
@@ -161,43 +167,37 @@ Responsibilities define the Public APIs through which architectural owners colla
 
 Only after those concepts are understood does implementation become important.
 
-Throughout this repository you will see the same pattern repeated consistently:
+Throughout this repository the same progression is followed consistently:
 
+```text
 Meaning
-
-↓
-
+    ↓
 Ownership
-
-↓
-
+    ↓
 Responsibility
-
-↓
-
+    ↓
 Public API
-
-↓
-
+    ↓
 Implementation
+```
 
-This progression is the foundation upon which the rest of the architecture is built.
+This progression forms the foundation upon which the rest of the architecture is built.
 
 ---
 
 ## Why This Matters
 
-Software evolves.
+Software changes continuously.
 
-Frameworks change.
+Frameworks evolve.
 
-Storage technologies change.
+Protocols evolve.
 
-Networking changes.
+Storage technologies evolve.
 
-Programming languages change.
+Programming languages evolve.
 
-Implementation techniques change.
+Implementation techniques evolve.
 
 The concepts represented by the application generally change much more slowly.
 
@@ -213,7 +213,7 @@ This makes the application easier to understand, easier to evolve, and easier to
 * The architecture documents define the project.
 * The implementation documents explain how the architecture is realized.
 * The source code implements those ideas.
-* The project is organized around meaning and architectural ownership rather than implementation patterns.
+* The project is organized around meaning, ownership, and architectural responsibility rather than implementation technologies.
 * Understanding the architecture first makes every implementation decision easier to reason about.
 
 # Project Overview
