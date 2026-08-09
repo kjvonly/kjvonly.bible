@@ -1445,203 +1445,178 @@ These characteristics influence every architectural and implementation decision 
 
 The application is organized around Domains.
 
-A Domain represents a cohesive area of application responsibility that models a particular aspect of the study experience.
+A Domain represents a cohesive area of application responsibility that models a meaningful concept within the application.
 
-Rather than organizing the application around technical concerns, each Domain owns a meaningful concept that users interact with directly.
+Domains own application behavior.
 
-This organization allows the application to evolve by introducing new capabilities without fundamentally changing its overall architecture.
+They define the Domain Objects, business rules, persistence, Resource Boundary participation, and Public APIs required to support that concept.
 
-Every Domain owns its own Domain Objects, behavior, persistence, and Resource Boundary participation while collaborating with the remainder of the application through Public APIs.
+The application intentionally organizes itself around these enduring concepts rather than around user interface features, modules, or technical implementation.
 
 ---
 
-## Bible
+## Domains And Modules
+
+Domains and Modules represent different architectural concepts.
+
+A **Domain** owns application behavior.
+
+A **Module** presents Domain capabilities within the user interface.
+
+A single Domain may expose multiple Modules, and multiple Module instances may exist simultaneously within a Workspace.
+
+Modules do not own business logic.
+
+They present the capabilities provided by their Domain.
+
+This distinction keeps application behavior independent from presentation while allowing the user interface to evolve without changing the underlying architecture.
+
+---
+
+## Bible Domain
 
 The Bible Domain is the foundation of the application.
 
-It provides access to Bible translations, chapters, books, verses, references, and related study information.
-
-Most application workflows ultimately interact with the Bible Domain in some way.
+It owns every responsibility directly related to studying Scripture.
 
 Responsibilities include:
 
 * Bible content
 * Chapter navigation
 * Verse references
-* Book organization
-* Translation support
 * Strong's integration
-* Scripture search
+* Bible annotations
+* Bible search
+* Cross references
+* Translation support
+* Scripture presentation
 
-The Bible Domain provides the primary context around which the remainder of the application is organized.
+Although these capabilities may appear as different Modules within the user interface, they remain responsibilities of the Bible Domain because they all exist to support the study of Scripture.
+
+The Bible Domain owns the behavior.
+
+Modules simply present that behavior.
 
 ---
 
-## Notes
+## Notes Domain
 
 The Notes Domain manages user-created study material.
 
-Notes allow users to record observations, insights, references, and commentary while studying Scripture.
-
-Notes are treated as first-class application data and participate in the same architectural model as every other Domain.
-
 Responsibilities include:
 
-* Creating notes
-* Editing notes
-* Organizing notes
-* Searching notes
-* Associating notes with Scripture
+* Notes
+* Note organization
+* Note search
+* Scripture associations
+* User-authored content
 
-The Notes Domain allows personal study material to grow alongside Scripture.
+The Notes Domain owns every aspect of personal note management.
+
+Searching notes is a capability of the Notes Domain rather than a separate architectural concern.
 
 ---
 
-## Reading Plans
+## Reading Plans Domain
 
-The Reading Plans Domain manages structured reading schedules.
-
-Reading plans guide users through Scripture while tracking progress independently of the Bible content itself.
+The Reading Plans Domain manages structured Bible reading.
 
 Responsibilities include:
 
 * Reading plans
+* Reading schedules
 * Reading progress
-* Daily readings
+* Completed readings
 * Plan management
-* Completion tracking
 
-Reading Plans coordinate with the Bible Domain while remaining an independent area of responsibility.
+Reading Plans collaborate closely with the Bible Domain but remain an independent area of application responsibility.
 
----
+The Reading Plans Domain determines what should be read.
 
-## Annotations
-
-The Annotations Domain manages user interaction directly within Scripture.
-
-Annotations enrich Bible content without modifying the Bible itself.
-
-Responsibilities include:
-
-* Highlights
-* Verse annotations
-* Word annotations
-* Visual study markers
-* User interaction state
-
-Annotations remain independent from Bible content while providing a richer study experience.
+The Bible Domain provides the Scripture being read.
 
 ---
 
-## Search
+## Settings Domain
 
-The Search Domain provides fast access to application information.
-
-Search operates across multiple Domains while respecting each Domain's ownership of its own data.
+The Settings Domain manages application preferences.
 
 Responsibilities include:
 
-* Scripture search
-* Notes search
-* Domain-specific indexes
-* Query execution
-* Result presentation
-
-Search provides a consistent experience while allowing each Domain to determine how its information is indexed and queried.
-
----
-
-## Settings
-
-The Settings Domain manages user preferences and application configuration.
-
-Settings describe how the application behaves rather than the study content itself.
-
-Responsibilities include:
-
-* Application preferences
+* User preferences
 * Theme configuration
-* User options
 * Runtime preferences
-* Local application configuration
+* Local application settings
 
-Settings allow users to personalize the application while remaining separate from study material.
-
----
-
-## Workspaces
-
-The Workspace Domain manages the user's study environment.
-
-A Workspace represents an active study session composed of panes, buffers, and module instances.
-
-Rather than representing study content, Workspaces organize how that content is presented and interacted with.
-
-Responsibilities include:
-
-* Workspace management
-* Pane organization
-* Buffer management
-* Study session persistence
-* Layout restoration
-
-The Workspace Domain provides the environment in which every other Domain operates.
+Settings influence how the application behaves without becoming part of the study data itself.
 
 ---
 
 ## Domain Collaboration
 
-Domains are intentionally independent.
+Domains remain intentionally independent.
 
-Each Domain owns its own behavior and internal implementation.
-
-When collaboration is required, Domains communicate through well-defined Public APIs rather than directly depending upon one another's implementation.
+When collaboration is required, Domains communicate through Public APIs rather than depending upon each other's internal implementation.
 
 For example:
 
 * Reading Plans request Bible content without owning Bible behavior.
 * Notes associate with Scripture without modifying Bible content.
-* Search queries Domain-owned indexes while leaving indexing decisions to each individual Domain.
-* Workspaces coordinate presentation without owning Domain behavior.
+* Bible annotations remain part of the Bible Domain while collaborating with Notes when appropriate.
+* Each Domain owns its own search behavior rather than depending upon a shared Search Domain.
 
-This separation allows Domains to evolve independently while contributing to a cohesive application.
+This separation allows Domains to evolve independently while maintaining a cohesive application.
 
 ---
 
-## Shared Architectural Model
+## Consistent Ownership
 
-Although each Domain represents different application concepts, every Domain follows the same architectural model.
+Every Domain follows the same architectural model.
 
 Each Domain owns:
 
 * Domain Objects
-* Internal behavior
+* Business behavior
 * Public APIs
 * Persistence
 * Resource Boundary participation
 
-This consistency allows the architecture to scale naturally as new Domains are introduced.
+This consistency makes the architecture predictable.
+
+When introducing new functionality, the first question should not be:
+
+> *Where should this code live?*
+
+Instead, the question should be:
+
+> *Which Domain owns this behavior?*
+
+Ownership determines implementation.
 
 ---
 
 ## Growing The Application
 
-New capabilities are typically introduced by adding new Domains rather than extending unrelated ones.
+The application grows by introducing new Domains only when new areas of responsibility emerge.
 
-This keeps ownership clear and prevents unrelated responsibilities from accumulating within existing Domains.
+Capabilities that naturally belong to an existing Domain should remain within that Domain rather than becoming independent architectural concepts.
 
-As the application evolves, the number of Domains may grow.
+For example, Bible Search belongs to the Bible Domain because it searches Bible content.
 
-The architectural model remains unchanged.
+Bible Annotations belong to the Bible Domain because they enrich Scripture.
 
-Each new Domain simply becomes another independently owned participant within the overall Application Architecture.
+Likewise, Note Search belongs to the Notes Domain because it searches Notes.
+
+This approach prevents the architecture from fragmenting into collections of technical features while preserving clear ownership throughout the application.
 
 ---
 
 ## Key Takeaways
 
-* Domains organize the application around meaningful concepts rather than technical implementation.
-* Each Domain owns its own behavior, Domain Objects, and Public APIs.
-* Domains collaborate without exposing internal implementation.
-* Workspaces provide the environment in which Domains operate.
-* New capabilities are introduced by adding new Domains while preserving existing architectural ownership.
+* Domains organize the application around meaningful business concepts.
+* Modules present Domain capabilities but do not own business behavior.
+* A single Domain may expose multiple Modules.
+* Search is a capability owned by individual Domains rather than a standalone Domain.
+* Annotations belong to the Bible Domain because they enrich Scripture.
+* Every Domain owns its own Domain Objects, Public APIs, persistence, and Resource Boundary participation.
+* New functionality should extend existing Domains whenever ownership remains clear.
