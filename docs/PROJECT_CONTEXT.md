@@ -403,11 +403,11 @@ Requirements evolve.
 
 Technologies change.
 
-Over time, the difficulty of maintaining a system rarely comes from implementing new functionality. More often, it comes from understanding how existing functionality fits together.
+Over time, maintaining a system becomes less about implementing new functionality and more about understanding how existing functionality fits together.
 
 The architecture of this project was designed with that observation in mind.
 
-Rather than organizing the application around implementation techniques, frameworks, or programming patterns, the architecture is organized around stable application concepts that are expected to remain meaningful throughout the lifetime of the project.
+Rather than organizing the application around frameworks, libraries, protocols, or implementation techniques, the architecture is organized around stable application concepts that are expected to remain meaningful throughout the lifetime of the project.
 
 The goal is not simply to produce working software.
 
@@ -425,9 +425,9 @@ Programming languages evolve.
 
 Frameworks are replaced.
 
-Storage technologies improve.
+Communication protocols evolve.
 
-Networking protocols mature.
+Storage technologies improve.
 
 User interface libraries come and go.
 
@@ -449,22 +449,23 @@ The project is organized around concepts that represent application meaning rath
 
 Examples include:
 
-* Workspace Runtime,
-* Domains,
-* User Interface,
-* Resource Integration,
-* Background Processing,
-* and Technical Infrastructure.
+* Workspace Runtime
+* Domains
+* User Interface
+* Background Processing
+* Persistence
+* Public APIs
+* Repository Organization
 
 These concepts describe responsibilities that exist regardless of how they are implemented.
 
-Implementation techniques such as Services, Stores, Components, Workers, Events, Factories, and Repositories exist within those architectural owners.
+Implementation details such as Components, Services, Stores, Workers, Events, Factories, Repositories, or communication protocols exist within those architectural owners.
 
 They support the architecture.
 
 They do not define it.
 
-This distinction keeps the architecture stable even when implementation evolves.
+This distinction allows implementation to evolve without requiring the conceptual architecture to be rediscovered.
 
 ---
 
@@ -477,29 +478,29 @@ Ownership establishes:
 * where behavior belongs,
 * where implementation should reside,
 * where changes should be made,
-* and how other parts of the application should collaborate.
+* and how other parts of the application collaborate.
 
 When ownership is clear, repository organization becomes straightforward.
 
-Architectural boundaries become easier to understand.
+Architectural boundaries become obvious.
 
-Implementation naturally follows the structure established by the architecture.
+Implementation naturally follows the structure established by those boundaries.
 
-Many implementation decisions become obvious simply because ownership has already been established.
+Many implementation decisions become self-evident simply because ownership has already been established.
 
 ---
 
-## Explicit Collaboration
+## Public APIs Enable Collaboration
 
-Architectural owners should collaborate deliberately.
+Architectural owners collaborate through explicit Public APIs.
 
-Responsibilities are shared through explicit Public APIs rather than through unrestricted implementation dependencies.
+Public APIs expose behavior rather than implementation.
 
-Each owner remains responsible for its own concepts while exposing only the capabilities required by other architectural owners.
+Each architectural owner remains responsible for its own concepts while exposing only the capabilities required by other owners.
 
-This allows independently evolving parts of the application to collaborate without becoming tightly coupled.
+This allows independently evolving parts of the application to collaborate without creating unnecessary implementation dependencies.
 
-Well-defined boundaries make both the architecture and the repository easier to understand.
+Clear Public APIs preserve architectural boundaries while making collaboration intentional.
 
 ---
 
@@ -507,16 +508,31 @@ Well-defined boundaries make both the architecture and the repository easier to 
 
 Technology changes faster than application concepts.
 
-The project therefore attempts to build its architecture around ideas that are expected to remain stable over time.
+The project therefore builds its architecture around ideas expected to remain stable over time.
 
 For example:
 
-* Bible chapters remain Bible chapters regardless of storage technology.
+* Bible Chapters remain Bible Chapters regardless of storage technology.
 * Notes remain Notes regardless of presentation framework.
 * Workspaces remain Workspaces regardless of layout implementation.
-* Domain Objects remain Domain Objects regardless of how Resources are published or transported.
+* Domain Objects remain Domain Objects regardless of how they cross the application's Resource Boundary.
+* Resources remain Resources regardless of the communication protocol used to exchange them.
 
-By organizing around these enduring concepts, implementation can evolve without requiring the conceptual architecture to be rediscovered.
+By organizing around these enduring concepts, implementation can evolve without requiring the architecture to be rediscovered.
+
+---
+
+## Boundaries Protect The Architecture
+
+Architectural boundaries exist to separate responsibilities rather than technologies.
+
+The Application Architecture defines how the application behaves.
+
+The Resource Boundary defines how Domain Objects are represented outside the application.
+
+Communication technologies such as Nostr, REST, RPC, GraphQL, or local file systems are implementations of that boundary rather than architectural owners themselves.
+
+Keeping these responsibilities separate allows application behavior and external communication to evolve independently.
 
 ---
 
@@ -526,11 +542,9 @@ The architecture is designed to support continuous evolution rather than periodi
 
 Existing implementation is not discarded simply because a better organizational model has been developed.
 
-Instead, improvements are introduced incrementally.
+Instead, architectural ownership is established first.
 
-Architectural ownership is established first.
-
-Implementation then migrates toward that ownership over time.
+Implementation then gradually migrates toward that ownership over time.
 
 This approach minimizes disruption while allowing the repository to steadily converge toward the documented architecture.
 
@@ -548,13 +562,13 @@ Domains own application meaning.
 
 The User Interface presents information.
 
-Resource Integration bridges the Application and the Resource Architecture.
+The Resource Boundary represents Domain Objects outside the application.
 
-Background Processing performs deferred application work.
+Background Processing performs deferred work.
 
 Technical Infrastructure provides implementation capabilities.
 
-Each owner has a limited set of responsibilities.
+Each owner has a limited and well-defined set of responsibilities.
 
 Together they form a cohesive application.
 
@@ -566,14 +580,14 @@ Separating responsibilities in this way allows individual parts of the system to
 
 Architecture exists to communicate.
 
-A well-designed architecture should allow someone unfamiliar with the codebase to understand:
+A well-designed architecture should allow someone unfamiliar with the repository to understand:
 
 * the major responsibilities,
 * how those responsibilities collaborate,
 * where new functionality belongs,
 * and how changes should be introduced.
 
-Repository organization, documentation, and source code should reinforce the same architectural model.
+Repository organization, documentation, Public APIs, and source code should reinforce the same architectural model.
 
 When these representations remain aligned, understanding the system becomes significantly easier.
 
@@ -586,9 +600,10 @@ Every architectural decision should consider the long-term evolution of the proj
 Questions such as:
 
 * Will this responsibility still exist in five years?
-* Is this concept tied to a particular technology?
-* Does this abstraction represent application meaning?
+* Does this concept represent application meaning?
+* Does this responsibility have a clear owner?
 * Can this implementation evolve independently?
+* Does this change preserve architectural boundaries?
 
 are often more valuable than questions about immediate implementation.
 
@@ -602,11 +617,12 @@ The architecture should make future change easier rather than merely accommodati
 
 * The architecture is organized around enduring application concepts rather than implementation technologies.
 * Implementation fulfills architectural responsibilities rather than defining them.
-* Clear ownership produces clear boundaries.
-* Public APIs provide explicit collaboration between independently owned parts of the application.
+* Clear ownership produces clear architectural boundaries.
+* Public APIs provide intentional collaboration between independently owned parts of the application.
 * Stable concepts should outlive the technologies used to implement them.
+* The Resource Boundary separates application behavior from external communication.
 * The project is intended to evolve incrementally rather than through periodic rewrites.
-* Architecture should make the application easier to understand, easier to extend, and easier to maintain over time.
+* Good architecture makes the application easier to understand, easier to extend, and easier to maintain over time.
 
 # System Overview
 
