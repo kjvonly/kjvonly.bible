@@ -393,6 +393,537 @@ The goal is to ensure that Domain Objects remain the central concept of the appl
 * This application primarily implements the boundary using Nostr together with compatible decentralized services.
 * Separating the Application Architecture from the Resource Boundary allows both to evolve independently.
 
+# The Application
+
+KJVOnly is an offline-first Bible study application designed to provide a fast, distraction-free reading and study experience while allowing users to own their data independently of any particular service or platform.
+
+The application is built around the idea that studying Scripture should remain available regardless of network connectivity while still allowing study material to be synchronized, shared, published, and preserved when connectivity becomes available.
+
+Rather than centering the application around cloud services, the application centers around the user's local experience.
+
+Everything else builds upon that foundation.
+
+---
+
+## Purpose
+
+The primary purpose of the application is to provide a complete Bible study environment.
+
+Reading Scripture is only one part of that experience.
+
+Users should be able to:
+
+* Read the Bible.
+* Study original language references.
+* Create notes.
+* Highlight passages.
+* Follow reading plans.
+* Search Scripture.
+* Search personal study material.
+* Organize multiple study sessions.
+* Continue working without an Internet connection.
+
+These capabilities work together to support long-term Bible study rather than isolated reading sessions.
+
+---
+
+## Offline First
+
+The application is designed to function without requiring continuous network connectivity.
+
+Bible content, indexes, notes, reading plans, annotations, and other application data are stored locally so that normal application behavior does not depend upon external services.
+
+Network communication enhances the application.
+
+It does not define the application.
+
+This approach provides a consistent user experience regardless of connectivity while allowing synchronization to occur whenever communication becomes available.
+
+---
+
+## A Workspace-Based Experience
+
+The application is designed around workspaces rather than pages.
+
+A workspace represents a study session.
+
+Within a workspace, users can open multiple panes, compare passages, follow references, consult notes, examine Strong's information, and work with multiple pieces of information simultaneously.
+
+Rather than navigating between pages, users build an environment that supports their current study.
+
+Workspaces allow that environment to be preserved and restored over time.
+
+---
+
+## Study Rather Than Navigation
+
+Traditional applications often organize their user experience around navigation.
+
+This application organizes the experience around study.
+
+Information is brought into the current workspace rather than requiring the user to continually move between unrelated screens.
+
+Opening a cross reference, viewing a note, searching Scripture, or following a reading plan extends the existing workspace instead of replacing it.
+
+This encourages exploration while preserving context.
+
+---
+
+## Domains
+
+The application is composed of several functional domains.
+
+Each domain represents a specific area of responsibility.
+
+Current domains include:
+
+* Bible
+* Notes
+* Reading Plans
+* Annotations
+* Search
+* Settings
+* Workspaces
+
+Each domain owns its own behavior while collaborating with the rest of the application through well-defined Public APIs.
+
+Together these domains provide the complete study experience.
+
+---
+
+## User Ownership
+
+Study material belongs to the user.
+
+Notes, reading plans, annotations, highlights, and other user-created information should remain portable independently of the application itself.
+
+The application therefore treats user information as first-class data that can be preserved, synchronized, imported, exported, and shared without becoming coupled to a single installation or service.
+
+User-created study material remains under the user's control and should continue to exist independently of the technologies used to store or synchronize it.
+
+---
+
+## Extensible By Design
+
+The architecture intentionally allows the application to grow over time.
+
+New domains, study tools, document types, and external communication mechanisms can be introduced without fundamentally changing the structure of the application.
+
+This allows the application to evolve while preserving a consistent user experience and architectural model.
+
+---
+
+## Long-Term Vision
+
+The long-term vision is to provide a study platform whose internal architecture remains stable while continuously expanding its capabilities.
+
+Users should be able to invest years of study into the application with confidence that their information remains portable, understandable, and independent of any single communication technology or storage provider.
+
+The application should continue evolving without requiring users to abandon either their data or their established study workflow.
+
+---
+
+## Key Characteristics
+
+The application is:
+
+* Offline-first.
+* Workspace-oriented.
+* Domain-driven.
+* Multi-pane.
+* User-owned.
+* Extensible.
+* Portable.
+* Decentralization-friendly.
+
+These characteristics influence every architectural and implementation decision throughout the project.
+
+---
+
+## Key Takeaways
+
+* KJVOnly is an offline-first Bible study application.
+* The application is designed around long-term study rather than simple reading.
+* Workspaces provide persistent study environments built from multiple panes.
+* The application operates entirely on locally managed Domain Objects.
+* User-created information remains portable and independent of any particular service.
+* The architecture is designed to support continuous evolution without disrupting the user experience.
+
+# Major Domains
+
+The application is organized around Domains.
+
+A Domain represents a cohesive area of application responsibility that models a meaningful concept within the application.
+
+Domains own application behavior.
+
+They define the Domain Objects, business rules, persistence, Resource Boundary participation, and Public APIs required to support that concept.
+
+The application intentionally organizes itself around these enduring concepts rather than around user interface features, modules, or technical implementation.
+
+---
+
+## Domains And Modules
+
+Domains and Modules represent different architectural concepts.
+
+A **Domain** owns application behavior.
+
+A **Module** presents Domain capabilities within the user interface.
+
+A single Domain may expose multiple Modules, and multiple Module instances may exist simultaneously within a Workspace.
+
+Modules do not own business logic.
+
+They present the capabilities provided by their Domain.
+
+This distinction keeps application behavior independent from presentation while allowing the user interface to evolve without changing the underlying architecture.
+
+---
+
+## Bible Domain
+
+The Bible Domain is the foundation of the application.
+
+It owns every responsibility directly related to studying Scripture.
+
+Responsibilities include:
+
+* Bible content
+* Chapter navigation
+* Verse references
+* Strong's integration
+* Bible annotations
+* Bible search
+* Cross references
+* Translation support
+* Scripture presentation
+
+Although these capabilities may appear as different Modules within the user interface, they remain responsibilities of the Bible Domain because they all exist to support the study of Scripture.
+
+The Bible Domain owns the behavior.
+
+Modules simply present that behavior.
+
+---
+
+## Notes Domain
+
+The Notes Domain manages user-created study material.
+
+Responsibilities include:
+
+* Notes
+* Note organization
+* Note search
+* Scripture associations
+* User-authored content
+
+The Notes Domain owns every aspect of personal note management.
+
+Searching notes is a capability of the Notes Domain rather than a separate architectural concern.
+
+---
+
+## Reading Plans Domain
+
+The Reading Plans Domain manages structured Bible reading.
+
+Responsibilities include:
+
+* Reading plans
+* Reading schedules
+* Reading progress
+* Completed readings
+* Plan management
+
+Reading Plans collaborate closely with the Bible Domain but remain an independent area of application responsibility.
+
+The Reading Plans Domain determines what should be read.
+
+The Bible Domain provides the Scripture being read.
+
+---
+
+## Settings Domain
+
+The Settings Domain manages application preferences.
+
+Responsibilities include:
+
+* User preferences
+* Theme configuration
+* Runtime preferences
+* Local application settings
+
+Settings influence how the application behaves without becoming part of the study data itself.
+
+---
+
+## Domain Collaboration
+
+Domains remain intentionally independent.
+
+When collaboration is required, Domains communicate through Public APIs rather than depending upon each other's internal implementation.
+
+For example:
+
+* Reading Plans request Bible content without owning Bible behavior.
+* Notes associate with Scripture without modifying Bible content.
+* Bible annotations remain part of the Bible Domain while collaborating with Notes when appropriate.
+* Each Domain owns its own search behavior rather than depending upon a shared Search Domain.
+
+This separation allows Domains to evolve independently while maintaining a cohesive application.
+
+---
+
+## Consistent Ownership
+
+Every Domain follows the same architectural model.
+
+Each Domain owns:
+
+* Domain Objects
+* Business behavior
+* Public APIs
+* Persistence
+* Resource Boundary participation
+
+This consistency makes the architecture predictable.
+
+When introducing new functionality, the first question should not be:
+
+> *Where should this code live?*
+
+Instead, the question should be:
+
+> *Which Domain owns this behavior?*
+
+Ownership determines implementation.
+
+---
+
+## Growing The Application
+
+The application grows by introducing new Domains only when new areas of responsibility emerge.
+
+Capabilities that naturally belong to an existing Domain should remain within that Domain rather than becoming independent architectural concepts.
+
+For example, Bible Search belongs to the Bible Domain because it searches Bible content.
+
+Bible Annotations belong to the Bible Domain because they enrich Scripture.
+
+Likewise, Note Search belongs to the Notes Domain because it searches Notes.
+
+This approach prevents the architecture from fragmenting into collections of technical features while preserving clear ownership throughout the application.
+
+---
+
+## Key Takeaways
+
+* Domains organize the application around meaningful business concepts.
+* Modules present Domain capabilities but do not own business behavior.
+* A single Domain may expose multiple Modules.
+* Search is a capability owned by individual Domains rather than a standalone Domain.
+* Annotations belong to the Bible Domain because they enrich Scripture.
+* Every Domain owns its own Domain Objects, Public APIs, persistence, and Resource Boundary participation.
+* New functionality should extend existing Domains whenever ownership remains clear.
+
+# Application Runtime
+
+The Application Runtime provides the environment in which every Domain operates.
+
+Rather than defining application behavior itself, the Runtime is responsible for coordinating presentation, navigation, interaction, and user workflow while allowing each Domain to remain focused on its own responsibilities.
+
+The Runtime owns the study environment.
+
+Domains own the study content.
+
+Together they provide the complete application experience.
+
+---
+
+## Purpose
+
+The purpose of the Runtime is to provide a consistent environment in which Domains can present their capabilities without becoming responsible for application infrastructure.
+
+Rather than embedding presentation logic inside individual Domains, the Runtime provides a common execution model shared throughout the application.
+
+This separation allows Domains to focus exclusively on business behavior while the Runtime manages how that behavior is presented to the user.
+
+---
+
+## The Workspace
+
+A Workspace represents a complete study session.
+
+Everything the user interacts with exists within a Workspace.
+
+A Workspace defines:
+
+* the current layout,
+* the active panes,
+* the buffers assigned to each pane,
+* and the collection of active Module instances.
+
+Workspaces allow users to build complex study environments that can be preserved and restored over time.
+
+---
+
+## Panes
+
+A Pane represents a region within a Workspace.
+
+Each Pane hosts a single Module instance.
+
+Panes may be divided, replaced, resized, or removed without affecting the Domains themselves.
+
+The Runtime manages the pane layout.
+
+Domains remain unaware of how they are presented.
+
+This separation allows presentation to evolve independently from application behavior.
+
+---
+
+## Buffers
+
+A Buffer represents the navigation context assigned to a Pane.
+
+Rather than containing business behavior, a Buffer carries the information required for a Module to present a particular piece of Domain data.
+
+Examples include:
+
+* the current Bible location,
+* the selected reading plan,
+* the active note,
+* or any other navigation state required by a Module.
+
+Buffers allow Modules to be recreated, moved between panes, or restored without coupling presentation to Domain implementation.
+
+---
+
+## Module Instances
+
+A Module Instance presents the capabilities of a Domain within a Pane.
+
+Modules do not own business behavior.
+
+Instead, they request behavior from their owning Domain while presenting that behavior to the user.
+
+Multiple instances of the same Module may exist simultaneously.
+
+For example, a user may open several Bible readers, compare different passages, or search Scripture in one pane while reading another.
+
+Each Module instance operates independently while sharing the same Domain behavior.
+
+---
+
+## Runtime Responsibilities
+
+The Runtime is responsible for coordinating the study environment.
+
+Responsibilities include:
+
+* Workspace management
+* Pane management
+* Buffer management
+* Module lifecycle
+* Layout coordination
+* Runtime events
+* Session restoration
+* User interaction flow
+
+The Runtime intentionally avoids implementing Domain behavior.
+
+Its responsibility is to coordinate the environment in which Domains operate.
+
+---
+
+## Domain Participation
+
+Domains participate in the Runtime through Module instances.
+
+Each Domain exposes one or more Modules that present its capabilities.
+
+For example:
+
+* The Bible Domain provides reading and study Modules.
+* The Notes Domain provides note management Modules.
+* The Reading Plans Domain provides reading plan Modules.
+* The Settings Domain provides configuration Modules.
+
+The Runtime hosts these Modules without becoming responsible for their business logic.
+
+---
+
+## Collaboration
+
+Interaction within the Runtime follows a consistent pattern.
+
+The user interacts with a Module.
+
+The Module requests behavior from its Domain.
+
+The Domain operates on Domain Objects.
+
+The Runtime coordinates presentation without participating in Domain behavior.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    User
+
+    Workspace
+
+    Pane
+
+    Module
+
+    Domain
+
+    DomainObject["Domain Object"]
+
+    User --> Workspace
+    Workspace --> Pane
+    Pane --> Module
+    Module --> Domain
+    Domain --> DomainObject
+```
+
+The Runtime coordinates interaction.
+
+Domains provide behavior.
+
+This separation keeps both responsibilities focused and independently evolvable.
+
+---
+
+## Long-Term Evolution
+
+The Runtime is expected to evolve as the application grows.
+
+New presentation models, layout capabilities, workspace features, and interaction patterns may be introduced without affecting the Domains themselves.
+
+Likewise, Domains may introduce new capabilities without requiring changes to the Runtime beyond presenting additional Module instances.
+
+This separation allows both the Runtime and Domains to evolve independently while preserving a consistent user experience.
+
+---
+
+## Key Takeaways
+
+* The Runtime provides the environment in which Domains operate.
+* Workspaces represent complete study sessions.
+* Panes organize the visual layout.
+* Buffers provide navigation context.
+* Module instances present Domain capabilities.
+* Domains own business behavior.
+* The Runtime owns presentation and interaction.
+* Separating Runtime responsibilities from Domain responsibilities keeps the application flexible and easy to evolve.
+
 # Design Philosophy
 
 Every software project eventually accumulates complexity.
@@ -1104,341 +1635,6 @@ The Resource Boundary follows several fundamental principles:
 * Communication technologies implement the boundary rather than define it.
 * The Application Architecture and Resource Boundary evolve independently while collaborating through a stable communication model.
 
-# The Application
-
-KJVOnly is an offline-first Bible study application designed to provide a fast, distraction-free reading and study experience while allowing users to own their data independently of any particular service or platform.
-
-The application is built around the idea that studying Scripture should remain available regardless of network connectivity while still allowing study material to be synchronized, shared, published, and preserved when connectivity becomes available.
-
-Rather than centering the application around cloud services, the application centers around the user's local experience.
-
-Everything else builds upon that foundation.
-
----
-
-## Purpose
-
-The primary purpose of the application is to provide a complete Bible study environment.
-
-Reading Scripture is only one part of that experience.
-
-Users should be able to:
-
-* Read the Bible.
-* Study original language references.
-* Create notes.
-* Highlight passages.
-* Follow reading plans.
-* Search Scripture.
-* Search personal study material.
-* Organize multiple study sessions.
-* Continue working without an Internet connection.
-
-These capabilities work together to support long-term Bible study rather than isolated reading sessions.
-
----
-
-## Offline First
-
-The application is designed to function without requiring continuous network connectivity.
-
-Bible content, indexes, notes, reading plans, annotations, and other application data are stored locally so that normal application behavior does not depend upon external services.
-
-Network communication enhances the application.
-
-It does not define the application.
-
-This approach provides a consistent user experience regardless of connectivity while allowing synchronization to occur whenever communication becomes available.
-
----
-
-## A Workspace-Based Experience
-
-The application is designed around workspaces rather than pages.
-
-A workspace represents a study session.
-
-Within a workspace, users can open multiple panes, compare passages, follow references, consult notes, examine Strong's information, and work with multiple pieces of information simultaneously.
-
-Rather than navigating between pages, users build an environment that supports their current study.
-
-Workspaces allow that environment to be preserved and restored over time.
-
----
-
-## Study Rather Than Navigation
-
-Traditional applications often organize their user experience around navigation.
-
-This application organizes the experience around study.
-
-Information is brought into the current workspace rather than requiring the user to continually move between unrelated screens.
-
-Opening a cross reference, viewing a note, searching Scripture, or following a reading plan extends the existing workspace instead of replacing it.
-
-This encourages exploration while preserving context.
-
----
-
-## Domains
-
-The application is composed of several functional domains.
-
-Each domain represents a specific area of responsibility.
-
-Current domains include:
-
-* Bible
-* Notes
-* Reading Plans
-* Annotations
-* Search
-* Settings
-* Workspaces
-
-Each domain owns its own behavior while collaborating with the rest of the application through well-defined Public APIs.
-
-Together these domains provide the complete study experience.
-
----
-
-## User Ownership
-
-Study material belongs to the user.
-
-Notes, reading plans, annotations, highlights, and other user-created information should remain portable independently of the application itself.
-
-The application therefore treats user information as first-class data that can be preserved, synchronized, imported, exported, and shared without becoming coupled to a single installation or service.
-
-User-created study material remains under the user's control and should continue to exist independently of the technologies used to store or synchronize it.
-
----
-
-## Extensible By Design
-
-The architecture intentionally allows the application to grow over time.
-
-New domains, study tools, document types, and external communication mechanisms can be introduced without fundamentally changing the structure of the application.
-
-This allows the application to evolve while preserving a consistent user experience and architectural model.
-
----
-
-## Long-Term Vision
-
-The long-term vision is to provide a study platform whose internal architecture remains stable while continuously expanding its capabilities.
-
-Users should be able to invest years of study into the application with confidence that their information remains portable, understandable, and independent of any single communication technology or storage provider.
-
-The application should continue evolving without requiring users to abandon either their data or their established study workflow.
-
----
-
-## Key Characteristics
-
-The application is:
-
-* Offline-first.
-* Workspace-oriented.
-* Domain-driven.
-* Multi-pane.
-* User-owned.
-* Extensible.
-* Portable.
-* Decentralization-friendly.
-
-These characteristics influence every architectural and implementation decision throughout the project.
-
----
-
-## Key Takeaways
-
-* KJVOnly is an offline-first Bible study application.
-* The application is designed around long-term study rather than simple reading.
-* Workspaces provide persistent study environments built from multiple panes.
-* The application operates entirely on locally managed Domain Objects.
-* User-created information remains portable and independent of any particular service.
-* The architecture is designed to support continuous evolution without disrupting the user experience.
-
-# Major Domains
-
-The application is organized around Domains.
-
-A Domain represents a cohesive area of application responsibility that models a meaningful concept within the application.
-
-Domains own application behavior.
-
-They define the Domain Objects, business rules, persistence, Resource Boundary participation, and Public APIs required to support that concept.
-
-The application intentionally organizes itself around these enduring concepts rather than around user interface features, modules, or technical implementation.
-
----
-
-## Domains And Modules
-
-Domains and Modules represent different architectural concepts.
-
-A **Domain** owns application behavior.
-
-A **Module** presents Domain capabilities within the user interface.
-
-A single Domain may expose multiple Modules, and multiple Module instances may exist simultaneously within a Workspace.
-
-Modules do not own business logic.
-
-They present the capabilities provided by their Domain.
-
-This distinction keeps application behavior independent from presentation while allowing the user interface to evolve without changing the underlying architecture.
-
----
-
-## Bible Domain
-
-The Bible Domain is the foundation of the application.
-
-It owns every responsibility directly related to studying Scripture.
-
-Responsibilities include:
-
-* Bible content
-* Chapter navigation
-* Verse references
-* Strong's integration
-* Bible annotations
-* Bible search
-* Cross references
-* Translation support
-* Scripture presentation
-
-Although these capabilities may appear as different Modules within the user interface, they remain responsibilities of the Bible Domain because they all exist to support the study of Scripture.
-
-The Bible Domain owns the behavior.
-
-Modules simply present that behavior.
-
----
-
-## Notes Domain
-
-The Notes Domain manages user-created study material.
-
-Responsibilities include:
-
-* Notes
-* Note organization
-* Note search
-* Scripture associations
-* User-authored content
-
-The Notes Domain owns every aspect of personal note management.
-
-Searching notes is a capability of the Notes Domain rather than a separate architectural concern.
-
----
-
-## Reading Plans Domain
-
-The Reading Plans Domain manages structured Bible reading.
-
-Responsibilities include:
-
-* Reading plans
-* Reading schedules
-* Reading progress
-* Completed readings
-* Plan management
-
-Reading Plans collaborate closely with the Bible Domain but remain an independent area of application responsibility.
-
-The Reading Plans Domain determines what should be read.
-
-The Bible Domain provides the Scripture being read.
-
----
-
-## Settings Domain
-
-The Settings Domain manages application preferences.
-
-Responsibilities include:
-
-* User preferences
-* Theme configuration
-* Runtime preferences
-* Local application settings
-
-Settings influence how the application behaves without becoming part of the study data itself.
-
----
-
-## Domain Collaboration
-
-Domains remain intentionally independent.
-
-When collaboration is required, Domains communicate through Public APIs rather than depending upon each other's internal implementation.
-
-For example:
-
-* Reading Plans request Bible content without owning Bible behavior.
-* Notes associate with Scripture without modifying Bible content.
-* Bible annotations remain part of the Bible Domain while collaborating with Notes when appropriate.
-* Each Domain owns its own search behavior rather than depending upon a shared Search Domain.
-
-This separation allows Domains to evolve independently while maintaining a cohesive application.
-
----
-
-## Consistent Ownership
-
-Every Domain follows the same architectural model.
-
-Each Domain owns:
-
-* Domain Objects
-* Business behavior
-* Public APIs
-* Persistence
-* Resource Boundary participation
-
-This consistency makes the architecture predictable.
-
-When introducing new functionality, the first question should not be:
-
-> *Where should this code live?*
-
-Instead, the question should be:
-
-> *Which Domain owns this behavior?*
-
-Ownership determines implementation.
-
----
-
-## Growing The Application
-
-The application grows by introducing new Domains only when new areas of responsibility emerge.
-
-Capabilities that naturally belong to an existing Domain should remain within that Domain rather than becoming independent architectural concepts.
-
-For example, Bible Search belongs to the Bible Domain because it searches Bible content.
-
-Bible Annotations belong to the Bible Domain because they enrich Scripture.
-
-Likewise, Note Search belongs to the Notes Domain because it searches Notes.
-
-This approach prevents the architecture from fragmenting into collections of technical features while preserving clear ownership throughout the application.
-
----
-
-## Key Takeaways
-
-* Domains organize the application around meaningful business concepts.
-* Modules present Domain capabilities but do not own business behavior.
-* A single Domain may expose multiple Modules.
-* Search is a capability owned by individual Domains rather than a standalone Domain.
-* Annotations belong to the Bible Domain because they enrich Scripture.
-* Every Domain owns its own Domain Objects, Public APIs, persistence, and Resource Boundary participation.
-* New functionality should extend existing Domains whenever ownership remains clear.
 
 # System Overview
 
@@ -1688,201 +1884,6 @@ This allows the application to continue growing without requiring fundamental ar
 * The Domain Resource Model defines the conceptual model used by the Resource Boundary.
 * Boundary implementations communicate Resources using technologies such as Nostr, Blossom, REST, or RPC.
 * Separating application behavior from communication technology allows both to evolve independently.
-
-# Application Runtime
-
-The Application Runtime provides the environment in which every Domain operates.
-
-Rather than defining application behavior itself, the Runtime is responsible for coordinating presentation, navigation, interaction, and user workflow while allowing each Domain to remain focused on its own responsibilities.
-
-The Runtime owns the study environment.
-
-Domains own the study content.
-
-Together they provide the complete application experience.
-
----
-
-## Purpose
-
-The purpose of the Runtime is to provide a consistent environment in which Domains can present their capabilities without becoming responsible for application infrastructure.
-
-Rather than embedding presentation logic inside individual Domains, the Runtime provides a common execution model shared throughout the application.
-
-This separation allows Domains to focus exclusively on business behavior while the Runtime manages how that behavior is presented to the user.
-
----
-
-## The Workspace
-
-A Workspace represents a complete study session.
-
-Everything the user interacts with exists within a Workspace.
-
-A Workspace defines:
-
-* the current layout,
-* the active panes,
-* the buffers assigned to each pane,
-* and the collection of active Module instances.
-
-Workspaces allow users to build complex study environments that can be preserved and restored over time.
-
----
-
-## Panes
-
-A Pane represents a region within a Workspace.
-
-Each Pane hosts a single Module instance.
-
-Panes may be divided, replaced, resized, or removed without affecting the Domains themselves.
-
-The Runtime manages the pane layout.
-
-Domains remain unaware of how they are presented.
-
-This separation allows presentation to evolve independently from application behavior.
-
----
-
-## Buffers
-
-A Buffer represents the navigation context assigned to a Pane.
-
-Rather than containing business behavior, a Buffer carries the information required for a Module to present a particular piece of Domain data.
-
-Examples include:
-
-* the current Bible location,
-* the selected reading plan,
-* the active note,
-* or any other navigation state required by a Module.
-
-Buffers allow Modules to be recreated, moved between panes, or restored without coupling presentation to Domain implementation.
-
----
-
-## Module Instances
-
-A Module Instance presents the capabilities of a Domain within a Pane.
-
-Modules do not own business behavior.
-
-Instead, they request behavior from their owning Domain while presenting that behavior to the user.
-
-Multiple instances of the same Module may exist simultaneously.
-
-For example, a user may open several Bible readers, compare different passages, or search Scripture in one pane while reading another.
-
-Each Module instance operates independently while sharing the same Domain behavior.
-
----
-
-## Runtime Responsibilities
-
-The Runtime is responsible for coordinating the study environment.
-
-Responsibilities include:
-
-* Workspace management
-* Pane management
-* Buffer management
-* Module lifecycle
-* Layout coordination
-* Runtime events
-* Session restoration
-* User interaction flow
-
-The Runtime intentionally avoids implementing Domain behavior.
-
-Its responsibility is to coordinate the environment in which Domains operate.
-
----
-
-## Domain Participation
-
-Domains participate in the Runtime through Module instances.
-
-Each Domain exposes one or more Modules that present its capabilities.
-
-For example:
-
-* The Bible Domain provides reading and study Modules.
-* The Notes Domain provides note management Modules.
-* The Reading Plans Domain provides reading plan Modules.
-* The Settings Domain provides configuration Modules.
-
-The Runtime hosts these Modules without becoming responsible for their business logic.
-
----
-
-## Collaboration
-
-Interaction within the Runtime follows a consistent pattern.
-
-The user interacts with a Module.
-
-The Module requests behavior from its Domain.
-
-The Domain operates on Domain Objects.
-
-The Runtime coordinates presentation without participating in Domain behavior.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    User
-
-    Workspace
-
-    Pane
-
-    Module
-
-    Domain
-
-    DomainObject["Domain Object"]
-
-    User --> Workspace
-    Workspace --> Pane
-    Pane --> Module
-    Module --> Domain
-    Domain --> DomainObject
-```
-
-The Runtime coordinates interaction.
-
-Domains provide behavior.
-
-This separation keeps both responsibilities focused and independently evolvable.
-
----
-
-## Long-Term Evolution
-
-The Runtime is expected to evolve as the application grows.
-
-New presentation models, layout capabilities, workspace features, and interaction patterns may be introduced without affecting the Domains themselves.
-
-Likewise, Domains may introduce new capabilities without requiring changes to the Runtime beyond presenting additional Module instances.
-
-This separation allows both the Runtime and Domains to evolve independently while preserving a consistent user experience.
-
----
-
-## Key Takeaways
-
-* The Runtime provides the environment in which Domains operate.
-* Workspaces represent complete study sessions.
-* Panes organize the visual layout.
-* Buffers provide navigation context.
-* Module instances present Domain capabilities.
-* Domains own business behavior.
-* The Runtime owns presentation and interaction.
-* Separating Runtime responsibilities from Domain responsibilities keeps the application flexible and easy to evolve.
 
 # Repository Overview
 
