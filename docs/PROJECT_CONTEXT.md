@@ -1440,3 +1440,208 @@ These characteristics influence every architectural and implementation decision 
 * The application operates entirely on locally managed Domain Objects.
 * User-created information remains portable and independent of any particular service.
 * The architecture is designed to support continuous evolution without disrupting the user experience.
+
+# Major Domains
+
+The application is organized around Domains.
+
+A Domain represents a cohesive area of application responsibility that models a particular aspect of the study experience.
+
+Rather than organizing the application around technical concerns, each Domain owns a meaningful concept that users interact with directly.
+
+This organization allows the application to evolve by introducing new capabilities without fundamentally changing its overall architecture.
+
+Every Domain owns its own Domain Objects, behavior, persistence, and Resource Boundary participation while collaborating with the remainder of the application through Public APIs.
+
+---
+
+## Bible
+
+The Bible Domain is the foundation of the application.
+
+It provides access to Bible translations, chapters, books, verses, references, and related study information.
+
+Most application workflows ultimately interact with the Bible Domain in some way.
+
+Responsibilities include:
+
+* Bible content
+* Chapter navigation
+* Verse references
+* Book organization
+* Translation support
+* Strong's integration
+* Scripture search
+
+The Bible Domain provides the primary context around which the remainder of the application is organized.
+
+---
+
+## Notes
+
+The Notes Domain manages user-created study material.
+
+Notes allow users to record observations, insights, references, and commentary while studying Scripture.
+
+Notes are treated as first-class application data and participate in the same architectural model as every other Domain.
+
+Responsibilities include:
+
+* Creating notes
+* Editing notes
+* Organizing notes
+* Searching notes
+* Associating notes with Scripture
+
+The Notes Domain allows personal study material to grow alongside Scripture.
+
+---
+
+## Reading Plans
+
+The Reading Plans Domain manages structured reading schedules.
+
+Reading plans guide users through Scripture while tracking progress independently of the Bible content itself.
+
+Responsibilities include:
+
+* Reading plans
+* Reading progress
+* Daily readings
+* Plan management
+* Completion tracking
+
+Reading Plans coordinate with the Bible Domain while remaining an independent area of responsibility.
+
+---
+
+## Annotations
+
+The Annotations Domain manages user interaction directly within Scripture.
+
+Annotations enrich Bible content without modifying the Bible itself.
+
+Responsibilities include:
+
+* Highlights
+* Verse annotations
+* Word annotations
+* Visual study markers
+* User interaction state
+
+Annotations remain independent from Bible content while providing a richer study experience.
+
+---
+
+## Search
+
+The Search Domain provides fast access to application information.
+
+Search operates across multiple Domains while respecting each Domain's ownership of its own data.
+
+Responsibilities include:
+
+* Scripture search
+* Notes search
+* Domain-specific indexes
+* Query execution
+* Result presentation
+
+Search provides a consistent experience while allowing each Domain to determine how its information is indexed and queried.
+
+---
+
+## Settings
+
+The Settings Domain manages user preferences and application configuration.
+
+Settings describe how the application behaves rather than the study content itself.
+
+Responsibilities include:
+
+* Application preferences
+* Theme configuration
+* User options
+* Runtime preferences
+* Local application configuration
+
+Settings allow users to personalize the application while remaining separate from study material.
+
+---
+
+## Workspaces
+
+The Workspace Domain manages the user's study environment.
+
+A Workspace represents an active study session composed of panes, buffers, and module instances.
+
+Rather than representing study content, Workspaces organize how that content is presented and interacted with.
+
+Responsibilities include:
+
+* Workspace management
+* Pane organization
+* Buffer management
+* Study session persistence
+* Layout restoration
+
+The Workspace Domain provides the environment in which every other Domain operates.
+
+---
+
+## Domain Collaboration
+
+Domains are intentionally independent.
+
+Each Domain owns its own behavior and internal implementation.
+
+When collaboration is required, Domains communicate through well-defined Public APIs rather than directly depending upon one another's implementation.
+
+For example:
+
+* Reading Plans request Bible content without owning Bible behavior.
+* Notes associate with Scripture without modifying Bible content.
+* Search queries Domain-owned indexes while leaving indexing decisions to each individual Domain.
+* Workspaces coordinate presentation without owning Domain behavior.
+
+This separation allows Domains to evolve independently while contributing to a cohesive application.
+
+---
+
+## Shared Architectural Model
+
+Although each Domain represents different application concepts, every Domain follows the same architectural model.
+
+Each Domain owns:
+
+* Domain Objects
+* Internal behavior
+* Public APIs
+* Persistence
+* Resource Boundary participation
+
+This consistency allows the architecture to scale naturally as new Domains are introduced.
+
+---
+
+## Growing The Application
+
+New capabilities are typically introduced by adding new Domains rather than extending unrelated ones.
+
+This keeps ownership clear and prevents unrelated responsibilities from accumulating within existing Domains.
+
+As the application evolves, the number of Domains may grow.
+
+The architectural model remains unchanged.
+
+Each new Domain simply becomes another independently owned participant within the overall Application Architecture.
+
+---
+
+## Key Takeaways
+
+* Domains organize the application around meaningful concepts rather than technical implementation.
+* Each Domain owns its own behavior, Domain Objects, and Public APIs.
+* Domains collaborate without exposing internal implementation.
+* Workspaces provide the environment in which Domains operate.
+* New capabilities are introduced by adding new Domains while preserving existing architectural ownership.
