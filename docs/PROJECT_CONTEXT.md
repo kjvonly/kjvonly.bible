@@ -1439,3 +1439,252 @@ This approach prevents the architecture from fragmenting into collections of tec
 * Annotations belong to the Bible Domain because they enrich Scripture.
 * Every Domain owns its own Domain Objects, Public APIs, persistence, and Resource Boundary participation.
 * New functionality should extend existing Domains whenever ownership remains clear.
+
+# System Overview
+
+The KJVOnly project consists of a single Application Architecture separated from external systems by a Resource Boundary.
+
+The Application Architecture defines how the application behaves.
+
+The Resource Boundary defines how Domain Objects are represented outside the application.
+
+Together they provide a complete model for building an offline-first application whose internal behavior remains independent of its communication technology.
+
+The application owns behavior.
+
+The Resource Boundary owns communication.
+
+---
+
+## The Complete System
+
+At a high level, the application is organized into two conceptual areas.
+
+The first is the Application Architecture.
+
+The second is the Resource Boundary through which the application communicates with external systems.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    subgraph Application["Application Architecture"]
+
+        Runtime["Workspace Runtime"]
+
+        Modules["Modules"]
+
+        Domains["Domains"]
+
+        Objects["Domain Objects"]
+
+        Runtime --> Modules
+        Modules --> Domains
+        Domains --> Objects
+
+    end
+
+    Boundary["Resource Boundary"]
+
+    Resources["Resources"]
+
+    External["Boundary Implementations<br/>Nostr • Blossom • REST • RPC"]
+
+    Objects --> Boundary
+    Boundary --> Resources
+    Resources --> External
+
+    External --> Resources
+    Resources --> Boundary
+    Boundary --> Objects
+```
+
+Every user interaction ultimately occurs within the Application Architecture.
+
+Only Resources cross the Resource Boundary.
+
+---
+
+## Application Architecture
+
+The Application Architecture owns everything required to operate the application.
+
+This includes:
+
+* Workspace Runtime
+* User Interface
+* Domains
+* Persistence
+* Background Processing
+* Public APIs
+* Repository Organization
+
+Applications operate exclusively on Domain Objects.
+
+Every architectural decision within the application ultimately supports the creation, modification, presentation, or management of Domain Objects.
+
+The application remains intentionally independent of any communication technology.
+
+---
+
+## Resource Boundary
+
+The Resource Boundary separates the application's internal model from external systems.
+
+When Domain Objects must be synchronized, published, discovered, imported, exported, archived, or reconstructed, they cross the Resource Boundary as Resources.
+
+The Domain Resource Model defines the conceptual model used by the boundary.
+
+Boundary implementations determine how those Resources are communicated with external systems.
+
+This application primarily implements the Resource Boundary using Nostr together with compatible decentralized services such as Blossom.
+
+Alternative implementations may use different communication technologies while preserving the same Application Architecture.
+
+---
+
+## Runtime Flow
+
+Every interaction within the application follows the same general flow.
+
+The user interacts with a Module.
+
+The Module requests behavior from the appropriate Domain.
+
+The Domain operates on Domain Objects.
+
+If external communication is required, the Domain requests the Resource Boundary to represent those Domain Objects as Resources.
+
+The Resource Boundary communicates with external systems before reconstructing Domain Objects when information returns to the application.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    User
+
+    Module
+
+    Domain
+
+    DomainObject["Domain Object"]
+
+    Boundary["Resource Boundary"]
+
+    Resource
+
+    External["External System"]
+
+    User --> Module
+    Module --> Domain
+    Domain --> DomainObject
+
+    DomainObject --> Boundary
+    Boundary --> Resource
+    Resource --> External
+
+    External --> Resource
+    Resource --> Boundary
+    Boundary --> DomainObject
+```
+
+The application itself never operates directly on externally communicated Resources.
+
+Resources exist only at the Resource Boundary.
+
+---
+
+## Architectural Independence
+
+The architecture intentionally separates responsibilities.
+
+Application behavior remains independent from communication technology.
+
+Communication technology remains independent from application behavior.
+
+This separation allows each side of the Resource Boundary to evolve without affecting the other.
+
+For example:
+
+* New Modules may be introduced without changing external communication.
+* New Domains may be introduced without changing communication protocols.
+* New communication technologies may be adopted without changing the application's internal architecture.
+
+This independence is one of the primary goals of the overall design.
+
+---
+
+## Information Ownership
+
+Information exists in two forms throughout the system.
+
+Within the application it exists as Domain Objects.
+
+Outside the application it exists as Resources.
+
+The Resource Boundary defines how information moves between these representations while preserving application semantics.
+
+This allows the application to remain focused on business behavior while external systems remain focused on communication and storage.
+
+---
+
+## Building The System
+
+The architecture follows a consistent progression.
+
+Application concepts establish ownership.
+
+Ownership establishes responsibility.
+
+Responsibilities define Public APIs.
+
+Public APIs allow architectural owners to collaborate.
+
+Only after these responsibilities have been established does implementation become important.
+
+This progression appears throughout the repository.
+
+```text
+Meaning
+    ↓
+Ownership
+    ↓
+Responsibility
+    ↓
+Public API
+    ↓
+Implementation
+```
+
+The same progression is followed whether introducing a new Domain, designing a new feature, or extending existing functionality.
+
+---
+
+## Long-Term Evolution
+
+The architecture is designed to evolve incrementally.
+
+The Application Architecture should remain focused on application behavior.
+
+The Resource Boundary should remain focused on communication.
+
+Implementation technologies may change over time.
+
+The architectural model should remain stable.
+
+This allows the application to continue growing without requiring fundamental architectural redesign.
+
+---
+
+## Key Takeaways
+
+* The project consists of a single Application Architecture separated from external systems by a Resource Boundary.
+* The Application Architecture owns behavior.
+* The Resource Boundary owns communication.
+* Applications operate exclusively on Domain Objects.
+* External systems operate exclusively on Resources.
+* The Domain Resource Model defines the conceptual model used by the Resource Boundary.
+* Boundary implementations communicate Resources using technologies such as Nostr, Blossom, REST, or RPC.
+* Separating application behavior from communication technology allows both to evolve independently.
