@@ -2062,3 +2062,71 @@ Maintaining this alignment ensures that the repository remains a reliable source
 * Implementation documents explain how the architecture is realized.
 * Source code should reinforce the documented architecture.
 * Understanding the architecture first makes the implementation significantly easier to understand.
+
+# Where To Go Next
+
+You should now have the context required to understand both the application and the repository.
+
+The preceding chapters introduced the purpose of the project, the major application concepts, the design philosophy, the architectural model, the Resource Boundary, and the overall organization of the system.
+
+The remainder of the repository expands upon those ideas in progressively greater detail.
+
+Rather than attempting to understand the source code immediately, continue through the documentation in the order it was designed to be read.
+
+Each section builds upon the concepts introduced by the previous one.
+
+```text
+Project Context
+        ↓
+Principles
+        ↓
+Application Architecture
+        ↓
+Resource Boundary
+        ↓
+Implementation
+        ↓
+Developer Guide
+        ↓
+Source Code
+```
+
+The Principles explain how architectural decisions are made.
+
+The Application Architecture describes how the application behaves.
+
+The Resource Boundary defines how Domain Objects are represented outside the application.
+
+The Implementation documents explain how those architectural concepts are realized by the current codebase.
+
+Finally, the Developer Guide provides practical guidance for contributing to the project.
+
+By the time you reach the source code, the architecture should already feel familiar.
+
+The purpose of this document has never been to replace the source code.
+
+Its purpose is to make the source code significantly easier to understand.
+
+As the project evolves, the implementation will continue to change.
+
+The architecture should change much more slowly.
+
+Whenever implementation and architecture appear to disagree, the architecture should be understood first before evaluating whether the implementation or the documentation requires refinement.
+
+This project is intentionally organized around enduring concepts rather than temporary implementation details.
+
+Meaning establishes ownership.
+
+Ownership establishes responsibility.
+
+Responsibilities define Public APIs.
+
+Public APIs enable collaboration.
+
+Implementation realizes those responsibilities.
+
+This progression appears throughout the repository because it is the foundation upon which the entire application has been designed.
+
+The architecture is intended to remain understandable long after individual implementation details have changed.
+
+Welcome to the project.
