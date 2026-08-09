@@ -643,60 +643,57 @@ The architecture should make future change easier rather than merely accommodati
 
 # System Overview
 
-The KJVOnly project is built upon two complementary architectural systems:
+The KJVOnly project is built around a single Application Architecture.
 
-* Application Architecture
-* Portable Ownership Architecture (POWN)
+The Application Architecture defines the application's runtime behavior, user experience, and Domain model.
 
-Together they define the complete application model.
+Applications operate exclusively on Domain Objects.
 
-The Application Architecture defines how the application behaves.
+When Domain Objects must exist outside the application, they cross the application's **Resource Boundary**.
 
-Portable Ownership Architecture (POWN) defines how applications represent, publish, discover, install, synchronize, and exchange Domain Objects using Nostr and compatible decentralized services.
+The Resource Boundary defines how Domain Objects are represented as portable Resources suitable for storage, publication, discovery, synchronization, and reconstruction.
 
-These two architectures are intentionally independent while remaining closely integrated.
+This application primarily implements its Resource Boundary using the Nostr protocol together with compatible decentralized services such as Blossom.
 
-The Application defines the user experience.
-
-POWN defines how application data exists beyond the boundaries of the application.
+The boundary model is intentionally independent of the underlying protocol, allowing alternative implementations using technologies such as REST, RPC, or other communication mechanisms without affecting the internal Application Architecture.
 
 ---
 
-## The Two Architectures
+# Application Architecture
 
-Although they work together, the two architectures solve different problems.
+The Application Architecture defines how the application behaves.
 
-### Application Architecture
-
-The Application Architecture defines the runtime behavior of the application.
-
-It describes concepts such as:
+It includes concepts such as:
 
 * Workspace Runtime
 * Domains
 * Module Presentation
 * User Interface
-* Persistence
 * Background Processing
+* Persistence
 * Application Events
 * Public APIs
 * Repository Organization
 
-The Application owns Domain Objects and the user experience built around those Domain Objects.
+Applications own Domain Objects.
 
-It intentionally says nothing about how Domain Objects are published or exchanged with other applications.
+Domain Objects represent the application's internal model and are the only objects used throughout runtime.
+
+The Application Architecture is intentionally independent of how Domain Objects are communicated beyond the application boundary.
 
 ---
 
-### Portable Ownership Architecture (POWN)
+# The Resource Boundary
 
-Portable Ownership Architecture (POWN) defines the application model used when Domain Objects exist outside the application.
+The Resource Boundary is the point where Domain Objects leave the application.
 
-It builds upon Nostr's decentralized event model together with compatible services such as Blossom.
+Rather than exposing Domain Objects directly, applications represent them as portable Resources.
 
-Rather than replacing these protocols, POWN defines a consistent architectural style for using them to build offline-first decentralized applications.
+Resources provide a protocol-independent representation suitable for communication with external systems.
 
-POWN specifies concepts including:
+The Domain Resource Model defines this mapping between internal Domain Objects and external Resources.
+
+The Resource Boundary is responsible for concepts including:
 
 * Resource Identity
 * Resource Representations
@@ -708,151 +705,119 @@ POWN specifies concepts including:
 * Persistence
 * Resource Lifecycle
 
-These concepts describe how portable Resources behave independently of any individual application while allowing applications to reconstruct their own Domain Objects locally.
+Together these concepts define how portable Resources behave independently of the application's internal implementation.
 
 ---
 
-## Relationship Between the Architectures
+# Boundary Implementations
 
-The two architectures collaborate through Domain Objects.
+The Resource Boundary is independent of any particular communication protocol.
+
+This application primarily implements the boundary using Nostr together with compatible decentralized services such as Blossom.
+
+Nostr provides decentralized identities, replaceable events, relay infrastructure, and decentralized discovery.
+
+The Resource Boundary defines how these capabilities are used to represent Domain Objects as portable Resources.
+
+Alternative implementations could communicate using REST, RPC, GraphQL, local files, or other protocols while preserving the same Domain Resource Model.
+
+Changing the boundary implementation does not require changes to the internal Application Architecture.
+
+---
+
+# Information Flow
+
+Information moves through the system by crossing the Resource Boundary.
 
 Conceptually:
 
 ```mermaid
 flowchart LR
 
-    User
+    Application
 
-    Application["Application Architecture"]
+    DomainObject["Domain Objects"]
 
-    Domain["Domain Objects"]
+    Boundary["Resource Boundary"]
 
-    POWN["Portable Ownership Architecture"]
+    Resource["Resources"]
 
-    Nostr["Nostr / Blossom"]
+    Service["Nostr / Blossom"]
 
-    User --> Application
+    Application --> DomainObject
+    DomainObject --> Boundary
+    Boundary --> Resource
+    Resource --> Service
 
-    Application --> Domain
-
-    Domain --> POWN
-
-    POWN --> Nostr
-
-    Nostr --> POWN
-
-    POWN --> Domain
-
-    Domain --> Application
+    Service --> Resource
+    Resource --> Boundary
+    Boundary --> DomainObject
+    DomainObject --> Application
 ```
 
-The Application owns Domain Objects.
+Within the application, all behavior operates on Domain Objects.
 
-POWN defines how those Domain Objects are represented as portable Resources.
+Only Resources cross the Resource Boundary.
 
-Applications publish Resources.
-
-Applications discover Resources.
-
-Applications reconstruct Domain Objects from those Resources.
-
-Each architecture remains focused on its own responsibilities.
+External systems never interact directly with the application's internal Domain Objects.
 
 ---
 
-## Domain Participation
+# Domain Participation
 
-Every Domain participates in POWN.
+Every Domain participates in the Resource Boundary.
 
-Each Domain determines:
+Each Domain defines:
 
-* how its Domain Objects are represented,
-* how those Resources are identified,
-* how Resources are discovered,
-* how Resources become Domain Objects,
-* how Domain Objects are published,
-* and how local application behavior relates to published Resources.
+* its Domain Objects,
+* how those Domain Objects become Resources,
+* how Resources are reconstructed into Domain Objects,
+* and how published Resources relate to local application behavior.
 
-For example, the Bible Domain understands how Bible Chapters participate in POWN.
+For example, the Bible Domain defines how Bible Chapters cross the Resource Boundary.
 
-The Notes Domain understands how Notes participate in POWN.
+The Notes Domain defines how Notes cross the Resource Boundary.
 
-The Reading Plans Domain understands how Reading Plans participate in POWN.
+The Reading Plans Domain defines how Reading Plans cross the Resource Boundary.
 
-POWN provides the architectural style.
+The Domain Resource Model provides the common structure.
 
-Each Domain provides the application meaning.
+Each Domain provides its own application semantics.
 
 ---
 
-## Information Flow
+# Independent Evolution
 
-The movement of information through the system follows a consistent lifecycle.
+The separation between the Application Architecture and the Resource Boundary allows each to evolve independently.
 
-```mermaid
-flowchart LR
+The Application Architecture may introduce new runtime behavior, presentation models, and user experiences without affecting the boundary.
 
-    User
+Likewise, the Resource Boundary may adopt new communication protocols or storage technologies without changing the application's internal Domain model.
 
-    DomainObject["Domain Object"]
-
-    Resource["Portable Resource"]
-
-    Nostr["Nostr / Blossom"]
-
-    User --> DomainObject
-
-    DomainObject --> Resource
-
-    Resource --> Nostr
-
-    Nostr --> Resource
-
-    Resource --> DomainObject
-```
-
-Within the application, users interact only with Domain Objects.
-
-When information is shared outside the application, Domain Objects are represented as portable Resources following the POWN specification.
-
-Other applications may discover those Resources, install them, and reconstruct equivalent Domain Objects within their own runtime.
-
-This separation allows applications to evolve independently while preserving interoperability.
+This separation keeps application behavior independent from external communication while preserving a consistent model for portable Resources.
 
 ---
 
-## Independent Evolution
+# Repository Alignment
 
-The separation between the Application Architecture and POWN allows each to evolve independently.
+The repository mirrors these responsibilities.
 
-Application Architecture may introduce new runtime capabilities, presentation models, or user experiences without changing the portable Resource model.
+Application documentation describes the runtime architecture and application behavior.
 
-Likewise, POWN may refine how Resources are identified, represented, or synchronized without affecting the internal architecture of individual applications.
+The Domain Resource Model defines the concepts used at the Resource Boundary.
 
-The result is a system where application innovation and data portability evolve independently while remaining compatible.
-
----
-
-## Repository Alignment
-
-The repository mirrors these architectural boundaries.
-
-The Application documentation describes how the application behaves.
-
-The POWN specification describes how applications represent and exchange portable Resources.
-
-Implementation documentation explains how this particular application realizes both architectural systems.
+Implementation documentation describes how this application realizes the Resource Boundary using Nostr and compatible decentralized services.
 
 Together these documents describe the complete platform while keeping responsibilities clearly separated.
 
 ---
 
-## Key Takeaways
+# Key Takeaways
 
-* The project is built upon two complementary architectural systems.
-* Application Architecture defines runtime behavior and user experience.
-* Portable Ownership Architecture (POWN) defines how Domain Objects become portable Resources.
-* POWN builds upon Nostr and compatible decentralized services rather than replacing them.
-* Every Domain implements POWN for its own Domain Objects.
-* The Application reconstructs Domain Objects from portable Resources while remaining free to define its own runtime behavior.
-* Clear separation between application behavior and portable ownership allows both architectures to evolve independently.
+* The project consists of a single Application Architecture.
+* Applications operate exclusively on Domain Objects.
+* Domain Objects cross the Resource Boundary as portable Resources.
+* The Domain Resource Model defines the mapping between Domain Objects and Resources.
+* This application primarily implements the Resource Boundary using Nostr and compatible decentralized services.
+* Alternative boundary implementations may use different communication protocols without affecting the internal Application Architecture.
+* Separating the Application Architecture from the Resource Boundary allows both to evolve independently.
