@@ -1284,3 +1284,159 @@ The Resource Boundary follows several fundamental principles:
 * The Domain Resource Model defines the concepts used by the boundary.
 * Communication technologies implement the boundary rather than define it.
 * The Application Architecture and Resource Boundary evolve independently while collaborating through a stable communication model.
+
+# The Application
+
+KJVOnly is an offline-first Bible study application designed to provide a fast, distraction-free reading and study experience while allowing users to own their data independently of any particular service or platform.
+
+The application is built around the idea that studying Scripture should remain available regardless of network connectivity while still allowing study material to be synchronized, shared, published, and preserved when connectivity becomes available.
+
+Rather than centering the application around cloud services, the application centers around the user's local experience.
+
+Everything else builds upon that foundation.
+
+---
+
+## Purpose
+
+The primary purpose of the application is to provide a complete Bible study environment.
+
+Reading Scripture is only one part of that experience.
+
+Users should be able to:
+
+* Read the Bible.
+* Study original language references.
+* Create notes.
+* Highlight passages.
+* Follow reading plans.
+* Search Scripture.
+* Search personal study material.
+* Organize multiple study sessions.
+* Continue working without an Internet connection.
+
+These capabilities work together to support long-term Bible study rather than isolated reading sessions.
+
+---
+
+## Offline First
+
+The application is designed to function without requiring continuous network connectivity.
+
+Bible content, indexes, notes, reading plans, annotations, and other application data are stored locally so that normal application behavior does not depend upon external services.
+
+Network communication enhances the application.
+
+It does not define the application.
+
+This approach provides a consistent user experience regardless of connectivity while allowing synchronization to occur whenever communication becomes available.
+
+---
+
+## A Workspace-Based Experience
+
+The application is designed around workspaces rather than pages.
+
+A workspace represents a study session.
+
+Within a workspace, users can open multiple panes, compare passages, follow references, consult notes, examine Strong's information, and work with multiple pieces of information simultaneously.
+
+Rather than navigating between pages, users build an environment that supports their current study.
+
+Workspaces allow that environment to be preserved and restored over time.
+
+---
+
+## Study Rather Than Navigation
+
+Traditional applications often organize their user experience around navigation.
+
+This application organizes the experience around study.
+
+Information is brought into the current workspace rather than requiring the user to continually move between unrelated screens.
+
+Opening a cross reference, viewing a note, searching Scripture, or following a reading plan extends the existing workspace instead of replacing it.
+
+This encourages exploration while preserving context.
+
+---
+
+## Domains
+
+The application is composed of several functional domains.
+
+Each domain represents a specific area of responsibility.
+
+Current domains include:
+
+* Bible
+* Notes
+* Reading Plans
+* Annotations
+* Search
+* Settings
+* Workspaces
+
+Each domain owns its own behavior while collaborating with the rest of the application through well-defined Public APIs.
+
+Together these domains provide the complete study experience.
+
+---
+
+## User Ownership
+
+Study material belongs to the user.
+
+Notes, reading plans, annotations, highlights, and other user-created information should remain portable independently of the application itself.
+
+The application therefore treats user information as first-class data that can be preserved, synchronized, imported, exported, and shared without becoming coupled to a single installation or service.
+
+User-created study material remains under the user's control and should continue to exist independently of the technologies used to store or synchronize it.
+
+---
+
+## Extensible By Design
+
+The architecture intentionally allows the application to grow over time.
+
+New domains, study tools, document types, and external communication mechanisms can be introduced without fundamentally changing the structure of the application.
+
+This allows the application to evolve while preserving a consistent user experience and architectural model.
+
+---
+
+## Long-Term Vision
+
+The long-term vision is to provide a study platform whose internal architecture remains stable while continuously expanding its capabilities.
+
+Users should be able to invest years of study into the application with confidence that their information remains portable, understandable, and independent of any single communication technology or storage provider.
+
+The application should continue evolving without requiring users to abandon either their data or their established study workflow.
+
+---
+
+## Key Characteristics
+
+The application is:
+
+* Offline-first.
+* Workspace-oriented.
+* Domain-driven.
+* Multi-pane.
+* User-owned.
+* Extensible.
+* Portable.
+* Decentralization-friendly.
+
+These characteristics influence every architectural and implementation decision throughout the project.
+
+---
+
+## Key Takeaways
+
+* KJVOnly is an offline-first Bible study application.
+* The application is designed around long-term study rather than simple reading.
+* Workspaces provide persistent study environments built from multiple panes.
+* The application operates entirely on locally managed Domain Objects.
+* User-created information remains portable and independent of any particular service.
+* The architecture is designed to support continuous evolution without disrupting the user experience.
