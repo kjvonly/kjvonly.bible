@@ -1,4 +1,4 @@
-# Responsibility Before Implementation
+# Architecture  Before Implementation
 
 ## Status
 
