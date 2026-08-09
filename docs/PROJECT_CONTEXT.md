@@ -643,321 +643,216 @@ The architecture should make future change easier rather than merely accommodati
 
 # System Overview
 
-The KJVOnly project is built from three complementary architectural systems:
+The KJVOnly project is built upon two complementary architectural systems:
 
 * Application Architecture
-* Resource Architecture
-* Service Architecture
+* Portable Ownership Architecture (POWN)
 
-Each architecture has a distinct purpose.
+Together they define the complete application model.
 
-Together they describe the complete system.
+The Application Architecture defines how the application behaves.
 
-The Application provides the user experience.
+Portable Ownership Architecture (POWN) defines how applications represent, publish, discover, install, synchronize, and exchange Domain Objects using Nostr and compatible decentralized services.
 
-The Resource Architecture defines how application data exists independently of any particular application.
+These two architectures are intentionally independent while remaining closely integrated.
 
-The Service Architecture provides the external capabilities required to publish, discover, retrieve, and synchronize those resources.
+The Application defines the user experience.
 
-These architectures are intentionally independent while remaining closely integrated.
+POWN defines how application data exists beyond the boundaries of the application.
 
 ---
 
-## Three Independent Architectures
+## The Two Architectures
 
-Each architecture answers a different set of questions.
+Although they work together, the two architectures solve different problems.
 
 ### Application Architecture
 
-How should the application behave?
+The Application Architecture defines the runtime behavior of the application.
 
-### Resource Architecture
+It describes concepts such as:
 
-How should application data exist independently of the application?
+* Workspace Runtime
+* Domains
+* Module Presentation
+* User Interface
+* Persistence
+* Background Processing
+* Application Events
+* Public APIs
+* Repository Organization
 
-### Service Architecture
+The Application owns Domain Objects and the user experience built around those Domain Objects.
 
-How should published resources be transported, stored, and discovered?
-
-Each architecture focuses on its own responsibilities.
-
-No architecture attempts to absorb the responsibilities of another.
-
----
-
-## The Application
-
-The Application is responsible for everything the user experiences.
-
-It owns concepts such as:
-
-* Workspace Runtime,
-* Domains,
-* Module Presentation,
-* User Interface,
-* Persistence,
-* Background Processing,
-* and Resource Integration.
-
-The Application is also responsible for creating and managing Domain Objects.
-
-Domain Objects represent the application's understanding of information.
-
-They are the primary concepts consumed throughout the application.
+It intentionally says nothing about how Domain Objects are published or exchanged with other applications.
 
 ---
 
-## The Resource Architecture
+### Portable Ownership Architecture (POWN)
 
-The Resource Architecture defines the model by which application information exists outside the application.
+Portable Ownership Architecture (POWN) defines the application model used when Domain Objects exist outside the application.
 
-It establishes concepts such as:
+It builds upon Nostr's decentralized event model together with compatible services such as Blossom.
 
-* Published Resources,
-* Resource Identity,
-* Discovery,
-* Resolution,
-* Resource Representations,
-* Installation,
-* Versioning,
-* and Persistence.
+Rather than replacing these protocols, POWN defines a consistent architectural style for using them to build offline-first decentralized applications.
 
-These concepts describe **how Resources exist**.
+POWN specifies concepts including:
 
-They do not describe how a particular application chooses to use those Resources.
+* Resource Identity
+* Resource Representations
+* Discovery
+* Resolution
+* Installation
+* Publication
+* Synchronization
+* Persistence
+* Resource Lifecycle
 
-The Resource Architecture is intentionally application independent.
-
-Multiple applications may consume the same Published Resources while creating entirely different Domain Objects.
-
----
-
-## The Service Architecture
-
-The Service Architecture provides the external capabilities required by the Resource Architecture.
-
-Examples include:
-
-* Nostr Relays,
-* Blossom servers,
-* storage providers,
-* synchronization services,
-* and other supporting infrastructure.
-
-These services provide transport, storage, and communication.
-
-They intentionally do not define application behavior.
-
-Specific service implementations may evolve without changing either the Application Architecture or the Resource Architecture.
+These concepts describe how portable Resources behave independently of any individual application while allowing applications to reconstruct their own Domain Objects locally.
 
 ---
 
-## Resource Integration
+## Relationship Between the Architectures
 
-Resource Integration is the part of the Application responsible for implementing the Resource Architecture.
+The two architectures collaborate through Domain Objects.
 
 Conceptually:
 
-```mermaid id="j3s2pg"
-flowchart LR
-
-    Application
-
-    ResourceIntegration["Resource Integration"]
-
-    ResourceArchitecture["Resource Architecture"]
-
-    ServiceArchitecture["Service Architecture"]
-
-    Application --> ResourceIntegration
-
-    ResourceIntegration -.implements.-> ResourceArchitecture
-
-    ResourceArchitecture --> ServiceArchitecture
-```
-
-Resource Integration allows the Application to participate in the Resource lifecycle while preserving the boundaries defined by the Resource Architecture.
-
-Its responsibilities include coordinating:
-
-* discovery,
-* publication,
-* installation,
-* refresh,
-* synchronization,
-* installation state,
-* and Resource lifecycle management.
-
-Although these operations follow the rules defined by the Resource Architecture, they remain Application responsibilities.
-
----
-
-## Domain Participation
-
-Each Domain participates in the Resource Architecture through its own Resource knowledge.
-
-For example, a Domain understands:
-
-* which Published Resources it consumes,
-* how those Resources are identified,
-* how they should be discovered,
-* how they become Domain Objects,
-* how Domain Objects should be serialized,
-* and which Resources should be published.
-
-Conceptually:
-
-```mermaid id="k8r91v"
-flowchart LR
-
-    Domain["Bible Domain"]
-
-    Knowledge["Domain Resource Knowledge"]
-
-    ResourceIntegration["Resource Integration"]
-
-    ResourceArchitecture["Resource Architecture"]
-
-    Domain --> Knowledge
-
-    Knowledge --> ResourceIntegration
-
-    ResourceIntegration -.implements.-> ResourceArchitecture
-```
-
-The Domain owns the mapping between Published Resources and Domain Objects.
-
-Generic Resource infrastructure cannot provide this knowledge because it belongs to the Domain itself.
-
----
-
-## Domain Objects
-
-Domain Objects form the boundary between generic Resource concepts and application behavior.
-
-Published Resources are transformed into Domain Objects by application-owned behavior.
-
-Conceptually:
-
-```mermaid id="cf40qh"
-flowchart LR
-
-    Published["Published Resource"]
-
-    Resolution["Resource Resolution"]
-
-    Resource["Resolved Resource"]
-
-    Factory["Domain Object Factory"]
-
-    DomainObject["Domain Object"]
-
-    Published --> Resolution
-
-    Resolution --> Resource
-
-    Resource --> Factory
-
-    Factory --> DomainObject
-```
-
-The Domain Object Factory belongs to the Domain.
-
-Likewise, the serializer responsible for publishing a Domain Object also belongs to the Domain.
-
-The Resource Architecture defines the rules governing Resources.
-
-The Domain defines how its application concepts participate within those rules.
-
----
-
-## Information Flow
-
-Information moves through several cooperating architectural systems.
-
-Conceptually:
-
-```mermaid id="g5kl2h"
+```mermaid
 flowchart LR
 
     User
 
-    Application
+    Application["Application Architecture"]
 
-    Domain
+    Domain["Domain Objects"]
 
-    ResourceIntegration["Resource Integration"]
+    POWN["Portable Ownership Architecture"]
 
-    Infrastructure["Service Infrastructure"]
-
-    Published["Published Resources"]
-
-    DomainObject["Domain Object"]
+    Nostr["Nostr / Blossom"]
 
     User --> Application
 
     Application --> Domain
 
-    Domain --> ResourceIntegration
+    Domain --> POWN
 
-    ResourceIntegration --> Infrastructure
+    POWN --> Nostr
 
-    Infrastructure --> Published
+    Nostr --> POWN
 
-    Published --> ResourceIntegration
+    POWN --> Domain
 
-    ResourceIntegration --> DomainObject
-
-    DomainObject --> Domain
+    Domain --> Application
 ```
 
-The Application initiates work.
+The Application owns Domain Objects.
 
-Domains determine what information they require.
+POWN defines how those Domain Objects are represented as portable Resources.
 
-Resource Integration implements the Resource Architecture to retrieve and publish Resources.
+Applications publish Resources.
 
-Service Infrastructure communicates with external systems.
+Applications discover Resources.
 
-The Domain ultimately creates and consumes Domain Objects.
+Applications reconstruct Domain Objects from those Resources.
 
-Each architectural system contributes its own responsibilities without taking ownership of another's.
+Each architecture remains focused on its own responsibilities.
+
+---
+
+## Domain Participation
+
+Every Domain participates in POWN.
+
+Each Domain determines:
+
+* how its Domain Objects are represented,
+* how those Resources are identified,
+* how Resources are discovered,
+* how Resources become Domain Objects,
+* how Domain Objects are published,
+* and how local application behavior relates to published Resources.
+
+For example, the Bible Domain understands how Bible Chapters participate in POWN.
+
+The Notes Domain understands how Notes participate in POWN.
+
+The Reading Plans Domain understands how Reading Plans participate in POWN.
+
+POWN provides the architectural style.
+
+Each Domain provides the application meaning.
+
+---
+
+## Information Flow
+
+The movement of information through the system follows a consistent lifecycle.
+
+```mermaid
+flowchart LR
+
+    User
+
+    DomainObject["Domain Object"]
+
+    Resource["Portable Resource"]
+
+    Nostr["Nostr / Blossom"]
+
+    User --> DomainObject
+
+    DomainObject --> Resource
+
+    Resource --> Nostr
+
+    Nostr --> Resource
+
+    Resource --> DomainObject
+```
+
+Within the application, users interact only with Domain Objects.
+
+When information is shared outside the application, Domain Objects are represented as portable Resources following the POWN specification.
+
+Other applications may discover those Resources, install them, and reconstruct equivalent Domain Objects within their own runtime.
+
+This separation allows applications to evolve independently while preserving interoperability.
 
 ---
 
 ## Independent Evolution
 
-Because responsibilities are clearly separated, each architecture can evolve independently.
+The separation between the Application Architecture and POWN allows each to evolve independently.
 
-For example:
+Application Architecture may introduce new runtime capabilities, presentation models, or user experiences without changing the portable Resource model.
 
-* a new Resource Representation may be introduced without changing Domain behavior,
-* a different relay implementation may replace the existing infrastructure,
-* a Domain may introduce additional Resource types,
-* or the Workspace Runtime may evolve without affecting Resource Resolution.
+Likewise, POWN may refine how Resources are identified, represented, or synchronized without affecting the internal architecture of individual applications.
 
-This separation allows the project to grow incrementally while preserving clear architectural boundaries.
+The result is a system where application innovation and data portability evolve independently while remaining compatible.
 
 ---
 
 ## Repository Alignment
 
-The repository is organized to reflect these architectural responsibilities.
+The repository mirrors these architectural boundaries.
 
-Documentation, repository organization, Public APIs, and implementation should all communicate the same ownership model.
+The Application documentation describes how the application behaves.
 
-The architecture should remain visible throughout the source code.
+The POWN specification describes how applications represent and exchange portable Resources.
 
-Repository organization should reinforce the architecture rather than obscure it.
+Implementation documentation explains how this particular application realizes both architectural systems.
+
+Together these documents describe the complete platform while keeping responsibilities clearly separated.
 
 ---
 
 ## Key Takeaways
 
-* The project consists of three complementary architectural systems.
-* The Resource Architecture defines how Resources exist independently of any application.
-* The Application implements the Resource Architecture through Resource Integration.
-* Domains contribute the application-specific knowledge required to discover, interpret, publish, and serialize their own Resources.
-* Domains own the creation of Domain Objects.
-* The Service Architecture provides the external capabilities used to implement the Resource Architecture.
-* Each architecture owns its own responsibilities while collaborating through explicit architectural boundaries.
+* The project is built upon two complementary architectural systems.
+* Application Architecture defines runtime behavior and user experience.
+* Portable Ownership Architecture (POWN) defines how Domain Objects become portable Resources.
+* POWN builds upon Nostr and compatible decentralized services rather than replacing them.
+* Every Domain implements POWN for its own Domain Objects.
+* The Application reconstructs Domain Objects from portable Resources while remaining free to define its own runtime behavior.
+* Clear separation between application behavior and portable ownership allows both architectures to evolve independently.
