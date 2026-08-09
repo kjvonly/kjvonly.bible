@@ -642,7 +642,7 @@ The boundary model is intentionally independent of the underlying protocol, allo
 
 ---
 
-# Application Architecture
+## Application Architecture
 
 The Application Architecture defines how the application behaves.
 
@@ -666,7 +666,7 @@ The Application Architecture is intentionally independent of how Domain Objects 
 
 ---
 
-# The Resource Boundary
+## The Resource Boundary
 
 The Resource Boundary is the point where Domain Objects leave the application.
 
@@ -692,7 +692,7 @@ Together these concepts define how portable Resources behave independently of th
 
 ---
 
-# Boundary Implementations
+## Boundary Implementations
 
 The Resource Boundary is independent of any particular communication protocol.
 
@@ -708,7 +708,7 @@ Changing the boundary implementation does not require changes to the internal Ap
 
 ---
 
-# Information Flow
+## Information Flow
 
 Information moves through the system by crossing the Resource Boundary.
 
@@ -746,7 +746,7 @@ External systems never interact directly with the application's internal Domain 
 
 ---
 
-# Domain Participation
+## Domain Participation
 
 Every Domain participates in the Resource Boundary.
 
@@ -769,7 +769,7 @@ Each Domain provides its own application semantics.
 
 ---
 
-# Independent Evolution
+## Independent Evolution
 
 The separation between the Application Architecture and the Resource Boundary allows each to evolve independently.
 
@@ -781,7 +781,7 @@ This separation keeps application behavior independent from external communicati
 
 ---
 
-# Repository Alignment
+## Repository Alignment
 
 The repository mirrors these responsibilities.
 
@@ -795,7 +795,7 @@ Together these documents describe the complete platform while keeping responsibi
 
 ---
 
-# Key Takeaways
+## Key Takeaways
 
 * The project consists of a single Application Architecture.
 * Applications operate exclusively on Domain Objects.
