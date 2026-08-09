@@ -222,7 +222,7 @@ The KJVOnly project is an offline-first application built around a single Applic
 
 The Application Architecture defines the application's runtime behavior, user experience, and Domain model.
 
-Applications operate exclusively on Domain Objects.
+The application operates on Domain Objects.
 
 Whenever Domain Objects need to exist outside the application, they cross the application's Resource Boundary where they become portable Resources suitable for communication, publication, synchronization, storage, and reconstruction.
 
@@ -245,7 +245,7 @@ That architecture defines:
 * Repository Organization,
 * and every other concept required to build and operate the application.
 
-The Application Architecture owns the application's behavior.
+The Application Architecture owns application behavior.
 
 Everything inside the application works with Domain Objects.
 
@@ -295,9 +295,7 @@ flowchart LR
     Domain --> Application
 ```
 
-The Application continues to operate exclusively on Domain Objects.
-
-Only Resources cross the Resource Boundary.
+The application continues to operate on Domain Objects while only Resources cross the Resource Boundary.
 
 This separation allows the application's internal design to remain stable while external communication mechanisms evolve independently.
 
@@ -386,7 +384,7 @@ The goal is to ensure that Domain Objects remain the central concept of the appl
 ## Key Takeaways
 
 * The project is built around a single Application Architecture.
-* Applications operate exclusively on Domain Objects.
+* The application operates on Domain Objects.
 * Domain Objects cross the Resource Boundary as portable Resources.
 * The Domain Resource Model defines the concepts used at the Resource Boundary.
 * The Resource Boundary can be implemented using different communication technologies.
@@ -1057,7 +1055,7 @@ By organizing around these enduring concepts, implementation can evolve without 
 
 Architectural boundaries exist to separate responsibilities rather than technologies.
 
-The Application Architecture defines how the application behaves.
+The Application Architecture defines the application's behavior.
 
 The Resource Boundary defines how Domain Objects are represented outside the application.
 
@@ -1157,7 +1155,7 @@ The architecture should make future change easier rather than merely accommodati
 
 # Application Architecture
 
-The Application Architecture defines how the application behaves.
+The Application Architecture defines the application's behavior.
 
 It describes the runtime structure of the application, the responsibilities owned by each architectural concept, and how those concepts collaborate to provide a cohesive user experience.
 
@@ -1211,7 +1209,7 @@ Implementation details remain private to the owner whenever possible.
 
 ## Domain Objects
 
-Applications operate exclusively on Domain Objects.
+The application operates on Domain Objects.
 
 A Domain Object represents the application's internal understanding of information.
 
@@ -1365,7 +1363,7 @@ External communication occurs beyond the boundary and remains independent of the
 
 ## Relationship To The Domain Resource Model
 
-The Application Architecture defines how the application behaves.
+The Application Architecture defines the application's behavior.
 
 The Domain Resource Model defines how Domain Objects are represented outside the application.
 
@@ -1393,8 +1391,8 @@ The Application Architecture follows several fundamental principles:
 
 ## Key Takeaways
 
-* The Application Architecture defines how the application behaves.
-* Applications operate exclusively on Domain Objects.
+* The Application Architecture defines the application's behavior.
+* The application operates on Domain Objects.
 * Architectural owners collaborate through Public APIs.
 * Responsibilities should remain stable while implementation evolves.
 * Domain Objects cross the Resource Boundary as portable Resources.
@@ -1406,7 +1404,7 @@ The Application Architecture follows several fundamental principles:
 
 The Resource Boundary defines how Domain Objects leave and re-enter the application.
 
-Applications operate exclusively on Domain Objects.
+The application operates on Domain Objects.
 
 External systems operate on Resources.
 
@@ -1585,7 +1583,7 @@ This separation reduces coupling and simplifies long-term evolution.
 
 ## Relationship To The Application Architecture
 
-The Application Architecture defines how the application behaves.
+The Application Architecture defines the application's behavior.
 
 The Resource Boundary defines how the application communicates beyond its own runtime.
 
@@ -1617,7 +1615,7 @@ They do not define it.
 
 The Resource Boundary follows several fundamental principles:
 
-* Applications operate exclusively on Domain Objects.
+* The application operates on Domain Objects.
 * External communication occurs exclusively through Resources.
 * Domain Objects are never exposed directly outside the application.
 * Boundary implementations remain independent of the Application Architecture.
@@ -1640,7 +1638,7 @@ The Resource Boundary follows several fundamental principles:
 
 The KJVOnly project consists of a single Application Architecture separated from external systems by a Resource Boundary.
 
-The Application Architecture defines how the application behaves.
+The Application Architecture defines the application's behavior.
 
 The Resource Boundary defines how Domain Objects are represented outside the application.
 
@@ -1716,7 +1714,7 @@ This includes:
 * Public APIs
 * Repository Organization
 
-Applications operate exclusively on Domain Objects.
+The application operates on Domain Objects.
 
 Every architectural decision within the application ultimately supports the creation, modification, presentation, or management of Domain Objects.
 
@@ -1879,7 +1877,7 @@ This allows the application to continue growing without requiring fundamental ar
 * The project consists of a single Application Architecture separated from external systems by a Resource Boundary.
 * The Application Architecture owns behavior.
 * The Resource Boundary owns communication.
-* Applications operate exclusively on Domain Objects.
+* The application operates on Domain Objects.
 * External systems operate exclusively on Resources.
 * The Domain Resource Model defines the conceptual model used by the Resource Boundary.
 * Boundary implementations communicate Resources using technologies such as Nostr, Blossom, REST, or RPC.
@@ -1893,7 +1891,7 @@ Rather than grouping files by framework, language, or technical concern, the rep
 
 This organization allows the repository to remain understandable as implementation evolves over time.
 
-Understanding the repository should require understanding the architecture rather than memorizing folder names.
+Understanding the repository should come from understanding the architecture rather than memorizing folder names.
 
 ---
 
