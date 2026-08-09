@@ -804,3 +804,249 @@ Together these documents describe the complete platform while keeping responsibi
 * This application primarily implements the Resource Boundary using Nostr and compatible decentralized services.
 * Alternative boundary implementations may use different communication protocols without affecting the internal Application Architecture.
 * Separating the Application Architecture from the Resource Boundary allows both to evolve independently.
+
+# Application Architecture
+
+The Application Architecture defines how the application behaves.
+
+It describes the runtime structure of the application, the responsibilities owned by each architectural concept, and how those concepts collaborate to provide a cohesive user experience.
+
+The Application Architecture is responsible for application behavior.
+
+It is intentionally independent of how information is communicated outside the application.
+
+Whenever Domain Objects need to interact with external systems, they cross the application's Resource Boundary.
+
+---
+
+## Purpose
+
+The purpose of the Application Architecture is to organize the application around stable concepts that represent application meaning rather than implementation.
+
+Applications evolve continuously.
+
+Features are added.
+
+User interfaces improve.
+
+Implementation technologies change.
+
+The underlying concepts represented by the application generally change much more slowly.
+
+The Application Architecture is designed to organize software around those enduring concepts so the application remains understandable as it evolves.
+
+---
+
+## Architectural Owners
+
+The Application Architecture is composed of a number of architectural owners.
+
+Each owner is responsible for a specific area of the application.
+
+Examples include:
+
+* Workspace Runtime
+* Domains
+* User Interface
+* Background Processing
+* Persistence
+* Public APIs
+* Repository Organization
+
+Each owner defines its own responsibilities and exposes behavior through its Public API.
+
+Implementation details remain private to the owner whenever possible.
+
+---
+
+## Domain Objects
+
+Applications operate exclusively on Domain Objects.
+
+A Domain Object represents the application's internal understanding of information.
+
+Examples include:
+
+* Bible Chapters
+* Notes
+* Reading Plans
+* Annotations
+* Search Results
+* User Settings
+
+Every runtime interaction operates on Domain Objects.
+
+The Application Architecture intentionally avoids exposing protocol-specific concepts throughout the runtime.
+
+Communication technologies remain outside the application boundary.
+
+---
+
+## Runtime Collaboration
+
+Architectural owners collaborate through Public APIs.
+
+Public APIs expose capabilities rather than implementation.
+
+This allows independently owned parts of the application to evolve without creating unnecessary implementation dependencies.
+
+Communication between architectural owners should always occur through their published contracts.
+
+Implementation remains private.
+
+Behavior remains public.
+
+---
+
+## The Resource Boundary
+
+Applications rarely exist in isolation.
+
+Domain Objects must eventually be stored, synchronized, published, imported, exported, or shared.
+
+Whenever this occurs, Domain Objects cross the application's Resource Boundary.
+
+The Resource Boundary represents the point where the application's internal model becomes an external representation suitable for communication with other systems.
+
+The Application Architecture owns Domain Objects.
+
+The Resource Boundary owns Resources.
+
+This separation allows the application to remain independent of any particular communication protocol or storage technology.
+
+---
+
+## Communication Independence
+
+The Application Architecture does not depend on Nostr.
+
+It does not depend on REST.
+
+It does not depend on RPC.
+
+It does not depend on any specific communication technology.
+
+Instead, the application depends only upon the Resource Boundary.
+
+The Resource Boundary defines how Domain Objects become portable Resources.
+
+Individual boundary implementations determine how those Resources are communicated with external systems.
+
+Changing the communication mechanism should not require changes to the internal Application Architecture.
+
+---
+
+## Stable Responsibilities
+
+Architectural owners should remain stable over time.
+
+Implementation evolves.
+
+Responsibilities generally do not.
+
+For example, the application will always require:
+
+* a runtime,
+* domains,
+* presentation,
+* persistence,
+* background processing,
+* and communication with external systems.
+
+How those responsibilities are implemented may change significantly.
+
+The responsibilities themselves remain relatively constant.
+
+The architecture therefore organizes the repository around responsibilities rather than technologies.
+
+---
+
+## Evolution
+
+The architecture is intended to support continuous evolution.
+
+Architectural ownership should be established before implementation changes occur.
+
+Implementation then gradually migrates toward the documented ownership model.
+
+This approach minimizes disruption while steadily improving the overall organization of the application.
+
+The architecture should guide implementation rather than continually reacting to it.
+
+---
+
+## High-Level View
+
+Conceptually, the application operates as follows:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Domain["Domain Objects"]
+
+    API["Public APIs"]
+
+    Boundary["Resource Boundary"]
+
+    External["Boundary Implementation"]
+
+    Runtime --> Domain
+
+    Domain --> API
+
+    API --> Boundary
+
+    Boundary --> External
+
+    External --> Boundary
+
+    Boundary --> Domain
+```
+
+Everything inside the Application Architecture operates on Domain Objects.
+
+Only Resources cross the Resource Boundary.
+
+External communication occurs beyond the boundary and remains independent of the application's internal behavior.
+
+---
+
+## Relationship To The Domain Resource Model
+
+The Application Architecture defines how the application behaves.
+
+The Domain Resource Model defines how Domain Objects are represented outside the application.
+
+The Application Architecture does not define Resource Identity, Discovery, Resolution, Installation, Publication, or Synchronization.
+
+Those concepts belong to the Domain Resource Model because they describe behavior at the Resource Boundary rather than application behavior.
+
+Together these documents define both sides of the application's communication boundary while keeping their responsibilities clearly separated.
+
+---
+
+## Key Principles
+
+The Application Architecture follows several fundamental principles:
+
+* Organize around application meaning.
+* Establish clear architectural ownership.
+* Expose behavior through Public APIs.
+* Keep implementation private.
+* Operate exclusively on Domain Objects.
+* Cross the Resource Boundary only when communicating with external systems.
+* Allow implementation technologies to evolve independently from application behavior.
+
+---
+
+## Key Takeaways
+
+* The Application Architecture defines how the application behaves.
+* Applications operate exclusively on Domain Objects.
+* Architectural owners collaborate through Public APIs.
+* Responsibilities should remain stable while implementation evolves.
+* Domain Objects cross the Resource Boundary as portable Resources.
+* Communication technologies remain outside the Application Architecture.
+* Separating application behavior from external communication allows both to evolve independently.
