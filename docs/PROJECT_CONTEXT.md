@@ -1884,3 +1884,180 @@ This separation allows both the Runtime and Domains to evolve independently whil
 * The Runtime owns presentation and interaction.
 * Separating Runtime responsibilities from Domain responsibilities keeps the application flexible and easy to evolve.
 
+# Repository Overview
+
+The repository is organized to reflect the architecture of the application rather than its implementation technologies.
+
+Rather than grouping files by framework, language, or technical concern, the repository groups documentation and source code according to architectural responsibility.
+
+This organization allows the repository to remain understandable as implementation evolves over time.
+
+Understanding the repository should require understanding the architecture rather than memorizing folder names.
+
+---
+
+## A Layered Repository
+
+The repository is divided into several conceptual layers.
+
+Each layer answers a different set of questions.
+
+Conceptually:
+
+```text
+Project Context
+        │
+        ▼
+Principles
+        │
+        ▼
+Architecture
+        │
+        ▼
+Implementation
+        │
+        ▼
+Developer Guide
+        │
+        ▼
+Source Code
+```
+
+Each layer builds upon the previous one.
+
+Reading from the top down establishes the architectural reasoning before introducing implementation details.
+
+---
+
+## Project Context
+
+Project Context provides the high-level understanding required before examining either the architecture or the source code.
+
+It explains:
+
+* what the application is,
+* why it exists,
+* the major concepts,
+* the Application Architecture,
+* the Resource Boundary,
+* and how the complete system fits together.
+
+This document should normally be read first.
+
+---
+
+## Principles
+
+The Principles describe the architectural rules used throughout the project.
+
+Rather than documenting implementation techniques, they establish the reasoning used to make architectural decisions.
+
+These principles should remain stable even as the implementation evolves.
+
+Whenever uncertainty exists, the Principles should be considered authoritative.
+
+---
+
+## Architecture
+
+The Architecture documents describe the structure of the application.
+
+They define architectural owners, responsibilities, Public APIs, runtime concepts, and the Resource Boundary.
+
+These documents describe how the application is organized independently of any particular implementation.
+
+Architecture explains **what** the application is.
+
+It intentionally avoids describing **how** it is implemented.
+
+---
+
+## Implementation
+
+Implementation documents describe how the current application realizes the documented architecture.
+
+These documents are expected to evolve more rapidly than the architecture itself.
+
+Examples include:
+
+* current implementation decisions,
+* migration strategy,
+* transport implementations,
+* runtime details,
+* and future implementation direction.
+
+Implementation documents explain today's application without redefining the architecture.
+
+---
+
+## Developer Guide
+
+The Developer Guide provides practical information for contributors.
+
+Topics include:
+
+* coding standards,
+* repository walkthroughs,
+* glossary,
+* quick reference,
+* common development patterns,
+* and contribution guidance.
+
+These documents support day-to-day development rather than architectural understanding.
+
+---
+
+## Source Code
+
+The source code is the final representation of the documented architecture.
+
+Repository organization, architectural ownership, Public APIs, and implementation should reinforce one another.
+
+Documentation should explain the code.
+
+The code should validate the documentation.
+
+Neither should contradict the other.
+
+---
+
+## Understanding The Repository
+
+The repository is intended to be explored in the same order that software is designed.
+
+First understand the problem.
+
+Then understand the principles.
+
+Then understand the architecture.
+
+Then understand the implementation.
+
+Finally examine the source code.
+
+This progression allows implementation details to be interpreted within their intended architectural context rather than being understood in isolation.
+
+---
+
+## Living Documentation
+
+The documentation is intended to evolve together with the application.
+
+Architectural documents should remain relatively stable.
+
+Implementation documents are expected to change more frequently.
+
+When architectural changes occur, documentation should be updated before implementation diverges significantly.
+
+Maintaining this alignment ensures that the repository remains a reliable source of architectural knowledge throughout the lifetime of the project.
+
+---
+
+## Key Takeaways
+
+* The repository mirrors the architecture of the application.
+* Documentation progresses from concepts to implementation.
+* Architectural documents define responsibilities rather than technologies.
+* Implementation documents explain how the architecture is realized.
+* Source code should reinforce the documented architecture.
+* Understanding the architecture first makes the implementation significantly easier to understand.
