@@ -218,213 +218,180 @@ This makes the application easier to understand, easier to evolve, and easier to
 
 # Project Overview
 
-The KJVOnly project is a collection of systems that together provide a decentralized, offline-first application platform.
+The KJVOnly project is an offline-first application built around a single Application Architecture.
 
-Although these systems are developed together, they each have distinct responsibilities and evolve independently.
+The Application Architecture defines the application's runtime behavior, user experience, and Domain model.
 
-Understanding the separation between these responsibilities is fundamental to understanding the architecture.
+Applications operate exclusively on Domain Objects.
 
-The project is intentionally organized around these architectural boundaries rather than around technologies or deployment models.
+Whenever Domain Objects need to exist outside the application, they cross the application's Resource Boundary where they become portable Resources suitable for communication, publication, synchronization, storage, and reconstruction.
+
+This separation allows the application to evolve independently from the technologies used to communicate with external systems while preserving a consistent application model.
 
 ---
 
-## The Three Architectures
+## A Single Application Architecture
 
-The project consists of three primary architectural systems:
+The project intentionally organizes the application around a single architecture.
 
-1. Application Architecture
-2. Resource Architecture
-3. Service Architecture
+That architecture defines:
 
-Each architecture solves a different problem.
+* the Runtime,
+* Domains,
+* User Interface,
+* Background Processing,
+* Persistence,
+* Public APIs,
+* Repository Organization,
+* and every other concept required to build and operate the application.
+
+The Application Architecture owns the application's behavior.
+
+Everything inside the application works with Domain Objects.
+
+Those Domain Objects represent the application's internal understanding of the world and remain independent of any particular communication protocol, storage technology, or external service.
+
+---
+
+## Crossing The Resource Boundary
+
+Applications rarely exist in isolation.
+
+Information must eventually be stored, synchronized, shared, imported, exported, or published.
+
+Rather than exposing Domain Objects directly, the application represents them as portable Resources when they cross the Resource Boundary.
+
+This boundary separates the application's internal model from the external representations used to communicate with other systems.
 
 Conceptually:
 
 ```mermaid
 flowchart LR
 
-    Resource["Resource Architecture"]
+    Application["Application"]
 
-    Service["Service Architecture"]
+    Domain["Domain Objects"]
 
-    Application["Application Architecture"]
+    Boundary["Resource Boundary"]
 
-    Resource --> Application
+    Resource["Resources"]
 
-    Service --> Application
+    External["External Systems"]
+
+    Application --> Domain
+
+    Domain --> Boundary
+
+    Boundary --> Resource
+
+    Resource --> External
+
+    External --> Resource
+
+    Resource --> Boundary
+
+    Boundary --> Domain
+
+    Domain --> Application
 ```
 
-The Application consumes capabilities provided by the other two architectures.
+The Application continues to operate exclusively on Domain Objects.
 
-Neither the Resource Architecture nor the Service Architecture depends upon the Application.
+Only Resources cross the Resource Boundary.
 
-This separation allows each system to evolve independently while remaining conceptually aligned.
-
----
-
-## Application Architecture
-
-The Application Architecture describes the application itself.
-
-Its responsibility is to present Domain capabilities to the user while coordinating the interaction between Runtime, Domains, User Interface, Persistence, Background Processing, and Resource Integration.
-
-The Application is responsible for:
-
-* presenting information,
-* responding to user interaction,
-* managing application state,
-* coordinating background work,
-* and providing a consistent user experience.
-
-The Application does not define how content exists outside of the application.
-
-Instead, it consumes Domain Objects produced by the Resource Architecture.
+This separation allows the application's internal design to remain stable while external communication mechanisms evolve independently.
 
 ---
 
-## Resource Architecture
+## The Domain Resource Model
 
-The Resource Architecture defines how Domain Objects exists independently of the application.
+The Domain Resource Model defines the conceptual model used at the Resource Boundary.
 
-It describes how information is identified, published, discovered, resolved, installed, updated, and transformed into Domain Objects.
+It describes how Domain Objects become Resources and how Resources are reconstructed back into Domain Objects.
 
-The Resource Architecture is intentionally independent of the Application.
+The model establishes concepts including:
 
-Any application capable of understanding the Resource Architecture could consume the same published content.
+* Resource Identity,
+* Resource Representations,
+* Discovery,
+* Resolution,
+* Installation,
+* Publication,
+* Synchronization,
+* Persistence,
+* and Resource Lifecycle.
 
-This separation allows application behavior and published content to evolve independently.
+Together these concepts provide a consistent way for applications to communicate Domain Objects without exposing their internal implementation.
 
-The Application does not own Resources.
+The Domain Resource Model defines the boundary.
 
-It owns the Domain Objects created from those Resources.
-
----
-
-## Service Architecture
-
-The Service Architecture describes the external systems that support the application.
-
-Examples include:
-
-* Nostr Relays,
-* Blossom servers,
-* storage providers,
-* synchronization services,
-* and other supporting infrastructure.
-
-These services provide capabilities to the Resource Architecture.
-
-The Application communicates with these services through Resource Integration rather than directly coupling application behavior to individual service implementations.
-
-The Service Architecture intentionally remains replaceable.
-
-Supporting technologies may evolve without changing the Application Architecture.
+Individual communication technologies implement it.
 
 ---
 
-## How The Architectures Collaborate
+## Boundary Implementations
 
-Each architecture has a clearly defined responsibility.
+The Resource Boundary intentionally remains independent of any particular protocol.
 
-Conceptually:
+This application primarily implements the boundary using the Nostr protocol together with compatible decentralized services such as Blossom.
 
-```mermaid
-flowchart LR
+Nostr provides decentralized identities, replaceable events, relay infrastructure, and decentralized discovery.
 
-    Services["Service Architecture"]
+The Domain Resource Model defines how those capabilities are used to represent portable Resources.
 
-    Resources["Resource Architecture"]
+Alternative implementations could communicate using technologies such as REST, RPC, GraphQL, local files, or other communication mechanisms while preserving the same Application Architecture and Domain Resource Model.
 
-    Application["Application Architecture"]
-
-    User["User"]
-
-    Services --> Resources
-
-    Resources --> Application
-
-    Application --> User
-```
-
-Service Architecture enables Resource Architecture.
-
-Resource Architecture provides Domain Objects to the Application.
-
-The Application presents those Domain Objects to the user.
-
-Each architecture remains focused on its own responsibilities.
-
-No architecture attempts to absorb the responsibilities of another.
+Changing the communication technology should not require changes to the application's internal Domain model.
 
 ---
 
-## Architectural Independence
+## Independent Evolution
 
-Although the three architectures collaborate closely, they should be understood independently.
+Separating the Application Architecture from the Resource Boundary allows each to evolve independently.
 
-Changes within one architecture should minimize their impact on the others.
+The Application may introduce new runtime capabilities, presentation models, and user experiences without affecting external communication.
 
-For example:
+Likewise, boundary implementations may adopt new protocols, storage technologies, or synchronization mechanisms without requiring changes to the application's internal architecture.
 
-* introducing a new storage provider should primarily affect the Service Architecture,
-* extending Resource Resolution should primarily affect the Resource Architecture,
-* redesigning Module Presentation should primarily affect the Application Architecture.
-
-Well-defined boundaries allow each architecture to evolve without unnecessary coupling.
+This separation reduces coupling while allowing both sides of the boundary to evolve at their own pace.
 
 ---
 
-## The Documentation
+## Repository Organization
 
-The repository documentation mirrors the architecture.
+The repository mirrors these responsibilities.
 
-Each architectural system has its own documentation describing:
+The Application Architecture documents describe how the application behaves.
 
-* its responsibilities,
-* its concepts,
-* its boundaries,
-* and the decisions that govern its evolution.
+The Domain Resource Model documents describe the concepts used at the Resource Boundary.
 
-Together, these documents form a complete description of the project.
+Implementation documents describe how this application realizes those concepts using Nostr and compatible decentralized services.
 
-This Project Context document connects those architectural systems into a single mental model.
-
----
-
-## The Source Code
-
-The repository implementation reflects these architectural boundaries.
-
-The source code should progressively evolve so that repository organization, Public APIs, and implementation responsibilities correspond to the architectural ownership model described throughout the documentation.
-
-Architecture drives repository organization.
-
-Repository organization should not redefine the architecture.
+Together these documents describe the complete system while keeping architectural responsibilities clearly separated.
 
 ---
 
 ## Long-Term Vision
 
-The project is designed so that the three architectures remain useful beyond a single application.
+The architecture is designed so that application behavior remains independent of communication technology.
 
-The Resource Architecture should be capable of supporting multiple applications.
+Future versions of the application may introduce additional Resource Boundary implementations without changing the application's internal architecture.
 
-The Service Architecture should support different Resource implementations.
+Likewise, the Domain Resource Model may evolve independently while preserving compatibility with existing applications.
 
-The Application Architecture should remain focused on providing the best possible user experience while consuming those capabilities.
-
-This separation encourages reuse, independent evolution, and long-term maintainability.
+The goal is to ensure that Domain Objects remain the central concept of the application while allowing communication technologies to evolve naturally over time.
 
 ---
 
 ## Key Takeaways
 
-* The project consists of three independent architectural systems.
-* The Application consumes Domain Objects produced by the Resource Architecture.
-* The Resource Architecture uses capabilities provided by the Service Architecture.
-* Each architecture owns a distinct set of responsibilities.
-* Architectural boundaries are intentional and should remain visible throughout the repository.
-* Repository organization and implementation should reinforce these architectural boundaries rather than obscure them.
+* The project is built around a single Application Architecture.
+* Applications operate exclusively on Domain Objects.
+* Domain Objects cross the Resource Boundary as portable Resources.
+* The Domain Resource Model defines the concepts used at the Resource Boundary.
+* The Resource Boundary can be implemented using different communication technologies.
+* This application primarily implements the boundary using Nostr together with compatible decentralized services.
+* Separating the Application Architecture from the Resource Boundary allows both to evolve independently.
 
 # Design Philosophy
 
