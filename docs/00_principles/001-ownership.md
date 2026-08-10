@@ -10,35 +10,33 @@ Current
 
 This document defines the ownership model used throughout the KJVOnly application.
 
-Ownership determines where responsibilities belong within the application.
+Ownership determines where responsibilities belong before implementation decisions are made.
 
-It is intended to guide implementation decisions, package organization, and future refactoring efforts.
-
-The goal is to organize code according to responsibility rather than technical role alone.
+Its purpose is to guide architectural decisions, package organization, and future refactoring by ensuring every responsibility has a clear architectural owner.
 
 ---
 
 # Principle
 
-Code should be organized by responsibility and ownership rather than by technical role alone.
+Code should be organized according to responsibility and ownership rather than technical role alone.
 
-A responsibility belongs to the part of the application that gives it meaning.
+Every responsibility belongs to the part of the application that gives it meaning.
 
 Its physical location within the repository is an implementation detail.
 
-As the application evolves, packages and folders may change.
+As the application evolves, packages, folders, and implementation technologies may change.
 
 Ownership should remain stable.
 
 ---
 
-# Ownership Models
+# Architectural Owners
 
-The application is organized around four primary ownership models.
+The application is organized around three architectural owners.
 
-Each model has a distinct responsibility.
+Each owner has a distinct responsibility.
 
-Understanding who owns a responsibility is more important than understanding where its implementation currently resides.
+Understanding who owns a responsibility is more important than understanding where it is currently implemented.
 
 ---
 
@@ -48,40 +46,16 @@ The Application Runtime owns the presentation and coordination of the applicatio
 
 Examples include:
 
-- workspace management,
-- pane trees,
-- buffers,
-- layout,
-- module composition,
-- and user interaction.
+* workspace management,
+* pane trees,
+* buffers,
+* layout,
+* module composition,
+* and user interaction.
 
-The runtime understands how the application is presented.
+The Runtime understands how the application is presented.
 
-It does not understand application data or resource distribution.
-
----
-
-## Application Services
-
-Application Services provide capabilities shared across multiple domains.
-
-These services represent application-wide concepts that are not owned by any single domain.
-
-Examples include:
-
-- Bible location references,
-- navigation,
-- application settings,
-- theme management,
-- workspace services,
-- pane services,
-- and other shared application capabilities.
-
-These responsibilities remain meaningful regardless of the underlying transport, storage, or networking implementation.
-
-When introducing a new application service, consider whether the responsibility is shared across multiple domains.
-
-If the responsibility exists to support several domains, it likely belongs as an Application Service.
+It does not own application behavior or communication with external systems.
 
 ---
 
@@ -89,179 +63,175 @@ If the responsibility exists to support several domains, it likely belongs as an
 
 Domains own the application's business concepts.
 
-Each domain owns:
+Each Domain owns:
 
-- Domain Objects,
-- business rules,
-- domain operations,
-- domain-specific services,
-- and the modules that present those capabilities to the user.
+* Domain Objects,
+* business rules,
+* domain operations,
+* Public APIs,
+* and the behavior presented to the user.
 
 Examples include:
 
-- Bible,
-- Notes,
-- Reading Plans,
-- and other application domains.
+* Bible,
+* Notes,
+* Reading Plans,
+* Settings,
+* and future application domains.
 
-If a responsibility exists only to support a single domain, it should generally be owned by that domain.
+If another architectural owner requires behavior owned by a Domain, that behavior should be accessed through the Domain's Public API.
 
-Domains should not depend upon knowledge of unrelated domains.
+Ownership does not change simply because another owner needs to collaborate with it.
 
 ---
 
-## Technical Infrastructure
+## Infrastructure
 
-Technical Infrastructure owns the implementation technologies used to support the application.
+Infrastructure provides the technical capabilities required to realize the application.
 
 Examples include:
 
-- Nostr communication,
-- Blossom integration,
-- IndexedDB,
-- background workers,
-- compression,
-- serialization,
-- networking,
-- and other implementation technologies.
+* Resource Boundary implementations,
+* Nostr communication,
+* Blossom integration,
+* IndexedDB,
+* background workers,
+* compression,
+* serialization,
+* networking,
+* and other implementation technologies.
 
-Infrastructure provides capabilities required by the application.
+Infrastructure exists to support the application.
 
-It should not define application behavior.
+It should not define application behavior or architectural ownership.
 
 ---
 
 # Ownership Test
 
-When introducing a new abstraction, determine its owner before deciding where it should be implemented.
+When introducing a new abstraction, determine its owner before deciding how it should be implemented.
 
 A useful heuristic is:
 
-> **If the underlying implementation technology changed tomorrow, would this abstraction still exist?**
+> **If the implementation technology changed tomorrow, would the application still require this responsibility?**
 
-If the answer is **yes**, the responsibility likely belongs to the application.
+If the answer is **yes**, the responsibility belongs to the application.
 
-If the answer is **no**, the responsibility likely belongs to the supporting infrastructure.
+If the answer is **no**, it belongs to the supporting infrastructure.
 
 For example:
 
-| Responsibility | Owner |
-|-------------------------------|---------------------------|
-| Workspace | Application Runtime |
-| Pane | Application Runtime |
-| Buffer | Application Runtime |
-| Bible Reader Module | Bible Domain |
-| Notes Module | Notes Domain |
-| BibleLocationReferenceService | Shared Application |
-| ThemeService | Shared Application |
-| NavigationService | Shared Application |
-| Relay Communication | Technical Infrastructure |
-| Compression | Technical Infrastructure |
-| Resource Serialization | Technical Infrastructure |
+| Responsibility                   | Owner                |
+| -------------------------------- | -------------------- |
+| Workspace                        | Application Runtime  |
+| Pane                             | Application Runtime  |
+| Buffer                           | Application Runtime  |
+| Bible Reader Module              | Bible Domain         |
+| Bible Search                     | Bible Domain         |
+| Notes                            | Notes Domain         |
+| Reading Plans                    | Reading Plans Domain |
+| Resource Boundary Implementation | Infrastructure       |
+| Relay Communication              | Infrastructure       |
+| Compression                      | Infrastructure       |
+| Resource Serialization           | Infrastructure       |
 
 The purpose of this heuristic is not to determine the final package structure.
 
 Its purpose is to identify ownership.
 
-Once ownership is understood, the physical organization of the implementation becomes much easier to reason about.
+Once ownership is understood, implementation decisions become significantly easier.
+
 ---
 
 # Ownership Heuristics
 
-Determining ownership should occur before deciding where code is physically organized.
+Ownership should always be determined before deciding where code is physically organized.
 
-When introducing a new abstraction, identify the responsibility first.
+Begin by identifying the responsibility.
 
-The following heuristics provide a simple decision process for determining ownership.
-
-## 1. Is it responsible for presenting or coordinating the user interface?
-
-If the responsibility exists to present the application, manage layout, coordinate user interaction, or control the workspace, it belongs to the **Application Runtime**.
-
-Examples include:
-
-- workspace management,
-- pane management,
-- buffer management,
-- layout generation,
-- and module composition.
+The following heuristics provide a simple decision process.
 
 ---
 
-## 2. Is it a capability shared across multiple domains?
+## 1. Does it coordinate the application?
 
-If the responsibility represents an application-wide concept used by multiple domains, it belongs to **Application Services**.
+If the responsibility exists to coordinate presentation, manage layout, control the Workspace Runtime, or orchestrate user interaction, it belongs to the **Application Runtime**.
 
 Examples include:
 
-- Bible location references,
-- navigation,
-- theme management,
-- application settings,
-- and other shared application capabilities.
+* workspace management,
+* pane management,
+* buffer management,
+* layout generation,
+* and module composition.
+
+---
+
+## 2. Does it define business behavior?
+
+If the responsibility represents a business concept that gives meaning to the application, it belongs to a **Domain**.
+
+Examples include:
+
+* Bible reading,
+* Bible annotations,
+* Bible search,
+* note organization,
+* reading plan generation,
+* and other domain-specific behavior.
 
 A useful question is:
 
-> **Would multiple domains naturally depend upon this capability?**
+> **Which Domain gives this responsibility meaning?**
 
-If the answer is yes, it is likely an Application Service.
+If another architectural owner requires that behavior, it should collaborate through the Domain's Public API rather than assuming ownership itself.
+
+Shared use does not imply shared ownership.
 
 ---
 
-## 3. Is it only meaningful within a single domain?
+## 3. Is it primarily implementation?
 
-If the responsibility exists solely to support one domain, it belongs to that domain.
+If the responsibility exists to communicate with external systems or provide technical capabilities, it belongs to **Infrastructure**.
 
 Examples include:
 
-- Bible parsing,
-- Bible search ranking,
-- note organization,
-- reading plan generation,
-- and other domain-specific behavior.
+* Resource Boundary implementations,
+* relay communication,
+* Blossom integration,
+* IndexedDB,
+* background workers,
+* compression,
+* serialization,
+* and networking.
 
-A useful question is:
+Infrastructure supports the application.
 
-> **Would another domain have any reason to depend upon this abstraction?**
-
-If the answer is no, it should generally remain within the owning domain.
-
----
-
-## 4. Is it primarily an implementation technology?
-
-If the responsibility exists to communicate with external systems or provide technical capabilities, it belongs to **Technical Infrastructure**.
-
-Examples include:
-
-- relay communication,
-- Blossom integration,
-- IndexedDB,
-- background workers,
-- compression,
-- serialization,
-- and networking.
-
-These responsibilities support the application but should not define its behavior.
+It should not define application behavior.
 
 ---
 
-These heuristics are intended to identify ownership rather than prescribe directory structure.
+These heuristics identify ownership.
 
-Ownership is an architectural decision. Physical organization is an implementation decision.
+They do not prescribe directory structure.
+
+Ownership is an architectural decision.
+
+Physical organization is an implementation decision.
+
 ---
 
 # Physical Organization
 
-Ownership and physical location are related but not identical.
+Ownership and physical organization are related but not identical.
 
-An abstraction may temporarily reside in a package that does not reflect its long-term ownership.
+An abstraction may temporarily reside in a package that does not reflect its long-term owner.
 
 This is acceptable while the implementation evolves.
 
-When refactoring, ownership should take precedence over existing directory structure.
+As the architecture matures, code should move toward its owner rather than remaining where it was originally implemented.
 
-Code should move toward its owner rather than remaining where it was originally implemented.
+The repository should evolve to reflect architectural ownership over time.
 
 ---
 
@@ -269,8 +239,24 @@ Code should move toward its owner rather than remaining where it was originally 
 
 Ownership is an architectural decision.
 
-Packages, folders, and implementation technologies may evolve over time.
+Physical organization is an implementation decision.
 
-The owner of a responsibility should remain stable.
+Implementation technologies may change.
 
-When ownership is clear, implementation decisions become simpler, refactoring becomes safer, and the application naturally evolves toward a cleaner and more maintainable design.
+Communication technologies may change.
+
+Repository structure may change.
+
+Ownership should remain stable.
+
+Meaning establishes ownership.
+
+Ownership establishes responsibility.
+
+Responsibilities define Public APIs.
+
+Public APIs enable collaboration.
+
+Implementation realizes those responsibilities.
+
+When ownership is clear, implementation naturally evolves toward a simpler, more maintainable architecture.
