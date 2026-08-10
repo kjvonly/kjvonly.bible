@@ -8,221 +8,155 @@ Current
 
 # Purpose
 
-This document defines the loose coupling principles used throughout the KJVOnly application.
+This document defines the loose coupling principle used throughout the KJVOnly application.
 
-Loose coupling allows independent parts of the application to collaborate while remaining responsible only for their own behavior.
+Loose coupling allows independently owned responsibilities to collaborate while remaining free to evolve independently.
 
-The goal is to enable the application to evolve through composition rather than through tightly connected implementations.
+Its purpose is to preserve clear ownership boundaries while enabling collaboration across the application.
 
 ---
 
 # Principle
 
-Application responsibilities should collaborate through stable abstractions rather than direct knowledge of one another.
+Loose coupling begins with well-defined responsibilities.
 
-Each part of the application should understand only the responsibilities it owns and the public interfaces exposed by other owners.
+A responsibility should have a single owner.
 
-An abstraction should depend upon behavior rather than implementation.
+Other responsibilities should collaborate with that owner through its Public API rather than depending upon its implementation.
 
-As the application evolves, implementations may change.
-
-The collaboration between responsibilities should remain stable.
+As implementations evolve, collaboration should remain stable.
 
 ---
 
-# Preferred Collaboration
+# What Is Loose Coupling?
 
-The application favors collaboration through well-defined boundaries.
+Loose coupling allows independently owned responsibilities to collaborate without requiring knowledge of one another's implementation.
 
-Preferred mechanisms include:
+Responsibilities collaborate through behavior rather than implementation details.
 
-* Application Services,
-* Domain Services,
-* shared identifiers,
-* application events,
-* navigation context,
-* and public interfaces.
+Ownership remains clear.
 
-Conceptually:
+Implementations remain replaceable.
 
-```mermaid
-flowchart TD
-
-    ModuleA["Module"]
-
-    Service["Application or Domain Service"]
-
-    ModuleB["Module"]
-
-    ModuleA --> Service
-
-    Service --> ModuleB
-```
-
-Modules collaborate through shared abstractions.
-
-They should not directly manipulate one another.
+The architecture remains stable.
 
 ---
 
-# Coupling Heuristics
+# Collaboration
 
-When introducing a dependency, determine whether the collaborating responsibilities truly need to know about one another.
+Ownership defines the boundaries of responsibility within the application.
 
-A useful heuristic is:
+Loose coupling preserves those boundaries by limiting cross-owner collaboration to stable communication mechanisms.
 
-> **Could either implementation be replaced tomorrow without requiring changes to the other?**
+When one owner requires behavior or information from another, it should cross the ownership boundary through a Public API, Application Event, Shared Identifier, or Navigation Context rather than depending on the other owner’s implementation.
 
-If the answer is **yes**, the collaboration is likely sufficiently decoupled.
+These mechanisms allow responsibilities to collaborate without merging ownership or leaking implementation details across boundaries.
 
-If the answer is **no**, the abstraction should be reconsidered.
+Responsibilities should not:
 
-Dependencies should exist because one responsibility requires another capability.
+* manipulate another owner's internal state,
+* depend upon implementation details,
+* assume repository organization,
+* or become coupled to implementation technologies.
 
-They should not exist merely because one implementation happens to call another.
-
----
-
-# Preferred Communication Patterns
-
-The application prefers communication through stable abstractions.
-
-Examples include:
-
-## Application Services
-
-Shared application capabilities used across multiple Domains.
-
-Examples include:
-
-* pane management,
-* workspace services,
-* theme management,
-* navigation,
-* and Bible location references.
+They should depend only upon behavior.
 
 ---
 
-## Domain Services
+# Communication Patterns
 
-Behavior owned by one Domain.
+The application favors a small number of stable collaboration mechanisms.
 
-Examples include:
+---
 
-* Bible chapter retrieval,
-* Notes management,
-* Reading Plan progress,
-* and other domain-specific operations.
+## Public APIs
+
+Public APIs are the primary collaboration mechanism.
+
+They expose behavior without exposing implementation.
+
+Every owner defines the behavior it makes available to the rest of the application.
+
+Other responsibilities collaborate through those APIs rather than directly manipulating implementation.
 
 ---
 
 ## Application Events
 
-Application events notify interested participants that something has changed.
+Application Events communicate that something has changed.
 
 The sender does not know who receives the event.
 
-Interested components decide whether they should respond.
+Interested responsibilities determine whether they should respond.
+
+This preserves loose coupling while supporting asynchronous collaboration.
 
 ---
 
 ## Shared Identifiers
 
-Domains collaborate through identifiers rather than shared implementation.
+Responsibilities should reference shared concepts through identifiers rather than shared implementation.
 
-For example, Notes and Reading Plans may reference Bible locations without understanding Bible storage or Bible Modules.
+For example, multiple Domains may reference the same Bible location without depending upon Bible storage or presentation.
 
 ---
 
 ## Navigation Context
 
-Modules may initialize another Module by supplying navigation context.
+The Runtime may initialize another responsibility by providing navigation context.
 
-The source Module provides context.
+The receiving owner decides how that context should be interpreted.
 
-The target Module determines how that context should be interpreted.
-
-The source Module does not depend upon the target Module's internal implementation.
+Neither responsibility depends upon the other's internal implementation.
 
 ---
 
 # Common Anti-Patterns
 
-The following patterns introduce unnecessary coupling and should generally be avoided.
+---
 
-## Direct Component References
+## Reaching Around the Public API
 
-One Module should not directly manipulate another Module's component instance.
+Do not bypass an owner's Public API to manipulate its implementation directly.
 
-Instead, request application behavior through an Application Service, Domain Service, or application event.
+Doing so transfers implementation knowledge between responsibilities and weakens ownership boundaries.
 
 ---
 
 ## Shared Internal State
 
-Modules should not depend upon another Module's private runtime state.
+Responsibilities should not depend upon another owner's private runtime state.
 
-Shared state should belong to its appropriate owner and be exposed through a stable interface.
+Shared state should belong to its owner and be exposed only through its Public API.
 
 ---
 
-## Ownership Violations
+## Ownership Leakage
 
-A responsibility should not manipulate implementation details owned by another responsibility.
+One responsibility should not begin implementing behavior owned by another.
 
-For example:
+Ownership should remain clear.
 
-* Modules should not manipulate the Pane tree.
-* Domains should not manipulate rendering.
-* Rendering should not manipulate Domain behavior.
-* Infrastructure should not define application behavior.
-
-Instead, collaborate through the interfaces exposed by the appropriate owner.
+Behavior should remain cohesive.
 
 ---
 
 ## Technology Coupling
 
-Application behavior should not become coupled to specific implementation technologies.
+Application behavior should not become dependent upon specific implementation technologies.
 
-For example:
+Technologies realize responsibilities.
 
-* Domains should not depend upon IndexedDB.
-* Modules should not depend upon relay communication.
-* Workspace behavior should not depend upon CSS Grid.
-
-Those technologies implement application behavior.
-
-They do not define it.
+They should not define them.
 
 ---
 
 # Big Takeaway
 
-Loose coupling allows responsibilities to collaborate without becoming dependent upon one another.
+Ownership establishes responsibility.
 
-Conceptually:
+Public APIs preserve ownership.
 
-```mermaid
-flowchart LR
+Loose coupling allows independently owned responsibilities to collaborate without depending upon one another's implementation.
 
-    Runtime["Application Runtime"]
-
-    Services["Application Services"]
-
-    Domains["Domains"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Runtime --> Services
-
-    Domains --> Services
-
-    Infrastructure --> Services
-```
-
-Each responsibility owns its own behavior.
-
-Collaboration occurs through stable abstractions rather than direct implementation knowledge.
-
-As long as ownership remains clear and communication occurs through well-defined interfaces, the application can evolve by replacing implementations without changing the relationships between its major responsibilities.
+As long as responsibilities remain cohesive and ownership remains clear, implementations can evolve independently while the architecture remains stable.
