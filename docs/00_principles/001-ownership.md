@@ -8,68 +8,110 @@ Current
 
 # Purpose
 
-This document defines the ownership model used throughout the KJVOnly application.
+This document defines the ownership principle used throughout the KJVOnly application.
 
 Ownership determines where responsibilities belong before implementation decisions are made.
 
-Its purpose is to guide architectural decisions, package organization, and future refactoring by ensuring every responsibility has a clear architectural owner.
+Its purpose is to ensure every responsibility has a clear owner, allowing the architecture to evolve without becoming tightly coupled to implementation details.
 
 ---
 
 # Principle
 
-Code should be organized according to responsibility and ownership rather than technical role alone.
+Every responsibility should have a single owner.
 
-Every responsibility belongs to the part of the application that gives it meaning.
+Ownership is determined by meaning rather than implementation.
 
-Its physical location within the repository is an implementation detail.
+The owner of a responsibility is the part of the application that gives that responsibility purpose.
 
-As the application evolves, packages, folders, and implementation technologies may change.
+Once ownership is established, other parts of the application collaborate through the owner's Public API rather than assuming ownership themselves.
 
-Ownership should remain stable.
-
----
-
-# Architectural Owners
-
-The application is organized around three architectural owners.
-
-Each owner has a distinct responsibility.
-
-Understanding who owns a responsibility is more important than understanding where it is currently implemented.
+Ownership should remain stable even as implementations evolve.
 
 ---
 
-## Application Runtime
+# What Is Ownership?
 
-The Application Runtime owns the presentation and coordination of the application.
+Ownership is the assignment of responsibility to the part of the application that gives that responsibility meaning.
 
-Examples include:
+Ownership is not determined by:
 
-* workspace management,
-* pane trees,
-* buffers,
-* layout,
-* module composition,
-* and user interaction.
+* package structure,
+* implementation technology,
+* where code currently resides,
+* or who happens to use the behavior.
 
-The Runtime understands how the application is presented.
+Instead, ownership answers a single question:
 
-It does not own application behavior or communication with external systems.
+> **Who gives this responsibility meaning?**
+
+The answer identifies the owner.
 
 ---
 
-## Domains
+# Determining Ownership
 
-Domains own the application's business concepts.
+When introducing a new responsibility, identify its owner before deciding how it should be implemented.
 
-Each Domain owns:
+Consider the following examples.
 
-* Domain Objects,
-* business rules,
-* domain operations,
-* Public APIs,
-* and the behavior presented to the user.
+| Responsibility          | Owner                |
+| ----------------------- | -------------------- |
+| Workspace               | Application Runtime  |
+| Pane                    | Application Runtime  |
+| Buffer                  | Application Runtime  |
+| Bible chapter retrieval | Bible Domain         |
+| Bible annotations       | Bible Domain         |
+| Bible search            | Bible Domain         |
+| Notes                   | Notes Domain         |
+| Reading Plans           | Reading Plans Domain |
+| Relay communication     | Infrastructure       |
+| IndexedDB persistence   | Infrastructure       |
+| Compression             | Infrastructure       |
+
+Notice that ownership is determined by purpose rather than implementation.
+
+Bible search belongs to the Bible Domain regardless of how it is implemented.
+
+Relay communication belongs to Infrastructure regardless of which relay implementation is used.
+
+---
+
+# Collaboration
+
+Ownership does not prevent collaboration.
+
+It defines it.
+
+When another part of the application requires behavior owned elsewhere, it should collaborate through the owner's Public API.
+
+Ownership does not change simply because another responsibility needs access.
+
+Shared use does not imply shared ownership.
+
+This preserves clear architectural boundaries while allowing independent parts of the application to work together.
+
+---
+
+# Ownership Heuristics
+
+The following questions provide a simple way to determine ownership.
+
+---
+
+## Does this responsibility coordinate the application?
+
+Responsibilities that coordinate presentation, layout, navigation, workspace management, or runtime behavior belong to the **Application Runtime**.
+
+The Runtime owns how the application executes.
+
+---
+
+## Does this responsibility define a business concept?
+
+Responsibilities that define application behavior belong to the Domain that gives them meaning.
+
+Each Domain owns its own Domain Objects, business rules, operations, and Public APIs.
 
 Examples include:
 
@@ -77,122 +119,13 @@ Examples include:
 * Notes,
 * Reading Plans,
 * Settings,
-* and future application domains.
-
-If another architectural owner requires behavior owned by a Domain, that behavior should be accessed through the Domain's Public API.
-
-Ownership does not change simply because another owner needs to collaborate with it.
+* and future application Domains.
 
 ---
 
-## Infrastructure
+## Does this responsibility exist only because of an implementation technology?
 
-Infrastructure provides the technical capabilities required to realize the application.
-
-Examples include:
-
-* Resource Boundary implementations,
-* Nostr communication,
-* Blossom integration,
-* IndexedDB,
-* background workers,
-* compression,
-* serialization,
-* networking,
-* and other implementation technologies.
-
-Infrastructure exists to support the application.
-
-It should not define application behavior or architectural ownership.
-
----
-
-# Ownership Test
-
-When introducing a new abstraction, determine its owner before deciding how it should be implemented.
-
-A useful heuristic is:
-
-> **If the implementation technology changed tomorrow, would the application still require this responsibility?**
-
-If the answer is **yes**, the responsibility belongs to the application.
-
-If the answer is **no**, it belongs to the supporting infrastructure.
-
-For example:
-
-| Responsibility                   | Owner                |
-| -------------------------------- | -------------------- |
-| Workspace                        | Application Runtime  |
-| Pane                             | Application Runtime  |
-| Buffer                           | Application Runtime  |
-| Bible Reader Module              | Bible Domain         |
-| Bible Search                     | Bible Domain         |
-| Notes                            | Notes Domain         |
-| Reading Plans                    | Reading Plans Domain |
-| Resource Boundary Implementation | Infrastructure       |
-| Relay Communication              | Infrastructure       |
-| Compression                      | Infrastructure       |
-| Resource Serialization           | Infrastructure       |
-
-The purpose of this heuristic is not to determine the final package structure.
-
-Its purpose is to identify ownership.
-
-Once ownership is understood, implementation decisions become significantly easier.
-
----
-
-# Ownership Heuristics
-
-Ownership should always be determined before deciding where code is physically organized.
-
-Begin by identifying the responsibility.
-
-The following heuristics provide a simple decision process.
-
----
-
-## 1. Does it coordinate the application?
-
-If the responsibility exists to coordinate presentation, manage layout, control the Workspace Runtime, or orchestrate user interaction, it belongs to the **Application Runtime**.
-
-Examples include:
-
-* workspace management,
-* pane management,
-* buffer management,
-* layout generation,
-* and module composition.
-
----
-
-## 2. Does it define business behavior?
-
-If the responsibility represents a business concept that gives meaning to the application, it belongs to a **Domain**.
-
-Examples include:
-
-* Bible reading,
-* Bible annotations,
-* Bible search,
-* note organization,
-* reading plan generation,
-* and other domain-specific behavior.
-
-A useful question is:
-
-> **Which Domain gives this responsibility meaning?**
-
-If another architectural owner requires that behavior, it should collaborate through the Domain's Public API rather than assuming ownership itself.
-
-Shared use does not imply shared ownership.
-
----
-
-## 3. Is it primarily implementation?
-
-If the responsibility exists to communicate with external systems or provide technical capabilities, it belongs to **Infrastructure**.
+Responsibilities that provide technical capabilities belong to **Infrastructure**.
 
 Examples include:
 
@@ -200,10 +133,10 @@ Examples include:
 * relay communication,
 * Blossom integration,
 * IndexedDB,
-* background workers,
-* compression,
+* networking,
 * serialization,
-* and networking.
+* compression,
+* and background workers.
 
 Infrastructure supports the application.
 
@@ -211,25 +144,15 @@ It should not define application behavior.
 
 ---
 
-These heuristics identify ownership.
-
-They do not prescribe directory structure.
-
-Ownership is an architectural decision.
-
-Physical organization is an implementation decision.
-
----
-
 # Physical Organization
 
 Ownership and physical organization are related but not identical.
 
-An abstraction may temporarily reside in a package that does not reflect its long-term owner.
+Code may temporarily reside in a package that does not reflect its long-term owner.
 
 This is acceptable while the implementation evolves.
 
-As the architecture matures, code should move toward its owner rather than remaining where it was originally implemented.
+During refactoring, responsibilities should move toward their owner rather than remaining where they were originally implemented.
 
 The repository should evolve to reflect architectural ownership over time.
 
@@ -237,26 +160,17 @@ The repository should evolve to reflect architectural ownership over time.
 
 # Big Takeaway
 
-Ownership is an architectural decision.
+Ownership is the foundation of the architecture.
 
-Physical organization is an implementation decision.
+Every responsibility has one owner.
 
-Implementation technologies may change.
+Ownership is determined by meaning rather than implementation.
 
-Communication technologies may change.
+Public APIs allow independently owned responsibilities to collaborate without transferring ownership.
 
-Repository structure may change.
+When ownership is clear:
 
-Ownership should remain stable.
-
-Meaning establishes ownership.
-
-Ownership establishes responsibility.
-
-Responsibilities define Public APIs.
-
-Public APIs enable collaboration.
-
-Implementation realizes those responsibilities.
-
-When ownership is clear, implementation naturally evolves toward a simpler, more maintainable architecture.
+* responsibilities become easier to understand,
+* Public APIs become easier to define,
+* implementations become easier to replace,
+* and the architecture remains stable as the application evolves.
