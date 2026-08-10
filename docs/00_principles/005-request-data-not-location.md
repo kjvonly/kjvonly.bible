@@ -17,8 +17,7 @@ This separates application behavior from storage technologies, transport protoco
 ---
 
 # Principle
-
-The application requests data.
+The caller requests data.
 
 It does not request locations.
 
@@ -26,8 +25,7 @@ Application behavior should express **what** information is required.
 
 It should not determine **where** that information resides.
 
-Finding the appropriate source is the responsibility of the data access layer rather than the caller.
-
+Finding the appropriate source is an implementation responsibility rather than the caller's responsibility.
 ---
 
 # Why
@@ -57,7 +55,7 @@ flowchart LR
 
     Data["Requested Data"]
 
-    Access["Data Access"]
+    Access["Implementation"]
 
     Source["Data Source"]
 
