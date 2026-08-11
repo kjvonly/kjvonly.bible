@@ -8,15 +8,21 @@ Current
 
 # Purpose
 
-The Workspace Runtime is responsible for presenting and coordinating the visible application.
+This document defines the architecture of the **Workspace Runtime**.
 
-It provides the runtime environment in which modules execute, user interaction occurs, and the workspace evolves over time.
+The Workspace Runtime provides the persistent execution environment in which the user interacts with the application.
 
-This document describes the conceptual runtime model.
+It owns the runtime structures required to:
 
-It intentionally describes the runtime independently from its current implementation.
+* organize the visible Workspace,
+* host Module Instances,
+* preserve independent interaction state,
+* coordinate Workspace operations,
+* and present multiple application capabilities simultaneously.
 
-Although the current implementation primarily resides within the application's root route, the concepts described by this document are independent of any particular framework, component hierarchy, or source file organization.
+This document describes those responsibilities independently from their current implementation.
+
+The current implementation primarily resides within the application's root Svelte route, but the architecture described here is independent of any framework, component hierarchy, or source file organization.
 
 ---
 
@@ -24,117 +30,150 @@ Although the current implementation primarily resides within the application's r
 
 This document defines:
 
-- the responsibilities of the Workspace Runtime,
-- the runtime object model,
-- the workspace model,
-- pane trees,
-- buffers,
-- modules,
-- workspace operations,
-- and the relationships between these concepts.
+* the responsibilities of the Workspace Runtime,
+* Runtime Objects,
+* Workspaces,
+* Panes,
+* Buffers,
+* Module Instances,
+* Workspace operations,
+* runtime identity,
+* navigation context,
+* runtime events,
+* runtime persistence,
+* and the relationship between the Runtime and application Domains.
 
-It does not describe the detailed rendering implementation, framework-specific behavior, or source code organization.
+It does not define:
 
-Those topics are described by implementation-specific documents.
+* Domain behavior,
+* Domain Objects,
+* resource distribution,
+* persistence technologies,
+* rendering technologies,
+* or the implementation of individual Modules.
+
+Those responsibilities are described elsewhere in the Application Architecture and Resource Boundary documentation.
+
+---
+
+# Principle
+
+The Workspace Runtime owns the execution environment of the application.
+
+It determines:
+
+* what Module Instances are active,
+* where they are presented,
+* what runtime context belongs to each instance,
+* and how the Workspace changes over time.
+
+It does not own the application behavior presented by those Module Instances.
+
+That behavior remains owned by the appropriate Domain.
+
+Conceptually:
+
+```text
+Workspace Runtime
+    │
+    ├── Workspace
+    │
+    ├── Panes
+    │
+    ├── Buffers
+    │
+    └── Module Instances
+            │
+            ▼
+         Domains
+```
+
+The Runtime owns execution and composition.
+
+Domains own application behavior.
+
+Modules present Domain capabilities within the Runtime.
 
 ---
 
 # Background
 
-Unlike traditional web applications, the KJVOnly application does not organize user interaction around route navigation.
+KJVOnly does not organize its primary user experience around route navigation.
 
-Instead, the application maintains a persistent workspace that remains active for the lifetime of the application.
+Instead, the application maintains a persistent Workspace.
 
-The workspace behaves more like the runtime of a desktop application than a collection of independent web pages.
+Opening Scripture, following references, searching the Bible, working with Notes, or viewing a Reading Plan changes the current Workspace rather than navigating to an independent page.
 
-User interaction occurs by modifying the workspace rather than navigating between routes.
+This allows multiple activities to exist simultaneously.
 
-This allows multiple application modules to coexist simultaneously while preserving their independent runtime state.
+For example, a Workspace may contain:
 
-The Workspace Runtime exists to coordinate this behavior.
+```text
+Bible Reader
+Bible Search
+Notes
+Reading Plan
+Bible Reader
+```
+
+at the same time.
+
+Each activity maintains its own runtime context while participating in one Workspace.
+
+This model behaves more like a desktop application than a conventional page-oriented website.
+
+The Workspace Runtime exists to coordinate that environment.
 
 ---
 
 # Responsibilities
 
-The Workspace Runtime owns:
+The Workspace Runtime owns responsibilities associated with the execution and composition of the visible application.
 
-- the workspace,
-- pane management,
-- buffer management,
-- workspace layout,
-- module composition,
-- workspace events,
-- and runtime object coordination.
+These include:
 
-It is responsible for presenting the application.
+* Workspace state,
+* Pane-tree management,
+* Buffer management,
+* Module Instance placement,
+* runtime identity,
+* focus and selection,
+* navigation context transport,
+* Workspace operations,
+* runtime events,
+* layout coordination,
+* Module Instance lifecycle,
+* and restoration of persisted Workspace state.
 
-It does not own application data.
+The Runtime does not own:
 
-It does not own resource distribution.
+* Bible behavior,
+* Notes behavior,
+* Reading Plan behavior,
+* Settings behavior,
+* Domain Objects,
+* resource resolution,
+* resource publication,
+* synchronization policy,
+* storage technologies,
+* transport technologies,
+* or other Domain and Infrastructure responsibilities.
 
-It does not understand Domain Objects.
-
-Instead, it provides the environment in which application modules execute.
+The Runtime provides the environment in which Domain capabilities are presented.
 
 ---
 
-# High-Level Design
+# Runtime Model
 
-The Workspace Runtime is organized around a small collection of runtime objects.
+The Workspace Runtime is built from four primary Runtime Objects:
 
-Each object owns a single responsibility.
-
-```mermaid
-flowchart TD
-
-    WORKSPACE["Workspace"]
-
-    PANE["Pane"]
-
-    BUFFER["Buffer"]
-
-    MODULE["Module"]
-
-    DOMAIN["Domain"]
-
-    WORKSPACE --> PANE
-
-    PANE --> BUFFER
-
-    BUFFER --> MODULE
-
-    MODULE --> DOMAIN
-```
-
-The Workspace owns the pane hierarchy.
-
-Panes organize the visible layout.
-
-Buffers host module instances.
-
-Modules provide user interaction.
-
-Domains provide application behavior.
-
-Together these runtime objects define the visible application.
-
-# Runtime Objects
-
-The Workspace Runtime is composed from a small collection of Runtime Objects.
-
-Runtime Objects describe the execution state of the application.
-
-Unlike Domain Objects, which represent application data, Runtime Objects represent how the application is currently organized and presented.
-
-The primary Runtime Objects are:
-
-- Workspace
-- Pane
-- Buffer
-- Module Instance
+* Workspace
+* Pane
+* Buffer
+* Module Instance
 
 Conceptually:
+
 ```mermaid
 flowchart TD
 
@@ -148,31 +187,81 @@ flowchart TD
 
     Module["Module Instance"]
 
+    Domain["Domain"]
+
     Workspace --> Root
     Root --> Pane
     Pane --> Buffer
     Buffer --> Module
+    Module --> Domain
 ```
 
-Each Runtime Object owns a single responsibility.
+These objects answer different runtime questions.
 
-Together they define the visible application independently from the application's Domain Objects and the Resource Architecture.
+| Runtime Object  | Question                                        |
+| --------------- | ----------------------------------------------- |
+| Workspace       | What study environment is currently active?     |
+| Pane            | Where can something be presented?               |
+| Buffer          | What active interaction occupies that location? |
+| Module Instance | What capability is being presented to the user? |
+
+The Domain sits outside the Runtime Object hierarchy.
+
+The Module Instance presents capabilities belonging to that Domain.
+
+---
+
+# Runtime Objects
+
+Runtime Objects describe the current execution state of the application.
+
+They are different from Domain Objects.
+
+A Domain Object represents information meaningful to a Domain.
+
+Examples include:
+
+* a Bible Chapter,
+* a Note,
+* a Reading Plan,
+* or Bible annotation data.
+
+A Runtime Object represents how application capabilities are currently organized for interaction.
+
+Examples include:
+
+* a Workspace,
+* a Pane,
+* a Buffer,
+* or a Module Instance.
+
+Conceptually:
+
+```text
+Domain Object
+    What information does the application understand?
+
+Runtime Object
+    How is the application currently presenting and interacting with it?
+```
+
+These models have different owners and different lifecycles.
 
 ---
 
 # Workspace
 
-A Workspace is the root Runtime Object of the application.
+A Workspace is the root Runtime Object.
 
-It owns the complete visible application presented to the user.
+It represents one complete active study environment.
 
-Conceptually, a Workspace consists of:
+A Workspace owns:
 
-- a root pane,
-- the recursive pane tree,
-- every buffer,
-- every module instance,
-- and the runtime state required to coordinate them.
+* one root Pane,
+* the recursive Pane tree reachable from that root,
+* the Buffers hosted by leaf Panes,
+* the active Module Instances represented by those Buffers,
+* and the runtime state required to coordinate them.
 
 Conceptually:
 
@@ -188,178 +277,183 @@ Workspace
                 Module Instances
 ```
 
-The current implementation realizes this model primarily through the application's root route and the root pane.
+The current implementation treats the root Pane and surrounding logic as the Workspace.
 
-The Workspace itself is currently an implicit concept rather than a dedicated object.
+A dedicated `Workspace` object does not currently need to exist for the architectural concept to be valid.
 
-This does not change the runtime model.
-
-Future implementations may introduce a concrete `Workspace` object without changing the responsibilities described by this document.
+The implementation may introduce a concrete Workspace representation later without changing its responsibility.
 
 ---
 
-# Runtime State
+# Workspace Identity
 
-The Workspace owns the runtime state required to present the application.
+A Workspace represents one independent runtime context.
 
-Examples include:
+Its identity should remain distinct from:
 
-- the pane hierarchy,
-- buffer assignments,
-- module instances,
-- workspace layout,
-- active selections,
-- and other presentation state.
+* the Domain Objects displayed inside it,
+* the Modules instantiated inside it,
+* and any Resource used to obtain application data.
 
-Runtime state is intentionally separate from Domain Objects.
+This distinction allows the same Domain Objects or Module types to appear in multiple Workspaces without coupling those Workspaces together.
 
-Domain Objects describe the application's data.
+For example:
 
-Runtime state describes how that data is currently being presented to the user.
+```text
+Workspace A
+    Bible Reader → Genesis 1
+    Bible Reader → John 1
+    Bible Reader → John 3
+    Notes
 
-Both models are required by the application but serve different responsibilities.
+Workspace B
+    Bible Reader → Romans 8
+    Bible Search
+```
 
----
+Both Workspaces may use the same Domains.
 
-# Runtime Persistence
-
-Runtime state may be persisted independently from application Resources.
-
-Persisting runtime state allows the application to restore the user's working environment following:
-
-- a page refresh,
-- the application being suspended,
-- switching to another application,
-- or restarting the browser.
-
-Examples of persisted runtime state include:
-
-- pane layout,
-- buffer state,
-- the last Bible location,
-- selected Bible version,
-- theme,
-- dark mode,
-- and other application preferences.
-
-This information represents the user's working environment rather than application content.
-
-It is therefore distinct from the Resource Architecture and does not become a Published Resource.
+They remain separate runtime environments.
 
 ---
 
-# Planned Evolution
+# Current Workspace
 
-The runtime model intentionally supports multiple independent Workspaces.
+The current application exposes one active Workspace.
 
-Each Workspace owns its own complete runtime object graph.
+That Workspace persists for the lifetime of the running application.
+
+The runtime model intentionally allows this to evolve into multiple independent Workspaces.
+
+The architecture therefore models Workspace explicitly even though the current implementation has only one active instance.
+
+---
+
+# Multiple Workspaces
+
+The Runtime model naturally supports multiple independent Workspaces.
 
 Conceptually:
 
 ```text
 Workspace A
-
     Root Pane
-
         Pane Tree
-
 
 Workspace B
-
     Root Pane
-
         Pane Tree
 
-
 Workspace C
-
     Root Pane
-
         Pane Tree
 ```
 
-Supporting multiple Workspaces enables capabilities such as:
+Each Workspace owns its own Runtime Object graph.
 
-- switching between study sessions,
-- saving workspace snapshots,
-- restoring previous research,
-- maintaining independent study contexts,
-- and resuming work exactly where it was left.
+This allows future capabilities such as:
 
-These capabilities require no fundamental changes to the runtime model.
+* named study Workspaces,
+* saved Workspace snapshots,
+* switching between study contexts,
+* restoring previous research,
+* maintaining independent study environments,
+* and resuming a study session where it was left.
 
-They represent natural extensions of the existing Workspace abstraction rather than new architectural concepts.
+These capabilities extend the Workspace abstraction.
 
-# Panes
-
-A Pane is a node within the Workspace pane tree.
-
-Panes define how the visible workspace is divided.
-
-Every Workspace owns one root Pane. All other Panes are reachable recursively through that root.
-
-The Pane structure is independent of the modules displayed within it.
-
-A Pane does not understand Bible chapters, notes, search results, reading plans, or other application behavior.
-
-It understands only:
-
-* its position within the tree,
-* whether it divides into child Panes,
-* the direction of that division,
-* and the Buffer hosted by a leaf Pane.
-
-This separation allows the same Pane model to host any current or future Module.
+They do not require a different runtime architecture.
 
 ---
 
-# Pane Types
+# Pane
 
-There are two conceptual Pane types:
+A Pane represents one structural node within the Workspace tree.
+
+Panes define the logical division of the Workspace.
+
+Every Workspace has one root Pane.
+
+All other Panes are reachable recursively through that root.
+
+A Pane does not need to understand:
+
+* Bible Chapters,
+* Notes,
+* Reading Plans,
+* search results,
+* Domain Objects,
+* Nostr,
+* Blossom,
+* or storage.
+
+Its responsibility is structural.
+
+---
+
+# Pane Responsibility
+
+A Pane answers one question:
+
+> **How is this part of the Workspace structured?**
+
+There are two conceptual Pane forms:
 
 * Branch Pane
 * Leaf Pane
 
-## Branch Pane
+A Branch Pane contains child Panes.
 
-A Branch Pane divides its available area between two child Panes.
-
-It contains:
-
-* a left child Pane,
-* a right child Pane,
-* and a split direction.
-
-A Branch Pane does not directly host a Buffer.
-
-Its responsibility is to define the relationship between its child Panes.
+A Leaf Pane hosts a Buffer.
 
 Conceptually:
 
 ```text
-Branch Pane
-
-    Left Pane
-
-    Right Pane
+Pane
+    │
+    ├── Branch Pane
+    │       ├── Pane
+    │       └── Pane
+    │
+    └── Leaf Pane
+            └── Buffer
 ```
 
-The terms `left` and `right` describe the two child positions in the tree.
+---
 
-Their visual arrangement is determined by the Branch Pane's split direction.
+# Branch Pane
 
-Depending on that direction, the children may appear beside one another or above and below one another.
-
-## Leaf Pane
-
-A Leaf Pane represents one visible region of the Workspace.
+A Branch Pane divides its available region between two child Panes.
 
 It contains:
 
-* a stable Pane identifier,
-* and one Buffer.
+* a first child Pane,
+* a second child Pane,
+* and the direction of the split.
 
-The Buffer determines which Module Instance is presented within the Pane.
+The current implementation refers to the child positions as `left` and `right`.
+
+Those names describe their positions in the tree rather than necessarily their final visual orientation.
+
+Depending on the split direction, the child Panes may appear:
+
+* beside one another,
+* or above and below one another.
+
+A Branch Pane does not host a Buffer directly.
+
+Its responsibility is the structural relationship between its child Panes.
+
+---
+
+# Leaf Pane
+
+A Leaf Pane represents one active region of the Workspace.
+
+It has:
+
+* a stable Pane identity,
+* and one Buffer.
 
 Conceptually:
 
@@ -371,7 +465,9 @@ Leaf Pane
         Module Instance
 ```
 
-Only Leaf Panes are directly rendered as visible application regions.
+The Pane determines **where** an interaction appears.
+
+The Buffer determines **which active interaction** occupies that Pane.
 
 ---
 
@@ -385,38 +481,63 @@ A Branch Pane may contain:
 * two Branch Panes,
 * or one Branch Pane and one Leaf Pane.
 
-This allows the Workspace to represent nested layouts of arbitrary depth.
-
 For example:
 
 ```mermaid
 flowchart TD
 
-    ROOT["Branch Pane"]
+    Root["Branch Pane"]
 
-    ROOT --> LEFT["Leaf Pane A"]
-    ROOT --> RIGHT["Branch Pane"]
+    Root --> Left["Leaf Pane A"]
+    Root --> Right["Branch Pane"]
 
-    LEFT --> BUFFER_A["Buffer A"]
+    Left --> BufferA["Buffer A"]
 
-    RIGHT --> TOP["Leaf Pane B"]
-    RIGHT --> BOTTOM["Leaf Pane C"]
+    Right --> Top["Leaf Pane B"]
+    Right --> Bottom["Leaf Pane C"]
 
-    TOP --> BUFFER_B["Buffer B"]
-    BOTTOM --> BUFFER_C["Buffer C"]
+    Top --> BufferB["Buffer B"]
+    Bottom --> BufferC["Buffer C"]
 ```
 
-The tree is the logical Workspace layout.
+The Pane tree is the logical representation of Workspace layout.
 
-The visual layout is derived from this tree.
+Rendering derives a visual layout from this structure.
 
-The rendering technology does not define the Workspace structure; it presents the structure already described by the Pane tree.
+Rendering technology does not define the Pane tree.
 
 ---
 
-# Pane Runtime Object
+# Pane Identity
 
-The current Pane runtime object is represented by a recursive interface.
+Leaf Panes have stable identities.
+
+Stable Pane identity allows the Runtime to:
+
+* find a Pane,
+* target Workspace operations,
+* replace its Buffer,
+* split it,
+* delete it,
+* associate it with a rendered region,
+* and preserve its identity when surrounding layout changes.
+
+A Pane may change:
+
+* position,
+* dimensions,
+* neighbors,
+* or depth within the tree
+
+while remaining the same Pane.
+
+This distinction is important for preserving unaffected runtime state during Workspace changes.
+
+---
+
+# Current Pane Representation
+
+The current implementation represents Pane state using a recursive interface similar to:
 
 ```typescript
 export interface Pane {
@@ -430,11 +551,7 @@ export interface Pane {
 }
 ```
 
-The same interface currently represents both Branch and Leaf Panes.
-
-A Branch Pane is identified by its child Panes and split direction.
-
-A Leaf Pane is identified by its Pane identifier and Buffer.
+The same structure currently represents both Branch and Leaf Panes.
 
 Conceptually:
 
@@ -446,264 +563,141 @@ Conceptually:
 | `split`  |         Yes |        No |
 | `buffer` |          No |       Yes |
 
-Some current properties support the rendering implementation rather than the conceptual Pane model.
+Some properties exist because of the current rendering implementation rather than the enduring Pane model.
 
-Future refactoring may introduce more precise runtime types without changing the recursive Pane-tree architecture.
+A future implementation may introduce explicit Branch and Leaf Pane types.
 
-For example, Branch and Leaf Panes could eventually be represented as distinct types.
-
-The ownership and responsibilities would remain the same.
+That change would refine implementation without changing the Pane responsibility.
 
 ---
 
-# Pane Identity
+# Pane Model and Pane Component
 
-Every Leaf Pane has a stable identifier.
+The Pane Runtime Object and the component that renders it are different concepts.
 
-Pane identifiers allow the Workspace Runtime to:
-
-* find a Pane,
-* update its Buffer,
-* split it,
-* delete it,
-* associate it with a rendered region,
-* and preserve its identity across layout changes.
-
-Stable identity is essential because changing the surrounding Workspace should not recreate unaffected Pane components.
-
-A Pane may change its size or position while continuing to represent the same active Module Instance.
-
-For example, splitting a neighboring Pane may change the available area of an existing Bible Pane.
-
-The Bible Module should remain mounted with its current state intact.
-
-Its chapter, scroll position, selection state, and Buffer state should not be reset merely because the Workspace layout changed.
-
-Pane identity allows layout to evolve independently from Module identity.
-
----
-
-# Pane Data and Pane Component
-
-The Pane runtime object and the Pane component are separate concepts.
-
-The **Pane runtime object** is a node in the recursive Workspace model.
+The **Pane Runtime Object** belongs to the Workspace model.
 
 It describes:
 
+* identity,
 * tree relationships,
 * split direction,
-* Pane identity,
 * and Buffer assignment.
 
-The **Pane component** presents a Leaf Pane in the user interface.
+The **Pane component** is part of the rendering implementation.
 
-It is responsible for:
-
-* applying the Pane's current dimensions,
-* resolving the Module associated with its Buffer,
-* and rendering that Module Instance.
+It presents the Runtime Object visually.
 
 Conceptually:
 
 ```text
 Pane Runtime Object
-        ↓
-Pane Component
-        ↓
-Buffer
-        ↓
-Module Instance
+        │
+        ▼
+Rendering Implementation
+        │
+        ▼
+Visible Pane
 ```
 
-The runtime object belongs to the Workspace model.
-
-The component belongs to the rendering implementation.
-
-Keeping these responsibilities separate allows the Workspace model to remain independent from the framework used to render it.
+The Runtime model therefore remains independent from the rendering framework.
 
 ---
 
-# Pane Operations
+# Buffer
 
-The Workspace Runtime modifies the application through operations on the Pane tree.
+A Buffer represents one active interaction within the Workspace.
 
-The primary Pane operations are:
+Every Leaf Pane hosts one Buffer.
 
-* finding a Pane,
-* splitting a Pane,
-* replacing a Pane's Buffer,
-* and deleting a Pane.
+The Pane determines where the Buffer appears.
 
-These operations modify runtime state rather than application data.
-
-## Find
-
-A Pane is located recursively from the root Pane using its stable identifier.
-
-Finding a Pane allows other Workspace operations to target one specific region without requiring knowledge of the entire rendered layout.
-
-## Split
-
-Splitting a Leaf Pane converts it into a Branch Pane.
-
-The existing Pane state becomes one child.
-
-A new Leaf Pane and Buffer become the other child.
-
-Conceptually:
-
-```text
-Before
-
-Leaf Pane A
-    Buffer A
-```
-
-```text
-After
-
-Branch Pane
-    Left: Leaf Pane A
-        Buffer A
-
-    Right: Leaf Pane B
-        Buffer B
-```
-
-The existing Buffer is preserved.
-
-The split introduces a new Pane without recreating the Module Instance already hosted by the original Pane.
-
-## Replace Buffer
-
-Replacing a Buffer changes the Module Instance displayed by an existing Leaf Pane without changing the surrounding Pane tree.
-
-The Pane retains its position and identity while presenting a different application feature.
-
-## Delete
-
-Deleting a Leaf Pane removes it from the tree.
-
-Its sibling replaces the parent Branch Pane so the remaining tree stays valid.
-
-The Workspace then reorganizes itself around the remaining Panes.
-
-Conceptually:
-
-```text
-Before
-
-Branch Pane
-    Leaf Pane A
-    Leaf Pane B
-```
-
-```text
-Delete Pane B
-```
-
-```text
-After
-
-Leaf Pane A
-```
-
-Deletion affects the targeted Pane and the minimum surrounding tree structure required to close the gap.
-
-Unrelated Panes and Module Instances remain intact.
-
----
-
-# Pane Responsibility
-
-A Pane owns one structural responsibility:
-
-> A Pane defines one node in the visible Workspace hierarchy.
-
-A Pane does not own:
-
-* Module behavior,
-* Domain Objects,
-* application services,
-* resource loading,
-* persistence,
-* synchronization,
-* or publishing.
-
-A Leaf Pane hosts a Buffer.
-
-A Branch Pane organizes child Panes.
-
-The Workspace Runtime owns operations across the complete Pane tree.
-
-# Buffers
-
-A Buffer represents one active Module Instance and its runtime state.
-
-Every Leaf Pane hosts exactly one Buffer.
-
-The Pane determines where the Module Instance appears within the Workspace.
-
-The Buffer determines what is displayed there and preserves the state required by that Module Instance.
+The Buffer identifies and preserves the runtime context required for one Module Instance.
 
 Conceptually:
 
 ```mermaid
 flowchart TD
 
-    PANE["Leaf Pane"]
+    Pane["Leaf Pane"]
 
-    BUFFER["Buffer"]
+    Buffer["Buffer"]
 
-    MODULE["Module Instance"]
+    Module["Module Instance"]
 
-    STATE["Module Runtime State"]
+    Context["Runtime / Navigation Context"]
 
-    PANE --> BUFFER
+    Pane --> Buffer
 
-    BUFFER --> MODULE
+    Buffer --> Module
 
-    BUFFER --> STATE
+    Buffer --> Context
 ```
 
-This separation allows Pane layout and Module behavior to evolve independently.
-
-A Pane may change position or size without changing its Buffer.
-
-A Buffer may display a different Module Instance without changing the surrounding Pane tree.
+This separation allows Pane structure and Module interaction state to evolve independently.
 
 ---
 
 # Buffer Responsibility
 
-A Buffer owns the runtime state associated with one Module Instance.
+A Buffer owns the runtime context associated with one active Module Instance.
 
-This includes:
+This includes responsibilities such as:
 
-* the Module type,
-* the mounted component,
-* Module initialization data,
-* Module-specific runtime state,
-* keyboard bindings,
+* stable Buffer identity,
+* Module type,
+* Module initialization context,
+* navigation context,
 * selection state,
-* and a stable Buffer identity.
+* focus-related state,
+* keyboard interaction state,
+* and other transient state necessary to preserve the active interaction.
 
-The Buffer does not own the visible layout.
+A Buffer does not own:
 
-The Pane owns the Buffer's position within the Workspace.
+* Domain behavior,
+* Domain Objects,
+* Pane-tree structure,
+* Resource lifecycle,
+* persistence technology,
+* synchronization,
+* or publication.
 
-The Buffer does not own domain behavior.
+The Buffer is a Runtime Object.
 
-The Module and its associated Domain own that behavior.
-
-The Buffer connects these responsibilities by hosting a Module Instance within a Pane.
+Its purpose is to preserve an active interaction independently from the Pane structure around it.
 
 ---
 
-# Buffer Runtime Object
+# Buffer Identity
 
-The current Buffer runtime object is represented by a class.
+Every Buffer has a stable identity independent from its Pane.
+
+This allows multiple instances of the same Module type to coexist.
+
+For example:
+
+```text
+Buffer A
+    Bible Reader
+    Genesis 1
+
+Buffer B
+    Bible Reader
+    Romans 8
+```
+
+Both Buffers represent Bible Reader interactions.
+
+Their Module type is the same.
+
+Their runtime identities and navigation contexts are different.
+
+---
+
+# Current Buffer Representation
+
+The current implementation uses a `Buffer` class similar to:
 
 ```typescript
 export class Buffer {
@@ -718,78 +712,40 @@ export class Buffer {
 }
 ```
 
-The Buffer contains both identity and runtime state.
+Several properties reflect the current Svelte implementation rather than the enduring Buffer model.
 
-| Property           | Responsibility                                               |
-| ------------------ | ------------------------------------------------------------ |
-| `key`              | Provides stable identity for the Buffer.                     |
-| `name`             | Provides a readable name for the active Buffer.              |
-| `component`        | References the currently mounted component.                  |
-| `componentName`    | Identifies the Module type hosted by the Buffer.             |
-| `keyboardBindings` | Stores keyboard actions associated with the Module Instance. |
-| `selected`         | Tracks whether the Buffer is currently selected.             |
-| `bag`              | Stores Module initialization and runtime state.              |
-| `onFocus`          | Defines behavior invoked when the Buffer receives focus.     |
+For example:
 
-Some of these properties reflect the current implementation rather than the essential Buffer model.
+* `component` references the current rendering implementation,
+* `componentName` identifies the Module implementation,
+* and `bag` currently carries runtime and navigation context.
 
-The essential responsibility remains stable:
+The enduring responsibility is:
 
-> A Buffer identifies and preserves one active Module Instance and its runtime state.
+> **A Buffer identifies and preserves one active Module interaction and its runtime context.**
+
+The implementation may evolve without changing that responsibility.
 
 ---
 
-# Buffer Identity
+# Navigation Context
 
-Every Buffer has a stable identity independent of the Pane that displays it.
+A Buffer may carry navigation context required to initialize or continue a Module interaction.
 
-Stable Buffer identity allows the application to distinguish between multiple instances of the same Module type.
-
-For example, two Buffers may both host Bible Reader Modules while displaying different chapters.
-
-```text
-Buffer A
-
-    Bible Reader Module
-
-    Genesis 1
-
-
-Buffer B
-
-    Bible Reader Module
-
-    Romans 8
-```
-
-The Module type is the same.
-
-The Buffer identity and runtime state are different.
-
-This allows multiple independent Module Instances to coexist within one Workspace.
-
----
-
-# Buffer State
-
-The Buffer's `bag` provides general-purpose state associated with its Module Instance.
-
-The Buffer bag is the current implementation of Module navigation context.
+The current implementation stores this information in the Buffer's `bag`.
 
 Examples include:
 
 * a Bible location reference,
-* a selected Bible version,
-* reading plan navigation state,
+* a Bible version,
+* selected verses,
+* Reading Plan navigation context,
 * search context,
+* Note context,
 * Module initialization parameters,
-* and other state required to restore or continue the interaction.
+* or other information required by the target Module.
 
-The Buffer does not define the meaning of this state.
-
-The hosted Module interprets the values stored within the Buffer.
-
-For example, a Bible Module may interpret:
+For example:
 
 ```typescript
 {
@@ -798,38 +754,59 @@ For example, a Bible Module may interpret:
 }
 ```
 
-while a Search Module may use an entirely different structure.
+The Workspace Runtime carries this context.
 
-This keeps the Workspace Runtime independent from Module-specific behavior.
+It does not interpret its Domain meaning.
 
-The Workspace can create, move, preserve, or restore a Buffer without understanding the contents of its state.
+The target Module interprets the context through the concepts exposed by its Domain.
 
 ---
 
-# Buffer and Pane Independence
+# Navigation Context Is Not Domain Ownership
 
-Panes and Buffers have separate identities and responsibilities.
+Passing Domain-related information through a Buffer does not transfer ownership to the Runtime.
 
-A Pane is a structural node in the Workspace.
+For example, a Buffer may carry:
 
-A Buffer is an active application view hosted by a Leaf Pane.
+```text
+Bible Location Reference
+```
 
-This distinction supports several Workspace operations.
+The Workspace Runtime needs to preserve and transport that value.
+
+It does not need to understand what Genesis 1 means or how Bible navigation works.
+
+Likewise, a Reading Plan Module may provide a Bible navigation context when opening a Bible Reader.
+
+The Runtime transports the context between interactions.
+
+The relevant Domain remains responsible for interpreting its meaning.
+
+---
+
+# Pane and Buffer Independence
+
+Panes and Buffers have separate identities.
+
+A Pane represents Workspace structure.
+
+A Buffer represents an active interaction.
+
+This distinction supports several important operations.
+
+---
 
 ## Replace
 
-The Buffer associated with an existing Leaf Pane may be replaced.
-
-The Pane retains its position within the tree while displaying a new Module Instance.
+A Buffer may be replaced without replacing the Pane.
 
 ```text
 Before
 
 Leaf Pane A
 
-    Buffer
-
-        Bible Reader Module
+    Buffer A
+        Bible Reader
 ```
 
 ```text
@@ -837,18 +814,21 @@ After
 
 Leaf Pane A
 
-    Buffer
-
-        Notes Module
+    Buffer B
+        Notes
 ```
 
-The surrounding Workspace layout does not change.
+The Pane retains its structural identity.
+
+Only the active interaction changes.
+
+---
 
 ## Split
 
-When a Leaf Pane is split, its existing Buffer is preserved within one of the resulting child Panes.
+When a Leaf Pane is split, its existing Buffer can remain active in one of the resulting child Panes.
 
-A new Buffer is created for the new child Pane.
+A new Buffer is introduced for the second child.
 
 ```text
 Before
@@ -864,180 +844,47 @@ After
 Branch Pane
 
     Leaf Pane A
-
         Buffer A
 
     Leaf Pane B
-
         Buffer B
 ```
 
-The original Module Instance remains associated with its existing Buffer.
+The existing interaction can therefore survive the layout change.
+
+---
 
 ## Delete
 
 When a Leaf Pane is deleted, the Buffer hosted by that Pane is removed from the active Workspace.
 
-The sibling Pane replaces the surrounding Branch Pane.
-
-Buffers belonging to unrelated Panes remain unchanged.
+Buffers hosted by unrelated Panes remain unchanged.
 
 ---
 
-# Buffer Persistence
+# Module
 
-Buffer state may be persisted as part of the Workspace runtime state.
-
-Persisting Buffers allows the application to restore:
-
-* which Modules were open,
-* the initialization state of each Module,
-* the active Bible locations,
-* search context,
-* reading plan navigation,
-* and other Module-specific state.
-
-A persisted Buffer represents the state required to reconstruct a Module Instance.
-
-It does not persist the rendered component itself.
-
-When the Workspace is restored, the application uses the persisted Buffer state to recreate the appropriate Module Instance.
-
-This distinction separates serializable runtime state from framework-specific component instances.
-
----
-
-# Buffer and Module Relationship
-
-A Buffer hosts exactly one Module Instance at a time.
-
-The Buffer owns the identity and runtime state of that instance.
-
-The Module owns the user interaction and application behavior.
-
-Conceptually:
-
-```text
-Buffer
-
-    Identity
-
-    Runtime State
-
-    Module Type
-
-        Module Instance
-
-            Domain Behavior
-```
-
-The Buffer does not need to understand the Domain used by the Module.
-
-It only needs enough information to identify, initialize, and preserve the Module Instance.
-
-This allows the Buffer abstraction to support any current or future Module without requiring changes to the Workspace Runtime.
-
----
-
-# Buffer Responsibility Boundary
-
-A Buffer owns:
-
-* Module Instance identity,
-* Module selection,
-* initialization state,
-* runtime state,
-* keyboard bindings,
-* and focus behavior.
-
-A Buffer does not own:
-
-* Pane layout,
-* Workspace structure,
-* Module behavior,
-* Domain Objects,
-* data persistence,
-* resource resolution,
-* synchronization,
-* or publishing.
-
-The Pane hosts the Buffer.
-
-The Buffer hosts the Module Instance.
-
-The Module interacts with the Domain.
-
-# Module Instances
-
-A Module Instance provides one user interaction within the Workspace.
-
-Every Module Instance is hosted by exactly one Buffer.
-
-A Module Instance presents the capabilities of one application Domain while maintaining its own independent runtime state.
+A Module defines a reusable presentation capability.
 
 Examples include:
 
-* a Bible Reader,
-* a Bible Search,
-* a Notes editor,
-* or a Reading Plan viewer.
+* Bible Reader,
+* Bible Search,
+* Notes,
+* Notes Search,
+* and Reading Plans.
 
-A Module Instance represents one active interaction rather than an application concept.
+A Module is not a Domain.
 
-Conceptually:
+A Domain owns application behavior.
 
-```mermaid
-flowchart TD
-
-    BUFFER["Buffer"]
-
-    MODULE["Module Instance"]
-
-    DOMAIN["Domain"]
-
-    BUFFER --> MODULE
-
-    MODULE --> DOMAIN
-```
-
-The Buffer hosts the Module Instance.
-
-The Module Instance presents the Domain.
-
-The Domain owns the application's behavior.
+A Module presents some portion of that behavior to the user.
 
 ---
 
-# Module Responsibility
+# Module Instance
 
-A Module Instance owns the interaction between the user and a Domain.
-
-Its responsibilities include:
-
-* presenting user interface,
-* responding to user input,
-* requesting Domain operations,
-* maintaining interaction state,
-* and updating the Buffer when required.
-
-A Module Instance does not own:
-
-* Workspace layout,
-* Pane management,
-* Buffer identity,
-* Resource resolution,
-* synchronization,
-* or persistence.
-
-Its responsibility begins when it is hosted by a Buffer and ends when it is removed from the Workspace.
-
----
-
-# Module Types
-
-A Module represents a reusable application feature.
-
-A Module Instance represents one execution of that feature.
+A Module Instance represents one active execution of a Module within a Buffer.
 
 For example:
 
@@ -1054,17 +901,46 @@ Bible Reader Module
         Psalms 23
 ```
 
-All three Module Instances present the same Module type.
+The Module is reusable.
 
-Each maintains its own independent runtime state.
+Each Module Instance has its own runtime identity and context.
 
-This allows multiple interactions with the same Domain to exist simultaneously without interfering with one another.
+This allows multiple independent interactions with the same Domain to coexist inside one Workspace.
+
+---
+
+# Module Responsibility
+
+A Module Instance owns presentation and user interaction for one Domain capability.
+
+Its responsibilities may include:
+
+* presenting user interface,
+* interpreting user input,
+* maintaining presentation-specific state,
+* invoking Domain behavior through the Domain's Public API,
+* requesting Workspace operations through the Runtime's Public API,
+* and responding to relevant Application Events.
+
+A Module does not own the Domain behavior it presents.
+
+For example:
+
+```text
+Bible Reader Module
+        │
+        │ presents
+        ▼
+Bible Domain capability
+```
+
+The Bible Domain owns Scripture behavior.
+
+The Bible Reader presents it.
 
 ---
 
 # Modules and Domains
-
-A Module belongs to one Domain.
 
 A Domain may expose one or more Module types.
 
@@ -1077,190 +953,308 @@ Bible Domain
 
     Bible Search Module
 
-    Bible References Module
-
 
 Notes Domain
 
-    Notes Editor Module
+    Notes Module
 
     Notes Search Module
 
 
 Reading Plans Domain
 
-    Reading Plan Module
+    Reading Plans Module
 ```
+
+This distinction is important.
 
 The user opens Modules.
 
-Modules interact with Domains.
+Modules present Domain capabilities.
 
-Domains own the application's business behavior.
+Domains own the behavior and Domain Objects that give those capabilities meaning.
 
-This distinction separates user interaction from application logic.
+Search therefore does not need to become its own Domain.
 
-New Modules may be introduced without changing the Domain.
+Bible Search belongs to Bible.
 
-Likewise, Domain behavior may evolve without fundamentally changing the Modules that present it.
+Notes Search belongs to Notes.
+
+---
+
+# Runtime and Domain Boundary
+
+The Runtime and Domains have different responsibilities.
+
+The Workspace Runtime understands:
+
+* Workspaces,
+* Panes,
+* Buffers,
+* Module Instances,
+* runtime operations,
+* focus,
+* selection,
+* navigation context,
+* and presentation coordination.
+
+A Domain understands:
+
+* its Domain Objects,
+* its rules,
+* its operations,
+* and its enduring application behavior.
+
+Conceptually:
+
+```text
+Workspace Runtime
+        │
+        │ hosts
+        ▼
+Module Instance
+        │
+        │ uses
+        ▼
+Domain Public API
+        │
+        ▼
+Domain
+```
+
+Neither responsibility needs access to the other's internal implementation.
+
+---
+
+# Runtime Public API
+
+Workspace behavior should be exposed through the Workspace Runtime's Public API.
+
+A Module may need to request operations such as:
+
+* open a Module,
+* split a Pane,
+* replace a Buffer,
+* close a Pane,
+* select a Pane,
+* focus a Buffer,
+* or change the active Workspace.
+
+The requesting Module should not manipulate the Pane tree directly.
+
+It expresses the requested operation through the Runtime's public boundary.
+
+The Runtime remains responsible for deciding how that operation modifies its Runtime Objects.
+
+---
+
+# Current Runtime Services
+
+The current implementation may expose Runtime capabilities through services such as a Pane service.
+
+Those services are implementation mechanisms.
+
+They are not separate architectural owners.
+
+Conceptually:
+
+```text
+Workspace Runtime
+    │
+    └── Public API
+            │
+            └── Current implementation
+                    Pane Service
+```
+
+If the implementation changes, the Runtime continues to own Pane behavior.
+
+The service does not own it merely because it implements or exposes it.
 
 ---
 
 # Module Independence
 
-Modules should remain loosely coupled.
+Module Instances should remain loosely coupled.
 
-A Module may communicate with other parts of the application through:
+A Module should not:
 
-- Application Services,
-- application events,
-- shared Domain state,
-- or Buffer navigation context.
+* directly manipulate another Module Instance,
+* depend upon another Module's component implementation,
+* mutate another Buffer's internal state,
+* or reach into another Domain's implementation.
 
-A Module should not directly manipulate another Module Instance or depend on its component implementation.
+Cross-boundary collaboration should use mechanisms such as:
 
-A Module should not directly manipulate another Module's runtime state.
+* Public APIs,
+* Application Events,
+* shared identifiers,
+* and Navigation Context.
 
-Communication between Modules should occur through Application Services, events, shared Domain state, or navigation context rather than direct component references.
+Ownership determines the boundary.
 
-This allows each Module Instance to remain independently reusable within the Workspace.
-
-For example, opening a new Bible Reader Module should not affect an existing Notes Module or Reading Plan Module.
-
-Each Module continues operating within its own Buffer and runtime state.
+Loose coupling preserves it.
 
 ---
 
-# Module Lifecycle
+# Cross-Domain Interaction
 
-A Module Instance follows a simple lifecycle.
+A Module may initiate an interaction involving another Domain without assuming ownership of that Domain's behavior.
+
+For example:
 
 ```text
-Created
-    ↓
-Initialized
-    ↓
-Presented
-    ↓
-Interacts with User
-    ↓
-Destroyed
+Reading Plans Module
+        │
+        │ requests Bible Reader
+        │ with navigation context
+        ▼
+Workspace Runtime
+        │
+        ▼
+Bible Reader Module
+        │
+        ▼
+Bible Domain
 ```
 
-The Workspace Runtime owns this lifecycle.
+The Reading Plans Module provides the information necessary to initiate the interaction.
 
-The Buffer preserves the runtime state associated with the Module Instance.
+It does not control the Bible Reader's implementation.
 
-The Module owns the interaction that occurs during its lifetime.
+It does not implement Bible behavior.
 
----
-
-# Module Extensibility
-
-The Workspace Runtime does not need to understand individual Modules.
-
-A new Module can be introduced without changing the Workspace model.
-
-As long as a Module can be hosted within a Buffer, it naturally becomes part of the Workspace.
-
-This allows the application to grow through new Modules while preserving the same runtime architecture.
-
-The Workspace Runtime remains responsible for presentation.
-
-The Domain remains responsible for behavior.
-
-The Module provides the bridge between them.
+The Bible Domain remains responsible for interpreting Bible-specific information.
 
 ---
 
-# Module Responsibility Boundary
+# Opening a Module
 
-A Module owns:
+Opening a Module is a Workspace operation.
 
-* user interaction,
-* presentation,
-* interaction state,
-* and communication with its Domain.
+A Module may request another Module Instance to be introduced into the Workspace.
 
-A Module does not own:
+The Runtime decides whether that request results in:
 
-* Workspace structure,
-* Pane layout,
-* Buffer identity,
-* Domain Objects,
-* Resource Architecture,
-* persistence,
-* synchronization,
-* or publishing.
+* a new Pane,
+* a replacement Buffer,
+* or another supported Workspace operation.
 
-The Workspace Runtime hosts the Module.
+Conceptually:
 
-The Module presents the Domain.
+```text
+Source Module
+        │
+        │ Request
+        ▼
+Workspace Runtime Public API
+        │
+        ▼
+Workspace Operation
+        │
+        ├── Split Pane
+        │
+        └── Replace Buffer
+        │
+        ▼
+Target Module Instance
+```
 
-The Domain owns the application's behavior.
+The requester describes its intent.
+
+The Runtime owns the Workspace modification.
+
+---
+
+# Opening a Module With Navigation Context
+
+A Module request may include Navigation Context.
+
+Conceptually:
+
+```text
+Source Module
+
+    Module Request
+        +
+    Navigation Context
+
+            │
+            ▼
+
+Workspace Runtime
+
+            │
+            ▼
+
+New Buffer
+
+            │
+            ▼
+
+Target Module Instance
+```
+
+For example, a Reading Plans Module may request a Bible Reader with context describing the next reading.
+
+The Runtime carries that context into the new Buffer.
+
+The Bible Reader and Bible Domain interpret the Bible-specific meaning.
+
+This allows collaboration without direct Module-to-Module control.
+
+---
 
 # Workspace Operations
 
-The Workspace Runtime evolves through a small set of operations applied to Runtime Objects.
+The Workspace evolves through operations on Runtime Objects.
 
-These operations modify the visible application without changing Domain Objects or application data.
+Primary operations include:
 
-The primary Workspace operations are:
+* find Pane,
+* split Pane,
+* replace Buffer,
+* delete Pane,
+* open Module,
+* focus or select Buffer,
+* restore Workspace,
+* and update layout.
 
-* find a Pane,
-* split a Pane,
-* replace a Buffer,
-* delete a Pane,
-* open a Module,
-* select or focus a Buffer,
-* and update the Workspace layout.
+Each operation modifies Runtime state.
 
-Each operation acts on the runtime model.
-
-The Workspace Runtime owns the operation.
-
-Modules may request Workspace changes through Application Services, but they do not directly manipulate the Pane tree.
+It does not directly modify Domain Objects.
 
 ---
 
 # Find Pane
 
-Most Workspace operations begin by locating a Pane within the recursive Pane tree.
+Most structural operations begin by locating a Pane.
 
-A Pane is identified by its stable Pane identifier.
+A Pane is identified by its stable identity.
 
-The runtime begins at the root Pane and recursively searches its left and right children until the requested Pane is found.
+The Runtime searches recursively from the Workspace root until the target Pane is found.
 
 Conceptually:
 
 ```text
 Root Pane
-    ↓
-Search left subtree
-    ↓
-Search right subtree
-    ↓
+    │
+    ▼
+Search Pane Tree
+    │
+    ▼
 Matching Pane
 ```
 
-Finding a Pane is a structural operation.
+Finding a Pane is a Runtime operation.
 
-It does not depend on the Buffer or Module hosted within the Pane.
-
-This allows the Workspace Runtime to target one visible region without understanding the application behavior presented there.
+It requires no knowledge of the Domain capability presented in that Pane.
 
 ---
 
 # Split Pane
 
-Splitting a Pane creates an additional visible region within the Workspace.
-
-A split operation begins with an existing Leaf Pane.
-
-The existing Pane becomes a Branch Pane with two children:
-
-* one child preserves the existing Buffer,
-* the other child receives a new Buffer.
+Splitting a Pane introduces another visible region into the Workspace.
 
 Conceptually:
 
@@ -1268,9 +1262,10 @@ Conceptually:
 Before
 
 Leaf Pane A
-
     Buffer A
 ```
+
+becomes:
 
 ```text
 After
@@ -1278,71 +1273,53 @@ After
 Branch Pane
 
     Leaf Pane A
-
         Buffer A
 
     Leaf Pane B
-
         Buffer B
 ```
 
-The Branch Pane records the split direction used to arrange its children.
+The existing Buffer should remain intact wherever possible.
 
-The existing Buffer and Module Instance remain intact.
+Only the minimum Runtime structure required for the new Pane is introduced.
 
-Only the minimum runtime structure required for the new Pane is introduced.
-
-This preserves the active state of the original Module Instance while extending the Workspace.
+This preserves the state of unaffected Module Instances.
 
 ---
 
 # Replace Buffer
 
-Replacing a Buffer changes the Module Instance displayed by an existing Leaf Pane.
+Replacing a Buffer changes the active interaction presented by one existing Leaf Pane.
 
 The Pane retains:
 
-* its identity,
-* its position within the Pane tree,
-* and its relationship to the surrounding Workspace.
+* its structural identity,
+* its location in the Pane tree,
+* and its relationship to surrounding Panes.
 
-Only its Buffer changes.
+Its Buffer changes.
 
 Conceptually:
 
 ```text
-Before
-
-Leaf Pane A
-
-    Buffer
-
-        Bible Reader Module
+Leaf Pane
+    │
+    ├── Before
+    │       Bible Reader Buffer
+    │
+    └── After
+            Notes Buffer
 ```
 
-```text
-After
-
-Leaf Pane A
-
-    Buffer
-
-        Notes Module
-```
-
-Buffer replacement provides a simple way to change the activity displayed in one region without restructuring the Workspace.
-
-It is distinct from splitting a Pane because it does not create an additional visible region.
+The Pane tree itself does not need to change.
 
 ---
 
 # Delete Pane
 
-Deleting a Pane removes one Leaf Pane and its Buffer from the active Workspace.
+Deleting a Leaf Pane removes that Pane and its Buffer from the active Workspace.
 
-Because the Pane tree is recursive, removing a Leaf Pane also requires reorganizing its immediate parent Branch Pane.
-
-The deleted Pane's sibling replaces the parent Branch Pane.
+Because the Pane tree is recursive, the deleted Pane's sibling replaces their parent Branch Pane.
 
 Conceptually:
 
@@ -1350,9 +1327,7 @@ Conceptually:
 Before
 
 Branch Pane
-
     Leaf Pane A
-
     Leaf Pane B
 ```
 
@@ -1366,254 +1341,267 @@ After
 Leaf Pane A
 ```
 
-If the sibling is itself a Branch Pane, its subtree replaces the deleted Pane's parent.
+If the remaining sibling is itself a Branch Pane, that subtree replaces the removed parent.
 
-Deletion therefore preserves a valid recursive Pane tree while removing only the targeted runtime state and the minimum surrounding structure required to close the gap.
+Only the minimum surrounding Runtime structure should change.
 
 Unrelated Panes, Buffers, and Module Instances remain intact.
 
 ---
 
-# Open Module
-
-Opening a Module creates or replaces Runtime Objects required to display a new Module Instance.
-
-A Module may be opened by:
-
-* splitting an existing Pane and creating a new Buffer,
-* or replacing the Buffer in an existing Leaf Pane.
-
-The requesting Module does not manipulate the Pane tree directly.
-
-Instead, it requests the operation through an Application Service such as the Pane Service.
-
-Conceptually:
-
-```text
-Module Instance
-
-    requests Module open
-
-        ↓
-
-Pane Service
-
-        ↓
-
-Workspace Runtime
-
-        ↓
-
-Split Pane or Replace Buffer
-```
-
-For example, selecting a reference from a Bible Module may request that another Module be opened in a new Pane.
-
-The Bible Module knows which Module should be opened and which navigation context should be supplied.
-
-The Workspace Runtime decides how that Module Instance is introduced into the visible Workspace.
-
-This preserves the ownership boundary between application behavior and runtime coordination.
-
----
-
-# Navigation Context
-
-A Module may provide initialization context when requesting another Module.
-
-The current implementation carries this context through the Buffer's `bag`.
-
-The Buffer bag is therefore the current implementation of Module navigation context.
-
-Navigation context may contain information such as:
-
-* a Bible location reference,
-* a Bible version,
-* selected verses,
-* reading plan navigation state,
-* search results,
-* references,
-* or other Module initialization data.
-
-Conceptually:
-
-```text
-Source Module
-
-    Navigation Context
-
-        ↓
-
-New Buffer
-
-        ↓
-
-Target Module Instance
-```
-
-For example, a Reading Plan Module may open a Bible Reader Module with a navigation context describing the readings currently in progress.
-
-The Bible Reader interprets that context and presents only the requested chapters or verses.
-
-The Reading Plan Module does not directly control the Bible Reader.
-
-It provides context.
-
-The target Module determines how that context affects its behavior.
-
-This allows Modules to coordinate without depending directly on one another's component implementations.
-
----
-
 # Focus and Selection
 
-The Workspace Runtime may track which Buffer or Pane is currently selected.
+The Workspace Runtime owns the coordination of active focus and selection.
 
-Selection state supports application behavior such as:
+This may support:
 
 * keyboard input,
-* focus handling,
-* visual selection,
-* commands applied to the active Module,
-* and switching attention between Pane regions.
+* command targeting,
+* active-Pane presentation,
+* Buffer focus,
+* and switching attention between Workspace regions.
 
-The selected Buffer may expose focus behavior through its runtime state.
+Focus and selection are Runtime state.
 
-Focus and selection remain runtime concerns.
-
-They do not change the Domain Objects presented by the Module.
-
----
-
-# Module Communication
-
-Modules should remain loosely coupled.
-
-A Module may communicate with other parts of the application through:
-
-* Application Services,
-* application events,
-* shared Domain state,
-* or Buffer navigation context.
-
-A Module should not directly manipulate another Module Instance or depend on its component implementation.
-
-For example, when a Note is created, Notes Modules may refresh through an application event or shared Notes state.
-
-The Module creating the Note does not directly invoke rendering behavior on every open Notes Module.
-
-Likewise, a Reading Plan Module may provide navigation context to a Bible Reader without depending on the Bible Reader's internal component structure.
-
-This allows multiple Module Instances to respond consistently while remaining independently reusable.
+They do not alter ownership of the Domain information presented inside the selected Module.
 
 ---
 
 # Runtime Events
 
-Workspace operations are event-driven.
+The Workspace Runtime may use Application Events as one mechanism for communication.
 
-User actions and Module requests produce events that are handled by the Workspace Runtime or an Application Service coordinating with it.
+Events allow a responsibility to announce that something occurred without requiring direct knowledge of every interested consumer.
 
-Examples include:
+Examples may include:
 
-* open a Module,
-* split a Pane,
-* close a Pane,
-* replace a Buffer,
-* select a Pane,
-* update the Workspace layout,
-* and notify Module Instances of shared application changes.
+* Workspace changed,
+* Pane opened,
+* Pane closed,
+* Buffer selected,
+* Module opened,
+* or other application-level events.
 
-Conceptually:
+An event does not transfer ownership.
 
-```mermaid
-sequenceDiagram
-
-    participant User
-    participant Module
-    participant ApplicationService as Application Service
-    participant Runtime as Workspace Runtime
-
-    User->>Module: Perform action
-    Module->>ApplicationService: Request Workspace change
-    ApplicationService->>Runtime: Execute runtime operation
-    Runtime->>Runtime: Update Runtime Objects
-    Runtime-->>Module: Updated Workspace is presented
-```
-
-Events allow the requester to express intent without owning the operation that realizes it.
-
-The Module requests application behavior.
-
-The Application Service exposes the capability.
-
-The Workspace Runtime modifies the runtime model.
+The owner of the underlying responsibility remains unchanged.
 
 ---
 
-# Layout Update
+# Domain Events and Module Updates
 
-Operations that change the Pane tree require the visible Workspace layout to be recalculated.
+Modules may also respond to events originating from Domain behavior.
 
-Examples include:
-
-* splitting a Pane,
-* deleting a Pane,
-* and restoring a Workspace.
-
-The runtime updates the logical Pane tree first.
-
-The rendering implementation then derives the visible layout from that updated model.
+For example, after a Note is changed, other Notes Module Instances may need to refresh their presentation.
 
 Conceptually:
 
 ```text
-Workspace Operation
-        ↓
-Update Pane Tree
-        ↓
-Derive Layout
-        ↓
-Present Updated Workspace
+Notes Domain
+      │
+      │ change occurs
+      ▼
+Application Event
+      │
+      ├── Notes Module A
+      └── Notes Module B
 ```
 
-The runtime operation does not directly manipulate unrelated Module behavior.
+The Module that initiated the change does not directly instruct every other Module Instance to update.
 
-Existing Buffers and Module Instances remain associated with their stable identities wherever possible.
+The Domain owns Notes behavior.
 
-This separation allows the Workspace layout to change without unnecessarily recreating unaffected parts of the application.
+Events allow interested presentation instances to react without becoming directly coupled.
 
 ---
 
-# Operation Ownership
+# Runtime Identity
 
-The Workspace Runtime owns:
+Stable identity is essential to the Workspace Runtime.
 
-* Pane-tree modification,
-* Buffer assignment,
-* Module Instance placement,
-* selection and focus coordination,
-* and layout updates.
+The Runtime distinguishes between:
 
-Application Services expose these capabilities to Modules.
+* Workspace identity,
+* Pane identity,
+* Buffer identity,
+* and Module Instance identity.
 
-Modules may request operations but do not own their implementation.
+These identities serve different purposes.
 
-Domains remain independent from Workspace structure.
+```text
+Workspace Identity
+    Which study environment?
 
-The Resource Architecture remains independent from Workspace operations.
+Pane Identity
+    Which structural region?
 
-This keeps runtime coordination centralized without coupling the Workspace Runtime to application-specific behavior.
+Buffer Identity
+    Which active interaction?
+
+Module Instance
+    Which execution of a Module?
+```
+
+Keeping these identities distinct allows Workspace structure to change without unnecessarily destroying active interactions.
+
+---
+
+# Preserving Module State
+
+One of the Runtime's important responsibilities is preventing unrelated Workspace changes from recreating unaffected Module Instances.
+
+For example, a user may have:
+
+```text
+Pane A
+    Bible Reader
+    Genesis 1
+    Scroll position 72%
+
+Pane B
+    Bible Reader
+    Romans 8
+    Scroll position 14%
+```
+
+Opening a third Pane should not reset either reader.
+
+The Runtime should preserve existing identities and state wherever possible.
+
+The architectural requirement is stable Runtime identity.
+
+The specific rendering mechanism used to preserve component instances belongs to the rendering implementation.
+
+---
+
+# Runtime Persistence
+
+Runtime state may be persisted so the user's Workspace can be reconstructed after the current execution ends.
+
+Examples include:
+
+* Pane-tree structure,
+* Buffer assignments,
+* Module types,
+* Module initialization context,
+* navigation context,
+* active selection,
+* and other reconstructable Workspace state.
+
+The persisted representation should describe the Runtime state necessary to rebuild the Workspace.
+
+It should not depend on live component instances.
+
+Conceptually:
+
+```text
+Runtime State
+      │
+      ▼
+Persist
+      │
+      ▼
+Application Restart
+      │
+      ▼
+Restore Runtime Objects
+      │
+      ▼
+Recreate Module Instances
+```
+
+---
+
+# Runtime Persistence and Other Application State
+
+Not every value persisted alongside Workspace state is owned by the Workspace Runtime.
+
+For example, the current implementation may persist values such as:
+
+* theme,
+* dark mode,
+* Bible version,
+* or other preferences
+
+near persisted Workspace information.
+
+Physical storage location does not determine architectural ownership.
+
+If a setting derives its meaning from the Settings Domain, Settings remains its owner.
+
+If a Bible preference derives its meaning from the Bible Domain, that ownership remains unchanged.
+
+The Runtime persists only the context it owns or needs to reconstruct the Workspace.
+
+---
+
+# Buffer Persistence
+
+A persisted Buffer should contain the serializable information required to reconstruct its active Module Instance.
+
+This may include:
+
+* Buffer identity,
+* Module type,
+* navigation context,
+* selection state,
+* and other serializable runtime information.
+
+It should not persist the live rendered component.
+
+Conceptually:
+
+```text
+Persisted Buffer
+
+    Module Type
+
+    Runtime Context
+
+    Navigation Context
+
+        │
+        ▼
+
+Restore
+
+        │
+        ▼
+
+Module Instance
+```
+
+This keeps persisted Runtime state independent from the presentation framework.
+
+---
+
+# Runtime State and Domain Objects
+
+Runtime persistence and Domain persistence are separate responsibilities.
+
+Runtime state answers:
+
+> **What was the user's active Workspace?**
+
+Domain state answers questions such as:
+
+> **What Notes exist?**
+
+> **What Reading Plan progress exists?**
+
+> **What Bible annotations exist?**
+
+Restoring a Workspace may cause Module Instances to request Domain Objects again.
+
+The Runtime does not need to embed those Domain Objects into its own persisted state merely because they are displayed within the Workspace.
+
+---
 
 # Rendering Boundary
 
-The Workspace Runtime defines the logical structure of the visible application.
+The Workspace Runtime defines the logical organization of the active application.
 
-It does not define how that structure is rendered.
-
-Rendering is a separate responsibility.
-
-The rendering implementation presents the Runtime Objects managed by the Workspace Runtime.
+Rendering determines how that organization becomes visible.
 
 Conceptually:
 
@@ -1621,9 +1609,13 @@ Conceptually:
 flowchart TD
 
     subgraph Runtime["Workspace Runtime"]
+
         Workspace["Workspace"]
+
         Pane["Pane"]
+
         Buffer["Buffer"]
+
         Module["Module Instance"]
 
         Workspace --> Pane
@@ -1631,66 +1623,397 @@ flowchart TD
         Buffer --> Module
     end
 
-    Runtime --> Rendering["Rendering Implementation"]
+    Runtime --> Rendering["Rendering"]
 
     Rendering --> UI["Visible Application"]
 ```
 
-The current implementation realizes the Workspace Runtime using recursive components and CSS Grid.
+The Runtime owns:
 
-These technologies implement the runtime model but do not define it.
+* the logical Pane tree,
+* Buffer placement,
+* Module Instance placement,
+* and Runtime state.
 
-The rendering implementation is intentionally separated from the Workspace Runtime so that presentation technologies may evolve without changing the runtime architecture.
+Rendering owns the technical process that presents that state.
 
-The rendering implementation is described by **003-runtime-rendering.md**.
+---
+
+# Current Rendering Implementation
+
+The current implementation uses:
+
+* recursive Svelte rendering,
+* dynamic Module components,
+* and CSS Grid.
+
+These technologies implement the Runtime model.
+
+They do not define it.
+
+Conceptually:
+
+```text
+Pane Tree
+      │
+      ▼
+Layout Derivation
+      │
+      ▼
+CSS Grid
+      │
+      ▼
+Rendered Workspace
+```
+
+The detailed rendering model is described in:
+
+```text
+003-runtime-rendering.md
+```
+
+---
+
+# Layout Coordination
+
+Workspace operations may require layout to be recalculated.
+
+Examples include:
+
+* splitting a Pane,
+* deleting a Pane,
+* restoring a Workspace,
+* or resizing the available application region.
+
+The logical Runtime model changes first.
+
+Rendering derives the new visible representation second.
+
+Conceptually:
+
+```text
+Workspace Operation
+        │
+        ▼
+Update Runtime Objects
+        │
+        ▼
+Derive Layout
+        │
+        ▼
+Render Workspace
+```
+
+This follows the broader architectural principle of defining responsibility before implementation.
+
+The Pane tree defines the structure.
+
+CSS Grid realizes it.
+
+---
+
+# Runtime Ownership
+
+Ownership within the Runtime follows the same principle used throughout the application:
+
+> **Ownership belongs to the responsibility that gives the behavior meaning.**
+
+Examples:
+
+```text
+Workspace lifecycle
+    → Workspace Runtime
+
+Pane-tree modification
+    → Workspace Runtime
+
+Buffer assignment
+    → Workspace Runtime
+
+Module Instance placement
+    → Workspace Runtime
+
+Focus coordination
+    → Workspace Runtime
+
+Bible search
+    → Bible Domain
+
+Bible annotations
+    → Bible Domain
+
+Notes behavior
+    → Notes Domain
+```
+
+A technical service implementing one of these behaviors does not become its architectural owner.
+
+---
+
+# Operation Ownership
+
+The Workspace Runtime owns operations that modify Runtime Objects.
+
+These include:
+
+* Pane-tree modification,
+* Buffer placement,
+* Module Instance placement,
+* focus and selection coordination,
+* Workspace restoration,
+* and layout coordination.
+
+Modules may request these operations through the Runtime's Public API.
+
+They do not assume ownership of the operations themselves.
+
+Domains remain independent from Pane-tree structure.
+
+A Domain should not need to understand how many Panes exist or how those Panes are arranged.
+
+---
+
+# Runtime Extensibility
+
+The Runtime is intentionally built around a small number of enduring concepts:
+
+```text
+Workspace
+    ↓
+Pane
+    ↓
+Buffer
+    ↓
+Module Instance
+```
+
+New application capabilities should fit within this model rather than requiring the Runtime to understand Domain-specific behavior.
+
+A new Module can be introduced without changing the Pane model.
+
+A new Domain can expose Modules without changing Workspace structure.
+
+Multiple Workspaces can be introduced without redefining Pane or Buffer responsibilities.
+
+Alternative rendering technologies can be introduced without redefining Runtime Objects.
+
+This is the primary extensibility property of the Workspace Runtime.
 
 ---
 
 # Future Evolution
 
-The Workspace Runtime has been intentionally designed around a small collection of Runtime Objects with clearly defined responsibilities.
+The current implementation may evolve substantially.
 
-This simplicity allows the runtime model to support future capabilities without changing its fundamental architecture.
+Potential changes include:
 
-Examples include:
+* extracting Workspace coordination from `+page.svelte`,
+* introducing a concrete Workspace object,
+* introducing stronger Branch and Leaf Pane types,
+* formalizing the Runtime Public API,
+* introducing named Workspace snapshots,
+* supporting multiple Workspaces,
+* refining Buffer and Navigation Context types,
+* moving technical services beneath their architectural owners,
+* and replacing rendering implementation details.
 
-* multiple independent Workspaces,
-* saved Workspace snapshots,
-* restoring previous study sessions,
-* detachable Workspaces,
-* additional Module types,
-* and alternative rendering implementations.
+These changes should refine the implementation.
 
-Each capability naturally extends the existing runtime model.
+They should not require redefining the Runtime's enduring responsibilities.
 
-None require changes to the relationships between:
+---
 
-* Workspace,
-* Pane,
-* Buffer,
-* Module Instance,
-* and Domain.
+# Current Implementation and Architecture
 
-As the application evolves, new functionality should extend the Workspace Runtime rather than replace it.
+The current implementation predates portions of the documented architecture.
+
+Some Runtime responsibilities currently exist in:
+
+* `+page.svelte`,
+* Pane-related services,
+* Svelte components,
+* Buffer implementation code,
+* event handlers,
+* local persistence code,
+* and other technically organized locations.
+
+Physical location does not determine ownership.
+
+When current code is refactored, the process should be:
+
+```text
+Identify responsibility
+        │
+        ▼
+Determine owner
+        │
+        ▼
+Define or use Public API
+        │
+        ▼
+Move implementation toward owner
+```
+
+The goal is not to rewrite the Runtime.
+
+The goal is to allow the implementation to increasingly reflect the Runtime architecture already present in the application.
+
+---
+
+# Design Rules
+
+The Workspace Runtime should follow several rules.
+
+## Runtime Owns Runtime State
+
+Workspace structure, Pane relationships, Buffer placement, Module Instance placement, focus, and selection belong to the Runtime.
+
+---
+
+## Domains Own Domain Behavior
+
+The Runtime may host a Bible Module.
+
+It does not own Bible behavior.
+
+The Runtime may host a Notes Module.
+
+It does not own Notes behavior.
+
+---
+
+## Modules Present Capabilities
+
+Modules provide the user-facing interaction with a Domain capability.
+
+They do not become the architectural owner of that capability.
+
+---
+
+## Buffers Carry Context
+
+Buffers preserve runtime and navigation context.
+
+They should not interpret Domain meaning that belongs elsewhere.
+
+---
+
+## Panes Remain Structural
+
+Panes organize the Workspace.
+
+They should not become aware of the Domain capability displayed within them.
+
+---
+
+## Cross-Boundary Collaboration Uses Public APIs
+
+A Module requesting a Workspace operation should use the Runtime's Public API.
+
+A Module requesting Domain behavior should use the Domain's Public API.
+
+Implementation internals should remain private to their owner.
+
+---
+
+## Preserve Stable Identity
+
+Workspace changes should preserve unaffected Runtime Objects wherever possible.
+
+Layout changes should not arbitrarily reset independent interactions.
+
+---
+
+## Implementation Follows Architecture
+
+Svelte, CSS Grid, services, event handlers, and local storage are implementation mechanisms.
+
+They should realize the Runtime model rather than define it.
+
+---
+
+# Conceptual Model
+
+The complete Runtime relationship can be summarized as:
+
+```mermaid
+flowchart TD
+
+    Workspace["Workspace"]
+
+    Branch["Branch Pane"]
+
+    Leaf["Leaf Pane"]
+
+    Buffer["Buffer"]
+
+    Module["Module Instance"]
+
+    PublicAPI["Domain Public API"]
+
+    Domain["Domain"]
+
+    Workspace --> Branch
+
+    Branch --> Leaf
+
+    Branch --> Branch
+
+    Leaf --> Buffer
+
+    Buffer --> Module
+
+    Module --> PublicAPI
+
+    PublicAPI --> Domain
+```
+
+The Workspace Runtime owns everything required to maintain the Runtime Object hierarchy.
+
+The Domain begins beyond the Module's public collaboration boundary.
 
 ---
 
 # Big Takeaway
 
-The Workspace Runtime is responsible for presenting and coordinating the visible application.
+The Workspace Runtime is the persistent execution environment of KJVOnly.
 
-It models the application as a hierarchy of Runtime Objects.
+It is built from four primary Runtime Objects:
 
-A Workspace owns the visible application.
+```text
+Workspace
+    ↓
+Pane
+    ↓
+Buffer
+    ↓
+Module Instance
+```
 
-Panes organize that Workspace into a recursive hierarchy.
+The Workspace owns the active study environment.
 
-Buffers preserve the runtime state of individual Module Instances.
+Panes define its structure.
 
-Module Instances present the capabilities of application Domains.
+Buffers preserve independent runtime and navigation context.
 
-Each Runtime Object owns one responsibility.
+Module Instances present Domain capabilities.
 
-Together they form a simple runtime model that remains independent from application behavior, the Resource Architecture, and the rendering implementation.
+Domains own the application behavior presented by those Modules.
 
-This separation allows the application to evolve through new Modules, Domains, Workspaces, and rendering technologies while preserving a stable and consistent runtime architecture.
+The Runtime and Domains collaborate through Public APIs and other stable communication mechanisms without depending upon one another's internal implementations.
+
+The Workspace Runtime should remain independent from:
+
+* individual Domain behavior,
+* resource distribution,
+* persistence technologies,
+* rendering technologies,
+* and other implementation mechanisms.
+
+Technologies may change.
+
+Implementations may move.
+
+New Domains and Modules may be introduced.
+
+The Runtime model should endure.
