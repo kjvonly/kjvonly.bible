@@ -911,16 +911,7 @@ This allows multiple independent interactions with the same Domain to coexist in
 
 # Module Responsibility
 
-A Module Instance owns presentation and user interaction for one Domain capability.
-
-Its responsibilities may include:
-
-* presenting user interface,
-* interpreting user input,
-* maintaining presentation-specific state,
-* invoking Domain behavior through the Domain's Public API,
-* requesting Workspace operations through the Runtime's Public API,
-* and responding to relevant Application Events.
+A Module Instance is a conceptual wrapper around a domain behavior.
 
 A Module does not own the Domain behavior it presents.
 
@@ -1014,12 +1005,9 @@ Workspace Runtime
         ▼
 Module Instance
         │
-        │ uses
+        │ hosts 
         ▼
-Domain Public API
-        │
-        ▼
-Domain
+Domain Behavior
 ```
 
 Neither responsibility needs access to the other's internal implementation.
