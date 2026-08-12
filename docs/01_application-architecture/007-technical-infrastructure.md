@@ -8,703 +8,559 @@ Current
 
 # Purpose
 
-This document defines the role of Technical Infrastructure within the KJVOnly application.
+This document defines the role of Technical Infrastructure within the Application Architecture.
 
-Technical Infrastructure provides the implementation technologies required to support the application's architecture.
+Its primary question is:
 
-It owns the interaction with browser capabilities, networking, storage technologies, serialization, compression, and other platform-specific concerns.
+> **When is a responsibility a technical capability rather than application behavior?**
 
-This document establishes the boundary between the application's architectural responsibilities and the technologies used to implement them.
-
----
-
-# Scope
-
-This document defines:
-
-* Technical Infrastructure,
-* implementation technologies,
-* browser capabilities,
-* networking,
-* persistence implementations,
-* serialization,
-* compression,
-* workers,
-* and platform integration.
-
-It does not define:
-
-* Workspace Runtime,
-* Runtime Rendering,
-* Domains,
-* Application Services,
-* Data Access,
-* Resource Resolution,
-* or application behavior.
-
-Those responsibilities are described by separate implementation and architecture documents.
+Infrastructure isolates the application from technologies and platform-specific mechanisms. It provides the technical capabilities required to realize responsibilities whose meaning is defined elsewhere in the architecture.
 
 ---
 
-# Background
+# Infrastructure in the Architecture
 
-The application architecture is intentionally independent from the technologies used to implement it.
+Application responsibilities define what the application means and what it must do.
 
-Application behavior is defined by the Workspace Runtime, Domains, Application Services, and Data Access.
-
-Technical Infrastructure provides the implementation technologies required to realize those responsibilities.
+Infrastructure provides mechanisms that allow those responsibilities to be implemented on the current platform.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Runtime["Workspace Runtime"]
-
-    Domains["Domains"]
-
-    Services["Application Services"]
-
-    Data["Data Access"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Resources["Resource Architecture"]
-
-    Runtime --> Services
-
-    Domains --> Services
-
-    Services --> Data
-
-    Data --> Infrastructure
-
-    Infrastructure --> Resources
+```text
+Application Responsibility
+        ↓
+Technical Capability
+        ↓
+Technology / Platform
 ```
-
-Technical Infrastructure is not responsible for defining application behavior.
-
-Its responsibility is to provide the technical capabilities required by the application architecture.
-
----
-
-# Technical Infrastructure Definition
-
-Technical Infrastructure owns implementation technologies rather than application behavior.
-
-It provides stable implementations for capabilities required throughout the application while remaining independent from Domain logic and the Workspace Runtime.
-
-Examples include:
-
-* IndexedDB,
-* Web Workers,
-* browser storage,
-* HTTP,
-* WebSockets,
-* compression,
-* serialization,
-* browser APIs,
-* and other platform-specific technologies.
-
-These technologies implement responsibilities defined elsewhere within the application architecture.
-
-They do not define those responsibilities themselves.
-
----
-
-# Technical Infrastructure Responsibilities
-
-Technical Infrastructure owns responsibilities that are inherently technical rather than domain-specific.
-
-These include:
-
-* interacting with browser APIs,
-* implementing persistence technologies,
-* implementing networking technologies,
-* performing compression and decompression,
-* performing serialization and deserialization,
-* managing worker execution,
-* and integrating with external platforms.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Application["Application Architecture"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Browser["Browser Platform"]
-
-    Network["Networking"]
-
-    Storage["Storage"]
-
-    Workers["Workers"]
-
-    Application --> Infrastructure
-
-    Infrastructure --> Browser
-
-    Infrastructure --> Network
-
-    Infrastructure --> Storage
-
-    Infrastructure --> Workers
-```
-
-Technical Infrastructure exposes implementation capabilities to the application architecture while remaining independent from the application's business behavior.
-
-The application requests capabilities.
-
-Technical Infrastructure determines how those capabilities are implemented.
-
-# Technical Infrastructure Ownership
-
-Technical Infrastructure owns responsibilities that exist because of the platform or technology used to implement the application.
-
-Ownership is determined by implementation rather than application behavior.
-
-A responsibility belongs to Technical Infrastructure when it provides a technical capability that could be reused regardless of the application's Domains or business logic.
-
-Examples include:
-
-* browser APIs,
-* IndexedDB,
-* Web Workers,
-* HTTP,
-* WebSockets,
-* compression,
-* serialization,
-* cryptographic operations,
-* timers,
-* and platform-specific integration.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Runtime["Workspace Runtime"]
-
-    Domains["Domains"]
-
-    Services["Application Services"]
-
-    Data["Data Access"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Runtime --> Infrastructure
-
-    Domains --> Infrastructure
-
-    Services --> Infrastructure
-
-    Data --> Infrastructure
-```
-
-Technical Infrastructure provides implementation capabilities to the application architecture.
-
-It does not own application behavior.
-
----
-
-# Ownership Heuristic
-
-When introducing a new responsibility, first determine whether it represents application behavior or implementation technology.
-
-A useful heuristic is:
-
-> **Would this responsibility still exist if the application solved a completely different business problem?**
-
-If the answer is **yes**, it likely belongs to Technical Infrastructure.
-
-If the answer is **no**, it probably belongs elsewhere within the application architecture.
 
 For example:
 
 ```text
-Compression
-
-Browser Storage
-
-HTTP
-
-Serialization
-
-Timers
-
-Logging
+Persist Domain Objects
+        ↓
+Persistent Storage
+        ↓
+IndexedDB
 ```
 
-would still exist regardless of whether the application managed Bible study, accounting, or inventory.
+or:
 
-These are implementation capabilities rather than application concepts.
+```text
+Communicate with external systems
+        ↓
+Networking
+        ↓
+HTTP / WebSocket
+```
+
+The architectural responsibility does not become Infrastructure simply because technology is required to implement it.
+
+Infrastructure provides the mechanism.
 
 ---
 
-# Technical Infrastructure Boundaries
+# Technical Capabilities
 
-Technical Infrastructure provides capabilities.
-
-It does not make application decisions.
-
-For example:
-
-* IndexedDB stores data.
-* It does not determine what should be stored.
-* HTTP performs requests.
-* It does not determine what should be requested.
-* Compression compresses data.
-* It does not determine what should be compressed.
-* Web Workers execute work.
-* They do not determine which work should be performed.
-
-Those decisions belong to the application architecture.
-
-Technical Infrastructure provides only the implementation required to carry them out.
-
----
-
-# Stable Implementation Boundary
-
-The application architecture intentionally depends upon capabilities rather than technologies.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Application["Application Architecture"]
-
-    Capability["Technical Capability"]
-
-    Technology["Technology"]
-
-    Application --> Capability
-
-    Capability --> Technology
-```
-
-For example, the application depends upon:
-
-* persistent storage,
-* background execution,
-* networking,
-* serialization,
-* and compression.
-
-The specific technologies used to implement those capabilities may change over time.
-
-This separation allows the application architecture to remain stable while Technical Infrastructure evolves independently.
-
-# Technical Infrastructure and the Application
-
-Technical Infrastructure exists to support the application architecture.
-
-It provides implementation capabilities while remaining independent from application behavior.
-
-The application defines:
-
-* what should happen,
-* when it should happen,
-* and why it should happen.
-
-Technical Infrastructure defines:
-
-* how those decisions are realized on the underlying platform.
-
-Conceptually:
-
-```mermaid id="r5t9gb"
-flowchart TD
-
-    Runtime["Workspace Runtime"]
-
-    Domains["Domains"]
-
-    Services["Application Services"]
-
-    Data["Data Access"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Platform["Browser Platform"]
-
-    Runtime --> Services
-
-    Domains --> Services
-
-    Services --> Data
-
-    Data --> Infrastructure
-
-    Infrastructure --> Platform
-```
-
-The application architecture owns behavior.
-
-Technical Infrastructure owns implementation.
-
-This separation allows application behavior to evolve without requiring changes to platform-specific code.
-
----
-
-# Technical Infrastructure and Data Access
-
-Data Access requests technical capabilities from Technical Infrastructure without depending upon specific technologies.
-
-For example, Data Access may request:
-
-* persistent storage,
-* serialization,
-* compression,
-* networking,
-* or background execution.
-
-Technical Infrastructure determines how those capabilities are implemented.
-
-Conceptually:
-
-```mermaid id="6l2rda"
-flowchart LR
-
-    Data["Data Access"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Storage["Persistence"]
-
-    Network["Networking"]
-
-    Workers["Workers"]
-
-    Data --> Infrastructure
-
-    Infrastructure --> Storage
-
-    Infrastructure --> Network
-
-    Infrastructure --> Workers
-```
-
-Data Access remains independent from IndexedDB, browser APIs, HTTP, WebSockets, or any other implementation technology.
-
-It depends only upon the capabilities exposed by Technical Infrastructure.
-
----
-
-# Technical Infrastructure and the Resource Architecture
-
-The Resource Architecture depends upon Technical Infrastructure to communicate with the outside world.
-
-Technical Infrastructure provides capabilities such as:
-
-* relay communication,
-* HTTP,
-* Blossom communication,
-* compression,
-* serialization,
-* cryptographic operations,
-* and browser networking.
-
-The Resource Architecture determines how those capabilities are used to satisfy the application's resource model.
-
-Conceptually:
-
-```mermaid id="2p7xzn"
-flowchart LR
-
-    Resources["Resource Architecture"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Network["Networking"]
-
-    Browser["Browser APIs"]
-
-    Resources --> Infrastructure
-
-    Infrastructure --> Network
-
-    Infrastructure --> Browser
-```
-
-Technical Infrastructure performs communication.
-
-The Resource Architecture determines the meaning of that communication.
-
----
-
-# Technology Independence
-
-The application intentionally avoids coupling its architecture to individual technologies.
-
-For example:
-
-* Domains do not depend upon IndexedDB.
-* Application Services do not depend upon browser APIs.
-* Data Access does not depend upon HTTP.
-* The Workspace Runtime does not depend upon CSS Grid.
-* The Resource Architecture does not depend upon a particular relay implementation.
-
-Instead, each architectural responsibility depends upon stable capabilities provided by Technical Infrastructure.
-
-This separation allows technologies to evolve without affecting the application's conceptual architecture.
-
-As new technologies emerge, they become additional implementations of existing capabilities rather than new architectural responsibilities.
-
-# Infrastructure Capabilities
-
-Technical Infrastructure provides a collection of reusable implementation capabilities to the application architecture.
-
-Each capability represents one technical concern that may be reused throughout the application.
+Infrastructure is organized around technical capabilities rather than application meaning.
 
 Examples include:
 
-* persistence,
-* networking,
-* serialization,
-* compression,
-* background execution,
-* browser integration,
-* cryptography,
-* timing,
-* and platform abstraction.
+```text
+Infrastructure
 
-These capabilities remain independent from the application's Domains and business behavior.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Infrastructure["Technical Infrastructure"]
-
-    Storage["Persistence"]
-
-    Network["Networking"]
-
-    Workers["Background Execution"]
-
-    Serialization["Serialization"]
-
-    Compression["Compression"]
-
-    Crypto["Cryptography"]
-
-    Browser["Browser Integration"]
-
-    Infrastructure --> Storage
-
-    Infrastructure --> Network
-
-    Infrastructure --> Workers
-
-    Infrastructure --> Serialization
-
-    Infrastructure --> Compression
-
-    Infrastructure --> Crypto
-
-    Infrastructure --> Browser
+    Persistent storage
+    Networking
+    Serialization
+    Compression
+    Cryptography
+    Worker execution
+    Browser integration
+    Timing
 ```
 
-Each capability should own one technical concern.
-
-Capabilities should remain cohesive and independent from one another whenever practical.
-
----
-
-# Capability Composition
-
-Application behavior is often realized through the composition of several technical capabilities.
-
-For example, obtaining a Domain Object from the Resource Architecture may require:
-
-* networking,
-* compression,
-* serialization,
-* validation,
-* and persistence.
-
-Each capability performs one technical responsibility.
-
-Together they provide the implementation required by the application architecture.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Application["Application"]
-
-    Network["Networking"]
-
-    Compression["Compression"]
-
-    Serialization["Serialization"]
-
-    Persistence["Persistence"]
-
-    Application --> Network
-
-    Network --> Compression
-
-    Compression --> Serialization
-
-    Serialization --> Persistence
-```
-
-No individual capability understands the application's business behavior.
-
-Each performs only its own technical responsibility.
-
----
-
-# Capability Independence
-
-Technical capabilities should remain reusable across the application.
-
-A capability should not become coupled to a particular Domain or Module.
+Specific technologies may implement these capabilities.
 
 For example:
 
-* persistence should not understand Bible chapters,
-* compression should not understand Notes,
-* networking should not understand Reading Plans,
-* browser integration should not understand Domain Objects.
+```text
+Persistent Storage
+    → IndexedDB
 
-Instead, each capability exposes a stable implementation interface that may be reused by any part of the application requiring that capability.
+Networking
+    → HTTP
+    → WebSocket
 
-This allows the implementation technologies supporting one area of the application to also support future Domains without modification.
+Background Execution
+    → Web Worker
+
+Browser Integration
+    → Browser APIs
+```
+
+The technology is replaceable.
+
+The technical capability describes what the application requires from the platform.
 
 ---
 
-# Technical Composition
+# Application Responsibility vs Technical Capability
 
-The application architecture composes technical capabilities to realize higher-level behavior.
+The most important distinction is between **meaning** and **mechanism**.
+
+Application responsibilities determine:
+
+* what should happen,
+* why it should happen,
+* what information is meaningful,
+* and which owner is responsible for the result.
+
+Infrastructure determines how a technical operation is performed.
+
+For example:
+
+| Application responsibility                                           | Infrastructure capability                                |
+| -------------------------------------------------------------------- | -------------------------------------------------------- |
+| Notes determines what Note information must persist                  | Persistent storage stores bytes or records               |
+| Bible determines what Bible search means                             | An indexing engine may provide indexing primitives       |
+| Background Processing determines what work should execute            | Worker infrastructure provides another execution context |
+| Resource Boundary determines which Resource must be retrieved        | Networking performs communication                        |
+| Resource representation determines that content requires compression | Compression performs the encoding and decoding           |
+
+Infrastructure performs the mechanism without taking ownership of the application decision that required it.
+
+---
+
+# Determining Whether Something Is Infrastructure
+
+When introducing a new responsibility, first ask:
+
+> **Does this responsibility derive its meaning from the application, or does it exist because software must interact with a technology or platform?**
+
+If its meaning comes from Bible, Notes, Reading Plans, the Workspace Runtime, the Resource Boundary, or another application responsibility, it belongs there.
+
+If the responsibility is simply the technical mechanism required to realize that behavior, it may belong in Infrastructure.
+
+For example:
+
+```text
+Search Bible text
+    ↓
+Meaning comes from Bible
+    ↓
+Bible Domain
+```
+
+The search implementation may then require:
+
+```text
+Indexing primitives
+    ↓
+Technical mechanism
+    ↓
+Infrastructure
+```
+
+Likewise:
+
+```text
+Synchronize Resources
+    ↓
+Meaning comes from Resource lifecycle
+    ↓
+Resource Boundary
+```
+
+while:
+
+```text
+Send WebSocket messages
+    ↓
+Technical mechanism
+    ↓
+Infrastructure
+```
+
+The implementation technology does not determine ownership of the higher-level responsibility.
+
+---
+
+# A Useful Secondary Test
+
+A useful secondary question is:
+
+> **Would this capability still make sense if the application solved a completely different problem?**
+
+Capabilities such as networking, persistent storage, compression, cryptography, timers, and worker execution generally would.
+
+Behavior such as Bible search, Note persistence rules, Reading Plan progression, Pane splitting, and Resource Resolution would not.
+
+This test helps identify technical mechanisms, but application meaning remains the primary ownership test.
+
+---
+
+# Infrastructure Does Not Make Application Decisions
+
+Infrastructure should perform technical operations without deciding when or why those operations are required.
+
+For example:
+
+```text
+Persistent Storage
+    stores information
+
+but does not decide
+    what information should be persisted
+```
+
+```text
+Networking
+    communicates with another system
+
+but does not decide
+    which Resource the application requires
+```
+
+```text
+Compression
+    compresses and decompresses information
+
+but does not decide
+    which application representation should be compressed
+```
+
+```text
+Worker Execution
+    provides another execution context
+
+but does not decide
+    which application work belongs in the background
+```
+
+Those decisions remain with the responsibility that gives the operation meaning.
+
+---
+
+# Infrastructure Is Not a Layer
+
+Technical Infrastructure should not be treated as a mandatory layer through which all application behavior passes.
+
+There is no architectural pipeline such as:
+
+```text
+Runtime
+    ↓
+Services
+    ↓
+Data Access
+    ↓
+Infrastructure
+```
+
+Different architectural responsibilities may require different technical capabilities.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Runtime["Workspace Runtime"]
-
-    Domains["Domains"]
-
-    Services["Application Services"]
-
-    Data["Data Access"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Capabilities["Technical Capabilities"]
-
-    Platform["Platform Technologies"]
-
-    Runtime --> Services
-
-    Domains --> Services
-
-    Services --> Data
-
-    Data --> Infrastructure
-
-    Infrastructure --> Capabilities
-
-    Capabilities --> Platform
+```text
+Bible Domain ───────────────┐
+                            │
+Workspace Runtime ──────────┼──→ Technical Capabilities
+                            │
+Resource Boundary ──────────┤
+                            │
+Background Processing ──────┘
 ```
 
-Each layer depends only upon the layer immediately beneath it.
+The dependency exists because a responsibility requires a technical mechanism.
 
-This allows responsibilities to remain clearly separated while enabling the implementation to evolve independently at each level.
+Infrastructure does not become the architectural owner of the responsibility using that mechanism.
 
-Technical Infrastructure therefore acts as the implementation foundation upon which the application architecture is built.
-# Future Evolution
+---
 
-Technical Infrastructure has been intentionally designed around technical capabilities rather than specific technologies.
+# Capability Boundaries
 
-As browser APIs, storage engines, networking libraries, and platform capabilities evolve, they should be introduced as new implementations of existing technical capabilities rather than new architectural responsibilities.
+When application architecture depends upon a technical capability, the dependency should describe the capability rather than unnecessarily expose the technology behind it.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Infrastructure["Technical Infrastructure"]
-
-    Capability["Technical Capability"]
-
-    Current["Current Technology"]
-
-    Future["Future Technology"]
-
-    Infrastructure --> Capability
-
-    Capability --> Current
-
-    Capability --> Future
+```text
+Application Responsibility
+        ↓
+Persistent Storage
+        ↓
+IndexedDB
 ```
 
-The application architecture should continue to depend upon technical capabilities instead of individual technologies.
+rather than making IndexedDB itself part of the application's conceptual model.
 
-This allows implementation technologies to evolve independently while preserving the application's conceptual architecture.
+Likewise:
 
-New technologies should strengthen existing capability boundaries rather than introduce technology-specific dependencies throughout the application.
+```text
+Resource Boundary
+        ↓
+Network Communication
+        ↓
+WebSocket
+```
+
+The architecture can therefore remain stable even when the technology used to implement the capability changes.
+
+This does not require an abstraction around every browser API or library. A capability boundary is useful when the technology would otherwise leak into responsibilities that should not depend upon it.
+
+---
+
+# Infrastructure and the Resource Boundary
+
+The Resource Boundary defines how Domain information is represented and communicated outside the application's local model.
+
+Infrastructure may provide technical mechanisms required to realize that boundary.
+
+For example:
+
+```text
+Resource Boundary
+
+    Resource Resolution
+    Resource Publication
+    Resource Synchronization
+
+            ↓
+
+Technical Capabilities
+
+    Networking
+    Serialization
+    Compression
+    Cryptography
+
+            ↓
+
+Current Technologies
+
+    Nostr
+    Blossom
+    HTTP
+    WebSocket
+    Browser APIs
+```
+
+The Resource Boundary determines the meaning of the Resource operation.
+
+Infrastructure performs the technical mechanisms required by the chosen boundary implementation.
+
+Nostr and Blossom therefore do not define the Application Architecture. They are technologies currently used to realize Resource Boundary responsibilities.
+
+---
+
+# Infrastructure and Persistence
+
+Persistence follows the same distinction.
+
+An architectural owner determines:
+
+* what information needs to persist,
+* what that information means,
+* and the rules governing its persistence.
+
+Infrastructure provides the mechanism used to store it.
+
+Conceptually:
+
+```text
+Owner
+    ↓
+Persistence Requirement
+    ↓
+Persistent Storage Capability
+    ↓
+IndexedDB
+```
+
+The fact that several owners use IndexedDB does not make IndexedDB responsible for their persistence semantics.
+
+It only provides the storage mechanism.
+
+---
+
+# Infrastructure and Background Execution
+
+Running work in the background does not determine ownership of that work.
+
+For example:
+
+```text
+Bible Search Indexing
+        ↓
+Bible-owned behavior
+        ↓
+Background execution
+        ↓
+Web Worker
+```
+
+The Bible Domain still owns the indexing behavior because Bible search gives that work meaning.
+
+Worker infrastructure only determines where or how the work executes.
+
+The same distinction applies to synchronization, maintenance, parsing, or any other work moved into a worker.
+
+---
+
+# Avoid Technology-Defined Architecture
+
+A technology should not become an architectural concept merely because it is important to the implementation.
+
+Avoid reasoning such as:
+
+```text
+We use IndexedDB
+    ↓
+Therefore IndexedDB owns persistence
+```
+
+or:
+
+```text
+We use Web Workers
+    ↓
+Therefore workers own background work
+```
+
+or:
+
+```text
+We use Nostr
+    ↓
+Therefore Nostr defines resource behavior
+```
+
+Instead reason from responsibility:
+
+```text
+What must the application accomplish?
+        ↓
+Who gives that responsibility meaning?
+        ↓
+What technical capability is required?
+        ↓
+Which technology should implement it?
+```
+
+This keeps architecture ahead of implementation.
+
+---
+
+# Adding a Technical Capability
+
+When new functionality requires a technology or platform feature, work through the decisions in order.
+
+```text
+What application responsibility requires the capability?
+        ↓
+Who owns that responsibility?
+        ↓
+What technical operation does the owner require?
+        ↓
+Is that operation application-specific?
+        │
+        ├── Yes → Keep it with the application owner
+        │
+        └── No → Consider an Infrastructure capability
+        ↓
+What capability should the architecture depend upon?
+        ↓
+Which technology should implement it?
+```
+
+Do not begin with:
+
+```text
+Where should the WebSocket code live?
+
+Should this use IndexedDB?
+
+Should this run in a worker?
+```
+
+Begin with the responsibility requiring those technologies.
+
+---
+
+# Example: Adding Bible Search Indexing
+
+Suppose Bible search requires a new index.
+
+Start with the application responsibility:
+
+```text
+Search Bible content
+    ↓
+Bible Domain
+```
+
+The Bible Domain determines:
+
+* what content is searchable,
+* how search queries are interpreted,
+* what results mean,
+* and when an index must be updated.
+
+Implementing that behavior may require generic indexing or background-execution capabilities.
+
+```text
+Bible Search
+    ↓
+Bible indexing behavior
+    ↓
+Technical capabilities
+        Index storage
+        Worker execution
+```
+
+Those technical capabilities do not become owners of Bible search.
+
+If the current implementation uses IndexedDB and a Web Worker, those technologies sit beneath the technical capabilities:
+
+```text
+Bible Domain
+    ↓
+Bible Search
+    ↓
+Index / Background Execution Capabilities
+    ↓
+IndexedDB / Web Worker
+```
+
+A future change in storage engine or execution mechanism should not change who owns Bible search.
 
 ---
 
 # Big Takeaway
 
-Technical Infrastructure owns the implementation technologies that realize the application's architecture.
+Technical Infrastructure provides mechanisms.
 
-It provides reusable technical capabilities while remaining independent from application behavior.
+It does not define application meaning.
 
-Conceptually:
+When deciding whether something belongs in Infrastructure, ask:
 
-```mermaid
-flowchart TD
+> **Is this the application responsibility itself, or is it the technical mechanism required to realize that responsibility?**
 
-    Runtime["Workspace Runtime"]
+Application responsibilities remain with the owner that gives them meaning.
 
-    Domains["Domains"]
+Infrastructure may provide storage, networking, serialization, compression, worker execution, browser integration, or other technical capabilities required to implement those responsibilities.
 
-    Services["Application Services"]
+The reasoning sequence is:
 
-    Data["Data Access"]
-
-    Infrastructure["Technical Infrastructure"]
-
-    Capabilities["Technical Capabilities"]
-
-    Technologies["Platform Technologies"]
-
-    Runtime --> Services
-
-    Domains --> Services
-
-    Services --> Data
-
-    Data --> Infrastructure
-
-    Infrastructure --> Capabilities
-
-    Capabilities --> Technologies
+```text
+Responsibility
+    ↓
+Ownership
+    ↓
+Required Technical Capability
+    ↓
+Technology
 ```
 
-The application architecture defines:
+Architecture determines what is required and why.
 
-* application behavior,
-* shared concepts,
-* data retrieval,
-* and resource lifecycles.
-
-Technical Infrastructure provides the technical capabilities required to implement those responsibilities.
-
-As technologies change, the application's architecture should remain stable because it depends upon capabilities rather than implementations.
-
-This separation allows the application to evolve while preserving clear ownership boundaries and a consistent architectural model.
+Infrastructure determines how the platform can make it possible.
