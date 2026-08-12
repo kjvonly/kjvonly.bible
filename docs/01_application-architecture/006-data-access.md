@@ -8,616 +8,467 @@ Current
 
 # Purpose
 
-This document defines how Domain Objects are obtained within the KJVOnly application.
+This document defines how requests for Domain Objects are satisfied within the application.
 
-It explains how Modules and Domain Services request data without depending upon storage technologies, transport protocols, or persistence implementations.
+Its primary question is:
 
-This document establishes the abstraction that allows the application to operate consistently regardless of where Domain Objects originate.
+> **When application behavior requests a Domain Object, how is that request satisfied without coupling the caller to where the information is stored or obtained?**
 
----
-
-# Scope
-
-This document defines:
-
-* Data Access,
-* Domain Object retrieval,
-* local-first access,
-* local-store-first behavior,
-* interaction with Domain Stores,
-* interaction with the Resource Architecture,
-* and the responsibilities of the Data Access abstraction.
-
-It does not define:
-
-* Domain behavior,
-* persistence technologies,
-* relay communication,
-* background synchronization,
-* startup,
-* or transport protocols.
-
-Those responsibilities are described by separate implementation and architecture documents.
+Callers request information through the Public API of the owner responsible for that information. The retrieval path remains behind that boundary.
 
 ---
 
-# Background
+# Data Access Model
 
-The application is built around Domain Objects.
+Application behavior operates on Domain Objects.
 
-Modules and Domain Services operate exclusively on Domain Objects.
-
-They should not know:
-
-* where those Domain Objects are stored,
-* how they are retrieved,
-* whether they originated locally,
-* or whether they were obtained from the network.
+A caller should therefore express the information it needs rather than the source from which that information should be retrieved.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Module["Module"]
-
-    Service["Domain Service"]
-
-    DataAccess["Data Access"]
-
-    Object["Domain Object"]
-
-    Module --> Service
-
-    Service --> DataAccess
-
-    DataAccess --> Object
+```text
+Caller
+    ↓
+Owner Public API
+    ↓
+Request Domain Object
+    ↓
+Data Access
+    ↓
+Domain Object
 ```
 
-The purpose of Data Access is to separate the request for data from the mechanism used to obtain it.
+Data Access is the responsibility of satisfying that request.
 
-The caller requests a Domain Object.
-
-Data Access determines how that request is satisfied.
+It may use locally available information, the Resource Boundary, or another appropriate source without requiring the caller to understand which path was taken.
 
 ---
 
-# Data Access Definition
+# Requesting Domain Objects
 
-Data Access is responsible for obtaining Domain Objects on behalf of the application.
+A request begins with application meaning.
 
-It owns the decision of where those objects should be retrieved from.
+For example:
 
-Possible sources include:
+```text
+Bible Reader
+    ↓
+Bible Public API
+    ↓
+Get Chapter
+```
 
-* Domain Stores,
-* the Resource Architecture,
-* cached application state,
-* or future data providers.
+The request is for a Bible Chapter.
 
-The caller does not select the source.
+It is not a request for:
 
-The caller simply requests the required Domain Object.
+```text
+IndexedDB record
+Nostr event
+Blossom object
+relay query
+```
 
-This allows Modules and Domain Services to remain independent from storage technologies and transport implementations.
+Those concepts describe possible implementation or retrieval mechanisms.
+
+The caller depends only upon the Domain capability and the Domain Object returned by it.
 
 ---
 
-# Local-First Retrieval
+# Retrieval Flow
 
-The application follows a local-first retrieval strategy.
+KJVOnly follows a local-first retrieval model.
 
-Whenever a Domain Object is requested, Data Access first attempts to satisfy that request using locally available data.
+The application's accepted local model is consulted first. If the requested Domain Object is available and satisfies the request, it is returned without requiring external retrieval.
 
-Only when the requested Domain Object cannot be obtained locally does Data Access request it from the Resource Architecture.
-
-The caller does not choose the retrieval source.
-
-The caller simply requests the required Domain Object.
-
-This separation allows application behavior to remain independent from storage technologies and transport implementations.
-
-One of the fundamental principles of the application is:
-
-> **Request data, not location.**
-
-Modules and Domain Services request the Domain Object they require.
-
-They do not request:
-
-* IndexedDB,
-* Nostr,
-* Blossom,
-* HTTP,
-* memory,
-* or any other storage or transport technology.
+If the information is not locally available and can be obtained externally, the request may cross the Resource Boundary.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Request["Request Domain Object"]
-
-    Store["Domain Store"]
-
-    Found{"Available?"}
-
-    Resource["Resource Architecture"]
-
-    Object["Domain Object"]
-
-    Request --> Store
-
-    Store --> Found
-
-    Found -->|"Yes"| Object
-
-    Found -->|"No"| Resource
-
-    Resource --> Object
+```text
+Request Domain Object
+        ↓
+Accepted Local Model
+        ↓
+    Available?
+      /   \
+    Yes    No
+     ↓      ↓
+   Return   Resource Boundary
+                ↓
+          Resolve Resource
+                ↓
+        Validate and Accept
+                ↓
+        Installed Domain Object
+                ↓
+              Return
 ```
 
-If the requested Domain Object already exists locally, it is returned immediately.
+The caller does not select between these paths.
 
-If it is unavailable locally, Data Access retrieves it through the Resource Architecture.
-
-The caller receives the resulting Domain Object without knowing which retrieval path was taken.
-
-The source of the data is therefore an implementation detail of Data Access rather than a concern of the caller.
-
-This allows storage technologies, transport protocols, and retrieval strategies to evolve without affecting Modules or Domain Services.
-
-Regardless of how a request is satisfied, Data Access always returns the same conceptual result:
-
-a Domain Object.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Store["Domain Store"]
-
-    Resource["Resource Architecture"]
-
-    Future["Future Source"]
-
-    Object["Domain Object"]
-
-    Store --> Object
-
-    Resource --> Object
-
-    Future --> Object
-```
-
-The source may differ.
-
-The Domain Object returned to the application remains the same.
-
-This consistency greatly simplifies the rest of the application because Modules and Domain Services operate on one stable representation rather than multiple storage-specific formats.
+It requests the Domain Object it needs.
 
 ---
 
-# Data Access Responsibilities
+# Local-First Access
 
-Data Access owns:
+Local-first access means the application's accepted local model is the first source considered when satisfying a request.
 
-* selecting the appropriate source,
-* retrieving Domain Objects,
-* coordinating local-first behavior,
-* requesting Resource retrieval when necessary,
-* and returning Domain Objects to the caller.
-
-It does not own:
-
-* Domain behavior,
-* persistence technologies,
-* transport protocols,
-* background synchronization,
-* or presentation.
-
-Its responsibility is limited to obtaining Domain Objects for the application through a consistent interface.
-
-# Transparent Retrieval
-
-The purpose of Data Access is to make Domain Object retrieval transparent to the rest of the application.
-
-Modules and Domain Services request Domain Objects.
-
-They do not determine where those objects originate.
-
-Conceptually:
-
-```mermaid id="4z3n8p"
-flowchart LR
-
-    Module["Module"]
-
-    Service["Domain Service"]
-
-    Data["Data Access"]
-
-    Object["Domain Object"]
-
-    Module --> Service
-
-    Service --> Data
-
-    Data --> Object
-```
-
-Whether the Domain Object was obtained from:
-
-* a Domain Store,
-* the Resource Architecture,
-* previously cached application state,
-* or another future source,
-
-the caller receives the same result.
-
-Data retrieval is therefore defined by the requested Domain Object rather than by its location.
+This supports offline operation and avoids making application behavior dependent upon current network availability.
 
 ---
 
-# Request Data, Not Location
+# Local Availability
 
-One of the fundamental principles of the application is:
+If an accepted Domain Object already exists locally and satisfies the request, it can be returned directly.
 
-> **Request data, not location.**
+Conceptually:
 
-Callers request the Domain Object they require.
-
-They do not request:
-
-* IndexedDB,
-* Nostr,
-* Blossom,
-* HTTP,
-* memory,
-* or any other storage or transport technology.
-
-For example, a Module requests:
-
-```text id="ngyjlwm"
-Chapter
-
-John 3
+```text
+Get Bible Chapter
+        ↓
+Local Chapter Available
+        ↓
+Return Chapter
 ```
 
-rather than:
+No Resource lookup is required simply because the same information may also exist externally.
 
-```text id="bhx8b3"
-Read John 3 from IndexedDB.
-
-or
-
-Read John 3 from Relay X.
-```
-
-The responsibility of locating the requested Domain Object belongs entirely to Data Access.
+The application operates on the Domain Object already accepted into its local model.
 
 ---
 
-# Stable Application Behavior
+# Local Misses
 
-Because callers never choose a retrieval source, application behavior remains stable as storage technologies evolve.
+A local miss does not change the caller's request.
 
-For example, replacing:
+For example:
 
-* IndexedDB,
-* relay implementations,
-* caching strategies,
-* or transport mechanisms
+```text
+Get Bible Chapter
+```
 
-should not require changes to Modules or Domain Services.
+remains the request regardless of whether that Chapter is currently installed.
 
-Those implementation decisions remain behind the Data Access abstraction.
+When the requested information can be obtained externally, Data Access may use the Resource Boundary to resolve it.
 
-This allows the application's behavior to remain independent from the technologies used to satisfy each request.
+```text
+Get Bible Chapter
+        ↓
+Not Available Locally
+        ↓
+Resource Boundary
+        ↓
+Resolve and Validate
+        ↓
+Install Domain Object
+        ↓
+Return Bible Chapter
+```
+
+The retrieval mechanism remains invisible to the caller.
 
 ---
 
-# Consistent Domain Objects
+# Not Every Request Has an External Source
 
-Regardless of how a request is satisfied, Data Access always returns the same conceptual result:
+The Resource Boundary is one possible path for satisfying a request.
 
-a Domain Object.
+It is not required for every Domain Object.
 
-Conceptually:
+Some information may:
 
-```mermaid id="sqn5g7"
-flowchart LR
+* exist only locally,
+* be created internally by the application,
+* or otherwise have no external Resource representation.
 
-    Store["Domain Store"]
+In those cases, a local miss is handled according to the owning capability's contract rather than automatically becoming a network request.
 
-    Resource["Resource Architecture"]
-
-    Future["Future Source"]
-
-    Object["Domain Object"]
-
-    Store --> Object
-
-    Resource --> Object
-
-    Future --> Object
-```
-
-The source may differ.
-
-The object returned to the application remains the same.
-
-This consistency greatly simplifies Module and Domain implementations because they operate on one stable representation rather than multiple storage-specific formats.
-
-# Domain Stores
-
-The primary responsibility of Data Access is to obtain Domain Objects.
-
-The first source consulted is the owning Domain Store.
-
-A Domain Store provides the local representation of one Domain's data.
-
-It is responsible for storing and retrieving Domain Objects for that Domain.
-
-Conceptually:
-
-```mermaid id="d3wrp8"
-flowchart LR
-
-    Module["Module"]
-
-    Service["Domain Service"]
-
-    Data["Data Access"]
-
-    Store["Domain Store"]
-
-    Object["Domain Object"]
-
-    Module --> Service
-
-    Service --> Data
-
-    Data --> Store
-
-    Store --> Object
-```
-
-A Domain Store does not own:
-
-* Domain behavior,
-* retrieval strategy,
-* transport,
-* synchronization,
-* or persistence technologies.
-
-Its responsibility is limited to the local management of Domain Objects owned by its Domain.
+Data Access separates the caller from that decision.
 
 ---
 
-# Domain Store Independence
+# Data Access and the Resource Boundary
 
-A Domain Store defines the persistence boundary for a Domain.
+Data Access and the Resource Boundary have different responsibilities.
 
-The application interacts with the Domain Store through a Domain-owned interface.
+Data Access answers:
 
-The physical storage technology remains an implementation detail.
+> **How should this request for a Domain Object be satisfied?**
+
+The Resource Boundary answers:
+
+> **How is Domain information represented and communicated outside the application's local Domain model?**
 
 Conceptually:
 
-```mermaid id="fj5q0d"
-flowchart TD
-
-    Store["Domain Store"]
-
-    Persistence["Persistence Implementation"]
-
-    IndexedDB["IndexedDB"]
-
-    Future["Future Storage"]
-
-    Store --> Persistence
-
-    Persistence --> IndexedDB
-
-    Persistence --> Future
+```text
+Domain Object Request
+        ↓
+Data Access
+        │
+        ├── Accepted Local Model
+        │
+        └── Resource Boundary
+                 ↓
+              Resource
 ```
 
-The Domain Store should remain stable even if the persistence implementation changes.
+The Resource Boundary is therefore a possible retrieval path used by Data Access.
 
-For example, replacing IndexedDB with another local storage technology should not require changes to Modules, Domain Services, or Data Access.
+It is not the Data Access abstraction itself.
 
 ---
 
-# Local Store Misses
+# Returning Through the Resource Boundary
 
-If the requested Domain Object is not available within the Domain Store, Data Access requests the object through the Resource Architecture.
+Externally obtained information does not bypass the application's local model.
 
-Once obtained, the Domain Object is stored within the Domain Store before being returned to the caller.
+A Resource must first pass through the Resource Boundary and become an accepted Domain Object.
 
 Conceptually:
 
-```mermaid id="5ptgkg"
-flowchart TD
-
-    Request["Request Domain Object"]
-
-    Store["Domain Store"]
-
-    Found{"Available?"}
-
-    Resource["Resource Architecture"]
-
-    Save["Store Domain Object"]
-
-    Object["Domain Object"]
-
-    Request --> Store
-
-    Store --> Found
-
-    Found -->|"Yes"| Object
-
-    Found -->|"No"| Resource
-
-    Resource --> Save
-
-    Save --> Store
-
-    Store --> Object
+```text
+Resource
+    ↓
+Resolution
+    ↓
+Validation
+    ↓
+Application Acceptance
+    ↓
+Installed Domain Object
+    ↓
+Request Satisfied
 ```
 
-The caller receives the same Domain Object regardless of whether it originated locally or from the Resource Architecture.
+The caller receives the Domain Object.
 
-The retrieval path remains an implementation detail of Data Access.
+It does not receive the external Resource representation and become responsible for interpreting it.
 
 ---
 
-# Consistent Application Behavior
+# Consistent Results
 
-Because every request follows the same retrieval process, application behavior remains consistent.
+The source used to satisfy a request may vary.
 
-Modules and Domain Services never need to determine:
+The application-facing result should not.
 
-* whether data is already available,
-* whether it must be retrieved,
-* where it was retrieved from,
-* or whether it has recently been synchronized.
+For example:
 
-They simply request the required Domain Object.
+```text
+Accepted Local Model ─────┐
+                          │
+Resource Boundary ────────┼──→ Bible Chapter
+                          │
+Future Retrieval Source ──┘
+```
 
-Data Access coordinates the remainder of the retrieval process.
+The caller continues to operate on the Bible Chapter regardless of how that Chapter became available.
 
-This separation greatly simplifies application logic while allowing persistence and synchronization strategies to evolve independently of the application's behavior.
+This keeps retrieval mechanisms from leaking into Domain behavior or Module interactions.
 
-# Data Freshness
+---
 
-Data Access is responsible for obtaining the best available Domain Object for the current request.
+# Data Access and Public APIs
 
-It is not responsible for continuously keeping that Domain Object up to date.
+Data Access normally sits behind the Public API of the owner whose information is being requested.
 
-That responsibility belongs to Background Processing.
+For example:
+
+```text
+Bible Reader
+    ↓
+Bible Public API
+    ↓
+Get Chapter
+    ↓
+Bible data retrieval
+```
+
+A consumer should not need to call a separate global retrieval mechanism and then determine how the returned information relates to the Bible Domain.
+
+The public request should remain expressed in the language of the owner.
+
+---
+
+# Data Access and Freshness
+
+Satisfying a request and maintaining data freshness are different responsibilities.
+
+Data Access satisfies the current request using information that is valid for that request.
+
+Background Processing may independently:
+
+* refresh installed information,
+* discover newer Resources,
+* synchronize changes,
+* or perform other maintenance.
 
 Conceptually:
 
-```mermaid id="m7g4hf"
-flowchart TD
+```text
+Current Request
+    ↓
+Data Access
+    ↓
+Accepted Domain Object
 
-    Module["Module"]
 
-    Data["Data Access"]
-
-    Store["Domain Store"]
-
-    Background["Background Processing"]
-
-    Resource["Resource Architecture"]
-
-    Module --> Data
-
-    Data --> Store
-
-    Background --> Resource
-
-    Resource --> Store
+Background Processing
+    ↓
+Resource Boundary
+    ↓
+Updated Local Model
 ```
 
-When a request is made, Data Access retrieves the currently available Domain Object.
+A later request can automatically benefit from newer accepted Domain Objects without requiring the original caller to coordinate synchronization.
 
-If the object is unavailable locally, Data Access retrieves it through the Resource Architecture.
+---
 
-Background Processing independently refreshes Domain Objects over time and stores newer versions within the Domain Store.
+# Deciding How a New Data Request Works
 
-The next request automatically benefits from those updates.
+When introducing behavior that requires information, work through the decision in order.
 
-Data Access therefore remains focused on satisfying the current request while Background Processing maintains the quality and freshness of locally available data.
-
-This separation keeps request handling simple while allowing synchronization strategies to evolve independently.
-
-# Future Evolution
-
-The Data Access architecture has been intentionally designed around Domain Objects rather than storage technologies.
-
-As the application evolves, new persistence implementations, transport protocols, and retrieval strategies should integrate behind the existing Data Access abstraction.
-
-Conceptually:
-
-```mermaid id="j6vznq"
-flowchart TD
-
-    Data["Data Access"]
-
-    Store["Domain Store"]
-
-    Resource["Resource Architecture"]
-
-    Future["Future Data Sources"]
-
-    Object["Domain Object"]
-
-    Data --> Store
-
-    Data --> Resource
-
-    Data --> Future
-
-    Store --> Object
-
-    Resource --> Object
-
-    Future --> Object
+```text
+What information is required?
+        ↓
+Who owns that information?
+        ↓
+Request it through the owner's Public API
+        ↓
+Can the accepted local model satisfy the request?
+        │
+        ├── Yes → Return the Domain Object
+        │
+        └── No
+             ↓
+Can the information be obtained through the Resource Boundary?
+        │
+        ├── Yes → Resolve, validate, accept, and return
+        │
+        └── No → Follow the owner's missing-data contract
+        ↓
+Choose implementation
 ```
 
-The application should continue requesting Domain Objects rather than specific storage locations.
+The caller should never need to decide:
 
-As long as this abstraction remains stable, new data sources may be introduced without affecting Modules or Domain Services.
+```text
+Should I read IndexedDB?
+
+Should I query a relay?
+
+Should I download from Blossom?
+```
+
+Those questions belong beneath the architectural request.
+
+---
+
+# Example: Requesting a Bible Chapter
+
+Suppose a Bible Reader requires John 3.
+
+The interaction requests the Chapter from the Bible Domain:
+
+```text
+Bible Reader
+    ↓
+Bible Public API
+    ↓
+Get Chapter: John 3
+```
+
+If John 3 is already installed and valid for the request, the existing Domain Object is returned.
+
+```text
+Get John 3
+    ↓
+Local Chapter
+    ↓
+Return Chapter
+```
+
+If it is not available locally and the Chapter can be obtained externally:
+
+```text
+Get John 3
+    ↓
+Local Miss
+    ↓
+Resource Boundary
+    ↓
+Resolve Published Resource
+    ↓
+Validate
+    ↓
+Install Chapter
+    ↓
+Return Chapter
+```
+
+The Bible Reader makes the same request in both cases.
+
+It never needs to know which retrieval path satisfied it.
+
+---
+
+# Design Rules
+
+## Request Information by Meaning
+
+Requests should identify the Domain information required rather than a storage or transport location.
+
+## Prefer the Accepted Local Model
+
+Locally accepted Domain Objects should satisfy requests whenever they meet the requirements of that request.
+
+## Keep Retrieval Paths Behind the Boundary
+
+Callers should not decide whether information comes from local persistence, the Resource Boundary, or another source.
+
+## Return Domain Objects
+
+Application-facing retrieval should produce Domain Objects rather than leaking external or persistence-specific representations.
+
+## Preserve Local Authority
+
+Externally obtained information must be validated and accepted before becoming part of the local Domain model.
+
+## Separate Retrieval From Freshness
+
+Current requests and ongoing synchronization are different responsibilities. Background Processing can improve the local model without becoming part of every request path.
 
 ---
 
 # Big Takeaway
 
-Data Access owns the responsibility of obtaining Domain Objects.
+Data Access separates **what information the application needs** from **how that information becomes available**.
 
-It determines how requests are satisfied while hiding storage technologies, transport protocols, and retrieval strategies from the rest of the application.
+A caller requests a Domain Object through the Public API of its owner.
+
+The accepted local model is considered first. When appropriate, a local miss may be satisfied through the Resource Boundary, after which the externally obtained information is validated and accepted as a Domain Object.
 
 Conceptually:
 
-```mermaid id="4qp2mo"
-flowchart LR
-
-    Module["Module"]
-
-    Service["Domain Service"]
-
-    Data["Data Access"]
-
-    Store["Domain Store"]
-
-    Resource["Resource Architecture"]
-
-    Object["Domain Object"]
-
-    Module --> Service
-
-    Service --> Data
-
-    Data --> Store
-
-    Data --> Resource
-
-    Store --> Object
-
-    Resource --> Object
+```text
+Caller
+    ↓
+Owner Public API
+    ↓
+Domain Object Request
+    ↓
+Data Access
+    │
+    ├── Local Model
+    │
+    └── Resource Boundary
+    ↓
+Domain Object
 ```
 
-Modules and Domain Services request Domain Objects.
+The caller requests data.
 
-They do not request IndexedDB, relays, Blossom, HTTP, or any other storage or transport technology.
-
-Data Access determines how each request is satisfied and always returns the same conceptual result:
-
-a Domain Object.
-
-By separating application behavior from retrieval strategy, the application remains local-first, transport-independent, and capable of evolving its persistence and synchronization technologies without changing the behavior of Modules or Domains.
+The retrieval path remains behind the architectural boundary.
