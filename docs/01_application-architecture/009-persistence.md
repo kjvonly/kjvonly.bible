@@ -8,623 +8,587 @@ Current
 
 # Purpose
 
-This document defines how the KJVOnly application persists its local state.
+This document defines how application state survives beyond the current execution of KJVOnly.
 
-Persistence ensures that installed Domain Objects, runtime state, settings, indexes, and application metadata survive application restarts and remain available while offline.
+Its primary question is:
 
-This document establishes the boundary between:
+> **When application state must survive, who determines what is persisted and what makes that persisted state meaningful?**
 
-* Domain-owned Store interfaces,
-* local persistence implementations,
-* remote publication,
-* and the application's authoritative local state.
+Persistence provides durability. It does not take ownership of the state being persisted.
 
----
-
-# Scope
-
-This document defines:
-
-* local persistence,
-* Domain Stores,
-* Store ownership,
-* immediate local writes,
-* remote persistence through the outbox,
-* deletion,
-* persisted indexes,
-* runtime persistence,
-* settings and application metadata,
-* and the relationship between persistence and Data Access.
-
-It does not define:
-
-* Data Access retrieval strategy,
-* Resource Resolution,
-* Resource publication,
-* outbox processing,
-* synchronization scheduling,
-* background workers,
-* or IndexedDB implementation details.
-
-Those responsibilities are described by separate implementation documents and Architecture Decision Records.
+The owner of the state determines its meaning and persistence requirements. Technical Infrastructure provides the storage mechanisms used to satisfy those requirements.
 
 ---
 
-# Background
+# Persistence Model
 
-The KJVOnly application is offline-first.
+KJVOnly is offline-first.
 
-Application behavior should not depend upon immediate access to a relay, server, or other remote system.
-
-When application state changes, the change is persisted locally first.
-
-Remote publication occurs separately through the outbox and synchronization architecture.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Domain["Domain"]
-
-    Object["Installed Domain Object"]
-
-    Store["Domain Store"]
-
-    Outbox["Outbox"]
-
-    Remote["Remote Persistence"]
-
-    Domain --> Object
-
-    Object --> Store
-
-    Object --> Outbox
-
-    Outbox --> Remote
-```
-
-The local Store becomes authoritative immediately.
-
-The outbox records the intent to publish the corresponding change remotely.
-
-This separation allows application behavior to remain responsive and reliable even when remote systems are unavailable.
-
----
-
-# Persistence Definition
-
-Persistence is responsible for preserving application state across application lifecycles.
-
-It ensures that locally installed data remains available after:
-
-* a page refresh,
-* the browser being closed,
-* the application being suspended,
-* a device restart,
-* or a temporary loss of network access.
-
-Persistence keeps data.
-
-It does not determine how application data is requested or where remote representations are discovered.
-
-Those responsibilities belong to Data Access and the Resource Architecture.
-
----
-
-# Persisted State
-
-The application persists several categories of state.
-
-## Installed Domain Objects
-
-Installed Domain Objects form the application's authoritative local domain model.
-
-Examples include:
-
-* Bible chapters,
-* annotations,
-* notes,
-* reading plans,
-* completed readings,
-* Strong's data,
-* and other Domain-owned objects.
-
-Each installed Domain Object is persisted through the Store owned by its Domain.
-
-## Runtime State
-
-Runtime state may be persisted so the application can restore the user's working environment.
-
-Examples include:
-
-* Pane layout,
-* Buffer state,
-* active Module types,
-* Module navigation context,
-* and the last active Bible location.
-
-## Application Settings
-
-Application-wide preferences are persisted independently from Domain Objects.
-
-Examples include:
-
-* dark mode,
-* color theme,
-* selected Bible version,
-* and other user preferences.
-
-## Derived Indexes
-
-Search and lookup indexes may also be persisted.
-
-Indexes are derived data, but persisting them can substantially reduce startup and indexing work.
-
-For example, a Notes index may be stored and incrementally updated so only newly created Notes require indexing.
-
-## Application Metadata
-
-The application may persist metadata required to coordinate local behavior.
-
-Examples include:
-
-* installed versions,
-* index state,
-* synchronization metadata,
-* and other local bookkeeping information.
-
----
-
-# Domain Store Ownership
-
-Every Domain owns the Store interfaces required by its Domain Objects.
-
-A Domain may own multiple Stores when its objects have different persistence requirements.
-
-For example, the Bible Domain may maintain separate Stores for:
-
-* Bible chapters,
-* annotations,
-* Bible versions,
-* Strong's data,
-* and other Bible-owned objects.
-
-Multiple Bible versions may share the same chapter Store.
-
-The persisted key includes the Bible version so that corresponding chapters remain independently addressable.
+Application state that must survive a refresh, restart, suspension, or loss of network connectivity is persisted locally.
 
 Conceptually:
 
 ```text
-Bible Domain
-
-    Chapter Store
-        kjv/1_1
-        kjvs/1_1
-
-    Annotation Store
-
-    Bible Version Store
-
-    Strong's Store
+Architectural Owner
+        ↓
+Owned State
+        ↓
+Persistence Requirement
+        ↓
+Persistent Storage Capability
+        ↓
+Storage Technology
 ```
-
-Store organization follows Domain Object ownership rather than requiring every Domain to persist all of its objects within one physical collection.
-
-The Domain owns:
-
-* the Store interface,
-* key semantics,
-* object identity,
-* persistence rules,
-* and which objects belong in each Store.
-
-Technical Infrastructure owns the implementation used to satisfy those Store interfaces.
-
----
-
-# Store Implementation Boundary
-
-Domain behavior should depend upon Domain Store interfaces rather than a particular database technology.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Service["Domain Service"]
-
-    Store["Domain Store Interface"]
-
-    Adapter["Persistence Adapter"]
-
-    IndexedDB["IndexedDB"]
-
-    Future["Alternative Storage"]
-
-    Service --> Store
-
-    Store --> Adapter
-
-    Adapter --> IndexedDB
-
-    Adapter --> Future
-```
-
-The current browser implementation uses IndexedDB.
-
-A different runtime could provide another implementation of the same Domain Store interface.
-
-For example, a Node-based application could provide a filesystem, SQLite, or another persistence adapter without changing the Domain Service that requests the data.
-
-This separation allows the Domain model and its services to be reused outside the browser.
-
----
-
-# Persistence and Domain Services
-
-Modules do not interact directly with persistence implementations.
-
-They request Domain behavior through Domain Services.
-
-The Domain Service then coordinates the appropriate Store.
 
 For example:
 
 ```text
-Bible Module
-
-    requests Chapter
-
-        ↓
-
-Chapter Service
-
-        ↓
-
-Chapter Store
-
-        ↓
-
-Installed Chapter
+Notes Domain
+    ↓
+Notes
+    ↓
+Must survive application restart
+    ↓
+Persistent Storage
+    ↓
+IndexedDB
 ```
 
-The caller does not know whether the Store is implemented using IndexedDB or another persistence technology.
+The Notes Domain owns the Notes and determines what their persisted state means.
 
-The Domain Service exposes Domain behavior.
+Persistence makes that state durable.
 
-The Domain Store exposes persistence behavior.
-
-Technical Infrastructure implements the Store.
-
-# Immediate Persistence
-
-The application persists changes to installed Domain Objects immediately.
-
-When application behavior modifies a Domain Object, the updated object is written to its owning Domain Store before any remote publication occurs.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Domain["Domain"]
-
-    Object["Installed Domain Object"]
-
-    Store["Domain Store"]
-
-    Outbox["Outbox"]
-
-    Domain --> Object
-
-    Object --> Store
-
-    Store --> Outbox
-```
-
-Local persistence is synchronous with application behavior.
-
-Remote persistence is asynchronous.
-
-This allows the application to immediately adopt the updated Domain Object as its authoritative local state while remote publication occurs independently.
+IndexedDB is the current technical mechanism used to store it.
 
 ---
 
-# Local and Remote Persistence
+# What Is Persisted?
 
-Persistence within the application is divided into two complementary responsibilities.
+Several kinds of application state may require persistence.
 
-## Local Persistence
+```text
+Application
 
-Local persistence is responsible for:
+    Domain State
+        Bible data
+        annotations
+        Notes
+        Reading Plans
+        completed readings
 
-* storing installed Domain Objects,
-* preserving application state,
-* maintaining offline capability,
-* and providing durable local storage.
+    Runtime State
+        Workspace structure
+        Buffers
+        Module context
 
-Once a change has been written to the Domain Store, the application immediately considers that change authoritative.
+    Settings
+        application preferences
 
-## Remote Persistence
+    Derived State
+        search indexes
+        cached projections
 
-Remote persistence is responsible for publishing those locally accepted changes through the Resource Architecture.
-
-This responsibility is fulfilled through the outbox model.
-
-Persistence itself does not communicate with relays or external systems.
-
-Its responsibility ends when the updated Domain Object has been successfully stored locally.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Domain["Domain"]
-
-    Store["Local Persistence"]
-
-    Outbox["Outbox"]
-
-    Resource["Resource Architecture"]
-
-    Remote["Published Resource"]
-
-    Domain --> Store
-
-    Store --> Outbox
-
-    Outbox --> Resource
-
-    Resource --> Remote
+    Operational Metadata
+        installation state
+        synchronization state
+        other bookkeeping
 ```
 
-The application therefore separates accepting a change from publishing that change.
+These categories may all use persistent storage, but they do not therefore share architectural ownership.
 
-Local behavior never depends upon the success of remote persistence.
+The meaning of each piece of persisted state remains with the responsibility that owns it.
 
 ---
 
-# Persistence Consistency
+# Persistence Does Not Determine Ownership
 
-Persistence guarantees that every installed Domain Object represents the application's current local model.
+Physical storage location does not determine architectural ownership.
 
-When a Domain accepts a change, subsequent requests observe that updated object immediately.
+A Note does not become persistence-owned because it is stored in IndexedDB. Workspace state does not become persistence-owned because it is stored alongside Notes.
 
-No additional synchronization step is required before the application begins operating on the new state.
+Instead:
 
-This behavior allows:
+```text
+Note
+    → Notes Domain
 
-* immediate user feedback,
-* reliable offline operation,
-* consistent application behavior,
-* and deterministic local state.
+Workspace structure
+    → Workspace Runtime
 
-Remote publication becomes an implementation concern rather than part of the application's behavior.
+Application preference
+    → Settings Domain
+
+Bible search index
+    → derived from Bible-owned information
+```
+
+Persistence preserves these states without becoming their conceptual owner.
+
+When adding persisted state, determine ownership before choosing how or where it will be stored.
+
+---
+
+# Persisting Domain State
+
+Domains determine the persistence semantics of their Domain Objects.
+
+For example, the Notes Domain determines what constitutes a Note, how Notes are identified, and which changes affect Note state. The persistence mechanism does not define those rules.
+
+Conceptually:
+
+```text
+Notes Domain
+    ↓
+Note Domain Object
+    ↓
+Persistence
+    ↓
+Durable Local State
+```
+
+The same relationship applies to Bible annotations, Reading Plan progress, completed readings, and other Domain-owned information.
+
+Application behavior continues to operate on Domain Objects rather than persistence-specific representations.
+
+---
+
+# Persisting Runtime State
+
+The Workspace Runtime may persist enough Runtime state to reconstruct the user's working environment.
+
+This may include:
+
+* Workspace structure,
+* Pane and Buffer relationships,
+* active Module types,
+* Navigation Context,
+* and other state required to restore the Runtime.
+
+The Workspace Runtime owns the meaning of that state.
+
+Persistence only ensures that the state remains available for reconstruction during a later application execution.
+
+A persisted Runtime representation should therefore describe Runtime state rather than depend upon live presentation components or framework instances.
+
+---
+
+# Persisting Settings
+
+Application preferences belong to the Settings Domain.
+
+Examples may include:
+
+* appearance preferences,
+* selected Bible version,
+* and other user-configurable application settings.
+
+Persistence makes those preferences durable.
+
+Their proximity to Runtime or Domain data in physical storage does not change their ownership.
+
+---
+
+# Local Authority
+
+Persistence preserves the application's accepted local state.
+
+Once a Domain Object or other owned state has been accepted locally, application behavior should not depend upon successful publication or current network availability before operating on that state.
+
+Conceptually:
+
+```text
+Application Change
+        ↓
+Accept Local State
+        ↓
+Persist Local State
+        ↓
+Application Continues
+```
+
+The durable local model therefore remains usable while offline.
+
+External systems may later receive or provide representations of that information through the Resource Boundary, but they do not become the authority for the application's current local state merely because they hold a copy.
+
+---
+
+# Persistence and Publication
+
+Local persistence and external publication are different responsibilities.
+
+When application behavior creates or changes Domain information, the locally accepted state is persisted independently from whether that change has been published.
+
+Conceptually:
+
+```text
+Domain Change
+      ↓
+Accepted Local Domain Object
+      ↓
+Local Persistence
+
+      and separately
+
+Accepted Local Domain Object
+      ↓
+Resource Boundary
+      ↓
+Publication
+```
+
+Publication is therefore not "remote persistence" from the application's perspective.
+
+Persistence preserves local application state.
+
+Publication represents that information externally as part of the Resource lifecycle.
+
+The outbox and publication model are defined by the Resource Boundary decisions responsible for publishing and synchronization.
+
+---
+
+# Local Changes
+
+A local change should become usable without waiting for external publication.
+
+For example:
+
+```text
+Edit Note
+    ↓
+Notes Domain accepts change
+    ↓
+Persist updated Note
+    ↓
+Updated Note is local state
+```
+
+Publication may follow independently:
+
+```text
+Updated Note
+    ↓
+Resource Boundary
+    ↓
+Outbox
+    ↓
+Published Resource
+```
+
+A relay being unavailable does not prevent the application from continuing to operate on the locally accepted Note.
+
+This separation is fundamental to offline-first behavior.
 
 ---
 
 # Deletion
 
-Deletion follows the same persistence model as every other state change.
+Deletion follows the same ownership model as other state changes.
 
-When a Domain deletes an installed Domain Object, the deletion is immediately persisted to the local Store.
-
-The corresponding publication is then handled through the outbox and Resource Architecture.
-
-The application intentionally favors simple persistence semantics.
-
-Deleted Domain Objects are removed from the local Store rather than retained through application-level soft deletion.
-
-User-facing confirmation is handled by the presentation layer before the deletion occurs.
-
-Persistence simply records the resulting state.
-
-# Derived Data
-
-Not every persisted object represents authoritative application state.
-
-Some persisted data exists solely to improve application performance.
-
-This data is referred to as **derived data**.
-
-Derived data is produced from installed Domain Objects rather than representing application behavior itself.
-
-Examples include:
-
-* search indexes,
-* lookup tables,
-* cached projections,
-* and other generated structures.
+The owner determines that an object has been deleted, and persistence records the resulting local state.
 
 Conceptually:
 
-```mermaid
-flowchart LR
-
-    Domain["Installed Domain Object"]
-
-    Derived["Derived Data"]
-
-    Search["Search Index"]
-
-    Domain --> Derived
-
-    Derived --> Search
+```text
+Domain
+    ↓
+Delete Domain Object
+    ↓
+Persist resulting local state
 ```
 
-Derived data may be persisted because rebuilding it can be expensive.
+If that deletion must also be represented externally, publication is handled separately through the Resource Boundary.
 
-Persisting derived data improves startup time, reduces unnecessary computation, and allows the application to resume work quickly after restarting.
-
-Unlike installed Domain Objects, derived data can always be regenerated from the application's authoritative local state.
-
----
-
-# Incremental Updates
-
-Derived data does not always need to be rebuilt from scratch.
-
-Whenever possible, the application updates derived data incrementally as installed Domain Objects change.
-
-For example, when a new Note is created:
-
-* the Note is immediately persisted,
-* the Notes Domain becomes authoritative,
-* and the search index incorporates only the newly added Note.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Note["Installed Note"]
-
-    Index["Search Index"]
-
-    Updated["Updated Index"]
-
-    Note --> Index
-
-    Index --> Updated
-```
-
-This approach minimizes indexing work while keeping derived data synchronized with the application's authoritative local state.
+Persistence does not decide whether deletion is allowed or what deletion means for the Domain.
 
 ---
 
 # Authoritative and Derived State
 
-Persistence intentionally distinguishes between authoritative state and derived state.
+Not everything stored locally has the same architectural significance.
 
-Conceptually:
+The application distinguishes between **authoritative local state** and **derived state**.
 
-```mermaid
-flowchart TD
-
-    State["Local State"]
-
-    Domain["Installed Domain Objects"]
-
-    Derived["Derived Data"]
-
-    State --> Domain
-
-    State --> Derived
+```text
+Authoritative Local State
+        ↓
+    Derived State
 ```
 
-Installed Domain Objects represent the application's authoritative local model.
+Authoritative state represents information accepted by the application.
 
-Derived data exists only to support efficient application behavior.
+Derived state can be reconstructed from authoritative state.
 
-If derived data is lost or becomes invalid, it may be regenerated from the installed Domain Objects.
+For example:
 
-If an installed Domain Object is lost, the application's local state has changed.
+```text
+Notes
+    ↓
+Notes Search Index
+```
 
-This distinction allows the application to optimize performance without confusing optimization data with application state.
+The Notes are authoritative Domain information.
+
+The search index is a derived representation used to make Notes search efficient.
 
 ---
 
-# Persistence Philosophy
+# Persisting Derived State
 
-Persistence exists to preserve application state.
+Derived state may be persisted when reconstructing it is expensive or would unnecessarily delay application startup.
 
-Not every persisted object carries the same architectural significance.
+Examples may include:
 
-Installed Domain Objects preserve the application's behavior.
+* search indexes,
+* lookup structures,
+* cached projections,
+* and other generated data.
 
-Derived data preserves the application's performance.
+Persisting derived state is an optimization.
 
-Understanding this distinction helps ensure that optimization strategies remain independent from the application's conceptual model.
+It does not make that data authoritative.
 
-The application should always be capable of rebuilding derived data from its installed Domain Objects.
+A useful test is:
 
-# Future Evolution
+> **If this persisted data disappeared, could the application reconstruct it from its authoritative local state?**
 
-Persistence has been intentionally designed around Domain ownership rather than persistence technologies.
+If yes, it is likely derived state.
 
-As the application evolves, new storage engines, persistence strategies, and optimization techniques should continue to support the existing Domain Store interfaces without changing the application's conceptual architecture.
+If losing it changes the application's actual accepted information, it is not merely derived.
+
+---
+
+# Derived State Follows Its Source
+
+Derived data should remain associated with the responsibility whose information gives it meaning.
+
+For example:
+
+```text
+Bible Domain
+    ↓
+Bible content
+    ↓
+Bible search index
+```
+
+and:
+
+```text
+Notes Domain
+    ↓
+Notes
+    ↓
+Notes search index
+```
+
+Both indexes may use the same indexing technology.
+
+That shared implementation does not create a separate owner for the meaning of those indexes.
+
+Persistence merely allows the derived structures to survive between executions.
+
+---
+
+# Operational Metadata
+
+Some persistent information exists to coordinate application behavior rather than represent user-facing Domain Objects.
+
+Examples may include:
+
+* installation metadata,
+* synchronization state,
+* index state,
+* or other local bookkeeping.
+
+This information should not automatically be grouped under a generic "Persistence" owner.
+
+Its ownership follows the responsibility that gives the metadata meaning.
+
+For example:
+
+```text
+Resource installation metadata
+    → Resource Boundary responsibility
+
+Search index metadata
+    → owning search responsibility
+
+Workspace restoration metadata
+    → Workspace Runtime
+```
+
+Storage is shared.
+
+Meaning is not.
+
+---
+
+# Persistence and Data Access
+
+Persistence makes accepted local state durable.
+
+Data Access determines how a current request for a Domain Object is satisfied.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Domain["Domain"]
-
-    Store["Domain Store"]
-
-    Persistence["Persistence"]
-
-    Current["Current Storage"]
-
-    Future["Future Storage"]
-
-    Domain --> Store
-
-    Store --> Persistence
-
-    Persistence --> Current
-
-    Persistence --> Future
+```text
+Data Access
+    ↓
+Accepted Local Model
+    ↓
+Persisted Local State
 ```
 
-Future improvements may introduce:
+A request may benefit from persisted information, but the caller still requests the Domain Object rather than the persistence mechanism.
 
-* alternative persistence implementations,
-* improved indexing strategies,
-* more efficient storage layouts,
-* additional optimization techniques,
-* or new platform-specific persistence technologies.
+Data Access and Persistence therefore answer different questions:
 
-These improvements should strengthen the persistence abstraction rather than expose implementation details to the application.
+```text
+Data Access
+    How do I obtain the requested Domain Object?
 
-As long as installed Domain Objects remain the application's authoritative local model, persistence technologies may evolve independently of application behavior.
+Persistence
+    What state must survive beyond this execution?
+```
+
+---
+
+# Persistence and Infrastructure
+
+Persistence requirements belong to application responsibilities.
+
+Storage technology belongs to Technical Infrastructure.
+
+Conceptually:
+
+```text
+Owner
+    ↓
+Persistence Requirement
+    ↓
+Persistent Storage Capability
+    ↓
+Technology
+```
+
+The current browser implementation may use IndexedDB.
+
+That implementation may change without changing which owner defines the persisted information or what that information means.
+
+Do not design application behavior around IndexedDB records, object stores, keys, transactions, or another storage technology unless those details are genuinely part of an implementation document.
+
+---
+
+# Deciding Whether State Should Be Persisted
+
+When introducing new state, work through the architectural decisions in order.
+
+```text
+What state is being introduced?
+        ↓
+Who gives that state meaning?
+        ↓
+Does it need to survive the current execution?
+        │
+        ├── No → Keep it transient
+        │
+        └── Yes
+             ↓
+Is it authoritative or derived?
+        ↓
+What persistence semantics does its owner require?
+        ↓
+Does a change also need external representation?
+        │
+        ├── No → Local persistence only
+        │
+        └── Yes → Resource Boundary separately
+        ↓
+What technical storage capability is required?
+        ↓
+Choose implementation
+```
+
+Do not begin with:
+
+```text
+Which IndexedDB store should this use?
+
+Should this go in localStorage?
+
+Should this be cached?
+```
+
+Those questions come after the state, ownership, authority, and durability requirements are understood.
+
+---
+
+# Example: Persisting a New Bible Feature
+
+Suppose the Bible Domain gains a new user-created type of Bible metadata.
+
+First determine ownership:
+
+```text
+New Bible Metadata
+        ↓
+Meaning comes from Bible content
+        ↓
+Bible Domain
+```
+
+Next determine whether the information must survive application restarts.
+
+If it represents durable user state, the Bible Domain defines its persistence semantics.
+
+```text
+Bible Domain
+    ↓
+New Domain Object
+    ↓
+Local Persistence
+```
+
+If the information also needs to synchronize between devices or be published externally, that is a separate decision:
+
+```text
+New Domain Object
+    ↓
+Resource Boundary
+    ↓
+Resource
+```
+
+Only after these architectural decisions are made should the implementation choose a storage structure, IndexedDB schema, Resource representation, or synchronization mechanism.
 
 ---
 
 # Big Takeaway
 
-Persistence ensures that the application's authoritative local model survives beyond the current execution of the application.
+Persistence preserves application state across executions.
 
-Installed Domain Objects represent application behavior.
+It does not own the meaning of that state.
 
-Derived data improves application performance.
+The architectural relationship is:
 
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Domain["Domain"]
-
-    Object["Installed Domain Object"]
-
-    Store["Domain Store"]
-
-    Derived["Derived Data"]
-
-    Persistence["Persistence"]
-
-    Domain --> Object
-
-    Object --> Store
-
-    Object --> Derived
-
-    Store --> Persistence
-
-    Derived --> Persistence
+```text
+Owner
+    ↓
+Owned State
+    ↓
+Persistence Requirement
+    ↓
+Durable Local State
 ```
 
-The application immediately persists accepted changes to its local Stores.
+Some durable state is authoritative.
 
-Remote publication occurs independently through the outbox and the Resource Architecture.
+Some is derived and can be rebuilt.
 
-This separation allows the application to remain responsive, offline-first, and resilient while maintaining one consistent and authoritative local model.
+Local persistence is separate from external publication, and application behavior does not wait for publication before operating on locally accepted state.
 
-Persistence therefore preserves more than data.
+When adding new state, ask:
 
-It preserves the continuity of the application's behavior across application restarts, offline operation, and evolving implementation technologies.
+> **Who owns this state, does it need to survive, and is it authoritative or derived?**
+
+Only after those questions are answered should storage technology be chosen.
