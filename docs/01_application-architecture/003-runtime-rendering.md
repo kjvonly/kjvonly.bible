@@ -8,272 +8,366 @@ Current
 
 # Purpose
 
-The Workspace Runtime defines the logical structure of the application.
+This document defines how the Workspace Runtime is presented as the visible application.
 
-This document describes how that runtime model is rendered into the visible user interface.
+The Runtime Object model is defined by **002-workspace-runtime.md**.
 
-It explains how the current implementation transforms Runtime Objects into a stable, interactive application while remaining faithful to the Workspace Runtime described by **002-workspace-runtime.md**.
+This document does not redefine that model.
+
+Instead, it describes how:
+
+```text
+Workspace
+    ↓
+Pane
+    ↓
+Buffer
+    ↓
+Module Instance
+```
+
+is projected into a visible and interactive user interface.
 
 ---
 
 # Scope
 
-This document describes:
+This document defines:
 
-* the rendering pipeline,
-* recursive rendering,
-* dynamic module rendering,
-* layout generation,
-* component identity,
-* rendering updates,
-* and rendering performance.
+* the rendering responsibility,
+* recursive Pane rendering,
+* Module presentation resolution,
+* layout derivation,
+* Runtime identity during rendering,
+* incremental rendering,
+* and the current Svelte and CSS Grid implementation.
 
-It focuses on the current rendering implementation.
+It does not define:
 
-It does not redefine the Workspace Runtime or the Runtime Objects described by the previous document.
-
----
-
-# Background
-
-The KJVOnly application is implemented as a Single Page Application.
-
-Unlike traditional web applications, navigation does not occur by transitioning between routes.
-
-Instead, the application maintains one persistent Workspace.
-
-The Workspace Runtime evolves over time while the rendering implementation updates only the portions of the interface affected by runtime changes.
-
-This approach allows multiple Module Instances to remain active simultaneously while preserving their independent runtime state.
-
-The rendering implementation exists to present the Workspace Runtime.
-
-It does not define the runtime model.
-
----
-
-# Responsibilities
-
-The rendering implementation is responsible for:
-
-* presenting the Workspace Runtime,
-* recursively rendering the Pane tree,
-* generating the visible layout,
-* dynamically loading Module components,
-* preserving component identity,
-* and efficiently updating the visible application.
-
-It is not responsible for:
-
+* Runtime Objects,
 * Workspace operations,
-* Pane-tree manipulation,
-* Buffer management,
+* Buffer ownership,
+* Navigation Context,
 * Domain behavior,
-* Resource resolution,
+* Domain Objects,
+* Resource Boundary behavior,
+* persistence,
+* or synchronization.
+
+Those responsibilities are defined elsewhere.
+
+---
+
+# Principle
+
+Rendering is a projection of Runtime state.
+
+Conceptually:
+
+```text
+Workspace Runtime
+        │
+        ▼
+Runtime Objects
+        │
+        ▼
+Rendering
+        │
+        ▼
+Visible Application
+```
+
+The Runtime determines what exists.
+
+Rendering determines how it becomes visible.
+
+---
+
+# Rendering Responsibility
+
+Rendering owns presentation.
+
+Its responsibilities include:
+
+* recursively presenting the Pane tree,
+* deriving visible layout,
+* rendering Leaf Pane contents,
+* resolving Module presentation components,
+* preserving presentation identity for stable Runtime Objects,
+* and reflecting Runtime changes in the visible application.
+
+Rendering does not own:
+
+* Workspace structure,
+* Pane-tree modification,
+* Buffer assignment,
+* Module Instance placement,
+* Domain behavior,
+* Domain Objects,
+* persistence,
 * synchronization,
-* or application services.
+* or publication.
 
-Those responsibilities belong to other parts of the application.
+---
 
-The rendering implementation consumes the Workspace Runtime.
+# Rendering Boundary
 
-It does not own it.
+The Workspace Runtime provides the logical model.
+
+Rendering consumes that model.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Rendering["Runtime Rendering"]
+
+    UI["Visible Application"]
+
+    Runtime --> Rendering
+    Rendering --> UI
+```
+
+Rendering should not introduce another authoritative model of the Workspace.
+
+It presents the Runtime model that already exists.
 
 ---
 
 # Rendering Pipeline
 
-Rendering is performed by transforming the Workspace Runtime into visible user interface components.
-
-Conceptually:
+At a high level:
 
 ```mermaid
 flowchart TD
 
-    Runtime["Workspace Runtime"]
+    Runtime["Runtime Objects"]
 
-    RuntimeObjects["Runtime Objects"]
+    Layout["Layout Derivation"]
 
-    Layout["Layout Generation"]
-
-    Components["Recursive Component Rendering"]
+    Components["Component Rendering"]
 
     UI["Visible Application"]
 
-    Runtime --> RuntimeObjects
-
-    RuntimeObjects --> Layout
-
+    Runtime --> Layout
     Layout --> Components
-
     Components --> UI
 ```
 
-The rendering pipeline begins with the Runtime Objects managed by the Workspace Runtime.
+Runtime Objects define the logical structure.
 
-Those Runtime Objects define the logical structure of the application.
+Layout derives visible regions from that structure.
 
-The rendering implementation derives the visible layout from that structure before recursively rendering the appropriate components.
-
-The visible application is therefore a presentation of the Workspace Runtime rather than the source of truth itself.
-
-This distinction allows the runtime model and rendering implementation to evolve independently while preserving a consistent application architecture.
-
-# Recursive Rendering
-
-The Workspace Runtime models the visible application as a recursive Pane tree.
-
-The rendering implementation preserves this model by rendering the Pane tree recursively.
-
-Each Pane is responsible for rendering only itself.
-
-If the Pane is a Branch Pane, it renders its child Panes.
-
-If the Pane is a Leaf Pane, it renders its hosted Buffer.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Workspace["Workspace"]
-
-    Root["Root Pane"]
-
-    Branch["Branch Pane"]
-
-    Leaf["Leaf Pane"]
-
-    Buffer["Buffer"]
-
-    Module["Module Instance"]
-
-    Workspace --> Root
-
-    Root --> Branch
-
-    Branch --> Branch
-
-    Branch --> Leaf
-
-    Leaf --> Buffer
-
-    Buffer --> Module
-```
-
-The rendering hierarchy therefore mirrors the runtime hierarchy.
-
-No separate rendering model is required.
-
-The recursive Workspace model naturally produces a recursive component tree.
+Components present the active Module Instances within those regions.
 
 ---
 
-# Recursive Component Composition
+# Recursive Pane Rendering
 
-The current implementation realizes the recursive Pane tree using recursive components.
+The Runtime defines the Workspace as a recursive Pane tree.
 
-Each rendered Branch Pane creates child Pane components.
+Rendering mirrors that recursion.
 
-Each rendered Leaf Pane creates the component associated with its Buffer.
+A Branch Pane produces child Pane presentations.
+
+A Leaf Pane produces one visible region containing the presentation associated with its Buffer.
 
 Conceptually:
 
 ```text
-Pane Component
+Pane Rendering
 
     Branch Pane
-
-        Pane Component
-
-        Pane Component
+        Pane Rendering
+        Pane Rendering
 
     Leaf Pane
-
-        Module Component
+        Module Presentation
 ```
 
-Each component is responsible only for rendering the Runtime Object it represents.
+No separate rendering hierarchy is required.
 
-No component requires knowledge of the complete Workspace.
-
-The Workspace emerges naturally from recursive composition.
+The Runtime structure naturally drives the component hierarchy.
 
 ---
 
-# Branch and Leaf Rendering
+# Branch Pane Rendering
 
-Branch Panes and Leaf Panes have different rendering responsibilities.
+A Branch Pane does not directly present a Module Instance.
 
-A Branch Pane:
+Its rendering responsibility is structural.
 
-* divides available space,
-* renders its child Panes,
-* and coordinates recursive rendering.
+It provides presentation regions for its child Panes.
 
-A Leaf Pane:
+Conceptually:
 
-* renders one Buffer,
-* hosts one Module Instance,
-* and presents one visible application region.
+```text
+Branch Pane
+    │
+    ├── Child Pane Presentation
+    │
+    └── Child Pane Presentation
+```
 
-This distinction mirrors the responsibilities defined by the Workspace Runtime.
+The logical child relationship belongs to the Workspace Runtime.
 
-The rendering implementation therefore follows the runtime model rather than introducing an alternative rendering hierarchy.
-
----
-
-# Rendering Ownership
-
-The rendering implementation never constructs the Workspace model.
-
-It consumes the Runtime Objects already owned by the Workspace Runtime.
-
-The rendering layer is responsible only for presentation.
-
-Workspace operations continue to belong to the Workspace Runtime.
-
-Application behavior continues to belong to Modules and Domains.
-
-This separation allows the runtime model to remain independent from the rendering framework.
-
-A future rendering implementation could adopt a different UI framework while preserving the same recursive Workspace architecture.
+Rendering determines how that relationship appears visually.
 
 ---
 
-# Rendering Responsibility Boundary
+# Leaf Pane Rendering
 
-The rendering implementation owns:
+A Leaf Pane represents one terminal presentation region.
 
-* recursive component composition,
-* visual presentation,
-* layout realization,
-* and Module component rendering.
+Its Buffer identifies the active Module Instance to present.
 
-It does not own:
+Conceptually:
 
-* Pane-tree modification,
-* Buffer management,
+```text
+Leaf Pane
+    ↓
+Buffer
+    ↓
+Module Instance
+    ↓
+Presentation Component
+```
+
+Rendering does not need to understand the Domain behavior wrapped by the Module Instance.
+
+It only needs to resolve and present the appropriate Module presentation.
+
+---
+
+# Module Presentation Resolution
+
+A Buffer identifies the Module Instance occupying a Leaf Pane.
+
+Rendering resolves that Module to its presentation implementation.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Buffer["Buffer"]
+
+    Module["Module"]
+
+    Resolver["Module Resolver"]
+
+    Component["Presentation Component"]
+
+    Buffer --> Module
+    Module --> Resolver
+    Resolver --> Component
+```
+
+The architectural responsibility is:
+
+> **Resolve the presentation associated with the active Module Instance.**
+
+The current implementation uses Svelte components.
+
+That is an implementation mechanism.
+
+---
+
+# Dynamic Module Composition
+
+The visible application is composed dynamically from the Module Instances currently active in the Workspace.
+
+For example:
+
+```text
+Workspace
+
+    Bible Reader
+
+    Notes
+
+    Bible Search
+```
+
+may later become:
+
+```text
+Workspace
+
+    Bible Reader
+
+    Bible Reader
+
+    Reading Plans
+
+    Notes
+```
+
+Rendering does not require a fixed page composition.
+
+It presents whatever Module Instances are currently represented by the Runtime.
+
+---
+
+# Multiple Module Instances
+
+Several instances of the same Module type may be active simultaneously.
+
+For example:
+
+```text
+Bible Reader
+    Genesis 1
+```
+
+and:
+
+```text
+Bible Reader
+    Romans 8
+```
+
+are different Module Instances.
+
+Rendering must preserve their independent identities and presentation state.
+
+Module type alone does not identify an active instance.
+
+---
+
+# Module Registration
+
+The rendering implementation requires a way to associate Module types with their presentation components.
+
+Conceptually:
+
+```text
+Module Type
+    ↓
+Module Registration
+    ↓
+Presentation Component
+```
+
+Adding a new Module should not require changes to:
+
+* Pane recursion,
 * Workspace operations,
-* Domain behavior,
-* Application Services,
-* or the Resource Architecture.
+* Buffer behavior,
+* or layout generation.
 
-The rendering implementation presents the Workspace Runtime.
+Only the Module presentation registration should need to understand the new rendering component.
 
-It does not define it.
+---
 
-# Layout Generation
+# Layout Derivation
 
-The Workspace Runtime defines the logical structure of the application as a recursive Pane tree.
+The Pane tree defines logical Workspace structure.
 
-The rendering implementation is responsible for transforming that tree into a two-dimensional layout that can be presented to the user.
-
-The layout algorithm derives the visible workspace directly from the recursive Pane hierarchy.
-
-The Pane tree remains the source of truth.
-
-The generated layout is a presentation of that tree.
+Rendering derives visible layout from that tree.
 
 Conceptually:
 
@@ -282,28 +376,27 @@ flowchart TD
 
     Tree["Pane Tree"]
 
-    Layout["Layout Generation"]
+    Derivation["Layout Derivation"]
 
-    Grid["CSS Grid Layout"]
+    Layout["Visible Layout"]
 
-    UI["Visible Workspace"]
-
-    Tree --> Layout
-
-    Layout --> Grid
-
-    Grid --> UI
+    Tree --> Derivation
+    Derivation --> Layout
 ```
+
+The Pane tree remains the source of Workspace structure.
+
+Rendered layout is derived from it.
 
 ---
 
 # Recursive Layout
 
-Each Branch Pane divides the available layout into two regions.
+Every Branch Pane divides one logical region into two child regions.
 
-Each child Pane then repeats the same process recursively until every Leaf Pane has been assigned a visible region.
+Those children may then divide their own regions recursively.
 
-Conceptually:
+For example:
 
 ```text
 Root Pane
@@ -321,394 +414,170 @@ Root Pane
                 Bottom Pane
 ```
 
-The layout is therefore generated by traversing the recursive Pane tree rather than by manually positioning individual components.
-
-This allows layouts of arbitrary complexity to be generated from a single runtime model.
+Rendering traverses this recursive structure to derive the final two-dimensional layout.
 
 ---
 
-# Layout Algorithm
+# Layout Is Derived State
 
-The current implementation generates a CSS Grid from the Pane tree.
+Visible layout should not become another source of truth.
 
-Rather than assigning fixed row and column sizes, the layout algorithm determines the minimum grid capable of representing the current Workspace.
+Workspace operations change Runtime Objects first.
 
-To accomplish this, the recursive Pane hierarchy is analyzed to determine the smallest common subdivision that satisfies every nested split.
+Rendering derives the new presentation afterward.
 
-The resulting grid is generated using a least common denominator strategy.
+Conceptually:
 
-This allows nested horizontal and vertical splits to coexist within a consistent two-dimensional grid while preserving the logical relationships described by the Pane tree.
+```text
+Workspace Operation
+        ↓
+Pane Tree Changes
+        ↓
+Layout Derivation
+        ↓
+Rendered Workspace
+```
 
-The algorithm produces a grid that is entirely derived from the runtime model.
-
-No layout information is duplicated outside of the Pane tree.
+This avoids maintaining independent Runtime and layout models that must later be synchronized.
 
 ---
 
-# Rendering Independence
+# Current Layout Implementation
 
-The layout algorithm is an implementation detail of the rendering layer.
+The current application realizes Workspace layout using CSS Grid.
 
-The Workspace Runtime remains unaware of:
+Conceptually:
+
+```text
+Pane Tree
+    ↓
+Layout Algorithm
+    ↓
+CSS Grid
+    ↓
+Visible Workspace
+```
+
+The Workspace Runtime does not understand:
 
 * CSS Grid,
 * rows,
 * columns,
 * template areas,
-* or rendering technologies.
+* or browser layout primitives.
 
-Its responsibility ends with the Pane tree.
-
-The rendering implementation determines how that tree is realized visually.
-
-Separating the runtime model from the layout algorithm allows future rendering technologies to generate the same visible Workspace without changing the Workspace Runtime.
+Those concepts belong to the rendering implementation.
 
 ---
 
-# Stable Layout
+# Layout Algorithm
 
-Workspace operations modify the Pane tree rather than the rendered layout directly.
+The current implementation analyzes nested Pane splits and derives a two-dimensional CSS Grid capable of representing them.
 
-Whenever the Pane tree changes, the rendering implementation derives a new layout from the updated runtime model.
+Nested horizontal and vertical divisions must ultimately be mapped into one grid.
 
-Because the layout is always generated from the Pane tree, there is no separate layout state that must be synchronized.
+The exact algorithm is implementation-specific.
 
-The runtime model remains the single source of truth.
+The enduring architectural requirement is:
 
-This greatly simplifies layout management while ensuring the visible Workspace always reflects the current runtime state.
-
-# Stable Component Identity
-
-One of the primary goals of the rendering implementation is to preserve the identity of existing Module Instances while the Workspace evolves.
-
-Workspace operations such as:
-
-* splitting a Pane,
-* deleting a Pane,
-* replacing a Buffer,
-* or restoring a Workspace,
-
-should affect only the Runtime Objects directly involved in the operation.
-
-Existing Module Instances should remain active whenever possible.
+> **The visible layout is derived from the Pane tree rather than maintained as an independent Workspace model.**
 
 ---
 
-# Identity Before Rendering
+# Runtime Identity During Rendering
 
-The rendering implementation treats Runtime Object identity as more important than visual position.
+Runtime Objects have stable identities.
 
-A Pane may:
+Rendering must respect those identities.
 
-* change size,
-* change position,
-* gain or lose neighboring Panes,
-* or become part of a different layout,
+Relevant identities include:
 
-while continuing to represent the same Runtime Object.
+* Pane identity,
+* Buffer identity,
+* and Module Instance identity.
 
-Likewise, a Buffer continues to represent the same Module Instance regardless of where its Pane appears within the Workspace.
+Visual position does not define identity.
 
-Conceptually:
+A Pane may move or resize while remaining the same Pane.
+
+A Buffer may move with that Pane while remaining the same active interaction.
+
+---
+
+# Identity Before Position
+
+For example:
 
 ```text
 Before
 
 Pane A
-
     Buffer A
-
         Bible Reader
 ```
+
+may become:
 
 ```text
 After Split
 
-Branch
+Branch Pane
 
     Pane A
-
         Buffer A
-
             Bible Reader
 
     Pane B
-
         Buffer B
-
             Notes
 ```
 
-The Bible Reader has not been recreated.
+`Pane A` and `Buffer A` are still the same Runtime Objects.
 
-Only the Workspace structure has changed.
+The Bible Reader Module Instance should therefore remain active.
+
+Only the surrounding layout changed.
 
 ---
 
-# Stable Runtime Identity
+# Stable Component Identity
 
-Each Runtime Object maintains a stable identity throughout its lifetime.
+Preserving Runtime identity allows rendering to preserve presentation state such as:
+
+* scroll position,
+* focus,
+* selection,
+* transient component state,
+* keyboard interaction state,
+* and other presentation-specific state.
+
+A Workspace change affecting one Pane should not unnecessarily recreate unrelated Module presentations elsewhere.
+
+---
+
+# Incremental Rendering
+
+Most Runtime operations affect only part of the Workspace.
 
 Examples include:
 
-* Pane identifiers,
-* Buffer identifiers,
-* and Module Instance state.
+* splitting one Pane,
+* deleting one Pane,
+* replacing one Buffer,
+* opening one Module Instance,
+* or changing active selection.
 
-Rendering is driven by these identities rather than by the visual layout.
+Rendering should preserve unaffected presentation instances whenever their Runtime Objects remain unchanged.
 
-This allows the rendering implementation to recognize when an existing Runtime Object should continue to exist even though the surrounding Workspace has changed.
+The architectural requirement is stable presentation for stable Runtime identity.
 
-Stable identity allows the rendering layer to preserve:
-
-* component state,
-* scroll position,
-* focus,
-* user selections,
-* keyboard state,
-* and other runtime information.
+The exact framework optimization strategy is implementation.
 
 ---
-
-# Minimal Rendering
-
-Workspace operations modify only the Runtime Objects directly affected by the operation.
-
-The rendering implementation then updates only the corresponding portions of the visible application.
-
-For example, splitting one Pane should not recreate unrelated Module Instances elsewhere in the Workspace.
-
-Likewise, deleting a neighboring Pane should not reset an active Bible Reader or Notes editor.
-
-The rendering implementation therefore strives to preserve existing component instances whenever their corresponding Runtime Objects remain unchanged.
-
----
-
-# Runtime-Driven Rendering
-
-The visible application is always derived from the current Runtime Objects.
-
-Rendering decisions are based upon changes to Runtime Object identity rather than changes to the surrounding layout.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Runtime["Runtime Objects"]
-
-    Identity["Stable Identity"]
-
-    Rendering["Rendering"]
-
-    UI["Visible Application"]
-
-    Runtime --> Identity
-
-    Identity --> Rendering
-
-    Rendering --> UI
-```
-
-This allows the Workspace layout to evolve independently from the lifetime of individual Module Instances.
-
-Layout may change.
-
-Runtime Object identity remains stable.
-
----
-
-# Rendering Performance
-
-Preserving Runtime Object identity minimizes unnecessary rendering work.
-
-Only Runtime Objects that have actually changed require corresponding updates to the visible application.
-
-Unchanged Runtime Objects continue to reuse their existing rendered components.
-
-This approach improves both rendering performance and user experience.
-
-Users experience a continuous Workspace rather than a collection of pages that are repeatedly recreated as the layout changes.
-
----
-
-# Responsibility Boundary
-
-The Workspace Runtime owns Runtime Object identity.
-
-The rendering implementation respects that identity while presenting the visible application.
-
-Neither the rendering implementation nor the Workspace Runtime owns the behavior of Module Instances.
-
-Module behavior remains the responsibility of the Module and its associated Domain.
-
-This separation allows the Workspace to evolve without unnecessarily disrupting the user's current interaction.
-
-# Module Resolution
-
-The Workspace Runtime does not understand how individual Modules are implemented.
-
-Its responsibility ends with assigning a Buffer to a Leaf Pane.
-
-The rendering implementation is responsible for resolving the appropriate Module component for that Buffer.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Buffer["Buffer"]
-
-    ModuleType["Module Type"]
-
-    Resolver["Module Resolver"]
-
-    Component["Module Component"]
-
-    Buffer --> ModuleType
-
-    ModuleType --> Resolver
-
-    Resolver --> Component
-```
-
-The Buffer identifies which Module should be presented.
-
-The rendering implementation resolves that Module into the appropriate user interface component.
-
-This separation keeps the Workspace Runtime independent from application-specific presentation.
-
----
-
-# Dynamic Module Composition
-
-The Workspace Runtime does not maintain a fixed set of visible Modules.
-
-Instead, the visible application is composed dynamically from the Buffers currently present within the Workspace.
-
-Each Leaf Pane renders the Module associated with its Buffer.
-
-As Buffers are added, removed, or replaced, the rendering implementation naturally composes a different visible application without changing the underlying runtime architecture.
-
-For example:
-
-```text
-Workspace
-
-    Bible Reader
-
-    Notes
-
-    Search
-```
-
-may later become:
-
-```text
-Workspace
-
-    Bible Reader
-
-    Bible Reader
-
-    Reading Plan
-
-    Notes
-```
-
-The Workspace Runtime does not distinguish between these layouts.
-
-It simply presents the Runtime Objects currently contained within the Workspace.
-
----
-
-# Module Independence
-
-Each Module Instance is resolved independently.
-
-The rendering implementation does not require knowledge of neighboring Modules.
-
-A Module is rendered solely from the information contained within its associated Buffer.
-
-This allows multiple instances of the same Module type to coexist naturally.
-
-For example:
-
-```text
-Bible Reader
-
-Genesis 1
-```
-
-and
-
-```text
-Bible Reader
-
-Romans 8
-```
-
-represent two independent Module Instances.
-
-Each is resolved independently despite sharing the same Module type.
-
----
-
-# Extensible Composition
-
-The rendering implementation is intentionally open to new Module types.
-
-Adding a new Module requires:
-
-* registering the Module,
-* associating it with a Module type,
-* and providing the corresponding rendering component.
-
-No changes are required to:
-
-* the Workspace Runtime,
-* Pane rendering,
-* Buffer management,
-* or the layout algorithm.
-
-The rendering implementation simply resolves the new Module when requested by a Buffer.
-
-This allows the application to grow through composition rather than modification.
-
----
-
-# Responsibility Boundary
-
-The Workspace Runtime owns:
-
-* Runtime Objects,
-* Pane relationships,
-* Buffer assignment,
-* and Module placement.
-
-The rendering implementation owns:
-
-* Module resolution,
-* component creation,
-* and presentation.
-
-Modules own:
-
-* user interaction,
-* application behavior,
-* and communication with Domains.
-
-Each layer owns a distinct responsibility.
-
-Together they produce a runtime that is both extensible and independent from individual Module implementations.
 
 # Rendering Updates
 
-The rendering implementation reacts to changes made by the Workspace Runtime.
-
-The Workspace Runtime remains the source of truth.
-
-Rendering is a consequence of runtime changes rather than an independent process.
+Rendering follows Runtime changes.
 
 Conceptually:
 
@@ -716,209 +585,322 @@ Conceptually:
 sequenceDiagram
 
     participant User
-    participant Module
+    participant Module as Module Instance
     participant Runtime as Workspace Runtime
-    participant Renderer as Rendering Implementation
+    participant Renderer as Runtime Rendering
 
-    User->>Module: Perform action
-    Module->>Runtime: Request runtime operation
+    User->>Module: Perform interaction
+    Module->>Runtime: Request Runtime operation
     Runtime->>Runtime: Update Runtime Objects
-    Runtime-->>Renderer: Runtime changed
-    Renderer->>Renderer: Derive layout
-    Renderer->>Renderer: Resolve Modules
+    Runtime-->>Renderer: Runtime state changed
+    Renderer->>Renderer: Derive layout and presentation
     Renderer-->>User: Present updated Workspace
 ```
 
-The rendering implementation does not initiate Workspace changes.
+Rendering does not own the Workspace operation.
 
-It observes the current Runtime Objects and presents their latest state.
-
----
-
-# Incremental Updates
-
-Most user interactions affect only a small portion of the Workspace.
-
-Examples include:
-
-* opening a Module,
-* closing a Pane,
-* replacing a Buffer,
-* changing the active Module,
-* or updating the Workspace layout.
-
-The rendering implementation updates only the Runtime Objects affected by the operation.
-
-Unchanged Runtime Objects continue to preserve their existing identity and rendered state.
-
-This minimizes unnecessary rendering work while preserving a continuous user experience.
+It presents the resulting state.
 
 ---
 
-# Runtime-Driven Presentation
+# Rendering and Domain Behavior
 
-The visible application is always derived from the current Runtime Objects.
+Rendering presents interactions with Domain behavior.
 
-Rendering does not maintain an independent representation of the Workspace.
+It does not own that behavior.
 
-Instead, each rendering pass reflects the current runtime state.
+For example, a Bible Reader presentation may:
+
+* display Scripture,
+* collect user input,
+* invoke Bible Domain behavior,
+* and present the result.
+
+The Bible Domain remains responsible for:
+
+* Scripture behavior,
+* annotations,
+* navigation rules,
+* search behavior,
+* and Bible Domain Objects.
+
+The fact that the behavior is visible inside a component does not transfer ownership to rendering.
+
+---
+
+# Rendering and Runtime Behavior
+
+The same rule applies to Runtime behavior.
+
+A UI control may allow the user to:
+
+* split a Pane,
+* close a Pane,
+* open a Module,
+* or select another Buffer.
+
+The control requests behavior through the Workspace Runtime's Public API.
+
+The component does not become the owner of the Workspace operation merely because the user activated it there.
+
+---
+
+# Rendering and Public APIs
+
+Presentation crosses ownership boundaries through Public APIs.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Runtime["Runtime Objects"]
-
-    Changes["Runtime Changes"]
-
-    Renderer["Rendering Implementation"]
-
-    UI["Visible Workspace"]
-
-    Runtime --> Changes
-    Changes --> Renderer
-    Renderer --> UI
+```text
+Presentation
+    │
+    ├── Workspace Runtime Public API
+    │       ↓
+    │   Runtime behavior
+    │
+    └── Domain Public API
+            ↓
+        Domain behavior
 ```
 
-This keeps the Workspace Runtime as the single source of truth for the application's visible structure.
+Rendering remains focused on presentation.
 
-The rendering implementation remains a projection of that model.
-
----
-
-# Event-Driven Rendering
-
-Rendering updates occur in response to runtime events.
-
-Examples include:
-
-* creating a Pane,
-* deleting a Pane,
-* replacing a Buffer,
-* restoring a Workspace,
-* or changing Module state.
-
-Each event updates the Runtime Objects.
-
-The rendering implementation then presents the resulting Workspace.
-
-Rendering therefore follows runtime events rather than driving them.
-
-This keeps presentation independent from application behavior while allowing the visible Workspace to remain synchronized with the underlying runtime model.
+It does not need access to the owner's internal implementation.
 
 ---
 
-# Responsibility Boundary
+# Current Rendering Implementation
 
-The Workspace Runtime owns the Runtime Objects and their evolution.
+The current rendering implementation uses:
 
-The rendering implementation owns how those Runtime Objects are presented.
+* Svelte,
+* recursive Pane components,
+* dynamic Module component resolution,
+* CSS Grid,
+* stable Pane identities,
+* stable Buffer identities,
+* and component preservation.
 
-Modules request changes through Application Services.
+These technologies realize the rendering responsibility.
 
-The rendering implementation simply reflects the resulting runtime state.
+They do not define it.
 
-This separation ensures the visible application always remains a faithful presentation of the Workspace Runtime.
+---
+
+# Current Pane Components
+
+Pane components present Pane Runtime Objects.
+
+A Pane component may:
+
+* determine whether the Pane is a Branch or Leaf,
+* recursively present children,
+* apply derived layout information,
+* and render the Module presentation associated with a Leaf Pane's Buffer.
+
+The component presents Runtime state.
+
+It does not own the Runtime state.
+
+---
+
+# Current Module Components
+
+A Module presentation may currently be implemented as a Svelte component.
+
+Conceptually:
+
+```text
+Domain Behavior
+        ↓
+Module Instance
+        ↓
+Presentation Component
+        ↓
+Visible Interaction
+```
+
+The component is an implementation of presentation.
+
+It is not the Domain behavior.
+
+It is not the Module concept itself.
+
+---
+
+# Rendering Performance
+
+Rendering performance is important because several Module Instances may remain active simultaneously.
+
+Stable Runtime identity and incremental updates help reduce unnecessary component recreation.
+
+Architecturally, the important requirements are:
+
+* Runtime identity remains stable,
+* unaffected interactions remain intact,
+* layout is derived from Runtime structure,
+* and rendering does not maintain an independent authoritative Workspace model.
+
+Specific optimization techniques may change over time.
+
+---
+
+# Rendering Independence
+
+Rendering technology should remain replaceable.
+
+The Workspace Runtime should not depend on whether rendering uses:
+
+* Svelte,
+* another component framework,
+* CSS Grid,
+* another layout system,
+* or another future presentation mechanism.
+
+Likewise, Domains should not depend upon rendering technology.
+
+The responsibility is architectural.
+
+The technology is implementation.
+
+---
 
 # Future Evolution
 
-The rendering architecture has been intentionally designed to evolve independently from the Workspace Runtime.
+Rendering may evolve through capabilities such as:
 
-Because rendering is a projection of the runtime model, improvements to the rendering implementation do not require changes to the Runtime Objects or their relationships.
+* alternative layout algorithms,
+* stronger Module registration,
+* virtualization,
+* detached presentation surfaces,
+* multiple simultaneous Workspace views,
+* improved incremental rendering,
+* or alternative component technologies.
 
-Future capabilities extend the rendering layer while preserving the Workspace Runtime.
+These changes should remain beneath the same rendering responsibility.
 
-Conceptually:
+They should not require the Workspace Runtime or Domains to be redesigned.
+
+---
+
+# Design Rules
+
+## Rendering Presents Runtime State
+
+The Workspace Runtime defines what exists.
+
+Rendering presents it.
+
+---
+
+## Runtime Objects Are Defined Elsewhere
+
+Workspace, Pane, Buffer, and Module Instance are defined by **002-workspace-runtime.md**.
+
+This document consumes those concepts rather than redefining them.
+
+---
+
+## Layout Is Derived
+
+Visible layout is derived from the Pane tree.
+
+It is not an independent Workspace model.
+
+---
+
+## Identity Is Stable
+
+Rendering should preserve existing presentation state when the corresponding Runtime Objects remain unchanged.
+
+---
+
+## Rendering Does Not Own Behavior
+
+Rendering may invoke Runtime or Domain behavior through Public APIs.
+
+It does not assume ownership of those responsibilities.
+
+---
+
+## Rendering Technologies Are Implementation
+
+Svelte and CSS Grid are current implementation choices.
+
+They do not define the architecture.
+
+---
+
+# Conceptual Model
+
+The complete rendering relationship can be summarized as:
 
 ```mermaid
 flowchart TD
 
     Runtime["Workspace Runtime"]
 
-    Projection["Rendering Implementation"]
+    Panes["Pane Tree"]
+
+    Buffers["Buffers"]
+
+    Modules["Module Instances"]
+
+    Rendering["Runtime Rendering"]
 
     UI["Visible Application"]
 
-    Runtime --> Projection
+    Runtime --> Panes
+    Panes --> Buffers
+    Buffers --> Modules
 
-    Projection --> UI
+    Panes --> Rendering
+    Buffers --> Rendering
+    Modules --> Rendering
 
-    Projection -.-> Multi["Multiple Workspaces"]
-
-    Projection -.-> Snapshots["Workspace Snapshots"]
-
-    Projection -.-> Virtual["Virtualized Rendering"]
-
-    Projection -.-> Windows["Detached Windows"]
-
-    Projection -.-> Modules["Additional Module Types"]
-
-    Projection -.-> Frameworks["Alternative Rendering Technologies"]
+    Rendering --> UI
 ```
 
-The Workspace Runtime remains the source of truth.
+The Workspace Runtime defines the active structure.
 
-New rendering capabilities extend the projection layer rather than changing the runtime model.
-
-As the application evolves, this separation allows the rendering implementation to adopt new technologies while preserving the same Workspace architecture.
+Rendering projects that structure into the visible application.
 
 ---
 
 # Big Takeaway
 
-The rendering implementation is not the application.
+Runtime Rendering has one responsibility:
 
-It is a projection of the application's runtime model.
+> **Present the Workspace Runtime.**
 
-Conceptually:
+The Runtime defines:
 
-```mermaid
-flowchart TD
-
-    Runtime["Workspace Runtime"]
-
-    Projection["Rendering Implementation"]
-
-    Presentation["Visible Application"]
-
-    User["User"]
-
-    Runtime --> Projection
-
-    Projection --> Presentation
-
-    User --> Presentation
+```text
+Workspace
+    ↓
+Pane
+    ↓
+Buffer
+    ↓
+Module Instance
 ```
 
-The Workspace Runtime owns the Runtime Objects.
+Rendering does not redefine those concepts.
 
-The rendering implementation projects those Runtime Objects into a visible application.
+It:
 
-The user interacts with that presentation while the Workspace Runtime remains the source of truth.
+* recursively presents the Pane tree,
+* derives visible layout,
+* resolves Module presentation components,
+* preserves presentation identity,
+* and reflects Runtime changes in the visible application.
 
-This architecture intentionally separates:
+The Pane tree defines logical structure.
 
-```mermaid
-flowchart LR
+Rendering derives presentation from it.
 
-    Runtime["Runtime"]
+Svelte, CSS Grid, recursive components, and dynamic component resolution are current implementation mechanisms.
 
-    Projection["Projection"]
+They may change.
 
-    Presentation["Presentation"]
-
-    Runtime --> Projection
-
-    Projection --> Presentation
-```
-
-This separation allows the application to evolve independently at each layer.
-
-The runtime model defines the application.
-
-The rendering implementation realizes that model.
-
-The visible application presents it to the user.
-
-As long as each layer preserves its responsibility, the application can evolve through new Runtime Objects, rendering technologies, and presentation capabilities without changing its underlying architecture.
+The Runtime model should not need to.
