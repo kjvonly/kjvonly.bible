@@ -1,4 +1,4 @@
-# Resource Integration
+# Resource Boundary
 
 ## Status
 
@@ -8,848 +8,517 @@ Current
 
 # Purpose
 
-This document defines how the KJVOnly application integrates with the Resource Architecture.
+This document defines the boundary between the application's internal Domain model and Resources used to represent Domain information outside that model.
 
-It explains how Published Resources become Domain Objects used by the application and how Domain Objects are transformed back into Published Resources.
+Its primary question is:
 
-This document establishes the boundary between the application architecture and the Resource Architecture.
+> **When Domain information crosses the Resource Boundary, what changes representation and what remains owned by the application?**
 
----
-
-# Scope
-
-This document defines:
-
-* Resource Integration,
-* the flow of Published Resources into the application,
-* the flow of Domain Objects back into Published Resources,
-* integration responsibilities,
-* Domain Object construction,
-* Resource serialization,
-* and the ownership boundaries between the application and the Resource Architecture.
-
-It does not define:
-
-* Resource Identity,
-* Resource Resolution,
-* relay communication,
-* Resource Installation,
-* synchronization,
-* transport protocols,
-* or Published Resource formats.
-
-Those responsibilities are defined by the Resource Architecture.
-
-Likewise, this document does not define:
-
-* Workspace Runtime,
-* Domains,
-* Application Services,
-* Data Access,
-* or Technical Infrastructure.
-
-Those responsibilities are defined by the application architecture.
+Inside the application, behavior operates on Domain Objects. At the Resource Boundary, that information may be represented as Resources for publication, discovery, distribution, synchronization, or other external use.
 
 ---
 
-# Background
+# Boundary Model
 
-The application and the Resource Architecture serve different purposes.
+The Resource Boundary is part of the Application Architecture.
 
-The Resource Architecture manages Published Resources.
-
-The application operates on Domain Objects.
-
-Resource Integration provides the boundary between these two architectural models.
+It is not a separate architecture and does not introduce a separate "Resource Integration" layer between two architectural models.
 
 Conceptually:
 
-```mermaid
-flowchart LR
+```text
+Application
 
-    Resources["Resource Architecture"]
+    Domain
+        ↓
+    Domain Object
 
-    Integration["Resource Integration"]
+========== Resource Boundary ==========
 
-    Application["Application"]
-
-    Resources --> Integration
-
-    Integration --> Application
+    Resource
 ```
 
-The Resource Architecture supplies published representations of data.
+The Domain Object and Resource may represent the same underlying information, but they serve different purposes.
 
-The application consumes Domain Objects representing application behavior.
+The Domain Object expresses application meaning.
 
-Neither architecture replaces the other.
-
-They collaborate through a well-defined integration boundary.
+The Resource expresses that information in a form suitable for the Resource lifecycle.
 
 ---
 
-# Resource Integration Definition
+# Domain Objects and Resources
 
-Resource Integration is responsible for translating between the Published Resources managed by the Resource Architecture and the Domain Objects used by the application.
+A Domain Object is the application's internal representation of Domain information.
 
-It owns the application-facing integration between these two architectural models.
+A Resource is an external representation of that information.
 
-Conceptually:
+For example:
 
-```mermaid
-flowchart LR
-
-    Published["Published Resource"]
-
-    Resolution["Resource Resolution"]
-
-    Factory["Domain Object Factory"]
-
-    Object["Domain Object"]
-
-    Domain["Domain"]
-
-    Published --> Resolution
-
-    Resolution --> Factory
-
-    Factory --> Object
-
-    Object --> Domain
+```text
+Bible Domain
+    ↓
+Chapter Domain Object
+    ↓
+========== Resource Boundary ==========
+    ↓
+Chapter Resource
 ```
 
-Published Resources are never consumed directly by Modules or Domain Services.
+The application does not replace its Domain model with the Resource model.
 
-Instead, Resource Resolution produces resolved Resource content.
+Likewise, the Resource representation does not become the model on which Domain behavior operates.
 
-The owning Domain Object Factory constructs the corresponding Domain Object.
-
-From that point forward, the application operates exclusively on the Domain Object.
-
-The Published Resource representation no longer participates in application behavior.
+The boundary exists specifically to keep those representations distinct.
 
 ---
 
-# Architectural Boundary
+# What Crosses the Boundary
 
-The application and the Resource Architecture intentionally operate at different abstraction levels.
+Domain information crosses the Resource Boundary when it needs to participate in the Resource lifecycle.
 
-The Resource Architecture owns:
+This may include information that must be:
 
-* Published Resources,
-* Resource Identity,
-* Resource Resolution,
-* transport,
-* installation,
-* synchronization,
-* publication,
-* and Resource lifecycle management.
+* published,
+* discovered,
+* distributed,
+* synchronized,
+* archived,
+* or obtained from another publisher.
 
-The application owns:
+Not every Domain Object must have a Resource representation.
 
-* Domain Objects,
-* Domain behavior,
-* Modules,
-* Application Services,
-* Data Access,
-* and the Workspace Runtime.
+A Domain Object that exists only as local application state may remain entirely within the Domain model.
 
-Resource Integration forms the boundary between these responsibilities.
-
-Neither side reaches across that boundary to manipulate the internal implementation of the other.
-
-Instead, they exchange only the representations required to construct or serialize Domain Objects.
-
-# Resource to Domain Object
-
-Published Resources represent serialized application data.
-
-They are designed for publication, discovery, synchronization, and transport.
-
-The application does not operate directly on Published Resources.
-
-Instead, Resource Resolution produces resolved Resource content which is then transformed into a Domain Object by the owning Domain.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Published["Published Resource"]
-
-    Resolution["Resource Resolution"]
-
-    Content["Resolved Resource Content"]
-
-    Factory["Domain Object Factory"]
-
-    Object["Domain Object"]
-
-    Published --> Resolution
-
-    Resolution --> Content
-
-    Content --> Factory
-
-    Factory --> Object
-```
-
-The Domain Object Factory belongs to the owning Domain.
-
-It is responsible for:
-
-* validating the resolved content,
-* constructing the appropriate Domain Object,
-* enforcing Domain invariants,
-* and rejecting invalid representations.
-
-Once constructed, the Domain Object becomes part of the application's Domain model.
-
-The Published Resource is no longer used by the application.
+The need for external representation should therefore be an explicit architectural decision.
 
 ---
 
-# Domain Object to Resource
+# Crossing Out of the Application
 
-When application behavior modifies a Domain Object, the application continues to operate exclusively on that Domain Object.
-
-Only when the object must be published does it become a Published Resource.
-
-The owning Domain performs this transformation through its Resource Serializer.
+When Domain information must be published or otherwise represented externally, the Domain Object is transformed into a Resource representation.
 
 Conceptually:
 
-```mermaid
-flowchart LR
-
-    Object["Domain Object"]
-
-    Serializer["Resource Serializer"]
-
-    Representation["Resource Representation"]
-
-    Publication["Resource Architecture"]
-
-    Object --> Serializer
-
-    Serializer --> Representation
-
-    Representation --> Publication
+```text
+Domain
+    ↓
+Domain Object
+    ↓
+========== Resource Boundary ==========
+    ↓
+Resource
+    ↓
+External Resource Lifecycle
 ```
 
-The Resource Serializer belongs to the owning Domain.
+The Domain continues to define what the information means and which invariants make it valid.
 
-It understands how the Domain Object should be represented for publication.
+The Resource representation expresses that meaning according to the requirements of the Resource Boundary.
 
-The Resource Architecture then assumes responsibility for:
-
-* publication,
-* synchronization,
-* transport,
-* signing,
-* relay communication,
-* and lifecycle management.
-
-The Domain's responsibility ends when it produces the Resource representation.
+Once represented as a Resource, responsibilities such as Resource identity, publication, discovery, synchronization, and transport belong to the Resource lifecycle rather than Domain behavior.
 
 ---
 
-# Transformation Ownership
+# Preserving Domain Meaning
 
-Transformation responsibilities are intentionally divided between the application and the Resource Architecture.
+Crossing the Resource Boundary must not discard or redefine Domain meaning.
+
+The owning Domain determines the structure and rules that make its information valid. The Resource representation must preserve enough of that meaning for the corresponding Domain Object to be reconstructed correctly.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Resources["Resource Architecture"]
-
-    Factory["Domain Object Factory"]
-
-    Domain["Domain"]
-
-    Serializer["Resource Serializer"]
-
-    Publication["Resource Architecture"]
-
-    Resources --> Factory
-
-    Factory --> Domain
-
-    Domain --> Serializer
-
-    Serializer --> Publication
+```text
+Domain Meaning
+      ↓
+Domain Object
+      ↓
+Resource Representation
+      ↓
+Domain Object
+      ↓
+Same Domain Meaning
 ```
 
-The Resource Architecture owns:
+The representation may change.
 
-* obtaining Published Resources,
-* resolving representations,
-* publishing representations,
-* and managing Resource lifecycles.
-
-The Domain owns:
-
-* constructing Domain Objects,
-* validating Domain data,
-* interpreting Domain behavior,
-* modifying Domain Objects,
-* and serializing Domain Objects for publication.
-
-This separation allows each architecture to evolve independently while maintaining a stable integration boundary.
+The application meaning should not.
 
 ---
 
-# Stable Integration Boundary
+# Crossing Into the Application
 
-Resource Integration exists to protect both architectures from unnecessary coupling.
+Information arriving from outside the application's local Domain model arrives as a Resource.
 
-The application should never depend upon:
-
-* relay events,
-* transport protocols,
-* serialization formats,
-* or Published Resource structures.
-
-Likewise, the Resource Architecture should never depend upon:
-
-* Module behavior,
-* Domain logic,
-* Workspace Runtime state,
-* or application presentation.
-
-The only responsibilities exchanged across this boundary are those required to construct or serialize Domain Objects.
-
-This allows the application and the Resource Architecture to evolve independently while preserving a clear and consistent integration model.
-
-# Resource Integration and Data Access
-
-Data Access is the primary consumer of Resource Integration.
-
-When a requested Domain Object is not available from the owning Domain Store, Data Access delegates retrieval to the Resource Architecture through the Resource Integration boundary.
+It does not immediately become authoritative application state.
 
 Conceptually:
 
-```mermaid id="m1y4ht"
-flowchart LR
-
-    Module["Module"]
-
-    Service["Domain Service"]
-
-    Data["Data Access"]
-
-    Store["Domain Store"]
-
-    Integration["Resource Integration"]
-
-    Resources["Resource Architecture"]
-
-    Object["Domain Object"]
-
-    Module --> Service
-
-    Service --> Data
-
-    Data --> Store
-
-    Store -->|"Miss"| Integration
-
-    Integration --> Resources
-
-    Integration --> Object
-
-    Object --> Data
+```text
+Resource
+    ↓
+Resolve Representation
+    ↓
+Construct Candidate Domain Object
+    ↓
+Validate Domain Meaning
+    ↓
+Acceptance Decision
+    ↓
+Installed Domain Object
 ```
 
-Data Access determines **when** Resource Integration is required.
+The Resource Boundary handles the external Resource representation and resolution process.
 
-Resource Integration determines **how** Domain Objects are obtained from the Resource Architecture.
+The owning Domain determines whether the resolved information constitutes valid Domain information.
 
-The caller remains unaware that Resource retrieval occurred.
+The application then determines whether that valid candidate should become part of its accepted local state.
 
 ---
 
-# Resource Installation
+# Candidate and Installed Domain Objects
 
-The Resource Architecture is responsible for obtaining and resolving Published Resources.
+An externally derived Domain Object is initially a candidate for installation.
 
-The application is responsible for deciding whether those Resources become installed Domain Objects.
-
-When Resource Integration successfully constructs a Domain Object, the owning Domain may choose to install that object into its Domain Store.
+Construction proves that the Resource can be interpreted as valid Domain information. It does not by itself make that candidate authoritative application state.
 
 Conceptually:
 
-```mermaid id="s0q4dj"
-flowchart LR
-
-    Resource["Published Resource"]
-
-    Factory["Domain Object Factory"]
-
-    Object["Domain Object"]
-
-    Store["Domain Store"]
-
-    Resource --> Factory
-
-    Factory --> Object
-
-    Object --> Store
+```text
+External Resource
+        ↓
+Candidate Domain Object
+        ↓
+Accept?
+   ┌────┴────┐
+   │         │
+  Yes        No
+   │         │
+   ↓         ↓
+Installed   Ignore
+Domain
+Object
 ```
 
-Installation represents the point at which a Resource becomes part of the application's local state.
+Only accepted candidates become installed Domain Objects.
 
-The Resource Architecture does not install Domain Objects.
-
-It supplies the information required for the application to construct them.
-
-The application determines how those Domain Objects participate in its local runtime.
+Application behavior operates on the accepted local model rather than directly on whatever Resources happen to be available externally.
 
 ---
 
-# Resource Integration and Domain Ownership
+# Local Authority at the Boundary
 
-Resource Integration does not own Domain Objects.
+The Resource Boundary is where the Local Authority principle becomes especially important.
 
-It provides the boundary through which Domain Objects are constructed and serialized.
+Receiving, discovering, or successfully resolving a Resource does not require the application to replace its current local state.
 
-Ownership always remains with the Domain.
+The network may provide a candidate.
 
-Conceptually:
+The application decides whether to accept it.
 
-```mermaid id="9j6tx7"
-flowchart TD
+For example, the application may already possess an installed Domain Object that should remain authoritative according to the applicable installation or synchronization rules.
 
-    Resources["Resource Architecture"]
-
-    Integration["Resource Integration"]
-
-    Domain["Owning Domain"]
-
-    Object["Domain Object"]
-
-    Resources --> Integration
-
-    Integration --> Domain
-
-    Domain --> Object
-```
-
-The Domain remains responsible for:
-
-* constructing Domain Objects,
-* validating Domain data,
-* interpreting application behavior,
-* storing Domain Objects,
-* and serializing Domain Objects for publication.
-
-Resource Integration coordinates the transformation.
-
-It does not become the owner of the resulting objects.
+Those detailed rules are defined by the Resource Boundary decisions responsible for installation and synchronization.
 
 ---
 
-# Resource Independence
+# Locally Created Domain Objects
 
-The application architecture intentionally remains independent from the structure of Published Resources.
+Domain Objects created inside the application follow a different path.
 
-Modules interact with Domain Objects.
+For example:
 
-Domain Services coordinate Domain behavior.
-
-Application Services provide shared capabilities.
-
-Data Access retrieves Domain Objects.
-
-None of these responsibilities require knowledge of:
-
-* relay events,
-* Resource identifiers,
-* publication metadata,
-* transport protocols,
-* or serialized representations.
-
-Those concerns remain entirely within the Resource Architecture.
-
-This separation allows the transport architecture and the application architecture to evolve independently while preserving a stable integration boundary.
-
-# Installation Decisions
-
-Constructing a Domain Object does not automatically make it part of the application's local state.
-
-Before a newly constructed Domain Object replaces an existing installed object, the application determines whether the new object should be installed.
-
-This decision belongs to the application rather than the Resource Architecture.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Resource["Published Resource"]
-
-    Factory["Domain Object Factory"]
-
-    Object["Domain Object"]
-
-    Compare["Installation Decision"]
-
-    Store["Domain Store"]
-
-    Discard["Discard"]
-
-    Resource --> Factory
-
-    Factory --> Object
-
-    Object --> Compare
-
-    Compare -->|"Install"| Store
-
-    Compare -->|"Ignore"| Discard
+```text
+User Action
+    ↓
+Domain Behavior
+    ↓
+Local Domain Object
 ```
 
-Installation decisions are based upon the application's current state.
+The object originates inside the application's local authority and therefore does not need to pass through the same external acceptance boundary merely to become local Domain state.
 
-For example, the application may determine that:
+If that information later needs to be published, it crosses outward through the Resource Boundary:
 
-* no installed Domain Object currently exists,
-* the newly constructed Domain Object is newer,
-* the installed Domain Object is newer,
-* or another Domain-specific installation rule applies.
+```text
+Local Domain Object
+        ↓
+Resource Boundary
+        ↓
+Resource
+```
 
-The Resource Architecture is responsible for supplying valid Published Resources.
-
-The application is responsible for determining whether those Resources become installed Domain Objects.
-
-This distinction allows the application to maintain a consistent local state even when older or duplicate Published Resources are received from the network.
+External acceptance and local creation are therefore different flows.
 
 ---
 
-# Installed Domain Objects
+# Boundary Ownership
 
-An installed Domain Object represents the application's authoritative local representation of a Resource.
+Crossing the Resource Boundary does not transfer ownership of Domain meaning.
 
-Modules, Domain Services, Application Services, and Data Access operate exclusively on installed Domain Objects.
+For example:
 
-Published Resources are used only to construct candidate Domain Objects.
+```text
+Bible Domain
+    owns
+Chapter meaning and rules
 
-Only after the application accepts a candidate does it become the installed Domain Object for that Domain.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Published["Published Resource"]
-
-    Candidate["Candidate Domain Object"]
-
-    Installed["Installed Domain Object"]
-
-    Published --> Candidate
-
-    Candidate --> Installed
+Resource Boundary
+    represents
+Chapter information externally
 ```
 
-This distinction separates:
+The Bible Domain continues to determine what constitutes a valid Chapter.
 
-* transport,
-* application state,
-* and installation decisions.
+The Resource Boundary determines how that information participates in the Resource lifecycle.
 
-The application therefore remains the owner of its local state while the Resource Architecture remains responsible for resource publication, discovery, and synchronization.
-
-# Local Authority
-
-The application is the authoritative owner of its installed Domain Objects.
-
-Published Resources represent information available from the Resource Architecture.
-
-They do not automatically replace the application's local state.
-
-Every Published Resource received by the application becomes a candidate for installation.
-
-The application determines whether that candidate should become the installed Domain Object.
-
-Conceptually:
-
-```mermaid id="jd5m8r"
-flowchart TD
-
-    Published["Published Resource"]
-
-    Candidate["Candidate Domain Object"]
-
-    Installed["Installed Domain Object"]
-
-    Decision["Installation Decision"]
-
-    Published --> Candidate
-
-    Candidate --> Decision
-
-    Decision -->|"Accept"| Installed
-
-    Decision -->|"Reject"| Installed
-```
-
-The installed Domain Object always remains the application's authoritative representation.
-
-Receiving a Published Resource does not imply that the application's local state should change.
+This distinction prevents transport or publication concerns from becoming Domain behavior.
 
 ---
 
-# Version Decisions
+# Resource Boundary Responsibilities
 
-Installation decisions are made using the rules defined by the owning Domain and the application's synchronization model.
+The detailed Resource Boundary architecture defines responsibilities such as:
 
-One common example is version comparison.
+```text
+Resource Boundary
 
-Conceptually:
-
-```mermaid id="u9fw0q"
-flowchart LR
-
-    Installed["Installed Domain Object"]
-
-    Candidate["Candidate Domain Object"]
-
-    Compare["Compare Versions"]
-
-    Decision["Install?"]
-
-    Installed --> Compare
-
-    Candidate --> Compare
-
-    Compare --> Decision
+    Resource Identity
+    Resource Representation
+    Resource Discovery
+    Resource Resolution
+    Resource Installation
+    Resource Publication
+    Resource Synchronization
+    Resource Archives
+    Resource Lifecycle
 ```
 
-If the installed Domain Object already represents a newer version, the candidate is discarded.
+Those decisions are documented in `02_resource-boundary`.
 
-The application continues using the installed Domain Object without interruption.
-
-Likewise, if the candidate represents newer application data, it may replace the installed object.
-
-The decision belongs entirely to the application.
-
-The Resource Architecture simply provides valid Published Resources for consideration.
+This document defines their relationship to the Application's Domain model rather than repeating their detailed behavior.
 
 ---
 
-# Stable Local State
+# Resource Boundary and Data Access
 
-This model intentionally separates:
-
-* resource discovery,
-* resource publication,
-* application state,
-* and installation decisions.
-
-The application therefore remains resilient when:
-
-* relays temporarily lag behind,
-* duplicate Resources are received,
-* older Published Resources are discovered,
-* or multiple publishers provide equivalent representations.
-
-Regardless of the source, every Published Resource follows the same integration process.
-
-Only accepted candidates become part of the application's local state.
-
-This allows the application to maintain one authoritative installed Domain Object while continuing to participate in a decentralized resource network.
-
-# Architectural Independence
-
-Resource Integration intentionally separates the application architecture from the Resource Architecture.
-
-The application is concerned with Domain Objects and application behavior.
-
-The Resource Architecture is concerned with Published Resources and resource lifecycles.
-
-Neither architecture requires knowledge of the internal implementation of the other.
+Data Access may use the Resource Boundary when a requested Domain Object cannot be satisfied from the accepted local model.
 
 Conceptually:
 
-```mermaid
-flowchart LR
-
-    Application["Application"]
-
-    Integration["Resource Integration"]
-
-    Resources["Resource Architecture"]
-
-    Application --> Integration
-
-    Integration --> Resources
+```text
+Domain Object Request
+        ↓
+Data Access
+        ↓
+Local Model
+   ┌────┴────┐
+   │         │
+ Found     Missing
+   │         │
+   ↓         ↓
+ Return   Resource Boundary
+               ↓
+         Accepted Domain Object
+               ↓
+             Return
 ```
 
-This separation allows each architecture to evolve independently while preserving a stable integration boundary.
+The caller still requests a Domain Object.
 
-Changes to:
+It does not request a Resource, relay event, Blossom object, or transport operation.
 
-* Resource representations,
-* publication mechanisms,
-* transport protocols,
-* synchronization strategies,
-* or discovery mechanisms
-
-should not require changes to application behavior.
-
-Likewise, changes to:
-
-* Workspace Runtime,
-* Modules,
-* Domains,
-* Application Services,
-* or Data Access
-
-should not require changes to the Resource Architecture.
-
-Each architecture owns its own responsibilities.
-
-Resource Integration coordinates the exchange between them.
+The Resource Boundary is one way the application may make the requested Domain Object available.
 
 ---
 
-# Stable Integration Model
+# Resource Boundary and Infrastructure
 
-The Resource Integration boundary intentionally limits what crosses between the application and the Resource Architecture.
+The Resource Boundary defines Resource meaning and lifecycle.
 
-The Resource Architecture supplies representations suitable for constructing Domain Objects.
+Infrastructure provides technical mechanisms used to implement those responsibilities.
 
-The application supplies representations suitable for publication.
+For example:
 
-Neither architecture exchanges internal implementation details.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Published["Published Resource"]
-
-    Candidate["Candidate Domain Object"]
-
-    Installed["Installed Domain Object"]
-
-    Representation["Published Representation"]
-
-    Published --> Candidate
-
-    Candidate --> Installed
-
-    Installed --> Representation
+```text
+Resource Publication
+        ↓
+Resource Boundary responsibility
+        ↓
+Networking / Signing
+        ↓
+Technical capabilities
+        ↓
+Nostr / WebSocket / Browser APIs
 ```
 
-The application never exposes its internal Domain Objects directly to the Resource Architecture.
+Likewise:
 
-Likewise, the Resource Architecture never exposes Published Resources directly to Modules or Domain Services.
+```text
+External Resource Content
+        ↓
+Resource Boundary
+        ↓
+Blob Retrieval / Networking
+        ↓
+Blossom / HTTP
+```
 
-Each architecture operates exclusively on its own model while exchanging only the representations required for integration.
+Nostr and Blossom are therefore current implementation technologies used beneath Resource Boundary responsibilities.
+
+They do not define the Resource Boundary itself.
 
 ---
 
-# Benefits
+# Deciding Whether Information Needs a Resource
 
-This separation provides several important architectural benefits.
+When adding new Domain information, first determine whether it needs to cross the Resource Boundary.
 
-It allows:
+Ask:
 
-* the application to evolve independently of transport technologies,
-* the Resource Architecture to evolve independently of application behavior,
-* Domain Objects to remain stable regardless of representation changes,
-* Published Resources to evolve without affecting Modules,
-* and new transport implementations to be introduced without modifying application logic.
+> **Does this information need to exist outside the application's local Domain model?**
 
-By maintaining this separation, Resource Integration protects both architectures from unnecessary coupling while providing a consistent and predictable integration model.
+If the answer is no, no Resource representation is required merely because other Domain Objects have one.
 
-# Future Evolution
+If the answer is yes, determine what must be preserved when that information crosses the boundary.
 
-Resource Integration has been intentionally designed as a stable architectural boundary between the application architecture and the Resource Architecture.
+Questions include:
 
-As either architecture evolves, Resource Integration should continue to translate between Published Resources and Domain Objects without allowing either side to depend upon the internal implementation of the other.
+> **Which Domain owns the information?**
 
-Conceptually:
+> **What Domain meaning and invariants must survive representation?**
 
-```mermaid
-flowchart TD
+> **Does the information need publication, discovery, synchronization, or another Resource lifecycle capability?**
 
-    Resources["Resource Architecture"]
+> **What acceptance rules apply when the information returns from outside the application?**
 
-    Integration["Resource Integration"]
+Only after those architectural questions are answered should the specific representation or transport implementation be chosen.
 
-    Application["Application Architecture"]
+---
 
-    Resources --> Integration
+# Adding a Resource Representation
 
-    Integration --> Application
+The architectural reasoning should proceed in this order:
 
-    Application -.-> FutureApp["Future Application"]
-
-    Resources -.-> FutureResources["Future Resource Architecture"]
+```text
+What Domain information is involved?
+        ↓
+Which Domain gives it meaning?
+        ↓
+Does it need to leave the local Domain model?
+        │
+        ├── No → Keep it internal
+        │
+        └── Yes
+             ↓
+What Domain meaning must survive the boundary?
+        ↓
+What Resource lifecycle capabilities are required?
+        ↓
+What makes an inbound candidate valid?
+        ↓
+What determines whether it becomes installed?
+        ↓
+Define the Resource representation
+        ↓
+Choose implementation
 ```
 
-Future enhancements may introduce:
+This keeps representation and transport decisions subordinate to application meaning.
 
-* new Resource representations,
-* additional transport mechanisms,
-* new Domain types,
-* alternative publication strategies,
-* or different persistence implementations.
+---
 
-These changes should strengthen the Resource Integration boundary rather than bypass it.
+# Example: Publishing a Note
 
-As long as Published Resources remain external representations and Domain Objects remain the application's internal model, both architectures may evolve independently without changing their conceptual relationship.
+Suppose a Note must be shared outside the local application.
+
+The Note already belongs to the Notes Domain:
+
+```text
+Notes Domain
+    ↓
+Note Domain Object
+```
+
+The first architectural decision is not which Nostr event to create.
+
+The decision is that Note information must cross the Resource Boundary.
+
+```text
+Notes Domain
+    ↓
+Note Domain Object
+    ↓
+========== Resource Boundary ==========
+    ↓
+Note Resource
+```
+
+The Notes Domain continues to define what a valid Note means.
+
+The Resource Boundary defines how that information is represented and participates in publication, identity, discovery, and synchronization.
+
+A particular Nostr event representation is chosen only after those responsibilities are established.
+
+---
+
+# Example: Receiving Domain Information
+
+The inbound direction follows the reverse relationship but adds local acceptance.
+
+```text
+External Resource
+        ↓
+Resource Boundary
+        ↓
+Candidate Domain Object
+        ↓
+Domain Validation
+        ↓
+Application Acceptance
+        ↓
+Installed Domain Object
+```
+
+The important architectural distinction is that **valid external information and accepted local state are not the same thing**.
+
+A Resource can be valid without replacing the Domain Object the application currently considers authoritative.
 
 ---
 
 # Big Takeaway
 
-Resource Integration is the architectural boundary between the application's Domain model and the Resource model.
+The Resource Boundary separates the application's internal Domain model from external Resource representations.
 
-The Resource Architecture publishes, discovers, resolves, and synchronizes Published Resources.
+Inside the application:
 
-The application constructs, installs, and operates upon Domain Objects.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Published["Published Resource"]
-
-    Resolution["Resource Resolution"]
-
-    Candidate["Candidate Domain Object"]
-
-    Decision["Installation Decision"]
-
-    Installed["Installed Domain Object"]
-
-    Domain["Domain"]
-
-    Published --> Resolution
-
-    Resolution --> Candidate
-
-    Candidate --> Decision
-
-    Decision --> Installed
-
-    Installed --> Domain
+```text
+Domain
+    ↓
+Domain Object
 ```
 
-Published Resources are external representations.
+Across the boundary:
 
-Installed Domain Objects are the application's authoritative local model.
+```text
+Domain Object
+    ↕
+========== Resource Boundary ==========
+    ↕
+Resource
+```
 
-The Resource Architecture proposes representations.
+When information crosses outward, Domain meaning is represented as a Resource.
 
-The application determines whether those representations become installed Domain Objects.
+When information crosses inward, a Resource must be resolved, interpreted as valid Domain information, and accepted before becoming installed local state.
 
-This separation preserves clear ownership, maintains a stable local model, and allows both architectures to evolve independently while collaborating through a well-defined integration boundary.
+When adding new functionality, ask:
+
+> **Does this Domain information actually need to cross the Resource Boundary?**
+
+If it does, preserve the owning Domain's meaning while allowing the Resource Boundary to handle the external representation and lifecycle.
+
+The Domain owns the meaning.
+
+The application owns its accepted local state.
+
+The Resource Boundary connects that local model to the outside world.
