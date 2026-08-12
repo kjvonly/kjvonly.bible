@@ -8,564 +8,481 @@ Current
 
 # Purpose
 
-This document defines how the KJVOnly application becomes operational after launch.
+This document defines how KJVOnly transitions from application launch to an interactive Workspace.
 
-Startup initializes the minimum application state required to present an interactive Workspace, restore local behavior, and begin background processing.
+Its primary question is:
 
-This document describes the startup lifecycle at the application architecture level.
+> **What must be available before the application is considered ready, and what work can happen afterward?**
 
-It does not prescribe the current source-file organization or require the existing initialization logic to remain within Svelte lifecycle functions.
-
----
-
-# Scope
-
-This document defines:
-
-* application initialization,
-* platform initialization,
-* Workspace Runtime initialization,
-* Pane initialization,
-* local data availability,
-* authentication attempts,
-* relay configuration,
-* startup readiness,
-* and the transition into Background Processing.
-
-It does not define:
-
-* detailed Svelte lifecycle behavior,
-* relay implementation,
-* authentication protocols,
-* synchronization algorithms,
-* worker implementation,
-* resource installation,
-* or background task execution.
-
-Those responsibilities are described by implementation documents, the Resource Architecture, and the Background Processing document.
+Startup coordinates the minimum initialization required for normal application behavior. It does not take ownership of the responsibilities it initializes, and it does not wait for unrelated background or remote work to complete.
 
 ---
 
-# Background
+# Startup Model
 
-The application is designed to become interactive without waiting for all remote data, synchronization work, or background processing to complete.
+KJVOnly is offline-first.
 
-Startup establishes the application environment and initializes the Workspace Runtime.
-
-Once the application is usable, additional work continues independently in the background.
+Startup should therefore restore locally available application state and make the Workspace interactive without requiring current network access or completion of synchronization.
 
 Conceptually:
-
-```mermaid
-flowchart TD
-
-    Launch["Application Launch"]
-
-    Platform["Platform Initialization"]
-
-    LocalData["Open Local Persistence"]
-
-    Runtime["Workspace Runtime Initialization"]
-
-    Panes["Pane Initialization"]
-
-    Ready["Interactive Application"]
-
-    Background["Background Processing"]
-
-    Launch --> Platform
-
-    Platform --> LocalData
-
-    LocalData --> Runtime
-
-    Runtime --> Panes
-
-    Panes --> Ready
-
-    Ready --> Background
-```
-
-Startup is responsible for making the application usable.
-
-It is not responsible for completing every synchronization, download, indexing, or resource-refresh operation before the user can interact with the application.
-
----
-
-# Startup Definition
-
-Startup is the application lifecycle that transforms an unloaded application into an interactive Workspace.
-
-It initializes the capabilities required by the active application session.
-
-These include:
-
-* browser and platform integration,
-* local persistence,
-* relay configuration,
-* authentication state,
-* Workspace Runtime state,
-* the root Pane and Buffer,
-* Pane runtime bindings,
-* application settings,
-* toast presentation,
-* and background-processing entry points.
-
-Startup coordinates these responsibilities without taking ownership of their internal behavior.
-
-Each subsystem remains responsible for its own initialization and ongoing lifecycle.
-
----
-
-# Startup Layers
-
-Startup currently occurs across several application layers.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    App["Application Startup"]
-
-    Platform["Platform and Data Layer"]
-
-    Workspace["Workspace Runtime"]
-
-    Pane["Pane Presentation"]
-
-    Background["Background Processing"]
-
-    App --> Platform
-
-    App --> Workspace
-
-    Workspace --> Pane
-
-    App --> Background
-```
-
-## Platform and Data Layer
-
-The platform and data layer prepares capabilities required by the rest of the application.
-
-Current responsibilities include:
-
-* opening the local Bible database,
-* configuring default relays,
-* attempting authentication,
-* and preparing Nostr connectivity.
-
-These operations establish technical capabilities.
-
-They do not define Workspace or Domain behavior.
-
-## Workspace Runtime
-
-The Workspace Runtime initializes the root runtime composition.
-
-Current responsibilities include:
-
-* creating the root Buffer,
-* selecting the initial Module,
-* binding Pane operations,
-* generating the initial layout,
-* enabling runtime persistence,
-* and connecting shared presentation services such as toast handling.
-
-The current implementation performs this work primarily from the application root page.
-
-The architectural responsibility belongs to the Workspace Runtime rather than to that source file.
-
-## Pane Presentation
-
-Each rendered Pane initializes the presentation behavior required for its Runtime Objects.
-
-Current responsibilities include:
-
-* applying application settings,
-* locating the corresponding Pane runtime object,
-* binding Buffer replacement behavior,
-* subscribing to Pane dimensions,
-* and applying the current container size.
-
-Pane initialization does not construct the Workspace.
-
-It connects one rendered Pane to the Runtime Object already owned by the Workspace Runtime.
-
----
-
-# Startup Lifecycle
-
-The current startup lifecycle can be summarized as:
-
-```mermaid
-sequenceDiagram
-
-    participant App as Application
-    participant Platform as Platform Initialization
-    participant Store as Local Persistence
-    participant Runtime as Workspace Runtime
-    participant Pane as Pane Presentation
-    participant Background as Background Processing
-
-    App->>Platform: Initialize application platform
-
-    Platform->>Store: Open local persistence
-
-    Platform->>Platform: Configure relays and attempt authentication
-
-    App->>Runtime: Initialize root Pane and Buffer
-
-    Runtime->>Runtime: Bind Pane operations and derive layout
-
-    Runtime->>Pane: Render active Pane
-
-    Pane->>Pane: Apply settings and bind runtime state
-
-    App-->>App: Application becomes interactive
-
-    App->>Background: Begin deferred synchronization work
-```
-
-The exact ordering may evolve as initialization responsibilities are moved into dedicated services.
-
-The architectural lifecycle remains:
 
 ```text
-Initialize platform
-
-↓
-
-Open local state
-
-↓
-
+Application Launch
+        ↓
+Restore Required Local State
+        ↓
 Initialize Workspace Runtime
-
-↓
-
-Bind Pane presentation
-
-↓
-
-Become interactive
-
-↓
-
-Begin background work
+        ↓
+Interactive Workspace
+        ↓
+Begin Deferred Work
 ```
+
+The goal of startup is **readiness**, not completeness.
 
 ---
 
-# Application Readiness
+# Startup Is Coordination
 
-The application is considered ready when the user can interact with the restored or initial Workspace.
+Startup is a lifecycle, not a permanent architectural owner.
 
-Readiness does not require:
+It coordinates initialization across responsibilities whose ownership already exists elsewhere in the Application Architecture.
 
-* every Resource to be downloaded,
-* every Domain Object to be refreshed,
-* every search index to be rebuilt,
-* authentication to succeed,
-* or every relay to be available.
+For example:
 
-Locally available state should be sufficient to present the application whenever possible.
+```text
+Startup
 
-Missing data may be requested through Data Access.
+    Settings Domain
+        restore required preferences
 
-Synchronization and refresh work continue through Background Processing.
+    Workspace Runtime
+        restore or create Workspace
 
-This keeps startup focused on usability rather than completeness.
+    Domains
+        make required local state available
+
+    Technical Infrastructure
+        prepare required platform capabilities
+
+    Background Processing
+        begin deferred work when appropriate
+```
+
+Startup does not absorb these responsibilities.
+
+The Settings Domain still owns settings. The Workspace Runtime still owns the Workspace. Domains still own Domain behavior and Domain Objects.
+
+Startup only coordinates what must happen before the application can proceed.
+
+---
+
+# Determining Startup Work
+
+Not everything that happens near application launch belongs to Startup.
+
+When considering new initialization work, ask:
+
+> **Must this complete before the user can meaningfully interact with the application?**
+
+If yes, it may belong on the startup path.
+
+If no, it should normally happen after readiness or when the capability is first required.
+
+This distinction keeps startup from becoming a collection point for every initialization task in the application.
+
+---
+
+# Required State
+
+Startup should restore or establish only the state required for the initial application experience.
+
+This generally includes enough information to:
+
+* apply required application settings,
+* establish the active Workspace,
+* restore or create its Runtime Objects,
+* present an initial Module interaction,
+* and access the local state required by that interaction.
+
+The exact data required depends upon the Workspace being restored.
+
+Startup should not load Domain information merely because the application may need it later.
+
+---
+
+# Restore Before Rebuild
+
+Persisted state should be restored whenever it remains valid.
+
+Conceptually:
+
+```text
+Persisted State
+      ↓
+Startup
+      ↓
+Restored Application
+```
+
+Startup should not unnecessarily reconstruct information that the application already persisted for reuse.
+
+For example, a persisted Workspace can be restored rather than recreated from scratch. Likewise, valid locally available Domain Objects can remain available without being downloaded again before the application becomes usable.
+
+Derived state follows the same principle when it can be safely restored. If rebuilding or refreshing derived information is not required for initial interaction, that work can occur later.
 
 ---
 
 # Initial Workspace
 
-The current implementation creates a Buffer for the root Pane and assigns an initial Module.
+The Workspace Runtime determines the Runtime state required for the active Workspace.
 
-The specific initial Module may vary during development or according to application state.
+Startup asks the Workspace Runtime to restore an existing Workspace when possible or establish an initial Workspace when no restorable state exists.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Runtime["Workspace Runtime"]
-
-    Root["Root Pane"]
-
-    Buffer["Initial Buffer"]
-
-    Module["Initial Module Instance"]
-
-    Runtime --> Root
-
-    Root --> Buffer
-
-    Buffer --> Module
+```text
+Startup
+    ↓
+Workspace Runtime
+    ↓
+Restored Workspace
+        or
+Initial Workspace
 ```
 
-The startup architecture should not depend on a permanently hard-coded Module.
+The resulting Workspace follows the Runtime model defined in `002-workspace-runtime.md`:
 
-Future implementations may select the initial Module using:
+```text
+Workspace
+    ↓
+Pane
+    ↓
+Buffer
+    ↓
+Module Instance
+```
 
-* restored Workspace state,
-* the last active session,
+Startup does not need to understand or manipulate that internal structure itself.
+
+The Workspace Runtime owns how the Workspace is reconstructed.
+
+---
+
+# Choosing the Initial Interaction
+
+A new or unrestorable Workspace still requires an initial interaction.
+
+That choice is application policy rather than a permanent property of Startup.
+
+For example, the initial Module may be chosen from:
+
+* restored application state,
+* a previous reading location,
 * a configured default,
-* or another application startup policy.
+* or another established startup policy.
+
+The important architectural requirement is that Startup can establish an interactive Workspace without assuming that one specific Module must always be the starting point.
 
 ---
 
-# Settings Initialization
+# Settings at Startup
 
-Application settings must be applied early enough that the initial interface reflects the user's persisted preferences.
+Settings required to present the initial application correctly must be available before or during initial presentation.
 
-Current Pane initialization applies settings as Panes become active.
+For example, appearance settings should be applied early enough that the application does not first present one configuration and then unnecessarily switch to another.
 
-This ensures rendered Modules receive the current theme and display behavior.
+The Settings Domain owns those preferences.
 
-As the startup implementation evolves, settings may be initialized at a higher application layer before the Workspace is presented.
+Startup only coordinates restoring the settings required for readiness.
 
-The architectural requirement is:
-
-> Persisted application settings should be available before or during the initial presentation without delaying unrelated background work.
-
-The exact lifecycle hook or source file used to satisfy this requirement is an implementation detail.
+Settings that do not affect initial interaction do not automatically belong on the critical startup path.
 
 ---
 
-# Nostr Initialization
+# Local State at Startup
 
-The current startup implementation includes early Nostr integration used to validate relay connectivity, authentication, Resource discovery, and event delivery.
+Startup relies upon the application's accepted local state whenever possible.
 
-Current behavior includes:
-
-* setting default relays,
-* attempting login,
-* establishing relay connectivity,
-* and initializing event flows used by synchronization services.
-
-This implementation is expected to evolve as the Resource Architecture is integrated more completely into the application.
-
-Startup should therefore depend upon Resource and networking capabilities rather than upon the current Nostr-specific classes or timeline implementation.
-
-The architectural requirement is that remote Resource capabilities may be initialized without preventing the locally available application from becoming interactive.
-
-# Startup Coordination
-
-Application startup is a coordination lifecycle that initializes the minimum capabilities required for the application to become interactive.
-
-It does not become the owner of the subsystems it initializes.
-
-Each subsystem remains responsible for its own lifecycle after startup has completed.
+It should not require externally available Resources merely to reconstruct information that is already installed locally.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Launch["Application Launch"]
-
-    Runtime["Initialize Workspace Runtime"]
-
-    Services["Initialize Application Services"]
-
-    Persistence["Open Local Persistence"]
-
-    Interactive["Interactive Application"]
-
-    Background["Begin Background Processing"]
-
-    Launch --> Persistence
-    Launch --> Services
-    Launch --> Runtime
-
-    Persistence --> Interactive
-    Services --> Interactive
-    Runtime --> Interactive
-
-    Interactive --> Background
+```text
+Persisted Local State
+        ↓
+Restore
+        ↓
+Interactive Application
 ```
 
-The startup lifecycle establishes the initial application environment by invoking the initialization responsibilities owned by each subsystem.
+If an active Module later requires a Domain Object that is not locally available, it requests that information through the normal Data Access path.
 
-After initialization:
-
-* the Workspace Runtime owns the active Workspace,
-* Application Services own shared application behavior,
-* Persistence owns durable local state,
-* Background Processing owns deferred work,
-* and Domains own application behavior.
-
-Once initialization completes, normal application behavior is owned entirely by the initialized subsystems.
----
-
-# Startup Boundaries
-
-Startup intentionally performs only the work required to transition the application into an interactive state.
-
-Responsibilities that continue beyond initialization belong to their owning subsystem.
-
-For example:
-
-| Responsibility           | Owner                   |
-| ------------------------ | ----------------------- |
-| Workspace initialization | Workspace Runtime       |
-| Pane initialization      | Workspace Runtime       |
-| Theme application        | Application Services    |
-| Local persistence        | Persistence             |
-| Domain behavior          | Domains                 |
-| Synchronization          | Background Processing   |
-| Resource publication     | Resource Architecture   |
-| Relay communication      | Resource Infrastructure |
-
-This separation allows startup to remain small even as the application grows.
-
-New capabilities should extend their existing subsystem rather than increasing startup complexity.
+Startup should not preemptively become a separate data-retrieval system.
 
 ---
 
-# Startup Philosophy
+# Remote Capabilities
 
-Startup should restore.
+Remote capabilities should not normally determine whether the application can start.
 
-Not rebuild.
-
-Whenever possible, startup restores:
-
-* persisted application settings,
-* the user's Workspace,
-* installed Domain Objects,
-* and previously available application state.
+Resource discovery, remote synchronization, publication, relay availability, and similar work may be important to the running application, but they are not prerequisites for presenting locally available state.
 
 Conceptually:
 
-```mermaid
-flowchart LR
+```text
+Local State
+    ↓
+Interactive Application
 
-    Persisted["Persisted State"]
+        meanwhile
 
-    Startup["Startup"]
-
-    Interactive["Interactive Application"]
-
-    Background["Background Processing"]
-
-    Persisted --> Startup
-
-    Startup --> Interactive
-
-    Interactive --> Background
+Remote Capabilities
+    ↓
+Resource Boundary / Background Work
 ```
 
-Once the application becomes interactive, remaining work proceeds independently.
+The application may initialize technical capabilities needed for later remote work, but network success should not become a readiness requirement unless a future capability genuinely cannot operate locally.
 
-This allows startup to remain predictable, responsive, and largely independent from network availability.
+Nostr, Blossom, relay connections, and authentication protocols are implementation concerns beneath the appropriate architectural responsibilities rather than Startup concepts.
 
-Users should be able to resume their work immediately while the application continues improving its local model in the background.
+---
+
+# Application Readiness
+
+The application is ready when the user can meaningfully interact with the restored or initial Workspace.
+
+Readiness does not require the application to be globally up to date.
+
+For example, readiness should not normally wait for:
+
+* every Resource to be discovered,
+* every installed Domain Object to be refreshed,
+* synchronization to complete,
+* every derived index to be rebuilt,
+* publication queues to drain,
+* or remote systems to become available.
+
+Those activities can continue after readiness when their owners require them.
+
+---
+
+# Critical and Deferred Work
+
+Startup work should be divided according to whether it blocks readiness.
+
+```text
+Application Launch
+        ↓
+Critical Startup Work
+        ↓
+Interactive
+        ↓
+Deferred Work
+```
+
+Critical work is necessary to create a usable application session.
+
+Deferred work improves, refreshes, synchronizes, or prepares the application after that point.
+
+The distinction should be based on user-visible readiness rather than on when the implementation happens to call a function.
+
+---
+
+# Background Processing
+
+Once the application is interactive, deferred work may continue through Background Processing.
+
+Examples may include:
+
+* refreshing locally installed information,
+* synchronization,
+* indexing,
+* maintenance,
+* or other non-blocking work.
+
+Conceptually:
+
+```text
+Startup
+    ↓
+Interactive Application
+    ↓
+Background Processing
+```
+
+Moving work to Background Processing does not change ownership of that work.
+
+A Bible indexing task remains Bible-owned. Resource synchronization remains associated with the Resource Boundary. Background Processing only changes when or where the work executes.
 
 ---
 
 # Startup Failures
 
-Startup should degrade gracefully when optional capabilities are unavailable.
+Startup should distinguish between failures that prevent meaningful interaction and failures in optional capabilities.
 
-Examples include:
+For example, inability to reconstruct any usable Workspace may be a startup failure.
 
-* relay connectivity,
-* authentication,
-* background synchronization,
-* or remote Resource availability.
-
-Failures within these subsystems should not prevent the application from presenting locally available state whenever possible.
-
-Critical failures should be isolated to the subsystem that owns them.
-
-The Workspace Runtime, Domains, and installed Domain Objects should continue operating using the application's authoritative local state until the affected subsystem recovers.
-
-This approach preserves the offline-first behavior of the application while minimizing startup dependencies.
-
-# Future Evolution
-
-The startup lifecycle has been intentionally designed around restoring the minimum application state required to become interactive.
-
-As the application evolves, the implementation of startup may change, but its architectural responsibilities should remain consistent.
+By contrast, failure to reach a relay should not prevent locally available Bible content, Notes, Reading Plans, or Workspace state from remaining usable.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    Launch["Application Launch"]
-
-    Startup["Startup Lifecycle"]
-
-    Interactive["Interactive Application"]
-
-    Background["Background Processing"]
-
-    Launch --> Startup
-
-    Startup --> Interactive
-
-    Interactive --> Background
+```text
+Initialization Failure
+        ↓
+Required for Readiness?
+     /           \
+   Yes            No
+    ↓              ↓
+Startup        Isolate Failure
+Cannot        Continue Locally
+Complete
 ```
 
-Future improvements may reorganize initialization logic, introduce additional startup capabilities, or simplify the startup sequence.
+Failures should remain associated with the responsibility that produced them rather than turning Startup into the long-term error manager for the application.
 
-These changes should strengthen the separation between startup and the long-running subsystems it initializes.
+---
 
-Startup should continue to focus on restoring the application to an interactive state while leaving ongoing application behavior to the subsystems that own it.
+# Avoid Growing the Startup Path
 
-The startup implementation may evolve.
+New functionality should not automatically add new startup work.
 
-The startup lifecycle should remain stable.
+For every proposed startup dependency, ask:
+
+> **Why must this happen before the Workspace becomes interactive?**
+
+If the answer is simply that the capability will eventually be needed, it probably does not belong on the startup path.
+
+Prefer:
+
+```text
+Launch
+    ↓
+Restore minimum state
+    ↓
+Interactive
+    ↓
+Initialize when required
+```
+
+over:
+
+```text
+Launch
+    ↓
+Initialize everything the application might use
+    ↓
+Interactive
+```
+
+This keeps startup bounded as the application grows.
+
+---
+
+# Adding a Startup Requirement
+
+When adding functionality that appears to require initialization, reason through it in order:
+
+```text
+What capability is being initialized?
+        ↓
+Who owns that capability?
+        ↓
+Does it require initialization at all?
+        ↓
+Must initialization complete before meaningful interaction?
+        │
+        ├── No → Defer or initialize on demand
+        │
+        └── Yes
+             ↓
+What is the minimum state required?
+        ↓
+Can that state be restored locally?
+        ↓
+What happens if initialization fails?
+        ↓
+Add only the required work to Startup
+        ↓
+Choose implementation
+```
+
+The first question should not be:
+
+```text
+Should this go in onMount()?
+
+Should this run from +page.svelte?
+
+Should Startup connect to the relay?
+```
+
+Those are implementation questions.
+
+First determine whether the capability belongs on the startup path at all.
+
+---
+
+# Example: Adding a New Domain
+
+Suppose a new Domain is introduced.
+
+Its existence does not automatically mean Startup must initialize the entire Domain.
+
+Ask whether the initial Workspace requires its information or behavior.
+
+If it does not:
+
+```text
+Application Launch
+    ↓
+Existing Startup Requirements
+    ↓
+Interactive Workspace
+    ↓
+New Domain initialized when required
+```
+
+If the active Workspace contains a Module backed by that Domain, Startup coordinates enough restoration for that Module to become usable.
+
+The Domain still owns its behavior and state.
+
+Startup only ensures that the required owner can participate in the initial application session.
 
 ---
 
 # Big Takeaway
 
-Startup transforms an unloaded application into an interactive Workspace.
+Startup is the transition from an unloaded application to an interactive Workspace.
 
-It prepares the minimum environment required for the user to begin working while allowing the remainder of the application to continue initializing independently.
+Its job is to coordinate the **minimum required initialization** while preserving ownership of every responsibility it touches.
+
+The central decision is:
+
+> **Must this complete before the user can meaningfully interact with the application?**
+
+If yes, Startup may coordinate it.
+
+If no, defer it, initialize it on demand, or allow its existing owner to perform it after readiness.
 
 Conceptually:
 
-```mermaid
-flowchart LR
-
-    Launch["Application Launch"]
-
-    Startup["Startup"]
-
-    Interactive["Interactive Workspace"]
-
-    Background["Background Processing"]
-
-    Launch --> Startup
-
-    Startup --> Interactive
-
-    Interactive --> Background
+```text
+Launch
+    ↓
+Restore Required Local State
+    ↓
+Initialize Required Owners
+    ↓
+Interactive Workspace
+    ↓
+Deferred and Background Work
 ```
 
-Startup restores the application.
+Startup restores rather than rebuilds.
 
-It does not rebuild it.
+It prefers local state over remote dependencies.
 
-It establishes the application's initial execution environment, restores locally available state, initializes the Workspace Runtime, and prepares the application for normal operation.
+It does not take ownership from the responsibilities it initializes.
 
-Once the application becomes interactive, ownership transfers entirely to the initialized subsystems.
-
-The Workspace Runtime owns presentation.
-
-Domains own application behavior.
-
-Persistence owns durable local state.
-
-Background Processing owns deferred work.
-
-Startup's responsibility is complete.
-
-This separation keeps application startup predictable, responsive, and independent from long-running work while preserving the offline-first experience that defines the application architecture.
+Once readiness is reached, Startup is complete.
