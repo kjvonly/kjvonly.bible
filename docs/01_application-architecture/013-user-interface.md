@@ -8,424 +8,536 @@ Current
 
 # Purpose
 
-This document defines the architectural principles that govern the application's user interface.
+This document defines how independently developed application interactions participate in one coherent user interface.
 
-The User Interface provides a consistent presentation model that allows independently developed Modules to appear and behave as one cohesive application.
+Its primary question is:
 
-Its purpose is to establish a shared user experience while allowing Domains and Module Presentation to evolve independently.
+> **When is a presentation concern shared across the application, and when does it belong to a Module, the Workspace Runtime, or a Domain?**
 
----
-
-# Scope
-
-This document defines:
-
-* user interface consistency,
-* shared interaction patterns,
-* responsive presentation,
-* visual continuity,
-* user context preservation,
-* and the relationship between the User Interface and Module Presentation.
-
-It does not define:
-
-* visual styling,
-* themes,
-* CSS frameworks,
-* rendering technologies,
-* component implementations,
-* or application behavior.
-
-These responsibilities are described by the Implementation documentation, Module Presentation, and the Domains.
+The User Interface establishes application-wide presentation conventions where consistency has value. It does not take ownership of Domain behavior, Module interaction state, or Workspace composition.
 
 ---
 
-# Background
+# User Interface Model
 
-The application is composed of many independently developed Module Instances.
-
-Although each Module presents a different Domain capability, the application should behave as a single, coherent user experience.
+The visible application is produced by several independently owned responsibilities.
 
 Conceptually:
 
-```mermaid
-flowchart LR
-
-    UI["User Interface"]
-
-    Runtime["Workspace Runtime"]
-
-    Modules["Module Presentation"]
-
-    Domains["Domains"]
-
-    UI --> Runtime
-
-    UI --> Modules
-
-    Modules --> Domains
+```text
+Domain
+    ↓
+Domain Behavior
+    ↓
+Module Instance
+    ↓
+Workspace Runtime
+    ↓
+Visible Application
 ```
 
-The User Interface establishes presentation principles shared across the entire application.
+Each responsibility contributes something different.
 
-The Workspace Runtime provides a consistent presentation environment.
+The Domain gives the behavior meaning.
 
-Module Presentation introduces Domain capabilities into that environment.
+The Module defines an active interaction with that behavior.
 
-The User Interface ensures those capabilities feel like parts of one application rather than isolated features.
+The Workspace Runtime determines how active interactions are composed into the Workspace.
+
+Shared User Interface conventions make those independently developed interactions feel like parts of the same application.
 
 ---
 
-# User Interface Definition
+# Shared Presentation Conventions
 
-The User Interface is the architectural layer responsible for providing a consistent user experience across every Module.
+Some presentation decisions should be consistent throughout the application.
 
-It defines how application capabilities are presented rather than how individual capabilities behave.
+Examples may include common conventions for:
 
-The User Interface establishes common presentation principles including:
+* navigation,
+* toolbars,
+* temporary overlays,
+* user feedback,
+* presentation of application state,
+* and other recurring interactions.
 
-* consistent interaction patterns,
-* predictable navigation,
-* responsive layouts,
-* preservation of user context,
-* and shared presentation conventions.
+These conventions form a shared presentation language.
 
-Application behavior remains owned by the Domains.
+They allow a user to understand a new Module using interaction patterns already learned elsewhere in the application.
 
-Presentation remains owned by Module Instances.
-
-The User Interface provides the shared presentation language that allows every Module to participate in a unified application experience.
-
----
-
-# Consistent User Experience
-
-Every Module should feel like a natural extension of the application.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Application["Application"]
-
-    Bible["Bible Module"]
-
-    Notes["Notes Module"]
-
-    Plans["Reading Plans"]
-
-    Search["Search Module"]
-
-    Settings["Settings"]
-
-    Application --> Bible
-
-    Application --> Notes
-
-    Application --> Plans
-
-    Application --> Search
-
-    Application --> Settings
-```
-
-Although Modules present different Domain capabilities, users should not need to learn a new interaction model for each capability.
-
-Shared presentation patterns allow users to transfer knowledge naturally between Modules.
-
-Consistency improves discoverability, reduces cognitive load, and allows new capabilities to integrate naturally into the existing application without requiring users to learn an entirely new interface.
-
-# User Context Preservation
-
-The User Interface should preserve user context whenever practical.
-
-Changing application capabilities should not unnecessarily discard the user's current work or require the user to reconstruct their working environment.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Context["User Context"]
-
-    Action["User Action"]
-
-    Preserve["Preserve Context"]
-
-    Continue["Continue Working"]
-
-    Context --> Action
-
-    Action --> Preserve
-
-    Preserve --> Continue
-```
-
-Examples of user context include:
-
-* the active Workspace,
-* open Modules,
-* navigation state,
-* reading position,
-* selections,
-* filters,
-* and other presentation state associated with the current task.
-
-Preserving context reduces unnecessary interruption and allows users to remain focused on their current work.
-
-Whenever practical, presentation changes should extend the existing context rather than replacing it.
+The purpose is consistency where behavior is conceptually shared, not uniformity for its own sake.
 
 ---
 
-# Shared Interaction Patterns
+# Determining UI Ownership
 
-The User Interface establishes common interaction patterns that are shared across every Module.
+When introducing presentation behavior, begin by asking:
+
+> **What gives this behavior meaning?**
+
+If the behavior expresses Domain meaning, the Domain owns it.
+
+If it describes one active interaction with Domain behavior, it belongs to the Module interaction.
+
+If it changes Workspace composition, Pane structure, Buffer placement, or Module lifecycle, it belongs to the Workspace Runtime.
+
+If it represents a presentation convention intended to behave consistently across otherwise independent interactions, it may belong to the shared User Interface.
 
 Conceptually:
 
-```mermaid
-flowchart TD
+```text
+What kind of behavior is this?
+        ↓
+Domain meaning?
+    → Domain
 
-    UI["User Interface"]
+Active interaction?
+    → Module
 
-    Navigation["Navigation"]
+Workspace composition?
+    → Workspace Runtime
 
-    Toolbars["Toolbars"]
-
-    Overlays["Temporary Presentation"]
-
-    Feedback["User Feedback"]
-
-    UI --> Navigation
-
-    UI --> Toolbars
-
-    UI --> Overlays
-
-    UI --> Feedback
+Shared presentation convention?
+    → User Interface
 ```
 
-Shared interaction patterns create a predictable user experience regardless of the Domain capability currently being presented.
+The fact that behavior is visible does not automatically make it User Interface-owned.
 
-Users should not need to learn a different interaction model for each Module.
+---
 
-Individual Modules may present different capabilities while participating in the same interaction language.
+# Domain Meaning vs Presentation
 
-This consistency allows independently developed Modules to integrate naturally into the application.
+The User Interface presents Domain behavior.
+
+It does not define what that behavior means.
+
+For example:
+
+```text
+Highlight Bible text
+        ↓
+Meaning of annotation
+        → Bible Domain
+
+Interaction for selecting text
+        → Bible Reader Module
+
+Visual convention for selected state
+        → User Interface where shared
+```
+
+These responsibilities may participate in the same user action while remaining independently owned.
+
+Presentation should express Domain meaning rather than redefine it.
+
+---
+
+# Module Interaction vs Shared UI
+
+Modules own the interaction state required by their active behavior.
+
+For example, a Bible Reader may have:
+
+* current selection,
+* visible controls,
+* transient interaction state,
+* and interaction-specific commands.
+
+Those concerns belong to the Bible Reader interaction even if they are implemented using shared UI components.
+
+A shared component does not imply shared architectural ownership.
+
+For example:
+
+```text
+Shared Toolbar Component
+        ↓
+used by
+        ↓
+Bible Reader Module
+Notes Module
+Reading Plans Module
+```
+
+The toolbar implementation may be shared.
+
+The meaning of each toolbar action remains with the Module or Domain that provides it.
+
+---
+
+# Workspace Runtime vs User Interface
+
+The Workspace Runtime owns the composition of active interactions.
+
+This includes concepts such as:
+
+```text
+Workspace
+    ↓
+Pane
+    ↓
+Buffer
+    ↓
+Module Instance
+```
+
+The User Interface may define shared ways to present or invoke those Runtime operations.
+
+For example:
+
+```text
+User chooses "Split Pane"
+        ↓
+Shared UI interaction
+        ↓
+Workspace Runtime Public API
+        ↓
+Workspace structure changes
+```
+
+The visual control does not own Pane splitting.
+
+The Workspace Runtime does.
+
+This distinction prevents presentation controls from becoming the source of Runtime behavior.
 
 ---
 
 # Responsive Presentation
 
-The User Interface should adapt to changes in the presentation environment without requiring individual Modules to manage application layout.
+Modules operate within presentation space provided by the Workspace Runtime.
+
+A Module should adapt its presentation to the environment it receives without taking ownership of Workspace layout.
 
 Conceptually:
 
-```mermaid
-flowchart LR
-
-    Workspace["Workspace Runtime"]
-
-    Presentation["Presentation Environment"]
-
-    Module["Module"]
-
-    Workspace --> Presentation
-
-    Presentation --> Module
+```text
+Workspace Runtime
+        ↓
+Available presentation environment
+        ↓
+Module Instance
+        ↓
+Module presentation adapts
 ```
 
-The Workspace Runtime establishes the presentation environment.
+A Module may change how its own interaction is presented when space changes.
 
-Modules present their capabilities within that environment.
+It should not independently restructure the surrounding Workspace merely to satisfy its local presentation needs.
 
-Changes to available presentation space should be handled by the shared presentation model rather than by introducing independent layout behavior within individual Modules.
-
-This allows Modules to focus on presenting Domain capabilities while the surrounding presentation environment remains consistent throughout the application.
-
-# Progressive Presentation
-
-The User Interface should present application capabilities as they become relevant to the user's current task.
-
-Rather than exposing every capability simultaneously, the interface should allow users to progressively discover additional functionality while preserving their current context.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Task["Current Task"]
-
-    Capability["Relevant Capability"]
-
-    Presentation["Present Capability"]
-
-    Continue["Continue Working"]
-
-    Task --> Capability
-
-    Capability --> Presentation
-
-    Presentation --> Continue
-```
-
-Additional capabilities should complement the user's current activity rather than interrupt or replace it.
-
-This allows the application to remain approachable while supporting increasingly sophisticated workflows.
-
-As new capabilities are introduced, they should integrate naturally into the existing presentation model rather than competing for the user's attention.
+Workspace composition and Module responsiveness are separate responsibilities.
 
 ---
 
-# Visual Continuity
+# Preserving User Context
 
-The User Interface should present a visually consistent environment regardless of the Domain capability currently being displayed.
+Presentation changes should preserve the user's current working context whenever practical.
 
-Conceptually:
+Examples of context may include:
 
-```mermaid
-flowchart TD
+* the active Workspace,
+* open Module Instances,
+* navigation position,
+* selections,
+* filters,
+* and other active interaction state.
 
-    Interface["User Interface"]
+The owner of each piece of context remains responsible for its meaning.
 
-    Bible["Bible"]
+For example:
 
-    Notes["Notes"]
+```text
+Bible reading location
+    → Bible interaction / Domain meaning
 
-    Plans["Reading Plans"]
+Active Buffer
+    → Workspace Runtime
 
-    Search["Search"]
-
-    Interface --> Bible
-
-    Interface --> Notes
-
-    Interface --> Plans
-
-    Interface --> Search
+Current selection
+    → Module interaction
 ```
 
-Visual continuity allows users to focus on application behavior rather than adapting to different presentation styles.
-
-Although individual Modules may present different information, they should participate in a shared visual language that provides consistency throughout the application.
-
-A cohesive presentation strengthens the perception that independently developed Modules belong to one unified application.
+The shared User Interface should avoid introducing transitions that unnecessarily discard those independently owned contexts.
 
 ---
 
-# Relationship to Module Presentation
+# Opening Related Interactions
 
-The User Interface and Module Presentation have complementary responsibilities.
+A user interface action may initiate another application interaction.
 
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    UI["User Interface"]
-
-    Modules["Module Presentation"]
-
-    Domains["Domains"]
-
-    UI --> Modules
-
-    Modules --> Domains
-```
-
-The User Interface establishes the shared presentation language used throughout the application.
-
-Module Presentation introduces individual Domain capabilities into that shared environment.
-
-Together they provide a consistent user experience while preserving the ownership boundaries established throughout the application architecture.
-
-The User Interface defines how the application feels.
-
-Module Presentation defines what capability is currently being presented.
-
-Domains define how that capability behaves.
-
-# Future Evolution
-
-The User Interface has been intentionally designed around consistency rather than individual presentation technologies.
-
-As the application evolves, new Domains, Module Instances, and application capabilities should participate in the same shared presentation model.
+For example, selecting a Scripture reference in Notes may open a Bible Reader.
 
 Conceptually:
 
-```mermaid id="2l9lzf"
-flowchart TD
-
-    UI["User Interface"]
-
-    Existing["Existing Modules"]
-
-    Future["Future Modules"]
-
-    Domains["Domains"]
-
-    UI --> Existing
-
-    UI --> Future
-
-    Existing --> Domains
-
-    Future --> Domains
+```text
+Notes Module
+    ↓
+User selects Bible reference
+    ↓
+Navigation Context
+    ↓
+Workspace Runtime
+    ↓
+Bible Reader Module
 ```
 
-Future capabilities should strengthen the consistency of the application's user experience rather than introducing independent interaction models.
+The User Interface presents the action.
 
-Presentation technologies, visual styling, and implementation details may evolve over time.
+The Notes interaction supplies the reference.
 
-The architectural responsibility of the User Interface remains unchanged.
+The Workspace Runtime manages the new Runtime interaction.
 
-The User Interface provides the shared presentation language that allows independently developed Modules to appear and behave as one cohesive application.
+The Bible Reader and Bible Domain interpret the Bible-specific meaning.
+
+One user action therefore may cross several ownership boundaries without requiring a single owner to absorb all of them.
+
+---
+
+# Shared Feedback
+
+Some feedback patterns may be useful throughout the application.
+
+Examples include temporary messages, progress indications, warnings, or confirmation presentation.
+
+The shared User Interface may define a common presentation convention for such feedback.
+
+The owner that caused the feedback still determines its meaning.
+
+For example:
+
+```text
+Notes Domain
+    ↓
+Note saved
+    ↓
+Shared feedback presentation
+```
+
+The shared feedback mechanism does not decide whether the Note was successfully saved.
+
+It only presents that result consistently.
+
+---
+
+# Shared Components Are Implementation
+
+A recurring visual component does not automatically become an architectural concept.
+
+Examples might include:
+
+```text
+Button
+Toolbar
+Menu
+Dialog
+Toast
+Panel
+```
+
+These may be valuable implementation abstractions.
+
+Architecture should describe the shared presentation behavior or convention that requires them, not elevate every reusable component into an architectural owner.
+
+The reasoning order is:
+
+```text
+What presentation behavior is required?
+        ↓
+Is it shared or interaction-specific?
+        ↓
+Who owns its meaning?
+        ↓
+Define the presentation contract
+        ↓
+Choose components and implementation
+```
+
+---
+
+# Avoid Domain-Specific Shared UI
+
+Shared User Interface behavior should remain meaningful across the application.
+
+For example, a generic presentation convention for temporary feedback can be shared.
+
+A control whose meaning is specifically "Go to next Bible chapter" is not application-wide merely because several Bible Modules use it.
+
+Conceptually:
+
+```text
+Next Bible Chapter
+    ↓
+Bible meaning
+    ↓
+Bible Domain / Bible interaction
+```
+
+Shared use within one Domain does not create an application-wide UI responsibility.
+
+This follows the same ownership rule used throughout the architecture: meaning determines ownership.
+
+---
+
+# Avoid Independent Module Conventions Without Reason
+
+The opposite problem is allowing every Module to invent its own version of behavior that is genuinely application-wide.
+
+Suppose several Modules require the same kind of temporary feedback.
+
+If each invents unrelated behavior for:
+
+```text
+success
+warning
+failure
+progress
+```
+
+the application begins to expose multiple interaction languages for the same conceptual presentation problem.
+
+When the presentation meaning is genuinely shared, establish a common convention and allow Modules to participate in it.
+
+Shared presentation should emerge from shared meaning, not merely from visual similarity.
+
+---
+
+# Adding a UI Capability
+
+When new presentation behavior is introduced, reason through it in order:
+
+```text
+What user interaction is required?
+        ↓
+What gives that interaction meaning?
+        ↓
+Is it Domain behavior?
+        → Domain
+        ↓
+Is it state for one active interaction?
+        → Module
+        ↓
+Does it change Workspace composition?
+        → Workspace Runtime
+        ↓
+Is the presentation behavior genuinely shared?
+        │
+        ├── No → Keep it with its owner
+        │
+        └── Yes
+             ↓
+Define the shared presentation convention
+        ↓
+Choose implementation
+```
+
+Do not begin with:
+
+```text
+Should this be a shared component?
+
+Should this go in the UI folder?
+
+Should every Module use this widget?
+```
+
+Those are implementation questions.
+
+First determine whether the behavior itself is actually shared.
+
+---
+
+# Example: Verse Selection
+
+Suppose Bible reading gains a new verse-selection interaction.
+
+Begin with meaning.
+
+```text
+Verse Selection
+    ↓
+Bible content gives the selection meaning
+    ↓
+Bible Domain
+```
+
+The active interaction occurs within the Bible Reader Module:
+
+```text
+Bible Reader Module
+    ↓
+User selects verse
+    ↓
+Bible selection behavior
+```
+
+The selected-state appearance may use shared application conventions for selection if such a convention exists.
+
+The architecture therefore does not create a generic "Selection Domain" or move Bible selection behavior into the shared User Interface merely because it has a visual representation.
+
+---
+
+# Example: Application Feedback
+
+Suppose several Modules need to notify the user when an operation completes.
+
+The operation remains owned by the responsibility that performed it.
+
+For example:
+
+```text
+Notes Domain
+    ↓
+Create Note
+    ↓
+Success
+```
+
+Presentation of that success may use a shared feedback convention:
+
+```text
+Operation Result
+    ↓
+Shared Feedback Convention
+    ↓
+Visible Feedback
+```
+
+The User Interface owns the consistency of the presentation convention.
+
+It does not own the operation or determine whether it succeeded.
 
 ---
 
 # Big Takeaway
 
-The User Interface establishes the application's shared presentation language.
+The User Interface provides a shared presentation language for independently owned application behavior.
 
-It allows independently developed Module Instances to participate in one consistent user experience while preserving the ownership boundaries established throughout the application architecture.
+It should not become a catch-all owner for everything visible on screen.
 
-Conceptually:
+When adding presentation behavior, ask:
 
-```mermaid
-flowchart LR
+> **What gives this interaction meaning?**
 
-    UI["User Interface"]
+Then distinguish:
 
-    Runtime["Workspace Runtime"]
+```text
+Domain
+    owns application meaning
 
-    Modules["Module Presentation"]
+Module
+    owns the active interaction
 
-    Domains["Domains"]
+Workspace Runtime
+    owns interaction composition
 
-    Objects["Domain Objects"]
-
-    UI --> Runtime
-
-    Runtime --> Modules
-
-    Modules --> Domains
-
-    Domains --> Objects
+User Interface
+    establishes genuinely shared presentation conventions
 ```
 
-The User Interface defines how the application is experienced.
+Use shared UI behavior when the presentation concept itself is shared.
 
-The Workspace Runtime provides a consistent presentation environment.
+Keep Domain-specific and Module-specific behavior with the responsibility that gives it meaning.
 
-Module Presentation introduces individual Domain capabilities into that environment.
+Architecture determines those boundaries first.
 
-Domains own application behavior.
-
-Domain Objects represent application data.
-
-Together these layers allow the application to grow by introducing new capabilities while preserving a familiar, predictable, and cohesive user experience.
-
-The presentation implementation may evolve.
-
-The user experience should remain consistent.
+Components, styling, framework choices, and other presentation implementation follow afterward.
