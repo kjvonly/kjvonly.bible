@@ -1,4 +1,4 @@
-# ADR 0002 — Data Distribution Strategy
+# ADR 02 — Data Distribution Strategy
 
 **Status**
 
