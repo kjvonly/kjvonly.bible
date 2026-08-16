@@ -1,134 +1,289 @@
-# Architecture Decision Record (ADR) Index
+# Resource Boundary Specification Index
 
-This directory contains the Architecture Decision Records (ADRs) that define the KJVOnly architecture.
+This directory contains the ADRs that define the KJVOnly **Resource Boundary**.
 
-The ADRs are intended to be read in order. Each ADR introduces concepts used by subsequent ADRs, forming a complete architecture specification.
+The Resource Boundary specifies:
+
+> **How an offline-first application uses Nostr to represent, publish, discover, resolve, install, synchronize, and archive application Resources.**
+
+The ADRs are intended to be read in order.
+
+Each specification introduces or depends on concepts established earlier in the series.
 
 ---
-# Architecture Organization
 
-```mermaid
-flowchart TD
+# Specification Organization
 
-    A["Foundations"]
+```text
+00  Resource Boundary Overview
 
-    --> B["Resource Lifecycle"]
+01  Domain Resource Model
+02  Data Distribution Strategy
+03  Nostr Event Model
+04  Nostr Resource Identity
 
-    --> C["Synchronization & Application"]
+05  Discovery Roots
+06  Resource Discovery
+07  Resource Resolution
+08  Resource Installation Lifecycle
 
-    A --> A1["0000 Architecture Overview"]
-    A --> A2["0001 Data Distribution Strategy"]
-    A --> A3["0002 Domain & Resource Model"]
-    A --> A4["0003 Nostr Event Model"]
-    A --> A5["0004 Nostr Resource Identity"]
-
-    B --> B1["0005 Resource Discovery"]
-    B --> B2["0006 Resource Resolution"]
-    B --> B3["0007 Domain Storage Model"]
-    B --> B4["0008 Resource Installation Lifecycle"]
-    B --> B5["0009 Discovery Roots"]
-
-    C --> C1["0010 Outbox and Publishing"]
-    C --> C2["0011 Multi-Device Synchronization"]
-    C --> C3["0012 Resource Archives"]
-    C --> C4["0013 Search Indexes"]
-    C --> C5["0014 Application Lifecycle"]
+09  Outbox and Publishing
+10  Multi-Device Synchronization
+11  Resource Archives
 ```
+
+The series progresses from the Resource model, through Nostr representation and identity, into the inbound and outbound Resource lifecycle.
+
 ---
+
 # Reading Order
 
-The architecture is organized into three logical areas.
+## Overview
 
-## Foundations
-
-These ADRs establish the core architectural concepts and terminology used throughout the application.
-
-| ADR | Title | Purpose |
-|-----|-------|---------|
-| 0000 | Architecture Overview | Introduces the architecture and explains how the ADRs fit together. |
-| 0001 | Data Distribution Strategy | Defines Resources as the unit of distribution and the overall distribution strategy. |
-| 0002 | Domain & Resource Model | Defines Domains, Resources, Representations, Domain Objects, and Domain Stores. |
-| 0003 | Nostr Event Model | Defines the boundary between the application and the Nostr protocol. |
-| 0004 | Nostr Resource Identity | Adopts Nostr addressable-event identity and replacement semantics. |
+| ADR | Title                      | Purpose                                                                                              |
+| --- | -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 00  | Resource Boundary Overview | Defines the purpose, principles, lifecycle, and organization of the Resource Boundary specification. |
 
 ---
 
-## Resource Lifecycle
+## Resource Foundations
 
-These ADRs define how Resources move through the application.
+These ADRs establish the Resource model and its Nostr representation.
 
-| ADR | Title | Purpose |
-|-----|-------|---------|
-| 0005 | Resource Discovery | Defines how published Resources are discovered. |
-| 0006 | Resource Resolution | Defines how Resource Representations become serialized Resource content. |
-| 0007 | Domain Storage Model | Defines persistence through Domain Stores. |
-| 0008 | Resource Installation Lifecycle | Defines how Resources become installed Domain Objects. |
-| 0009 | Discovery Roots | Defines where Resource Discovery begins. |
-
----
-
-## Synchronization & Application
-
-These ADRs define how local and remote state evolve over time.
-
-| ADR | Title | Purpose |
-|-----|-------|---------|
-| 0010 | Outbox and Publishing | Defines asynchronous publication of local changes. |
-| 0011 | Multi-Device Synchronization | Defines synchronization between devices. |
-| 0012 | Resource Archives | Defines import, export, sharing, and backup. |
-| 0013 | Search Indexes | Defines published and generated search indexes. |
-| 0014 | Application Lifecycle | Defines application startup and background processing. |
+| ADR | Title                      | Purpose                                                                                                                         |
+| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 01  | Domain Resource Model      | Defines Domain Objects, Resources, Resource Types, Representations, Classification, Granularity, and their relationships.       |
+| 02  | Data Distribution Strategy | Defines how Resource content is distributed directly through Nostr or through externally stored descriptor content.             |
+| 03  | Nostr Event Model          | Defines how Resource Representations map to Nostr events without making Nostr events part of the Domain model.                  |
+| 04  | Nostr Resource Identity    | Defines Published Resource Identity as `kind + pubkey + d` and distinguishes Resource identity from event publication identity. |
 
 ---
 
-# Architecture at a Glance
+## Inbound Resource Lifecycle
 
-The architecture follows two primary pipelines.
+These ADRs define how externally available Resources become candidates for accepted local state.
 
-## Incoming
+| ADR | Title                           | Purpose                                                                                               |
+| --- | ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 05  | Discovery Roots                 | Defines which publishers may serve as starting points for open-ended Resource Discovery.              |
+| 06  | Resource Discovery              | Defines how Resource Representations are located from Nostr relays using known discovery information. |
+| 07  | Resource Resolution             | Defines how a known Resource Representation produces verified serialized Resource content.            |
+| 08  | Resource Installation Lifecycle | Defines how verified external Resource information may become accepted local application state.       |
 
-```mermaid
-flowchart LR
+---
 
-    RESOURCE["Published Resource"]
+## Publication, Synchronization, and Portability
 
-    --> DISCOVERY["Resource Discovery"]
+These ADRs define how accepted local information participates in the external Resource lifecycle.
 
-    --> RESOLUTION["Resource Resolution"]
+| ADR | Title                        | Purpose                                                                                        |
+| --- | ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| 09  | Outbox and Publishing        | Defines durable offline-first publication of accepted local changes to Nostr.                  |
+| 10  | Multi-Device Synchronization | Defines Last Write Wins reconciliation between independently operating offline clients.        |
+| 11  | Resource Archives            | Defines portable `.kjva` Resource collections for transfer, preservation, sharing, and import. |
 
-    --> FACTORY["Domain Object Factory"]
+---
 
-    --> STORE["Domain Store"]
+# Resource Boundary at a Glance
+
+The Resource Boundary connects application-owned Domain information to its external Resource lifecycle.
+
+```text
+Application
+
+Accepted Local Domain Information
+        │
+        │ outbound
+        ↓
+Resource
+        ↓
+Resource Representation
+        ↓
+Nostr Event
+        ↓
+Nostr Relays
+
+        ↑
+        │ inbound
+        │
+
+Discovery
+    ↓
+Resource Representation
+    ↓
+Resolution
+    ↓
+Verified Resource Content
+    ↓
+Domain Interpretation
+    ↓
+Candidate Domain Object
+    ↓
+Domain Validation
+    ↓
+Installation
+    ↓
+Accepted Local Domain Information
 ```
-## Outgoing
 
-```mermaid
-flowchart LR
+The application owns accepted local state.
 
-    STORE["Domain Store"]
+Nostr provides external Resource publication and discovery.
 
-    --> SERIALIZER["Resource Serializer"]
+---
 
-    --> OUTBOX["Outbox"]
+# Core Contracts
 
-    --> RESOURCE["Published Resource"]
+The specification establishes several system-wide contracts.
+
+## Resource Identity
+
+```text
+Published Resource Identity
+    =
+kind + publisher public key + d tag
 ```
 
-Together these pipelines support installation, publishing, synchronization, import/export, and application startup.
+The event `id` identifies one signed publication.
+
+It does not create another Resource identity or revision system.
 
 ---
 
-# Glossary
+## Local Authority
 
-Architectural terminology is defined in **glossary.md**.
+External information does not automatically become application state.
+
+> **The network proposes. The application decides.**
+
+Discovery and Resolution may identify and verify Resource information.
+
+Installation determines whether that information becomes accepted local state.
 
 ---
 
-# Contributing
+## Offline-First Publication
 
-When adding or modifying ADRs:
+Local application behavior does not wait for Nostr publication.
 
-- Keep each ADR focused on a single architectural responsibility.
-- Avoid implementation details.
-- Reference existing ADRs rather than repeating concepts.
-- Update this index when adding, removing, or renaming ADRs.
+```text
+Local Domain Change
+        ↓
+Accepted Local State
+        ↓
+Durable Publication Intent
+        ↓
+Outbox
+        ↓
+Nostr Publication
+```
+
+> **Accept locally first. Publish externally independently.**
+
+---
+
+## Synchronization
+
+Multi-device synchronization uses Last Write Wins.
+
+```text
+Domain modifiedAt
+    =
+Nostr created_at
+```
+
+The later valid write wins reconciliation for the same Published Resource Identity.
+
+A newer network publication still follows the normal acceptance lifecycle.
+
+---
+
+## Resource Portability
+
+Resource Archives make Resources portable without requiring live relay or external-storage access.
+
+Archives preserve Resource boundaries and serialized Resource content.
+
+They do not automatically include arbitrary application state that has no Resource representation.
+
+---
+
+# Outside This Specification
+
+The Resource Boundary interacts with, but does not define:
+
+* application persistence,
+* Domain-specific search implementation,
+* application startup,
+* background execution scheduling,
+* Workspace Runtime behavior,
+* presentation,
+* local-only settings,
+* caches,
+* and other implementation-specific application concerns.
+
+Implementation documentation may define mechanisms such as:
+
+* repositories,
+* IndexedDB object stores,
+* Resource Resolution strategies,
+* Nostr event handlers,
+* background workers,
+* Outbox processors,
+* and Resource Installation coordinators.
+
+Those mechanisms implement the Resource Boundary but are not themselves Resource Boundary ADRs.
+
+---
+
+# Support Documents
+
+The specification is accompanied by:
+
+```text
+_glossary.md
+_adr-authoring-guide.md
+```
+
+`_glossary.md` provides concise definitions of Resource Boundary terminology.
+
+`_adr-authoring-guide.md` defines conventions for extending and maintaining the specification.
+
+---
+
+# File List
+
+```text
+00-resource-boundary-overview.md
+01-domain-resource-model.md
+02-data-distribution-strategy.md
+03-nostr-event-model.md
+04-nostr-resource-identity.md
+05-discovery-roots.md
+06-resource-discovery.md
+07-resource-resolution.md
+08-resource-installation-lifecycle.md
+09-outbox-and-publishing.md
+10-multi-device-synchronization.md
+11-resource-archives.md
+
+_glossary.md
+_adr-authoring-guide.md
+_index.md
+```
+
+---
+
+# Maintaining the Specification
+
+When adding or modifying an ADR:
+
+* keep it focused on one Resource Boundary responsibility,
+* preserve existing Nostr contracts unless explicitly revising them,
+* define concepts only in their authoritative ADR,
+* avoid implementation details that do not affect compatibility,
+* preserve offline-first and Local Authority principles,
+* update this index when filenames or reading order change,
+* and update the glossary when authoritative terminology changes.
+
+The ADR series should remain readable as one progressively constructed Resource Boundary specification.
