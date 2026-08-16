@@ -1,4 +1,4 @@
-# ADR 0004 — Nostr Resource Identity
+# ADR 04 — Nostr Resource Identity
 
 **Status**
 
@@ -8,53 +8,89 @@ Accepted
 
 # Problem
 
-KJVOnly resources are published as Nostr addressable events.
+Resources are published as Nostr addressable events.
 
-The application needs a consistent way to determine:
+The Resource Boundary needs a consistent way to determine:
 
-* whether two events represent the same published Resource,
-* whether an event is a newer publication of an existing Resource,
-* and whether a publication represents a different Resource.
+* whether two events are publications of the same Resource,
+* whether a new event replaces an earlier publication,
+* and whether an event identifies a different Resource.
 
-Defining a separate application-specific identity or versioning model would duplicate semantics already provided by Nostr and could introduce conflicting rules.
+Defining a separate application-specific Resource version or revision model would duplicate semantics already provided by Nostr.
 
 ---
 
 # Decision
 
-KJVOnly adopts Nostr addressable-event identity and replacement semantics directly.
+The Resource Boundary adopts Nostr addressable-event identity and replacement semantics directly.
 
-The application does not define a separate Resource version, revision, or identity system.
-
-For an addressable event, the published Resource is identified by:
+A Published Resource is identified by:
 
 ```text
 kind + publisher public key + d tag
 ```
 
-Nostr defines addressable events using this tuple and permits relays to retain only the latest event for each unique combination.
+The application MUST NOT introduce a separate Resource version, revision, or publication identity system.
 
-The individual event `id` identifies a specific signed publication of that Resource.
+The Nostr event `id` identifies one specific signed publication of that Resource.
 
 ---
 
-# Core Terms
+# Published Resource Identity
 
-## Published Resource Identity
-
-The identity of a published Resource is:
+Two Resource events with the same:
 
 ```text
-kind + publisher public key + d tag
+kind
+publisher public key
+d tag
 ```
 
-Two events with the same values represent publications of the same Resource.
+are publications of the same Published Resource.
 
-Changing any value creates a different Published Resource Identity.
+Changing any of those values creates a different Published Resource.
+
+Conceptually:
+
+```text
+kind + pubkey + d
+        │
+        ├── Event Publication A
+        ├── Event Publication B
+        └── Event Publication C
+```
+
+Each publication has its own event `id`.
+
+The Published Resource Identity remains unchanged.
 
 ---
 
-## Event Publication
+# Resource Identifier
+
+The Domain Resource Model defines the logical Resource Identifier.
+
+When represented as a Nostr addressable event, that identifier is carried in the `d` tag.
+
+For example:
+
+```text
+kjvonly/bible/chapters/kjv
+```
+
+may be represented as:
+
+```json
+["d", "kjvonly/bible/chapters/kjv"]
+```
+
+The `d` tag identifies the Resource within a publisher's address space and Nostr kind.
+
+It is therefore one component of Published Resource Identity, not the complete identity by itself.
+
+---
+
+# Event Publication
 
 An Event Publication is one signed Nostr event for a Published Resource.
 
@@ -64,87 +100,161 @@ Publishing another event with the same:
 * publisher public key,
 * and `d` tag
 
-publishes a replacement for the same Resource.
+creates another publication of the same Resource.
 
-The new event has a different event `id`, but the Published Resource Identity remains unchanged.
+The replacement publication has a different event `id`, but the Published Resource Identity remains unchanged.
 
-```mermaid
-flowchart LR
-    IDENTITY["kind + pubkey + d"]
+Relays MAY discard older publications and retain only the latest event for an addressable identity.
 
-    IDENTITY --> EVENT1["Event Publication"]
-    IDENTITY --> EVENT2["Replacement Publication"]
-    IDENTITY --> EVENT3["Replacement Publication"]
-```
-
-Relays may discard older publications and retain only the latest event for an addressable identity.
+Older event publications therefore MUST NOT be treated as a durable Resource revision history.
 
 ---
 
-## Different Published Resource
+# Different Published Resources
 
-A different Published Resource is created when any identity component changes.
+A different Published Resource is created when any identity component changes:
 
 ```text
 different kind
+
 or
+
 different publisher public key
+
 or
+
 different d tag
 ```
 
-The architecture does not assign additional meaning to why the identity changed.
+The protocol does not assign additional meaning to why the identity changed.
 
-For example, a publisher may use different `d` tag values for:
-
-* incompatible formats,
-* editions,
-* translations,
-* alternative datasets,
-* or compatibility versions.
-
-A value such as:
+For example, a publisher may choose identifiers such as:
 
 ```text
+kjvonly/bible/chapters/kjv
+
 kjvonly/bible/chapters/kjv/v2
 ```
 
-is simply a different Resource Identifier.
+These are different Resource Identifiers and therefore different Published Resources when published under the same kind and publisher.
 
-The `/v2` segment is a publisher naming convention, not a special architectural version type.
+The `v2` segment has no special protocol meaning.
+
+It is part of the publisher's Resource naming convention.
 
 ---
 
 # Publisher Identity
 
-The publisher public key is part of the Published Resource Identity.
+The publisher public key is part of Published Resource Identity.
 
 The same `kind` and `d` tag published by two different publishers identifies two different Resources.
 
-```mermaid
-flowchart TD
-    A["Publisher A<br/>kind + d"]
-    B["Publisher B<br/>kind + d"]
+```text
+Publisher A + kind + d
+    → Published Resource A
 
-    A --> RA["Published Resource A"]
-    B --> RB["Published Resource B"]
+Publisher B + kind + d
+    → Published Resource B
 ```
 
-Changing publishers therefore cannot update or replace the original publisher's Resource.
+Changing publishers cannot replace the original publisher's Resource.
 
 It creates an independently addressable Resource.
 
 ---
 
+# Replacement Semantics
+
+Compatible corrections and updates to the same Resource SHOULD preserve:
+
+```text
+kind + pubkey + d
+```
+
+and publish a replacement event.
+
+A publisher SHOULD use a different Resource Identifier when it intends to create a separately addressable Resource.
+
+Changing:
+
+* event `id`,
+* `created_at`,
+* serialized content,
+* or Resource Representation
+
+does not by itself create a different Published Resource.
+
+Identity is determined only by:
+
+```text
+kind + pubkey + d
+```
+
+---
+
+# Resource Representation and Identity
+
+Resource Representation does not participate in Published Resource Identity.
+
+A publisher may change a Resource from:
+
+```text
+content
+```
+
+to:
+
+```text
+descriptor
+```
+
+without changing the Resource identity, provided the `kind`, publisher, and `d` tag remain the same.
+
+Representation determines how Resource content is obtained.
+
+Identity determines which Published Resource the event represents.
+
+---
+
+# Versions
+
+The Resource Boundary does not define a special version abstraction.
+
+Publishers MAY encode distinctions such as:
+
+* editions,
+* translations,
+* incompatible formats,
+* compatibility generations,
+* or alternative datasets
+
+into Resource Identifiers when those distinctions should be independently addressable.
+
+Segments such as:
+
+```text
+v1
+v2
+edition
+2026
+```
+
+have no generic protocol-level version semantics.
+
+They are Resource naming conventions.
+
+---
+
 # Forks and Provenance
 
-KJVOnly does not define a Fork as a separate identity type.
+The Resource Boundary does not define a Fork as a separate identity type.
 
-A Resource published under another publisher is already a different Published Resource because its public key differs.
+A Resource published under another publisher is already a different Published Resource because the publisher public key differs.
 
-A publisher may include provenance metadata indicating that its Resource was derived from another Published Resource.
+A publisher MAY include provenance metadata describing a relationship to another Resource.
 
-Conceptually, provenance may reference:
+Such metadata may identify:
 
 ```text
 source kind
@@ -155,18 +265,27 @@ optional source event id
 
 Provenance is descriptive metadata.
 
-It does not participate in identity and does not change Nostr replacement semantics.
+It MUST NOT participate in Published Resource Identity or replacement semantics.
 
-A Resource with provenance may be described by the application or user as a fork, but no special fork identity mechanism is required.
+---
 
-```mermaid
-flowchart LR
-    SOURCE["Source Published Resource"]
+# Identity and Local Acceptance
 
-    SOURCE -->|provenance| DERIVED["Derived Published Resource"]
+Published Resource Identity determines which external Resource a Nostr event represents.
 
-    DERIVED --> IDENTITY["Independent Nostr Identity"]
+It does not determine whether a publication becomes accepted local state.
+
+A replacement publication may be newer according to Nostr semantics while still requiring the normal Resource Resolution, validation, Installation, or Synchronization rules.
+
+Therefore:
+
+```text
+same Published Resource
+    ≠
+automatically accepted replacement
 ```
+
+Identity and local acceptance are separate concerns.
 
 ---
 
@@ -175,17 +294,20 @@ flowchart LR
 The complete identity model is:
 
 ```text
-Same kind + same publisher + same d tag
+same kind + same publisher + same d tag
     = same Published Resource
 
-Same identity + different event id
+same identity + different event id
     = different publication of the same Resource
 
-Different kind, publisher, or d tag
+different kind, publisher, or d tag
     = different Published Resource
 
-Provenance
+provenance
     = metadata only
+
+version-like identifier segments
+    = publisher naming convention
 ```
 
 No additional Resource version or revision abstraction is introduced.
@@ -194,15 +316,15 @@ No additional Resource version or revision abstraction is introduced.
 
 # Implications
 
-Resource identifiers should be designed as stable logical identifiers.
+Resource Identifiers SHOULD be stable logical identifiers.
 
-Compatible corrections and updates should normally reuse the same `d` tag and publish a replacement event.
+Compatible corrections and updates SHOULD normally reuse the existing Published Resource Identity.
 
-A publisher may create a new `d` tag when it intends to create an independently addressable Resource.
+A publisher MAY create a new identity when it intends to publish an independently addressable Resource.
 
-The application must not assume that segments such as `v1`, `v2`, `edition`, or dates have protocol-level meaning.
+Clients MUST NOT infer protocol-level version semantics from Resource Identifier segments.
 
-Older Event Publications may not remain available from relays and must not be treated as a durable revision history.
+Clients MUST NOT depend on older relay publications as a durable revision history.
 
 ---
 
@@ -210,32 +332,33 @@ Older Event Publications may not remain available from relays and must not be tr
 
 This ADR defines:
 
-* adoption of Nostr addressable-event identity,
+* Published Resource Identity,
+* the relationship between Resource Identifier and Nostr identity,
 * the relationship between Published Resource Identity and event `id`,
-* the effect of changing identity components,
-* and optional provenance between independently published Resources.
+* Nostr replacement identity,
+* publisher participation in identity,
+* version-like Resource naming,
+* and optional provenance.
 
-This ADR does not define:
+It does not define:
 
-* Resource discovery,
+* Resource Discovery,
 * Resource Resolution,
-* installation,
-* Multi-Device Synchronization,
-* update-selection behavior,
-* historical event archival,
-* synchronization,
-* conflict resolution,
-* or local persistence.
+* Installation,
+* update-selection policy,
+* synchronization conflict resolution,
+* local acceptance,
+* historical archival,
+* deletion,
+* or persistence.
 
-Those concerns are defined by other ADRs.
+Those concerns are defined by other Resource Boundary specifications.
 
 ---
 
 # Big Takeaway
 
-KJVOnly does not invent its own Resource versioning system.
-
-It relies directly on Nostr:
+The Resource Boundary relies directly on Nostr addressable-event identity:
 
 ```text
 kind + publisher public key + d tag
@@ -243,8 +366,10 @@ kind + publisher public key + d tag
 
 identifies the Published Resource.
 
-The event `id` identifies one signed publication of it.
+The event `id` identifies one signed publication of that Resource.
 
-Changing any identity component creates a different Resource.
+Changing an identity component creates a different Published Resource.
 
-Version names and fork relationships are publisher-level conventions expressed through Resource Identifiers and optional provenance metadata.
+Version names and fork relationships remain naming or provenance conventions rather than additional identity systems.
+
+> **Nostr identity determines which Resource was published; the Resource lifecycle determines what the application accepts.**
