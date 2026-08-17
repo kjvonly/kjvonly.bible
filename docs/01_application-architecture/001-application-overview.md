@@ -8,76 +8,83 @@ Current
 
 # Purpose
 
-This document provides a high-level overview of the KJVOnly application.
+This document provides a high-level overview of the KJVOnly Application Architecture.
 
-It introduces the primary concepts used throughout the application and establishes the terminology used by the remaining implementation documentation.
+It introduces the primary concepts used throughout the application and establishes the terminology used by the remaining Application Architecture documents.
 
-Rather than describing individual source files or implementation details, this document explains how the application is organized and how its major responsibilities relate to one another.
+Rather than describing individual source files or implementation details, this document explains how the application's major responsibilities fit together.
 
-The application consists of two complementary architectures.
+The application is organized around enduring responsibilities such as:
 
-The first is the **Application Architecture**, responsible for presenting the user interface and coordinating user interactions.
+* the Workspace Runtime,
+* Domains,
+* Modules,
+* Domain Objects,
+* Public APIs,
+* persistence,
+* background processing,
+* user interface behavior,
+* the Resource Boundary,
+* and supporting Infrastructure.
 
-The second is the **Resource Architecture**, documented by the Architecture Decision Records (ADRs), which defines how application data is identified, discovered, resolved, installed, published, and synchronized.
-
-The two architectures are intentionally independent.
-
-The application operates on Domain Objects.
-
-The Resource Architecture is responsible for producing and maintaining those Domain Objects.
-
-This separation allows the application's behavior and user experience to evolve independently from the mechanisms used to distribute application data.
+Together these responsibilities define how the application operates.
 
 ---
 
 # Scope
 
-This document provides a conceptual overview of the application.
+This document provides the conceptual map for the Application Architecture.
 
 It introduces:
 
-- the application runtime,
-- the workspace model,
-- panes,
-- buffers,
-- modules,
-- domains,
-- the Resource Architecture,
-- supporting infrastructure,
-- and the relationship between these concepts.
+* the Application Runtime,
+* the Workspace model,
+* Panes,
+* Buffers,
+* Modules,
+* Domains,
+* Domain Objects,
+* Public APIs,
+* the Resource Boundary,
+* Infrastructure,
+* and the relationships between them.
 
-This document does not describe the detailed implementation of individual subsystems.
+Detailed responsibilities are described by the architecture documents that follow.
 
-Topics such as workspace management, pane rendering, domain organization, persistence, synchronization, startup, publishing, and resource resolution are described by their own implementation documents.
+Implementation details belong to the Implementation documentation.
 
 ---
 
 # Big Takeaway
 
-The KJVOnly application is organized around a persistent workspace.
+The KJVOnly application is organized around a persistent Workspace Runtime.
 
-The workspace is modeled as a recursive pane tree.
+The Workspace is represented by a recursive Pane tree.
 
-Every visible feature in the application is presented by instantiating a module inside a buffer hosted by a leaf pane.
+Leaf Panes host Buffers.
 
-Modules provide user interactions for application domains.
+Buffers provide the runtime and navigation context used to instantiate Modules.
 
-Application domains own the data and behavior used by those modules.
+Modules present capabilities owned by Domains.
 
-The Resource Architecture retrieves, installs, publishes, and synchronizes the Domain Objects required by those domains.
+Domains own the application's business behavior and Domain Objects.
 
-Together these concepts allow the application runtime and the Resource Architecture to evolve independently while remaining connected through a shared domain model.
+When Domain Objects must be represented outside the application, they cross the Resource Boundary as Resources.
+
+Infrastructure provides the technical capabilities used to realize these responsibilities.
+
+Each responsibility remains independently owned and collaborates through Public APIs and other stable communication mechanisms.
 
 ---
 
 # Application Model
 
-At a high level, the application consists of four major areas.
+At a high level:
 
 ```mermaid
 flowchart TD
 
-    WORKSPACE["Workspace Runtime"]
+    RUNTIME["Workspace Runtime"]
 
     MODULES["Modules"]
 
@@ -85,82 +92,86 @@ flowchart TD
 
     OBJECTS["Domain Objects"]
 
-    RESOURCES["Resource Architecture"]
+    BOUNDARY["Resource Boundary"]
 
-    WORKSPACE --> MODULES
+    INFRA["Infrastructure"]
+
+    RUNTIME --> MODULES
 
     MODULES --> DOMAINS
 
     DOMAINS --> OBJECTS
 
-    RESOURCES --> OBJECTS
+    OBJECTS <--> BOUNDARY
+
+    BOUNDARY --> INFRA
 ```
 
-Each area has a distinct responsibility.
+Each concept has a distinct responsibility.
 
-The **Workspace Runtime** manages the visible application and user interaction.
+The **Workspace Runtime** manages the application's active study environment.
 
-**Modules** provide individual application features that users interact with.
+**Modules** present capabilities to the user.
 
-**Domains** own the application's business concepts, data, and behavior.
+**Domains** own application behavior and Domain Objects.
 
-The **Resource Architecture** manages the lifecycle of application data from publication through installation and synchronization.
+**Domain Objects** represent information within the application.
 
-These responsibilities intentionally remain separate.
+The **Resource Boundary** defines how Domain Objects are represented outside the application.
 
-The workspace does not communicate directly with Nostr.
+**Infrastructure** realizes technical capabilities such as Nostr communication, Blossom integration, IndexedDB persistence, workers, networking, and serialization.
 
-Modules do not operate on serialized Resources.
-
-The Resource Architecture does not participate in rendering the user interface.
-
-Instead, both architectures meet at the application's Domain Objects.
-
-Domain Objects form the common language shared between the application runtime and the Resource Architecture.
-
-This boundary allows either architecture to evolve without unnecessarily affecting the other.
+These responsibilities should remain distinct even when their implementations are physically close together.
 
 ---
 
 # Application Runtime
 
-The application is implemented as a single-page application (SPA).
+The application is implemented as a single-page application.
 
-Although SvelteKit provides the routing framework, routing is not used as the primary application composition model.
+Although SvelteKit provides routing capabilities, routes are not the primary composition model for the application.
 
-Nearly all application behavior exists within the root route.
+The root application hosts a persistent Workspace Runtime.
 
-The root route hosts a persistent workspace that remains active throughout the lifetime of the application.
+User interaction primarily occurs by modifying that Workspace rather than navigating between independent pages.
 
-User interaction occurs by manipulating the workspace rather than navigating between pages.
+Opening Scripture, following a reference, searching the Bible, viewing Notes, or working through a Reading Plan changes the current Workspace.
 
-Conceptually, the application behaves more like a desktop application than a traditional website.
+Conceptually, the application behaves more like a desktop application than a traditional page-oriented website.
 
-Subsequent sections describe how the workspace is modeled and how application features are presented within it.
+---
 
 # Workspace Runtime
 
-The Workspace Runtime is responsible for presenting and managing the visible application.
+The Workspace Runtime owns the active study environment.
 
-Rather than constructing the user interface through route navigation, the application maintains a persistent workspace that remains active for the lifetime of the application.
+Its responsibilities include:
 
-All user interaction occurs within this workspace.
+* Workspace management,
+* Pane management,
+* Buffer management,
+* layout coordination,
+* Module composition,
+* runtime events,
+* and user interaction flow.
 
-Opening a Bible chapter, displaying notes, searching Scripture, viewing references, or interacting with any other application feature occurs by modifying the workspace rather than navigating between pages.
+The Runtime understands how application capabilities are presented.
 
-The workspace therefore becomes the primary application runtime.
+It does not own Domain behavior.
+
+A Bible chapter remains Bible behavior regardless of how many Panes display it.
+
+A Note remains Notes behavior regardless of where it appears in the Workspace.
+
+This separation allows the Runtime and Domains to evolve independently.
 
 ---
 
 # Workspace Model
 
-The workspace is modeled as a recursive pane tree.
+A Workspace represents a complete study environment.
 
-This tree represents the complete visible layout of the application.
-
-Each node within the tree is represented by a `Pane`.
-
-A pane may either contain another pair of panes or display a single buffer.
+The Workspace is modeled as a recursive Pane tree.
 
 Conceptually:
 
@@ -180,26 +191,24 @@ flowchart TD
     Right --> BufferB["Buffer"]
 ```
 
-The workspace itself is therefore defined entirely by the pane tree.
+The Pane tree describes the logical arrangement of the Workspace.
 
-Changing the workspace means modifying the tree.
+Changing the Workspace means changing that tree.
 
-The rendered user interface is simply a visual representation of that tree.
+The rendered user interface is a visual representation of the current Workspace state.
 
 ---
 
 # Pane Tree
 
-The pane tree is implemented as a conventional recursive tree structure.
+Each Pane is either:
 
-Each pane represents either:
+* a branch Pane,
+* or a leaf Pane.
 
-- a **branch pane**, or
-- a **leaf pane**.
+A branch Pane divides available space between child Panes.
 
-A branch pane divides the available space between two child panes.
-
-A leaf pane hosts a single buffer.
+A leaf Pane hosts a Buffer.
 
 Conceptually:
 
@@ -217,509 +226,678 @@ flowchart TD
     Right --> BufferB["Buffer"]
 ```
 
-This recursive structure allows the workspace to support arbitrarily nested layouts while remaining represented by a single root pane.
+This recursive model supports nested layouts while preserving a single root representation of the Workspace.
 
-The current implementation stores this tree directly within the workspace runtime.
-
-Operations such as splitting, replacing, or deleting panes modify the tree before the workspace is re-rendered.
+Operations such as splitting, replacing, or deleting Panes modify this structure.
 
 ---
 
 # Workspace Operations
 
-The workspace provides a small number of primitive operations that modify the pane tree.
+The Runtime provides a small set of primitive Workspace operations.
 
 These include:
 
-- splitting a pane,
-- replacing the buffer displayed by a pane,
-- deleting a pane,
-- rebuilding the workspace layout,
-- and updating pane dimensions.
+* splitting a Pane,
+* replacing a Pane's Buffer,
+* deleting a Pane,
+* reorganizing the Pane tree,
+* rebuilding layout information,
+* and updating Pane dimensions.
 
-More complex user interactions are composed from these primitive operations.
+More complex interactions are composed from these primitives.
 
-For example, opening a Bible module in a new pane is implemented by splitting an existing pane, creating a new buffer, assigning the requested module to that buffer, and regenerating the workspace layout.
+For example, opening another Bible Reader may require the Runtime to split a Pane, create a Buffer for the new Module instance, and update the Workspace layout.
 
-This keeps the workspace runtime small while allowing application behavior to remain flexible.
+The Runtime owns these operations.
+
+Domains request them through the Runtime's Public API rather than manipulating the Pane tree directly.
 
 ---
 
 # Rendering
 
-The workspace runtime does not directly construct the visible layout.
+The Pane tree represents logical layout.
 
-Instead, it transforms the pane tree into a CSS Grid representation.
-
-The generated grid becomes the visual representation of the current workspace.
+The current implementation transforms that tree into a CSS Grid representation for rendering.
 
 Conceptually:
 
 ```text
 Pane Tree
-        │
-        ▼
-Grid Template Areas
-        │
-        ▼
+    │
+    ▼
+Layout Representation
+    │
+    ▼
 Rendered Workspace
 ```
 
-The pane tree therefore represents the logical layout.
+The architectural responsibility is **layout and rendering**.
 
-CSS Grid represents the visual layout.
+CSS Grid is the current implementation.
 
-Separating these concepts allows the application to modify the workspace model without coupling application behavior to the rendering implementation.
-
----
-
-# Stable Rendering
-
-One of the primary goals of the workspace runtime is preserving module state.
-
-The workspace is designed so that changes affecting one pane do not unnecessarily recreate modules hosted by unaffected panes.
-
-For example, a user may have multiple Bible modules open, each displaying a different chapter and scroll position.
-
-Opening a new module should not cause those existing modules to be recreated.
-
-To preserve component identity, the workspace maintains stable pane identifiers and carefully controls how panes are rendered.
-
-Deleted pane identifiers continue to be tracked after removal, allowing existing pane components to remain associated with their original identity.
-
-This prevents unnecessary component recreation and preserves runtime state such as scroll position, selection state, and module-specific interaction state.
-
-This behavior is a defining characteristic of the application's workspace model and contributes significantly to its desktop-like user experience.
+This distinction allows rendering technology to evolve without redefining the Workspace model.
 
 ---
 
-# Relationship to Modules
+# Stable Runtime State
 
-The workspace is intentionally independent of application functionality.
+The Workspace Runtime is designed to preserve active Module state when unrelated parts of the Workspace change.
 
-It understands panes and buffers.
+A user may have several Bible Reader instances open at different locations and scroll positions.
 
-It does not understand Bible chapters, notes, search results, or reading plans.
+Opening another Module should not unnecessarily recreate unaffected Module instances.
 
-Application functionality is introduced by the modules hosted within buffers.
+Stable Pane and Buffer identity allow the Runtime to preserve state such as:
 
-This separation allows the workspace runtime to remain generic while supporting any number of application modules.
+* scroll position,
+* selection,
+* navigation context,
+* and Module-specific interaction state.
 
-As new modules are introduced, the workspace itself does not require modification.
+The architectural requirement is stable runtime identity.
 
-It continues to provide the same responsibilities:
+The mechanism used to realize that requirement is an implementation concern.
 
-- layout,
-- composition,
-- rendering,
-- and workspace management.
+---
 
-The modules provide the application behavior.
+# Buffers
 
-# Domains
+A Buffer represents the runtime context hosted by a leaf Pane.
 
-The application organizes its functionality into domains.
+It provides the information required to instantiate and maintain a Module instance.
 
-A domain represents a cohesive area of application data and behavior.
+That context may include:
 
-Examples include:
+* Bible location,
+* Reading Plan context,
+* Note context,
+* search context,
+* or other Module-specific navigation information.
 
-- Bible
-- Notes
-- Reading Plans
-- Search (future organization may move search beneath individual domains)
+The Buffer does not own Domain behavior.
 
-Domains define the concepts understood by the application.
+It carries the context required for a Module to present Domain capabilities within the Workspace.
 
-They own the application's business data, operations, and rules.
+Conceptually:
 
-The user interface does not interact directly with infrastructure.
-
-Instead, modules interact with their corresponding domain through strongly typed application models and domain services.
-
-This separation allows the user experience to remain independent from the mechanisms used to retrieve, store, or synchronize application data.
+```text
+Pane
+    ↓
+Buffer
+    ↓
+Module Instance
+```
 
 ---
 
 # Modules
 
-Modules provide the visible functionality presented to the user.
+Modules provide the visible capabilities presented to the user.
 
-A module is an instantiable application feature hosted within a buffer.
-
-Unlike a domain, which represents a category of application behavior, modules represent individual user interactions.
+A Module is an instantiable application feature hosted by a Buffer within a Pane.
 
 Examples include:
 
-- Bible Reader
-- Bible Search
-- Notes Editor
-- Reading Plans
-- Publisher Browser
+* Bible Reader,
+* Bible Search,
+* Notes,
+* Notes Search,
+* and Reading Plans.
 
-Multiple instances of the same module may exist simultaneously.
+Multiple instances of the same Module may exist simultaneously.
 
-For example, a user may open several Bible Reader modules displaying different chapters while also opening one or more Bible Search modules.
+For example, several Bible Reader instances may display different chapters while a Bible Search instance remains open in another Pane.
 
-Each module instance maintains its own runtime state through its associated buffer.
+Each instance has its own runtime context.
 
-```mermaid
-flowchart TD
+The Module presents behavior.
 
-    Buffer
+It does not own that behavior.
 
-    Buffer --> Module
+---
 
-    Module --> Domain
-```
+# Domains
 
-The buffer owns the runtime state.
+Domains own cohesive areas of application meaning.
 
-The module owns the user interaction.
+Current Domains include:
 
-The domain owns the application behavior.
+* Bible,
+* Notes,
+* Reading Plans,
+* and Settings.
+
+A Domain owns the responsibilities that derive their meaning from that Domain.
+
+For example, the Bible Domain owns:
+
+* Bible content,
+* Bible navigation,
+* Bible references,
+* Strong's information,
+* Bible annotations,
+* and Bible search.
+
+Bible Search is therefore not a separate Domain.
+
+It is a capability of the Bible Domain.
+
+Likewise, Notes Search belongs to the Notes Domain.
+
+A capability does not become a Domain simply because it has its own Module.
 
 ---
 
 # Modules and Domains
 
-A module belongs to exactly one domain.
+Domains and Modules serve different purposes.
 
-A domain may provide one or more modules.
+A Domain owns behavior.
+
+A Module presents Domain capabilities.
+
+A Domain may expose multiple Modules.
 
 Conceptually:
 
 ```text
 Bible Domain
-
     Bible Reader Module
-
     Bible Search Module
 
-    Bible References Module
-
-
 Notes Domain
-
     Notes Module
-
     Notes Search Module
 
-
 Reading Plans Domain
-
     Reading Plans Module
 ```
 
-This distinction is important.
+The user interacts with Modules.
 
-The user opens modules.
+Those Modules collaborate with their owning Domain.
 
-The application operates on domains.
+For example, a Bible Reader Module presents Bible behavior owned by the Bible Domain.
 
-For example, a user does not open "the Bible domain."
-
-The user opens a Bible Reader module.
-
-That module presents and manipulates data owned by the Bible domain.
-
-Likewise, searching Scripture is not a separate application domain.
-
-It is another interaction with Bible-domain data.
-
-Separating domains from modules allows new application functionality to be introduced without changing the application's overall organization.
+The Module does not become the owner of chapter retrieval, Scripture navigation, annotations, or other Bible responsibilities simply because it presents them.
 
 ---
 
 # Domain Objects
 
-Domain Objects are the application's primary data model.
+Domain Objects are the application's representation of Domain information.
 
-Every application domain exposes strongly typed Domain Objects representing the data required by its modules.
+Examples include:
 
-Modules operate exclusively on these Domain Objects.
+* Bible Chapters,
+* Notes,
+* Reading Plans,
+* Annotations,
+* Strong's information,
+* and other Domain-owned data.
 
-They do not operate on serialized Resources, Nostr events, Blossom descriptors, or IndexedDB records.
+Application behavior operates on Domain Objects rather than transport- or storage-specific representations.
 
-This separation isolates application behavior from transport and persistence concerns.
+A Domain should not need to understand:
 
-The Resource Architecture is responsible for producing and maintaining Domain Objects.
+* Nostr events,
+* Blossom descriptors,
+* relay query results,
+* IndexedDB records,
+* or other Infrastructure representations.
 
-The application is responsible for presenting and manipulating them.
+Those are implementation concerns.
+
+Within the application, the Domain Object is the meaningful representation.
+
+---
+
+# Public APIs
+
+Ownership establishes boundaries between responsibilities.
+
+Public APIs provide the primary mechanism for collaborating across those boundaries.
+
+When one responsibility requires behavior owned elsewhere, it should request that behavior through the owner's Public API rather than depending upon its implementation.
+
+For example:
+
+* a Module requests Domain behavior through the Domain's Public API,
+* a Domain requests Workspace behavior through the Runtime's Public API,
+* and cross-Domain collaboration occurs through the Public API of the Domain that owns the behavior.
+
+Shared use does not imply shared ownership.
+
+A service, store, repository, factory, component, or adapter may implement part of a Public API.
+
+Those are implementation roles.
+
+The Public API is the architectural boundary.
+
+---
+
+# Shared Concepts
+
+Not every concept used by multiple parts of the application becomes a new owner.
+
+Some concepts provide a shared language between independently owned responsibilities.
+
+Examples include:
+
+* Bible location references,
+* identifiers,
+* navigation context,
+* and application events.
+
+Shared use does not automatically imply shared ownership.
+
+The important question remains:
+
+> **Who gives this responsibility meaning?**
+
+Once ownership is identified, other responsibilities collaborate through the appropriate Public API or stable shared representation.
+
+---
+
+# The Resource Boundary
+
+The Resource Boundary defines how Domain Objects leave and re-enter the application.
+
+Inside the application, responsibilities operate on Domain Objects.
+
+When those objects must be:
+
+* published,
+* synchronized,
+* discovered,
+* installed,
+* imported,
+* exported,
+* archived,
+* or shared,
+
+they are represented as Resources.
 
 Conceptually:
 
 ```mermaid
 flowchart LR
 
-    Resources["Resource Architecture"]
-
-    Factory["Domain Object Factory"]
-
-    Objects["Domain Objects"]
-
     Domain["Domain"]
 
-    Module["Module"]
+    Object["Domain Object"]
 
-    Resources --> Factory
+    Boundary["Resource Boundary"]
 
-    Factory --> Objects
+    Resource["Resource"]
 
-    Objects --> Domain
+    External["External System"]
 
-    Domain --> Module
+    Domain --> Object
+
+    Object <--> Boundary
+
+    Boundary <--> Resource
+
+    Resource <--> External
 ```
 
-The Domain Object therefore forms the boundary between the application's runtime and the Resource Architecture.
+The Resource Boundary is not a second architecture.
 
-Everything above this boundary is application behavior.
-
-Everything below this boundary is responsible for retrieving, installing, storing, or synchronizing application data.
-
-# Resource Architecture
-
-The application runtime is responsible for presenting and manipulating Domain Objects.
-
-It is not responsible for determining where those Domain Objects originate.
-
-That responsibility belongs to the Resource Architecture.
-
-The Resource Architecture provides the mechanisms required to identify, discover, retrieve, install, publish, and synchronize application resources.
-
-Its primary responsibility is transforming externally distributed Resources into strongly typed Domain Objects that can be consumed by the application.
-
-The complete Resource Architecture is defined by the Architecture Decision Records (ADRs).
-
-This document describes only how the application integrates with that architecture.
+It is the communication boundary between the application's internal Domain model and external representations.
 
 ---
 
-# Resource Boundary
+# Domain Resource Model
 
-The application and the Resource Architecture share a common domain model.
+The Domain Resource Model defines the conceptual model used at the Resource Boundary.
 
-The application is responsible for creating, reading, updating, and deleting Domain Objects.
+It describes concepts such as:
 
-The Resource Architecture is responsible for transforming Published Resources into Domain Objects and serializing Domain Objects back into Published Resources.
+* Resource identity,
+* Resource representations,
+* discovery,
+* resolution,
+* installation,
+* publication,
+* synchronization,
+* lifecycle,
+* Domain Object reconstruction,
+* and serialization.
 
-This separation allows the application to operate entirely on strongly typed Domain Objects without depending on how those objects are serialized, transported, discovered, or persisted.
+These concepts define how Domain Objects can exist beyond a single running application while preserving their meaning when they return.
 
-Likewise, the Resource Architecture has no knowledge of panes, buffers, modules, or user interface behavior.
+The detailed model is documented in `02_resource-boundary`.
 
-Instead, both architectures meet at a single boundary.
+---
+
+# Crossing the Resource Boundary
+
+When externally distributed information enters the application, it arrives as a Resource representation.
+
+That representation is resolved and validated before becoming part of the application's local Domain model.
+
+Conceptually:
 
 ```mermaid
 flowchart LR
 
-    RESOURCES["Published Resources"]
+    Resource["Published Resource"]
 
-    RESOLUTION["Resource Resolution"]
+    Resolution["Resolution"]
 
-    FACTORY["Domain Object Factory"]
+    Validation["Validation"]
 
-    OBJECTS["Domain Objects"]
+    Factory["Domain Object Factory"]
 
-    DOMAINS["Application Domains"]
+    Object["Domain Object"]
 
-    MODULES["Modules"]
+    Domain["Domain"]
 
-    MODULES --> DOMAINS
+    Resource --> Resolution
 
-    DOMAINS --> OBJECTS
+    Resolution --> Validation
 
-    OBJECTS --> FACTORY
+    Validation --> Factory
 
-    FACTORY --> RESOLUTION
+    Factory --> Object
 
-    RESOLUTION --> RESOURCES
+    Object --> Domain
 ```
 
-The flow above illustrates the relationship between the application and the Resource Architecture.
+Publication travels in the opposite direction.
 
-The application creates and manipulates Domain Objects.
+A Domain Object is serialized into the appropriate Resource representation before being communicated externally.
 
-When application data is published, Domain Objects are serialized into Published Resources.
+The application continues to operate on Domain Objects throughout this process.
 
-When application data is retrieved, Published Resources are resolved and transformed back into Domain Objects.
+Resources exist for communication across the boundary.
 
-The Domain Object therefore forms the architectural boundary between the application runtime and the Resource Architecture.
+---
 
-Everything above this boundary represents application behavior.
+# Local Authority
 
-Everything below this boundary represents the lifecycle of distributed application resources.
+Resources received from external systems are candidates.
+
+They do not automatically become part of the application's local model.
+
+Before installation, externally received information may be validated for:
+
+* identity,
+* authorization,
+* schema correctness,
+* version,
+* integrity,
+* and Domain-specific policy.
+
+Only accepted Resources become installed Domain Objects.
+
+This preserves Local Authority:
+
+```text
+External system proposes.
+Application validates.
+Application accepts or rejects.
+```
+
+The application operates on its accepted local Domain Objects rather than directly on information from external systems.
+
+---
+
+# Infrastructure
+
+Infrastructure provides the technical capabilities used to realize application responsibilities.
+
+Examples include:
+
+* Nostr communication,
+* Blossom communication,
+* IndexedDB,
+* background workers,
+* networking,
+* serialization,
+* compression,
+* and browser APIs.
+
+Infrastructure does not define application meaning.
+
+For example:
+
+```text
+Resource Publication
+    ↓
+Current implementation
+    Nostr
+```
+
+```text
+Local Persistence
+    ↓
+Current implementation
+    IndexedDB
+```
+
+```text
+Workspace Layout
+    ↓
+Current implementation
+    CSS Grid
+```
+
+The responsibility is architectural.
+
+The technology is implementation.
+
+---
+
+# Data Access
+
+Application responsibilities request the information they need.
+
+They should not determine where that information must be found.
+
+For example, a caller requests:
+
+```text
+Bible Chapter
+```
+
+rather than:
+
+```text
+IndexedDB record
+Relay event
+Blossom object
+```
+
+The implementation determines how the request is satisfied.
+
+The caller receives the Domain Object it requires.
+
+This preserves the principle:
+
+> **Request data, not location.**
+
+---
+
+# Background Processing
+
+Long-running or deferred work belongs to Background Processing.
+
+Examples may include:
+
+* resource downloads,
+* synchronization,
+* search indexing,
+* maintenance,
+* and other operations that should not block user interaction.
+
+Background Processing performs work on behalf of architectural owners.
+
+It does not become the owner of the Domain behavior merely because the work executes asynchronously.
+
+Ownership remains with the responsibility that gives the work meaning.
+
+---
+
+# Persistence
+
+Persistence preserves application state across runtime sessions.
+
+Different kinds of information may require different persistence strategies.
+
+The Application Architecture defines what must persist.
+
+Infrastructure determines how that persistence is realized.
+
+For example, the application may require durable Domain storage while IndexedDB provides the current implementation.
+
+Persistence responsibilities should therefore remain independent of any individual storage technology.
 
 ---
 
 # Current Implementation
 
-The current implementation predates the Resource Architecture defined by the ADRs.
+The current implementation predates portions of the documented architecture.
 
-Application data is currently accessed through a combination of domain services, transport adapters, local persistence, and background workers.
+Some responsibilities remain distributed across packages organized by technical role, including services, transport code, storage code, and workers.
 
-The `nostr/` package provides the transport implementation responsible for communicating with relays and publishing events.
+This does not change architectural ownership.
 
-Shared services coordinate data retrieval, serialization, caching, and persistence before exposing strongly typed application models to the rest of the application.
+A service remains an implementation mechanism.
 
-Local storage is provided through IndexedDB.
+A transport adapter remains Infrastructure.
 
-Background workers perform long-running operations such as downloading, indexing, and synchronization.
+A Domain responsibility remains owned by its Domain even when its current implementation resides elsewhere.
 
-Collectively these packages form the application's current data-access layer.
+The migration strategy is therefore incremental:
 
-Although several responsibilities remain combined within the current implementation, the separation between the application runtime and the transport implementation is already present.
+```text
+Identify responsibility
+    ↓
+Determine ownership
+    ↓
+Define Public API
+    ↓
+Move implementation toward its owner
+```
 
-Modules operate on typed application models rather than directly manipulating Nostr events or IndexedDB records.
-
-This existing separation provides the foundation for implementing the Resource Architecture defined by the ADRs.
+Existing separation between typed application models and transport-specific representations provides a strong foundation for that migration.
 
 ---
 
 # Evolution
 
-The Resource Architecture does not replace the application runtime.
+The Application Architecture is intended to remain stable while implementation evolves.
 
-Instead, it refines the implementation beneath the domain layer.
+The Workspace Runtime may move out of the root Svelte component.
 
-As the application evolves, responsibilities currently implemented across the `nostr/`, `services/`, `storer/`, and `workers/` packages will gradually align with the architectural boundaries defined by the ADRs.
+Rendering technology may change.
 
-The application runtime, workspace model, pane tree, buffers, modules, and domains remain largely unchanged.
+Persistence technology may change.
 
-The primary evolution occurs below the Domain Object boundary.
+Nostr or Blossom implementations may change.
 
-This allows the application's user experience to remain stable while the underlying resource lifecycle becomes more modular, maintainable, and consistent.
+Services may be reorganized.
 
-# Shared Application Responsibilities
+Workers may be replaced.
 
-Not every application responsibility belongs to a specific domain.
+None of those changes should redefine the enduring responsibilities of the application.
 
-Some responsibilities represent concepts shared across the application and are used by multiple domains.
+Implementation should move toward the architecture.
 
-Examples include:
-
-- workspace management,
-- pane management,
-- Bible location references,
-- application settings,
-- navigation,
-- theme management,
-- and other application-wide capabilities.
-
-These responsibilities exist because they express concepts understood by the application itself rather than a particular domain.
-
-For example, a Bible location reference is used by Bible reading, Notes, Reading Plans, References, and Search.
-
-Although it describes Bible data, it is an application-wide concept rather than a responsibility owned exclusively by the Bible domain.
-
-Likewise, workspace management is independent of every application domain.
-
-It provides the runtime in which domains are presented but has no knowledge of Bible chapters, notes, reading plans, or other domain-specific behavior.
-
-Shared application responsibilities provide common capabilities that remain meaningful regardless of how application data is stored, transported, or synchronized.
-
----
-
-# Technical Infrastructure
-
-Technical infrastructure provides the implementation capabilities required by the application.
-
-Unlike application responsibilities, technical infrastructure exists to support the application rather than define its behavior.
-
-Examples include:
-
-- Nostr relay communication,
-- Blossom integration,
-- IndexedDB,
-- background workers,
-- compression,
-- serialization,
-- networking,
-- and other implementation technologies.
-
-These responsibilities may change as implementation technologies evolve.
-
-The application should therefore depend upon their capabilities rather than their implementations.
+The architecture should not continually move toward the implementation.
 
 ---
 
 # Ownership
 
-The implementation is organized around three ownership models.
+Ownership is determined by responsibility.
 
-**Application Runtime**
+The relevant question is not:
 
-Owns the presentation and coordination of the application.
+> **Which architectural layer should contain this code?**
 
-Examples include:
+It is:
 
-- workspace management,
-- panes,
-- buffers,
-- layout,
-- and module composition.
-
-**Application and Domain Responsibilities**
-
-Own the application's concepts, behavior, and business rules.
+> **Who gives this responsibility meaning?**
 
 Examples include:
 
-- domains,
-- modules,
-- Domain Objects,
-- Bible location references,
-- navigation,
-- settings,
-- and other shared application services.
+* Workspace behavior → Workspace Runtime
+* Pane behavior → Workspace Runtime
+* Bible Search → Bible Domain
+* Bible annotations → Bible Domain
+* Notes behavior → Notes Domain
+* Reading Plan behavior → Reading Plans Domain
+* relay communication → Infrastructure
+* IndexedDB implementation → Infrastructure
 
-**Technical Infrastructure**
+Ownership may exist at different levels of the architecture.
 
-Owns the mechanisms used to support the application.
+A Domain may own behavior.
 
-Examples include:
+The Runtime may own behavior.
 
-- Nostr,
-- Blossom,
-- IndexedDB,
-- workers,
-- serialization,
-- compression,
-- and networking.
+A subsystem within either may own a narrower responsibility.
 
-These ownership models intentionally separate application concepts from implementation technologies.
-
-This distinction allows implementation details to evolve while preserving the application's conceptual design.
+The important rule is that every responsibility has a clear owner.
 
 ---
 
 # Repository Organization
 
-The repository contains several projects that together form the complete KJVOnly system.
+The repository should evolve to reflect architectural ownership.
 
-```text
-client/
-relay/
-blossom/
-docs/
-zarf/
-```
+Physical organization is an implementation decision.
 
-The client application is the primary focus of this implementation documentation.
+Ownership is an architectural decision.
 
-Most application code resides under:
+During migration, code may temporarily live outside the package that best represents its owner.
 
-```text
-client/src/lib/
-```
+That is acceptable.
 
-The current repository organization reflects the evolution of the application over time.
+What matters is that new design decisions begin with ownership rather than existing file location.
 
-Some responsibilities are organized by technical role while others are organized by application behavior.
+Over time:
 
-As the implementation continues to evolve, ownership should take precedence over physical location.
+* Domain behavior should move toward its Domain,
+* Runtime behavior should move toward the Runtime,
+* Infrastructure should remain beneath the responsibilities it implements,
+* and cross-owner collaboration should occur through Public APIs.
 
 Files may move.
 
 Packages may change.
 
-Responsibilities should remain owned by the same application concept.
+Technologies may change.
+
+Responsibilities should remain clear.
+
+---
+
+# Summary
+
+The KJVOnly Application Architecture is organized around enduring responsibilities.
+
+The Workspace Runtime owns the study environment.
+
+Domains own application behavior.
+
+Modules present Domain capabilities.
+
+Buffers provide runtime context.
+
+Domain Objects represent information within the application.
+
+Public APIs preserve ownership boundaries while allowing collaboration.
+
+The Resource Boundary represents Domain Objects for communication with external systems.
+
+Infrastructure realizes the technical capabilities required by those responsibilities.
+
+Architecture defines responsibility.
+
+Implementation realizes it.

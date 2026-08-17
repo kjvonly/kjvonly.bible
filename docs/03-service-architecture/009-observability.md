@@ -1,3 +1,0 @@
-# Uobservability
-
-TODO: WRITE ME

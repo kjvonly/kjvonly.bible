@@ -10,25 +10,19 @@ Current
 
 This document defines the principle of **Local Authority**.
 
-It establishes that the application is the authoritative owner of its installed Domain Objects.
+The application is the sole authority over its local model.
 
-External systems may propose changes.
-
-Only the application decides what becomes part of its local model.
+External systems may propose new information, but only the application determines what becomes part of its installed Domain Objects.
 
 ---
 
 # Principle
 
-The application owns its local state.
+The application owns its local model.
 
-Published Resources represent information available from external systems.
+Every representation received from outside the application is treated as a candidate.
 
-They do not automatically become part of the application.
-
-Every Published Resource is treated as a candidate.
-
-The application evaluates that candidate before deciding whether it becomes the installed Domain Object.
+Only after it has been validated and accepted does it become part of the application's installed Domain Objects.
 
 The network proposes.
 
@@ -38,20 +32,19 @@ The application decides.
 
 # Why
 
-External systems are inherently distributed.
+The application is designed to operate independently of any individual network, relay, storage provider, or transport mechanism.
 
-Relays may:
+External systems may:
 
 * deliver duplicate Resources,
-* deliver older Resources,
-* receive updates at different times,
-* or become temporarily unavailable.
+* deliver outdated Resources,
+* deliver conflicting Resources,
+* become temporarily unavailable,
+* or fail to deliver Resources entirely.
 
-The application must therefore determine which representation becomes its authoritative local model.
+The application cannot assume that externally received information is authoritative.
 
-This responsibility cannot belong to the network.
-
-It belongs to the application.
+Authority belongs to the application.
 
 ---
 
@@ -62,65 +55,89 @@ flowchart TD
 
     Published["Published Resource"]
 
-    Candidate["Candidate Domain Object"]
+    Candidate["Candidate Resource"]
 
-    Decision["Application Decision"]
+    Validation["Application Validation"]
 
     Installed["Installed Domain Object"]
 
     Published --> Candidate
 
-    Candidate --> Decision
+    Candidate --> Validation
 
-    Decision --> Installed
+    Validation --> Installed
 ```
 
-Every Published Resource follows the same process.
+Every externally received Resource follows the same process.
 
-Only accepted candidates become part of the application's local state.
+Only validated and accepted Resources become part of the application's local model.
+
+---
+
+# Validation
+
+Receiving a Resource does not make it authoritative.
+
+Before a Resource becomes part of the application's local model it may be subject to validation such as:
+
+* authentication,
+* authorization,
+* schema validation,
+* ownership verification,
+* conflict resolution,
+* version comparison,
+* and application-specific policy.
+
+The exact validation process depends upon the Domain and the type of Resource being installed.
+
+The principle remains the same:
+
+> **External information is never trusted simply because it exists.**
 
 ---
 
 # Consequences
 
-This principle provides several important benefits.
+This principle allows the application to:
 
-The application:
+* operate while offline,
+* maintain a consistent local model,
+* ignore invalid or outdated Resources,
+* install newer accepted Resources,
+* and remain independent of any particular transport or synchronization mechanism.
 
-* remains usable while offline,
-* maintains a consistent local model,
-* ignores outdated Resources,
-* accepts newer Resources,
-* and remains independent from the behavior of any individual relay or transport mechanism.
-
-The application's behavior is therefore determined by its installed Domain Objects rather than by the current state of the network.
+The application operates on its accepted local Domain Objects, not directly on information from external systems.
 
 ---
 
 # Heuristic
 
-When deciding where application truth should exist, ask:
+When information enters the application, ask:
 
-> **Who owns the installed Domain Object?**
+> **Did this originate outside the application's local model?**
 
-If the answer is:
+If the answer is **yes**, treat it as a candidate.
 
-> **The application**
+Validate it.
 
-then the application must also own the decision of whether a newly received representation replaces it.
+Apply application policy.
 
-External systems may propose.
+Only after it has been accepted should it be installed.
 
-Only the application determines its authoritative local model.
+The network proposes.
+
+The application decides.
 
 ---
 
 # Big Takeaway
 
-The application owns its installed Domain Objects.
+Local Authority ensures the application remains the authoritative owner of its local model.
 
-The network provides candidate representations.
+External systems distribute information.
 
-The application determines which representations become part of its authoritative local model.
+They do not determine application state.
 
-Local Authority preserves a stable application state while allowing the application to participate in a decentralized resource network.
+Only the application decides which Resources become installed Domain Objects.
+
+This allows the application to remain predictable, resilient, and independent while participating in a decentralized resource network.

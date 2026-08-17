@@ -8,1089 +8,589 @@ Current
 
 # Purpose
 
-This document defines the role of Domains within the KJVOnly application.
+This document defines how application behavior and data are organized into Domains.
 
-It explains:
+A Domain represents a cohesive area of application meaning and behavior.
 
-* what a Domain represents,
-* which responsibilities a Domain owns,
-* how Modules interact with Domains,
-* how Domain Objects represent application data,
-* and how Domains integrate with Application Services, Technical Infrastructure, and the Resource Architecture.
+This document also provides a decision process for determining where new application capabilities belong.
 
-This document establishes the ownership model used when implementing and organizing domain-specific behavior.
+The goal is not only to describe the current Domain model, but to help future development extend that model without creating unnecessary Domains, moving behavior to the wrong owner, or allowing implementation mechanisms to define the architecture.
 
 ---
 
-# Scope
+# Domain Model
 
-This document defines:
+The application is currently organized around the following Domains:
 
-* Domains,
-* domain ownership,
-* Domain Objects,
-* Domain Services,
-* domain-specific Modules,
-* domain boundaries,
-* and communication between Domains and the surrounding application.
+```text id="xlbpqy"
+Application
 
-It does not define:
+    Bible Domain
+        Bible content
+        Bible navigation
+        Bible references
+        Bible search
+        Strong's information
+        Bible annotations
 
-* Workspace Runtime behavior,
-* runtime rendering,
-* shared Application Services,
-* Technical Infrastructure,
-* Resource Resolution,
-* Resource Installation,
-* persistence implementation,
-* synchronization,
-* or repository organization.
+    Notes Domain
+        Notes
+        Notes search
+        Scripture associations
 
-Those responsibilities are described by separate implementation and architecture documents.
+    Reading Plans Domain
+        Reading Plans
+        Reading progress
+        Completed readings
 
----
-
-# Background
-
-The Workspace Runtime provides the environment in which the application executes.
-
-Modules provide the user interactions presented within that environment.
-
-Domains define the application concepts and behavior used by those Modules.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Runtime["Workspace Runtime"]
-
-    Buffer["Buffer"]
-
-    Module["Module Instance"]
-
-    Domain["Domain"]
-
-    Objects["Domain Objects"]
-
-    Runtime --> Buffer
-
-    Buffer --> Module
-
-    Module --> Domain
-
-    Domain --> Objects
+    Settings Domain
+        Application preferences
 ```
 
-The runtime determines how the application is composed and presented.
+Each Domain groups concepts and behavior that derive their meaning from the same area of the application.
 
-Domains determine what the application does.
+For example, Bible search belongs to the Bible Domain because the Bible gives that search behavior meaning. Annotations also belong to the Bible Domain because they describe selections within Bible content.
 
-This distinction keeps application behavior independent from:
-
-* Workspace layout,
-* rendering technology,
-* storage technology,
-* transport protocols,
-* and Resource representations.
+A capability does not become a separate Domain merely because it has its own implementation, Module, storage requirements, or user interface.
 
 ---
 
-# Domain Definition
+# Adding New Behavior
 
-A Domain represents one cohesive area of application data and behavior.
+When introducing new application behavior, begin by asking:
 
-A Domain owns the concepts understood within that area of the application.
+> **What gives this behavior meaning?**
 
-Examples include:
-
-* Bible,
-* Notes,
-* and Reading Plans.
-
-A Domain is not:
-
-* a directory,
-* a Module,
-* a database,
-* a Nostr event kind,
-* or a Resource type.
-
-Those implementation concepts may support a Domain, but they do not define it.
-
-A Domain is defined by the application meaning and behavior it owns.
-
----
-
-# Domain Responsibilities
-
-A Domain owns the implementation responsibilities specific to its application area.
-
-These may include:
-
-* Domain Objects,
-* domain rules,
-* domain operations,
-* Domain Services,
-* Domain Object Factories,
-* Resource Serializers,
-* Domain Stores,
-* domain-specific queries,
-* and the Modules that present the Domain to the user.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Domain["Domain"]
-
-    Objects["Domain Objects"]
-
-    Services["Domain Services"]
-
-    Modules["Domain Modules"]
-
-    Factories["Domain Object Factories"]
-
-    Serializers["Resource Serializers"]
-
-    Stores["Domain Stores"]
-
-    Domain --> Objects
-
-    Domain --> Services
-
-    Domain --> Modules
-
-    Domain --> Factories
-
-    Domain --> Serializers
-
-    Domain --> Stores
-```
-
-Not every Domain currently implements each responsibility through a dedicated abstraction.
-
-The ownership remains the same even when responsibilities are currently combined or physically located in shared technical directories.
-
----
-
-# Domain Ownership
-
-Ownership is determined by application meaning rather than physical location.
-
-A responsibility belongs to a Domain when it exists specifically to support that Domain's concepts or behavior.
-
-For example, behavior that:
-
-* parses Bible chapter content,
-* applies Bible annotations,
-* searches Bible text,
-* manages Notes,
-* or calculates Reading Plan progress
-
-belongs to the corresponding Domain.
-
-The responsibility remains domain-owned even if its implementation currently resides under:
-
-```text
-models/
-modules/
-services/
-storer/
-workers/
-```
-
-Repository structure may evolve.
-
-Domain ownership should remain stable.
-
----
-
-# Domain Boundary
-
-A Domain exposes application behavior without exposing its implementation details.
-
-Modules interact with Domains through:
-
-* Domain Services,
-* Domain Objects,
-* domain operations,
-* and domain-defined events or state.
-
-Other parts of the application should not directly manipulate:
-
-* a Domain's persistence records,
-* serialized Resource content,
-* transport events,
-* internal indexes,
-* or private runtime state.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Module["Module Instance"]
-
-    API["Domain API"]
-
-    Domain["Domain"]
-
-    Objects["Domain Objects"]
-
-    Module --> API
-
-    API --> Domain
-
-    Domain --> Objects
-```
-
-The Domain API may currently be represented by one or more services rather than a single formal interface.
-
-The important boundary is behavioral:
-
-> Callers request domain behavior rather than manipulating domain implementation details.
-
----
-
-# Domain Independence
-
-Each Domain should remain independently understandable and evolvable.
-
-A change to one Domain should not require unrelated Domains to understand its internal implementation.
+If the behavior only makes sense in relation to an existing Domain, that Domain should own it.
 
 For example:
 
-* Notes should not directly manipulate Bible storage.
-* Reading Plans should not directly update Bible Module state.
-* Bible search should not require Notes to understand Bible indexes.
-* A Bible Module should not depend on the internal component structure of a Reading Plan Module.
+```text id="zjxo4r"
+Search Scripture
+    ↓
+Meaning comes from Bible content
+    ↓
+Bible Domain
+```
 
-Domains may collaborate when application behavior requires it.
+```text id="k28kox"
+Highlight a Bible verse
+    ↓
+Meaning comes from Bible content
+    ↓
+Bible Domain
+```
 
-That collaboration should occur through:
+```text id="4qnqsm"
+Track completion of a Reading Plan
+    ↓
+Meaning comes from Reading Plans
+    ↓
+Reading Plans Domain
+```
 
-* shared Application Services,
-* public Domain APIs,
-* application events,
-* shared identifiers,
-* or explicitly defined integration behavior.
+The first question is therefore not:
 
-Domains should not become coupled through internal implementation details.
+> Should this be a service?
+
+or:
+
+> Should this be a Module?
+
+or:
+
+> Where should this file live?
+
+The first question is:
+
+> **Which Domain gives this responsibility meaning?**
+
+---
+
+# Extending an Existing Domain
+
+Most new capabilities should extend an existing Domain rather than introduce a new one.
+
+A capability belongs within an existing Domain when its meaning, rules, and data are already grounded in that Domain.
+
+For example:
+
+```text id="s2t8rl"
+Bible Domain
+
+    Reading
+    Search
+    References
+    Strong's
+    Annotations
+```
+
+These capabilities are different behaviors, but they all operate on concepts whose meaning comes from the Bible.
+
+They therefore remain one Domain.
+
+Separate implementations do not imply separate ownership.
+
+---
+
+# Introducing a New Domain
+
+A new Domain should represent a genuinely new area of application meaning.
+
+Before creating one, ask:
+
+> **Would this concept still make sense independently from the existing Domains?**
+
+and:
+
+> **Does it introduce its own enduring data, rules, and behavior?**
+
+If the answer is no, it probably belongs within an existing Domain.
+
+For example, Bible Search does not require a Search Domain because its results, rules, and meaning all depend upon Bible content.
+
+Likewise, Bible annotations do not require an Annotations Domain because their meaning exists only in relation to Scripture.
+
+A new Domain should therefore represent a new conceptual area of the application rather than a new technical capability or presentation feature.
 
 ---
 
 # Domain Objects
 
-Domain Objects are the application-facing representation of domain data.
+Domains express their information through Domain Objects.
 
-They provide the strongly typed data model used by Modules, Domain Services, and other application behavior.
+A Domain Object represents information according to its application meaning rather than according to how that information is stored or transported.
 
 Examples include:
 
-* Bible chapters,
-* annotations,
-* notes,
-* reading plans,
-* completed readings,
-* and other domain-owned data.
-
-A Domain Object represents application meaning rather than its storage or transport format.
-
-It is not:
-
-* a Nostr event,
-* serialized JSON,
-* compressed content,
-* an IndexedDB record,
-* a Resource Representation,
-* or a Blossom object.
-
-Those formats may contain or persist the data used to construct a Domain Object, but the application does not operate directly on those representations.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Representation["Serialized Representation"]
-
-    Factory["Domain Object Factory"]
-
-    Object["Domain Object"]
-
-    Domain["Domain Behavior"]
-
-    Module["Module Instance"]
-
-    Representation --> Factory
-
-    Factory --> Object
-
-    Object --> Domain
-
-    Domain --> Module
-```
-
-The Domain Object Factory converts resolved Resource content into a trusted Domain Object.
-
-Once created, the Domain Object belongs to the Domain and may be used without knowledge of its original representation.
-
----
-
-# Domain Object Ownership
-
-Every Domain Object is owned by exactly one Domain.
-
-The owning Domain defines:
-
-* the object's type,
-* its required fields,
-* its invariants,
-* the operations that may be performed on it,
-* and how it is stored or serialized.
-
-For example:
-
-```text
+```text id="5dwrkb"
 Bible Domain
-
     Chapter
-
     Annotation
-
-    Bible Version
-
-    Book Names
-
+    Strong's Entry
 
 Notes Domain
-
     Note
 
-    Note Collection
-
-
 Reading Plans Domain
-
     Reading Plan
-
     Completed Reading
 ```
 
-A Domain Object may reference identifiers or concepts shared with another Domain without transferring ownership.
+A Nostr event, IndexedDB record, serialized JSON object, or other external representation is not itself a Domain Object.
 
-For example, a Note may refer to a Bible location.
+Those representations may contain the information required to reconstruct one.
 
-The Notes Domain continues to own the Note.
-
-The Bible location reference remains a shared application concept used to identify the location associated with it.
+Inside the application, Domain behavior operates on Domain Objects.
 
 ---
 
-# Domain Object Lifecycle
+# Deciding Where a Domain Object Belongs
 
-Domain Objects may enter the application through more than one path.
+When introducing a new Domain Object, ask:
 
-They may be:
+> **Which Domain defines what this information means?**
 
-* created by a user,
-* constructed from resolved Resource content,
-* loaded from a Domain Store,
-* modified by domain behavior,
-* or recreated from persisted application state.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    User["User Interaction"]
-
-    Resource["Resolved Resource"]
-
-    Store["Domain Store"]
-
-    Factory["Domain Object Factory"]
-
-    Object["Domain Object"]
-
-    User --> Object
-
-    Resource --> Factory
-
-    Factory --> Object
-
-    Store --> Object
-
-    Object --> Store
-```
-
-The application may create and modify Domain Objects directly.
-
-When a Domain Object must be published, the owning Domain serializes it into an appropriate Resource representation.
-
-The Domain Object remains the application's working model throughout this lifecycle.
-
----
-
-# Domain Modules
-
-A Domain may provide one or more Modules.
-
-Each Module presents one focused interaction with the Domain.
+That Domain owns the object.
 
 For example:
 
-```text
+```text id="7l4n2x"
+Annotation
+    ↓
+Describes Bible content
+    ↓
+Bible Domain
+```
+
+```text id="r0szt7"
+Completed Reading
+    ↓
+Describes Reading Plan progress
+    ↓
+Reading Plans Domain
+```
+
+A Domain Object may reference information owned elsewhere without changing ownership.
+
+For example:
+
+```text id="9rzz4t"
+Note
+    └── Bible Location Reference
+```
+
+The Note remains owned by the Notes Domain.
+
+The Bible reference expresses a relationship to Bible information.
+
+---
+
+# Domain Behavior and Modules
+
+A Domain may expose several different behaviors to the user.
+
+Those behaviors may participate in the Workspace Runtime through Modules.
+
+As defined by the Workspace Runtime:
+
+> **A Module Instance is a conceptual wrapper around a Domain behavior.**
+
+For example:
+
+```text id="jzwamu"
 Bible Domain
 
+    Bible reading behavior
+        ↓
     Bible Reader Module
 
+    Bible search behavior
+        ↓
     Bible Search Module
+```
 
-    Bible References Module
+The existence of multiple Modules does not divide the Domain.
 
+Modules represent independently useful Runtime interactions.
 
+Domains represent ownership of behavior.
+
+---
+
+# Deciding Whether a Behavior Needs a Module
+
+When adding a Domain capability, ask:
+
+> **Does this behavior need to exist as an independently active interaction in the Workspace?**
+
+If yes, it may warrant its own Module.
+
+Bible Search is independently useful and can occupy its own Buffer, so it can be represented by a Bible Search Module.
+
+Other behavior may remain part of an existing Module.
+
+For example, Bible annotations belong to the Bible Domain but can be presented within the Bible Reader interaction.
+
+Conceptually:
+
+```text id="1ix39k"
+Bible Domain
+
+    Bible Reading
+        ↓
+    Bible Reader Module
+        ├── Scripture presentation
+        └── Annotation interaction
+```
+
+Domain ownership and Module composition are separate decisions.
+
+---
+
+# Domain Boundary
+
+A Domain exposes the behavior required by the rest of the application through its Public API.
+
+Consumers should depend upon that boundary rather than the Domain's internal implementation.
+
+Conceptually:
+
+```text id="0vhkj5"
+Consumer
+    ↓
+Domain Public API
+    ↓
+Domain Behavior
+    ↓
+Domain Objects
+```
+
+The Domain may internally use services, stores, parsers, factories, indexes, workers, or other mechanisms.
+
+Those are implementation details beneath the Domain boundary.
+
+---
+
+# Deciding What Belongs in the Public API
+
+When adding behavior to a Domain, ask:
+
+> **Does another owner need to request this behavior?**
+
+If not, the behavior may remain internal.
+
+If another owner needs it, the Domain should expose an appropriate capability through its Public API rather than exposing the implementation that performs it.
+
+For example, a consumer should request Bible chapter behavior rather than reach directly into:
+
+* Bible storage,
+* Bible indexes,
+* parsers,
+* or transport representations.
+
+The Public API exposes the responsibility.
+
+The implementation remains private.
+
+---
+
+# Domain Collaboration
+
+Some application workflows involve more than one Domain.
+
+Collaboration should preserve the ownership of each Domain.
+
+The appropriate mechanism depends on what is being communicated.
+
+A Domain may:
+
+* request another Domain's behavior through its Public API,
+* refer to another Domain's information using a shared identifier,
+* communicate that something occurred through an Application Event,
+* or initiate another Runtime interaction using Navigation Context.
+
+These mechanisms solve different collaboration problems without merging ownership.
+
+---
+
+# Choosing a Collaboration Mechanism
+
+When one responsibility needs something from another, ask what kind of relationship exists.
+
+## Behavior Is Required
+
+Use the owner's Public API.
+
+```text id="2qs80f"
+Consumer
+    ↓
+Bible Public API
+    ↓
+Bible behavior
+```
+
+---
+
+## Information Must Be Referenced
+
+Use an identifier.
+
+```text id="tthn0f"
+Note
+    └── Bible Location Reference
+```
+
+The consumer can express the relationship without depending on Bible storage.
+
+---
+
+## Something Happened
+
+Use an Application Event when other responsibilities may need to react.
+
+```text id="5g01y6"
 Notes Domain
-
-    Notes Editor Module
-
-    Notes List Module
-
-    Notes Search Module
-
-
-Reading Plans Domain
-
-    Reading Plan Module
+    ↓
+Note Created Event
+    ↓
+Interested Consumers
 ```
 
-A Module is not the Domain itself.
+---
 
-The Domain owns the data and behavior.
+## Another Runtime Interaction Should Begin
 
-The Module presents a specific capability to the user.
+Use Navigation Context.
 
-Multiple Module Instances may interact with the same Domain simultaneously.
+```text id="b9f1nm"
+Reading Plans Module
+    ↓
+Bible Navigation Context
+    ↓
+Workspace Runtime
+    ↓
+Bible Reader Module
+```
 
-For example, several Bible Reader Module Instances may display different chapters while sharing the same Bible Domain Services and Domain Store.
+The source provides context.
+
+The target remains responsible for interpreting its own Domain meaning.
 
 ---
 
-# Module Responsibility
+# Domain Information and the Resource Boundary
 
-A Domain Module owns:
+Inside the application, Domains operate on Domain Objects.
 
-* user interaction,
-* domain-specific presentation,
-* interaction state,
-* and requests to its Domain.
-
-A Domain Module does not own:
-
-* the Workspace layout,
-* Pane-tree manipulation,
-* shared Application Services,
-* Technical Infrastructure,
-* Resource Resolution,
-* or persistence implementation.
-
-A Module may request these capabilities through the interfaces provided by their owners.
-
-For example, a Bible Module may request that the Pane Service open a Verse References Module.
-
-The Bible Module expresses the desired application behavior.
-
-It does not manipulate the Pane tree itself.
-
----
-
-# Domain Features
-
-Not every domain capability requires a separate Module.
-
-Some capabilities exist as behavior within another Module.
-
-Annotations are one example.
-
-Annotations belong to the Bible Domain and augment the interaction with Bible text.
-
-A user may highlight:
-
-* an entire verse,
-* an individual word,
-* or another supported Bible-text selection.
-
-This behavior is presented within the Bible Reader Module, but it remains distinct from the Chapter Domain Object itself.
-
-The distinction is:
-
-* the Chapter represents Bible text,
-* the Annotation represents user-created Bible metadata,
-* and the Bible Reader Module presents both within one interaction.
-
-A capability should become a separate Module when it represents an independently useful user interaction that can be hosted within its own Buffer.
-
-It should remain a feature of an existing Module when its behavior is meaningful only within that interaction.
-
----
-
-# Domain Services
-
-Domain Services expose operations owned by one Domain.
-
-A Domain Service coordinates domain behavior that does not naturally belong to a single Domain Object or Module.
-
-Examples may include:
-
-* retrieving a Bible chapter,
-* applying annotations,
-* searching Bible text,
-* managing Notes,
-* calculating Reading Plan progress,
-* and coordinating domain-specific persistence.
-
-A Domain Service provides an application-facing interface to its Domain.
+When Domain information must be represented outside the application's local model, it crosses the Resource Boundary as a Resource.
 
 Conceptually:
 
-```mermaid
-flowchart LR
+```text id="o5wmy0"
+Domain
+    ↓
+Domain Object
 
-    Module["Domain Module"]
+========== Resource Boundary ==========
 
-    Service["Domain Service"]
-
-    Objects["Domain Objects"]
-
-    Store["Domain Store"]
-
-    Module --> Service
-
-    Service --> Objects
-
-    Service --> Store
+Resource
 ```
 
-Modules request domain behavior through Domain Services.
+The Resource Boundary defines the external representation and lifecycle of that information.
 
-Domain Services coordinate Domain Objects and Domain Stores.
-
-The Module does not need to understand how the requested operation is implemented.
+The Domain continues to define what the information means.
 
 ---
 
-# Domain Service Ownership
+# Crossing Into the Application
 
-A service belongs to a Domain when its responsibility is meaningful only within that Domain.
-
-A useful ownership test is:
-
-> Would another Domain naturally use this service as part of its own behavior?
-
-If the answer is no, the service should generally remain within its owning Domain.
-
-Examples include:
-
-```text
-Bible Chapter Service
-    Bible Domain
-
-Bible Annotation Service
-    Bible Domain
-
-Notes Service
-    Notes Domain
-
-Reading Plan Progress Service
-    Reading Plans Domain
-```
-
-A service does not become shared merely because another Domain triggers behavior that eventually uses it.
-
-For example, a Reading Plan may open a Bible Reader with selected readings.
-
-The Reading Plans Domain provides navigation context.
-
-The Bible Module then uses Bible Domain Services to interpret and display that context.
-
-The Reading Plans Domain does not take ownership of Bible behavior.
-
----
-
-# Application Services and Domain Services
-
-Application Services and Domain Services serve different ownership models.
-
-A Domain Service provides behavior specific to one Domain.
-
-An Application Service provides a capability shared across multiple Domains.
-
-For example, a Bible location reference may be used by:
-
-* Bible,
-* Notes,
-* Reading Plans,
-* Search,
-* and References.
-
-The service that parses or answers questions about that reference is therefore an Application Service rather than a service owned exclusively by the Bible Domain.
+Information arriving from outside the application does not immediately become a Domain Object.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-
-    AppService["Application Service"]
-
-    Bible["Bible Domain"]
-
-    Notes["Notes Domain"]
-
-    Plans["Reading Plans Domain"]
-
-    AppService --> Bible
-
-    AppService --> Notes
-
-    AppService --> Plans
+```text id="d2a8rx"
+Resource
+    ↓
+Resource Boundary
+    ↓
+Validation
+    ↓
+Domain Object
+    ↓
+Domain
 ```
 
-The distinction is based on ownership, not naming.
+The Resource Boundary handles the process required to bring external information into the application.
 
-A service should be domain-owned when it supports only one Domain.
+The Domain defines whether the resulting information is valid according to its Domain meaning.
 
-A service should be application-owned when it expresses a shared application concept used across Domains.
+Only accepted information becomes part of the application's local Domain model.
 
 ---
 
-# Shared Identifiers
+# Crossing Out of the Application
 
-Domains often collaborate through shared identifiers.
-
-A shared identifier allows one Domain to refer to data owned by another Domain without depending on its internal implementation.
-
-Bible location references are an important example.
-
-A Bible location reference may identify:
-
-* a book,
-* a chapter,
-* a verse,
-* a verse range,
-* or another supported Bible location.
-
-Notes and Reading Plans may store or transmit Bible location references without directly reading or manipulating Bible storage.
+When Domain information must be published or otherwise communicated externally, the Domain Object is represented as a Resource.
 
 Conceptually:
 
-```mermaid
-flowchart LR
-
-    Notes["Notes Domain"]
-
-    Reference["Bible Location Reference"]
-
-    Plans["Reading Plans Domain"]
-
-    Bible["Bible Domain"]
-
-    Notes --> Reference
-
-    Plans --> Reference
-
-    Reference --> Bible
+```text id="bsxc3h"
+Domain
+    ↓
+Domain Object
+    ↓
+Resource Boundary
+    ↓
+Resource
 ```
 
-The shared identifier provides a stable integration boundary.
+The Domain should not need to know whether the resulting Resource is ultimately transported through Nostr, Blossom, another protocol, or some future mechanism.
 
-The Bible Domain remains responsible for interpreting Bible data.
-
-Other Domains may use the identifier to express their relationship to that data.
+Those mechanisms exist beneath the Resource Boundary.
 
 ---
 
-# Cross-Domain Collaboration
+# Adding a New Domain Capability
 
-Domains may collaborate when an application workflow spans multiple areas of behavior.
+When introducing new application functionality, work through the following questions in order.
 
-Cross-Domain collaboration should preserve the ownership of each participating Domain.
-
-Preferred collaboration mechanisms include:
-
-* Application Services,
-* shared identifiers,
-* public Domain Services,
-* application events,
-* and Module navigation context.
-
-Domains should not collaborate by directly manipulating one another's:
-
-* internal storage,
-* private state,
-* component instances,
-* or implementation-specific data structures.
-
----
-
-# Application Events
-
-Application events allow Domain Modules to respond to changes without becoming directly coupled.
-
-For example, creating a Note may cause multiple open Notes Module Instances to refresh their displayed lists.
-
-Conceptually:
-
-```mermaid
-sequenceDiagram
-
-    participant Editor as Notes Editor Module
-
-    participant Domain as Notes Domain
-
-    participant Events as Application Events
-
-    participant List as Notes List Module
-
-    Editor->>Domain: Create Note
-
-    Domain->>Events: Note created
-
-    Events-->>List: Refresh Notes view
+```text id="u5kl6x"
+What behavior or information is being introduced?
+        ↓
+Which Domain gives it meaning?
+        ↓
+Does it extend an existing Domain?
+        │
+        ├── Yes → Add it to that Domain
+        │
+        └── No → Does it represent a new enduring area of meaning?
+                         │
+                         └── Consider a new Domain
+        ↓
+What Domain Objects are involved?
+        ↓
+Does the behavior require an independent Module?
+        ↓
+What must the Domain expose publicly?
+        ↓
+Does it need to collaborate with another owner?
+        ↓
+Does its information cross the Resource Boundary?
+        ↓
+Choose implementation
 ```
 
-The Notes Editor does not directly call methods on each Notes List Module Instance.
-
-It performs a Domain operation.
-
-The resulting event allows interested Module Instances to update independently.
-
-This preserves loose coupling while allowing the visible application to remain synchronized.
+This order keeps architectural decisions ahead of implementation decisions.
 
 ---
 
-# Navigation Context
+# Example: Adding Cross References
 
-Module navigation context allows one Module to initialize another Module without directly controlling it.
+Suppose the application gains support for Bible cross references.
 
-The current implementation carries this information through the Buffer `bag`.
+Begin with meaning.
 
-For example, a Reading Plan Module may provide:
+Cross references describe relationships between Bible passages.
 
-* queued chapters,
-* selected verses,
-* Bible version,
-* or reading progress
+Therefore:
 
-when opening a Bible Reader Module.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Plans["Reading Plan Module"]
-
-    Context["Navigation Context"]
-
-    Buffer["Bible Reader Buffer"]
-
-    Reader["Bible Reader Module"]
-
-    Plans --> Context
-
-    Context --> Buffer
-
-    Buffer --> Reader
+```text id="2gb256"
+Cross References
+    ↓
+Bible meaning
+    ↓
+Bible Domain
 ```
 
-The source Module supplies context.
+Next determine the Domain information and behavior involved.
 
-The target Module interprets it.
+The Bible Domain may gain:
 
-The source Module does not depend on the target Module's internal component implementation.
+```text id="4jaoiu"
+Bible Domain
 
-Navigation context therefore supports collaboration between Modules while preserving their independence.
+    Cross-reference information
 
----
-
-# Search as a Domain Capability
-
-Search is a capability that may be provided by multiple Domains.
-
-Bible search operates on Bible data.
-
-Notes search operates on Notes data.
-
-Reading Plan search operates on Reading Plan data.
-
-Although these capabilities may share:
-
-* reusable components,
-* query interfaces,
-* indexing infrastructure,
-* and interaction patterns,
-
-their search behavior remains owned by the Domain whose data is being searched.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    SearchCapability["Shared Search Capabilities"]
-
-    BibleSearch["Bible Search"]
-
-    NotesSearch["Notes Search"]
-
-    PlanSearch["Reading Plan Search"]
-
-    SearchCapability --> BibleSearch
-
-    SearchCapability --> NotesSearch
-
-    SearchCapability --> PlanSearch
+    Cross-reference lookup behavior
 ```
 
-Search should not automatically become a standalone Domain merely because several Domains support searching.
+Then determine presentation.
 
-The owning Domain defines:
+If cross references need an independently active Workspace interaction, they may be exposed through a Module.
 
-* what is searchable,
-* how results are interpreted,
-* and which Domain Objects are returned.
-
-Shared Application Services or Technical Infrastructure may provide reusable search capabilities without taking ownership of domain-specific search behavior.
-
----
-
-# Relationship to the Resource Architecture
-
-Domains form the integration boundary between application behavior and the Resource Architecture.
-
-The Resource Architecture transforms Published Resources into Domain Objects and serializes Domain Objects back into Published Resources.
-
-Domain-owned components participate in this flow.
-
-These include:
-
-* Domain Object Factories,
-* Resource Serializers,
-* and Domain Stores.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Published["Published Resource"]
-
-    Resolution["Resource Resolution"]
-
-    Factory["Domain Object Factory"]
-
-    Object["Domain Object"]
-
-    Store["Domain Store"]
-
-    Domain["Domain Behavior"]
-
-    Serializer["Resource Serializer"]
-
-    Published --> Resolution
-
-    Resolution --> Factory
-
-    Factory --> Object
-
-    Object --> Store
-
-    Store --> Domain
-
-    Domain --> Serializer
-
-    Serializer --> Published
+```text id="3wm25y"
+Bible Domain
+    ↓
+Cross-reference behavior
+    ↓
+Bible References Module
 ```
 
-The Resource Architecture defines the resource lifecycle.
+Finally determine what implementation is required.
 
-The Domain defines the application meaning of the data moving through that lifecycle.
-
----
-
-# Domain Object Factory
-
-A Domain Object Factory belongs to the Domain whose objects it creates.
-
-It is responsible for:
-
-* receiving resolved Resource content,
-* validating domain-specific structure,
-* constructing the appropriate Domain Object,
-* and rejecting content that cannot become a valid Domain Object.
-
-The factory understands the Domain Object.
-
-It does not perform Resource discovery or relay communication.
-
-The Domain Object Factory receives resolved Resource content.
-
-It does not retrieve Resources, communicate with relays, download blobs, or perform generic decoding.
-
-Those responsibilities belong to the Resource Architecture and Technical Infrastructure.
-
----
-
-# Resource Serializer
-
-A domain-specific Resource Serializer belongs to the Domain whose objects it serializes.
-
-It converts a Domain Object into the content required for a Published Resource.
-
-The serializer understands:
-
-- the Domain Object,
-- the Domain's serialization format,
-- and the representation required for publication.
-
-Shared encoding, compression, hashing, and other generic serialization technologies belong to Technical Infrastructure.
-
-The Resource Serializer owns the Domain's mapping to a published representation.
-
-It does not own:
-
-- signing,
-- relay publication,
-- outbox processing,
-- transport retries,
-- or generic serialization technologies.
-
-Those responsibilities belong to the Resource Architecture and Technical Infrastructure.
-
----
-
-# Domain Store
-
-A Domain Store persists and retrieves Domain Objects for one Domain.
-
-Modules and Domain Services interact with the Domain Store through Domain-owned interfaces.
-
-The Domain Store hides the physical persistence implementation.
-
-Conceptually:
-
-```mermaid
-flowchart LR
-
-    Module["Module"]
-
-    Service["Domain Service"]
-
-    Store["Domain Store"]
-
-    Persistence["Persistence Implementation"]
-
-    Module --> Service
-
-    Service --> Store
-
-    Store --> Persistence
-```
-The Domain owns the Store interface and the persistence semantics required by its Domain Objects.
-
-Technical Infrastructure owns the implementation used to satisfy that interface, such as IndexedDB.
-
-This separation allows persistence technologies to evolve without changing Domain behavior.
-
----
-
-# Future Evolution
-
-The Domain architecture has been intentionally designed around ownership rather than implementation.
-
-As the application evolves, new capabilities should extend existing Domains or introduce new Domains when they represent new areas of application behavior.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-
-    Domain["Domain"]
-
-    Objects["Domain Objects"]
-
-    Services["Domain Services"]
-
-    Modules["Domain Modules"]
-
-    Factories["Domain Object Factories"]
-
-    Serializers["Resource Serializers"]
-
-    Stores["Domain Stores"]
-
-    Domain --> Objects
-    Domain --> Services
-    Domain --> Modules
-    Domain --> Factories
-    Domain --> Serializers
-    Domain --> Stores
-
-    Modules -.-> NewModules["New Modules"]
-    Services -.-> NewServices["New Services"]
-    Objects -.-> NewObjects["New Domain Objects"]
-```
-
-Future enhancements should strengthen the Domain model rather than distribute domain behavior throughout the application.
-
-As long as ownership remains centered around the Domain, the implementation may evolve without changing the application's conceptual architecture.
+Only after the ownership, behavior, objects, boundaries, and presentation model are understood should implementation questions such as storage, indexing, transport, or component structure be answered.
 
 ---
 
 # Big Takeaway
 
-The Domain is the central owner of one area of application behavior.
+Domains organize the application around enduring areas of meaning and behavior.
 
-Conceptually:
+When adding functionality, begin by asking:
 
-```mermaid
-flowchart LR
+> **Which Domain gives this responsibility meaning?**
 
-    Runtime["Workspace Runtime"]
+Extend an existing Domain when the new capability belongs to concepts that Domain already owns.
 
-    Module["Module Instance"]
+Create a new Domain only when the application gains a genuinely distinct area of meaning, data, rules, and behavior.
 
-    Domain["Domain"]
+Then determine:
 
-    Objects["Domain Objects"]
+* the Domain Objects involved,
+* whether the behavior needs a Module,
+* what must be exposed through the Domain's Public API,
+* how collaboration should occur,
+* and whether Domain information must cross the Resource Boundary.
 
-    Services["Domain Services"]
-
-    Resources["Resource Architecture"]
-
-    Runtime --> Module
-    Module --> Domain
-
-    Domain --> Objects
-    Domain --> Services
-
-    Resources --> Domain
-```
-
-The Workspace Runtime presents Modules.
-
-Modules present Domains.
-
-Domains own application behavior.
-
-Domain Objects represent domain data.
-
-The Resource Architecture supplies and persists that data.
-
-Everything related to one area of application behavior belongs to its Domain.
-
-The Domain remains the stable center of ownership regardless of how the surrounding runtime, rendering implementation, or Resource Architecture evolves.
+Only after those architectural questions are answered should implementation be chosen.
