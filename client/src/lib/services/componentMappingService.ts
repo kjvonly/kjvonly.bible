@@ -1,5 +1,5 @@
 import { Modules as modules } from '$lib/models/modules.model';
-import BibleContainer from '$lib/modules/bible/bibleContainer.svelte';
+import BibleContainer from '$lib/domains/bible/bibleContainer.svelte';
 import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
 import NotesContainer from '$lib/modules/notes/notesContainer.svelte';

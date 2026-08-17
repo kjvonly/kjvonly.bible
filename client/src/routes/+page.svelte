@@ -222,7 +222,7 @@
 		 * DEV NOTE: Update the component to w/e you are working on
 		 * Save you a few clicks on reload.
 		 */
-		paneService.rootPane.buffer.componentName = Modules.PROFILE;
+		paneService.rootPane.buffer.componentName = Modules.BIBLE;
 
 		paneService.onDeletePane = deletePane;
 		paneService.onSplitPane = splitPane;
