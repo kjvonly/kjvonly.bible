@@ -5,7 +5,7 @@ const notesWorker = new Worker(
   }
 );
 
-// TODO this needs to call into notes.api/notes.nostr
+// TODO this needs to call into notes.api/notes.api
 
 /**
  * Note the * character is wildcard for get all notes. Will change in the future.

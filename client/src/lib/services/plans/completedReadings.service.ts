@@ -1,4 +1,4 @@
-import { completedReadingsApi } from '$lib/nostr/events/completedReadings.nostr';
+import { completedReadingsApi } from '$lib/api/completedReadings.api';
 import type { Pane } from '$lib/models/pane.model';
 import {
   type NavReadings,

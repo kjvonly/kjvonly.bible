@@ -1,4 +1,4 @@
-import { chapterApi } from '$lib/nostr/events/chapters.nostr';
+import { chapterApi } from '$lib/api/chapters.api';
 import {
   jsonToChapter,
   newChapter,

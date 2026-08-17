@@ -1,4 +1,4 @@
-import { annotsApi } from '$lib/nostr/events/annots.nostr';
+import { annotsApi } from '$lib/api/annots.api';
 import { newAnnotation, type Annotations } from '$lib/models/bible.model';
 import { bibleStorer } from '$lib/storer/bible.storer';
 import { ANNOTATIONS } from '$lib/storer/bible.db';

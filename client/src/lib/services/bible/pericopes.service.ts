@@ -1,4 +1,4 @@
-import { pericopesApi } from "$lib/nostr/events/pericopes.nostr";
+import { pericopesApi } from "$lib/api/pericopes.api";
 
 class PericopesService {
   async get(ref: string): Promise<{}> {

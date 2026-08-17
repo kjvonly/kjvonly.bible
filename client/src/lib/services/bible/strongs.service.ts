@@ -1,4 +1,4 @@
-import { strongsApi } from '$lib/nostr/events/strongs.nostr';
+import { strongsApi } from '$lib/api/strongs.api';
 import { newStrongs, type Strongs } from '$lib/models/strongs.model';
 
 export class StrongsService {
