@@ -3,9 +3,9 @@
 	import { onMount } from 'svelte';
 
 	// COMPONENTS
-	import BufferBody from '../../components/bufferBody.svelte';
-	import BufferContainer from '../../components/bufferContainer.svelte';
-	import BufferHeader from '../../components/bufferHeader.svelte';
+	import BufferBody from '$lib/components/bufferBody.svelte';
+	import BufferContainer from '$lib/components/bufferContainer.svelte';
+	import BufferHeader from '$lib/components/bufferHeader.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ColorTheme from './colorTheme.svelte';
 	import FontFamilies from './fontFamilies.svelte';
