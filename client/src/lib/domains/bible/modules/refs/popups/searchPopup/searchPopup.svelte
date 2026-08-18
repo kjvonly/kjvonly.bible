@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// COMPONENTS
-	import Search from '$lib/modules/search/search.svelte';
+	import Search from '$lib/domains/bible/modules/search/search.svelte';
 	// MODELS
 	import type { StrongsPopups } from '$lib/models/strongs.model';
 
