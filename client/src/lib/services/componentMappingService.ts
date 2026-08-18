@@ -4,7 +4,7 @@ import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
 import NotesContainer from '$lib/domains/notes/notesContainer.svelte';
 import PlansContainer from '$lib/modules/plans/plansContainer.svelte';
-import RefsContainer from '$lib/modules/refs/refsContainer.svelte';
+import RefsContainer from '$lib/domains/bible/refs/refsContainer.svelte';
 import SettingsContainer from '$lib/modules/settings/settingsContainer.svelte';
 import Search from '../modules/search/search.svelte';
 import ProfileContainer from '$lib/nostr/modules/profile/profileContainer.svelte';
