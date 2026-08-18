@@ -152,7 +152,7 @@
 				version: 0
 			};
 		} else {
-			let verse = await verseService.get(mode.bibleLocationRef);
+			let verse = await verseService.get(`${mode.bibleVersion}/${mode.bibleLocationRef}`);
 			let verseTextWithoutVerseNumber = verse.text.slice(
 				verse.text.indexOf(' ') + 1
 			);

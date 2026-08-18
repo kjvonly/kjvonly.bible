@@ -26,12 +26,14 @@
 		mode = $bindable<BibleMode>(),
 		pane = $bindable<Pane>(),
 		bibleLocationRef = $bindable<string>(),
+		bibleVersion = $bindable<string>(),
 		showNavButtons = $bindable<boolean>(),
 		ID
 	}: {
 		mode: BibleMode;
 		pane: Pane;
 		bibleLocationRef: string;
+		bibleVersion: string;
 		showNavButtons: boolean;
 		ID: string;
 	} = $props();

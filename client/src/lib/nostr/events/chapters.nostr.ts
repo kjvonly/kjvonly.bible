@@ -14,6 +14,7 @@ import { relayService } from '$lib/nostr/services/relay.service';
 
 export class ChapterApi {
   async getChapter(key: string): Promise<any> {
+    key = bibleLocationReferenceService.extractVersionBookIDChapter(key)
     let filter = {
       "authors": [KJVONLY_PUBKEY],
       "#d": [`kjvonly/bible/${key}`] // TODO: need to add resource type here.

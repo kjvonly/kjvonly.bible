@@ -101,6 +101,8 @@ export interface BibleMode {
   navReadings: NavReadings | undefined;
 
   bibleLocationRef: string;
+  bibleVersion: string;
+
   notePopup: NotePopup;
 
   // edit options, word
@@ -110,6 +112,7 @@ export interface BibleMode {
 
 export interface NotePopup {
   bibleLocationRef: string;
+  bibleVersion: string;
   show: boolean;
 }
 
@@ -120,9 +123,11 @@ export function newBibleMode(): BibleMode {
     colorAnnotation: 'bg-highlighta',
     type: '',
     bibleLocationRef: '73_1_1_1',
+    bibleVersion: 'kjvs',
     notePopup: {
       show: false,
-      bibleLocationRef: '73_1_1_1'
+      bibleLocationRef: '73_1_1_1',
+      bibleVersion: 'kjvs'
     }
   };
 }
@@ -158,6 +163,7 @@ export interface CrossRef {
   chapterNumber: number;
   crossRef: string;
   bibleLocationRef: string;
+  bibleVersion: string;
   text: string;
   verseNumber: number;
 }
@@ -169,6 +175,7 @@ export function newCrossRef(): CrossRef {
     chapterNumber: 0,
     crossRef: '',
     bibleLocationRef: '',
+    bibleVersion: '',
     text: '',
     verseNumber: 0
   };

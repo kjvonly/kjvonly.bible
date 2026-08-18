@@ -282,6 +282,7 @@
 				{footnotes}
 				verse={chapter?.verses[k] as VerseModel}
 				{bibleLocationRef}
+				{bibleVersion}
 				{lastKnownScrollPosition}
 			></Verse>
 		</span>

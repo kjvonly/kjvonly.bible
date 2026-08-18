@@ -169,6 +169,7 @@
 		let wordIdx =
 			bibleLocationReferenceService.extractWordIndexOrDefault(bibleLocationRef);
 		mode.bibleLocationRef = `${bookIDChapter}_${verseNumber}_${wordIdx}`;
+		mode.bibleVersion = bibleVersion;
 		mode.value = BIBLE_MODES.EDIT;
 	}
 

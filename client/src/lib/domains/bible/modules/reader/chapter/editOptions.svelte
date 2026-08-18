@@ -169,6 +169,7 @@
 			onclick={() => {
 				onSave();
 				mode.notePopup.bibleLocationRef = mode.bibleLocationRef;
+				mode.notePopup.bibleVersion = mode.bibleVersion;
 				mode.value = BIBLE_MODES.READING;
 				mode.notePopup.show = true;
 			}}

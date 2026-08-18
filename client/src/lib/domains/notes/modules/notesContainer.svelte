@@ -11,6 +11,7 @@
 
 	let mode = $state({
 		bibleLocationRef: '0_0_0_0',
+		bibleVersion: 'kjvs',
 		notePopup: { show: false },
 		paneID: paneID
 	});

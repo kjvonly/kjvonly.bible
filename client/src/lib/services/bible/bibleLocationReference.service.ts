@@ -68,43 +68,42 @@ class BibleLocationReferenceService {
 	convertCrossRefToBibleLocationRef(ref: string): string {
 		return ref.replaceAll('/', '_');
 	}
+	
+	/**
+	 * Returns the version from a Bible location ref when present.
+	 *
+	 * Example:
+	 * - `kjv/GEN_1_3_5` -> `kjv`
+	 * - `GEN_1_3_5` -> `undefined`
+	 */
+	extractVersion(ref: string): string | undefined {
+		const [version, locationRef] = ref.split('/');
+
+		return locationRef ? version : undefined;
+	}
 
 	/**
-	 * Reduces a reference chapter key to BookID_Chapter.
+	 * Removes the version from a Bible location ref when present.
 	 *
-	 * @param ref any reference
-	 * @returns
+	 * Example:
+	 * - `kjv/GEN_1_3_5` -> `GEN_1_3_5`
+	 * - `GEN_1_3_5` -> `GEN_1_3_5`
 	 */
-	// extractBookIDChapter(ref: string): string {
-	// 	let bibleLocationRef = ''
-	// 	let versionRef = ref.split('/')
-	// 	if (versionRef.length === 2) {
-	// 		bibleLocationRef = versionRef[1]
-	// 	}else {
-	// 	 bibleLocationRef = ref
-	// 	}
+	extractLocationRef(ref: string): string {
+		const [, locationWithVersion] = ref.split('/');
 
-	// 	let bcvw = bibleLocationRef.split('_');
-	// 	if (bcvw.length > 2) {
-	// 		ref = `${bcvw[0]}_${bcvw[1]}`;
-	// 	}
-	// 	return ref;
-	// }
+		return locationWithVersion ?? ref;
+	}
+
 	/**
 	 * Reduces a Bible location reference to `bookId_chapter`.
 	 *
-	 * Accepts:
-	 * - `version/bookId_chapter`
-	 * - `version/bookId_chapter_verse`
-	 * - `version/bookId_chapter_verse_wordIndex`
-	 * - `bookId_chapter`
-	 * - `bookId_chapter_verse`
-	 * - `bookId_chapter_verse_wordIndex`
+	 * Example:
+	 * - `kjv/GEN_1_3_5` -> `GEN_1`
+	 * - `GEN_1_3_5` -> `GEN_1`
 	 */
 	extractBookIDChapter(ref: string): string {
-		const [, locationWithVersion] = ref.split('/');
-		const locationRef = locationWithVersion ?? ref;
-
+		const locationRef = this.extractLocationRef(ref);
 		const [bookId, chapter] = locationRef.split('_');
 
 		if (!bookId || !chapter) {
@@ -112,6 +111,25 @@ class BibleLocationReferenceService {
 		}
 
 		return `${bookId}_${chapter}`;
+	}
+
+	/**
+	 * Reduces a Bible location reference to:
+	 *
+	 * - `version/bookId_chapter` when version exists
+	 * - `bookId_chapter` when version does not exist
+	 *
+	 * Example:
+	 * - `kjv/GEN_1_3_5` -> `kjv/GEN_1`
+	 * - `GEN_1_3_5` -> `GEN_1`
+	 */
+	extractVersionBookIDChapter(ref: string): string {
+		const version = this.extractVersion(ref);
+		const bookIDChapter = this.extractBookIDChapter(ref);
+
+		return version
+			? `${version}/${bookIDChapter}`
+			: bookIDChapter;
 	}
 
 	extractVersesOrOne(ref: string): number[] {
