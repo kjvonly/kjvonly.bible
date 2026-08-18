@@ -75,12 +75,43 @@ class BibleLocationReferenceService {
 	 * @param ref any reference
 	 * @returns
 	 */
+	// extractBookIDChapter(ref: string): string {
+	// 	let bibleLocationRef = ''
+	// 	let versionRef = ref.split('/')
+	// 	if (versionRef.length === 2) {
+	// 		bibleLocationRef = versionRef[1]
+	// 	}else {
+	// 	 bibleLocationRef = ref
+	// 	}
+
+	// 	let bcvw = bibleLocationRef.split('_');
+	// 	if (bcvw.length > 2) {
+	// 		ref = `${bcvw[0]}_${bcvw[1]}`;
+	// 	}
+	// 	return ref;
+	// }
+	/**
+	 * Reduces a Bible location reference to `bookId_chapter`.
+	 *
+	 * Accepts:
+	 * - `version/bookId_chapter`
+	 * - `version/bookId_chapter_verse`
+	 * - `version/bookId_chapter_verse_wordIndex`
+	 * - `bookId_chapter`
+	 * - `bookId_chapter_verse`
+	 * - `bookId_chapter_verse_wordIndex`
+	 */
 	extractBookIDChapter(ref: string): string {
-		let bcvw = ref.split('_');
-		if (bcvw.length > 2) {
-			ref = `${bcvw[0]}_${bcvw[1]}`;
+		const [, locationWithVersion] = ref.split('/');
+		const locationRef = locationWithVersion ?? ref;
+
+		const [bookId, chapter] = locationRef.split('_');
+
+		if (!bookId || !chapter) {
+			throw new Error(`Invalid bible location ref: ${ref}`);
 		}
-		return ref;
+
+		return `${bookId}_${chapter}`;
 	}
 
 	extractVersesOrOne(ref: string): number[] {

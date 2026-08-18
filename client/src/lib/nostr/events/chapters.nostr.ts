@@ -14,21 +14,10 @@ import { relayService } from '$lib/nostr/services/relay.service';
 
 export class ChapterApi {
   async getChapter(key: string): Promise<any> {
-
-    let bibleLocationRef = ''
-    let versionRef = key.split('/')
-    if (versionRef.length === 2) {
-      bibleLocationRef = versionRef[1]
-    }
-
-    bibleLocationRef =
-      bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-
     let filter = {
       "authors": [KJVONLY_PUBKEY],
-      "#d": [`kjvonly/bible/kjvs/${bibleLocationRef}`]
+      "#d": [`kjvonly/bible/${key}`] // TODO: need to add resource type here.
     }
-
 
     return offlineApi.cacheHitThenFetch(
       filter,
