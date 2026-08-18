@@ -21,7 +21,7 @@
 		type NextReadings,
 		type Readings,
 		type NavReadings
-	} from '../../../models/plans.model';
+	} from '../../../../../models/plans.model';
 
 	// SERVICES
 	import { completedReadingsService } from '$lib/services/plans/completedReadings.service';

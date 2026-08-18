@@ -3,7 +3,7 @@ import BibleContainer from '$lib/domains/bible/modules/reader/bibleContainer.sve
 import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
 import NotesContainer from '$lib/domains/notes/modules/notesContainer.svelte';
-import PlansContainer from '$lib/modules/plans/plansContainer.svelte';
+import PlansContainer from '$lib/domains/reading-plans/modules/plans/plansContainer.svelte';
 import RefsContainer from '$lib/domains/bible/modules/refs/refsContainer.svelte';
 import SettingsContainer from '$lib/domains/settings/modules/settingsContainer.svelte';
 import Search from '$lib/domains/bible/modules/search/search.svelte';
