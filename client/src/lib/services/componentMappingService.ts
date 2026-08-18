@@ -5,7 +5,7 @@ import Modules from '$lib/modules/modules/modules.svelte';
 import NotesContainer from '$lib/domains/notes/modules/notesContainer.svelte';
 import PlansContainer from '$lib/domains/reading-plans/modules/plans/plansContainer.svelte';
 import RefsContainer from '$lib/domains/bible/modules/refs/refsContainer.svelte';
-import SettingsContainer from '$lib/domains/settings/modules/settingsContainer.svelte';
+import SettingsContainer from '$lib/application/modules/settings/settingsContainer.svelte';
 import Search from '$lib/domains/bible/modules/search/search.svelte';
 import ProfileContainer from '$lib/nostr/modules/profile/profileContainer.svelte';
 
