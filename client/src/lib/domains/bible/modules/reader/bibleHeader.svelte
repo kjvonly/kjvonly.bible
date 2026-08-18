@@ -7,7 +7,7 @@
 	import BookChapterPopup from './popups/bookChapterVersePopup/bookChapterPopup.svelte';
 	import CopyVersePopup from './popups/copyVersePopup.svelte';
 	import NavReadingsList from './plans/navReadingsList.svelte';
-	import Notes from '$lib/domains/notes/notes.svelte';
+	import Notes from '$lib/domains/notes/modules/notes.svelte';
 	import Settings from '$lib/modules/settings/settings.svelte';
 	import Edit from '$lib/components/svgs/edit.svelte';
 	import BibleVersionPopup from './popups/bibleVersionPopup.svelte';

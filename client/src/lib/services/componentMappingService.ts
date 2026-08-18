@@ -2,7 +2,7 @@ import { Modules as modules } from '$lib/models/modules.model';
 import BibleContainer from '$lib/domains/bible/modules/reader/bibleContainer.svelte';
 import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
 import Modules from '$lib/modules/modules/modules.svelte';
-import NotesContainer from '$lib/domains/notes/notesContainer.svelte';
+import NotesContainer from '$lib/domains/notes/modules/notesContainer.svelte';
 import PlansContainer from '$lib/modules/plans/plansContainer.svelte';
 import RefsContainer from '$lib/domains/bible/modules/refs/refsContainer.svelte';
 import SettingsContainer from '$lib/modules/settings/settingsContainer.svelte';
