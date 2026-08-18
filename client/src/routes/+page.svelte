@@ -210,27 +210,7 @@
 		}
 	}
 
-	onMount(() => {
-		let link = document.createElement('link');
-		link.setAttribute('rel', 'manifest');
-		link.setAttribute('href', `/manifest.json`);
-		document.getElementById('kjvonly-head')?.appendChild(link);
-
-		paneService.rootPane.buffer = new Buffer();
-
-		/**
-		 * DEV NOTE: Update the component to w/e you are working on
-		 * Save you a few clicks on reload.
-		 */
-		paneService.rootPane.buffer.componentName = Modules.BIBLE;
-
-		paneService.onDeletePane = deletePane;
-		paneService.onSplitPane = splitPane;
-		onGridUpdate();
-
-		trySetDataPersistence();
-		toastService.showToast = showToast;
-	});
+	
 
 	let toasts: string[] = $state([]);
 	let timeoutId = {};
@@ -257,6 +237,28 @@
 			}
 		})();
 	}
+
+	onMount(() => {
+		let link = document.createElement('link');
+		link.setAttribute('rel', 'manifest');
+		link.setAttribute('href', `/manifest.json`);
+		document.getElementById('kjvonly-head')?.appendChild(link);
+
+		paneService.rootPane.buffer = new Buffer();
+
+		/**
+		 * DEV NOTE: Update the component to w/e you are working on
+		 * Save you a few clicks on reload.
+		 */
+		paneService.rootPane.buffer.componentName = Modules.BIBLE;
+
+		paneService.onDeletePane = deletePane;
+		paneService.onSplitPane = splitPane;
+		onGridUpdate();
+
+		trySetDataPersistence();
+		toastService.showToast = showToast;
+	});
 </script>
 
 <div class="flex h-[100vh] w-full flex-col">
