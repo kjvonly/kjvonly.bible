@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SERVICES
-	import { searchService } from '$lib/services/search.service';
+	import { searchService } from '$lib/domains/bible/services/search.service';
 
 	// =============================== BINDINGS ================================
 

@@ -16,7 +16,7 @@
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { searchService } from '$lib/services/search.service';
+	import { searchService } from '$lib/domains/bible/services/search.service';
 
 	// OTHER
 	import uuid4 from 'uuid4';
