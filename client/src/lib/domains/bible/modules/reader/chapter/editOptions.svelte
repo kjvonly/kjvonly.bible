@@ -11,7 +11,7 @@
 	} from '$lib/models/bible.model';
 
 	// API
-	import { annotsService } from '$lib/services/bible/annots.service';
+	import { annotsService } from '$lib/domains/bible/services/annots.service';
 
 	// =============================== BINDINGS ================================
 	let {

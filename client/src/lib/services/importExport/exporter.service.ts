@@ -1,4 +1,4 @@
-import { annotsService } from '$lib/services/bible/annots.service';
+import { annotsService } from '$lib/domains/bible/services/annots.service';
 import { toastService } from '../toast.service';
 
 /**

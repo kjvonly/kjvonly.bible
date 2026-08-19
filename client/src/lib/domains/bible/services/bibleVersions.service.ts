@@ -1,6 +1,6 @@
 import { paragraphsApi } from '$lib/nostr/events/paragraphs.nostr';
 import { BIBLE_VERSIONS, getBibleDB} from '$lib/storer/bible.db';
-import { syncService } from '../sync.service';
+import { syncService } from '../../../services/sync.service';
 
 let bibleDB = await getBibleDB()
 

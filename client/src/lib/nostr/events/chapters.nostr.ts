@@ -8,7 +8,7 @@ import {
 } from '$lib/storer/bible.db';
 
 import { offlineApi } from './offline.nostr';
-import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
 import { relayService } from '$lib/nostr/services/relay.service';
 

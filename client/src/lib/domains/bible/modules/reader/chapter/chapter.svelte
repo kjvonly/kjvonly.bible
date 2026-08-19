@@ -25,7 +25,7 @@
 	import { chapterService } from '$lib/services/bible/chapter.service';
 	import { notesService } from '$lib/services/notes.service';
 	import { syncService } from '$lib/services/sync.service';
-	import { annotsService } from '$lib/services/bible/annots.service';
+	import { annotsService } from '$lib/domains/bible/services/annots.service';
 	// API
 
 	// OTHER

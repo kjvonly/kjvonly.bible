@@ -1,7 +1,7 @@
 import { bibleStorer } from '$lib/storer/bible.storer';
 import { offlineApi } from './offline.nostr';
 import { ANNOTATIONS, UNSYNCED_ANNOTATIONS } from '$lib/storer/bible.db';
-import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 import type { NostrEvent } from 'nostr-tools';
 import { ANNOTATIONS_KIND } from './kinds';
 import type { Annotations } from '$lib/models/bible.model';
