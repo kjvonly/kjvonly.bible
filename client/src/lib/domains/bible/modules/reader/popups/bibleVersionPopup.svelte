@@ -7,7 +7,7 @@
 	import BufferBody from '$lib/components/bufferBody.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import { bibleVersionsService } from '$lib/services/bible/bibleVersions.service';
+	import { bibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
 	import Edit from '$lib/components/svgs/edit.svelte';
 	import Delete from '$lib/components/svgs/delete.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';

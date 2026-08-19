@@ -9,7 +9,7 @@
 	import type { NavReadings } from '$lib/models/plans.model';
 
 	// SERVICES
-	import { bibleNavigationService } from '$lib/services/bible/bibleNavigation.service';
+	import { bibleNavigationService } from '$lib/domains/bible/services/bibleNavigation.service';
 
 	// COMPONENTS
 	import LeftChevron from '$lib/components/buttons/chevrons/leftChevron.svelte';

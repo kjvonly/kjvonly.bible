@@ -4,10 +4,10 @@
 	import { Modules } from '$lib/models/modules.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { toastService } from '$lib/services/toast.service';
-	import { verseService } from '$lib/services/bible/verse.service';
+	import { verseService } from '$lib/domains/bible/services/verse.service';
 
 	// OTHER
 	import BufferContainer from '$lib/components/bufferContainer.svelte';

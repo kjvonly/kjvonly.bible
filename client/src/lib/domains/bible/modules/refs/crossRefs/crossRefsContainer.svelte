@@ -19,12 +19,12 @@
 	import { newCrossRef, type CrossRef } from '$lib/models/bible.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { bookNamesByIDService } from '$lib/services/bibleMetadata/bookNamesByID.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { shortBookNamesByIDService } from '$lib/services/bibleMetadata/shortBookNamesByID.service';
 	import { toastService } from '$lib/services/toast.service';
-	import { verseService } from '$lib/services/bible/verse.service';
+	import { verseService } from '$lib/domains/bible/services/verse.service';
 
 	// OTHER
 	import uuid4 from 'uuid4';

@@ -8,7 +8,7 @@
 
 	// MODELS
 	// SERVICES
-	import { strongsService } from '$lib/services/bible/strongs.service';
+	import { strongsService } from '$lib/domains/bible/services/strongs.service';
 
 	// API
 	import { bookIDByBookNameService } from '$lib/services/bibleMetadata/bookIDByBookName.service';

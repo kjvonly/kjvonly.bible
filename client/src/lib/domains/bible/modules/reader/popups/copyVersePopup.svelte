@@ -8,9 +8,9 @@
 	import type { Verse } from '$lib/models/bible.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { bookNamesByIDService } from '$lib/services/bibleMetadata/bookNamesByID.service';
-	import { chapterService } from '$lib/services/bible/chapter.service';
+	import { chapterService } from '$lib/domains/bible/services/chapter.service';
 	import { toastService } from '$lib/services/toast.service';
 
 	// COMPONENTS

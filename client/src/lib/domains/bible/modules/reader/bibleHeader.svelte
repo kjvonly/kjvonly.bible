@@ -30,7 +30,7 @@
 	import { Modules } from '$lib/models/modules.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { shortBookNamesByIDService } from '$lib/services/bibleMetadata/shortBookNamesByID.service';
 	import { settingsService } from '$lib/services/settings.service';
 	import { paneService } from '$lib/services/pane.service.svelte';

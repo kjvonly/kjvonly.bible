@@ -16,10 +16,10 @@
 	} from '$lib/models/search.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/services/pane.service.svelte';
 	import { searchService } from '$lib/services/search.service';
-	import { verseService } from '$lib/services/bible/verse.service';
+	import { verseService } from '$lib/domains/bible/services/verse.service';
 
 	// =============================== BINDINGS ================================
 

@@ -21,8 +21,8 @@
 	import { type Chapter } from '$lib/models/bible.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
-	import { chapterService } from '$lib/services/bible/chapter.service';
+	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
+	import { chapterService } from '$lib/domains/bible/services/chapter.service';
 	import { notesService } from '$lib/services/notes.service';
 	import { syncService } from '$lib/services/sync.service';
 	import { annotsService } from '$lib/domains/bible/services/annots.service';
@@ -32,10 +32,10 @@
 	import uuid4 from 'uuid4';
 	import { scrollTo, scrollToTop } from '$lib/utils/eventHandlers';
 	import type { Pane } from '$lib/models/pane.model';
-	import { paragraphsService } from '$lib/services/bible/paragraphs.service';
+	import { paragraphsService } from '$lib/domains/bible/services/paragraphs.service';
 	import { settingsService } from '$lib/services/settings.service';
 	import type { Settings } from '$lib/models/settings.model';
-	import { pericopesService } from '$lib/services/bible/pericopes.service';
+	import { pericopesService } from '$lib/domains/bible/services/pericopes.service';
 
 	// =============================== BINDINGS ================================
 

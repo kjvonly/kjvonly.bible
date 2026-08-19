@@ -29,7 +29,7 @@
 	import { attachEvents, scrollTo } from '$lib/utils/eventHandlers';
 	import { bookIDByBookNameService } from '$lib/services/bibleMetadata/bookIDByBookName.service';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
-	import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 
 	// =============================== BINDINGS ================================
 
