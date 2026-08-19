@@ -11,8 +11,8 @@
 	import { strongsService } from '$lib/domains/bible/services/strongs.service';
 
 	// API
-	import { bookIDByBookNameService } from '$lib/services/bibleMetadata/bookIDByBookName.service';
-	import { shortBookNamesByIDService } from '$lib/services/bibleMetadata/shortBookNamesByID.service';
+	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
+	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import type { Strongs, UsageBy } from '$lib/models/strongs.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';

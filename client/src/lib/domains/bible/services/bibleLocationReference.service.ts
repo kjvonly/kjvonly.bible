@@ -1,5 +1,5 @@
-import { bookNamesByIDService } from '$lib/services/bibleMetadata/bookNamesByID.service';
-import { shortBookNamesByIDService } from '../../../services/bibleMetadata/shortBookNamesByID.service';
+import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
+import { shortBookNamesByIDService } from './bibleMetadata/shortBookNamesByID.service';
 
 class BibleLocationReferenceService {
 	/**

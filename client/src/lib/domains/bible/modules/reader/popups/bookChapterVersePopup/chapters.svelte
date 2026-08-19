@@ -14,8 +14,8 @@
 	import Toggle from '$lib/components/toggle.svelte';
 
 	// SERVICES
-	import { booksChaptersVerseCountByIDService } from '$lib/services/bibleMetadata/booksChaptersVerseCountByID.service';
-	import { bookNamesByIDService } from '$lib/services/bibleMetadata/bookNamesByID.service';
+	import { booksChaptersVerseCountByIDService } from '$lib/domains/bible/services/bibleMetadata/booksChaptersVerseCountByID.service';
+	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 	import { toastService } from '$lib/services/toast.service';
 
 	// =============================== BINDINGS ================================

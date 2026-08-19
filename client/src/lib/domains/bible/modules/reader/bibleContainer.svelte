@@ -27,7 +27,7 @@
 	import uuid4 from 'uuid4';
 
 	import { attachEvents, scrollTo } from '$lib/utils/eventHandlers';
-	import { bookIDByBookNameService } from '$lib/services/bibleMetadata/bookIDByBookName.service';
+	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 

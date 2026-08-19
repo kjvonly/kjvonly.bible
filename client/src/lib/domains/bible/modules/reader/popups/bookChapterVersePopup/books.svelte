@@ -18,8 +18,8 @@
 	import type { Book, BookGrouping } from '$lib/models/bible.model';
 
 	// SERVICES
-	import { bookGroupingsService } from '$lib/services/bibleMetadata/bookGroupingByBookID.service';
-	import { bookNamesByIDService } from '$lib/services/bibleMetadata/bookNamesByID.service';
+	import { bookGroupingsService } from '$lib/domains/bible/services/bibleMetadata/bookGroupingByBookID.service';
+	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 
 	// =============================== BINDINGS ================================
 	let {

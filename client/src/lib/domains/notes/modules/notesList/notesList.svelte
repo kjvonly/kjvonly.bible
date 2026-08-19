@@ -12,7 +12,7 @@
 	// OTHER
 	import BufferContainer from '$lib/components/bufferContainer.svelte';
 	import BufferHeader from '$lib/components/bufferHeader.svelte';
-	import { shortBookNamesByIDService } from '$lib/services/bibleMetadata/shortBookNamesByID.service';
+	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Bible from '$lib/components/svgs/bible.svelte';

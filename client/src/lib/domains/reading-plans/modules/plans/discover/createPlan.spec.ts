@@ -1,8 +1,8 @@
-import { bookIDByBookNameService } from '$lib/services/bibleMetadata/bookIDByBookName.service';
-import { bookIDByshortBookNamesService } from '$lib/services/bibleMetadata/bookIDByshortBookNames.service';
-import { booksChaptersVerseCountByIDService } from '$lib/services/bibleMetadata/booksChaptersVerseCountByID.service';
-import { booksChaptersVerseCountByIDNumberService } from '$lib/services/bibleMetadata/booksChaptersVerseCountByIDNumber.service';
-import { shortBookNamesByIDService } from '$lib/services/bibleMetadata/shortBookNamesByID.service';
+import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
+import { bookIDByshortBookNamesService } from '$lib/domains/bible/services/bibleMetadata/bookIDByshortBookNames.service';
+import { booksChaptersVerseCountByIDService } from '$lib/domains/bible/services/bibleMetadata/booksChaptersVerseCountByID.service';
+import { booksChaptersVerseCountByIDNumberService } from '$lib/domains/bible/services/bibleMetadata/booksChaptersVerseCountByIDNumber.service';
+import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 import { describe, it } from 'vitest';
 
 describe('sum test', () => {

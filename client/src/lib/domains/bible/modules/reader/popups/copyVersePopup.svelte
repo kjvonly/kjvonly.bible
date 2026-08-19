@@ -9,7 +9,7 @@
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { bookNamesByIDService } from '$lib/services/bibleMetadata/bookNamesByID.service';
+	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 	import { chapterService } from '$lib/domains/bible/services/chapter.service';
 	import { toastService } from '$lib/services/toast.service';
 
