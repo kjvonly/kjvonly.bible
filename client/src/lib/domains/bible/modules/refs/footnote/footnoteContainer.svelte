@@ -13,7 +13,7 @@
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 
 	// OTHERS
-	import { numberToLetters } from '$lib/services/dynamicGrid.service';
+	import { numberToLetters } from '$lib/application/services/dynamicGrid.service';
 
 	// =============================== BINDINGS ================================
 

@@ -3,7 +3,7 @@
 		base26ToDecimal,
 		numberToLetters,
 		renderGridTemplateAreas
-	} from '$lib/services/dynamicGrid.service';
+	} from '$lib/application/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
 	import { paneService } from '$lib/services/pane.service.svelte';
