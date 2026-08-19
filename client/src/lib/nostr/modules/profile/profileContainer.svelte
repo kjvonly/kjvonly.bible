@@ -3,7 +3,7 @@
 	// COMPONENTS
 	import BufferContainer from '$lib/components/bufferContainer.svelte';
 	import { onMount } from 'svelte';
-	import { NavigationService } from '$lib/services/navigation.service';
+	import { NavigationService } from '$lib/application/services/navigation.service';
 	import { type Writable } from 'svelte/store';
 	import { stopPropagation } from '$lib/utils/click';
 	import Profile from './profile/profile.svelte';
