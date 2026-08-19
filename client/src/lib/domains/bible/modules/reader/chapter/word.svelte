@@ -8,7 +8,7 @@
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import type { Pane } from '$lib/models/pane.model';
 	import {
 		BIBLE_MODES,

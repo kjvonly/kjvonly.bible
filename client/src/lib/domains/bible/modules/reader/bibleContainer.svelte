@@ -21,7 +21,7 @@
 	import type { Pane } from '$lib/models/pane.model';
 
 	// SERVICES
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// OTHER
 	import uuid4 from 'uuid4';

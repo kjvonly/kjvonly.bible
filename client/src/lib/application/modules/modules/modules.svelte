@@ -15,7 +15,7 @@
 	import type { Pane } from '$lib/models/pane.model';
 
 	// SERVICES
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 
 	// NOSTR

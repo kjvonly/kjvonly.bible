@@ -7,7 +7,7 @@
 	import SearchPopup from './popups/searchPopup/searchPopup.svelte';
 
 	// SERVICES
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// =============================== BINDINGS ================================
 

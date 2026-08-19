@@ -20,8 +20,8 @@
 	import { Modules } from '$lib/models/modules.model';
 
 	// SERVICES
-	import { notesService } from '$lib/services/notes.service';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { notesService } from '$lib/domains/notes/services/notes.service';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { toastService } from '$lib/services/toast.service';
 
 	// APIS

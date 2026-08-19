@@ -23,7 +23,7 @@
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { chapterService } from '$lib/domains/bible/services/chapter.service';
-	import { notesService } from '$lib/services/notes.service';
+	import { notesService } from '$lib/domains/notes/services/notes.service';
 	import { syncService } from '$lib/services/sync.service';
 	import { annotsService } from '$lib/domains/bible/services/annots.service';
 	// API

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Pane } from '$lib/models/pane.model';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import uuid4 from 'uuid4';
 	import Notes from './notes.svelte';
 	import { onMount, untrack } from 'svelte';

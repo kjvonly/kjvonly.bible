@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	let { paneID = $bindable(), module, data, classes = 'h-8 w-8' } = $props();
 </script>

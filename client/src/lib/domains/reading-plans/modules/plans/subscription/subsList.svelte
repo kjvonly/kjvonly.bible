@@ -14,7 +14,7 @@
 	import { PLANS_VIEWS, type Sub } from '$lib/models/plans.model';
 
 	// SERVICES
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// =============================== BINDINGS ================================
 	let {

@@ -7,7 +7,7 @@
 	// SERVICES
 	import { exporterService } from '$lib/services/importExport/exporter.service';
 	import { importerService } from '$lib/services/importExport/importer.service';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';

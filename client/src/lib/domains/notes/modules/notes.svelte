@@ -22,7 +22,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import { onMount } from 'svelte';
 
 	// SERVICES
-	import { notesService } from '$lib/services/notes.service';
+	import { notesService } from '$lib/domains/notes/services/notes.service';
 
 	// OTHER
 	import uuid4 from 'uuid4';

@@ -5,7 +5,7 @@
 	import { Modules } from '$lib/models/modules.model';
 	import { Login } from '$lib/nostr/Login';
 	import { loginService } from '$lib/nostr/services/login.service';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import NsecLoginHeader from './nsecLoginHeader.svelte';
 
 	let {

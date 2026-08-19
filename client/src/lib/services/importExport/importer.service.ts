@@ -1,5 +1,5 @@
 import { annotsService } from '$lib/domains/bible/services/annots.service';
-import { notesService } from '../notes.service';
+import { notesService } from '$lib/domains/notes/services/notes.service';
 import { toastService } from '../toast.service';
 import { deepMergeService } from './deepMerge.service';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { componentMapping } from '$lib/application/services/componentMappingService';
 	import { settingsService } from '$lib/services/settings.service';
 	import type { Pane } from '$lib/models/pane.model';
