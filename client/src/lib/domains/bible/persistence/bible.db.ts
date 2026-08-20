@@ -1,5 +1,5 @@
 import uuid4 from 'uuid4';
-import IndexedDB from './idb.db';
+import IndexedDB from '$lib/infrastructure/persistence/idb.db';
 
 const DB_VERSION = 15;
 

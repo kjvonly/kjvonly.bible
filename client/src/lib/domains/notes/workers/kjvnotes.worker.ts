@@ -1,6 +1,6 @@
 import { notesApi } from '$lib/nostr/events/notes.nostr';
 import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-import {  getBibleDB, SEARCH } from '$lib/storer/bible.db';
+import {  getBibleDB, SEARCH } from '$lib/domains/bible/persistence/bible.db';
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
 

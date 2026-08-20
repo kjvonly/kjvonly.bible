@@ -1,5 +1,5 @@
 import type { SearchResultResponse } from '$lib/models/search.model';
-import { getBibleDB, SEARCH } from '$lib/storer/bible.db';
+import { getBibleDB, SEARCH } from '$lib/domains/bible/persistence/bible.db';
 import { sleep } from '$lib/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
 

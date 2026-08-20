@@ -1,5 +1,5 @@
 import { api } from './api';
-import { bibleStorer as storer } from '$lib/storer/bible.storer';
+import { bibleStorer as storer } from '$lib/domains/bible/persistence/bible.storer';
 import { toastService } from '$lib/application/services/toast.service';
 import { authService } from '$lib/application/services/auth.service';
 import uuid4 from 'uuid4';

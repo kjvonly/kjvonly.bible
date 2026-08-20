@@ -1,8 +1,8 @@
 import {
   COMPLETED_READINGS,
   UNSYNCED_COMPLETED_READINGS
-} from '$lib/storer/bible.db';
-import { bibleStorer } from '$lib/storer/bible.storer';
+} from '$lib/domains/bible/persistence/bible.db';
+import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 import type { NostrEvent } from 'nostr-tools';
 import { offlineApi } from './offline.api';
 import { COMPLETED_READINGS_KIND } from './kinds';

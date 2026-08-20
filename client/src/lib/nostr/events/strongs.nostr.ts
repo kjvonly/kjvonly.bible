@@ -1,4 +1,4 @@
-import { STRONGS } from '$lib/storer/bible.db';
+import { STRONGS } from '$lib/domains/bible/persistence/bible.db';
 import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
 import { offlineApi } from './offline.nostr';
 

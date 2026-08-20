@@ -1,5 +1,5 @@
-import { PLANS, UNSYNCED_PLANS } from '$lib/storer/bible.db';
-import { bibleStorer } from '$lib/storer/bible.storer';
+import { PLANS, UNSYNCED_PLANS } from '$lib/domains/bible/persistence/bible.db';
+import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 import type { NostrEvent } from 'nostr-tools';
 import { offlineApi } from './offline.api';
 import { PLANS_KIND } from './kinds';

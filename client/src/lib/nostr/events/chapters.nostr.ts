@@ -1,11 +1,11 @@
-import { bibleStorer } from '$lib/storer/bible.storer';
+import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 
 import {
   CHAPTERS,
   BOOKNAMES,
   SEARCH,
   STRONGS
-} from '$lib/storer/bible.db';
+} from '$lib/domains/bible/persistence/bible.db';
 
 import { offlineApi } from './offline.nostr';
 import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';

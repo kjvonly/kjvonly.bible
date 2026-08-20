@@ -1,7 +1,7 @@
 import { annotsApi } from '$lib/nostr/events/annots.nostr';
 import { newAnnotation, type Annotations } from '$lib/models/bible.model';
-import { bibleStorer } from '$lib/storer/bible.storer';
-import { ANNOTATIONS } from '$lib/storer/bible.db';
+import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
+import { ANNOTATIONS } from '$lib/domains/bible/persistence/bible.db';
 
 export class AnnotsService {
   async get(bibleLocationRef: string): Promise<Annotations> {

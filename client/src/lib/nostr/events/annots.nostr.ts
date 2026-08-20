@@ -1,6 +1,6 @@
-import { bibleStorer } from '$lib/storer/bible.storer';
+import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 import { offlineApi } from './offline.nostr';
-import { ANNOTATIONS, UNSYNCED_ANNOTATIONS } from '$lib/storer/bible.db';
+import { ANNOTATIONS, UNSYNCED_ANNOTATIONS } from '$lib/domains/bible/persistence/bible.db';
 import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 import type { NostrEvent } from 'nostr-tools';
 import { ANNOTATIONS_KIND } from './kinds';

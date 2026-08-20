@@ -1,4 +1,4 @@
-import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION, getBibleDB } from '$lib/storer/bible.db';
+import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION, getBibleDB } from '$lib/domains/bible/persistence/bible.db';
 import { sleep } from '$lib/utils/sleep';
 import { relayService } from '../../../nostr/services/relay.service';
 import { MANIFEST_KIND } from '$lib/nostr/events/kinds';

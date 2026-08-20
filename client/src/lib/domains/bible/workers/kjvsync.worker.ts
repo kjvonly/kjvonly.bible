@@ -14,7 +14,7 @@ import {
   BIBLE_VERSIONS,
   ACTION_DELETE_VERSION,
   getBibleDB
-} from '$lib/storer/bible.db';
+} from '$lib/domains/bible/persistence/bible.db';
 import { authService } from '$lib/application/services/auth.service';
 import { offlineApi } from '$lib/nostr/events/offline.nostr';
 import { downloadAndDecompressGzip } from '$lib/utils/gzip';
