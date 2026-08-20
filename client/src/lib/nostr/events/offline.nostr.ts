@@ -1,7 +1,7 @@
 import { api } from './api';
 import { bibleStorer as storer } from '$lib/storer/bible.storer';
 import { toastService } from '$lib/application/services/toast.service';
-import { authService } from '$lib/services/auth.service';
+import { authService } from '$lib/application/services/auth.service';
 import uuid4 from 'uuid4';
 import type { Event, Filter, NostrEvent } from 'nostr-tools';
 import { relayService } from '$lib/nostr/services/relay.service';
