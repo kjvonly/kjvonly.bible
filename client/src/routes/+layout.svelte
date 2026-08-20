@@ -10,7 +10,7 @@
 	import Container from '$lib/components/container.svelte';
 
 	// SERVICES
-	import { syncService } from '$lib/services/sync.service';
+	import { syncService } from '$lib/domains/bible/services/sync.service';
 
 	// TODO reorg imports
 	import { browser } from '$app/environment';

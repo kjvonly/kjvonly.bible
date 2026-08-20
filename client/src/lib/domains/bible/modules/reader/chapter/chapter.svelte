@@ -24,7 +24,7 @@
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { chapterService } from '$lib/domains/bible/services/chapter.service';
 	import { notesService } from '$lib/domains/notes/services/notes.service';
-	import { syncService } from '$lib/services/sync.service';
+	import { syncService } from '$lib/domains/bible/services/sync.service';
 	import { annotsService } from '$lib/domains/bible/services/annots.service';
 	// API
 
@@ -33,8 +33,7 @@
 	import { scrollTo, scrollToTop } from '$lib/utils/eventHandlers';
 	import type { Pane } from '$lib/models/pane.model';
 	import { paragraphsService } from '$lib/domains/bible/services/paragraphs.service';
-	import { settingsService } from '$lib/services/settings.service';
-	import type { Settings } from '$lib/models/settings.model';
+	import { settingsService } from '$lib/application/services/settings.service';
 	import { pericopesService } from '$lib/domains/bible/services/pericopes.service';
 
 	// =============================== BINDINGS ================================

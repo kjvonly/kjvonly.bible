@@ -1,6 +1,6 @@
 import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DELETE_VERSION, getBibleDB } from '$lib/storer/bible.db';
 import { sleep } from '$lib/utils/sleep';
-import { relayService } from '../nostr/services/relay.service';
+import { relayService } from '../../../nostr/services/relay.service';
 import { MANIFEST_KIND } from '$lib/nostr/events/kinds';
 import { getTag, getTags, KJVONLY_PUBKEY } from '$lib/utils/nostr';
 

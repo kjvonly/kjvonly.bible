@@ -17,7 +17,7 @@
 	import { newSettings, type Settings } from '$lib/models/settings.model';
 
 	// SERVICES
-	import { settingsService } from '$lib/services/settings.service';
+	import { settingsService } from '$lib/application/services/settings.service';
 	import Close from '$lib/components/svgs/close.svelte';
 	import BibleSettings from './bible/bibleSettings.svelte';
 	// =============================== BINDINGS ================================
