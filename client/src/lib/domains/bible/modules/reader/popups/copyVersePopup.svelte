@@ -11,7 +11,7 @@
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 	import { chapterService } from '$lib/domains/bible/services/chapter.service';
-	import { toastService } from '$lib/services/toast.service';
+	import { toastService } from '$lib/application/services/toast.service';
 
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';

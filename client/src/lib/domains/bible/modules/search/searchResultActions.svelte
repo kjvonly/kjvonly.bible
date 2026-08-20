@@ -7,7 +7,7 @@
 	import VerticalSplit from '$lib/components/buttons/verticalSplit.svelte';
 
 	// SERVICES
-	import { toastService } from '$lib/services/toast.service';
+	import { toastService } from '$lib/application/services/toast.service';
 
 	// =============================== BINDINGS ================================
 

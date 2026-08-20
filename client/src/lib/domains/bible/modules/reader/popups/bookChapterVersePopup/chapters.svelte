@@ -16,7 +16,7 @@
 	// SERVICES
 	import { booksChaptersVerseCountByIDService } from '$lib/domains/bible/services/bibleMetadata/booksChaptersVerseCountByID.service';
 	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
-	import { toastService } from '$lib/services/toast.service';
+	import { toastService } from '$lib/application/services/toast.service';
 
 	// =============================== BINDINGS ================================
 

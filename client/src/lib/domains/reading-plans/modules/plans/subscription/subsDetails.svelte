@@ -26,7 +26,7 @@
 	} from '$lib/models/plans.model';
 
 	// SERVICES
-	import { toastService } from '$lib/services/toast.service';
+	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
 	import { sleep } from '$lib/utils/sleep';

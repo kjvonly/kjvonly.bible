@@ -17,7 +17,7 @@
 		type Plan
 	} from '$lib/models/plans.model';
 	// SERVICES
-	import { toastService } from '$lib/services/toast.service';
+	import { toastService } from '$lib/application/services/toast.service';
 	import uuid4 from 'uuid4';
 	import { sleep } from '$lib/utils/sleep';
 	import { onMount } from 'svelte';

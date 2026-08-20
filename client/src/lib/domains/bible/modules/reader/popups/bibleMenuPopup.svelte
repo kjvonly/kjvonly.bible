@@ -5,8 +5,8 @@
 	import { Modules } from '$lib/models/modules.model';
 
 	// SERVICES
-	import { exporterService } from '$lib/services/importExport/exporter.service';
-	import { importerService } from '$lib/services/importExport/importer.service';
+	import { exporterService } from '$lib/application/services/importExport/exporter.service';
+	import { importerService } from '$lib/application/services/importExport/importer.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// COMPONENTS

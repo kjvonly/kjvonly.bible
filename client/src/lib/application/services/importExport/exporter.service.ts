@@ -1,5 +1,5 @@
 import { annotsService } from '$lib/domains/bible/services/annots.service';
-import { toastService } from '../toast.service';
+import { toastService } from '$lib/application/services/toast.service';
 
 /**
  * Allow user to export their data

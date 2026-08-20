@@ -22,7 +22,7 @@
 	// SERVICES
 	import { notesService } from '$lib/domains/notes/services/notes.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { toastService } from '$lib/services/toast.service';
+	import { toastService } from '$lib/application/services/toast.service';
 
 	// APIS
 	import { notesApi } from '$lib/nostr/events/notes.nostr';
