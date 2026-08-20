@@ -11,7 +11,7 @@ let plansWorker: any;
 
 if (isBrowser) {
   plansWorker = new Worker(
-    new URL('../../workers/kjvplans.worker?worker', import.meta.url),
+    new URL('../workers/kjvplans.worker?worker', import.meta.url),
     {
       type: 'module'
     }
