@@ -4,7 +4,7 @@ import {
   type Sub
 } from '$lib/models/plans.model';
 import { plansApi } from '$lib/nostr/events/plans.nostr';
-import { relayService } from '../../nostr/services/relay.service';
+import { relayService } from '$lib/nostr/services/relay.service';
 
 const isBrowser = typeof window !== 'undefined';
 let plansWorker: any;

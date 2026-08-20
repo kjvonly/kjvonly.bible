@@ -17,8 +17,8 @@
 	} from '$lib/models/plans.model';
 
 	// SERVICES
-	import { encodedReadingsDecoderService } from '$lib/services/plans/encodedReadingsDecoder.service';
-	import { plansPubSubService } from '$lib/services/plans/plansPubSub.service';
+	import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
+	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
 
 	// API
 	import { plansApi } from '$lib/nostr/events/plans.nostr';

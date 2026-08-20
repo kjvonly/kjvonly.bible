@@ -1,4 +1,4 @@
-import { encodedReadingsDecoderService } from '$lib/services/plans/encodedReadingsDecoder.service';
+import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import uuid4 from 'uuid4';
 import type { BCV } from './bible.model';
 

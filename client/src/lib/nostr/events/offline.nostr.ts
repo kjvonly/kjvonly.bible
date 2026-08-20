@@ -117,6 +117,9 @@ export class OfflineApi {
             ["syncedDB", `${syncedDB}`],
             ["idToDelete", `${id}`]
           ],
+          pubkey: '',
+          id: '',
+          sig: ''
         }
         await relayService.publishEvent(deleteEvent)
         await storer.deleteValue(unsyncedDB, id);

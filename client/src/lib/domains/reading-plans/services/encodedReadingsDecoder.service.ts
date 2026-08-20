@@ -1,6 +1,6 @@
 import type { BCV } from '$lib/models/bible.model';
 import type { Readings } from '$lib/models/plans.model';
-import { bookNamesByIDService } from '../../domains/bible/services/bibleMetadata/bookNamesByID.service';
+import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 
 /**
  * {@link CachedPlan.readings} are stored encoded in the backend. This service decodes the

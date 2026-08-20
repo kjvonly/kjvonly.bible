@@ -22,7 +22,7 @@
 	import { sleep } from '$lib/utils/sleep';
 	import { onMount } from 'svelte';
 	import { subsApi } from '$lib/nostr/events/subs.nostr';
-	import { plansPubSubService } from '$lib/services/plans/plansPubSub.service';
+	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
 	// =============================== BINDINGS ================================
 	let {
 		plansDisplay = $bindable<PLANS_VIEWS>(),

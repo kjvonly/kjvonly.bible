@@ -18,8 +18,8 @@
 	import type { Pane } from '$lib/models/pane.model';
 
 	// SERVICES
-	import { completedReadingsService } from '$lib/services/plans/completedReadings.service';
-	import { plansPubSubService } from '$lib/services/plans/plansPubSub.service';
+	import { completedReadingsService } from '$lib/domains/reading-plans/services/completedReadings.service';
+	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
 
 	// OTHER
 	import uuid4 from 'uuid4';

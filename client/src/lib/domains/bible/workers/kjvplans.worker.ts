@@ -12,8 +12,8 @@ import {
   type Plan,
   type Sub
 } from '$lib/models/plans.model';
-import { encodedReadingsDecoderService } from '$lib/services/plans/encodedReadingsDecoder.service';
-import { subsEnricherService } from '$lib/services/plans/subsEnricher.service';
+import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
+import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
 import FlexSearch from 'flexsearch';
 
 let workerHasInitialized = false;
