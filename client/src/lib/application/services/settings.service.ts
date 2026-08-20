@@ -1,5 +1,5 @@
 import uuid4 from 'uuid4';
-import { type Settings, newSettings } from '../models/settings.model';
+import { type Settings, newSettings } from '$lib/models/settings.model';
 
 
 
