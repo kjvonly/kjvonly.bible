@@ -10,8 +10,8 @@
 	import { verseService } from '$lib/domains/bible/services/verse.service';
 
 	// OTHER
-	import BufferContainer from '$lib/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/components/bufferHeader.svelte';
+	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
@@ -23,7 +23,7 @@
 	import Close from '$lib/components/svgs/close.svelte';
 	import Filter from '$lib/components/svgs/filter.svelte';
 	import ClearFilter from '$lib/components/svgs/clearFilter.svelte';
-	import BufferBody from '$lib/components/bufferBody.svelte';
+	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 
 	// =============================== BINDINGS ================================
 

@@ -4,8 +4,8 @@
 	import { onMount } from 'svelte';
 
 	// COMPONENTS
-	import BufferBody from '$lib/components/bufferBody.svelte';
-	import BufferContainer from '$lib/components/bufferContainer.svelte';
+	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
+	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
 	import Chapter from './chapter/chapter.svelte';
 	import BibleHeader from './bibleHeader.svelte';
 	import ChapterNavButtons from './components/chapterNavButtons.svelte';
@@ -28,7 +28,7 @@
 
 	import { attachEvents, scrollTo } from '$lib/utils/eventHandlers';
 	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
-	import BufferHeader from '$lib/components/bufferHeader.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 
 	// =============================== BINDINGS ================================

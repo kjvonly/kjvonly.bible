@@ -1,6 +1,6 @@
 <script lang="ts">
-	import BufferBody from '$lib/components/bufferBody.svelte';
-	import BufferHeader from '$lib/components/bufferHeader.svelte';
+	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import { Modules } from '$lib/application/models/modules.model';
 	import { Login } from '$lib/nostr/Login';

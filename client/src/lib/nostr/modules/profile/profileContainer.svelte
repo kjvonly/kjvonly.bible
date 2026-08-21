@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// COMPONENTS
-	import BufferContainer from '$lib/components/bufferContainer.svelte';
+	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
 	import { onMount } from 'svelte';
 	import { NavigationService } from '$lib/application/services/navigation.service';
 	import { type Writable } from 'svelte/store';

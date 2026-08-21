@@ -1,6 +1,6 @@
 <script lang="ts">
-	import BufferContainer from '$lib/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/components/bufferHeader.svelte';
+	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 
 	// SVELTE
 	import { onMount } from 'svelte';

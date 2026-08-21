@@ -11,9 +11,9 @@
 
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';
-	import BufferContainer from '$lib/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/components/bufferHeader.svelte';
-	import BufferBody from '$lib/components/bufferBody.svelte';
+	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
