@@ -14,7 +14,7 @@
 	import LightDarkMode from './lightDarkMode.svelte';
 
 	// MODELS
-	import { newSettings, type Settings } from '$lib/models/settings.model';
+	import { newSettings, type Settings } from '$lib/application/models/settings.model';
 
 	// SERVICES
 	import { settingsService } from '$lib/application/services/settings.service';
