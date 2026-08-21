@@ -1,4 +1,4 @@
-import { newVerse, type Verse } from '$lib/models/bible.model';
+import { newVerse, type Verse } from '$lib/domains/bible/models/bible.model';
 import { bibleLocationReferenceService } from './bibleLocationReference.service';
 import { chapterService } from './chapter.service';
 

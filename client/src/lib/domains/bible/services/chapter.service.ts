@@ -3,7 +3,7 @@ import {
   jsonToChapter,
   newChapter,
   type Chapter
-} from '$lib/models/bible.model';
+} from '$lib/domains/bible/models/bible.model';
 
 class ChapterService {
   async get(ref: string): Promise<Chapter> {

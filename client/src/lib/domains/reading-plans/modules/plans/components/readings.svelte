@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { BCV } from '$lib/models/bible.model';
+	import type { BCV } from '$lib/domains/bible/models/bible.model';
 
 	let { readings = $bindable<BCV[]>() } = $props();
 </script>

@@ -1,4 +1,4 @@
-import type { BCV } from '$lib/models/bible.model';
+import type { BCV } from '$lib/domains/bible/models/bible.model';
 import type { Readings } from '$lib/models/plans.model';
 import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 

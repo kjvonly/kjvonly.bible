@@ -17,8 +17,8 @@
 		type Paragraphs,
 		type Pericopes,
 		type Verse as VerseModel
-	} from '$lib/models/bible.model';
-	import { type Chapter } from '$lib/models/bible.model';
+	} from '$lib/domains/bible/models/bible.model';
+	import { type Chapter } from '$lib/domains/bible/models/bible.model';
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';

@@ -5,7 +5,7 @@
 
 	//MODELS
 	import { Modules } from '$lib/models/modules.model';
-	import type { Verse } from '$lib/models/bible.model';
+	import type { Verse } from '$lib/domains/bible/models/bible.model';
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';

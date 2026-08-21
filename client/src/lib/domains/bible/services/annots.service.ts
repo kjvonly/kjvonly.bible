@@ -1,5 +1,5 @@
 import { annotsApi } from '$lib/nostr/events/annots.nostr';
-import { newAnnotation, type Annotations } from '$lib/models/bible.model';
+import { newAnnotation, type Annotations } from '$lib/domains/bible/models/bible.model';
 import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 import { ANNOTATIONS } from '$lib/domains/bible/persistence/bible.db';
 

@@ -4,7 +4,7 @@ import { ANNOTATIONS, UNSYNCED_ANNOTATIONS } from '$lib/domains/bible/persistenc
 import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 import type { NostrEvent } from 'nostr-tools';
 import { ANNOTATIONS_KIND } from './kinds';
-import type { Annotations } from '$lib/models/bible.model';
+import type { Annotations } from '$lib/domains/bible/models/bible.model';
 
 export class AnnotsApi {
   async getAnnotations(bibleLocationRef: string): Promise<any> {

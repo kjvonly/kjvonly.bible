@@ -17,7 +17,7 @@
 		type Verse,
 		type Word,
 		type WordAnnots
-	} from '$lib/models/bible.model';
+	} from '$lib/domains/bible/models/bible.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Notes from '$lib/components/svgs/notes.svelte';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';

@@ -1,4 +1,4 @@
-import type { NavReadings } from './plans.model';
+import type { NavReadings } from '../../../models/plans.model';
 
 /**
  *

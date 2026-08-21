@@ -16,7 +16,7 @@
 
 	// MODELS
 	import { Modules } from '$lib/models/modules.model';
-	import { newCrossRef, type CrossRef } from '$lib/models/bible.model';
+	import { newCrossRef, type CrossRef } from '$lib/domains/bible/models/bible.model';
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';

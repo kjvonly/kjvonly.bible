@@ -15,7 +15,7 @@
 	import List from '$lib/components/svgs/list.svelte';
 
 	// MODELS
-	import type { Book, BookGrouping } from '$lib/models/bible.model';
+	import type { Book, BookGrouping } from '$lib/domains/bible/models/bible.model';
 
 	// SERVICES
 	import { bookGroupingsService } from '$lib/domains/bible/services/bibleMetadata/bookGroupingByBookID.service';

@@ -8,7 +8,7 @@
 		BIBLE_MODES,
 		type Annotations,
 		type BibleMode
-	} from '$lib/models/bible.model';
+	} from '$lib/domains/bible/models/bible.model';
 
 	// API
 	import { annotsService } from '$lib/domains/bible/services/annots.service';

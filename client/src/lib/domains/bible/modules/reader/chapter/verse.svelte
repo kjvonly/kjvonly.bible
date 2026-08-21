@@ -7,7 +7,7 @@
 		type BibleMode,
 		type Verse,
 		type Pericopes
-	} from '$lib/models/bible.model';
+	} from '$lib/domains/bible/models/bible.model';
 	import type { Pane } from '$lib/models/pane.model';
 	import Paragraph from './paragraph.svelte';
 	import Pericope from './pericope.svelte';

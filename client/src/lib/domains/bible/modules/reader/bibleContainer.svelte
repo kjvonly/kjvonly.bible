@@ -17,7 +17,7 @@
 		newAnnotation,
 		newBibleMode,
 		type Annotations
-	} from '$lib/models/bible.model';
+	} from '$lib/domains/bible/models/bible.model';
 	import type { Pane } from '$lib/models/pane.model';
 
 	// SERVICES

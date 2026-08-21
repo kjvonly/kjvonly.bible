@@ -1,4 +1,4 @@
-import type { BookGrouping } from '$lib/models/bible.model';
+import type { BookGrouping } from '$lib/domains/bible/models/bible.model';
 
 export class BookGroupingsService {
 	bookGroups: { [bookID: string]: BookGrouping } = {

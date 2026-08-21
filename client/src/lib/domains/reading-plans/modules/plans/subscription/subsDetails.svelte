@@ -15,7 +15,7 @@
 	import Pending from '$lib/components/svgs/pending.svelte';
 
 	// MODELS
-	import type { BCV } from '$lib/models/bible.model';
+	import type { BCV } from '$lib/domains/bible/models/bible.model';
 	import { Modules } from '$lib/models/modules.model';
 	import type { Pane } from '$lib/models/pane.model';
 	import {

@@ -26,7 +26,7 @@
 		BIBLE_MODES,
 		ToolbarItems,
 		type BibleMode
-	} from '$lib/models/bible.model';
+	} from '$lib/domains/bible/models/bible.model';
 	import { Modules } from '$lib/models/modules.model';
 
 	// SERVICES
