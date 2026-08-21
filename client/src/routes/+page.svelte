@@ -8,8 +8,8 @@
 
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { Buffer } from '$lib/models/buffer.model';
-	import PaneContainer from '$lib/components/pane.svelte';
-	import { type Pane } from '$lib/models/pane.model';
+	import PaneContainer from '$lib/application/runtime/pane/components/pane.svelte';
+	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import { toastService } from '$lib/application/services/toast.service';
 	import { Modules } from '$lib/application/models/modules.model';
 

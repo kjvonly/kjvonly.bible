@@ -3,7 +3,7 @@
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { componentMapping } from '$lib/application/services/componentMappingService';
 	import { settingsService } from '$lib/application/services/settings.service';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');

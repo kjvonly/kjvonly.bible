@@ -1,6 +1,6 @@
 import type { BibleMode } from '$lib/domains/bible/models/bible.model';
 import type { Modules } from '$lib/application/models/modules.model';
-import type { Pane } from '$lib/models/pane.model';
+import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 export class PaneService {
 	private static _instance: PaneService;
