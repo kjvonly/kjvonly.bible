@@ -11,7 +11,7 @@
 	import PaneContainer from '$lib/components/pane.svelte';
 	import { type Pane } from '$lib/models/pane.model';
 	import { toastService } from '$lib/application/services/toast.service';
-	import { Modules } from '$lib/models/modules.model';
+	import { Modules } from '$lib/application/models/modules.model';
 
 	let template = $state();
 	let paneIds: string[] = $state([]);

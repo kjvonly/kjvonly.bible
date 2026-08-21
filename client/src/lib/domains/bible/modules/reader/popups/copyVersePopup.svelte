@@ -4,7 +4,7 @@
 	import { onMount, untrack } from 'svelte';
 
 	//MODELS
-	import { Modules } from '$lib/models/modules.model';
+	import { Modules } from '$lib/application/models/modules.model';
 	import type { Verse } from '$lib/domains/bible/models/bible.model';
 
 	// SERVICES

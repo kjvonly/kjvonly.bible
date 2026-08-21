@@ -17,7 +17,7 @@
 	import Tag from '$lib/components/svgs/tag.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/models/modules.model';
+	import { Modules } from '$lib/application/models/modules.model';
 
 	// SERVICES
 	import { notesService } from '$lib/domains/notes/services/notes.service';

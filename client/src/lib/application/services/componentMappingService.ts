@@ -1,4 +1,4 @@
-import { Modules as modules } from '$lib/models/modules.model';
+import { Modules as modules } from '$lib/application/models/modules.model';
 import BibleContainer from '$lib/domains/bible/modules/reader/bibleContainer.svelte';
 import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
 import Modules from '$lib/application/modules/modules/modules.svelte';

@@ -3,7 +3,7 @@
 	// COMPONENTS
 	import Copy from '$lib/components/buttons/copy.svelte';
 	import HorizontalSplit from '$lib/components/buttons/horizontalSplit.svelte';
-	import { Modules } from '$lib/models/modules.model';
+	import { Modules } from '$lib/application/models/modules.model';
 	import VerticalSplit from '$lib/components/buttons/verticalSplit.svelte';
 
 	// SERVICES

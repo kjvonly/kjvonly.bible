@@ -15,7 +15,7 @@
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/models/modules.model';
+	import { Modules } from '$lib/application/models/modules.model';
 	import { newCrossRef, type CrossRef } from '$lib/domains/bible/models/bible.model';
 
 	// SERVICES

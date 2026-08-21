@@ -1,5 +1,5 @@
 import type { BibleMode } from '$lib/domains/bible/models/bible.model';
-import type { Modules } from '$lib/models/modules.model';
+import type { Modules } from '$lib/application/models/modules.model';
 import type { Pane } from '$lib/models/pane.model';
 
 export class PaneService {

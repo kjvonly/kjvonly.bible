@@ -1,5 +1,5 @@
 import uuid4 from 'uuid4';
-import { Modules } from './modules.model';
+import { Modules } from '../application/models/modules.model';
 
 export class Buffer {
 	key: string = uuid4();

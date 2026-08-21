@@ -2,7 +2,7 @@
 	// ================================ IMPORTS ================================
 
 	//MODELS
-	import { Modules } from '$lib/models/modules.model';
+	import { Modules } from '$lib/application/models/modules.model';
 
 	// SERVICES
 	import { exporterService } from '$lib/application/services/importExport/exporter.service';
