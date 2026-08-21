@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Settings } from '$lib/models/settings.model';
+	import type { Settings } from '$lib/application/models/settings.model';
 	import Paragraphs from './paragraphs.svelte';
 	import Pericopes from './pericopes.svelte';
 	import BibleVersion from './bibleVersion.svelte';

@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { settingsService } from '$lib/application/services/settings.service';
 	import uuid4 from 'uuid4';
-	import type { Settings } from '$lib/models/settings.model';
+	import type { Settings } from '$lib/application/models/settings.model';
 
 	let { clientHeight = $bindable<number>(), children } = $props();
 

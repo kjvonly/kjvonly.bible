@@ -1,7 +1,7 @@
 <script lang="ts">
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Save from '$lib/components/svgs/save.svelte';
-	import type { Settings } from '$lib/models/settings.model';
+	import type { Settings } from '$lib/application/models/settings.model';
 
 	// =============================== BINDINGS ================================
 

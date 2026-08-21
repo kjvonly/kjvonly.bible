@@ -4,7 +4,7 @@
 	import Sun from '$lib/components/buttons/sun.svelte';
 	import DarkMode from '$lib/components/svgs/darkMode.svelte';
 	import LightMode from '$lib/components/svgs/lightMode.svelte';
-	import { type Settings } from '$lib/models/settings.model';
+	import { type Settings } from '$lib/application/models/settings.model';
 
 	let { settings = $bindable<Settings>() } = $props();
 
