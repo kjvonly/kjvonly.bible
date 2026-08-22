@@ -10,7 +10,7 @@
 	import Container from '$lib/components/container.svelte';
 
 	// SERVICES
-	import { syncService } from '$lib/services/sync.service';
+	import { syncService } from '$lib/domains/bible/services/sync.service';
 
 	// TODO reorg imports
 	import { browser } from '$app/environment';
@@ -18,7 +18,7 @@
 	import { defaultRelays } from '$lib/nostr/Constants';
 	import { WebStorage } from '$lib/nostr/WebStorage';
 	import { Login } from '$lib/nostr/Login';
-	import { getBibleDB } from '$lib/storer/bible.db';
+	import { getBibleDB } from '$lib/domains/bible/persistence/bible.db';
 
 	function register() {
 		// Listen for connection coming online

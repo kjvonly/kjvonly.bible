@@ -5,7 +5,7 @@
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
 	// SERVICES
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// =============================== BINDINGS ================================
 

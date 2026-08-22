@@ -1,11 +1,11 @@
 <script lang="ts">
-	import BufferBody from '$lib/components/bufferBody.svelte';
-	import BufferHeader from '$lib/components/bufferHeader.svelte';
+	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
-	import { Modules } from '$lib/models/modules.model';
+	import { Modules } from '$lib/application/models/modules.model';
 	import { Login } from '$lib/nostr/Login';
 	import { loginService } from '$lib/nostr/services/login.service';
-	import { paneService } from '$lib/services/pane.service.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import NsecLoginHeader from './nsecLoginHeader.svelte';
 
 	let {

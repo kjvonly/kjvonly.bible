@@ -3,15 +3,15 @@
 		base26ToDecimal,
 		numberToLetters,
 		renderGridTemplateAreas
-	} from '$lib/services/dynamicGrid.service';
+	} from '$lib/application/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
-	import { paneService } from '$lib/services/pane.service.svelte';
-	import { Buffer } from '$lib/models/buffer.model';
-	import PaneContainer from '$lib/components/pane.svelte';
-	import { type Pane } from '$lib/models/pane.model';
-	import { toastService } from '$lib/services/toast.service';
-	import { Modules } from '$lib/models/modules.model';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { Buffer } from '$lib/application/runtime/buffer/models/buffer.model';
+	import PaneContainer from '$lib/application/runtime/pane/components/pane.svelte';
+	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { toastService } from '$lib/application/services/toast.service';
+	import { Modules } from '$lib/application/models/modules.model';
 
 	let template = $state();
 	let paneIds: string[] = $state([]);
@@ -210,27 +210,7 @@
 		}
 	}
 
-	onMount(() => {
-		let link = document.createElement('link');
-		link.setAttribute('rel', 'manifest');
-		link.setAttribute('href', `/manifest.json`);
-		document.getElementById('kjvonly-head')?.appendChild(link);
-
-		paneService.rootPane.buffer = new Buffer();
-
-		/**
-		 * DEV NOTE: Update the component to w/e you are working on
-		 * Save you a few clicks on reload.
-		 */
-		paneService.rootPane.buffer.componentName = Modules.PROFILE;
-
-		paneService.onDeletePane = deletePane;
-		paneService.onSplitPane = splitPane;
-		onGridUpdate();
-
-		trySetDataPersistence();
-		toastService.showToast = showToast;
-	});
+	
 
 	let toasts: string[] = $state([]);
 	let timeoutId = {};
@@ -257,6 +237,28 @@
 			}
 		})();
 	}
+
+	onMount(() => {
+		let link = document.createElement('link');
+		link.setAttribute('rel', 'manifest');
+		link.setAttribute('href', `/manifest.json`);
+		document.getElementById('kjvonly-head')?.appendChild(link);
+
+		paneService.rootPane.buffer = new Buffer();
+
+		/**
+		 * DEV NOTE: Update the component to w/e you are working on
+		 * Save you a few clicks on reload.
+		 */
+		paneService.rootPane.buffer.componentName = Modules.BIBLE;
+
+		paneService.onDeletePane = deletePane;
+		paneService.onSplitPane = splitPane;
+		onGridUpdate();
+
+		trySetDataPersistence();
+		toastService.showToast = showToast;
+	});
 </script>
 
 <div class="flex h-[100vh] w-full flex-col">

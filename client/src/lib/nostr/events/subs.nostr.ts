@@ -1,5 +1,5 @@
-import { SUBSCRIPTIONS, UNSYNCED_SUBSCRIPTIONS } from '$lib/storer/bible.db';
-import { bibleStorer } from '$lib/storer/bible.storer';
+import { SUBSCRIPTIONS, UNSYNCED_SUBSCRIPTIONS } from '$lib/domains/bible/persistence/bible.db';
+import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 import type { NostrEvent } from 'nostr-tools';
 import { offlineApi } from './offline.nostr';
 import { SUBSCRIPTIONS_KIND } from './kinds';

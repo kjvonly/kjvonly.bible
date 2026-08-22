@@ -1,9 +1,9 @@
 import {
   PERICOPES
-} from '$lib/storer/bible.db';
+} from '$lib/domains/bible/persistence/bible.db';
 
 import { offlineApi } from './offline.nostr';
-import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
+import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 
 export class PericopesApi {
   async get(bibleLocationRef: string): Promise<any> {

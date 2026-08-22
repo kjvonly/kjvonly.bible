@@ -1,6 +1,6 @@
 <script lang="ts">
-	import BufferBody from '$lib/components/bufferBody.svelte';
-	import BufferHeader from '$lib/components/bufferHeader.svelte';
+	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import ProfileHeader from './profileHeader.svelte';
 	import Pubkey from './home/pubkey.svelte';
 	import Relays from './home/relays.svelte';

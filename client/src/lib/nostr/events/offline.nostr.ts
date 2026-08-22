@@ -1,11 +1,11 @@
 import { api } from './api';
-import { bibleStorer as storer } from '$lib/storer/bible.storer';
-import { toastService } from '$lib/services/toast.service';
-import { authService } from '$lib/services/auth.service';
+import { bibleStorer as storer } from '$lib/domains/bible/persistence/bible.storer';
+import { toastService } from '$lib/application/services/toast.service';
+import { authService } from '$lib/application/services/auth.service';
 import uuid4 from 'uuid4';
 import type { Event, Filter, NostrEvent } from 'nostr-tools';
 import { relayService } from '$lib/nostr/services/relay.service';
-import { gzipAndHexEncode } from '$lib/utils/gzip';
+import { gzipAndHexEncode } from '$lib/infrastructure/compression/gzip';
 
 export class OfflineApi {
   // --------------------------------------------------------------------------
@@ -117,6 +117,9 @@ export class OfflineApi {
             ["syncedDB", `${syncedDB}`],
             ["idToDelete", `${id}`]
           ],
+          pubkey: '',
+          id: '',
+          sig: ''
         }
         await relayService.publishEvent(deleteEvent)
         await storer.deleteValue(unsyncedDB, id);

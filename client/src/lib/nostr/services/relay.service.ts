@@ -1,9 +1,9 @@
 import { finalizeEvent, generateSecretKey, getPublicKey, type NostrEvent } from 'nostr-tools/pure'
 import { SimplePool } from 'nostr-tools/pool'
-import { getTags, KJVONLY_PUBKEY, KJVONLY_REALY_URL } from '$lib/utils/nostr';
+import { getTags, KJVONLY_PUBKEY, KJVONLY_REALY_URL } from '$lib/infrastructure/nostr/nostr';
 import type { Event, EventTemplate, Filter, UnsignedEvent, VerifiedEvent } from 'nostr-tools';
-import { hexDecode, hexDecodeAndUngzip, hexEncode } from '$lib/utils/gzip';
-import { Deferred } from '$lib/utils/deferred';
+import { hexDecode, hexDecodeAndUngzip, hexEncode } from '$lib/infrastructure/compression/gzip';
+import { Deferred } from '$lib/infrastructure/utils/deferred';
 import { signerService } from './signer.service';
 import { authorService } from './author.service';
 import { createRxBackwardReq, uniq, type EventPacket } from 'rx-nostr';

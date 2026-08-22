@@ -1,34 +1,24 @@
-import { bibleStorer } from '$lib/storer/bible.storer';
+import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 
 import {
   CHAPTERS,
   BOOKNAMES,
   SEARCH,
   STRONGS
-} from '$lib/storer/bible.db';
+} from '$lib/domains/bible/persistence/bible.db';
 
 import { offlineApi } from './offline.nostr';
-import { bibleLocationReferenceService } from '$lib/services/bible/bibleLocationReference.service';
-import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
+import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
+import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 import { relayService } from '$lib/nostr/services/relay.service';
 
 export class ChapterApi {
   async getChapter(key: string): Promise<any> {
-
-    let bibleLocationRef = ''
-    let versionRef = key.split('/')
-    if (versionRef.length === 2) {
-      bibleLocationRef = versionRef[1]
-    }
-
-    bibleLocationRef =
-      bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-
+    key = bibleLocationReferenceService.extractVersionBookIDChapter(key)
     let filter = {
       "authors": [KJVONLY_PUBKEY],
-      "#d": [`kjvonly/bible/kjvs/${bibleLocationRef}`]
+      "#d": [`kjvonly/bible/${key}`] // TODO: need to add resource type here.
     }
-
 
     return offlineApi.cacheHitThenFetch(
       filter,
