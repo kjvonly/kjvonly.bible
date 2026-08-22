@@ -29,7 +29,7 @@
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
-	import { sleep } from '$lib/utils/sleep';
+	import { sleep } from '$lib/infrastructure/utils/sleep';
 	import uuid4 from 'uuid4';
 
 	// =============================== BINDINGS ================================

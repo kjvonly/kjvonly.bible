@@ -1,6 +1,6 @@
 import type { SearchResultResponse } from '$lib/domains/bible/models/search.model';
 import { getBibleDB, SEARCH } from '$lib/domains/bible/persistence/bible.db';
-import { sleep } from '$lib/utils/sleep';
+import { sleep } from '$lib/infrastructure/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
 
 let bibleDB = await getBibleDB()

@@ -19,7 +19,7 @@
 	// SERVICES
 	import { toastService } from '$lib/application/services/toast.service';
 	import uuid4 from 'uuid4';
-	import { sleep } from '$lib/utils/sleep';
+	import { sleep } from '$lib/infrastructure/utils/sleep';
 	import { onMount } from 'svelte';
 	import { subsApi } from '$lib/nostr/events/subs.nostr';
 	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';

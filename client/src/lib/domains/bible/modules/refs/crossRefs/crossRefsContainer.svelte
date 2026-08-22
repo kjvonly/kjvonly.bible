@@ -29,7 +29,7 @@
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { findElement, scrollTo } from '$lib/utils/eventHandlers';
-	import { sleep } from '$lib/utils/sleep';
+	import { sleep } from '$lib/infrastructure/utils/sleep';
 
 	// =============================== BINDINGS ================================
 
