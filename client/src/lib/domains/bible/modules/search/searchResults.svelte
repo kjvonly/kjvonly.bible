@@ -13,7 +13,7 @@
 		type onFilterBibleLocationRefFunction,
 		type SearchResult,
 		type SearchResultResponse
-	} from '$lib/models/search.model';
+	} from '$lib/domains/bible/models/search.model';
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
