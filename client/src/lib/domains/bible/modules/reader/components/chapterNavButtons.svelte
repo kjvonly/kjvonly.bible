@@ -6,7 +6,7 @@
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
-	import type { NavReadings } from '$lib/models/plans.model';
+	import type { NavReadings } from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	import { bibleNavigationService } from '$lib/domains/bible/services/bibleNavigation.service';

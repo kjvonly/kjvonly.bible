@@ -15,7 +15,7 @@
 		PLANS_VIEWS,
 		PlanToCachedSub,
 		type Plan
-	} from '$lib/models/plans.model';
+	} from '$lib/domains/reading-plans/models/plans.model';
 	// SERVICES
 	import { toastService } from '$lib/application/services/toast.service';
 	import uuid4 from 'uuid4';

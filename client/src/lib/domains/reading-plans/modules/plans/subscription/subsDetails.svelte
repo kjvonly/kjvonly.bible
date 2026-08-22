@@ -23,7 +23,7 @@
 		type NavReadings,
 		type Readings,
 		type Sub
-	} from '$lib/models/plans.model';
+	} from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	import { toastService } from '$lib/application/services/toast.service';

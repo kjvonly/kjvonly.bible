@@ -11,7 +11,7 @@ import {
   type CompletedReadings,
   type Plan,
   type Sub
-} from '$lib/models/plans.model';
+} from '$lib/domains/reading-plans/models/plans.model';
 import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
 import FlexSearch from 'flexsearch';

@@ -10,7 +10,7 @@
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// MODELS
-	import { PLANS_VIEWS, type Plan } from '$lib/models/plans.model';
+	import { PLANS_VIEWS, type Plan } from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	// =============================== BINDINGS ================================

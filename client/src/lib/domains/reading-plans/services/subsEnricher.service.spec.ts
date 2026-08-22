@@ -6,7 +6,7 @@ import {
 	NullSub,
 	NullCompletedReadings,
 	NullReadings
-} from '$lib/models/plans.model';
+} from '$lib/domains/reading-plans/models/plans.model';
 
 describe('path util functions', () => {
 	interface tt {

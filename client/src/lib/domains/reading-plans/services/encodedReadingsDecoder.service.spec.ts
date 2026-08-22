@@ -1,6 +1,6 @@
 import { describe, it, assert, expect } from 'vitest';
 import { encodedReadingsDecoderService } from './encodedReadingsDecoder.service';
-import type { Readings } from '$lib/models/plans.model';
+import type { Readings } from '$lib/domains/reading-plans/models/plans.model';
 
 describe('verse rng', () => {
 	interface tt {

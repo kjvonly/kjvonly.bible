@@ -2,7 +2,7 @@ import {
   PLAN_PUBSUB_SUBSCRIPTIONS,
   type CachedSub,
   type Sub
-} from '$lib/models/plans.model';
+} from '$lib/domains/reading-plans/models/plans.model';
 import { plansApi } from '$lib/nostr/events/plans.nostr';
 import { relayService } from '$lib/nostr/services/relay.service';
 

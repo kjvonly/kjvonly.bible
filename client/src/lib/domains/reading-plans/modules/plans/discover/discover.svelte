@@ -14,7 +14,7 @@
 		PLAN_PUBSUB_SUBSCRIPTIONS,
 		PLANS_VIEWS,
 		type Plan
-	} from '$lib/models/plans.model';
+	} from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';

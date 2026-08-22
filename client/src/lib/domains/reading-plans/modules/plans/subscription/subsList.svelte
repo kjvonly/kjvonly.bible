@@ -11,7 +11,7 @@
 	import type { Pane } from '$lib/models/pane.model';
 
 	// MODELS
-	import { PLANS_VIEWS, type Sub } from '$lib/models/plans.model';
+	import { PLANS_VIEWS, type Sub } from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';

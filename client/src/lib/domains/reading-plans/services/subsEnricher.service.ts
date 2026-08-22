@@ -1,4 +1,4 @@
-import type { Sub } from '$lib/models/plans.model';
+import type { Sub } from '$lib/domains/reading-plans/models/plans.model';
 
 /**
  * Subs enricher services enriches the a sub with metadata such as next readings

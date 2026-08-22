@@ -9,7 +9,7 @@
 		PLANS_MAX_VIEW_ID,
 		PLANS_VIEWS,
 		SUBS_MAX_VIEW_ID
-	} from '$lib/models/plans.model';
+	} from '$lib/domains/reading-plans/models/plans.model';
 
 	// =============================== BINDINGS ================================
 	let { paneID = $bindable<string>(), pane = $bindable<Pane>() } = $props();

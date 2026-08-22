@@ -7,7 +7,7 @@ import {
   type Plan,
   type Readings,
   NullSub
-} from '$lib/models/plans.model';
+} from '$lib/domains/reading-plans/models/plans.model';
 import { plansPubSubService } from './plansPubSub.service';
 import { subsEnricherService } from './subsEnricher.service';
 
