@@ -1,5 +1,5 @@
 import { STRONGS } from '$lib/domains/bible/persistence/bible.db';
-import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
+import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 import { offlineApi } from './offline.nostr';
 
 export class StrongsApi {

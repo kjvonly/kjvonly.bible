@@ -3,7 +3,7 @@ import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 import type { NostrEvent } from 'nostr-tools';
 import { offlineApi } from './offline.nostr';
 import { NOTES_KIND } from './kinds';
-import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
+import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 
 export class NotesApi {
 

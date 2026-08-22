@@ -2,7 +2,7 @@ import { CHAPTERS, BOOKNAMES, STRONGS, SEARCH, PARAGRAPHS, PERICOPES, ACTION_DEL
 import { sleep } from '$lib/infrastructure/utils/sleep';
 import { relayService } from '../../../nostr/services/relay.service';
 import { MANIFEST_KIND } from '$lib/nostr/events/kinds';
-import { getTag, getTags, KJVONLY_PUBKEY } from '$lib/utils/nostr';
+import { getTag, getTags, KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 
 let bibleDB = await getBibleDB()
 

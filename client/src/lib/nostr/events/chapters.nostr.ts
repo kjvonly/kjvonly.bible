@@ -9,7 +9,7 @@ import {
 
 import { offlineApi } from './offline.nostr';
 import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
+import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 import { relayService } from '$lib/nostr/services/relay.service';
 
 export class ChapterApi {

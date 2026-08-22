@@ -4,7 +4,7 @@ import type { NostrEvent } from 'nostr-tools';
 import { offlineApi } from './offline.api';
 import { PLANS_KIND } from './kinds';
 import { relayService } from '$lib/nostr/services/relay.service';
-import { KJVONLY_PUBKEY } from '$lib/utils/nostr';
+import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 
 export class PlansApi {
   async put(data: any): Promise<any> {

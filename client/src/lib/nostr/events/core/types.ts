@@ -1,7 +1,7 @@
 import type { Relay } from "$lib/nostr/services/constants.service";
 import { localStorageService } from "$lib/nostr/services/localStorage.service";
 import { relayService } from "$lib/nostr/services/relay.service";
-import { getTag } from "$lib/utils/nostr";
+import { getTag } from "$lib/infrastructure/nostr/nostr";
 import { kinds as Kind, type Event, type Nostr, type UnsignedEvent } from "nostr-tools";
 
 import { z } from "zod";
