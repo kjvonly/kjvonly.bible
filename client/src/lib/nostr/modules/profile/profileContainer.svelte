@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import { NavigationService } from '$lib/application/services/navigation.service';
 	import { type Writable } from 'svelte/store';
-	import { stopPropagation } from '$lib/utils/click';
+	import { stopPropagation } from '$lib/application/ui/click';
 	import Profile from './profile/profile.svelte';
 
 	// =============================== BINDINGS ================================
