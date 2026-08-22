@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import uuid4 from 'uuid4';
 	import Notes from './notes.svelte';

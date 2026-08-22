@@ -8,7 +8,7 @@
 		type Verse,
 		type Pericopes
 	} from '$lib/domains/bible/models/bible.model';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import Paragraph from './paragraph.svelte';
 	import Pericope from './pericope.svelte';
 

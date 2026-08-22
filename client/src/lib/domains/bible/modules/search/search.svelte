@@ -12,7 +12,7 @@
 	import SearchResults from './searchResults.svelte';
 
 	// MODELS
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';

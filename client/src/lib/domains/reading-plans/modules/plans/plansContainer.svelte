@@ -3,7 +3,7 @@
 	import NextReadings from './nextReadings/nextReadings.svelte';
 	import Discover from './discover/discover.svelte';
 	import { onMount } from 'svelte';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import {
 		NEXT_MAX_VIEW_ID,
 		PLANS_MAX_VIEW_ID,

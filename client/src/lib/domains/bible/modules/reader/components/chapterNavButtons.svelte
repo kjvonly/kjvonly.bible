@@ -18,7 +18,7 @@
 	// OTHER
 	import { attachEvents } from '$lib/utils/eventHandlers';
 	import type { BibleMode } from '$lib/domains/bible/models/bible.model';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// =============================== BINDINGS ================================
 

@@ -15,7 +15,7 @@
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS
 	} from '$lib/domains/reading-plans/models/plans.model';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// SERVICES
 	import { completedReadingsService } from '$lib/domains/reading-plans/services/completedReadings.service';

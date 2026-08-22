@@ -17,7 +17,7 @@
 	// MODELS
 	import type { BCV } from '$lib/domains/bible/models/bible.model';
 	import { Modules } from '$lib/application/models/modules.model';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import {
 		PLANS_VIEWS,
 		type NavReadings,

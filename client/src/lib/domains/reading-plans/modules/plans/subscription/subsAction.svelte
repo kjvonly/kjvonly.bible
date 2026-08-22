@@ -9,7 +9,7 @@
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
 	// MODELS
-	import { type Pane } from '$lib/models/pane.model';
+	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import { PLANS_VIEWS } from '$lib/domains/reading-plans/models/plans.model';
 
 	// =============================== BINDINGS ================================

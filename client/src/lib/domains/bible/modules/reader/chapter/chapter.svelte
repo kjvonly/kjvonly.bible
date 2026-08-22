@@ -31,7 +31,7 @@
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { scrollTo, scrollToTop } from '$lib/utils/eventHandlers';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import { paragraphsService } from '$lib/domains/bible/services/paragraphs.service';
 	import { settingsService } from '$lib/application/services/settings.service';
 	import { pericopesService } from '$lib/domains/bible/services/pericopes.service';

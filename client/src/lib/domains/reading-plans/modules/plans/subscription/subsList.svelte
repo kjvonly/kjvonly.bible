@@ -8,7 +8,7 @@
 	// // SVGS
 	import Close from '$lib/components/svgs/close.svelte';
 	import Menu from '$lib/components/svgs/menu.svelte';
-	import type { Pane } from '$lib/models/pane.model';
+	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// MODELS
 	import { PLANS_VIEWS, type Sub } from '$lib/domains/reading-plans/models/plans.model';
