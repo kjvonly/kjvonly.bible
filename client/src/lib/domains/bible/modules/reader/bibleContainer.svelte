@@ -26,7 +26,7 @@
 	// OTHER
 	import uuid4 from 'uuid4';
 
-	import { attachEvents, scrollTo } from '$lib/utils/eventHandlers';
+	import { attachEvents } from '$lib/application/ui/eventHandlers';
 	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';

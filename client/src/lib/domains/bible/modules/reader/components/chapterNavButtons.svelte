@@ -16,7 +16,7 @@
 	import RightChevron from '$lib/components/buttons/chevrons/rightChevron.svelte';
 
 	// OTHER
-	import { attachEvents } from '$lib/utils/eventHandlers';
+	import { attachEvents } from '$lib/application/ui/eventHandlers';
 	import type { BibleMode } from '$lib/domains/bible/models/bible.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 

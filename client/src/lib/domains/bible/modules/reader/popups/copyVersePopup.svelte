@@ -24,7 +24,7 @@
 	import VerticalSplit from '$lib/components/buttons/verticalSplit.svelte';
 
 	//OTHER
-	import { scrollTo } from '$lib/utils/eventHandlers';
+	import { scrollTo } from '$lib/application/ui/eventHandlers';
 	import uuid4 from 'uuid4';
 
 	// =============================== BINDINGS ================================

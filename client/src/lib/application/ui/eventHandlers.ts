@@ -1,4 +1,4 @@
-import { sleep } from '../infrastructure/utils/sleep';
+import { sleep } from '$lib/infrastructure/utils/sleep';
 
 export async function findElement(id: string): Promise<HTMLElement | null> {
 	let el = document.getElementById(id);

@@ -17,7 +17,7 @@ import {
 } from '$lib/domains/bible/persistence/bible.db';
 import { authService } from '$lib/application/services/auth.service';
 import { offlineApi } from '$lib/nostr/events/offline.nostr';
-import { downloadAndDecompressGzip } from '$lib/utils/gzip';
+import { downloadAndDecompressGzip } from '$lib/infrastructure/compression/gzip';
 
 let bibleDB = await getBibleDB()
 

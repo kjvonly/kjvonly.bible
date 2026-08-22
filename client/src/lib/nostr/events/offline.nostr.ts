@@ -5,7 +5,7 @@ import { authService } from '$lib/application/services/auth.service';
 import uuid4 from 'uuid4';
 import type { Event, Filter, NostrEvent } from 'nostr-tools';
 import { relayService } from '$lib/nostr/services/relay.service';
-import { gzipAndHexEncode } from '$lib/utils/gzip';
+import { gzipAndHexEncode } from '$lib/infrastructure/compression/gzip';
 
 export class OfflineApi {
   // --------------------------------------------------------------------------

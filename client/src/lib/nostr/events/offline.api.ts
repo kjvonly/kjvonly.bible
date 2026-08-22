@@ -5,7 +5,7 @@ import { authService } from '$lib/application/services/auth.service';
 import uuid4 from 'uuid4';
 import { relayService } from '$lib/nostr/services/relay.service';
 import type { Nostr, NostrEvent } from 'nostr-tools';
-import { gzipAndHexEncode } from '$lib/utils/gzip';
+import { gzipAndHexEncode } from '$lib/infrastructure/compression/gzip';
 
 // CORE NOTE: We do soft deletes server side so we can sync the delete
 // across devices. Periodically, the server will remove the soft deletes.

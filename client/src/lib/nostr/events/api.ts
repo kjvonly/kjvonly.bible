@@ -1,4 +1,4 @@
-import { BASE_URL, API_URL } from '$lib/utils/paths';
+import { BASE_URL, API_URL } from '$lib/application/config/paths';
 import { authService } from '$lib/application/services/auth.service';
 
 export class Api {

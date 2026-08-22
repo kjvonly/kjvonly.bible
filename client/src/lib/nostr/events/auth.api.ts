@@ -1,5 +1,5 @@
 
-import { API_URL } from '$lib/utils/paths';
+import { API_URL } from '$lib/application/config/paths';
 export class AuthApi {
 
     login(email: string, password: string): Promise<any> {

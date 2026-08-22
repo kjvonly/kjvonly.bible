@@ -31,7 +31,7 @@
 	import Quill from 'quill';
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
-	import { findElement } from '$lib/utils/eventHandlers';
+	import { findElement } from '$lib/application/ui/eventHandlers';
 
 	// =============================== BINDINGS ================================
 
