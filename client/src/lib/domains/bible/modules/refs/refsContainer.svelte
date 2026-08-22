@@ -16,7 +16,7 @@
 	import {
 		newStrongsPopups,
 		type StrongsPopups
-	} from '$lib/models/strongs.model';
+	} from '$lib/domains/bible/models/strongs.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// =============================== BINDINGS ================================

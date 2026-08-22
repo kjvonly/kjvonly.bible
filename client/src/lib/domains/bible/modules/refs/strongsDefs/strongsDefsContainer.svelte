@@ -13,7 +13,7 @@
 	// API
 	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
 	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
-	import type { Strongs, UsageBy } from '$lib/models/strongs.model';
+	import type { Strongs, UsageBy } from '$lib/domains/bible/models/strongs.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 	import KeyboardArrowDown from '$lib/components/svgs/keyboardArrowDown.svelte';
