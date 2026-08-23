@@ -1,4 +1,4 @@
-import type { Event, Filter } from 'nostr-typedef';
+import type { Event, EventParameters, Filter } from 'nostr-typedef';
 
 /**
  * A Nostr relay available to the Resource Client.
@@ -64,6 +64,7 @@ export type ResourceClientOperation =
     | 'getEvent'
     | 'getEvents'
     | 'subscribe'
+    | 'publishEvent'
     | 'dispose';
 
 /**
@@ -139,14 +140,14 @@ export interface ResourceClient {
     /**
      * Publishes an already-signed Nostr event.
      *
-     * Event construction, Resource identity, and signing happen before this
+     * Event construction, Resource identity, and signing happen after this
      * boundary.
      *
      * Relay rejection (OK=false) is represented in ResourcePublishResult and
      * is not itself a ResourceClientError.
      */
     publishEvent(
-        event: Event,
+        event: EventParameters,
         options?: ResourceClientRequestOptions
     ): Promise<ResourcePublishResult>;
 

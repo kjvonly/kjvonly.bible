@@ -14,11 +14,14 @@ import {
 
 import type {
 	Event,
+	EventParameters,
 	Filter
 } from 'nostr-typedef';
 
 import type {
 	EventPacket,
+	OkPacketAgainstEvent,
+
 	RxNostr
 } from 'rx-nostr';
 
@@ -59,11 +62,60 @@ function createPacket(
 	};
 }
 
+function createEventParameters(): EventParameters {
+	return {
+		kind: 37770,
+		tags: [
+			[
+				'd',
+				'bible/kjv/43_3'
+			]
+		],
+		content: JSON.stringify({
+			bookId: 43,
+			chapter: 3
+		})
+	};
+}
+
+function createOkPacket({
+	eventId,
+	from = 'wss://relay.test/',
+	ok,
+	notice = '',
+	done = true
+}: {
+	eventId: string;
+	from?: string;
+	ok: boolean;
+	notice?: string;
+	done?: boolean;
+}): OkPacketAgainstEvent {
+	return {
+		from,
+		type: 'OK',
+		eventId,
+		ok,
+		notice,
+		done,
+		message: [
+			'OK',
+			eventId,
+			ok,
+			notice
+		]
+	};
+}
+
 function createRxNostr(
-	packets: readonly EventPacket[] = []
+	packets: readonly EventPacket[] = [],
+	okPackets: readonly OkPacketAgainstEvent[] = []
 ): RxNostr {
 	return {
 		use: vi.fn(() => from(packets)),
+			send: vi.fn(
+			() => from(okPackets)
+		),
 		setDefaultRelays: vi.fn(),
 		getDefaultRelays: vi.fn(() => ({
 			'wss://relay.test/': {
@@ -622,3 +674,390 @@ describe('RxNostrResourceClient.subscribe', () => {
 	});
 });
 
+describe(
+	'RxNostrResourceClient.publishEvent',
+	() => {
+		it(
+			'returns an accepted acknowledgement',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const eventId =
+					'a'.repeat(64);
+
+				const rxNostr =
+					createRxNostr(
+						[],
+						[
+							createOkPacket({
+								eventId,
+								ok: true
+							})
+						]
+					);
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				const result =
+					await client.publishEvent(
+						event
+					);
+
+				expect(result).toEqual({
+					eventId,
+
+					acknowledgements: [
+						{
+							relay:
+								'wss://relay.test/',
+							accepted: true,
+							message: ''
+						}
+					],
+
+					acceptedByAnyRelay:
+						true
+				});
+			}
+		);
+
+		it(
+			'returns relay rejection as a normal publication result',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const eventId =
+					'a'.repeat(64);
+
+				const rxNostr =
+					createRxNostr(
+						[],
+						[
+							createOkPacket({
+								eventId,
+								ok: false,
+								notice:
+									'restricted: publisher not allowed'
+							})
+						]
+					);
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				const result =
+					await client.publishEvent(
+						event
+					);
+
+				expect(
+					result.eventId
+				).toBe(eventId);
+
+				expect(
+					result.acceptedByAnyRelay
+				).toBe(false);
+
+				expect(
+					result.acknowledgements
+				).toEqual([
+					{
+						relay:
+							'wss://relay.test/',
+						accepted: false,
+						message:
+							'restricted: publisher not allowed'
+					}
+				]);
+			}
+		);
+
+		it(
+			'reports acknowledgements from multiple relays',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const eventId =
+					'a'.repeat(64);
+
+				const rxNostr =
+					createRxNostr(
+						[],
+						[
+							createOkPacket({
+								eventId,
+								from:
+									'wss://relay-a.test/',
+								ok: true
+							}),
+
+							createOkPacket({
+								eventId,
+								from:
+									'wss://relay-b.test/',
+								ok: false,
+								notice:
+									'restricted'
+							})
+						]
+					);
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				const result =
+					await client.publishEvent(
+						event
+					);
+
+				expect(
+					result.acceptedByAnyRelay
+				).toBe(true);
+
+				expect(
+					result.acknowledgements
+				).toEqual([
+					{
+						relay:
+							'wss://relay-a.test/',
+						accepted: true,
+						message: ''
+					},
+					{
+						relay:
+							'wss://relay-b.test/',
+						accepted: false,
+						message:
+							'restricted'
+					}
+				]);
+			}
+		);
+
+		it(
+			'uses the final acknowledgement from each relay',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const eventId =
+					'a'.repeat(64);
+
+				const rxNostr =
+					createRxNostr(
+						[],
+						[
+							createOkPacket({
+								eventId,
+								ok: false,
+								notice:
+									'auth-required: authentication required',
+								done: false
+							}),
+
+							createOkPacket({
+								eventId,
+								ok: true,
+								done: true
+							})
+						]
+					);
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				const result =
+					await client.publishEvent(
+						event
+					);
+
+				expect(
+					result.acknowledgements
+				).toEqual([
+					{
+						relay:
+							'wss://relay.test/',
+						accepted: true,
+						message: ''
+					}
+				]);
+
+				expect(
+					result.acceptedByAnyRelay
+				).toBe(true);
+			}
+		);
+
+		it(
+			'passes event parameters to rx-nostr for signing',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const eventId =
+					'a'.repeat(64);
+
+				const rxNostr =
+					createRxNostr(
+						[],
+						[
+							createOkPacket({
+								eventId,
+								ok: true
+							})
+						]
+					);
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				await client.publishEvent(
+					event
+				);
+
+				const send =
+					vi.mocked(rxNostr.send);
+
+				expect(
+					send.mock.calls[0][0]
+				).toBe(event);
+
+				expect(
+					send.mock.calls[0][1]
+				).not.toHaveProperty(
+					'signer'
+				);
+			}
+		);
+
+		it(
+			'uses only explicitly supplied write relays',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const eventId =
+					'a'.repeat(64);
+
+				const rxNostr =
+					createRxNostr(
+						[],
+						[
+							createOkPacket({
+								eventId,
+								from:
+									'wss://publish.test/',
+								ok: true
+							})
+						]
+					);
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				await client.publishEvent(
+					event,
+					{
+						relays: [
+							'wss://publish.test'
+						]
+					}
+				);
+
+				const send =
+					vi.mocked(rxNostr.send);
+
+				expect(
+					send.mock.calls[0][1]
+				).toEqual({
+					completeOn: 'all-ok',
+					errorOnTimeout: false,
+
+					on: {
+						relays: [
+							'wss://publish.test'
+						],
+						defaultWriteRelays:
+							false
+					}
+				});
+			}
+		);
+
+		it(
+			'throws when no writable relays are configured',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const rxNostr =
+					createRxNostr();
+
+				vi.mocked(
+					rxNostr.getDefaultRelays
+				).mockReturnValue({});
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				await expect(
+					client.publishEvent(
+						event
+					)
+				).rejects.toMatchObject({
+					name:
+						'ResourceClientError',
+					operation:
+						'publishEvent',
+					relays: []
+				});
+
+				expect(
+					rxNostr.send
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
+			'throws when no relay acknowledgement is received',
+			async () => {
+				const event =
+					createEventParameters();
+
+				const rxNostr =
+					createRxNostr();
+
+				const client =
+					new RxNostrResourceClient(
+						rxNostr
+					);
+
+				await expect(
+					client.publishEvent(
+						event
+					)
+				).rejects.toBeInstanceOf(
+					ResourceClientError
+				);
+			}
+		);
+	}
+);

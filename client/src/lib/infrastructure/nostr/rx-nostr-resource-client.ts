@@ -4,16 +4,19 @@ import {
     latest,
     timeline,
     uniq,
+    type OkPacketAgainstEvent,
     type RxNostr
 } from 'rx-nostr';
 
 import {
     lastValueFrom,
-    map
+    map,
+    toArray
 } from 'rxjs';
 
 import type {
     Event,
+    EventParameters,
     Filter
 } from 'nostr-typedef';
 
@@ -21,6 +24,8 @@ import {
     ResourceClientError,
     type ResourceClient,
     type ResourceClientRequestOptions,
+    type ResourcePublishAcknowledgement,
+    type ResourcePublishResult,
     type ResourceRelay,
     type ResourceSubscription
 } from '$lib/resource/nostr/resource-client';
@@ -38,6 +43,7 @@ export class RxNostrResourceClient
         | 'setDefaultRelays'
         | 'getEvent'
         | 'getEvents'
+        | 'publishEvent'
         | 'subscribe'
         | 'dispose'
     > {
@@ -221,6 +227,70 @@ export class RxNostrResourceClient
         }
     }
 
+    async publishEvent(
+        event: EventParameters,
+        options?: ResourceClientRequestOptions
+    ): Promise<ResourcePublishResult> {
+        const relays = this.getWriteRelays(options);
+
+        if (relays.length === 0) {
+            throw new ResourceClientError(
+                'publishEvent',
+                relays,
+                new Error(
+                    'No writable Nostr relays are configured.'
+                )
+            );
+        }
+
+        try {
+            const packets = await lastValueFrom(
+                this.rxNostr
+                    .send(
+                        event,
+                        this.createPublishOptions(options)
+                    )
+                    .pipe(toArray())
+            );
+
+            if (packets.length === 0) {
+                throw new ResourceClientError(
+                    'publishEvent',
+                    relays,
+                    new Error(
+                        'No relay acknowledgement was received.'
+                    )
+                );
+            }
+
+            const acknowledgements =
+                normalizePublishAcknowledgements(
+                    packets
+                );
+
+            return {
+                eventId:
+                    packets[packets.length - 1].eventId,
+
+                acknowledgements,
+
+                acceptedByAnyRelay:
+                    acknowledgements.some(
+                        ({ accepted }) => accepted
+                    )
+            };
+        } catch (cause) {
+            if (cause instanceof ResourceClientError) {
+                throw cause;
+            }
+
+            throw new ResourceClientError(
+                'publishEvent',
+                relays,
+                cause
+            );
+        }
+    }
     private getReadRelays(
         options?: ResourceClientRequestOptions
     ): string[] {
@@ -270,6 +340,42 @@ export class RxNostrResourceClient
         );
     }
 
+    private getWriteRelays(
+        options?: ResourceClientRequestOptions
+    ): string[] {
+        if (options?.relays !== undefined) {
+            return [...options.relays];
+        }
+
+        return Object.values(
+            this.rxNostr.getDefaultRelays({
+                filter: 'write-all'
+            })
+        ).map(({ url }) => url);
+    }
+
+    private createPublishOptions(
+	options?: ResourceClientRequestOptions
+) {
+	const baseOptions = {
+		completeOn: 'all-ok' as const,
+		errorOnTimeout: false
+	};
+
+	if (options?.relays === undefined) {
+		return baseOptions;
+	}
+
+	return {
+		...baseOptions,
+
+		on: {
+			relays: [...options.relays],
+			defaultWriteRelays: false
+		}
+	};
+}
+
     dispose(): void {
         this.rxNostr.dispose();
     }
@@ -288,4 +394,29 @@ function isFilterArray(
     filters: Filter | readonly Filter[]
 ): filters is readonly Filter[] {
     return Array.isArray(filters);
+}
+
+function normalizePublishAcknowledgements(
+	packets: readonly OkPacketAgainstEvent[]
+): ResourcePublishAcknowledgement[] {
+	const acknowledgements =
+		new Map<
+			string,
+			ResourcePublishAcknowledgement
+		>();
+
+	for (const packet of packets) {
+		acknowledgements.set(
+			packet.from,
+			{
+				relay: packet.from,
+				accepted: packet.ok,
+				message: packet.notice
+			}
+		);
+	}
+
+	return [
+		...acknowledgements.values()
+	];
 }
