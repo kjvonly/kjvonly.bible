@@ -1,143 +1,167 @@
 import type {
-	ApplicationContext
+    ApplicationContext
 } from './application-context';
 
 import type {
-	ApplicationConfig
+    ApplicationConfig
 } from '$lib/application/config/application.config';
 
 import {
-	NostrSigner
+    NostrSigner
 } from '$lib/infrastructure/nostr/nostr-signer';
 
 import {
-	createBrowserResourceClient
+    createBrowserResourceClient
 } from '$lib/infrastructure/nostr/resource-client';
 
+import {
+    ResourceDiscovery
+} from '$lib/resource/nostr/resource-discovery';
+
+import {
+    ContentRepresentationResolver
+} from '$lib/resource/resolution/content-representation-resolver';
+
+import {
+    ResourceResolver
+} from '$lib/resource/resolution/resource-resolver';
+
 type ApplicationState =
-	| 'created'
-	| 'starting'
-	| 'started'
-	| 'stopped';
+    | 'created'
+    | 'starting'
+    | 'started'
+    | 'stopped';
 
 export class Application {
-	readonly context:
-		ApplicationContext;
+    readonly context:
+        ApplicationContext;
 
-	private state:
-		ApplicationState =
-			'created';
+    private state:
+        ApplicationState =
+        'created';
 
-	private startPromise:
-		Promise<void> |
-		undefined;
+    private startPromise:
+        Promise<void> |
+        undefined;
 
-	constructor(
-		private readonly config:
-			ApplicationConfig
-	) {
-		const nostrSigner =
-			new NostrSigner();
+    constructor(
+        private readonly config:
+            ApplicationConfig
+    ) {
+        const nostrSigner =
+            new NostrSigner();
 
-		const resourceClient =
-			createBrowserResourceClient(
-				nostrSigner
-			);
+        const resourceClient =
+            createBrowserResourceClient(
+                nostrSigner
+            );
 
-		this.context = {
-			nostrSigner,
-			resourceClient
-		};
-	}
+        const resourceDiscovery =
+            new ResourceDiscovery(
+                resourceClient
+            );
 
-	start(): Promise<void> {
-		if (
-			this.state ===
-			'started'
-		) {
-			return Promise.resolve();
-		}
+        const resourceResolver =
+            new ResourceResolver([
+                new ContentRepresentationResolver()
+            ]);
 
-		if (
-			this.state ===
-			'stopped'
-		) {
-			return Promise.reject(
-				new Error(
-					'Application has already been stopped.'
-				)
-			);
-		}
+        this.context = {
+            nostrSigner,
+            resourceClient,
+            resourceDiscovery,
+            resourceResolver
+        };
+    }
 
-		if (
-			this.startPromise !==
-			undefined
-		) {
-			return this.startPromise;
-		}
+    start(): Promise<void> {
+        if (
+            this.state ===
+            'started'
+        ) {
+            return Promise.resolve();
+        }
 
-		this.state =
-			'starting';
+        if (
+            this.state ===
+            'stopped'
+        ) {
+            return Promise.reject(
+                new Error(
+                    'Application has already been stopped.'
+                )
+            );
+        }
 
-		this.startPromise =
-			this.startInternal();
+        if (
+            this.startPromise !==
+            undefined
+        ) {
+            return this.startPromise;
+        }
 
-		return this.startPromise;
-	}
+        this.state =
+            'starting';
 
-	async stop(): Promise<void> {
-		if (
-			this.state ===
-			'stopped'
-		) {
-			return;
-		}
+        this.startPromise =
+            this.startInternal();
 
-		this.context
-			.resourceClient
-			.dispose();
+        return this.startPromise;
+    }
 
-		await this.context
-			.nostrSigner
-			.clear();
+    async stop(): Promise<void> {
+        if (
+            this.state ===
+            'stopped'
+        ) {
+            return;
+        }
 
-		this.state =
-			'stopped';
-	}
+        this.context
+            .resourceClient
+            .dispose();
 
-	private async startInternal():
-		Promise<void> {
+        await this.context
+            .nostrSigner
+            .clear();
 
-		try {
-			this.context
-				.resourceClient
-				.setDefaultRelays(
-					this.config
-						.resourceRelays
-				);
+        this.state =
+            'stopped';
+    }
 
-			/*
-			 * Future startup sequencing
-			 * belongs here:
-			 *
-			 * 1. initialize persistence
-			 * 2. restore authentication
-			 * 3. initialize Domain services
-			 * 4. initialize Workspace Runtime
-			 * 5. become interactive
-			 * 6. begin background work
-			 */
+    private async startInternal():
+        Promise<void> {
 
-			this.state =
-				'started';
-		} catch (cause) {
-			this.state =
-				'created';
+        try {
+            this.context
+                .resourceClient
+                .setDefaultRelays(
+                    this.config
+                        .resourceRelays
+                );
 
-			this.startPromise =
-				undefined;
+            /*
+             * Future startup sequencing
+             * belongs here:
+             *
+             * 1. initialize persistence
+             * 2. restore authentication
+             * 3. initialize Domain services
+             * 4. initialize Workspace Runtime
+             * 5. become interactive
+             * 6. begin background work
+             */
 
-			throw cause;
-		}
-	}
+            this.state =
+                'started';
+        } catch (cause) {
+            this.state =
+                'created';
+
+            this.startPromise =
+                undefined;
+
+            throw cause;
+        }
+    }
 }

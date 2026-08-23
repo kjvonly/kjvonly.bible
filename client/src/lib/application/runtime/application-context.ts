@@ -1,54 +1,62 @@
 import {
-	getContext,
-	setContext
+    getContext,
+    setContext
 } from 'svelte';
 
 import type {
-	ResourceClient
+    ResourceClient
 } from '$lib/resource/nostr/resource-client';
 
 import type {
-	NostrSigner
+    NostrSigner
 } from '$lib/infrastructure/nostr/nostr-signer';
+import type { ResourceDiscovery } from '$lib/resource/nostr/resource-discovery';
+import type { ResourceResolver } from '$lib/resource/resolution/resource-resolver';
 
 export interface ApplicationContext {
-	readonly nostrSigner:
-		NostrSigner;
+    readonly nostrSigner:
+    NostrSigner;
 
-	readonly resourceClient:
-		ResourceClient;
+    readonly resourceClient:
+    ResourceClient;
+    
+    readonly resourceDiscovery:
+    ResourceDiscovery;
+
+    readonly resourceResolver:
+    ResourceResolver;
 }
 
 const APPLICATION_CONTEXT =
-	Symbol(
-		'kjvonly.application-context'
-	);
+    Symbol(
+        'kjvonly.application-context'
+    );
 
 export function provideApplicationContext(
-	context: ApplicationContext
+    context: ApplicationContext
 ): void {
-	setContext(
-		APPLICATION_CONTEXT,
-		context
-	);
+    setContext(
+        APPLICATION_CONTEXT,
+        context
+    );
 }
 
 export function useApplicationContext():
-	ApplicationContext {
+    ApplicationContext {
 
-	const context =
-		getContext<
-			ApplicationContext |
-			undefined
-		>(
-			APPLICATION_CONTEXT
-		);
+    const context =
+        getContext<
+            ApplicationContext |
+            undefined
+        >(
+            APPLICATION_CONTEXT
+        );
 
-	if (context === undefined) {
-		throw new Error(
-			'Application context is not available.'
-		);
-	}
+    if (context === undefined) {
+        throw new Error(
+            'Application context is not available.'
+        );
+    }
 
-	return context;
+    return context;
 }
