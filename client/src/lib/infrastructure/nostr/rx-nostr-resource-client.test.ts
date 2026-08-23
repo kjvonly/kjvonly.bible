@@ -63,6 +63,17 @@ function createRxNostr(
 	return {
 		use: vi.fn(() => from(packets)),
 		setDefaultRelays: vi.fn(),
+		getDefaultRelays: vi.fn(() => ({
+			'wss://relay.test/': {
+				url: 'wss://relay.test/',
+				read: true,
+				write: true
+			}
+		})),
+
+		getRelayStatus: vi.fn(() => ({
+			connection: 'connected'
+		})),
 		dispose: vi.fn()
 	} as unknown as RxNostr;
 }
@@ -419,5 +430,26 @@ describe('RxNostrResourceClient.dispose', () => {
 		expect(
 			rxNostr.dispose
 		).toHaveBeenCalledOnce();
+	});
+});
+
+it('throws when no readable relays are configured', async () => {
+	const rxNostr = createRxNostr([]);
+
+	vi.mocked(
+		rxNostr.getDefaultRelays
+	).mockReturnValue({});
+
+	const client =
+		new RxNostrResourceClient(rxNostr);
+
+	await expect(
+		client.getEvent({
+			kinds: [37770]
+		})
+	).rejects.toMatchObject({
+		name: 'ResourceClientError',
+		operation: 'getEvent',
+		relays: []
 	});
 });
