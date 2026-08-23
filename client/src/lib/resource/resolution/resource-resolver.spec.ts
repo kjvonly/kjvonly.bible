@@ -1,216 +1,210 @@
 import {
-	describe,
-	expect,
-	it,
-	vi
+    describe,
+    expect,
+    it,
+    vi
 } from 'vitest';
 
 import type {
-	ResourceRepresentation,
-	VerifiedResourceContent
+    ResourceRepresentation,
+    VerifiedResourceContent
 } from '$lib/resource/models/resource.model';
 
 import {
-	ContentRepresentationResolver
+    ContentRepresentationResolver
 } from './content-representation-resolver';
 
 import type {
-	ResourceRepresentationResolver
+    ResourceRepresentationResolver
 } from './resource-representation-resolver';
 
 import {
-	ResourceResolver
+    ResourceResolver
 } from './resource-resolver';
 
 describe(
-	'ResourceResolver',
-	() => {
-		it(
-			'resolves an embedded content representation',
-			async () => {
-				const resolver =
-					new ResourceResolver([
-						new ContentRepresentationResolver()
-					]);
+    'ResourceResolver',
+    () => {
+        it(
+            'resolves an embedded content representation',
+            async () => {
+                const resolver =
+                    new ResourceResolver([
+                        new ContentRepresentationResolver()
+                    ]);
 
-				const result =
-					await resolver.resolve(
-						createResourceRepresentation()
-					);
+                const result =
+                    await resolver.resolve(
+                        createResourceRepresentation()
+                    );
 
-				expect(
-					result
-				).toHaveLength(
-					1
-				);
+                expect(
+                    result
+                ).toHaveLength(
+                    1
+                );
 
-				const content =
-					result[0];
+                const content =
+                    result[0];
 
-				expect(
-					content
-				).toMatchObject({
-					publisher:
-						'a'.repeat(64),
+                expect(
+                    content
+                ).toMatchObject({
+                    publisher:
+                        'a'.repeat(64),
 
-					resourceId:
-						'kjvonly/bible/chapters/kjv/1_1',
+                    resourceId:
+                        'kjvonly/bible/chapters/kjv/1_1',
 
-					resourceType:
-						'kjvonly/bible/chapters',
+                    resourceType:
+                        'kjvonly/bible/chapters',
 
-					eventId:
-						'b'.repeat(64),
+                    eventId:
+                        'b'.repeat(64),
 
-					createdAt:
-						123456,
+                    createdAt:
+                        123456,
 
-					mediaType:
-						'application/json'
-				});
+                    mediaType:
+                        'application/json'
+                });
 
-				expect(
-					new TextDecoder()
-						.decode(
-							content.content
-						)
-				).toBe(
-					'{"chapter":1}'
-				);
-			}
-		);
+                expect(
+                    content.content
+                ).toBe(
+                    '{"chapter":1}'
+                );
+            }
+        );
 
-		it(
-			'does not interpret serialized Resource content',
-			async () => {
-				const resolver =
-					new ResourceResolver([
-						new ContentRepresentationResolver()
-					]);
+        it(
+            'does not interpret serialized Resource content',
+            async () => {
+                const resolver =
+                    new ResourceResolver([
+                        new ContentRepresentationResolver()
+                    ]);
 
-				const result =
-					await resolver.resolve(
-						createResourceRepresentation({
-							payload:
-								'not-json'
-						})
-					);
+                const result =
+                    await resolver.resolve(
+                        createResourceRepresentation({
+                            payload:
+                                'not-json'
+                        })
+                    );
 
-				expect(
-					new TextDecoder()
-						.decode(
-							result[0].content
-						)
-				).toBe(
-					'not-json'
-				);
-			}
-		);
+                expect(
+                    result[0].content
+                ).toBe(
+                    'not-json'
+                );
+            }
+        );
 
-		it(
-			'fails when no resolver supports the representation',
-			async () => {
-				const resolver =
-					new ResourceResolver([
-						new ContentRepresentationResolver()
-					]);
+        it(
+            'fails when no resolver supports the representation',
+            async () => {
+                const resolver =
+                    new ResourceResolver([
+                        new ContentRepresentationResolver()
+                    ]);
 
-				await expect(
-					resolver.resolve(
-						createResourceRepresentation({
-							representation:
-								'descriptor'
-						})
-					)
-				).rejects.toThrow(
-					'Unsupported Resource representation: descriptor'
-				);
-			}
-		);
+                await expect(
+                    resolver.resolve(
+                        createResourceRepresentation({
+                            representation:
+                                'descriptor'
+                        })
+                    )
+                ).rejects.toThrow(
+                    'Unsupported Resource representation: descriptor'
+                );
+            }
+        );
 
-		it(
-			'dispatches through the registered representation resolver',
-			async () => {
-				const resolved:
-					readonly VerifiedResourceContent[] =
-					[];
+        it(
+            'dispatches through the registered representation resolver',
+            async () => {
+                const resolved:
+                    readonly VerifiedResourceContent[] =
+                    [];
 
-				const descriptorResolver:
-					ResourceRepresentationResolver = {
-						representation:
-							'descriptor',
+                const descriptorResolver:
+                    ResourceRepresentationResolver = {
+                    representation:
+                        'descriptor',
 
-						resolve:
-							vi.fn(
-								async () =>
-									resolved
-							)
-					};
+                    resolve:
+                        vi.fn(
+                            async () =>
+                                resolved
+                        )
+                };
 
-				const resolver =
-					new ResourceResolver([
-						new ContentRepresentationResolver(),
-						descriptorResolver
-					]);
+                const resolver =
+                    new ResourceResolver([
+                        new ContentRepresentationResolver(),
+                        descriptorResolver
+                    ]);
 
-				const resource =
-					createResourceRepresentation({
-						representation:
-							'descriptor'
-					});
+                const resource =
+                    createResourceRepresentation({
+                        representation:
+                            'descriptor'
+                    });
 
-				const result =
-					await resolver.resolve(
-						resource
-					);
+                const result =
+                    await resolver.resolve(
+                        resource
+                    );
 
-				expect(
-					descriptorResolver
-						.resolve
-				).toHaveBeenCalledWith(
-					resource
-				);
+                expect(
+                    descriptorResolver
+                        .resolve
+                ).toHaveBeenCalledWith(
+                    resource
+                );
 
-				expect(
-					result
-				).toBe(
-					resolved
-				);
-			}
-		);
-	}
+                expect(
+                    result
+                ).toBe(
+                    resolved
+                );
+            }
+        );
+    }
 );
 
 function createResourceRepresentation(
-	overrides:
-		Partial<ResourceRepresentation> =
-			{}
+    overrides:
+        Partial<ResourceRepresentation> =
+        {}
 ): ResourceRepresentation {
-	return {
-		publisher:
-			'a'.repeat(64),
+    return {
+        publisher:
+            'a'.repeat(64),
 
-		resourceId:
-			'kjvonly/bible/chapters/kjv/1_1',
+        resourceId:
+            'kjvonly/bible/chapters/kjv/1_1',
 
-		resourceType:
-			'kjvonly/bible/chapters',
+        resourceType:
+            'kjvonly/bible/chapters',
 
-		eventId:
-			'b'.repeat(64),
+        eventId:
+            'b'.repeat(64),
 
-		createdAt:
-			123456,
+        createdAt:
+            123456,
 
-		representation:
-			'content',
+        representation:
+            'content',
 
-		mediaType:
-			'application/json',
+        mediaType:
+            'application/json',
 
-		payload:
-			'{"chapter":1}',
+        payload:
+            '{"chapter":1}',
 
-		...overrides
-	};
+        ...overrides
+    };
 }

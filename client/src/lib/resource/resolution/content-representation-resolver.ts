@@ -7,6 +7,7 @@ import type {
 	ResourceRepresentationResolver
 } from './resource-representation-resolver';
 
+
 export class ContentRepresentationResolver
 	implements ResourceRepresentationResolver {
 
@@ -19,12 +20,6 @@ export class ContentRepresentationResolver
 	): Promise<
 		readonly VerifiedResourceContent[]
 	> {
-		const content =
-			new TextEncoder()
-				.encode(
-					resource.payload
-				);
-
 		return [
 			{
 				publisher:
@@ -45,7 +40,8 @@ export class ContentRepresentationResolver
 				mediaType:
 					resource.mediaType,
 
-				content
+				content:
+					resource.payload
 			}
 		];
 	}

@@ -30,23 +30,18 @@ export interface ResourceRepresentation {
 	payload: string;
 }
 
+export type SerializedResourceContent =
+	| string
+	| Uint8Array;
+
 export interface VerifiedResourceContent {
 	readonly publisher: string;
-
 	readonly resourceId: string;
-
 	readonly resourceType: string;
-
 	readonly eventId: string;
-
-	/**
-	 * Nostr publication timestamp.
-	 *
-	 * This is not the Domain Object's modifiedAt.
-	 */
 	readonly createdAt: number;
-
 	readonly mediaType: string;
 
-	readonly content: Uint8Array;
+	readonly content:
+		SerializedResourceContent;
 }
