@@ -48,7 +48,9 @@ export class RxNostrResourceClient
         | 'dispose'
     > {
     constructor(
-        private readonly rxNostr: RxNostr
+        private readonly rxNostr: RxNostr,
+        private readonly onDispose:
+            () => void = () => { }
     ) { }
 
     /**
@@ -355,29 +357,33 @@ export class RxNostrResourceClient
     }
 
     private createPublishOptions(
-	options?: ResourceClientRequestOptions
-) {
-	const baseOptions = {
-		completeOn: 'all-ok' as const,
-		errorOnTimeout: false
-	};
+        options?: ResourceClientRequestOptions
+    ) {
+        const baseOptions = {
+            completeOn: 'all-ok' as const,
+            errorOnTimeout: false
+        };
 
-	if (options?.relays === undefined) {
-		return baseOptions;
-	}
+        if (options?.relays === undefined) {
+            return baseOptions;
+        }
 
-	return {
-		...baseOptions,
+        return {
+            ...baseOptions,
 
-		on: {
-			relays: [...options.relays],
-			defaultWriteRelays: false
-		}
-	};
-}
+            on: {
+                relays: [...options.relays],
+                defaultWriteRelays: false
+            }
+        };
+    }
 
     dispose(): void {
-        this.rxNostr.dispose();
+        try {
+            this.rxNostr.dispose();
+        } finally {
+            this.onDispose();
+        }
     }
 }
 function normalizeFilters(
@@ -397,26 +403,26 @@ function isFilterArray(
 }
 
 function normalizePublishAcknowledgements(
-	packets: readonly OkPacketAgainstEvent[]
+    packets: readonly OkPacketAgainstEvent[]
 ): ResourcePublishAcknowledgement[] {
-	const acknowledgements =
-		new Map<
-			string,
-			ResourcePublishAcknowledgement
-		>();
+    const acknowledgements =
+        new Map<
+            string,
+            ResourcePublishAcknowledgement
+        >();
 
-	for (const packet of packets) {
-		acknowledgements.set(
-			packet.from,
-			{
-				relay: packet.from,
-				accepted: packet.ok,
-				message: packet.notice
-			}
-		);
-	}
+    for (const packet of packets) {
+        acknowledgements.set(
+            packet.from,
+            {
+                relay: packet.from,
+                accepted: packet.ok,
+                message: packet.notice
+            }
+        );
+    }
 
-	return [
-		...acknowledgements.values()
-	];
+    return [
+        ...acknowledgements.values()
+    ];
 }
