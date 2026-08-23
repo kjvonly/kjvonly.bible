@@ -2568,127 +2568,103 @@ The production adapter itself is infrastructure and should receive focused adapt
 
 # Pure Ordering Tests
 
-The deterministic ordering logic does not require a relay and should be unit tested.
+The Resource Client does not implement its own Nostr event ordering or deduplication algorithm.
 
-## File
-
-```text
-src/lib/infrastructure/nostr/rx-nostr-resource-client.test.ts
-```
-
-## Example
+rx-nostr already provides operators for these behaviors, including:
 
 ```ts
-import {
-    describe,
-    expect,
-    it
-} from 'vitest';
-
-import type {
-    Event
-} from 'nostr-typedef';
-
-import {
-    orderNostrEvents
-} from './rx-nostr-resource-client';
-
-function event(
-    id: string,
-    createdAt: number
-): Event {
-    return {
-        id,
-        pubkey: 'a'.repeat(64),
-        created_at: createdAt,
-        kind: 37770,
-        tags: [],
-        content: '',
-        sig: 'b'.repeat(128)
-    };
-}
-
-describe(
-    'orderNostrEvents',
-    () => {
-        it(
-            'orders newest events first',
-            () => {
-                const older =
-                    event(
-                        'b'.repeat(64),
-                        100
-                    );
-
-                const newer =
-                    event(
-                        'c'.repeat(64),
-                        200
-                    );
-
-                expect(
-                    orderNostrEvents([
-                        older,
-                        newer
-                    ])
-                ).toEqual([
-                    newer,
-                    older
-                ]);
-            }
-        );
-
-        it(
-            'uses the lower event id when timestamps match',
-            () => {
-                const lowerId =
-                    event(
-                        'a'.repeat(64),
-                        100
-                    );
-
-                const higherId =
-                    event(
-                        'b'.repeat(64),
-                        100
-                    );
-
-                expect(
-                    orderNostrEvents([
-                        higherId,
-                        lowerId
-                    ])
-                ).toEqual([
-                    lowerId,
-                    higherId
-                ]);
-            }
-        );
-
-        it(
-            'deduplicates the same signed event',
-            () => {
-                const value =
-                    event(
-                        'a'.repeat(64),
-                        100
-                    );
-
-                expect(
-                    orderNostrEvents([
-                        value,
-                        value
-                    ])
-                ).toEqual([
-                    value
-                ]);
-            }
-        );
-    }
-);
+uniq()
 ```
 
----
+for removing the same signed event received from multiple relays, and:
+
+```ts
+latestEach(...)
+```
+
+for selecting the latest event for a logical replaceable or addressable identity.
+
+The Resource Client should compose these rx-nostr operators where the query semantics require them rather than duplicating Nostr ordering behavior in application code.
+
+For example, a bounded query for one addressable Resource may conceptually use:
+
+```ts
+rxNostr
+	.use(request)
+	.pipe(
+		uniq(),
+		latestEach(() => 'resource')
+	);
+```
+
+Because the request identifies one logical Resource, all returned candidate publications belong to the same result group and `latestEach()` can select the current publication.
+
+A plural query is different.
+
+For example:
+
+```ts
+rxNostr
+	.use(request)
+	.pipe(
+		uniq()
+	);
+```
+
+may be sufficient when the caller intentionally requested multiple distinct events.
+
+`latestEach()` must not be applied universally to `getEvents()`. The grouping key depends on the semantics of the query. Some Resource Discovery operations may need several distinct Resources, while others may need the latest publication for each Resource identity.
+
+The Resource Client therefore relies on rx-nostr for the mechanics of Nostr event deduplication and latest-event selection instead of introducing utilities such as:
+
+```text
+compareNostrEvents()
+orderNostrEvents()
+selectCurrentNostrEvent()
+```
+
+These would duplicate behavior already owned by the Nostr client library.
+
+## Testing Strategy
+
+There is no value in reproducing rx-nostr's own unit tests inside KJVOnly.
+
+KJVOnly tests should instead verify the behavior of the `ResourceClient` contract.
+
+For example, adapter tests should establish that:
+
+```text
+same event returned by multiple relays
+    ↓
+ResourceClient returns it once
+```
+
+and:
+
+```text
+multiple publications for one requested addressable Resource
+    ↓
+ResourceClient.getEvent()
+    ↓
+returns the current publication
+```
+
+while:
+
+```text
+multiple distinct events requested by getEvents()
+    ↓
+distinct events remain present
+```
+
+These tests validate that `RxNostrResourceClient` composes rx-nostr correctly without testing the internal implementation of `uniq()` or `latestEach()`.
+
+The distinction is important:
+
+> **KJVOnly tests the Resource Client contract. rx-nostr tests Nostr stream ordering and deduplication mechanics.**
+
+If future Resource behavior requires ordering or selection semantics that rx-nostr does not provide, that behavior should be introduced and unit tested explicitly at that time rather than preemptively duplicating protocol behavior.
+
 
 # Resource Client Contract Tests
 
