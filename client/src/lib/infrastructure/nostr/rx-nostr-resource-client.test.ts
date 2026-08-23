@@ -7,6 +7,7 @@ import {
 
 import {
 	from,
+	Observable,
 	lastValueFrom,
 	toArray
 } from 'rxjs';
@@ -24,6 +25,7 @@ import type {
 import {
 	RxNostrResourceClient
 } from './rx-nostr-resource-client';
+import { ResourceClientError } from '$lib/resource/nostr/resource-client';
 
 function createEvent(
 	id: string,
@@ -453,3 +455,170 @@ it('throws when no readable relays are configured', async () => {
 		relays: []
 	});
 });
+
+
+describe('RxNostrResourceClient.subscribe', () => {
+	it('delivers matching events to the callback', () => {
+		const event = createEvent(
+			'a'.repeat(64),
+			100
+		);
+
+		const rxNostr = createRxNostr([
+			createPacket(event)
+		]);
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		const onEvent = vi.fn();
+
+		client.subscribe(
+			{
+				kinds: [37770]
+			},
+			onEvent
+		);
+
+		expect(onEvent).toHaveBeenCalledOnce();
+		expect(onEvent).toHaveBeenCalledWith(event);
+	});
+
+	it('closes the underlying rx-nostr subscription', () => {
+		const teardown = vi.fn();
+
+		const rxNostr = {
+			use: vi.fn(
+				() =>
+					new Observable<EventPacket>(() => {
+						return teardown;
+					})
+			),
+
+			getDefaultRelays: vi.fn(() => ({
+				'wss://relay.test/': {
+					url: 'wss://relay.test/',
+					read: true,
+					write: true
+				}
+			})),
+
+			getRelayStatus: vi.fn(() => ({
+				connection: 'connected'
+			})),
+
+			setDefaultRelays: vi.fn(),
+			dispose: vi.fn()
+		} as unknown as RxNostr;
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		const subscription =
+			client.subscribe(
+				{
+					kinds: [37770]
+				},
+				() => { }
+			);
+
+		subscription.close();
+
+		expect(teardown).toHaveBeenCalledOnce();
+	});
+
+	it('uses only explicitly supplied relays', () => {
+		const rxNostr = createRxNostr();
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		client.subscribe(
+			{
+				kinds: [37770]
+			},
+			() => { },
+			{
+				relays: [
+					'wss://resource.test'
+				]
+			}
+		);
+
+		expect(
+			vi.mocked(rxNostr.use).mock.calls[0][1]
+		).toEqual({
+			on: {
+				relays: [
+					'wss://resource.test'
+				],
+				defaultReadRelays: false
+			}
+		});
+	});
+
+
+	it('closes the underlying rx-nostr subscription', () => {
+		const teardown = vi.fn();
+
+		const rxNostr = {
+			use: vi.fn(
+				() =>
+					new Observable<EventPacket>(() => {
+						return teardown;
+					})
+			),
+
+			getDefaultRelays: vi.fn(() => ({
+				'wss://relay.test/': {
+					url: 'wss://relay.test/',
+					read: true,
+					write: true
+				}
+			})),
+
+			getRelayStatus: vi.fn(() => ({
+				connection: 'connected'
+			})),
+
+			setDefaultRelays: vi.fn(),
+			dispose: vi.fn()
+		} as unknown as RxNostr;
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		const subscription =
+			client.subscribe(
+				{
+					kinds: [37770]
+				},
+				() => { }
+			);
+
+		subscription.close();
+
+		expect(teardown).toHaveBeenCalledOnce();
+	});
+
+	it('throws when no readable relays are configured', () => {
+		const rxNostr = createRxNostr();
+
+		vi.mocked(
+			rxNostr.getDefaultRelays
+		).mockReturnValue({});
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		expect(() =>
+			client.subscribe(
+				{
+					kinds: [37770]
+				},
+				() => { }
+			)
+		).toThrow(ResourceClientError);
+	});
+});
+

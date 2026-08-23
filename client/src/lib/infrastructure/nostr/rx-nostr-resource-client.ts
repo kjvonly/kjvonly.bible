@@ -1,4 +1,5 @@
 import {
+    createRxForwardReq,
     createRxOneshotReq,
     latest,
     timeline,
@@ -20,7 +21,8 @@ import {
     ResourceClientError,
     type ResourceClient,
     type ResourceClientRequestOptions,
-    type ResourceRelay
+    type ResourceRelay,
+    type ResourceSubscription
 } from '$lib/resource/nostr/resource-client';
 
 /**
@@ -31,7 +33,14 @@ import {
  * added in later phases.
  */
 export class RxNostrResourceClient
-    implements Pick<ResourceClient, 'getEvent' | 'getEvents'> {
+    implements Pick<
+        ResourceClient,
+        | 'setDefaultRelays'
+        | 'getEvent'
+        | 'getEvents'
+        | 'subscribe'
+        | 'dispose'
+    > {
     constructor(
         private readonly rxNostr: RxNostr
     ) { }
@@ -154,6 +163,60 @@ export class RxNostrResourceClient
             throw new ResourceClientError(
                 operation,
                 relays
+            );
+        }
+    }
+
+    subscribe(
+        filters: Filter | readonly Filter[],
+        onEvent: (event: Event) => void,
+        options?: ResourceClientRequestOptions
+    ): ResourceSubscription {
+        const relays = this.getReadRelays(options);
+
+        if (relays.length === 0) {
+            throw new ResourceClientError(
+                'subscribe',
+                relays,
+                new Error(
+                    'No readable Nostr relays are configured.'
+                )
+            );
+        }
+
+        const request = createRxForwardReq();
+
+        try {
+            const subscription = this.rxNostr
+                .use(
+                    request,
+                    this.createReadOptions(options)
+                )
+                .subscribe(({ event }) => {
+                    onEvent(event);
+                });
+
+            request.emit(
+                normalizeFilters(filters)
+            );
+
+            let closed = false;
+
+            return {
+                close(): void {
+                    if (closed) {
+                        return;
+                    }
+
+                    closed = true;
+                    subscription.unsubscribe();
+                }
+            };
+        } catch (cause) {
+            throw new ResourceClientError(
+                'subscribe',
+                relays,
+                cause
             );
         }
     }

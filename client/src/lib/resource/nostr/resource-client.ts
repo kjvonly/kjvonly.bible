@@ -7,31 +7,31 @@ import type { Event, Filter } from 'nostr-typedef';
  * for only one direction.
  */
 export interface ResourceRelay {
-	url: string;
-	read: boolean;
-	write: boolean;
+    url: string;
+    read: boolean;
+    write: boolean;
 }
 
 /**
  * Options that apply to one Resource Client operation.
  */
 export interface ResourceClientRequestOptions {
-	/**
-	 * Overrides the configured default relays for this operation.
-	 *
-	 * When omitted, the Resource Client uses its configured default
-	 * read or write relays.
-	 */
-	relays?: readonly string[];
+    /**
+     * Overrides the configured default relays for this operation.
+     *
+     * When omitted, the Resource Client uses its configured default
+     * read or write relays.
+     */
+    relays?: readonly string[];
 }
 
 /**
  * The final acknowledgement received from one relay for a published event.
  */
 export interface ResourcePublishAcknowledgement {
-	relay: string;
-	accepted: boolean;
-	message?: string;
+    relay: string;
+    accepted: boolean;
+    message?: string;
 }
 
 /**
@@ -42,28 +42,29 @@ export interface ResourcePublishAcknowledgement {
  * Resource Client.
  */
 export interface ResourcePublishResult {
-	eventId: string;
-	acknowledgements: readonly ResourcePublishAcknowledgement[];
-	acceptedByAnyRelay: boolean;
+    eventId: string;
+    acknowledgements: readonly ResourcePublishAcknowledgement[];
+    acceptedByAnyRelay: boolean;
 }
 
 /**
  * Handle for a long-lived Nostr subscription.
  */
 export interface ResourceSubscription {
-	/**
-	 * Stops the subscription.
-	 *
-	 * Implementations must make this operation idempotent.
-	 */
-	close(): void;
+    /**
+     * Stops the subscription.
+     *
+     * Implementations must make this operation idempotent.
+     */
+    close(): void;
 }
 
 export type ResourceClientOperation =
-	| 'getEvent'
-	| 'getEvents'
-	| 'publishEvent'
-	| 'subscribe';
+    | 'setDefaultRelays'
+    | 'getEvent'
+    | 'getEvents'
+    | 'subscribe'
+    | 'dispose';
 
 /**
  * Indicates that a Resource Client operation could not be meaningfully
@@ -77,15 +78,15 @@ export type ResourceClientOperation =
  * ResourceClientError is reserved for infrastructure failure.
  */
 export class ResourceClientError extends Error {
-	constructor(
-		public readonly operation: ResourceClientOperation,
-		public readonly relays: readonly string[],
-		public readonly cause?: unknown
-	) {
-		super(`Resource client unavailable during ${operation}.`);
+    constructor(
+        public readonly operation: ResourceClientOperation,
+        public readonly relays: readonly string[],
+        public readonly cause?: unknown
+    ) {
+        super(`Resource client unavailable during ${operation}.`);
 
-		this.name = 'ResourceClientError';
-	}
+        this.name = 'ResourceClientError';
+    }
 }
 
 /**
@@ -96,78 +97,78 @@ export class ResourceClientError extends Error {
  * implementation (rx-nostr), not from Nostr itself.
  */
 export interface ResourceClient {
-	/**
-	 * Replaces the default relay configuration used by future operations.
-	 */
-	setDefaultRelays(relays: readonly ResourceRelay[]): void;
+    /**
+     * Replaces the default relay configuration used by future operations.
+     */
+    setDefaultRelays(relays: readonly ResourceRelay[]): void;
 
-	/**
-	 * Executes a bounded historical query where one matching event is expected.
-	 *
-	 * Returns:
-	 *
-	 * - Event when a matching event exists.
-	 * - null when the request completed normally without a match.
-	 *
-	 * Throws ResourceClientError when the relay operation could not be
-	 * meaningfully completed.
-	 */
-	getEvent(
-		filter: Filter,
-		options?: ResourceClientRequestOptions
-	): Promise<Event | null>;
+    /**
+     * Executes a bounded historical query where one matching event is expected.
+     *
+     * Returns:
+     *
+     * - Event when a matching event exists.
+     * - null when the request completed normally without a match.
+     *
+     * Throws ResourceClientError when the relay operation could not be
+     * meaningfully completed.
+     */
+    getEvent(
+        filter: Filter,
+        options?: ResourceClientRequestOptions
+    ): Promise<Event | null>;
 
-	/**
-	 * Executes a bounded historical query where multiple events may match.
-	 *
-	 * Implementations must:
-	 *
-	 * - deduplicate identical signed events by event id;
-	 * - return results in deterministic Nostr ordering.
-	 *
-	 * Returns [] when the request completed normally without any matches.
-	 *
-	 * Throws ResourceClientError when the relay operation could not be
-	 * meaningfully completed.
-	 */
-	getEvents(
-		filters: Filter | readonly Filter[],
-		options?: ResourceClientRequestOptions
-	): Promise<readonly Event[]>;
+    /**
+     * Executes a bounded historical query where multiple events may match.
+     *
+     * Implementations must:
+     *
+     * - deduplicate identical signed events by event id;
+     * - return results in deterministic Nostr ordering.
+     *
+     * Returns [] when the request completed normally without any matches.
+     *
+     * Throws ResourceClientError when the relay operation could not be
+     * meaningfully completed.
+     */
+    getEvents(
+        filters: Filter | readonly Filter[],
+        options?: ResourceClientRequestOptions
+    ): Promise<readonly Event[]>;
 
-	/**
-	 * Publishes an already-signed Nostr event.
-	 *
-	 * Event construction, Resource identity, and signing happen before this
-	 * boundary.
-	 *
-	 * Relay rejection (OK=false) is represented in ResourcePublishResult and
-	 * is not itself a ResourceClientError.
-	 */
-	publishEvent(
-		event: Event,
-		options?: ResourceClientRequestOptions
-	): Promise<ResourcePublishResult>;
+    /**
+     * Publishes an already-signed Nostr event.
+     *
+     * Event construction, Resource identity, and signing happen before this
+     * boundary.
+     *
+     * Relay rejection (OK=false) is represented in ResourcePublishResult and
+     * is not itself a ResourceClientError.
+     */
+    publishEvent(
+        event: Event,
+        options?: ResourceClientRequestOptions
+    ): Promise<ResourcePublishResult>;
 
-	/**
-	 * Starts a long-lived subscription for matching Nostr events.
-	 *
-	 * Unlike getEvent() and getEvents(), this does not automatically complete
-	 * after historical relay results have been returned.
-	 *
-	 * The caller owns the returned subscription and must close it when it is
-	 * no longer needed.
-	 */
-	subscribe(
-		filters: Filter | readonly Filter[],
-		onEvent: (event: Event) => void,
-		options?: ResourceClientRequestOptions
-	): ResourceSubscription;
+    /**
+     * Starts a long-lived subscription for matching Nostr events.
+     *
+     * Unlike getEvent() and getEvents(), this does not automatically complete
+     * after historical relay results have been returned.
+     *
+     * The caller owns the returned subscription and must close it when it is
+     * no longer needed.
+     */
+    subscribe(
+        filters: Filter | readonly Filter[],
+        onEvent: (event: Event) => void,
+        options?: ResourceClientRequestOptions
+    ): ResourceSubscription;
 
-	/**
-	 * Permanently releases resources owned by this client.
-	 *
-	 * The client must not be used after dispose() has been called.
-	 */
-	dispose(): void;
+    /**
+     * Permanently releases resources owned by this client.
+     *
+     * The client must not be used after dispose() has been called.
+     */
+    dispose(): void;
 }
