@@ -40,6 +40,7 @@
 	},
 	"dependencies": {
 		"@rust-nostr/nostr-sdk": "^0.44.0",
+		"@rx-nostr/crypto": "^3.1.6",
 		"@tailwindcss/postcss": "^4.1.7",
 		"@tailwindcss/typography": "^0.5.16",
 		"@tailwindcss/vite": "^4.1.7",
@@ -53,7 +54,7 @@
 		"nostr-tools": "^2.18.0",
 		"nostr-typedef": "^0.13.0",
 		"quill": "^2.0.3",
-		"rx-nostr": "^3.6.2",
+		"rx-nostr": "^3.7.5",
 		"rx-nostr-crypto": "^3.1.3",
 		"rxjs": "^7.8.2",
 		"svelte-persisted-store": "^0.12.0",
