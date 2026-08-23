@@ -58,10 +58,12 @@ function createPacket(
 }
 
 function createRxNostr(
-	packets: readonly EventPacket[]
+	packets: readonly EventPacket[] = []
 ): RxNostr {
 	return {
-		use: vi.fn(() => from(packets))
+		use: vi.fn(() => from(packets)),
+		setDefaultRelays: vi.fn(),
+		dispose: vi.fn()
 	} as unknown as RxNostr;
 }
 
@@ -328,5 +330,94 @@ describe('RxNostrResourceClient.getEvents', () => {
 		expect(
 			requestPackets[0].filters
 		).toEqual(filters);
+	});
+});
+
+describe('RxNostrResourceClient.setDefaultRelays', () => {
+	it('configures the rx-nostr default relays', () => {
+		const rxNostr = createRxNostr();
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		client.setDefaultRelays([
+			{
+				url: 'wss://relay-a.test',
+				read: true,
+				write: true
+			},
+			{
+				url: 'wss://relay-b.test',
+				read: true,
+				write: false
+			}
+		]);
+
+		expect(
+			rxNostr.setDefaultRelays
+		).toHaveBeenCalledWith([
+			{
+				url: 'wss://relay-a.test',
+				read: true,
+				write: true
+			},
+			{
+				url: 'wss://relay-b.test',
+				read: true,
+				write: false
+			}
+		]);
+	});
+
+	it('replaces the default relay configuration when called again', () => {
+		const rxNostr = createRxNostr();
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		client.setDefaultRelays([
+			{
+				url: 'wss://relay-a.test',
+				read: true,
+				write: true
+			}
+		]);
+
+		client.setDefaultRelays([
+			{
+				url: 'wss://relay-b.test',
+				read: true,
+				write: false
+			}
+		]);
+
+		expect(
+			rxNostr.setDefaultRelays
+		).toHaveBeenLastCalledWith([
+			{
+				url: 'wss://relay-b.test',
+				read: true,
+				write: false
+			}
+		]);
+
+		expect(
+			rxNostr.setDefaultRelays
+		).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('RxNostrResourceClient.dispose', () => {
+	it('disposes the underlying rx-nostr client', () => {
+		const rxNostr = createRxNostr();
+
+		const client =
+			new RxNostrResourceClient(rxNostr);
+
+		client.dispose();
+
+		expect(
+			rxNostr.dispose
+		).toHaveBeenCalledOnce();
 	});
 });
