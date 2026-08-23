@@ -20,6 +20,36 @@
 	import { Login } from '$lib/nostr/Login';
 	import { getBibleDB } from '$lib/domains/bible/persistence/bible.db';
 
+
+	// APPLICATION START
+	import {
+		Application
+	} from '$lib/application/runtime/application';
+
+	import {
+		provideApplicationContext
+	} from '$lib/application/runtime/application-context';
+
+	import {
+		createApplicationConfig
+	} from '$lib/application/config/application.config';
+
+	const application =
+	new Application(
+		createApplicationConfig()
+	);
+
+provideApplicationContext(
+	application.context
+);
+
+let applicationReady =
+	$state(false);
+
+let applicationStartupError =
+	$state<unknown>();
+
+
 	function register() {
 		// Listen for connection coming online
 		window.addEventListener('online', () => {
@@ -77,33 +107,109 @@
 		return true;
 	}
 
-	onMount(async () => {
-		// loginService.init();
-		// await relayService.init();
-		await getBibleDB()
-		console.debug('[layout load]');
-		let authenticated = false;
-		if (browser) {
-			rxNostr.setDefaultRelays(defaultRelays);
-			authenticated = await tryLogin();
+	onMount(() => {
+	let syncTimer:
+		ReturnType<typeof setTimeout> |
+		undefined;
+
+	async function start():
+		Promise<void> {
+
+		try {
+			/*
+			 * New application Composition Root.
+			 *
+			 * Currently this initializes the new
+			 * ResourceClient infrastructure.
+			 */
+			await application.start();
+
+			/*
+			 * Legacy startup.
+			 *
+			 * These responsibilities will move into
+			 * Application.start() incrementally.
+			 */
+			await getBibleDB();
+
+			console.debug(
+				'[layout load]'
+			);
+
+			let authenticated =
+				false;
+
+			if (browser) {
+				rxNostr.setDefaultRelays(
+					defaultRelays
+				);
+
+				authenticated =
+					await tryLogin();
+			}
+
+			if (!authenticated) {
+				console.debug(
+					'[layout load] not logged in'
+				);
+			}
+
+			/*
+			 * Existing deferred background sync.
+			 *
+			 * This remains legacy behavior for now.
+			 */
+			syncTimer =
+				setTimeout(
+					() => {
+						syncService.init();
+					},
+					5000
+				);
+
+			applicationReady =
+				true;
+		} catch (cause) {
+			console.error(
+				'[application startup]',
+				cause
+			);
+
+			applicationStartupError =
+				cause;
+		}
+	}
+
+	void start();
+
+	return () => {
+		if (
+			syncTimer !==
+			undefined
+		) {
+			clearTimeout(
+				syncTimer
+			);
 		}
 
-		if (!authenticated) {
-			console.debug('[layout load] not logged in');
-		}
+		void application.stop();
+	};
+});
 
-		setTimeout(() => {
-			// [DEV NOTE]: Sync Services is the entry point to sync data for the app...
-			//             default data like bible chapters etc.
-			syncService.init();
-		}, 5000);
-
-		//register();
-	});
 
 	let { children } = $props();
 </script>
 
-<Container>
-	{@render children?.()}
-</Container>
+{#if applicationStartupError}
+	<div>
+		Application startup failed.
+	</div>
+{:else if applicationReady}
+	<Container>
+		{@render children?.()}
+	</Container>
+{:else}
+	<div>
+		Loading...
+	</div>
+{/if}
