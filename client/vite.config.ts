@@ -18,10 +18,6 @@ export default defineConfig({
    }
   },
   plugins: [tailwindcss(), sveltekit()],
-  test: {
-    include: ['src/**/*.{test,spec}.{js,ts}'],
-    pool: 'forks' // or 'vmForks'
-  },
   build: {
     target: 'es2022'
   },
