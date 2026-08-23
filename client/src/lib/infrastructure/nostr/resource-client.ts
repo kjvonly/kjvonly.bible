@@ -18,10 +18,6 @@ import {
 } from './rx-nostr-resource-client';
 
 import {
-	rxNostrSigner
-} from './rx-nostr-signer';
-
-import {
 	createBrowserVerificationClient
 } from './verification-client';
 
@@ -36,8 +32,7 @@ export function createResourceClient(
 	verificationClient:
 		VerificationServiceClient,
 
-	signer: EventSigner =
-		rxNostrSigner,
+	signer: EventSigner,
 
 	rxNostrFactory: RxNostrFactory =
 		createRxNostr
@@ -88,12 +83,14 @@ export function createResourceClient(
 	);
 }
 
-export function createBrowserResourceClient():
-	ResourceClient {
+export function createBrowserResourceClient(
+	signer: EventSigner
+): ResourceClient {
 	const verificationClient =
 		createBrowserVerificationClient();
 
 	return createResourceClient(
-		verificationClient
+		verificationClient,
+		signer
 	);
 }

@@ -1,193 +1,232 @@
 import {
-	describe,
-	expect,
-	it,
-	vi
+    describe,
+    expect,
+    it,
+    vi
 } from 'vitest';
 
 import type {
-	VerificationServiceClient
+    VerificationServiceClient
 } from '@rx-nostr/crypto';
 
 import type {
-	EventSigner,
-	RxNostr
+    EventSigner,
+    RxNostrConfig,
+    RxNostr
 } from 'rx-nostr';
 
 import {
-	createResourceClient
+    createResourceClient
 } from './resource-client';
 
 function createVerificationClient():
-	VerificationServiceClient {
-	return {
-		start:
-			vi.fn(),
+    VerificationServiceClient {
+    return {
+        start:
+            vi.fn(),
 
-		verifier:
-			vi.fn(
-				async () => true
-			),
+        verifier:
+            vi.fn(
+                async () => true
+            ),
 
-		get status() {
-			return 'active' as const;
-		},
+        get status() {
+            return 'active' as const;
+        },
 
-		dispose:
-			vi.fn(),
+        dispose:
+            vi.fn(),
 
-		[Symbol.dispose]:
-			vi.fn()
-	} as unknown as VerificationServiceClient;
+        [Symbol.dispose]:
+            vi.fn()
+    } as unknown as VerificationServiceClient;
 }
 
 function createSigner():
-	EventSigner {
-	return {
-		getPublicKey:
-			vi.fn(),
+    EventSigner {
+    return {
+        getPublicKey:
+            vi.fn(),
 
-		signEvent:
-			vi.fn()
-	} as unknown as EventSigner;
+        signEvent:
+            vi.fn()
+    } as unknown as EventSigner;
 }
 
 function createRxNostr():
-	RxNostr {
-	return {
-		dispose:
-			vi.fn()
-	} as unknown as RxNostr;
+    RxNostr {
+    return {
+        dispose:
+            vi.fn()
+    } as unknown as RxNostr;
 }
 
 describe(
-	'createResourceClient',
-	() => {
-		it(
-			'starts verification and configures rx-nostr with its verifier',
-			() => {
-				const verificationClient =
-					createVerificationClient();
+    'createResourceClient',
+    () => {
+        it(
+            'starts verification and configures rx-nostr',
+            () => {
+                const verificationClient =
+                    createVerificationClient();
 
-				const signer =
-					createSigner();
+                const signer =
+                    createSigner();
 
-				const rxNostr =
-					createRxNostr();
+                const rxNostr =
+                    createRxNostr();
 
-				const rxNostrFactory =
-					vi.fn(
-						() => rxNostr
-					);
+                const rxNostrFactory =
+                    vi.fn(
+                        () => rxNostr
+                    );
 
-				createResourceClient(
-					verificationClient,
-					signer,
-					rxNostrFactory
-				);
+                createResourceClient(
+                    verificationClient,
+                    signer,
+                    rxNostrFactory
+                );
 
-				expect(
-					verificationClient
-						.start
-				).toHaveBeenCalledOnce();
+                expect(
+                    verificationClient
+                        .start
+                ).toHaveBeenCalledOnce();
 
-				expect(
-					rxNostrFactory
-				).toHaveBeenCalledWith({
-					verifier:
-						verificationClient
-							.verifier,
+                expect(
+                    rxNostrFactory
+                ).toHaveBeenCalledWith({
+                    verifier:
+                        verificationClient
+                            .verifier,
 
-					signer,
+                    signer,
 
-					authenticator:
-						'auto',
+                    authenticator:
+                        'auto',
 
-					connectionStrategy:
-						'lazy-keep',
+                    connectionStrategy:
+                        'lazy-keep',
 
-					eoseTimeout:
-						5_000,
+                    eoseTimeout:
+                        5_000,
 
-					okTimeout:
-						5_000,
+                    okTimeout:
+                        5_000,
 
-					authTimeout:
-						5_000,
+                    authTimeout:
+                        5_000,
 
-					retry: {
-						strategy:
-							'exponential',
+                    retry: {
+                        strategy:
+                            'exponential',
 
-						maxCount:
-							5,
+                        maxCount:
+                            5,
 
-						initialDelay:
-							1_000,
+                        initialDelay:
+                            1_000,
 
-						polite:
-							true
-					}
-				});
-			}
-		);
+                        polite:
+                            true
+                    }
+                });
+            }
+        );
 
-		it(
-			'does not wait for the verification worker before creating rx-nostr',
-			() => {
-				const verificationClient = {
-					...createVerificationClient(),
+        it(
+            'does not wait for the verification worker before creating rx-nostr',
+            () => {
+                const verificationClient = {
+                    ...createVerificationClient(),
 
-					get status() {
-						return 'booting' as const;
-					}
-				} as VerificationServiceClient;
+                    get status() {
+                        return 'booting' as const;
+                    }
+                } as VerificationServiceClient;
 
-				const rxNostrFactory =
-					vi.fn(
-						() =>
-							createRxNostr()
-					);
+                const rxNostrFactory =
+                    vi.fn(
+                        () =>
+                            createRxNostr()
+                    );
 
-				createResourceClient(
-					verificationClient,
-					createSigner(),
-					rxNostrFactory
-				);
+                createResourceClient(
+                    verificationClient,
+                    createSigner(),
+                    rxNostrFactory
+                );
 
-				expect(
-					rxNostrFactory
-				).toHaveBeenCalledOnce();
-			}
-		);
+                expect(
+                    rxNostrFactory
+                ).toHaveBeenCalledOnce();
+            }
+        );
 
-		it(
-			'disposes rx-nostr and the verification client together',
-			() => {
-				const verificationClient =
-					createVerificationClient();
+        it(
+            'uses the supplied signer instance',
+            () => {
+                const verificationClient =
+                    createVerificationClient();
 
-				const rxNostr =
-					createRxNostr();
+                const signer =
+                    createSigner();
 
-				const client =
-					createResourceClient(
-						verificationClient,
-						createSigner(),
-						() => rxNostr
-					);
+                const rxNostr =
+                    createRxNostr();
 
-				client.dispose();
+                const rxNostrFactory =
+                    vi.fn(
+                        (_config: RxNostrConfig) =>
+                            rxNostr
+                    );
 
-				expect(
-					rxNostr.dispose
-				).toHaveBeenCalledOnce();
+                createResourceClient(
+                    verificationClient,
+                    signer,
+                    rxNostrFactory
+                );
 
-				expect(
-					verificationClient
-						.dispose
-				).toHaveBeenCalledOnce();
-			}
-		);
-	}
+                expect(
+                    rxNostrFactory
+                ).toHaveBeenCalledOnce();
+               
+                expect(
+                    rxNostrFactory
+                ).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        signer
+                    })
+                );
+            }
+        );
+
+        it(
+            'disposes rx-nostr and the verification client together',
+            () => {
+                const verificationClient =
+                    createVerificationClient();
+
+                const rxNostr =
+                    createRxNostr();
+
+                const client =
+                    createResourceClient(
+                        verificationClient,
+                        createSigner(),
+                        () => rxNostr
+                    );
+
+                client.dispose();
+
+                expect(
+                    rxNostr.dispose
+                ).toHaveBeenCalledOnce();
+
+                expect(
+                    verificationClient
+                        .dispose
+                ).toHaveBeenCalledOnce();
+            }
+        );
+    }
 );
