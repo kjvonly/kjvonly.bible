@@ -45,3 +45,26 @@ export interface VerifiedResourceContent {
 	readonly content:
 		SerializedResourceContent;
 }
+
+export interface DecodedResourceContent {
+	readonly publisher:
+		string;
+
+	readonly resourceId:
+		string;
+
+	readonly resourceType:
+		string;
+
+	readonly eventId:
+		string;
+
+	readonly createdAt:
+		number;
+
+	readonly mediaType:
+		string;
+
+	readonly value:
+		unknown;
+}
