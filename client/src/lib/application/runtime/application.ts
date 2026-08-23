@@ -25,6 +25,9 @@ import {
 import {
     ResourceResolver
 } from '$lib/resource/resolution/resource-resolver';
+import { ResourceContentCodecBuilder } from '$lib/resource/content/resource-content-codec-builder';
+import { JsonResourceContentCodec } from '$lib/resource/content/json-resource-content-codec';
+import { ResourceContentDecoder } from '$lib/resource/content/resource-content-decoder';
 
 type ApplicationState =
     | 'created'
@@ -66,11 +69,33 @@ export class Application {
                 new ContentRepresentationResolver()
             ]);
 
+        const resourceContentCodecBuilder =
+            new ResourceContentCodecBuilder(
+                [
+                    {
+                        mediaType:
+                            'application/json',
+
+                        create:
+                            () =>
+                                new JsonResourceContentCodec()
+                    }
+                ],
+                []
+            );
+
+        const resourceContentDecoder =
+            new ResourceContentDecoder(
+                resourceContentCodecBuilder
+            );
+
         this.context = {
             nostrSigner,
             resourceClient,
             resourceDiscovery,
-            resourceResolver
+            resourceResolver,
+            resourceContentCodecBuilder,
+            resourceContentDecoder
         };
     }
 

@@ -10,8 +10,19 @@ import type {
 import type {
     NostrSigner
 } from '$lib/infrastructure/nostr/nostr-signer';
+
 import type { ResourceDiscovery } from '$lib/resource/nostr/resource-discovery';
 import type { ResourceResolver } from '$lib/resource/resolution/resource-resolver';
+
+
+import type {
+    ResourceContentCodecBuilder
+} from '$lib/resource/content/resource-content-codec-builder';
+
+import type {
+    ResourceContentDecoder
+} from '$lib/resource/content/resource-content-decoder';
+
 
 export interface ApplicationContext {
     readonly nostrSigner:
@@ -19,12 +30,18 @@ export interface ApplicationContext {
 
     readonly resourceClient:
     ResourceClient;
-    
+
     readonly resourceDiscovery:
     ResourceDiscovery;
 
     readonly resourceResolver:
     ResourceResolver;
+
+    readonly resourceContentCodecBuilder:
+    ResourceContentCodecBuilder;
+
+    readonly resourceContentDecoder:
+    ResourceContentDecoder;
 }
 
 const APPLICATION_CONTEXT =
