@@ -20,7 +20,6 @@ import type {
 } from '$lib/resource/content/resource-content-decoder';
 import type { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
 
-
 export interface ApplicationContext {
     readonly nostrSigner:
     NostrSigner;

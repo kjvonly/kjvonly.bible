@@ -30,41 +30,39 @@ export interface ResourceRepresentation {
 	payload: string;
 }
 
+
 export type SerializedResourceContent =
 	| string
 	| Uint8Array;
 
 export interface VerifiedResourceContent {
 	readonly publisher: string;
+
 	readonly resourceId: string;
+
 	readonly resourceType: string;
+
 	readonly eventId: string;
+
 	readonly createdAt: number;
+
 	readonly mediaType: string;
 
-	readonly content:
-		SerializedResourceContent;
+	readonly content: SerializedResourceContent;
 }
 
 export interface DecodedResourceContent {
-	readonly publisher:
-		string;
+	readonly publisher: string;
 
-	readonly resourceId:
-		string;
+	readonly resourceId: string;
 
-	readonly resourceType:
-		string;
+	readonly resourceType: string;
 
-	readonly eventId:
-		string;
+	readonly eventId: string;
 
-	readonly createdAt:
-		number;
+	readonly createdAt: number;
 
-	readonly mediaType:
-		string;
+	readonly mediaType: string;
 
-	readonly value:
-		unknown;
+	readonly value: unknown;
 }

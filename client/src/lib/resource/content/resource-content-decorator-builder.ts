@@ -1,98 +1,91 @@
-import {
-	BaseResourceContentDecorator
-} from './base-resource-content-decorator';
+import { BaseResourceContentDecorator } from './base-resource-content-decorator';
+import type { ResourceContentDecorator } from './resource-content-decorator';
 
-import type {
-	ResourceContentDecorator
-} from './resource-content-decorator';
-
-export interface ResourceContentMediaTypeDecoratorRegistration {
-	readonly mediaType:
-		string;
+export interface ResourceContentDecoratorRegistration {
+	readonly token: string;
 
 	decorate(
-		inner:
-			ResourceContentDecorator
-	): ResourceContentDecorator;
-}
-
-export interface ResourceContentEncodingDecoratorRegistration {
-	readonly encoding:
-		string;
-
-	decorate(
-		inner:
-			ResourceContentDecorator
+		inner: ResourceContentDecorator
 	): ResourceContentDecorator;
 }
 
 export class ResourceContentDecoratorBuilder {
 	constructor(
-		private readonly mediaTypeDecorators:
-			readonly ResourceContentMediaTypeDecoratorRegistration[],
-
-		private readonly encodingDecorators:
-			readonly ResourceContentEncodingDecoratorRegistration[]
+		private readonly registrations:
+			readonly ResourceContentDecoratorRegistration[]
 	) {}
 
-	build(
-		mediaType: string
-	): ResourceContentDecorator {
-		const [
-			baseMediaType,
-			...encodings
-		] =
-			mediaType
-				.toLowerCase()
-				.split('+');
+	build(mediaType: string): ResourceContentDecorator {
+		const tokens = mediaType
+			.toLowerCase()
+			.split('+');
 
-		let decorator:
-			ResourceContentDecorator =
-				new BaseResourceContentDecorator();
+		const [baseMediaType, ...encodings] = tokens;
 
-		const mediaTypeDecorator =
-			this.mediaTypeDecorators.find(
-				(candidate) =>
-					candidate.mediaType ===
-						baseMediaType
+		if (!baseMediaType) {
+			throw new Error(
+				'Resource media type is required.'
 			);
-
-		if (
-			mediaTypeDecorator
-		) {
-			decorator =
-				mediaTypeDecorator
-					.decorate(
-						decorator
-					);
 		}
 
-		for (
-			const encoding
-			of encodings
-		) {
-			const encodingDecorator =
-				this.encodingDecorators.find(
-					(candidate) =>
-						candidate.encoding ===
-							encoding
+		let decorator: ResourceContentDecorator =
+			new BaseResourceContentDecorator();
+
+		/*
+		 * The base MIME type is optional.
+		 *
+		 * application/json
+		 *     → Json(Base)
+		 *
+		 * audio/mpeg
+		 *     → Base
+		 */
+		const baseRegistration =
+			this.findRegistration(
+				baseMediaType
+			);
+
+		if (baseRegistration) {
+			decorator =
+				baseRegistration.decorate(
+					decorator
+				);
+		}
+
+		/*
+		 * Encoding suffixes are not optional.
+		 *
+		 * If a Resource declares +gzip, we must
+		 * understand gzip or decoding would produce
+		 * incorrect content.
+		 */
+		for (const encoding of encodings) {
+			const registration =
+				this.findRegistration(
+					encoding
 				);
 
-			if (
-				!encodingDecorator
-			) {
+			if (!registration) {
 				throw new Error(
 					`Unsupported Resource content encoding: ${encoding}`
 				);
 			}
 
 			decorator =
-				encodingDecorator
-					.decorate(
-						decorator
-					);
+				registration.decorate(
+					decorator
+				);
 		}
 
 		return decorator;
+	}
+
+	private findRegistration(
+		token: string
+	): ResourceContentDecoratorRegistration | undefined {
+		return this.registrations.find(
+			(registration) =>
+				registration.token === token
+		);
 	}
 }

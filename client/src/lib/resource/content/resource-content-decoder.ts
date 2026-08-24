@@ -14,11 +14,8 @@ export class ResourceContentDecoder {
 	) {}
 
 	async decode(
-		resource:
-			VerifiedResourceContent
-	): Promise<
-		DecodedResourceContent
-	> {
+		resource: VerifiedResourceContent
+	): Promise<DecodedResourceContent> {
 		const decorator =
 			this.decoratorBuilder.build(
 				resource.mediaType

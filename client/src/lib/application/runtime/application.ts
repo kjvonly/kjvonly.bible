@@ -70,21 +70,18 @@ export class Application {
             ]);
 
         const resourceContentDecoratorBuilder =
-            new ResourceContentDecoratorBuilder(
-                [
-                    {
-                        mediaType:
-                            'application/json',
+            new ResourceContentDecoratorBuilder([
+                {
+                    token:
+                        'application/json',
 
-                        decorate:
-                            (inner) =>
-                                new JsonResourceContentDecorator(
-                                    inner
-                                )
-                    }
-                ],
-                []
-            );
+                    decorate:
+                        (inner) =>
+                            new JsonResourceContentDecorator(
+                                inner
+                            )
+                }
+            ]);
 
         const resourceContentDecoder =
             new ResourceContentDecoder(
