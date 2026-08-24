@@ -16,10 +16,6 @@ import type { ResourceResolver } from '$lib/resource/resolution/resource-resolve
 
 
 import type {
-    ResourceContentCodecBuilder
-} from '$lib/resource/content/resource-content-codec-builder';
-
-import type {
     ResourceContentDecoder
 } from '$lib/resource/content/resource-content-decoder';
 import type { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
