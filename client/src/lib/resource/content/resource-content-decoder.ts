@@ -4,13 +4,13 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
-	ResourceContentCodecBuilder
-} from './resource-content-codec-builder';
+	ResourceContentDecoratorBuilder
+} from './resource-content-decorator-builder';
 
 export class ResourceContentDecoder {
 	constructor(
-		private readonly codecBuilder:
-			ResourceContentCodecBuilder
+		private readonly decoratorBuilder:
+			ResourceContentDecoratorBuilder
 	) {}
 
 	async decode(
@@ -19,13 +19,13 @@ export class ResourceContentDecoder {
 	): Promise<
 		DecodedResourceContent
 	> {
-		const codec =
-			this.codecBuilder.build(
+		const decorator =
+			this.decoratorBuilder.build(
 				resource.mediaType
 			);
 
 		const value =
-			await codec.decode(
+			await decorator.decode(
 				resource.content
 			);
 

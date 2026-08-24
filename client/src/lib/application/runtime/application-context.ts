@@ -22,6 +22,7 @@ import type {
 import type {
     ResourceContentDecoder
 } from '$lib/resource/content/resource-content-decoder';
+import type { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
 
 
 export interface ApplicationContext {
@@ -37,8 +38,8 @@ export interface ApplicationContext {
     readonly resourceResolver:
     ResourceResolver;
 
-    readonly resourceContentCodecBuilder:
-    ResourceContentCodecBuilder;
+    readonly resourceContentDecoratorBuilder:
+    ResourceContentDecoratorBuilder;
 
     readonly resourceContentDecoder:
     ResourceContentDecoder;

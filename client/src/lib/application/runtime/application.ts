@@ -28,6 +28,8 @@ import {
 import { ResourceContentCodecBuilder } from '$lib/resource/content/resource-content-codec-builder';
 import { JsonResourceContentCodec } from '$lib/resource/content/json-resource-content-codec';
 import { ResourceContentDecoder } from '$lib/resource/content/resource-content-decoder';
+import { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
+import { JsonResourceContentDecorator } from '$lib/resource/content/json-resource-content-decorator';
 
 type ApplicationState =
     | 'created'
@@ -69,16 +71,18 @@ export class Application {
                 new ContentRepresentationResolver()
             ]);
 
-        const resourceContentCodecBuilder =
-            new ResourceContentCodecBuilder(
+        const resourceContentDecoratorBuilder =
+            new ResourceContentDecoratorBuilder(
                 [
                     {
                         mediaType:
                             'application/json',
 
-                        create:
-                            () =>
-                                new JsonResourceContentCodec()
+                        decorate:
+                            (inner) =>
+                                new JsonResourceContentDecorator(
+                                    inner
+                                )
                     }
                 ],
                 []
@@ -86,7 +90,7 @@ export class Application {
 
         const resourceContentDecoder =
             new ResourceContentDecoder(
-                resourceContentCodecBuilder
+                resourceContentDecoratorBuilder
             );
 
         this.context = {
@@ -94,7 +98,7 @@ export class Application {
             resourceClient,
             resourceDiscovery,
             resourceResolver,
-            resourceContentCodecBuilder,
+            resourceContentDecoratorBuilder,
             resourceContentDecoder
         };
     }
