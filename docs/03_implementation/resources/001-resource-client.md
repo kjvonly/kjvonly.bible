@@ -1,376 +1,322 @@
-# 001 — Resource Client
+# Resource Client
 
-**Status**
+## Status
 
-Implementation Specification
+Current
 
 ---
 
 # Purpose
 
-The Resource Client provides the Resource Boundary with a small, explicit interface for communicating with Nostr relays.
+The Resource Client is the application-facing Nostr transport boundary used by the Resource implementation.
 
-The Resource Client is the application's Nostr relay communication boundary.
+It provides a small, stable API for:
 
-It hides:
+* bounded event reads,
+* multi-event reads,
+* live event subscriptions,
+* event publication,
+* relay selection,
+* relay configuration,
+* signing integration,
+* event verification,
+* NIP-42 authentication,
+* and transport-level error reporting.
 
-* rx-nostr,
-* RxJS,
-* WebSocket connection management,
-* Nostr REQ lifecycle mechanics,
-* relay connection reuse,
-* NIP-11 request queuing,
-* reconnection behavior,
-* NIP-42 challenge handling,
-* and relay acknowledgement mechanics.
+The Resource Client exists so the remainder of the Resource implementation does not depend directly on:
 
-It does **not** hide Nostr itself.
+* rx-nostr request objects,
+* RxJS observables,
+* WebSocket connection state,
+* rx-nostr relay-selection syntax,
+* rx-nostr publication packets,
+* verification-worker lifecycle,
+* or signer wiring.
 
-The Resource Boundary intentionally uses Nostr as its Resource protocol. Resource code may therefore operate on Nostr concepts such as:
+The Resource Client does **not** attempt to replace rx-nostr.
 
-```text
-Filter
-Event
-relay
-publisher pubkey
-kind
-d tag
-```
+It is intentionally a thin implementation boundary around the rx-nostr behavior the application needs.
 
-The Resource Client is not a generic abstraction over REST, RPC, HTTP, or arbitrary transport protocols.
-
-Its purpose is narrower:
-
-> **Provide the Resource Boundary with a clean, testable Nostr client while isolating the application from the rx-nostr implementation.**
+The implementation should prefer rx-nostr's existing semantics, operators, request types, relay management, connection lifecycle, signing support, authentication support, and retry behavior rather than recreating those mechanisms inside KJVOnly.
 
 ---
 
 # Scope
 
-This specification defines:
+This document describes the current Resource Client implementation, including:
 
-* the `ResourceClient` interface,
-* the `RxNostrResourceClient` implementation,
-* singular event retrieval,
-* plural event retrieval,
-* event publication,
+* the Resource Client contract,
+* the rx-nostr infrastructure implementation,
+* bounded historical reads,
 * live subscriptions,
-* default relay configuration,
-* per-operation relay selection,
-* NIP-42 authentication integration,
-* Nostr event verification,
-* Resource Client error semantics,
-* client lifecycle,
-* background execution behavior,
-* and testing expectations.
+* publication,
+* relay configuration,
+* error semantics,
+* signing,
+* NIP-42 authentication,
+* browser event verification,
+* verification-worker lifecycle,
+* Composition Root integration,
+* browser integration testing,
+* and the boundary between Resource Client and higher Resource lifecycle stages.
 
-This specification does not define:
+This document does not define:
 
-* Resource Discovery policy,
 * Published Resource Identity,
+* Resource Discovery rules,
 * Resource Representation parsing,
 * Resource Resolution,
-* descriptor retrieval,
-* Resource integrity verification,
-* Domain parsing,
+* content decoding,
+* Domain Object construction,
 * Domain validation,
-* Resource Installation,
+* installation decisions,
+* persistence,
+* synchronization,
 * the Outbox,
-* synchronization policy,
-* publication intent,
-* Resource event construction,
-* or Resource signing policy.
+* or Domain-specific behavior.
 
-Those responsibilities exist above or beside the Resource Client.
+Those responsibilities exist above the Resource Client.
 
 ---
 
-# Architectural Position
+# Background
 
-The Resource Client sits between the Resource lifecycle and Nostr infrastructure.
+KJVOnly uses Nostr as the primary publication and discovery protocol for application Resources.
 
-```text
-Application
-    ↓
-Domain
-    ↓
-Domain Resource behavior
-    ↓
+The application previously contained Nostr behavior spread across multiple services and feature-specific files.
 
-========== Resource Boundary ==========
+Those implementations mixed concerns such as:
 
-Resource Discovery
-Resource Publication
-Resource Synchronization
-    ↓
-ResourceClient
-    ↓
+* creating relay queries,
+* signing events,
+* selecting relays,
+* parsing event content,
+* caching,
+* local persistence,
+* retry behavior,
+* Domain-specific assumptions,
+* and feature behavior.
 
-========== Infrastructure ==========
+The Resource architecture requires a cleaner boundary.
 
-RxNostrResourceClient
-    ↓
-rx-nostr
-    ↓
-WebSocket
-    ↓
-Nostr Relays
+The application should be able to request Nostr events without every Resource feature understanding rx-nostr or WebSocket behavior.
+
+At the same time, the application should not hide Nostr behind a generic transport abstraction.
+
+Nostr concepts such as:
+
+* `Event`,
+* `EventParameters`,
+* `Filter`,
+* relays,
+* authors,
+* kinds,
+* tags,
+* replaceable events,
+* and relay acknowledgements
+
+remain valid concepts at this boundary.
+
+The Resource Client therefore hides **library mechanics**, not the Nostr protocol.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Resource["Resource Lifecycle"]
+    Client["ResourceClient"]
+    Rx["rx-nostr"]
+    WS["WebSocket Relays"]
+
+    Resource --> Client
+    Client --> Rx
+    Rx --> WS
 ```
 
-The dependency direction is:
-
-```text
-Resource Boundary
-        ↓
-ResourceClient interface
-
-Infrastructure
-        ↓
-implements ResourceClient
-```
-
-Resource lifecycle code depends on the interface.
-
-The interface does not depend on the concrete rx-nostr implementation.
+The Resource Client is the narrow seam between application Resource behavior and rx-nostr infrastructure.
 
 ---
 
-# Why the Boundary Exists
+# Architectural Ownership
 
-rx-nostr is intentionally a low-level Nostr communication library.
+The Resource Client contract belongs to the Resource boundary.
 
-That is desirable.
+The concrete rx-nostr implementation belongs to infrastructure.
 
-It handles difficult relay mechanics without imposing application-level Nostr semantics.
+Conceptually:
 
-However, Resource Discovery should not contain code such as:
+```text
+src/lib/resource/
+    nostr/
+        resource-client.ts
 
-```ts
-const req = createRxBackwardReq();
-
-rxNostr
-    .use(req)
-    .subscribe(...);
-
-req.emit(filter);
-req.over();
+src/lib/infrastructure/
+    nostr/
+        resource-client.ts
+        nostr-signer.ts
+        verification-client.ts
+        verification.worker.ts
 ```
 
-Nor should Resource Publication contain:
+The distinction is intentional.
 
-```ts
-rxNostr.send(event).subscribe(...);
-```
+The Resource layer defines what Nostr capabilities it requires.
 
-Those are infrastructure mechanics.
+Infrastructure defines how those capabilities are implemented using:
 
-Resource code should instead say:
+* rx-nostr,
+* RxJS,
+* Web Workers,
+* browser WebSockets,
+* and signing libraries.
 
-```ts
-const event = await resourceClient.getEvent(filter);
-```
+Higher Resource services depend on the Resource Client contract.
 
-or:
-
-```ts
-const events = await resourceClient.getEvents(filter);
-```
-
-or:
-
-```ts
-const result = await resourceClient.publishEvent(event);
-```
-
-This keeps Resource lifecycle code focused on Resource behavior rather than relay lifecycle behavior.
+They do not import rx-nostr directly.
 
 ---
 
-# Nostr Is Not Abstracted Away
+# Core Implementation Principle
 
-The Resource Client is not intended to make Nostr interchangeable with another transport.
+The Resource Client should remain thin.
 
-For example, this is appropriate:
+The implementation follows this rule:
 
-```ts
-const filter: Filter = {
-    kinds: [37770],
-    authors: [publisher],
-    '#d': ['kjvonly/bible/chapters/kjv/43_3']
-};
+> Use rx-nostr for Nostr behavior. Use ResourceClient to isolate rx-nostr mechanics from the Resource lifecycle.
 
-const event = await resourceClient.getEvent(filter);
-```
+The Resource Client should not recreate functionality already provided reliably by rx-nostr.
 
-The caller knows that Resources are discovered through Nostr.
+Examples include:
 
-The Resource Client merely owns execution of the Nostr request.
+* request lifecycle,
+* EOSE handling,
+* relay connection management,
+* retry scheduling,
+* event verification integration,
+* event signing integration,
+* NIP-42 authentication,
+* event deduplication operators,
+* latest-event selection,
+* observable completion,
+* and relay publication acknowledgement streams.
 
-This avoids abstractions such as:
+The implementation adapts those capabilities into application-friendly Promise and callback APIs.
 
-```text
-TransportClient
-ProtocolClient
-GenericNetworkClient
-RemoteRepository
-```
-
-which would not protect a meaningful application boundary.
+It does not implement parallel versions of them.
 
 ---
 
-# REST-Like Application Shape
+# What the Resource Client Abstracts
 
-At the application level, KJVOnly's Resource usage resembles a local-first REST-style model over Nostr addressable events.
-
-The useful conceptual mapping is:
-
-| Application Intent                   | Resource Client Operation |
-| ------------------------------------ | ------------------------- |
-| Get one current Resource publication | `getEvent()`              |
-| Get multiple matching publications   | `getEvents()`             |
-| Create or replace a publication      | `publishEvent()`          |
-| Observe future publications          | `subscribe()`             |
-
-There is deliberately no separate POST and PUT operation.
-
-Nostr publication uses the same `EVENT` operation for both.
-
-Whether a publication creates a new logical publication or replaces an existing addressable publication is determined by Nostr event semantics, particularly:
+The Resource Client hides:
 
 ```text
-kind + pubkey + d
+createRxOneshotReq()
+createRxForwardReq()
+RxNostr.use()
+RxNostr.send()
+Observable subscriptions
+lastValueFrom()
+relay packet shapes
+verification-client wiring
+worker lifecycle
+connection strategy configuration
+retry configuration
 ```
 
-That policy belongs to Resource identity and publication behavior rather than to separate client methods.
+The caller instead sees:
 
-There is also no generic:
-
-```ts
-deleteEvent()
-```
-
-Resource deletion semantics are not equivalent to deleting a row from a server.
-
-If a Resource Type later defines deletion through a Nostr event, that event is constructed by the appropriate Resource lifecycle behavior and published through:
-
-```ts
+```text
+getEvent()
+getEvents()
+subscribe()
 publishEvent()
+setDefaultRelays()
+dispose()
 ```
 
 ---
 
-# Source Organization
+# What the Resource Client Does Not Abstract
 
-The target organization is:
+The Resource Client intentionally exposes Nostr types.
 
-```text
-src/lib/
+For example:
 
-    resource/
-        nostr/
-            resource-client.ts
-
-    infrastructure/
-        nostr/
-            rx-nostr-resource-client.ts
-            create-rx-nostr-resource-client.ts
+```ts
+import type {
+    Event,
+    EventParameters,
+    Filter
+} from 'nostr-typedef';
 ```
 
-The ownership is intentional.
+This is deliberate.
+
+The boundary is not:
 
 ```text
-resource/nostr/resource-client.ts
+GenericTransportClient
+    REST
+    RPC
+    Nostr
 ```
 
-defines the contract used by the Resource Boundary.
+The boundary is:
 
 ```text
-infrastructure/nostr/rx-nostr-resource-client.ts
+Resource implementation
+        ↓
+ResourceClient
+        ↓
+Nostr
 ```
 
-contains rx-nostr and RxJS-specific behavior.
-
-```text
-infrastructure/nostr/create-rx-nostr-resource-client.ts
-```
-
-contains composition and rx-nostr configuration.
-
-Domain code must not import from:
-
-```text
-infrastructure/nostr/
-```
-
-Resource lifecycle code should normally depend only on:
-
-```text
-resource/nostr/resource-client
-```
+The current implementation does not generalize prematurely for hypothetical transports.
 
 ---
 
-# Core Resource Client Types
+# Resource Client Contract
 
-## File
+The Resource Client contract is defined in:
 
 ```text
 src/lib/resource/nostr/resource-client.ts
 ```
 
-## Implementation
+The important types are:
 
 ```ts
-import type { Event, Filter } from 'nostr-typedef';
+import type {
+    Event,
+    EventParameters,
+    Filter
+} from 'nostr-typedef';
 
 export interface ResourceRelay {
-    readonly url: string;
-    readonly read: boolean;
-    readonly write: boolean;
+    url: string;
+    read: boolean;
+    write: boolean;
 }
 
 export interface ResourceClientRequestOptions {
-    /**
-     * Override the configured default relays for this operation.
-     *
-     * When omitted, the Resource Client uses its configured default
-     * read or write relays.
-     *
-     * When supplied, only these relays are used for the operation.
-     */
-    readonly relays?: readonly string[];
+    relays?: readonly string[];
 }
 
 export interface ResourcePublishAcknowledgement {
-    readonly relay: string;
-    readonly accepted: boolean;
-    readonly message?: string;
+    relay: string;
+    accepted: boolean;
+    message?: string;
 }
 
 export interface ResourcePublishResult {
-    readonly eventId: string;
-
-    readonly acknowledgements:
-    readonly ResourcePublishAcknowledgement[];
-
-    /**
-     * True when at least one relay acknowledged the event with OK=true.
-     *
-     * This is a factual transport result.
-     *
-     * Higher Resource publication behavior remains responsible for
-     * deciding whether that satisfies the publication lifecycle.
-     */
-    readonly acceptedByAnyRelay: boolean;
+    eventId: string;
+    acknowledgements: readonly ResourcePublishAcknowledgement[];
+    acceptedByAnyRelay: boolean;
 }
 
 export interface ResourceSubscription {
-    /**
-     * Closes the underlying Nostr REQ subscription.
-     *
-     * Calling close more than once must be safe.
-     */
     close(): void;
 }
 
@@ -392,2521 +338,1909 @@ export class ResourceClientError extends Error {
 }
 
 export interface ResourceClient {
-    /**
-     * Replaces the configured default relay set.
-     *
-     * rx-nostr reacts to changes in the default relay configuration
-     * and updates active default-relay subscriptions as appropriate.
-     */
     setDefaultRelays(relays: readonly ResourceRelay[]): void;
 
-    /**
-     * Executes a bounded historical Nostr request where the caller
-     * expects one current matching event.
-     *
-     * Returns null when the request can be completed but no matching
-     * event is available.
-     *
-     * Throws ResourceClientError when the operation cannot be
-     * meaningfully completed because the relay service is unavailable.
-     */
     getEvent(
         filter: Filter,
         options?: ResourceClientRequestOptions
     ): Promise<Event | null>;
 
-    /**
-     * Executes a bounded historical Nostr request and returns all
-     * matching events produced by that request.
-     *
-     * Duplicate signed events received from multiple relays are
-     * deduplicated by event id.
-     *
-     * Results are ordered newest-first using Nostr event ordering.
-     */
     getEvents(
         filters: Filter | readonly Filter[],
         options?: ResourceClientRequestOptions
     ): Promise<readonly Event[]>;
 
-    /**
-     * Publishes an already-signed Nostr event.
-     *
-     * Event construction and Resource publication signing occur
-     * before this boundary.
-     */
     publishEvent(
-        event: Event,
+        event: EventParameters,
         options?: ResourceClientRequestOptions
     ): Promise<ResourcePublishResult>;
 
-    /**
-     * Creates a long-lived Nostr subscription for future matching events.
-     *
-     * Unlike getEvent/getEvents, this operation does not automatically
-     * complete after historical events have been read.
-     *
-     * The caller owns the returned subscription and must close it when
-     * it is no longer required.
-     */
     subscribe(
         filters: Filter | readonly Filter[],
         onEvent: (event: Event) => void,
         options?: ResourceClientRequestOptions
     ): ResourceSubscription;
 
-    /**
-     * Permanently releases the Resource Client's relay resources.
-     *
-     * The client must not be reused after disposal.
-     */
     dispose(): void;
 }
 ```
 
 ---
 
-# Interface Semantics
+# Contract Design
 
-The interface deliberately stays small.
-
-Its operations correspond directly to useful Nostr communication behaviors.
+The contract deliberately contains only the Nostr operations needed by the Resource implementation.
 
 It does not expose:
 
-```text
-Observable
-Subject
-RxReq
-EventPacket
-OkPacket
-ConnectionState
-createRxBackwardReq
-createRxForwardReq
-```
+* RxJS observables,
+* rx-nostr request objects,
+* connection-state streams,
+* relay WebSocket objects,
+* verification-worker objects,
+* signer internals,
+* or raw rx-nostr send packets.
 
-Those are rx-nostr implementation concepts.
-
-They remain inside infrastructure.
+This means the Resource implementation can use Nostr without being coupled to the rx-nostr programming model.
 
 ---
 
-# `getEvent()`
+# Relay Selection
 
-`getEvent()` is used when the caller expects one current matching publication.
+Each operation may use either:
 
-The primary Resource example is direct discovery by Published Resource Identity.
+* configured default relays,
+* or an explicit relay list supplied for that request.
+
+The request option is:
+
+```ts
+export interface ResourceClientRequestOptions {
+    relays?: readonly string[];
+}
+```
+
+This allows higher Resource behavior to choose a specific relay set when necessary without reconstructing the client.
+
+If no explicit relay list is supplied, the Resource Client uses the configured defaults appropriate to the operation.
+
+---
+
+# Relay Model
+
+Configured relays distinguish read and write capabilities.
+
+```ts
+export interface ResourceRelay {
+    url: string;
+    read: boolean;
+    write: boolean;
+}
+```
+
+A relay may participate in:
+
+* reads only,
+* writes only,
+* or both.
+
+The Resource Client translates this application configuration into rx-nostr relay configuration.
+
+Higher Resource services do not manage rx-nostr relay objects themselves.
+
+---
+
+# Default Relays
+
+`setDefaultRelays()` updates the relay configuration used by normal Resource operations.
+
+The Resource Client remains long-lived.
+
+Changing relay configuration does not require reconstructing:
+
+* the Resource Client,
+* the signer,
+* the verification worker,
+* or higher Resource services.
+
+---
+
+# rx-nostr Infrastructure Implementation
+
+The concrete Resource Client is implemented using rx-nostr.
+
+The implementation lives under:
+
+```text
+src/lib/infrastructure/nostr/resource-client.ts
+```
+
+Its responsibilities are narrowly technical:
+
+* create rx-nostr request objects,
+* select read/write relays,
+* translate observable results into Promise results,
+* normalize publication acknowledgements,
+* translate infrastructure failures into `ResourceClientError`,
+* and dispose infrastructure resources.
+
+It must not:
+
+* parse Resource payloads,
+* understand Resource Identifier structure,
+* decide whether a Resource should be installed,
+* interpret Domain data,
+* write IndexedDB,
+* or make Domain-specific decisions.
+
+---
+
+# Why rx-nostr
+
+rx-nostr already provides the difficult mechanics required by the Nostr transport layer.
+
+These include:
+
+* relay connection management,
+* request orchestration,
+* observable event streams,
+* EOSE handling,
+* retry strategies,
+* signing integration,
+* verification integration,
+* authentication integration,
+* relay-specific send results,
+* and operators designed around Nostr event semantics.
+
+The application therefore uses rx-nostr as the primary Nostr engine.
+
+The Resource Client is an adapter around that engine.
+
+It is not an alternative Nostr client.
+
+---
+
+# Avoiding Duplicate Nostr Logic
+
+A central implementation decision is to avoid rebuilding Nostr semantics outside rx-nostr.
+
+For bounded event selection, the implementation should prefer rx-nostr operators such as:
+
+```text
+uniq()
+latest()
+timeline()
+```
+
+where those operators already express the desired Nostr behavior.
+
+The Resource Client should not introduce its own parallel implementation of:
+
+* event deduplication,
+* replaceable-event ordering,
+* current-event selection,
+* relay retry,
+* connection pooling,
+* or authentication handshakes
+
+unless a concrete application requirement cannot be expressed using the library.
+
+---
+
+# Bounded Historical Reads
+
+Historical reads are bounded operations.
+
+They should:
+
+1. construct a finite Nostr request,
+2. query the selected read relays,
+3. consume the resulting rx-nostr stream,
+4. allow rx-nostr to complete the request,
+5. normalize the result into a Promise,
+6. and return absence separately from infrastructure failure.
+
+The implementation uses:
+
+```text
+createRxOneshotReq()
+```
+
+rather than creating a long-lived request and manually deciding when to stop it.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Filter["Nostr Filter"]
+    Request["createRxOneshotReq"]
+    Use["RxNostr.use"]
+    Operators["rx-nostr Operators"]
+    Promise["Promise Result"]
+
+    Filter --> Request
+    Request --> Use
+    Use --> Operators
+    Operators --> Promise
+```
+
+---
+
+# getEvent
+
+`getEvent()` retrieves at most one event.
+
+```ts
+getEvent(
+    filter: Filter,
+    options?: ResourceClientRequestOptions
+): Promise<Event | null>;
+```
+
+Its semantics are:
+
+```text
+matching event
+    → Event
+
+normal absence
+    → null
+
+transport unavailable
+    → ResourceClientError
+```
+
+No matching event is normal Nostr query behavior.
+
+It must not be represented as a network failure.
+
+---
+
+# Event Selection
+
+When a bounded query may return duplicate relay results or multiple candidate publications, the implementation relies on rx-nostr operators rather than performing ad hoc array sorting after the fact.
+
+The implementation uses behavior such as:
+
+```text
+uniq()
+latest()
+```
+
+to normalize the bounded result.
+
+The Resource Client should not invent a competing rule for "latest event."
+
+Higher Resource stages may apply Resource-specific identity or discovery semantics above the client.
+
+---
+
+# getEvents
+
+`getEvents()` returns all events selected by the bounded request semantics.
+
+```ts
+getEvents(
+    filters: Filter | readonly Filter[],
+    options?: ResourceClientRequestOptions
+): Promise<readonly Event[]>;
+```
+
+Its absence semantics are:
+
+```text
+no matching events
+    → []
+
+transport unavailable
+    → ResourceClientError
+```
+
+An empty result is not an infrastructure failure.
+
+---
+
+# Why Reads Return Nostr Events
+
+The Resource Client returns `Event`, not Resource Representations or Domain Objects.
+
+This is intentional.
+
+The Resource Client's responsibility ends with the Nostr transport result.
 
 Conceptually:
 
 ```text
-kind
-+
-publisher pubkey
-+
-d
-```
-
-produces a filter such as:
-
-```ts
-const filter: Filter = {
-    kinds: [37770],
-    authors: [publisher],
-    '#d': [
-        'kjvonly/bible/chapters/kjv/43_3'
-    ]
-};
-```
-
-The call is:
-
-```ts
-const event = await resourceClient.getEvent(filter);
-```
-
-The caller should not need to write:
-
-```ts
-const events = await resourceClient.getEvents(filter);
-const event = events[0] ?? null;
-```
-
-when singular retrieval is explicitly the requested behavior.
-
----
-
-# Singular Does Not Mean First Packet
-
-`getEvent()` must not return whichever relay happens to respond first.
-
-Multiple relays may hold different signed publications for the same addressable identity.
-
-Therefore `getEvent()`:
-
-1. performs the bounded historical query,
-2. permits participating relays to return their matching event,
-3. deduplicates identical signed events,
-4. orders the remaining events using Nostr ordering,
-5. and returns the current event.
-
-For replaceable/addressable event ordering:
-
-```text
-newer created_at wins
-```
-
-and when timestamps are equal:
-
-```text
-lower lexical event id wins
-```
-
-This is Nostr protocol ordering rather than Domain authority.
-
-Returning the current network publication does not imply that the application must install or accept that publication.
-
-That decision remains downstream.
-
----
-
-# `getEvent()` and `limit`
-
-The implementation should add:
-
-```ts
-limit: 1
-```
-
-to the supplied filter.
-
-For example:
-
-```ts
-const boundedFilter: Filter = {
-    ...filter,
-    limit: 1
-};
-```
-
-The limit applies to each relay's initial query.
-
-The client still collects responses from the targeted relay set before choosing the current result.
-
----
-
-# `getEvents()`
-
-`getEvents()` is used when the caller genuinely expects multiple publications.
-
-Examples include:
-
-* classification discovery,
-* discovery of related Resources,
-* querying a set of explicit Resource references,
-* or other Resource graph operations.
-
-Example:
-
-```ts
-const events = await resourceClient.getEvents({
-    kinds: [37770],
-    authors: [publisher],
-    '#t': ['kjvonly/bible/chapters']
-});
-```
-
-The Resource Client performs only Nostr-level result normalization.
-
-It may:
-
-* deduplicate identical events by `event.id`,
-* and return them in deterministic Nostr order.
-
-It does not:
-
-* group events into Resources,
-* inspect `d` as Resource identity,
-* select Resource Types,
-* establish trust,
-* or install anything.
-
-Those remain Resource Discovery responsibilities.
-
----
-
-# One-Shot Request Lifecycle
-
-Both:
-
-```ts
-getEvent()
-```
-
-and:
-
-```ts
-getEvents()
-```
-
-are bounded historical requests.
-
-The rx-nostr Backward Strategy is used.
-
-Conceptually:
-
-```text
-create backward request
-        ↓
-register event listener
-        ↓
-emit filter
-        ↓
-REQ sent to relay(s)
-        ↓
-EVENT messages received
-        ↓
-EOSE received
-        ↓
-CLOSE
-        ↓
-Observable completes
-        ↓
-Promise resolves
-```
-
-The caller never manages this lifecycle directly.
-
----
-
-# `over()`
-
-For each one-shot request, the adapter calls:
-
-```ts
-request.over();
-```
-
-after emitting all filters.
-
-This communicates:
-
-> No more filters will be emitted through this request.
-
-The rx-nostr Backward Strategy can then complete after all outstanding historical REQs reach their completion condition.
-
-This is an infrastructure detail and must not escape through `ResourceClient`.
-
----
-
-# One-Shot Request Isolation
-
-Each bounded Resource Client call creates its own backward request.
-
-For example:
-
-```text
-getEvent(A)
-    ↓
-RxBackwardReq A
-
-getEvent(B)
-    ↓
-RxBackwardReq B
-```
-
-This does not mean a new WebSocket is created for each request.
-
-rx-nostr manages relay connections independently from the individual REQ lifecycle.
-
----
-
-# Event Verification
-
-Inbound Nostr events must be cryptographically verified before they are used by the Resource Boundary.
-
-The rx-nostr instance must therefore be configured with a real verifier.
-
-The production configuration must not use:
-
-```ts
-noopVerifier
-```
-
-or:
-
-```text
-skipVerify
-```
-
-for normal Resource traffic.
-
-A verified Nostr event is still only a valid Nostr event.
-
-Additional Resource validation occurs later:
-
-```text
-Nostr Event
-    ↓
-protocol signature verification
-    ↓
-Resource event validation
-    ↓
-Resource Representation
-    ↓
-Resource Resolution
-```
-
-The Resource Client handles the first protocol-level validation through rx-nostr configuration.
-
-It does not perform Resource-event validation.
-
----
-
-# Relay Configuration
-
-The Resource Client maintains a default relay configuration.
-
-Each relay has independent read and write permissions.
-
-Example:
-
-```ts
-const relays: ResourceRelay[] = [
-    {
-        url: 'wss://relay.example.com',
-        read: true,
-        write: true
-    },
-    {
-        url: 'wss://archive.example.com',
-        read: true,
-        write: false
-    }
-];
-```
-
-The relay set is supplied during application composition.
-
-The client may later receive a replacement configuration:
-
-```ts
-resourceClient.setDefaultRelays(updatedRelays);
-```
-
-The Resource lifecycle does not recreate the client merely because relay settings change.
-
----
-
-# Default Relay Behavior
-
-When no operation-specific relay selection is supplied:
-
-```ts
-await resourceClient.getEvent(filter);
-```
-
-the configured default **read** relays are used.
-
-Likewise:
-
-```ts
-await resourceClient.publishEvent(event);
-```
-
-uses configured default **write** relays.
-
-Read and write permissions remain meaningful even when the same physical relay is used for both.
-
----
-
-# Per-Operation Relay Selection
-
-Some Resource workflows may provide relay hints or otherwise require an explicit target.
-
-The Resource Client supports this through:
-
-```ts
-ResourceClientRequestOptions
-```
-
-Example:
-
-```ts
-const event = await resourceClient.getEvent(
-    filter,
-    {
-        relays: [
-            'wss://relay-hint.example.com'
-        ]
-    }
-);
-```
-
-When `relays` is supplied, those relays replace the default relay set for that operation.
-
-This permits Resource Discovery to use relay hints without mutating the application's default relay configuration.
-
-The Resource Client does not determine when relay hints should be trusted or followed.
-
-That policy belongs to the caller.
-
----
-
-# Dynamic Default Relays
-
-Changing default relays is a runtime configuration operation.
-
-For example:
-
-```ts
-resourceClient.setDefaultRelays([
-    {
-        url: 'wss://relay-a.example.com',
-        read: true,
-        write: true
-    },
-    {
-        url: 'wss://relay-b.example.com',
-        read: true,
-        write: false
-    }
-]);
-```
-
-rx-nostr owns the mechanics required to adapt active default-relay communication when this set changes.
-
-Resource lifecycle code does not manage WebSocket reconnection itself.
-
----
-
-# Authentication
-
-Nostr relay authentication is an infrastructure responsibility.
-
-KJVOnly uses NIP-42 authentication where required by configured relays.
-
-Authentication must not appear as an application call such as:
-
-```ts
-resourceClient.authenticate();
-```
-
-A caller should simply perform its intended operation:
-
-```ts
-const event = await resourceClient.getEvent(filter);
-```
-
-If the relay requires NIP-42 authentication, the configured rx-nostr authenticator handles the challenge.
-
-Conceptually:
-
-```text
-ResourceClient.getEvent()
-        ↓
-REQ
-        ↓
-Relay requires AUTH
-        ↓
-AUTH challenge
-        ↓
+relay
+  ↓
 rx-nostr
-        ↓
-configured signer
-        ↓
-signed kind 22242 AUTH event
-        ↓
-AUTH accepted
-        ↓
-REQ automatically retried
-        ↓
-Resource operation continues
+  ↓
+ResourceClient
+  ↓
+Event
+  ↓
+ResourceDiscovery
+  ↓
+ResourceRepresentation
 ```
 
-Authentication does not alter Resource ownership.
-
----
-
-# Signer Responsibility
-
-The Resource Client does not determine:
-
-* which user identity is active,
-* where a private key is stored,
-* whether signing uses a local key,
-* whether signing uses NIP-07,
-* whether signing uses NIP-46,
-* or how authentication state is presented to the user.
-
-The Resource Client requires an rx-nostr-compatible signer during composition.
-
-Conceptually the signer contract is:
-
-```ts
-interface EventSigner {
-    getPublicKey(): Promise<string>;
-
-    signEvent(
-        event: EventParameters
-    ): Promise<Event>;
-}
-```
-
-The application's authentication/signing implementation supplies that capability.
-
-The same signer can therefore support:
-
-```text
-NIP-42 AUTH
-```
-
-without moving authentication logic into Resource Discovery.
-
----
-
-# Signed Resource Publication
-
-Resource publication itself has an additional architectural requirement:
-
-```text
-Resource Representation
-        ↓
-Nostr Event
-        ↓
-Sign
-        ↓
-Signed Nostr Event
-        ↓
-ResourceClient.publishEvent()
-```
-
-Therefore:
-
-```ts
-publishEvent()
-```
-
-accepts a complete signed `Event`.
-
-The Resource Client is not responsible for deciding which publisher must sign the Resource publication.
-
-That is part of the outbound Resource lifecycle.
-
-The signer configured on rx-nostr remains required because rx-nostr may independently need it for NIP-42 authentication.
-
-The signer implementation used with rx-nostr must respect already-complete signed events rather than replacing their publication identity.
-
----
-
-# Publication
-
-There is one Nostr write operation:
-
-```ts
-publishEvent()
-```
-
-Example:
-
-```ts
-const result =
-    await resourceClient.publishEvent(event);
-```
-
-The adapter sends the event to the applicable write relays and waits for the rx-nostr send operation to complete.
-
-The result preserves relay acknowledgements.
-
-Example:
-
-```ts
-{
-    eventId: event.id,
-
-    acknowledgements: [
-        {
-            relay: 'wss://relay-a.example.com/',
-            accepted: true
-        },
-        {
-            relay: 'wss://relay-b.example.com/',
-            accepted: false,
-            message: 'restricted'
-        }
-    ],
-
-    acceptedByAnyRelay: true
-}
-```
-
-A negative relay `OK` response is not a Resource Client transport error.
-
-It is a normal Nostr publication response.
-
-Therefore:
-
-```text
-relay responded OK=false
-```
-
-produces a normal `ResourcePublishResult`.
-
-It does not throw `ResourceClientError`.
-
-Higher Resource Publication behavior decides whether the result satisfies the publication requirement.
-
----
-
-# NIP-42 and Publication Acknowledgements
-
-NIP-42 may cause the same relay to return more than one acknowledgement during one logical send operation.
-
-For example:
-
-```text
-EVENT
-    ↓
-OK false: auth-required
-    ↓
-AUTH
-    ↓
-EVENT resent
-    ↓
-OK true
-```
-
-The Resource Client must normalize acknowledgements by relay.
-
-If a relay eventually accepts the event:
-
-```text
-accepted = true
-```
-
-for that relay.
-
-A prior authentication rejection must not cause the final publication result to remain rejected after the authenticated retry succeeds.
+This keeps transport independent from Resource Representation parsing.
 
 ---
 
 # Live Subscriptions
 
-`subscribe()` represents a different Nostr behavior from one-shot reads.
+Historical reads and live subscriptions use different rx-nostr request types.
 
-It is intended for future Resource synchronization and other operations that need newly arriving publications.
-
-Example:
-
-```ts
-const subscription = resourceClient.subscribe(
-    {
-        kinds: [37770],
-        authors: [publisher],
-        since: Math.floor(Date.now() / 1000)
-    },
-    (event) => {
-        // Feed the event into the Resource lifecycle.
-    }
-);
-```
-
-The subscription remains active.
-
-The caller later closes it:
-
-```ts
-subscription.close();
-```
-
----
-
-# Forward vs Backward Requests
-
-The implementation uses different rx-nostr request strategies intentionally.
+Live subscriptions use:
 
 ```text
-getEvent()
-getEvents()
-    ↓
-createRxBackwardReq()
-```
-
-These operations query historical stored events and finish.
-
-```text
-subscribe()
-    ↓
 createRxForwardReq()
 ```
 
-This operation listens for ongoing/future events.
+because they remain active until explicitly closed.
 
-This distinction belongs inside the adapter.
+The Resource Client exposes this as:
 
-Resource callers do not manipulate `RxReq` directly.
+```ts
+subscribe(
+    filters: Filter | readonly Filter[],
+    onEvent: (event: Event) => void,
+    options?: ResourceClientRequestOptions
+): ResourceSubscription;
+```
+
+The caller does not receive an RxJS `Subscription`.
+
+Instead it receives the narrow application contract:
+
+```ts
+export interface ResourceSubscription {
+    close(): void;
+}
+```
 
 ---
 
-# Closing Live Subscriptions
+# Subscription Lifecycle
 
-Calling:
+A Resource subscription remains active until:
 
 ```ts
 subscription.close();
 ```
 
-must unsubscribe the underlying RxJS subscription.
+`close()` is idempotent.
 
-rx-nostr then owns sending the applicable Nostr `CLOSE` message.
+Calling it more than once should not create additional behavior or errors.
 
-The implementation must not maintain a separate application-level registry of Nostr subscription IDs merely to close them.
+This simplifies ownership for callers that may dispose during:
+
+* component teardown,
+* application shutdown,
+* Resource workflow cancellation,
+* or replacement of one subscription with another.
 
 ---
 
-# Subscription Error Semantics
+# No Unbounded uniq() on Live Streams
 
-rx-nostr manages reconnection for active relay communication.
+The live subscription path intentionally does not place an unbounded `uniq()` operator over the infinite event stream.
 
-A temporary WebSocket disconnect is therefore not automatically a Resource synchronization failure.
+A long-lived uniqueness operator may retain event identifiers indefinitely.
 
-The first implementation does not expose rx-nostr connection-state events through the Resource Client subscription contract.
+That would make memory use grow with subscription lifetime.
 
-This is intentional.
+Bounded historical requests can safely use bounded deduplication behavior.
 
-Synchronization policy has not yet been specified in implementation detail.
+Infinite subscriptions should avoid operators that require unbounded historical memory unless a concrete use case requires them.
 
-If synchronization later requires an explicit terminal-connectivity callback, that requirement should extend the contract deliberately rather than exposing raw rx-nostr connection states now.
+---
 
-The Resource Client must not prematurely invent:
+# Publication
 
-```text
-onRetry
-onReconnect
-onSocketError
-onRelayDormant
-onCircuitOpen
+Publication accepts unsigned Nostr event parameters:
+
+```ts
+publishEvent(
+    event: EventParameters,
+    options?: ResourceClientRequestOptions
+): Promise<ResourcePublishResult>;
 ```
 
-as Resource-level concepts.
+The caller does **not** sign the event before passing it to Resource Client.
+
+Signing belongs to the signer configured into rx-nostr.
+
+---
+
+# Unsigned Publication Input
+
+A normal call resembles:
+
+```ts
+await resourceClient.publishEvent({
+    kind: 37770,
+    created_at: now(),
+    tags: [
+        [
+            'd',
+            'kjvonly/bible/chapters/kjv/1_1'
+        ]
+    ],
+    content: '...'
+});
+```
+
+The configured signer signs the event as part of the rx-nostr publication path.
+
+This avoids duplicated signing behavior across callers.
+
+---
+
+# Why ResourceClient Does Not Sign Manually
+
+rx-nostr supports a configured signer.
+
+The implementation uses that capability.
+
+The Resource Client should therefore not:
+
+1. call a signer manually,
+2. create a signed `Event`,
+3. then pass that signed event into a second publication mechanism.
+
+Instead:
+
+```text
+EventParameters
+    ↓
+RxNostr.send()
+    ↓
+configured EventSigner
+    ↓
+signed Event
+    ↓
+relay publication
+```
+
+One signing path avoids ambiguity about:
+
+* who owns the public key,
+* which signer instance is active,
+* and whether NIP-42 authentication can use the same signing capability.
+
+---
+
+# Publication Result
+
+Publication returns a normalized application result:
+
+```ts
+export interface ResourcePublishResult {
+    eventId: string;
+    acknowledgements: readonly ResourcePublishAcknowledgement[];
+    acceptedByAnyRelay: boolean;
+}
+```
+
+Each relay result is represented as:
+
+```ts
+export interface ResourcePublishAcknowledgement {
+    relay: string;
+    accepted: boolean;
+    message?: string;
+}
+```
+
+This preserves relay-level information while still giving callers the common question:
+
+```text
+Was the publication accepted by at least one relay?
+```
+
+through:
+
+```ts
+acceptedByAnyRelay
+```
+
+---
+
+# Publication Acknowledgement Normalization
+
+rx-nostr may emit acknowledgement information as relay publication progresses.
+
+The Resource Client normalizes these into one final acknowledgement per relay.
+
+A `Map` keyed by relay is used to retain the final state for each relay before constructing the returned result.
+
+The higher application does not need to understand rx-nostr send packet progression.
+
+---
+
+# Writable Relay Requirement
+
+Publication requires at least one writable relay.
+
+The Resource Client checks the applicable relay selection before publishing.
+
+A caller should not receive a successful-looking publication result when no writable destination exists.
+
+---
+
+# Signing Architecture
+
+Signing is implemented by:
+
+```text
+src/lib/infrastructure/nostr/nostr-signer.ts
+```
+
+`NostrSigner` implements the rx-nostr `EventSigner` contract directly.
+
+The signer is long-lived.
+
+It is created once by the Application Composition Root and supplied to the Resource Client infrastructure.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    App["Application Composition Root"]
+    Signer["NostrSigner"]
+    Client["ResourceClient"]
+    Rx["rx-nostr"]
+
+    App --> Signer
+    App --> Client
+    Signer --> Rx
+    Client --> Rx
+```
+
+---
+
+# One Long-Lived Signer
+
+The signer exists even when the user is not currently authenticated for publication.
+
+This is important because public Resource reads do not require rebuilding the Resource Client when login state changes.
+
+Instead:
+
+```text
+application starts
+    ↓
+create long-lived NostrSigner
+    ↓
+create long-lived ResourceClient
+    ↓
+public reads work
+    ↓
+user logs in
+    ↓
+configure same NostrSigner
+    ↓
+publication/authentication become available
+```
+
+The Resource Client does not need to be reconstructed because the user's signing mode changes.
+
+---
+
+# Supported Signing Modes
+
+The current design supports signing mechanics required for:
+
+* local secret key / nsec signing,
+* NIP-07 browser-extension signing,
+* and NIP-46 remote signing.
+
+These modes share one `EventSigner` boundary presented to rx-nostr.
+
+The Resource Client does not branch on login type.
+
+---
+
+# Signer Ownership Boundary
+
+The signer owns:
+
+* active signing mechanics,
+* public-key access required by `EventSigner`,
+* local signing-key use,
+* NIP-07 signing delegation,
+* NIP-46 signer connection mechanics,
+* and signer cleanup.
+
+The signer does not own:
+
+* login UI,
+* persistence of the user's selected login method,
+* localStorage session restoration,
+* obtaining `window.nostr`,
+* persisted NIP-46 client-secret ownership,
+* persisted bunker details,
+* or presentation of NIP-46 authorization URLs.
+
+Those are application/login responsibilities.
+
+---
+
+# NIP-07 Boundary
+
+The application accesses the browser's NIP-07 provider, such as `window.nostr`, and passes that provider into the signer.
+
+The signer does not discover login state by reaching into browser globals on its own.
+
+---
+
+# NIP-46 Boundary
+
+For NIP-46, the application owns persisted session information such as:
+
+* bunker connection details,
+* client secret material required to restore the session,
+* and authorization-flow presentation.
+
+The signer owns the active remote-signing mechanics.
+
+On disposal, the active NIP-46 signer/connection is closed.
+
+---
+
+# Secret-Key Cleanup
+
+When a local secret key is owned by the signer, disposal clears the key material held by the signer.
+
+This prevents the long-lived signer from intentionally retaining disposed key bytes.
+
+---
+
+# Encryption Is Not ResourceClient Signing
+
+The Nostr signer used by Resource Client is deliberately limited to event-signing behavior required by rx-nostr.
+
+NIP-04 or NIP-44 payload encryption is not a Resource Client responsibility.
+
+Resource content encryption belongs to the Resource content/lifecycle implementation because it concerns Resource payload interpretation rather than Nostr event publication mechanics.
+
+---
+
+# NIP-42 Authentication
+
+The Resource Client configures rx-nostr with:
+
+```ts
+authenticator: 'auto'
+```
+
+and provides the same configured signer used for publication.
+
+This allows rx-nostr to handle NIP-42 relay authentication challenges.
+
+Conceptually:
+
+```text
+relay AUTH challenge
+    ↓
+rx-nostr authenticator
+    ↓
+configured NostrSigner
+    ↓
+signed AUTH event
+    ↓
+relay
+```
+
+The application does not implement a parallel AUTH challenge state machine inside Resource Client.
+
+---
+
+# Event Verification
+
+Incoming Nostr events are cryptographically verified.
+
+Verification is integrated using:
+
+```text
+@rx-nostr/crypto
+```
+
+with a browser Web Worker.
+
+The implementation uses:
+
+```text
+src/lib/infrastructure/nostr/
+    verification.worker.ts
+    verification-client.ts
+```
+
+---
+
+# Verification Worker Host
+
+The worker host is intentionally tiny.
+
+```ts
+import {
+    startVerificationServiceHost
+} from '@rx-nostr/crypto';
+
+startVerificationServiceHost();
+```
+
+The worker hosts the verification service supplied by the library.
+
+KJVOnly does not implement its own signature-verification protocol inside the worker.
+
+---
+
+# Browser Verification Client
+
+The browser creates a real Worker and passes it to the library verification client.
+
+```ts
+import {
+    createVerificationServiceClient,
+    type VerificationServiceClient
+} from '@rx-nostr/crypto';
+
+const VERIFICATION_REQUEST_TIMEOUT_MS = 10_000;
+
+export function createBrowserVerificationClient(): VerificationServiceClient {
+    const worker = new Worker(
+        new URL(
+            './verification.worker.ts',
+            import.meta.url
+        ),
+        {
+            type: 'module'
+        }
+    );
+
+    return createVerificationServiceClient({
+        worker,
+        timeout: VERIFICATION_REQUEST_TIMEOUT_MS
+    });
+}
+```
+
+The browser Worker is therefore part of the actual production verification path.
+
+---
+
+# Verification Fallback
+
+The verification library provides a main-thread verifier fallback while the worker:
+
+* boots,
+* is unavailable,
+* or encounters an error.
+
+The application intentionally relies on this library behavior.
+
+Startup does **not** wait for the verification worker to reach an `active` state before allowing the Resource Client to operate.
+
+This prevents worker startup from becoming an unnecessary application-readiness gate.
+
+---
+
+# Verification Client Lifecycle
+
+The verification client is started during Resource Client composition.
+
+When the Resource Client is disposed, the verification client is also disposed.
+
+Disposal terminates the worker.
+
+This lifecycle is owned by the composed Resource Client infrastructure rather than arbitrary Resource callers.
+
+---
+
+# Resource Client Composition
+
+The infrastructure composition creates:
+
+1. the verification client,
+2. the rx-nostr instance,
+3. the Resource Client adapter,
+4. and the disposal relationship between them.
+
+Conceptually:
+
+```ts
+export function createResourceClient(
+    verificationClient: VerificationServiceClient,
+    signer: EventSigner,
+    rxNostrFactory: RxNostrFactory = createRxNostr
+): ResourceClient {
+    verificationClient.start();
+
+    const rxNostr = rxNostrFactory({
+        verifier: verificationClient.verifier,
+        signer,
+        authenticator: 'auto',
+        connectionStrategy: 'lazy-keep',
+        eoseTimeout: NOSTR_TIMEOUT_MS,
+        okTimeout: NOSTR_TIMEOUT_MS,
+        authTimeout: NOSTR_TIMEOUT_MS,
+        retry: {
+            strategy: 'exponential',
+            maxCount: 5,
+            initialDelay: 1_000,
+            polite: true
+        }
+    });
+
+    return new RxNostrResourceClient(
+        rxNostr,
+        () => verificationClient.dispose()
+    );
+}
+```
+
+Browser composition then becomes:
+
+```ts
+export function createBrowserResourceClient(
+    signer: EventSigner
+): ResourceClient {
+    const verificationClient =
+        createBrowserVerificationClient();
+
+    return createResourceClient(
+        verificationClient,
+        signer
+    );
+}
+```
+
+---
+
+# Connection Strategy
+
+The Resource Client configures rx-nostr using:
+
+```text
+lazy-keep
+```
+
+KJVOnly does not maintain an independent WebSocket pool alongside rx-nostr.
+
+That would duplicate connection ownership.
+
+---
+
+# Retry Strategy
+
+The configured retry behavior uses rx-nostr's exponential retry support.
+
+Current configuration:
+
+```text
+strategy      = exponential
+maxCount      = 5
+initialDelay  = 1000 ms
+polite        = true
+```
+
+The Resource Client does not contain an additional application retry loop around every rx-nostr operation.
+
+Duplicated retry layers would make failure timing and connection behavior difficult to reason about.
+
+---
+
+# Timeouts
+
+The rx-nostr instance is configured with operation timeouts for:
+
+* EOSE,
+* relay OK responses,
+* and authentication.
+
+These timeouts belong to Nostr infrastructure configuration.
+
+Callers receive Resource Client operation results rather than managing rx-nostr timers themselves.
 
 ---
 
 # Error Model
 
-The Resource Client intentionally exposes a small error model.
+The Resource Client distinguishes normal Nostr absence from transport unavailability.
 
-The primary infrastructure error is:
-
-```ts
-ResourceClientError
-```
-
-It means:
-
-> The requested Resource Client operation could not be meaningfully completed because usable Nostr relay communication was unavailable.
-
-Example:
-
-```ts
-try {
-    const event =
-        await resourceClient.getEvent(filter);
-} catch (error) {
-    if (error instanceof ResourceClientError) {
-        // Infrastructure unavailable.
-    }
-
-    throw error;
-}
-```
-
----
-
-# Absence Is Not Failure
-
-For singular reads:
-
-```ts
-Event
-```
-
-means a matching event was available.
-
-```ts
-null
-```
-
-means the bounded request completed without a matching event.
+The central infrastructure error is:
 
 ```ts
 ResourceClientError
 ```
 
-means the client could not meaningfully complete the operation because relay infrastructure was unavailable.
+It preserves:
 
-These cases must remain distinct.
+* the Resource Client operation,
+* the applicable relays,
+* and the underlying cause.
 
 ---
 
-# Empty Collection Is Not Failure
+# Error Semantics by Operation
 
-Likewise:
+## getEvent
 
-```ts
-[]
+```text
+event exists
+    → Event
+
+event does not exist
+    → null
+
+operation unavailable
+    → ResourceClientError
+```
+
+## getEvents
+
+```text
+events exist
+    → Event[]
+
+no events
+    → []
+
+operation unavailable
+    → ResourceClientError
+```
+
+## publishEvent
+
+```text
+publication completes
+    → ResourcePublishResult
+
+publication cannot be performed
+    → ResourceClientError
+```
+
+Normal subscription closure is not an error.
+
+---
+
+# Why Absence Is Not an Error
+
+Resource Discovery frequently asks relays for Resources that may not exist.
+
+Treating that as infrastructure failure would make callers unable to distinguish:
+
+```text
+The publisher has not published this Resource
 ```
 
 from:
 
-```ts
-getEvents()
-```
-
-means the query completed without matching events.
-
-It is not automatically an infrastructure error.
-
----
-
-# Partial Relay Failure
-
-Multiple relays may participate in one operation.
-
-One relay failing does not invalidate successful results from another relay.
-
-For example:
-
 ```text
-Relay A
-    → unavailable
-
-Relay B
-    → returns valid Event
+The relay could not be reached
 ```
 
-must still allow the operation to return that Event.
-
-The Resource Client throws only when the operation cannot be meaningfully satisfied by the available relay set.
-
-It must not add another aggressive retry loop above rx-nostr.
-
-rx-nostr already owns:
-
-* reconnect behavior,
-* retry scheduling,
-* WebSocket restoration,
-* and REQ concurrency handling.
+The Resource Client preserves this distinction explicitly.
 
 ---
 
-# rx-nostr Error Behavior
+# Composition Root Ownership
 
-A significant rx-nostr implementation detail is that the Observable returned by:
-
-```ts
-rxNostr.use()
-```
-
-does not directly throw multiplexed WebSocket connection errors.
-
-Those errors are available through rx-nostr's connection/error observables and relay state.
-
-Therefore the adapter must not assume this is sufficient:
-
-```ts
-rxNostr.use(req).subscribe({
-    error(error) {
-        // This is not the normal connection-error path.
-    }
-});
-```
-
-For bounded requests, the adapter determines whether the operation had usable relay participation after the request completes.
-
-If every targeted relay is in a terminal unavailable state, it throws:
-
-```ts
-ResourceClientError
-```
-
-Otherwise successful or empty results are returned.
-
----
-
-# Terminal Relay States
-
-For Resource Client availability purposes, these rx-nostr states are terminal for the current operation:
-
-```text
-error
-rejected
-terminated
-```
-
-The following are not treated as terminal application failures:
-
-```text
-initialized
-connecting
-connected
-waiting-for-retrying
-retrying
-dormant
-```
-
-rx-nostr may still establish or restore communication in those states.
-
-The Resource Client does not expose these states directly to Resource lifecycle code.
-
----
-
-# RxNostrResourceClient
-
-## File
-
-```text
-src/lib/infrastructure/nostr/rx-nostr-resource-client.ts
-```
-
-## Implementation
-
-```ts
-import {
-    createRxBackwardReq,
-    createRxForwardReq,
-    type RxNostr
-} from 'rx-nostr';
-
-import type {
-    Event,
-    Filter
-} from 'nostr-typedef';
-
-import type {
-    ResourceClient,
-    ResourceClientOperation,
-    ResourceClientRequestOptions,
-    ResourcePublishAcknowledgement,
-    ResourcePublishResult,
-    ResourceRelay,
-    ResourceSubscription
-} from '$lib/resource/nostr/resource-client';
-
-import {
-    ResourceClientError
-} from '$lib/resource/nostr/resource-client';
-
-const TERMINAL_CONNECTION_STATES =
-    new Set([
-        'error',
-        'rejected',
-        'terminated'
-    ] as const);
-
-export class RxNostrResourceClient
-    implements ResourceClient {
-
-    private readonly relayErrors =
-        new Map<string, unknown>();
-
-    private readonly errorSubscription;
-
-    constructor(
-        private readonly rxNostr: RxNostr
-    ) {
-        this.errorSubscription =
-            this.rxNostr
-                .createAllErrorObservable()
-                .subscribe(({ from, reason }) => {
-                    this.relayErrors.set(
-                        from,
-                        reason
-                    );
-                });
-    }
-
-    setDefaultRelays(
-        relays: readonly ResourceRelay[]
-    ): void {
-        this.rxNostr.setDefaultRelays(
-            relays.map((relay) => ({
-                url: relay.url,
-                read: relay.read,
-                write: relay.write
-            }))
-        );
-    }
-
-    async getEvent(
-        filter: Filter,
-        options?: ResourceClientRequestOptions
-    ): Promise<Event | null> {
-        const events =
-            await this.queryPast(
-                [
-                    {
-                        ...filter,
-                        limit: 1
-                    }
-                ],
-                'getEvent',
-                options
-            );
-
-        return events[0] ?? null;
-    }
-
-    async getEvents(
-        filters: Filter | readonly Filter[],
-        options?: ResourceClientRequestOptions
-    ): Promise<readonly Event[]> {
-        return this.queryPast(
-            normalizeFilters(filters),
-            'getEvents',
-            options
-        );
-    }
-
-    async publishEvent(
-        event: Event,
-        options?: ResourceClientRequestOptions
-    ): Promise<ResourcePublishResult> {
-        const relays =
-            this.getWriteRelays(options);
-
-        this.assertRelaysConfigured(
-            'publishEvent',
-            relays
-        );
-
-        return new Promise(
-            (resolve, reject) => {
-                const acknowledgements =
-                    new Map<
-                        string,
-                        ResourcePublishAcknowledgement
-                    >();
-
-                let observable;
-
-                try {
-                    observable =
-                        options?.relays !== undefined
-                            ? this.rxNostr.send(
-                                event,
-                                {
-                                    on: {
-                                        relays: [
-                                            ...options.relays
-                                        ],
-                                        defaultWriteRelays: false
-                                    }
-                                }
-                            )
-                            : this.rxNostr.send(event);
-                } catch (cause) {
-                    reject(
-                        new ResourceClientError(
-                            'publishEvent',
-                            relays,
-                            cause
-                        )
-                    );
-
-                    return;
-                }
-
-                observable.subscribe({
-                    next: (packet) => {
-                        const previous =
-                            acknowledgements.get(
-                                packet.from
-                            );
-
-                        acknowledgements.set(
-                            packet.from,
-                            {
-                                relay: packet.from,
-
-                                // Once a relay accepts the event,
-                                // a previous auth-required response
-                                // must not make it rejected again.
-                                accepted:
-                                    previous?.accepted === true ||
-                                    packet.ok,
-
-                                message:
-                                    packet.notice ??
-                                    previous?.message
-                            }
-                        );
-                    },
-
-                    complete: () => {
-                        const result =
-                            [
-                                ...acknowledgements.values()
-                            ];
-
-                        if (
-                            result.length === 0 &&
-                            this.allRelaysTerminal(
-                                relays
-                            )
-                        ) {
-                            reject(
-                                this.unavailableError(
-                                    'publishEvent',
-                                    relays
-                                )
-                            );
-
-                            return;
-                        }
-
-                        resolve({
-                            eventId: event.id,
-
-                            acknowledgements:
-                                result,
-
-                            acceptedByAnyRelay:
-                                result.some(
-                                    ({ accepted }) =>
-                                        accepted
-                                )
-                        });
-                    },
-
-                    error: (cause) => {
-                        reject(
-                            new ResourceClientError(
-                                'publishEvent',
-                                relays,
-                                cause
-                            )
-                        );
-                    }
-                });
-            }
-        );
-    }
-
-    subscribe(
-        filters: Filter | readonly Filter[],
-        onEvent: (event: Event) => void,
-        options?: ResourceClientRequestOptions
-    ): ResourceSubscription {
-        const relays =
-            this.getReadRelays(options);
-
-        this.assertRelaysConfigured(
-            'subscribe',
-            relays
-        );
-
-        const request =
-            createRxForwardReq();
-
-        const subscription =
-            this.rxNostr
-                .use(request)
-                .subscribe(({ event }) => {
-                    onEvent(event);
-                });
-
-        try {
-            emitRequest(
-                request,
-                normalizeFilters(filters),
-                options
-            );
-        } catch (cause) {
-            subscription.unsubscribe();
-
-            throw new ResourceClientError(
-                'subscribe',
-                relays,
-                cause
-            );
-        }
-
-        let closed = false;
-
-        return {
-            close(): void {
-                if (closed) {
-                    return;
-                }
-
-                closed = true;
-                subscription.unsubscribe();
-            }
-        };
-    }
-
-    dispose(): void {
-        this.errorSubscription.unsubscribe();
-        this.rxNostr.dispose();
-    }
-
-    private async queryPast(
-        filters: readonly Filter[],
-        operation:
-            | 'getEvent'
-            | 'getEvents',
-        options?: ResourceClientRequestOptions
-    ): Promise<readonly Event[]> {
-        const relays =
-            this.getReadRelays(options);
-
-        this.assertRelaysConfigured(
-            operation,
-            relays
-        );
-
-        return new Promise(
-            (resolve, reject) => {
-                const events =
-                    new Map<string, Event>();
-
-                const request =
-                    createRxBackwardReq();
-
-                const subscription =
-                    this.rxNostr
-                        .use(request)
-                        .subscribe({
-                            next: ({ event }) => {
-                                events.set(
-                                    event.id,
-                                    event
-                                );
-                            },
-
-                            complete: () => {
-                                const result =
-                                    orderNostrEvents(
-                                        events.values()
-                                    );
-
-                                if (
-                                    result.length === 0 &&
-                                    this.allRelaysTerminal(
-                                        relays
-                                    )
-                                ) {
-                                    reject(
-                                        this.unavailableError(
-                                            operation,
-                                            relays
-                                        )
-                                    );
-
-                                    return;
-                                }
-
-                                resolve(result);
-                            },
-
-                            // rx-nostr's REQ Observable is not
-                            // the normal transport-error channel,
-                            // but retain this defensively.
-                            error: (cause) => {
-                                reject(
-                                    new ResourceClientError(
-                                        operation,
-                                        relays,
-                                        cause
-                                    )
-                                );
-                            }
-                        });
-
-                try {
-                    emitRequest(
-                        request,
-                        filters,
-                        options
-                    );
-
-                    request.over();
-                } catch (cause) {
-                    subscription.unsubscribe();
-
-                    reject(
-                        new ResourceClientError(
-                            operation,
-                            relays,
-                            cause
-                        )
-                    );
-                }
-            }
-        );
-    }
-
-    private getReadRelays(
-        options?: ResourceClientRequestOptions
-    ): string[] {
-        if (options?.relays !== undefined) {
-            return [...options.relays];
-        }
-
-        return Object
-            .values(
-                this.rxNostr.getDefaultRelays()
-            )
-            .filter(({ read }) => read)
-            .map(({ url }) => url);
-    }
-
-    private getWriteRelays(
-        options?: ResourceClientRequestOptions
-    ): string[] {
-        if (options?.relays !== undefined) {
-            return [...options.relays];
-        }
-
-        return Object
-            .values(
-                this.rxNostr.getDefaultRelays()
-            )
-            .filter(({ write }) => write)
-            .map(({ url }) => url);
-    }
-
-    private assertRelaysConfigured(
-        operation: ResourceClientOperation,
-        relays: readonly string[]
-    ): void {
-        if (relays.length > 0) {
-            return;
-        }
-
-        throw new ResourceClientError(
-            operation,
-            relays,
-            new Error(
-                'No applicable Nostr relays are configured.'
-            )
-        );
-    }
-
-    private allRelaysTerminal(
-        relays: readonly string[]
-    ): boolean {
-        if (relays.length === 0) {
-            return true;
-        }
-
-        return relays.every((relay) => {
-            const state =
-                this.rxNostr
-                    .getRelayStatus(relay)
-                    ?.connection;
-
-            return (
-                state === undefined ||
-                TERMINAL_CONNECTION_STATES.has(
-                    state as
-                        | 'error'
-                        | 'rejected'
-                        | 'terminated'
-                )
-            );
-        });
-    }
-
-    private unavailableError(
-        operation: ResourceClientOperation,
-        relays: readonly string[]
-    ): ResourceClientError {
-        const causes =
-            relays
-                .map((relay) =>
-                    this.relayErrors.get(relay)
-                )
-                .filter(
-                    (cause) =>
-                        cause !== undefined
-                );
-
-        return new ResourceClientError(
-            operation,
-            relays,
-            causes.length === 1
-                ? causes[0]
-                : causes
-        );
-    }
-}
-
-function normalizeFilters(
-    filters: Filter | readonly Filter[]
-): Filter[] {
-    return Array.isArray(filters)
-        ? [...filters]
-        : [filters];
-}
-
-function emitRequest(
-    request:
-        ReturnType<
-            typeof createRxBackwardReq
-        > |
-        ReturnType<
-            typeof createRxForwardReq
-        >,
-    filters: readonly Filter[],
-    options?: ResourceClientRequestOptions
-): void {
-    if (options?.relays !== undefined) {
-        request.emit(
-            [...filters],
-            {
-                relays: [...options.relays]
-            }
-        );
-
-        return;
-    }
-
-    request.emit([...filters]);
-}
-
-/**
- * Deduplicates identical signed events and returns
- * them in NIP-01 newest-first ordering.
- *
- * For equal created_at values the lexically lower
- * event id sorts first.
- */
-export function orderNostrEvents(
-    events: Iterable<Event>
-): Event[] {
-    const unique =
-        new Map<string, Event>();
-
-    for (const event of events) {
-        unique.set(
-            event.id,
-            event
-        );
-    }
-
-    return [
-        ...unique.values()
-    ].sort(compareNostrEvents);
-}
-
-function compareNostrEvents(
-    left: Event,
-    right: Event
-): number {
-    if (
-        left.created_at !==
-        right.created_at
-    ) {
-        return (
-            right.created_at -
-            left.created_at
-        );
-    }
-
-    return left.id.localeCompare(
-        right.id
-    );
-}
-```
-
----
-
-# Notes on the Core Implementation
-
-The implementation intentionally does not create a general-purpose relay service.
-
-There is no class responsible for:
-
-```text
-decode Resource payload
-load IndexedDB
-construct Bible filters
-publish Domain state
-show toast
-manage Outbox
-perform synchronization
-```
-
-`RxNostrResourceClient` does one thing:
-
-> Translate the small Resource Client contract into rx-nostr communication.
-
----
-
-# rx-nostr Construction
-
-The `RxNostrResourceClient` receives an existing `RxNostr` instance.
-
-This is deliberate.
-
-```ts
-new RxNostrResourceClient(rxNostr)
-```
-
-The adapter does not decide:
-
-* which signer to use,
-* which verifier implementation to use,
-* initial relay configuration,
-* connection strategy,
-* or authentication configuration.
-
-Those are composition concerns.
-
-This also makes execution-context behavior explicit.
-
-The main application may construct one client.
-
-A Web Worker may construct another.
-
-Neither changes the Resource lifecycle contract.
-
----
-
-# Production Composition
-
-## File
-
-```text
-src/lib/infrastructure/nostr/create-rx-nostr-resource-client.ts
-```
-
-## Implementation
-
-```ts
-import {
-    createRxNostr,
-    type EventSigner
-} from 'rx-nostr';
-
-import {
-    verifier
-} from '@rx-nostr/crypto';
-
-import type {
-    ResourceClient,
-    ResourceRelay
-} from '$lib/resource/nostr/resource-client';
-
-import {
-    RxNostrResourceClient
-} from './rx-nostr-resource-client';
-
-export interface CreateResourceClientOptions {
-    readonly relays:
-        readonly ResourceRelay[];
-
-    readonly signer:
-        EventSigner;
-}
-
-export function createRxNostrResourceClient(
-    options: CreateResourceClientOptions
-): ResourceClient {
-    const rxNostr =
-        createRxNostr({
-            verifier,
-
-            signer:
-                options.signer,
-
-            authenticator:
-                'auto',
-
-            connectionStrategy:
-                'lazy-keep',
-
-            eoseTimeout:
-                5_000,
-
-            okTimeout:
-                5_000
-        });
-
-    const client =
-        new RxNostrResourceClient(
-            rxNostr
-        );
-
-    client.setDefaultRelays(
-        options.relays
-    );
-
-    return client;
-}
-```
-
-The exact timeout values are implementation configuration and may be adjusted from operational experience.
-
-They are not architectural constants.
-
----
-
-# Why `lazy-keep`
-
-The initial production configuration uses:
-
-```ts
-connectionStrategy: 'lazy-keep'
-```
-
-This gives KJVOnly useful behavior for an application that performs intermittent Resource operations throughout its lifetime.
-
-The relay connection is not created merely because the application starts.
-
-It is created when communication is actually needed.
-
-Once a default relay has been used, the connection may remain available for later Resource operations.
-
-This avoids both extremes:
-
-```text
-connect eagerly to every relay at startup
-```
-
-and:
-
-```text
-create and destroy a WebSocket for every Resource lookup
-```
-
-The Resource Client contract does not depend on this strategy.
-
-The configuration can change without modifying Resource lifecycle code.
-
----
-
-# Retry and Reconnection
-
-The Resource Client does not implement its own retry loop.
-
-Do not write:
-
-```ts
-for (let attempt = 0; attempt < 5; attempt++) {
-    try {
-        return await query();
-    } catch {
-        await sleep(...);
-    }
-}
-```
-
-around rx-nostr.
-
-rx-nostr already owns WebSocket reconnection and restoration of active communication.
-
-Duplicating retry behavior above it would create:
-
-* competing backoff policies,
-* unnecessary relay load,
-* harder error semantics,
-* and more difficult testing.
-
-The Resource Client converts terminal unavailability into:
-
-```ts
-ResourceClientError
-```
-
-and otherwise lets rx-nostr perform its normal connection behavior.
-
----
-
-# REQ Concurrency and Relay Limits
-
-The Resource Client does not implement its own semaphore for Nostr subscriptions.
-
-rx-nostr reads applicable relay limitations and queues REQ operations to avoid exceeding relay concurrency limits.
-
-Therefore multiple Resource operations may safely share one long-lived `RxNostr` instance.
+Long-lived Nostr infrastructure is created by the Application Composition Root.
 
 Conceptually:
 
 ```text
-Resource operation A ─┐
-Resource operation B ─┼─→ ResourceClient
-Resource operation C ─┘        ↓
-                             rx-nostr
-                                ↓
-                     shared relay connection
+Application
+    │
+    ├── NostrSigner
+    │
+    └── ResourceClient
 ```
 
-The application should not create a new `RxNostr` instance for each Resource request.
+Dependencies are created at the application boundary and pushed downward.
+
+The new Resource implementation does not depend on file-level singleton construction.
 
 ---
 
-# Client Lifetime
+# ResourceClient and Application Startup
 
-Within one JavaScript execution context, the normal ownership model is:
+The Resource Client can exist before the user is authenticated.
 
-```text
-Application Runtime
-        ↓
-one long-lived ResourceClient
-        ↓
-one long-lived RxNostr
-        ↓
-relay connection pool
-```
+This allows startup to establish public Resource-read capability without requiring a user login.
 
-The client is disposed only when that execution context no longer needs Nostr communication.
+Authentication may later configure the same long-lived signer.
 
-For example:
-
-```ts
-resourceClient.dispose();
-```
-
-This closes the underlying rx-nostr resources.
+The application does not need to rebuild the Resource graph when login state changes.
 
 ---
 
-# Background Execution
+# Dependency Direction
 
-Running Resource behavior in the background does not change architectural ownership.
+```mermaid
+flowchart TD
 
-A foreground operation and a background operation use the same Resource lifecycle:
+    Application["Application Composition Root"]
+    Resource["Resource Services"]
+    Contract["ResourceClient Contract"]
+    Infrastructure["RxNostrResourceClient"]
+    Rx["rx-nostr"]
+    Crypto["@rx-nostr/crypto"]
+    Browser["Browser APIs"]
+
+    Application --> Resource
+    Resource --> Contract
+    Infrastructure --> Contract
+    Infrastructure --> Rx
+    Infrastructure --> Crypto
+    Crypto --> Browser
+```
+
+Higher Resource code knows the contract.
+
+Infrastructure knows the library.
+
+The Domain does not know rx-nostr or browser WebSocket mechanics.
+
+---
+
+# Resource Discovery Boundary
+
+Resource Client is deliberately below Resource Discovery.
+
+Resource Client accepts Nostr filters.
+
+Resource Discovery is responsible for constructing Resource-specific queries such as:
 
 ```text
-Resource lifecycle
+kind
+publisher
+d tag
+```
+
+Conceptually:
+
+```text
+PublishedResourceReference
+        ↓
+ResourceDiscovery
+        ↓
+Nostr Filter
+        ↓
+ResourceClient
+        ↓
+rx-nostr
+```
+
+This prevents the Resource Client from becoming coupled to one Resource Identifier convention.
+
+---
+
+# Raw Events Stop Above ResourceClient
+
+Although Resource Client returns raw Nostr `Event` values, those events should not continue leaking upward through the application.
+
+Resource Discovery converts a discovered Nostr event into the application's Resource Representation model.
+
+The intended flow is:
+
+```text
+relay
+    ↓
+ResourceClient
+    ↓
+Nostr Event
+    ↓
+ResourceDiscovery / Event Model
+    ↓
+ResourceRepresentation
+```
+
+Domain code should never receive raw relay events.
+
+---
+
+# ResourceClient Is Not Resource Resolution
+
+Resource Client retrieves Nostr events.
+
+It does not resolve Resource content.
+
+```text
+ResourceClient
+    ↓
+Nostr Event
+
+ResourceDiscovery
+    ↓
+ResourceRepresentation
+
+ResourceResolver
+    ↓
+VerifiedResourceContent
+```
+
+This distinction matters because a Resource Representation may point to content stored outside Nostr, such as Blossom.
+
+---
+
+# ResourceClient Is Not Content Decoding
+
+The Resource Client does not inspect media types and does not:
+
+* parse JSON,
+* decompress gzip,
+* decode hex,
+* decrypt Resource payloads,
+* or validate Domain schemas.
+
+Those behaviors belong to later Resource lifecycle stages.
+
+---
+
+# ResourceClient Is Not Persistence
+
+No Resource Client method writes:
+
+* IndexedDB,
+* Domain stores,
+* installation records,
+* or application state.
+
+Network retrieval does not imply local installation.
+
+Publication does not imply local persistence.
+
+---
+
+# Browser Integration
+
+The Resource Client depends on browser capabilities that cannot be fully proven by Node-only unit tests.
+
+Important production behavior includes:
+
+* real Web Workers,
+* real browser WebSockets,
+* rx-nostr browser behavior,
+* verification-worker startup,
+* actual event signing,
+* and real relay interaction.
+
+The implementation therefore includes browser integration tests using Vitest Browser Mode with Playwright and Chromium.
+
+---
+
+# Browser Test Configuration
+
+The browser tests use a dedicated configuration rather than the normal application Vite configuration.
+
+The test setup includes:
+
+```text
+vitest
+@vitest/browser-playwright
+playwright
+Chromium
+```
+
+The tests live under:
+
+```text
+client/tests/browser/
+```
+
+with:
+
+```text
+vitest.browser.config.ts
+```
+
+This prevents unrelated application HTTPS or HMR configuration from interfering with local relay integration tests.
+
+---
+
+# Browser Test Scripts
+
+```json
+{
+    "test:browser":
+        "vitest --config vitest.browser.config.ts --run",
+
+    "test:browser:watch":
+        "vitest --config vitest.browser.config.ts --browser.headless=false"
+}
+```
+
+---
+
+# Browser API Smoke Test
+
+A browser smoke test proves that tests are actually executing with the required browser APIs.
+
+A passing Node test would not prove:
+
+* browser Worker behavior,
+* browser WebSocket behavior,
+* or browser module-worker loading.
+
+---
+
+# Verification Worker Integration Test
+
+The verification-worker test uses the real worker implementation.
+
+It verifies:
+
+* worker startup,
+* successful event verification,
+* and rejection of tampered event data.
+
+The production Worker is not replaced with a fake.
+
+---
+
+# Local Relay Integration Test
+
+The Resource Client integration test connects to the real local relay over WebSocket.
+
+Default development relay:
+
+```text
+ws://127.0.0.1:3334
+```
+
+The integration test uses:
+
+* a real `NostrSigner`,
+* a fresh secret key,
+* the browser Resource Client,
+* a real WebSocket connection,
+* real publication,
+* and a real bounded query.
+
+---
+
+# Temporary Integration-Test Kind
+
+The Resource Client relay test uses a temporary Nostr kind:
+
+```text
+30001
+```
+
+This is intentionally separate from application Resource semantics.
+
+The test proves transport behavior rather than Resource Identity behavior.
+
+---
+
+# Local Relay Test Flow
+
+```mermaid
+flowchart TD
+
+    Key["Fresh Secret Key"]
+    Signer["NostrSigner"]
+    Client["Browser ResourceClient"]
+    Publish["Publish Temporary Event"]
+    Relay["Local Relay"]
+    Query["Query Exact Event"]
+    Missing["Query Missing Identity"]
+
+    Key --> Signer
+    Signer --> Client
+    Client --> Publish
+    Publish --> Relay
+    Relay --> Query
+    Query --> Client
+    Client --> Missing
+```
+
+The test proves that:
+
+1. publication is accepted,
+2. the returned publication has an event ID,
+3. the exact event can be read back,
+4. the returned event has the expected author,
+5. the returned event has the expected kind,
+6. the returned event has the expected content,
+7. the expected `d` tag is preserved,
+8. and querying a missing identity returns `null`.
+
+This is a full browser-to-relay proof of the Resource Client transport path.
+
+---
+
+# Unreachable Relay Integration Test
+
+Error semantics are also tested using an unreachable local relay address such as:
+
+```text
+ws://127.0.0.1:65534
+```
+
+The purpose is to distinguish:
+
+```text
+no matching event
+```
+
+from:
+
+```text
+relay unavailable
+```
+
+The latter surfaces as `ResourceClientError`.
+
+---
+
+# Testing Strategy
+
+The Resource Client uses multiple test levels because different responsibilities require different proof.
+
+## Unit Tests
+
+Unit tests are appropriate for:
+
+* relay-selection logic,
+* acknowledgement normalization,
+* error translation,
+* subscription-close idempotence,
+* and signer state transitions where external browser behavior is not required.
+
+## Browser Integration Tests
+
+Browser integration tests are required for:
+
+* real Worker loading,
+* verification service behavior,
+* real WebSockets,
+* rx-nostr browser integration,
+* real event signing,
+* publication,
+* and relay reads.
+
+These tests intentionally exercise the actual browser stack.
+
+---
+
+# Test Philosophy
+
+Tests should prove architectural behavior rather than duplicate rx-nostr's own unit tests.
+
+KJVOnly does not need tests proving that rx-nostr itself:
+
+* parses WebSocket frames,
+* implements Observable correctly,
+* computes Nostr signatures correctly,
+* or implements its documented retry algorithm.
+
+KJVOnly should test:
+
+* that Resource Client uses the library correctly,
+* that its contract semantics are preserved,
+* that browser composition works,
+* and that a real relay round trip succeeds.
+
+---
+
+# Thin Adapter Testing
+
+A thin adapter should have thin tests.
+
+For example, a Resource Client test should care that:
+
+```text
+getEvent()
+```
+
+returns:
+
+```text
+Event | null
+```
+
+with the correct error distinction.
+
+It should not assert private implementation details such as:
+
+* the number of internal RxJS subscriptions,
+* private helper invocation order,
+* or rx-nostr's internal connection state transitions.
+
+---
+
+# Source Organization
+
+```text
+src/lib/
+
+    resource/
+        nostr/
+            resource-client.ts
+
+    infrastructure/
+        nostr/
+            resource-client.ts
+            nostr-signer.ts
+            verification-client.ts
+            verification.worker.ts
+
+    application/
+        runtime/
+            application.ts
+            application-context.ts
+
+tests/
+    browser/
+        browser-smoke.test.ts
+        verification-worker.test.ts
+        resource-client-relay.test.ts
+        smoke.worker.js
+
+vitest.browser.config.ts
+```
+
+The exact surrounding repository organization may continue evolving, but these ownership boundaries should remain.
+
+---
+
+# Important Types
+
+## ResourceRelay
+
+Represents application relay configuration.
+
+## ResourceClientRequestOptions
+
+Allows one operation to override the default relay selection.
+
+## ResourceSubscription
+
+Provides lifecycle control without exposing RxJS.
+
+## ResourcePublishAcknowledgement
+
+Represents the final normalized result from one relay.
+
+## ResourcePublishResult
+
+Represents the final application publication result.
+
+## ResourceClientError
+
+Represents inability to perform a Resource Client transport operation while preserving operation and relay context.
+
+---
+
+# Full Read Flow
+
+```mermaid
+flowchart TD
+
+    Caller["Resource Discovery"]
+    Client["ResourceClient.getEvent"]
+    Req["createRxOneshotReq"]
+    Rx["RxNostr.use"]
+    Operators["uniq / latest"]
+    Verify["VerificationServiceClient"]
+    Relay["Nostr Relays"]
+    Result["Event or null"]
+
+    Caller --> Client
+    Client --> Req
+    Req --> Rx
+    Rx --> Relay
+    Relay --> Verify
+    Verify --> Operators
+    Operators --> Result
+```
+
+The exact operator pipeline is an infrastructure detail.
+
+The stable behavior is:
+
+```text
+Filter → Event | null
+```
+
+with explicit infrastructure failure.
+
+---
+
+# Full Publication Flow
+
+```mermaid
+flowchart TD
+
+    Caller["Resource Publication"]
+    Parameters["EventParameters"]
+    Client["ResourceClient.publishEvent"]
+    Rx["RxNostr.send"]
+    Signer["NostrSigner"]
+    Auth["NIP-42 when required"]
+    Relays["Writable Relays"]
+    Ack["Relay Acknowledgements"]
+    Result["ResourcePublishResult"]
+
+    Caller --> Parameters
+    Parameters --> Client
+    Client --> Rx
+    Signer --> Rx
+    Rx --> Auth
+    Auth --> Relays
+    Relays --> Ack
+    Ack --> Result
+```
+
+The caller never manually signs the event before entering Resource Client.
+
+---
+
+# Verification Flow
+
+```mermaid
+flowchart TD
+
+    Relay["Relay Event"]
+    Rx["rx-nostr"]
+    Verifier["VerificationServiceClient.verifier"]
+    Worker["Verification Worker"]
+    Fallback["Main-thread Fallback"]
+    Valid["Verified Event"]
+
+    Relay --> Rx
+    Rx --> Verifier
+    Verifier --> Worker
+    Verifier --> Fallback
+    Worker --> Valid
+    Fallback --> Valid
+```
+
+Worker optimization does not change verification ownership or semantics.
+
+---
+
+# Login and ResourceClient Independence
+
+The Resource Client and login system are intentionally related but separate.
+
+The Resource Client requires an `EventSigner`.
+
+The application owns login state.
+
+```text
+login persistence
+    ≠
+signer mechanics
+
+signer mechanics
+    ≠
+Resource Client
+
+Resource Client
+    ≠
+Resource Discovery
+```
+
+Keeping these separate prevents authentication, networking, and Resource behavior from collapsing into one service.
+
+---
+
+# Why No DI Framework Is Required
+
+The application uses a Composition Root rather than a dependency-injection framework.
+
+Long-lived services are created explicitly.
+
+```text
+Application
+    creates NostrSigner
+    creates ResourceClient
+    exposes ResourceClient through ApplicationContext
+```
+
+No service locator, reflection system, or DI container is required.
+
+---
+
+# Disposal
+
+The Resource Client owns the lifecycle of resources created specifically for its infrastructure.
+
+Disposal releases:
+
+* Resource Client infrastructure,
+* verification client resources,
+* and the verification Worker.
+
+Subscription-specific resources are closed through `ResourceSubscription.close()`.
+
+The signer has its own application-owned lifecycle.
+
+---
+
+# Failure Isolation
+
+A Resource Client failure is a transport failure.
+
+It should not automatically:
+
+* delete local Domain data,
+* mark a Resource invalid,
+* modify installed state,
+* or block unrelated local application behavior.
+
+Higher application layers decide how a failed remote operation affects user-visible behavior.
+
+---
+
+# Resource Client and Local-First Behavior
+
+The Resource Client is network-facing.
+
+It is not the local-first data-access abstraction.
+
+A later application data-access layer may choose:
+
+```text
+local store first
+    ↓
+Resource workflow on miss or refresh
+```
+
+but that behavior must not be implemented inside Resource Client.
+
+---
+
+# Migration From Older Nostr Code
+
+The older application Nostr implementation remains useful as evidence of required behavior, but it is not the architectural contract for the new Resource implementation.
+
+Older files directly combined responsibilities such as:
+
+```text
+feature-specific filter construction
+relay querying
+JSON parsing
+local caching
+Domain storage
+signing
+```
+
+The new implementation separates those concerns.
+
+For example, a Bible chapter path should ultimately become:
+
+```text
+Bible Domain
+    ↓
+Resource Integration
+    ↓
+Resource Discovery
     ↓
 ResourceClient
     ↓
 Nostr
 ```
 
-There is no:
+rather than:
 
 ```text
-BackgroundResourceClient
-ForegroundResourceClient
-WorkerResourceClient
+Bible API
+    ↓
+raw relay service
+    ↓
+JSON.parse
+    ↓
+cache
 ```
 
-architectural distinction.
+The migration is evolutionary.
 
 ---
 
-# Separate Worker Contexts
+# Design Constraints
 
-A Web Worker is a separate JavaScript execution context.
+## Nostr Remains First-Class
 
-It cannot directly share the main thread's in-memory `RxNostr` instance.
+Do not replace Nostr types with generic transport types merely for abstraction purity.
 
-If a background task runs inside a dedicated worker, the simplest implementation is:
+## rx-nostr Remains the Nostr Engine
+
+Do not duplicate library behavior without a concrete reason.
+
+## Domains Never Import rx-nostr
+
+Domain code should receive Domain values through higher Resource/Application boundaries.
+
+## Raw Nostr Events Do Not Become Domain Objects
+
+An event is network publication data.
+
+It must pass through later Resource stages before accepted Domain state exists.
+
+## Signing Is Centralized
+
+Callers provide `EventParameters`.
+
+The configured signer signs through rx-nostr.
+
+## Verification Is Centralized
+
+Incoming events use the configured verification service.
+
+Feature code does not perform its own signature verification.
+
+## Authentication Uses the Same Signer
+
+NIP-42 authentication and publication share the configured signing capability.
+
+## Browser Behavior Is Tested in a Browser
+
+Workers and WebSockets must not be considered proven by Node-only mocks.
+
+---
+
+# Anti-Patterns
+
+## Reimplementing Relay Pools
 
 ```text
-Worker
-    ↓
-create RxNostr
-    ↓
-create RxNostrResourceClient
-    ↓
-run Resource lifecycle
+ResourceClient
+    owns rx-nostr
+    AND
+    owns a separate relay pool
 ```
 
-That worker uses the same:
+This creates competing connection ownership.
+
+## Manual Latest-Event Sorting Everywhere
+
+If rx-nostr already provides an operator expressing the desired event semantics, use it rather than repeatedly implementing custom sorting.
+
+## Signing in Every Caller
+
+Do not make every caller manually sign before publication.
+
+## Parsing Resource Content in ResourceClient
+
+Do not do:
 
 ```ts
-ResourceClient
+return JSON.parse(event.content);
 ```
 
-contract.
+Resource Client returns Nostr events.
 
-Only composition differs.
+Content decoding belongs later.
+
+## Domain-Specific Methods
+
+Avoid methods such as:
+
+```text
+getBibleChapter()
+getReadingPlan()
+getStrongs()
+```
+
+inside Resource Client.
+
+Those belong above the transport boundary.
+
+## Catch-and-Return-Null for Network Failure
+
+Transport unavailability must remain distinguishable from normal event absence.
 
 ---
 
-# Relay Connection Limits Across Workers
+# Extension Points
 
-Separate workers may therefore establish separate WebSocket connections to the same relay.
+The current Resource Client contract is intentionally small but supports future Resource behavior without becoming a framework.
 
-This should not be optimized prematurely.
+Potential higher-level features include:
 
-The initial rule is:
+* Resource classification discovery,
+* publisher catalog discovery,
+* descriptor-driven Resource graphs,
+* background Resource subscriptions,
+* publication through the Outbox,
+* and synchronization.
 
-> Use one Resource Client per execution context, not one Resource Client per operation.
+These features should compose **above** Resource Client.
 
-If operational evidence later shows that browser-level relay connection limits make multiple worker clients undesirable, Nostr communication can be centralized behind a worker/message boundary.
-
-For example:
-
-```text
-Main Thread ───────┐
-                   │
-Background Worker ─┼─→ Network Worker
-                   │       ↓
-Other Worker ──────┘   ResourceClient
-                           ↓
-                        rx-nostr
-```
-
-That is an infrastructure optimization.
-
-The Resource lifecycle does not change because it already depends on the `ResourceClient` contract.
+They should not expand Resource Client into a complete Resource lifecycle manager.
 
 ---
 
-# Resource Lifecycle Integration
+# Relationship to Resource Content Work
 
-The Resource Client participates only in lifecycle stages requiring Nostr relay communication.
-
-For inbound Resources:
-
-```text
-Resource Discovery
-        ↓
-construct Nostr Filter
-        ↓
-ResourceClient
-        ↓
-Nostr Event
-        ↓
-Resource Representation validation
-        ↓
-Resource Resolution
-        ↓
-serialized Resource content
-```
-
-The Resource Client stops at:
-
-```text
-Nostr Event
-```
-
-It does not continue into representation processing.
-
----
-
-# `content` Representation
-
-For a Resource whose representation is:
-
-```text
-content
-```
-
-the downstream flow is:
-
-```text
-ResourceClient
-    ↓
-Nostr Event
-    ↓
-Resource Representation
-    ↓
-event.content
-    ↓
-Resource Resolution
-```
-
-The Resource Client does not decode the content.
-
----
-
-# `descriptor` Representation
-
-For a Resource whose representation is:
-
-```text
-descriptor
-```
-
-the flow is:
+The Resource content implementation developed after Resource Client begins several layers above it.
 
 ```text
 ResourceClient
     ↓
-Nostr Event
+ResourceDiscovery
     ↓
-Resource Representation
+ResourceRepresentation
     ↓
-descriptor
-    ↓
-Resource Resolution
-    ↓
-external content retrieval
-```
-
-The Resource Client does **not** fetch the descriptor target.
-
-That behavior belongs downstream in Resource Resolution and its applicable infrastructure.
-
-This distinction prevents the Resource Client from becoming a general network service.
-
----
-
-# Nostr Resource References
-
-A descriptor is different from a reference to another Nostr Resource.
-
-If Resource Discovery follows another Nostr Resource reference, Discovery may make another:
-
-```ts
-resourceClient.getEvent(...)
-```
-
-or:
-
-```ts
-resourceClient.getEvents(...)
-```
-
-call.
-
-The Resource Client itself does not recursively follow references.
-
----
-
-# Bible Chapter Example
-
-A Bible chapter provides the first concrete Resource Client use case.
-
-Assume the application needs:
-
-```text
-KJV
-John 3
-```
-
-and the canonical chapter Resource Identifier is:
-
-```text
-kjvonly/bible/chapters/kjv/43_3
-```
-
-Resource Discovery knows:
-
-```text
-kind
-publisher
-resource identifier
-```
-
-and constructs:
-
-```ts
-import type {
-    Event,
-    Filter
-} from 'nostr-typedef';
-
-async function discoverBibleChapterEvent(
-    resourceClient: ResourceClient,
-    publisher: string
-): Promise<Event | null> {
-    const filter: Filter = {
-        kinds: [37770],
-
-        authors: [
-            publisher
-        ],
-
-        '#d': [
-            'kjvonly/bible/chapters/kjv/43_3'
-        ]
-    };
-
-    return resourceClient.getEvent(
-        filter
-    );
-}
-```
-
-The Resource Client does not know that:
-
-```text
-43 = John
-3 = chapter 3
-kjv = Bible version
-```
-
-It also does not know that kind `37770` represents a Resources.
-
-Those meanings belong above the Resource Client.
-
----
-
-# Complete Bible Network Segment
-
-The Resource Client's portion of the first vertical slice is:
-
-```text
-Chapter Resource Access
-        ↓
-Resource Discovery
-        ↓
-construct:
-    kind = 37770
-    publisher = KJVOnly publisher
-    d = kjvonly/bible/chapters/kjv/43_3
-        ↓
-ResourceClient.getEvent(filter)
-        ↓
-RxNostrResourceClient
-        ↓
-createRxBackwardReq()
-        ↓
-rx-nostr
-        ↓
-configured read relay(s)
-        ↓
-NIP-42 if required
-        ↓
-verified Nostr event(s)
-        ↓
-EOSE
-        ↓
-request completes
-        ↓
-current Event | null
-        ↓
-Resource Discovery
-        ↓
-Resource Representation
-        ↓
-Resource Resolution
-```
-
-Everything below the returned Nostr Event is outside the Resource Client.
-
----
-
-# Dependency Injection
-
-Resource lifecycle services receive a `ResourceClient`.
-
-For example:
-
-```ts
-export class ResourceDiscovery {
-    constructor(
-        private readonly resourceClient:
-            ResourceClient
-    ) {}
-}
-```
-
-They do not instantiate:
-
-```ts
-new RxNostrResourceClient(...)
-```
-
-and they do not import:
-
-```ts
-rx-nostr
-```
-
-The application composition root supplies the production implementation.
-
----
-
-# Testing Boundary
-
-The main testing advantage of `ResourceClient` is not that rx-nostr itself becomes heavily mocked.
-
-It is that every Resource behavior above the client can be tested without:
-
-* a WebSocket,
-* a relay,
-* rx-nostr,
-* RxJS,
-* NIP-42,
-* or browser networking.
-
-For example, Resource Discovery tests can use:
-
-```ts
-const client: ResourceClient = {
-    setDefaultRelays() {},
-
-    async getEvent() {
-        return event;
-    },
-
-    async getEvents() {
-        return [];
-    },
-
-    async publishEvent(event) {
-        return {
-            eventId: event.id,
-            acknowledgements: [],
-            acceptedByAnyRelay: false
-        };
-    },
-
-    subscribe() {
-        return {
-            close() {}
-        };
-    },
-
-    dispose() {}
-};
-```
-
-The production adapter itself is infrastructure and should receive focused adapter/integration testing.
-
----
-
-# Pure Ordering Tests
-
-The Resource Client does not implement its own Nostr event ordering or deduplication algorithm.
-
-rx-nostr already provides operators for these behaviors, including:
-
-```ts
-uniq()
-```
-
-for removing the same signed event received from multiple relays, and:
-
-```ts
-latestEach(...)
-```
-
-for selecting the latest event for a logical replaceable or addressable identity.
-
-The Resource Client should compose these rx-nostr operators where the query semantics require them rather than duplicating Nostr ordering behavior in application code.
-
-For example, a bounded query for one addressable Resource may conceptually use:
-
-```ts
-rxNostr
-	.use(request)
-	.pipe(
-		uniq(),
-		latestEach(() => 'resource')
-	);
-```
-
-Because the request identifies one logical Resource, all returned candidate publications belong to the same result group and `latestEach()` can select the current publication.
-
-A plural query is different.
-
-For example:
-
-```ts
-rxNostr
-	.use(request)
-	.pipe(
-		uniq()
-	);
-```
-
-may be sufficient when the caller intentionally requested multiple distinct events.
-
-`latestEach()` must not be applied universally to `getEvents()`. The grouping key depends on the semantics of the query. Some Resource Discovery operations may need several distinct Resources, while others may need the latest publication for each Resource identity.
-
-The Resource Client therefore relies on rx-nostr for the mechanics of Nostr event deduplication and latest-event selection instead of introducing utilities such as:
-
-```text
-compareNostrEvents()
-orderNostrEvents()
-selectCurrentNostrEvent()
-```
-
-These would duplicate behavior already owned by the Nostr client library.
-
-## Testing Strategy
-
-There is no value in reproducing rx-nostr's own unit tests inside KJVOnly.
-
-KJVOnly tests should instead verify the behavior of the `ResourceClient` contract.
-
-For example, adapter tests should establish that:
-
-```text
-same event returned by multiple relays
-    ↓
-ResourceClient returns it once
-```
-
-and:
-
-```text
-multiple publications for one requested addressable Resource
-    ↓
-ResourceClient.getEvent()
-    ↓
-returns the current publication
-```
-
-while:
-
-```text
-multiple distinct events requested by getEvents()
-    ↓
-distinct events remain present
-```
-
-These tests validate that `RxNostrResourceClient` composes rx-nostr correctly without testing the internal implementation of `uniq()` or `latestEach()`.
-
-The distinction is important:
-
-> **KJVOnly tests the Resource Client contract. rx-nostr tests Nostr stream ordering and deduplication mechanics.**
-
-If future Resource behavior requires ordering or selection semantics that rx-nostr does not provide, that behavior should be introduced and unit tested explicitly at that time rather than preemptively duplicating protocol behavior.
-
-
-# Resource Client Contract Tests
-
-Resource-level tests should verify the contract rather than rx-nostr internals.
-
-Important behaviors include:
-
-```text
-getEvent()
-    returns Event when found
-
-getEvent()
-    returns null when absent
-
-getEvents()
-    returns multiple events
-
-getEvent()/getEvents()
-    throw ResourceClientError when no usable relay exists
-
-publishEvent()
-    reports per-relay acceptance
-
-publishEvent()
-    considers a relay accepted after an auth retry succeeds
-
-subscribe()
-    returns a closeable handle
-
-ResourceSubscription.close()
-    is idempotent
-```
-
-These may be implemented with a small rx-nostr test harness or a local test relay.
-
-Tests should not assert private RxJS operator composition.
-
----
-
-# Integration Testing
-
-The production adapter should eventually have integration tests against a controlled Nostr relay.
-
-Useful cases include:
-
-```text
-read existing event
-
-read missing event
-
-read addressable event
-
-same event returned from two relays
-
-different addressable publications returned by two relays
-
-NIP-42 authenticated read
-
-successful publication
-
-rejected publication
-
-NIP-42 authenticated publication
-
-relay unavailable
-
-default relay replacement
-
-temporary relay request
-
-live subscription + close
-```
-
-These tests validate the infrastructure boundary rather than Domain or Resource meaning.
-
----
-
-# What Should Not Be Mocked
-
-Pure Resource logic above the client should use a fake `ResourceClient`.
-
-It should not mock:
-
-```text
-WebSocket
-RxJS
-createRxBackwardReq
-createRxForwardReq
-NIP-42 packets
-rx-nostr internal connection state
-```
-
-That would couple Resource tests to infrastructure implementation details.
-
----
-
-# What the Adapter May Rely on From rx-nostr
-
-The implementation deliberately delegates these mechanics to rx-nostr:
-
-* one relay connection serving multiple requests,
-* relay connection reuse,
-* lazy connection establishment,
-* reconnection,
-* exponential retry behavior,
-* restoration of active REQs after reconnection,
-* NIP-11 REQ concurrency handling,
-* event signature verification,
-* filter validation,
-* temporary relay communication,
-* default relay reconfiguration,
-* NIP-42 authentication,
-* EVENT retransmission after successful AUTH,
-* and Nostr CLOSE behavior.
-
-The adapter should not reproduce these mechanisms.
-
----
-
-# Future Extension Rules
-
-The Resource Client interface may grow when a concrete Resource lifecycle requirement requires it.
-
-Possible future needs include:
-
-```text
-relay diagnostics
-explicit connection health
-COUNT requests
-more advanced live-subscription restart behavior
-```
-
-They should not be added merely because rx-nostr supports them.
-
-The interface should continue to expose only operations that the KJVOnly Resource lifecycle actually requires.
-
----
-
-# Explicit Non-Goals
-
-The Resource Client must not become:
-
-```text
-BibleResourceClient
-DomainRepository
-OfflineApi
 ResourceResolver
-ResourceInstaller
-Outbox
-SynchronizationManager
-HTTP client
-Blossom client
-generic network client
+    ↓
+VerifiedResourceContent
+    ↓
+ResourceContentDecoder
 ```
 
-It does not know Domain meaning.
+The Resource Client document intentionally stops at the first arrow.
 
-It does not know local persistence.
+This keeps the Nostr infrastructure specification independent from:
 
-It does not resolve external Resource content.
+* representation types,
+* descriptor retrieval,
+* media types,
+* gzip,
+* hex,
+* JSON,
+* and Domain interpretation.
 
-It does not decide local authority.
-
-It does not decide whether a Resource should be installed.
-
-It does not decide synchronization conflicts.
-
-It does not determine Resource publication identity.
-
-It communicates with Nostr relays.
+Those belong in the Resource lifecycle/content implementation document.
 
 ---
 
-# Implementation Summary
+# Current Implementation Summary
 
-The Resource Client establishes one narrow boundary:
+The current implementation establishes the following behavior:
 
-```text
-Resource lifecycle
-        ↓
-ResourceClient
-        ↓
-RxNostrResourceClient
-        ↓
-rx-nostr
-        ↓
-Nostr relays
-```
+* `ResourceClient` is the Nostr-facing Resource transport contract.
+* rx-nostr is the underlying Nostr engine.
+* bounded reads use rx-nostr one-shot requests.
+* live reads use rx-nostr forward requests.
+* bounded result semantics rely on rx-nostr operators instead of custom protocol logic.
+* normal absence is distinct from network failure.
+* publication accepts unsigned `EventParameters`.
+* signing is performed by the configured rx-nostr signer.
+* publication results preserve relay acknowledgements.
+* NIP-42 authentication uses rx-nostr automatic authentication.
+* `NostrSigner` supports the application's signing mechanisms through one long-lived signer.
+* login/session persistence remains outside the signer.
+* event verification is delegated to `@rx-nostr/crypto`.
+* verification uses a real browser Worker with main-thread fallback.
+* Resource Client startup does not wait for the worker to become active.
+* Resource Client disposal disposes verification infrastructure.
+* long-lived infrastructure is created by the Application Composition Root.
+* real browser integration tests prove Workers, WebSockets, signing, publication, verification, and relay reads.
+* Resource Client remains below Resource Discovery and all Domain behavior.
 
-Its complete initial contract is:
+---
 
-```ts
-interface ResourceClient {
-    setDefaultRelays(
-        relays: readonly ResourceRelay[]
-    ): void;
+# Key Takeaways
 
-    getEvent(
-        filter: Filter,
-        options?: ResourceClientRequestOptions
-    ): Promise<Event | null>;
+The Resource Client is intentionally small.
 
-    getEvents(
-        filters: Filter | readonly Filter[],
-        options?: ResourceClientRequestOptions
-    ): Promise<readonly Event[]>;
+It gives KJVOnly a stable Nostr boundary without turning the application into a second Nostr library.
 
-    publishEvent(
-        event: Event,
-        options?: ResourceClientRequestOptions
-    ): Promise<ResourcePublishResult>;
+Its most important implementation rule is:
 
-    subscribe(
-        filters: Filter | readonly Filter[],
-        onEvent: (event: Event) => void,
-        options?: ResourceClientRequestOptions
-    ): ResourceSubscription;
+> Adapt rx-nostr; do not recreate rx-nostr.
 
-    dispose(): void;
-}
-```
+The Resource Client owns the application-facing shape of Nostr operations.
 
-The client is intentionally Nostr-aware and Domain-agnostic.
+rx-nostr owns protocol and connection mechanics.
 
-rx-nostr remains entirely below the interface.
+The signer owns signing mechanics.
 
-Bounded historical queries hide the REQ/EOSE/CLOSE lifecycle behind promises.
+The verification service owns cryptographic event verification.
 
-Live subscriptions expose only a closeable handle.
+The Application Composition Root owns construction and lifecycle.
 
-Default relays may be replaced dynamically.
+Resource Discovery and the later Resource lifecycle own Resource meaning.
 
-Individual operations may target temporary relays.
-
-NIP-42 is handled through rx-nostr and the configured signer.
-
-Protocol-level event verification occurs before events leave Nostr infrastructure.
-
-Publication accepts an already-signed Nostr Resource event and reports relay acknowledgements.
-
-Background execution does not change the Resource lifecycle or the client contract.
-
-Within an execution context, one long-lived Resource Client should serve many Resource operations.
-
-The resulting boundary is small enough to understand directly, broad enough to support the known Resource lifecycle, and narrow enough that rx-nostr can be replaced or upgraded without changing Domain or Resource behavior.
+This separation provides a clean foundation for the rest of the Resource implementation while keeping Nostr first-class and infrastructure details out of Domain code.
