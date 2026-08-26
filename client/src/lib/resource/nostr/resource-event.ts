@@ -8,6 +8,10 @@ import {
 	type ResourceRepresentationType
 } from '$lib/resource/models/resource.model';
 
+import {
+	extractResourceType
+} from '$lib/resource/utils/resource-identifier';
+
 const RESOURCE_REPRESENTATIONS:
 	readonly ResourceRepresentationType[] = [
 		'content',
@@ -116,29 +120,6 @@ function requireTag(
 	}
 
 	return value;
-}
-
-function extractResourceType(
-	resourceId: string
-): string {
-	const segments =
-		resourceId.split('/');
-
-	if (
-		segments.length <
-		3
-	) {
-		throw new Error(
-			`Invalid Resource Identifier: ${resourceId}`
-		);
-	}
-
-	return segments
-		.slice(
-			0,
-			3
-		)
-		.join('/');
 }
 
 function isResourceRepresentationType(
