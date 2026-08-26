@@ -1,7 +1,11 @@
 import uuid4 from 'uuid4';
 import IndexedDB from '$lib/infrastructure/persistence/idb.db';
 
-const DB_VERSION = 15;
+const DB_VERSION = 16;
+
+
+export const RESOURCE_INSTALLATIONS =
+	'resource_installations';
 
 export const enum STORES {
   CHAPTERS,
@@ -20,7 +24,11 @@ export const enum STORES {
   SUBSCRIPTIONS,
   UNSYNCED_SUBSCRIPTIONS,
   READINGS,
-  UNSYNCED_READINGS
+  UNSYNCED_READINGS,
+
+
+  // NOSTR IMPLE
+  RESOURCE_INSTALLATIONS
 }
 
 export const DB_NAME = 'bible';
