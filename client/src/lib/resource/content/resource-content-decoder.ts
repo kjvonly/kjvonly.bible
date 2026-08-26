@@ -39,8 +39,8 @@ export class ResourceContentDecoder {
 			eventId:
 				resource.eventId,
 
-			createdAt:
-				resource.createdAt,
+			modifiedAt:
+				resource.modifiedAt,
 
 			mediaType:
 				resource.mediaType,

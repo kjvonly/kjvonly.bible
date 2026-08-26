@@ -20,7 +20,7 @@ export interface ResourceRepresentation {
 
 	eventId: string;
 
-	createdAt: number;
+	modifiedAt: number;
 
 	representation:
 		ResourceRepresentationType;
@@ -44,7 +44,7 @@ export interface VerifiedResourceContent {
 
 	readonly eventId: string;
 
-	readonly createdAt: number;
+	readonly modifiedAt: number;
 
 	readonly mediaType: string;
 
@@ -60,7 +60,7 @@ export interface DecodedResourceContent {
 
 	readonly eventId: string;
 
-	readonly createdAt: number;
+	readonly modifiedAt: number;
 
 	readonly mediaType: string;
 

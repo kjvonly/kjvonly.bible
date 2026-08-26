@@ -162,7 +162,7 @@ describe(
 					eventId:
 						EVENT_ID,
 
-					createdAt:
+					modifiedAt:
 						123456,
 
 					representation:

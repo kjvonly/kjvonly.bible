@@ -86,7 +86,7 @@ export function toResourceRepresentation(
 		eventId:
 			event.id,
 
-		createdAt:
+		modifiedAt:
 			event.created_at,
 
 		representation:

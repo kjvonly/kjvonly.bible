@@ -101,7 +101,7 @@ describe(
 					eventId:
 						'b'.repeat(64),
 
-					createdAt:
+					modifiedAt:
 						123456,
 
 					mediaType:
@@ -174,7 +174,7 @@ function createVerifiedContent(
 		eventId:
 			'b'.repeat(64),
 
-		createdAt:
+		modifiedAt:
 			123456,
 
 		mediaType:
