@@ -1,19 +1,44 @@
-import { chapterApi } from '$lib/nostr/events/chapters.nostr';
 import {
-  jsonToChapter,
-  newChapter,
-  type Chapter
+	newChapter,
+	type Chapter
 } from '$lib/domains/bible/models/bible.model';
 
-class ChapterService {
-  async get(ref: string): Promise<Chapter> {
-    try {
-      let chapter = await chapterApi.getChapter(ref);
-      return jsonToChapter(chapter);
-    } catch (err: any) { }
+import type {
+	ChapterStore
+} from '$lib/domains/bible/persistence/chapter-store';
 
-    return newChapter();
-  }
+import {
+	bibleLocationReferenceService
+} from './bibleLocationReference.service';
+
+export class ChapterService {
+
+	constructor(
+		private readonly chapters:
+			ChapterStore
+	) {}
+
+	async get(
+		bibleVersionId: string,
+		bibleLocationRef: string
+	): Promise<Chapter> {
+		const chapterRef =
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					bibleLocationRef
+				);
+
+		const chapterId =
+			`${bibleVersionId}/${chapterRef}`;
+
+		const chapter =
+			await this.chapters.get(
+				chapterId
+			);
+
+		return (
+			chapter ??
+			newChapter()
+		);
+	}
 }
-
-export const chapterService = new ChapterService();

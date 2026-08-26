@@ -21,6 +21,7 @@ import type {
 import type { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
 import type { BibleChapterResourceHandler } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
 import type { BibleChapterResourceService } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-service';
+import type { ChapterService } from '$lib/domains/bible/services/chapter.service';
 
 export interface ApplicationContext {
     readonly nostrSigner:
@@ -43,6 +44,9 @@ export interface ApplicationContext {
 
     readonly bibleChapterResourceService:
 	BibleChapterResourceService;
+
+    readonly chapterService:
+	ChapterService;
 }
 
 const APPLICATION_CONTEXT =
