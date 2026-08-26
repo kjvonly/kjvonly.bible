@@ -23,7 +23,8 @@ PARALLEL="${PARALLEL:-10}"
 seed_relay() {
   # Numeric files are individual chapter files.
   # These are small enough to store directly as Nostr event content.
-  find "$DATA_DIR" -maxdepth 1 -type f -name '[0-9]*' -print0 |
+    find "$DATA_DIR" -maxdepth 1 -type f -name '[0-9]*' -print0 |
+    # find "$DATA_DIR" -maxdepth 1 -type f -name '1_2.json.gz' -print0 |
     xargs -0 -I {} -P "$PARALLEL" sh -c '
       file="$1"
       relay_url="$2"
@@ -34,8 +35,8 @@ seed_relay() {
       nak event \
         -c "$(cat "$file" | xxd -p -c 0)" \
         -k 37770 \
-        -d "kjvonly/bible/kjvs/$id" \
-        --tag "m=json.gz.hex" \
+        -d "kjvonly/bible/chapters/kjvs/$id" \
+        --tag "m=application/json+gz+hex" \
         "$relay_url"
     ' sh {} "$RELAY_URL"
 }
