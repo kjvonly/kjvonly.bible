@@ -27,8 +27,8 @@ export class IndexedDBBibleChapterInstallationTransaction
 	implements BibleChapterInstallationTransaction {
 
 	constructor(
-		private readonly db:
-			BibleDB
+		private readonly getDB:
+			() => Promise<BibleDB>
 	) {}
 
 	async run<TResult>(
@@ -38,7 +38,9 @@ export class IndexedDBBibleChapterInstallationTransaction
 					BibleChapterInstallationStores
 			) => Promise<TResult>
 	): Promise<TResult> {
-		return this.db.runReadWriteTransaction(
+        	const db =
+		await this.getDB();
+		return db.runReadWriteTransaction(
 			[
 				CHAPTERS,
 				BIBLE_VERSIONS,

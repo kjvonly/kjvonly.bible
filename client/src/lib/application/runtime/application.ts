@@ -37,6 +37,14 @@ import {
 import {
     HexResourceContentDecorator
 } from '$lib/resource/content/hex-resource-content-decorator';
+import { IndexedDBBibleChapterInstallationTransaction } from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
+import { BibleChapterInstaller } from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+import { BibleChapterInterpreter } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+import { BibleChapterResourceHandler } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
+import { BibleChapterValidator } from '$lib/domains/bible/resources/chapters/bible-chapter-validator';
+import { getBibleDB } from '$lib/domains/bible/persistence/bible.db';
+
+
 
 type ApplicationState =
     | 'created'
@@ -117,13 +125,30 @@ export class Application {
                 resourceContentDecoratorBuilder
             );
 
+        const bibleChapterInstallationTransaction =
+            new IndexedDBBibleChapterInstallationTransaction(
+                getBibleDB
+            );
+
+        const bibleChapterInstaller =
+            new BibleChapterInstaller(
+                bibleChapterInstallationTransaction
+            );
+
+        const bibleChapterResourceHandler =
+            new BibleChapterResourceHandler(
+                new BibleChapterInterpreter(),
+                new BibleChapterValidator(),
+                bibleChapterInstaller
+            );
         this.context = {
             nostrSigner,
             resourceClient,
             resourceDiscovery,
             resourceResolver,
             resourceContentDecoratorBuilder,
-            resourceContentDecoder
+            resourceContentDecoder,
+            bibleChapterResourceHandler
         };
     }
 
