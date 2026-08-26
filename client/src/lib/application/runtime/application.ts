@@ -25,9 +25,18 @@ import {
 import {
     ResourceResolver
 } from '$lib/resource/resolution/resource-resolver';
+
 import { ResourceContentDecoder } from '$lib/resource/content/resource-content-decoder';
 import { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
 import { JsonResourceContentDecorator } from '$lib/resource/content/json-resource-content-decorator';
+
+import {
+    GzipResourceContentDecorator
+} from '$lib/resource/content/gzip-resource-content-decorator';
+
+import {
+    HexResourceContentDecorator
+} from '$lib/resource/content/hex-resource-content-decorator';
 
 type ApplicationState =
     | 'created'
@@ -78,6 +87,26 @@ export class Application {
                     decorate:
                         (inner) =>
                             new JsonResourceContentDecorator(
+                                inner
+                            )
+                },
+                {
+                    token:
+                        'gzip',
+
+                    decorate:
+                        (inner) =>
+                            new GzipResourceContentDecorator(
+                                inner
+                            )
+                },
+                {
+                    token:
+                        'hex',
+
+                    decorate:
+                        (inner) =>
+                            new HexResourceContentDecorator(
                                 inner
                             )
                 }
