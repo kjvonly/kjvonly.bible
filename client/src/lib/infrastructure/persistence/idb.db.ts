@@ -1,6 +1,18 @@
 import { openDB } from 'idb';
 import type { IDBPDatabase } from 'idb';
 
+export interface IndexedDBTransaction {
+	getValue(
+		tableName: string,
+		id: string
+	): Promise<any>;
+
+	putValue(
+		tableName: string,
+		value: object
+	): Promise<any>;
+}
+
 /**
  * Base class for interfacing with indexedDB
  */
@@ -64,6 +76,98 @@ class IndexedDB {
 		} catch (error) {
 			console.log(error);
 			return false;
+		}
+	}
+
+	/**
+ * Runs work against multiple object stores in a single
+ * read/write transaction.
+ *
+ * The operation must only await IndexedDB work performed
+ * through the supplied transaction. Do not perform network,
+ * decoding, compression, or other asynchronous work inside
+ * this callback.
+ *
+ * If the operation throws, the transaction is aborted.
+ * The method does not return until the transaction commits.
+ */
+	public async runReadWriteTransaction<TResult>(
+		tableNames: string[],
+		operation:
+			(
+				transaction:
+					IndexedDBTransaction
+			) => Promise<TResult>
+	): Promise<TResult> {
+		if (!this.db) {
+			throw new Error(
+				'IndexedDB is not open.'
+			);
+		}
+
+		const tx =
+			this.db.transaction(
+				tableNames,
+				'readwrite'
+			);
+
+		const transaction:
+			IndexedDBTransaction = {
+			getValue:
+				async (
+					tableName,
+					id
+				) => {
+					const store =
+						tx.objectStore(
+							tableName
+						);
+
+					return await store.get(
+						id
+					);
+				},
+
+			putValue:
+				async (
+					tableName,
+					value
+				) => {
+					const store =
+						tx.objectStore(
+							tableName
+						);
+
+					return await store.put(
+						value
+					);
+				}
+		};
+
+		try {
+			const result =
+				await operation(
+					transaction
+				);
+
+			await tx.done;
+
+			return result;
+		} catch (error) {
+			try {
+				tx.abort();
+			} catch {
+				// Transaction may already
+				// have been aborted.
+			}
+
+			try {
+				await tx.done;
+			} catch {
+				// Preserve the original error.
+			}
+
+			throw error;
 		}
 	}
 
