@@ -18,7 +18,7 @@ export default defineConfig({
 
 	test: {
 		include: [
-			'tests/browser/**/*.test.ts'
+			'tests/browser/**/*.spec.ts'
 		],
 
 		browser: {
