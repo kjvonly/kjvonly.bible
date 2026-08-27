@@ -49,6 +49,8 @@ import { ChapterService } from '$lib/domains/bible/services/chapter.service';
 import { BibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
 import { IndexedDBBibleVersionCatalog } from '$lib/domains/bible/persistence/indexeddb-bible-version-catalog';
 import { VerseService } from '$lib/domains/bible/services/verse.service';
+import { BibleChapterResourceLoader } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-loader';
+import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 
 
 
@@ -161,11 +163,17 @@ export class Application {
                 getBibleDB
             );
 
-        const chapterService =
-            new ChapterService(
-                chapterStore
+        const chapterResourceLoader =
+            new BibleChapterResourceLoader(
+                bibleChapterResourceService
             );
 
+        const chapterService =
+            new ChapterService(
+                KJVONLY_PUBKEY,
+                chapterStore,
+                chapterResourceLoader
+            );
         const verseService =
             new VerseService(
                 chapterService
