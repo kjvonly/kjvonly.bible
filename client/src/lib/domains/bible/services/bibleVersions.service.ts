@@ -21,7 +21,7 @@ export class BibleVersionsService {
 
 		return [...versions].sort(
 			(a, b) =>
-				a.version.localeCompare(
+				a.id.localeCompare(
 					b.version
 				) ||
 				a.publisher.localeCompare(

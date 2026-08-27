@@ -19,7 +19,11 @@
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { searchService } from '$lib/domains/bible/services/search.service';
-	import { verseService } from '$lib/domains/bible/services/verse.service';
+
+	// NOSTR IMPL
+  import { useApplicationContext } from '$lib/application/runtime/application-context';
+	const { verseService } = useApplicationContext();
+
 
 	// =============================== BINDINGS ================================
 
@@ -126,7 +130,9 @@
 	async function searchResultIndexToSearchResult(
 		bibleLocationRef: string
 	): Promise<SearchResult | undefined> {
-		let verse = await verseService.get(`${bibleVersion}/${bibleLocationRef}`);
+		let verse = await verseService.get(
+			bibleVersion,
+			bibleLocationRef);
 		if (!verse) {
 			return;
 		}

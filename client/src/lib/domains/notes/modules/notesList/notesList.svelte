@@ -7,7 +7,6 @@
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { toastService } from '$lib/application/services/toast.service';
-	import { verseService } from '$lib/domains/bible/services/verse.service';
 
 	// OTHER
 	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
@@ -24,6 +23,12 @@
 	import Filter from '$lib/components/svgs/filter.svelte';
 	import ClearFilter from '$lib/components/svgs/clearFilter.svelte';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
+
+	// NOSTR IMPL
+    import { useApplicationContext } from '$lib/application/runtime/application-context';
+	const { verseService } = useApplicationContext();
+
+
 
 	// =============================== BINDINGS ================================
 
@@ -152,7 +157,7 @@
 				version: 0
 			};
 		} else {
-			let verse = await verseService.get(`${mode.bibleVersion}/${mode.bibleLocationRef}`);
+			let verse = await verseService.get(mode.bibleVersion,mode.bibleLocationRef);
 			let verseTextWithoutVerseNumber = verse.text.slice(
 				verse.text.indexOf(' ') + 1
 			);

@@ -30,9 +30,9 @@
 	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// NOSTR IMPL
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	const { bibleVersionsService } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
