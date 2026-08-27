@@ -9,6 +9,7 @@ import type {
 } from '$lib/domains/bible/models/bible.model';
 
 import {
+	createBibleVersionId,
 	createChapterId
 } from '$lib/domains/bible/utils/bible-identity';
 
@@ -22,14 +23,16 @@ describe(
 		it(
 			'returns an installed Chapter without loading a Resource',
 			async () => {
-				const publisher =
-					'publisher';
+				const bibleVersionId =
+					createBibleVersionId(
+						'publisher',
+						'kjvs'
+					);
 
 				const chapter =
 					createChapter(
 						createChapterId(
-							publisher,
-							'kjvs',
+							bibleVersionId,
 							'1_1'
 						)
 					);
@@ -44,14 +47,13 @@ describe(
 
 				const service =
 					new ChapterService(
-						publisher,
 						chapters,
 						loader
 					);
 
 				const result =
 					await service.get(
-						'kjvs',
+						bibleVersionId,
 						'1_1_3'
 					);
 
@@ -76,13 +78,15 @@ describe(
 		it(
 			'loads and rereads a Chapter on a local miss',
 			async () => {
-				const publisher =
-					'publisher';
+				const bibleVersionId =
+					createBibleVersionId(
+						'publisher',
+						'kjvs'
+					);
 
 				const chapterId =
 					createChapterId(
-						publisher,
-						'kjvs',
+						bibleVersionId,
 						'1_1'
 					);
 
@@ -108,14 +112,13 @@ describe(
 
 				const service =
 					new ChapterService(
-						publisher,
 						chapters,
 						loader
 					);
 
 				const result =
 					await service.get(
-						'kjvs',
+						bibleVersionId,
 						'1_1'
 					);
 
@@ -129,18 +132,17 @@ describe(
 					loader.calls
 				).toEqual([
 					{
-						publisher,
+						publisher:
+							'publisher',
+
 						version:
 							'kjvs',
+
 						chapterRef:
 							'1_1'
 					}
 				]);
 
-				/*
-				 * Initial local lookup +
-				 * post-installation reread.
-				 */
 				expect(
 					chapters.ids
 				).toEqual([
@@ -155,7 +157,6 @@ describe(
 			async () => {
 				const service =
 					new ChapterService(
-						'publisher',
 						new FakeChapterStore(),
 						new FakeChapterResourceLoader(
 							async () =>
@@ -165,11 +166,11 @@ describe(
 
 				await expect(
 					service.get(
-						'kjvs',
+						'publisher/kjvs',
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Bible Chapter Resource not found'
+					'Bible Chapter Resource not found: publisher/kjvs/1_1'
 				);
 			}
 		);
@@ -179,7 +180,6 @@ describe(
 			async () => {
 				const service =
 					new ChapterService(
-						'publisher',
 						new FakeChapterStore(),
 						new FakeChapterResourceLoader(
 							async () =>
@@ -189,7 +189,7 @@ describe(
 
 				await expect(
 					service.get(
-						'kjvs',
+						'publisher/kjvs',
 						'1_1'
 					)
 				).rejects.toThrow(
@@ -203,7 +203,6 @@ describe(
 			async () => {
 				const service =
 					new ChapterService(
-						'publisher',
 						new FakeChapterStore(),
 						new FakeChapterResourceLoader(
 							async () => {
@@ -216,11 +215,31 @@ describe(
 
 				await expect(
 					service.get(
-						'kjvs',
+						'publisher/kjvs',
 						'1_1'
 					)
 				).rejects.toThrow(
 					'resolution failed'
+				);
+			}
+		);
+
+		it(
+			'rejects a bare Bible version',
+			async () => {
+				const service =
+					new ChapterService(
+						new FakeChapterStore(),
+						new FakeChapterResourceLoader()
+					);
+
+				await expect(
+					service.get(
+						'kjvs',
+						'1_1'
+					)
+				).rejects.toThrow(
+					'Invalid Bible Version id'
 				);
 			}
 		);
@@ -306,6 +325,7 @@ class FakeChapterResourceLoader {
 		version: string,
 		chapterRef: string
 	): Promise<boolean> {
+
 		this.calls.push({
 			publisher,
 			version,
@@ -323,6 +343,7 @@ class FakeChapterResourceLoader {
 function createChapter(
 	id: string
 ): Chapter {
+
 	return {
 		id,
 

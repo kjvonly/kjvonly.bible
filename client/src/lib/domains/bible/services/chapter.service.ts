@@ -11,7 +11,8 @@ import type {
 } from './chapter-resource-loader';
 
 import {
-	createChapterId
+	createChapterId,
+	parseBibleVersionId
 } from '$lib/domains/bible/utils/bible-identity';
 
 import {
@@ -21,9 +22,6 @@ import {
 export class ChapterService {
 
 	constructor(
-		private readonly publisher:
-			string,
-
 		private readonly chapters:
 			Pick<
 				ChapterStore,
@@ -35,9 +33,18 @@ export class ChapterService {
 	) {}
 
 	async get(
-		version: string,
+		bibleVersionId: string,
 		bibleLocationRef: string
 	): Promise<Chapter> {
+
+		const {
+			publisher,
+			version
+		} =
+			parseBibleVersionId(
+				bibleVersionId
+			);
+
 		const chapterRef =
 			bibleLocationReferenceService
 				.extractBookIDChapter(
@@ -46,8 +53,7 @@ export class ChapterService {
 
 		const chapterId =
 			createChapterId(
-				this.publisher,
-				version,
+				bibleVersionId,
 				chapterRef
 			);
 
@@ -62,14 +68,14 @@ export class ChapterService {
 
 		const found =
 			await this.resourceLoader.load(
-				this.publisher,
+				publisher,
 				version,
 				chapterRef
 			);
 
 		if (!found) {
 			throw new Error(
-				`Bible Chapter Resource not found: ${this.publisher}/${version}/${chapterRef}`
+				`Bible Chapter Resource not found: ${chapterId}`
 			);
 		}
 

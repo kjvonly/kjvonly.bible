@@ -36,7 +36,7 @@ export class BibleChapterInstaller {
 	constructor(
 		private readonly transaction:
 			BibleChapterInstallationTransaction
-	) {}
+	) { }
 
 	async install(
 		resource:
@@ -88,14 +88,14 @@ export class BibleChapterInstaller {
 				) {
 					const bibleVersion:
 						BibleVersion = {
-							id:
-								bibleVersionId,
+						id:
+							bibleVersionId,
 
-							publisher:
-								resource.publisher,
+						publisher:
+							resource.publisher,
 
-							version
-						};
+						version
+					};
 
 					await stores
 						.bibleVersions
@@ -109,8 +109,7 @@ export class BibleChapterInstaller {
 				) {
 					const chapterId =
 						createChapterId(
-							resource.publisher,
-							candidate.version,
+							bibleVersionId,
 							candidate.chapterRef
 						);
 
@@ -125,45 +124,45 @@ export class BibleChapterInstaller {
 					if (
 						existingInstallation &&
 						resource.modifiedAt <=
-							existingInstallation.modifiedAt
+						existingInstallation.modifiedAt
 					) {
 						continue;
 					}
 
 					const chapter:
 						Chapter = {
-							...candidate.content,
+						...candidate.content,
 
-							id:
-								chapterId
-						};
+						id:
+							chapterId
+					};
 
 					const installation:
 						ResourceInstallation = {
-							id:
-								createResourceInstallationId(
-									BIBLE_CHAPTER_OBJECT_TYPE,
-									chapterId
-								),
-
-							objectType:
+						id:
+							createResourceInstallationId(
 								BIBLE_CHAPTER_OBJECT_TYPE,
+								chapterId
+							),
 
-							objectId:
-								chapterId,
+						objectType:
+							BIBLE_CHAPTER_OBJECT_TYPE,
 
-							publisher:
-								resource.publisher,
+						objectId:
+							chapterId,
 
-							resourceId:
-								resource.resourceId,
+						publisher:
+							resource.publisher,
 
-							eventId:
-								resource.eventId,
+						resourceId:
+							resource.resourceId,
 
-							modifiedAt:
-								resource.modifiedAt
-						};
+						eventId:
+							resource.eventId,
+
+						modifiedAt:
+							resource.modifiedAt
+					};
 
 					await stores
 						.chapters

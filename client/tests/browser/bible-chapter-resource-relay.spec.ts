@@ -175,8 +175,10 @@ describe(
 
 				const chapterId =
 					createChapterId(
-						publisher,
-						'kjvs',
+						createBibleVersionId(
+		publisher,
+		'kjvs'
+	),
 						'1_1'
 					);
 

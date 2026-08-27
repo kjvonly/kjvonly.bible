@@ -49,7 +49,7 @@
 
 	let annotations: Annotations = $state(newAnnotation());
 	let bibleLocationRef: string = $state('');
-	let bibleVersion: string = $state('kjvs');
+	let bibleVersion: string = $state('');
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	/** since the {@link header} snippet is part of the body we don't
@@ -80,7 +80,7 @@
 	$effect(() => {
 		bibleLocationRef;
 		bibleVersion;
-		onBibleLocationRefChanged();
+		onBibleNavigationChanged();
 	});
 
 	// ================================ FUNCS ==================================
@@ -106,15 +106,14 @@
 			);
 
 		const selected =
-			await bibleVersionsService
-				.resolve(
-					persisted
-				);
+		await bibleVersionsService
+		.resolve(
+				persisted
+		);
 
-		if (selected) {
-			bibleVersion =
-				selected.id;
-		}
+		bibleVersion =
+			selected.id;
+
 }
 
 	function setBibleLocationRef() {
@@ -160,15 +159,33 @@
 		lastKnownScrollPosition = el.scrollTop;
 	}
 
-	function onBibleLocationRefChanged() {
-		if (bibleLocationRef) {
-			pane.buffer.bag.bibleLocationRef = bibleLocationRef;
-			pane.buffer.bag.bibleVersion = bibleVersion;
-			localStorage.setItem(LAST_BIBLE_LOCATION_REF, bibleLocationRef);
-			localStorage.setItem(LAST_BIBLE_VERSION, bibleVersion);
-			paneService.save();
+	function onBibleNavigationChanged() {
+		if (
+			!bibleLocationRef ||
+			!bibleVersion
+		) {
+			return;
 		}
-	}
+
+		pane.buffer.bag.bibleLocationRef =
+			bibleLocationRef;
+
+		pane.buffer.bag.bibleVersion =
+			bibleVersion;
+
+		localStorage.setItem(
+			LAST_BIBLE_LOCATION_REF,
+			bibleLocationRef
+		);
+
+		localStorage.setItem(
+			LAST_BIBLE_VERSION,
+			bibleVersion
+		);
+
+		paneService.save();
+    }
+
 </script>
 
 <!-- ================================ HEADER =============================== -->

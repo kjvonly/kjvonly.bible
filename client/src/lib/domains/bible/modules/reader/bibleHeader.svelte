@@ -37,6 +37,7 @@
 
 	// OTHER
 	import uuid4 from 'uuid4';
+	import { extractBibleVersion } from '../../utils/bible-identity';
 
 	// =============================== BINDINGS ================================
 
@@ -186,6 +187,8 @@
 	function onCopyClick() {
 		showCopyVersesPopup = true;
 	}
+
+
 </script>
 
 <!-- =============================== TOOLBAR =============================== -->
@@ -194,7 +197,7 @@
 	<button onclick={onBookChapterClick} class=" text-center text-neutral-700">
 		<span class="kjvonly-noselect text-center whitespace-nowrap">
 			{#if bookName && bookChapter}
-				{#if showBibleVersion}{bibleVersion?.toUpperCase()}/{/if}{bookName}
+				{#if showBibleVersion}{extractBibleVersion(bibleVersion).toUpperCase()}/{/if}{bookName}
 				{bookChapter}{verses}
 			{/if}
 		</span>

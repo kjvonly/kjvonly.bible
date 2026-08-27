@@ -54,6 +54,8 @@ import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 import {
     getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
+import type { BibleVersion } from '$lib/domains/bible/models/bible-version.model';
+import { createBibleVersionId } from '$lib/domains/bible/utils/bible-identity';
 
 const LOGIN_KEY =
     'login';
@@ -142,7 +144,7 @@ export class Application {
 
         const bibleChapterInstallationTransaction =
             new IndexedDBBibleChapterInstallationTransaction(
-               getApplicationDB 
+                getApplicationDB
             );
 
         const bibleChapterInstaller =
@@ -174,13 +176,12 @@ export class Application {
             new BibleChapterResourceLoader(
                 bibleChapterResourceService
             );
-
         const chapterService =
             new ChapterService(
-                KJVONLY_PUBKEY,
                 chapterStore,
                 chapterResourceLoader
             );
+
         const verseService =
             new VerseService(
                 chapterService
@@ -188,12 +189,28 @@ export class Application {
 
         const bibleVersionCatalog =
             new IndexedDBBibleVersionCatalog(
-               getApplicationDB 
+                getApplicationDB
             );
+        const defaultBibleVersion:
+            BibleVersion = {
+
+            id:
+                createBibleVersionId(
+                    KJVONLY_PUBKEY,
+                    'kjvs'
+                ),
+
+            publisher:
+                KJVONLY_PUBKEY,
+
+            version:
+                'kjvs'
+        };
 
         const bibleVersionsService =
             new BibleVersionsService(
-                bibleVersionCatalog
+                bibleVersionCatalog,
+                defaultBibleVersion
             );
 
         this.context = {
