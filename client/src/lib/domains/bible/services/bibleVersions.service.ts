@@ -24,7 +24,7 @@ export class BibleVersionsService {
 				a.id.localeCompare(
 					b.version
 				) ||
-				a.publisher.localeCompare(
+				a.publisher?.localeCompare(
 					b.publisher
 				)
 		);
