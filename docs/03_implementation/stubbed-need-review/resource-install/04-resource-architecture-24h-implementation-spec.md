@@ -24,7 +24,185 @@ The goal of the work was to move from a mostly-composed Resource stack to a comp
 10. and expose the resulting Chapter to the application without using the legacy `chapters.nostr.ts` cache/fetch path.
 
 The implementation intentionally remains concrete for Bible Chapters. No generic Resource-Type registry, generic installer framework, repository framework, or Unit of Work abstraction was introduced.
+---
 
+# Diagram
+
+```mermaid
+flowchart TD
+
+    %% ============================================================
+    %% APPLICATION READ / ACQUISITION
+    %% ============================================================
+
+    subgraph P0["Phase 0 — Domain Read / Acquisition"]
+        CS["ChapterService<br/>Domain-facing read service"]
+        STORE_READ["IndexedDBChapterStore<br/>ChapterStore"]
+        LOADER["BibleChapterResourceLoader<br/>Resource acquisition seam"]
+        CRS["BibleChapterResourceService<br/>Resource lifecycle coordinator"]
+
+        CS -->|"get chapter"| STORE_READ
+        STORE_READ -->|"hit"| RETURN["Return Chapter"]
+        STORE_READ -->|"miss"| LOADER
+
+        LOADER -->|"try individual resource"| CRS
+        LOADER -->|"fallback: version bundle"| CRS
+    end
+
+
+    %% ============================================================
+    %% DISCOVERY
+    %% ============================================================
+
+    subgraph P1["Phase 1 — Resource Discovery"]
+        DISCOVERY["ResourceDiscovery"]
+        CLIENT["RxNostrResourceClient<br/>ResourceClient"]
+        RELAY["Nostr Relay"]
+
+        CRS -->|"PublishedResourceReference"| DISCOVERY
+        DISCOVERY --> CLIENT
+        CLIENT -->|"REQ<br/>kind + author + #d"| RELAY
+        RELAY -->|"Nostr event"| CLIENT
+        CLIENT -->|"ResourceRepresentation"| DISCOVERY
+    end
+
+
+    %% ============================================================
+    %% RESOLUTION
+    %% ============================================================
+
+    subgraph P2["Phase 2 — Resource Resolution"]
+        RESOLVER["ResourceResolver"]
+        CONTENT_RESOLVER["ContentRepresentationResolver"]
+        VERIFIED["VerifiedResourceContent[]"]
+
+        DISCOVERY -->|"ResourceRepresentation"| RESOLVER
+        RESOLVER --> CONTENT_RESOLVER
+        CONTENT_RESOLVER --> VERIFIED
+    end
+
+
+    %% ============================================================
+    %% CONTENT DECODING
+    %% ============================================================
+
+    subgraph P3["Phase 3 — Content Decoding"]
+        DECODER["ResourceContentDecoder"]
+        BUILDER["ResourceContentDecoratorBuilder"]
+
+        HEX["HexResourceContentDecorator"]
+        GZIP["GzipResourceContentDecorator"]
+        JSON["JsonResourceContentDecorator"]
+        BASE["BaseResourceContentDecorator"]
+
+        DECODED["DecodedResourceContent"]
+
+        VERIFIED -->|"each resolved content"| DECODER
+        DECODER --> BUILDER
+
+        BUILDER --> HEX
+        HEX --> GZIP
+        GZIP --> JSON
+        JSON --> BASE
+
+        DECODER --> DECODED
+    end
+
+
+    %% ============================================================
+    %% RESOURCE-TYPE INTERPRETATION
+    %% ============================================================
+
+    subgraph P4["Phase 4 — Resource-Type Interpretation"]
+        HANDLER["BibleChapterResourceHandler"]
+        INTERPRETER["BibleChapterInterpreter<br/>ResourceInterpreter"]
+        CANDIDATES["BibleChapterCandidate[]"]
+
+        DECODED --> CRS
+        CRS -->|"process sequentially"| HANDLER
+
+        HANDLER --> INTERPRETER
+        INTERPRETER --> CANDIDATES
+    end
+
+
+    %% ============================================================
+    %% DOMAIN VALIDATION
+    %% ============================================================
+
+    subgraph P5["Phase 5 — Domain Validation"]
+        VALIDATOR["BibleChapterValidator<br/>ResourceValidator"]
+        VALIDATED["ValidatedBibleChapterCandidate[]"]
+
+        CANDIDATES -->|"validate all before writes"| VALIDATOR
+        VALIDATOR --> VALIDATED
+    end
+
+
+    %% ============================================================
+    %% INSTALLATION
+    %% ============================================================
+
+    subgraph P6["Phase 6 — Installation Decision"]
+        INSTALLER["BibleChapterInstaller"]
+
+        VERSION_ID["createBibleVersionId()"]
+        CHAPTER_ID["createChapterId()"]
+
+        PROVENANCE_CHECK["ResourceInstallationStore.get()<br/>compare modifiedAt"]
+
+        VALIDATED --> INSTALLER
+
+        INSTALLER --> VERSION_ID
+        INSTALLER --> CHAPTER_ID
+        INSTALLER --> PROVENANCE_CHECK
+
+        PROVENANCE_CHECK -->|"incoming newer / none"| INSTALL
+        PROVENANCE_CHECK -->|"older or equal"| SKIP["Skip Chapter"]
+    end
+
+
+    %% ============================================================
+    %% ATOMIC PERSISTENCE
+    %% ============================================================
+
+    subgraph P7["Phase 7 — Atomic Persistence"]
+        INSTALL["IndexedDBBibleChapterInstallationTransaction"]
+        TX["IDBDB.runReadWriteTransaction()"]
+
+        CHAPTER_STORE["Transaction-scoped<br/>ChapterStore"]
+        VERSION_STORE["Transaction-scoped<br/>BibleVersionStore"]
+        INSTALL_STORE["Transaction-scoped<br/>ResourceInstallationStore"]
+
+        CHAPTERS["IndexedDB<br/>chapters"]
+        VERSIONS["IndexedDB<br/>bible_versions"]
+        INSTALLATIONS["IndexedDB<br/>resource_installations"]
+
+        INSTALL --> TX
+
+        TX --> CHAPTER_STORE
+        TX --> VERSION_STORE
+        TX --> INSTALL_STORE
+
+        CHAPTER_STORE --> CHAPTERS
+        VERSION_STORE --> VERSIONS
+        INSTALL_STORE --> INSTALLATIONS
+    end
+
+
+    %% ============================================================
+    %% RETURN TO DOMAIN
+    %% ============================================================
+
+    subgraph P8["Phase 8 — Authoritative Local Read"]
+        REREAD["ChapterService rereads ChapterStore"]
+        DOMAIN["Chapter Domain Object"]
+
+        TX -->|"commit"| REREAD
+        SKIP --> REREAD
+        REREAD --> DOMAIN
+    end
+```
 ---
 
 # Architectural Constraints Preserved
