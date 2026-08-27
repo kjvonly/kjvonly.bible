@@ -162,7 +162,7 @@ let applicationStartupError =
 			syncTimer =
 				setTimeout(
 					() => {
-						syncService.init();
+						//syncService.init();
 					},
 					5000
 				);

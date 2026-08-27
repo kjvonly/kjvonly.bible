@@ -52,7 +52,11 @@ import { VerseService } from '$lib/domains/bible/services/verse.service';
 import { BibleChapterResourceLoader } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-loader';
 import { KJVONLY_PUBKEY } from '$lib/infrastructure/nostr/nostr';
 
+const LOGIN_KEY =
+	'login';
 
+const NOSTR_STORAGE_PREFIX =
+	`${import.meta.env.VITE_NOSTR_STORAGE_PREFIX}`;
 
 type ApplicationState =
     | 'created'
@@ -262,6 +266,8 @@ export class Application {
         Promise<void> {
 
         try {
+            await this.restoreNsec();
+
             this.context
                 .resourceClient
                 .setDefaultRelays(
@@ -293,4 +299,25 @@ export class Application {
             throw cause;
         }
     }
+
+    private async restoreNsec():
+	Promise<void> {
+	const login =
+		localStorage.getItem(
+			`${NOSTR_STORAGE_PREFIX}:${LOGIN_KEY}`
+		);
+
+	if (
+		!login ||
+		!login.startsWith('nsec')
+	) {
+		return;
+	}
+
+	await this.context
+		.nostrSigner
+		.useNsec(
+			login
+		);
+}
 }
