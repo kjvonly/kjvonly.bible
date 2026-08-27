@@ -114,3 +114,10 @@ export function getApplicationDB():
 
 	return databasePromise;
 }
+
+export function createStoredDomainObjectId(
+	objectType: string,
+	objectId: string
+): string {
+	return `${objectType}:${objectId}`;
+}

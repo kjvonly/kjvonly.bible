@@ -6,21 +6,23 @@ import type {
 	ChapterStore
 } from './chapter-store';
 
-import type {
-	BibleDB
-} from './bible.db';
-
 import {
-	CHAPTERS
-} from './bible.db';
+	DOMAIN_OBJECTS,
+	createStoredDomainObjectId,
+	type ApplicationDB,
+	type StoredDomainObject
+} from '$lib/infrastructure/persistence/application.db';
+
+const BIBLE_CHAPTER_OBJECT_TYPE =
+	'bible/chapter';
 
 export class IndexedDBChapterStore
 	implements ChapterStore {
 
 	constructor(
 		private readonly getDB:
-			() => Promise<BibleDB>
-	) {}
+			() => Promise<ApplicationDB>
+	) { }
 
 	async get(
 		id: string
@@ -31,22 +33,49 @@ export class IndexedDBChapterStore
 		const db =
 			await this.getDB();
 
-		return await db.getValue(
-			CHAPTERS,
-			id
-		);
+		const stored =
+			await db.get(
+				DOMAIN_OBJECTS,
+				createStoredDomainObjectId(
+					BIBLE_CHAPTER_OBJECT_TYPE,
+					id
+				)
+			);
+
+		if (!stored) {
+			return undefined;
+		}
+
+		return stored.value as Chapter;
 	}
 
 	async put(
-		chapter:
-			Chapter
+		chapter: Chapter
 	): Promise<void> {
 		const db =
 			await this.getDB();
 
-		await db.putValue(
-			CHAPTERS,
-			chapter
+		const stored:
+			StoredDomainObject = {
+			id:
+				createStoredDomainObjectId(
+					BIBLE_CHAPTER_OBJECT_TYPE,
+					chapter.id
+				),
+
+			objectType:
+				BIBLE_CHAPTER_OBJECT_TYPE,
+
+			objectId:
+				chapter.id,
+
+			value:
+				chapter
+		};
+
+		await db.put(
+			DOMAIN_OBJECTS,
+			stored
 		);
 	}
 }

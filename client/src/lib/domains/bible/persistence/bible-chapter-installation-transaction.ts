@@ -12,23 +12,30 @@ import type {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-installation-stores';
 
 import {
-	BIBLE_VERSIONS,
-	CHAPTERS,
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
-	type BibleDB
-} from './bible.db';
+	createStoredDomainObjectId,
+	type ApplicationDB,
+	type StoredDomainObject
+} from '$lib/infrastructure/persistence/application.db';
 
 import {
 	createResourceInstallationId,
 	type ResourceInstallation
 } from '$lib/resource/installation/resource-installation';
 
+const BIBLE_CHAPTER_OBJECT_TYPE =
+	'bible/chapter';
+
+const BIBLE_VERSION_OBJECT_TYPE =
+	'bible/version';
+
 export class IndexedDBBibleChapterInstallationTransaction
 	implements BibleChapterInstallationTransaction {
 
 	constructor(
 		private readonly getDB:
-			() => Promise<BibleDB>
+			() => Promise<ApplicationDB>
 	) {}
 
 	async run<TResult>(
@@ -38,98 +45,177 @@ export class IndexedDBBibleChapterInstallationTransaction
 					BibleChapterInstallationStores
 			) => Promise<TResult>
 	): Promise<TResult> {
-        	const db =
-		await this.getDB();
-		return db.runReadWriteTransaction(
-			[
-				CHAPTERS,
-				BIBLE_VERSIONS,
+
+		const db =
+			await this.getDB();
+
+		const transaction =
+			db.transaction(
+				[
+					DOMAIN_OBJECTS,
+					RESOURCE_INSTALLATIONS
+				],
+				'readwrite'
+			);
+
+		const domainObjects =
+			transaction.objectStore(
+				DOMAIN_OBJECTS
+			);
+
+		const resourceInstallations =
+			transaction.objectStore(
 				RESOURCE_INSTALLATIONS
-			],
-			async (transaction) => {
-				const stores:
-					BibleChapterInstallationStores = {
-						chapters: {
-							get:
-								async (
-									id
-								) => {
-									return await transaction.getValue(
-										CHAPTERS,
-										id
-									) as Chapter |
-										undefined;
-								},
+			);
 
-							put:
-								async (
+		const stores:
+			BibleChapterInstallationStores = {
+
+			chapters: {
+				get:
+					async (
+						id
+					) => {
+						const stored =
+							await domainObjects.get(
+								createStoredDomainObjectId(
+									BIBLE_CHAPTER_OBJECT_TYPE,
+									id
+								)
+							);
+
+						return stored?.value as
+							Chapter |
+							undefined;
+					},
+
+				put:
+					async (
+						chapter
+					) => {
+						const stored:
+							StoredDomainObject = {
+								id:
+									createStoredDomainObjectId(
+										BIBLE_CHAPTER_OBJECT_TYPE,
+										chapter.id
+									),
+
+								objectType:
+									BIBLE_CHAPTER_OBJECT_TYPE,
+
+								objectId:
+									chapter.id,
+
+								value:
 									chapter
-								) => {
-									await transaction.putValue(
-										CHAPTERS,
-										chapter
-									);
-								}
-						},
+							};
 
-						bibleVersions: {
-							get:
-								async (
+						await domainObjects.put(
+							stored
+						);
+					}
+			},
+
+			bibleVersions: {
+				get:
+					async (
+						id
+					) => {
+						const stored =
+							await domainObjects.get(
+								createStoredDomainObjectId(
+									BIBLE_VERSION_OBJECT_TYPE,
 									id
-								) => {
-									return await transaction.getValue(
-										BIBLE_VERSIONS,
-										id
-									) as BibleVersion |
-										undefined;
-								},
+								)
+							);
 
-							put:
-								async (
+						return stored?.value as
+							BibleVersion |
+							undefined;
+					},
+
+				put:
+					async (
+						bibleVersion
+					) => {
+						const stored:
+							StoredDomainObject = {
+								id:
+									createStoredDomainObjectId(
+										BIBLE_VERSION_OBJECT_TYPE,
+										bibleVersion.id
+									),
+
+								objectType:
+									BIBLE_VERSION_OBJECT_TYPE,
+
+								objectId:
+									bibleVersion.id,
+
+								value:
 									bibleVersion
-								) => {
-									await transaction.putValue(
-										BIBLE_VERSIONS,
-										bibleVersion
-									);
-								}
-						},
+							};
 
-						resourceInstallations: {
-							get:
-								async (
-									objectType,
-									objectId
-								) => {
-									const id =
-										createResourceInstallationId(
-											objectType,
-											objectId
-										);
+						await domainObjects.put(
+							stored
+						);
+					}
+			},
 
-									return await transaction.getValue(
-										RESOURCE_INSTALLATIONS,
-										id
-									) as ResourceInstallation |
-										undefined;
-								},
+			resourceInstallations: {
+				get:
+					async (
+						objectType,
+						objectId
+					) => {
+						const id =
+							createResourceInstallationId(
+								objectType,
+								objectId
+							);
 
-							put:
-								async (
-									installation
-								) => {
-									await transaction.putValue(
-										RESOURCE_INSTALLATIONS,
-										installation
-									);
-								}
-						}
-					};
+						return await resourceInstallations.get(
+							id
+						) as
+							ResourceInstallation |
+							undefined;
+					},
 
-				return operation(
+				put:
+					async (
+						installation
+					) => {
+						await resourceInstallations.put(
+							installation
+						);
+					}
+			}
+		};
+
+		try {
+			const result =
+				await operation(
 					stores
 				);
+
+			await transaction.done;
+
+			return result;
+		} catch (error) {
+			try {
+				transaction.abort();
+			} catch {
+				// Transaction may already be aborted.
 			}
-		);
+
+			try {
+				await transaction.done;
+			} catch {
+				// Preserve the original operation error.
+			}
+
+			throw error;
+		}
 	}
 }

@@ -1,368 +1,435 @@
 import {
-    describe,
-    expect,
-    it
+	describe,
+	expect,
+	it
 } from 'vitest';
 
 import {
-    BIBLE_VERSIONS,
-    CHAPTERS,
-    RESOURCE_INSTALLATIONS,
-    BibleDB
-} from './bible.db';
+	DOMAIN_OBJECTS,
+	RESOURCE_INSTALLATIONS,
+	createStoredDomainObjectId,
+	type ApplicationDB,
+	type StoredDomainObject
+} from '$lib/infrastructure/persistence/application.db';
 
 import {
-    IndexedDBBibleChapterInstallationTransaction
-} from './bible-chapter-installation-transaction';
-
-import type {
-    IndexedDBTransaction
-} from '$lib/infrastructure/persistence/idb.db';
-
-import {
-    createResourceInstallationId,
-    type ResourceInstallation
+	createResourceInstallationId,
+	type ResourceInstallation
 } from '$lib/resource/installation/resource-installation';
 
+import {
+	IndexedDBBibleChapterInstallationTransaction
+} from './bible-chapter-installation-transaction';
+
 describe(
-    'IndexedDBBibleChapterInstallationTransaction',
-    () => {
-        it(
-            'runs the installation using the required object stores',
-            async () => {
-                const db =
-                    new FakeBibleDB();
+	'IndexedDBBibleChapterInstallationTransaction',
+	() => {
+		it(
+			'runs the installation using the required object stores',
+			async () => {
+				const db =
+					new FakeApplicationDB();
 
-                const transaction =
-                    new IndexedDBBibleChapterInstallationTransaction(
-                        async () => db
+				const transaction =
+					createTransaction(
+						db
+					);
 
-                    );
+				await transaction.run(
+					async () => {}
+				);
 
-                await transaction.run(
-                    async () => { }
-                );
+				expect(
+					db.storeNames
+				).toEqual([
+					DOMAIN_OBJECTS,
+					RESOURCE_INSTALLATIONS
+				]);
+			}
+		);
 
-                expect(
-                    db.tableNames
-                ).toEqual([
-                    CHAPTERS,
-                    BIBLE_VERSIONS,
-                    RESOURCE_INSTALLATIONS
-                ]);
-            }
-        );
+		it(
+			'exposes a transaction-scoped ChapterStore',
+			async () => {
+				const db =
+					new FakeApplicationDB();
 
-        it(
-            'exposes a transaction-scoped ChapterStore',
-            async () => {
-                const db =
-                    new FakeBibleDB();
+				const transaction =
+					createTransaction(
+						db
+					);
 
-                const transaction =
-                    new IndexedDBBibleChapterInstallationTransaction(
-                        async () => db
+				const chapter = {
+					id:
+						'publisher/kjvs/1_1',
 
-                    );
+					number:
+						1,
 
-                const chapter = {
-                    id:
-                        'publisher/kjvs/1_1',
+					bookName:
+						'Genesis',
 
-                    number:
-                        1,
+					verses: {},
 
-                    bookName:
-                        'Genesis',
+					verseMap: {},
 
-                    verses: {},
+					footnotes: {}
+				};
 
-                    verseMap: {},
+				await transaction.run(
+					async (
+						stores
+					) => {
+						await stores.chapters.put(
+							chapter
+						);
 
-                    footnotes: {}
-                };
+						const result =
+							await stores.chapters.get(
+								chapter.id
+							);
 
-                await transaction.run(
-                    async (stores) => {
-                        await stores.chapters.put(
-                            chapter
-                        );
+						expect(
+							result
+						).toEqual(
+							chapter
+						);
+					}
+				);
 
-                        const result =
-                            await stores.chapters.get(
-                                chapter.id
-                            );
+				const stored =
+					db.getStoredValue(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							'bible/chapter',
+							chapter.id
+						)
+					) as StoredDomainObject;
 
-                        expect(
-                            result
-                        ).toEqual(
-                            chapter
-                        );
-                    }
-                );
+				expect(
+					stored.objectType
+				).toBe(
+					'bible/chapter'
+				);
 
-                expect(
-                    db.getStoredValue(
-                        CHAPTERS,
-                        chapter.id
-                    )
-                ).toEqual(
-                    chapter
-                );
-            }
-        );
+				expect(
+					stored.objectId
+				).toBe(
+					chapter.id
+				);
 
-        it(
-            'exposes a transaction-scoped BibleVersionStore',
-            async () => {
-                const db =
-                    new FakeBibleDB();
+				expect(
+					stored.value
+				).toEqual(
+					chapter
+				);
+			}
+		);
 
-                const transaction =
-                    new IndexedDBBibleChapterInstallationTransaction(
-                        async () => db
+		it(
+			'exposes a transaction-scoped BibleVersionStore',
+			async () => {
+				const db =
+					new FakeApplicationDB();
 
-                    );
+				const transaction =
+					createTransaction(
+						db
+					);
 
-                const bibleVersion = {
-                    id:
-                        'publisher/kjvs',
+				const bibleVersion = {
+					id:
+						'publisher/kjvs',
 
-                    publisher:
-                        'publisher',
+					publisher:
+						'publisher',
 
-                    version:
-                        'kjvs'
-                };
+					version:
+						'kjvs'
+				};
 
-                await transaction.run(
-                    async (stores) => {
-                        await stores.bibleVersions.put(
-                            bibleVersion
-                        );
+				await transaction.run(
+					async (
+						stores
+					) => {
+						await stores
+							.bibleVersions
+							.put(
+								bibleVersion
+							);
 
-                        const result =
-                            await stores.bibleVersions.get(
-                                bibleVersion.id
-                            );
+						const result =
+							await stores
+								.bibleVersions
+								.get(
+									bibleVersion.id
+								);
 
-                        expect(
-                            result
-                        ).toEqual(
-                            bibleVersion
-                        );
-                    }
-                );
+						expect(
+							result
+						).toEqual(
+							bibleVersion
+						);
+					}
+				);
 
-                expect(
-                    db.getStoredValue(
-                        BIBLE_VERSIONS,
-                        bibleVersion.id
-                    )
-                ).toEqual(
-                    bibleVersion
-                );
-            }
-        );
+				const stored =
+					db.getStoredValue(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							'bible/version',
+							bibleVersion.id
+						)
+					) as StoredDomainObject;
 
-        it(
-            'exposes a transaction-scoped ResourceInstallationStore',
-            async () => {
-                const db =
-                    new FakeBibleDB();
+				expect(
+					stored.objectType
+				).toBe(
+					'bible/version'
+				);
 
-                const transaction =
-                    new IndexedDBBibleChapterInstallationTransaction(
-                        async () => db
+				expect(
+					stored.objectId
+				).toBe(
+					bibleVersion.id
+				);
 
-                    );
+				expect(
+					stored.value
+				).toEqual(
+					bibleVersion
+				);
+			}
+		);
 
-                const objectType =
-                    'bible/chapter';
+		it(
+			'exposes a transaction-scoped ResourceInstallationStore',
+			async () => {
+				const db =
+					new FakeApplicationDB();
 
-                const objectId =
-                    'publisher/kjvs/1_1';
+				const transaction =
+					createTransaction(
+						db
+					);
 
-                const installation:
-                    ResourceInstallation = {
-                    id:
-                        createResourceInstallationId(
-                            objectType,
-                            objectId
-                        ),
+				const objectType =
+					'bible/chapter';
 
-                    objectType,
+				const objectId =
+					'publisher/kjvs/1_1';
 
-                    objectId,
+				const installation:
+					ResourceInstallation = {
+						id:
+							createResourceInstallationId(
+								objectType,
+								objectId
+							),
 
-                    publisher:
-                        'publisher',
+						objectType,
 
-                    resourceId:
-                        'kjvonly/bible/chapters/kjvs',
+						objectId,
 
-                    eventId:
-                        'event-id',
+						publisher:
+							'publisher',
 
-                    modifiedAt:
-                        123456
-                };
+						resourceId:
+							'kjvonly/bible/chapters/kjvs',
 
-                await transaction.run(
-                    async (stores) => {
-                        await stores
-                            .resourceInstallations
-                            .put(
-                                installation
-                            );
+						eventId:
+							'event-id',
 
-                        const result =
-                            await stores
-                                .resourceInstallations
-                                .get(
-                                    objectType,
-                                    objectId
-                                );
+						modifiedAt:
+							123456
+					};
 
-                        expect(
-                            result
-                        ).toEqual(
-                            installation
-                        );
-                    }
-                );
+				await transaction.run(
+					async (
+						stores
+					) => {
+						await stores
+							.resourceInstallations
+							.put(
+								installation
+							);
 
-                expect(
-                    db.getStoredValue(
-                        RESOURCE_INSTALLATIONS,
-                        installation.id
-                    )
-                ).toEqual(
-                    installation
-                );
-            }
-        );
+						const result =
+							await stores
+								.resourceInstallations
+								.get(
+									objectType,
+									objectId
+								);
 
-        it(
-            'returns the installation operation result',
-            async () => {
-                const db =
-                    new FakeBibleDB();
+						expect(
+							result
+						).toEqual(
+							installation
+						);
+					}
+				);
 
-                const transaction =
-                    new IndexedDBBibleChapterInstallationTransaction(
-                        async () => db
+				expect(
+					db.getStoredValue(
+						RESOURCE_INSTALLATIONS,
+						installation.id
+					)
+				).toEqual(
+					installation
+				);
+			}
+		);
 
-                    );
+		it(
+			'returns the installation operation result',
+			async () => {
+				const db =
+					new FakeApplicationDB();
 
-                const result =
-                    await transaction.run(
-                        async () =>
-                            'installation-complete'
-                    );
+				const transaction =
+					createTransaction(
+						db
+					);
 
-                expect(
-                    result
-                ).toBe(
-                    'installation-complete'
-                );
-            }
-        );
-    }
+				const result =
+					await transaction.run(
+						async () =>
+							'installation-complete'
+					);
+
+				expect(
+					result
+				).toBe(
+					'installation-complete'
+				);
+			}
+		);
+	}
 );
 
-class FakeBibleDB extends BibleDB {
+function createTransaction(
+	db: FakeApplicationDB
+): IndexedDBBibleChapterInstallationTransaction {
 
-    tableNames:
-        string[] = [];
+	return new IndexedDBBibleChapterInstallationTransaction(
+		async () =>
+			db as unknown as ApplicationDB
+	);
+}
 
-    private readonly stores =
-        new Map<
-            string,
-            Map<string, object>
-        >();
+class FakeApplicationDB {
 
-    override async runReadWriteTransaction<
-        TResult
-    >(
-        tableNames: string[],
-        operation:
-            (
-                transaction:
-                    IndexedDBTransaction
-            ) => Promise<TResult>
-    ): Promise<TResult> {
-        this.tableNames = [
-            ...tableNames
-        ];
+	storeNames:
+		string[] = [];
 
-        const transaction:
-            IndexedDBTransaction = {
-            getValue:
-                async (
-                    tableName,
-                    id
-                ) => {
-                    return this.stores
-                        .get(
-                            tableName
-                        )
-                        ?.get(
-                            id
-                        );
-                },
+	private readonly stores =
+		new Map<
+			string,
+			Map<string, object>
+		>();
 
-            putValue:
-                async (
-                    tableName,
-                    value
-                ) => {
-                    let store =
-                        this.stores.get(
-                            tableName
-                        );
+	transaction(
+		storeNames: string[],
+		_mode: string
+	) {
+		this.storeNames = [
+			...storeNames
+		];
 
-                    if (!store) {
-                        store =
-                            new Map();
+		return new FakeTransaction(
+			this.stores
+		);
+	}
 
-                        this.stores.set(
-                            tableName,
-                            store
-                        );
-                    }
+	getStoredValue(
+		storeName: string,
+		id: string
+	): object | undefined {
+		return this.stores
+			.get(
+				storeName
+			)
+			?.get(
+				id
+			);
+	}
+}
 
-                    const id =
-                        (
-                            value as {
-                                id: string;
-                            }
-                        ).id;
+class FakeTransaction {
 
-                    store.set(
-                        id,
-                        value
-                    );
+	readonly done =
+		Promise.resolve();
 
-                    return id;
-                }
-        };
+	constructor(
+		private readonly stores:
+			Map<
+				string,
+				Map<string, object>
+			>
+	) {}
 
-        return operation(
-            transaction
-        );
-    }
+	objectStore(
+		storeName: string
+	): FakeObjectStore {
 
-    getStoredValue(
-        tableName: string,
-        id: string
-    ): object | undefined {
-        return this.stores
-            .get(
-                tableName
-            )
-            ?.get(
-                id
-            );
-    }
+		let store =
+			this.stores.get(
+				storeName
+			);
+
+		if (!store) {
+			store =
+				new Map();
+
+			this.stores.set(
+				storeName,
+				store
+			);
+		}
+
+		return new FakeObjectStore(
+			store
+		);
+	}
+
+	abort(): void {}
+}
+
+class FakeObjectStore {
+
+	constructor(
+		private readonly values:
+			Map<string, object>
+	) {}
+
+	async get(
+		id: string
+	): Promise<
+		object |
+		undefined
+	> {
+		return this.values.get(
+			id
+		);
+	}
+
+	async put(
+		value: object
+	): Promise<string> {
+
+		const id =
+			(
+				value as {
+					id: string;
+				}
+			).id;
+
+		this.values.set(
+			id,
+			value
+		);
+
+		return id;
+	}
 }

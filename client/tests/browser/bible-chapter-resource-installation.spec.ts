@@ -49,11 +49,11 @@ import {
 } from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
 
 import {
-	BIBLE_VERSIONS,
-	CHAPTERS,
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
-	getBibleDB
-} from '$lib/domains/bible/persistence/bible.db';
+	createStoredDomainObjectId,
+	getApplicationDB
+} from '$lib/infrastructure/persistence/application.db';
 
 import {
 	createBibleVersionId,
@@ -63,6 +63,9 @@ import {
 import {
 	createResourceInstallationId
 } from '$lib/resource/installation/resource-installation';
+
+const BIBLE_VERSION_OBJECT_TYPE =
+	'bible/version';
 
 describe(
 	'Bible Chapter Resource installation',
@@ -77,7 +80,9 @@ describe(
 					'kjvonly/bible/chapters/kjvs';
 
 				const eventId =
-					'a'.repeat(64);
+					'a'.repeat(
+						64
+					);
 
 				const service =
 					createService([
@@ -113,9 +118,6 @@ describe(
 					true
 				);
 
-				const db =
-					await getBibleDB();
-
 				const chapter1Id =
 					createChapterId(
 						publisher,
@@ -131,8 +133,8 @@ describe(
 					);
 
 				expect(
-					await db.getValue(
-						CHAPTERS,
+					await getDomainObject(
+						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter1Id
 					)
 				).toEqual({
@@ -145,8 +147,8 @@ describe(
 				});
 
 				expect(
-					await db.getValue(
-						CHAPTERS,
+					await getDomainObject(
+						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter2Id
 					)
 				).toEqual({
@@ -165,8 +167,8 @@ describe(
 					);
 
 				expect(
-					await db.getValue(
-						BIBLE_VERSIONS,
+					await getDomainObject(
+						BIBLE_VERSION_OBJECT_TYPE,
 						bibleVersionId
 					)
 				).toEqual({
@@ -185,8 +187,11 @@ describe(
 						chapter1Id
 					);
 
+				const db =
+					await getApplicationDB();
+
 				expect(
-					await db.getValue(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						installationId
 					)
@@ -253,9 +258,6 @@ describe(
 					})
 				).rejects.toThrow();
 
-				const db =
-					await getBibleDB();
-
 				const chapter1Id =
 					createChapterId(
 						publisher,
@@ -271,22 +273,22 @@ describe(
 					);
 
 				expect(
-					await db.getValue(
-						CHAPTERS,
+					await getDomainObject(
+						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter1Id
 					)
 				).toBeUndefined();
 
 				expect(
-					await db.getValue(
-						CHAPTERS,
+					await getDomainObject(
+						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter2Id
 					)
 				).toBeUndefined();
 
 				expect(
-					await db.getValue(
-						BIBLE_VERSIONS,
+					await getDomainObject(
+						BIBLE_VERSION_OBJECT_TYPE,
 						createBibleVersionId(
 							publisher,
 							'kjvs'
@@ -294,8 +296,11 @@ describe(
 					)
 				).toBeUndefined();
 
+				const db =
+					await getApplicationDB();
+
 				expect(
-					await db.getValue(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						createResourceInstallationId(
 							BIBLE_CHAPTER_OBJECT_TYPE,
@@ -319,10 +324,14 @@ describe(
 					'kjvonly/bible/chapters/kjvs/1_2';
 
 				const eventA =
-					'a'.repeat(64);
+					'a'.repeat(
+						64
+					);
 
 				const eventB =
-					'b'.repeat(64);
+					'b'.repeat(
+						64
+					);
 
 				const service =
 					createService(
@@ -382,9 +391,6 @@ describe(
 					})
 				).rejects.toThrow();
 
-				const db =
-					await getBibleDB();
-
 				const chapter1Id =
 					createChapterId(
 						publisher,
@@ -404,8 +410,8 @@ describe(
 				 * installation transaction.
 				 */
 				expect(
-					await db.getValue(
-						CHAPTERS,
+					await getDomainObject(
+						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter1Id
 					)
 				).toEqual({
@@ -417,8 +423,11 @@ describe(
 					)
 				});
 
+				const db =
+					await getApplicationDB();
+
 				expect(
-					await db.getValue(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						createResourceInstallationId(
 							BIBLE_CHAPTER_OBJECT_TYPE,
@@ -441,14 +450,14 @@ describe(
 				 * so its transaction never began.
 				 */
 				expect(
-					await db.getValue(
-						CHAPTERS,
+					await getDomainObject(
+						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter2Id
 					)
 				).toBeUndefined();
 
 				expect(
-					await db.getValue(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						createResourceInstallationId(
 							BIBLE_CHAPTER_OBJECT_TYPE,
@@ -469,6 +478,7 @@ function createService(
 		ResourceRepresentationType =
 			'content'
 ): BibleChapterResourceService {
+
 	const discovery =
 		new FakeDiscovery(
 			createRepresentation(
@@ -486,7 +496,7 @@ function createService(
 
 	const installationTransaction =
 		new IndexedDBBibleChapterInstallationTransaction(
-			getBibleDB
+			getApplicationDB
 		);
 
 	const installer =
@@ -511,6 +521,7 @@ function createService(
 
 function createDecoder():
 	ResourceContentDecoder {
+
 	const builder =
 		new ResourceContentDecoratorBuilder([
 			{
@@ -535,6 +546,7 @@ function createVerifiedContent(
 		Partial<VerifiedResourceContent> =
 			{}
 ): VerifiedResourceContent {
+
 	return {
 		publisher:
 			'publisher',
@@ -546,7 +558,9 @@ function createVerifiedContent(
 			'kjvonly/bible/chapters',
 
 		eventId:
-			'a'.repeat(64),
+			'a'.repeat(
+				64
+			),
 
 		modifiedAt:
 			200,
@@ -565,6 +579,7 @@ function createRepresentation(
 	representation:
 		ResourceRepresentationType
 ): ResourceRepresentation {
+
 	return {
 		publisher:
 			'publisher',
@@ -576,7 +591,9 @@ function createRepresentation(
 			'kjvonly/bible/chapters',
 
 		eventId:
-			'c'.repeat(64),
+			'c'.repeat(
+				64
+			),
 
 		modifiedAt:
 			200,
@@ -610,6 +627,7 @@ function createChapterContent(
 
 function createPublisher():
 	string {
+
 	const value =
 		crypto
 			.randomUUID()
@@ -622,6 +640,28 @@ function createPublisher():
 		value +
 		value
 	);
+}
+
+async function getDomainObject(
+	objectType: string,
+	objectId: string
+): Promise<
+	unknown |
+	undefined
+> {
+	const db =
+		await getApplicationDB();
+
+	const stored =
+		await db.get(
+			DOMAIN_OBJECTS,
+			createStoredDomainObjectId(
+				objectType,
+				objectId
+			)
+		);
+
+	return stored?.value;
 }
 
 class FakeDiscovery {
