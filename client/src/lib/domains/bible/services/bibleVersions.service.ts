@@ -6,11 +6,18 @@ import type {
 	BibleVersionCatalog
 } from '$lib/domains/bible/persistence/bible-version-catalog';
 
+import {
+	parseBibleVersionId
+} from '$lib/domains/bible/utils/bible-identity';
+
 export class BibleVersionsService {
 
 	constructor(
 		private readonly catalog:
-			BibleVersionCatalog
+			BibleVersionCatalog,
+
+		private readonly defaultBibleVersion:
+			BibleVersion
 	) {}
 
 	async list(): Promise<
@@ -21,10 +28,10 @@ export class BibleVersionsService {
 
 		return [...versions].sort(
 			(a, b) =>
-				a.id.localeCompare(
+				a.version.localeCompare(
 					b.version
 				) ||
-				a.publisher?.localeCompare(
+				a.publisher.localeCompare(
 					b.publisher
 				)
 		);
@@ -35,48 +42,50 @@ export class BibleVersionsService {
 			string |
 			null |
 			undefined
-	): Promise<
-		BibleVersion |
-		undefined
-	> {
+	): Promise<BibleVersion> {
+
 		const versions =
 			await this.list();
 
-		if (!selection) {
-			return versions[0];
+		if (selection) {
+			const exact =
+				versions.find(
+					(version) =>
+						version.id ===
+						selection
+				);
+
+			if (exact) {
+				return exact;
+			}
+
+			try {
+				const identity =
+					parseBibleVersionId(
+						selection
+					);
+
+				return {
+					id:
+						selection,
+
+					publisher:
+						identity.publisher,
+
+					version:
+						identity.version
+				};
+			} catch {
+				/*
+				 * Invalid / legacy selections are
+				 * discarded rather than propagated.
+				 */
+			}
 		}
 
-		const exact =
-			versions.find(
-				(version) =>
-					version.id ===
-					selection
-			);
-
-		if (exact) {
-			return exact;
-		}
-
-		/*
-		 * Temporary migration support for
-		 * legacy values such as "kjvs".
-		 *
-		 * Only upgrade automatically when
-		 * the value is unambiguous.
-		 */
-		const legacyMatches =
-			versions.filter(
-				(version) =>
-					version.version ===
-					selection
-			);
-
-		if (
-			legacyMatches.length === 1
-		) {
-			return legacyMatches[0];
-		}
-
-		return undefined;
+		return (
+			versions[0] ??
+			this.defaultBibleVersion
+		);
 	}
 }

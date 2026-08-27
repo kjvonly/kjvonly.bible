@@ -6,7 +6,10 @@ import {
 
 import {
 	createBibleVersionId,
-	createChapterId
+	createChapterId,
+	extractBibleVersion,
+	extractBibleVersionPublisher,
+	parseBibleVersionId
 } from './bible-identity';
 
 describe(
@@ -15,14 +18,11 @@ describe(
 		it(
 			'creates a publisher-scoped Bible Version id',
 			() => {
-				const result =
+				expect(
 					createBibleVersionId(
 						'abc123',
 						'kjvs'
-					);
-
-				expect(
-					result
+					)
 				).toBe(
 					'abc123/kjvs'
 				);
@@ -32,28 +32,201 @@ describe(
 		it(
 			'creates different ids for different publishers',
 			() => {
-				const publisherA =
+				expect(
 					createBibleVersionId(
 						'publisher-a',
 						'kjvs'
-					);
-
-				const publisherB =
+					)
+				).not.toBe(
 					createBibleVersionId(
 						'publisher-b',
 						'kjvs'
-					);
-
-				expect(
-					publisherA
-				).not.toBe(
-					publisherB
+					)
 				);
 			}
 		);
 
 		it(
 			'creates different ids for different Bible versions',
+			() => {
+				expect(
+					createBibleVersionId(
+						'abc123',
+						'kjv'
+					)
+				).not.toBe(
+					createBibleVersionId(
+						'abc123',
+						'kjvs'
+					)
+				);
+			}
+		);
+	}
+);
+
+describe(
+	'parseBibleVersionId',
+	() => {
+		it(
+			'extracts publisher and version',
+			() => {
+				expect(
+					parseBibleVersionId(
+						'abc123/kjvs'
+					)
+				).toEqual({
+					publisher:
+						'abc123',
+
+					version:
+						'kjvs'
+				});
+			}
+		);
+
+		it(
+			'rejects a bare version',
+			() => {
+				expect(
+					() =>
+						parseBibleVersionId(
+							'kjvs'
+						)
+				).toThrow(
+					'Invalid Bible Version id'
+				);
+			}
+		);
+
+		it(
+			'rejects too many segments',
+			() => {
+				expect(
+					() =>
+						parseBibleVersionId(
+							'publisher/kjvs/extra'
+						)
+				).toThrow(
+					'Invalid Bible Version id'
+				);
+			}
+		);
+	}
+);
+
+describe(
+	'extractBibleVersion',
+	() => {
+		it(
+			'extracts the Bible version from a Bible Version id',
+			() => {
+				expect(
+					extractBibleVersion(
+						'abc123/kjvs'
+					)
+				).toBe(
+					'kjvs'
+				);
+			}
+		);
+
+		it(
+			'rejects an invalid Bible Version id',
+			() => {
+				expect(
+					() =>
+						extractBibleVersion(
+							'kjvs'
+						)
+				).toThrow(
+					'Invalid Bible Version id'
+				);
+			}
+		);
+	}
+);
+
+describe(
+	'extractBibleVersionPublisher',
+	() => {
+		it(
+			'extracts the publisher from a Bible Version id',
+			() => {
+				expect(
+					extractBibleVersionPublisher(
+						'abc123/kjvs'
+					)
+				).toBe(
+					'abc123'
+				);
+			}
+		);
+
+		it(
+			'rejects an invalid Bible Version id',
+			() => {
+				expect(
+					() =>
+						extractBibleVersionPublisher(
+							'kjvs'
+						)
+				).toThrow(
+					'Invalid Bible Version id'
+				);
+			}
+		);
+	}
+);
+
+describe(
+	'createChapterId',
+	() => {
+		it(
+			'creates Chapter identity from Bible Version identity',
+			() => {
+				const bibleVersionId =
+					createBibleVersionId(
+						'abc123',
+						'kjvs'
+					);
+
+				expect(
+					createChapterId(
+						bibleVersionId,
+						'1_1'
+					)
+				).toBe(
+					'abc123/kjvs/1_1'
+				);
+			}
+		);
+
+		it(
+			'creates different ids for different Chapters',
+			() => {
+				const bibleVersionId =
+					createBibleVersionId(
+						'abc123',
+						'kjvs'
+					);
+
+				expect(
+					createChapterId(
+						bibleVersionId,
+						'1_1'
+					)
+				).not.toBe(
+					createChapterId(
+						bibleVersionId,
+						'1_2'
+					)
+				);
+			}
+		);
+
+		it(
+			'creates different Chapter ids for different Bible versions',
 			() => {
 				const kjv =
 					createBibleVersionId(
@@ -68,81 +241,15 @@ describe(
 					);
 
 				expect(
-					kjv
+					createChapterId(
+						kjv,
+						'1_1'
+					)
 				).not.toBe(
-					kjvs
-				);
-			}
-		);
-	}
-);
-
-describe(
-	'createChapterId',
-	() => {
-		it(
-			'creates a publisher-scoped Chapter id',
-			() => {
-				const result =
 					createChapterId(
-						'abc123',
-						'kjvs',
+						kjvs,
 						'1_1'
-					);
-
-				expect(
-					result
-				).toBe(
-					'abc123/kjvs/1_1'
-				);
-			}
-		);
-
-		it(
-			'builds Chapter identity from Bible Version identity',
-			() => {
-				const bibleVersionId =
-					createBibleVersionId(
-						'abc123',
-						'kjvs'
-					);
-
-				const chapterId =
-					createChapterId(
-						'abc123',
-						'kjvs',
-						'1_1'
-					);
-
-				expect(
-					chapterId
-				).toBe(
-					`${bibleVersionId}/1_1`
-				);
-			}
-		);
-
-		it(
-			'creates different ids for different Chapters',
-			() => {
-				const genesis1 =
-					createChapterId(
-						'abc123',
-						'kjvs',
-						'1_1'
-					);
-
-				const genesis2 =
-					createChapterId(
-						'abc123',
-						'kjvs',
-						'1_2'
-					);
-
-				expect(
-					genesis1
-				).not.toBe(
-					genesis2
+					)
 				);
 			}
 		);
@@ -151,48 +258,27 @@ describe(
 			'creates different Chapter ids for different publishers',
 			() => {
 				const publisherA =
-					createChapterId(
+					createBibleVersionId(
 						'publisher-a',
-						'kjvs',
-						'1_1'
+						'kjvs'
 					);
 
 				const publisherB =
-					createChapterId(
+					createBibleVersionId(
 						'publisher-b',
-						'kjvs',
-						'1_1'
+						'kjvs'
 					);
 
 				expect(
-					publisherA
-				).not.toBe(
-					publisherB
-				);
-			}
-		);
-
-		it(
-			'creates different Chapter ids for different Bible versions',
-			() => {
-				const kjv =
 					createChapterId(
-						'abc123',
-						'kjv',
+						publisherA,
 						'1_1'
-					);
-
-				const kjvs =
-					createChapterId(
-						'abc123',
-						'kjvs',
-						'1_1'
-					);
-
-				expect(
-					kjv
+					)
 				).not.toBe(
-					kjvs
+					createChapterId(
+						publisherB,
+						'1_1'
+					)
 				);
 			}
 		);

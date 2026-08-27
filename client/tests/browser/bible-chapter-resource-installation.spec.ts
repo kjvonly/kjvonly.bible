@@ -120,15 +120,19 @@ describe(
 
 				const chapter1Id =
 					createChapterId(
-						publisher,
-						'kjvs',
+						createBibleVersionId(
+							publisher,
+							'kjvs'
+						),
 						'1_1'
 					);
 
 				const chapter2Id =
 					createChapterId(
-						publisher,
-						'kjvs',
+						createBibleVersionId(
+							publisher,
+							'kjvs'
+						),
 						'1_2'
 					);
 
@@ -260,15 +264,19 @@ describe(
 
 				const chapter1Id =
 					createChapterId(
-						publisher,
-						'kjvs',
+						createBibleVersionId(
+							publisher,
+							'kjvs'
+						),
 						'1_1'
 					);
 
 				const chapter2Id =
 					createChapterId(
-						publisher,
-						'kjvs',
+						createBibleVersionId(
+							publisher,
+							'kjvs'
+						),
 						'1_2'
 					);
 
@@ -393,15 +401,19 @@ describe(
 
 				const chapter1Id =
 					createChapterId(
-						publisher,
-						'kjvs',
+						createBibleVersionId(
+							publisher,
+							'kjvs'
+						),
 						'1_1'
 					);
 
 				const chapter2Id =
 					createChapterId(
-						publisher,
-						'kjvs',
+						createBibleVersionId(
+							publisher,
+							'kjvs'
+						),
 						'1_2'
 					);
 
@@ -476,7 +488,7 @@ function createService(
 
 	representation:
 		ResourceRepresentationType =
-			'content'
+		'content'
 ): BibleChapterResourceService {
 
 	const discovery =
@@ -544,7 +556,7 @@ function createDecoder():
 function createVerifiedContent(
 	overrides:
 		Partial<VerifiedResourceContent> =
-			{}
+		{}
 ): VerifiedResourceContent {
 
 	return {
@@ -669,7 +681,7 @@ class FakeDiscovery {
 	constructor(
 		private readonly representation:
 			ResourceRepresentation
-	) {}
+	) { }
 
 	async get(
 		_reference:
@@ -687,7 +699,7 @@ class FakeResolver {
 	constructor(
 		private readonly contents:
 			readonly VerifiedResourceContent[]
-	) {}
+	) { }
 
 	async resolve(
 		_resource:
