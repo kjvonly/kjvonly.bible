@@ -16,7 +16,7 @@
 	import {
 		newStrongsPopups,
 		type StrongsPopups
-	} from '$lib/domains/bible/models/strongs.model';
+	} from '$lib/domains/strongs/models/strongs.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// =============================== BINDINGS ================================
@@ -160,6 +160,7 @@
 			{paneID}
 			hasCrossRef={crossRefs.length > 0}
 			strongsWords={pane?.buffer?.bag?.strongsWords}
+			{bibleVersion}
 		></StrongsDefsContainer>
 	{/if}
 

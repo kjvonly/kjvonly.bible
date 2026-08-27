@@ -1,5 +1,5 @@
 import { strongsApi } from '$lib/nostr/events/strongs.nostr';
-import { newStrongs, type Strongs } from '$lib/domains/bible/models/strongs.model';
+import { newStrongs, type Strongs } from '$lib/domains/strongs/models/strongs.model';
 
 export class StrongsService {
   jsonToStrongs(strongs: string): Strongs {
