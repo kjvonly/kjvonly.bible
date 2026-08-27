@@ -1,7 +1,7 @@
 import uuid4 from 'uuid4';
 import IndexedDB from '$lib/infrastructure/persistence/idb.db';
 
-const DB_VERSION = 16;
+const DB_VERSION = 17;
 
 
 

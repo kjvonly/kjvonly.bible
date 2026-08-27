@@ -77,8 +77,11 @@ describe(
 					createDecorator();
 
 				const encoded =
-					await decorator.encode(
-						'hello'
+					await compress(
+						new TextEncoder()
+							.encode(
+								'hello'
+							)
 					);
 
 				const decoded =
@@ -162,6 +165,75 @@ describe(
 		);
 
 		it(
+			'encodes large content without blocking on stream backpressure',
+			async () => {
+				const decorator =
+					createDecorator();
+
+				const original =
+					createLargeContent();
+
+				const encoded =
+					await decorator.encode(
+						original
+					);
+
+				expect(
+					encoded
+				).toBeInstanceOf(
+					Uint8Array
+				);
+
+				const decoded =
+					await decompress(
+						encoded as Uint8Array
+					);
+
+				expect(
+					new TextDecoder()
+						.decode(
+							decoded
+						)
+				).toBe(
+					original
+				);
+			}
+		);
+
+		it(
+			'decodes large gzip content without blocking on stream backpressure',
+			async () => {
+				const decorator =
+					createDecorator();
+
+				const original =
+					createLargeContent();
+
+				const encoded =
+					await compress(
+						new TextEncoder()
+							.encode(
+								original
+							)
+					);
+
+				const decoded =
+					await decorator.decode(
+						encoded
+					);
+
+				expect(
+					new TextDecoder()
+						.decode(
+							decoded as Uint8Array
+						)
+				).toBe(
+					original
+				);
+			}
+		);
+
+		it(
 			'rejects unsupported encoded input types',
 			async () => {
 				const decorator =
@@ -219,4 +291,107 @@ function createDecorator():
 	return new GzipResourceContentDecorator(
 		new BaseResourceContentDecorator()
 	);
+}
+
+function createLargeContent():
+	string {
+	return JSON.stringify({
+		chapter:
+			1,
+
+		verses:
+			Array.from(
+				{
+					length:
+						10_000
+				},
+				(
+					_,
+					index
+				) => ({
+					number:
+						index + 1,
+
+					text:
+						'In the beginning God created the heaven and the earth.'
+				})
+			)
+	});
+}
+
+async function compress(
+	value: Uint8Array
+): Promise<Uint8Array> {
+	const stream =
+		new CompressionStream(
+			'gzip'
+		);
+
+	const resultPromise =
+		new Response(
+			stream.readable
+		).arrayBuffer();
+
+	const writer =
+		stream.writable
+			.getWriter();
+
+	await writer.write(
+		toArrayBuffer(
+			value
+		)
+	);
+
+	await writer.close();
+
+	return new Uint8Array(
+		await resultPromise
+	);
+}
+
+async function decompress(
+	value: Uint8Array
+): Promise<Uint8Array> {
+	const stream =
+		new DecompressionStream(
+			'gzip'
+		);
+
+	const resultPromise =
+		new Response(
+			stream.readable
+		).arrayBuffer();
+
+	const writer =
+		stream.writable
+			.getWriter();
+
+	await writer.write(
+		toArrayBuffer(
+			value
+		)
+	);
+
+	await writer.close();
+
+	return new Uint8Array(
+		await resultPromise
+	);
+}
+
+function toArrayBuffer(
+	value: Uint8Array
+): ArrayBuffer {
+	const buffer =
+		new ArrayBuffer(
+			value.byteLength
+		);
+
+	new Uint8Array(
+		buffer
+	).set(
+		value
+	);
+
+	return buffer;
 }

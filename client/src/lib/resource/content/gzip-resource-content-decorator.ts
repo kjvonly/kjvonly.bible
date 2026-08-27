@@ -86,6 +86,16 @@ async function compressGzip(
 			'gzip'
 		);
 
+	/*
+	 * Begin consuming the readable side before
+	 * writing so stream backpressure cannot block
+	 * writer.write().
+	 */
+	const resultPromise =
+		new Response(
+			stream.readable
+		).arrayBuffer();
+
 	const writer =
 		stream.writable
 			.getWriter();
@@ -99,9 +109,7 @@ async function compressGzip(
 	await writer.close();
 
 	const buffer =
-		await new Response(
-			stream.readable
-		).arrayBuffer();
+		await resultPromise;
 
 	return new Uint8Array(
 		buffer
@@ -116,6 +124,16 @@ async function decompressGzip(
 			'gzip'
 		);
 
+	/*
+	 * Begin consuming the readable side before
+	 * writing so stream backpressure cannot block
+	 * writer.write().
+	 */
+	const resultPromise =
+		new Response(
+			stream.readable
+		).arrayBuffer();
+
 	const writer =
 		stream.writable
 			.getWriter();
@@ -129,9 +147,7 @@ async function decompressGzip(
 	await writer.close();
 
 	const buffer =
-		await new Response(
-			stream.readable
-		).arrayBuffer();
+		await resultPromise;
 
 	return new Uint8Array(
 		buffer
