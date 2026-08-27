@@ -31,6 +31,10 @@
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 
+	// NOSTR IMPL
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	const { bibleVersionsService } = useApplicationContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -64,10 +68,10 @@
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(() => {
+	onMount(async () => {
 		setModePaneID();
 		setNavReadings();
-		setBibleVersion();
+		await setBibleVersion();
 		setBibleLocationRef();
 		attachScrolls();
 		overrideContextMenu();
@@ -91,16 +95,27 @@
 		}
 	}
 
-	function setBibleVersion() {
-		if (pane?.buffer?.bag?.bibleVersion) {
-			bibleVersion = pane?.buffer?.bag?.bibleVersion;
-		} else {
-			let version = localStorage.getItem(LAST_BIBLE_VERSION);
-			if (version) {
-				bibleVersion = version;
-			}
+	async function setBibleVersion():
+		Promise<void> {
+
+		const persisted =
+			pane?.buffer?.bag
+				?.bibleVersion ??
+			localStorage.getItem(
+				LAST_BIBLE_VERSION
+			);
+
+		const selected =
+			await bibleVersionsService
+				.resolve(
+					persisted
+				);
+
+		if (selected) {
+			bibleVersion =
+				selected.id;
 		}
-	}
+}
 
 	function setBibleLocationRef() {
 		let ref = pane.buffer.bag.bibleLocationRef;

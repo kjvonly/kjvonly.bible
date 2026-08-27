@@ -1,24 +1,82 @@
-import { paragraphsApi } from '$lib/nostr/events/paragraphs.nostr';
-import { BIBLE_VERSIONS, getBibleDB} from '$lib/domains/bible/persistence/bible.db';
-import { syncService } from './sync.service';
+import type {
+	BibleVersion
+} from '$lib/domains/bible/models/bible-version.model';
 
-let bibleDB = await getBibleDB()
+import type {
+	BibleVersionCatalog
+} from '$lib/domains/bible/persistence/bible-version-catalog';
 
-class BibleVersionsService {
-  async list(): Promise<string[]> {
-    try {
-      let bibleVersions = await bibleDB.getAllKeys(BIBLE_VERSIONS)
+export class BibleVersionsService {
 
-      return bibleVersions.map(v => String(v))
-    } catch (err: any) { }
+	constructor(
+		private readonly catalog:
+			BibleVersionCatalog
+	) {}
 
-    return [];
-  }
+	async list(): Promise<
+		readonly BibleVersion[]
+	> {
+		const versions =
+			await this.catalog.list();
 
-  async delete(version: string): Promise<any> {
-    await bibleDB.deleteValue(BIBLE_VERSIONS, version)
-    await syncService.deleteVersion(version)
-  }
+		return [...versions].sort(
+			(a, b) =>
+				a.id.localeCompare(
+					b.version
+				) ||
+				a.publisher?.localeCompare(
+					b.publisher
+				)
+		);
+	}
+
+	async resolve(
+		selection:
+			string |
+			null |
+			undefined
+	): Promise<
+		BibleVersion |
+		undefined
+	> {
+		const versions =
+			await this.list();
+
+		if (!selection) {
+			return versions[0];
+		}
+
+		const exact =
+			versions.find(
+				(version) =>
+					version.id ===
+					selection
+			);
+
+		if (exact) {
+			return exact;
+		}
+
+		/*
+		 * Temporary migration support for
+		 * legacy values such as "kjvs".
+		 *
+		 * Only upgrade automatically when
+		 * the value is unambiguous.
+		 */
+		const legacyMatches =
+			versions.filter(
+				(version) =>
+					version.version ===
+					selection
+			);
+
+		if (
+			legacyMatches.length === 1
+		) {
+			return legacyMatches[0];
+		}
+
+		return undefined;
+	}
 }
-
-export const bibleVersionsService = new BibleVersionsService();

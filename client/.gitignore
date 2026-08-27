@@ -1,5 +1,7 @@
 node_modules
 
+
+
 # Output
 .output
 .vercel
@@ -8,6 +10,8 @@ node_modules
 /.svelte-kit
 /build
 /site
+__screenshots__
+.vitest-attachments
 
 # OS
 .DS_Store

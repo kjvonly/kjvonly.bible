@@ -55,6 +55,12 @@ export function newChapter(): Chapter {
   };
 }
 
+export type ChapterContent =
+	Omit<
+		Chapter,
+		'id'
+	>;
+
 export interface Verse {
   number: number;
   words: Word[];

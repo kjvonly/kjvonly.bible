@@ -24,12 +24,15 @@
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import { toastService } from '$lib/application/services/toast.service';
-	import { verseService } from '$lib/domains/bible/services/verse.service';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { findElement, scrollTo } from '$lib/application/ui/eventHandlers';
 	import { sleep } from '$lib/infrastructure/utils/sleep';
+
+	// NOSTR IMPL
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	const { verseService } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -96,7 +99,7 @@
 			bibleLocationReferenceService.extractVerse(bibleLocationRef);
 		let bookID = bibleLocationReferenceService.extractBookID(bibleLocationRef);
 		let bookName = bookNamesByIDService.get(bookID);
-		let verse = await verseService.get(`${bibleVersion}/${bibleLocationRef}`);
+		let verse = await verseService.get(bibleVersion, bibleLocationRef);
 		let verseWithoutNumber = verse.text.slice(verse.text.indexOf(' ') + 1);
 
 		return {
@@ -158,7 +161,7 @@
 			bibleLocationReferenceService.convertCrossRefToBibleLocationRef(
 				crossRef.crossRef
 			);
-		let verse = await verseService.get(`${bibleVersion}/${bibleLocationRef}`);
+		let verse = await verseService.get(bibleVersion, bibleLocationRef);
 		let crossRefs = [crossRef.crossRef];
 		verse?.words.forEach((w: any) => {
 			w.href?.forEach((ref: string) => {
