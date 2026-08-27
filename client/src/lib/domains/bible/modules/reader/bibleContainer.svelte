@@ -30,6 +30,10 @@
 	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+
+	// NOSTR IMPL
+	const { bibleVersionsService } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -45,7 +49,7 @@
 
 	let annotations: Annotations = $state(newAnnotation());
 	let bibleLocationRef: string = $state('');
-	let bibleVersion: string = $state('kjvs');
+	let bibleVersion: string = $state('');
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	/** since the {@link header} snippet is part of the body we don't
@@ -64,10 +68,10 @@
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(() => {
+	onMount(async () => {
 		setModePaneID();
 		setNavReadings();
-		setBibleVersion();
+		await setBibleVersion();
 		setBibleLocationRef();
 		attachScrolls();
 		overrideContextMenu();
@@ -91,16 +95,27 @@
 		}
 	}
 
-	function setBibleVersion() {
-		if (pane?.buffer?.bag?.bibleVersion) {
-			bibleVersion = pane?.buffer?.bag?.bibleVersion;
-		} else {
-			let version = localStorage.getItem(LAST_BIBLE_VERSION);
-			if (version) {
-				bibleVersion = version;
-			}
+	async function setBibleVersion():
+		Promise<void> {
+
+		const persisted =
+			pane?.buffer?.bag
+				?.bibleVersion ??
+			localStorage.getItem(
+				LAST_BIBLE_VERSION
+			);
+
+		const selected =
+			await bibleVersionsService
+				.resolve(
+					persisted
+				);
+
+		if (selected) {
+			bibleVersion =
+				selected.id;
 		}
-	}
+}
 
 	function setBibleLocationRef() {
 		let ref = pane.buffer.bag.bibleLocationRef;

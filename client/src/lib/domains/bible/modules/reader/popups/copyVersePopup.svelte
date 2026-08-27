@@ -10,7 +10,6 @@
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
-	import { chapterService } from '$lib/domains/bible/services/chapter.service';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// COMPONENTS
@@ -26,6 +25,16 @@
 	//OTHER
 	import { scrollTo } from '$lib/application/ui/eventHandlers';
 	import uuid4 from 'uuid4';
+
+	// NOSTR IMPL
+	import {
+		useApplicationContext
+	} from '$lib/application/runtime/application-context';
+
+	const {
+		chapterService
+	} = useApplicationContext();
+
 
 	// =============================== BINDINGS ================================
 
@@ -75,7 +84,8 @@
 
 	async function loadVerses() {
 		let chapter = await chapterService.get(
-			`${bibleVersion}/${bibleLocationRef}`
+			bibleVersion,
+			bibleLocationRef
 		);
 		verses = chapter.verses;
 	}

@@ -22,6 +22,8 @@ import type { ResourceContentDecoratorBuilder } from '$lib/resource/content/reso
 import type { BibleChapterResourceHandler } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
 import type { BibleChapterResourceService } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-service';
 import type { ChapterService } from '$lib/domains/bible/services/chapter.service';
+import type { BibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
+import type { VerseService } from '$lib/domains/bible/services/verse.service';
 
 export interface ApplicationContext {
     readonly nostrSigner:
@@ -47,6 +49,12 @@ export interface ApplicationContext {
 
     readonly chapterService:
 	ChapterService;
+
+    readonly verseService:
+	VerseService;
+
+    readonly bibleVersionsService:
+	BibleVersionsService;
 }
 
 const APPLICATION_CONTEXT =

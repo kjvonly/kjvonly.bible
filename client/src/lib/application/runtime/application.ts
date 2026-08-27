@@ -46,6 +46,9 @@ import { getBibleDB } from '$lib/domains/bible/persistence/bible.db';
 import { BibleChapterResourceService } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-service';
 import { IndexedDBChapterStore } from '$lib/domains/bible/persistence/indexeddb-chapter-store';
 import { ChapterService } from '$lib/domains/bible/services/chapter.service';
+import { BibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
+import { IndexedDBBibleVersionCatalog } from '$lib/domains/bible/persistence/indexeddb-bible-version-catalog';
+import { VerseService } from '$lib/domains/bible/services/verse.service';
 
 
 
@@ -163,6 +166,21 @@ export class Application {
                 chapterStore
             );
 
+        const verseService =
+            new VerseService(
+                chapterService
+            );
+
+        const bibleVersionCatalog =
+            new IndexedDBBibleVersionCatalog(
+                getBibleDB
+            );
+
+        const bibleVersionsService =
+            new BibleVersionsService(
+                bibleVersionCatalog
+            );
+
         this.context = {
             nostrSigner,
             resourceClient,
@@ -171,7 +189,9 @@ export class Application {
             resourceContentDecoratorBuilder,
             resourceContentDecoder,
             bibleChapterResourceService,
-            chapterService
+            chapterService,
+            verseService,
+            bibleVersionsService
         };
     }
 
