@@ -49,7 +49,7 @@
 
 	let annotations: Annotations = $state(newAnnotation());
 	let bibleLocationRef: string = $state('');
-	let bibleVersion: string = $state('');
+	let bibleVersion: string = $state('kjvs');
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	/** since the {@link header} snippet is part of the body we don't
