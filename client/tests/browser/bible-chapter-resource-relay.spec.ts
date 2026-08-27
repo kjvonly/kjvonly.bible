@@ -23,11 +23,11 @@ import {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
 
 import {
-	BIBLE_VERSIONS,
-	CHAPTERS,
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
-	getBibleDB
-} from '$lib/domains/bible/persistence/bible.db';
+	createStoredDomainObjectId,
+	getApplicationDB
+} from '$lib/infrastructure/persistence/application.db';
 
 import {
 	createBibleVersionId,
@@ -42,6 +42,9 @@ const RELAY_URL =
 	import.meta.env
 		.VITE_NOSTR_TEST_RELAY_URL ??
 	'ws://127.0.0.1:3334';
+
+const BIBLE_VERSION_OBJECT_TYPE =
+	'bible/version';
 
 describe(
 	'Bible Chapter Resource relay integration',
@@ -170,9 +173,6 @@ describe(
 					true
 				);
 
-				const db =
-					await getBibleDB();
-
 				const chapterId =
 					createChapterId(
 						publisher,
@@ -196,8 +196,8 @@ describe(
 				 * Domain Object
 				 */
 				expect(
-					await db.getValue(
-						CHAPTERS,
+					await getDomainObject(
+						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapterId
 					)
 				).toEqual({
@@ -211,8 +211,8 @@ describe(
 				 * Installed Bible Version
 				 */
 				expect(
-					await db.getValue(
-						BIBLE_VERSIONS,
+					await getDomainObject(
+						BIBLE_VERSION_OBJECT_TYPE,
 						bibleVersionId
 					)
 				).toEqual({
@@ -228,8 +228,11 @@ describe(
 				/*
 				 * Resource provenance
 				 */
+				const db =
+					await getApplicationDB();
+
 				expect(
-					await db.getValue(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						installationId
 					)
@@ -259,6 +262,28 @@ describe(
 		);
 	}
 );
+
+async function getDomainObject(
+	objectType: string,
+	objectId: string
+): Promise<
+	unknown |
+	undefined
+> {
+	const db =
+		await getApplicationDB();
+
+	const stored =
+		await db.get(
+			DOMAIN_OBJECTS,
+			createStoredDomainObjectId(
+				objectType,
+				objectId
+			)
+		);
+
+	return stored?.value;
+}
 
 function createChapterContent() {
 	return {
