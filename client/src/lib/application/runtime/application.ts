@@ -57,6 +57,36 @@ import {
 import type { BibleVersion } from '$lib/domains/bible/models/bible-version.model';
 import { createBibleVersionId } from '$lib/domains/bible/utils/bible-identity';
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Strongs
+
+import {
+    IndexedDBStrongsInstallationTransaction
+} from '$lib/domains/strongs/persistence/strongs-installation-transaction';
+
+import {
+    StrongsInstaller
+} from '$lib/domains/strongs/resources/definitions/strongs-installer';
+
+import {
+    StrongsInterpreter
+} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+
+import {
+    StrongsValidator
+} from '$lib/domains/strongs/resources/definitions/strongs-validator';
+
+import {
+    StrongsResourceHandler
+} from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
+
+import {
+    StrongsResourceService
+} from '$lib/domains/strongs/resources/definitions/strongs-resource-service';
+
+///////////////////////////////////////////////////////////////////////////////
+
 const LOGIN_KEY =
     'login';
 
@@ -142,6 +172,9 @@ export class Application {
                 resourceContentDecoratorBuilder
             );
 
+        ///////////////////////////////////////////////////////////////////////
+        // Bible Chapter
+
         const bibleChapterInstallationTransaction =
             new IndexedDBBibleChapterInstallationTransaction(
                 getApplicationDB
@@ -213,6 +246,37 @@ export class Application {
                 defaultBibleVersion
             );
 
+        ///////////////////////////////////////////////////////////////////////
+        // Strongs
+
+        const strongsInstallationTransaction =
+            new IndexedDBStrongsInstallationTransaction(
+                getApplicationDB
+            );
+
+        const strongsInstaller =
+            new StrongsInstaller(
+                strongsInstallationTransaction
+            );
+
+        const strongsResourceHandler =
+            new StrongsResourceHandler(
+                new StrongsInterpreter(),
+                new StrongsValidator(),
+                strongsInstaller
+            );
+
+        const strongsResourceService =
+            new StrongsResourceService(
+                resourceDiscovery,
+                resourceResolver,
+                resourceContentDecoder,
+                strongsResourceHandler
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Application Context
+
         this.context = {
             nostrSigner,
             resourceClient,
@@ -223,7 +287,8 @@ export class Application {
             bibleChapterResourceService,
             chapterService,
             verseService,
-            bibleVersionsService
+            bibleVersionsService,
+            strongsResourceService,
         };
     }
 

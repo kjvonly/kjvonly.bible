@@ -24,6 +24,7 @@ import type { BibleChapterResourceService } from '$lib/domains/bible/resources/c
 import type { ChapterService } from '$lib/domains/bible/services/chapter.service';
 import type { BibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
 import type { VerseService } from '$lib/domains/bible/services/verse.service';
+import type { StrongsResourceService } from '$lib/domains/strongs/resources/definitions/strongs-resource-service';
 
 export interface ApplicationContext {
     readonly nostrSigner:
@@ -55,6 +56,9 @@ export interface ApplicationContext {
 
     readonly bibleVersionsService:
 	BibleVersionsService;
+
+    readonly strongsResourceService:
+	StrongsResourceService;
 }
 
 const APPLICATION_CONTEXT =
