@@ -14,7 +14,8 @@ import {
 	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
-import  { STRONGS_DEFINITION_OBJECT_TYPE, IndexedDBStrongsStore } from '$lib/domains/strongs/persistence/indexeddb-strongs-store';
+import  { IndexedDBStrongsStore } from '$lib/domains/strongs/persistence/indexeddb-strongs-store';
+import { STRONGS_DEFINITION_OBJECT_TYPE } from '$lib/domains/strongs/persistence/strongs-store';
 
 
 describe(

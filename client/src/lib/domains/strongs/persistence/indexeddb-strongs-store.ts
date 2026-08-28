@@ -2,8 +2,9 @@ import type {
 	Strongs
 } from '$lib/domains/strongs/models/strongs.model';
 
-import type {
-	StrongsStore
+import {
+    STRONGS_DEFINITION_OBJECT_TYPE,
+	type StrongsStore
 } from './strongs-store';
 
 import {
@@ -12,9 +13,6 @@ import {
 	type ApplicationDB,
 	type StoredDomainObject
 } from '$lib/infrastructure/persistence/application.db';
-
-export const STRONGS_DEFINITION_OBJECT_TYPE =
-	'strongs/definition';
 
 export class IndexedDBStrongsStore
 	implements StrongsStore {
