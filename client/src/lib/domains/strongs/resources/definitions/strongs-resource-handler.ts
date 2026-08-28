@@ -1,74 +1,71 @@
 import type {
-	DecodedResourceContent
+    DecodedResourceContent
 } from '$lib/resource/models/resource.model';
 
 import type {
-	ResourceInterpreter
+    ResourceInterpreter
 } from '$lib/resource/interpretation/resource-interpreter';
 
 import type {
-	ResourceValidator
+    ResourceValidator
 } from '$lib/resource/validation/resource-validator';
 
 import type {
-	StrongsCandidate
+    StrongsCandidate
 } from './strongs-candidate';
 
 import type {
-	ValidatedStrongsCandidate
+    ValidatedStrongsCandidate
 } from './validated-strongs-candidate';
 
-export interface StrongsResourceInstaller {
-	install(
-		resource:
-			DecodedResourceContent,
-
-		candidates:
-			readonly ValidatedStrongsCandidate[]
-	): Promise<void>;
-}
+import type {
+    StrongsInstaller
+} from './strongs-installer';
 
 export class StrongsResourceHandler {
 
-	constructor(
-		private readonly interpreter:
-			ResourceInterpreter<
-				StrongsCandidate
-			>,
+    constructor(
+        private readonly interpreter:
+            ResourceInterpreter<
+                StrongsCandidate
+            >,
 
-		private readonly validator:
-			ResourceValidator<
-				StrongsCandidate,
-				ValidatedStrongsCandidate
-			>,
+        private readonly validator:
+            ResourceValidator<
+                StrongsCandidate,
+                ValidatedStrongsCandidate
+            >,
 
-		private readonly installer:
-			StrongsResourceInstaller
-	) {}
+        private readonly installer:
+            Pick<
+                StrongsInstaller,
+                'install'
+            >
+    ) { }
 
-	async handle(
-		resource:
-			DecodedResourceContent
-	): Promise<void> {
+    async handle(
+        resource:
+            DecodedResourceContent
+    ): Promise<void> {
 
-		const candidates =
-			Array.from(
-				this.interpreter.interpret(
-					resource
-				)
-			);
+        const candidates =
+            Array.from(
+                this.interpreter.interpret(
+                    resource
+                )
+            );
 
-		const validatedCandidates =
-			candidates.map(
-				(candidate) =>
-					this.validator.validate(
-						candidate
-					)
-			);
+        const validatedCandidates =
+            candidates.map(
+                (candidate) =>
+                    this.validator.validate(
+                        candidate
+                    )
+            );
 
-		await this.installer.install(
-			resource,
-			validatedCandidates
-		);
-	}
+        await this.installer.install(
+            resource,
+            validatedCandidates
+        );
+    }
 }
