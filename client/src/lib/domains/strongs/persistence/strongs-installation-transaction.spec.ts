@@ -133,7 +133,7 @@ describe(
 					) => {
 						expect(
 							await stores.strongs.get(
-								'publisher/kjvs/G999'
+								'publisher/kjvs/G777'
 							)
 						).toBeUndefined();
 					}
