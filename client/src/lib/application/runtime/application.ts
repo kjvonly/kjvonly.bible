@@ -318,17 +318,20 @@ export class Application {
 
         this.context = {
             nostrSigner,
+
             resourceClient,
             resourceDiscovery,
             resourceResolver,
             resourceContentDecoratorBuilder,
             resourceContentDecoder,
+            
+            resourceService,
+
             bibleChapterResourceService,
             chapterService,
             verseService,
             bibleVersionsService,
 
-            resourceService,
             strongsService
         };
     }

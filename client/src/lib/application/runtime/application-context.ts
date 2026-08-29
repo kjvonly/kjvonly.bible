@@ -24,7 +24,6 @@ import type { BibleChapterResourceService } from '$lib/domains/bible/resources/c
 import type { ChapterService } from '$lib/domains/bible/services/chapter.service';
 import type { BibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
 import type { VerseService } from '$lib/domains/bible/services/verse.service';
-import type { StrongsResourceService } from '$lib/domains/strongs/resources/definitions/strongs-resource-service';
 import type { StrongsService } from '$lib/domains/strongs/services/strongs.service';
 import type { ResourceService } from '$lib/resource/services/resource.service';
 
@@ -32,6 +31,8 @@ export interface ApplicationContext {
     readonly nostrSigner:
     NostrSigner;
 
+    // RESOURCE
+    
     readonly resourceClient:
     ResourceClient;
 
@@ -47,6 +48,12 @@ export interface ApplicationContext {
     readonly resourceContentDecoder:
     ResourceContentDecoder;
 
+    readonly resourceService:
+    ResourceService;
+
+
+    // BIBLE
+
     readonly bibleChapterResourceService:
     BibleChapterResourceService;
 
@@ -59,9 +66,8 @@ export interface ApplicationContext {
     readonly bibleVersionsService:
     BibleVersionsService;
 
-    readonly resourceService:
-    ResourceService;
-
+    // STRONGS
+    
     readonly strongsService:
     StrongsService;
 }

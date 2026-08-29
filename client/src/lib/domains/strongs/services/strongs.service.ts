@@ -4,27 +4,27 @@ import type {
 
 import type {
 	Strongs
-} from '../models/strongs.model';
+} from '$lib/domains/strongs/models/strongs.model';
 
 import type {
 	StrongsStore
-} from '../persistence/strongs-store';
+} from '$lib/domains/strongs/persistence/strongs-store';
 
 import type {
 	ResourceLoader
 } from '$lib/resource/loading/resource-loader';
 
 import {
-	createStrongsId
-} from '../utils/strongs-identity';
-
-import {
 	parseResourceIdentifier
 } from '$lib/resource/utils/resource-identifier';
 
 import {
+	createStrongsId
+} from '$lib/domains/strongs/utils/strongs-identity';
+
+import {
 	STRONGS_RESOURCE_TYPE
-} from '../resources/definitions/strongs-interpreter';
+} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
 export class StrongsService {
 
@@ -48,6 +48,7 @@ export class StrongsService {
 		key:
 			string
 	): Promise<Strongs> {
+
 		const {
 			edition
 		} =
@@ -67,7 +68,8 @@ export class StrongsService {
 			);
 
 		if (
-			existing !== undefined
+			existing !==
+			undefined
 		) {
 			return existing;
 		}
@@ -90,7 +92,8 @@ export class StrongsService {
 			);
 
 		if (
-			installed === undefined
+			installed ===
+			undefined
 		) {
 			throw new Error(
 				`Strong's definition was not installed: ${strongsId}`
@@ -108,6 +111,7 @@ function parseStrongsSource(
 	readonly edition:
 		string;
 } {
+
 	const identifier =
 		parseResourceIdentifier(
 			source.resourceId
