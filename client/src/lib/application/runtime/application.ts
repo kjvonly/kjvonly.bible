@@ -213,33 +213,13 @@ export class Application {
                 bibleChapterInstaller
             );
 
-        const bibleChapterResourceService =
-            new BibleChapterResourceService(
-                resourceDiscovery,
-                resourceResolver,
-                resourceContentDecoder,
-                bibleChapterResourceHandler
-            );
-
         const chapterStore =
             new IndexedDBChapterStore(
                 getApplicationDB
             );
 
-        const chapterResourceLoader =
-            new BibleChapterResourceLoader(
-                bibleChapterResourceService
-            );
-        const chapterService =
-            new ChapterService(
-                chapterStore,
-                chapterResourceLoader
-            );
 
-        const verseService =
-            new VerseService(
-                chapterService
-            );
+
 
         const bibleVersionCatalog =
             new IndexedDBBibleVersionCatalog(
@@ -287,6 +267,13 @@ export class Application {
                 strongsInstaller
             );
 
+        const strongsStore =
+            new IndexedDBStrongsStore(
+                getApplicationDB
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Resource loaders and services
         const resourceService =
             new ResourceService(
                 resourceDiscovery,
@@ -298,11 +285,28 @@ export class Application {
                 ]
             );
 
-        const strongsStore =
-            new IndexedDBStrongsStore(
-                getApplicationDB
+
+        // // Chapter
+
+        const chapterResourceLoader =
+            new ResourceLoader<string>(
+                resourceService,
+                appendResourceReferenceBuilder
             );
 
+        const chapterService =
+            new ChapterService(
+                chapterStore,
+                chapterResourceLoader
+            );
+
+
+        const verseService =
+            new VerseService(
+                chapterService
+            );
+
+        // // Strongs
         const strongsResourceLoader =
             new ResourceLoader(
                 resourceService,
@@ -325,10 +329,9 @@ export class Application {
             resourceResolver,
             resourceContentDecoratorBuilder,
             resourceContentDecoder,
-            
+
             resourceService,
 
-            bibleChapterResourceService,
             chapterService,
             verseService,
             bibleVersionsService,

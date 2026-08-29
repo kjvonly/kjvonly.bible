@@ -54,9 +54,6 @@ export interface ApplicationContext {
 
     // BIBLE
 
-    readonly bibleChapterResourceService:
-    BibleChapterResourceService;
-
     readonly chapterService:
     ChapterService;
 
