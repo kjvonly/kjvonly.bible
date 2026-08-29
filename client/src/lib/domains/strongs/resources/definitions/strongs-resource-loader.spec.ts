@@ -25,7 +25,7 @@ describe(
 						) => {
 							return (
 								reference.resourceId ===
-								'kjvonly/bible/strongs/kjvs/G1'
+								'kjvonly/strongs/definitions/kjvs/G1'
 							);
 						}
 					);
@@ -56,7 +56,7 @@ describe(
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs/G1'
+							'kjvonly/strongs/definitions/kjvs/G1'
 					}
 				]);
 			}
@@ -72,7 +72,7 @@ describe(
 						) => {
 							return (
 								reference.resourceId ===
-								'kjvonly/bible/strongs/kjvs'
+								'kjvonly/strongs/definitions/kjvs'
 							);
 						}
 					);
@@ -103,14 +103,14 @@ describe(
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs/G1'
+							'kjvonly/strongs/definitions/kjvs/G1'
 					},
 					{
 						publisher:
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs'
+							'kjvonly/strongs/definitions/kjvs'
 					}
 				]);
 			}
@@ -151,14 +151,14 @@ describe(
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs/G1'
+							'kjvonly/strongs/definitions/kjvs/G1'
 					},
 					{
 						publisher:
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs'
+							'kjvonly/strongs/definitions/kjvs'
 					}
 				]);
 			}
@@ -192,7 +192,7 @@ describe(
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs/H1'
+							'kjvonly/strongs/definitions/kjvs/H1'
 					}
 				]);
 			}
@@ -240,7 +240,7 @@ describe(
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs/G1'
+							'kjvonly/strongs/definitions/kjvs/G1'
 					}
 				]);
 			}
@@ -256,7 +256,7 @@ describe(
 						) => {
 							if (
 								reference.resourceId ===
-								'kjvonly/bible/strongs/kjvs/G1'
+								'kjvonly/strongs/definitions/kjvs/G1'
 							) {
 								return false;
 							}
@@ -290,14 +290,14 @@ describe(
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs/G1'
+							'kjvonly/strongs/definitions/kjvs/G1'
 					},
 					{
 						publisher:
 							'publisher',
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs'
+							'kjvonly/strongs/definitions/kjvs'
 					}
 				]);
 			}

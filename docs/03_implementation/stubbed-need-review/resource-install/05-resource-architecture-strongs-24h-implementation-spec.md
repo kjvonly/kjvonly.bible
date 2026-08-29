@@ -15,7 +15,7 @@ This document records the Resource Architecture implementation work completed du
 The primary goal was to implement a second concrete Published Resource type after Bible Chapters:
 
 ```text
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
 ```
 
 The Strong’s slice was intentionally implemented concretely rather than through a new generic framework. Its purpose was to prove that the architecture established by Bible Chapters can support another Domain while preserving the same boundaries around discovery, resolution, decoding, interpretation, validation, installation, provenance, and Domain persistence.
@@ -93,14 +93,14 @@ Everything after those first three segments is Resource-Type-specific path data.
 Example:
 
 ```text
-kjvonly/bible/strongs/kjvs/G1
+kjvonly/strongs/definitions/kjvs/G1
 ```
 
 becomes:
 
 ```text
 resourceType:
-    kjvonly/bible/strongs
+    kjvonly/strongs/definitions
 
 path:
     kjvs/G1
@@ -217,7 +217,7 @@ shared use != shared ownership
 The Published Resource Type remains:
 
 ```text
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
 ```
 
 while local application ownership is:
@@ -304,28 +304,28 @@ No `.min(1)` constraints were added to descriptive text fields because current p
 Resource Type:
 
 ```text
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
 ```
 
 Supported forms:
 
 ```text
-kjvonly/bible/strongs/{version}
-kjvonly/bible/strongs/{version}/{key}
+kjvonly/strongs/definitions/{version}
+kjvonly/strongs/definitions/{version}/{key}
 ```
 
 Examples:
 
 ```text
-kjvonly/bible/strongs/kjvs
-kjvonly/bible/strongs/kjvs/G1
-kjvonly/bible/strongs/kjvs/H1
+kjvonly/strongs/definitions/kjvs
+kjvonly/strongs/definitions/kjvs/G1
+kjvonly/strongs/definitions/kjvs/H1
 ```
 
 The Resource Type root is rejected:
 
 ```text
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
 ```
 
 Paths deeper than `version/key` are rejected.
@@ -347,7 +347,7 @@ The supported bundle shape is:
 The version already exists in the Resource Identifier:
 
 ```text
-kjvonly/bible/strongs/kjvs
+kjvonly/strongs/definitions/kjvs
 ```
 
 so bundle keys do not repeat it.
@@ -478,7 +478,7 @@ Resource Type constant:
 
 ```ts
 export const STRONGS_RESOURCE_TYPE =
-    'kjvonly/bible/strongs';
+    'kjvonly/strongs/definitions';
 ```
 
 Responsibilities:
@@ -495,7 +495,7 @@ produce StrongsCandidate values
 Individual Resource:
 
 ```text
-kjvonly/bible/strongs/kjvs/G1
+kjvonly/strongs/definitions/kjvs/G1
 ```
 
 produces:
@@ -511,7 +511,7 @@ produces:
 Bundle Resource:
 
 ```text
-kjvonly/bible/strongs/kjvs
+kjvonly/strongs/definitions/kjvs
 ```
 
 produces one candidate per bundle property.

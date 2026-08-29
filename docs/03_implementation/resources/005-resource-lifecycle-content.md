@@ -277,7 +277,7 @@ For example, all of these may use kind `37770`:
 
 ```text
 kjvonly/bible/chapters
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
 kjvonly/plans/readings
 kjvonly/notes/...
 kjvonly/overlays/pericopes
@@ -372,7 +372,7 @@ Examples:
 
 ```text
 kjvonly/bible/chapters
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
 kjvonly/plans/readings
 ```
 
@@ -601,7 +601,7 @@ This:
 
 ```text
 d = kjvonly/bible/chapters/kjv/1_1
-t = kjvonly/bible/strongs
+t = kjvonly/strongs/definitions
 ```
 
 is rejected as an invalid Resource classification.
@@ -2157,7 +2157,7 @@ Examples:
 kjvonly/bible/chapters
     → BibleChapterInterpreter
 
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
     → BibleStrongsInterpreter
 
 kjvonly/plans/readings

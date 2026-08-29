@@ -315,10 +315,10 @@ function createResource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/bible/strongs',
+			'kjvonly/strongs/definitions',
 
 		eventId:
 			'event-200',
@@ -424,7 +424,7 @@ class FakeStrongsInterpreter
 	> {
 
 	readonly resourceType =
-		'kjvonly/bible/strongs';
+		'kjvonly/strongs/definitions';
 
 	resource:
 		DecodedResourceContent |
@@ -453,7 +453,7 @@ class ThrowingStrongsInterpreter
 	> {
 
 	readonly resourceType =
-		'kjvonly/bible/strongs';
+		'kjvonly/strongs/definitions';
 
 	constructor(
 		private readonly error:

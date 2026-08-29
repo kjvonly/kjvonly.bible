@@ -32,7 +32,7 @@ describe(
 						...interpreter.interpret(
 							createResource({
 								resourceId:
-									'kjvonly/bible/strongs/kjvs/G1',
+									'kjvonly/strongs/definitions/kjvs/G1',
 
 								value
 							})
@@ -76,7 +76,7 @@ describe(
 						...interpreter.interpret(
 							createResource({
 								resourceId:
-									'kjvonly/bible/strongs/kjvs',
+									'kjvonly/strongs/definitions/kjvs',
 
 								value: {
 									G1:
@@ -127,7 +127,7 @@ describe(
 						...interpreter.interpret(
 							createResource({
 								resourceId:
-									'kjvonly/bible/strongs/kjv/G1'
+									'kjvonly/strongs/definitions/kjv/G1'
 							})
 						)
 					];
@@ -197,7 +197,7 @@ describe(
 							...interpreter.interpret(
 								createResource({
 									resourceId:
-										'kjvonly/bible/strongs'
+										'kjvonly/strongs/definitions'
 								})
 							)
 						]
@@ -219,7 +219,7 @@ describe(
 							...interpreter.interpret(
 								createResource({
 									resourceId:
-										'kjvonly/bible/strongs/kjvs/G1/extra'
+										'kjvonly/strongs/definitions/kjvs/G1/extra'
 								})
 							)
 						]
@@ -241,7 +241,7 @@ describe(
 							...interpreter.interpret(
 								createResource({
 									resourceId:
-										'kjvonly/bible/strongs/kjvs',
+										'kjvonly/strongs/definitions/kjvs',
 
 									value:
 										'not-an-object'
@@ -266,7 +266,7 @@ describe(
 							...interpreter.interpret(
 								createResource({
 									resourceId:
-										'kjvonly/bible/strongs/kjvs',
+										'kjvonly/strongs/definitions/kjvs',
 
 									value:
 										null
@@ -291,7 +291,7 @@ describe(
 							...interpreter.interpret(
 								createResource({
 									resourceId:
-										'kjvonly/bible/strongs/kjvs',
+										'kjvonly/strongs/definitions/kjvs',
 
 									value:
 										[]
@@ -316,7 +316,7 @@ describe(
 							...interpreter.interpret(
 								createResource({
 									resourceId:
-										'kjvonly/bible/strongs/kjvs',
+										'kjvonly/strongs/definitions/kjvs',
 
 									value: {
 										'kjvs/G1': {
@@ -349,7 +349,7 @@ describe(
 						...interpreter.interpret(
 							createResource({
 								resourceId:
-									'kjvonly/bible/strongs/kjvs/G1',
+									'kjvonly/strongs/definitions/kjvs/G1',
 
 								value
 							})
@@ -385,7 +385,7 @@ function createResource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs/G1',
+			'kjvonly/strongs/definitions/kjvs/G1',
 
 		resourceType:
 			STRONGS_RESOURCE_TYPE,

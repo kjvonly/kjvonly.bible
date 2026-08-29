@@ -559,7 +559,7 @@ function createReference():
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs'
+			'kjvonly/strongs/definitions/kjvs'
 	};
 }
 
@@ -574,10 +574,10 @@ function createRepresentation(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/bible/strongs',
+			'kjvonly/strongs/definitions',
 
 		eventId:
 			'event-id',
@@ -609,10 +609,10 @@ function createVerifiedContent(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/bible/strongs',
+			'kjvonly/strongs/definitions',
 
 		eventId:
 			'event-id',
@@ -641,10 +641,10 @@ function createDecodedContent(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/bible/strongs',
+			'kjvonly/strongs/definitions',
 
 		eventId:
 			'event-id',

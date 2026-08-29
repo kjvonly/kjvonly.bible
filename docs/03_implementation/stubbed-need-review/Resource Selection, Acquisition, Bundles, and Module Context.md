@@ -1957,7 +1957,7 @@ hardcoded application publisher
 The Strong’s Resource namespace should move from:
 
 ```text
-kjvonly/bible/strongs/...
+kjvonly/strongs/definitions/...
 ```
 
 to:

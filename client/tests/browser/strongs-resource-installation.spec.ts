@@ -80,7 +80,7 @@ describe(
 					createPublisher();
 
 				const resourceId =
-					'kjvonly/bible/strongs/kjvs';
+					'kjvonly/strongs/definitions/kjvs';
 
 				const eventId =
 					'a'.repeat(
@@ -246,7 +246,7 @@ describe(
 					createPublisher();
 
 				const resourceId =
-					'kjvonly/bible/strongs/kjvs';
+					'kjvonly/strongs/definitions/kjvs';
 
 				const service =
 					createService([
@@ -350,10 +350,10 @@ describe(
 					createPublisher();
 
 				const g1ResourceId =
-					'kjvonly/bible/strongs/kjvs/G1';
+					'kjvonly/strongs/definitions/kjvs/G1';
 
 				const g2ResourceId =
-					'kjvonly/bible/strongs/kjvs/G2';
+					'kjvonly/strongs/definitions/kjvs/G2';
 
 				const eventA =
 					'a'.repeat(
@@ -419,7 +419,7 @@ describe(
 						publisher,
 
 						resourceId:
-							'kjvonly/bible/strongs/kjvs'
+							'kjvonly/strongs/definitions/kjvs'
 					})
 				).rejects.toThrow();
 
@@ -609,10 +609,10 @@ function createVerifiedContent(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/bible/strongs',
+			'kjvonly/strongs/definitions',
 
 		eventId:
 			'a'.repeat(
@@ -642,10 +642,10 @@ function createRepresentation(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/bible/strongs',
+			'kjvonly/strongs/definitions',
 
 		eventId:
 			'c'.repeat(

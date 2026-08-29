@@ -100,7 +100,7 @@ describe(
 			"publishes discovers resolves decodes validates and installs a Strong's definition",
 			async () => {
 				const resourceType =
-					'kjvonly/bible/strongs';
+					'kjvonly/strongs/definitions';
 
 				const resourceId =
 					`${resourceType}/kjvs/G1`;

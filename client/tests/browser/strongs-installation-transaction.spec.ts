@@ -374,7 +374,7 @@ function createInstallation():
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs/G1',
+			'kjvonly/strongs/definitions/kjvs/G1',
 
 		eventId:
 			'event-id',

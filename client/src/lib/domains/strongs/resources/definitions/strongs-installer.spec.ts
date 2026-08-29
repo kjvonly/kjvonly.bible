@@ -113,7 +113,7 @@ describe(
 						'publisher',
 
 					resourceId:
-						'kjvonly/bible/strongs/kjvs',
+						'kjvonly/strongs/definitions/kjvs',
 
 					eventId:
 						'event-200',
@@ -593,10 +593,10 @@ function createResource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/bible/strongs',
+			'kjvonly/strongs/definitions',
 
 		eventId:
 			'event-200',
@@ -700,7 +700,7 @@ function createInstallation(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/strongs/kjvs',
+			'kjvonly/strongs/definitions/kjvs',
 
 		eventId:
 			'event-id',

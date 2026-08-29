@@ -978,7 +978,7 @@ Example:
 kjvonly/bible/chapters
     → Bible Chapter pipeline
 
-kjvonly/bible/strongs
+kjvonly/strongs/definitions
     → Strong's pipeline
 
 kjvonly/plans/readings

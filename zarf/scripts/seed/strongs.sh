@@ -30,7 +30,7 @@ seed_relay() {
       nak event \
         -c "$(cat "$file" | xxd -p -c 0)" \
         -k 37770 \
-        -d "kjvonly/bible/strongs/$id" \
+        -d "kjvonly/strongs/definitions/$id" \
         --tag "m=json.gz.hex" \
         "$relay_url"
     ' sh {} "$RELAY_URL"
@@ -50,7 +50,7 @@ seed_blossom_file() {
     --tag "x=$hash" \
     -c "$title" \
     -k 37778 \
-    -d "kjvonly/bible/strongs/$id" \
+    -d "kjvonly/strongs/definitions/$id" \
     --tag "m=json.gz" \
     --tag "url=$BLOSSOM_URL/$hash.gz" \
     "$RELAY_URL"

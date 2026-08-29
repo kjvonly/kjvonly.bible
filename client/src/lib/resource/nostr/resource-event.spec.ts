@@ -236,7 +236,7 @@ describe(
 							],
 							[
 								't',
-								'kjvonly/bible/strongs'
+								'kjvonly/strongs/definitions'
 							],
 							[
 								'representation',
