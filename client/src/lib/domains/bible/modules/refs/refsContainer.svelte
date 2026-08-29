@@ -19,6 +19,21 @@
 	} from '$lib/domains/strongs/models/strongs.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
+
+
+	// 
+	import type {
+		PublishedResourceReference
+	} from '$lib/resource/models/resource.model';
+
+	import {
+		STRONGS_RESOURCE_TYPE
+	} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+
+	import {
+		KJVONLY_PUBKEY
+	} from '$lib/infrastructure/nostr/nostr';
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -131,6 +146,35 @@
 			);
 		}
 	}
+
+	// ============================== TMP FUNCS ==============================
+	function getStrongsSource():
+		PublishedResourceReference {
+
+		const parts =
+			bibleVersion.split('/');
+
+		const edition =
+			parts.at(-1);
+
+		if (!edition) {
+			throw new Error(
+				`Invalid Bible version: ${bibleVersion}`
+			);
+		}
+
+		const publisher =
+			parts.length === 2
+				? parts[0]
+				: KJVONLY_PUBKEY;
+
+		return {
+			publisher,
+
+			resourceId:
+				`${STRONGS_RESOURCE_TYPE}/${edition}`
+		};
+}
 	// ============================== CLICK FUNCS ==============================
 </script>
 
@@ -156,6 +200,7 @@
 			bind:clientHeight
 			bind:popups
 			{text}
+			strongsSource={getStrongsSource()}
 			{strongsRefs}
 			{paneID}
 			hasCrossRef={crossRefs.length > 0}

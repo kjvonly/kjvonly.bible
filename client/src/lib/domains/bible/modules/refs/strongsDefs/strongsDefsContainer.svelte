@@ -8,7 +8,6 @@
 
 	// MODELS
 	// SERVICES
-	import { strongsService } from '$lib/domains/bible/services/strongs.service';
 
 	// API
 	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
@@ -20,12 +19,25 @@
 	import Dictionary from '$lib/components/svgs/dictionary.svelte';
 	import ShortText from '$lib/components/svgs/shortText.svelte';
 
+	import {
+	useApplicationContext
+} from '$lib/application/runtime/application-context';
+
+	import type {
+		PublishedResourceReference
+	} from '$lib/resource/models/resource.model';
+
+	const {
+		strongsService
+	} = useApplicationContext();
+
 	// =============================== BINDINGS ================================
 	let {
 		clientHeight = $bindable<number>(),
 		popups = $bindable<any>(),
 		bibleVersion,
 		hasCrossRef,
+ 		strongsSource,
 		strongsRefs,
 		strongsWords,
 		text,
@@ -49,16 +61,29 @@
 	});
 
 	// ================================ FUNCS ==================================
-	async function setStrongsRef(): Promise<any> {
-		if (strongsRefs) {
-			strongsRefs.forEach(async (ref: string) => {
-				let data = await strongsService.get(ref.toLowerCase());
-				if (data) {
-					strongsWithToggle.push({ ...data, toggle: false });
-				}
-			});
-		}
+	async function setStrongsRef():
+	Promise<void> {
+
+	if (!strongsRefs) {
+		return;
 	}
+
+	for (
+		const ref of strongsRefs
+	) {
+		const data =
+			await strongsService.get(
+				strongsSource,
+				ref.toUpperCase()
+			);
+
+		strongsWithToggle.push({
+			...data,
+			toggle:
+				false
+		});
+	}
+}
 
 	function sanitize(w: string): string {
 		return w?.replace(/[^a-zA-Z0-9 ]/g, '');
