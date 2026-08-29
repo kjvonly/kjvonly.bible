@@ -31,6 +31,10 @@
 		useApplicationContext
 	} from '$lib/application/runtime/application-context';
 
+	import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
 	const {
 		chapterService
 	} = useApplicationContext();
@@ -42,11 +46,13 @@
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		showCopyVersePopup = $bindable<boolean>(),
+		chapterSource,
 		paneID
 	}: {
 		bibleLocationRef: string;
 		bibleVersion: string;
 		showCopyVersePopup: boolean;
+		chapterSource: PublishedResourceReference;
 		paneID: string;
 	} = $props();
 
@@ -81,14 +87,17 @@
 	});
 
 	// ================================ FUNCS ==================================
-
 	async function loadVerses() {
-		let chapter = await chapterService.get(
-			bibleVersion,
-			bibleLocationRef
-		);
-		verses = chapter.verses;
+		const chapter =
+			await chapterService.get(
+				chapterSource,
+				bibleLocationRef
+			);
+
+		verses =
+			chapter.verses;
 	}
+	
 
 	function setSortedAscVersesKeys() {
 		verseNumbers = Object.keys(verses).sort((a, b) => {

@@ -39,6 +39,9 @@
 	import uuid4 from 'uuid4';
 	import { extractBibleVersion } from '../../utils/bible-identity';
 
+	import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -47,6 +50,7 @@
 		bibleVersion = $bindable<string>(),
 		clientHeight = $bindable<number>(),
 		headerHeight = $bindable<number>(),
+		chapterSource,
 		paneID
 	}: {
 		mode: BibleMode;
@@ -54,6 +58,7 @@
 		bibleVersion: string;
 		clientHeight: number;
 		headerHeight: number;
+		chapterSource: PublishedResourceReference;
 		paneID: string;
 	} = $props();
 
@@ -345,6 +350,7 @@
 		<PopupContainer bind:clientHeight>
 			<CopyVersePopup
 				{paneID}
+				{chapterSource}
 				bind:showCopyVersePopup={showCopyVersesPopup}
 				bind:bibleLocationRef
 				bind:bibleVersion

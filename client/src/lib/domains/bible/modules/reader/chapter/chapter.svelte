@@ -41,6 +41,12 @@
 	useApplicationContext
 } from '$lib/application/runtime/application-context';
 
+
+import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+
 const {
 	chapterService
 } = useApplicationContext();
@@ -53,6 +59,7 @@ const {
 		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
 		annotations = $bindable<Annotations>(),
+		chapterSource,
 		lastKnownScrollPosition
 	}: {
 		bibleLocationRef: string;
@@ -61,6 +68,7 @@ const {
 		pane: Pane;
 		mode: BibleMode;
 		annotations: Annotations;
+		chapterSource: PublishedResourceReference;
 		lastKnownScrollPosition: number;
 	} = $props();
 
@@ -247,9 +255,8 @@ const {
 	}
 
 	async function loadChapter() {
-		chapter =
-		await chapterService.get(
-			bibleVersion,
+		chapter = await chapterService.get(
+			chapterSource,
 			bibleLocationRef
 		);
 		verses = chapter.verses;
