@@ -19,6 +19,7 @@ import type {
 import {
     BibleChapterResourceHandler
 } from './bible-chapter-resource-handler';
+import { BIBLE_CHAPTER_RESOURCE_TYPE } from './bible-chapter-interpreter';
 
 describe(
     'BibleChapterResourceHandler',
@@ -293,6 +294,34 @@ describe(
                 ).toEqual([
                     []
                 ]);
+            }
+        );
+
+        it(
+            'exposes its Resource Type',
+            () => {
+                const interpreter =
+                    new FakeInterpreter(
+                        []
+                    );
+
+                const validator =
+                    new FakeValidator();
+
+                const installer =
+                    new FakeInstaller();
+
+                const handler =
+                    new BibleChapterResourceHandler(
+                        interpreter,
+                        validator,
+                        installer
+                    );
+                expect(
+                    handler.resourceType
+                ).toBe(
+                    BIBLE_CHAPTER_RESOURCE_TYPE
+                );
             }
         );
     }

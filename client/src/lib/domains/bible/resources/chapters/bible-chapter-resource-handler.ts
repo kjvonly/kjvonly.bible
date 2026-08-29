@@ -18,6 +18,16 @@ import type {
 	ValidatedBibleChapterCandidate
 } from './validated-bible-chapter-candidate';
 
+
+import type {
+	ResourceHandler
+} from '$lib/resource/installation/resource-handler';
+
+import {
+	BIBLE_CHAPTER_RESOURCE_TYPE,
+	BibleChapterInterpreter
+} from './bible-chapter-interpreter';
+
 export interface BibleChapterResourceInstaller {
 	install(
 		resource:
@@ -28,7 +38,11 @@ export interface BibleChapterResourceInstaller {
 	): Promise<void>;
 }
 
-export class BibleChapterResourceHandler {
+export class BibleChapterResourceHandler
+	implements ResourceHandler {
+
+	readonly resourceType =
+		BIBLE_CHAPTER_RESOURCE_TYPE;
 
 	constructor(
 		private readonly interpreter:
@@ -44,7 +58,7 @@ export class BibleChapterResourceHandler {
 
 		private readonly installer:
 			BibleChapterResourceInstaller
-	) {}
+	) { }
 
 	async handle(
 		resource:
