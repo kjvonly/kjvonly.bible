@@ -153,32 +153,52 @@ describe(
 				);
 
 				/*
-				 * Enter through the application-facing
-				 * Bible Chapter Resource service.
+				 * Enter through the generic
+				 * application ResourceService.
 				 *
 				 * Nothing below this point is faked.
 				 */
-				const installed =
+				const result =
 					await application
 						.context
-						.bibleChapterResourceService
+						.resourceService
 						.install({
 							publisher,
 							resourceId
 						});
 
 				expect(
-					installed
-				).toBe(
-					true
-				);
+					result
+				).toEqual({
+					requested: {
+						publisher,
+						resourceId
+					},
+
+					found:
+						true,
+
+					resources: [
+						{
+							reference: {
+								publisher,
+								resourceId
+							},
+
+							resourceType,
+
+							status:
+								'handled'
+						}
+					]
+				});
 
 				const chapterId =
 					createChapterId(
 						createBibleVersionId(
-		publisher,
-		'kjvs'
-	),
+							publisher,
+							'kjvs'
+						),
 						'1_1'
 					);
 

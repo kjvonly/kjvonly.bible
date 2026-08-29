@@ -293,6 +293,7 @@ export class Application {
                 resourceResolver,
                 resourceContentDecoder,
                 [
+                    bibleChapterResourceHandler,
                     strongsResourceHandler
                 ]
             );

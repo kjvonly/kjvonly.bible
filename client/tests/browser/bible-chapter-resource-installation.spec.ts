@@ -41,8 +41,8 @@ import {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
 
 import {
-	BibleChapterResourceService
-} from '$lib/domains/bible/resources/chapters/bible-chapter-resource-service';
+	ResourceService
+} from '$lib/resource/services/resource.service';
 
 import {
 	IndexedDBBibleChapterInstallationTransaction
@@ -114,9 +114,30 @@ describe(
 
 				expect(
 					result
-				).toBe(
-					true
-				);
+				).toEqual({
+					requested: {
+						publisher,
+						resourceId
+					},
+
+					found:
+						true,
+
+					resources: [
+						{
+							reference: {
+								publisher,
+								resourceId
+							},
+
+							resourceType:
+								'kjvonly/bible/chapters',
+
+							status:
+								'handled'
+						}
+					]
+				});
 
 				const chapter1Id =
 					createChapterId(
@@ -255,12 +276,39 @@ describe(
 						})
 					]);
 
-				await expect(
-					service.install({
+				const result =
+					await service.install({
 						publisher,
 						resourceId
-					})
-				).rejects.toThrow();
+					});
+
+				expect(
+					result.found
+				).toBe(
+					true
+				);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+							resourceId
+						},
+
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						status:
+							'failed',
+
+						error:
+							expect.any(
+								Error
+							)
+					}
+				]);
 
 				const chapter1Id =
 					createChapterId(
@@ -390,14 +438,70 @@ describe(
 						'descriptors'
 					);
 
-				await expect(
-					service.install({
+				const requestedResourceId =
+					'kjvonly/bible/chapters/kjvs';
+
+				const result =
+					await service.install({
 						publisher,
 
 						resourceId:
-							'kjvonly/bible/chapters/kjvs'
-					})
-				).rejects.toThrow();
+							requestedResourceId
+					});
+
+				expect(
+					result.found
+				).toBe(
+					true
+				);
+
+				expect(
+					result.requested
+				).toEqual({
+					publisher,
+
+					resourceId:
+						requestedResourceId
+				});
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+
+							resourceId:
+								chapter1ResourceId
+						},
+
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						status:
+							'handled'
+					},
+
+					{
+						reference: {
+							publisher,
+
+							resourceId:
+								chapter2ResourceId
+						},
+
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						status:
+							'failed',
+
+						error:
+							expect.any(
+								Error
+							)
+					}
+				]);
 
 				const chapter1Id =
 					createChapterId(
@@ -489,7 +593,7 @@ function createService(
 	representation:
 		ResourceRepresentationType =
 		'content'
-): BibleChapterResourceService {
+): ResourceService {
 
 	const discovery =
 		new FakeDiscovery(
@@ -523,11 +627,13 @@ function createService(
 			installer
 		);
 
-	return new BibleChapterResourceService(
+	return new ResourceService(
 		discovery,
 		resolver,
 		decoder,
-		handler
+		[
+			handler
+		]
 	);
 }
 
