@@ -38,6 +38,22 @@ import {
     HexResourceContentDecorator
 } from '$lib/resource/content/hex-resource-content-decorator';
 
+///////////////////////////////////////////////////////////////////////////////
+// Resource
+import {
+    ResourceService
+} from '$lib/resource/services/resource.service';
+
+import {
+    ResourceLoader
+} from '$lib/resource/loading/resource-loader';
+
+import {
+    appendResourceReferenceBuilder
+} from '$lib/resource/loading/resource-reference-builder';
+///////////////////////////////////////////////////////////////////////////////
+
+
 import { IndexedDBBibleChapterInstallationTransaction } from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
 import { BibleChapterInstaller } from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
 import { BibleChapterInterpreter } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
@@ -82,16 +98,9 @@ import {
 } from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
 
 import {
-    StrongsResourceService
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-service';
-
-import {
     IndexedDBStrongsStore
 } from '$lib/domains/strongs/persistence/indexeddb-strongs-store';
 
-import {
-    StrongsResourceLoader
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-loader';
 
 import {
     StrongsService
@@ -278,12 +287,14 @@ export class Application {
                 strongsInstaller
             );
 
-        const strongsResourceService =
-            new StrongsResourceService(
+        const resourceService =
+            new ResourceService(
                 resourceDiscovery,
                 resourceResolver,
                 resourceContentDecoder,
-                strongsResourceHandler
+                [
+                    strongsResourceHandler
+                ]
             );
 
         const strongsStore =
@@ -292,17 +303,16 @@ export class Application {
             );
 
         const strongsResourceLoader =
-            new StrongsResourceLoader(
-                strongsResourceService
+            new ResourceLoader(
+                resourceService,
+                appendResourceReferenceBuilder
             );
 
         const strongsService =
             new StrongsService(
-                KJVONLY_PUBKEY,
                 strongsStore,
                 strongsResourceLoader
             );
-
         ///////////////////////////////////////////////////////////////////////
         // Application Context
 
@@ -317,8 +327,8 @@ export class Application {
             chapterService,
             verseService,
             bibleVersionsService,
-            
-            strongsResourceService,
+
+            resourceService,
             strongsService
         };
     }

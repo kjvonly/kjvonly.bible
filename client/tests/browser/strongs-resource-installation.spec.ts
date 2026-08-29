@@ -24,6 +24,10 @@ import {
 } from '$lib/resource/content/resource-content-decoder';
 
 import {
+	ResourceService
+} from '$lib/resource/services/resource.service';
+
+import {
 	StrongsInterpreter
 } from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
@@ -38,10 +42,6 @@ import {
 import {
 	StrongsResourceHandler
 } from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
-
-import {
-	StrongsResourceService
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-service';
 
 import {
 	IndexedDBStrongsInstallationTransaction
@@ -123,9 +123,30 @@ describe(
 
 				expect(
 					result
-				).toBe(
-					true
-				);
+				).toEqual({
+					requested: {
+						publisher,
+						resourceId
+					},
+
+					found:
+						true,
+
+					resources: [
+						{
+							reference: {
+								publisher,
+								resourceId
+							},
+
+							resourceType:
+								'kjvonly/strongs/definitions',
+
+							status:
+								'handled'
+						}
+					]
+				});
 
 				const db =
 					await getApplicationDB();
@@ -273,12 +294,39 @@ describe(
 						})
 					]);
 
-				await expect(
-					service.install({
+				const result =
+					await service.install({
 						publisher,
 						resourceId
-					})
-				).rejects.toThrow();
+					});
+
+				expect(
+					result.found
+				).toBe(
+					true
+				);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+							resourceId
+						},
+
+						resourceType:
+							'kjvonly/strongs/definitions',
+
+						status:
+							'failed',
+
+						error:
+							expect.any(
+								Error
+							)
+					}
+				]);
 
 				const db =
 					await getApplicationDB();
@@ -414,14 +462,70 @@ describe(
 						'descriptors'
 					);
 
-				await expect(
-					service.install({
+				const requestedResourceId =
+					'kjvonly/strongs/definitions/kjvs';
+
+				const result =
+					await service.install({
 						publisher,
 
 						resourceId:
-							'kjvonly/strongs/definitions/kjvs'
-					})
-				).rejects.toThrow();
+							requestedResourceId
+					});
+
+				expect(
+					result.found
+				).toBe(
+					true
+				);
+
+				expect(
+					result.requested
+				).toEqual({
+					publisher,
+
+					resourceId:
+						requestedResourceId
+				});
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+
+							resourceId:
+								g1ResourceId
+						},
+
+						resourceType:
+							'kjvonly/strongs/definitions',
+
+						status:
+							'handled'
+					},
+
+					{
+						reference: {
+							publisher,
+
+							resourceId:
+								g2ResourceId
+						},
+
+						resourceType:
+							'kjvonly/strongs/definitions',
+
+						status:
+							'failed',
+
+						error:
+							expect.any(
+								Error
+							)
+					}
+				]);
 
 				const db =
 					await getApplicationDB();
@@ -534,7 +638,7 @@ function createService(
 	representation:
 		ResourceRepresentationType =
 			'content'
-): StrongsResourceService {
+): ResourceService {
 
 	const discovery =
 		new FakeDiscovery(
@@ -568,11 +672,13 @@ function createService(
 			installer
 		);
 
-	return new StrongsResourceService(
+	return new ResourceService(
 		discovery,
 		resolver,
 		decoder,
-		handler
+		[
+			handler
+		]
 	);
 }
 

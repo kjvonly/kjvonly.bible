@@ -1,6 +1,8 @@
 export function createStrongsId(
-	bibleVersionId: string,
-	key: string
+	sourceId:
+		string,
+	key:
+		string
 ): string {
-	return `${bibleVersionId}/${key}`;
+	return `${sourceId}/${key}`;
 }

@@ -1,29 +1,34 @@
 import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import type {
 	Strongs
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../models/strongs.model';
 
 import type {
 	StrongsStore
-} from '$lib/domains/strongs/persistence/strongs-store';
+} from '../persistence/strongs-store';
 
 import type {
-	StrongsResourceLoader
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-loader';
-
-import {
-	createBibleVersionId
-} from '$lib/domains/bible/utils/bible-identity';
+	ResourceLoader
+} from '$lib/resource/loading/resource-loader';
 
 import {
 	createStrongsId
-} from '$lib/domains/strongs/utils/strongs-identity';
+} from '../utils/strongs-identity';
+
+import {
+	parseResourceIdentifier
+} from '$lib/resource/utils/resource-identifier';
+
+import {
+	STRONGS_RESOURCE_TYPE
+} from '../resources/definitions/strongs-interpreter';
 
 export class StrongsService {
 
 	constructor(
-		private readonly publisher:
-			string,
-
 		private readonly strongs:
 			Pick<
 				StrongsStore,
@@ -32,25 +37,27 @@ export class StrongsService {
 
 		private readonly resourceLoader:
 			Pick<
-				StrongsResourceLoader,
+				ResourceLoader<string>,
 				'load'
 			>
 	) {}
 
 	async get(
-		version: string,
-		key: string
+		source:
+			PublishedResourceReference,
+		key:
+			string
 	): Promise<Strongs> {
-
-		const bibleVersionId =
-			createBibleVersionId(
-				this.publisher,
-				version
+		const {
+			edition
+		} =
+			parseStrongsSource(
+				source
 			);
 
 		const strongsId =
 			createStrongsId(
-				bibleVersionId,
+				`${source.publisher}/${edition}`,
 				key
 			);
 
@@ -59,20 +66,21 @@ export class StrongsService {
 				strongsId
 			);
 
-		if (existing) {
+		if (
+			existing !== undefined
+		) {
 			return existing;
 		}
 
 		const found =
 			await this.resourceLoader.load(
-				this.publisher,
-				version,
+				source,
 				key
 			);
 
 		if (!found) {
 			throw new Error(
-				`Strong's Resource not found: ${this.publisher}/${version}/${key}`
+				`Strong's Resource not found: ${source.publisher}/${source.resourceId}/${key}`
 			);
 		}
 
@@ -81,7 +89,9 @@ export class StrongsService {
 				strongsId
 			);
 
-		if (!installed) {
+		if (
+			installed === undefined
+		) {
 			throw new Error(
 				`Strong's definition was not installed: ${strongsId}`
 			);
@@ -89,4 +99,40 @@ export class StrongsService {
 
 		return installed;
 	}
+}
+
+function parseStrongsSource(
+	source:
+		PublishedResourceReference
+): {
+	readonly edition:
+		string;
+} {
+	const identifier =
+		parseResourceIdentifier(
+			source.resourceId
+		);
+
+	if (
+		identifier.resourceType !==
+		STRONGS_RESOURCE_TYPE
+	) {
+		throw new Error(
+			`Invalid Strong's Resource Type: ${identifier.resourceType}`
+		);
+	}
+
+	if (
+		identifier.path.length !==
+		1
+	) {
+		throw new Error(
+			`Invalid Strong's Resource source: ${source.resourceId}`
+		);
+	}
+
+	return {
+		edition:
+			identifier.path[0]
+	};
 }

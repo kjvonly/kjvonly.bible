@@ -97,7 +97,7 @@ describe(
 		);
 
 		it(
-			"publishes discovers resolves decodes validates and installs a Strong's definition",
+			"publishes discovers resolves decodes validates and installs a Strong's definition through the generic ResourceService",
 			async () => {
 				const resourceType =
 					'kjvonly/strongs/definitions';
@@ -155,27 +155,49 @@ describe(
 				);
 
 				/*
-				 * Enter through the
-				 * application-facing Strong's
-				 * Resource service.
+				 * Enter through the generic
+				 * application ResourceService.
 				 *
 				 * Nothing below this point
 				 * is faked.
 				 */
-				const installed =
+				const result =
 					await application
 						.context
-						.strongsResourceService
+						.resourceService
 						.install({
 							publisher,
 							resourceId
 						});
 
 				expect(
-					installed
+					result.found
 				).toBe(
 					true
 				);
+
+				expect(
+					result.requested
+				).toEqual({
+					publisher,
+					resourceId
+				});
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+							resourceId
+						},
+
+						resourceType,
+
+						status:
+							'handled'
+					}
+				]);
 
 				const db =
 					await getApplicationDB();
