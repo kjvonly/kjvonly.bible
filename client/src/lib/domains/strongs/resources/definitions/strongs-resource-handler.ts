@@ -22,7 +22,19 @@ import type {
     StrongsInstaller
 } from './strongs-installer';
 
-export class StrongsResourceHandler {
+import type {
+	ResourceHandler
+} from '$lib/resource/installation/resource-handler';
+
+import {
+	STRONGS_RESOURCE_TYPE
+} from './strongs-interpreter';
+
+export class StrongsResourceHandler implements ResourceHandler  {
+
+
+	readonly resourceType =
+		STRONGS_RESOURCE_TYPE;
 
     constructor(
         private readonly interpreter:

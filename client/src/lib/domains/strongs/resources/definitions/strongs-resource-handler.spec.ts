@@ -27,6 +27,7 @@ import type {
 import {
 	StrongsResourceHandler
 } from './strongs-resource-handler';
+import { STRONGS_RESOURCE_TYPE } from './strongs-interpreter';
 
 describe(
 	'StrongsResourceHandler',
@@ -301,13 +302,42 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'exposes its Resource Type',
+			() => {
+				const interpreter =
+					new FakeStrongsInterpreter([
+						createCandidate()
+					]);
+
+				const validator =
+					new FakeStrongsValidator();
+
+				const installer =
+					new FakeStrongsInstaller();
+
+				const handler =
+					new StrongsResourceHandler(
+						interpreter,
+						validator,
+						installer
+					);
+
+				expect(
+					handler.resourceType
+				).toBe(
+					STRONGS_RESOURCE_TYPE
+				);
+			}
+		);
 	}
 );
 
 function createResource(
 	overrides:
 		Partial<DecodedResourceContent> =
-			{}
+		{}
 ): DecodedResourceContent {
 
 	return {
@@ -339,7 +369,7 @@ function createResource(
 function createCandidate(
 	overrides:
 		Partial<StrongsCandidate> =
-			{}
+		{}
 ): StrongsCandidate {
 
 	return {
@@ -361,7 +391,7 @@ function createCandidate(
 function createValidatedCandidate(
 	overrides:
 		Partial<ValidatedStrongsCandidate> =
-			{}
+		{}
 ): ValidatedStrongsCandidate {
 
 	return {
@@ -381,7 +411,7 @@ function createValidatedCandidate(
 function createStrongsContent(
 	overrides:
 		Record<string, unknown> =
-			{}
+		{}
 ) {
 	return {
 		number:
@@ -433,7 +463,7 @@ class FakeStrongsInterpreter
 	constructor(
 		private readonly candidates:
 			readonly StrongsCandidate[]
-	) {}
+	) { }
 
 	interpret(
 		resource:
@@ -458,7 +488,7 @@ class ThrowingStrongsInterpreter
 	constructor(
 		private readonly error:
 			Error
-	) {}
+	) { }
 
 	interpret():
 		Iterable<StrongsCandidate> {
@@ -475,12 +505,12 @@ class FakeStrongsValidator
 
 	readonly candidates:
 		StrongsCandidate[] =
-			[];
+		[];
 
 	constructor(
 		private readonly failKey?:
 			string
-	) {}
+	) { }
 
 	validate(
 		candidate:
@@ -527,7 +557,7 @@ class FakeStrongsInstaller {
 
 	candidates:
 		readonly ValidatedStrongsCandidate[] =
-			[];
+		[];
 
 	async install(
 		resource:
