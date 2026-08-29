@@ -85,6 +85,18 @@ import {
     StrongsResourceService
 } from '$lib/domains/strongs/resources/definitions/strongs-resource-service';
 
+import {
+    IndexedDBStrongsStore
+} from '$lib/domains/strongs/persistence/indexeddb-strongs-store';
+
+import {
+    StrongsResourceLoader
+} from '$lib/domains/strongs/resources/definitions/strongs-resource-loader';
+
+import {
+    StrongsService
+} from '$lib/domains/strongs/services/strongs.service';
+
 ///////////////////////////////////////////////////////////////////////////////
 
 const LOGIN_KEY =
@@ -274,6 +286,23 @@ export class Application {
                 strongsResourceHandler
             );
 
+        const strongsStore =
+            new IndexedDBStrongsStore(
+                getApplicationDB
+            );
+
+        const strongsResourceLoader =
+            new StrongsResourceLoader(
+                strongsResourceService
+            );
+
+        const strongsService =
+            new StrongsService(
+                KJVONLY_PUBKEY,
+                strongsStore,
+                strongsResourceLoader
+            );
+
         ///////////////////////////////////////////////////////////////////////
         // Application Context
 
@@ -288,7 +317,9 @@ export class Application {
             chapterService,
             verseService,
             bibleVersionsService,
+            
             strongsResourceService,
+            strongsService
         };
     }
 
