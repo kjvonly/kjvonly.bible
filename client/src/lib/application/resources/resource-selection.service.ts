@@ -153,4 +153,46 @@ export class ResourceSelectionService {
             }
         );
     }
+
+    initializeDefaults(
+        defaults:
+            readonly PublishedResourceReference[]
+    ): void {
+
+        let changed =
+            false;
+
+        for (
+            const reference of
+            defaults
+        ) {
+            const {
+                resourceType
+            } =
+                parseResourceIdentifier(
+                    reference.resourceId
+                );
+
+            if (
+                this.selections.has(
+                    resourceType
+                )
+            ) {
+                continue;
+            }
+
+            this.setSelection(
+                reference
+            );
+
+            changed =
+                true;
+        }
+
+        if (changed) {
+            this.store?.save(
+                this.snapshot()
+            );
+        }
+    }
 }
