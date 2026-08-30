@@ -107,17 +107,18 @@ export class ResourceService {
 			};
 		}
 
-		const contents =
+		const resolution =
 			await this.resolver.resolve(
 				representation
 			);
 
 		const resources:
 			ResourceInstallOutcome[] =
-				[];
+			[];
 
 		for (
-			const content of contents
+			const content
+			of resolution.contents
 		) {
 			resources.push(
 				await this.process(
@@ -143,12 +144,12 @@ export class ResourceService {
 	): Promise<ResourceInstallOutcome> {
 		const reference:
 			PublishedResourceReference = {
-				publisher:
-					content.publisher,
+			publisher:
+				content.publisher,
 
-				resourceId:
-					content.resourceId
-			};
+			resourceId:
+				content.resourceId
+		};
 
 		const handler =
 			this.handlers.get(

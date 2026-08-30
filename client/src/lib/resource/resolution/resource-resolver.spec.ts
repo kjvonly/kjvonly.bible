@@ -1,207 +1,236 @@
 import {
-    describe,
-    expect,
-    it,
-    vi
+	describe,
+	expect,
+	it,
+	vi
 } from 'vitest';
 
 import type {
-    ResourceRepresentation,
-    VerifiedResourceContent
+	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
 import {
-    ContentRepresentationResolver
+	ContentRepresentationResolver
 } from './content-representation-resolver';
 
 import type {
-    ResourceRepresentationResolver
+	ResourceRepresentationResolver
 } from './resource-representation-resolver';
 
+import type {
+	ResourceResolutionResult
+} from './resource-resolution-result';
+
 import {
-    ResourceResolver
+	ResourceResolver
 } from './resource-resolver';
 
 describe(
-    'ResourceResolver',
-    () => {
-        it(
-            'resolves an embedded content representation',
-            async () => {
-                const resolver =
-                    new ResourceResolver([
-                        new ContentRepresentationResolver()
-                    ]);
+	'ResourceResolver',
+	() => {
 
-                const result =
-                    await resolver.resolve(
-                        createResourceRepresentation()
-                    );
+		it(
+			'resolves an embedded content representation',
+			async () => {
+				const resolver =
+					new ResourceResolver([
+						new ContentRepresentationResolver()
+					]);
 
-                expect(
-                    result
-                ).toHaveLength(
-                    1
-                );
+				const result =
+					await resolver.resolve(
+						createResourceRepresentation()
+					);
 
-                const content =
-                    result[0];
+				expect(
+					result.failures
+				).toEqual(
+					[]
+				);
 
-                expect(
-                    content
-                ).toMatchObject({
-                    publisher:
-                        'a'.repeat(64),
+				expect(
+					result.contents
+				).toHaveLength(
+					1
+				);
 
-                    resourceId:
-                        'kjvonly/bible/chapters/kjv/1_1',
+				const content =
+					result.contents[0];
 
-                    resourceType:
-                        'kjvonly/bible/chapters',
-                    
-                    modifiedAt:
-                        123456,
+				expect(
+					content
+				).toMatchObject({
+					publisher:
+						'a'.repeat(
+							64
+						),
 
-                    mediaType:
-                        'application/json'
-                });
+					resourceId:
+						'kjvonly/bible/chapters/kjv/1_1',
 
-                expect(
-                    content.content
-                ).toBe(
-                    '{"chapter":1}'
-                );
-            }
-        );
+					resourceType:
+						'kjvonly/bible/chapters',
 
-        it(
-            'does not interpret serialized Resource content',
-            async () => {
-                const resolver =
-                    new ResourceResolver([
-                        new ContentRepresentationResolver()
-                    ]);
+					modifiedAt:
+						123456,
 
-                const result =
-                    await resolver.resolve(
-                        createResourceRepresentation({
-                            payload:
-                                'not-json'
-                        })
-                    );
+					mediaType:
+						'application/json'
+				});
 
-                expect(
-                    result[0].content
-                ).toBe(
-                    'not-json'
-                );
-            }
-        );
+				expect(
+					content.content
+				).toBe(
+					'{"chapter":1}'
+				);
+			}
+		);
 
-        it(
-            'fails when no resolver supports the representation',
-            async () => {
-                const resolver =
-                    new ResourceResolver([
-                        new ContentRepresentationResolver()
-                    ]);
+		it(
+			'does not interpret serialized Resource content',
+			async () => {
+				const resolver =
+					new ResourceResolver([
+						new ContentRepresentationResolver()
+					]);
 
-                await expect(
-                    resolver.resolve(
-                        createResourceRepresentation({
-                            representation:
-                                'descriptors'
-                        })
-                    )
-                ).rejects.toThrow(
-                    'Unsupported Resource representation: descriptors'
-                );
-            }
-        );
+				const result =
+					await resolver.resolve(
+						createResourceRepresentation({
+							payload:
+								'not-json'
+						})
+					);
 
-        it(
-            'dispatches through the registered representation resolver',
-            async () => {
-                const resolved:
-                    readonly VerifiedResourceContent[] =
-                    [];
+				expect(
+					result.contents[0]
+						.content
+				).toBe(
+					'not-json'
+				);
+			}
+		);
 
-                const descriptorResolver:
-                    ResourceRepresentationResolver = {
-                    representation:
-                        'descriptors',
+		it(
+			'fails when no resolver supports the representation',
+			async () => {
+				const resolver =
+					new ResourceResolver([
+						new ContentRepresentationResolver()
+					]);
 
-                    resolve:
-                        vi.fn(
-                            async () =>
-                                resolved
-                        )
-                };
+				await expect(
+					resolver.resolve(
+						createResourceRepresentation({
+							representation:
+								'descriptors'
+						})
+					)
+				).rejects.toThrow(
+					'Unsupported Resource representation: descriptors'
+				);
+			}
+		);
 
-                const resolver =
-                    new ResourceResolver([
-                        new ContentRepresentationResolver(),
-                        descriptorResolver
-                    ]);
+		it(
+			'dispatches through the registered representation resolver',
+			async () => {
+				const resolved:
+					ResourceResolutionResult = {
+						contents:
+							[],
 
-                const resource =
-                    createResourceRepresentation({
-                        representation:
-                            'descriptors'
-                    });
+						failures: [
+							{
+								error:
+									new Error(
+										'resolution failed'
+									)
+							}
+						]
+					};
 
-                const result =
-                    await resolver.resolve(
-                        resource
-                    );
+				const descriptorsResolver:
+					ResourceRepresentationResolver = {
+						representation:
+							'descriptors',
 
-                expect(
-                    descriptorResolver
-                        .resolve
-                ).toHaveBeenCalledWith(
-                    resource
-                );
+						resolve:
+							vi.fn(
+								async () =>
+									resolved
+							)
+					};
 
-                expect(
-                    result
-                ).toBe(
-                    resolved
-                );
-            }
-        );
-    }
+				const resolver =
+					new ResourceResolver([
+						new ContentRepresentationResolver(),
+						descriptorsResolver
+					]);
+
+				const resource =
+					createResourceRepresentation({
+						representation:
+							'descriptors'
+					});
+
+				const result =
+					await resolver.resolve(
+						resource
+					);
+
+				expect(
+					descriptorsResolver
+						.resolve
+				).toHaveBeenCalledWith(
+					resource
+				);
+
+				expect(
+					result
+				).toBe(
+					resolved
+				);
+			}
+		);
+	}
 );
 
 function createResourceRepresentation(
-    overrides:
-        Partial<ResourceRepresentation> =
-        {}
+	overrides:
+		Partial<ResourceRepresentation> =
+			{}
 ): ResourceRepresentation {
-    return {
-        publisher:
-            'a'.repeat(64),
 
-        resourceId:
-            'kjvonly/bible/chapters/kjv/1_1',
+	return {
+		publisher:
+			'a'.repeat(
+				64
+			),
 
-        resourceType:
-            'kjvonly/bible/chapters',
+		resourceId:
+			'kjvonly/bible/chapters/kjv/1_1',
 
-        eventId:
-            'b'.repeat(64),
+		resourceType:
+			'kjvonly/bible/chapters',
 
-        modifiedAt:
-            123456,
+		eventId:
+			'b'.repeat(
+				64
+			),
 
-        representation:
-            'content',
+		modifiedAt:
+			123456,
 
-        mediaType:
-            'application/json',
+		representation:
+			'content',
 
-        payload:
-            '{"chapter":1}',
+		mediaType:
+			'application/json',
 
-        ...overrides
-    };
+		payload:
+			'{"chapter":1}',
+
+		...overrides
+	};
 }

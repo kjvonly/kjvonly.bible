@@ -1,11 +1,14 @@
 import type {
-	ResourceRepresentation,
-	VerifiedResourceContent
+	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
 import type {
 	ResourceRepresentationResolver
 } from './resource-representation-resolver';
+
+import type {
+	ResourceResolutionResult
+} from './resource-resolution-result';
 
 export class ContentRepresentationResolver
 	implements ResourceRepresentationResolver {
@@ -17,28 +20,33 @@ export class ContentRepresentationResolver
 		resource:
 			ResourceRepresentation
 	): Promise<
-		readonly VerifiedResourceContent[]
+		ResourceResolutionResult
 	> {
-		return [
-			{
-				publisher:
-					resource.publisher,
+		return {
+			contents: [
+				{
+					publisher:
+						resource.publisher,
 
-				resourceId:
-					resource.resourceId,
+					resourceId:
+						resource.resourceId,
 
-				resourceType:
-					resource.resourceType,
+					resourceType:
+						resource.resourceType,
 
-				modifiedAt:
-					resource.modifiedAt,
+					modifiedAt:
+						resource.modifiedAt,
 
-				mediaType:
-					resource.mediaType,
+					mediaType:
+						resource.mediaType,
 
-				content:
-					resource.payload
-			}
-		];
+					content:
+						resource.payload
+				}
+			],
+
+			failures:
+				[]
+		};
 	}
 }

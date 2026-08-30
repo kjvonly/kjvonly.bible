@@ -1,8 +1,11 @@
 import type {
 	ResourceRepresentation,
-	ResourceRepresentationType,
-	VerifiedResourceContent
+	ResourceRepresentationType
 } from '$lib/resource/models/resource.model';
+
+import type {
+	ResourceResolutionResult
+} from './resource-resolution-result';
 
 export interface ResourceRepresentationResolver {
 	readonly representation:
@@ -12,6 +15,6 @@ export interface ResourceRepresentationResolver {
 		resource:
 			ResourceRepresentation
 	): Promise<
-		readonly VerifiedResourceContent[]
+		ResourceResolutionResult
 	>;
 }

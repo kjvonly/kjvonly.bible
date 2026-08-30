@@ -19,6 +19,10 @@ import {
 	ResourceService
 } from './resource.service';
 
+import type {
+	ResourceResolutionResult
+} from '$lib/resource/resolution/resource-resolution-result';
+
 describe(
 	'ResourceService',
 	() => {
@@ -564,9 +568,15 @@ class FakeResolver {
 		_resource:
 			ResourceRepresentation
 	): Promise<
-		readonly VerifiedResourceContent[]
+		ResourceResolutionResult
 	> {
-		return this.contents;
+		return {
+			contents:
+				this.contents,
+
+			failures:
+				[]
+		};
 	}
 }
 

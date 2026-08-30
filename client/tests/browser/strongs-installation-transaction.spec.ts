@@ -376,9 +376,6 @@ function createInstallation():
 		resourceId:
 			'kjvonly/strongs/definitions/kjvs/G1',
 
-		eventId:
-			'event-id',
-
 		modifiedAt:
 			123
 	};

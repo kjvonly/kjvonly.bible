@@ -69,6 +69,7 @@ import {
 import {
 	createResourceInstallationId
 } from '$lib/resource/installation/resource-installation';
+import type { ResourceResolutionResult } from '$lib/resource/resolution/resource-resolution-result';
 
 describe(
 	"Strong's Resource installation",
@@ -625,7 +626,7 @@ function createService(
 
 	representation:
 		ResourceRepresentationType =
-			'content'
+		'content'
 ): ResourceService {
 
 	const discovery =
@@ -695,7 +696,7 @@ function createDecoder():
 function createVerifiedContent(
 	overrides:
 		Partial<VerifiedResourceContent> =
-			{}
+		{}
 ): VerifiedResourceContent {
 
 	return {
@@ -815,7 +816,7 @@ class FakeDiscovery {
 	constructor(
 		private readonly representation:
 			ResourceRepresentation
-	) {}
+	) { }
 
 	async get(
 		_reference:
@@ -833,14 +834,19 @@ class FakeResolver {
 	constructor(
 		private readonly contents:
 			readonly VerifiedResourceContent[]
-	) {}
+	) { }
 
 	async resolve(
 		_resource:
 			ResourceRepresentation
 	): Promise<
-		readonly VerifiedResourceContent[]
-	> {
-		return this.contents;
+		ResourceResolutionResult> {
+		return {
+			contents:
+				this.contents,
+
+			failures:
+				[]
+		};
 	}
 }

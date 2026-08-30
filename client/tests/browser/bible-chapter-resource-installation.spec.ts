@@ -63,6 +63,7 @@ import {
 import {
 	createResourceInstallationId
 } from '$lib/resource/installation/resource-installation';
+import type { ResourceResolutionResult } from '$lib/resource/resolution/resource-resolution-result';
 
 const BIBLE_VERSION_OBJECT_TYPE =
 	'bible/version';
@@ -794,8 +795,14 @@ class FakeResolver {
 		_resource:
 			ResourceRepresentation
 	): Promise<
-		readonly VerifiedResourceContent[]
+		ResourceResolutionResult
 	> {
-		return this.contents;
+		return {
+			contents:
+				this.contents,
+
+			failures:
+				[]
+		};
 	}
 }
