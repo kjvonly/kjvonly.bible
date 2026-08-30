@@ -180,7 +180,6 @@ export function newCrossRef(): CrossRef {
     chapterNumber: 0,
     crossRef: '',
     bibleLocationRef: '',
-    bibleVersion: '',
     text: '',
     verseNumber: 0
   };
