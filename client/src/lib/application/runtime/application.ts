@@ -119,6 +119,12 @@ import {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+import {
+    LocalStorageResourceSelectionStore
+} from '$lib/infrastructure/persistence/local-storage-resource-selection-store';
+
+///////////////////////////////////////////////////////////////////////////////
+
 const LOGIN_KEY =
     'login';
 
@@ -150,6 +156,7 @@ export class Application {
         const nostrSigner =
             new NostrSigner();
 
+        // Resource
         const resourceClient =
             createBrowserResourceClient(
                 nostrSigner
@@ -204,24 +211,34 @@ export class Application {
                 resourceContentDecoratorBuilder
             );
 
+        const resourceSelectionStore =
+            new LocalStorageResourceSelectionStore(
+                localStorage
+            );
+
         const resourceSelectionService =
-            new ResourceSelectionService([
-                {
-                    publisher:
-                        KJVONLY_PUBKEY,
+            new ResourceSelectionService(
+                [
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
 
-                    resourceId:
-                        `${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-                },
-                {
-                    publisher:
-                        KJVONLY_PUBKEY,
+                        resourceId:
+                            `${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+                    },
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
 
-                    resourceId:
-                        `${STRONGS_RESOURCE_TYPE}/kjvs`
-                }
-            ]);
+                        resourceId:
+                            `${STRONGS_RESOURCE_TYPE}/kjvs`
+                    }
 
+                    // your existing Chapter default
+                    // your existing Strong's default
+                ],
+                resourceSelectionStore
+            );
         ///////////////////////////////////////////////////////////////////////
         // Bible Chapter
 
@@ -430,6 +447,10 @@ export class Application {
 
         try {
             await this.restoreNsec();
+
+            this.context
+                .resourceSelectionService
+                .restore();
 
             this.context
                 .resourceClient

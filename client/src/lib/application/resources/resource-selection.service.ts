@@ -1,117 +1,156 @@
 import type {
-	PublishedResourceReference
+    PublishedResourceReference
 } from '$lib/resource/models/resource.model';
 
 import {
-	parseResourceIdentifier
+    parseResourceIdentifier
 } from '$lib/resource/utils/resource-identifier';
+import type { ResourceSelectionStore } from './resource-selection-store';
 
 import type {
-	ResourceSelections
+    ResourceSelections
 } from './resource-selections';
 
 export class ResourceSelectionService {
 
-	private readonly selections =
-		new Map<
-			string,
-			PublishedResourceReference
-		>();
+    private readonly selections =
+        new Map<
+            string,
+            PublishedResourceReference
+        >();
 
-	constructor(
-		initialSelections:
-			readonly PublishedResourceReference[] =
-				[]
-	) {
-		for (
-			const selection of
-			initialSelections
-		) {
-			this.select(
-				selection
-			);
-		}
-	}
+    constructor(
+        initialSelections:
+            readonly PublishedResourceReference[] =
+            [],
 
-	get(
-		resourceType: string
-	):
-		PublishedResourceReference |
-		undefined {
+        private readonly store?:
+            ResourceSelectionStore
+    ) {
+        for (
+            const selection of
+            initialSelections
+        ) {
+            this.setSelection(
+                selection
+            );
+        }
+    }
 
-		const selection =
-			this.selections.get(
-				resourceType
-			);
+    get(
+        resourceType: string
+    ):
+        PublishedResourceReference |
+        undefined {
 
-		if (!selection) {
-			return undefined;
-		}
+        const selection =
+            this.selections.get(
+                resourceType
+            );
 
-		return {
-			...selection
-		};
-	}
+        if (!selection) {
+            return undefined;
+        }
 
-	require(
-		resourceType: string
-	): PublishedResourceReference {
+        return {
+            ...selection
+        };
+    }
 
-		const selection =
-			this.get(
-				resourceType
-			);
+    require(
+        resourceType: string
+    ): PublishedResourceReference {
 
-		if (!selection) {
-			throw new Error(
-				`No Resource selected for type: ${resourceType}`
-			);
-		}
+        const selection =
+            this.get(
+                resourceType
+            );
 
-		return selection;
-	}
+        if (!selection) {
+            throw new Error(
+                `No Resource selected for type: ${resourceType}`
+            );
+        }
 
-	select(
-		reference:
-			PublishedResourceReference
-	): void {
+        return selection;
+    }
 
-		const {
-			resourceType
-		} =
-			parseResourceIdentifier(
-				reference.resourceId
-			);
+    select(
+        reference:
+            PublishedResourceReference
+    ): void {
 
-		this.selections.set(
-			resourceType,
-			{
-				...reference
-			}
-		);
-	}
+        this.setSelection(
+            reference
+        );
 
-	snapshot():
-		ResourceSelections {
+        this.store?.save(
+            this.snapshot()
+        );
+    }
 
-		const result:
-			ResourceSelections =
-				{};
+    snapshot():
+        ResourceSelections {
 
-		for (
-			const [
-				resourceType,
-				reference
-			] of
-			this.selections
-		) {
-			result[
-				resourceType
-			] = {
-				...reference
-			};
-		}
+        const result:
+            ResourceSelections =
+            {};
 
-		return result;
-	}
+        for (
+            const [
+                resourceType,
+                reference
+            ] of
+            this.selections
+        ) {
+            result[
+                resourceType
+            ] = {
+                ...reference
+            };
+        }
+
+        return result;
+    }
+
+    restore(): void {
+
+        const persisted =
+            this.store?.load();
+
+        if (!persisted) {
+            return;
+        }
+
+        for (
+            const selection of
+            Object.values(
+                persisted
+            )
+        ) {
+            this.setSelection(
+                selection
+            );
+        }
+    }
+
+    private setSelection(
+        reference:
+            PublishedResourceReference
+    ): void {
+
+        const {
+            resourceType
+        } =
+            parseResourceIdentifier(
+                reference.resourceId
+            );
+
+        this.selections.set(
+            resourceType,
+            {
+                ...reference
+            }
+        );
+    }
 }

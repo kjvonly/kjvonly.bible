@@ -8,6 +8,14 @@ import {
 	ResourceSelectionService
 } from './resource-selection.service';
 
+import type {
+	ResourceSelectionStore
+} from './resource-selection-store';
+
+import type {
+	ResourceSelections
+} from './resource-selections';
+
 describe(
 	'ResourceSelectionService',
 	() => {
@@ -207,3 +215,255 @@ describe(
 		);
 	}
 );
+
+describe(
+	'ResourceSelectionService persistence',
+	() => {
+
+		it(
+			'does not persist defaults during construction',
+			() => {
+
+				const store =
+					new FakeResourceSelectionStore();
+
+				new ResourceSelectionService(
+					[
+						{
+							publisher:
+								'publisher',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjvs'
+						},
+						{
+							publisher:
+								'publisher',
+
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs'
+						}
+					],
+					store
+				);
+
+				expect(
+					store.saved
+				).toEqual([]);
+			}
+		);
+
+		it(
+			'restores persisted selection over the default for the same Resource Type',
+			() => {
+
+				const store =
+					new FakeResourceSelectionStore({
+						'kjvonly/bible/chapters': {
+							publisher:
+								'publisher-b',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjv'
+						}
+					});
+
+				const service =
+					new ResourceSelectionService(
+						[
+							{
+								publisher:
+									'publisher-a',
+
+								resourceId:
+									'kjvonly/bible/chapters/kjvs'
+							}
+						],
+						store
+					);
+
+				service.restore();
+
+				expect(
+					service.require(
+						'kjvonly/bible/chapters'
+					)
+				).toEqual({
+					publisher:
+						'publisher-b',
+
+					resourceId:
+						'kjvonly/bible/chapters/kjv'
+				});
+			}
+		);
+
+		it(
+			'retains defaults for Resource Types missing from persisted selections',
+			() => {
+
+				const store =
+					new FakeResourceSelectionStore({
+						'kjvonly/bible/chapters': {
+							publisher:
+								'publisher-b',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjv'
+						}
+					});
+
+				const service =
+					new ResourceSelectionService(
+						[
+							{
+								publisher:
+									'publisher-a',
+
+								resourceId:
+									'kjvonly/bible/chapters/kjvs'
+							},
+							{
+								publisher:
+									'publisher-a',
+
+								resourceId:
+									'kjvonly/strongs/definitions/kjvs'
+							}
+						],
+						store
+					);
+
+				service.restore();
+
+				expect(
+					service.require(
+						'kjvonly/bible/chapters'
+					)
+				).toEqual({
+					publisher:
+						'publisher-b',
+
+					resourceId:
+						'kjvonly/bible/chapters/kjv'
+				});
+
+				expect(
+					service.require(
+						'kjvonly/strongs/definitions'
+					)
+				).toEqual({
+					publisher:
+						'publisher-a',
+
+					resourceId:
+						'kjvonly/strongs/definitions/kjvs'
+				});
+			}
+		);
+
+		it(
+			'persists the complete selection snapshot when a selection changes',
+			() => {
+
+				const store =
+					new FakeResourceSelectionStore();
+
+				const service =
+					new ResourceSelectionService(
+						[
+							{
+								publisher:
+									'publisher-a',
+
+								resourceId:
+									'kjvonly/bible/chapters/kjvs'
+							},
+							{
+								publisher:
+									'publisher-a',
+
+								resourceId:
+									'kjvonly/strongs/definitions/kjvs'
+							}
+						],
+						store
+					);
+
+				service.select({
+					publisher:
+						'publisher-b',
+
+					resourceId:
+						'kjvonly/bible/chapters/kjv'
+				});
+
+				expect(
+					service.require(
+						'kjvonly/bible/chapters'
+					)
+				).toEqual({
+					publisher:
+						'publisher-b',
+
+					resourceId:
+						'kjvonly/bible/chapters/kjv'
+				});
+
+				expect(
+					store.saved
+				).toEqual([
+					{
+						'kjvonly/bible/chapters': {
+							publisher:
+								'publisher-b',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjv'
+						},
+
+						'kjvonly/strongs/definitions': {
+							publisher:
+								'publisher-a',
+
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs'
+						}
+					}
+				]);
+			}
+		);
+	}
+);
+
+class FakeResourceSelectionStore
+	implements ResourceSelectionStore {
+
+	saved:
+		ResourceSelections[] =
+			[];
+
+	constructor(
+		private readonly persisted?:
+			ResourceSelections
+	) {}
+
+	load():
+		ResourceSelections |
+		undefined {
+
+		return this.persisted;
+	}
+
+	save(
+		selections:
+			ResourceSelections
+	): void {
+
+		this.saved.push(
+			structuredClone(
+				selections
+			)
+		);
+	}
+}
