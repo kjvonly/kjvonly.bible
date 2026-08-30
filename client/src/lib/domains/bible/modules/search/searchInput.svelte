@@ -7,7 +7,6 @@
 
 	let {
 		searchText = $bindable<string>(),
-		bibleVersion = $bindable<string>(),
 		ID,
 		onFilterBibleLocationRef
 	} = $props();

@@ -62,7 +62,6 @@ const {
 	// component vars
 	let searchID: string = uuid4();
 	let searchText = $state('');
-	let bibleVersion = $state('kjvs');
 	let chapterSource:
 	PublishedResourceReference |
 	undefined =
@@ -137,7 +136,6 @@ function setChapterSource():
 {#snippet body()}
 	{#if showInput}
 		<SearchInput
-			bind:bibleVersion
 			bind:searchText
 			ID={searchID}
 			{onFilterBibleLocationRef}
@@ -147,7 +145,6 @@ function setChapterSource():
 		<SearchResults
 			{paneID}
 			{chapterSource}
-			bind:bibleVersion
 			bind:searchText
 			{searchID}
 			{onFilterBibleLocationRef}

@@ -31,14 +31,12 @@ import type {
 
 	let {
 		searchText = $bindable<string>(),
-		bibleVersion = $bindable<string>(),
 		chapterSource,
 		paneID,
 		searchID,
 		onFilterBibleLocationRef
 	}: {
 		searchText: string;
-		bibleVersion: string;
 		chapterSource: PublishedResourceReference;
 		paneID: string;
 		searchID: string;
@@ -161,7 +159,6 @@ import type {
 		if (pane) {
 			pane.buffer.bag = {
 				bibleLocationRef: sr.key,
-				bibleVersion: bibleVersion
 			};
 			pane?.updateBuffer(Modules.BIBLE);
 		}

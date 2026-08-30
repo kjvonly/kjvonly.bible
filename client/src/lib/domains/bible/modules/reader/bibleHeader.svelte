@@ -191,9 +191,7 @@ import type {
 	}
 
 	function onSearchClick() {
-		paneService.onSplitPane(paneID, 'h', Modules.SEARCH, {
-			bibleVersion: bibleVersion
-		});
+		paneService.onSplitPane(paneID, 'h', Modules.SEARCH, {});
 	}
 
 	function onCopyClick() {

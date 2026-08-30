@@ -171,7 +171,6 @@
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
 			refs: refs,
-			bibleVersion: bibleVersion,
 			strongsWords: strongsWords
 		});
 	}
@@ -181,7 +180,6 @@
 			word: word,
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
-			bibleVersion: bibleVersion
 		});
 	}
 
