@@ -33,7 +33,6 @@
 
 	// NOSTR IMPL
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	const { bibleVersionsService } = useApplicationContext();
 
 	import type {
 	PublishedResourceReference
@@ -105,7 +104,6 @@ import {
 	let zeroHeaderHeight = $state(0);
 	let id = $state(uuid4());
 	const LAST_BIBLE_LOCATION_REF = 'lastBibleLocationReference';
-	const LAST_BIBLE_VERSION = 'lastBibleVersion';
 	let mode: any = $state(newBibleMode());
 
 	// DOM related vars
@@ -124,8 +122,7 @@ import {
 
 	$effect(() => {
 		bibleLocationRef;
-		bibleVersion;
-		onBibleNavigationChanged();
+		onBibleLocationRefChanged();
 	});
 
 	// ================================ FUNCS ==================================
@@ -208,7 +205,7 @@ import {
 		lastKnownScrollPosition = el.scrollTop;
 	}
 
-	function onBibleNavigationChanged() {
+	function onBibleLocationRefChanged() {
 		if (
 			!bibleLocationRef ||
 			!bibleVersion
@@ -226,12 +223,7 @@ import {
 			LAST_BIBLE_LOCATION_REF,
 			bibleLocationRef
 		);
-
-		localStorage.setItem(
-			LAST_BIBLE_VERSION,
-			bibleVersion
-		);
-
+		
 		paneService.save();
     }
 
@@ -265,6 +257,8 @@ import {
 
 	bibleVersion =
 		version.id;
+
+	paneService.save();
 }
 
 </script>

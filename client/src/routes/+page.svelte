@@ -122,10 +122,13 @@
 			toggle: p.toggle
 		};
 
-		let buffer = new Buffer(
-		resourceSelectionService
-			.snapshot()
+		let buffer =	new Buffer(
+		structuredClone(
+			p.buffer
+				.resourceSelections
+		)
 	);
+
 		buffer.componentName = componentName;
 		buffer.name = `${componentName}`;
 		buffer.bag = bag;
