@@ -102,7 +102,6 @@ describe(
 						createVerifiedContent({
 							publisher,
 							resourceId,
-							eventId,
 
 							content:
 								JSON.stringify({
@@ -420,9 +419,6 @@ describe(
 								resourceId:
 									g1ResourceId,
 
-								eventId:
-									eventA,
-
 								modifiedAt:
 									100,
 
@@ -439,9 +435,6 @@ describe(
 
 								resourceId:
 									g2ResourceId,
-
-								eventId:
-									eventB,
 
 								modifiedAt:
 									200,
@@ -714,11 +707,6 @@ function createVerifiedContent(
 
 		resourceType:
 			'kjvonly/strongs/definitions',
-
-		eventId:
-			'a'.repeat(
-				64
-			),
 
 		modifiedAt:
 			200,

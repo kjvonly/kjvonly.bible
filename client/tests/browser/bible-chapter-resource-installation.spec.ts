@@ -89,7 +89,6 @@ describe(
 						createVerifiedContent({
 							publisher,
 							resourceId,
-							eventId,
 
 							content:
 								JSON.stringify({
@@ -396,9 +395,6 @@ describe(
 								resourceId:
 									chapter1ResourceId,
 
-								eventId:
-									eventA,
-
 								modifiedAt:
 									100,
 
@@ -415,9 +411,6 @@ describe(
 
 								resourceId:
 									chapter2ResourceId,
-
-								eventId:
-									eventB,
 
 								modifiedAt:
 									200,
@@ -669,11 +662,6 @@ function createVerifiedContent(
 
 		resourceType:
 			'kjvonly/bible/chapters',
-
-		eventId:
-			'a'.repeat(
-				64
-			),
 
 		modifiedAt:
 			200,

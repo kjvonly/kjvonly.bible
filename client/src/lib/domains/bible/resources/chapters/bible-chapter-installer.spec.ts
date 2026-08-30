@@ -618,9 +618,6 @@ function createResource(
 		resourceType:
 			'kjvonly/bible/chapters',
 
-		eventId:
-			'event-200',
-
 		modifiedAt:
 			200,
 
