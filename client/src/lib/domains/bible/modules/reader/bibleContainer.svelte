@@ -216,9 +216,6 @@ import {
 		pane.buffer.bag.bibleLocationRef =
 			bibleLocationRef;
 
-		pane.buffer.bag.bibleVersion =
-			bibleVersion;
-
 		localStorage.setItem(
 			LAST_BIBLE_LOCATION_REF,
 			bibleLocationRef

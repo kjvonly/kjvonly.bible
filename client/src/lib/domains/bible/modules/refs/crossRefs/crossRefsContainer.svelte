@@ -43,12 +43,10 @@
 	let {
 		paneID,
 		boundCrossRefs,
-		bibleVersion,
 		chapterSource
 	}: {
 		paneID: string;
 		boundCrossRefs: string[];
-		bibleVersion: string;
 		chapterSource: PublishedResourceReference;
 	} = $props();
 
@@ -112,7 +110,6 @@
 		return {
 			crossRef: crossRef,
 			bibleLocationRef: bibleLocationRef,
-			bibleVersion: bibleVersion,
 			bookName: bookName,
 			chapterNumber: chapterNumber,
 			verseNumber: verseNumber,

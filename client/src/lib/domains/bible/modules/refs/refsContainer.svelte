@@ -76,21 +76,12 @@ const chapterSource =
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		setBibleVersion();
 		setRefs();
 		setCurrentVerseRef();
 		setWordText();
 	});
 
 	// ================================ FUNCS ==================================
-
-	function setBibleVersion() {
-		if (pane?.buffer?.bag?.bibleVersion) {
-			bibleVersion = pane?.buffer?.bag?.bibleVersion;
-		} else {
-			bibleVersion = 'kjvs';
-		}
-	}
 
 	function setRefs(): void {
 		let refs: string[] = getRefs();
@@ -204,7 +195,6 @@ const chapterSource =
 			paneID={pane?.id}
 			boundCrossRefs={crossRefs}
 			{chapterSource}
-			{bibleVersion}
 		></CrossRefsContainer>
 	{/if}
 {/snippet}

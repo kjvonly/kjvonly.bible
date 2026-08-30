@@ -251,17 +251,3 @@ onMount(() => {
 	</div>
 	{/if}
 </Container>
-
-{#if applicationStartupError}
-	<div>
-		Application startup failed.
-	</div>
-{:else if applicationReady}
-	<Container>
-		{@render children?.()}
-	</Container>
-{:else}
-	<div>
-		Loading...
-	</div>
-{/if}
