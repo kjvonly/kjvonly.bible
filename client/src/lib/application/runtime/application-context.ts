@@ -19,14 +19,12 @@ import type {
     ResourceContentDecoder
 } from '$lib/resource/content/resource-content-decoder';
 import type { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
-import type { BibleChapterResourceHandler } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
-import type { BibleChapterResourceService } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-service';
 import type { ChapterService } from '$lib/domains/bible/services/chapter.service';
 import type { BibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
 import type { VerseService } from '$lib/domains/bible/services/verse.service';
 import type { StrongsService } from '$lib/domains/strongs/services/strongs.service';
 import type { ResourceService } from '$lib/resource/services/resource.service';
-
+import type { ResourceSelectionService } from '$lib/application/resources/resource-selection.service';
 export interface ApplicationContext {
     readonly nostrSigner:
     NostrSigner;
@@ -51,6 +49,10 @@ export interface ApplicationContext {
     readonly resourceService:
     ResourceService;
 
+    
+
+	readonly resourceSelectionService:
+		ResourceSelectionService;
 
     // BIBLE
 

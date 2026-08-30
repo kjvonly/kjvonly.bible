@@ -51,6 +51,19 @@ import {
 import {
     appendResourceReferenceBuilder
 } from '$lib/resource/loading/resource-reference-builder';
+
+import {
+    ResourceSelectionService
+} from '$lib/application/resources/resource-selection.service';
+
+// // RESOURCE TYPES
+import {
+    BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+import {
+    STRONGS_RESOURCE_TYPE
+} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -191,6 +204,24 @@ export class Application {
                 resourceContentDecoratorBuilder
             );
 
+        const resourceSelectionService =
+            new ResourceSelectionService([
+                {
+                    publisher:
+                        KJVONLY_PUBKEY,
+
+                    resourceId:
+                        `${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+                },
+                {
+                    publisher:
+                        KJVONLY_PUBKEY,
+
+                    resourceId:
+                        `${STRONGS_RESOURCE_TYPE}/kjvs`
+                }
+            ]);
+
         ///////////////////////////////////////////////////////////////////////
         // Bible Chapter
 
@@ -329,6 +360,7 @@ export class Application {
             resourceContentDecoder,
 
             resourceService,
+            resourceSelectionService,
 
             chapterService,
             verseService,
