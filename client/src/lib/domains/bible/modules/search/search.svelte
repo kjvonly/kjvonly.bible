@@ -34,9 +34,14 @@ import {
 	useApplicationContext
 } from '$lib/application/runtime/application-context';
 
+import {
+	requireResourceSelection
+} from '$lib/application/resources/resource-selections';
+
 const {
 	bibleVersionsService
 } = useApplicationContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -86,30 +91,28 @@ const {
 		}
 	}
 
-	async function setChapterSource():
-	Promise<void> {
+function setChapterSource():
+	void {
 
-	const selected =
-		await bibleVersionsService.resolve(
-			bibleVersion
+	const owningPane =
+		pane ??
+		paneService.findNode(
+			paneService.rootPane,
+			paneID
 		);
 
-	if (!selected) {
+	if (!owningPane) {
 		throw new Error(
-			`Bible Version is not available: ${bibleVersion}`
+			`Search Pane not found: ${paneID}`
 		);
 	}
 
-	bibleVersion =
-		selected.id;
-
-	chapterSource = {
-		publisher:
-			selected.publisher,
-
-		resourceId:
-			`${BIBLE_CHAPTER_RESOURCE_TYPE}/${selected.version}`
-	};
+	chapterSource =
+		requireResourceSelection(
+			owningPane.buffer
+				.resourceSelections,
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		);
 }
 </script>
 
