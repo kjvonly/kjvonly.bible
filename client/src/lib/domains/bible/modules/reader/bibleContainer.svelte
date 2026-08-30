@@ -90,7 +90,7 @@ import {
 				chapterSource
 			)
 		);
-		
+		``
 	const {
 	resourceSelectionService
 } =
@@ -235,6 +235,38 @@ import {
 		paneService.save();
     }
 
+	function onBibleVersionSelected(
+	version:
+		BibleVersion
+): void {
+
+	const source:
+		PublishedResourceReference = {
+			publisher:
+				version.publisher,
+
+			resourceId:
+				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version.version}`
+		};
+
+	pane.buffer
+		.resourceSelections[
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		] =
+		source;
+
+	resourceSelectionService
+		.select(
+			source
+		);
+
+	chapterSource =
+		source;
+
+	bibleVersion =
+		version.id;
+}
+
 </script>
 
 <!-- ================================ HEADER =============================== -->
@@ -248,6 +280,7 @@ import {
 			bind:clientHeight
 			bind:headerHeight
 			{chapterSource}
+			{onBibleVersionSelected}
 			{paneID}
 		></BibleHeader>
 	{/if}

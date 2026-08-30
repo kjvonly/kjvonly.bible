@@ -42,6 +42,11 @@
 	import type {
 	PublishedResourceReference
 } from '$lib/resource/models/resource.model';
+
+
+import type {
+	BibleVersion
+} from '$lib/domains/bible/models/bible-version.model';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -51,6 +56,7 @@
 		clientHeight = $bindable<number>(),
 		headerHeight = $bindable<number>(),
 		chapterSource,
+		onBibleVersionSelected,
 		paneID
 	}: {
 		mode: BibleMode;
@@ -59,6 +65,7 @@
 		clientHeight: number;
 		headerHeight: number;
 		chapterSource: PublishedResourceReference;
+		onBibleVersionSelected:( version: BibleVersion	) => void;
 		paneID: string;
 	} = $props();
 
@@ -331,7 +338,8 @@
 {#snippet bibleVersionPopup()}
 	{#if showBibleVersionPopup}
 		<PopupContainer bind:clientHeight>
-			<BibleVersionPopup bind:bibleVersion bind:showBibleVersionPopup
+			<BibleVersionPopup {onBibleVersionSelected} bind:showBibleVersionPopup
+
 			></BibleVersionPopup>
 		</PopupContainer>
 	{/if}
