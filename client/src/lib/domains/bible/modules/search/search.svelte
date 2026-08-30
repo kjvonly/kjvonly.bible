@@ -22,6 +22,21 @@
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
+	import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import {
+	BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+import {
+	useApplicationContext
+} from '$lib/application/runtime/application-context';
+
+const {
+	bibleVersionsService
+} = useApplicationContext();
 	// =============================== BINDINGS ================================
 
 	let {
@@ -43,15 +58,25 @@
 	let searchID: string = uuid4();
 	let searchText = $state('');
 	let bibleVersion = $state('kjvs');
+	let chapterSource:
+	PublishedResourceReference |
+	undefined =
+		$state();
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(() => {
-		if (searchTerms?.length > 0) {
-			searchText = searchTerms;
-			searchService.search(searchID, searchTerms);
-		}
-	});
+	onMount(async () => {
+	await setChapterSource();
+
+	if (searchTerms?.length > 0) {
+		searchText = searchTerms;
+		searchService.search(
+			searchID,
+			searchTerms
+		);
+	}
+});
+
 
 	function applyOnClose() {
 		if (onClose) {
@@ -60,7 +85,35 @@
 			paneService.onDeletePane(paneService.rootPane, paneID);
 		}
 	}
+
+	async function setChapterSource():
+	Promise<void> {
+
+	const selected =
+		await bibleVersionsService.resolve(
+			bibleVersion
+		);
+
+	if (!selected) {
+		throw new Error(
+			`Bible Version is not available: ${bibleVersion}`
+		);
+	}
+
+	bibleVersion =
+		selected.id;
+
+	chapterSource = {
+		publisher:
+			selected.publisher,
+
+		resourceId:
+			`${BIBLE_CHAPTER_RESOURCE_TYPE}/${selected.version}`
+	};
+}
 </script>
+
+
 
 <!-- ================================ HEADER =============================== -->
 
@@ -87,14 +140,16 @@
 			{onFilterBibleLocationRef}
 		></SearchInput>
 	{/if}
-	<SearchResults
-		{paneID}
-		bind:bibleVersion
-		bind:searchText
-		{searchID}
-		{onFilterBibleLocationRef}
-	></SearchResults>
-
+	{#if chapterSource}
+		<SearchResults
+			{paneID}
+			{chapterSource}
+			bind:bibleVersion
+			bind:searchText
+			{searchID}
+			{onFilterBibleLocationRef}
+		></SearchResults>
+	{/if}
 	<div class="h-6"></div>
 {/snippet}
 

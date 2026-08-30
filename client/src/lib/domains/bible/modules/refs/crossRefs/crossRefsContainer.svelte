@@ -34,16 +34,22 @@
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	const { verseService } = useApplicationContext();
 
+	import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
 	// =============================== BINDINGS ================================
 
 	let {
 		paneID,
 		boundCrossRefs,
-		bibleVersion
+		bibleVersion,
+		chapterSource
 	}: {
 		paneID: string;
 		boundCrossRefs: string[];
 		bibleVersion: string;
+		chapterSource: PublishedResourceReference;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -99,7 +105,8 @@
 			bibleLocationReferenceService.extractVerse(bibleLocationRef);
 		let bookID = bibleLocationReferenceService.extractBookID(bibleLocationRef);
 		let bookName = bookNamesByIDService.get(bookID);
-		let verse = await verseService.get(bibleVersion, bibleLocationRef);
+		let verse = await verseService.get(chapterSource, bibleLocationRef);
+	
 		let verseWithoutNumber = verse.text.slice(verse.text.indexOf(' ') + 1);
 
 		return {
@@ -161,7 +168,7 @@
 			bibleLocationReferenceService.convertCrossRefToBibleLocationRef(
 				crossRef.crossRef
 			);
-		let verse = await verseService.get(bibleVersion, bibleLocationRef);
+		let verse = await verseService.get(chapterSource, bibleLocationRef);	
 		let crossRefs = [crossRef.crossRef];
 		verse?.words.forEach((w: any) => {
 			w.href?.forEach((ref: string) => {

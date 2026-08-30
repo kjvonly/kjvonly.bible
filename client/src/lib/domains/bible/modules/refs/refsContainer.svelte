@@ -34,6 +34,10 @@
 		KJVONLY_PUBKEY
 	} from '$lib/infrastructure/nostr/nostr';
 
+	import {
+	BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -175,6 +179,34 @@
 				`${STRONGS_RESOURCE_TYPE}/${edition}`
 		};
 }
+
+	function getChapterSource():
+		PublishedResourceReference {
+
+		const parts =
+			bibleVersion.split('/');
+
+		const edition =
+			parts.at(-1);
+
+		if (!edition) {
+			throw new Error(
+				`Invalid Bible version: ${bibleVersion}`
+			);
+		}
+
+		const publisher =
+			parts.length === 2
+				? parts[0]
+				: KJVONLY_PUBKEY;
+
+		return {
+			publisher,
+
+			resourceId:
+				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${edition}`
+		};
+	}
 	// ============================== CLICK FUNCS ==============================
 </script>
 
@@ -214,6 +246,7 @@
 		<CrossRefsContainer
 			paneID={pane?.id}
 			boundCrossRefs={crossRefs}
+			chapterSource={getChapterSource()}
 			{bibleVersion}
 		></CrossRefsContainer>
 	{/if}

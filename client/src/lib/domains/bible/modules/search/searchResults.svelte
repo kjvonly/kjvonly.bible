@@ -24,18 +24,22 @@
   import { useApplicationContext } from '$lib/application/runtime/application-context';
 	const { verseService } = useApplicationContext();
 
-
+import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
 	// =============================== BINDINGS ================================
 
 	let {
 		searchText = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
+		chapterSource,
 		paneID,
 		searchID,
 		onFilterBibleLocationRef
 	}: {
 		searchText: string;
 		bibleVersion: string;
+		chapterSource: PublishedResourceReference;
 		paneID: string;
 		searchID: string;
 		onFilterBibleLocationRef: onFilterBibleLocationRefFunction;
@@ -129,10 +133,12 @@
 
 	async function searchResultIndexToSearchResult(
 		bibleLocationRef: string
-	): Promise<SearchResult | undefined> {
-		let verse = await verseService.get(
-			bibleVersion,
-			bibleLocationRef);
+	): Promise<SearchResult | undefined> { 
+		let verse =
+	await verseService.get(
+		chapterSource,
+		bibleLocationRef
+	);
 		if (!verse) {
 			return;
 		}
