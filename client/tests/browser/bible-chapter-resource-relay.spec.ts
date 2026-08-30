@@ -272,9 +272,6 @@ describe(
 
 					resourceId,
 
-					eventId:
-						publication.eventId,
-
 					modifiedAt:
 						expect.any(
 							Number

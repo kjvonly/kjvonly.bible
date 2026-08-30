@@ -15,7 +15,6 @@ import {
 const RESOURCE_REPRESENTATIONS:
 	readonly ResourceRepresentationType[] = [
 		'content',
-		'descriptor',
 		'descriptors'
 	];
 

@@ -234,8 +234,6 @@ describe(
 
 					resourceId,
 
-					eventId,
-
 					modifiedAt:
 						200
 				});
@@ -553,9 +551,6 @@ describe(
 				).toMatchObject({
 					objectId:
 						chapter1Id,
-
-					eventId:
-						eventA,
 
 					modifiedAt:
 						100

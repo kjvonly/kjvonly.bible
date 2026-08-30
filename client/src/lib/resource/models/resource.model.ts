@@ -3,7 +3,6 @@ export const RESOURCE_KIND =
 
 export type ResourceRepresentationType =
 	| 'content'
-	| 'descriptor'
 	| 'descriptors';
 
 export interface PublishedResourceReference {
@@ -30,7 +29,6 @@ export interface ResourceRepresentation {
 	payload: string;
 }
 
-
 export type SerializedResourceContent =
 	| string
 	| Uint8Array;
@@ -42,13 +40,12 @@ export interface VerifiedResourceContent {
 
 	readonly resourceType: string;
 
-	readonly eventId: string;
-
 	readonly modifiedAt: number;
 
 	readonly mediaType: string;
 
-	readonly content: SerializedResourceContent;
+	readonly content:
+		SerializedResourceContent;
 }
 
 export interface DecodedResourceContent {
@@ -57,8 +54,6 @@ export interface DecodedResourceContent {
 	readonly resourceId: string;
 
 	readonly resourceType: string;
-
-	readonly eventId: string;
 
 	readonly modifiedAt: number;
 

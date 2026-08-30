@@ -136,9 +136,6 @@ export class StrongsInstaller {
 							resourceId:
 								resource.resourceId,
 
-							eventId:
-								resource.eventId,
-
 							modifiedAt:
 								resource.modifiedAt
 						};

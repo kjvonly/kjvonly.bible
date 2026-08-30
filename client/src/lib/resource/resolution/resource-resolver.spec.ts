@@ -58,10 +58,7 @@ describe(
 
                     resourceType:
                         'kjvonly/bible/chapters',
-
-                    eventId:
-                        'b'.repeat(64),
-
+                    
                     modifiedAt:
                         123456,
 
@@ -113,11 +110,11 @@ describe(
                     resolver.resolve(
                         createResourceRepresentation({
                             representation:
-                                'descriptor'
+                                'descriptors'
                         })
                     )
                 ).rejects.toThrow(
-                    'Unsupported Resource representation: descriptor'
+                    'Unsupported Resource representation: descriptors'
                 );
             }
         );
@@ -132,7 +129,7 @@ describe(
                 const descriptorResolver:
                     ResourceRepresentationResolver = {
                     representation:
-                        'descriptor',
+                        'descriptors',
 
                     resolve:
                         vi.fn(
@@ -150,7 +147,7 @@ describe(
                 const resource =
                     createResourceRepresentation({
                         representation:
-                            'descriptor'
+                            'descriptors'
                     });
 
                 const result =

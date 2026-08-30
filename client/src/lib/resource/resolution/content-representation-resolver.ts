@@ -7,7 +7,6 @@ import type {
 	ResourceRepresentationResolver
 } from './resource-representation-resolver';
 
-
 export class ContentRepresentationResolver
 	implements ResourceRepresentationResolver {
 
@@ -30,9 +29,6 @@ export class ContentRepresentationResolver
 
 				resourceType:
 					resource.resourceType,
-
-				eventId:
-					resource.eventId,
 
 				modifiedAt:
 					resource.modifiedAt,

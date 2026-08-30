@@ -14,7 +14,8 @@ export class ResourceContentDecoder {
 	) {}
 
 	async decode(
-		resource: VerifiedResourceContent
+		resource:
+			VerifiedResourceContent
 	): Promise<DecodedResourceContent> {
 		const decorator =
 			this.decoratorBuilder.build(
@@ -35,9 +36,6 @@ export class ResourceContentDecoder {
 
 			resourceType:
 				resource.resourceType,
-
-			eventId:
-				resource.eventId,
 
 			modifiedAt:
 				resource.modifiedAt,

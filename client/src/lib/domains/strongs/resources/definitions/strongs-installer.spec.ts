@@ -115,9 +115,6 @@ describe(
 					resourceId:
 						'kjvonly/strongs/definitions/kjvs',
 
-					eventId:
-						'event-200',
-
 					modifiedAt:
 						200
 				});
@@ -598,9 +595,6 @@ function createResource(
 		resourceType:
 			'kjvonly/strongs/definitions',
 
-		eventId:
-			'event-200',
-
 		modifiedAt:
 			200,
 
@@ -701,9 +695,6 @@ function createInstallation(
 
 		resourceId:
 			'kjvonly/strongs/definitions/kjvs',
-
-		eventId:
-			'event-id',
 
 		modifiedAt:
 			100,

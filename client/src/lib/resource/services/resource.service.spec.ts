@@ -521,9 +521,6 @@ function createVerifiedContent(
 		resourceType:
 			'kjvonly/strongs/definitions',
 
-		eventId:
-			'b'.repeat(64),
-
 		modifiedAt:
 			100,
 
@@ -610,9 +607,6 @@ class FakeDecoder {
 
 			resourceType:
 				content.resourceType,
-
-			eventId:
-				content.eventId,
 
 			modifiedAt:
 				content.modifiedAt,

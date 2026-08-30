@@ -252,8 +252,6 @@ describe(
 
 					resourceId,
 
-					eventId,
-
 					modifiedAt:
 						200
 				});
@@ -594,9 +592,6 @@ describe(
 				).toMatchObject({
 					objectId:
 						g1Id,
-
-					eventId:
-						eventA,
 
 					modifiedAt:
 						100
