@@ -30,14 +30,13 @@
 		STRONGS_RESOURCE_TYPE
 	} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
-	import {
-		KJVONLY_PUBKEY
-	} from '$lib/infrastructure/nostr/nostr';
+import {
+	requireResourceSelection
+} from '$lib/application/resources/resource-selections';
 
-	import {
+import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';``
 	// =============================== BINDINGS ================================
 
 	let {
@@ -59,6 +58,20 @@
 	let text = $state('');
 	let crossRefs: string[] = $state([]);
 	let bibleVersion: string = $state('');
+
+	const strongsSource =
+	requireResourceSelection(
+		pane.buffer
+			.resourceSelections,
+		STRONGS_RESOURCE_TYPE
+	);
+
+const chapterSource =
+	requireResourceSelection(
+		pane.buffer
+			.resourceSelections,
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -151,62 +164,6 @@
 		}
 	}
 
-	// ============================== TMP FUNCS ==============================
-	function getStrongsSource():
-		PublishedResourceReference {
-
-		const parts =
-			bibleVersion.split('/');
-
-		const edition =
-			parts.at(-1);
-
-		if (!edition) {
-			throw new Error(
-				`Invalid Bible version: ${bibleVersion}`
-			);
-		}
-
-		const publisher =
-			parts.length === 2
-				? parts[0]
-				: KJVONLY_PUBKEY;
-
-		return {
-			publisher,
-
-			resourceId:
-				`${STRONGS_RESOURCE_TYPE}/${edition}`
-		};
-}
-
-	function getChapterSource():
-		PublishedResourceReference {
-
-		const parts =
-			bibleVersion.split('/');
-
-		const edition =
-			parts.at(-1);
-
-		if (!edition) {
-			throw new Error(
-				`Invalid Bible version: ${bibleVersion}`
-			);
-		}
-
-		const publisher =
-			parts.length === 2
-				? parts[0]
-				: KJVONLY_PUBKEY;
-
-		return {
-			publisher,
-
-			resourceId:
-				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${edition}`
-		};
-	}
 	// ============================== CLICK FUNCS ==============================
 </script>
 
@@ -232,7 +189,7 @@
 			bind:clientHeight
 			bind:popups
 			{text}
-			strongsSource={getStrongsSource()}
+			{strongsSource}
 			{strongsRefs}
 			{paneID}
 			hasCrossRef={crossRefs.length > 0}
@@ -246,7 +203,7 @@
 		<CrossRefsContainer
 			paneID={pane?.id}
 			boundCrossRefs={crossRefs}
-			chapterSource={getChapterSource()}
+			{chapterSource}
 			{bibleVersion}
 		></CrossRefsContainer>
 	{/if}
