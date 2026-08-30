@@ -43,6 +43,21 @@ import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
 } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
+import type {
+	BibleVersion
+} from '$lib/domains/bible/models/bible-version.model';
+
+import {
+	requireResourceSelection
+} from '$lib/application/resources/resource-selections';
+
+import {
+	parseResourceIdentifier
+} from '$lib/resource/utils/resource-identifier';
+
+import {
+	createBibleVersionId
+} from '$lib/domains/bible/utils/bible-identity';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -57,9 +72,29 @@ import {
 
 	let annotations: Annotations = $state(newAnnotation());
 	let bibleLocationRef: string = $state('');
-	let bibleVersion: string = $state('');
 
-	let chapterSource:	PublishedResourceReference | undefined = $state();
+	let chapterSource:
+	PublishedResourceReference =
+		$state(
+			requireResourceSelection(
+				pane.buffer
+					.resourceSelections,
+				BIBLE_CHAPTER_RESOURCE_TYPE
+			)
+		);
+
+	let bibleVersion:
+	string =
+		$state(
+			getBibleVersionId(
+				chapterSource
+			)
+		);
+		
+	const {
+	resourceSelectionService
+} =
+	useApplicationContext();
 		
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
@@ -82,7 +117,6 @@ import {
 	onMount(async () => {
 		setModePaneID();
 		setNavReadings();
-		await setBibleVersion();
 		setBibleLocationRef();
 		attachScrolls();
 		overrideContextMenu();
@@ -106,41 +140,31 @@ import {
 		}
 	}
 
-
-	async function setBibleVersion():
-		Promise<void> {
-
-		const persisted =
-			pane?.buffer?.bag
-				?.bibleVersion ??
-			localStorage.getItem(
-				LAST_BIBLE_VERSION
-			);
-
-		const selected =
-			await bibleVersionsService
-				.resolve(
-					persisted
-				);
-
-		if (!selected) {
-			throw new Error(
-				'No Bible Version is available.'
-			);
-		}
-
-		bibleVersion =
-			selected.id;
-
-		chapterSource = {
-			publisher:
-				selected.publisher,
-
-			resourceId:
-				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${selected.version}`
-		};
-	}
 	
+	function getBibleVersionId(
+	source:
+		PublishedResourceReference
+): string {
+
+	const identifier =
+		parseResourceIdentifier(
+			source.resourceId
+		);
+
+	const version =
+		identifier.path[0];
+
+	if (!version) {
+		throw new Error(
+			`Invalid Bible Chapter Resource selection: ${source.resourceId}`
+		);
+	}
+
+	return createBibleVersionId(
+		source.publisher,
+		version
+	);
+}
 	function setBibleLocationRef() {
 		let ref = pane.buffer.bag.bibleLocationRef;
 		if (ref) {
