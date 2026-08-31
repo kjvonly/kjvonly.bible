@@ -18,64 +18,13 @@ import {
     ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
 
-import {
-    ContentRepresentationResolver
-} from '$lib/resource/resolution/content-representation-resolver';
-
-import {
-    DescriptorsRepresentationResolver
-} from '$lib/resource/resolution/descriptors-representation-resolver';
-
-import {
-    BlossomResourceResolutionStrategy
-} from '$lib/resource/resolution/blossom-resource-resolution-strategy';
-
-import {
-    ResourceResolver
-} from '$lib/resource/resolution/resource-resolver';
-
-import {
-    ResourceDescriptorDocumentDecoder
-} from '$lib/resource/descriptors/resource-descriptor-document-decoder';
-
-import {
-    ResourceDescriptorValidator
-} from '$lib/resource/descriptors/resource-descriptor-validator';
-
-import {
-    ResourceContentDecoder
-} from '$lib/resource/content/resource-content-decoder';
-
-import {
-    ResourceContentDecoratorBuilder
-} from '$lib/resource/content/resource-content-decorator-builder';
-
-import {
-    JsonResourceContentDecorator
-} from '$lib/resource/content/json-resource-content-decorator';
-
-import {
-    GzipResourceContentDecorator
-} from '$lib/resource/content/gzip-resource-content-decorator';
-
-import {
-    HexResourceContentDecorator
-} from '$lib/resource/content/hex-resource-content-decorator';
-
-import {
-    ResourceReceiptService
-} from '$lib/resource/receipts/resource-receipt.service';
-
-import {
-    IndexedDBResourceReceiptStore
-} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
-
 ///////////////////////////////////////////////////////////////////////////////
 // Resource
 
 import {
-    ResourceService
-} from '$lib/resource/services/resource.service';
+    createBrowserResourceWorkerClient,
+    type ResourceWorkerClient
+} from '$lib/resource/worker/resource-worker-client';
 
 import {
     ResourceLoader
@@ -93,7 +42,8 @@ import type {
     PublishedResourceReference
 } from '$lib/resource/models/resource.model';
 
-// RESOURCE TYPES
+///////////////////////////////////////////////////////////////////////////////
+// Resource Types
 
 import {
     BIBLE_CHAPTER_RESOURCE_TYPE
@@ -105,26 +55,6 @@ import {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
-
-import {
-    IndexedDBBibleChapterInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
-
-import {
-    BibleChapterInstaller
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
-
-import {
-    BibleChapterInterpreter
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-    BibleChapterResourceHandler
-} from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
-
-import {
-    BibleChapterValidator
-} from '$lib/domains/bible/resources/chapters/bible-chapter-validator';
 
 import {
     IndexedDBChapterStore
@@ -163,27 +93,7 @@ import {
 } from '$lib/domains/bible/utils/bible-identity';
 
 ///////////////////////////////////////////////////////////////////////////////
-// Strongs
-
-import {
-    IndexedDBStrongsInstallationTransaction
-} from '$lib/domains/strongs/persistence/strongs-installation-transaction';
-
-import {
-    StrongsInstaller
-} from '$lib/domains/strongs/resources/definitions/strongs-installer';
-
-import {
-    StrongsInterpreter
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
-
-import {
-    StrongsValidator
-} from '$lib/domains/strongs/resources/definitions/strongs-validator';
-
-import {
-    StrongsResourceHandler
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
+// Strong's
 
 import {
     IndexedDBStrongsStore
@@ -194,6 +104,7 @@ import {
 } from '$lib/domains/strongs/services/strongs.service';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Persistence
 
 import {
     LocalStorageResourceSelectionStore
@@ -209,6 +120,7 @@ const NOSTR_STORAGE_PREFIX =
 
 const APPLICATION_BOOTSTRAP_RESOURCE:
     PublishedResourceReference = {
+
     publisher:
         KJVONLY_PUBKEY,
 
@@ -216,11 +128,15 @@ const APPLICATION_BOOTSTRAP_RESOURCE:
         'kjvonly/resources/collections/default'
 };
 
+///////////////////////////////////////////////////////////////////////////////
+
 type ApplicationState =
     | 'created'
     | 'starting'
     | 'started'
     | 'stopped';
+
+///////////////////////////////////////////////////////////////////////////////
 
 export class Application {
 
@@ -235,119 +151,77 @@ export class Application {
         Promise<void> |
         undefined;
 
+    private readonly resourceWorkerClient:
+        ResourceWorkerClient;
+
     constructor(
         private readonly config:
             ApplicationConfig
     ) {
-        const nostrSigner =
-            new NostrSigner();
 
         ///////////////////////////////////////////////////////////////////////
-        // Resource
+        // Nostr
+
+        const nostrSigner =
+            new NostrSigner();
 
         const resourceClient =
             createBrowserResourceClient(
                 nostrSigner
             );
 
+        /*
+         * Nostr Resource discovery remains on the
+         * application/main thread.
+         *
+         * ResourceDiscovery converts transport-specific
+         * Nostr events into ResourceRepresentation values.
+         *
+         * Everything after that boundary executes through
+         * the Resource Worker.
+         */
         const resourceDiscovery =
             new ResourceDiscovery(
                 resourceClient
             );
 
-        /*
-         * The same decorator builder is used for:
-         *
-         * - normal Resource content decoding
-         * - descriptor document decoding
-         *
-         * Descriptor retrieval strategies return raw
-         * serialized bytes. They do not decode them.
-         */
-        const resourceContentDecoratorBuilder =
-            new ResourceContentDecoratorBuilder([
-                {
-                    token:
-                        'application/json',
-
-                    decorate:
-                        (inner) =>
-                            new JsonResourceContentDecorator(
-                                inner
-                            )
-                },
-                {
-                    token:
-                        'gzip',
-
-                    decorate:
-                        (inner) =>
-                            new GzipResourceContentDecorator(
-                                inner
-                            )
-                },
-                {
-                    token:
-                        'hex',
-
-                    decorate:
-                        (inner) =>
-                            new HexResourceContentDecorator(
-                                inner
-                            )
-                }
-            ]);
-
-        const resourceContentDecoder =
-            new ResourceContentDecoder(
-                resourceContentDecoratorBuilder
-            );
+        ///////////////////////////////////////////////////////////////////////
+        // Resource Worker
 
         /*
-         * Resource receipts are shared by:
+         * The Resource Worker owns Resource processing:
          *
-         * - descriptor resolution for pre-download
-         *   freshness checks
+         * ResourceService
+         *     ↓
+         * Resource Resolution
+         *     ↓
+         * descriptor processing
+         *     ↓
+         * external retrieval / integrity verification
+         *     ↓
+         * Resource content decoding
+         *     ↓
+         * ResourceHandler dispatch
+         *     ↓
+         * Domain interpretation / validation
+         *     ↓
+         * Domain installation
+         *     ↓
+         * Resource receipt persistence
          *
-         * - ResourceService for recording successful
-         *   Resource processing
+         * Resource discovery is bridged back to the
+         * main-thread ResourceDiscovery above.
          */
-        const resourceReceiptStore =
-            new IndexedDBResourceReceiptStore(
-                getApplicationDB
+        const resourceWorkerClient =
+            createBrowserResourceWorkerClient(
+                resourceDiscovery
             );
 
-        const resourceReceiptService =
-            new ResourceReceiptService(
-                resourceReceiptStore
-            );
+        this.resourceWorkerClient =
+            resourceWorkerClient;
 
-        const resourceDescriptorDocumentDecoder =
-            new ResourceDescriptorDocumentDecoder(
-                resourceContentDecoratorBuilder
-            );
-
-        const resourceDescriptorValidator =
-            new ResourceDescriptorValidator();
-
-        const blossomResourceResolutionStrategy =
-            new BlossomResourceResolutionStrategy();
-
-        const descriptorsRepresentationResolver =
-            new DescriptorsRepresentationResolver(
-                resourceDescriptorDocumentDecoder,
-                resourceDescriptorValidator,
-                resourceReceiptService,
-                [
-                    blossomResourceResolutionStrategy
-                ]
-            );
-
-        const resourceResolver =
-            new ResourceResolver([
-                new ContentRepresentationResolver(),
-                descriptorsRepresentationResolver
-            ]);
+        ///////////////////////////////////////////////////////////////////////
+        // Resource Selection
 
         const resourceSelectionStore =
             new LocalStorageResourceSelectionStore(
@@ -376,24 +250,7 @@ export class Application {
             );
 
         ///////////////////////////////////////////////////////////////////////
-        // Bible Chapter
-
-        const bibleChapterInstallationTransaction =
-            new IndexedDBBibleChapterInstallationTransaction(
-                getApplicationDB
-            );
-
-        const bibleChapterInstaller =
-            new BibleChapterInstaller(
-                bibleChapterInstallationTransaction
-            );
-
-        const bibleChapterResourceHandler =
-            new BibleChapterResourceHandler(
-                new BibleChapterInterpreter(),
-                new BibleChapterValidator(),
-                bibleChapterInstaller
-            );
+        // Bible
 
         const chapterStore =
             new IndexedDBChapterStore(
@@ -407,6 +264,7 @@ export class Application {
 
         const defaultBibleVersion:
             BibleVersion = {
+
             id:
                 createBibleVersionId(
                     KJVONLY_PUBKEY,
@@ -426,51 +284,17 @@ export class Application {
                 defaultBibleVersion
             );
 
-        ///////////////////////////////////////////////////////////////////////
-        // Strongs
-
-        const strongsInstallationTransaction =
-            new IndexedDBStrongsInstallationTransaction(
-                getApplicationDB
-            );
-
-        const strongsInstaller =
-            new StrongsInstaller(
-                strongsInstallationTransaction
-            );
-
-        const strongsResourceHandler =
-            new StrongsResourceHandler(
-                new StrongsInterpreter(),
-                new StrongsValidator(),
-                strongsInstaller
-            );
-
-        const strongsStore =
-            new IndexedDBStrongsStore(
-                getApplicationDB
-            );
-
-        ///////////////////////////////////////////////////////////////////////
-        // Resource loaders and services
-
-        const resourceService =
-            new ResourceService(
-                resourceDiscovery,
-                resourceResolver,
-                resourceContentDecoder,
-                resourceReceiptService,
-                [
-                    bibleChapterResourceHandler,
-                    strongsResourceHandler
-                ]
-            );
-
-        // Chapter
-
+        /*
+         * ResourceLoader only depends on the generic
+         * install(reference) capability.
+         *
+         * Resource acquisition therefore executes through
+         * ResourceWorkerClient rather than a main-thread
+         * ResourceService.
+         */
         const chapterResourceLoader =
             new ResourceLoader<string>(
-                resourceService,
+                resourceWorkerClient,
                 appendResourceReferenceBuilder
             );
 
@@ -485,11 +309,17 @@ export class Application {
                 chapterService
             );
 
-        // Strongs
+        ///////////////////////////////////////////////////////////////////////
+        // Strong's
+
+        const strongsStore =
+            new IndexedDBStrongsStore(
+                getApplicationDB
+            );
 
         const strongsResourceLoader =
             new ResourceLoader(
-                resourceService,
+                resourceWorkerClient,
                 appendResourceReferenceBuilder
             );
 
@@ -502,16 +332,23 @@ export class Application {
         ///////////////////////////////////////////////////////////////////////
         // Application Context
 
+        /*
+         * Only application-facing capabilities are exposed.
+         *
+         * Resource resolution, decoding, handlers,
+         * installation transactions, receipt persistence,
+         * and ResourceService composition now live inside
+         * resource.worker.ts.
+         */
         this.context = {
             nostrSigner,
 
             resourceClient,
             resourceDiscovery,
-            resourceResolver,
-            resourceContentDecoratorBuilder,
-            resourceContentDecoder,
 
-            resourceService,
+            resourceService:
+                resourceWorkerClient,
+
             resourceSelectionService,
 
             chapterService,
@@ -522,7 +359,11 @@ export class Application {
         };
     }
 
-    start(): Promise<void> {
+    ///////////////////////////////////////////////////////////////////////////
+
+    start():
+        Promise<void> {
+
         if (
             this.state ===
             'started'
@@ -557,13 +398,28 @@ export class Application {
         return this.startPromise;
     }
 
-    async stop(): Promise<void> {
+    ///////////////////////////////////////////////////////////////////////////
+
+    async stop():
+        Promise<void> {
+
         if (
             this.state ===
             'stopped'
         ) {
             return;
         }
+
+        /*
+         * Stop Resource processing before disposing
+         * main-thread discovery transport.
+         *
+         * This prevents the Resource Worker from issuing
+         * another discovery request while ResourceClient
+         * infrastructure is being torn down.
+         */
+        this.resourceWorkerClient
+            .dispose();
 
         this.context
             .resourceClient
@@ -576,6 +432,8 @@ export class Application {
         this.state =
             'stopped';
     }
+
+    ///////////////////////////////////////////////////////////////////////////
 
     private async startInternal():
         Promise<void> {
@@ -594,6 +452,10 @@ export class Application {
                         .resourceRelays
                 );
 
+            /*
+             * The application is interactive before
+             * bootstrap Resource processing begins.
+             */
             this.state =
                 'started';
 
@@ -604,10 +466,12 @@ export class Application {
              * It intentionally does not block
              * Application.start().
              *
-             * The same ResourceService pipeline used
-             * everywhere else performs discovery,
-             * descriptor resolution, decoding, Domain
-             * installation, and receipt persistence.
+             * Resource processing executes in the
+             * Resource Worker.
+             *
+             * Nostr discovery remains on the main thread
+             * and returns ResourceRepresentation across
+             * the worker bridge.
              */
             void this.installBootstrapResources();
         } catch (cause) {
@@ -621,13 +485,14 @@ export class Application {
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+
     private async installBootstrapResources():
         Promise<void> {
 
         try {
             const result =
-                await this.context
-                    .resourceService
+                await this.resourceWorkerClient
                     .install(
                         APPLICATION_BOOTSTRAP_RESOURCE
                     );
@@ -669,7 +534,9 @@ export class Application {
             );
         }
     }
-    
+
+    ///////////////////////////////////////////////////////////////////////////
+
     private async restoreNsec():
         Promise<void> {
 

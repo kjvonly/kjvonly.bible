@@ -11,6 +11,7 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import {
+	createBrowserResourceWorkerClient,
 	ResourceWorkerClient
 } from '$lib/resource/worker/resource-worker-client';
 
@@ -114,21 +115,8 @@ describe(
 						representation
 					);
 
-				const worker =
-					new Worker(
-						new URL(
-							'../../src/lib/resource/worker/resource.worker.ts',
-							import.meta.url
-						),
-						{
-							type:
-								'module'
-						}
-					);
-
 				const client =
-					new ResourceWorkerClient(
-						worker,
+					createBrowserResourceWorkerClient(
 						discovery
 					);
 
@@ -304,13 +292,13 @@ class FakeDiscovery {
 
 	readonly references:
 		PublishedResourceReference[] =
-			[];
+		[];
 
 	constructor(
 		private readonly representation:
 			ResourceRepresentation |
 			null
-	) {}
+	) { }
 
 	async get(
 		reference:

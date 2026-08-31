@@ -341,3 +341,29 @@ export class ResourceWorkerClient {
 		);
 	}
 }
+
+export function createBrowserResourceWorkerClient(
+	discovery:
+		Pick<
+			ResourceDiscovery,
+			'get'
+		>
+): ResourceWorkerClient {
+
+	const worker =
+		new Worker(
+			new URL(
+				'./resource.worker.ts',
+				import.meta.url
+			),
+			{
+				type:
+					'module'
+			}
+		);
+
+	return new ResourceWorkerClient(
+		worker,
+		discovery
+	);
+}
