@@ -32,7 +32,13 @@ interface PendingInstall {
 		) => void;
 }
 
+type ResourceWorkerClientState =
+	| 'active'
+	| 'failed'
+	| 'disposed';
+
 export interface ResourceWorkerPort {
+
 	postMessage(
 		message:
 			ResourceWorkerMainMessage
@@ -51,6 +57,28 @@ export interface ResourceWorkerPort {
 			) => void
 	): void;
 
+	addEventListener(
+		type:
+			'error',
+
+		listener:
+			(
+				event:
+					ErrorEvent
+			) => void
+	): void;
+
+	addEventListener(
+		type:
+			'messageerror',
+
+		listener:
+			(
+				event:
+					MessageEvent
+			) => void
+	): void;
+
 	removeEventListener(
 		type:
 			'message',
@@ -61,6 +89,28 @@ export interface ResourceWorkerPort {
 					MessageEvent<
 						ResourceWorkerMessage
 					>
+			) => void
+	): void;
+
+	removeEventListener(
+		type:
+			'error',
+
+		listener:
+			(
+				event:
+					ErrorEvent
+			) => void
+	): void;
+
+	removeEventListener(
+		type:
+			'messageerror',
+
+		listener:
+			(
+				event:
+					MessageEvent
 			) => void
 	): void;
 
@@ -79,8 +129,13 @@ export class ResourceWorkerClient {
 	private nextRequestId =
 		0;
 
-	private disposed =
-		false;
+	private state:
+		ResourceWorkerClientState =
+		'active';
+
+	private terminalError:
+		Error |
+		undefined;
 
 	constructor(
 		private readonly worker:
@@ -92,10 +147,23 @@ export class ResourceWorkerClient {
 				'get'
 			>
 	) {
+
 		this.worker
 			.addEventListener(
 				'message',
 				this.handleMessage
+			);
+
+		this.worker
+			.addEventListener(
+				'error',
+				this.handleWorkerError
+			);
+
+		this.worker
+			.addEventListener(
+				'messageerror',
+				this.handleWorkerMessageError
 			);
 	}
 
@@ -107,11 +175,13 @@ export class ResourceWorkerClient {
 	> {
 
 		if (
-			this.disposed
+			this.state !==
+			'active'
 		) {
 			return Promise.reject(
+				this.terminalError ??
 				new Error(
-					'Resource worker client is disposed.'
+					'Resource worker client is unavailable.'
 				)
 			);
 		}
@@ -126,13 +196,15 @@ export class ResourceWorkerClient {
 				resolve,
 				reject
 			) => {
-				this.pendingInstalls.set(
-					requestId,
-					{
-						resolve,
-						reject
-					}
-				);
+
+				this.pendingInstalls
+					.set(
+						requestId,
+						{
+							resolve,
+							reject
+						}
+					);
 
 				try {
 					this.worker
@@ -145,6 +217,7 @@ export class ResourceWorkerClient {
 							reference
 						});
 				} catch (error) {
+
 					this.pendingInstalls
 						.delete(
 							requestId
@@ -162,40 +235,43 @@ export class ResourceWorkerClient {
 		void {
 
 		if (
-			this.disposed
+			this.state ===
+			'disposed'
 		) {
 			return;
 		}
-
-		this.disposed =
-			true;
-
-		this.worker
-			.removeEventListener(
-				'message',
-				this.handleMessage
-			);
-
-		this.worker
-			.terminate();
 
 		const error =
 			new Error(
 				'Resource worker client was disposed.'
 			);
 
-		for (
-			const pending
-			of this.pendingInstalls
-				.values()
+		/*
+		 * A failed worker has already been terminated
+		 * and all pending operations have already been
+		 * rejected.
+		 *
+		 * Disposal still changes the public lifecycle
+		 * state so future operations report disposal
+		 * rather than the previous worker failure.
+		 */
+		if (
+			this.state ===
+			'failed'
 		) {
-			pending.reject(
-				error
-			);
+			this.state =
+				'disposed';
+
+			this.terminalError =
+				error;
+
+			return;
 		}
 
-		this.pendingInstalls
-			.clear();
+		this.close(
+			'disposed',
+			error
+		);
 	}
 
 	private readonly handleMessage =
@@ -206,13 +282,22 @@ export class ResourceWorkerClient {
 				>
 		): void => {
 
+			if (
+				this.state !==
+				'active'
+			) {
+				return;
+			}
+
 			const message =
 				event.data;
 
 			switch (
 				message.type
 			) {
+
 				case 'discovery':
+
 					void this.handleDiscovery(
 						message.requestId,
 						message.reference
@@ -221,6 +306,7 @@ export class ResourceWorkerClient {
 					return;
 
 				case 'install-result': {
+
 					const pending =
 						this.pendingInstalls
 							.get(
@@ -249,6 +335,7 @@ export class ResourceWorkerClient {
 				}
 
 				case 'install-error': {
+
 					const pending =
 						this.pendingInstalls
 							.get(
@@ -278,6 +365,57 @@ export class ResourceWorkerClient {
 			}
 		};
 
+	private readonly handleWorkerError =
+		(
+			event:
+				ErrorEvent
+		): void => {
+
+			if (
+				this.state !==
+				'active'
+			) {
+				return;
+			}
+
+			const error =
+				this.createWorkerError(
+					event
+				);
+
+			this.close(
+				'failed',
+				error
+			);
+		};
+
+	private readonly handleWorkerMessageError =
+		(
+			_event:
+				MessageEvent
+		): void => {
+
+			if (
+				this.state !==
+				'active'
+			) {
+				return;
+			}
+
+			const error =
+				new Error(
+					'Resource worker message could not be deserialized.'
+				);
+
+			error.name =
+				'ResourceWorkerError';
+
+			this.close(
+				'failed',
+				error
+			);
+		};
+
 	private async handleDiscovery(
 		requestId:
 			string,
@@ -288,12 +426,21 @@ export class ResourceWorkerClient {
 
 		try {
 			const representation =
-				await this.discovery.get(
-					reference
-				);
+				await this.discovery
+					.get(
+						reference
+					);
 
+			/*
+			 * Discovery may finish after the worker has
+			 * failed or the Application has been stopped.
+			 *
+			 * The result has nowhere valid to go in that
+			 * case and must simply be discarded.
+			 */
 			if (
-				this.disposed
+				this.state !==
+				'active'
 			) {
 				return;
 			}
@@ -308,8 +455,10 @@ export class ResourceWorkerClient {
 					representation
 				});
 		} catch (error) {
+
 			if (
-				this.disposed
+				this.state !==
+				'active'
 			) {
 				return;
 			}
@@ -329,6 +478,95 @@ export class ResourceWorkerClient {
 		}
 	}
 
+	private close(
+		state:
+			Exclude<
+				ResourceWorkerClientState,
+				'active'
+			>,
+
+		error:
+			Error
+	): void {
+
+		if (
+			this.state !==
+			'active'
+		) {
+			return;
+		}
+
+		this.state =
+			state;
+
+		this.terminalError =
+			error;
+
+		this.worker
+			.removeEventListener(
+				'message',
+				this.handleMessage
+			);
+
+		this.worker
+			.removeEventListener(
+				'error',
+				this.handleWorkerError
+			);
+
+		this.worker
+			.removeEventListener(
+				'messageerror',
+				this.handleWorkerMessageError
+			);
+
+		this.worker
+			.terminate();
+
+		for (
+			const pending
+			of this.pendingInstalls
+				.values()
+		) {
+			pending.reject(
+				error
+			);
+		}
+
+		this.pendingInstalls
+			.clear();
+	}
+
+	private createWorkerError(
+		event:
+			ErrorEvent
+	): Error {
+
+		if (
+			event.error instanceof
+			Error
+		) {
+			return event.error;
+		}
+
+		const message =
+			event.message
+				.trim();
+
+		const error =
+			new Error(
+				message.length >
+				0
+					? message
+					: 'Resource worker failed.'
+			);
+
+		error.name =
+			'ResourceWorkerError';
+
+		return error;
+	}
+
 	private createRequestId(
 		prefix:
 			string
@@ -341,6 +579,8 @@ export class ResourceWorkerClient {
 		);
 	}
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 export function createBrowserResourceWorkerClient(
 	discovery:

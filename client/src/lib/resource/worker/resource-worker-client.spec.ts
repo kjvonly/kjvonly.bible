@@ -569,6 +569,13 @@ describe(
 						createReference()
 					);
 
+				const rejection =
+					expect(
+						promise
+					).rejects.toThrow(
+						'Resource worker client was disposed.'
+					);
+
 				client.dispose();
 
 				expect(
@@ -577,10 +584,235 @@ describe(
 					true
 				);
 
+				await rejection;
+			}
+		);
+
+		it(
+			'rejects all pending installs when the Worker fails',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const client =
+					new ResourceWorkerClient(
+						worker,
+						new FakeDiscovery(
+							null
+						)
+					);
+
+				const first =
+					client.install({
+						publisher:
+							'a'.repeat(
+								64
+							),
+
+						resourceId:
+							'resource-a'
+					});
+
+				const second =
+					client.install({
+						publisher:
+							'a'.repeat(
+								64
+							),
+
+						resourceId:
+							'resource-b'
+					});
+
+				const workerError =
+					new Error(
+						'Worker exploded.'
+					);
+
+				const firstRejection =
+					expect(
+						first
+					).rejects.toBe(
+						workerError
+					);
+
+				const secondRejection =
+					expect(
+						second
+					).rejects.toBe(
+						workerError
+					);
+
+				worker.emitError(
+					workerError
+				);
+
+				await firstRejection;
+				await secondRejection;
+
+				expect(
+					worker.terminated
+				).toBe(
+					true
+				);
+			}
+		);
+
+		it(
+			'rejects future installs after the Worker fails',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const client =
+					new ResourceWorkerClient(
+						worker,
+						new FakeDiscovery(
+							null
+						)
+					);
+
+				const workerError =
+					new Error(
+						'Worker exploded.'
+					);
+
+				worker.emitError(
+					workerError
+				);
+
 				await expect(
-					promise
-				).rejects.toThrow(
-					'Resource worker client was disposed.'
+					client.install(
+						createReference()
+					)
+				).rejects.toBe(
+					workerError
+				);
+
+				expect(
+					worker.terminated
+				).toBe(
+					true
+				);
+			}
+		);
+
+		it(
+			'rejects pending installs when a Worker message cannot be deserialized',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const client =
+					new ResourceWorkerClient(
+						worker,
+						new FakeDiscovery(
+							null
+						)
+					);
+
+				const promise =
+					client.install(
+						createReference()
+					);
+
+				const rejection =
+					expect(
+						promise
+					).rejects.toThrow(
+						'Resource worker message could not be deserialized.'
+					);
+
+				worker.emitMessageError();
+
+				await rejection;
+
+				expect(
+					worker.terminated
+				).toBe(
+					true
+				);
+			}
+		);
+
+		it(
+			'ignores a discovery result that completes after the Worker fails',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const discovery =
+					new DeferredDiscovery();
+
+				const client =
+					new ResourceWorkerClient(
+						worker,
+						discovery
+					);
+
+				const reference =
+					createReference();
+
+				const install =
+					client.install(
+						reference
+					);
+
+				worker.emit({
+					type:
+						'discovery',
+
+					requestId:
+						'discovery-1',
+
+					reference
+				});
+
+				await flushAsync();
+
+				expect(
+					discovery.references
+				).toEqual([
+					reference
+				]);
+
+				const workerError =
+					new Error(
+						'Worker failed.'
+					);
+
+				const rejection =
+					expect(
+						install
+					).rejects.toBe(
+						workerError
+					);
+
+				worker.emitError(
+					workerError
+				);
+
+				discovery.resolve(
+					null
+				);
+
+				await rejection;
+				await flushAsync();
+
+				expect(
+					worker.messages.filter(
+						(message) =>
+							message.type ===
+							'discovery-result'
+					)
+				).toHaveLength(
+					0
+				);
+
+				expect(
+					worker.terminated
+				).toBe(
+					true
 				);
 			}
 		);
@@ -680,6 +912,72 @@ class FakeDiscovery {
 	}
 }
 
+class DeferredDiscovery {
+
+	readonly references:
+		PublishedResourceReference[] =
+			[];
+
+	private resolvePending:
+		(
+			representation:
+				ResourceRepresentation |
+				null
+		) => void =
+			() => {};
+
+	get(
+		reference:
+			PublishedResourceReference
+	): Promise<
+		ResourceRepresentation |
+		null
+	> {
+
+		this.references.push(
+			reference
+		);
+
+		return new Promise(
+			(resolve) => {
+				this.resolvePending =
+					resolve;
+			}
+		);
+	}
+
+	resolve(
+		representation:
+			ResourceRepresentation |
+			null
+	): void {
+
+		this.resolvePending(
+			representation
+		);
+	}
+}
+
+type ResourceWorkerMessageListener =
+	(
+		event:
+			MessageEvent<
+				ResourceWorkerMessage
+			>
+	) => void;
+
+type ResourceWorkerErrorListener =
+	(
+		event:
+			ErrorEvent
+	) => void;
+
+type ResourceWorkerMessageErrorListener =
+	(
+		event:
+			MessageEvent
+	) => void;
+
 class FakeWorker
 	implements ResourceWorkerPort {
 
@@ -690,14 +988,19 @@ class FakeWorker
 	terminated =
 		false;
 
-	private readonly listeners =
+	private readonly messageListeners =
 		new Set<
-			(
-				event:
-					MessageEvent<
-						ResourceWorkerMessage
-					>
-			) => void
+			ResourceWorkerMessageListener
+		>();
+
+	private readonly errorListeners =
+		new Set<
+			ResourceWorkerErrorListener
+		>();
+
+	private readonly messageErrorListeners =
+		new Set<
+			ResourceWorkerMessageErrorListener
 		>();
 
 	postMessage(
@@ -711,39 +1014,147 @@ class FakeWorker
 	}
 
 	addEventListener(
-		_type:
+		type:
 			'message',
 
 		listener:
-			(
-				event:
-					MessageEvent<
-						ResourceWorkerMessage
-					>
-			) => void
+			ResourceWorkerMessageListener
+	): void;
+
+	addEventListener(
+		type:
+			'error',
+
+		listener:
+			ResourceWorkerErrorListener
+	): void;
+
+	addEventListener(
+		type:
+			'messageerror',
+
+		listener:
+			ResourceWorkerMessageErrorListener
+	): void;
+
+	addEventListener(
+		type:
+			| 'message'
+			| 'error'
+			| 'messageerror',
+
+		listener:
+			| ResourceWorkerMessageListener
+			| ResourceWorkerErrorListener
+			| ResourceWorkerMessageErrorListener
 	): void {
 
-		this.listeners.add(
-			listener
-		);
+		switch (
+			type
+		) {
+
+			case 'message':
+
+				this.messageListeners
+					.add(
+						listener as
+							ResourceWorkerMessageListener
+					);
+
+				return;
+
+			case 'error':
+
+				this.errorListeners
+					.add(
+						listener as
+							ResourceWorkerErrorListener
+					);
+
+				return;
+
+			case 'messageerror':
+
+				this.messageErrorListeners
+					.add(
+						listener as
+							ResourceWorkerMessageErrorListener
+					);
+
+				return;
+		}
 	}
 
 	removeEventListener(
-		_type:
+		type:
 			'message',
 
 		listener:
-			(
-				event:
-					MessageEvent<
-						ResourceWorkerMessage
-					>
-			) => void
+			ResourceWorkerMessageListener
+	): void;
+
+	removeEventListener(
+		type:
+			'error',
+
+		listener:
+			ResourceWorkerErrorListener
+	): void;
+
+	removeEventListener(
+		type:
+			'messageerror',
+
+		listener:
+			ResourceWorkerMessageErrorListener
+	): void;
+
+	removeEventListener(
+		type:
+			| 'message'
+			| 'error'
+			| 'messageerror',
+
+		listener:
+			| ResourceWorkerMessageListener
+			| ResourceWorkerErrorListener
+			| ResourceWorkerMessageErrorListener
 	): void {
 
-		this.listeners.delete(
-			listener
-		);
+		switch (
+			type
+		) {
+
+			case 'message':
+
+				this.messageListeners
+					.delete(
+						listener as
+							ResourceWorkerMessageListener
+					);
+
+				return;
+
+			case 'error':
+
+				this.errorListeners
+					.delete(
+						listener as
+							ResourceWorkerErrorListener
+					);
+
+				return;
+
+			case 'messageerror':
+
+				this.messageErrorListeners
+					.delete(
+						listener as
+							ResourceWorkerMessageErrorListener
+					);
+
+				return;
+		}
 	}
 
 	terminate():
@@ -767,7 +1178,47 @@ class FakeWorker
 
 		for (
 			const listener
-			of this.listeners
+			of this.messageListeners
+		) {
+			listener(
+				event
+			);
+		}
+	}
+
+	emitError(
+		error:
+			Error
+	): void {
+
+		const event = {
+			error,
+
+			message:
+				error.message
+		} as ErrorEvent;
+
+		for (
+			const listener
+			of this.errorListeners
+		) {
+			listener(
+				event
+			);
+		}
+	}
+
+	emitMessageError():
+		void {
+
+		const event = {
+			data:
+				undefined
+		} as MessageEvent;
+
+		for (
+			const listener
+			of this.messageErrorListeners
 		) {
 			listener(
 				event
