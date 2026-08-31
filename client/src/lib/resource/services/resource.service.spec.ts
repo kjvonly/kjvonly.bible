@@ -21,6 +21,7 @@ import type {
 } from '$lib/resource/installation/resource-handler';
 
 import type {
+	ResourceResolutionCurrent,
 	ResourceResolutionFailure,
 	ResourceResolutionResult
 } from '$lib/resource/resolution/resource-resolution-result';
@@ -254,6 +255,93 @@ describe(
 						error
 					}
 				]);
+			}
+		);
+
+		it(
+			'preserves a current Resource without decoding handling or writing a receipt',
+			async () => {
+				const decoder =
+					new FakeDecoder();
+
+				const receipts =
+					new FakeReceiptService();
+
+				const handler =
+					new FakeHandler(
+						'kjvonly/bible/chapters'
+					);
+
+				const current:
+					ResourceResolutionCurrent = {
+					publisher:
+						'publisher',
+
+					resourceId:
+						'kjvonly/bible/chapters/kjvs',
+
+					resourceType:
+						'kjvonly/bible/chapters'
+				};
+
+				const service =
+					createService({
+						contents:
+							[],
+
+						current: [
+							current
+						],
+
+						decoder,
+						receipts,
+						handlers: [
+							handler
+						]
+					});
+
+				const result =
+					await service.install(
+						createReference()
+					);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher:
+								current.publisher,
+
+							resourceId:
+								current.resourceId
+						},
+
+						resourceType:
+							current.resourceType,
+
+						status:
+							'current'
+					}
+				]);
+
+				expect(
+					decoder.contents
+				).toHaveLength(
+					0
+				);
+
+				expect(
+					handler.resources
+				).toHaveLength(
+					0
+				);
+
+				expect(
+					receipts.calls
+				).toHaveLength(
+					0
+				);
 			}
 		);
 
@@ -1252,6 +1340,9 @@ function createService(
 		readonly contents?:
 			readonly VerifiedResourceContent[];
 
+		readonly current?:
+			readonly ResourceResolutionCurrent[];
+
 		readonly failures?:
 			readonly ResourceResolutionFailure[];
 
@@ -1280,6 +1371,10 @@ function createService(
 				[
 					createVerifiedContent()
 				],
+
+			current:
+				options.current ??
+				[],
 
 			failures:
 				options.failures ??

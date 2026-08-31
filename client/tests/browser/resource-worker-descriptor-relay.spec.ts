@@ -597,8 +597,38 @@ describe(
 						found:
 							true,
 
-						resources:
-							[]
+						resources: [
+							{
+								reference: {
+									publisher:
+										KJVONLY_PUBKEY,
+
+									resourceId:
+										'kjvonly/bible/chapters/kjvs'
+								},
+
+								resourceType:
+									'kjvonly/bible/chapters',
+
+								status:
+									'current'
+							},
+							{
+								reference: {
+									publisher:
+										KJVONLY_PUBKEY,
+
+									resourceId:
+										'kjvonly/strongs/definitions/kjvs/H7225'
+								},
+
+								resourceType:
+									'kjvonly/strongs/definitions',
+
+								status:
+									'current'
+							}
+						]
 					});
 
 					///////////////////////////////////////////////////////////

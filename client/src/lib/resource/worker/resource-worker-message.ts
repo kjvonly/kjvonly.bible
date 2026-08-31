@@ -28,6 +28,15 @@ type ResourceWorkerHandledOutcome =
 		}
 	>;
 
+type ResourceWorkerCurrentOutcome =
+	Extract<
+		ResourceInstallOutcome,
+		{
+			readonly status:
+				'current';
+		}
+	>;
+
 type ResourceWorkerUnsupportedOutcome =
 	Extract<
 		ResourceInstallOutcome,
@@ -54,6 +63,7 @@ type ResourceWorkerFailedOutcome =
 
 export type ResourceWorkerInstallOutcome =
 	| ResourceWorkerHandledOutcome
+	| ResourceWorkerCurrentOutcome
 	| ResourceWorkerUnsupportedOutcome
 	| ResourceWorkerFailedOutcome;
 

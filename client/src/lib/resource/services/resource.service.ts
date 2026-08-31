@@ -12,6 +12,7 @@ import type {
 } from '$lib/resource/resolution/resource-resolver';
 
 import type {
+	ResourceResolutionCurrent,
 	ResourceResolutionFailure
 } from '$lib/resource/resolution/resource-resolution-result';
 
@@ -192,6 +193,17 @@ export class ResourceService {
 				);
 
 		for (
+			const current
+			of resolution.current
+		) {
+			resources.push(
+				this.createCurrentOutcome(
+					current
+				)
+			);
+		}
+
+		for (
 			const content
 			of resolution.contents
 		) {
@@ -244,6 +256,28 @@ export class ResourceService {
 		this.inFlightInstalls.delete(
 			key
 		);
+	}
+
+	private createCurrentOutcome(
+		current:
+			ResourceResolutionCurrent
+	): ResourceInstallOutcome {
+
+		return {
+			reference: {
+				publisher:
+					current.publisher,
+
+				resourceId:
+					current.resourceId
+			},
+
+			resourceType:
+				current.resourceType,
+
+			status:
+				'current'
+		};
 	}
 
 	private createFailureOutcome(

@@ -928,16 +928,21 @@ class FakeResolver {
 	constructor(
 		private readonly contents:
 			readonly VerifiedResourceContent[]
-	) { }
+	) {}
 
 	async resolve(
 		_resource:
 			ResourceRepresentation
 	): Promise<
-		ResourceResolutionResult> {
+		ResourceResolutionResult
+	> {
+
 		return {
 			contents:
 				this.contents,
+
+			current:
+				[],
 
 			failures:
 				[]

@@ -832,8 +832,38 @@ describe(
 					found:
 						true,
 
-					resources:
-						[]
+					resources: [
+						{
+							reference: {
+								publisher:
+									resourcePublisher,
+
+								resourceId:
+									'kjvonly/bible/chapters/kjvs/1_1'
+							},
+
+							resourceType:
+								'kjvonly/bible/chapters',
+
+							status:
+								'current'
+						},
+						{
+							reference: {
+								publisher:
+									resourcePublisher,
+
+								resourceId:
+									'kjvonly/strongs/definitions/kjvs/G1'
+							},
+
+							resourceType:
+								'kjvonly/strongs/definitions',
+
+							status:
+								'current'
+						}
+					]
 				});
 
 				/*
@@ -862,10 +892,10 @@ function createService(
 		>
 ): {
 	readonly service:
-		ResourceService;
+	ResourceService;
 
 	readonly strategy:
-		FakeResourceResolutionStrategy;
+	FakeResourceResolutionStrategy;
 } {
 
 	const discovery =
@@ -1022,19 +1052,19 @@ function createRepresentation(
 function createDescriptor(
 	options: {
 		readonly publisher:
-			string;
+		string;
 
 		readonly resourceId:
-			string;
+		string;
 
 		readonly category:
-			string;
+		string;
 
 		readonly modifiedAt:
-			number;
+		number;
 
 		readonly strategyType?:
-			string;
+		string;
 	}
 ): ResourceDescriptor {
 
@@ -1180,7 +1210,7 @@ class FakeDiscovery {
 	constructor(
 		private readonly representation:
 			ResourceRepresentation
-	) {}
+	) { }
 
 	async get(
 		_reference:
@@ -1201,7 +1231,7 @@ class FakeResourceResolutionStrategy
 
 	readonly descriptors:
 		ResourceDescriptor[] =
-			[];
+		[];
 
 	constructor(
 		private readonly contents:
@@ -1209,7 +1239,7 @@ class FakeResourceResolutionStrategy
 				string,
 				Uint8Array
 			>
-	) {}
+	) { }
 
 	async resolve(
 		descriptor:
