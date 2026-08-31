@@ -41,8 +41,8 @@ import {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
 
 import {
-	BibleChapterResourceService
-} from '$lib/domains/bible/resources/chapters/bible-chapter-resource-service';
+	ResourceService
+} from '$lib/resource/services/resource.service';
 
 import {
 	IndexedDBBibleChapterInstallationTransaction
@@ -51,6 +51,7 @@ import {
 import {
 	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
+	RESOURCE_RECEIPTS,
 	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
@@ -63,6 +64,22 @@ import {
 import {
 	createResourceInstallationId
 } from '$lib/resource/installation/resource-installation';
+
+import {
+	IndexedDBResourceReceiptStore
+} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+
+import {
+	ResourceReceiptService
+} from '$lib/resource/receipts/resource-receipt.service';
+
+import {
+	createResourceReceiptId
+} from '$lib/resource/receipts/resource-receipt';
+
+import type {
+	ResourceResolutionResult
+} from '$lib/resource/resolution/resource-resolution-result';
 
 const BIBLE_VERSION_OBJECT_TYPE =
 	'bible/version';
@@ -89,7 +106,6 @@ describe(
 						createVerifiedContent({
 							publisher,
 							resourceId,
-							eventId,
 
 							content:
 								JSON.stringify({
@@ -114,9 +130,30 @@ describe(
 
 				expect(
 					result
-				).toBe(
-					true
-				);
+				).toEqual({
+					requested: {
+						publisher,
+						resourceId
+					},
+
+					found:
+						true,
+
+					resources: [
+						{
+							reference: {
+								publisher,
+								resourceId
+							},
+
+							resourceType:
+								'kjvonly/bible/chapters',
+
+							status:
+								'handled'
+						}
+					]
+				});
 
 				const chapter1Id =
 					createChapterId(
@@ -213,7 +250,28 @@ describe(
 
 					resourceId,
 
-					eventId,
+					modifiedAt:
+						200
+				});
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							resourceId
+						)
+					)
+				).toEqual({
+					id:
+						createResourceReceiptId(
+							publisher,
+							resourceId
+						),
+
+					publisher,
+
+					resourceId,
 
 					modifiedAt:
 						200
@@ -255,12 +313,39 @@ describe(
 						})
 					]);
 
-				await expect(
-					service.install({
+				const result =
+					await service.install({
 						publisher,
 						resourceId
-					})
-				).rejects.toThrow();
+					});
+
+				expect(
+					result.found
+				).toBe(
+					true
+				);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+							resourceId
+						},
+
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						status:
+							'failed',
+
+						error:
+							expect.any(
+								Error
+							)
+					}
+				]);
 
 				const chapter1Id =
 					createChapterId(
@@ -316,6 +401,16 @@ describe(
 						)
 					)
 				).toBeUndefined();
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							resourceId
+						)
+					)
+				).toBeUndefined();
 			}
 		);
 
@@ -350,9 +445,6 @@ describe(
 								resourceId:
 									chapter1ResourceId,
 
-								eventId:
-									eventA,
-
 								modifiedAt:
 									100,
 
@@ -369,9 +461,6 @@ describe(
 
 								resourceId:
 									chapter2ResourceId,
-
-								eventId:
-									eventB,
 
 								modifiedAt:
 									200,
@@ -390,14 +479,70 @@ describe(
 						'descriptors'
 					);
 
-				await expect(
-					service.install({
+				const requestedResourceId =
+					'kjvonly/bible/chapters/kjvs';
+
+				const result =
+					await service.install({
 						publisher,
 
 						resourceId:
-							'kjvonly/bible/chapters/kjvs'
-					})
-				).rejects.toThrow();
+							requestedResourceId
+					});
+
+				expect(
+					result.found
+				).toBe(
+					true
+				);
+
+				expect(
+					result.requested
+				).toEqual({
+					publisher,
+
+					resourceId:
+						requestedResourceId
+				});
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+
+							resourceId:
+								chapter1ResourceId
+						},
+
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						status:
+							'handled'
+					},
+
+					{
+						reference: {
+							publisher,
+
+							resourceId:
+								chapter2ResourceId
+						},
+
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						status:
+							'failed',
+
+						error:
+							expect.any(
+								Error
+							)
+					}
+				]);
 
 				const chapter1Id =
 					createChapterId(
@@ -450,9 +595,6 @@ describe(
 					objectId:
 						chapter1Id,
 
-					eventId:
-						eventA,
-
 					modifiedAt:
 						100
 				});
@@ -477,6 +619,40 @@ describe(
 						)
 					)
 				).toBeUndefined();
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							chapter1ResourceId
+						)
+					)
+				).toEqual({
+					id:
+						createResourceReceiptId(
+							publisher,
+							chapter1ResourceId
+						),
+
+					publisher,
+
+					resourceId:
+						chapter1ResourceId,
+
+					modifiedAt:
+						100
+				});
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							chapter2ResourceId
+						)
+					)
+				).toBeUndefined();
 			}
 		);
 	}
@@ -489,7 +665,7 @@ function createService(
 	representation:
 		ResourceRepresentationType =
 		'content'
-): BibleChapterResourceService {
+): ResourceService {
 
 	const discovery =
 		new FakeDiscovery(
@@ -505,6 +681,16 @@ function createService(
 
 	const decoder =
 		createDecoder();
+
+	const receiptStore =
+		new IndexedDBResourceReceiptStore(
+			getApplicationDB
+		);
+
+	const receiptService =
+		new ResourceReceiptService(
+			receiptStore
+		);
 
 	const installationTransaction =
 		new IndexedDBBibleChapterInstallationTransaction(
@@ -523,11 +709,14 @@ function createService(
 			installer
 		);
 
-	return new BibleChapterResourceService(
+	return new ResourceService(
 		discovery,
 		resolver,
 		decoder,
-		handler
+		receiptService,
+		[
+			handler
+		]
 	);
 }
 
@@ -568,11 +757,6 @@ function createVerifiedContent(
 
 		resourceType:
 			'kjvonly/bible/chapters',
-
-		eventId:
-			'a'.repeat(
-				64
-			),
 
 		modifiedAt:
 			200,
@@ -705,8 +889,14 @@ class FakeResolver {
 		_resource:
 			ResourceRepresentation
 	): Promise<
-		readonly VerifiedResourceContent[]
+		ResourceResolutionResult
 	> {
-		return this.contents;
+		return {
+			contents:
+				this.contents,
+
+			failures:
+				[]
+		};
 	}
 }

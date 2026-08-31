@@ -207,9 +207,6 @@ describe(
 					resourceId:
 						'kjvonly/bible/chapters/kjvs',
 
-					eventId:
-						'event-200',
-
 					modifiedAt:
 						200
 				});
@@ -621,9 +618,6 @@ function createResource(
 		resourceType:
 			'kjvonly/bible/chapters',
 
-		eventId:
-			'event-200',
-
 		modifiedAt:
 			200,
 
@@ -741,9 +735,6 @@ function seedInstalledChapter(
 
 			resourceId:
 				'kjvonly/bible/chapters/kjvs',
-
-			eventId:
-				`event-${options.modifiedAt}`,
 
 			modifiedAt:
 				options.modifiedAt

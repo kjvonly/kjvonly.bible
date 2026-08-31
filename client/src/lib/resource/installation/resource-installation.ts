@@ -14,9 +14,6 @@ export interface ResourceInstallation {
 	readonly resourceId:
 		string;
 
-	readonly eventId:
-		string;
-
 	readonly modifiedAt:
 		number;
 }

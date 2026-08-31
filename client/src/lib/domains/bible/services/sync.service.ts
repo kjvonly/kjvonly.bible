@@ -243,7 +243,7 @@ export class SyncService {
     let keys = await bibleDB.getAllKeys(STRONGS);
     if (keys.length < TOTAL_STRONGS_KEYS) {
       let filter = {
-        "#d": [`kjvonly/bible/strongs/all`],
+        "#d": [`kjvonly/strongs/definitions/all`],
         "authors": [KJVONLY_PUBKEY],
         kinds: [MANIFEST_KIND]
       }

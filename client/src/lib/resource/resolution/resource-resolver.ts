@@ -1,13 +1,17 @@
 import type {
-	ResourceRepresentation,
-	VerifiedResourceContent
+	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
 import type {
 	ResourceRepresentationResolver
 } from './resource-representation-resolver';
 
+import type {
+	ResourceResolutionResult
+} from './resource-resolution-result';
+
 export class ResourceResolver {
+
 	constructor(
 		private readonly resolvers:
 			readonly ResourceRepresentationResolver[]
@@ -17,8 +21,9 @@ export class ResourceResolver {
 		resource:
 			ResourceRepresentation
 	): Promise<
-		readonly VerifiedResourceContent[]
+		ResourceResolutionResult
 	> {
+
 		const resolver =
 			this.resolvers.find(
 				(candidate) =>

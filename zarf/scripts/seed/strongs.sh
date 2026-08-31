@@ -19,19 +19,22 @@ PARALLEL="${PARALLEL:-10}"
 #   Stores the sha256 hash and URL for files uploaded to Blossom.
 
 seed_relay() {
-  find "$DATA_DIR" -maxdepth 1 -type f \( -name 'g*' -o -name 'h*' \) -print0 |
+#  find "$DATA_DIR" -maxdepth 1 -type f \( -name 'g*' -o -name 'h*' \) -print0 |
+   find "$DATA_DIR" -maxdepth 1 -type f -name 'h7225.json.gz' -print0 |
     xargs -0 -I {} -P "$PARALLEL" sh -c '
       file="$1"
       relay_url="$2"
 
       name="$(basename "$file")"
-      id="${name%%.*}"
+      id="$(printf "%s" "${name%%.*}" | tr "[:lower:]" "[:upper:]")"
 
       nak event \
         -c "$(cat "$file" | xxd -p -c 0)" \
         -k 37770 \
-        -d "kjvonly/bible/strongs/$id" \
-        --tag "m=json.gz.hex" \
+        -d "kjvonly/strongs/definitions/kjvs/$id" \
+        --tag "m=application/json+gzip+hex" \
+        --tag "t=kjvonly/strongs/definitions" \
+        --tag "representation=content" \
         "$relay_url"
     ' sh {} "$RELAY_URL"
 }
@@ -50,7 +53,7 @@ seed_blossom_file() {
     --tag "x=$hash" \
     -c "$title" \
     -k 37778 \
-    -d "kjvonly/bible/strongs/$id" \
+    -d "kjvonly/strongs/definitions/$id" \
     --tag "m=json.gz" \
     --tag "url=$BLOSSOM_URL/$hash.gz" \
     "$RELAY_URL"

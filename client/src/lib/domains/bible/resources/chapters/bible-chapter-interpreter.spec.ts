@@ -173,12 +173,12 @@ describe(
 							interpreter.interpret(
 								createDecodedResource({
 									resourceType:
-										'kjvonly/bible/strongs'
+										'kjvonly/strongs/definitions'
 								})
 							)
 						)
 				).toThrow(
-					'Invalid Bible Chapter Resource Type: kjvonly/bible/strongs'
+					'Invalid Bible Chapter Resource Type: kjvonly/strongs/definitions'
 				);
 			}
 		);

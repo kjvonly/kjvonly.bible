@@ -157,9 +157,6 @@ export class BibleChapterInstaller {
 						resourceId:
 							resource.resourceId,
 
-						eventId:
-							resource.eventId,
-
 						modifiedAt:
 							resource.modifiedAt
 					};

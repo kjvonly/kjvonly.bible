@@ -3,7 +3,7 @@
 	// COMPONENTS
 	import Search from '$lib/domains/bible/modules/search/search.svelte';
 	// MODELS
-	import type { StrongsPopups } from '$lib/domains/bible/models/strongs.model';
+	import type { StrongsPopups } from '$lib/domains/strongs/models/strongs.model';
 
 	// =============================== BINDINGS ================================
 	let { popups = $bindable<StrongsPopups>() }: { popups: StrongsPopups } =

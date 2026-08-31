@@ -4,6 +4,10 @@ import {
 } from '$lib/domains/bible/models/bible.model';
 
 import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import type {
 	ChapterService
 } from './chapter.service';
 
@@ -22,12 +26,16 @@ export class VerseService {
 	) {}
 
 	async get(
-		bibleVersion: string,
-		bibleLocationRef: string
+		source:
+			PublishedResourceReference,
+
+		bibleLocationRef:
+			string
 	): Promise<Verse> {
+
 		const chapter =
 			await this.chapterService.get(
-				bibleVersion,
+				source,
 				bibleLocationRef
 			);
 

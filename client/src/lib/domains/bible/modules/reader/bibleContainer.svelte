@@ -33,8 +33,30 @@
 
 	// NOSTR IMPL
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	const { bibleVersionsService } = useApplicationContext();
 
+	import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import {
+	BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+import type {
+	BibleVersion
+} from '$lib/domains/bible/models/bible-version.model';
+
+import {
+	requireResourceSelection
+} from '$lib/application/resources/resource-selections';
+
+import {
+	parseResourceIdentifier
+} from '$lib/resource/utils/resource-identifier';
+
+import {
+	createBibleVersionId
+} from '$lib/domains/bible/utils/bible-identity';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -49,7 +71,30 @@
 
 	let annotations: Annotations = $state(newAnnotation());
 	let bibleLocationRef: string = $state('');
-	let bibleVersion: string = $state('');
+
+	let chapterSource:
+	PublishedResourceReference =
+		$state(
+			requireResourceSelection(
+				pane.buffer
+					.resourceSelections,
+				BIBLE_CHAPTER_RESOURCE_TYPE
+			)
+		);
+
+	let bibleVersion:
+	string =
+		$state(
+			getBibleVersionId(
+				chapterSource
+			)
+		);
+		``
+	const {
+	resourceSelectionService
+} =
+	useApplicationContext();
+		
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	/** since the {@link header} snippet is part of the body we don't
@@ -59,7 +104,6 @@
 	let zeroHeaderHeight = $state(0);
 	let id = $state(uuid4());
 	const LAST_BIBLE_LOCATION_REF = 'lastBibleLocationReference';
-	const LAST_BIBLE_VERSION = 'lastBibleVersion';
 	let mode: any = $state(newBibleMode());
 
 	// DOM related vars
@@ -71,7 +115,6 @@
 	onMount(async () => {
 		setModePaneID();
 		setNavReadings();
-		await setBibleVersion();
 		setBibleLocationRef();
 		attachScrolls();
 		overrideContextMenu();
@@ -79,8 +122,7 @@
 
 	$effect(() => {
 		bibleLocationRef;
-		bibleVersion;
-		onBibleNavigationChanged();
+		onBibleLocationRefChanged();
 	});
 
 	// ================================ FUNCS ==================================
@@ -95,27 +137,31 @@
 		}
 	}
 
-	async function setBibleVersion():
-		Promise<void> {
+	
+	function getBibleVersionId(
+	source:
+		PublishedResourceReference
+): string {
 
-		const persisted =
-			pane?.buffer?.bag
-				?.bibleVersion ??
-			localStorage.getItem(
-				LAST_BIBLE_VERSION
-			);
-
-		const selected =
-		await bibleVersionsService
-		.resolve(
-				persisted
+	const identifier =
+		parseResourceIdentifier(
+			source.resourceId
 		);
 
-		bibleVersion =
-			selected.id;
+	const version =
+		identifier.path[0];
 
+	if (!version) {
+		throw new Error(
+			`Invalid Bible Chapter Resource selection: ${source.resourceId}`
+		);
+	}
+
+	return createBibleVersionId(
+		source.publisher,
+		version
+	);
 }
-
 	function setBibleLocationRef() {
 		let ref = pane.buffer.bag.bibleLocationRef;
 		if (ref) {
@@ -159,7 +205,7 @@
 		lastKnownScrollPosition = el.scrollTop;
 	}
 
-	function onBibleNavigationChanged() {
+	function onBibleLocationRefChanged() {
 		if (
 			!bibleLocationRef ||
 			!bibleVersion
@@ -170,35 +216,65 @@
 		pane.buffer.bag.bibleLocationRef =
 			bibleLocationRef;
 
-		pane.buffer.bag.bibleVersion =
-			bibleVersion;
-
 		localStorage.setItem(
 			LAST_BIBLE_LOCATION_REF,
 			bibleLocationRef
 		);
-
-		localStorage.setItem(
-			LAST_BIBLE_VERSION,
-			bibleVersion
-		);
-
+		
 		paneService.save();
     }
+
+	function onBibleVersionSelected(
+	version:
+		BibleVersion
+): void {
+
+	const source:
+		PublishedResourceReference = {
+			publisher:
+				version.publisher,
+
+			resourceId:
+				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version.version}`
+		};
+
+	pane.buffer
+		.resourceSelections[
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		] =
+		source;
+
+	resourceSelectionService
+		.select(
+			source
+		);
+
+	chapterSource =
+		source;
+
+	bibleVersion =
+		version.id;
+
+	paneService.save();
+}
 
 </script>
 
 <!-- ================================ HEADER =============================== -->
 
 {#snippet header()}
-	<BibleHeader
-		bind:mode
-		bind:bibleLocationRef
-		bind:bibleVersion
-		bind:clientHeight
-		bind:headerHeight
-		{paneID}
-	></BibleHeader>
+	{#if chapterSource}
+		<BibleHeader
+			bind:mode
+			bind:bibleLocationRef
+			bind:bibleVersion
+			bind:clientHeight
+			bind:headerHeight
+			{chapterSource}
+			{onBibleVersionSelected}
+			{paneID}
+		></BibleHeader>
+	{/if}
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
@@ -207,15 +283,18 @@
 	<div class="kjvonly-noselect flex justify-center">
 		<div>
 			<div id="chapter-container-{id}" class="w-full">
-				<Chapter
-					bind:bibleLocationRef
-					bind:bibleVersion
-					bind:id
-					bind:pane
-					bind:mode
-					bind:annotations
-					{lastKnownScrollPosition}
-				></Chapter>
+				{#if chapterSource}
+					<Chapter
+						bind:bibleLocationRef
+						bind:bibleVersion
+						bind:id
+						bind:pane
+						bind:mode
+						bind:annotations
+						{chapterSource}
+						{lastKnownScrollPosition}
+					></Chapter>
+				{/if}
 			</div>
 		</div>
 	</div>

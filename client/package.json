@@ -44,6 +44,7 @@
 		"vitest": "^4.1.11"
 	},
 	"dependencies": {
+		"@noble/hashes": "^2.4.0",
 		"@rust-nostr/nostr-sdk": "^0.44.0",
 		"@rx-nostr/crypto": "^3.1.6",
 		"@tailwindcss/postcss": "^4.1.7",

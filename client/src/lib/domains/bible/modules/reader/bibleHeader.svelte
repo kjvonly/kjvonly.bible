@@ -39,6 +39,14 @@
 	import uuid4 from 'uuid4';
 	import { extractBibleVersion } from '../../utils/bible-identity';
 
+	import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+
+import type {
+	BibleVersion
+} from '$lib/domains/bible/models/bible-version.model';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -47,6 +55,8 @@
 		bibleVersion = $bindable<string>(),
 		clientHeight = $bindable<number>(),
 		headerHeight = $bindable<number>(),
+		chapterSource,
+		onBibleVersionSelected,
 		paneID
 	}: {
 		mode: BibleMode;
@@ -54,6 +64,8 @@
 		bibleVersion: string;
 		clientHeight: number;
 		headerHeight: number;
+		chapterSource: PublishedResourceReference;
+		onBibleVersionSelected:( version: BibleVersion	) => void;
 		paneID: string;
 	} = $props();
 
@@ -179,9 +191,7 @@
 	}
 
 	function onSearchClick() {
-		paneService.onSplitPane(paneID, 'h', Modules.SEARCH, {
-			bibleVersion: bibleVersion
-		});
+		paneService.onSplitPane(paneID, 'h', Modules.SEARCH, {});
 	}
 
 	function onCopyClick() {
@@ -326,7 +336,8 @@
 {#snippet bibleVersionPopup()}
 	{#if showBibleVersionPopup}
 		<PopupContainer bind:clientHeight>
-			<BibleVersionPopup bind:bibleVersion bind:showBibleVersionPopup
+			<BibleVersionPopup {onBibleVersionSelected} bind:showBibleVersionPopup
+
 			></BibleVersionPopup>
 		</PopupContainer>
 	{/if}
@@ -345,6 +356,7 @@
 		<PopupContainer bind:clientHeight>
 			<CopyVersePopup
 				{paneID}
+				{chapterSource}
 				bind:showCopyVersePopup={showCopyVersesPopup}
 				bind:bibleLocationRef
 				bind:bibleVersion

@@ -169,7 +169,6 @@ export interface CrossRef {
   chapterNumber: number;
   crossRef: string;
   bibleLocationRef: string;
-  bibleVersion: string;
   text: string;
   verseNumber: number;
 }
@@ -181,7 +180,6 @@ export function newCrossRef(): CrossRef {
     chapterNumber: 0,
     crossRef: '',
     bibleLocationRef: '',
-    bibleVersion: '',
     text: '',
     verseNumber: 0
   };

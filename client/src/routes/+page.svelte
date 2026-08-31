@@ -12,6 +12,7 @@
 	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import { toastService } from '$lib/application/services/toast.service';
 	import { Modules } from '$lib/application/models/modules.model';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	let template = $state();
 	let paneIds: string[] = $state([]);
@@ -121,7 +122,13 @@
 			toggle: p.toggle
 		};
 
-		let buffer = new Buffer();
+		let buffer =	new Buffer(
+		structuredClone(
+			p.buffer
+				.resourceSelections
+		)
+	);
+
 		buffer.componentName = componentName;
 		buffer.name = `${componentName}`;
 		buffer.bag = bag;
@@ -238,13 +245,20 @@
 		})();
 	}
 
+	const {
+	resourceSelectionService
+} = useApplicationContext();
+
 	onMount(() => {
 		let link = document.createElement('link');
 		link.setAttribute('rel', 'manifest');
 		link.setAttribute('href', `/manifest.json`);
 		document.getElementById('kjvonly-head')?.appendChild(link);
 
-		paneService.rootPane.buffer = new Buffer();
+		paneService.rootPane.buffer = new Buffer(
+		resourceSelectionService
+			.snapshot()
+	);
 
 		/**
 		 * DEV NOTE: Update the component to w/e you are working on

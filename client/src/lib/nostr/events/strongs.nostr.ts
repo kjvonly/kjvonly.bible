@@ -7,7 +7,7 @@ export class StrongsApi {
   async get(ref: string): Promise<any> {
     let filter = {
       "authors": [KJVONLY_PUBKEY],
-      "#d": [`kjvonly/bible/strongs/${ref}`]
+      "#d": [`kjvonly/strongs/definitions/${ref}`]
     }
 
     return offlineApi.cacheHitThenFetch(

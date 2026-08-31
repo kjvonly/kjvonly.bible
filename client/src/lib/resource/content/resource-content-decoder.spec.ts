@@ -108,9 +108,6 @@ describe(
                     resourceType:
                         'kjvonly/bible/chapters',
 
-                    eventId:
-                        'b'.repeat(64),
-
                     modifiedAt:
                         123456,
 
@@ -247,9 +244,6 @@ function createVerifiedContent(
 
         resourceType:
             'kjvonly/bible/chapters',
-
-        eventId:
-            'b'.repeat(64),
 
         modifiedAt:
             123456,

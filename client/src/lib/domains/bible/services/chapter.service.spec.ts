@@ -5,6 +5,10 @@ import {
 } from 'vitest';
 
 import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import type {
 	Chapter
 } from '$lib/domains/bible/models/bible.model';
 
@@ -23,9 +27,12 @@ describe(
 		it(
 			'returns an installed Chapter without loading a Resource',
 			async () => {
+				const source =
+					createSource();
+
 				const bibleVersionId =
 					createBibleVersionId(
-						'publisher',
+						source.publisher,
 						'kjvs'
 					);
 
@@ -43,7 +50,7 @@ describe(
 					]);
 
 				const loader =
-					new FakeChapterResourceLoader();
+					new FakeResourceLoader();
 
 				const service =
 					new ChapterService(
@@ -53,7 +60,7 @@ describe(
 
 				const result =
 					await service.get(
-						bibleVersionId,
+						source,
 						'1_1_3'
 					);
 
@@ -78,9 +85,12 @@ describe(
 		it(
 			'loads and rereads a Chapter on a local miss',
 			async () => {
+				const source =
+					createSource();
+
 				const bibleVersionId =
 					createBibleVersionId(
-						'publisher',
+						source.publisher,
 						'kjvs'
 					);
 
@@ -99,7 +109,7 @@ describe(
 					new FakeChapterStore();
 
 				const loader =
-					new FakeChapterResourceLoader(
+					new FakeResourceLoader(
 						async () => {
 							chapters.values.set(
 								chapterId,
@@ -118,7 +128,7 @@ describe(
 
 				const result =
 					await service.get(
-						bibleVersionId,
+						source,
 						'1_1'
 					);
 
@@ -132,17 +142,16 @@ describe(
 					loader.calls
 				).toEqual([
 					{
-						publisher:
-							'publisher',
-
-						version:
-							'kjvs',
-
-						chapterRef:
+						source,
+						key:
 							'1_1'
 					}
 				]);
 
+				/*
+				 * Initial local lookup +
+				 * post-installation reread.
+				 */
 				expect(
 					chapters.ids
 				).toEqual([
@@ -153,12 +162,67 @@ describe(
 		);
 
 		it(
+			'creates the Chapter id from the selected source and Chapter reference',
+			async () => {
+				const source =
+					createSource({
+						publisher:
+							'publisher-a',
+
+						resourceId:
+							'kjvonly/bible/chapters/kjv'
+					});
+
+				const chapters =
+					new FakeChapterStore();
+
+				const loader =
+					new FakeResourceLoader(
+						async () =>
+							false
+					);
+
+				const service =
+					new ChapterService(
+						chapters,
+						loader
+					);
+
+				await expect(
+					service.get(
+						source,
+						'2_3_4'
+					)
+				).rejects.toThrow();
+
+				expect(
+					chapters.ids
+				).toEqual([
+					'publisher-a/kjv/2_3'
+				]);
+
+				expect(
+					loader.calls
+				).toEqual([
+					{
+						source,
+						key:
+							'2_3'
+					}
+				]);
+			}
+		);
+
+		it(
 			'throws when no Resource can provide the Chapter',
 			async () => {
+				const source =
+					createSource();
+
 				const service =
 					new ChapterService(
 						new FakeChapterStore(),
-						new FakeChapterResourceLoader(
+						new FakeResourceLoader(
 							async () =>
 								false
 						)
@@ -166,22 +230,61 @@ describe(
 
 				await expect(
 					service.get(
-						'publisher/kjvs',
+						source,
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Bible Chapter Resource not found: publisher/kjvs/1_1'
+					'Bible Chapter Resource not found'
 				);
+			}
+		);
+
+		it(
+			'does not reread the store when no Chapter Resource is found',
+			async () => {
+				const source =
+					createSource();
+
+				const chapters =
+					new FakeChapterStore();
+
+				const service =
+					new ChapterService(
+						chapters,
+						new FakeResourceLoader(
+							async () =>
+								false
+						)
+					);
+
+				await expect(
+					service.get(
+						source,
+						'1_1'
+					)
+				).rejects.toThrow();
+
+				expect(
+					chapters.ids
+				).toEqual([
+					'publisher/kjvs/1_1'
+				]);
 			}
 		);
 
 		it(
 			'throws when Resource processing succeeds but the Chapter is not installed',
 			async () => {
+				const source =
+					createSource();
+
+				const chapters =
+					new FakeChapterStore();
+
 				const service =
 					new ChapterService(
-						new FakeChapterStore(),
-						new FakeChapterResourceLoader(
+						chapters,
+						new FakeResourceLoader(
 							async () =>
 								true
 						)
@@ -189,22 +292,32 @@ describe(
 
 				await expect(
 					service.get(
-						'publisher/kjvs',
+						source,
 						'1_1'
 					)
 				).rejects.toThrow(
 					'Bible Chapter was not installed'
 				);
+
+				expect(
+					chapters.ids
+				).toEqual([
+					'publisher/kjvs/1_1',
+					'publisher/kjvs/1_1'
+				]);
 			}
 		);
 
 		it(
 			'propagates Resource loading failures',
 			async () => {
+				const source =
+					createSource();
+
 				const service =
 					new ChapterService(
 						new FakeChapterStore(),
-						new FakeChapterResourceLoader(
+						new FakeResourceLoader(
 							async () => {
 								throw new Error(
 									'resolution failed'
@@ -215,7 +328,7 @@ describe(
 
 				await expect(
 					service.get(
-						'publisher/kjvs',
+						source,
 						'1_1'
 					)
 				).rejects.toThrow(
@@ -225,22 +338,113 @@ describe(
 		);
 
 		it(
-			'rejects a bare Bible version',
+			'rejects a source for another Resource Type',
 			async () => {
+				const chapters =
+					new FakeChapterStore();
+
+				const loader =
+					new FakeResourceLoader();
+
 				const service =
 					new ChapterService(
-						new FakeChapterStore(),
-						new FakeChapterResourceLoader()
+						chapters,
+						loader
 					);
 
 				await expect(
 					service.get(
-						'kjvs',
+						createSource({
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs'
+						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Version id'
+					'Invalid Bible Chapter Resource Type'
 				);
+
+				expect(
+					chapters.ids
+				).toEqual([]);
+
+				expect(
+					loader.calls
+				).toEqual([]);
+			}
+		);
+
+		it(
+			'rejects an individual Chapter Resource as the selected source',
+			async () => {
+				const chapters =
+					new FakeChapterStore();
+
+				const loader =
+					new FakeResourceLoader();
+
+				const service =
+					new ChapterService(
+						chapters,
+						loader
+					);
+
+				await expect(
+					service.get(
+						createSource({
+							resourceId:
+								'kjvonly/bible/chapters/kjvs/1_1'
+						}),
+						'1_1'
+					)
+				).rejects.toThrow(
+					'Invalid Bible Chapter Resource source'
+				);
+
+				expect(
+					chapters.ids
+				).toEqual([]);
+
+				expect(
+					loader.calls
+				).toEqual([]);
+			}
+		);
+
+		it(
+			'rejects the Bible Chapter Resource Type root as the selected source',
+			async () => {
+				const chapters =
+					new FakeChapterStore();
+
+				const loader =
+					new FakeResourceLoader();
+
+				const service =
+					new ChapterService(
+						chapters,
+						loader
+					);
+
+				await expect(
+					service.get(
+						createSource({
+							resourceId:
+								'kjvonly/bible/chapters'
+						}),
+						'1_1'
+					)
+				).rejects.toThrow(
+					'Invalid Bible Chapter Resource source'
+				);
+
+				expect(
+					chapters.ids
+				).toEqual([]);
+
+				expect(
+					loader.calls
+				).toEqual([]);
 			}
 		);
 	}
@@ -289,17 +493,14 @@ class FakeChapterStore {
 	}
 }
 
-class FakeChapterResourceLoader {
+class FakeResourceLoader {
 
 	readonly calls:
 		{
-			publisher:
-				string;
+			source:
+				PublishedResourceReference;
 
-			version:
-				string;
-
-			chapterRef:
+			key:
 				string;
 		}[] =
 			[];
@@ -307,13 +508,10 @@ class FakeChapterResourceLoader {
 	constructor(
 		private readonly onLoad:
 			(
-				publisher:
-					string,
+				source:
+					PublishedResourceReference,
 
-				version:
-					string,
-
-				chapterRef:
+				key:
 					string
 			) => Promise<boolean> =
 				async () =>
@@ -321,23 +519,41 @@ class FakeChapterResourceLoader {
 	) {}
 
 	async load(
-		publisher: string,
-		version: string,
-		chapterRef: string
+		source:
+			PublishedResourceReference,
+		key:
+			string
 	): Promise<boolean> {
 
 		this.calls.push({
-			publisher,
-			version,
-			chapterRef
+			source,
+			key
 		});
 
 		return await this.onLoad(
-			publisher,
-			version,
-			chapterRef
+			source,
+			key
 		);
 	}
+}
+
+function createSource(
+	overrides:
+		Partial<
+			PublishedResourceReference
+		> =
+			{}
+): PublishedResourceReference {
+
+	return {
+		publisher:
+			'publisher',
+
+		resourceId:
+			'kjvonly/bible/chapters/kjvs',
+
+		...overrides
+	};
 }
 
 function createChapter(

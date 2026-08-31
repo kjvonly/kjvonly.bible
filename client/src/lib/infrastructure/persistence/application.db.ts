@@ -8,11 +8,18 @@ import type {
 	ResourceInstallation
 } from '$lib/resource/installation/resource-installation';
 
+import type {
+	ResourceReceipt
+} from '$lib/resource/receipts/resource-receipt';
+
 export const DOMAIN_OBJECTS =
 	'domain_objects';
 
 export const RESOURCE_INSTALLATIONS =
 	'resource_installations';
+
+export const RESOURCE_RECEIPTS =
+	'resource_receipts';
 
 export const OBJECT_TYPE_INDEX =
 	'objectType';
@@ -25,16 +32,16 @@ const DATABASE_VERSION =
 
 export interface StoredDomainObject {
 	readonly id:
-		string;
+	string;
 
 	readonly objectType:
-		string;
+	string;
 
 	readonly objectId:
-		string;
+	string;
 
 	readonly value:
-		unknown;
+	unknown;
 }
 
 export interface ApplicationDBSchema
@@ -42,23 +49,31 @@ export interface ApplicationDBSchema
 
 	domain_objects: {
 		key:
-			string;
+		string;
 
 		value:
-			StoredDomainObject;
+		StoredDomainObject;
 
 		indexes: {
 			objectType:
-				string;
+			string;
 		};
 	};
 
 	resource_installations: {
 		key:
-			string;
+		string;
 
 		value:
-			ResourceInstallation;
+		ResourceInstallation;
+	};
+
+	resource_receipts: {
+		key:
+		string;
+
+		value:
+		ResourceReceipt;
 	};
 }
 
@@ -102,6 +117,14 @@ export function getApplicationDB():
 
 						db.createObjectStore(
 							RESOURCE_INSTALLATIONS,
+							{
+								keyPath:
+									'id'
+							}
+						);
+
+						db.createObjectStore(
+							RESOURCE_RECEIPTS,
 							{
 								keyPath:
 									'id'

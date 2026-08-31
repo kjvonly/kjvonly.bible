@@ -16,9 +16,27 @@
 	import {
 		newStrongsPopups,
 		type StrongsPopups
-	} from '$lib/domains/bible/models/strongs.model';
+	} from '$lib/domains/strongs/models/strongs.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
+
+
+	// 
+	import type {
+		PublishedResourceReference
+	} from '$lib/resource/models/resource.model';
+
+	import {
+		STRONGS_RESOURCE_TYPE
+	} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+
+import {
+	requireResourceSelection
+} from '$lib/application/resources/resource-selections';
+
+import {
+	BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';``
 	// =============================== BINDINGS ================================
 
 	let {
@@ -41,24 +59,29 @@
 	let crossRefs: string[] = $state([]);
 	let bibleVersion: string = $state('');
 
+	const strongsSource =
+	requireResourceSelection(
+		pane.buffer
+			.resourceSelections,
+		STRONGS_RESOURCE_TYPE
+	);
+
+const chapterSource =
+	requireResourceSelection(
+		pane.buffer
+			.resourceSelections,
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	);
+
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		setBibleVersion();
 		setRefs();
 		setCurrentVerseRef();
 		setWordText();
 	});
 
 	// ================================ FUNCS ==================================
-
-	function setBibleVersion() {
-		if (pane?.buffer?.bag?.bibleVersion) {
-			bibleVersion = pane?.buffer?.bag?.bibleVersion;
-		} else {
-			bibleVersion = 'kjvs';
-		}
-	}
 
 	function setRefs(): void {
 		let refs: string[] = getRefs();
@@ -131,6 +154,7 @@
 			);
 		}
 	}
+
 	// ============================== CLICK FUNCS ==============================
 </script>
 
@@ -156,10 +180,12 @@
 			bind:clientHeight
 			bind:popups
 			{text}
+			{strongsSource}
 			{strongsRefs}
 			{paneID}
 			hasCrossRef={crossRefs.length > 0}
 			strongsWords={pane?.buffer?.bag?.strongsWords}
+			{bibleVersion}
 		></StrongsDefsContainer>
 	{/if}
 
@@ -168,7 +194,7 @@
 		<CrossRefsContainer
 			paneID={pane?.id}
 			boundCrossRefs={crossRefs}
-			{bibleVersion}
+			{chapterSource}
 		></CrossRefsContainer>
 	{/if}
 {/snippet}

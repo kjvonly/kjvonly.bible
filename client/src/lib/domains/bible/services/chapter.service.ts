@@ -1,4 +1,8 @@
 import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import type {
 	Chapter
 } from '$lib/domains/bible/models/bible.model';
 
@@ -7,12 +11,20 @@ import type {
 } from '$lib/domains/bible/persistence/chapter-store';
 
 import type {
-	ChapterResourceLoader
-} from './chapter-resource-loader';
+	ResourceLoader
+} from '$lib/resource/loading/resource-loader';
 
 import {
-	createChapterId,
-	parseBibleVersionId
+	parseResourceIdentifier
+} from '$lib/resource/utils/resource-identifier';
+
+import {
+	BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+import {
+	createBibleVersionId,
+	createChapterId
 } from '$lib/domains/bible/utils/bible-identity';
 
 import {
@@ -29,20 +41,25 @@ export class ChapterService {
 			>,
 
 		private readonly resourceLoader:
-			ChapterResourceLoader
+			Pick<
+				ResourceLoader<string>,
+				'load'
+			>
 	) {}
 
 	async get(
-		bibleVersionId: string,
-		bibleLocationRef: string
+		source:
+			PublishedResourceReference,
+
+		bibleLocationRef:
+			string
 	): Promise<Chapter> {
 
 		const {
-			publisher,
 			version
 		} =
-			parseBibleVersionId(
-				bibleVersionId
+			parseChapterSource(
+				source
 			);
 
 		const chapterRef =
@@ -50,6 +67,12 @@ export class ChapterService {
 				.extractBookIDChapter(
 					bibleLocationRef
 				);
+
+		const bibleVersionId =
+			createBibleVersionId(
+				source.publisher,
+				version
+			);
 
 		const chapterId =
 			createChapterId(
@@ -62,20 +85,22 @@ export class ChapterService {
 				chapterId
 			);
 
-		if (existing) {
+		if (
+			existing !==
+			undefined
+		) {
 			return existing;
 		}
 
 		const found =
 			await this.resourceLoader.load(
-				publisher,
-				version,
+				source,
 				chapterRef
 			);
 
 		if (!found) {
 			throw new Error(
-				`Bible Chapter Resource not found: ${chapterId}`
+				`Bible Chapter Resource not found: ${source.publisher}/${source.resourceId}/${chapterRef}`
 			);
 		}
 
@@ -84,7 +109,10 @@ export class ChapterService {
 				chapterId
 			);
 
-		if (!installed) {
+		if (
+			installed ===
+			undefined
+		) {
 			throw new Error(
 				`Bible Chapter was not installed: ${chapterId}`
 			);
@@ -92,4 +120,41 @@ export class ChapterService {
 
 		return installed;
 	}
+}
+
+function parseChapterSource(
+	source:
+		PublishedResourceReference
+): {
+	readonly version:
+		string;
+} {
+
+	const identifier =
+		parseResourceIdentifier(
+			source.resourceId
+		);
+
+	if (
+		identifier.resourceType !==
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	) {
+		throw new Error(
+			`Invalid Bible Chapter Resource Type: ${identifier.resourceType}`
+		);
+	}
+
+	if (
+		identifier.path.length !==
+		1
+	) {
+		throw new Error(
+			`Invalid Bible Chapter Resource source: ${source.resourceId}`
+		);
+	}
+
+	return {
+		version:
+			identifier.path[0]
+	};
 }

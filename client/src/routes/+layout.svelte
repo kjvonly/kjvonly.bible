@@ -107,109 +107,147 @@ let applicationStartupError =
 		return true;
 	}
 
-	onMount(() => {
-	let syncTimer:
-		ReturnType<typeof setTimeout> |
-		undefined;
+	let ready =
+	$state(false);
 
-	async function start():
-		Promise<void> {
+let startupError:
+	unknown =
+		$state();
 
-		try {
-			/*
-			 * New application Composition Root.
-			 *
-			 * Currently this initializes the new
-			 * ResourceClient infrastructure.
-			 */
-			await application.start();
+onMount(() => {
+	let disposed =
+		false;
 
-			/*
-			 * Legacy startup.
-			 *
-			 * These responsibilities will move into
-			 * Application.start() incrementally.
-			 */
-			await getBibleDB();
+	const start =
+		async () => {
+			try {
+				await application.start();
 
-			console.debug(
-				'[layout load]'
-			);
-
-			let authenticated =
-				false;
-
-			if (browser) {
-				rxNostr.setDefaultRelays(
-					defaultRelays
-				);
-
-				authenticated =
-					await tryLogin();
+				if (!disposed) {
+					ready =
+						true;
+				}
+			} catch (error) {
+				if (!disposed) {
+					startupError =
+						error;
+				}
 			}
-
-			if (!authenticated) {
-				console.debug(
-					'[layout load] not logged in'
-				);
-			}
-
-			/*
-			 * Existing deferred background sync.
-			 *
-			 * This remains legacy behavior for now.
-			 */
-			syncTimer =
-				setTimeout(
-					() => {
-						//syncService.init();
-					},
-					5000
-				);
-
-			applicationReady =
-				true;
-		} catch (cause) {
-			console.error(
-				'[application startup]',
-				cause
-			);
-
-			applicationStartupError =
-				cause;
-		}
-	}
+		};
 
 	void start();
 
 	return () => {
-		if (
-			syncTimer !==
-			undefined
-		) {
-			clearTimeout(
-				syncTimer
-			);
-		}
+		disposed =
+			true;
 
 		void application.stop();
 	};
 });
 
+	// onMount(() => {
+	// let syncTimer:
+	// 	ReturnType<typeof setTimeout> |
+	// 	undefined;
+
+	// async function start():
+	// 	Promise<void> {
+
+	// 	try {
+	// 		/*
+	// 		 * New application Composition Root.
+	// 		 *
+	// 		 * Currently this initializes the new
+	// 		 * ResourceClient infrastructure.
+	// 		 */
+	// 		await application.start();
+
+	// 		/*
+	// 		 * Legacy startup.
+	// 		 *
+	// 		 * These responsibilities will move into
+	// 		 * Application.start() incrementally.
+	// 		 */
+	// 		await getBibleDB();
+
+	// 		console.debug(
+	// 			'[layout load]'
+	// 		);
+
+	// 		let authenticated =
+	// 			false;
+
+	// 		if (browser) {
+	// 			rxNostr.setDefaultRelays(
+	// 				defaultRelays
+	// 			);
+
+	// 			authenticated =
+	// 				await tryLogin();
+	// 		}
+
+	// 		if (!authenticated) {
+	// 			console.debug(
+	// 				'[layout load] not logged in'
+	// 			);
+	// 		}
+
+	// 		/*
+	// 		 * Existing deferred background sync.
+	// 		 *
+	// 		 * This remains legacy behavior for now.
+	// 		 */
+	// 		syncTimer =
+	// 			setTimeout(
+	// 				() => {
+	// 					//syncService.init();
+	// 				},
+	// 				5000
+	// 			);
+
+	// 		applicationReady =
+	// 			true;
+	// 	} catch (cause) {
+	// 		console.error(
+	// 			'[application startup]',
+	// 			cause
+	// 		);
+
+	// 		applicationStartupError =
+	// 			cause;
+	// 	}
+	// }
+
+// 	void start();
+
+// 	return () => {
+// 		if (
+// 			syncTimer !==
+// 			undefined
+// 		) {
+// 			clearTimeout(
+// 				syncTimer
+// 			);
+// 		}
+
+// 		void application.stop();
+// 	};
+// });
+
 
 	let { children } = $props();
 </script>
 
-{#if applicationStartupError}
-	<div>
-		Application startup failed.
-	</div>
-{:else if applicationReady}
-	<Container>
+<Container>
+	{#if ready}
 		{@render children?.()}
-	</Container>
-{:else}
+	{:else if startupError}
+		<div>
+			Application startup failed.
+		</div>
+	{:else}
 	<div>
 		Loading...
 	</div>
-{/if}
+	{/if}
+</Container>

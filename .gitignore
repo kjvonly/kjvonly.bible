@@ -1,6 +1,7 @@
 # Project
 .excalidraw
 database-data/
+coverage
 
 # Mac
 .DS_Store

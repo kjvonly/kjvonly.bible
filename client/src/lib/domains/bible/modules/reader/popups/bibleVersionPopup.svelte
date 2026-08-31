@@ -21,12 +21,20 @@
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 
 	let {
-		showBibleVersionPopup =
-			$bindable<boolean>(),
+	showBibleVersionPopup =
+		$bindable<boolean>(),
 
-		bibleVersion =
-			$bindable<string>()
-	} = $props();
+	onBibleVersionSelected
+}: {
+	showBibleVersionPopup:
+		boolean;
+
+	onBibleVersionSelected:
+		(
+			version:
+				BibleVersion
+		) => void;
+} = $props();
 
 	const {
 		bibleVersionsService
@@ -49,16 +57,18 @@
 		];
 	});
 
-	function onVersionClicked(
-		version:
-			BibleVersion
-	): void {
-		bibleVersion =
-			version.id;
+function onVersionClicked(
+	version:
+		BibleVersion
+): void {
 
-		showBibleVersionPopup =
-			false;
-	}
+	onBibleVersionSelected(
+		version
+	);
+
+	showBibleVersionPopup =
+		false;
+}	
 
 	function onClose(): void {
 		showBibleVersionPopup =

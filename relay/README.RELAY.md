@@ -6,9 +6,9 @@ nak req  -l 3 -d kjvonly/bible/kjvs/1_1   --auth ws://localhost:3334  | jq -r '.
 
 # strongs
 ```
-/bin/ls -1 | grep -E '^(g|h)' |  xargs -I {} -P 10 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37770 -d kjvonly/bible/strongs/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {} 
+/bin/ls -1 | grep -E '^(g|h)' |  xargs -I {} -P 10 sh -c  'nak event -c $(cat "$1" | xxd -p -c 0) -k 37770 -d kjvonly/strongs/definitions/"${1%%.*}" --tag "m=json.gz.hex" ws://localhost:3334' sh {} 
 
-nak req  -l 3 -d kjvonly/bible/strongs/H1   --auth ws://localhost:3334  | jq -r '.content' | xxd -p -r | zcat  | jq
+nak req  -l 3 -d kjvonly/strongs/definitions/H1   --auth ws://localhost:3334  | jq -r '.content' | xxd -p -r | zcat  | jq
 ```
 
 # Readings
