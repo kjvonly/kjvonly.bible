@@ -42,16 +42,9 @@ import type {
     PublishedResourceReference
 } from '$lib/resource/models/resource.model';
 
-///////////////////////////////////////////////////////////////////////////////
-// Resource Types
-
-import {
-    BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-    STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+import type {
+    ResourceInstallResult
+} from '$lib/resource/services/resource-install-result';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
@@ -230,22 +223,7 @@ export class Application {
 
         const resourceSelectionService =
             new ResourceSelectionService(
-                [
-                    {
-                        publisher:
-                            KJVONLY_PUBKEY,
-
-                        resourceId:
-                            `${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-                    },
-                    {
-                        publisher:
-                            KJVONLY_PUBKEY,
-
-                        resourceId:
-                            `${STRONGS_RESOURCE_TYPE}/kjvs`
-                    }
-                ],
+                [],
                 resourceSelectionStore
             );
 
@@ -506,6 +484,22 @@ export class Application {
                 return;
             }
 
+            try {
+                this.initializeBootstrapResourceSelections(
+                    result
+                );
+            } catch (error) {
+                console.warn(
+                    '[Application bootstrap Resource selection initialization failed]',
+                    {
+                        reference:
+                            APPLICATION_BOOTSTRAP_RESOURCE,
+
+                        error
+                    }
+                );
+            }
+
             const incomplete =
                 result.resources.filter(
                     (resource) =>
@@ -535,6 +529,91 @@ export class Application {
                 }
             );
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    private initializeBootstrapResourceSelections(
+        result:
+            ResourceInstallResult
+    ): void {
+
+        const selections =
+            new Map<
+                string,
+                PublishedResourceReference
+            >();
+
+        for (
+            const resource of
+            result.resources
+        ) {
+            const reference =
+                resource.reference;
+
+            const resourceType =
+                resource.resourceType;
+
+            /*
+             * A failure can occur before a child
+             * descriptor has trustworthy Resource
+             * identity.
+             */
+            if (
+                reference ===
+                    undefined ||
+                resourceType ===
+                    undefined
+            ) {
+                continue;
+            }
+
+            /*
+             * A collection-level resolution failure may
+             * identify the requested bootstrap Resource
+             * itself. The collection is not one of its
+             * selectable child Resources.
+             */
+            if (
+                reference.publisher ===
+                    result.requested.publisher &&
+                reference.resourceId ===
+                    result.requested.resourceId
+            ) {
+                continue;
+            }
+
+            /*
+             * Generic descriptor collections may contain
+             * multiple Resources of the same Resource
+             * Type, but the application-default collection
+             * may contain at most one default per type.
+             */
+            if (
+                selections.has(
+                    resourceType
+                )
+            ) {
+                throw new Error(
+                    `Duplicate application bootstrap Resource Type: ${resourceType}`
+                );
+            }
+
+            selections.set(
+                resourceType,
+                {
+                    ...reference
+                }
+            );
+        }
+
+        this.context
+            .resourceSelectionService
+            .initializeMissing(
+                [
+                    ...selections.values()
+                ]
+            );
     }
 
     ///////////////////////////////////////////////////////////////////////////
