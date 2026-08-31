@@ -46,6 +46,11 @@ seed-plans-relay:
 	cd zarf/scripts/seed && ./plans.sh relay
 	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./plans.sh
 
+## BOOTSTRAP
+
+seed-bootstrap:
+	cd zarf/scripts/seed && ./bootstrap.sh
+
 ###############################################################################
 # DOCKER
 
