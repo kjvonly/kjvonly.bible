@@ -154,8 +154,8 @@ export class ResourceSelectionService {
         );
     }
 
-    initializeDefaults(
-        defaults:
+    initializeMissing(
+        selections:
             readonly PublishedResourceReference[]
     ): void {
 
@@ -164,7 +164,7 @@ export class ResourceSelectionService {
 
         for (
             const reference of
-            defaults
+            selections
         ) {
             const {
                 resourceType

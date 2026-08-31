@@ -221,7 +221,7 @@ describe(
 	() => {
 
 		it(
-			'does not persist defaults during construction',
+			'does not persist initial selections during construction',
 			() => {
 
 				const store =
@@ -254,7 +254,7 @@ describe(
 		);
 
 		it(
-			'restores persisted selection over the default for the same Resource Type',
+			'restores persisted selection over an initial selection for the same Resource Type',
 			() => {
 
 				const store =
@@ -299,7 +299,7 @@ describe(
 		);
 
 		it(
-			'retains defaults for Resource Types missing from persisted selections',
+			'retains initial selections for Resource Types missing from persisted selections',
 			() => {
 
 				const store =
@@ -437,7 +437,7 @@ describe(
 );
 
 describe(
-	'initializeDefaults',
+	'initializeMissing',
 	() => {
 
 		it(
@@ -447,7 +447,7 @@ describe(
 				const service =
 					new ResourceSelectionService();
 
-				service.initializeDefaults([
+				service.initializeMissing([
 					{
 						publisher:
 							'publisher-a',
@@ -486,7 +486,7 @@ describe(
 						}
 					]);
 
-				service.initializeDefaults([
+				service.initializeMissing([
 					{
 						publisher:
 							'publisher-default',
@@ -525,7 +525,7 @@ describe(
 						}
 					]);
 
-				service.initializeDefaults([
+				service.initializeMissing([
 					{
 						publisher:
 							'publisher-default',
@@ -569,7 +569,7 @@ describe(
 		);
 
 		it(
-			'persists the updated snapshot when defaults are added',
+			'persists the updated snapshot when missing selections are added',
 			() => {
 
 				const store =
@@ -581,7 +581,7 @@ describe(
 						store
 					);
 
-				service.initializeDefaults([
+				service.initializeMissing([
 					{
 						publisher:
 							'publisher',
@@ -608,7 +608,95 @@ describe(
 		);
 
 		it(
-			'does not persist when every default already has a selection',
+			'preserves restored selections while initializing missing Resource Types',
+			() => {
+
+				const store =
+					new FakeResourceSelectionStore({
+						'kjvonly/bible/chapters': {
+							publisher:
+								'publisher-user',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjv'
+						}
+					});
+
+				const service =
+					new ResourceSelectionService(
+						[],
+						store
+					);
+
+				service.restore();
+
+				service.initializeMissing([
+					{
+						publisher:
+							'publisher-default',
+
+						resourceId:
+							'kjvonly/bible/chapters/kjvs'
+					},
+					{
+						publisher:
+							'publisher-default',
+
+						resourceId:
+							'kjvonly/strongs/definitions/kjvs'
+					}
+				]);
+
+				expect(
+					service.require(
+						'kjvonly/bible/chapters'
+					)
+				).toEqual({
+					publisher:
+						'publisher-user',
+
+					resourceId:
+						'kjvonly/bible/chapters/kjv'
+				});
+
+				expect(
+					service.require(
+						'kjvonly/strongs/definitions'
+					)
+				).toEqual({
+					publisher:
+						'publisher-default',
+
+					resourceId:
+						'kjvonly/strongs/definitions/kjvs'
+				});
+
+				expect(
+					store.saved
+				).toEqual([
+					{
+						'kjvonly/bible/chapters': {
+							publisher:
+								'publisher-user',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjv'
+						},
+
+						'kjvonly/strongs/definitions': {
+							publisher:
+								'publisher-default',
+
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs'
+						}
+					}
+				]);
+			}
+		);
+
+		it(
+			'does not persist when every supplied Resource Type already has a selection',
 			() => {
 
 				const store =
@@ -628,7 +716,7 @@ describe(
 						store
 					);
 
-				service.initializeDefaults([
+				service.initializeMissing([
 					{
 						publisher:
 							'publisher-default',
