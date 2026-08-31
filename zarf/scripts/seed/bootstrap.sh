@@ -4,12 +4,14 @@ set -euo pipefail
 RELAY_URL="${RELAY_URL:-ws://localhost:3334}"
 BLOSSOM_URL="${BLOSSOM_URL:-http://localhost:3335}"
 
-CHAPTER_FILE="${CHAPTER_FILE:-../../../data/json.gz/1_1.json.gz}"
+CHAPTER_FILE_1="${CHAPTER_FILE_1:-../../../data/json.gz/1_1.json.gz}"
+CHAPTER_FILE_2="${CHAPTER_FILE_2:-../../../data/json.gz/1_2.json.gz}"
+
 STRONGS_FILE="${STRONGS_FILE:-../../../data/strongs.json.gz/h7225.json.gz}"
 
 BOOTSTRAP_RESOURCE_ID="kjvonly/resources/collections/default"
 
-CHAPTER_RESOURCE_ID="kjvonly/bible/chapters/kjvs/1_1"
+CHAPTER_RESOURCE_ID="kjvonly/bible/chapters/kjvs"
 CHAPTER_RESOURCE_TYPE="kjvonly/bible/chapters"
 
 STRONGS_RESOURCE_ID="kjvonly/strongs/definitions/kjvs/H7225"
@@ -22,8 +24,13 @@ if [[ -z "${NOSTR_SECRET_KEY:-}" ]]; then
 	exit 1
 fi
 
-if [[ ! -f "$CHAPTER_FILE" ]]; then
-	echo "Chapter file not found: $CHAPTER_FILE"
+if [[ ! -f "$CHAPTER_FILE_1" ]]; then
+	echo "Chapter file not found: $CHAPTER_FILE_1"
+	exit 1
+fi
+
+if [[ ! -f "$CHAPTER_FILE_2" ]]; then
+	echo "Chapter file not found: $CHAPTER_FILE_2"
 	exit 1
 fi
 
@@ -76,22 +83,77 @@ upload_blossom_file() {
 }
 
 ###############################################################################
-# Chapter
+# Temporary workspace
 
-echo "Uploading Chapter Resource:"
+TEMP_DIR="$(
+	mktemp -d
+)"
+
+# trap 'rm -rf "$TEMP_DIR"' EXIT
+
+###############################################################################
+# Chapter bundle
+#
+# Create one Resource containing:
+#
+# {
+#     "kjvs/1_1": {...},
+#     "kjvs/1_2": {...}
+# }
+#
+# The existing Chapter Resource handler already understands this bundle shape.
+
+echo "Creating Chapter bundle:"
+echo "  $CHAPTER_RESOURCE_ID"
+
+gzip -dc \
+	"$CHAPTER_FILE_1" \
+	> "$TEMP_DIR/1_1.json"
+
+gzip -dc \
+	"$CHAPTER_FILE_2" \
+	> "$TEMP_DIR/1_2.json"
+
+jq -cn \
+	--slurpfile chapter1 "$TEMP_DIR/1_1.json" \
+	--slurpfile chapter2 "$TEMP_DIR/1_2.json" \
+	'{
+		"kjvs/1_1": $chapter1[0],
+		"kjvs/1_2": $chapter2[0]
+	}' \
+	> "$TEMP_DIR/chapters.json"
+
+gzip -n -c \
+	"$TEMP_DIR/chapters.json" \
+	> "$TEMP_DIR/chapters.json.gz"
+
+CHAPTER_BUNDLE_FILE="$TEMP_DIR/chapters.json.gz"
+
+CHAPTER_1_MODIFIED_AT="$(
+	file_modified_at \
+		"$CHAPTER_FILE_1"
+)"
+
+CHAPTER_2_MODIFIED_AT="$(
+	file_modified_at \
+		"$CHAPTER_FILE_2"
+)"
+
+if (( CHAPTER_1_MODIFIED_AT > CHAPTER_2_MODIFIED_AT )); then
+	CHAPTER_MODIFIED_AT="$CHAPTER_1_MODIFIED_AT"
+else
+	CHAPTER_MODIFIED_AT="$CHAPTER_2_MODIFIED_AT"
+fi
+
+echo "Uploading Chapter bundle:"
 echo "  $CHAPTER_RESOURCE_ID"
 
 upload_blossom_file \
-	"$CHAPTER_FILE"
+	"$CHAPTER_BUNDLE_FILE"
 
 CHAPTER_HASH="$UPLOAD_HASH"
 CHAPTER_SIZE="$UPLOAD_SIZE"
 CHAPTER_URL="$UPLOAD_URL"
-
-CHAPTER_MODIFIED_AT="$(
-	file_modified_at \
-		"$CHAPTER_FILE"
-)"
 
 ###############################################################################
 # Strong's
@@ -170,7 +232,7 @@ DESCRIPTORS="$(
 )"
 
 ###############################################################################
-# Publish bootstrap Resource
+# Publish bootstrap descriptor Resource
 
 echo "Publishing bootstrap descriptor Resource:"
 echo "  $BOOTSTRAP_RESOURCE_ID"
@@ -192,8 +254,11 @@ echo
 echo "Publisher:"
 echo "  $PUBLISHER"
 echo
-echo "Chapter:"
+echo "Chapter bundle:"
 echo "  $CHAPTER_RESOURCE_ID"
+echo "  contains:"
+echo "    kjvs/1_1"
+echo "    kjvs/1_2"
 echo "  $CHAPTER_URL"
 echo "  sha256=$CHAPTER_HASH"
 echo "  size=$CHAPTER_SIZE"
