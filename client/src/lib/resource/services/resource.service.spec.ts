@@ -13,6 +13,10 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
+	ResourceDiscovery
+} from '$lib/resource/nostr/resource-discovery';
+
+import type {
 	ResourceHandler
 } from '$lib/resource/installation/resource-handler';
 
@@ -772,6 +776,438 @@ describe(
 			}
 		);
 
+
+		it(
+			'deduplicates concurrent installs for the same Published Resource',
+			async () => {
+				const discovery =
+					new DeferredDiscovery();
+
+				const service =
+					createService({
+						discovery
+					});
+
+				const firstReference =
+					createReference();
+
+				const secondReference =
+					createReference();
+
+				const first =
+					service.install(
+						firstReference
+					);
+
+				const second =
+					service.install(
+						secondReference
+					);
+
+				expect(
+					first
+				).toBe(
+					second
+				);
+
+				expect(
+					discovery.references
+				).toEqual([
+					firstReference
+				]);
+
+				discovery.resolve(
+					firstReference,
+					createRepresentation()
+				);
+
+				await Promise.all([
+					first,
+					second
+				]);
+
+				expect(
+					discovery.references
+				).toHaveLength(
+					1
+				);
+			}
+		);
+
+		it(
+			'shares the successful result of a concurrent install',
+			async () => {
+				const discovery =
+					new DeferredDiscovery();
+
+				const receipts =
+					new FakeReceiptService();
+
+				const service =
+					createService({
+						discovery,
+						receipts
+					});
+
+				const reference =
+					createReference();
+
+				const first =
+					service.install(
+						reference
+					);
+
+				const second =
+					service.install({
+						...reference
+					});
+
+				expect(
+					first
+				).toBe(
+					second
+				);
+
+				discovery.resolve(
+					reference,
+					createRepresentation()
+				);
+
+				const firstResult =
+					await first;
+
+				const secondResult =
+					await second;
+
+				expect(
+					secondResult
+				).toBe(
+					firstResult
+				);
+
+				expect(
+					firstResult
+				).toEqual({
+					requested:
+						reference,
+
+					found:
+						true,
+
+					resources: [
+						{
+							reference: {
+								publisher:
+									'publisher',
+
+								resourceId:
+									'kjvonly/strongs/definitions/kjvs'
+							},
+
+							resourceType:
+								'kjvonly/strongs/definitions',
+
+							status:
+								'handled'
+						}
+					]
+				});
+
+				expect(
+					receipts.calls
+				).toHaveLength(
+					1
+				);
+			}
+		);
+
+		it(
+			'shares a failed Resource result between concurrent callers',
+			async () => {
+				const failure =
+					new Error(
+						'Strong\'s failed'
+					);
+
+				const discovery =
+					new DeferredDiscovery();
+
+				const service =
+					createService({
+						discovery,
+
+						handlers: [
+							new FakeHandler(
+								'kjvonly/strongs/definitions',
+								failure
+							)
+						]
+					});
+
+				const reference =
+					createReference();
+
+				const first =
+					service.install(
+						reference
+					);
+
+				const second =
+					service.install({
+						...reference
+					});
+
+				expect(
+					first
+				).toBe(
+					second
+				);
+
+				discovery.resolve(
+					reference,
+					createRepresentation()
+				);
+
+				const firstResult =
+					await first;
+
+				const secondResult =
+					await second;
+
+				expect(
+					secondResult
+				).toBe(
+					firstResult
+				);
+
+				expect(
+					firstResult.resources
+				).toEqual([
+					{
+						reference: {
+							publisher:
+								'publisher',
+
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs'
+						},
+
+						resourceType:
+							'kjvonly/strongs/definitions',
+
+						status:
+							'failed',
+
+						error:
+							failure
+					}
+				]);
+
+				expect(
+					discovery.references
+				).toHaveLength(
+					1
+				);
+			}
+		);
+
+		it(
+			'clears a rejected in-flight install so a later request can try again',
+			async () => {
+				const discovery =
+					new DeferredDiscovery();
+
+				const service =
+					createService({
+						discovery
+					});
+
+				const reference =
+					createReference();
+
+				const failure =
+					new Error(
+						'Discovery failed.'
+					);
+
+				const first =
+					service.install(
+						reference
+					);
+
+				const concurrent =
+					service.install({
+						...reference
+					});
+
+				expect(
+					concurrent
+				).toBe(
+					first
+				);
+
+				const firstRejection =
+					expect(
+						first
+					).rejects.toBe(
+						failure
+					);
+
+				const concurrentRejection =
+					expect(
+						concurrent
+					).rejects.toBe(
+						failure
+					);
+
+				discovery.reject(
+					reference,
+					failure
+				);
+
+				await firstRejection;
+				await concurrentRejection;
+
+				const retry =
+					service.install(
+						reference
+					);
+
+				expect(
+					retry
+				).not.toBe(
+					first
+				);
+
+				expect(
+					discovery.references
+				).toEqual([
+					reference,
+					reference
+				]);
+
+				discovery.resolve(
+					reference,
+					createRepresentation()
+				);
+
+				await expect(
+					retry
+				).resolves.toMatchObject({
+					requested:
+						reference,
+
+					found:
+						true
+				});
+			}
+		);
+
+		it(
+			'does not deduplicate different Published Resources',
+			async () => {
+				const discovery =
+					new DeferredDiscovery();
+
+				const service =
+					createService({
+						discovery,
+
+						contents:
+							[]
+					});
+
+				const firstReference =
+					createReference();
+
+				const secondReference:
+					PublishedResourceReference = {
+					publisher:
+						firstReference.publisher,
+
+					resourceId:
+						'kjvonly/strongs/definitions/kjvs/H7225'
+				};
+
+				const first =
+					service.install(
+						firstReference
+					);
+
+				const second =
+					service.install(
+						secondReference
+					);
+
+				expect(
+					first
+				).not.toBe(
+					second
+				);
+
+				expect(
+					discovery.references
+				).toEqual([
+					firstReference,
+					secondReference
+				]);
+
+				let firstSettled =
+					false;
+
+				void first.then(
+					() => {
+						firstSettled =
+							true;
+					},
+
+					() => {
+						firstSettled =
+							true;
+					}
+				);
+
+				discovery.resolve(
+					secondReference,
+					createRepresentation({
+						resourceId:
+							secondReference.resourceId
+					})
+				);
+
+				await expect(
+					second
+				).resolves.toMatchObject({
+					requested:
+						secondReference,
+
+					found:
+						true
+				});
+
+				expect(
+					firstSettled
+				).toBe(
+					false
+				);
+
+				discovery.resolve(
+					firstReference,
+					createRepresentation()
+				);
+
+				await expect(
+					first
+				).resolves.toMatchObject({
+					requested:
+						firstReference,
+
+					found:
+						true
+				});
+			}
+		);
+
 		it(
 			'rejects duplicate Resource Type handlers',
 			() => {
@@ -807,6 +1243,12 @@ function createService(
 			ResourceRepresentation |
 			null;
 
+		readonly discovery?:
+			Pick<
+				ResourceDiscovery,
+				'get'
+			>;
+
 		readonly contents?:
 			readonly VerifiedResourceContent[];
 
@@ -824,12 +1266,13 @@ function createService(
 	} = {}
 ): ResourceService {
 	return new ResourceService(
-		new FakeDiscovery(
-			options.representation ===
-				undefined
-				? createRepresentation()
-				: options.representation
-		),
+		options.discovery ??
+			new FakeDiscovery(
+				options.representation ===
+					undefined
+					? createRepresentation()
+					: options.representation
+			),
 
 		new FakeResolver({
 			contents:
@@ -869,7 +1312,11 @@ function createReference():
 	};
 }
 
-function createRepresentation():
+function createRepresentation(
+	overrides:
+		Partial<ResourceRepresentation> =
+			{}
+):
 	ResourceRepresentation {
 	return {
 		publisher:
@@ -896,7 +1343,9 @@ function createRepresentation():
 			'application/json',
 
 		payload:
-			'{}'
+			'{}',
+
+		...overrides
 	};
 }
 
@@ -930,6 +1379,10 @@ function createVerifiedContent(
 
 class FakeDiscovery {
 
+	readonly references:
+		PublishedResourceReference[] =
+			[];
+
 	constructor(
 		private readonly representation:
 			ResourceRepresentation |
@@ -937,13 +1390,180 @@ class FakeDiscovery {
 	) {}
 
 	async get(
-		_reference:
+		reference:
 			PublishedResourceReference
 	): Promise<
 		ResourceRepresentation |
 		null
 	> {
+
+		this.references.push(
+			reference
+		);
+
 		return this.representation;
+	}
+}
+
+interface PendingDiscovery {
+	readonly resolve:
+		(
+			representation:
+				ResourceRepresentation |
+				null
+		) => void;
+
+	readonly reject:
+		(
+			error:
+				unknown
+		) => void;
+}
+
+class DeferredDiscovery {
+
+	readonly references:
+		PublishedResourceReference[] =
+			[];
+
+	private readonly pending =
+		new Map<
+			string,
+			PendingDiscovery[]
+		>();
+
+	get(
+		reference:
+			PublishedResourceReference
+	): Promise<
+		ResourceRepresentation |
+		null
+	> {
+
+		this.references.push(
+			reference
+		);
+
+		return new Promise(
+			(
+				resolve,
+				reject
+			) => {
+
+				const key =
+					this.createKey(
+						reference
+					);
+
+				const pending =
+					this.pending.get(
+						key
+					) ??
+						[];
+
+				pending.push({
+					resolve,
+					reject
+				});
+
+				this.pending.set(
+					key,
+					pending
+				);
+			}
+		);
+	}
+
+	resolve(
+		reference:
+			PublishedResourceReference,
+
+		representation:
+			ResourceRepresentation |
+			null
+	): void {
+
+		this.take(
+			reference
+		).resolve(
+			representation
+		);
+	}
+
+	reject(
+		reference:
+			PublishedResourceReference,
+
+		error:
+			unknown
+	): void {
+
+		this.take(
+			reference
+		).reject(
+			error
+		);
+	}
+
+	private take(
+		reference:
+			PublishedResourceReference
+	): PendingDiscovery {
+
+		const key =
+			this.createKey(
+				reference
+			);
+
+		const pending =
+			this.pending.get(
+				key
+			);
+
+		if (
+			pending ===
+			undefined ||
+			pending.length ===
+			0
+		) {
+			throw new Error(
+				'No pending discovery request.'
+			);
+		}
+
+		const next =
+			pending.shift();
+
+		if (
+			pending.length ===
+			0
+		) {
+			this.pending.delete(
+				key
+			);
+		}
+
+		if (
+			next ===
+			undefined
+		) {
+			throw new Error(
+				'No pending discovery request.'
+			);
+		}
+
+		return next;
+	}
+
+	private createKey(
+		reference:
+			PublishedResourceReference
+	): string {
+
+		return JSON.stringify([
+			reference.publisher,
+			reference.resourceId
+		]);
 	}
 }
 
