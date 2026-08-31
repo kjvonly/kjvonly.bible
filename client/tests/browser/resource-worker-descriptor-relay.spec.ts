@@ -84,7 +84,7 @@ const CHAPTER_RESOURCE_ID =
 	`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`;
 
 const STRONGS_RESOURCE_ID =
-	`${STRONGS_RESOURCE_TYPE}/kjvs/H7225`;
+	`${STRONGS_RESOURCE_TYPE}/kjvs`;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -619,7 +619,7 @@ describe(
 										KJVONLY_PUBKEY,
 
 									resourceId:
-										'kjvonly/strongs/definitions/kjvs/H7225'
+										'kjvonly/strongs/definitions/kjvs'
 								},
 
 								resourceType:
