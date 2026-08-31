@@ -1,7 +1,8 @@
 import {
 	describe,
 	expect,
-	it
+	it,
+	vi
 } from 'vitest';
 
 import type {
@@ -15,13 +16,14 @@ import type {
 	ResourceHandler
 } from '$lib/resource/installation/resource-handler';
 
+import type {
+	ResourceResolutionFailure,
+	ResourceResolutionResult
+} from '$lib/resource/resolution/resource-resolution-result';
+
 import {
 	ResourceService
 } from './resource.service';
-
-import type {
-	ResourceResolutionResult
-} from '$lib/resource/resolution/resource-resolution-result';
 
 describe(
 	'ResourceService',
@@ -29,10 +31,15 @@ describe(
 		it(
 			'returns not found when the requested Resource does not exist',
 			async () => {
+				const receipts =
+					new FakeReceiptService();
+
 				const service =
 					createService({
 						representation:
-							null
+							null,
+
+						receipts
 					});
 
 				const result =
@@ -52,6 +59,12 @@ describe(
 					resources:
 						[]
 				});
+
+				expect(
+					receipts.calls
+				).toHaveLength(
+					0
+				);
 			}
 		);
 
@@ -66,6 +79,9 @@ describe(
 				const decoder =
 					new FakeDecoder();
 
+				const receipts =
+					new FakeReceiptService();
+
 				const content =
 					createVerifiedContent();
 
@@ -75,6 +91,7 @@ describe(
 							content
 						],
 						decoder,
+						receipts,
 						handlers: [
 							handler
 						]
@@ -122,14 +139,196 @@ describe(
 				).toHaveLength(
 					1
 				);
+
+				expect(
+					receipts.calls
+				).toEqual([
+					{
+						publisher:
+							content.publisher,
+
+						resourceId:
+							content.resourceId,
+
+						modifiedAt:
+							content.modifiedAt
+					}
+				]);
 			}
 		);
 
 		it(
-			'reports an unsupported Resource Type without decoding it',
+			'folds a Resource resolution failure into the install result',
+			async () => {
+				const error =
+					new Error(
+						'Blossom retrieval failed.'
+					);
+
+				const service =
+					createService({
+						contents:
+							[],
+
+						failures: [
+							{
+								publisher:
+									'publisher',
+
+								resourceId:
+									'kjvonly/bible/chapters/kjvs',
+
+								resourceType:
+									'kjvonly/bible/chapters',
+
+								error
+							}
+						]
+					});
+
+				const result =
+					await service.install(
+						createReference()
+					);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher:
+								'publisher',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjvs'
+						},
+
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						status:
+							'failed',
+
+						error
+					}
+				]);
+			}
+		);
+
+		it(
+			'preserves an identity-less Resource resolution failure',
+			async () => {
+				const error =
+					new Error(
+						'Invalid Resource descriptor.'
+					);
+
+				const service =
+					createService({
+						contents:
+							[],
+
+						failures: [
+							{
+								error
+							}
+						]
+					});
+
+				const result =
+					await service.install(
+						createReference()
+					);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						status:
+							'failed',
+
+						error
+					}
+				]);
+			}
+		);
+
+		it(
+			'folds resolution failures and continues processing resolved Resources',
+			async () => {
+				const error =
+					new Error(
+						'Resource resolution failed'
+					);
+
+				const content =
+					createVerifiedContent();
+
+				const receipts =
+					new FakeReceiptService();
+
+				const service =
+					createService({
+						contents: [
+							content
+						],
+
+						failures: [
+							{
+								error
+							}
+						],
+
+						receipts
+					});
+
+				const result =
+					await service.install(
+						createReference()
+					);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						status:
+							'failed',
+
+						error
+					},
+					{
+						reference: {
+							publisher:
+								content.publisher,
+
+							resourceId:
+								content.resourceId
+						},
+
+						resourceType:
+							content.resourceType,
+
+						status:
+							'handled'
+					}
+				]);
+
+				expect(
+					receipts.calls
+				).toHaveLength(
+					1
+				);
+			}
+		);
+
+		it(
+			'reports an unsupported Resource Type without decoding or recording a receipt',
 			async () => {
 				const decoder =
 					new FakeDecoder();
+
+				const receipts =
+					new FakeReceiptService();
 
 				const content =
 					createVerifiedContent({
@@ -146,6 +345,7 @@ describe(
 							content
 						],
 						decoder,
+						receipts,
 						handlers:
 							[]
 					});
@@ -180,6 +380,12 @@ describe(
 				).toHaveLength(
 					0
 				);
+
+				expect(
+					receipts.calls
+				).toHaveLength(
+					0
+				);
 			}
 		);
 
@@ -195,6 +401,9 @@ describe(
 					new FakeHandler(
 						'kjvonly/bible/chapters'
 					);
+
+				const receipts =
+					new FakeReceiptService();
 
 				const strongs =
 					createVerifiedContent();
@@ -214,6 +423,7 @@ describe(
 							strongs,
 							chapter
 						],
+						receipts,
 						handlers: [
 							strongsHandler,
 							chapterHandler
@@ -260,6 +470,31 @@ describe(
 				).toBe(
 					'kjvonly/bible/chapters'
 				);
+
+				expect(
+					receipts.calls
+				).toEqual([
+					{
+						publisher:
+							strongs.publisher,
+
+						resourceId:
+							strongs.resourceId,
+
+						modifiedAt:
+							strongs.modifiedAt
+					},
+					{
+						publisher:
+							chapter.publisher,
+
+						resourceId:
+							chapter.resourceId,
+
+						modifiedAt:
+							chapter.modifiedAt
+					}
+				]);
 			}
 		);
 
@@ -282,18 +517,28 @@ describe(
 						'kjvonly/bible/chapters'
 					);
 
+				const receipts =
+					new FakeReceiptService();
+
+				const failed =
+					createVerifiedContent();
+
+				const handled =
+					createVerifiedContent({
+						resourceType:
+							'kjvonly/bible/chapters',
+
+						resourceId:
+							'kjvonly/bible/chapters/kjvs/1_1'
+					});
+
 				const service =
 					createService({
 						contents: [
-							createVerifiedContent(),
-							createVerifiedContent({
-								resourceType:
-									'kjvonly/bible/chapters',
-
-								resourceId:
-									'kjvonly/bible/chapters/kjvs/1_1'
-							})
+							failed,
+							handled
 						],
+						receipts,
 						handlers: [
 							strongsHandler,
 							chapterHandler
@@ -324,6 +569,21 @@ describe(
 				).toHaveLength(
 					1
 				);
+
+				expect(
+					receipts.calls
+				).toEqual([
+					{
+						publisher:
+							handled.publisher,
+
+						resourceId:
+							handled.resourceId,
+
+						modifiedAt:
+							handled.modifiedAt
+					}
+				]);
 			}
 		);
 
@@ -352,6 +612,9 @@ describe(
 						'kjvonly/strongs/definitions'
 					);
 
+				const receipts =
+					new FakeReceiptService();
+
 				const service =
 					createService({
 						contents: [
@@ -359,6 +622,7 @@ describe(
 							good
 						],
 						decoder,
+						receipts,
 						handlers: [
 							handler
 						]
@@ -395,6 +659,116 @@ describe(
 				).toBe(
 					good.resourceId
 				);
+
+				expect(
+					receipts.calls
+				).toEqual([
+					{
+						publisher:
+							good.publisher,
+
+						resourceId:
+							good.resourceId,
+
+						modifiedAt:
+							good.modifiedAt
+					}
+				]);
+			}
+		);
+
+		it(
+			'keeps a successfully handled Resource handled when receipt persistence fails',
+			async () => {
+				const receiptFailure =
+					new Error(
+						'Receipt persistence failed'
+					);
+
+				const receipts =
+					new FakeReceiptService(
+						receiptFailure
+					);
+
+				const warning =
+					vi.spyOn(
+						console,
+						'warn'
+					).mockImplementation(
+						() => undefined
+					);
+
+				const content =
+					createVerifiedContent();
+
+				const service =
+					createService({
+						contents: [
+							content
+						],
+						receipts
+					});
+
+				const result =
+					await service.install(
+						createReference()
+					);
+
+				expect(
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher:
+								content.publisher,
+
+							resourceId:
+								content.resourceId
+						},
+
+						resourceType:
+							content.resourceType,
+
+						status:
+							'handled'
+					}
+				]);
+
+				expect(
+					receipts.calls
+				).toEqual([
+					{
+						publisher:
+							content.publisher,
+
+						resourceId:
+							content.resourceId,
+
+						modifiedAt:
+							content.modifiedAt
+					}
+				]);
+
+				expect(
+					warning
+				).toHaveBeenCalledWith(
+					'[Resource receipt write failed]',
+					{
+						publisher:
+							content.publisher,
+
+						resourceId:
+							content.resourceId,
+
+						modifiedAt:
+							content.modifiedAt,
+
+						error:
+							receiptFailure
+					}
+				);
+
+				warning.mockRestore();
 			}
 		);
 
@@ -436,8 +810,14 @@ function createService(
 		readonly contents?:
 			readonly VerifiedResourceContent[];
 
+		readonly failures?:
+			readonly ResourceResolutionFailure[];
+
 		readonly decoder?:
 			FakeDecoder;
+
+		readonly receipts?:
+			FakeReceiptService;
 
 		readonly handlers?:
 			readonly ResourceHandler[];
@@ -451,15 +831,23 @@ function createService(
 				: options.representation
 		),
 
-		new FakeResolver(
-			options.contents ??
+		new FakeResolver({
+			contents:
+				options.contents ??
 				[
 					createVerifiedContent()
-				]
-		),
+				],
+
+			failures:
+				options.failures ??
+				[]
+		}),
 
 		options.decoder ??
 			new FakeDecoder(),
+
+		options.receipts ??
+			new FakeReceiptService(),
 
 		options.handlers ??
 			[
@@ -494,7 +882,9 @@ function createRepresentation():
 			'kjvonly/strongs/definitions',
 
 		eventId:
-			'a'.repeat(64),
+			'a'.repeat(
+				64
+			),
 
 		modifiedAt:
 			100,
@@ -560,8 +950,8 @@ class FakeDiscovery {
 class FakeResolver {
 
 	constructor(
-		private readonly contents:
-			readonly VerifiedResourceContent[]
+		private readonly result:
+			ResourceResolutionResult
 	) {}
 
 	async resolve(
@@ -570,13 +960,7 @@ class FakeResolver {
 	): Promise<
 		ResourceResolutionResult
 	> {
-		return {
-			contents:
-				this.contents,
-
-			failures:
-				[]
-		};
+		return this.result;
 	}
 }
 
@@ -627,6 +1011,44 @@ class FakeDecoder {
 			value:
 				{}
 		};
+	}
+}
+
+class FakeReceiptService {
+
+	readonly calls: {
+		readonly publisher:
+			string;
+
+		readonly resourceId:
+			string;
+
+		readonly modifiedAt:
+			number;
+	}[] = [];
+
+	constructor(
+		private readonly failure?:
+			Error
+	) {}
+
+	async markProcessed(
+		publisher: string,
+		resourceId: string,
+		modifiedAt: number
+	): Promise<void> {
+		this.calls.push({
+			publisher,
+			resourceId,
+			modifiedAt
+		});
+
+		if (
+			this.failure !==
+			undefined
+		) {
+			throw this.failure;
+		}
 	}
 }
 

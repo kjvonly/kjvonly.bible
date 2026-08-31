@@ -56,6 +56,14 @@ import {
     ResourceSelectionService
 } from '$lib/application/resources/resource-selection.service';
 
+import {
+    ResourceReceiptService
+} from '$lib/resource/receipts/resource-receipt.service';
+
+import {
+    IndexedDBResourceReceiptStore
+} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+
 // // RESOURCE TYPES
 import {
     BIBLE_CHAPTER_RESOURCE_TYPE
@@ -211,6 +219,15 @@ export class Application {
                 resourceContentDecoratorBuilder
             );
 
+        const resourceReceiptStore =
+            new IndexedDBResourceReceiptStore(
+                getApplicationDB
+            );
+
+        const resourceReceiptService =
+            new ResourceReceiptService(
+                resourceReceiptStore
+            );
         const resourceSelectionStore =
             new LocalStorageResourceSelectionStore(
                 localStorage
@@ -325,12 +342,12 @@ export class Application {
                 resourceDiscovery,
                 resourceResolver,
                 resourceContentDecoder,
+                resourceReceiptService,
                 [
                     bibleChapterResourceHandler,
                     strongsResourceHandler
                 ]
             );
-
 
         // // Chapter
 

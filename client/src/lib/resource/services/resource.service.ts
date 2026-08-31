@@ -12,12 +12,20 @@ import type {
 } from '$lib/resource/resolution/resource-resolver';
 
 import type {
+	ResourceResolutionFailure
+} from '$lib/resource/resolution/resource-resolution-result';
+
+import type {
 	ResourceContentDecoder
 } from '$lib/resource/content/resource-content-decoder';
 
 import type {
 	ResourceHandler
 } from '$lib/resource/installation/resource-handler';
+
+import type {
+	ResourceReceiptService
+} from '$lib/resource/receipts/resource-receipt.service';
 
 import type {
 	ResourceInstallOutcome,
@@ -49,6 +57,12 @@ export class ResourceService {
 			Pick<
 				ResourceContentDecoder,
 				'decode'
+			>,
+
+		private readonly receipts:
+			Pick<
+				ResourceReceiptService,
+				'markProcessed'
 			>,
 
 		handlers:
@@ -114,7 +128,12 @@ export class ResourceService {
 
 		const resources:
 			ResourceInstallOutcome[] =
-			[];
+				resolution.failures.map(
+					(failure) =>
+						this.createFailureOutcome(
+							failure
+						)
+				);
 
 		for (
 			const content
@@ -135,6 +154,46 @@ export class ResourceService {
 				true,
 
 			resources
+		};
+	}
+
+	private createFailureOutcome(
+		failure:
+			ResourceResolutionFailure
+	): ResourceInstallOutcome {
+		return {
+			...(
+				failure.publisher !==
+					undefined &&
+				failure.resourceId !==
+					undefined
+					? {
+							reference: {
+								publisher:
+									failure.publisher,
+
+								resourceId:
+									failure.resourceId
+							}
+						}
+					: {}
+			),
+
+			...(
+				failure.resourceType !==
+					undefined
+					? {
+							resourceType:
+								failure.resourceType
+						}
+					: {}
+			),
+
+			status:
+				'failed',
+
+			error:
+				failure.error
 		};
 	}
 
@@ -177,14 +236,6 @@ export class ResourceService {
 			await handler.handle(
 				decoded
 			);
-
-			return {
-				reference,
-				resourceType:
-					content.resourceType,
-				status:
-					'handled'
-			};
 		} catch (error) {
 			return {
 				reference,
@@ -195,5 +246,37 @@ export class ResourceService {
 				error
 			};
 		}
+
+		try {
+			await this.receipts.markProcessed(
+				content.publisher,
+				content.resourceId,
+				content.modifiedAt
+			);
+		} catch (error) {
+			console.warn(
+				'[Resource receipt write failed]',
+				{
+					publisher:
+						content.publisher,
+
+					resourceId:
+						content.resourceId,
+
+					modifiedAt:
+						content.modifiedAt,
+
+					error
+				}
+			);
+		}
+
+		return {
+			reference,
+			resourceType:
+				content.resourceType,
+			status:
+				'handled'
+		};
 	}
 }

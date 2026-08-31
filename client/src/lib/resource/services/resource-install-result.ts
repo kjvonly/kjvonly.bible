@@ -24,10 +24,10 @@ export type ResourceInstallOutcome =
 				'unsupported';
 	  }
 	| {
-			readonly reference:
+			readonly reference?:
 				PublishedResourceReference;
 
-			readonly resourceType:
+			readonly resourceType?:
 				string;
 
 			readonly status:

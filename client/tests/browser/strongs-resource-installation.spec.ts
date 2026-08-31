@@ -62,6 +62,7 @@ import {
 import {
 	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
+	RESOURCE_RECEIPTS,
 	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
@@ -69,7 +70,22 @@ import {
 import {
 	createResourceInstallationId
 } from '$lib/resource/installation/resource-installation';
-import type { ResourceResolutionResult } from '$lib/resource/resolution/resource-resolution-result';
+
+import {
+	IndexedDBResourceReceiptStore
+} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+
+import {
+	ResourceReceiptService
+} from '$lib/resource/receipts/resource-receipt.service';
+
+import {
+	createResourceReceiptId
+} from '$lib/resource/receipts/resource-receipt';
+
+import type {
+	ResourceResolutionResult
+} from '$lib/resource/resolution/resource-resolution-result';
 
 describe(
 	"Strong's Resource installation",
@@ -255,6 +271,29 @@ describe(
 					modifiedAt:
 						200
 				});
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							resourceId
+						)
+					)
+				).toEqual({
+					id:
+						createResourceReceiptId(
+							publisher,
+							resourceId
+						),
+
+					publisher,
+
+					resourceId,
+
+					modifiedAt:
+						200
+				});
 			}
 		);
 
@@ -383,6 +422,16 @@ describe(
 						createResourceInstallationId(
 							STRONGS_DEFINITION_OBJECT_TYPE,
 							g2Id
+						)
+					)
+				).toBeUndefined();
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							resourceId
 						)
 					)
 				).toBeUndefined();
@@ -615,6 +664,40 @@ describe(
 						)
 					)
 				).toBeUndefined();
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							g1ResourceId
+						)
+					)
+				).toEqual({
+					id:
+						createResourceReceiptId(
+							publisher,
+							g1ResourceId
+						),
+
+					publisher,
+
+					resourceId:
+						g1ResourceId,
+
+					modifiedAt:
+						100
+				});
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							g2ResourceId
+						)
+					)
+				).toBeUndefined();
 			}
 		);
 	}
@@ -644,6 +727,16 @@ function createService(
 	const decoder =
 		createDecoder();
 
+	const receiptStore =
+		new IndexedDBResourceReceiptStore(
+			getApplicationDB
+		);
+
+	const receiptService =
+		new ResourceReceiptService(
+			receiptStore
+		);
+
 	const installationTransaction =
 		new IndexedDBStrongsInstallationTransaction(
 			getApplicationDB
@@ -665,6 +758,7 @@ function createService(
 		discovery,
 		resolver,
 		decoder,
+		receiptService,
 		[
 			handler
 		]

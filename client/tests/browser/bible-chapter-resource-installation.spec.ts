@@ -51,6 +51,7 @@ import {
 import {
 	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
+	RESOURCE_RECEIPTS,
 	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
@@ -63,7 +64,22 @@ import {
 import {
 	createResourceInstallationId
 } from '$lib/resource/installation/resource-installation';
-import type { ResourceResolutionResult } from '$lib/resource/resolution/resource-resolution-result';
+
+import {
+	IndexedDBResourceReceiptStore
+} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+
+import {
+	ResourceReceiptService
+} from '$lib/resource/receipts/resource-receipt.service';
+
+import {
+	createResourceReceiptId
+} from '$lib/resource/receipts/resource-receipt';
+
+import type {
+	ResourceResolutionResult
+} from '$lib/resource/resolution/resource-resolution-result';
 
 const BIBLE_VERSION_OBJECT_TYPE =
 	'bible/version';
@@ -237,6 +253,29 @@ describe(
 					modifiedAt:
 						200
 				});
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							resourceId
+						)
+					)
+				).toEqual({
+					id:
+						createResourceReceiptId(
+							publisher,
+							resourceId
+						),
+
+					publisher,
+
+					resourceId,
+
+					modifiedAt:
+						200
+				});
 			}
 		);
 
@@ -359,6 +398,16 @@ describe(
 						createResourceInstallationId(
 							BIBLE_CHAPTER_OBJECT_TYPE,
 							chapter1Id
+						)
+					)
+				).toBeUndefined();
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							resourceId
 						)
 					)
 				).toBeUndefined();
@@ -570,6 +619,40 @@ describe(
 						)
 					)
 				).toBeUndefined();
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							chapter1ResourceId
+						)
+					)
+				).toEqual({
+					id:
+						createResourceReceiptId(
+							publisher,
+							chapter1ResourceId
+						),
+
+					publisher,
+
+					resourceId:
+						chapter1ResourceId,
+
+					modifiedAt:
+						100
+				});
+
+				expect(
+					await db.get(
+						RESOURCE_RECEIPTS,
+						createResourceReceiptId(
+							publisher,
+							chapter2ResourceId
+						)
+					)
+				).toBeUndefined();
 			}
 		);
 	}
@@ -599,6 +682,16 @@ function createService(
 	const decoder =
 		createDecoder();
 
+	const receiptStore =
+		new IndexedDBResourceReceiptStore(
+			getApplicationDB
+		);
+
+	const receiptService =
+		new ResourceReceiptService(
+			receiptStore
+		);
+
 	const installationTransaction =
 		new IndexedDBBibleChapterInstallationTransaction(
 			getApplicationDB
@@ -620,6 +713,7 @@ function createService(
 		discovery,
 		resolver,
 		decoder,
+		receiptService,
 		[
 			handler
 		]
