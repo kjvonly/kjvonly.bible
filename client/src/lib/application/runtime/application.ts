@@ -510,7 +510,9 @@ export class Application {
                 result.resources.filter(
                     (resource) =>
                         resource.status !==
-                        'handled'
+                        'handled' &&
+                        resource.status !==
+                        'current'
                 );
 
             if (

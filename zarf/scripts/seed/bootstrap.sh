@@ -14,7 +14,7 @@ BOOTSTRAP_RESOURCE_ID="kjvonly/resources/collections/default"
 CHAPTER_RESOURCE_ID="kjvonly/bible/chapters/kjvs"
 CHAPTER_RESOURCE_TYPE="kjvonly/bible/chapters"
 
-STRONGS_RESOURCE_ID="kjvonly/strongs/definitions/kjvs/H7225"
+STRONGS_RESOURCE_ID="kjvonly/strongs/definitions/kjvs"
 STRONGS_RESOURCE_TYPE="kjvonly/strongs/definitions"
 
 ###############################################################################
@@ -156,22 +156,51 @@ CHAPTER_SIZE="$UPLOAD_SIZE"
 CHAPTER_URL="$UPLOAD_URL"
 
 ###############################################################################
-# Strong's
+# Strong's bundle
+#
+# Create one Resource containing:
+#
+# {
+#     "H7225": {...}
+# }
+#
+# The Strong's Resource handler understands this bundle shape. The Resource ID
+# identifies the KJVS Strong's source; H7225 is only the current seed payload.
 
-echo "Uploading Strong's Resource:"
+echo "Creating Strong's bundle:"
 echo "  $STRONGS_RESOURCE_ID"
 
-upload_blossom_file \
-	"$STRONGS_FILE"
+gzip -dc \
+	"$STRONGS_FILE" \
+	> "$TEMP_DIR/H7225.json"
 
-STRONGS_HASH="$UPLOAD_HASH"
-STRONGS_SIZE="$UPLOAD_SIZE"
-STRONGS_URL="$UPLOAD_URL"
+jq -cn \
+	--slurpfile h7225 "$TEMP_DIR/H7225.json" \
+	'{
+		"H7225": $h7225[0]
+	}' \
+	> "$TEMP_DIR/strongs.json"
+
+gzip -n -c \
+	"$TEMP_DIR/strongs.json" \
+	> "$TEMP_DIR/strongs.json.gz"
+
+STRONGS_BUNDLE_FILE="$TEMP_DIR/strongs.json.gz"
 
 STRONGS_MODIFIED_AT="$(
 	file_modified_at \
 		"$STRONGS_FILE"
 )"
+
+echo "Uploading Strong's bundle:"
+echo "  $STRONGS_RESOURCE_ID"
+
+upload_blossom_file \
+	"$STRONGS_BUNDLE_FILE"
+
+STRONGS_HASH="$UPLOAD_HASH"
+STRONGS_SIZE="$UPLOAD_SIZE"
+STRONGS_URL="$UPLOAD_URL"
 
 ###############################################################################
 # Descriptor collection
@@ -264,8 +293,10 @@ echo "  sha256=$CHAPTER_HASH"
 echo "  size=$CHAPTER_SIZE"
 echo "  modifiedAt=$CHAPTER_MODIFIED_AT"
 echo
-echo "Strong's:"
+echo "Strong's bundle:"
 echo "  $STRONGS_RESOURCE_ID"
+echo "  contains:"
+echo "    H7225"
 echo "  $STRONGS_URL"
 echo "  sha256=$STRONGS_HASH"
 echo "  size=$STRONGS_SIZE"
