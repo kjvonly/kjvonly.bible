@@ -221,7 +221,7 @@ describe(
 	() => {
 
 		it(
-			'does not persist initial selections during construction',
+			'does not persist fallback selections during construction',
 			() => {
 
 				const store =
@@ -254,7 +254,7 @@ describe(
 		);
 
 		it(
-			'restores persisted selection over an initial selection for the same Resource Type',
+			'restores persisted selection over a fallback selection for the same Resource Type',
 			() => {
 
 				const store =
@@ -299,7 +299,7 @@ describe(
 		);
 
 		it(
-			'retains initial selections for Resource Types missing from persisted selections',
+			'retains fallback selections for Resource Types missing from persisted selections',
 			() => {
 
 				const store =
@@ -363,7 +363,7 @@ describe(
 		);
 
 		it(
-			'persists the complete selection snapshot when a selection changes',
+			'persists only established current selections when a selection changes',
 			() => {
 
 				const store =
@@ -420,14 +420,6 @@ describe(
 
 							resourceId:
 								'kjvonly/bible/chapters/kjv'
-						},
-
-						'kjvonly/strongs/definitions': {
-							publisher:
-								'publisher-a',
-
-							resourceId:
-								'kjvonly/strongs/definitions/kjvs'
 						}
 					}
 				]);
@@ -472,27 +464,27 @@ describe(
 		);
 
 		it(
-			'does not replace an existing Resource selection',
+			'replaces a fallback selection with an initialized selection',
 			() => {
 
 				const service =
 					new ResourceSelectionService([
 						{
 							publisher:
-								'publisher-user',
+								'publisher-fallback',
 
 							resourceId:
-								'kjvonly/bible/chapters/kjv'
+								'kjvonly/bible/chapters/kjvs'
 						}
 					]);
 
 				service.initializeMissing([
 					{
 						publisher:
-							'publisher-default',
+							'publisher-bootstrap',
 
 						resourceId:
-							'kjvonly/bible/chapters/kjvs'
+							'kjvonly/bible/chapters/kjv'
 					}
 				]);
 
@@ -502,7 +494,7 @@ describe(
 					)
 				).toEqual({
 					publisher:
-						'publisher-user',
+						'publisher-bootstrap',
 
 					resourceId:
 						'kjvonly/bible/chapters/kjv'
@@ -511,34 +503,49 @@ describe(
 		);
 
 		it(
-			'initializes only missing Resource Types',
+			'preserves current selections while replacing fallbacks',
 			() => {
 
 				const service =
 					new ResourceSelectionService([
 						{
 							publisher:
-								'publisher-user',
+								'publisher-fallback',
 
 							resourceId:
-								'kjvonly/bible/chapters/kjv'
+								'kjvonly/bible/chapters/kjvs'
+						},
+						{
+							publisher:
+								'publisher-fallback',
+
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs'
 						}
 					]);
+
+				service.select({
+					publisher:
+						'publisher-user',
+
+					resourceId:
+						'kjvonly/bible/chapters/kjv'
+				});
 
 				service.initializeMissing([
 					{
 						publisher:
-							'publisher-default',
+							'publisher-bootstrap',
 
 						resourceId:
 							'kjvonly/bible/chapters/kjvs'
 					},
 					{
 						publisher:
-							'publisher-default',
+							'publisher-bootstrap',
 
 						resourceId:
-							'kjvonly/strongs/definitions/kjvs'
+							'kjvonly/strongs/definitions/enhanced'
 					}
 				]);
 
@@ -560,10 +567,10 @@ describe(
 					)
 				).toEqual({
 					publisher:
-						'publisher-default',
+						'publisher-bootstrap',
 
 					resourceId:
-						'kjvonly/strongs/definitions/kjvs'
+						'kjvonly/strongs/definitions/enhanced'
 				});
 			}
 		);
@@ -577,17 +584,32 @@ describe(
 
 				const service =
 					new ResourceSelectionService(
-						[],
+						[
+							{
+								publisher:
+									'publisher-fallback',
+
+								resourceId:
+									'kjvonly/bible/chapters/kjvs'
+							},
+							{
+								publisher:
+									'publisher-fallback',
+
+								resourceId:
+									'kjvonly/strongs/definitions/kjvs'
+							}
+						],
 						store
 					);
 
 				service.initializeMissing([
 					{
 						publisher:
-							'publisher',
+							'publisher-bootstrap',
 
 						resourceId:
-							'kjvonly/bible/chapters/kjvs'
+							'kjvonly/bible/chapters/kjv'
 					}
 				]);
 
@@ -597,10 +619,10 @@ describe(
 					{
 						'kjvonly/bible/chapters': {
 							publisher:
-								'publisher',
+								'publisher-bootstrap',
 
 							resourceId:
-								'kjvonly/bible/chapters/kjvs'
+								'kjvonly/bible/chapters/kjv'
 						}
 					}
 				]);
@@ -624,7 +646,22 @@ describe(
 
 				const service =
 					new ResourceSelectionService(
-						[],
+						[
+							{
+								publisher:
+									'publisher-fallback',
+
+								resourceId:
+									'kjvonly/bible/chapters/kjvs'
+							},
+							{
+								publisher:
+									'publisher-fallback',
+
+								resourceId:
+									'kjvonly/strongs/definitions/kjvs'
+							}
+						],
 						store
 					);
 
@@ -696,30 +733,40 @@ describe(
 		);
 
 		it(
-			'does not persist when every supplied Resource Type already has a selection',
+			'does not persist when every supplied Resource Type already has a current selection',
 			() => {
 
 				const store =
-					new FakeResourceSelectionStore();
+					new FakeResourceSelectionStore({
+						'kjvonly/bible/chapters': {
+							publisher:
+								'publisher-user',
+
+							resourceId:
+								'kjvonly/bible/chapters/kjv'
+						}
+					});
 
 				const service =
 					new ResourceSelectionService(
 						[
 							{
 								publisher:
-									'publisher-user',
+									'publisher-fallback',
 
 								resourceId:
-									'kjvonly/bible/chapters/kjv'
+									'kjvonly/bible/chapters/kjvs'
 							}
 						],
 						store
 					);
 
+				service.restore();
+
 				service.initializeMissing([
 					{
 						publisher:
-							'publisher-default',
+							'publisher-bootstrap',
 
 						resourceId:
 							'kjvonly/bible/chapters/kjvs'

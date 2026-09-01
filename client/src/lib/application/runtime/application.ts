@@ -47,6 +47,17 @@ import type {
 } from '$lib/resource/services/resource-install-result';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Resource Types
+
+import {
+    BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+import {
+    STRONGS_RESOURCE_TYPE
+} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+
+///////////////////////////////////////////////////////////////////////////////
 // Bible
 
 import {
@@ -223,7 +234,22 @@ export class Application {
 
         const resourceSelectionService =
             new ResourceSelectionService(
-                [],
+                [
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
+                            `${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+                    },
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
+                            `${STRONGS_RESOURCE_TYPE}/kjvs`
+                    }
+                ],
                 resourceSelectionStore
             );
 
