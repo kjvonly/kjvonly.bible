@@ -5,7 +5,10 @@ import type {
 import {
     parseResourceIdentifier
 } from '$lib/resource/utils/resource-identifier';
-import type { ResourceSelectionStore } from './resource-selection-store';
+
+import type {
+    ResourceSelectionStore
+} from './resource-selection-store';
 
 import type {
     ResourceSelections
@@ -13,14 +16,39 @@ import type {
 
 export class ResourceSelectionService {
 
+    /*
+     * Current selections are selections established by
+     * persisted state, bootstrap initialization, or an
+     * explicit user/application selection.
+     *
+     * These are the only selections persisted.
+     */
     private readonly selections =
         new Map<
             string,
             PublishedResourceReference
         >();
 
+    /*
+     * Fallback selections are application-provided startup
+     * defaults.
+     *
+     * They make a Resource Type immediately usable before
+     * bootstrap discovery completes, but they are not
+     * themselves persisted current selections.
+     *
+     * A bootstrap-initialized selection may therefore
+     * replace a fallback, while a restored or explicitly
+     * selected current value remains authoritative.
+     */
+    private readonly fallbackSelections =
+        new Map<
+            string,
+            PublishedResourceReference
+        >();
+
     constructor(
-        initialSelections:
+        fallbackSelections:
             readonly PublishedResourceReference[] =
             [],
 
@@ -29,9 +57,9 @@ export class ResourceSelectionService {
     ) {
         for (
             const selection of
-            initialSelections
+            fallbackSelections
         ) {
-            this.setSelection(
+            this.setFallbackSelection(
                 selection
             );
         }
@@ -45,6 +73,9 @@ export class ResourceSelectionService {
 
         const selection =
             this.selections.get(
+                resourceType
+            ) ??
+            this.fallbackSelections.get(
                 resourceType
             );
 
@@ -84,17 +115,37 @@ export class ResourceSelectionService {
             reference
         );
 
-        this.store?.save(
-            this.snapshot()
-        );
+        this.persist();
     }
 
+    /*
+     * Snapshot exposes the effective current application
+     * selection state.
+     *
+     * Fallbacks are included when no current selection has
+     * replaced them so callers such as module creation can
+     * immediately obtain usable Resource references.
+     */
     snapshot():
         ResourceSelections {
 
         const result:
             ResourceSelections =
             {};
+
+        for (
+            const [
+                resourceType,
+                reference
+            ] of
+            this.fallbackSelections
+        ) {
+            result[
+                resourceType
+            ] = {
+                ...reference
+            };
+        }
 
         for (
             const [
@@ -134,6 +185,55 @@ export class ResourceSelectionService {
         }
     }
 
+    initializeMissing(
+        selections:
+            readonly PublishedResourceReference[]
+    ): void {
+
+        let changed =
+            false;
+
+        for (
+            const reference of
+            selections
+        ) {
+            const {
+                resourceType
+            } =
+                parseResourceIdentifier(
+                    reference.resourceId
+                );
+
+            /*
+             * Only an established current selection blocks
+             * bootstrap initialization.
+             *
+             * A fallback does not. This allows the
+             * application to have an immediate startup
+             * source while still accepting the default
+             * advertised by the bootstrap Resource.
+             */
+            if (
+                this.selections.has(
+                    resourceType
+                )
+            ) {
+                continue;
+            }
+
+            this.setSelection(
+                reference
+            );
+
+            changed =
+                true;
+        }
+
+        if (changed) {
+            this.persist();
+        }
+    }
+
     private setSelection(
         reference:
             PublishedResourceReference
@@ -154,45 +254,64 @@ export class ResourceSelectionService {
         );
     }
 
-    initializeDefaults(
-        defaults:
-            readonly PublishedResourceReference[]
+    private setFallbackSelection(
+        reference:
+            PublishedResourceReference
     ): void {
 
-        let changed =
-            false;
+        const {
+            resourceType
+        } =
+            parseResourceIdentifier(
+                reference.resourceId
+            );
+
+        this.fallbackSelections.set(
+            resourceType,
+            {
+                ...reference
+            }
+        );
+    }
+
+    /*
+     * Persistence intentionally excludes fallback
+     * selections.
+     *
+     * Otherwise an application fallback could become a
+     * durable user/current selection before bootstrap has
+     * had the opportunity to initialize the advertised
+     * default.
+     */
+    private persist(): void {
+
+        if (
+            this.store ===
+            undefined
+        ) {
+            return;
+        }
+
+        const result:
+            ResourceSelections =
+            {};
 
         for (
-            const reference of
-            defaults
-        ) {
-            const {
-                resourceType
-            } =
-                parseResourceIdentifier(
-                    reference.resourceId
-                );
-
-            if (
-                this.selections.has(
-                    resourceType
-                )
-            ) {
-                continue;
-            }
-
-            this.setSelection(
+            const [
+                resourceType,
                 reference
-            );
-
-            changed =
-                true;
+            ] of
+            this.selections
+        ) {
+            result[
+                resourceType
+            ] = {
+                ...reference
+            };
         }
 
-        if (changed) {
-            this.store?.save(
-                this.snapshot()
-            );
-        }
+        this.store.save(
+            result
+        );
     }
 }

@@ -166,6 +166,9 @@ describe(
 						}
 					],
 
+					current:
+						[],
+
 					failures:
 						[]
 				});
@@ -173,7 +176,7 @@ describe(
 		);
 
 		it(
-			'skips a child Resource when its receipt is current',
+			'preserves a child Resource when its receipt is current',
 			async () => {
 				const strategy =
 					createStrategy(
@@ -212,6 +215,19 @@ describe(
 				).toEqual({
 					contents:
 						[],
+
+					current: [
+						{
+							publisher:
+								PUBLISHER,
+
+							resourceId:
+								'kjvonly/bible/chapters/kjvs',
+
+							resourceType:
+								'kjvonly/bible/chapters'
+						}
+					],
 
 					failures:
 						[]
@@ -568,6 +584,9 @@ describe(
 					result
 				).toEqual({
 					contents:
+						[],
+
+					current:
 						[],
 
 					failures: [

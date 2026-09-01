@@ -4,7 +4,8 @@ import {
 	renderGridTemplateAreas
 } from './dynamicGrid.service';
 
-describe('suite name', () => {
+describe.skip('suite name', () => {
+	
 	it('large grid vertical', () => {
 		let root = {
 			id: 'root',

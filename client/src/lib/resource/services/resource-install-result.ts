@@ -21,6 +21,16 @@ export type ResourceInstallOutcome =
 				string;
 
 			readonly status:
+				'current';
+	  }
+	| {
+			readonly reference:
+				PublishedResourceReference;
+
+			readonly resourceType:
+				string;
+
+			readonly status:
 				'unsupported';
 	  }
 	| {

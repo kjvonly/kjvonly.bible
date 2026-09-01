@@ -1,632 +1,670 @@
 import type {
-	ApplicationContext
+    ApplicationContext
 } from './application-context';
 
 import type {
-	ApplicationConfig
+    ApplicationConfig
 } from '$lib/application/config/application.config';
 
 import {
-	NostrSigner
+    NostrSigner
 } from '$lib/infrastructure/nostr/nostr-signer';
 
 import {
-	createBrowserResourceClient
+    createBrowserResourceClient
 } from '$lib/infrastructure/nostr/resource-client';
 
 import {
-	ResourceDiscovery
+    ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
-
-import {
-	ContentRepresentationResolver
-} from '$lib/resource/resolution/content-representation-resolver';
-
-import {
-	DescriptorsRepresentationResolver
-} from '$lib/resource/resolution/descriptors-representation-resolver';
-
-import {
-	BlossomResourceResolutionStrategy
-} from '$lib/resource/resolution/blossom-resource-resolution-strategy';
-
-import {
-	ResourceResolver
-} from '$lib/resource/resolution/resource-resolver';
-
-import {
-	ResourceDescriptorDocumentDecoder
-} from '$lib/resource/descriptors/resource-descriptor-document-decoder';
-
-import {
-	ResourceDescriptorValidator
-} from '$lib/resource/descriptors/resource-descriptor-validator';
-
-import {
-	ResourceContentDecoder
-} from '$lib/resource/content/resource-content-decoder';
-
-import {
-	ResourceContentDecoratorBuilder
-} from '$lib/resource/content/resource-content-decorator-builder';
-
-import {
-	JsonResourceContentDecorator
-} from '$lib/resource/content/json-resource-content-decorator';
-
-import {
-	GzipResourceContentDecorator
-} from '$lib/resource/content/gzip-resource-content-decorator';
-
-import {
-	HexResourceContentDecorator
-} from '$lib/resource/content/hex-resource-content-decorator';
-
-import {
-	ResourceReceiptService
-} from '$lib/resource/receipts/resource-receipt.service';
-
-import {
-	IndexedDBResourceReceiptStore
-} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Resource
 
 import {
-	ResourceService
-} from '$lib/resource/services/resource.service';
+    createBrowserResourceWorkerClient,
+    type ResourceWorkerClient
+} from '$lib/resource/worker/resource-worker-client';
 
 import {
-	ResourceLoader
+    ResourceLoader
 } from '$lib/resource/loading/resource-loader';
 
 import {
-	appendResourceReferenceBuilder
+    appendResourceReferenceBuilder
 } from '$lib/resource/loading/resource-reference-builder';
 
 import {
-	ResourceSelectionService
+    ResourceSelectionService
 } from '$lib/application/resources/resource-selection.service';
 
-// RESOURCE TYPES
+import type {
+    PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import type {
+    ResourceInstallResult
+} from '$lib/resource/services/resource-install-result';
+
+///////////////////////////////////////////////////////////////////////////////
+// Resource Types
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
+    BIBLE_CHAPTER_RESOURCE_TYPE
 } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
 import {
-	STRONGS_RESOURCE_TYPE
+    STRONGS_RESOURCE_TYPE
 } from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
 import {
-	IndexedDBBibleChapterInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
-
-import {
-	BibleChapterInstaller
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
-
-import {
-	BibleChapterInterpreter
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-	BibleChapterResourceHandler
-} from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
-
-import {
-	BibleChapterValidator
-} from '$lib/domains/bible/resources/chapters/bible-chapter-validator';
-
-import {
-	IndexedDBChapterStore
+    IndexedDBChapterStore
 } from '$lib/domains/bible/persistence/indexeddb-chapter-store';
 
 import {
-	ChapterService
+    ChapterService
 } from '$lib/domains/bible/services/chapter.service';
 
 import {
-	BibleVersionsService
+    BibleVersionsService
 } from '$lib/domains/bible/services/bibleVersions.service';
 
 import {
-	IndexedDBBibleVersionCatalog
+    IndexedDBBibleVersionCatalog
 } from '$lib/domains/bible/persistence/indexeddb-bible-version-catalog';
 
 import {
-	VerseService
+    VerseService
 } from '$lib/domains/bible/services/verse.service';
 
 import {
-	KJVONLY_PUBKEY
+    KJVONLY_PUBKEY
 } from '$lib/infrastructure/nostr/nostr';
 
 import {
-	getApplicationDB
+    getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import type {
-	BibleVersion
+    BibleVersion
 } from '$lib/domains/bible/models/bible-version.model';
 
 import {
-	createBibleVersionId
+    createBibleVersionId
 } from '$lib/domains/bible/utils/bible-identity';
 
 ///////////////////////////////////////////////////////////////////////////////
-// Strongs
+// Strong's
 
 import {
-	IndexedDBStrongsInstallationTransaction
-} from '$lib/domains/strongs/persistence/strongs-installation-transaction';
-
-import {
-	StrongsInstaller
-} from '$lib/domains/strongs/resources/definitions/strongs-installer';
-
-import {
-	StrongsInterpreter
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
-
-import {
-	StrongsValidator
-} from '$lib/domains/strongs/resources/definitions/strongs-validator';
-
-import {
-	StrongsResourceHandler
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
-
-import {
-	IndexedDBStrongsStore
+    IndexedDBStrongsStore
 } from '$lib/domains/strongs/persistence/indexeddb-strongs-store';
 
 import {
-	StrongsService
+    StrongsService
 } from '$lib/domains/strongs/services/strongs.service';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Persistence
 
 import {
-	LocalStorageResourceSelectionStore
+    LocalStorageResourceSelectionStore
 } from '$lib/infrastructure/persistence/local-storage-resource-selection-store';
 
 ///////////////////////////////////////////////////////////////////////////////
 
 const LOGIN_KEY =
-	'login';
+    'login';
 
 const NOSTR_STORAGE_PREFIX =
-	`${import.meta.env.VITE_NOSTR_STORAGE_PREFIX}`;
+    `${import.meta.env.VITE_NOSTR_STORAGE_PREFIX}`;
+
+const APPLICATION_BOOTSTRAP_RESOURCE:
+    PublishedResourceReference = {
+
+    publisher:
+        KJVONLY_PUBKEY,
+
+    resourceId:
+        'kjvonly/resources/collections/default'
+};
+
+///////////////////////////////////////////////////////////////////////////////
 
 type ApplicationState =
-	| 'created'
-	| 'starting'
-	| 'started'
-	| 'stopped';
+    | 'created'
+    | 'starting'
+    | 'started'
+    | 'stopped';
+
+///////////////////////////////////////////////////////////////////////////////
 
 export class Application {
 
-	readonly context:
-		ApplicationContext;
-
-	private state:
-		ApplicationState =
-			'created';
-
-	private startPromise:
-		Promise<void> |
-		undefined;
-
-	constructor(
-		private readonly config:
-			ApplicationConfig
-	) {
-		const nostrSigner =
-			new NostrSigner();
-
-		///////////////////////////////////////////////////////////////////////
-		// Resource
-
-		const resourceClient =
-			createBrowserResourceClient(
-				nostrSigner
-			);
-
-		const resourceDiscovery =
-			new ResourceDiscovery(
-				resourceClient
-			);
-
-		/*
-		 * The same decorator builder is used for:
-		 *
-		 * - normal Resource content decoding
-		 * - descriptor document decoding
-		 *
-		 * Descriptor retrieval strategies return raw
-		 * serialized bytes. They do not decode them.
-		 */
-		const resourceContentDecoratorBuilder =
-			new ResourceContentDecoratorBuilder([
-				{
-					token:
-						'application/json',
-
-					decorate:
-						(inner) =>
-							new JsonResourceContentDecorator(
-								inner
-							)
-				},
-				{
-					token:
-						'gzip',
-
-					decorate:
-						(inner) =>
-							new GzipResourceContentDecorator(
-								inner
-							)
-				},
-				{
-					token:
-						'hex',
-
-					decorate:
-						(inner) =>
-							new HexResourceContentDecorator(
-								inner
-							)
-				}
-			]);
-
-		const resourceContentDecoder =
-			new ResourceContentDecoder(
-				resourceContentDecoratorBuilder
-			);
-
-		/*
-		 * Resource receipts are shared by:
-		 *
-		 * - descriptor resolution for pre-download
-		 *   freshness checks
-		 *
-		 * - ResourceService for recording successful
-		 *   Resource processing
-		 */
-		const resourceReceiptStore =
-			new IndexedDBResourceReceiptStore(
-				getApplicationDB
-			);
-
-		const resourceReceiptService =
-			new ResourceReceiptService(
-				resourceReceiptStore
-			);
-
-		const resourceDescriptorDocumentDecoder =
-			new ResourceDescriptorDocumentDecoder(
-				resourceContentDecoratorBuilder
-			);
-
-		const resourceDescriptorValidator =
-			new ResourceDescriptorValidator();
-
-		const blossomResourceResolutionStrategy =
-			new BlossomResourceResolutionStrategy();
-
-		const descriptorsRepresentationResolver =
-			new DescriptorsRepresentationResolver(
-				resourceDescriptorDocumentDecoder,
-				resourceDescriptorValidator,
-				resourceReceiptService,
-				[
-					blossomResourceResolutionStrategy
-				]
-			);
-
-		const resourceResolver =
-			new ResourceResolver([
-				new ContentRepresentationResolver(),
-				descriptorsRepresentationResolver
-			]);
-
-		const resourceSelectionStore =
-			new LocalStorageResourceSelectionStore(
-				localStorage
-			);
-
-		const resourceSelectionService =
-			new ResourceSelectionService(
-				[
-					{
-						publisher:
-							KJVONLY_PUBKEY,
-
-						resourceId:
-							`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-					},
-					{
-						publisher:
-							KJVONLY_PUBKEY,
-
-						resourceId:
-							`${STRONGS_RESOURCE_TYPE}/kjvs`
-					}
-				],
-				resourceSelectionStore
-			);
-
-		///////////////////////////////////////////////////////////////////////
-		// Bible Chapter
-
-		const bibleChapterInstallationTransaction =
-			new IndexedDBBibleChapterInstallationTransaction(
-				getApplicationDB
-			);
-
-		const bibleChapterInstaller =
-			new BibleChapterInstaller(
-				bibleChapterInstallationTransaction
-			);
-
-		const bibleChapterResourceHandler =
-			new BibleChapterResourceHandler(
-				new BibleChapterInterpreter(),
-				new BibleChapterValidator(),
-				bibleChapterInstaller
-			);
-
-		const chapterStore =
-			new IndexedDBChapterStore(
-				getApplicationDB
-			);
-
-		const bibleVersionCatalog =
-			new IndexedDBBibleVersionCatalog(
-				getApplicationDB
-			);
-
-		const defaultBibleVersion:
-			BibleVersion = {
-			id:
-				createBibleVersionId(
-					KJVONLY_PUBKEY,
-					'kjvs'
-				),
-
-			publisher:
-				KJVONLY_PUBKEY,
-
-			version:
-				'kjvs'
-		};
-
-		const bibleVersionsService =
-			new BibleVersionsService(
-				bibleVersionCatalog,
-				defaultBibleVersion
-			);
-
-		///////////////////////////////////////////////////////////////////////
-		// Strongs
-
-		const strongsInstallationTransaction =
-			new IndexedDBStrongsInstallationTransaction(
-				getApplicationDB
-			);
-
-		const strongsInstaller =
-			new StrongsInstaller(
-				strongsInstallationTransaction
-			);
-
-		const strongsResourceHandler =
-			new StrongsResourceHandler(
-				new StrongsInterpreter(),
-				new StrongsValidator(),
-				strongsInstaller
-			);
-
-		const strongsStore =
-			new IndexedDBStrongsStore(
-				getApplicationDB
-			);
-
-		///////////////////////////////////////////////////////////////////////
-		// Resource loaders and services
-
-		const resourceService =
-			new ResourceService(
-				resourceDiscovery,
-				resourceResolver,
-				resourceContentDecoder,
-				resourceReceiptService,
-				[
-					bibleChapterResourceHandler,
-					strongsResourceHandler
-				]
-			);
-
-		// Chapter
-
-		const chapterResourceLoader =
-			new ResourceLoader<string>(
-				resourceService,
-				appendResourceReferenceBuilder
-			);
-
-		const chapterService =
-			new ChapterService(
-				chapterStore,
-				chapterResourceLoader
-			);
-
-		const verseService =
-			new VerseService(
-				chapterService
-			);
-
-		// Strongs
-
-		const strongsResourceLoader =
-			new ResourceLoader(
-				resourceService,
-				appendResourceReferenceBuilder
-			);
-
-		const strongsService =
-			new StrongsService(
-				strongsStore,
-				strongsResourceLoader
-			);
-
-		///////////////////////////////////////////////////////////////////////
-		// Application Context
-
-		this.context = {
-			nostrSigner,
-
-			resourceClient,
-			resourceDiscovery,
-			resourceResolver,
-			resourceContentDecoratorBuilder,
-			resourceContentDecoder,
-
-			resourceService,
-			resourceSelectionService,
-
-			chapterService,
-			verseService,
-			bibleVersionsService,
-
-			strongsService
-		};
-	}
-
-	start(): Promise<void> {
-		if (
-			this.state ===
-			'started'
-		) {
-			return Promise.resolve();
-		}
-
-		if (
-			this.state ===
-			'stopped'
-		) {
-			return Promise.reject(
-				new Error(
-					'Application has already been stopped.'
-				)
-			);
-		}
-
-		if (
-			this.startPromise !==
-			undefined
-		) {
-			return this.startPromise;
-		}
-
-		this.state =
-			'starting';
-
-		this.startPromise =
-			this.startInternal();
-
-		return this.startPromise;
-	}
-
-	async stop(): Promise<void> {
-		if (
-			this.state ===
-			'stopped'
-		) {
-			return;
-		}
-
-		this.context
-			.resourceClient
-			.dispose();
-
-		await this.context
-			.nostrSigner
-			.clear();
-
-		this.state =
-			'stopped';
-	}
-
-	private async startInternal():
-		Promise<void> {
-
-		try {
-			await this.restoreNsec();
-
-			this.context
-				.resourceSelectionService
-				.restore();
-
-			this.context
-				.resourceClient
-				.setDefaultRelays(
-					this.config
-						.resourceRelays
-				);
-
-			/*
-			 * Future startup sequencing
-			 * belongs here:
-			 *
-			 * 1. initialize persistence
-			 * 2. restore authentication
-			 * 3. initialize Domain services
-			 * 4. initialize Workspace Runtime
-			 * 5. become interactive
-			 * 6. begin background work
-			 */
-
-			this.state =
-				'started';
-		} catch (cause) {
-			this.state =
-				'created';
-
-			this.startPromise =
-				undefined;
-
-			throw cause;
-		}
-	}
-
-	private async restoreNsec():
-		Promise<void> {
-
-		const login =
-			localStorage.getItem(
-				`${NOSTR_STORAGE_PREFIX}:${LOGIN_KEY}`
-			);
-
-		if (
-			!login ||
-			!login.startsWith(
-				'nsec'
-			)
-		) {
-			return;
-		}
-
-		await this.context
-			.nostrSigner
-			.useNsec(
-				login
-			);
-	}
+    readonly context:
+        ApplicationContext;
+
+    private state:
+        ApplicationState =
+        'created';
+
+    private startPromise:
+        Promise<void> |
+        undefined;
+
+    private readonly resourceWorkerClient:
+        ResourceWorkerClient;
+
+    constructor(
+        private readonly config:
+            ApplicationConfig
+    ) {
+
+        ///////////////////////////////////////////////////////////////////////
+        // Nostr
+
+        const nostrSigner =
+            new NostrSigner();
+
+        const resourceClient =
+            createBrowserResourceClient(
+                nostrSigner
+            );
+
+        /*
+         * Nostr Resource discovery remains on the
+         * application/main thread.
+         *
+         * ResourceDiscovery converts transport-specific
+         * Nostr events into ResourceRepresentation values.
+         *
+         * Everything after that boundary executes through
+         * the Resource Worker.
+         */
+        const resourceDiscovery =
+            new ResourceDiscovery(
+                resourceClient
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Resource Worker
+
+        /*
+         * The Resource Worker owns Resource processing:
+         *
+         * ResourceService
+         *     ↓
+         * Resource Resolution
+         *     ↓
+         * descriptor processing
+         *     ↓
+         * external retrieval / integrity verification
+         *     ↓
+         * Resource content decoding
+         *     ↓
+         * ResourceHandler dispatch
+         *     ↓
+         * Domain interpretation / validation
+         *     ↓
+         * Domain installation
+         *     ↓
+         * Resource receipt persistence
+         *
+         * Resource discovery is bridged back to the
+         * main-thread ResourceDiscovery above.
+         */
+        const resourceWorkerClient =
+            createBrowserResourceWorkerClient(
+                resourceDiscovery
+            );
+
+        this.resourceWorkerClient =
+            resourceWorkerClient;
+
+        ///////////////////////////////////////////////////////////////////////
+        // Resource Selection
+
+        const resourceSelectionStore =
+            new LocalStorageResourceSelectionStore(
+                localStorage
+            );
+
+        const resourceSelectionService =
+            new ResourceSelectionService(
+                [
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
+                            `${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+                    },
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
+                            `${STRONGS_RESOURCE_TYPE}/kjvs`
+                    }
+                ],
+                resourceSelectionStore
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Bible
+
+        const chapterStore =
+            new IndexedDBChapterStore(
+                getApplicationDB
+            );
+
+        const bibleVersionCatalog =
+            new IndexedDBBibleVersionCatalog(
+                getApplicationDB
+            );
+
+        const defaultBibleVersion:
+            BibleVersion = {
+
+            id:
+                createBibleVersionId(
+                    KJVONLY_PUBKEY,
+                    'kjvs'
+                ),
+
+            publisher:
+                KJVONLY_PUBKEY,
+
+            version:
+                'kjvs'
+        };
+
+        const bibleVersionsService =
+            new BibleVersionsService(
+                bibleVersionCatalog,
+                defaultBibleVersion
+            );
+
+        /*
+         * ResourceLoader only depends on the generic
+         * install(reference) capability.
+         *
+         * Resource acquisition therefore executes through
+         * ResourceWorkerClient rather than a main-thread
+         * ResourceService.
+         */
+        const chapterResourceLoader =
+            new ResourceLoader<string>(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
+        const chapterService =
+            new ChapterService(
+                chapterStore,
+                chapterResourceLoader
+            );
+
+        const verseService =
+            new VerseService(
+                chapterService
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Strong's
+
+        const strongsStore =
+            new IndexedDBStrongsStore(
+                getApplicationDB
+            );
+
+        const strongsResourceLoader =
+            new ResourceLoader(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
+        const strongsService =
+            new StrongsService(
+                strongsStore,
+                strongsResourceLoader
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Application Context
+
+        /*
+         * Only application-facing capabilities are exposed.
+         *
+         * Resource resolution, decoding, handlers,
+         * installation transactions, receipt persistence,
+         * and ResourceService composition now live inside
+         * resource.worker.ts.
+         */
+        this.context = {
+            nostrSigner,
+
+            resourceClient,
+            resourceDiscovery,
+
+            resourceService:
+                resourceWorkerClient,
+
+            resourceSelectionService,
+
+            chapterService,
+            verseService,
+            bibleVersionsService,
+
+            strongsService
+        };
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    start():
+        Promise<void> {
+
+        if (
+            this.state ===
+            'started'
+        ) {
+            return Promise.resolve();
+        }
+
+        if (
+            this.state ===
+            'stopped'
+        ) {
+            return Promise.reject(
+                new Error(
+                    'Application has already been stopped.'
+                )
+            );
+        }
+
+        if (
+            this.startPromise !==
+            undefined
+        ) {
+            return this.startPromise;
+        }
+
+        this.state =
+            'starting';
+
+        this.startPromise =
+            this.startInternal();
+
+        return this.startPromise;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    async stop():
+        Promise<void> {
+
+        if (
+            this.state ===
+            'stopped'
+        ) {
+            return;
+        }
+
+        /*
+         * Stop Resource processing before disposing
+         * main-thread discovery transport.
+         *
+         * This prevents the Resource Worker from issuing
+         * another discovery request while ResourceClient
+         * infrastructure is being torn down.
+         */
+        this.resourceWorkerClient
+            .dispose();
+
+        this.context
+            .resourceClient
+            .dispose();
+
+        await this.context
+            .nostrSigner
+            .clear();
+
+        this.state =
+            'stopped';
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    private async startInternal():
+        Promise<void> {
+
+        try {
+            await this.restoreNsec();
+
+            this.context
+                .resourceSelectionService
+                .restore();
+
+            this.context
+                .resourceClient
+                .setDefaultRelays(
+                    this.config
+                        .resourceRelays
+                );
+
+            /*
+             * The application is interactive before
+             * bootstrap Resource processing begins.
+             */
+            this.state =
+                'started';
+
+            /*
+             * Bootstrap Resource installation is
+             * application policy.
+             *
+             * It intentionally does not block
+             * Application.start().
+             *
+             * Resource processing executes in the
+             * Resource Worker.
+             *
+             * Nostr discovery remains on the main thread
+             * and returns ResourceRepresentation across
+             * the worker bridge.
+             */
+            void this.installBootstrapResources();
+        } catch (cause) {
+            this.state =
+                'created';
+
+            this.startPromise =
+                undefined;
+
+            throw cause;
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    private async installBootstrapResources():
+        Promise<void> {
+
+        try {
+            const result =
+                await this.resourceWorkerClient
+                    .install(
+                        APPLICATION_BOOTSTRAP_RESOURCE
+                    );
+
+            if (!result.found) {
+                console.warn(
+                    '[Application bootstrap Resource not found]',
+                    APPLICATION_BOOTSTRAP_RESOURCE
+                );
+
+                return;
+            }
+
+            try {
+                this.initializeBootstrapResourceSelections(
+                    result
+                );
+            } catch (error) {
+                console.warn(
+                    '[Application bootstrap Resource selection initialization failed]',
+                    {
+                        reference:
+                            APPLICATION_BOOTSTRAP_RESOURCE,
+
+                        error
+                    }
+                );
+            }
+
+            const incomplete =
+                result.resources.filter(
+                    (resource) =>
+                        resource.status !==
+                        'handled' &&
+                        resource.status !==
+                        'current'
+                );
+
+            if (
+                incomplete.length >
+                0
+            ) {
+                console.warn(
+                    '[Application bootstrap Resources incomplete]',
+                    incomplete
+                );
+            }
+        } catch (error) {
+            console.warn(
+                '[Application bootstrap Resource installation failed]',
+                {
+                    reference:
+                        APPLICATION_BOOTSTRAP_RESOURCE,
+
+                    error
+                }
+            );
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    private initializeBootstrapResourceSelections(
+        result:
+            ResourceInstallResult
+    ): void {
+
+        const selections =
+            new Map<
+                string,
+                PublishedResourceReference
+            >();
+
+        for (
+            const resource of
+            result.resources
+        ) {
+            const reference =
+                resource.reference;
+
+            const resourceType =
+                resource.resourceType;
+
+            /*
+             * A failure can occur before a child
+             * descriptor has trustworthy Resource
+             * identity.
+             */
+            if (
+                reference ===
+                    undefined ||
+                resourceType ===
+                    undefined
+            ) {
+                continue;
+            }
+
+            /*
+             * A collection-level resolution failure may
+             * identify the requested bootstrap Resource
+             * itself. The collection is not one of its
+             * selectable child Resources.
+             */
+            if (
+                reference.publisher ===
+                    result.requested.publisher &&
+                reference.resourceId ===
+                    result.requested.resourceId
+            ) {
+                continue;
+            }
+
+            /*
+             * Generic descriptor collections may contain
+             * multiple Resources of the same Resource
+             * Type, but the application-default collection
+             * may contain at most one default per type.
+             */
+            if (
+                selections.has(
+                    resourceType
+                )
+            ) {
+                throw new Error(
+                    `Duplicate application bootstrap Resource Type: ${resourceType}`
+                );
+            }
+
+            selections.set(
+                resourceType,
+                {
+                    ...reference
+                }
+            );
+        }
+
+        this.context
+            .resourceSelectionService
+            .initializeMissing(
+                [
+                    ...selections.values()
+                ]
+            );
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    private async restoreNsec():
+        Promise<void> {
+
+        const login =
+            localStorage.getItem(
+                `${NOSTR_STORAGE_PREFIX}:${LOGIN_KEY}`
+            );
+
+        if (
+            !login ||
+            !login.startsWith(
+                'nsec'
+            )
+        ) {
+            return;
+        }
+
+        await this.context
+            .nostrSigner
+            .useNsec(
+                login
+            );
+    }
 }

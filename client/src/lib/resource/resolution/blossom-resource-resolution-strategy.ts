@@ -16,13 +16,13 @@ import {
 
 interface BlossomStrategyData {
 	readonly url:
-		string;
+	string;
 
 	readonly sha256:
-		string;
+	string;
 
 	readonly size?:
-		number;
+	number;
 }
 
 export class BlossomResourceResolutionStrategy
@@ -36,8 +36,10 @@ export class BlossomResourceResolutionStrategy
 			(
 				url: string
 			) => Promise<Response> =
-				fetch
-	) {}
+			globalThis.fetch.bind(
+				globalThis
+			)
+	) { }
 
 	async resolve(
 		descriptor:
@@ -92,9 +94,9 @@ export class BlossomResourceResolutionStrategy
 
 		if (
 			data.size !==
-				undefined &&
+			undefined &&
 			content.byteLength !==
-				data.size
+			data.size
 		) {
 			throw new Error(
 				'Blossom content size mismatch.'
@@ -134,9 +136,9 @@ function validateStrategyData(
 
 	if (
 		typeof url !==
-			'string' ||
+		'string' ||
 		url.length ===
-			0 ||
+		0 ||
 		!isValidUrl(
 			url
 		)
@@ -151,7 +153,7 @@ function validateStrategyData(
 
 	if (
 		typeof sha256 !==
-			'string' ||
+		'string' ||
 		!/^[0-9a-f]{64}$/.test(
 			sha256
 		)
@@ -166,10 +168,10 @@ function validateStrategyData(
 
 	if (
 		size !==
-			undefined &&
+		undefined &&
 		(
 			typeof size !==
-				'number' ||
+			'number' ||
 			!Number.isSafeInteger(
 				size
 			) ||
@@ -200,9 +202,9 @@ function isValidUrl(
 
 		return (
 			url.protocol ===
-				'https:' ||
+			'https:' ||
 			url.protocol ===
-				'http:'
+			'http:'
 		);
 	} catch {
 		return false;
@@ -227,7 +229,7 @@ function isObject(
 
 	return (
 		typeof value ===
-			'object' &&
+		'object' &&
 		value !== null &&
 		!Array.isArray(
 			value

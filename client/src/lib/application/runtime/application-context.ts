@@ -11,50 +11,66 @@ import type {
     NostrSigner
 } from '$lib/infrastructure/nostr/nostr-signer';
 
-import type { ResourceDiscovery } from '$lib/resource/nostr/resource-discovery';
-import type { ResourceResolver } from '$lib/resource/resolution/resource-resolver';
-
+import type {
+    ResourceDiscovery
+} from '$lib/resource/nostr/resource-discovery';
 
 import type {
-    ResourceContentDecoder
-} from '$lib/resource/content/resource-content-decoder';
-import type { ResourceContentDecoratorBuilder } from '$lib/resource/content/resource-content-decorator-builder';
-import type { ChapterService } from '$lib/domains/bible/services/chapter.service';
-import type { BibleVersionsService } from '$lib/domains/bible/services/bibleVersions.service';
-import type { VerseService } from '$lib/domains/bible/services/verse.service';
-import type { StrongsService } from '$lib/domains/strongs/services/strongs.service';
-import type { ResourceService } from '$lib/resource/services/resource.service';
-import type { ResourceSelectionService } from '$lib/application/resources/resource-selection.service';
+    ResourceSelectionService
+} from '$lib/application/resources/resource-selection.service';
+
+import type {
+    ResourceService
+} from '$lib/resource/services/resource.service';
+///////////////////////////////////////////////////////////////////////////////
+// Bible
+
+import type {
+    ChapterService
+} from '$lib/domains/bible/services/chapter.service';
+
+import type {
+    BibleVersionsService
+} from '$lib/domains/bible/services/bibleVersions.service';
+
+import type {
+    VerseService
+} from '$lib/domains/bible/services/verse.service';
+
+///////////////////////////////////////////////////////////////////////////////
+// Strong's
+
+import type {
+    StrongsService
+} from '$lib/domains/strongs/services/strongs.service';
+
+///////////////////////////////////////////////////////////////////////////////
+
 export interface ApplicationContext {
+
     readonly nostrSigner:
     NostrSigner;
 
-    // RESOURCE
-    
+    ///////////////////////////////////////////////////////////////////////////
+    // Resource
+
     readonly resourceClient:
     ResourceClient;
 
     readonly resourceDiscovery:
     ResourceDiscovery;
 
-    readonly resourceResolver:
-    ResourceResolver;
-
-    readonly resourceContentDecoratorBuilder:
-    ResourceContentDecoratorBuilder;
-
-    readonly resourceContentDecoder:
-    ResourceContentDecoder;
-
     readonly resourceService:
-    ResourceService;
+    Pick<
+        ResourceService,
+        'install'
+    >;
 
-    
+    readonly resourceSelectionService:
+    ResourceSelectionService;
 
-	readonly resourceSelectionService:
-		ResourceSelectionService;
-
-    // BIBLE
+    ///////////////////////////////////////////////////////////////////////////
+    // Bible
 
     readonly chapterService:
     ChapterService;
@@ -65,25 +81,34 @@ export interface ApplicationContext {
     readonly bibleVersionsService:
     BibleVersionsService;
 
-    // STRONGS
-    
+    ///////////////////////////////////////////////////////////////////////////
+    // Strong's
+
     readonly strongsService:
     StrongsService;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 const APPLICATION_CONTEXT =
     Symbol(
         'kjvonly.application-context'
     );
 
+///////////////////////////////////////////////////////////////////////////////
+
 export function provideApplicationContext(
-    context: ApplicationContext
+    context:
+        ApplicationContext
 ): void {
+
     setContext(
         APPLICATION_CONTEXT,
         context
     );
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 export function useApplicationContext():
     ApplicationContext {
@@ -96,7 +121,10 @@ export function useApplicationContext():
             APPLICATION_CONTEXT
         );
 
-    if (context === undefined) {
+    if (
+        context ===
+        undefined
+    ) {
         throw new Error(
             'Application context is not available.'
         );

@@ -24,6 +24,7 @@ import type {
 } from './resource-representation-resolver';
 
 import type {
+	ResourceResolutionCurrent,
 	ResourceResolutionFailure,
 	ResourceResolutionResult
 } from './resource-resolution-result';
@@ -116,6 +117,9 @@ export class DescriptorsRepresentationResolver
 				contents:
 					[],
 
+				current:
+					[],
+
 				failures: [
 					{
 						publisher:
@@ -135,6 +139,10 @@ export class DescriptorsRepresentationResolver
 
 		const contents:
 			VerifiedResourceContent[] =
+				[];
+
+		const current:
+			ResourceResolutionCurrent[] =
 				[];
 
 		const failures:
@@ -163,6 +171,17 @@ export class DescriptorsRepresentationResolver
 					);
 
 				if (!shouldProcess) {
+					current.push({
+						publisher:
+							descriptor.metadata.publisher,
+
+						resourceId:
+							descriptor.metadata.resourceId,
+
+						resourceType:
+							descriptor.metadata.category
+					});
+
 					continue;
 				}
 
@@ -232,6 +251,7 @@ export class DescriptorsRepresentationResolver
 
 		return {
 			contents,
+			current,
 			failures
 		};
 	}

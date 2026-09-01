@@ -12,6 +12,7 @@ import type {
 } from '$lib/resource/resolution/resource-resolver';
 
 import type {
+	ResourceResolutionCurrent,
 	ResourceResolutionFailure
 } from '$lib/resource/resolution/resource-resolution-result';
 
@@ -39,6 +40,12 @@ export class ResourceService {
 			string,
 			ResourceHandler
 		>;
+
+	private readonly inFlightInstalls =
+		new Map<
+			string,
+			Promise<ResourceInstallResult>
+		>();
 
 	constructor(
 		private readonly discovery:
@@ -97,10 +104,60 @@ export class ResourceService {
 			handlerMap;
 	}
 
-	async install(
+	install(
 		reference:
 			PublishedResourceReference
 	): Promise<ResourceInstallResult> {
+
+		const key =
+			this.createInstallKey(
+				reference
+			);
+
+		const inFlight =
+			this.inFlightInstalls.get(
+				key
+			);
+
+		if (
+			inFlight !==
+			undefined
+		) {
+			return inFlight;
+		}
+
+		const install =
+			this.installResource(
+				reference
+			);
+
+		this.inFlightInstalls.set(
+			key,
+			install
+		);
+
+		void install.then(
+			() =>
+				this.clearInFlightInstall(
+					key,
+					install
+				),
+
+			() =>
+				this.clearInFlightInstall(
+					key,
+					install
+				)
+		);
+
+		return install;
+	}
+
+	private async installResource(
+		reference:
+			PublishedResourceReference
+	): Promise<ResourceInstallResult> {
+
 		const representation =
 			await this.discovery.get(
 				reference
@@ -136,6 +193,17 @@ export class ResourceService {
 				);
 
 		for (
+			const current
+			of resolution.current
+		) {
+			resources.push(
+				this.createCurrentOutcome(
+					current
+				)
+			);
+		}
+
+		for (
 			const content
 			of resolution.contents
 		) {
@@ -154,6 +222,61 @@ export class ResourceService {
 				true,
 
 			resources
+		};
+	}
+
+	private createInstallKey(
+		reference:
+			PublishedResourceReference
+	): string {
+
+		return JSON.stringify([
+			reference.publisher,
+			reference.resourceId
+		]);
+	}
+
+	private clearInFlightInstall(
+		key:
+			string,
+
+		install:
+			Promise<ResourceInstallResult>
+	): void {
+
+		if (
+			this.inFlightInstalls.get(
+				key
+			) !==
+			install
+		) {
+			return;
+		}
+
+		this.inFlightInstalls.delete(
+			key
+		);
+	}
+
+	private createCurrentOutcome(
+		current:
+			ResourceResolutionCurrent
+	): ResourceInstallOutcome {
+
+		return {
+			reference: {
+				publisher:
+					current.publisher,
+
+				resourceId:
+					current.resourceId
+			},
+
+			resourceType:
+				current.resourceType,
+
+			status:
+				'current'
 		};
 	}
 

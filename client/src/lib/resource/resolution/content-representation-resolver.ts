@@ -45,8 +45,8 @@ export class ContentRepresentationResolver
 				}
 			],
 
-			failures:
-				[]
+			current: [],
+			failures: []
 		};
 	}
 }
