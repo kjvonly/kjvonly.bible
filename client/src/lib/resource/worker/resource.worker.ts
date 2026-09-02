@@ -114,13 +114,14 @@ import {
 import {
 	StrongsResourceHandler
 } from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
+import { ResourceProcessor } from '../services/resource-processor';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Worker port
 
 const workerPort =
 	self as unknown as
-		ResourceWorkerDiscoveryPort;
+	ResourceWorkerDiscoveryPort;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Discovery
@@ -286,10 +287,8 @@ const strongsResourceHandler =
 //
 // The only difference from normal main-thread composition is that Discovery
 // is represented by ResourceWorkerDiscovery.
-
-const resourceService =
-	new ResourceService(
-		resourceDiscovery,
+const resourceProcessor =
+	new ResourceProcessor(
 		resourceResolver,
 		resourceContentDecoder,
 		resourceReceiptService,
@@ -297,6 +296,12 @@ const resourceService =
 			bibleChapterResourceHandler,
 			strongsResourceHandler
 		]
+	);
+
+const resourceService =
+	new ResourceService(
+		resourceDiscovery,
+		resourceProcessor
 	);
 
 ///////////////////////////////////////////////////////////////////////////////
