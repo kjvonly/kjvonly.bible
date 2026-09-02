@@ -2,16 +2,16 @@
 
 ## Status
 
-**Status:** Implemented except for the final Resource Worker coordinator / child-worker routing slice  
-**Scope:** Application bootstrap policy, default Resource collection, Resource Selection initialization, startup fallback selections, Resource Worker execution, bootstrap reliability, integration behavior, and final worker concurrency design  
+**Status:** Implemented and validated  
+**Scope:** Application bootstrap policy, default Resource collection, Resource Selection initialization, startup fallback selections, Resource Worker execution, bootstrap reliability, fixed worker concurrency, and production validation  
 **Application:** KJVOnly.bible  
-**Date:** 2026-08-31
+**Date:** 2026-09-02
 
 ---
 
 # 1. Purpose
 
-This document captures the Application Bootstrap design and implementation work completed during the 2026-08-30 through 2026-08-31 implementation cycle.
+This document captures the Application Bootstrap design and implementation work completed during the 2026-08-30 through 2026-09-02 implementation cycle.
 
 The work began with a small application startup requirement:
 
@@ -31,14 +31,16 @@ That requirement expanded into several related problems that needed to be solved
 - how Resource processing moves into a Web Worker,
 - how worker failure propagates to callers,
 - how large descriptor-backed bootstrap work avoids blocking latency-sensitive content Resources,
-- and how the Resource Worker can evolve into a small coordinator with representation-specific child workers.
+- how the Resource Worker became a small coordinator with representation-specific child workers,
+- how post-discovery Resource processing was separated into `ResourceProcessor`,
+- how Resource worker composition was centralized without turning worker entrypoints into composition roots,
+- how fixed descriptor concurrency and content isolation were tested,
+- how worker transport values are normalized into plain structured-cloneable DTOs,
+- and how production-preview validation distinguished real runtime latency from Vite development-mode startup cost.
 
-This document records both:
+This document records the completed Application Bootstrap implementation, including the final Resource Worker coordinator / child-worker execution topology and the validation work that followed it.
 
-1. the implementation that is already complete, and
-2. the final planned Resource Worker execution change required before Application Bootstrap is considered finished.
-
-The final worker change does not alter bootstrap semantics. It changes only how Resource processing work is scheduled inside the Resource worker subsystem.
+The worker changes do not alter bootstrap semantics. They change only how Resource processing work is composed, routed, and executed inside the Resource worker subsystem.
 
 ---
 
@@ -1421,21 +1423,55 @@ without changing application-facing Chapter identity.
 
 After fallback selections were implemented, first startup correctly downloaded the individual Genesis 1 Resource.
 
-However a noticeable delay remained.
+A noticeable delay still appeared in development, which initially suggested that bulk descriptor processing and latency-sensitive content processing were contending inside one Resource worker execution lane.
 
-That proved:
+That observation motivated the representation-specific worker topology described later in this document.
+
+The final implementation and production-preview validation refined the diagnosis.
+
+With bootstrap temporarily disabled, Genesis 1 was still slow on a cold Vite development load even though:
+
+```text
+relay discovery
+    → completed within milliseconds
+
+content-worker IndexedDB open
+    → approximately 2–5 ms
+
+Chapter installation transaction
+    → approximately 5 ms on first install
+    → approximately 2 ms on the next Chapter
+```
+
+The browser was still downloading and transforming application TypeScript modules near the two-second mark.
+
+A production build removed that development-only module-loading pattern. After the worker transport clone issue described in Section 55 was corrected, production preview showed:
+
+```text
+bootstrap bundles
+    → approximately 500 ms download/install window in the tested local environment
+
+Genesis 1 individual Resource
+    → rendered quickly
+```
+
+Therefore the final conclusion is:
 
 ```text
 selection availability
-    → fixed
+    → fixed by startup fallback selections
 
-Resource execution contention
-    → still present
+content vs descriptor execution isolation
+    → implemented and verified
+
+IndexedDB cold-open / transaction cost
+    → not the observed multi-second delay
+
+remaining cold delay observed in development
+    → Vite development-mode module loading / transformation cost
 ```
 
-The remaining issue was not missing Resource identity.
-
-It was worker execution topology.
+The worker topology remains valuable because it provides a real independent content execution lane, but production validation did not show Genesis blocked behind bootstrap descriptor work.
 
 ---
 
@@ -1486,7 +1522,7 @@ This is a useful boundary and should remain stable.
 
 # 55. Current Worker Message Contract
 
-The main thread currently sends:
+The main thread sends:
 
 ```text
 install {
@@ -1516,6 +1552,45 @@ discovery-result {
 ```
 
 The representation becomes known before Resource Resolution begins.
+
+## Plain transport DTO rule
+
+A production-preview failure exposed an important worker-boundary requirement.
+
+Passing the caller-owned `PublishedResourceReference` object directly to `Worker.postMessage(...)` produced:
+
+```text
+DataCloneError:
+Failed to execute 'postMessage' on 'Worker'
+```
+
+The compile-time TypeScript shape was correct, but a caller may supply an object whose runtime representation is not structured-cloneable, such as a reactive/wrapped object.
+
+`ResourceWorkerClient` therefore materializes a plain transport DTO before crossing the worker boundary:
+
+```ts
+reference: {
+    publisher:
+        reference.publisher,
+
+    resourceId:
+        reference.resourceId
+}
+```
+
+The boundary rule is:
+
+```text
+application-owned object
+    ↓
+ResourceWorkerClient
+    ↓
+plain PublishedResourceReference DTO
+    ↓
+postMessage
+```
+
+Worker transport should depend on the serialized values required by the contract, not on the concrete runtime identity of the caller's object.
 
 ---
 
@@ -1548,25 +1623,71 @@ Resource worker subsystem
 
 # 57. Worker-Side Resource Processing
 
-The current Resource worker owns:
+The final Resource worker subsystem is split into coordination and post-discovery processing responsibilities.
+
+The Coordinator owns:
 
 ```text
 ResourceService
-ResourceResolver
-ContentRepresentationResolver
-DescriptorsRepresentationResolver
-ResourceDescriptorDocumentDecoder
-ResourceDescriptorValidator
-BlossomResourceResolutionStrategy
-ResourceContentDecoder
-ResourceReceiptService
-Bible Chapter Resource Handler
-Strong's Resource Handler
-Domain installers
-IndexedDB persistence adapters
+ResourceWorkerDiscovery
+ResourceWorkerProcessorRouter
+Content ResourceChildWorkerClient
+ResourceDescriptorWorkerPool
+three Descriptor ResourceChildWorkerClients
 ```
 
-This removed Resource CPU/data processing from the main application composition.
+Post-discovery processing is owned by `ResourceProcessor` instances inside the child workers.
+
+`ResourceProcessor` owns the normal processing sequence after root discovery:
+
+```text
+ResourceRepresentation
+    ↓
+Resource Resolution
+    ↓
+Resource Content Decoding
+    ↓
+Resource Handler dispatch
+    ↓
+Domain interpretation / validation
+    ↓
+Domain installation
+    ↓
+Resource receipt
+```
+
+The processing object graph is assembled in one Resource-worker composition module:
+
+```text
+resource-worker-composition.ts
+    ├── createContentResourceProcessor()
+    └── createDescriptorResourceProcessor()
+```
+
+The Content processor is configured with:
+
+```text
+ContentRepresentationResolver
+```
+
+The Descriptor processor is configured with:
+
+```text
+DescriptorsRepresentationResolver
+    ↓
+ResourceDescriptorDocumentDecoder
+ResourceDescriptorValidator
+ResourceReceiptService
+BlossomResourceResolutionStrategy
+```
+
+Both processors reuse the shared downstream decoding and Domain-handler infrastructure required after verified content exists.
+
+The worker entry files remain thin transport hosts. They do not each recreate the knowledge of how Resource processing services are assembled.
+
+This preserves one composition rule:
+
+> Do not duplicate the knowledge of how Resource processing services are assembled across worker entrypoints.
 
 ---
 
@@ -1586,9 +1707,19 @@ large Domain installation transactions
 
 These operations should not block Svelte rendering or interaction on the main thread.
 
-The worker move therefore addressed UI-thread responsiveness.
+The first Resource Worker move addressed UI-thread responsiveness.
 
-It did not yet address head-of-line blocking between different Resource workloads inside the worker itself.
+The final coordinator topology additionally isolates representation-specific workloads:
+
+```text
+content
+    → one dedicated Content Worker
+
+descriptors
+    → fixed pool of three Descriptor Workers
+```
+
+Focused concurrency tests and a real-browser nested-worker integration test now prove that content processing can begin while all three descriptor workers are occupied and another descriptor request is queued.
 
 ---
 
@@ -1618,27 +1749,49 @@ This preserves one Nostr implementation and keeps worker Resource processing tra
 
 # 60. Worker Request Correlation
 
-Worker requests use request IDs.
+The worker subsystem uses correlation IDs at two distinct transport boundaries.
 
-This allows multiple outstanding install operations to be matched independently.
+## Outer correlation
 
-The `ResourceWorkerClient` already supports results arriving out of order.
+`ResourceWorkerClient` correlates:
+
+```text
+Application / main thread
+    ↔
+Resource Coordinator Worker
+```
+
+This allows multiple outstanding installs to resolve out of order while preserving the correct caller Promise.
+
+## Child correlation
+
+`ResourceChildWorkerClient` independently correlates:
+
+```text
+Resource Coordinator Worker
+    ↔
+Content / Descriptor child worker
+```
+
+The child client generates its own request IDs.
+
+The outer request ID is not propagated as the child transport ID.
 
 Conceptually:
 
 ```text
-install-1
-install-2
-
-worker returns:
-    install-2
-    install-1
-
-client resolves:
-    correct Promise for each request
+outer install-7
+    ↓
+Coordinator
+    ↓
+child process-3
+    ↓
+child result process-3
+    ↓
+Coordinator completes outer install-7
 ```
 
-This remains required after child-worker routing is added.
+This keeps transport correlation local to each message boundary and prevents child workers from depending on the main-thread request-ID scheme.
 
 ---
 
@@ -2159,9 +2312,9 @@ This naturally represents heavier work.
 
 # 80. Final Worker Design Principle
 
-The Application should continue to see exactly one Resource worker/service boundary.
+The Application continues to see exactly one Resource worker/service boundary.
 
-Internally, the Resource Worker should become a coordinator.
+Internally, `resource.worker.ts` is the Resource Coordinator Worker.
 
 Conceptually:
 
@@ -2172,7 +2325,14 @@ ResourceWorkerClient
     ↓
 Resource Coordinator Worker
     ↓
-representation-specific child workers
+ResourceService
+    ↓
+ResourceWorkerProcessorRouter
+    ├── content      → Content Resource Worker
+    └── descriptors  → ResourceDescriptorWorkerPool
+                           ├── Descriptor Worker 1
+                           ├── Descriptor Worker 2
+                           └── Descriptor Worker 3
 ```
 
 This keeps execution topology hidden from Application and Domain code.
@@ -2211,31 +2371,31 @@ The existing:
 resource.worker.ts
 ```
 
-should become the Resource Coordinator Worker.
+is the Resource Coordinator Worker.
 
-Its responsibilities become:
+Its responsibilities are:
 
 ```text
 accept outer install(reference) requests
 
-preserve request correlation
+preserve outer request correlation
 
 perform root Resource Discovery through the existing main-thread bridge
 
 receive ResourceRepresentation
 
-route by representation
+route post-discovery processing by representation
 
-coordinate child worker result/error messages
-
-preserve exact-reference in-flight semantics
-
-manage child worker lifecycle
+preserve exact-reference in-flight semantics through ResourceService
 
 forward final ResourceInstallResult to ResourceWorkerClient
 ```
 
-It should stop doing heavy Resource processing itself.
+Heavy Resource processing is no longer performed in the Coordinator.
+
+The Coordinator constructs one Content child client and a fixed three-slot Descriptor worker pool when its module initializes.
+
+No custom Coordinator shutdown-message protocol or child-worker restart/replacement policy was introduced. The outer `ResourceWorkerClient.dispose()` terminates the Coordinator Worker. Additional child lifecycle policy remains out of scope unless runtime evidence requires it.
 
 ---
 
@@ -2337,7 +2497,7 @@ This keeps bootstrap ordinary.
 
 # 87. Genesis 1 With Final Worker Topology
 
-The target fresh startup flow becomes:
+The implemented fresh-start flow is:
 
 ```text
 Application constructed
@@ -2373,7 +2533,9 @@ representation = content
 Content Resource Worker
 ```
 
-The two operations use separate child execution lanes.
+The operations use separate child execution lanes.
+
+This independence is covered both by focused worker tests and by a real-browser nested-worker integration test.
 
 ---
 
@@ -2436,15 +2598,7 @@ The Application and `ResourceWorkerClient` do not need to change their public re
 
 A child worker receives an already-discovered root representation.
 
-Conceptually the internal child request should contain enough information to preserve:
-
-```text
-outer request identity
-requested PublishedResourceReference
-ResourceRepresentation
-```
-
-For example:
+The implemented internal child request is conceptually:
 
 ```text
 process {
@@ -2454,55 +2608,77 @@ process {
 }
 ```
 
-The exact internal message type name is an implementation detail.
+where:
 
-The required semantic is not.
+```text
+requestId
+    → child-transport correlation owned by ResourceChildWorkerClient
+
+requested
+    → PublishedResourceReference requested by the outer Resource operation
+
+representation
+    → already-discovered ResourceRepresentation
+```
+
+The child request does not perform root Resource Discovery again.
+
+The child request ID is intentionally independent from the outer `ResourceWorkerClient` request ID.
 
 ---
 
 # 91. ResourceService Internal Refactor Seam
 
-Today `ResourceService.install(reference)` performs:
+The final implementation introduced a concrete post-discovery seam:
 
 ```text
-Discovery
+ResourceProcessor
+```
+
+Responsibilities are now separated as:
+
+```text
+ResourceService
+    → exact Published Resource in-flight deduplication
+    → root Resource Discovery
+
+ResourceProcessor
+    → Resource Resolution
+    → current/failure folding
+    → Resource Content Decoding
+    → Resource Handler dispatch
+    → Domain installation
+    → Resource receipt recording
+```
+
+`ResourceService` depends only on:
+
+```text
+ResourceDiscovery.get(...)
+ResourceProcessor.process(...)
+```
+
+Conceptually:
+
+```text
+ResourceService.install(reference)
     ↓
-Resolution
+exact-reference dedupe
     ↓
-processing
+ResourceDiscovery.get(reference)
+    ↓
+not found
+    → found:false
+
+found
+    ↓
+ResourceProcessor.process(
+    requested,
+    representation
+)
 ```
 
-The Coordinator topology discovers the root before choosing a child worker.
-
-Therefore worker-internal composition needs a seam that can begin processing from:
-
-```text
-ResourceRepresentation
-```
-
-without performing root Resource Discovery again.
-
-The external application-facing API should remain:
-
-```ts
-install(
-    PublishedResourceReference
-): Promise<ResourceInstallResult>
-```
-
-The exact internal class name is not locked.
-
-The implementation should prefer the smallest refactor that separates:
-
-```text
-root discovery
-
-from
-
-post-discovery Resource processing
-```
-
-without creating a second Resource architecture.
+This was the minimum clean seam needed by the Coordinator because it can discover the root once and route the already-discovered representation to a child worker without creating a second Resource lifecycle.
 
 ---
 
@@ -2567,27 +2743,31 @@ This preserves collection behavior and avoids unnecessary inter-worker chatter.
 
 ---
 
-# 94. Initial Descriptor Pool Scheduling
+# 94. Descriptor Pool Scheduling
 
-The first implementation should use a deliberately simple scheduling rule:
+The implemented `ResourceDescriptorWorkerPool` uses a deliberately simple rule:
 
 ```text
 descriptor request arrives
     ↓
-idle descriptor worker exists?
+first idle descriptor slot exists?
     ├── yes → assign request
     └── no  → enqueue FIFO
 ```
 
-When a descriptor worker finishes:
+When a descriptor worker finishes or its assigned Promise rejects:
 
 ```text
-mark idle
+mark slot idle
     ↓
-take next queued descriptor request
+shift oldest queued request
+    ↓
+dispatch it
 ```
 
-No more sophisticated policy is required now.
+The pool is Resource-specific and fixed at exactly three clients.
+
+No generic `WorkerPool`, priority scheduler, size scheduler, work stealing, retry mechanism, or dynamic worker-count policy is introduced.
 
 ---
 
@@ -2631,7 +2811,7 @@ for integrity/retrieval purposes.
 
 However scheduling by size is a separate concern.
 
-The current implementation should not add a generic Resource-level:
+The current implementation does not add a generic Resource-level:
 
 ```text
 size
@@ -2651,36 +2831,25 @@ Reasons:
 
 # 97. Descriptor Pool Is the Future Optimization Seam
 
-The Coordinator should depend conceptually on:
+The implemented routing seam is:
 
 ```text
-descriptor executor
+ResourceWorkerProcessorRouter
+    ├── content processor
+    └── descriptor processor
 ```
 
-rather than embedding scheduling assumptions throughout Resource processing.
-
-Today:
+The descriptor processor is currently:
 
 ```text
-descriptor executor
-    =
-fixed pool of three workers
-    +
-FIFO queue
+ResourceDescriptorWorkerPool
+    = fixed pool of three ResourceChildWorkerClient instances
+    + FIFO queue
 ```
 
-Future internal implementations may use:
+This localizes execution policy without creating a generic worker framework.
 
-```text
-dynamic worker count
-hardwareConcurrency
-size-aware assignment
-work stealing
-priority
-cancellation
-```
-
-without changing:
+Future internal implementations may change descriptor scheduling only if measurements justify it, without changing:
 
 ```text
 Application
@@ -2691,7 +2860,18 @@ Resource identities
 Resource lifecycle
 ```
 
-None of those future optimizations are part of the current bootstrap milestone.
+Possible future changes remain deliberately unimplemented:
+
+```text
+dynamic worker count
+hardwareConcurrency tuning
+size-aware assignment
+work stealing
+priority
+cancellation
+```
+
+None are required for the current bootstrap architecture.
 
 ---
 
@@ -2780,17 +2960,31 @@ It only allows independent Resource operations to execute on different worker th
 
 ---
 
-# 101. Child Worker Failure Requirement
+# 101. Child Worker Failure Behavior
 
-The final implementation must preserve the existing outward failure guarantee:
+The implemented `ResourceChildWorkerClient` preserves the outward guarantee:
 
-> No Resource install Promise may remain pending indefinitely because a worker execution lane failed.
+> No assigned Resource operation should remain pending because its child worker execution lane failed.
 
-If a child worker fails while processing an assigned request, the Coordinator must produce an outward failure/rejection for that affected request.
+Normal child processing errors are correlated to the affected request and reject that request.
 
-No automatic Resource operation retry is required.
+Fatal child `error` or `messageerror` events cause the child client to:
 
-The exact child replacement policy after an infrastructure crash is not part of bootstrap semantics and may be decided during implementation, but it must not silently retry the failed Resource operation.
+```text
+record terminal client failure
+    ↓
+terminate the child worker
+    ↓
+reject every pending child request
+    ↓
+reject future process(...) calls
+```
+
+`dispose()` likewise terminates the child and rejects pending/future processing.
+
+No automatic retry, restart, or replacement is implemented.
+
+The Descriptor pool currently treats a rejected child operation as a completed slot assignment and releases the slot. A separate failed-slot disable/replacement policy was deliberately not introduced without a concrete runtime requirement.
 
 ---
 
@@ -2865,7 +3059,9 @@ Worker ownership should follow subsystem ownership.
 
 # 105. Bootstrap Completion Definition
 
-Application Bootstrap should be considered complete when the following are implemented and tested:
+Application Bootstrap is complete for the current architecture.
+
+The implemented and tested milestone is:
 
 ```text
 bootstrap Published Resource reference
@@ -2919,17 +3115,38 @@ startup fallback selection layer
 Genesis 1 can identify/request individual Resource on first boot
     ✓
 
+post-discovery ResourceProcessor seam
+    ✓
+
+centralized Resource worker composition
+    ✓
+
 representation-specific child Resource execution
-    pending
+    ✓
 
 content Resource lane independent from descriptor work
-    pending
+    ✓
 
 three-worker descriptor pool
-    pending
+    ✓
+
+FIFO descriptor scheduling
+    ✓
+
+child worker transport/lifecycle coverage
+    ✓
+
+real-browser nested-worker concurrency proof
+    ✓
+
+plain structured-cloneable Resource reference transport
+    ✓
+
+production-preview startup validation
+    ✓
 ```
 
-Once the final worker routing slice is complete and green, no additional bootstrap-specific architecture work is currently required.
+No additional bootstrap-specific architecture work is currently required.
 
 ---
 
@@ -2959,284 +3176,320 @@ The bootstrap design evolved through the following commits.
 | `7728020d21184dfb2238eb85ccbac4afb29d221a` | 2026-08-31 20:17 | Added tests proving an identified failed bootstrap Resource may still initialize a missing Resource Selection. |
 | `043d9c278cc0012ce6975126104f0cd18547b74c` | 2026-08-31 20:23 | Reintroduced application-provided defaults as non-persisted startup fallbacks so individual Chapters can be requested immediately on first application start. |
 
-The final planned worker-coordinator commit should follow this sequence rather than revisiting earlier bootstrap semantics.
+The worker-coordinator work continued on 2026-09-02 after the commit sequence above. Commit hashes for that continuation were not recorded in this document at update time.
+
+That implementation cycle completed:
+
+- `ResourceProcessor` extraction from `ResourceService`,
+- worker-internal child message contracts,
+- `ResourceChildWorkerClient`,
+- one Content child worker,
+- one Descriptor child worker entrypoint,
+- centralized `resource-worker-composition.ts`,
+- a fixed three-worker `ResourceDescriptorWorkerPool`,
+- `ResourceWorkerProcessorRouter`,
+- focused child lifecycle and concurrency tests,
+- a real-browser nested-worker concurrency integration test,
+- production-preview validation,
+- and plain DTO normalization at the outer worker `postMessage` boundary.
 
 ---
 
-# 107. Final Worker Implementation Sequence
+# 107. Final Worker Implementation Record
 
-The remaining bootstrap implementation should be performed in small slices.
+The final worker work was implemented in small slices.
 
-## Step 1 — Introduce internal child-worker message contracts
+## Step 1 — Extract `ResourceProcessor`
 
-Add worker-internal messages for:
+`ResourceService` was reduced to:
+
+```text
+exact-reference in-flight deduplication
+    +
+root Resource Discovery
+```
+
+Post-discovery work moved into `ResourceProcessor`.
+
+This became the seam used by child workers.
+
+## Step 2 — Introduce internal child-worker message contracts
+
+A separate internal protocol was added for:
 
 ```text
 Coordinator → child
-    process discovered representation
+    process {
+        requestId
+        requested
+        representation
+    }
 
 Child → Coordinator
-    result
-
-Child → Coordinator
-    error
+    process-result
+    process-error
 ```
 
-Do not change the public `ResourceWorkerClient.install(reference)` contract.
+The public `ResourceWorkerClient.install(reference)` contract did not change.
 
-## Step 2 — Factor post-discovery Resource processing
+## Step 3 — Add `ResourceChildWorkerClient`
 
-Create the minimum worker-internal seam required to process:
+The child client owns:
 
 ```text
-ResourceRepresentation
+child request correlation
+pending Promises
+process-result/error deserialization
+fatal worker error/messageerror handling
+dispose behavior
 ```
 
-without performing root Resource Discovery again.
+It is Resource-specific rather than a generic worker client framework.
 
-Reuse the current:
+## Step 4 — Add Content and Descriptor child workers
 
-- Resource Resolver,
-- content decorators,
-- descriptor resolver,
-- Blossom strategy,
-- Resource handlers,
-- Domain installers,
-- receipt service.
+Both entrypoints are thin message hosts.
 
-Do not duplicate the Resource lifecycle.
-
-## Step 3 — Create Content child worker
-
-Create one child worker initialized with the normal post-discovery Resource processing dependencies.
-
-Route only:
+They obtain processors through:
 
 ```text
-representation = content
+resource-worker-composition.ts
 ```
 
-to this worker.
+rather than directly constructing all Resource and Domain dependencies in each entry file.
 
-## Step 4 — Create Descriptor child worker
+## Step 5 — Centralize worker processing composition
 
-Create a descriptor-capable child worker using the same post-discovery Resource processing infrastructure.
-
-It must preserve current descriptor behavior:
+The composition module provides:
 
 ```text
-best effort
-receipt checks
-Blossom
-integrity
-decode
-Domain handlers
-current outcomes
-failures
+createContentResourceProcessor()
+createDescriptorResourceProcessor()
 ```
 
-## Step 5 — Create fixed three-worker Descriptor Pool
+The Content processor is configured only for `content` root representations.
 
-Instantiate three descriptor child workers when the Coordinator starts.
+The Descriptor processor is configured only for `descriptors` root representations and retains Blossom/descriptor behavior.
 
-Track:
+## Step 6 — Add the fixed three-worker Descriptor pool
+
+`ResourceDescriptorWorkerPool` owns exactly three descriptor child clients and FIFO scheduling.
+
+## Step 7 — Add representation routing
+
+`ResourceWorkerProcessorRouter` routes:
 
 ```text
-idle
-busy
-queued request
+content
+    → Content child
+
+descriptors
+    → Descriptor pool
 ```
 
-Use FIFO when all workers are busy.
+## Step 8 — Preserve ResourceService deduplication
 
-## Step 6 — Route after root discovery
+Exact root identity deduplication remains before post-discovery child processing.
 
-Coordinator flow:
+## Step 9 — Harden child lifecycle behavior
+
+Tests cover:
 
 ```text
-outer install(reference)
+normal results
+serialized processing errors
+concurrent request correlation
+fatal worker error
+messageerror
+dispose
+postMessage failure
+```
+
+No retry/restart policy was added.
+
+## Step 10 — Keep shutdown policy minimal
+
+The earlier plan considered an explicit Coordinator shutdown protocol and a Descriptor-pool `dispose()` method.
+
+Those were not added.
+
+Current outer shutdown remains:
+
+```text
+ResourceWorkerClient.dispose()
     ↓
-root discovery bridge
-    ↓
-not found?
-    → normal found:false result
-
-found
-    ↓
-representation = content?
-    → Content Worker
-
-representation = descriptors?
-    → Descriptor Pool
+terminate Resource Coordinator Worker
 ```
 
-## Step 7 — Preserve outer request correlation
+No extra coordinator control message, child restart policy, or descriptor-slot replacement policy was introduced without a concrete requirement.
 
-The Coordinator must preserve the original outer request ID all the way to the final:
+## Step 11 — Normalize the outer worker transport DTO
+
+Production preview exposed a `DataCloneError` when a caller-owned reference object was passed directly to `postMessage`.
+
+`ResourceWorkerClient` now constructs a plain object containing only:
 
 ```text
-install-result
-or
-install-error
+publisher
+resourceId
 ```
 
-sent back to `ResourceWorkerClient`.
-
-## Step 8 — Preserve exact-reference in-flight deduplication
-
-Ensure duplicate concurrent root requests join one operation before child worker routing.
-
-Do not allow the same exact root Resource to occupy two descriptor workers.
-
-## Step 9 — Preserve failure lifecycle
-
-A failed child operation must complete/reject the affected outer request.
-
-A Coordinator failure must continue to trigger the existing main-thread worker failure behavior.
-
-No automatic Resource retry.
-
-## Step 10 — Update disposal
-
-When the Coordinator is disposed/terminated, child workers must not remain orphaned.
-
-Coordinator shutdown should terminate:
-
-```text
-Content Worker
-Descriptor Worker 1
-Descriptor Worker 2
-Descriptor Worker 3
-```
-
-## Step 11 — Run existing Resource integration suite unchanged where possible
-
-Existing Application callers should not need a new API.
-
-The strongest sign that the boundary is correct is that normal Resource Loader and Application bootstrap tests require little or no caller-side change.
+before crossing the worker boundary.
 
 ---
 
-# 108. Required Final Worker Tests
+# 108. Final Worker Test Coverage
 
-The final worker slice should add focused tests for execution routing.
+The final worker slice added focused coverage at each boundary.
 
-## Coordinator discovery routing
+## Resource Worker processor routing
+
+Tests prove:
 
 ```text
 content representation
-    → Content Worker
+    → Content processor only
 
 descriptors representation
-    → Descriptor Pool
+    → Descriptor pool only
 ```
 
-## Content isolation
+## Content isolation under descriptor saturation
+
+Using the real `ResourceDescriptorWorkerPool` with controlled processors:
 
 ```text
-descriptor worker busy
+Descriptor 1
+    → busy
 
-content request arrives
+Descriptor 2
+    → busy
 
-content request dispatched immediately
-without waiting for descriptor completion
+Descriptor 3
+    → busy
+
+Descriptor 4
+    → FIFO queued
+
+Content request
+    → starts and completes independently
 ```
 
-## Descriptor concurrency
+This is the key concurrency property.
+
+## Descriptor pool behavior
+
+Tests prove:
 
 ```text
-descriptor request A
-descriptor request B
-descriptor request C
-
-→ three descriptor workers occupied
+first three jobs occupy three slots
+fourth job queues
+completed/rejected slot releases capacity
+oldest queued job dispatches first
+FIFO order is preserved
 ```
 
-## Descriptor queue
+## `ResourceChildWorkerClient`
+
+Tests cover:
 
 ```text
-workers A/B/C busy
-
-descriptor request D
-    → queued
-
-one worker completes
-    → D dispatched
+process request serialization
+process-result resolution
+process-error rejection
+concurrent result correlation
+Resource failure error rehydration
+fatal worker crash
+messageerror
+dispose
+postMessage failure cleanup
 ```
 
-## FIFO descriptor queue
+## Existing outer coverage remains
 
-Given queued:
+The existing suite continues to cover:
 
 ```text
-D
-E
-F
+ResourceWorkerClient lifecycle
+ResourceService exact-reference deduplication
+Resource Discovery bridge
+Resource processing integration
+Application bootstrap selection policy
+real relay + Blossom descriptor installation
 ```
 
-workers should receive queued jobs in:
-
-```text
-D
-E
-F
-```
-
-order as capacity becomes available.
-
-## Exact root deduplication
-
-```text
-same exact descriptor Resource requested twice concurrently
-    → one child assignment
-    → callers share one operation/result
-```
-
-## Not-found root
-
-```text
-root discovery returns null
-    → no child worker selected
-    → found:false
-```
-
-## Child error propagation
-
-```text
-assigned child reports processing error
-    → affected outer request settles with failure/error
-```
-
-## Coordinator shutdown
-
-```text
-dispose/termination
-    → all child workers terminated
-```
+The full focused unit/integration suite was green after the worker changes.
 
 ---
 
-# 109. Bootstrap-Specific Final Integration Test
+# 109. Final Concurrency and Production Validation
 
-After child-worker routing is implemented, the most useful bootstrap-level concurrency proof is:
+Two additional validation layers were used after the focused tests.
+
+## Real-browser nested-worker concurrency integration
+
+The integration test enters through the real `ResourceWorkerClient` and real nested worker topology.
+
+To keep all three descriptor workers occupied long enough to observe the content lane, the test constructs four synthetic descriptor roots using a repeated known-good Blossom descriptor.
+
+Conceptually:
 
 ```text
-fresh application
+Descriptor root A
+    → Descriptor Worker 1 busy
+
+Descriptor root B
+    → Descriptor Worker 2 busy
+
+Descriptor root C
+    → Descriptor Worker 3 busy
+
+Descriptor root D
+    → Descriptor FIFO queue
+
+then
+
+individual Chapter content Resource
     ↓
-bootstrap descriptor install starts
+Content Worker
     ↓
-descriptor worker remains intentionally busy
-    ↓
-request Genesis 1
-    ↓
-Genesis 1 routed to Content Worker
-    ↓
-Genesis 1 completes without waiting for bootstrap descriptor job
+handled before descriptor roots settle
 ```
 
-The test does not need a production-sized Chapter dataset.
+The repeated descriptor work is intentionally artificial. A deterministic blocked-fetch injection would be cleaner, but worker-local Blossom construction makes main-test closure injection inappropriate without adding a production test hook. No test-only production seam was added.
 
-It only needs to prove execution-lane independence.
+The real-browser concurrency test passes and proves the nested-worker topology, not merely the router in isolation.
+
+## Production-preview startup validation
+
+A production build was then tested to distinguish real runtime behavior from Vite development-mode cold module loading.
+
+The first preview attempt exposed a worker transport bug:
+
+```text
+DataCloneError
+    → caller-owned PublishedResourceReference could not be structured-cloned
+```
+
+After `ResourceWorkerClient` began materializing a plain reference DTO before `postMessage`, preview behavior was:
+
+```text
+bootstrap bundles
+    → approximately 500 ms in the tested local environment
+
+Genesis 1
+    → rendered quickly
+```
+
+This validates the intended runtime property:
+
+```text
+background descriptor work
+    does not block
+latency-sensitive individual Chapter content acquisition
+```
+
+It also showed that the earlier multi-second cold delay observed in Vite development mode was not caused by IndexedDB transaction cost.
 
 ---
 
@@ -3978,21 +4231,27 @@ This specification refines earlier implementation/design documentation in severa
 
 1. `current` is now a first-class Resource install outcome rather than an invisible receipt skip.
 2. Application bootstrap results initialize missing Resource Selections.
-3. identified failed child Resources may initialize missing selections.
-4. application startup defaults exist as provisional non-persisted fallback selections.
-5. those fallbacks are not general runtime outage fallbacks.
-6. the Resource Worker is planned to become a Coordinator Worker with representation-specific child execution lanes.
-7. descriptor worker pooling is an execution optimization, not a Resource architecture change.
+3. Identified failed child Resources may initialize missing selections.
+4. Application startup defaults exist as provisional non-persisted fallback selections.
+5. Those fallbacks are not general runtime outage fallbacks.
+6. The Resource Worker is implemented as a Coordinator Worker with representation-specific child execution lanes.
+7. Descriptor worker pooling is an execution optimization, not a Resource architecture change.
+8. `ResourceService` now owns only exact-reference deduplication and root discovery, while `ResourceProcessor` owns post-discovery Resource processing.
+9. Resource worker processing composition is centralized in `resource-worker-composition.ts`; worker entrypoints remain thin hosts.
+10. Outer and child worker message transports own independent correlation IDs.
+11. Worker-boundary Resource references are materialized as plain structured-cloneable DTOs.
+12. No custom Coordinator shutdown protocol, child restart policy, or generic worker framework was introduced.
+13. Production-preview validation confirms that the final worker topology provides fast individual Chapter acquisition while bootstrap descriptor work proceeds independently.
 
 ADRs remain authoritative unless explicitly revised.
 
-Where an older implementation document describes an earlier implementation state, this document records the current implementation direction for Application Bootstrap.
+Where an older implementation document describes an earlier implementation state, this document records the completed current implementation for Application Bootstrap.
 
 ---
 
 # 145. Locked Decisions Summary
 
-The following decisions are considered locked for the completion of Application Bootstrap unless implementation evidence reveals a contradiction.
+The following decisions are considered locked for the completed Application Bootstrap implementation unless later implementation evidence reveals a contradiction.
 
 1. Application Bootstrap is Application policy, not generic Resource behavior.
 2. Bootstrap uses a normal `PublishedResourceReference`.
@@ -4013,8 +4272,8 @@ The following decisions are considered locked for the completion of Application 
 17. An identity-less failed child may not initialize a selection.
 18. The bootstrap root Resource itself is never treated as a selectable child default.
 19. Duplicate child Resource Types are a bootstrap policy error.
-20. ResourceSelectionService does not know which references are KJVOnly defaults.
-21. ResourceSelectionService maintains established current selections separately from startup fallbacks.
+20. `ResourceSelectionService` does not know which references are KJVOnly defaults.
+21. `ResourceSelectionService` maintains established current selections separately from startup fallbacks.
 22. Established current selections have precedence over fallback selections.
 23. Fallback selections are not persisted merely because they exist.
 24. `initializeMissing()` treats fallback-only Resource Types as missing established state.
@@ -4030,31 +4289,39 @@ The following decisions are considered locked for the completion of Application 
 34. Nostr Resource Discovery remains bridged to main-thread Resource infrastructure.
 35. Application continues to see one `ResourceWorkerClient`.
 36. The existing outer `install(reference)` API remains stable.
-37. `resource.worker.ts` becomes the Resource Coordinator Worker.
+37. `resource.worker.ts` is the Resource Coordinator Worker.
 38. The Coordinator discovers the root representation before selecting a child worker.
 39. One Content Resource Worker is created at Coordinator initialization.
 40. Three Descriptor Resource Workers are created at Coordinator initialization.
 41. `content` root representations route to the Content Worker.
 42. `descriptors` root representations route to the Descriptor Worker Pool.
 43. Bootstrap receives no special worker; it routes naturally as `descriptors`.
-44. Descriptor pool scheduling begins as idle-worker assignment plus FIFO queue.
+44. Descriptor pool scheduling is idle-slot assignment plus FIFO queue.
 45. Exact root in-flight deduplication occurs before child assignment.
 46. Child workers begin processing from an already-discovered root `ResourceRepresentation`.
-47. Child workers reuse the existing Resource Resolution, decoding, handler, installer, and receipt infrastructure.
-48. Descriptor child workers process their assigned root collection through completion rather than bouncing each descriptor child through the Coordinator.
-49. No generic Resource `size` field is added for scheduling.
-50. No size-aware scheduling is implemented now.
-51. No dynamic worker-count policy is implemented now.
-52. No automatic Resource operation retry is implemented.
-53. No generic application-wide worker pool is introduced.
-54. Search and Notes workers remain self-contained subsystem workers.
-55. The final worker coordinator/pool slice is the last currently known substantive Application Bootstrap task.
+47. `ResourceService` owns root discovery and exact-reference in-flight deduplication.
+48. `ResourceProcessor` owns post-discovery Resource processing.
+49. Resource worker processing dependency construction is centralized in `resource-worker-composition.ts`.
+50. Content and Descriptor worker entrypoints remain thin transport hosts.
+51. Descriptor child workers process their assigned root collection through completion rather than bouncing each descriptor child through the Coordinator.
+52. Outer Coordinator transport IDs and child transport IDs are independent.
+53. Worker-boundary `PublishedResourceReference` values are materialized as plain DTOs before `postMessage`.
+54. No generic Resource `size` field is added for scheduling.
+55. No size-aware scheduling is implemented now.
+56. No dynamic worker-count policy is implemented now.
+57. No automatic Resource operation retry is implemented.
+58. No child auto-restart/replacement policy is implemented.
+59. No generic application-wide worker pool is introduced.
+60. Search and Notes workers remain self-contained subsystem workers.
+61. No custom Coordinator shutdown-message protocol is required by the current bootstrap implementation.
+62. The coordinator/content/three-descriptor topology is implemented and tested.
+63. Production-preview validation confirms fast individual Chapter acquisition with bootstrap descriptor work active.
 
 ---
 
-# 146. Target End State
+# 146. Implemented End State
 
-The final Application Bootstrap and Resource execution architecture is:
+The implemented Application Bootstrap and Resource execution architecture is:
 
 ```mermaid
 flowchart TD
@@ -4154,9 +4421,9 @@ remains authoritative
 
 # 147. Final Bootstrap State
 
-After the remaining Resource Coordinator / child-worker routing slice is implemented and tested, Application Bootstrap should be considered complete for the current architecture.
+Application Bootstrap is complete for the current architecture.
 
-The resulting system will have:
+The resulting system has:
 
 ```text
 one application-facing Resource install API
@@ -4177,13 +4444,29 @@ provisional first-start fallbacks
 
 immediate individual Chapter acquisition
 
+one Resource Coordinator Worker
+
+one dedicated Content Resource Worker
+
+three fixed Descriptor Resource Workers
+
+FIFO descriptor scheduling
+
 worker-isolated Resource processing
 
 content latency isolation
 
 bounded descriptor concurrency
 
+centralized Resource worker composition
+
+explicit post-discovery ResourceProcessor seam
+
+plain structured-cloneable worker transport DTOs
+
 a clean seam for later scheduling optimization
 ```
 
-No additional bootstrap-specific service, Domain model, Resource representation, or background architecture is required at this time.
+Focused tests, real-browser nested-worker integration, and production-preview validation all support the current implementation.
+
+No additional bootstrap-specific service, Domain model, Resource representation, worker framework, or background architecture is required at this time.
