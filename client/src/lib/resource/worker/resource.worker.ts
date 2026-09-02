@@ -18,6 +18,10 @@ import {
 } from './resource-descriptor-worker-pool';
 
 import {
+	ResourceWorkerProcessorRouter
+} from './resource-worker-processor-router';
+
+import {
 	ResourceService
 } from '$lib/resource/services/resource.service';
 
@@ -93,32 +97,16 @@ function createDescriptorWorkerClient():
 // Once Discovery returns ResourceRepresentation, the Coordinator routes
 // processing by representation type.
 
+const resourceWorkerProcessor =
+	new ResourceWorkerProcessorRouter(
+		contentWorkerClient,
+		descriptorWorkerPool
+	);
+
 const resourceService =
 	new ResourceService(
 		resourceDiscovery,
-		{
-			process:
-				(
-					requested,
-					representation
-				) => {
-
-					if (
-						representation.representation ===
-							'content'
-					) {
-						return contentWorkerClient.process(
-							requested,
-							representation
-						);
-					}
-
-					return descriptorWorkerPool.process(
-						requested,
-						representation
-					);
-				}
-		}
+		resourceWorkerProcessor
 	);
 
 ///////////////////////////////////////////////////////////////////////////////
