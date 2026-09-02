@@ -14,6 +14,10 @@ import {
 } from './resource-child-worker-client';
 
 import {
+	ResourceDescriptorWorkerPool
+} from './resource-descriptor-worker-pool';
+
+import {
 	ResourceService
 } from '$lib/resource/services/resource.service';
 
@@ -54,8 +58,17 @@ const contentWorkerClient =
 		)
 	);
 
-const descriptorWorkerClient =
-	new ResourceChildWorkerClient(
+const descriptorWorkerPool =
+	new ResourceDescriptorWorkerPool([
+		createDescriptorWorkerClient(),
+		createDescriptorWorkerClient(),
+		createDescriptorWorkerClient()
+	]);
+
+function createDescriptorWorkerClient():
+	ResourceChildWorkerClient {
+
+	return new ResourceChildWorkerClient(
 		new Worker(
 			new URL(
 				'./resource-descriptor.worker.ts',
@@ -67,6 +80,7 @@ const descriptorWorkerClient =
 			}
 		)
 	);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Resource Service
@@ -99,7 +113,7 @@ const resourceService =
 						);
 					}
 
-					return descriptorWorkerClient.process(
+					return descriptorWorkerPool.process(
 						requested,
 						representation
 					);
