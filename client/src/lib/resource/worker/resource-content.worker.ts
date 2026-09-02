@@ -1,29 +1,20 @@
 import {
-	ResourceWorkerDiscovery,
-	type ResourceWorkerDiscoveryPort
-} from './resource-worker-discovery';
-
-import {
 	serializeResourceWorkerError,
-	serializeResourceWorkerInstallResult,
-	type ResourceWorkerInstallRequest
+	serializeResourceWorkerInstallResult
 } from './resource-worker-message';
+
+import type {
+	ResourceChildWorkerMessage,
+	ResourceChildWorkerRequest
+} from './resource-child-worker-message';
 
 import {
 	ContentRepresentationResolver
 } from '$lib/resource/resolution/content-representation-resolver';
 
 import {
-	DescriptorsRepresentationResolver
-} from '$lib/resource/resolution/descriptors-representation-resolver';
-
-import {
 	ResourceResolver
 } from '$lib/resource/resolution/resource-resolver';
-
-import {
-	BlossomResourceResolutionStrategy
-} from '$lib/resource/resolution/blossom-resource-resolution-strategy';
 
 import {
 	ResourceContentDecoratorBuilder
@@ -46,14 +37,6 @@ import {
 } from '$lib/resource/content/hex-resource-content-decorator';
 
 import {
-	ResourceDescriptorDocumentDecoder
-} from '$lib/resource/descriptors/resource-descriptor-document-decoder';
-
-import {
-	ResourceDescriptorValidator
-} from '$lib/resource/descriptors/resource-descriptor-validator';
-
-import {
 	IndexedDBResourceReceiptStore
 } from '$lib/resource/receipts/indexeddb-resource-receipt-store';
 
@@ -62,8 +45,8 @@ import {
 } from '$lib/resource/receipts/resource-receipt.service';
 
 import {
-	ResourceService
-} from '$lib/resource/services/resource.service';
+	ResourceProcessor
+} from '$lib/resource/services/resource-processor';
 
 import {
 	getApplicationDB
@@ -114,37 +97,30 @@ import {
 import {
 	StrongsResourceHandler
 } from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
-import {
-	ResourceProcessor
-} from '$lib/resource/services/resource-processor';
 
-import {
-	ResourceChildWorkerClient
-} from './resource-child-worker-client';
+interface ResourceContentWorkerPort {
+	postMessage(
+		message:
+			ResourceChildWorkerMessage
+	): void;
 
-///////////////////////////////////////////////////////////////////////////////
-// Worker port
+	addEventListener(
+		type:
+			'message',
+
+		listener:
+			(
+				event:
+					MessageEvent<
+						ResourceChildWorkerRequest
+					>
+			) => void
+	): void;
+}
 
 const workerPort =
 	self as unknown as
-	ResourceWorkerDiscoveryPort;
-
-///////////////////////////////////////////////////////////////////////////////
-// Discovery
-//
-// Nostr remains on the main thread.
-//
-// ResourceService sees the same logical:
-//
-//     get(reference)
-//         → ResourceRepresentation | null
-//
-// contract as normal ResourceDiscovery.
-
-const resourceDiscovery =
-	new ResourceWorkerDiscovery(
-		workerPort
-	);
+		ResourceContentWorkerPort;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Resource content decoding
@@ -190,18 +166,6 @@ const resourceContentDecoder =
 
 ///////////////////////////////////////////////////////////////////////////////
 // Resource receipts
-//
-// This same service is used by:
-//
-//     DescriptorsRepresentationResolver
-//         → needsProcessing()
-//
-// and:
-//
-//     ResourceService
-//         → markProcessed()
-//
-// so freshness checking and successful processing remain one policy.
 
 const resourceReceiptStore =
 	new IndexedDBResourceReceiptStore(
@@ -214,36 +178,11 @@ const resourceReceiptService =
 	);
 
 ///////////////////////////////////////////////////////////////////////////////
-// Descriptor resolution
-
-const resourceDescriptorDocumentDecoder =
-	new ResourceDescriptorDocumentDecoder(
-		resourceContentDecoratorBuilder
-	);
-
-const resourceDescriptorValidator =
-	new ResourceDescriptorValidator();
-
-const blossomResourceResolutionStrategy =
-	new BlossomResourceResolutionStrategy();
-
-const descriptorsRepresentationResolver =
-	new DescriptorsRepresentationResolver(
-		resourceDescriptorDocumentDecoder,
-		resourceDescriptorValidator,
-		resourceReceiptService,
-		[
-			blossomResourceResolutionStrategy
-		]
-	);
-
-///////////////////////////////////////////////////////////////////////////////
-// Generic Resource resolution
+// Content Resource resolution
 
 const resourceResolver =
 	new ResourceResolver([
-		new ContentRepresentationResolver(),
-		descriptorsRepresentationResolver
+		new ContentRepresentationResolver()
 	]);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -287,13 +226,9 @@ const strongsResourceHandler =
 	);
 
 ///////////////////////////////////////////////////////////////////////////////
-// Resource Service
-//
-// This is the real Resource lifecycle coordinator.
-//
-// The only difference from normal main-thread composition is that Discovery
-// is represented by ResourceWorkerDiscovery.
-const localResourceProcessor =
+// Resource Processor
+
+const resourceProcessor =
 	new ResourceProcessor(
 		resourceResolver,
 		resourceContentDecoder,
@@ -304,63 +239,8 @@ const localResourceProcessor =
 		]
 	);
 
-const contentWorkerClient =
-	new ResourceChildWorkerClient(
-		new Worker(
-			new URL(
-				'./resource-content.worker.ts',
-				import.meta.url
-			),
-			{
-				type:
-					'module'
-			}
-		)
-	);
-
-const resourceProcessorRouter:
-	Pick<
-		ResourceProcessor,
-		'process'
-	> = {
-	process:
-		(
-			requested,
-			representation
-		) => {
-
-			if (
-				representation.representation ===
-				'content'
-			) {
-				return contentWorkerClient.process(
-					requested,
-					representation
-				);
-			}
-
-			/*
-			 * Descriptor processing remains local to the
-			 * coordinator for this slice.
-			 *
-			 * The next slice moves descriptors into their
-			 * own child worker.
-			 */
-			return localResourceProcessor.process(
-				requested,
-				representation
-			);
-		}
-};
-
-const resourceService =
-	new ResourceService(
-		resourceDiscovery,
-		resourceProcessorRouter
-	);
-
 ///////////////////////////////////////////////////////////////////////////////
-// Install request host
+// Process request host
 
 workerPort.addEventListener(
 	'message',
@@ -371,31 +251,32 @@ workerPort.addEventListener(
 
 		if (
 			message.type !==
-			'install'
+			'process'
 		) {
 			return;
 		}
 
-		void handleInstall(
+		void handleProcess(
 			message
 		);
 	}
 );
 
-async function handleInstall(
+async function handleProcess(
 	message:
-		ResourceWorkerInstallRequest
+		ResourceChildWorkerRequest
 ): Promise<void> {
 
 	try {
 		const result =
-			await resourceService.install(
-				message.reference
+			await resourceProcessor.process(
+				message.requested,
+				message.representation
 			);
 
 		workerPort.postMessage({
 			type:
-				'install-result',
+				'process-result',
 
 			requestId:
 				message.requestId,
@@ -408,7 +289,7 @@ async function handleInstall(
 	} catch (error) {
 		workerPort.postMessage({
 			type:
-				'install-error',
+				'process-error',
 
 			requestId:
 				message.requestId,
