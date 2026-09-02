@@ -9,10 +9,10 @@ import type {
 } from './resource-child-worker-message';
 
 import {
-	createContentResourceProcessor
+	createDescriptorResourceProcessor
 } from './resource-worker-composition';
 
-interface ResourceContentWorkerPort {
+interface ResourceDescriptorWorkerPort {
 	postMessage(
 		message:
 			ResourceChildWorkerMessage
@@ -34,10 +34,10 @@ interface ResourceContentWorkerPort {
 
 const workerPort =
 	self as unknown as
-		ResourceContentWorkerPort;
+		ResourceDescriptorWorkerPort;
 
 const resourceProcessor =
-	createContentResourceProcessor();
+	createDescriptorResourceProcessor();
 
 workerPort.addEventListener(
 	'message',
