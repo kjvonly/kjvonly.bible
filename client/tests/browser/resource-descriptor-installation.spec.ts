@@ -65,6 +65,10 @@ import {
 	ResourceService
 } from '$lib/resource/services/resource.service';
 
+import {
+	ResourceProcessor
+} from '$lib/resource/services/resource-processor';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -995,9 +999,8 @@ function createService(
 			strongsInstaller
 		);
 
-	const service =
-		new ResourceService(
-			discovery,
+	const processor =
+		new ResourceProcessor(
 			resolver,
 			decoder,
 			receiptService,
@@ -1005,6 +1008,12 @@ function createService(
 				bibleChapterHandler,
 				strongsHandler
 			]
+		);
+
+	const service =
+		new ResourceService(
+			discovery,
+			processor
 		);
 
 	return {

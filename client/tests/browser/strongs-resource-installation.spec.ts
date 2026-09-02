@@ -28,6 +28,10 @@ import {
 } from '$lib/resource/services/resource.service';
 
 import {
+	ResourceProcessor
+} from '$lib/resource/services/resource-processor';
+
+import {
 	StrongsInterpreter
 } from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
@@ -754,14 +758,19 @@ function createService(
 			installer
 		);
 
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			decoder,
+			receiptService,
+			[
+				handler
+			]
+		);
+
 	return new ResourceService(
 		discovery,
-		resolver,
-		decoder,
-		receiptService,
-		[
-			handler
-		]
+		processor
 	);
 }
 
