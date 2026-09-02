@@ -1,15 +1,12 @@
 import {
 	describe,
 	expect,
-	it,
-	vi
+	it
 } from 'vitest';
 
 import type {
-	DecodedResourceContent,
 	PublishedResourceReference,
-	ResourceRepresentation,
-	VerifiedResourceContent
+	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
 import type {
@@ -17,14 +14,8 @@ import type {
 } from '$lib/resource/nostr/resource-discovery';
 
 import type {
-	ResourceHandler
-} from '$lib/resource/installation/resource-handler';
-
-import type {
-	ResourceResolutionCurrent,
-	ResourceResolutionFailure,
-	ResourceResolutionResult
-} from '$lib/resource/resolution/resource-resolution-result';
+	ResourceInstallResult
+} from './resource-install-result';
 
 import {
 	ResourceService
@@ -36,15 +27,15 @@ describe(
 		it(
 			'returns not found when the requested Resource does not exist',
 			async () => {
-				const receipts =
-					new FakeReceiptService();
+				const processor =
+					new FakeProcessor();
 
 				const service =
 					createService({
 						representation:
 							null,
 
-						receipts
+						processor
 					});
 
 				const result =
@@ -66,7 +57,7 @@ describe(
 				});
 
 				expect(
-					receipts.calls
+					processor.calls
 				).toHaveLength(
 					0
 				);
@@ -74,796 +65,39 @@ describe(
 		);
 
 		it(
-			'decodes and handles a supported Resource',
+			'passes the discovered Resource representation to the processor',
 			async () => {
-				const handler =
-					new FakeHandler(
-						'kjvonly/strongs/definitions'
-					);
+				const reference =
+					createReference();
 
-				const decoder =
-					new FakeDecoder();
+				const representation =
+					createRepresentation();
 
-				const receipts =
-					new FakeReceiptService();
-
-				const content =
-					createVerifiedContent();
+				const processor =
+					new FakeProcessor();
 
 				const service =
 					createService({
-						contents: [
-							content
-						],
-						decoder,
-						receipts,
-						handlers: [
-							handler
-						]
+						representation,
+						processor
 					});
 
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.found
-				).toBe(
-					true
+				await service.install(
+					reference
 				);
 
 				expect(
-					result.resources
+					processor.calls
 				).toEqual([
 					{
-						reference: {
-							publisher:
-								content.publisher,
+						requested:
+							reference,
 
-							resourceId:
-								content.resourceId
-						},
-
-						resourceType:
-							content.resourceType,
-
-						status:
-							'handled'
-					}
-				]);
-
-				expect(
-					decoder.contents
-				).toEqual([
-					content
-				]);
-
-				expect(
-					handler.resources
-				).toHaveLength(
-					1
-				);
-
-				expect(
-					receipts.calls
-				).toEqual([
-					{
-						publisher:
-							content.publisher,
-
-						resourceId:
-							content.resourceId,
-
-						modifiedAt:
-							content.modifiedAt
+						representation
 					}
 				]);
 			}
 		);
-
-		it(
-			'folds a Resource resolution failure into the install result',
-			async () => {
-				const error =
-					new Error(
-						'Blossom retrieval failed.'
-					);
-
-				const service =
-					createService({
-						contents:
-							[],
-
-						failures: [
-							{
-								publisher:
-									'publisher',
-
-								resourceId:
-									'kjvonly/bible/chapters/kjvs',
-
-								resourceType:
-									'kjvonly/bible/chapters',
-
-								error
-							}
-						]
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						reference: {
-							publisher:
-								'publisher',
-
-							resourceId:
-								'kjvonly/bible/chapters/kjvs'
-						},
-
-						resourceType:
-							'kjvonly/bible/chapters',
-
-						status:
-							'failed',
-
-						error
-					}
-				]);
-			}
-		);
-
-		it(
-			'preserves an identity-less Resource resolution failure',
-			async () => {
-				const error =
-					new Error(
-						'Invalid Resource descriptor.'
-					);
-
-				const service =
-					createService({
-						contents:
-							[],
-
-						failures: [
-							{
-								error
-							}
-						]
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						status:
-							'failed',
-
-						error
-					}
-				]);
-			}
-		);
-
-		it(
-			'preserves a current Resource without decoding handling or writing a receipt',
-			async () => {
-				const decoder =
-					new FakeDecoder();
-
-				const receipts =
-					new FakeReceiptService();
-
-				const handler =
-					new FakeHandler(
-						'kjvonly/bible/chapters'
-					);
-
-				const current:
-					ResourceResolutionCurrent = {
-					publisher:
-						'publisher',
-
-					resourceId:
-						'kjvonly/bible/chapters/kjvs',
-
-					resourceType:
-						'kjvonly/bible/chapters'
-				};
-
-				const service =
-					createService({
-						contents:
-							[],
-
-						current: [
-							current
-						],
-
-						decoder,
-						receipts,
-						handlers: [
-							handler
-						]
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						reference: {
-							publisher:
-								current.publisher,
-
-							resourceId:
-								current.resourceId
-						},
-
-						resourceType:
-							current.resourceType,
-
-						status:
-							'current'
-					}
-				]);
-
-				expect(
-					decoder.contents
-				).toHaveLength(
-					0
-				);
-
-				expect(
-					handler.resources
-				).toHaveLength(
-					0
-				);
-
-				expect(
-					receipts.calls
-				).toHaveLength(
-					0
-				);
-			}
-		);
-
-		it(
-			'folds resolution failures and continues processing resolved Resources',
-			async () => {
-				const error =
-					new Error(
-						'Resource resolution failed'
-					);
-
-				const content =
-					createVerifiedContent();
-
-				const receipts =
-					new FakeReceiptService();
-
-				const service =
-					createService({
-						contents: [
-							content
-						],
-
-						failures: [
-							{
-								error
-							}
-						],
-
-						receipts
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						status:
-							'failed',
-
-						error
-					},
-					{
-						reference: {
-							publisher:
-								content.publisher,
-
-							resourceId:
-								content.resourceId
-						},
-
-						resourceType:
-							content.resourceType,
-
-						status:
-							'handled'
-					}
-				]);
-
-				expect(
-					receipts.calls
-				).toHaveLength(
-					1
-				);
-			}
-		);
-
-		it(
-			'reports an unsupported Resource Type without decoding or recording a receipt',
-			async () => {
-				const decoder =
-					new FakeDecoder();
-
-				const receipts =
-					new FakeReceiptService();
-
-				const content =
-					createVerifiedContent({
-						resourceType:
-							'kjvonly/future/things',
-
-						resourceId:
-							'kjvonly/future/things/default'
-					});
-
-				const service =
-					createService({
-						contents: [
-							content
-						],
-						decoder,
-						receipts,
-						handlers:
-							[]
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						reference: {
-							publisher:
-								content.publisher,
-
-							resourceId:
-								content.resourceId
-						},
-
-						resourceType:
-							content.resourceType,
-
-						status:
-							'unsupported'
-					}
-				]);
-
-				expect(
-					decoder.contents
-				).toHaveLength(
-					0
-				);
-
-				expect(
-					receipts.calls
-				).toHaveLength(
-					0
-				);
-			}
-		);
-
-		it(
-			'dispatches different Resource Types to different handlers',
-			async () => {
-				const strongsHandler =
-					new FakeHandler(
-						'kjvonly/strongs/definitions'
-					);
-
-				const chapterHandler =
-					new FakeHandler(
-						'kjvonly/bible/chapters'
-					);
-
-				const receipts =
-					new FakeReceiptService();
-
-				const strongs =
-					createVerifiedContent();
-
-				const chapter =
-					createVerifiedContent({
-						resourceType:
-							'kjvonly/bible/chapters',
-
-						resourceId:
-							'kjvonly/bible/chapters/kjvs/1_1'
-					});
-
-				const service =
-					createService({
-						contents: [
-							strongs,
-							chapter
-						],
-						receipts,
-						handlers: [
-							strongsHandler,
-							chapterHandler
-						]
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources.map(
-						resource =>
-							resource.status
-					)
-				).toEqual([
-					'handled',
-					'handled'
-				]);
-
-				expect(
-					strongsHandler.resources
-				).toHaveLength(
-					1
-				);
-
-				expect(
-					strongsHandler.resources[0]
-						.resourceType
-				).toBe(
-					'kjvonly/strongs/definitions'
-				);
-
-				expect(
-					chapterHandler.resources
-				).toHaveLength(
-					1
-				);
-
-				expect(
-					chapterHandler.resources[0]
-						.resourceType
-				).toBe(
-					'kjvonly/bible/chapters'
-				);
-
-				expect(
-					receipts.calls
-				).toEqual([
-					{
-						publisher:
-							strongs.publisher,
-
-						resourceId:
-							strongs.resourceId,
-
-						modifiedAt:
-							strongs.modifiedAt
-					},
-					{
-						publisher:
-							chapter.publisher,
-
-						resourceId:
-							chapter.resourceId,
-
-						modifiedAt:
-							chapter.modifiedAt
-					}
-				]);
-			}
-		);
-
-		it(
-			'records a handler failure and continues processing other Resources',
-			async () => {
-				const failure =
-					new Error(
-						'Strong\'s failed'
-					);
-
-				const strongsHandler =
-					new FakeHandler(
-						'kjvonly/strongs/definitions',
-						failure
-					);
-
-				const chapterHandler =
-					new FakeHandler(
-						'kjvonly/bible/chapters'
-					);
-
-				const receipts =
-					new FakeReceiptService();
-
-				const failed =
-					createVerifiedContent();
-
-				const handled =
-					createVerifiedContent({
-						resourceType:
-							'kjvonly/bible/chapters',
-
-						resourceId:
-							'kjvonly/bible/chapters/kjvs/1_1'
-					});
-
-				const service =
-					createService({
-						contents: [
-							failed,
-							handled
-						],
-						receipts,
-						handlers: [
-							strongsHandler,
-							chapterHandler
-						]
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources[0]
-						.status
-				).toBe(
-					'failed'
-				);
-
-				expect(
-					result.resources[1]
-						.status
-				).toBe(
-					'handled'
-				);
-
-				expect(
-					chapterHandler.resources
-				).toHaveLength(
-					1
-				);
-
-				expect(
-					receipts.calls
-				).toEqual([
-					{
-						publisher:
-							handled.publisher,
-
-						resourceId:
-							handled.resourceId,
-
-						modifiedAt:
-							handled.modifiedAt
-					}
-				]);
-			}
-		);
-
-		it(
-			'records a decoding failure and continues processing other Resources',
-			async () => {
-				const bad =
-					createVerifiedContent({
-						resourceId:
-							'kjvonly/strongs/definitions/kjvs/G1'
-					});
-
-				const good =
-					createVerifiedContent({
-						resourceId:
-							'kjvonly/strongs/definitions/kjvs/G2'
-					});
-
-				const decoder =
-					new FakeDecoder(
-						bad.resourceId
-					);
-
-				const handler =
-					new FakeHandler(
-						'kjvonly/strongs/definitions'
-					);
-
-				const receipts =
-					new FakeReceiptService();
-
-				const service =
-					createService({
-						contents: [
-							bad,
-							good
-						],
-						decoder,
-						receipts,
-						handlers: [
-							handler
-						]
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources[0]
-						.status
-				).toBe(
-					'failed'
-				);
-
-				expect(
-					result.resources[1]
-						.status
-				).toBe(
-					'handled'
-				);
-
-				expect(
-					handler.resources
-				).toHaveLength(
-					1
-				);
-
-				expect(
-					handler.resources[0]
-						.resourceId
-				).toBe(
-					good.resourceId
-				);
-
-				expect(
-					receipts.calls
-				).toEqual([
-					{
-						publisher:
-							good.publisher,
-
-						resourceId:
-							good.resourceId,
-
-						modifiedAt:
-							good.modifiedAt
-					}
-				]);
-			}
-		);
-
-		it(
-			'keeps a successfully handled Resource handled when receipt persistence fails',
-			async () => {
-				const receiptFailure =
-					new Error(
-						'Receipt persistence failed'
-					);
-
-				const receipts =
-					new FakeReceiptService(
-						receiptFailure
-					);
-
-				const warning =
-					vi.spyOn(
-						console,
-						'warn'
-					).mockImplementation(
-						() => undefined
-					);
-
-				const content =
-					createVerifiedContent();
-
-				const service =
-					createService({
-						contents: [
-							content
-						],
-						receipts
-					});
-
-				const result =
-					await service.install(
-						createReference()
-					);
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						reference: {
-							publisher:
-								content.publisher,
-
-							resourceId:
-								content.resourceId
-						},
-
-						resourceType:
-							content.resourceType,
-
-						status:
-							'handled'
-					}
-				]);
-
-				expect(
-					receipts.calls
-				).toEqual([
-					{
-						publisher:
-							content.publisher,
-
-						resourceId:
-							content.resourceId,
-
-						modifiedAt:
-							content.modifiedAt
-					}
-				]);
-
-				expect(
-					warning
-				).toHaveBeenCalledWith(
-					'[Resource receipt write failed]',
-					{
-						publisher:
-							content.publisher,
-
-						resourceId:
-							content.resourceId,
-
-						modifiedAt:
-							content.modifiedAt,
-
-						error:
-							receiptFailure
-					}
-				);
-
-				warning.mockRestore();
-			}
-		);
-
 
 		it(
 			'deduplicates concurrent installs for the same Published Resource',
@@ -871,9 +105,13 @@ describe(
 				const discovery =
 					new DeferredDiscovery();
 
+				const processor =
+					new FakeProcessor();
+
 				const service =
 					createService({
-						discovery
+						discovery,
+						processor
 					});
 
 				const firstReference =
@@ -919,6 +157,12 @@ describe(
 				).toHaveLength(
 					1
 				);
+
+				expect(
+					processor.calls
+				).toHaveLength(
+					1
+				);
 			}
 		);
 
@@ -928,13 +172,18 @@ describe(
 				const discovery =
 					new DeferredDiscovery();
 
-				const receipts =
-					new FakeReceiptService();
+				const result =
+					createInstallResult();
+
+				const processor =
+					new FakeProcessor(
+						result
+					);
 
 				const service =
 					createService({
 						discovery,
-						receipts
+						processor
 					});
 
 				const reference =
@@ -968,41 +217,19 @@ describe(
 					await second;
 
 				expect(
+					firstResult
+				).toBe(
+					result
+				);
+
+				expect(
 					secondResult
 				).toBe(
 					firstResult
 				);
 
 				expect(
-					firstResult
-				).toEqual({
-					requested:
-						reference,
-
-					found:
-						true,
-
-					resources: [
-						{
-							reference: {
-								publisher:
-									'publisher',
-
-								resourceId:
-									'kjvonly/strongs/definitions/kjvs'
-							},
-
-							resourceType:
-								'kjvonly/strongs/definitions',
-
-							status:
-								'handled'
-						}
-					]
-				});
-
-				expect(
-					receipts.calls
+					processor.calls
 				).toHaveLength(
 					1
 				);
@@ -1020,16 +247,39 @@ describe(
 				const discovery =
 					new DeferredDiscovery();
 
+				const result =
+					createInstallResult({
+						resources: [
+							{
+								reference: {
+									publisher:
+										'publisher',
+
+									resourceId:
+										'kjvonly/strongs/definitions/kjvs'
+								},
+
+								resourceType:
+									'kjvonly/strongs/definitions',
+
+								status:
+									'failed',
+
+								error:
+									failure
+							}
+						]
+					});
+
+				const processor =
+					new FakeProcessor(
+						result
+					);
+
 				const service =
 					createService({
 						discovery,
-
-						handlers: [
-							new FakeHandler(
-								'kjvonly/strongs/definitions',
-								failure
-							)
-						]
+						processor
 					});
 
 				const reference =
@@ -1063,36 +313,19 @@ describe(
 					await second;
 
 				expect(
+					firstResult
+				).toBe(
+					result
+				);
+
+				expect(
 					secondResult
 				).toBe(
 					firstResult
 				);
 
 				expect(
-					firstResult.resources
-				).toEqual([
-					{
-						reference: {
-							publisher:
-								'publisher',
-
-							resourceId:
-								'kjvonly/strongs/definitions/kjvs'
-						},
-
-						resourceType:
-							'kjvonly/strongs/definitions',
-
-						status:
-							'failed',
-
-						error:
-							failure
-					}
-				]);
-
-				expect(
-					discovery.references
+					processor.calls
 				).toHaveLength(
 					1
 				);
@@ -1105,9 +338,13 @@ describe(
 				const discovery =
 					new DeferredDiscovery();
 
+				const processor =
+					new FakeProcessor();
+
 				const service =
 					createService({
-						discovery
+						discovery,
+						processor
 					});
 
 				const reference =
@@ -1188,6 +425,12 @@ describe(
 					found:
 						true
 				});
+
+				expect(
+					processor.calls
+				).toHaveLength(
+					1
+				);
 			}
 		);
 
@@ -1197,12 +440,13 @@ describe(
 				const discovery =
 					new DeferredDiscovery();
 
+				const processor =
+					new FakeProcessor();
+
 				const service =
 					createService({
 						discovery,
-
-						contents:
-							[]
+						processor
 					});
 
 				const firstReference =
@@ -1293,32 +537,11 @@ describe(
 					found:
 						true
 				});
-			}
-		);
-
-		it(
-			'rejects duplicate Resource Type handlers',
-			() => {
-				const handlerA =
-					new FakeHandler(
-						'kjvonly/strongs/definitions'
-					);
-
-				const handlerB =
-					new FakeHandler(
-						'kjvonly/strongs/definitions'
-					);
 
 				expect(
-					() =>
-						createService({
-							handlers: [
-								handlerA,
-								handlerB
-							]
-						})
-				).toThrow(
-					'Duplicate Resource handler: kjvonly/strongs/definitions'
+					processor.calls
+				).toHaveLength(
+					2
 				);
 			}
 		);
@@ -1337,25 +560,11 @@ function createService(
 				'get'
 			>;
 
-		readonly contents?:
-			readonly VerifiedResourceContent[];
-
-		readonly current?:
-			readonly ResourceResolutionCurrent[];
-
-		readonly failures?:
-			readonly ResourceResolutionFailure[];
-
-		readonly decoder?:
-			FakeDecoder;
-
-		readonly receipts?:
-			FakeReceiptService;
-
-		readonly handlers?:
-			readonly ResourceHandler[];
+		readonly processor?:
+			FakeProcessor;
 	} = {}
 ): ResourceService {
+
 	return new ResourceService(
 		options.discovery ??
 			new FakeDiscovery(
@@ -1365,39 +574,14 @@ function createService(
 					: options.representation
 			),
 
-		new FakeResolver({
-			contents:
-				options.contents ??
-				[
-					createVerifiedContent()
-				],
-
-			current:
-				options.current ??
-				[],
-
-			failures:
-				options.failures ??
-				[]
-		}),
-
-		options.decoder ??
-			new FakeDecoder(),
-
-		options.receipts ??
-			new FakeReceiptService(),
-
-		options.handlers ??
-			[
-				new FakeHandler(
-					'kjvonly/strongs/definitions'
-				)
-			]
+		options.processor ??
+			new FakeProcessor()
 	);
 }
 
 function createReference():
 	PublishedResourceReference {
+
 	return {
 		publisher:
 			'publisher',
@@ -1413,6 +597,7 @@ function createRepresentation(
 			{}
 ):
 	ResourceRepresentation {
+
 	return {
 		publisher:
 			'publisher',
@@ -1444,29 +629,21 @@ function createRepresentation(
 	};
 }
 
-function createVerifiedContent(
+function createInstallResult(
 	overrides:
-		Partial<VerifiedResourceContent> =
+		Partial<ResourceInstallResult> =
 			{}
-): VerifiedResourceContent {
+): ResourceInstallResult {
+
 	return {
-		publisher:
-			'publisher',
+		requested:
+			createReference(),
 
-		resourceId:
-			'kjvonly/strongs/definitions/kjvs',
+		found:
+			true,
 
-		resourceType:
-			'kjvonly/strongs/definitions',
-
-		modifiedAt:
-			100,
-
-		mediaType:
-			'application/json',
-
-		content:
-			'{}',
+		resources:
+			[],
 
 		...overrides
 	};
@@ -1662,139 +839,45 @@ class DeferredDiscovery {
 	}
 }
 
-class FakeResolver {
+interface FakeProcessorCall {
+	readonly requested:
+		PublishedResourceReference;
 
-	constructor(
-		private readonly result:
-			ResourceResolutionResult
-	) {}
-
-	async resolve(
-		_resource:
-			ResourceRepresentation
-	): Promise<
-		ResourceResolutionResult
-	> {
-		return this.result;
-	}
+	readonly representation:
+		ResourceRepresentation;
 }
 
-class FakeDecoder {
+class FakeProcessor {
 
-	readonly contents:
-		VerifiedResourceContent[] =
+	readonly calls:
+		FakeProcessorCall[] =
 			[];
 
 	constructor(
-		private readonly failingResourceId?:
-			string
+		private readonly result?:
+			ResourceInstallResult
 	) {}
 
-	async decode(
-		content:
-			VerifiedResourceContent
-	): Promise<DecodedResourceContent> {
-		this.contents.push(
-			content
-		);
+	async process(
+		requested:
+			PublishedResourceReference,
 
-		if (
-			content.resourceId ===
-			this.failingResourceId
-		) {
-			throw new Error(
-				'Decode failed'
-			);
-		}
+		representation:
+			ResourceRepresentation
+	): Promise<ResourceInstallResult> {
 
-		return {
-			publisher:
-				content.publisher,
-
-			resourceId:
-				content.resourceId,
-
-			resourceType:
-				content.resourceType,
-
-			modifiedAt:
-				content.modifiedAt,
-
-			mediaType:
-				content.mediaType,
-
-			value:
-				{}
-		};
-	}
-}
-
-class FakeReceiptService {
-
-	readonly calls: {
-		readonly publisher:
-			string;
-
-		readonly resourceId:
-			string;
-
-		readonly modifiedAt:
-			number;
-	}[] = [];
-
-	constructor(
-		private readonly failure?:
-			Error
-	) {}
-
-	async markProcessed(
-		publisher: string,
-		resourceId: string,
-		modifiedAt: number
-	): Promise<void> {
 		this.calls.push({
-			publisher,
-			resourceId,
-			modifiedAt
+			requested,
+			representation
 		});
 
-		if (
-			this.failure !==
-			undefined
-		) {
-			throw this.failure;
-		}
-	}
-}
-
-class FakeHandler
-	implements ResourceHandler {
-
-	readonly resources:
-		DecodedResourceContent[] =
-			[];
-
-	constructor(
-		readonly resourceType:
-			string,
-
-		private readonly failure?:
-			Error
-	) {}
-
-	async handle(
-		resource:
-			DecodedResourceContent
-	): Promise<void> {
-		if (
-			this.failure !==
-			undefined
-		) {
-			throw this.failure;
-		}
-
-		this.resources.push(
-			resource
-		);
+		return this.result ??
+			{
+				requested,
+				found:
+					true,
+				resources:
+					[]
+			};
 	}
 }

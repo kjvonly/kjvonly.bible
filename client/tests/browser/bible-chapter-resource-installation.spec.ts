@@ -45,6 +45,10 @@ import {
 } from '$lib/resource/services/resource.service';
 
 import {
+	ResourceProcessor
+} from '$lib/resource/services/resource-processor';
+
+import {
 	IndexedDBBibleChapterInstallationTransaction
 } from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
 
@@ -709,14 +713,19 @@ function createService(
 			installer
 		);
 
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			decoder,
+			receiptService,
+			[
+				handler
+			]
+		);
+
 	return new ResourceService(
 		discovery,
-		resolver,
-		decoder,
-		receiptService,
-		[
-			handler
-		]
+		processor
 	);
 }
 

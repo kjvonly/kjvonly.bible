@@ -14,22 +14,23 @@ import {
 	deserializeResourceWorkerError,
 	deserializeResourceWorkerInstallResult,
 	serializeResourceWorkerError,
+	type ResourceWorkerInstallRequest,
 	type ResourceWorkerMainMessage,
 	type ResourceWorkerMessage
 } from './resource-worker-message';
 
 interface PendingInstall {
 	readonly resolve:
-		(
-			result:
-				ResourceInstallResult
-		) => void;
+	(
+		result:
+			ResourceInstallResult
+	) => void;
 
 	readonly reject:
-		(
-			error:
-				unknown
-		) => void;
+	(
+		error:
+			unknown
+	) => void;
 }
 
 type ResourceWorkerClientState =
@@ -207,15 +208,24 @@ export class ResourceWorkerClient {
 					);
 
 				try {
+
+					const message:
+						ResourceWorkerInstallRequest = {
+						type:
+							'install',
+
+						requestId,
+
+						reference: {
+							publisher:
+								reference.publisher,
+
+							resourceId:
+								reference.resourceId
+						}
+					};
 					this.worker
-						.postMessage({
-							type:
-								'install',
-
-							requestId,
-
-							reference
-						});
+						.postMessage(message);
 				} catch (error) {
 
 					this.pendingInstalls
@@ -293,7 +303,7 @@ export class ResourceWorkerClient {
 				event.data;
 
 			switch (
-				message.type
+			message.type
 			) {
 
 				case 'discovery':
@@ -556,7 +566,7 @@ export class ResourceWorkerClient {
 		const error =
 			new Error(
 				message.length >
-				0
+					0
 					? message
 					: 'Resource worker failed.'
 			);
