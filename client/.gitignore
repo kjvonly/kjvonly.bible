@@ -7,9 +7,9 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
-/site
+kjvonly-pwa/.svelte-kit
+kjvonly-pwa/build
+kjvonly-pwa/site
 __screenshots__
 .vitest-attachments
 
