@@ -1,0 +1,21 @@
+{
+	"name": "@kjvonly/resource-cli",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"bin": {
+		"kjvonly": "./dist/main.js"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"test": "vitest run --config vitest.config.ts"
+	},
+	"dependencies": {
+		"commander": "^14.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.0",
+		"typescript": "^5.8.3",
+		"vitest": "^4.1.11"
+	}
+}

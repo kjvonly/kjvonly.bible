@@ -3,6 +3,9 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"workspaces": [
+		"cli"
+	],
 	"scripts": {
 		"echo": "echo $BASE_PATH",
 		"dev": "BASE_PATH= vite dev",
