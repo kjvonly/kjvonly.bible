@@ -1,4 +1,5 @@
 import {
+	readFile as readFileBytes,
 	readdir,
 	stat
 } from 'node:fs/promises';
@@ -99,6 +100,19 @@ export class NodeSourceRepository
 						entry
 					)
 			})
+		);
+	}
+
+
+	async readFile(
+		path:
+			string
+	): Promise<
+		Uint8Array
+	> {
+
+		return readFileBytes(
+			path
 		);
 	}
 

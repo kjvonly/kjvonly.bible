@@ -1,6 +1,22 @@
+import {
+	resolve
+} from 'node:path';
+
+import type {
+	Manifest
+} from '../domain/manifest.js';
+
 import type {
 	ManifestLoader
 } from '../ports/manifest-loader.js';
+
+import type {
+	SignedEventStagingRepository
+} from '../ports/signed-event-staging-repository.js';
+
+import {
+	InlineEventBuilder
+} from './inline-event-builder.js';
 
 import {
 	SourceExpander
@@ -23,7 +39,13 @@ export class BuildManifestUseCase
 			ManifestLoader,
 
 		private readonly sourceExpander:
-			SourceExpander
+			SourceExpander,
+
+		private readonly eventBuilder:
+			InlineEventBuilder,
+
+		private readonly stagingRepository:
+			SignedEventStagingRepository
 	) {}
 
 
@@ -38,6 +60,21 @@ export class BuildManifestUseCase
 			);
 
 
+		this.assertSupportedManifest(
+			loaded.manifest
+		);
+
+
+		const stagingRoot =
+			resolve(
+				loaded.directory,
+				loaded
+					.manifest
+					.staging
+					.path
+			);
+
+
 		for (
 			const [
 				resourceName,
@@ -49,20 +86,83 @@ export class BuildManifestUseCase
 					.resources
 			)
 		) {
-			await this.sourceExpander
-				.expand({
-					manifestDirectory:
-						loaded.directory,
+			const sources =
+				await this.sourceExpander
+					.expand({
+						manifestDirectory:
+							loaded.directory,
 
-					resourceName,
+						resourceName,
 
-					resource
-				});
+						resource
+					});
+
+
+			for (
+				const source
+				of sources
+			) {
+				const event =
+					await this.eventBuilder
+						.build(
+							source,
+							loaded
+								.manifest
+								.kind
+						);
+
+
+				await this
+					.stagingRepository
+					.stage({
+						stagingRoot,
+
+						resourceName,
+
+						key:
+							source.key,
+
+						event
+					});
+			}
+		}
+	}
+
+
+	private assertSupportedManifest(
+		manifest:
+			Manifest
+	): void {
+
+		if (
+			Object.keys(
+				manifest.collections
+			).length > 0
+		) {
+			throw new Error(
+				'Collection building is not implemented yet.'
+			);
 		}
 
 
-		throw new Error(
-			'Build is not implemented beyond source expansion yet.'
-		);
+		for (
+			const [
+				resourceName,
+				resource
+			]
+			of Object.entries(
+				manifest.resources
+			)
+		) {
+			if (
+				resource[
+					'object-upload'
+				] !== undefined
+			) {
+				throw new Error(
+					`Resource "${resourceName}" uses object-upload, which is not implemented yet.`
+				);
+			}
+		}
 	}
 }

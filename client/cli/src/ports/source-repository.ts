@@ -38,4 +38,12 @@ export interface SourceRepository {
 	): Promise<
 		readonly SourceDirectoryEntry[]
 	>;
+
+
+	readFile(
+		path:
+			string
+	): Promise<
+		Uint8Array
+	>;
 }
