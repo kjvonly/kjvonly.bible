@@ -49,6 +49,9 @@ export class InlineEventBuilder {
 			ConcreteSource,
 
 		kind:
+			number,
+
+		previousCreatedAt?:
 			number
 	): Promise<
 		SignedNostrEvent
@@ -90,12 +93,26 @@ export class InlineEventBuilder {
 				);
 
 
+		const now =
+			this.clock
+				.nowEpochSeconds();
+
+
+		const createdAt =
+			previousCreatedAt ===
+				undefined
+				? now
+				: Math.max(
+					now,
+					previousCreatedAt + 1
+				);
+
+
 		return this.signer.sign({
 			kind,
 
 			created_at:
-				this.clock
-					.nowEpochSeconds(),
+				createdAt,
 
 			tags:
 				source.event

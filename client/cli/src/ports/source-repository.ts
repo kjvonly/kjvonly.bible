@@ -23,6 +23,15 @@ export interface SourceDirectoryEntry {
 }
 
 
+export interface SourceFileMetadata {
+	readonly mtimeMs:
+		number;
+
+	readonly size:
+		number;
+}
+
+
 export interface SourceRepository {
 	getPathType(
 		path:
@@ -37,6 +46,14 @@ export interface SourceRepository {
 			string
 	): Promise<
 		readonly SourceDirectoryEntry[]
+	>;
+
+
+	getFileMetadata(
+		path:
+			string
+	): Promise<
+		SourceFileMetadata
 	>;
 
 

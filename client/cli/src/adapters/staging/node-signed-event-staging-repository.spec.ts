@@ -1,6 +1,6 @@
 import {
 	mkdtemp,
-	readFile,
+	readdir,
 	rm
 } from 'node:fs/promises';
 
@@ -21,12 +21,22 @@ import {
 } from 'vitest';
 
 import {
+	LocalNostrSigner
+} from '../nostr/local-nostr-signer.js';
+
+import {
 	NodeSignedEventStagingRepository
 } from './node-signed-event-staging-repository.js';
 
 
 const directories:
 	string[] = [];
+
+
+const secretKey =
+	'01'.repeat(
+		32
+	);
 
 
 async function createDirectory():
@@ -47,6 +57,33 @@ async function createDirectory():
 
 
 	return directory;
+}
+
+
+async function createEvent(
+	createdAt:
+		number
+) {
+
+	return new LocalNostrSigner(
+		secretKey
+	).sign({
+		kind:
+			37770,
+
+		created_at:
+			createdAt,
+
+		tags: [
+			[
+				'd',
+				'resource'
+			]
+		],
+
+		content:
+			'content'
+	});
 }
 
 
@@ -77,7 +114,7 @@ describe(
 	() => {
 
 		it(
-			'stages a complete signed event with the event ID in the filename',
+			'stages and reads a signed event',
 			async () => {
 
 				const stagingRoot =
@@ -88,35 +125,13 @@ describe(
 					new NodeSignedEventStagingRepository();
 
 
-				const event = {
-					id:
-						'abc123',
-
-					pubkey:
-						'publisher',
-
-					created_at:
-						1_000,
-
-					kind:
-						37770,
-
-					tags: [
-						[
-							'd',
-							'resource'
-						]
-					],
-
-					content:
-						'content',
-
-					sig:
-						'signature'
-				};
+				const event =
+					await createEvent(
+						1_000
+					);
 
 
-				const path =
+				const entry =
 					await repository.stage({
 						stagingRoot,
 
@@ -126,33 +141,118 @@ describe(
 						key:
 							'1_1',
 
+						sourceMtimeMs:
+							1788461234123,
+
+						sourceSize:
+							18453,
+
+						definitionRevision:
+							'71a3cbd1',
+
 						event
 					});
 
 
 				expect(
 					basename(
-						path
+						entry.path
 					)
 				).toBe(
-					'1_1--abc123.json'
+					`1_1--1788461234123--18453--71a3cbd1--${event.id}.json`
 				);
 
 
-				const stored =
-					JSON.parse(
-						await readFile(
-							path,
-							'utf8'
+				expect(
+					await repository.read(
+						entry
+					)
+				).toEqual(
+					event
+				);
+			}
+		);
+
+
+		it(
+			'replaces the previous current event',
+			async () => {
+
+				const stagingRoot =
+					await createDirectory();
+
+
+				const repository =
+					new NodeSignedEventStagingRepository();
+
+
+				const first =
+					await repository.stage({
+						stagingRoot,
+
+						resourceName:
+							'chapters',
+
+						key:
+							'1_1',
+
+						sourceMtimeMs:
+							100,
+
+						sourceSize:
+							10,
+
+						definitionRevision:
+							'11111111',
+
+						event:
+							await createEvent(
+								1_000
+							)
+					});
+
+
+				await repository.stage({
+					stagingRoot,
+
+					resourceName:
+						'chapters',
+
+					key:
+						'1_1',
+
+					sourceMtimeMs:
+						200,
+
+					sourceSize:
+						20,
+
+					definitionRevision:
+						'22222222',
+
+					event:
+						await createEvent(
+							1_001
+						),
+
+					previous:
+						first
+				});
+
+
+				const files =
+					await readdir(
+						join(
+							stagingRoot,
+							'events',
+							'chapters'
 						)
 					);
 
 
 				expect(
-					stored
-				).toEqual(
-					event
-				);
+					files
+				).toHaveLength(1);
 			}
 		);
 	}

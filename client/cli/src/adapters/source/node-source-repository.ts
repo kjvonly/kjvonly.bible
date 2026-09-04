@@ -11,6 +11,7 @@ import {
 import type {
 	SourceDirectoryEntry,
 	SourceDirectoryEntryType,
+	SourceFileMetadata,
 	SourcePathType,
 	SourceRepository
 } from '../../ports/source-repository.js';
@@ -101,6 +102,40 @@ export class NodeSourceRepository
 					)
 			})
 		);
+	}
+
+
+	async getFileMetadata(
+		path:
+			string
+	): Promise<
+		SourceFileMetadata
+	> {
+
+		const metadata =
+			await stat(
+				path
+			);
+
+
+		if (
+			!metadata.isFile()
+		) {
+			throw new Error(
+				`Source is not a file: ${path}`
+			);
+		}
+
+
+		return {
+			mtimeMs:
+				Math.trunc(
+					metadata.mtimeMs
+				),
+
+			size:
+				metadata.size
+		};
 	}
 
 

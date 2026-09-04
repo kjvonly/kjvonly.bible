@@ -2,17 +2,30 @@ import {
 	resolve
 } from 'node:path';
 
+import {
+	calculateEventDefinitionRevision
+} from '../domain/event-definition-revision.js';
+
 import type {
 	Manifest
 } from '../domain/manifest.js';
+
+import type {
+	EventSigner
+} from '../ports/event-signer.js';
 
 import type {
 	ManifestLoader
 } from '../ports/manifest-loader.js';
 
 import type {
-	SignedEventStagingRepository
+	SignedEventStagingRepository,
+	StagedEventEntry
 } from '../ports/signed-event-staging-repository.js';
+
+import type {
+	SourceRepository
+} from '../ports/source-repository.js';
 
 import {
 	InlineEventBuilder
@@ -41,8 +54,14 @@ export class BuildManifestUseCase
 		private readonly sourceExpander:
 			SourceExpander,
 
+		private readonly sourceRepository:
+			SourceRepository,
+
 		private readonly eventBuilder:
 			InlineEventBuilder,
+
+		private readonly signer:
+			EventSigner,
 
 		private readonly stagingRepository:
 			SignedEventStagingRepository
@@ -75,6 +94,11 @@ export class BuildManifestUseCase
 			);
 
 
+		const publisher =
+			await this.signer
+				.getPublicKey();
+
+
 		for (
 			const [
 				resourceName,
@@ -98,17 +122,122 @@ export class BuildManifestUseCase
 					});
 
 
+			const staged =
+				await this
+					.stagingRepository
+					.list(
+						stagingRoot,
+						resourceName
+					);
+
+
+			const stagedByKey =
+				new Map<
+					string,
+					StagedEventEntry
+				>(
+					staged.map(
+						entry => [
+							entry.metadata.key,
+							entry
+						]
+					)
+				);
+
+
+			const currentKeys =
+				new Set<string>();
+
+
 			for (
 				const source
 				of sources
 			) {
+				currentKeys.add(
+					source.key
+				);
+
+
+				const sourceMetadata =
+					await this
+						.sourceRepository
+						.getFileMetadata(
+							source.path
+						);
+
+
+				const definitionRevision =
+					calculateEventDefinitionRevision({
+						kind:
+							loaded
+								.manifest
+								.kind,
+
+						event:
+							source.event,
+
+						publisher
+					});
+
+
+				const previous =
+					stagedByKey.get(
+						source.key
+					);
+
+
+				let previousEvent;
+
+
+				if (
+					previous !==
+						undefined
+				) {
+					previousEvent =
+						await this
+							.stagingRepository
+							.read(
+								previous
+							);
+
+
+					const unchanged =
+						previous
+							.metadata
+							.sourceMtimeMs ===
+								sourceMetadata
+									.mtimeMs &&
+						previous
+							.metadata
+							.sourceSize ===
+								sourceMetadata
+									.size &&
+						previous
+							.metadata
+							.definitionRevision ===
+								definitionRevision &&
+						previousEvent
+							.pubkey ===
+								publisher;
+
+
+					if (
+						unchanged
+					) {
+						continue;
+					}
+				}
+
+
 				const event =
 					await this.eventBuilder
 						.build(
 							source,
 							loaded
 								.manifest
-								.kind
+								.kind,
+							previousEvent
+								?.created_at
 						);
 
 
@@ -122,8 +251,38 @@ export class BuildManifestUseCase
 						key:
 							source.key,
 
-						event
+						sourceMtimeMs:
+							sourceMetadata
+								.mtimeMs,
+
+						sourceSize:
+							sourceMetadata
+								.size,
+
+						definitionRevision,
+
+						event,
+
+						previous
 					});
+			}
+
+
+			for (
+				const entry
+				of staged
+			) {
+				if (
+					!currentKeys.has(
+						entry.metadata.key
+					)
+				) {
+					await this
+						.stagingRepository
+						.remove(
+							entry
+						);
+				}
 			}
 		}
 	}

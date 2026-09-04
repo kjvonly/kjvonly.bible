@@ -125,7 +125,9 @@ export function createCliComposition() {
 		new BuildManifestUseCase(
 			manifestLoader,
 			sourceExpander,
+			sourceRepository,
 			eventBuilder,
+			signer,
 			stagingRepository
 		);
 

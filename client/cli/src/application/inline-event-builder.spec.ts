@@ -274,5 +274,92 @@ describe(
 				);
 			}
 		);
+
+        		it(
+			'advances created_at beyond the previous event',
+			async () => {
+
+				const directory =
+					await createDirectory();
+
+
+				const path =
+					join(
+						directory,
+						'1_1.json.gz'
+					);
+
+
+				await writeFile(
+					path,
+					gzipSync(
+						Buffer.from(
+							'content'
+						)
+					)
+				);
+
+
+				const repository =
+					new NodeSourceRepository();
+
+
+				const builder =
+					new InlineEventBuilder(
+						repository,
+
+						new EncodingRegistry([
+							new GzipEncoder(),
+							new HexEncoder()
+						]),
+
+						new LocalNostrSigner(
+							secretKey
+						),
+
+						{
+							nowEpochSeconds:
+								() =>
+									1_000
+						}
+					);
+
+
+				const event =
+					await builder.build(
+						{
+							resourceName:
+								'chapter',
+
+							key:
+								'1_1',
+
+							path,
+
+							event: {
+								encoding: [
+									'hex'
+								],
+
+								tags: [
+									[
+										'd',
+										'resource'
+									]
+								]
+							}
+						},
+						37770,
+						1_000
+					);
+
+
+				expect(
+					event.created_at
+				).toBe(
+					1_001
+				);
+			}
+		);
 	}
 );
