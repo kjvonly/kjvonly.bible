@@ -58,6 +58,34 @@ import {
 	createCli
 } from '../cli/create-cli.js';
 
+import {
+	BlossomDescriptorStrategyBuilder
+} from '../adapters/strategy/blossom-descriptor-strategy-builder.js';
+
+import {
+	NodeArtifactStagingRepository
+} from '../adapters/staging/node-artifact-staging-repository.js';
+
+import {
+	DescriptorBackedResourceBuilder
+} from '../application/descriptor-backed-resource-builder.js';
+
+import {
+	DescriptorEventBuilder
+} from '../application/descriptor-event-builder.js';
+
+import {
+	DescriptorStrategyRegistry
+} from '../application/descriptor-strategy-registry.js';
+
+import {
+	ObjectArtifactStager
+} from '../application/object-artifact-stager.js';
+
+import {
+	ResourceDescriptorBuilder
+} from '../application/resource-descriptor-builder.js';
+
 
 export function createCliComposition() {
 
@@ -119,7 +147,45 @@ export function createCliComposition() {
 
 	const stagingRepository =
 		new NodeSignedEventStagingRepository();
+	const artifactStagingRepository =
+		new NodeArtifactStagingRepository();
 
+
+	const objectArtifactStager =
+		new ObjectArtifactStager(
+			sourceRepository,
+			encodingRegistry,
+			artifactStagingRepository
+		);
+
+
+	const descriptorStrategyRegistry =
+		new DescriptorStrategyRegistry([
+			new BlossomDescriptorStrategyBuilder()
+		]);
+
+
+	const resourceDescriptorBuilder =
+		new ResourceDescriptorBuilder();
+
+
+	const descriptorEventBuilder =
+		new DescriptorEventBuilder(
+			encodingRegistry,
+			signer,
+			clock,
+			resourceDescriptorBuilder
+		);
+
+
+	const descriptorBackedResourceBuilder =
+		new DescriptorBackedResourceBuilder(
+			objectArtifactStager,
+			descriptorStrategyRegistry,
+			descriptorEventBuilder,
+			signer,
+			stagingRepository
+		);
 
 	const buildManifest =
 		new BuildManifestUseCase(
@@ -128,7 +194,8 @@ export function createCliComposition() {
 			sourceRepository,
 			eventBuilder,
 			signer,
-			stagingRepository
+			stagingRepository,
+			descriptorBackedResourceBuilder
 		);
 
 

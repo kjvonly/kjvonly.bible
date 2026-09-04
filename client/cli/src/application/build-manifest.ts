@@ -35,7 +35,9 @@ import {
 	SourceExpander
 } from './source-expander.js';
 
-
+import {
+	DescriptorBackedResourceBuilder
+} from './descriptor-backed-resource-builder.js';
 export interface BuildManifest {
 	build(
 		manifestPath:
@@ -64,8 +66,11 @@ export class BuildManifestUseCase
 			EventSigner,
 
 		private readonly stagingRepository:
-			SignedEventStagingRepository
-	) {}
+			SignedEventStagingRepository,
+
+		private readonly descriptorBackedResourceBuilder:
+			DescriptorBackedResourceBuilder
+	) { }
 
 
 	async build(
@@ -121,6 +126,27 @@ export class BuildManifestUseCase
 						resource
 					});
 
+			if (
+				resource[
+				'object-upload'
+				] !== undefined
+			) {
+				await this
+					.descriptorBackedResourceBuilder
+					.build({
+						manifest:
+							loaded.manifest,
+
+						stagingRoot,
+
+						resourceName,
+
+						sources
+					});
+
+
+				continue;
+			}
 
 			const staged =
 				await this
@@ -191,7 +217,7 @@ export class BuildManifestUseCase
 
 				if (
 					previous !==
-						undefined
+					undefined
 				) {
 					previousEvent =
 						await this
@@ -205,20 +231,20 @@ export class BuildManifestUseCase
 						previous
 							.metadata
 							.sourceMtimeMs ===
-								sourceMetadata
-									.mtimeMs &&
+						sourceMetadata
+							.mtimeMs &&
 						previous
 							.metadata
 							.sourceSize ===
-								sourceMetadata
-									.size &&
+						sourceMetadata
+							.size &&
 						previous
 							.metadata
 							.definitionRevision ===
-								definitionRevision &&
+						definitionRevision &&
 						previousEvent
 							.pubkey ===
-								publisher;
+						publisher;
 
 
 					if (
@@ -302,26 +328,6 @@ export class BuildManifestUseCase
 				'Collection building is not implemented yet.'
 			);
 		}
-
-
-		for (
-			const [
-				resourceName,
-				resource
-			]
-			of Object.entries(
-				manifest.resources
-			)
-		) {
-			if (
-				resource[
-					'object-upload'
-				] !== undefined
-			) {
-				throw new Error(
-					`Resource "${resourceName}" uses object-upload, which is not implemented yet.`
-				);
-			}
-		}
+		
 	}
 }

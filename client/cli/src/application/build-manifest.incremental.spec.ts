@@ -1,642 +1,713 @@
 import {
-	mkdtemp,
-	mkdir,
-	readdir,
-	rm,
-	unlink,
-	writeFile
+    mkdtemp,
+    mkdir,
+    readdir,
+    rm,
+    unlink,
+    writeFile
 } from 'node:fs/promises';
 
 import {
-	join
+    join
 } from 'node:path';
 
 import {
-	tmpdir
+    tmpdir
 } from 'node:os';
 
 import {
-	gzipSync
+    gzipSync
 } from 'node:zlib';
 
 import {
-	afterEach,
-	describe,
-	expect,
-	it,
-	vi
+    afterEach,
+    describe,
+    expect,
+    it,
+    vi
 } from 'vitest';
 
 import {
-	GzipEncoder
+    GzipEncoder
 } from '../adapters/encoding/gzip-encoder.js';
 
 import {
-	HexEncoder
+    HexEncoder
 } from '../adapters/encoding/hex-encoder.js';
 
 import {
-	LocalNostrSigner
+    LocalNostrSigner
 } from '../adapters/nostr/local-nostr-signer.js';
 
 import {
-	NodeSourceRepository
+    NodeSourceRepository
 } from '../adapters/source/node-source-repository.js';
 
 import {
-	NodeSignedEventStagingRepository
+    NodeSignedEventStagingRepository
 } from '../adapters/staging/node-signed-event-staging-repository.js';
 
 import type {
-	Manifest
+    Manifest
 } from '../domain/manifest.js';
 
 import type {
-	ManifestLoader
+    ManifestLoader
 } from '../ports/manifest-loader.js';
 
 import {
-	BuildManifestUseCase
+    BuildManifestUseCase
 } from './build-manifest.js';
 
 import {
-	EncodingRegistry
+    EncodingRegistry
 } from './encoding/encoding-registry.js';
 
 import {
-	InlineEventBuilder
+    InlineEventBuilder
 } from './inline-event-builder.js';
 
 import {
-	SourceExpander
+    SourceExpander
 } from './source-expander.js';
+import {
+    BlossomDescriptorStrategyBuilder
+} from '../adapters/strategy/blossom-descriptor-strategy-builder.js';
 
+import {
+    NodeArtifactStagingRepository
+} from '../adapters/staging/node-artifact-staging-repository.js';
+
+import {
+    DescriptorBackedResourceBuilder
+} from './descriptor-backed-resource-builder.js';
+
+import {
+    DescriptorEventBuilder
+} from './descriptor-event-builder.js';
+
+import {
+    DescriptorStrategyRegistry
+} from './descriptor-strategy-registry.js';
+
+import {
+    ObjectArtifactStager
+} from './object-artifact-stager.js';
+
+import {
+    ResourceDescriptorBuilder
+} from './resource-descriptor-builder.js';
 
 const directories:
-	string[] = [];
+    string[] = [];
 
 
 const secretKey =
-	'01'.repeat(
-		32
-	);
+    '01'.repeat(
+        32
+    );
 
 
 async function createDirectory():
-	Promise<string> {
+    Promise<string> {
 
-	const directory =
-		await mkdtemp(
-			join(
-				tmpdir(),
-				'kjvonly-incremental-'
-			)
-		);
-
-
-	directories.push(
-		directory
-	);
+    const directory =
+        await mkdtemp(
+            join(
+                tmpdir(),
+                'kjvonly-incremental-'
+            )
+        );
 
 
-	return directory;
+    directories.push(
+        directory
+    );
+
+
+    return directory;
 }
 
 
 function createManifest():
-	Manifest {
+    Manifest {
 
-	return {
-		version:
-			1,
+    return {
+        version:
+            1,
 
-		kind:
-			37770,
+        kind:
+            37770,
 
-		staging: {
-			path:
-				'./.kjvonly'
-		},
+        staging: {
+            path:
+                './.kjvonly'
+        },
 
-		nostr: {
-			relays: [
-				'wss://relay.example'
-			]
-		},
+        nostr: {
+            relays: [
+                'wss://relay.example'
+            ]
+        },
 
-		strategies:
-			{},
+        strategies:
+            {},
 
-		resources: {
-			chapters: {
-				path:
-					'./data',
+        resources: {
+            chapters: {
+                path:
+                    './data',
 
-				event: {
-					encoding: [
-						'hex'
-					],
+                event: {
+                    encoding: [
+                        'hex'
+                    ],
 
-					tags: [
-						[
-							'd',
-							'kjvonly/test/${key}'
-						],
-						[
-							'm',
-							'application/json+gzip+hex'
-						]
-					]
-				}
-			}
-		},
+                    tags: [
+                        [
+                            'd',
+                            'kjvonly/test/${key}'
+                        ],
+                        [
+                            'm',
+                            'application/json+gzip+hex'
+                        ]
+                    ]
+                }
+            }
+        },
 
-		collections:
-			{}
-	};
+        collections:
+            {}
+    };
 }
 
 
+
 function createBuild(
-	directory:
-		string,
+    directory:
+        string,
 
-	manifest:
-		Manifest,
+    manifest:
+        Manifest,
 
-	sourceRepository:
-		NodeSourceRepository
+    sourceRepository:
+        NodeSourceRepository
 ): BuildManifestUseCase {
 
-	const loader:
-		ManifestLoader = {
-			load:
-				async () => ({
-					path:
-						join(
-							directory,
-							'manifest.yaml'
-						),
-
-					directory,
-
-					manifest
-				})
-	};
+    const encodingRegistry =
+        new EncodingRegistry([
+            new GzipEncoder(),
+            new HexEncoder()
+        ]);
 
 
-	const signer =
-		new LocalNostrSigner(
-			secretKey
-		);
+    const clock = {
+        nowEpochSeconds:
+            () =>
+                1_000
+    };
 
 
-	return new BuildManifestUseCase(
-		loader,
+    const eventStagingRepository =
+        new NodeSignedEventStagingRepository();
 
-		new SourceExpander(
-			sourceRepository
-		),
 
-		sourceRepository,
+    const artifactStagingRepository =
+        new NodeArtifactStagingRepository();
 
-		new InlineEventBuilder(
-			sourceRepository,
 
-			new EncodingRegistry([
-				new GzipEncoder(),
-				new HexEncoder()
-			]),
+    const objectArtifactStager =
+        new ObjectArtifactStager(
+            sourceRepository,
+            encodingRegistry,
+            artifactStagingRepository
+        );
 
-			signer,
 
-			{
-				nowEpochSeconds:
-					() =>
-						1_000
-			}
-		),
+    const descriptorStrategyRegistry =
+        new DescriptorStrategyRegistry([
+            new BlossomDescriptorStrategyBuilder()
+        ]);
 
-		signer,
+    const signer =
+        new LocalNostrSigner(
+            secretKey
+        );
 
-		new NodeSignedEventStagingRepository()
-	);
+    const loader:
+        ManifestLoader = {
+        load:
+            async () => ({
+                path:
+                    join(
+                        directory,
+                        'manifest.yaml'
+                    ),
+
+                directory,
+
+                manifest
+            })
+    };
+
+    const descriptorEventBuilder =
+        new DescriptorEventBuilder(
+            encodingRegistry,
+            signer,
+            clock,
+            new ResourceDescriptorBuilder()
+        );
+
+
+    const descriptorBackedResourceBuilder =
+        new DescriptorBackedResourceBuilder(
+            objectArtifactStager,
+            descriptorStrategyRegistry,
+            descriptorEventBuilder,
+            signer,
+            eventStagingRepository
+        );
+
+
+    return new BuildManifestUseCase(
+        loader,
+
+        new SourceExpander(
+            sourceRepository
+        ),
+
+        sourceRepository,
+
+        new InlineEventBuilder(
+            sourceRepository,
+            encodingRegistry,
+            signer,
+            clock
+        ),
+
+        signer,
+
+        eventStagingRepository,
+
+        descriptorBackedResourceBuilder
+    );
 }
 
 
 afterEach(
-	async () => {
+    async () => {
 
-		for (
-			const directory
-			of directories.splice(0)
-		) {
-			await rm(
-				directory,
-				{
-					recursive:
-						true,
+        for (
+            const directory
+            of directories.splice(0)
+        ) {
+            await rm(
+                directory,
+                {
+                    recursive:
+                        true,
 
-					force:
-						true
-				}
-			);
-		}
-	}
+                    force:
+                        true
+                }
+            );
+        }
+    }
 );
 
 
 describe(
-	'BuildManifest incremental staging',
-	() => {
+    'BuildManifest incremental staging',
+    () => {
 
-		it(
-			'reuses an unchanged signed event without reading the source payload',
-			async () => {
+        it(
+            'reuses an unchanged signed event without reading the source payload',
+            async () => {
 
-				const directory =
-					await createDirectory();
+                const directory =
+                    await createDirectory();
 
 
-				const data =
-					join(
-						directory,
-						'data'
-					);
+                const data =
+                    join(
+                        directory,
+                        'data'
+                    );
 
 
-				await mkdir(
-					data
-				);
+                await mkdir(
+                    data
+                );
 
 
-				await writeFile(
-					join(
-						data,
-						'1_1.json.gz'
-					),
-					gzipSync(
-						Buffer.from(
-							'chapter'
-						)
-					)
-				);
+                await writeFile(
+                    join(
+                        data,
+                        '1_1.json.gz'
+                    ),
+                    gzipSync(
+                        Buffer.from(
+                            'chapter'
+                        )
+                    )
+                );
 
 
-				const sourceRepository =
-					new NodeSourceRepository();
+                const sourceRepository =
+                    new NodeSourceRepository();
 
 
-				const build =
-					createBuild(
-						directory,
-						createManifest(),
-						sourceRepository
-					);
+                const build =
+                    createBuild(
+                        directory,
+                        createManifest(),
+                        sourceRepository
+                    );
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				const eventDirectory =
-					join(
-						directory,
-						'.kjvonly',
-						'events',
-						'chapters'
-					);
+                const eventDirectory =
+                    join(
+                        directory,
+                        '.kjvonly',
+                        'events',
+                        'chapters'
+                    );
 
 
-				const firstFiles =
-					await readdir(
-						eventDirectory
-					);
+                const firstFiles =
+                    await readdir(
+                        eventDirectory
+                    );
 
 
-				const readFileSpy =
-					vi.spyOn(
-						sourceRepository,
-						'readFile'
-					);
+                const readFileSpy =
+                    vi.spyOn(
+                        sourceRepository,
+                        'readFile'
+                    );
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				const secondFiles =
-					await readdir(
-						eventDirectory
-					);
+                const secondFiles =
+                    await readdir(
+                        eventDirectory
+                    );
 
 
-				expect(
-					secondFiles
-				).toEqual(
-					firstFiles
-				);
+                expect(
+                    secondFiles
+                ).toEqual(
+                    firstFiles
+                );
 
 
-				expect(
-					readFileSpy
-				).not.toHaveBeenCalled();
-			}
-		);
+                expect(
+                    readFileSpy
+                ).not.toHaveBeenCalled();
+            }
+        );
 
 
-		it(
-			'rebuilds when the source changes',
-			async () => {
+        it(
+            'rebuilds when the source changes',
+            async () => {
 
-				const directory =
-					await createDirectory();
+                const directory =
+                    await createDirectory();
 
 
-				const data =
-					join(
-						directory,
-						'data'
-					);
+                const data =
+                    join(
+                        directory,
+                        'data'
+                    );
 
 
-				await mkdir(
-					data
-				);
+                await mkdir(
+                    data
+                );
 
 
-				const sourcePath =
-					join(
-						data,
-						'1_1.json.gz'
-					);
+                const sourcePath =
+                    join(
+                        data,
+                        '1_1.json.gz'
+                    );
 
 
-				await writeFile(
-					sourcePath,
-					gzipSync(
-						Buffer.from(
-							'first'
-						)
-					)
-				);
+                await writeFile(
+                    sourcePath,
+                    gzipSync(
+                        Buffer.from(
+                            'first'
+                        )
+                    )
+                );
 
 
-				const sourceRepository =
-					new NodeSourceRepository();
+                const sourceRepository =
+                    new NodeSourceRepository();
 
 
-				const build =
-					createBuild(
-						directory,
-						createManifest(),
-						sourceRepository
-					);
+                const build =
+                    createBuild(
+                        directory,
+                        createManifest(),
+                        sourceRepository
+                    );
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				const eventDirectory =
-					join(
-						directory,
-						'.kjvonly',
-						'events',
-						'chapters'
-					);
+                const eventDirectory =
+                    join(
+                        directory,
+                        '.kjvonly',
+                        'events',
+                        'chapters'
+                    );
 
 
-				const firstFiles =
-					await readdir(
-						eventDirectory
-					);
+                const firstFiles =
+                    await readdir(
+                        eventDirectory
+                    );
 
 
-				await writeFile(
-					sourcePath,
-					gzipSync(
-						Buffer.from(
-							'second source with different size'
-						)
-					)
-				);
+                await writeFile(
+                    sourcePath,
+                    gzipSync(
+                        Buffer.from(
+                            'second source with different size'
+                        )
+                    )
+                );
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				const secondFiles =
-					await readdir(
-						eventDirectory
-					);
+                const secondFiles =
+                    await readdir(
+                        eventDirectory
+                    );
 
 
-				expect(
-					secondFiles
-				).toHaveLength(1);
+                expect(
+                    secondFiles
+                ).toHaveLength(1);
 
 
-				expect(
-					secondFiles[0]
-				).not.toBe(
-					firstFiles[0]
-				);
-			}
-		);
+                expect(
+                    secondFiles[0]
+                ).not.toBe(
+                    firstFiles[0]
+                );
+            }
+        );
 
 
-		it(
-			'rebuilds when the event definition changes',
-			async () => {
+        it(
+            'rebuilds when the event definition changes',
+            async () => {
 
-				const directory =
-					await createDirectory();
+                const directory =
+                    await createDirectory();
 
 
-				const data =
-					join(
-						directory,
-						'data'
-					);
+                const data =
+                    join(
+                        directory,
+                        'data'
+                    );
 
 
-				await mkdir(
-					data
-				);
+                await mkdir(
+                    data
+                );
 
 
-				await writeFile(
-					join(
-						data,
-						'1_1.json.gz'
-					),
-					gzipSync(
-						Buffer.from(
-							'chapter'
-						)
-					)
-				);
+                await writeFile(
+                    join(
+                        data,
+                        '1_1.json.gz'
+                    ),
+                    gzipSync(
+                        Buffer.from(
+                            'chapter'
+                        )
+                    )
+                );
 
 
-				const sourceRepository =
-					new NodeSourceRepository();
+                const sourceRepository =
+                    new NodeSourceRepository();
 
 
-				const manifest =
-					createManifest();
+                const manifest =
+                    createManifest();
 
 
-				const build =
-					createBuild(
-						directory,
-						manifest,
-						sourceRepository
-					);
+                const build =
+                    createBuild(
+                        directory,
+                        manifest,
+                        sourceRepository
+                    );
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				const eventDirectory =
-					join(
-						directory,
-						'.kjvonly',
-						'events',
-						'chapters'
-					);
+                const eventDirectory =
+                    join(
+                        directory,
+                        '.kjvonly',
+                        'events',
+                        'chapters'
+                    );
 
 
-				const firstFiles =
-					await readdir(
-						eventDirectory
-					);
+                const firstFiles =
+                    await readdir(
+                        eventDirectory
+                    );
 
 
-				manifest
-					.resources
-					.chapters
-					.event
-					.tags
-					.push([
-						'language',
-						'en'
-					]);
+                manifest
+                    .resources
+                    .chapters
+                    .event
+                    .tags
+                    .push([
+                        'language',
+                        'en'
+                    ]);
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				const secondFiles =
-					await readdir(
-						eventDirectory
-					);
+                const secondFiles =
+                    await readdir(
+                        eventDirectory
+                    );
 
 
-				expect(
-					secondFiles
-				).toHaveLength(1);
+                expect(
+                    secondFiles
+                ).toHaveLength(1);
 
 
-				expect(
-					secondFiles[0]
-				).not.toBe(
-					firstFiles[0]
-				);
-			}
-		);
+                expect(
+                    secondFiles[0]
+                ).not.toBe(
+                    firstFiles[0]
+                );
+            }
+        );
 
 
-		it(
-			'removes staging when a source is removed',
-			async () => {
+        it(
+            'removes staging when a source is removed',
+            async () => {
 
-				const directory =
-					await createDirectory();
+                const directory =
+                    await createDirectory();
 
 
-				const data =
-					join(
-						directory,
-						'data'
-					);
+                const data =
+                    join(
+                        directory,
+                        'data'
+                    );
 
 
-				await mkdir(
-					data
-				);
+                await mkdir(
+                    data
+                );
 
 
-				const sourcePath =
-					join(
-						data,
-						'1_1.json.gz'
-					);
+                const sourcePath =
+                    join(
+                        data,
+                        '1_1.json.gz'
+                    );
 
 
-				await writeFile(
-					sourcePath,
-					gzipSync(
-						Buffer.from(
-							'chapter'
-						)
-					)
-				);
+                await writeFile(
+                    sourcePath,
+                    gzipSync(
+                        Buffer.from(
+                            'chapter'
+                        )
+                    )
+                );
 
 
-				const sourceRepository =
-					new NodeSourceRepository();
+                const sourceRepository =
+                    new NodeSourceRepository();
 
 
-				const build =
-					createBuild(
-						directory,
-						createManifest(),
-						sourceRepository
-					);
+                const build =
+                    createBuild(
+                        directory,
+                        createManifest(),
+                        sourceRepository
+                    );
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				await unlink(
-					sourcePath
-				);
+                await unlink(
+                    sourcePath
+                );
 
 
-				await build.build(
-					'manifest.yaml'
-				);
+                await build.build(
+                    'manifest.yaml'
+                );
 
 
-				const files =
-					await readdir(
-						join(
-							directory,
-							'.kjvonly',
-							'events',
-							'chapters'
-						)
-					);
+                const files =
+                    await readdir(
+                        join(
+                            directory,
+                            '.kjvonly',
+                            'events',
+                            'chapters'
+                        )
+                    );
 
 
-				expect(
-					files
-				).toEqual(
-					[]
-				);
-			}
-		);
-	}
+                expect(
+                    files
+                ).toEqual(
+                    []
+                );
+            }
+        );
+    }
 );
