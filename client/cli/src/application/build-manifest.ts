@@ -2,6 +2,10 @@ import type {
 	ManifestLoader
 } from '../ports/manifest-loader.js';
 
+import {
+	SourceExpander
+} from './source-expander.js';
+
 
 export interface BuildManifest {
 	build(
@@ -16,7 +20,10 @@ export class BuildManifestUseCase
 
 	constructor(
 		private readonly manifestLoader:
-			ManifestLoader
+			ManifestLoader,
+
+		private readonly sourceExpander:
+			SourceExpander
 	) {}
 
 
@@ -25,13 +32,37 @@ export class BuildManifestUseCase
 			string
 	): Promise<void> {
 
-		await this.manifestLoader.load(
-			manifestPath
-		);
+		const loaded =
+			await this.manifestLoader.load(
+				manifestPath
+			);
+
+
+		for (
+			const [
+				resourceName,
+				resource
+			]
+			of Object.entries(
+				loaded
+					.manifest
+					.resources
+			)
+		) {
+			await this.sourceExpander
+				.expand({
+					manifestDirectory:
+						loaded.directory,
+
+					resourceName,
+
+					resource
+				});
+		}
 
 
 		throw new Error(
-			'Build is not implemented beyond manifest validation yet.'
+			'Build is not implemented beyond source expansion yet.'
 		);
 	}
 }

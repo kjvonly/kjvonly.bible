@@ -22,6 +22,13 @@ import {
 	createCli
 } from '../cli/create-cli.js';
 
+import {
+	NodeSourceRepository
+} from '../adapters/source/node-source-repository.js';
+
+import {
+	SourceExpander
+} from '../application/source-expander.js';
 
 export function createCliComposition() {
 
@@ -43,10 +50,19 @@ export function createCliComposition() {
 				process.env
 		});
 
+	const sourceRepository =
+		new NodeSourceRepository();
+
+
+	const sourceExpander =
+		new SourceExpander(
+			sourceRepository
+		);
 
 	const buildManifest =
 		new BuildManifestUseCase(
-			manifestLoader
+			manifestLoader,
+			sourceExpander
 		);
 
 
