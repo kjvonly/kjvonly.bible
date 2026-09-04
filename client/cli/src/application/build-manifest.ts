@@ -1,6 +1,12 @@
+import type {
+	ManifestLoader
+} from '../ports/manifest-loader.js';
+
+
 export interface BuildManifest {
 	build(
-		manifestPath: string
+		manifestPath:
+			string
 	): Promise<void>;
 }
 
@@ -8,11 +14,24 @@ export interface BuildManifest {
 export class BuildManifestUseCase
 	implements BuildManifest {
 
+	constructor(
+		private readonly manifestLoader:
+			ManifestLoader
+	) {}
+
+
 	async build(
-		_manifestPath: string
+		manifestPath:
+			string
 	): Promise<void> {
+
+		await this.manifestLoader.load(
+			manifestPath
+		);
+
+
 		throw new Error(
-			'BuildManifest is not implemented yet.'
+			'Build is not implemented beyond manifest validation yet.'
 		);
 	}
 }

@@ -1,4 +1,12 @@
 import {
+	resolve
+} from 'node:path';
+
+import {
+	NodeManifestLoader
+} from '../adapters/manifest/node-manifest-loader.js';
+
+import {
 	BuildManifestUseCase
 } from '../application/build-manifest.js';
 
@@ -17,8 +25,29 @@ import {
 
 export function createCliComposition() {
 
+	const workingDirectory =
+		process.cwd();
+
+
+	const manifestLoader =
+		new NodeManifestLoader({
+			workingDirectory,
+
+			envFilePath:
+				resolve(
+					workingDirectory,
+					'.env'
+				),
+
+			runtimeEnvironment:
+				process.env
+		});
+
+
 	const buildManifest =
-		new BuildManifestUseCase();
+		new BuildManifestUseCase(
+			manifestLoader
+		);
 
 
 	const publishManifest =
