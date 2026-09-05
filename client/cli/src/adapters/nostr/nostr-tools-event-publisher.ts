@@ -1,3 +1,10 @@
+import WebSocket from 'ws';
+
+import {
+	SimplePool,
+	useWebSocketImplementation
+} from 'nostr-tools/pool';
+
 import type {
 	SignedNostrEvent
 } from '../../domain/nostr-event.js';
@@ -11,14 +18,6 @@ import type {
 } from '../../ports/nostr-event-publisher.js';
 
 import {
-	authenticateNostrToolsRelay
-} from './authenticate-nostr-tools-relay.js';
-
-import {
-	connectNodeNostrToolsRelay
-} from './connect-node-nostr-tools-relay.js';
-
-import {
 	createNostrToolsAuthSigner
 } from './nostr-tools-auth-signer.js';
 
@@ -27,31 +26,37 @@ import type {
 } from './nostr-tools-auth-signer.js';
 
 
-interface NostrToolsEventPublisherRelay {
+useWebSocketImplementation(
+	WebSocket
+);
+
+
+interface NostrToolsEventPublicationPool {
+
 	publish(
+		relays:
+			string[],
+
 		event:
-			SignedNostrEvent
-	): Promise<string>;
+			SignedNostrEvent,
+
+		params: {
+			readonly onauth:
+				NostrToolsAuthSigner;
+		}
+	): Promise<string>[];
 
 
-	auth(
-		signAuthEvent:
-			NostrToolsAuthSigner
-	): Promise<string>;
-
-
-	close():
-		void;
+	close(
+		relays:
+			string[]
+	): void;
 }
 
 
-type NostrToolsEventPublisherConnector =
-	(
-		url:
-			string
-	) => Promise<
-		NostrToolsEventPublisherRelay
-	>;
+type NostrToolsEventPublicationPoolFactory =
+	() =>
+		NostrToolsEventPublicationPool;
 
 
 export class NostrToolsEventPublisher
@@ -61,9 +66,10 @@ export class NostrToolsEventPublisher
 		private readonly signer:
 			EventSigner,
 
-		private readonly connectRelay:
-			NostrToolsEventPublisherConnector =
-				connectNodeNostrToolsRelay
+		private readonly createPool:
+			NostrToolsEventPublicationPoolFactory =
+				() =>
+					new SimplePool()
 	) {}
 
 
@@ -75,65 +81,30 @@ export class NostrToolsEventPublisher
 			SignedNostrEvent
 	): Promise<void> {
 
-		const relay =
-			await this.connectRelay(
-				relayUrl
-			);
+		const pool =
+			this.createPool();
 
 
 		try {
-			try {
-				await relay.publish(
-					event
-				);
-			}
-			catch (
-				error:
-					unknown
-			) {
-				if (
-					!this.isAuthRequired(
-						error
-					)
-				) {
-					throw error;
-				}
-
-
-				await authenticateNostrToolsRelay(
-					relay,
-					createNostrToolsAuthSigner(
-						this.signer
-					)
-				);
-
-
-				await relay.publish(
-					event
-				);
-			}
+			await Promise.all(
+				pool.publish(
+					[
+						relayUrl
+					],
+					event,
+					{
+						onauth:
+							createNostrToolsAuthSigner(
+								this.signer
+							)
+					}
+				)
+			);
 		}
 		finally {
-			relay.close();
+			pool.close([
+				relayUrl
+			]);
 		}
-	}
-
-
-	private isAuthRequired(
-		error:
-			unknown
-	): boolean {
-
-		const message =
-			error instanceof Error
-				? error.message
-				: String(
-					error
-				);
-
-
-		return message.startsWith(
-			'auth-required:'
-		);
 	}
 }
