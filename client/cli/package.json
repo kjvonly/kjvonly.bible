@@ -7,7 +7,7 @@
 		"kjvonly": "./dist/main.js"
 	},
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
+		"build": "tsc -p tsconfig.build.json",
 		"test": "vitest run --config vitest.config.ts"
 	},
 	"dependencies": {
@@ -19,7 +19,7 @@
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
-		"@types/node": "^24.0.0",
+		"@types/node": "^24.13.3",
 		"@types/nunjucks": "^3.2.6",
 		"typescript": "^5.8.3",
 		"vitest": "^4.1.11"

@@ -86,6 +86,17 @@ import {
 	ResourceDescriptorBuilder
 } from '../application/resource-descriptor-builder.js';
 
+import {
+	NodeCollectionEventStagingRepository
+} from '../adapters/staging/node-collection-event-staging-repository.js';
+
+import {
+	CollectionBuilder
+} from '../application/collection-builder.js';
+
+import {
+	CollectionEventBuilder
+} from '../application/collection-event-builder.js';
 
 export function createCliComposition() {
 
@@ -177,14 +188,32 @@ export function createCliComposition() {
 			resourceDescriptorBuilder
 		);
 
-
 	const descriptorBackedResourceBuilder =
 		new DescriptorBackedResourceBuilder(
 			objectArtifactStager,
 			descriptorStrategyRegistry,
 			descriptorEventBuilder,
+			resourceDescriptorBuilder,
 			signer,
 			stagingRepository
+		);
+
+	const collectionEventStagingRepository =
+		new NodeCollectionEventStagingRepository();
+
+
+	const collectionEventBuilder =
+		new CollectionEventBuilder(
+			encodingRegistry,
+			signer,
+			clock
+		);
+
+
+	const collectionBuilder =
+		new CollectionBuilder(
+			collectionEventBuilder,
+			collectionEventStagingRepository
 		);
 
 	const buildManifest =
@@ -195,7 +224,8 @@ export function createCliComposition() {
 			eventBuilder,
 			signer,
 			stagingRepository,
-			descriptorBackedResourceBuilder
+			descriptorBackedResourceBuilder,
+			collectionBuilder
 		);
 
 

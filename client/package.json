@@ -9,8 +9,8 @@
 		"pwa:dev": "npm run dev --workspace @kjvonly/pwa",
 		"pwa:build": "npm run build --workspace @kjvonly/pwa",
 		"pwa:test": "npm run test --workspace @kjvonly/pwa",
-
 		"cli:build": "npm run build --workspace @kjvonly/cli",
 		"cli:test": "npm run test --workspace @kjvonly/cli"
 	}
+	
 }

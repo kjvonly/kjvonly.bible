@@ -3,12 +3,16 @@ import {
 } from '../domain/descriptor-event-definition-revision.js';
 
 import type {
+	ConcreteSource
+} from '../domain/concrete-source.js';
+
+import type {
 	Manifest
 } from '../domain/manifest.js';
 
 import type {
-	ConcreteSource
-} from '../domain/concrete-source.js';
+	ResourceDescriptor
+} from '../domain/resource-descriptor.js';
 
 import type {
 	EventSigner
@@ -30,6 +34,10 @@ import {
 import {
 	ObjectArtifactStager
 } from './object-artifact-stager.js';
+
+import {
+	ResourceDescriptorBuilder
+} from './resource-descriptor-builder.js';
 
 
 export interface BuildDescriptorBackedResourceRequest {
@@ -59,6 +67,9 @@ export class DescriptorBackedResourceBuilder {
 		private readonly eventBuilder:
 			DescriptorEventBuilder,
 
+		private readonly descriptorBuilder:
+			ResourceDescriptorBuilder,
+
 		private readonly signer:
 			EventSigner,
 
@@ -70,7 +81,9 @@ export class DescriptorBackedResourceBuilder {
 	async build(
 		request:
 			BuildDescriptorBackedResourceRequest
-	): Promise<void> {
+	): Promise<
+		readonly ResourceDescriptor[]
+	> {
 
 		const artifacts =
 			await this.artifactStager
@@ -129,6 +142,11 @@ export class DescriptorBackedResourceBuilder {
 
 		const currentKeys =
 			new Set<string>();
+
+
+		const descriptors:
+			ResourceDescriptor[] =
+				[];
 
 
 		for (
@@ -279,6 +297,24 @@ export class DescriptorBackedResourceBuilder {
 				if (
 					unchanged
 				) {
+					descriptors.push(
+						this.descriptorBuilder
+							.build({
+								source,
+
+								artifact,
+
+								publisher,
+
+								modifiedAt:
+									previousEvent
+										.created_at,
+
+								strategy
+							})
+					);
+
+
 					continue;
 				}
 			}
@@ -335,6 +371,11 @@ export class DescriptorBackedResourceBuilder {
 
 					previous
 				});
+
+
+			descriptors.push(
+				result.descriptor
+			);
 		}
 
 
@@ -354,5 +395,8 @@ export class DescriptorBackedResourceBuilder {
 					);
 			}
 		}
+
+
+		return descriptors;
 	}
 }

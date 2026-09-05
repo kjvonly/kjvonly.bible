@@ -38,6 +38,14 @@ import {
 import {
 	DescriptorBackedResourceBuilder
 } from './descriptor-backed-resource-builder.js';
+
+import type {
+	ResourceDescriptor
+} from '../domain/resource-descriptor.js';
+
+import {
+	CollectionBuilder
+} from './collection-builder.js';
 export interface BuildManifest {
 	build(
 		manifestPath:
@@ -69,7 +77,10 @@ export class BuildManifestUseCase
 			SignedEventStagingRepository,
 
 		private readonly descriptorBackedResourceBuilder:
-			DescriptorBackedResourceBuilder
+			DescriptorBackedResourceBuilder,
+
+		private readonly collectionBuilder:
+			CollectionBuilder
 	) { }
 
 
@@ -82,11 +93,6 @@ export class BuildManifestUseCase
 			await this.manifestLoader.load(
 				manifestPath
 			);
-
-
-		this.assertSupportedManifest(
-			loaded.manifest
-		);
 
 
 		const stagingRoot =
@@ -103,6 +109,11 @@ export class BuildManifestUseCase
 			await this.signer
 				.getPublicKey();
 
+		const descriptorsByResource =
+			new Map<
+				string,
+				readonly ResourceDescriptor[]
+			>();
 
 		for (
 			const [
@@ -131,18 +142,25 @@ export class BuildManifestUseCase
 				'object-upload'
 				] !== undefined
 			) {
-				await this
-					.descriptorBackedResourceBuilder
-					.build({
-						manifest:
-							loaded.manifest,
+				const descriptors =
+					await this
+						.descriptorBackedResourceBuilder
+						.build({
+							manifest:
+								loaded.manifest,
 
-						stagingRoot,
+							stagingRoot,
 
-						resourceName,
+							resourceName,
 
-						sources
-					});
+							sources
+						});
+
+
+				descriptorsByResource.set(
+					resourceName,
+					descriptors
+				);
 
 
 				continue;
@@ -311,23 +329,17 @@ export class BuildManifestUseCase
 				}
 			}
 		}
-	}
 
-
-	private assertSupportedManifest(
+		await this
+	.collectionBuilder
+	.build({
 		manifest:
-			Manifest
-	): void {
+			loaded.manifest,
 
-		if (
-			Object.keys(
-				manifest.collections
-			).length > 0
-		) {
-			throw new Error(
-				'Collection building is not implemented yet.'
-			);
-		}
-		
+		stagingRoot,
+
+		descriptorsByResource
+	});
 	}
+
 }

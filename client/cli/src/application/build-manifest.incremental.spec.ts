@@ -98,6 +98,17 @@ import {
     ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
 
+import {
+	NodeCollectionEventStagingRepository
+} from '../adapters/staging/node-collection-event-staging-repository.js';
+
+import {
+	CollectionBuilder
+} from './collection-builder.js';
+
+import {
+	CollectionEventBuilder
+} from './collection-event-builder.js';
 const directories:
     string[] = [];
 
@@ -129,8 +140,8 @@ async function createDirectory():
 }
 
 
-function createManifest():
-    Manifest {
+function createManifest()
+     {
 
     return {
         version:
@@ -179,7 +190,7 @@ function createManifest():
 
         collections:
             {}
-    };
+    } satisfies Manifest;
 }
 
 
@@ -259,16 +270,26 @@ function createBuild(
             new ResourceDescriptorBuilder()
         );
 
+const descriptorBackedResourceBuilder =
+	new DescriptorBackedResourceBuilder(
+		objectArtifactStager,
+		descriptorStrategyRegistry,
+		descriptorEventBuilder,
+		new ResourceDescriptorBuilder(),
+		signer,
+		eventStagingRepository
+	);
+   
+const collectionBuilder =
+	new CollectionBuilder(
+		new CollectionEventBuilder(
+			encodingRegistry,
+			signer,
+			clock
+		),
 
-    const descriptorBackedResourceBuilder =
-        new DescriptorBackedResourceBuilder(
-            objectArtifactStager,
-            descriptorStrategyRegistry,
-            descriptorEventBuilder,
-            signer,
-            eventStagingRepository
-        );
-
+		new NodeCollectionEventStagingRepository()
+	);
 
     return new BuildManifestUseCase(
         loader,
@@ -290,7 +311,8 @@ function createBuild(
 
         eventStagingRepository,
 
-        descriptorBackedResourceBuilder
+        descriptorBackedResourceBuilder,
+        collectionBuilder
     );
 }
 
@@ -560,7 +582,7 @@ describe(
 
 
                 const manifest =
-                    createManifest();
+                    createManifest(); 
 
 
                 const build =
