@@ -6,6 +6,13 @@ import {
 	PublicationPreflight
 } from './publication-preflight.js';
 
+import {
+	resolve
+} from 'node:path';
+
+import {
+	BlossomArtifactPublisher
+} from './blossom-artifact-publisher.js';
 
 export interface PublishManifest {
 
@@ -24,9 +31,11 @@ export class PublishManifestUseCase
 			ManifestLoader,
 
 		private readonly publicationPreflight:
-			PublicationPreflight
-	) {}
+			PublicationPreflight,
 
+		private readonly blossomArtifactPublisher:
+			BlossomArtifactPublisher
+	) { }
 
 	async publish(
 		manifestPath:
@@ -47,8 +56,26 @@ export class PublishManifestUseCase
 			);
 
 
+		const stagingRoot =
+			resolve(
+				loaded.directory,
+				loaded
+					.manifest
+					.staging
+					.path
+			);
+
+
+		await this
+			.blossomArtifactPublisher
+			.publish(
+				loaded.manifest,
+				stagingRoot
+			);
+
+
 		throw new Error(
-			'Publication after preflight is not implemented yet.'
+			'Nostr publication is not implemented yet.'
 		);
 	}
 }

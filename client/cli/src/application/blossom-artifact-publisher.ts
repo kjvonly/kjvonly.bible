@@ -1,0 +1,331 @@
+import type {
+	Manifest
+} from '../domain/manifest.js';
+
+import type {
+	BlossomPublicationResult
+} from '../domain/blossom-publication-result.js';
+
+import type {
+	ArtifactStagingRepository,
+	StagedArtifactEntry
+} from '../ports/artifact-staging-repository.js';
+
+import type {
+	BlossomPublicationClient
+} from '../ports/blossom-publication-client.js';
+
+import type {
+	SourceRepository
+} from '../ports/source-repository.js';
+
+
+interface ArtifactPublicationPlan {
+	readonly resourceName:
+		string;
+
+	readonly artifact:
+		StagedArtifactEntry;
+
+	readonly mediaType:
+		string;
+
+	readonly urls:
+		readonly string[];
+}
+
+
+export class BlossomArtifactPublisher {
+
+	constructor(
+		private readonly artifactStagingRepository:
+			ArtifactStagingRepository,
+
+		private readonly sourceRepository:
+			SourceRepository,
+
+		private readonly publicationClient:
+			BlossomPublicationClient
+	) {}
+
+
+	async publish(
+		manifest:
+			Manifest,
+
+		stagingRoot:
+			string
+	): Promise<
+		readonly BlossomPublicationResult[]
+	> {
+
+		const plans =
+			await this.createPlans(
+				manifest,
+				stagingRoot
+			);
+
+
+		await this.validateArtifacts(
+			plans
+		);
+
+
+		const results:
+			BlossomPublicationResult[] =
+				[];
+
+
+		for (
+			const plan
+			of plans
+		) {
+			for (
+				const url
+				of plan.urls
+			) {
+				const status =
+					await this
+						.publicationClient
+						.ensure({
+							serverUrl:
+								url,
+
+							artifactPath:
+								plan
+									.artifact
+									.path,
+
+							sha256:
+								plan
+									.artifact
+									.metadata
+									.sha256,
+
+							size:
+								plan
+									.artifact
+									.size,
+
+							mediaType:
+								plan
+									.mediaType
+						});
+
+
+				results.push({
+					resourceName:
+						plan.resourceName,
+
+					key:
+						plan
+							.artifact
+							.metadata
+							.key,
+
+					sha256:
+						plan
+							.artifact
+							.metadata
+							.sha256,
+
+					url,
+
+					status
+				});
+			}
+		}
+
+
+		return results;
+	}
+
+
+	private async createPlans(
+		manifest:
+			Manifest,
+
+		stagingRoot:
+			string
+	): Promise<
+		readonly ArtifactPublicationPlan[]
+	> {
+
+		const plans:
+			ArtifactPublicationPlan[] =
+				[];
+
+
+		for (
+			const [
+				resourceName,
+				resource
+			]
+			of Object.entries(
+				manifest.resources
+			)
+		) {
+			const objectUpload =
+				resource[
+					'object-upload'
+				];
+
+
+			if (
+				objectUpload ===
+					undefined
+			) {
+				continue;
+			}
+
+
+			const strategyName =
+				objectUpload.strategy ??
+				manifest
+					.defaults
+					?.strategy;
+
+
+			if (
+				strategyName ===
+					undefined
+			) {
+				throw new Error(
+					`Resource "${resourceName}" has no publication strategy.`
+				);
+			}
+
+
+			const strategy =
+				manifest
+					.strategies[
+						strategyName
+					];
+
+
+			if (
+				strategy ===
+					undefined
+			) {
+				throw new Error(
+					`Unknown publication strategy: ${strategyName}`
+				);
+			}
+
+
+			if (
+				strategy.type !==
+					'blossom'
+			) {
+				throw new Error(
+					`Unsupported artifact publication strategy: ${strategy.type}`
+				);
+			}
+
+
+			const artifacts =
+				await this
+					.artifactStagingRepository
+					.list(
+						stagingRoot,
+						resourceName
+					);
+
+
+			for (
+				const artifact
+				of artifacts
+			) {
+				plans.push({
+					resourceName,
+
+					artifact,
+
+					mediaType:
+						objectUpload
+							.mediaType,
+
+					urls:
+						strategy.urls
+				});
+			}
+		}
+
+
+		return plans;
+	}
+
+
+	private async validateArtifacts(
+		plans:
+			readonly ArtifactPublicationPlan[]
+	): Promise<void> {
+
+		for (
+			const plan
+			of plans
+		) {
+			const artifact =
+				plan.artifact;
+
+
+			let metadata;
+
+
+			try {
+				metadata =
+					await this
+						.sourceRepository
+						.getFileMetadata(
+							artifact.path
+						);
+			}
+			catch (
+				error:
+					unknown
+			) {
+				throw new Error(
+					`Staged artifact is unavailable for Resource "${plan.resourceName}" key "${artifact.metadata.key}".`,
+					{
+						cause:
+							error
+					}
+				);
+			}
+
+
+			if (
+				artifact.kind ===
+					'symlink'
+			) {
+				if (
+					metadata.mtimeMs !==
+						artifact
+							.metadata
+							.sourceMtimeMs ||
+					metadata.size !==
+						artifact
+							.metadata
+							.sourceSize
+				) {
+					throw new Error(
+						`Staged artifact is stale for Resource "${plan.resourceName}" key "${artifact.metadata.key}".`
+					);
+				}
+
+
+				continue;
+			}
+
+
+			if (
+				metadata.size !==
+					artifact.size
+			) {
+				throw new Error(
+					`Staged artifact size mismatch for Resource "${plan.resourceName}" key "${artifact.metadata.key}".`
+				);
+			}
+		}
+	}
+}

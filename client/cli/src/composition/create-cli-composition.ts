@@ -100,6 +100,8 @@ import {
 import { RxNostrRelayPreflight } from '../adapters/nostr/rx-nostr-relay-preflight.js';
 import { NodeBlossomPreflight } from '../adapters/blossom/node-blossom-preflight.js';
 import { PublicationPreflight } from '../application/publication-preflight.js';
+import { NodeBlossomPublicationClient } from '../adapters/blossom/node-blossom-publication-client.js';
+import { BlossomArtifactPublisher } from '../application/blossom-artifact-publisher.js';
 
 export function createCliComposition() {
 
@@ -238,10 +240,26 @@ export function createCliComposition() {
 			new NodeBlossomPreflight()
 		);
 
+	const blossomPublicationClient =
+		new NodeBlossomPublicationClient(
+			signer,
+			clock
+		);
+
+
+	const blossomArtifactPublisher =
+		new BlossomArtifactPublisher(
+			artifactStagingRepository,
+			sourceRepository,
+			blossomPublicationClient
+		);
+
 	const publishManifest =
 		new PublishManifestUseCase(
 			manifestLoader,
-			publicationPreflight
+			publicationPreflight,
+			blossomArtifactPublisher
+
 		);
 
 
