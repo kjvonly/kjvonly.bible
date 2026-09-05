@@ -14,12 +14,17 @@ import {
 	BlossomArtifactPublisher
 } from './blossom-artifact-publisher.js';
 
-export interface PublishManifest {
+import type {
+	PublicationResult
+} from '../domain/publication-result.js';
 
+export interface PublishManifest {
 	publish(
 		manifestPath:
 			string
-	): Promise<void>;
+	): Promise<
+		readonly PublicationResult[]
+	>;
 }
 
 
@@ -40,7 +45,7 @@ export class PublishManifestUseCase
 	async publish(
 		manifestPath:
 			string
-	): Promise<void> {
+	): Promise<PublicationResult[]> {
 
 		const loaded =
 			await this.manifestLoader

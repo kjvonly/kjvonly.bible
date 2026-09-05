@@ -32,29 +32,35 @@ describe(
 
 				const buildManifest:
 					BuildManifest = {
-						build:
-							vi.fn(
-								async () => {
-									calls.push(
-										'build'
-									);
-								}
-							)
-					};
+					build:
+						vi.fn(
+							async () => {
+								calls.push(
+									'build'
+								);
+							}
+						)
+				};
 
 
 				const publishManifest:
 					PublishManifest = {
-						publish:
-							vi.fn(
-								async () => {
-									calls.push(
-										'publish'
-									);
-								}
-							)
-					};
+					publish:
+						vi.fn(
+							async (
+								_manifestPath:
+									string
+							) => {
 
+								calls.push(
+									'publish'
+								);
+
+
+								return [];
+							}
+						)
+				};
 
 				const syncManifest =
 					new SyncManifestUseCase(
@@ -84,22 +90,22 @@ describe(
 
 				const buildManifest:
 					BuildManifest = {
-						build:
-							vi.fn(
-								async () => {
-									throw new Error(
-										'build failed'
-									);
-								}
-							)
-					};
+					build:
+						vi.fn(
+							async () => {
+								throw new Error(
+									'build failed'
+								);
+							}
+						)
+				};
 
 
 				const publishManifest:
 					PublishManifest = {
-						publish:
-							vi.fn()
-					};
+					publish:
+						vi.fn()
+				};
 
 
 				const syncManifest =
