@@ -14,6 +14,7 @@ import {
 } from './nostr-tools-negentropy-storage.js';
 
 import {
+    NostrToolsNegentropyError,
     reconcileNostrToolsNegentropy
 } from './nostr-tools-negentropy-session.js';
 
@@ -185,7 +186,7 @@ describe(
 
 
         it(
-            'fails when the relay returns NEG-ERR',
+            'preserves the relay reason when the relay returns NEG-ERR',
             async () => {
 
                 const storage =
@@ -200,6 +201,10 @@ describe(
                             string[]
                     ) => void =
                     () => { };
+
+
+                const close =
+                    vi.fn();
 
 
                 const relay = {
@@ -226,8 +231,7 @@ describe(
                                         handler;
                                 },
 
-                                close:
-                                    vi.fn()
+                                close
                             })
                         ),
 
@@ -254,7 +258,7 @@ describe(
                                             oncustom([
                                                 'NEG-ERR',
                                                 'negentropy:1',
-                                                'blocked: query rejected'
+                                                'auth-required: authentication required'
                                             ]);
                                         }
                                     );
@@ -280,9 +284,19 @@ describe(
                             ]
                         }
                     )
-                ).rejects.toThrow(
-                    'Relay rejected Negentropy reconciliation: blocked: query rejected'
-                );
+                ).rejects.toMatchObject({
+                    name:
+                        NostrToolsNegentropyError
+                            .name,
+
+                    reason:
+                        'auth-required: authentication required'
+                });
+
+
+                expect(
+                    close
+                ).toHaveBeenCalledOnce();
             }
         );
     }

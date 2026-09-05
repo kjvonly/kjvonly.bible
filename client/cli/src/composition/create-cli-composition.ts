@@ -284,6 +284,7 @@ export function createCliComposition() {
 
 	const nostrRelayReconciler =
 		new NostrToolsRelayReconciler(
+			signer,
 			connectNodeNostrToolsRelay
 		);
 
