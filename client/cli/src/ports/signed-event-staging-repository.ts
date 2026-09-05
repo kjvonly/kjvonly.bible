@@ -32,6 +32,9 @@ export interface StageSignedEventRequest {
 	readonly sourceSize:
 		number;
 
+	readonly createdAt:
+		number;
+		
 	readonly definitionRevision:
 		string;
 

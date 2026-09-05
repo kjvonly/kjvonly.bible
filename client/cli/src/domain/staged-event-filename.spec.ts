@@ -31,6 +31,9 @@ describe(
 					definitionRevision:
 						'71a3cbd1',
 
+					createdAt:
+						1788461240,
+
 					eventId:
 						'a'.repeat(
 							64
@@ -47,7 +50,7 @@ describe(
 				expect(
 					filename
 				).toBe(
-					`1_1--1788461234123--18453--71a3cbd1--${'a'.repeat(64)}.json`
+					`1_1--1788461234123--18453--71a3cbd1--1788461240--${'a'.repeat(64)}.json`
 				);
 
 
@@ -79,6 +82,9 @@ describe(
 
 						definitionRevision:
 							'12345678',
+
+						createdAt:
+							1000,
 
 						eventId:
 							'b'.repeat(

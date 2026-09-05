@@ -69,8 +69,8 @@ export class NodeSignedEventStagingRepository
 				);
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			if (
 				this.isFileNotFound(
@@ -157,7 +157,7 @@ export class NodeSignedEventStagingRepository
 			StagedEventEntry
 	): Promise<
 		import(
-			'../../domain/nostr-event.js'
+		'../../domain/nostr-event.js'
 		).SignedNostrEvent
 	> {
 
@@ -193,7 +193,7 @@ export class NodeSignedEventStagingRepository
 
 		if (
 			event.id !==
-				entry.metadata.eventId
+			entry.metadata.eventId
 		) {
 			throw new Error(
 				`Staged event ID does not match filename: ${entry.path}`
@@ -252,6 +252,9 @@ export class NodeSignedEventStagingRepository
 			definitionRevision:
 				request.definitionRevision,
 
+			createdAt:
+				request.event.created_at,
+
 			eventId:
 				request.event.id
 		};
@@ -296,9 +299,9 @@ export class NodeSignedEventStagingRepository
 
 		if (
 			request.previous !==
-				undefined &&
+			undefined &&
 			request.previous.path !==
-				path
+			path
 		) {
 			await unlink(
 				request.previous.path
@@ -324,8 +327,8 @@ export class NodeSignedEventStagingRepository
 			);
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			if (
 				!this.isFileNotFound(
@@ -363,7 +366,7 @@ export class NodeSignedEventStagingRepository
 			error instanceof Error &&
 			'code' in error &&
 			error.code ===
-				'ENOENT'
+			'ENOENT'
 		);
 	}
 }

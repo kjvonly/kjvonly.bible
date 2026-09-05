@@ -11,6 +11,9 @@ export interface StagedEventMetadata {
 	readonly definitionRevision:
 		string;
 
+	readonly createdAt:
+		number;
+
 	readonly eventId:
 		string;
 }
@@ -39,6 +42,7 @@ export function buildStagedEventFilename(
 		metadata.sourceMtimeMs,
 		metadata.sourceSize,
 		metadata.definitionRevision,
+		metadata.createdAt,
 		metadata.eventId
 	].join(
 		'--'
@@ -74,7 +78,7 @@ export function parseStagedEventFilename(
 
 
 	if (
-		parts.length < 5
+		parts.length < 6
 	) {
 		throw malformedFilename(
 			filename
@@ -83,6 +87,10 @@ export function parseStagedEventFilename(
 
 
 	const eventId =
+		parts.pop();
+
+
+	const createdAtText =
 		parts.pop();
 
 
@@ -106,6 +114,8 @@ export function parseStagedEventFilename(
 
 	if (
 		eventId ===
+			undefined ||
+		createdAtText ===
 			undefined ||
 		definitionRevision ===
 			undefined ||
@@ -135,6 +145,11 @@ export function parseStagedEventFilename(
 				),
 
 			definitionRevision,
+
+			createdAt:
+				Number(
+					createdAtText
+				),
 
 			eventId
 		};
@@ -204,6 +219,18 @@ function assertMetadata(
 	) {
 		throw new Error(
 			'Invalid staged event definition revision.'
+		);
+	}
+
+
+	if (
+		!Number.isInteger(
+			metadata.createdAt
+		) ||
+		metadata.createdAt < 0
+	) {
+		throw new Error(
+			'Invalid staged event created at.'
 		);
 	}
 

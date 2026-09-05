@@ -147,6 +147,8 @@ describe(
 						sourceSize:
 							18453,
 
+						createdAt: event.created_at,
+
 						definitionRevision:
 							'71a3cbd1',
 
@@ -159,7 +161,7 @@ describe(
 						entry.path
 					)
 				).toBe(
-					`1_1--1788461234123--18453--71a3cbd1--${event.id}.json`
+					`1_1--1788461234123--18453--71a3cbd1--${event.created_at}--${event.id}.json`
 				);
 
 
@@ -205,6 +207,7 @@ describe(
 						definitionRevision:
 							'11111111',
 
+						createdAt: 1_000,
 						event:
 							await createEvent(
 								1_000
@@ -229,6 +232,8 @@ describe(
 
 					definitionRevision:
 						'22222222',
+
+					createdAt: 1_001,
 
 					event:
 						await createEvent(
