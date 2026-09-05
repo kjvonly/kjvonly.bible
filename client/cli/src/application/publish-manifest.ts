@@ -1,6 +1,17 @@
+import type {
+	ManifestLoader
+} from '../ports/manifest-loader.js';
+
+import {
+	PublicationPreflight
+} from './publication-preflight.js';
+
+
 export interface PublishManifest {
+
 	publish(
-		manifestPath: string
+		manifestPath:
+			string
 	): Promise<void>;
 }
 
@@ -8,11 +19,36 @@ export interface PublishManifest {
 export class PublishManifestUseCase
 	implements PublishManifest {
 
+	constructor(
+		private readonly manifestLoader:
+			ManifestLoader,
+
+		private readonly publicationPreflight:
+			PublicationPreflight
+	) {}
+
+
 	async publish(
-		_manifestPath: string
+		manifestPath:
+			string
 	): Promise<void> {
+
+		const loaded =
+			await this.manifestLoader
+				.load(
+					manifestPath
+				);
+
+
+		await this
+			.publicationPreflight
+			.check(
+				loaded.manifest
+			);
+
+
 		throw new Error(
-			'PublishManifest is not implemented yet.'
+			'Publication after preflight is not implemented yet.'
 		);
 	}
 }
