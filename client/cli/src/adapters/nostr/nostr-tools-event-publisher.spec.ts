@@ -1,124 +1,222 @@
 import {
-	describe,
-	expect,
-	it,
-	vi
+    describe,
+    expect,
+    it,
+    vi
 } from 'vitest';
 
 import {
-	NostrToolsEventPublisher
+    NostrToolsEventPublisher
 } from './nostr-tools-event-publisher.js';
 
 
 describe(
-	'NostrToolsEventPublisher',
-	() => {
+    'NostrToolsEventPublisher',
+    () => {
 
-		it(
-			'publishes the exact signed event and closes the relay',
-			async () => {
+        it(
+            'publishes the exact signed event and closes the relay',
+            async () => {
 
-				const event = {
-					id:
-						'a'.repeat(
-							64
-						),
+                const event = {
+                    id:
+                        'a'.repeat(
+                            64
+                        ),
 
-					pubkey:
-						'b'.repeat(
-							64
-						),
+                    pubkey:
+                        'b'.repeat(
+                            64
+                        ),
 
-					created_at:
-						1000,
+                    created_at:
+                        1000,
 
-					kind:
-						37770,
+                    kind:
+                        37770,
 
-					tags:
-						[
-							[
-								'd',
-								'kjvonly/test/1_1'
-							]
-						],
+                    tags:
+                        [
+                            [
+                                'd',
+                                'kjvonly/test/1_1'
+                            ]
+                        ],
 
-					content:
-						'content',
+                    content:
+                        'content',
 
-					sig:
-						'c'.repeat(
-							128
-						)
-				};
-
-
-				const publish =
-					vi.fn(
-						async () =>
-							'published'
-					);
+                    sig:
+                        'c'.repeat(
+                            128
+                        )
+                };
 
 
-				const close =
-					vi.fn();
+                const publish =
+                    vi.fn(
+                        async () =>
+                            'published'
+                    );
 
 
-				const relay = {
-					prepareSubscription:
-						vi.fn(),
-
-					send:
-						vi.fn(),
-
-					publish,
-
-					close
-				};
+                const close =
+                    vi.fn();
 
 
-				const connectRelay =
-					vi.fn(
-						async () =>
-							relay
-					);
+                const relay = {
+                    prepareSubscription:
+                        vi.fn(),
+
+                    send:
+                        vi.fn(),
+
+                    publish,
+
+                    close
+                };
 
 
-				const publisher =
-					new NostrToolsEventPublisher(
-						connectRelay
-					);
+                const connectRelay =
+                    vi.fn(
+                        async () =>
+                            relay
+                    );
 
 
-				await publisher.publish(
-					'wss://relay.example',
-					event
-				);
+                const publisher =
+                    new NostrToolsEventPublisher(
+                        connectRelay
+                    );
 
 
-				expect(
-					connectRelay
-				).toHaveBeenCalledWith(
-					'wss://relay.example'
-				);
+                await publisher.publish(
+                    'wss://relay.example',
+                    event
+                );
 
 
-				expect(
-					publish
-				).toHaveBeenCalledOnce();
+                expect(
+                    connectRelay
+                ).toHaveBeenCalledWith(
+                    'wss://relay.example'
+                );
 
 
-				expect(
-					publish
-				).toHaveBeenCalledWith(
-					event
-				);
+                expect(
+                    publish
+                ).toHaveBeenCalledOnce();
 
 
-				expect(
-					close
-				).toHaveBeenCalledOnce();
-			}
-		);
-	}
+                expect(
+                    publish
+                ).toHaveBeenCalledWith(
+                    event
+                );
+
+
+                expect(
+                    close
+                ).toHaveBeenCalledOnce();
+            }
+        );
+
+        it(
+            'closes the relay when publication is rejected',
+            async () => {
+
+                const event = {
+                    id:
+                        'a'.repeat(
+                            64
+                        ),
+
+                    pubkey:
+                        'b'.repeat(
+                            64
+                        ),
+
+                    created_at:
+                        1000,
+
+                    kind:
+                        37770,
+
+                    tags:
+                        [],
+
+                    content:
+                        'content',
+
+                    sig:
+                        'c'.repeat(
+                            128
+                        )
+                };
+
+
+                const publish =
+                    vi.fn(
+                        async () => {
+
+                            throw new Error(
+                                'blocked: event rejected'
+                            );
+                        }
+                    );
+
+
+                const close =
+                    vi.fn();
+
+
+                const relay = {
+                    prepareSubscription:
+                        vi.fn(),
+
+                    send:
+                        vi.fn(),
+
+                    publish,
+
+                    close
+                };
+
+
+                const connectRelay =
+                    vi.fn(
+                        async () =>
+                            relay
+                    );
+
+
+                const publisher =
+                    new NostrToolsEventPublisher(
+                        connectRelay
+                    );
+
+
+                await expect(
+                    publisher.publish(
+                        'wss://relay.example',
+                        event
+                    )
+                ).rejects.toThrow(
+                    'blocked: event rejected'
+                );
+
+
+                expect(
+                    publish
+                ).toHaveBeenCalledWith(
+                    event
+                );
+
+
+                expect(
+                    close
+                ).toHaveBeenCalledOnce();
+            }
+        );
+    }
 );

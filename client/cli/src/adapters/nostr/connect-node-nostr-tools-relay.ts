@@ -5,22 +5,17 @@ import {
 	useWebSocketImplementation
 } from 'nostr-tools/relay';
 
-import type {
-	NostrToolsRelayConnector
-} from './nostr-tools-relay-reconciler.js';
-
 
 useWebSocketImplementation(
 	WebSocket
 );
 
+export async function connectNodeNostrToolsRelay(
+	url:
+		string
+) {
 
-export const connectNodeNostrToolsRelay:
-	NostrToolsRelayConnector =
-		async (
-			url:
-				string
-		) =>
-			Relay.connect(
-				url
-			);
+	return Relay.connect(
+		url
+	);
+}
