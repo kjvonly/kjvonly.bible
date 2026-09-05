@@ -1,126 +1,186 @@
 import type {
-	Manifest
+    Manifest
 } from '../domain/manifest.js';
 
 import type {
-	NostrPublicationResult
+    NostrPublicationResult
 } from '../domain/nostr-publication-result.js';
 
 import type {
-	EventSigner
+    EventSigner
 } from '../ports/event-signer.js';
 
 import type {
-	NostrEventStagingRepository
+    NostrEventPublisher
+} from '../ports/nostr-event-publisher.js';
+
+import type {
+    NostrEventStagingRepository
 } from '../ports/nostr-event-staging-repository.js';
 
 import type {
-	NostrRelayReconciler
+    NostrRelayReconciler
 } from '../ports/nostr-relay-reconciler.js';
 
 
 export class NostrStagedEventPublisher {
 
-	constructor(
-		private readonly stagingRepository:
-			NostrEventStagingRepository,
+    constructor(
+        private readonly stagingRepository:
+            NostrEventStagingRepository,
 
-		private readonly signer:
-			EventSigner,
+        private readonly signer:
+            EventSigner,
 
-		private readonly reconciler:
-			NostrRelayReconciler
-	) {}
+        private readonly reconciler:
+            NostrRelayReconciler,
 
-
-	async publish(
-		manifest:
-			Manifest,
-
-		stagingRoot:
-			string
-	): Promise<
-		readonly NostrPublicationResult[]
-	> {
-
-		const stagedEvents =
-			await this
-				.stagingRepository
-				.list(
-					stagingRoot
-				);
+        private readonly eventPublisher:
+            NostrEventPublisher
+    ) { }
 
 
-		const publisher =
-			await this
-				.signer
-				.getPublicKey();
+    async publish(
+        manifest:
+            Manifest,
+
+        stagingRoot:
+            string
+    ): Promise<
+        readonly NostrPublicationResult[]
+    > {
+
+        const stagedEvents =
+            await this
+                .stagingRepository
+                .list(
+                    stagingRoot
+                );
 
 
-		const reconciliationEntries =
-			stagedEvents.map(
-				entry => ({
-					eventId:
-						entry.eventId,
-
-					createdAt:
-						entry.createdAt
-				})
-			);
+        const publisher =
+            await this
+                .signer
+                .getPublicKey();
 
 
-		const results:
-			NostrPublicationResult[] =
-				[];
+        const reconciliationEntries =
+            stagedEvents.map(
+                entry => ({
+                    eventId:
+                        entry.eventId,
+
+                    createdAt:
+                        entry.createdAt
+                })
+            );
+
+        const stagedEventIds =
+            new Set(
+                stagedEvents.map(
+                    entry =>
+                        entry.eventId
+                )
+            );
+
+        const results:
+            NostrPublicationResult[] =
+            [];
 
 
-		for (
-			const relay
-			of manifest.nostr.relays
-		) {
-			const missingEventIds =
-				await this
-					.reconciler
-					.reconcile({
-						relay,
+        for (
+            const relay
+            of manifest.nostr.relays
+        ) {
+            const missingEventIds =
+                await this
+                    .reconciler
+                    .reconcile({
+                        relay,
 
-						publisher,
+                        publisher,
 
-						kind:
-							manifest.kind,
+                        kind:
+                            manifest.kind,
 
-						events:
-							reconciliationEntries
-					});
-
-
-			if (
-				missingEventIds.length >
-					0
-			) {
-				throw new Error(
-					'Nostr publication of missing staged events is not implemented yet.'
-				);
-			}
+                        events:
+                            reconciliationEntries
+                    });
 
 
-			for (
-				const entry
-				of stagedEvents
-			) {
-				results.push({
-					eventId:
-						entry.eventId,
+            const missing =
+                new Set(
+                    missingEventIds
+                );
 
-					relay,
+            for (
+                const eventId
+                of missing
+            ) {
+                if (
+                    !stagedEventIds.has(
+                        eventId
+                    )
+                ) {
+                    throw new Error(
+                        `Nostr reconciliation returned unknown staged event ID: ${eventId}`
+                    );
+                }
+            }
+            
+            for (
+                const entry
+                of stagedEvents
+            ) {
+                if (
+                    missing.has(
+                        entry.eventId
+                    )
+                ) {
+                    const event =
+                        await this
+                            .stagingRepository
+                            .read(
+                                entry
+                            );
 
-					status:
-						'already-present'
-				});
-			}
-		}
+
+                    await this
+                        .eventPublisher
+                        .publish(
+                            relay,
+                            event
+                        );
 
 
-		return results;
-	}
+                    results.push({
+                        eventId:
+                            entry.eventId,
+
+                        relay,
+
+                        status:
+                            'published'
+                    });
+
+
+                    continue;
+                }
+
+
+                results.push({
+                    eventId:
+                        entry.eventId,
+
+                    relay,
+
+                    status:
+                        'already-present'
+                });
+            }
+        }
+
+
+        return results;
+    }
 }

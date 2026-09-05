@@ -1,7 +1,8 @@
 import {
 	mkdtemp,
 	readdir,
-	rm
+	rm,
+	writeFile
 } from 'node:fs/promises';
 
 import {
@@ -258,6 +259,71 @@ describe(
 				expect(
 					files
 				).toHaveLength(1);
+			}
+		);
+		it(
+			'rejects an event whose created_at does not match the staged filename',
+			async () => {
+
+				const stagingRoot =
+					await createDirectory();
+
+
+				const repository =
+					new NodeSignedEventStagingRepository();
+
+
+				const event =
+					await createEvent(
+						1_000
+					);
+
+
+				const entry =
+					await repository.stage({
+						stagingRoot,
+
+						resourceName:
+							'chapters',
+
+						key:
+							'1_1',
+
+						sourceMtimeMs:
+							100,
+
+						sourceSize:
+							10,
+
+						createdAt:
+							event.created_at,
+
+						definitionRevision:
+							'11111111',
+
+						event
+					});
+
+
+				await writeFile(
+					entry.path,
+					`${JSON.stringify({
+						...event,
+
+						created_at:
+							1_001
+					})}\n`,
+					'utf8'
+				);
+
+
+				await expect(
+					repository.read(
+						entry
+					)
+				).rejects.toThrow(
+					'Staged event created_at does not match filename'
+				);
 			}
 		);
 	}

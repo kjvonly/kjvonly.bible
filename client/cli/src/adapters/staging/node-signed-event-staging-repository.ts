@@ -202,6 +202,15 @@ export class NodeSignedEventStagingRepository
 
 
 		if (
+			event.created_at !==
+			entry.metadata.createdAt
+		) {
+			throw new Error(
+				`Staged event created_at does not match filename: ${entry.path}`
+			);
+		}
+
+		if (
 			!verifyEvent(
 				event
 			)

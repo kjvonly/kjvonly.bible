@@ -18,6 +18,10 @@ import type {
 	PublicationResult
 } from '../domain/publication-result.js';
 
+import {
+	NostrStagedEventPublisher
+} from './nostr-staged-event-publisher.js';
+
 export interface PublishManifest {
 	publish(
 		manifestPath:
@@ -39,7 +43,10 @@ export class PublishManifestUseCase
 			PublicationPreflight,
 
 		private readonly blossomArtifactPublisher:
-			BlossomArtifactPublisher
+			BlossomArtifactPublisher,
+
+		private readonly nostrStagedEventPublisher:
+			NostrStagedEventPublisher
 	) { }
 
 	async publish(
@@ -71,16 +78,42 @@ export class PublishManifestUseCase
 			);
 
 
-		await this
-			.blossomArtifactPublisher
-			.publish(
-				loaded.manifest,
-				stagingRoot
-			);
+		const blossomResults =
+			await this
+				.blossomArtifactPublisher
+				.publish(
+					loaded.manifest,
+					stagingRoot
+				);
 
 
-		throw new Error(
-			'Nostr publication is not implemented yet.'
-		);
+		const nostrResults =
+			await this
+				.nostrStagedEventPublisher
+				.publish(
+					loaded.manifest,
+					stagingRoot
+				);
+
+
+		return [
+			...blossomResults.map(
+				data => ({
+					type:
+						'blossom',
+
+					data
+				})
+			),
+
+			...nostrResults.map(
+				data => ({
+					type:
+						'nostr',
+
+					data
+				})
+			)
+		];
 	}
 }
