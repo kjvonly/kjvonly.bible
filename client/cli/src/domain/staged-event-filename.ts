@@ -1,21 +1,21 @@
 export interface StagedEventMetadata {
 	readonly key:
-		string;
+	string;
 
 	readonly sourceMtimeMs:
-		number;
+	number;
 
 	readonly sourceSize:
-		number;
+	number;
 
 	readonly definitionRevision:
-		string;
+	string;
 
 	readonly createdAt:
-		number;
+	number;
 
 	readonly eventId:
-		string;
+	string;
 }
 
 
@@ -27,6 +27,13 @@ const DEFINITION_REVISION_PATTERN =
 	/^[0-9a-f]{8}$/;
 
 
+const MAX_STAGED_EVENT_KEY_BYTES =
+	128;
+
+
+const MAX_STAGED_EVENT_FILENAME_BYTES =
+	255;
+
 export function buildStagedEventFilename(
 	metadata:
 		StagedEventMetadata
@@ -37,7 +44,7 @@ export function buildStagedEventFilename(
 	);
 
 
-	return [
+	const filename = [
 		metadata.key,
 		metadata.sourceMtimeMs,
 		metadata.sourceSize,
@@ -47,6 +54,12 @@ export function buildStagedEventFilename(
 	].join(
 		'--'
 	) + '.json';
+
+	assertFilename(
+		filename
+	);
+
+	return filename
 }
 
 
@@ -54,6 +67,17 @@ export function parseStagedEventFilename(
 	filename:
 		string
 ): StagedEventMetadata {
+	try {
+		assertFilename(
+			filename
+		);
+	}
+	catch {
+		throw malformedFilename(
+			filename
+		);
+	}
+
 
 	if (
 		!filename.endsWith(
@@ -114,15 +138,15 @@ export function parseStagedEventFilename(
 
 	if (
 		eventId ===
-			undefined ||
+		undefined ||
 		createdAtText ===
-			undefined ||
+		undefined ||
 		definitionRevision ===
-			undefined ||
+		undefined ||
 		sourceSizeText ===
-			undefined ||
+		undefined ||
 		sourceMtimeMsText ===
-			undefined
+		undefined
 	) {
 		throw malformedFilename(
 			filename
@@ -132,27 +156,27 @@ export function parseStagedEventFilename(
 
 	const metadata:
 		StagedEventMetadata = {
-			key,
+		key,
 
-			sourceMtimeMs:
-				Number(
-					sourceMtimeMsText
-				),
+		sourceMtimeMs:
+			Number(
+				sourceMtimeMsText
+			),
 
-			sourceSize:
-				Number(
-					sourceSizeText
-				),
+		sourceSize:
+			Number(
+				sourceSizeText
+			),
 
-			definitionRevision,
+		definitionRevision,
 
-			createdAt:
-				Number(
-					createdAtText
-				),
+		createdAt:
+			Number(
+				createdAtText
+			),
 
-			eventId
-		};
+		eventId
+	};
 
 
 	try {
@@ -178,13 +202,24 @@ function assertMetadata(
 
 	if (
 		metadata.key.length ===
-			0
+		0
 	) {
 		throw new Error(
 			'Staged event key is empty.'
 		);
 	}
 
+	if (
+		Buffer.byteLength(
+			metadata.key,
+			'utf8'
+		) >
+		MAX_STAGED_EVENT_KEY_BYTES
+	) {
+		throw new Error(
+			`Staged event key exceeds ${MAX_STAGED_EVENT_KEY_BYTES} UTF-8 bytes.`
+		);
+	}
 
 	if (
 		!Number.isInteger(
@@ -256,4 +291,22 @@ function malformedFilename(
 	return new Error(
 		`Malformed staged event filename: ${filename}`
 	);
+}
+
+function assertFilename(
+	filename:
+		string
+): void {
+
+	if (
+		Buffer.byteLength(
+			filename,
+			'utf8'
+		) >
+			MAX_STAGED_EVENT_FILENAME_BYTES
+	) {
+		throw new Error(
+			`Staged event filename exceeds ${MAX_STAGED_EVENT_FILENAME_BYTES} UTF-8 bytes.`
+		);
+	}
 }

@@ -118,5 +118,203 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'accepts a 128-byte key',
+			() => {
+
+				expect(
+					() =>
+						buildStagedEventFilename({
+							key:
+								'a'.repeat(
+									128
+								),
+
+							sourceMtimeMs:
+								100,
+
+							sourceSize:
+								200,
+
+							definitionRevision:
+								'12345678',
+
+							createdAt:
+								1000,
+
+							eventId:
+								'a'.repeat(
+									64
+								)
+						})
+				).not.toThrow();
+			}
+		);
+
+		it(
+			'rejects a key longer than 128 bytes',
+			() => {
+
+				expect(
+					() =>
+						buildStagedEventFilename({
+							key:
+								'a'.repeat(
+									129
+								),
+
+							sourceMtimeMs:
+								100,
+
+							sourceSize:
+								200,
+
+							definitionRevision:
+								'12345678',
+
+							createdAt:
+								1000,
+
+							eventId:
+								'a'.repeat(
+									64
+								)
+						})
+				).toThrow(
+					'Staged event key exceeds 128 UTF-8 bytes.'
+				);
+			}
+		);
+
+		it(
+			'measures key length in UTF-8 bytes',
+			() => {
+
+				const build =
+					(
+						key:
+							string
+					) =>
+						buildStagedEventFilename({
+							key,
+
+							sourceMtimeMs:
+								100,
+
+							sourceSize:
+								200,
+
+							definitionRevision:
+								'12345678',
+
+							createdAt:
+								1000,
+
+							eventId:
+								'a'.repeat(
+									64
+								)
+						});
+
+
+				expect(
+					() =>
+						build(
+							'é'.repeat(
+								64
+							)
+						)
+				).not.toThrow();
+
+
+				expect(
+					() =>
+						build(
+							'é'.repeat(
+								65
+							)
+						)
+				).toThrow(
+					'Staged event key exceeds 128 UTF-8 bytes.'
+				);
+			}
+		);
+
+		it(
+			'accepts a 255-byte filename',
+			() => {
+
+				const filename =
+					buildStagedEventFilename({
+						key:
+							'a'.repeat(
+								123
+							),
+
+						sourceMtimeMs:
+							999_999_999_999_999,
+
+						sourceSize:
+							999_999_999_999_999,
+
+						definitionRevision:
+							'12345678',
+
+						createdAt:
+							999_999_999_999_999,
+
+						eventId:
+							'a'.repeat(
+								64
+							)
+					});
+
+
+				expect(
+					Buffer.byteLength(
+						filename,
+						'utf8'
+					)
+				).toBe(
+					255
+				);
+			}
+		);
+
+		it(
+			'rejects a filename longer than 255 bytes',
+			() => {
+
+				expect(
+					() =>
+						buildStagedEventFilename({
+							key:
+								'a'.repeat(
+									124
+								),
+
+							sourceMtimeMs:
+								999_999_999_999_999,
+
+							sourceSize:
+								999_999_999_999_999,
+
+							definitionRevision:
+								'12345678',
+
+							createdAt:
+								999_999_999_999_999,
+
+							eventId:
+								'a'.repeat(
+									64
+								)
+						})
+				).toThrow(
+					'Staged event filename exceeds 255 UTF-8 bytes.'
+				);
+			}
+		);
 	}
 );
