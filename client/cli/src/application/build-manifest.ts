@@ -305,6 +305,8 @@ export class BuildManifestUseCase
 
 						definitionRevision,
 
+						createdAt: event.created_at,
+
 						event,
 
 						previous

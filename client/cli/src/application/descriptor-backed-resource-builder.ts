@@ -42,16 +42,16 @@ import {
 
 export interface BuildDescriptorBackedResourceRequest {
 	readonly manifest:
-		Manifest;
+	Manifest;
 
 	readonly stagingRoot:
-		string;
+	string;
 
 	readonly resourceName:
-		string;
+	string;
 
 	readonly sources:
-		readonly ConcreteSource[];
+	readonly ConcreteSource[];
 }
 
 
@@ -75,7 +75,7 @@ export class DescriptorBackedResourceBuilder {
 
 		private readonly eventStagingRepository:
 			SignedEventStagingRepository
-	) {}
+	) { }
 
 
 	async build(
@@ -146,7 +146,7 @@ export class DescriptorBackedResourceBuilder {
 
 		const descriptors:
 			ResourceDescriptor[] =
-				[];
+			[];
 
 
 		for (
@@ -164,7 +164,7 @@ export class DescriptorBackedResourceBuilder {
 
 			if (
 				objectUpload ===
-					undefined
+				undefined
 			) {
 				throw new Error(
 					`Resource "${request.resourceName}" source "${source.key}" has no object-upload definition.`
@@ -180,7 +180,7 @@ export class DescriptorBackedResourceBuilder {
 
 			if (
 				artifact ===
-					undefined
+				undefined
 			) {
 				throw new Error(
 					`Missing staged artifact for Resource "${request.resourceName}" source "${source.key}".`
@@ -198,7 +198,7 @@ export class DescriptorBackedResourceBuilder {
 
 			if (
 				strategyName ===
-					undefined
+				undefined
 			) {
 				throw new Error(
 					`Resource "${request.resourceName}" source "${source.key}" has no publication strategy.`
@@ -210,13 +210,13 @@ export class DescriptorBackedResourceBuilder {
 				request
 					.manifest
 					.strategies[
-						strategyName
-					];
+				strategyName
+				];
 
 
 			if (
 				strategyDefinition ===
-					undefined
+				undefined
 			) {
 				throw new Error(
 					`Unknown strategy: ${strategyName}`
@@ -262,7 +262,7 @@ export class DescriptorBackedResourceBuilder {
 
 			if (
 				previous !==
-					undefined
+				undefined
 			) {
 				previousEvent =
 					await this
@@ -276,22 +276,22 @@ export class DescriptorBackedResourceBuilder {
 					previous
 						.metadata
 						.sourceMtimeMs ===
-							artifact
-								.metadata
-								.sourceMtimeMs &&
+					artifact
+						.metadata
+						.sourceMtimeMs &&
 					previous
 						.metadata
 						.sourceSize ===
-							artifact
-								.metadata
-								.sourceSize &&
+					artifact
+						.metadata
+						.sourceSize &&
 					previous
 						.metadata
 						.definitionRevision ===
-							definitionRevision &&
+					definitionRevision &&
 					previousEvent
 						.pubkey ===
-							publisher;
+					publisher;
 
 
 				if (
@@ -366,6 +366,8 @@ export class DescriptorBackedResourceBuilder {
 
 					definitionRevision,
 
+					createdAt: result.event.created_at,
+					
 					event:
 						result.event,
 
