@@ -97,7 +97,9 @@ import {
 import {
 	CollectionEventBuilder
 } from '../application/collection-event-builder.js';
-import { RxNostrRelayPreflight } from '../adapters/nostr/rx-nostr-relay-preflight.js';
+import {
+	NostrToolsRelayPreflight
+} from '../adapters/nostr/nostr-tools-relay-preflight.js';
 import { NodeBlossomPreflight } from '../adapters/blossom/node-blossom-preflight.js';
 import { PublicationPreflight } from '../application/publication-preflight.js';
 import { NodeBlossomPublicationClient } from '../adapters/blossom/node-blossom-publication-client.js';
@@ -236,7 +238,7 @@ export function createCliComposition() {
 
 	const publicationPreflight =
 		new PublicationPreflight(
-			new RxNostrRelayPreflight(),
+			new NostrToolsRelayPreflight(), 
 			new NodeBlossomPreflight()
 		);
 
