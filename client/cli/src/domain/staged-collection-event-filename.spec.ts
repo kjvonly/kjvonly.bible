@@ -22,6 +22,9 @@ describe(
 					collectionName:
 						'application-defaults',
 
+					createdAt:
+						1000,
+
 					eventId:
 						'a'.repeat(
 							64
@@ -33,6 +36,13 @@ describe(
 					buildStagedCollectionEventFilename(
 						metadata
 					);
+
+
+				expect(
+					filename
+				).toBe(
+					`application-defaults--1000--${'a'.repeat(64)}.json`
+				);
 
 
 				expect(
@@ -54,6 +64,9 @@ describe(
 					buildStagedCollectionEventFilename({
 						collectionName:
 							'application--defaults',
+
+						createdAt:
+							1000,
 
 						eventId:
 							'a'.repeat(

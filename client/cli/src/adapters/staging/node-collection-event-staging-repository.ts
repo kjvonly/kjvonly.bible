@@ -65,8 +65,8 @@ export class NodeCollectionEventStagingRepository
 				);
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			if (
 				this.isFileNotFound(
@@ -110,6 +110,10 @@ export class NodeCollectionEventStagingRepository
 							collectionName:
 								metadata
 									.collectionName,
+
+							createdAt:
+								metadata
+									.createdAt,
 
 							eventId:
 								metadata
@@ -181,13 +185,23 @@ export class NodeCollectionEventStagingRepository
 
 		if (
 			event.id !==
-				entry.eventId
+			entry.eventId
 		) {
 			throw new Error(
 				`Staged collection event ID does not match filename: ${entry.path}`
 			);
 		}
 
+
+
+		if (
+			event.created_at !==
+			entry.createdAt
+		) {
+			throw new Error(
+				`Staged collection event created_at does not match filename: ${entry.path}`
+			);
+		}
 
 		if (
 			!verifyEvent(
@@ -231,6 +245,9 @@ export class NodeCollectionEventStagingRepository
 				collectionName:
 					request.collectionName,
 
+				createdAt:
+					request.event.created_at,
+
 				eventId:
 					request.event.id
 			});
@@ -269,9 +286,9 @@ export class NodeCollectionEventStagingRepository
 
 		if (
 			request.previous !==
-				undefined &&
+			undefined &&
 			request.previous.path !==
-				path
+			path
 		) {
 			await unlink(
 				request.previous.path
@@ -284,6 +301,9 @@ export class NodeCollectionEventStagingRepository
 
 			collectionName:
 				request.collectionName,
+
+			createdAt:
+				request.event.created_at,
 
 			eventId:
 				request.event.id
@@ -302,8 +322,8 @@ export class NodeCollectionEventStagingRepository
 			);
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			if (
 				!this.isFileNotFound(
@@ -338,7 +358,7 @@ export class NodeCollectionEventStagingRepository
 			error instanceof Error &&
 			'code' in error &&
 			error.code ===
-				'ENOENT'
+			'ENOENT'
 		);
 	}
 }

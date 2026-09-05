@@ -10,6 +10,9 @@ export interface StagedCollectionEventEntry {
 	readonly collectionName:
 		string;
 
+	readonly createdAt:
+		number;
+
 	readonly eventId:
 		string;
 }

@@ -2,6 +2,9 @@ export interface StagedCollectionEventMetadata {
 	readonly collectionName:
 		string;
 
+	readonly createdAt:
+		number;
+
 	readonly eventId:
 		string;
 }
@@ -12,7 +15,7 @@ const EVENT_ID_PATTERN =
 
 
 const FILENAME_PATTERN =
-	/^(.*)--([0-9a-f]{64})\.json$/;
+	/^(.*)--(\d+)--([0-9a-f]{64})\.json$/;
 
 
 export function buildStagedCollectionEventFilename(
@@ -31,6 +34,18 @@ export function buildStagedCollectionEventFilename(
 
 
 	if (
+		!Number.isInteger(
+			metadata.createdAt
+		) ||
+		metadata.createdAt < 0
+	) {
+		throw new Error(
+			'Invalid collection event created at.'
+		);
+	}
+
+
+	if (
 		!EVENT_ID_PATTERN.test(
 			metadata.eventId
 		)
@@ -43,6 +58,7 @@ export function buildStagedCollectionEventFilename(
 
 	return (
 		`${metadata.collectionName}` +
+		`--${metadata.createdAt}` +
 		`--${metadata.eventId}.json`
 	);
 }
@@ -73,8 +89,12 @@ export function parseStagedCollectionEventFilename(
 		match[1];
 
 
-	const eventId =
+	const createdAtText =
 		match[2];
+
+
+	const eventId =
+		match[3];
 
 
 	if (
@@ -82,6 +102,8 @@ export function parseStagedCollectionEventFilename(
 			undefined ||
 		collectionName.length ===
 			0 ||
+		createdAtText ===
+			undefined ||
 		eventId ===
 			undefined
 	) {
@@ -91,8 +113,27 @@ export function parseStagedCollectionEventFilename(
 	}
 
 
+	const createdAt =
+		Number(
+			createdAtText
+		);
+
+
+	if (
+		!Number.isInteger(
+			createdAt
+		) ||
+		createdAt < 0
+	) {
+		throw new Error(
+			`Malformed staged collection event filename: ${filename}`
+		);
+	}
+
+
 	return {
 		collectionName,
+		createdAt,
 		eventId
 	};
 }
