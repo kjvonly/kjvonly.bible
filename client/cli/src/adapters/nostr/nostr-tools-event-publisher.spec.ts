@@ -1,3 +1,7 @@
+import type {
+    EventSigner
+} from '../../ports/event-signer.js';
+
 import {
     describe,
     expect,
@@ -13,6 +17,15 @@ import {
 describe(
     'NostrToolsEventPublisher',
     () => {
+
+        const signer:
+            EventSigner = {
+            getPublicKey:
+                vi.fn(),
+
+            sign:
+                vi.fn()
+        };
 
         it(
             'publishes the exact signed event and closes the relay',
@@ -73,6 +86,9 @@ describe(
 
                     publish,
 
+                    auth:
+                        vi.fn(),
+
                     close
                 };
 
@@ -86,6 +102,7 @@ describe(
 
                 const publisher =
                     new NostrToolsEventPublisher(
+                        signer,
                         connectRelay
                     );
 
@@ -179,6 +196,9 @@ describe(
 
                     publish,
 
+                    auth:
+                        vi.fn(),
+
                     close
                 };
 
@@ -192,6 +212,7 @@ describe(
 
                 const publisher =
                     new NostrToolsEventPublisher(
+                        signer,
                         connectRelay
                     );
 
@@ -211,6 +232,134 @@ describe(
                 ).toHaveBeenCalledWith(
                     event
                 );
+
+
+                expect(
+                    close
+                ).toHaveBeenCalledOnce();
+            }
+        );
+        it(
+            'authenticates and retries the exact event once when authentication is required',
+            async () => {
+
+                const event = {
+                    id:
+                        'a'.repeat(
+                            64
+                        ),
+
+                    pubkey:
+                        'b'.repeat(
+                            64
+                        ),
+
+                    created_at:
+                        1000,
+
+                    kind:
+                        37770,
+
+                    tags:
+                        [],
+
+                    content:
+                        'content',
+
+                    sig:
+                        'c'.repeat(
+                            128
+                        )
+                };
+
+
+                const publish =
+                    vi.fn()
+                        .mockRejectedValueOnce(
+                            new Error(
+                                'auth-required: authentication required'
+                            )
+                        )
+                        .mockResolvedValueOnce(
+                            'published'
+                        );
+
+
+                const auth =
+                    vi.fn(
+                        async (
+                            signAuthEvent
+                        ) => {
+
+                            expect(
+                                signAuthEvent
+                            ).toBeTypeOf(
+                                'function'
+                            );
+
+
+                            return 'authenticated';
+                        }
+                    );
+
+
+                const close =
+                    vi.fn();
+
+
+                const relay = {
+                    publish,
+                    auth,
+                    close
+                };
+
+
+                const connectRelay =
+                    vi.fn(
+                        async () =>
+                            relay
+                    );
+
+
+                const publisher =
+                    new NostrToolsEventPublisher(
+                        signer,
+                        connectRelay
+                    );
+
+
+                await publisher.publish(
+                    'wss://relay.example',
+                    event
+                );
+
+
+                expect(
+                    publish
+                ).toHaveBeenCalledTimes(
+                    2
+                );
+
+
+                expect(
+                    publish
+                ).toHaveBeenNthCalledWith(
+                    1,
+                    event
+                );
+
+
+                expect(
+                    publish
+                ).toHaveBeenNthCalledWith(
+                    2,
+                    event
+                );
+
+
+                expect(
+                    auth
+                ).toHaveBeenCalledOnce();
 
 
                 expect(
