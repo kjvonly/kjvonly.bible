@@ -24,10 +24,6 @@ import type {
 } from './nostr-tools-auth-signer.js';
 
 import type {
-	SignedNostrEvent
-} from '../../domain/nostr-event.js';
-
-import type {
 	EventSigner
 } from '../../ports/event-signer.js';
 
@@ -39,12 +35,6 @@ import type {
 
 export interface NostrToolsRelayConnection
 	extends NegentropyRelay {
-
-	publish(
-		event:
-			SignedNostrEvent
-	): Promise<string>;
-
 
 	auth(
 		signAuthEvent:

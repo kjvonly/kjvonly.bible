@@ -477,9 +477,6 @@ describe(
                             }
                         ),
 
-                    publish:
-                        vi.fn(),
-
                     auth,
 
                     close
@@ -648,9 +645,6 @@ describe(
                                 );
                             }
                         ),
-
-                    publish:
-                        vi.fn(),
 
                     auth,
 
