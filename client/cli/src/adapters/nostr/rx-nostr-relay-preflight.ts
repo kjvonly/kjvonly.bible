@@ -17,10 +17,36 @@ const PREFLIGHT_TIMEOUT_MS =
 	5_000;
 
 
+export interface NostrPreflightData {
+	readonly relays:
+		readonly string[];
+}
+
+
 export class RxNostrRelayPreflight
 	implements PublicationEndpointPreflight {
 
 	async check(
+		data:
+			unknown
+	): Promise<void> {
+
+		const config =
+			data as NostrPreflightData;
+
+
+		await Promise.all(
+			config.relays.map(
+				url =>
+					this.checkRelay(
+						url
+					)
+			)
+		);
+	}
+
+
+	private async checkRelay(
 		url:
 			string
 	): Promise<void> {

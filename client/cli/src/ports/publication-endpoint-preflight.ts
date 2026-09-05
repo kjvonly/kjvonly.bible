@@ -1,7 +1,7 @@
 export interface PublicationEndpointPreflight {
 
 	check(
-		url:
-			string
+		data:
+			unknown
 	): Promise<void>;
 }

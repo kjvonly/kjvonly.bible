@@ -14,6 +14,12 @@ import {
 } from './publication-preflight.js';
 
 
+interface NostrPreflightData {
+	readonly relays:
+		readonly string[];
+}
+
+
 function createManifest() {
 
 	return {
@@ -61,8 +67,12 @@ describe(
 	() => {
 
 		it(
-			'checks every required endpoint',
+			'checks every required preflight configuration',
 			async () => {
+
+				const manifest =
+					createManifest();
+
 
 				const nostrCheck =
 					vi.fn(
@@ -91,21 +101,37 @@ describe(
 
 
 				await preflight.check(
-					createManifest()
+					manifest
 				);
 
 
 				expect(
 					nostrCheck
 				).toHaveBeenCalledTimes(
-					2
+					1
+				);
+
+
+				expect(
+					nostrCheck
+				).toHaveBeenCalledWith(
+					manifest.nostr
 				);
 
 
 				expect(
 					blossomCheck
 				).toHaveBeenCalledTimes(
-					2
+					1
+				);
+
+
+				expect(
+					blossomCheck
+				).toHaveBeenCalledWith(
+					manifest
+						.strategies
+						.primary
 				);
 			}
 		);
@@ -119,14 +145,19 @@ describe(
 					new PublicationPreflight(
 						{
 							check:
-								async url => {
+								async data => {
+
+									const config =
+										data as NostrPreflightData;
+
 
 									if (
-										url ===
+										config.relays.includes(
 											'wss://relay-b.example'
+										)
 									) {
 										throw new Error(
-											'offline'
+											'wss://relay-b.example offline'
 										);
 									}
 								}
