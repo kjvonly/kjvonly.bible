@@ -15,14 +15,22 @@ import type {
 	NostrRelayReconciliationRequest
 } from '../../ports/nostr-relay-reconciler.js';
 
+import type {
+	SignedNostrEvent
+} from '../../domain/nostr-event.js';
 
 export interface NostrToolsRelayConnection
 	extends NegentropyRelay {
 
+	publish(
+		event:
+			SignedNostrEvent
+	): Promise<string>;
+
+
 	close():
 		void;
 }
-
 
 export type NostrToolsRelayConnector =
 	(
