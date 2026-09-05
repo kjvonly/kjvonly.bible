@@ -84,5 +84,98 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'accepts a 128-byte collection name',
+			() => {
+
+				expect(
+					() =>
+						buildStagedCollectionEventFilename({
+							collectionName:
+								'a'.repeat(
+									128
+								),
+
+							createdAt:
+								1000,
+
+							eventId:
+								'a'.repeat(
+									64
+								)
+						})
+				).not.toThrow();
+			}
+		);
+		it(
+			'rejects a collection name longer than 128 bytes',
+			() => {
+
+				expect(
+					() =>
+						buildStagedCollectionEventFilename({
+							collectionName:
+								'a'.repeat(
+									129
+								),
+
+							createdAt:
+								1000,
+
+							eventId:
+								'a'.repeat(
+									64
+								)
+						})
+				).toThrow(
+					'Collection name exceeds 128 UTF-8 bytes.'
+				);
+			}
+		);
+		it(
+			'measures collection name length in UTF-8 bytes',
+			() => {
+
+				const build =
+					(
+						collectionName:
+							string
+					) =>
+						buildStagedCollectionEventFilename({
+							collectionName,
+
+							createdAt:
+								1000,
+
+							eventId:
+								'a'.repeat(
+									64
+								)
+						});
+
+
+				expect(
+					() =>
+						build(
+							'é'.repeat(
+								64
+							)
+						)
+				).not.toThrow();
+
+
+				expect(
+					() =>
+						build(
+							'é'.repeat(
+								65
+							)
+						)
+				).toThrow(
+					'Collection name exceeds 128 UTF-8 bytes.'
+				);
+			}
+		);
 	}
 );
