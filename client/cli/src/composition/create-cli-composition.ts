@@ -105,6 +105,26 @@ import { PublicationPreflight } from '../application/publication-preflight.js';
 import { NodeBlossomPublicationClient } from '../adapters/blossom/node-blossom-publication-client.js';
 import { BlossomArtifactPublisher } from '../application/blossom-artifact-publisher.js';
 
+import {
+	connectNodeNostrToolsRelay
+} from '../adapters/nostr/connect-node-nostr-tools-relay.js';
+
+import {
+	NostrToolsEventPublisher
+} from '../adapters/nostr/nostr-tools-event-publisher.js';
+
+import {
+	NostrToolsRelayReconciler
+} from '../adapters/nostr/nostr-tools-relay-reconciler.js';
+
+import {
+	NodeNostrEventStagingRepository
+} from '../adapters/staging/node-nostr-event-staging-repository.js';
+
+import {
+	NostrStagedEventPublisher
+} from '../application/nostr-staged-event-publisher.js';
+
 export function createCliComposition() {
 
 	const workingDirectory =
@@ -238,7 +258,7 @@ export function createCliComposition() {
 
 	const publicationPreflight =
 		new PublicationPreflight(
-			new NostrToolsRelayPreflight(), 
+			new NostrToolsRelayPreflight(),
 			new NodeBlossomPreflight()
 		);
 
@@ -256,14 +276,39 @@ export function createCliComposition() {
 			blossomPublicationClient
 		);
 
+	const nostrEventStagingRepository =
+		new NodeNostrEventStagingRepository(
+			stagingRepository,
+			collectionEventStagingRepository
+		);
+
+	const nostrRelayReconciler =
+		new NostrToolsRelayReconciler(
+			connectNodeNostrToolsRelay
+		);
+
+
+	const nostrEventPublisher =
+		new NostrToolsEventPublisher(
+			signer
+		);
+
+
+	const nostrStagedEventPublisher =
+		new NostrStagedEventPublisher(
+			nostrEventStagingRepository,
+			signer,
+			nostrRelayReconciler,
+			nostrEventPublisher
+		);
+
 	const publishManifest =
 		new PublishManifestUseCase(
 			manifestLoader,
 			publicationPreflight,
-			blossomArtifactPublisher
-
+			blossomArtifactPublisher,
+			nostrStagedEventPublisher
 		);
-
 
 	const syncManifest =
 		new SyncManifestUseCase(

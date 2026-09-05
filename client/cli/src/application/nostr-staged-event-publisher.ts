@@ -127,7 +127,7 @@ export class NostrStagedEventPublisher {
                     );
                 }
             }
-            
+
             for (
                 const entry
                 of stagedEvents
