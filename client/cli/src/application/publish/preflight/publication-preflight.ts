@@ -1,5 +1,5 @@
 
-import { Manifest } from '../../../domain/manifest/manifest.js';
+import { Manifest } from '#domain/manifest/manifest.js';
 import { Logger } from '#ports/logging/logger.js';
 import { PublicationEndpointPreflight } from '#ports/publication/publication-endpoint-preflight.js';
 

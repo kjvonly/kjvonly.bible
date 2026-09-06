@@ -1,4 +1,4 @@
-import { SignedNostrEvent } from "../../domain/event/nostr-event.js";
+import { SignedNostrEvent } from "#domain/event/nostr-event.js";
 
 export interface NostrEventPublisher {
 	publish(

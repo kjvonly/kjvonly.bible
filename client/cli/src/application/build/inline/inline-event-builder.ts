@@ -10,8 +10,8 @@ import type {
 import { SourceRepository } from '#ports/source/source-repository.js';
 import { EventSigner } from '#ports/nostr/event-signer.js';
 import { Clock } from '#ports/time/clock.js';
-import { SignedNostrEvent } from '../../../domain/event/nostr-event.js';
-import { ConcreteSource } from '../../../domain/source/concrete-source.js';
+import { SignedNostrEvent } from '#domain/event/nostr-event.js';
+import { ConcreteSource } from '#domain/source/concrete-source.js';
 
 
 

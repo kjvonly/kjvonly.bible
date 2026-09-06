@@ -1,4 +1,4 @@
-import { BlossomPublicationStatus } from "../../domain/publication/blossom-publication-result.js";
+import { BlossomPublicationStatus } from "#domain/publication/blossom-publication-result.js";
 
 
 export interface BlossomPublicationRequest {

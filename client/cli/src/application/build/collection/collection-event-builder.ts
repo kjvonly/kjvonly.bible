@@ -8,9 +8,9 @@ import type {
 
 import { EventSigner } from '#ports/nostr/event-signer.js';
 import { Clock } from '#ports/time/clock.js';
-import { SignedNostrEvent } from '../../../domain/event/nostr-event.js';
-import { EventDefinition } from '../../../domain/manifest/manifest.js';
-import { ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
+import { SignedNostrEvent } from '#domain/event/nostr-event.js';
+import { EventDefinition } from '#domain/manifest/manifest.js';
+import { ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
 
 export interface BuildCollectionEventRequest {
 	readonly kind:

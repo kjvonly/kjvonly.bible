@@ -27,9 +27,9 @@ import { ManifestLoader } from '#ports/manifest/manifest-loader.js';
 import { EventSigner } from '#ports/nostr/event-signer.js';
 import { SourceRepository } from '#ports/source/source-repository.js';
 import { SignedEventStagingRepository, StagedEventEntry } from '#ports/staging/signed-event-staging-repository.js';
-import { calculateEventDefinitionRevision } from '../../domain/event/event-definition-revision.js';
-import { Manifest } from '../../domain/manifest/manifest.js';
-import { ResourceDescriptor } from '../../domain/resource/resource-descriptor.js';
+import { calculateEventDefinitionRevision } from '#domain/event/event-definition-revision.js';
+import { Manifest } from '#domain/manifest/manifest.js';
+import { ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
 
 export interface BuildManifest {
 	build(

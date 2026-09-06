@@ -1,6 +1,6 @@
 
 
-import { ResourceDescriptorStrategy } from '../../domain/resource/resource-descriptor.js';
+import { ResourceDescriptorStrategy } from '#domain/resource/resource-descriptor.js';
 import type {
 	StagedArtifactEntry
 } from '../staging/artifact-staging-repository.js';

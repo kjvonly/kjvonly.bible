@@ -46,8 +46,8 @@ import {
 	EncodingRegistry
 } from '../encoding/encoding-registry.js';
 import { LocalNostrSigner } from '../../../adapters/nostr/signer/local-nostr-signer.js';
-import { Manifest } from '../../../domain/manifest/manifest.js';
-import { ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
+import { Manifest } from '#domain/manifest/manifest.js';
+import { ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
 import { Logger } from '#ports/logging/logger.js';
 
 

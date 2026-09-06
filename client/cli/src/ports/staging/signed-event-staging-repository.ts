@@ -1,5 +1,5 @@
-import { SignedNostrEvent } from "../../domain/event/nostr-event.js";
-import { StagedEventMetadata } from "../../domain/staging/staged-event-filename.js";
+import { SignedNostrEvent } from "#domain/event/nostr-event.js";
+import { StagedEventMetadata } from "#domain/staging/staged-event-filename.js";
 
 
 

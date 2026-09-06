@@ -18,10 +18,10 @@ import {
 import {
 	verifyEvent
 } from 'nostr-tools/pure';
-import { parseSignedNostrEvent } from '../../domain/event/parse-signed-nostr-event.js';
-import { parseStagedEventFilename, buildStagedEventFilename } from '../../domain/staging/staged-event-filename.js';
+import { parseSignedNostrEvent } from '#domain/event/parse-signed-nostr-event.js';
+import { parseStagedEventFilename, buildStagedEventFilename } from '#domain/staging/staged-event-filename.js';
 import { SignedEventStagingRepository, StagedEventEntry, StageSignedEventRequest } from '#ports/staging/signed-event-staging-repository.js';
-import { SignedNostrEvent } from '../../domain/event/nostr-event.js';
+import { SignedNostrEvent } from '#domain/event/nostr-event.js';
 
 export class NodeSignedEventStagingRepository
 	implements SignedEventStagingRepository {

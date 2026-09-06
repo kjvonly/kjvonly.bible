@@ -102,7 +102,7 @@ import {
 import {
     CollectionEventBuilder
 } from './collection/collection-event-builder.js';
-import { Manifest } from '../../domain/manifest/manifest.js';
+import { Manifest } from '#domain/manifest/manifest.js';
 import { LocalNostrSigner } from '../../adapters/nostr/signer/local-nostr-signer.js';
 const directories:
     string[] = [];

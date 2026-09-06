@@ -1,5 +1,5 @@
 
-import { Encoding } from '../../../domain/manifest/manifest.js';
+import { Encoding } from '#domain/manifest/manifest.js';
 import { ByteEncoder } from '#ports/encoding/byte-encoder.js';
 
 

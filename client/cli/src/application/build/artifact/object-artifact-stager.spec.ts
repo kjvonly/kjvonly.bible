@@ -51,11 +51,11 @@ import {
 
 import type {
 	ConcreteSource
-} from '../../../domain/concrete-source.js';
+} from '#domain/concrete-source.js';
 
 import type {
 	Encoding
-} from '../../../domain/manifest.js';
+} from '#domain/manifest.js';
 
 import {
 	EncodingRegistry

@@ -1,6 +1,6 @@
 
-import { ResourceDescriptorStrategy, ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
-import { ConcreteSource } from '../../../domain/source/concrete-source.js';
+import { ResourceDescriptorStrategy, ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
+import { ConcreteSource } from '#domain/source/concrete-source.js';
 import { StagedArtifactEntry } from '#ports/staging/artifact-staging-repository.js';
 
 

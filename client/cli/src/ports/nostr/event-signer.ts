@@ -1,4 +1,4 @@
-import { SignedNostrEvent, UnsignedNostrEvent } from "../../domain/event/nostr-event.js";
+import { SignedNostrEvent, UnsignedNostrEvent } from "#domain/event/nostr-event.js";
 
 export interface EventSigner {
 	getPublicKey():

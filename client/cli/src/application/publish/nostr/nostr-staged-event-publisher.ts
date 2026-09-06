@@ -1,6 +1,6 @@
 
-import { Manifest } from "../../../domain/manifest/manifest.js";
-import { NostrPublicationResult } from "../../../domain/publication/nostr-publication-result.js";
+import { Manifest } from "#domain/manifest/manifest.js";
+import { NostrPublicationResult } from "#domain/publication/nostr-publication-result.js";
 import { Logger } from "#ports/logging/logger.js";
 import { EventSigner } from "#ports/nostr/event-signer.js";
 import { NostrEventPublisher } from "#ports/nostr/nostr-event-publisher.js";

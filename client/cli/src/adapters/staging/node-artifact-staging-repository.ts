@@ -23,7 +23,7 @@ import {
 
 
 import { ArtifactStagingRepository, StagedArtifactEntry, StageIdentityArtifactRequest, StageMaterializedArtifactRequest } from '#ports/staging/artifact-staging-repository.js';
-import { parseStagedArtifactFilename, buildStagedArtifactFilename } from '../../domain/staging/staged-artifact-filename.js';
+import { parseStagedArtifactFilename, buildStagedArtifactFilename } from '#domain/staging/staged-artifact-filename.js';
 
 export class NodeArtifactStagingRepository
     implements ArtifactStagingRepository {
@@ -398,7 +398,7 @@ export class NodeArtifactStagingRepository
 
         metadata:
             import(
-            '../../domain/staging/staged-artifact-filename.js'
+            '#domain/staging/staged-artifact-filename.js'
             ).StagedArtifactMetadata
     ): Promise<string> {
 
