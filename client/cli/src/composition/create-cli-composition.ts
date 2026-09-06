@@ -125,6 +125,7 @@ import {
 	NostrStagedEventPublisher
 } from '../application/nostr-staged-event-publisher.js';
 import { ConsoleLogger } from '../adapters/logging/console-logger.js';
+import { log } from 'node:console';
 
 export function createCliComposition() {
 	const logger =
@@ -267,7 +268,8 @@ export function createCliComposition() {
 	const publicationPreflight =
 		new PublicationPreflight(
 			new NostrToolsRelayPreflight(logger),
-			new NodeBlossomPreflight(logger)
+			new NodeBlossomPreflight(logger),
+			logger
 		);
 
 	const blossomPublicationClient =

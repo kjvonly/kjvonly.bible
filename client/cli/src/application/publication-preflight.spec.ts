@@ -16,7 +16,7 @@ import {
 
 interface NostrPreflightData {
 	readonly relays:
-		readonly string[];
+	readonly string[];
 }
 
 
@@ -76,16 +76,19 @@ describe(
 
 				const nostrCheck =
 					vi.fn(
-						async () => {}
+						async () => { }
 					);
 
 
 				const blossomCheck =
 					vi.fn(
-						async () => {}
+						async () => { }
 					);
 
-
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 				const preflight =
 					new PublicationPreflight(
 						{
@@ -96,7 +99,8 @@ describe(
 						{
 							check:
 								blossomCheck
-						}
+						},
+						logger,
 					);
 
 
@@ -140,7 +144,10 @@ describe(
 		it(
 			'fails when any required endpoint fails',
 			async () => {
-
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 				const preflight =
 					new PublicationPreflight(
 						{
@@ -165,8 +172,9 @@ describe(
 
 						{
 							check:
-								async () => {}
-						}
+								async () => { }
+						},
+						logger
 					);
 
 

@@ -1,6 +1,7 @@
 import type {
     Manifest
 } from '../domain/manifest.js';
+import { Logger } from '../ports/logger.js';
 
 import type {
     PublicationEndpointPreflight
@@ -24,7 +25,10 @@ export class PublicationPreflight {
             PublicationEndpointPreflight,
 
         private readonly blossom:
-            PublicationEndpointPreflight
+            PublicationEndpointPreflight,
+
+        private readonly logger:
+            Logger
     ) { }
 
 
@@ -32,6 +36,10 @@ export class PublicationPreflight {
         manifest:
             Manifest
     ): Promise<void> {
+
+        this.logPreflightStart(
+            manifest
+        );
 
         let checks = [];
 
@@ -130,5 +138,48 @@ export class PublicationPreflight {
                 )
             );
         }
+        this.logPreflightStart(
+            manifest
+        );
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Log Helpers
+
+    private logPreflightStart(
+        manifest:
+            Manifest
+    ): void {
+
+        this.logger.verbose(
+            'preflight.start',
+            {
+                relayCount:
+                    manifest
+                        .nostr
+                        .relays
+                        .length,
+
+                strategyCount:
+                    Object.keys(
+                        manifest.strategies
+                    ).length
+            }
+        );
+    }
+
+
+    private logPreflightComplete(
+        checkCount:
+            number
+    ): void {
+
+        this.logger.verbose(
+            'preflight.complete',
+            {
+                checkCount
+            }
+        );
+    }
+
 }
