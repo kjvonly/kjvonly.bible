@@ -13,6 +13,10 @@ import type {
     EventSigner
 } from '../../ports/event-signer.js';
 
+import type {
+    Logger
+} from '../../ports/logger.js';
+
 import {
     NostrToolsRelayReconciler
 } from './nostr-tools-relay-reconciler.js';
@@ -34,6 +38,16 @@ function createSigner():
             ),
 
         sign:
+            vi.fn()
+    };
+}
+
+
+function createLogger():
+    Logger {
+
+    return {
+        verbose:
             vi.fn()
     };
 }
@@ -196,7 +210,8 @@ describe(
                 const reconciler =
                     new NostrToolsRelayReconciler(
                         createSigner(),
-                        connectRelay
+                        connectRelay,
+                        createLogger()
                     );
 
 
@@ -297,7 +312,8 @@ describe(
                 const reconciler =
                     new NostrToolsRelayReconciler(
                         createSigner(),
-                        connectRelay
+                        connectRelay,
+                        createLogger()
                     );
 
 
@@ -493,7 +509,8 @@ describe(
                 const reconciler =
                     new NostrToolsRelayReconciler(
                         createSigner(),
-                        connectRelay
+                        connectRelay,
+                        createLogger()
                     );
 
 
@@ -662,7 +679,8 @@ describe(
                 const reconciler =
                     new NostrToolsRelayReconciler(
                         createSigner(),
-                        connectRelay
+                        connectRelay,
+                        createLogger()
                     );
 
 

@@ -28,6 +28,10 @@ import type {
 } from '../../ports/event-signer.js';
 
 import type {
+	Logger
+} from '../../ports/logger.js';
+
+import type {
 	NostrRelayReconciler,
 	NostrRelayReconciliationRequest
 } from '../../ports/nostr-relay-reconciler.js';
@@ -64,8 +68,11 @@ export class NostrToolsRelayReconciler
 			EventSigner,
 
 		private readonly connectRelay:
-			NostrToolsRelayConnector
-	) {}
+			NostrToolsRelayConnector,
+
+		private readonly logger:
+			Logger
+	) { }
 
 
 	async reconcile(
@@ -75,22 +82,47 @@ export class NostrToolsRelayReconciler
 		readonly string[]
 	> {
 
+		this.logConnectStart(
+			request.relay
+		);
+
+
 		const relay =
 			await this.connectRelay(
 				request.relay
 			);
 
 
+		this.logConnectComplete(
+			request.relay
+		);
+
+
+		this.logReconcileStart(
+			request
+		);
+
+
 		try {
 			try {
-				return await this.reconcileOnce(
-					relay,
-					request
+				const missing =
+					await this.reconcileOnce(
+						relay,
+						request
+					);
+
+
+				this.logReconcileComplete(
+					request.relay,
+					missing.length
 				);
+
+
+				return missing;
 			}
 			catch (
-				error:
-					unknown
+			error:
+				unknown
 			) {
 				if (
 					!this.isAuthRequired(
@@ -101,6 +133,16 @@ export class NostrToolsRelayReconciler
 				}
 
 
+				this.logAuthRequired(
+					request.relay
+				);
+
+
+				this.logAuthStart(
+					request.relay
+				);
+
+
 				await authenticateNostrToolsRelay(
 					relay,
 					createNostrToolsAuthSigner(
@@ -109,10 +151,30 @@ export class NostrToolsRelayReconciler
 				);
 
 
-				return await this.reconcileOnce(
-					relay,
-					request
+				this.logAuthComplete(
+					request.relay
 				);
+
+
+				this.logReconcileRetry(
+					request.relay
+				);
+
+
+				const missing =
+					await this.reconcileOnce(
+						relay,
+						request
+					);
+
+
+				this.logReconcileComplete(
+					request.relay,
+					missing.length
+				);
+
+
+				return missing;
 			}
 		}
 		finally {
@@ -160,10 +222,133 @@ export class NostrToolsRelayReconciler
 
 		return (
 			error instanceof
-				NostrToolsNegentropyError &&
+			NostrToolsNegentropyError &&
 			error.reason.startsWith(
 				'auth-required:'
 			)
+		);
+	}
+
+
+	private logConnectStart(
+		relay:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.connect.start',
+			{
+				relay
+			}
+		);
+	}
+
+
+	private logConnectComplete(
+		relay:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.connect.complete',
+			{
+				relay
+			}
+		);
+	}
+
+
+	private logReconcileStart(
+		request:
+			NostrRelayReconciliationRequest
+	): void {
+
+		this.logger.verbose(
+			'nostr.reconcile.start',
+			{
+				relay:
+					request.relay,
+
+				kind:
+					request.kind,
+
+				eventCount:
+					request.events.length
+			}
+		);
+	}
+
+
+	private logAuthRequired(
+		relay:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.auth.required',
+			{
+				relay
+			}
+		);
+	}
+
+
+	private logAuthStart(
+		relay:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.auth.start',
+			{
+				relay
+			}
+		);
+	}
+
+
+	private logAuthComplete(
+		relay:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.auth.complete',
+			{
+				relay
+			}
+		);
+	}
+
+
+	private logReconcileRetry(
+		relay:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.reconcile.retry',
+			{
+				relay
+			}
+		);
+	}
+
+
+	private logReconcileComplete(
+		relay:
+			string,
+
+		missingCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'nostr.reconcile.complete',
+			{
+				relay,
+				missingCount
+			}
 		);
 	}
 }
