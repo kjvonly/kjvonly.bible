@@ -89,11 +89,7 @@ describe(
                 expect(
                     consoleLog
                 ).toHaveBeenCalledWith(
-                    '[verbose] manifest.load.start',
-                    {
-                        path:
-                            'manifest.yaml'
-                    }
+                    '[verbose] manifest.load.start {"path":"manifest.yaml"}'
                 );
             }
         );

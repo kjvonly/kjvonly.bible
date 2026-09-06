@@ -291,6 +291,11 @@ const collectionBuilder =
 		new NodeCollectionEventStagingRepository()
 	);
 
+    const logger = {
+	verbose:
+		vi.fn()
+};
+
     return new BuildManifestUseCase(
         loader,
 
@@ -312,7 +317,8 @@ const collectionBuilder =
         eventStagingRepository,
 
         descriptorBackedResourceBuilder,
-        collectionBuilder
+        collectionBuilder,
+        logger
     );
 }
 

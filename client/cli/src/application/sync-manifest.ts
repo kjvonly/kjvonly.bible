@@ -39,11 +39,8 @@ export class SyncManifestUseCase
 			string
 	): Promise<void> {
 
-		this.logger.verbose(
-			'sync.build.start',
-			{
-				manifestPath
-			}
+		this.logBuildStart(
+			manifestPath
 		);
 
 
@@ -52,19 +49,13 @@ export class SyncManifestUseCase
 		);
 
 
-		this.logger.verbose(
-			'sync.build.complete',
-			{
-				manifestPath
-			}
+		this.logBuildComplete(
+			manifestPath
 		);
 
 
-		this.logger.verbose(
-			'sync.publish.start',
-			{
-				manifestPath
-			}
+		this.logPublishStart(
+			manifestPath
 		);
 
 
@@ -72,6 +63,59 @@ export class SyncManifestUseCase
 			manifestPath
 		);
 
+
+		this.logPublishComplete(
+			manifestPath
+		);
+	}
+
+
+	private logBuildStart(
+		manifestPath:
+			string
+	): void {
+
+		this.logger.verbose(
+			'sync.build.start',
+			{
+				manifestPath
+			}
+		);
+	}
+
+
+	private logBuildComplete(
+		manifestPath:
+			string
+	): void {
+
+		this.logger.verbose(
+			'sync.build.complete',
+			{
+				manifestPath
+			}
+		);
+	}
+
+
+	private logPublishStart(
+		manifestPath:
+			string
+	): void {
+
+		this.logger.verbose(
+			'sync.publish.start',
+			{
+				manifestPath
+			}
+		);
+	}
+
+
+	private logPublishComplete(
+		manifestPath:
+			string
+	): void {
 
 		this.logger.verbose(
 			'sync.publish.complete',

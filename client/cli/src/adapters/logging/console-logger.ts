@@ -31,40 +31,41 @@ export class ConsoleLogger
 
 
 	verbose(
-		event:
-			string,
+	event:
+		string,
 
-		context?:
-			Readonly<
-				Record<
-					string,
-					unknown
-				>
+	context?:
+		Readonly<
+			Record<
+				string,
+				unknown
 			>
-	): void {
+		>
+): void {
 
-		if (
-			!this.verboseEnabled
-		) {
-			return;
-		}
-
-
-		if (
-			context ===
-			undefined
-		) {
-			console.log(
-				`[verbose] ${event}`
-			);
-
-			return;
-		}
-
-
-		console.log(
-			`[verbose] ${event}`,
-			context
-		);
+	if (
+		!this.verboseEnabled
+	) {
+		return;
 	}
+
+
+	if (
+		context ===
+		undefined
+	) {
+		console.log(
+			`[verbose] ${event}`
+		);
+
+		return;
+	}
+
+
+	console.log(
+		`[verbose] ${event} ${JSON.stringify(
+			context
+		)}`
+	);
+}
 }

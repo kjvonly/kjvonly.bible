@@ -123,7 +123,6 @@ describe(
 					}
 				);
 
-
 				expect(
 					logger.verbose
 				).toHaveBeenNthCalledWith(
