@@ -333,12 +333,17 @@ export class DescriptorBackedResourceBuilder {
 							})
 					);
 
-
 					continue;
 				}
 			}
 
-
+			this.logEventBuild(
+				request.resourceName,
+				source.key,
+				previous === undefined
+					? 'new'
+					: 'changed'
+			);
 			const result =
 				await this.eventBuilder
 					.build({
@@ -393,7 +398,11 @@ export class DescriptorBackedResourceBuilder {
 					previous
 				});
 
-
+			this.logEventStaged(
+				request.resourceName,
+				source.key,
+				result.event.id
+			);
 			descriptors.push(
 				result.descriptor
 			);
@@ -417,6 +426,10 @@ export class DescriptorBackedResourceBuilder {
 			}
 		}
 
+		this.logBuildComplete(
+			request.resourceName,
+			descriptors.length
+		);
 
 		return descriptors;
 	}
@@ -478,6 +491,66 @@ export class DescriptorBackedResourceBuilder {
 				resourceName,
 				key,
 				eventId
+			}
+		);
+	}
+
+	private logEventBuild(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		reason:
+			'new' |
+			'changed'
+	): void {
+
+		this.logger.verbose(
+			'descriptor-resource.event.build',
+			{
+				resourceName,
+				key,
+				reason
+			}
+		);
+	}
+
+	private logEventStaged(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'descriptor-resource.event.staged',
+			{
+				resourceName,
+				key,
+				eventId
+			}
+		);
+	}
+
+	private logBuildComplete(
+		resourceName:
+			string,
+
+		descriptorCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'descriptor-resource.build.complete',
+			{
+				resourceName,
+				descriptorCount
 			}
 		);
 	}
