@@ -14,9 +14,23 @@ import type {
 	StagedArtifactEntry
 } from '../ports/artifact-staging-repository.js';
 
+import type {
+	Logger
+} from '../ports/logger.js';
+
 import {
 	BlossomArtifactPublisher
 } from './blossom-artifact-publisher.js';
+
+
+function createLogger():
+	Logger {
+
+	return {
+		verbose:
+			vi.fn()
+	};
+}
 
 
 function createManifest() {
@@ -163,6 +177,10 @@ describe(
 					);
 
 
+			const logger =
+				createLogger();
+
+
 			const publisher =
 				new BlossomArtifactPublisher(
 					stagingRepository,
@@ -180,7 +198,9 @@ describe(
 
 					{
 						ensure
-					}
+					},
+
+					logger
 				);
 
 
@@ -207,6 +227,54 @@ describe(
 				'already-present',
 				'uploaded'
 			]);
+
+
+
+			expect(
+				logger.verbose
+			).toHaveBeenCalledWith(
+				'blossom.publish.start',
+				{
+					stagingRoot:
+						'/staging'
+				}
+			);
+
+
+			expect(
+				logger.verbose
+			).toHaveBeenCalledWith(
+				'blossom.plans.created',
+				{
+					planCount:
+						1,
+
+					targetCount:
+						2
+				}
+			);
+
+
+			expect(
+				logger.verbose
+			).toHaveBeenCalledWith(
+				'blossom.artifacts.validated',
+				{
+					artifactCount:
+						1
+				}
+			);
+
+
+			expect(
+				logger.verbose
+			).toHaveBeenCalledWith(
+				'blossom.publish.complete',
+				{
+					resultCount:
+						2
+				}
+			);
 		}
 	);
 
@@ -247,7 +315,9 @@ describe(
 
 					{
 						ensure
-					}
+					},
+
+					createLogger()
 				);
 
 

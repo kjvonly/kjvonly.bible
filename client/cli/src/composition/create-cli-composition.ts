@@ -285,7 +285,8 @@ export function createCliComposition() {
 		new BlossomArtifactPublisher(
 			artifactStagingRepository,
 			sourceRepository,
-			blossomPublicationClient
+			blossomPublicationClient,
+			logger
 		);
 
 	const nostrEventStagingRepository =

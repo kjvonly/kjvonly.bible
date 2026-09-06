@@ -16,6 +16,10 @@ import type {
 } from '../ports/blossom-publication-client.js';
 
 import type {
+	Logger
+} from '../ports/logger.js';
+
+import type {
 	SourceRepository
 } from '../ports/source-repository.js';
 
@@ -45,7 +49,10 @@ export class BlossomArtifactPublisher {
 			SourceRepository,
 
 		private readonly publicationClient:
-			BlossomPublicationClient
+			BlossomPublicationClient,
+
+		private readonly logger:
+			Logger
 	) {}
 
 
@@ -59,6 +66,11 @@ export class BlossomArtifactPublisher {
 		readonly BlossomPublicationResult[]
 	> {
 
+		this.logPublishStart(
+			stagingRoot
+		);
+
+
 		const plans =
 			await this.createPlans(
 				manifest,
@@ -66,8 +78,18 @@ export class BlossomArtifactPublisher {
 			);
 
 
+		this.logPlansCreated(
+			plans
+		);
+
+
 		await this.validateArtifacts(
 			plans
+		);
+
+
+		this.logArtifactsValidated(
+			plans.length
 		);
 
 
@@ -135,6 +157,11 @@ export class BlossomArtifactPublisher {
 				});
 			}
 		}
+
+
+		this.logPublishComplete(
+			results.length
+		);
 
 
 		return results;
@@ -328,4 +355,73 @@ export class BlossomArtifactPublisher {
 			}
 		}
 	}
+
+
+	private logPublishStart(
+		stagingRoot:
+			string
+	): void {
+
+		this.logger.verbose(
+			'blossom.publish.start',
+			{
+				stagingRoot
+			}
+		);
+	}
+
+
+	private logPlansCreated(
+		plans:
+			readonly ArtifactPublicationPlan[]
+	): void {
+
+		this.logger.verbose(
+			'blossom.plans.created',
+			{
+				planCount:
+					plans.length,
+
+				targetCount:
+					plans.reduce(
+						(
+							total,
+							plan
+						) =>
+							total +
+							plan.urls.length,
+						0
+					)
+			}
+		);
+	}
+
+
+	private logArtifactsValidated(
+		artifactCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'blossom.artifacts.validated',
+			{
+				artifactCount
+			}
+		);
+	}
+
+
+	private logPublishComplete(
+		resultCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'blossom.publish.complete',
+			{
+				resultCount
+			}
+		);
+	}
+
 }
