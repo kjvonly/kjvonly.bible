@@ -124,8 +124,8 @@ import {
 import {
 	NostrStagedEventPublisher
 } from '../application/nostr-staged-event-publisher.js';
+
 import { ConsoleLogger } from '../adapters/logging/console-logger.js';
-import { log } from 'node:console';
 
 export function createCliComposition() {
 	const logger =
@@ -296,7 +296,8 @@ export function createCliComposition() {
 	const nostrRelayReconciler =
 		new NostrToolsRelayReconciler(
 			signer,
-			connectNodeNostrToolsRelay
+			connectNodeNostrToolsRelay,
+			logger
 		);
 
 
