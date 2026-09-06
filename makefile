@@ -20,13 +20,14 @@ seed-chapters-blossom:
 	cd zarf/scripts/seed && \
 	./chapters.sh blossom
 
-seed-kjv:
-	cd zarf/scripts/seed && \
-	./chapters.sh file ../../../data/json.gz/kjv.json.gz "KJV Bible"
-
 seed-kjvs:
 	cd zarf/scripts/seed && \
 	./chapters.sh file ../../../data/json.gz/kjvs.json.gz "KJV Bible with Strongs Concordance"
+
+seed-kjv:
+	cd client/cli && \
+	npm run build && \
+	node dist/main.js sync ../../zarf/manifest/kjv.yaml
 
 ## STRONGS
 seed-strongs:

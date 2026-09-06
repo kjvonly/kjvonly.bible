@@ -257,23 +257,20 @@ export function reconcileNostrToolsNegentropy(
 						}
 
 
-						case 'NEG-ERR': if (
-							data[0] ===
-							'NEG-ERR'
-						) {
+						case 'NEG-ERR':
+						case 'NEG-ERROR': {
+
 							const reason =
 								data[2] ??
 								'unknown error';
 
 
-							subscription.close();
-
-
-							reject(
+							fail(
 								new NostrToolsNegentropyError(
 									reason
 								)
 							);
+
 
 							return;
 						}
