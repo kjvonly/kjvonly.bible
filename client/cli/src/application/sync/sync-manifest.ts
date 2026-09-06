@@ -2,12 +2,12 @@
 
 import type {
 	PublishManifest
-} from './publish/publish-manifest.js';
+} from '../publish/publish-manifest.js';
 
 import type {
 	Logger
-} from '../ports/logger.js';
-import { BuildManifest } from './build/build-manifest.js';
+} from '../../ports/logger.js';
+import { BuildManifest } from '../build/build-manifest.js';
 
 
 export interface SyncManifest {

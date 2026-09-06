@@ -9,12 +9,12 @@ import {
 
 import type {
 	PublishManifest
-} from './publish/publish-manifest.js';
+} from '../publish/publish-manifest.js';
 
 import {
 	SyncManifestUseCase
 } from './sync-manifest.js';
-import { BuildManifest } from './build/build-manifest.js';
+import { BuildManifest } from '../build/build-manifest.js';
 
 
 describe(

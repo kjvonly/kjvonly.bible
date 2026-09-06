@@ -32,7 +32,7 @@ import {
 
 import {
 	SyncManifestUseCase
-} from '../application/sync-manifest.js';
+} from '../application/sync/sync-manifest.js';
 
 import {
 	createCli

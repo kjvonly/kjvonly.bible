@@ -8,7 +8,7 @@ import type {
 
 import type {
 	SyncManifest
-} from '../application/sync-manifest.js';
+} from '../application/sync/sync-manifest.js';
 
 import { BuildManifest } from '../application/build/build-manifest.js';
 
