@@ -9,6 +9,10 @@ import type {
 	EventSigner
 } from '../../ports/event-signer.js';
 
+import type {
+	Logger
+} from '../../ports/logger.js';
+
 import {
 	NostrToolsEventPublisher
 } from './nostr-tools-event-publisher.js';
@@ -27,6 +31,16 @@ function createSigner():
 			),
 
 		sign:
+			vi.fn()
+	};
+}
+
+
+function createLogger():
+	Logger {
+
+	return {
+		verbose:
 			vi.fn()
 	};
 }
@@ -101,9 +115,14 @@ describe(
 				};
 
 
+				const logger =
+					createLogger();
+
+
 				const publisher =
 					new NostrToolsEventPublisher(
 						createSigner(),
+						logger,
 						() =>
 							pool
 					);
@@ -141,6 +160,34 @@ describe(
 				).toHaveBeenCalledWith([
 					'wss://relay.example'
 				]);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'nostr.event.transport.start',
+					{
+						relay:
+							'wss://relay.example',
+
+						eventId:
+							event.id
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'nostr.event.transport.complete',
+					{
+						relay:
+							'wss://relay.example',
+
+						eventId:
+							event.id
+					}
+				);
 			}
 		);
 
@@ -175,9 +222,14 @@ describe(
 				};
 
 
+				const logger =
+					createLogger();
+
+
 				const publisher =
 					new NostrToolsEventPublisher(
 						createSigner(),
+						logger,
 						() =>
 							pool
 					);
@@ -198,6 +250,23 @@ describe(
 				).toHaveBeenCalledWith([
 					'wss://relay.example'
 				]);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'nostr.event.transport.failed',
+					{
+						relay:
+							'wss://relay.example',
+
+						eventId:
+							event.id,
+
+						error:
+							'blocked: event rejected'
+					}
+				);
 			}
 		);
 	}

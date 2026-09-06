@@ -303,7 +303,8 @@ export function createCliComposition() {
 
 	const nostrEventPublisher =
 		new NostrToolsEventPublisher(
-			signer
+			signer,
+			logger
 		);
 
 
@@ -321,7 +322,8 @@ export function createCliComposition() {
 			manifestLoader,
 			publicationPreflight,
 			blossomArtifactPublisher,
-			nostrStagedEventPublisher
+			nostrStagedEventPublisher,
+			logger
 		);
 
 	const syncManifest =

@@ -2,6 +2,10 @@ import type {
 	ManifestLoader
 } from '../ports/manifest-loader.js';
 
+import type {
+	Logger
+} from '../ports/logger.js';
+
 import {
 	PublicationPreflight
 } from './publication-preflight.js';
@@ -21,6 +25,7 @@ import type {
 import {
 	NostrStagedEventPublisher
 } from './nostr-staged-event-publisher.js';
+
 
 export interface PublishManifest {
 	publish(
@@ -46,13 +51,22 @@ export class PublishManifestUseCase
 			BlossomArtifactPublisher,
 
 		private readonly nostrStagedEventPublisher:
-			NostrStagedEventPublisher
+			NostrStagedEventPublisher,
+
+		private readonly logger:
+			Logger
 	) { }
+
 
 	async publish(
 		manifestPath:
 			string
 	): Promise<PublicationResult[]> {
+
+		this.logPublishStart(
+			manifestPath
+		);
+
 
 		const loaded =
 			await this.manifestLoader
@@ -61,11 +75,23 @@ export class PublishManifestUseCase
 				);
 
 
+		this.logManifestLoaded(
+			manifestPath,
+			loaded.manifest.resources,
+			loaded.manifest.collections
+		);
+
+
 		await this
 			.publicationPreflight
 			.check(
 				loaded.manifest
 			);
+
+
+		this.logPreflightComplete(
+			manifestPath
+		);
 
 
 		const stagingRoot =
@@ -87,6 +113,11 @@ export class PublishManifestUseCase
 				);
 
 
+		this.logBlossomComplete(
+			blossomResults.length
+		);
+
+
 		const nostrResults =
 			await this
 				.nostrStagedEventPublisher
@@ -96,7 +127,12 @@ export class PublishManifestUseCase
 				);
 
 
-		return [
+		this.logNostrComplete(
+			nostrResults.length
+		);
+
+
+		const results = [
 			...blossomResults.map(
 				data => ({
 					type:
@@ -115,5 +151,123 @@ export class PublishManifestUseCase
 				})
 			)
 		];
+
+
+		this.logPublishComplete(
+			results.length
+		);
+
+
+		return results;
+	}
+
+
+	private logPublishStart(
+		manifestPath:
+			string
+	): void {
+
+		this.logger.verbose(
+			'publish.start',
+			{
+				manifestPath
+			}
+		);
+	}
+
+
+	private logManifestLoaded(
+		manifestPath:
+			string,
+
+		resources:
+			Readonly<
+				Record<
+					string,
+					unknown
+				>
+			>,
+
+		collections:
+			Readonly<
+				Record<
+					string,
+					unknown
+				>
+			>
+	): void {
+
+		this.logger.verbose(
+			'publish.manifest.loaded',
+			{
+				manifestPath,
+
+				resourceCount:
+					Object.keys(
+						resources
+					).length,
+
+				collectionCount:
+					Object.keys(
+						collections
+					).length
+			}
+		);
+	}
+
+
+	private logPreflightComplete(
+		manifestPath:
+			string
+	): void {
+
+		this.logger.verbose(
+			'publish.preflight.complete',
+			{
+				manifestPath
+			}
+		);
+	}
+
+
+	private logBlossomComplete(
+		resultCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'publish.blossom.complete',
+			{
+				resultCount
+			}
+		);
+	}
+
+
+	private logNostrComplete(
+		resultCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'publish.nostr.complete',
+			{
+				resultCount
+			}
+		);
+	}
+
+
+	private logPublishComplete(
+		resultCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'publish.complete',
+			{
+				resultCount
+			}
+		);
 	}
 }

@@ -14,6 +14,10 @@ import type {
 } from '../ports/manifest-loader.js';
 
 import type {
+	Logger
+} from '../ports/logger.js';
+
+import type {
 	BlossomArtifactPublisher
 } from './blossom-artifact-publisher.js';
 
@@ -28,6 +32,16 @@ import {
 import type {
 	PublicationPreflight
 } from './publication-preflight.js';
+
+
+function createLogger():
+	Logger {
+
+	return {
+		verbose:
+			vi.fn()
+	};
+}
 
 
 function createManifest() {
@@ -170,12 +184,17 @@ describe(
 				} as unknown as NostrStagedEventPublisher;
 
 
+				const logger =
+					createLogger();
+
+
 				const publisher =
 					new PublishManifestUseCase(
 						manifestLoader,
 						publicationPreflight,
 						blossomArtifactPublisher,
-						nostrStagedEventPublisher
+						nostrStagedEventPublisher,
+						logger
 					);
 
 
@@ -230,6 +249,79 @@ describe(
 							nostrResult
 					}
 				]);
+
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'publish.start',
+					{
+						manifestPath:
+							'/project/manifest.yaml'
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'publish.manifest.loaded',
+					{
+						manifestPath:
+							'/project/manifest.yaml',
+
+						resourceCount:
+							0,
+
+						collectionCount:
+							0
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'publish.preflight.complete',
+					{
+						manifestPath:
+							'/project/manifest.yaml'
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'publish.blossom.complete',
+					{
+						resultCount:
+							1
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'publish.nostr.complete',
+					{
+						resultCount:
+							1
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'publish.complete',
+					{
+						resultCount:
+							2
+					}
+				);
 			}
 		);
 	}

@@ -14,6 +14,10 @@ import type {
 } from '../../ports/event-signer.js';
 
 import type {
+	Logger
+} from '../../ports/logger.js';
+
+import type {
 	NostrEventPublisher
 } from '../../ports/nostr-event-publisher.js';
 
@@ -66,6 +70,9 @@ export class NostrToolsEventPublisher
 		private readonly signer:
 			EventSigner,
 
+		private readonly logger:
+			Logger,
+
 		private readonly createPool:
 			NostrToolsEventPublicationPoolFactory =
 				() =>
@@ -80,6 +87,12 @@ export class NostrToolsEventPublisher
 		event:
 			SignedNostrEvent
 	): Promise<void> {
+
+		this.logTransportStart(
+			relayUrl,
+			event.id
+		);
+
 
 		const pool =
 			this.createPool();
@@ -100,11 +113,94 @@ export class NostrToolsEventPublisher
 					}
 				)
 			);
+
+
+			this.logTransportComplete(
+				relayUrl,
+				event.id
+			);
+		}
+		catch (
+			error:
+				unknown
+		) {
+			this.logTransportFailed(
+				relayUrl,
+				event.id,
+				error
+			);
+
+
+			throw error;
 		}
 		finally {
 			pool.close([
 				relayUrl
 			]);
 		}
+	}
+
+
+	private logTransportStart(
+		relay:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.event.transport.start',
+			{
+				relay,
+				eventId
+			}
+		);
+	}
+
+
+	private logTransportComplete(
+		relay:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'nostr.event.transport.complete',
+			{
+				relay,
+				eventId
+			}
+		);
+	}
+
+
+	private logTransportFailed(
+		relay:
+			string,
+
+		eventId:
+			string,
+
+		error:
+			unknown
+	): void {
+
+		this.logger.verbose(
+			'nostr.event.transport.failed',
+			{
+				relay,
+				eventId,
+
+				error:
+					error instanceof Error
+						? error.message
+						: String(
+							error
+						)
+			}
+		);
 	}
 }
