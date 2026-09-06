@@ -5,9 +5,7 @@ import {
 	vi
 } from 'vitest';
 
-import type {
-	BuildManifest
-} from './build-manifest.js';
+
 
 import type {
 	PublishManifest
@@ -16,6 +14,7 @@ import type {
 import {
 	SyncManifestUseCase
 } from './sync-manifest.js';
+import { BuildManifest } from './build/build-manifest.js';
 
 
 describe(

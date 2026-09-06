@@ -30,25 +30,15 @@ import {
 	SystemClock
 } from '../adapters/time/system-clock.js';
 
-import {
-	BuildManifestUseCase
-} from '../application/build-manifest.js';
 
-import {
-	EncodingRegistry
-} from '../application/encoding/encoding-registry.js';
 
-import {
-	InlineEventBuilder
-} from '../application/inline-event-builder.js';
+
 
 import {
 	PublishManifestUseCase
 } from '../application/publish-manifest.js';
 
-import {
-	SourceExpander
-} from '../application/source-expander.js';
+
 
 import {
 	SyncManifestUseCase
@@ -66,37 +56,12 @@ import {
 	NodeArtifactStagingRepository
 } from '../adapters/staging/node-artifact-staging-repository.js';
 
-import {
-	DescriptorBackedResourceBuilder
-} from '../application/descriptor-backed-resource-builder.js';
 
-import {
-	DescriptorEventBuilder
-} from '../application/descriptor-event-builder.js';
-
-import {
-	DescriptorStrategyRegistry
-} from '../application/descriptor-strategy-registry.js';
-
-import {
-	ObjectArtifactStager
-} from '../application/object-artifact-stager.js';
-
-import {
-	ResourceDescriptorBuilder
-} from '../application/resource-descriptor-builder.js';
 
 import {
 	NodeCollectionEventStagingRepository
 } from '../adapters/staging/node-collection-event-staging-repository.js';
 
-import {
-	CollectionBuilder
-} from '../application/collection-builder.js';
-
-import {
-	CollectionEventBuilder
-} from '../application/collection-event-builder.js';
 import {
 	NostrToolsRelayPreflight
 } from '../adapters/nostr/nostr-tools-relay-preflight.js';
@@ -125,7 +90,19 @@ import {
 	NostrStagedEventPublisher
 } from '../application/nostr-staged-event-publisher.js';
 
+//application
 import { ConsoleLogger } from '../adapters/logging/console-logger.js';
+import { ObjectArtifactStager } from '../application/build/artifact/object-artifact-stager.js';
+import { BuildManifestUseCase } from '../application/build/build-manifest.js';
+import { CollectionBuilder } from '../application/build/collection/collection-builder.js';
+import { CollectionEventBuilder } from '../application/build/collection/collection-event-builder.js';
+import { DescriptorBackedResourceBuilder } from '../application/build/descriptor/descriptor-backed-resource-builder.js';
+import { DescriptorEventBuilder } from '../application/build/descriptor/descriptor-event-builder.js';
+import { DescriptorStrategyRegistry } from '../application/build/descriptor/descriptor-strategy-registry.js';
+import { ResourceDescriptorBuilder } from '../application/build/descriptor/resource-descriptor-builder.js';
+import { EncodingRegistry } from '../application/build/encoding/encoding-registry.js';
+import { InlineEventBuilder } from '../application/build/inline/inline-event-builder.js';
+import { SourceExpander } from '../application/build/source/source-expander.js';
 
 export function createCliComposition() {
 	const logger =

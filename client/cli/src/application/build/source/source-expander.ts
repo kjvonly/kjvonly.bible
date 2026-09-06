@@ -5,24 +5,24 @@ import {
 
 import type {
 	ConcreteSource
-} from '../domain/concrete-source.js';
+} from '../../../domain/concrete-source.js';
 
 import {
 	interpolateEventKey
-} from '../domain/interpolate-key.js';
+} from '../../../domain/interpolate-key.js';
 
 import type {
 	ResourceDefinition
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import {
 	deriveSourceKey
-} from '../domain/source-key.js';
+} from '../../../domain/source-key.js';
 
 import type {
 	SourceDirectoryEntry,
 	SourceRepository
-} from '../ports/source-repository.js';
+} from '../../../ports/source-repository.js';
 
 
 export interface ExpandSourceRequest {

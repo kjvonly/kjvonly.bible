@@ -1,6 +1,4 @@
-import type {
-	BuildManifest
-} from './build-manifest.js';
+
 
 import type {
 	PublishManifest
@@ -9,6 +7,7 @@ import type {
 import type {
 	Logger
 } from '../ports/logger.js';
+import { BuildManifest } from './build/build-manifest.js';
 
 
 export interface SyncManifest {

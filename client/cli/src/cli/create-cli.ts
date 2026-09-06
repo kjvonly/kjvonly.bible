@@ -3,16 +3,14 @@ import {
 } from 'commander';
 
 import type {
-	BuildManifest
-} from '../application/build-manifest.js';
-
-import type {
 	PublishManifest
 } from '../application/publish-manifest.js';
 
 import type {
 	SyncManifest
 } from '../application/sync-manifest.js';
+
+import { BuildManifest } from '../application/build/build-manifest.js';
 
 
 export interface CliDependencies {
