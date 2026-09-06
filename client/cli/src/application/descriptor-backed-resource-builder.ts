@@ -38,6 +38,7 @@ import {
 import {
 	ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
+import { Logger } from '../ports/logger.js';
 
 
 export interface BuildDescriptorBackedResourceRequest {
@@ -74,7 +75,11 @@ export class DescriptorBackedResourceBuilder {
 			EventSigner,
 
 		private readonly eventStagingRepository:
-			SignedEventStagingRepository
+			SignedEventStagingRepository,
+
+
+		private readonly logger:
+			Logger
 	) { }
 
 
@@ -85,6 +90,9 @@ export class DescriptorBackedResourceBuilder {
 		readonly ResourceDescriptor[]
 	> {
 
+		this.logBuildStart(
+			request
+		);
 		const artifacts =
 			await this.artifactStager
 				.stage({
@@ -98,6 +106,10 @@ export class DescriptorBackedResourceBuilder {
 						request.sources
 				});
 
+		this.logArtifactsStaged(
+			request,
+			artifacts.length
+		);
 
 		const artifactsByKey =
 			new Map(
@@ -297,6 +309,13 @@ export class DescriptorBackedResourceBuilder {
 				if (
 					unchanged
 				) {
+
+					this.logEventReused(
+						request.resourceName,
+						source.key,
+						previousEvent.id
+					);
+
 					descriptors.push(
 						this.descriptorBuilder
 							.build({
@@ -367,7 +386,7 @@ export class DescriptorBackedResourceBuilder {
 					definitionRevision,
 
 					createdAt: result.event.created_at,
-					
+
 					event:
 						result.event,
 
@@ -400,5 +419,66 @@ export class DescriptorBackedResourceBuilder {
 
 
 		return descriptors;
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// LOG HELPERS
+
+	private logBuildStart(
+		request:
+			BuildDescriptorBackedResourceRequest
+	): void {
+
+		this.logger.verbose(
+			'descriptor-resource.build.start',
+			{
+				resourceName:
+					request.resourceName,
+
+				sourceCount:
+					request.sources.length
+			}
+		);
+	}
+
+
+	private logArtifactsStaged(
+		request:
+			BuildDescriptorBackedResourceRequest,
+
+		artifactCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'descriptor-resource.artifacts.staged',
+			{
+				resourceName:
+					request.resourceName,
+
+				artifactCount
+			}
+		);
+	}
+
+	private logEventReused(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'descriptor-resource.event.reused',
+			{
+				resourceName,
+				key,
+				eventId
+			}
+		);
 	}
 }

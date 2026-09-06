@@ -99,15 +99,15 @@ import {
 } from './resource-descriptor-builder.js';
 
 import {
-	NodeCollectionEventStagingRepository
+    NodeCollectionEventStagingRepository
 } from '../adapters/staging/node-collection-event-staging-repository.js';
 
 import {
-	CollectionBuilder
+    CollectionBuilder
 } from './collection-builder.js';
 
 import {
-	CollectionEventBuilder
+    CollectionEventBuilder
 } from './collection-event-builder.js';
 const directories:
     string[] = [];
@@ -140,8 +140,7 @@ async function createDirectory():
 }
 
 
-function createManifest()
-     {
+function createManifest() {
 
     return {
         version:
@@ -205,6 +204,11 @@ function createBuild(
     sourceRepository:
         NodeSourceRepository
 ): BuildManifestUseCase {
+
+    const logger = {
+        verbose:
+            vi.fn()
+    };
 
     const encodingRegistry =
         new EncodingRegistry([
@@ -270,31 +274,28 @@ function createBuild(
             new ResourceDescriptorBuilder()
         );
 
-const descriptorBackedResourceBuilder =
-	new DescriptorBackedResourceBuilder(
-		objectArtifactStager,
-		descriptorStrategyRegistry,
-		descriptorEventBuilder,
-		new ResourceDescriptorBuilder(),
-		signer,
-		eventStagingRepository
-	);
-   
-const collectionBuilder =
-	new CollectionBuilder(
-		new CollectionEventBuilder(
-			encodingRegistry,
-			signer,
-			clock
-		),
 
-		new NodeCollectionEventStagingRepository()
-	);
+    const descriptorBackedResourceBuilder =
+        new DescriptorBackedResourceBuilder(
+            objectArtifactStager,
+            descriptorStrategyRegistry,
+            descriptorEventBuilder,
+            new ResourceDescriptorBuilder(),
+            signer,
+            eventStagingRepository,
+            logger
+        );
 
-    const logger = {
-	verbose:
-		vi.fn()
-};
+    const collectionBuilder =
+        new CollectionBuilder(
+            new CollectionEventBuilder(
+                encodingRegistry,
+                signer,
+                clock
+            ),
+
+            new NodeCollectionEventStagingRepository()
+        );
 
     return new BuildManifestUseCase(
         loader,
@@ -588,7 +589,7 @@ describe(
 
 
                 const manifest =
-                    createManifest(); 
+                    createManifest();
 
 
                 const build =

@@ -290,11 +290,24 @@ export class BuildManifestUseCase
 					if (
 						unchanged
 					) {
+
+						this.logResourceReused(
+							resourceName,
+							source.key,
+							previous.metadata.eventId
+						);
+
 						continue;
 					}
 				}
 
-
+				this.logResourceBuild(
+					resourceName,
+					source.key,
+					previous === undefined
+						? 'new'
+						: 'changed'
+				);
 				const event =
 					await this.eventBuilder
 						.build(
@@ -333,6 +346,12 @@ export class BuildManifestUseCase
 
 						previous
 					});
+
+				this.logResourceStaged(
+					resourceName,
+					source.key,
+					event.id
+				);
 			}
 
 
@@ -467,6 +486,72 @@ export class BuildManifestUseCase
 
 				sourceCount:
 					sources.length
+			}
+		);
+	}
+
+	private logResourceReused(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'build.resource.reused',
+			{
+				resourceName,
+				key,
+				eventId
+			}
+		);
+	}
+
+
+	private logResourceBuild(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		reason:
+			'new' |
+			'changed'
+	): void {
+
+		this.logger.verbose(
+			'build.resource.build',
+			{
+				resourceName,
+				key,
+				reason
+			}
+		);
+	}
+
+
+	private logResourceStaged(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'build.resource.staged',
+			{
+				resourceName,
+				key,
+				eventId
 			}
 		);
 	}

@@ -227,7 +227,8 @@ export function createCliComposition() {
 			descriptorEventBuilder,
 			resourceDescriptorBuilder,
 			signer,
-			stagingRepository
+			stagingRepository,
+			logger
 		);
 
 	const collectionEventStagingRepository =
