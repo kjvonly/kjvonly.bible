@@ -3,22 +3,12 @@ import {
 	resolve
 } from 'node:path';
 
-import type {
-	ConcreteSource
-} from '../../../domain/concrete-source.js';
 
-import {
-	interpolateEventKey
-} from '../../../domain/interpolate-key.js';
-
-import type {
-	ResourceDefinition
-} from '../../../domain/manifest.js';
-
-import {
-	deriveSourceKey
-} from '../../../domain/source-key.js';
 import { SourceRepository, SourceDirectoryEntry } from '../../../ports/source/source-repository.js';
+import { ResourceDefinition } from '../../../domain/manifest/manifest.js';
+import { ConcreteSource } from '../../../domain/source/concrete-source.js';
+import { interpolateEventKey } from '../../../domain/source/interpolate-key.js';
+import { deriveSourceKey } from '../../../domain/source/source-key.js';
 
 export interface ExpandSourceRequest {
 	readonly manifestDirectory:

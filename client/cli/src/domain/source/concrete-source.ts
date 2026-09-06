@@ -1,8 +1,4 @@
-import type {
-	EventDefinition,
-	ObjectUploadDefinition
-} from './manifest.js';
-
+import { EventDefinition, ObjectUploadDefinition } from "../manifest/manifest.js";
 
 export interface ConcreteSource {
 	readonly resourceName:

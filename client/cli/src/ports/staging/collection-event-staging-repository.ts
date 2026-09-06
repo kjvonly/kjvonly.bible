@@ -1,7 +1,4 @@
-import type {
-	SignedNostrEvent
-} from '../../domain/nostr-event.js';
-
+import { SignedNostrEvent } from "../../domain/event/nostr-event.js";
 
 export interface StagedCollectionEventEntry {
 	readonly path:

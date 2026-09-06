@@ -1,10 +1,7 @@
 import type {
-	Encoding
-} from '../../../domain/manifest.js';
-
-import type {
 	ByteEncoder
 } from '../../../application/encoding/byte-encoder.js';
+import { Encoding } from '../../../domain/manifest/manifest.js';
 
 
 export class EncodingRegistry {

@@ -47,9 +47,6 @@ import {
     NodeSignedEventStagingRepository
 } from '../../adapters/staging/node-signed-event-staging-repository.js';
 
-import type {
-    Manifest
-} from '../../domain/manifest.js';
 
 import type {
     ManifestLoader
@@ -109,6 +106,7 @@ import {
 import {
     CollectionEventBuilder
 } from './collection/collection-event-builder.js';
+import { Manifest } from '../../domain/manifest/manifest.js';
 const directories:
     string[] = [];
 

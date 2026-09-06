@@ -1,12 +1,7 @@
 import {
 	createHash
 } from 'node:crypto';
-
-import type {
-	EventDefinition,
-	ObjectUploadDefinition
-} from './manifest.js';
-
+import { EventDefinition, ObjectUploadDefinition } from '../manifest/manifest.js';
 
 export interface DescriptorEventDefinitionRevisionInput {
 	readonly kind:

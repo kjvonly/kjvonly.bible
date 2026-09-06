@@ -1,18 +1,4 @@
-import {
-	calculateDescriptorEventDefinitionRevision
-} from '../../../domain/descriptor-event-definition-revision.js';
 
-import type {
-	ConcreteSource
-} from '../../../domain/concrete-source.js';
-
-import type {
-	Manifest
-} from '../../../domain/manifest.js';
-
-import type {
-	ResourceDescriptor
-} from '../../../domain/resource-descriptor.js';
 
 import {
 	DescriptorEventBuilder
@@ -32,6 +18,10 @@ import {
 import { Logger } from '../../../ports/logging/logger.js';
 import { EventSigner } from '../../../ports/nostr/event-signer.js';
 import { SignedEventStagingRepository, StagedEventEntry } from '../../../ports/staging/signed-event-staging-repository.js';
+import { calculateDescriptorEventDefinitionRevision } from '../../../domain/event/descriptor-event-definition-revision.js';
+import { Manifest } from '../../../domain/manifest/manifest.js';
+import { ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
+import { ConcreteSource } from '../../../domain/source/concrete-source.js';
 
 export interface BuildDescriptorBackedResourceRequest {
 	readonly manifest:

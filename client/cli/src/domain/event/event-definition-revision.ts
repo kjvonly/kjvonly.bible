@@ -1,12 +1,7 @@
 import {
 	createHash
 } from 'node:crypto';
-
-import type {
-	EventDefinition
-} from './manifest.js';
-
-
+import { EventDefinition } from '../manifest/manifest.js';
 export interface EventDefinitionRevisionInput {
 	readonly kind:
 		number;

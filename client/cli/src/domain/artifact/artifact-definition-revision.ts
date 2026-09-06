@@ -1,10 +1,9 @@
 import {
 	createHash
 } from 'node:crypto';
+import { ObjectUploadDefinition } from '../manifest/manifest.js';
 
-import type {
-	ObjectUploadDefinition
-} from './manifest.js';
+
 
 
 export function calculateArtifactDefinitionRevision(

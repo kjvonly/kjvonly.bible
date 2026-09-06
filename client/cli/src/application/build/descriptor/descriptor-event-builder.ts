@@ -6,18 +6,7 @@ import type {
 	EncodingRegistry
 } from '../encoding/encoding-registry.js';
 
-import type {
-	ConcreteSource
-} from '../../../domain/concrete-source.js';
 
-import type {
-	ResourceDescriptor,
-	ResourceDescriptorStrategy
-} from '../../../domain/resource-descriptor.js';
-
-import type {
-	SignedNostrEvent
-} from '../../../domain/nostr-event.js';
 
 import {
 	ResourceDescriptorBuilder
@@ -25,6 +14,9 @@ import {
 import { EventSigner } from '../../../ports/nostr/event-signer.js';
 import { StagedArtifactEntry } from '../../../ports/staging/artifact-staging-repository.js';
 import { Clock } from '../../../ports/time/clock.js';
+import { SignedNostrEvent } from '../../../domain/event/nostr-event.js';
+import { ResourceDescriptorStrategy, ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
+import { ConcreteSource } from '../../../domain/source/concrete-source.js';
 
 
 export interface BuildDescriptorEventRequest {

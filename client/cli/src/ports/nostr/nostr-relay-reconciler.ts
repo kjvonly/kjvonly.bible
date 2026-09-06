@@ -1,7 +1,4 @@
-import type {
-	NostrReconciliationEntry
-} from '../../domain/nostr-reconciliation-entry.js';
-
+import { NostrReconciliationEntry } from "../../domain/publication/nostr-reconciliation-entry.js";
 
 export interface NostrRelayReconciliationRequest {
 	readonly relay:

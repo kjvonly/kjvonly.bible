@@ -1,7 +1,4 @@
-import type {
-	Encoding
-} from '../../domain/manifest.js';
-
+import { Encoding } from "../../domain/manifest/manifest.js";
 
 export interface ByteEncoder {
 	readonly encoding:

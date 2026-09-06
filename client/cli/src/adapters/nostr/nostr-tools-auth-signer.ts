@@ -3,9 +3,7 @@ import type {
 	VerifiedEvent
 } from 'nostr-tools';
 
-import type {
-	SignedNostrEvent
-} from '../../domain/nostr-event.js';
+
 import { EventSigner } from '../../ports/nostr/event-signer.js';
 
 

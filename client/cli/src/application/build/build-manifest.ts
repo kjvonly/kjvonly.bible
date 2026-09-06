@@ -2,13 +2,7 @@ import {
 	resolve
 } from 'node:path';
 
-import {
-	calculateEventDefinitionRevision
-} from '../../domain/event-definition-revision.js';
 
-import type {
-	Manifest
-} from '../../domain/manifest.js';
 
 import {
 	InlineEventBuilder
@@ -22,9 +16,7 @@ import {
 	DescriptorBackedResourceBuilder
 } from './descriptor/descriptor-backed-resource-builder.js';
 
-import type {
-	ResourceDescriptor
-} from '../../domain/resource-descriptor.js';
+
 
 import {
 	CollectionBuilder
@@ -35,6 +27,9 @@ import { ManifestLoader } from '../../ports/manifest/manifest-loader.js';
 import { EventSigner } from '../../ports/nostr/event-signer.js';
 import { SourceRepository } from '../../ports/source/source-repository.js';
 import { SignedEventStagingRepository, StagedEventEntry } from '../../ports/staging/signed-event-staging-repository.js';
+import { calculateEventDefinitionRevision } from '../../domain/event/event-definition-revision.js';
+import { Manifest } from '../../domain/manifest/manifest.js';
+import { ResourceDescriptor } from '../../domain/resource/resource-descriptor.js';
 
 export interface BuildManifest {
 	build(

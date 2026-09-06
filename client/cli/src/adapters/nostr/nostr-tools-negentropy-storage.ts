@@ -1,10 +1,8 @@
 import {
 	nip77
 } from 'nostr-tools';
+import { NostrReconciliationEntry } from '../../domain/publication/nostr-reconciliation-entry.js';
 
-import type {
-	NostrReconciliationEntry
-} from '../../domain/nostr-reconciliation-entry.js';
 
 
 export function createNostrToolsNegentropyStorage(

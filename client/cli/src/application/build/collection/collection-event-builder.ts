@@ -6,19 +6,11 @@ import type {
 	EncodingRegistry
 } from '../encoding/encoding-registry.js';
 
-import type {
-	EventDefinition
-} from '../../../domain/manifest.js';
-
-import type {
-	ResourceDescriptor
-} from '../../../domain/resource-descriptor.js';
-
-import type {
-	SignedNostrEvent
-} from '../../../domain/nostr-event.js';
 import { EventSigner } from '../../../ports/nostr/event-signer.js';
 import { Clock } from '../../../ports/time/clock.js';
+import { SignedNostrEvent } from '../../../domain/event/nostr-event.js';
+import { EventDefinition } from '../../../domain/manifest/manifest.js';
+import { ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
 
 export interface BuildCollectionEventRequest {
 	readonly kind:

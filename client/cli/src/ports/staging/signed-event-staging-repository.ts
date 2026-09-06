@@ -1,10 +1,6 @@
-import type {
-	SignedNostrEvent
-} from '../../domain/nostr-event.js';
+import { SignedNostrEvent } from "../../domain/event/nostr-event.js";
+import { StagedEventMetadata } from "../../domain/staging/staged-event-filename.js";
 
-import type {
-	StagedEventMetadata
-} from '../../domain/staged-event-filename.js';
 
 
 export interface StagedEventEntry {

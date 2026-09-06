@@ -19,7 +19,7 @@ import {
 
 import {
 	validateManifest
-} from '../../domain/manifest.js';
+} from '../../domain/manifest/manifest.js';
 
 import type {
 	LoadedManifest,

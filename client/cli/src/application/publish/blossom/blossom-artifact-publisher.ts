@@ -1,10 +1,6 @@
-import type {
-	Manifest
-} from '../../../domain/manifest.js';
 
-import type {
-	BlossomPublicationResult
-} from '../../../domain/blossom-publication-result.js';
+import { Manifest } from '../../../domain/manifest/manifest.js';
+import { BlossomPublicationResult } from '../../../domain/publication/blossom-publication-result.js';
 import { BlossomPublicationClient } from '../../../ports/blossom/blossom-publication-client.js';
 import { Logger } from '../../../ports/logging/logger.js';
 import { SourceRepository } from '../../../ports/source/source-repository.js';

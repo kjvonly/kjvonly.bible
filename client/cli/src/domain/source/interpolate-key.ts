@@ -1,6 +1,5 @@
-import type {
-	EventDefinition
-} from './manifest.js';
+import { EventDefinition } from "../manifest/manifest.js";
+
 
 
 const KEY_TOKEN =

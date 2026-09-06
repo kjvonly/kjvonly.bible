@@ -1,7 +1,4 @@
-import type {
-	StagedArtifactMetadata
-} from '../../domain/staged-artifact-filename.js';
-
+import { StagedArtifactMetadata } from "../../domain/staging/staged-artifact-filename.js";
 
 export type StagedArtifactKind =
 	| 'symlink'
