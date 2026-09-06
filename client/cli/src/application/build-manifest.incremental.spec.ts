@@ -202,13 +202,13 @@ function createBuild(
         Manifest,
 
     sourceRepository:
-        NodeSourceRepository
-): BuildManifestUseCase {
+        NodeSourceRepository,
 
-    const logger = {
+    logger = {
         verbose:
             vi.fn()
-    };
+    }
+): BuildManifestUseCase {
 
     const encodingRegistry =
         new EncodingRegistry([
@@ -699,11 +699,18 @@ describe(
                     new NodeSourceRepository();
 
 
+                const logger = {
+                    verbose:
+                        vi.fn()
+                };
+
+
                 const build =
                     createBuild(
                         directory,
                         createManifest(),
-                        sourceRepository
+                        sourceRepository,
+                        logger
                     );
 
 
@@ -737,6 +744,24 @@ describe(
                     files
                 ).toEqual(
                     []
+                );
+
+                expect(
+                    logger.verbose
+                ).toHaveBeenCalledWith(
+                    'build.resource.event.removed',
+                    {
+                        resourceName:
+                            'chapters',
+
+                        key:
+                            '1_1',
+
+                        eventId:
+                            expect.any(
+                                String
+                            )
+                    }
                 );
             }
         );

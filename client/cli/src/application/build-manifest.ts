@@ -46,7 +46,9 @@ import type {
 import {
 	CollectionBuilder
 } from './collection-builder.js';
-import { Logger } from '../ports/logger.js';
+
+import type{  Logger } from '../ports/logger.js';
+
 export interface BuildManifest {
 	build(
 		manifestPath:
@@ -364,6 +366,13 @@ export class BuildManifestUseCase
 						entry.metadata.key
 					)
 				) {
+
+					this.logResourceRemoved(
+						resourceName,
+						entry.metadata.key,
+						entry.metadata.eventId
+					);
+
 					await this
 						.stagingRepository
 						.remove(
@@ -548,6 +557,27 @@ export class BuildManifestUseCase
 
 		this.logger.verbose(
 			'build.resource.staged',
+			{
+				resourceName,
+				key,
+				eventId
+			}
+		);
+	}
+
+	private logResourceRemoved(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'build.resource.event.removed',
 			{
 				resourceName,
 				key,
