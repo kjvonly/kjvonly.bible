@@ -46,6 +46,7 @@ import type {
 import {
 	CollectionBuilder
 } from './collection-builder.js';
+import { Logger } from '../ports/logger.js';
 export interface BuildManifest {
 	build(
 		manifestPath:
@@ -80,7 +81,10 @@ export class BuildManifestUseCase
 			DescriptorBackedResourceBuilder,
 
 		private readonly collectionBuilder:
-			CollectionBuilder
+			CollectionBuilder,
+
+		private readonly logger:
+			Logger
 	) { }
 
 
@@ -89,11 +93,19 @@ export class BuildManifestUseCase
 			string
 	): Promise<void> {
 
+		this.logBuildStart(
+			manifestPath
+		);
+
 		const loaded =
 			await this.manifestLoader.load(
 				manifestPath
 			);
 
+		this.logManifestLoaded(
+			manifestPath,
+			loaded.manifest
+		);
 
 		const stagingRoot =
 			resolve(
@@ -103,7 +115,6 @@ export class BuildManifestUseCase
 					.staging
 					.path
 			);
-
 
 		const publisher =
 			await this.signer
@@ -333,15 +344,77 @@ export class BuildManifestUseCase
 		}
 
 		await this
-	.collectionBuilder
-	.build({
+			.collectionBuilder
+			.build({
+				manifest:
+					loaded.manifest,
+
+				stagingRoot,
+
+				descriptorsByResource
+			});
+
+
+		this.logBuildComplete(
+			manifestPath
+		);
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// LOG HELPERS
+
+	private logBuildStart(
+		manifestPath:
+			string
+	): void {
+
+		this.logger.verbose(
+			'build.start',
+			{
+				manifestPath
+			}
+		);
+	}
+
+
+	private logManifestLoaded(
+		manifestPath:
+			string,
+
 		manifest:
-			loaded.manifest,
+			Manifest
+	): void {
 
-		stagingRoot,
+		this.logger.verbose(
+			'build.manifest.loaded',
+			{
+				manifestPath,
 
-		descriptorsByResource
-	});
+				resourceCount:
+					Object.keys(
+						manifest.resources
+					).length,
+
+				collectionCount:
+					Object.keys(
+						manifest.collections
+					).length
+			}
+		);
+	}
+
+
+	private logBuildComplete(
+		manifestPath:
+			string
+	): void {
+
+		this.logger.verbose(
+			'build.complete',
+			{
+				manifestPath
+			}
+		);
 	}
 
 }

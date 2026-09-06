@@ -257,7 +257,8 @@ export function createCliComposition() {
 			signer,
 			stagingRepository,
 			descriptorBackedResourceBuilder,
-			collectionBuilder
+			collectionBuilder,
+			logger
 		);
 
 
