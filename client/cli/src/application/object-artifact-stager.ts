@@ -313,9 +313,19 @@ export class ObjectArtifactStager {
 					.remove(
 						entry
 					);
+				this.logArtifactRemoved(
+					request.resourceName,
+					entry.metadata.key
+				);
+
 			}
+
 		}
 
+		this.logStageComplete(
+			request.resourceName,
+			current.length
+		);
 
 		return current;
 	}
@@ -374,6 +384,39 @@ export class ObjectArtifactStager {
 					artifact
 						.metadata
 						.sha256
+			}
+		);
+	}
+
+	private logArtifactRemoved(
+		resourceName:
+			string,
+
+		key:
+			string
+	): void {
+
+		this.logger.verbose(
+			'artifact.removed',
+			{
+				resourceName,
+				key
+			}
+		);
+	}
+	private logStageComplete(
+		resourceName:
+			string,
+
+		artifactCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'artifact.stage.complete',
+			{
+				resourceName,
+				artifactCount
 			}
 		);
 	}
