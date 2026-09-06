@@ -137,6 +137,12 @@ export class BuildManifestUseCase
 					.resources
 			)
 		) {
+
+			this.logResourceStart(
+				resourceName,
+				resource.path
+			);
+
 			const sources =
 				await this.sourceExpander
 					.expand({
@@ -147,6 +153,11 @@ export class BuildManifestUseCase
 
 						resource
 					});
+
+			this.logResourceExpanded(
+				resourceName,
+				sources
+			);
 
 			if (
 				resource[
@@ -417,4 +428,46 @@ export class BuildManifestUseCase
 		);
 	}
 
+	private logResourceStart(
+		resourceName:
+			string,
+
+		path:
+			string
+	): void {
+
+		this.logger.verbose(
+			'build.resource.start',
+			{
+				resourceName,
+				path
+			}
+		);
+	}
+
+
+	private logResourceExpanded(
+		resourceName:
+			string,
+
+		sources:
+			readonly {
+				readonly key:
+				string;
+
+				readonly path:
+				string;
+			}[]
+	): void {
+
+		this.logger.verbose(
+			'build.resource.expanded',
+			{
+				resourceName,
+
+				sourceCount:
+					sources.length
+			}
+		);
+	}
 }
