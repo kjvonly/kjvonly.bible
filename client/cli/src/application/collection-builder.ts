@@ -11,6 +11,10 @@ import type {
 	StagedCollectionEventEntry
 } from '../ports/collection-event-staging-repository.js';
 
+import type {
+	Logger
+} from '../ports/logger.js';
+
 import {
 	CollectionEventBuilder
 } from './collection-event-builder.js';
@@ -38,7 +42,10 @@ export class CollectionBuilder {
 			CollectionEventBuilder,
 
 		private readonly stagingRepository:
-			CollectionEventStagingRepository
+			CollectionEventStagingRepository,
+
+		private readonly logger:
+			Logger
 	) {}
 
 
@@ -53,6 +60,14 @@ export class CollectionBuilder {
 				.list(
 					request.stagingRoot
 				);
+
+
+		this.logBuildStart(
+			Object.keys(
+				request.manifest.collections
+			).length,
+			staged.length
+		);
 
 
 		const stagedByName =
@@ -89,6 +104,12 @@ export class CollectionBuilder {
 			);
 
 
+			this.logCollectionStart(
+				collectionName,
+				collection.resources.length
+			);
+
+
 			const descriptors:
 				ResourceDescriptor[] =
 					[];
@@ -116,6 +137,13 @@ export class CollectionBuilder {
 				}
 
 
+				this.logMemberResolved(
+					collectionName,
+					resourceName,
+					resourceDescriptors.length
+				);
+
+
 				descriptors.push(
 					...resourceDescriptors
 				);
@@ -137,6 +165,14 @@ export class CollectionBuilder {
 						.read(
 							previous
 						);
+
+
+			this.logEventBuild(
+				collectionName,
+				descriptors.length,
+				previous !==
+					undefined
+			);
 
 
 			const event =
@@ -170,6 +206,18 @@ export class CollectionBuilder {
 
 					previous
 				});
+
+
+			this.logEventStaged(
+				collectionName,
+				event.id
+			);
+
+
+			this.logCollectionComplete(
+				collectionName,
+				descriptors.length
+			);
 		}
 
 
@@ -182,6 +230,11 @@ export class CollectionBuilder {
 					entry.collectionName
 				)
 			) {
+				this.logCollectionRemoved(
+					entry.collectionName
+				);
+
+
 				await this
 					.stagingRepository
 					.remove(
@@ -189,5 +242,154 @@ export class CollectionBuilder {
 					);
 			}
 		}
+
+
+		this.logBuildComplete(
+			currentNames.size
+		);
+	}
+
+
+	private logBuildStart(
+		collectionCount:
+			number,
+
+		stagedCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'collection.build.start',
+			{
+				collectionCount,
+				stagedCount
+			}
+		);
+	}
+
+
+	private logCollectionStart(
+		collectionName:
+			string,
+
+		resourceCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'collection.start',
+			{
+				collectionName,
+				resourceCount
+			}
+		);
+	}
+
+
+	private logMemberResolved(
+		collectionName:
+			string,
+
+		resourceName:
+			string,
+
+		descriptorCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'collection.member.resolved',
+			{
+				collectionName,
+				resourceName,
+				descriptorCount
+			}
+		);
+	}
+
+
+	private logEventBuild(
+		collectionName:
+			string,
+
+		descriptorCount:
+			number,
+
+		hasPrevious:
+			boolean
+	): void {
+
+		this.logger.verbose(
+			'collection.event.build',
+			{
+				collectionName,
+				descriptorCount,
+				hasPrevious
+			}
+		);
+	}
+
+
+	private logEventStaged(
+		collectionName:
+			string,
+
+		eventId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'collection.event.staged',
+			{
+				collectionName,
+				eventId
+			}
+		);
+	}
+
+
+	private logCollectionComplete(
+		collectionName:
+			string,
+
+		descriptorCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'collection.complete',
+			{
+				collectionName,
+				descriptorCount
+			}
+		);
+	}
+
+
+	private logCollectionRemoved(
+		collectionName:
+			string
+	): void {
+
+		this.logger.verbose(
+			'collection.removed',
+			{
+				collectionName
+			}
+		);
+	}
+
+
+	private logBuildComplete(
+		collectionCount:
+			number
+	): void {
+
+		this.logger.verbose(
+			'collection.build.complete',
+			{
+				collectionCount
+			}
+		);
 	}
 }

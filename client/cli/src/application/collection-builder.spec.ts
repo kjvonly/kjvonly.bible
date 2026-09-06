@@ -15,7 +15,8 @@ import {
 	afterEach,
 	describe,
 	expect,
-	it
+	it,
+	vi
 } from 'vitest';
 
 import {
@@ -42,6 +43,10 @@ import type {
 	ResourceDescriptor
 } from '../domain/resource-descriptor.js';
 
+import type {
+	Logger
+} from '../ports/logger.js';
+
 import {
 	CollectionBuilder
 } from './collection-builder.js';
@@ -63,6 +68,16 @@ const secretKey =
 	'01'.repeat(
 		32
 	);
+
+
+function createLogger():
+	Logger {
+
+	return {
+		verbose:
+			vi.fn()
+	};
+}
 
 
 async function createDirectory():
@@ -254,6 +269,10 @@ describe(
 					new NodeCollectionEventStagingRepository();
 
 
+				const logger =
+					createLogger();
+
+
 				const builder =
 					new CollectionBuilder(
 						new CollectionEventBuilder(
@@ -273,7 +292,8 @@ describe(
 							}
 						),
 
-						stagingRepository
+						stagingRepository,
+						logger
 					);
 
 
@@ -359,6 +379,63 @@ describe(
 						.event
 						.tags
 				);
+
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'collection.build.start',
+					{
+						collectionCount:
+							1,
+
+						stagedCount:
+							0
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'collection.member.resolved',
+					{
+						collectionName:
+							'defaults',
+
+						resourceName:
+							'chapters',
+
+						descriptorCount:
+							2
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'collection.event.staged',
+					{
+						collectionName:
+							'defaults',
+
+						eventId:
+							event.id
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'collection.build.complete',
+					{
+						collectionCount:
+							1
+					}
+				);
 			}
 		);
 
@@ -438,7 +515,8 @@ describe(
 							}
 						),
 
-						new NodeCollectionEventStagingRepository()
+						new NodeCollectionEventStagingRepository(),
+						createLogger()
 					);
 
 

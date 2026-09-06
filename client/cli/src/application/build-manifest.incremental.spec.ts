@@ -295,7 +295,8 @@ function createBuild(
                 clock
             ),
 
-            new NodeCollectionEventStagingRepository()
+            new NodeCollectionEventStagingRepository(),
+            logger
         );
 
     return new BuildManifestUseCase(

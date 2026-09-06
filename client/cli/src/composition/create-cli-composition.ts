@@ -248,7 +248,8 @@ export function createCliComposition() {
 	const collectionBuilder =
 		new CollectionBuilder(
 			collectionEventBuilder,
-			collectionEventStagingRepository
+			collectionEventStagingRepository,
+			logger
 		);
 
 	const buildManifest =
