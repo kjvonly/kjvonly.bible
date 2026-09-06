@@ -17,13 +17,19 @@ import type {
 
 export interface CliDependencies {
 	readonly buildManifest:
-		BuildManifest;
+	BuildManifest;
 
 	readonly publishManifest:
-		PublishManifest;
+	PublishManifest;
 
 	readonly syncManifest:
-		SyncManifest;
+	SyncManifest;
+
+	readonly setVerbose:
+	(
+		enabled:
+			boolean
+	) => void;
 }
 
 
@@ -40,8 +46,31 @@ export function createCli(
 		.name('kjvonly')
 		.description(
 			'KJVOnly Resource publishing CLI'
+		)
+		.option(
+			'-v, --verbose',
+			'output verbose execution tracing'
 		);
 
+
+	program.hook(
+		'preAction',
+		(
+			_thisCommand,
+			actionCommand
+		) => {
+
+			const options =
+				actionCommand
+					.optsWithGlobals();
+
+
+			dependencies.setVerbose(
+				options.verbose ===
+				true
+			);
+		}
+	);
 
 	program
 		.command('build')

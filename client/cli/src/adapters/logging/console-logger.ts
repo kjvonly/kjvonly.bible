@@ -6,10 +6,28 @@ import type {
 export class ConsoleLogger
 	implements Logger {
 
+	private verboseEnabled:
+		boolean;
+
+
 	constructor(
-		private readonly verboseEnabled:
+		verboseEnabled:
 			boolean
-	) {}
+	) {
+
+		this.verboseEnabled =
+			verboseEnabled;
+	}
+
+
+	setVerboseEnabled(
+		enabled:
+			boolean
+	): void {
+
+		this.verboseEnabled =
+			enabled;
+	}
 
 
 	verbose(

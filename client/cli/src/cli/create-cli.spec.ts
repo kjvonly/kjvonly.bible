@@ -14,146 +14,158 @@ describe(
 	'createCli',
 	() => {
 
-	it(
-		'routes build to BuildManifest',
-		async () => {
+		it(
+			'routes build to BuildManifest',
+			async () => {
 
-			const build =
-				vi.fn();
-
-
-			const cli =
-				createCli({
-					buildManifest: {
-						build
-					},
-
-					publishManifest: {
-						publish:
-							vi.fn()
-					},
-
-					syncManifest: {
-						sync:
-							vi.fn()
-					}
-				});
+				const build =
+					vi.fn();
 
 
-			await cli.parseAsync([
-				'node',
-				'kjvonly',
-				'build',
-				'./manifest.yaml'
-			]);
+				const cli =
+					createCli({
+						buildManifest: {
+							build
+						},
+
+						publishManifest: {
+							publish:
+								vi.fn()
+						},
+
+						syncManifest: {
+							sync:
+								vi.fn()
+						},
+						setVerbose:
+							enabled => {
+								return false
+							}
+					});
 
 
-			expect(
-				build
-			).toHaveBeenCalledOnce();
+				await cli.parseAsync([
+					'node',
+					'kjvonly',
+					'build',
+					'./manifest.yaml'
+				]);
 
 
-			expect(
-				build
-			).toHaveBeenCalledWith(
-				'./manifest.yaml'
-			);
-		}
-	);
+				expect(
+					build
+				).toHaveBeenCalledOnce();
 
 
-	it(
-		'routes publish to PublishManifest',
-		async () => {
-
-			const publish =
-				vi.fn();
-
-
-			const cli =
-				createCli({
-					buildManifest: {
-						build:
-							vi.fn()
-					},
-
-					publishManifest: {
-						publish
-					},
-
-					syncManifest: {
-						sync:
-							vi.fn()
-					}
-				});
+				expect(
+					build
+				).toHaveBeenCalledWith(
+					'./manifest.yaml'
+				);
+			}
+		);
 
 
-			await cli.parseAsync([
-				'node',
-				'kjvonly',
-				'publish',
-				'./manifest.yaml'
-			]);
+		it(
+			'routes publish to PublishManifest',
+			async () => {
+
+				const publish =
+					vi.fn();
 
 
-			expect(
-				publish
-			).toHaveBeenCalledOnce();
+				const cli =
+					createCli({
+						buildManifest: {
+							build:
+								vi.fn()
+						},
+
+						publishManifest: {
+							publish
+						},
+
+						syncManifest: {
+							sync:
+								vi.fn()
+						},
+						setVerbose:
+							enabled => {
+								return false
+							}
+					});
 
 
-			expect(
-				publish
-			).toHaveBeenCalledWith(
-				'./manifest.yaml'
-			);
-		}
-	);
+				await cli.parseAsync([
+					'node',
+					'kjvonly',
+					'publish',
+					'./manifest.yaml'
+				]);
 
 
-	it(
-		'routes sync to SyncManifest',
-		async () => {
-
-			const sync =
-				vi.fn();
+				expect(
+					publish
+				).toHaveBeenCalledOnce();
 
 
-			const cli =
-				createCli({
-					buildManifest: {
-						build:
-							vi.fn()
-					},
-
-					publishManifest: {
-						publish:
-							vi.fn()
-					},
-
-					syncManifest: {
-						sync
-					}
-				});
+				expect(
+					publish
+				).toHaveBeenCalledWith(
+					'./manifest.yaml'
+				);
+			}
+		);
 
 
-			await cli.parseAsync([
-				'node',
-				'kjvonly',
-				'sync',
-				'./manifest.yaml'
-			]);
+		it(
+			'routes sync to SyncManifest',
+			async () => {
+
+				const sync =
+					vi.fn();
 
 
-			expect(
-				sync
-			).toHaveBeenCalledOnce();
+				const cli =
+					createCli({
+						buildManifest: {
+							build:
+								vi.fn()
+						},
+
+						publishManifest: {
+							publish:
+								vi.fn()
+						},
+
+						syncManifest: {
+							sync
+						},
+						setVerbose:
+							enabled => {
+								return false
+							}
+					});
 
 
-			expect(
-				sync
-			).toHaveBeenCalledWith(
-				'./manifest.yaml'
-			);
-		}
-	);
-});
+				await cli.parseAsync([
+					'node',
+					'kjvonly',
+					'sync',
+					'./manifest.yaml'
+				]);
+
+
+				expect(
+					sync
+				).toHaveBeenCalledOnce();
+
+
+				expect(
+					sync
+				).toHaveBeenCalledWith(
+					'./manifest.yaml'
+				);
+			}
+		);
+	});

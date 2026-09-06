@@ -1,134 +1,170 @@
 import {
-	afterEach,
-	describe,
-	expect,
-	it,
-	vi
+    afterEach,
+    describe,
+    expect,
+    it,
+    vi
 } from 'vitest';
 
 import {
-	ConsoleLogger
+    ConsoleLogger
 } from './console-logger.js';
 
 
 describe(
-	'ConsoleLogger',
-	() => {
+    'ConsoleLogger',
+    () => {
 
-		afterEach(
-			() => {
+        afterEach(
+            () => {
 
-				vi.restoreAllMocks();
-			}
-		);
-
-
-		it(
-			'does not log verbose events when disabled',
-			() => {
-
-				const consoleLog =
-					vi.spyOn(
-						console,
-						'log'
-					).mockImplementation(
-						() => { }
-					);
+                vi.restoreAllMocks();
+            }
+        );
 
 
-				const logger =
-					new ConsoleLogger(
-						false
-					);
+        it(
+            'does not log verbose events when disabled',
+            () => {
+
+                const consoleLog =
+                    vi.spyOn(
+                        console,
+                        'log'
+                    ).mockImplementation(
+                        () => { }
+                    );
 
 
-				logger.verbose(
-					'manifest.load.start',
-					{
-						path:
-							'manifest.yaml'
-					}
-				);
+                const logger =
+                    new ConsoleLogger(
+                        false
+                    );
 
 
-				expect(
-					consoleLog
-				).not.toHaveBeenCalled();
-			}
-		);
+                logger.verbose(
+                    'manifest.load.start',
+                    {
+                        path:
+                            'manifest.yaml'
+                    }
+                );
 
 
-		it(
-			'logs verbose events when enabled',
-			() => {
-
-				const consoleLog =
-					vi.spyOn(
-						console,
-						'log'
-					).mockImplementation(
-						() => { }
-					);
+                expect(
+                    consoleLog
+                ).not.toHaveBeenCalled();
+            }
+        );
 
 
-				const logger =
-					new ConsoleLogger(
-						true
-					);
+        it(
+            'logs verbose events when enabled',
+            () => {
+
+                const consoleLog =
+                    vi.spyOn(
+                        console,
+                        'log'
+                    ).mockImplementation(
+                        () => { }
+                    );
 
 
-				logger.verbose(
-					'manifest.load.start',
-					{
-						path:
-							'manifest.yaml'
-					}
-				);
+                const logger =
+                    new ConsoleLogger(
+                        true
+                    );
 
 
-				expect(
-					consoleLog
-				).toHaveBeenCalledWith(
-					'[verbose] manifest.load.start',
-					{
-						path:
-							'manifest.yaml'
-					}
-				);
-			}
-		);
+                logger.verbose(
+                    'manifest.load.start',
+                    {
+                        path:
+                            'manifest.yaml'
+                    }
+                );
 
 
-		it(
-			'logs events without context',
-			() => {
-
-				const consoleLog =
-					vi.spyOn(
-						console,
-						'log'
-					).mockImplementation(
-						() => { }
-					);
-
-
-				const logger =
-					new ConsoleLogger(
-						true
-					);
+                expect(
+                    consoleLog
+                ).toHaveBeenCalledWith(
+                    '[verbose] manifest.load.start',
+                    {
+                        path:
+                            'manifest.yaml'
+                    }
+                );
+            }
+        );
 
 
-				logger.verbose(
-					'sync.build.start'
-				);
+        it(
+            'logs events without context',
+            () => {
+
+                const consoleLog =
+                    vi.spyOn(
+                        console,
+                        'log'
+                    ).mockImplementation(
+                        () => { }
+                    );
 
 
-				expect(
-					consoleLog
-				).toHaveBeenCalledWith(
-					'[verbose] sync.build.start'
-				);
-			}
-		);
-	}
+                const logger =
+                    new ConsoleLogger(
+                        true
+                    );
+
+
+                logger.verbose(
+                    'sync.build.start'
+                );
+
+
+                expect(
+                    consoleLog
+                ).toHaveBeenCalledWith(
+                    '[verbose] sync.build.start'
+                );
+            }
+        );
+        it(
+            'can enable verbose logging after construction',
+            () => {
+
+                const consoleLog =
+                    vi.spyOn(
+                        console,
+                        'log'
+                    ).mockImplementation(
+                        () => { }
+                    );
+
+
+                const logger =
+                    new ConsoleLogger(
+                        false
+                    );
+
+
+                logger.setVerboseEnabled(
+                    true
+                );
+
+
+                logger.verbose(
+                    'sync.build.start'
+                );
+
+
+                expect(
+                    consoleLog
+                ).toHaveBeenCalledWith(
+                    '[verbose] sync.build.start'
+                );
+            }
+        );
+    }
 );

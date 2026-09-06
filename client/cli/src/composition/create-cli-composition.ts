@@ -124,8 +124,13 @@ import {
 import {
 	NostrStagedEventPublisher
 } from '../application/nostr-staged-event-publisher.js';
+import { ConsoleLogger } from '../adapters/logging/console-logger.js';
 
 export function createCliComposition() {
+	const logger =
+		new ConsoleLogger(
+			false
+		);
 
 	const workingDirectory =
 		process.cwd();
@@ -322,7 +327,14 @@ export function createCliComposition() {
 		createCli({
 			buildManifest,
 			publishManifest,
-			syncManifest
+			syncManifest,
+			setVerbose:
+				enabled => {
+
+					logger.setVerboseEnabled(
+						enabled
+					);
+				}
 		});
 
 
