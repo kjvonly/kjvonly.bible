@@ -4,27 +4,27 @@ import {
 
 import type {
 	EncodingRegistry
-} from './encoding/encoding-registry.js';
+} from '../encoding/encoding-registry.js';
 
 import type {
 	ConcreteSource
-} from '../domain/concrete-source.js';
+} from '../../../domain/concrete-source.js';
 
 import type {
 	SignedNostrEvent
-} from '../domain/nostr-event.js';
+} from '../../../domain/nostr-event.js';
 
 import type {
 	Clock
-} from '../ports/clock.js';
+} from '../../../ports/clock.js';
 
 import type {
 	EventSigner
-} from '../ports/event-signer.js';
+} from '../../../ports/event-signer.js';
 
 import type {
 	SourceRepository
-} from '../ports/source-repository.js';
+} from '../../../ports/source-repository.js';
 
 
 export class InlineEventBuilder {

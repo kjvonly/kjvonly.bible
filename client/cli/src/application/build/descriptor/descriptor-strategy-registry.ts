@@ -1,15 +1,15 @@
 import type {
 	ResourceDescriptorStrategy
-} from '../domain/resource-descriptor.js';
+} from '../../../domain/resource-descriptor.js';
 
 import type {
 	StagedArtifactEntry
-} from '../ports/artifact-staging-repository.js';
+} from '../../../ports/artifact-staging-repository.js';
 
 import type {
 	DescriptorStrategyBuilder,
 	DescriptorStrategyDefinition
-} from '../ports/descriptor-strategy-builder.js';
+} from '../../../ports/descriptor-strategy-builder.js';
 
 
 export class DescriptorStrategyRegistry {

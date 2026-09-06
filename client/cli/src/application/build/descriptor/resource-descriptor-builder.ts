@@ -1,15 +1,15 @@
 import type {
 	ConcreteSource
-} from '../domain/concrete-source.js';
+} from '../../../domain/concrete-source.js';
 
 import type {
 	ResourceDescriptor,
 	ResourceDescriptorStrategy
-} from '../domain/resource-descriptor.js';
+} from '../../../domain/resource-descriptor.js';
 
 import type {
 	StagedArtifactEntry
-} from '../ports/artifact-staging-repository.js';
+} from '../../../ports/artifact-staging-repository.js';
 
 
 export interface BuildResourceDescriptorRequest {

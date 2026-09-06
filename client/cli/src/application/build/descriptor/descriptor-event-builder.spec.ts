@@ -10,15 +10,15 @@ import {
 
 import {
 	GzipEncoder
-} from '../adapters/encoding/gzip-encoder.js';
+} from '../../../adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../adapters/encoding/hex-encoder.js';
+} from '../../../adapters/encoding/hex-encoder.js';
 
 import {
 	LocalNostrSigner
-} from '../adapters/nostr/local-nostr-signer.js';
+} from '../../../adapters/nostr/local-nostr-signer.js';
 
 import {
 	DescriptorEventBuilder
@@ -26,7 +26,7 @@ import {
 
 import {
 	EncodingRegistry
-} from './encoding/encoding-registry.js';
+} from '../encoding/encoding-registry.js';
 
 import {
 	ResourceDescriptorBuilder

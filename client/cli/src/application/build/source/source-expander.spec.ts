@@ -22,11 +22,11 @@ import {
 
 import {
 	NodeSourceRepository
-} from '../adapters/source/node-source-repository.js';
+} from '../../../adapters/source/node-source-repository.js';
 
 import type {
 	ResourceDefinition
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import {
 	SourceExpander

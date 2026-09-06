@@ -1,19 +1,19 @@
 import type {
 	Manifest
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import type {
 	ResourceDescriptor
-} from '../domain/resource-descriptor.js';
+} from '../../../domain/resource-descriptor.js';
 
 import type {
 	CollectionEventStagingRepository,
 	StagedCollectionEventEntry
-} from '../ports/collection-event-staging-repository.js';
+} from '../../../ports/collection-event-staging-repository.js';
 
 import type {
 	Logger
-} from '../ports/logger.js';
+} from '../../../ports/logger.js';
 
 import {
 	CollectionEventBuilder

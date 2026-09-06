@@ -4,29 +4,29 @@ import {
 
 import type {
 	EncodingRegistry
-} from './encoding/encoding-registry.js';
+} from '../encoding/encoding-registry.js';
 
 import {
 	calculateArtifactDefinitionRevision
-} from '../domain/artifact-definition-revision.js';
+} from '../../../domain/artifact-definition-revision.js';
 
 import type {
 	ConcreteSource
-} from '../domain/concrete-source.js';
+} from '../../../domain/concrete-source.js';
 
 import {
 	deriveSourceExtension
-} from '../domain/source-extension.js';
+} from '../../../domain/source-extension.js';
 
 import type {
 	ArtifactStagingRepository,
 	StagedArtifactEntry
-} from '../ports/artifact-staging-repository.js';
+} from '../../../ports/artifact-staging-repository.js';
 
 import type {
 	SourceRepository
-} from '../ports/source-repository.js';
-import { Logger } from '../ports/logger.js';
+} from '../../../ports/source-repository.js';
+import { Logger } from '../../../ports/logger.js';
 
 
 export interface StageObjectArtifactsRequest {

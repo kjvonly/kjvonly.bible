@@ -4,50 +4,50 @@ import {
 
 import {
 	calculateEventDefinitionRevision
-} from '../domain/event-definition-revision.js';
+} from '../../domain/event-definition-revision.js';
 
 import type {
 	Manifest
-} from '../domain/manifest.js';
+} from '../../domain/manifest.js';
 
 import type {
 	EventSigner
-} from '../ports/event-signer.js';
+} from '../../ports/event-signer.js';
 
 import type {
 	ManifestLoader
-} from '../ports/manifest-loader.js';
+} from '../../ports/manifest-loader.js';
 
 import type {
 	SignedEventStagingRepository,
 	StagedEventEntry
-} from '../ports/signed-event-staging-repository.js';
+} from '../../ports/signed-event-staging-repository.js';
 
 import type {
 	SourceRepository
-} from '../ports/source-repository.js';
+} from '../../ports/source-repository.js';
 
 import {
 	InlineEventBuilder
-} from './inline-event-builder.js';
+} from './inline/inline-event-builder.js';
 
 import {
 	SourceExpander
-} from './source-expander.js';
+} from './source/source-expander.js';
 
 import {
 	DescriptorBackedResourceBuilder
-} from './descriptor-backed-resource-builder.js';
+} from './descriptor/descriptor-backed-resource-builder.js';
 
 import type {
 	ResourceDescriptor
-} from '../domain/resource-descriptor.js';
+} from '../../domain/resource-descriptor.js';
 
 import {
 	CollectionBuilder
-} from './collection-builder.js';
+} from './collection/collection-builder.js';
 
-import type{  Logger } from '../ports/logger.js';
+import type{  Logger } from '../../ports/logger.js';
 
 export interface BuildManifest {
 	build(

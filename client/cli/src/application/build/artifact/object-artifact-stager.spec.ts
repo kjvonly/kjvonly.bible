@@ -35,31 +35,31 @@ import {
 
 import {
 	GzipEncoder
-} from '../adapters/encoding/gzip-encoder.js';
+} from '../../../adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../adapters/encoding/hex-encoder.js';
+} from '../../../adapters/encoding/hex-encoder.js';
 
 import {
 	NodeSourceRepository
-} from '../adapters/source/node-source-repository.js';
+} from '../../../adapters/source/node-source-repository.js';
 
 import {
 	NodeArtifactStagingRepository
-} from '../adapters/staging/node-artifact-staging-repository.js';
+} from '../../../adapters/staging/node-artifact-staging-repository.js';
 
 import type {
 	ConcreteSource
-} from '../domain/concrete-source.js';
+} from '../../../domain/concrete-source.js';
 
 import type {
 	Encoding
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import {
 	EncodingRegistry
-} from './encoding/encoding-registry.js';
+} from '../encoding/encoding-registry.js';
 
 import {
 	ObjectArtifactStager

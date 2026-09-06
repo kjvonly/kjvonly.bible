@@ -29,31 +29,31 @@ import {
 
 import {
     GzipEncoder
-} from '../adapters/encoding/gzip-encoder.js';
+} from '../../adapters/encoding/gzip-encoder.js';
 
 import {
     HexEncoder
-} from '../adapters/encoding/hex-encoder.js';
+} from '../../adapters/encoding/hex-encoder.js';
 
 import {
     LocalNostrSigner
-} from '../adapters/nostr/local-nostr-signer.js';
+} from '../../adapters/nostr/local-nostr-signer.js';
 
 import {
     NodeSourceRepository
-} from '../adapters/source/node-source-repository.js';
+} from '../../adapters/source/node-source-repository.js';
 
 import {
     NodeSignedEventStagingRepository
-} from '../adapters/staging/node-signed-event-staging-repository.js';
+} from '../../adapters/staging/node-signed-event-staging-repository.js';
 
 import type {
     Manifest
-} from '../domain/manifest.js';
+} from '../../domain/manifest.js';
 
 import type {
     ManifestLoader
-} from '../ports/manifest-loader.js';
+} from '../../ports/manifest-loader.js';
 
 import {
     BuildManifestUseCase
@@ -65,50 +65,50 @@ import {
 
 import {
     InlineEventBuilder
-} from './inline-event-builder.js';
+} from './inline/inline-event-builder.js';
 
 import {
     SourceExpander
-} from './source-expander.js';
+} from './source/source-expander.js';
 import {
     BlossomDescriptorStrategyBuilder
-} from '../adapters/strategy/blossom-descriptor-strategy-builder.js';
+} from '../../adapters/strategy/blossom-descriptor-strategy-builder.js';
 
 import {
     NodeArtifactStagingRepository
-} from '../adapters/staging/node-artifact-staging-repository.js';
+} from '../../adapters/staging/node-artifact-staging-repository.js';
 
 import {
     DescriptorBackedResourceBuilder
-} from './descriptor-backed-resource-builder.js';
+} from './descriptor/descriptor-backed-resource-builder.js';
 
 import {
     DescriptorEventBuilder
-} from './descriptor-event-builder.js';
+} from './descriptor/descriptor-event-builder.js';
 
 import {
     DescriptorStrategyRegistry
-} from './descriptor-strategy-registry.js';
+} from './descriptor/descriptor-strategy-registry.js';
 
 import {
     ObjectArtifactStager
-} from './object-artifact-stager.js';
+} from './artifact/object-artifact-stager.js';
 
 import {
     ResourceDescriptorBuilder
-} from './resource-descriptor-builder.js';
+} from './descriptor/resource-descriptor-builder.js';
 
 import {
     NodeCollectionEventStagingRepository
-} from '../adapters/staging/node-collection-event-staging-repository.js';
+} from '../../adapters/staging/node-collection-event-staging-repository.js';
 
 import {
     CollectionBuilder
-} from './collection-builder.js';
+} from './collection/collection-builder.js';
 
 import {
     CollectionEventBuilder
-} from './collection-event-builder.js';
+} from './collection/collection-event-builder.js';
 const directories:
     string[] = [];
 

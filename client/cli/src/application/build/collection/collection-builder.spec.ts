@@ -21,31 +21,31 @@ import {
 
 import {
 	GzipEncoder
-} from '../adapters/encoding/gzip-encoder.js';
+} from '../../../adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../adapters/encoding/hex-encoder.js';
+} from '../../../adapters/encoding/hex-encoder.js';
 
 import {
 	LocalNostrSigner
-} from '../adapters/nostr/local-nostr-signer.js';
+} from '../../../adapters/nostr/local-nostr-signer.js';
 
 import {
 	NodeCollectionEventStagingRepository
-} from '../adapters/staging/node-collection-event-staging-repository.js';
+} from '../../../adapters/staging/node-collection-event-staging-repository.js';
 
 import type {
 	Manifest
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import type {
 	ResourceDescriptor
-} from '../domain/resource-descriptor.js';
+} from '../../../domain/resource-descriptor.js';
 
 import type {
 	Logger
-} from '../ports/logger.js';
+} from '../../../ports/logger.js';
 
 import {
 	CollectionBuilder
@@ -57,7 +57,7 @@ import {
 
 import {
 	EncodingRegistry
-} from './encoding/encoding-registry.js';
+} from '../encoding/encoding-registry.js';
 
 
 const directories:

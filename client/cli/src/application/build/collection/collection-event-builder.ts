@@ -4,27 +4,27 @@ import {
 
 import type {
 	EncodingRegistry
-} from './encoding/encoding-registry.js';
+} from '../encoding/encoding-registry.js';
 
 import type {
 	EventDefinition
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import type {
 	ResourceDescriptor
-} from '../domain/resource-descriptor.js';
+} from '../../../domain/resource-descriptor.js';
 
 import type {
 	SignedNostrEvent
-} from '../domain/nostr-event.js';
+} from '../../../domain/nostr-event.js';
 
 import type {
 	Clock
-} from '../ports/clock.js';
+} from '../../../ports/clock.js';
 
 import type {
 	EventSigner
-} from '../ports/event-signer.js';
+} from '../../../ports/event-signer.js';
 
 
 export interface BuildCollectionEventRequest {

@@ -4,32 +4,32 @@ import {
 
 import type {
 	EncodingRegistry
-} from './encoding/encoding-registry.js';
+} from '../encoding/encoding-registry.js';
 
 import type {
 	ConcreteSource
-} from '../domain/concrete-source.js';
+} from '../../../domain/concrete-source.js';
 
 import type {
 	ResourceDescriptor,
 	ResourceDescriptorStrategy
-} from '../domain/resource-descriptor.js';
+} from '../../../domain/resource-descriptor.js';
 
 import type {
 	SignedNostrEvent
-} from '../domain/nostr-event.js';
+} from '../../../domain/nostr-event.js';
 
 import type {
 	StagedArtifactEntry
-} from '../ports/artifact-staging-repository.js';
+} from '../../../ports/artifact-staging-repository.js';
 
 import type {
 	Clock
-} from '../ports/clock.js';
+} from '../../../ports/clock.js';
 
 import type {
 	EventSigner
-} from '../ports/event-signer.js';
+} from '../../../ports/event-signer.js';
 
 import {
 	ResourceDescriptorBuilder

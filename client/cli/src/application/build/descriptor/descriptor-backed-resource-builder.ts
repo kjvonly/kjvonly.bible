@@ -1,27 +1,27 @@
 import {
 	calculateDescriptorEventDefinitionRevision
-} from '../domain/descriptor-event-definition-revision.js';
+} from '../../../domain/descriptor-event-definition-revision.js';
 
 import type {
 	ConcreteSource
-} from '../domain/concrete-source.js';
+} from '../../../domain/concrete-source.js';
 
 import type {
 	Manifest
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import type {
 	ResourceDescriptor
-} from '../domain/resource-descriptor.js';
+} from '../../../domain/resource-descriptor.js';
 
 import type {
 	EventSigner
-} from '../ports/event-signer.js';
+} from '../../../ports/event-signer.js';
 
 import type {
 	SignedEventStagingRepository,
 	StagedEventEntry
-} from '../ports/signed-event-staging-repository.js';
+} from '../../../ports/signed-event-staging-repository.js';
 
 import {
 	DescriptorEventBuilder
@@ -33,12 +33,12 @@ import {
 
 import {
 	ObjectArtifactStager
-} from './object-artifact-stager.js';
+} from '../artifact/object-artifact-stager.js';
 
 import {
 	ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
-import { Logger } from '../ports/logger.js';
+import { Logger } from '../../../ports/logger.js';
 
 
 export interface BuildDescriptorBackedResourceRequest {
