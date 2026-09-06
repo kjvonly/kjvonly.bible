@@ -2,9 +2,7 @@ import type {
 	EventTemplate,
 	VerifiedEvent
 } from 'nostr-tools';
-
-
-import { EventSigner } from '../../ports/nostr/event-signer.js';
+import { EventSigner } from '../../../ports/nostr/event-signer.js';
 
 
 

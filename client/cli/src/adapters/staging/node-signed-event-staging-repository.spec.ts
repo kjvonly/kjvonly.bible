@@ -21,13 +21,11 @@ import {
 	it
 } from 'vitest';
 
-import {
-	LocalNostrSigner
-} from '../nostr/local-nostr-signer.js';
 
 import {
 	NodeSignedEventStagingRepository
 } from './node-signed-event-staging-repository.js';
+import { LocalNostrSigner } from '../nostr/signer/local-nostr-signer.js';
 
 
 const directories:

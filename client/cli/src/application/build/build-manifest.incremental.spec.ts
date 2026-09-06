@@ -36,10 +36,6 @@ import {
 } from '../../adapters/encoding/hex-encoder.js';
 
 import {
-    LocalNostrSigner
-} from '../../adapters/nostr/local-nostr-signer.js';
-
-import {
     NodeSourceRepository
 } from '../../adapters/source/node-source-repository.js';
 
@@ -107,6 +103,7 @@ import {
     CollectionEventBuilder
 } from './collection/collection-event-builder.js';
 import { Manifest } from '../../domain/manifest/manifest.js';
+import { LocalNostrSigner } from '../../adapters/nostr/signer/local-nostr-signer.js';
 const directories:
     string[] = [];
 

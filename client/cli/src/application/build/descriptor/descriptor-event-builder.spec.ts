@@ -17,10 +17,6 @@ import {
 } from '../../../adapters/encoding/hex-encoder.js';
 
 import {
-	LocalNostrSigner
-} from '../../../adapters/nostr/local-nostr-signer.js';
-
-import {
 	DescriptorEventBuilder
 } from './descriptor-event-builder.js';
 
@@ -31,6 +27,7 @@ import {
 import {
 	ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
+import { LocalNostrSigner } from '../../../adapters/nostr/signer/local-nostr-signer.js';
 
 
 const secretKey =

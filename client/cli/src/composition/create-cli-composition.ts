@@ -15,10 +15,6 @@ import {
 } from '../adapters/manifest/node-manifest-loader.js';
 
 import {
-	LocalNostrSigner
-} from '../adapters/nostr/local-nostr-signer.js';
-
-import {
 	NodeSourceRepository
 } from '../adapters/source/node-source-repository.js';
 
@@ -50,23 +46,10 @@ import {
 	NodeCollectionEventStagingRepository
 } from '../adapters/staging/node-collection-event-staging-repository.js';
 
-import {
-	NostrToolsRelayPreflight
-} from '../adapters/nostr/nostr-tools-relay-preflight.js';
 import { NodeBlossomPreflight } from '../adapters/blossom/node-blossom-preflight.js';
 import { NodeBlossomPublicationClient } from '../adapters/blossom/node-blossom-publication-client.js';
 
-import {
-	connectNodeNostrToolsRelay
-} from '../adapters/nostr/connect-node-nostr-tools-relay.js';
 
-import {
-	NostrToolsEventPublisher
-} from '../adapters/nostr/nostr-tools-event-publisher.js';
-
-import {
-	NostrToolsRelayReconciler
-} from '../adapters/nostr/nostr-tools-relay-reconciler.js';
 
 import {
 	NodeNostrEventStagingRepository
@@ -89,6 +72,11 @@ import { BlossomArtifactPublisher } from '../application/publish/blossom/blossom
 import { NostrStagedEventPublisher } from '../application/publish/nostr/nostr-staged-event-publisher.js';
 import { PublicationPreflight } from '../application/publish/preflight/publication-preflight.js';
 import { PublishManifestUseCase } from '../application/publish/publish-manifest.js';
+import { NostrToolsEventPublisher } from '../adapters/nostr/publication/nostr-tools-event-publisher.js';
+import { connectNodeNostrToolsRelay } from '../adapters/nostr/relay/connect-node-nostr-tools-relay.js';
+import { NostrToolsRelayPreflight } from '../adapters/nostr/relay/nostr-tools-relay-preflight.js';
+import { NostrToolsRelayReconciler } from '../adapters/nostr/relay/nostr-tools-relay-reconciler.js';
+import { LocalNostrSigner } from '../adapters/nostr/signer/local-nostr-signer.js';
 
 export function createCliComposition() {
 	const logger =

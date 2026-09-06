@@ -6,10 +6,8 @@ import {
 import {
 	nip19
 } from 'nostr-tools';
-
-
-import { EventSigner } from '../../ports/nostr/event-signer.js';
-import { UnsignedNostrEvent, SignedNostrEvent } from '../../domain/event/nostr-event.js';
+import { UnsignedNostrEvent, SignedNostrEvent } from '../../../domain/event/nostr-event.js';
+import { EventSigner } from '../../../ports/nostr/event-signer.js';
 
 
 

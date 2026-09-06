@@ -4,18 +4,13 @@ import {
 	SimplePool,
 	useWebSocketImplementation
 } from 'nostr-tools/pool';
+import { SignedNostrEvent } from '../../../domain/event/nostr-event.js';
+import { Logger } from '../../../ports/logging/logger.js';
+import { EventSigner } from '../../../ports/nostr/event-signer.js';
+import { NostrEventPublisher } from '../../../ports/nostr/nostr-event-publisher.js';
+import { NostrToolsAuthSigner, createNostrToolsAuthSigner } from '../auth/nostr-tools-auth-signer.js';
 
-import {
-	createNostrToolsAuthSigner
-} from './nostr-tools-auth-signer.js';
 
-import type {
-	NostrToolsAuthSigner
-} from './nostr-tools-auth-signer.js';
-import { Logger } from '../../ports/logging/logger.js';
-import { EventSigner } from '../../ports/nostr/event-signer.js';
-import { NostrEventPublisher } from '../../ports/nostr/nostr-event-publisher.js';
-import { SignedNostrEvent } from '../../domain/event/nostr-event.js';
 
 
 useWebSocketImplementation(

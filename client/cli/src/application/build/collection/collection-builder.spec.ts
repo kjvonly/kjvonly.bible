@@ -27,25 +27,12 @@ import {
 	HexEncoder
 } from '../../../adapters/encoding/hex-encoder.js';
 
-import {
-	LocalNostrSigner
-} from '../../../adapters/nostr/local-nostr-signer.js';
 
 import {
 	NodeCollectionEventStagingRepository
 } from '../../../adapters/staging/node-collection-event-staging-repository.js';
 
-import type {
-	Manifest
-} from '../../../domain/manifest.js';
 
-import type {
-	ResourceDescriptor
-} from '../../../domain/resource-descriptor.js';
-
-import type {
-	Logger
-} from '../../../ports/logger.js';
 
 import {
 	CollectionBuilder
@@ -58,6 +45,10 @@ import {
 import {
 	EncodingRegistry
 } from '../encoding/encoding-registry.js';
+import { LocalNostrSigner } from '../../../adapters/nostr/signer/local-nostr-signer.js';
+import { Manifest } from '../../../domain/manifest/manifest.js';
+import { ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
+import { Logger } from '../../../ports/logging/logger.js';
 
 
 const directories:

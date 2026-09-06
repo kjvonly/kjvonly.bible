@@ -5,10 +5,8 @@ import {
 import type {
 	Filter
 } from 'nostr-tools/filter';
+import { Logger } from '../../../ports/logging/logger.js';
 
-import type {
-	Logger
-} from '../../ports/logging/logger.js';
 
 
 export class NostrToolsNegentropyError

@@ -1,5 +1,6 @@
-import { Logger } from '../../ports/logging/logger.js';
-import { PublicationEndpointPreflight } from '../../ports/publication/publication-endpoint-preflight.js';
+
+import { Logger } from '../../../ports/logging/logger.js';
+import { PublicationEndpointPreflight } from '../../../ports/publication/publication-endpoint-preflight.js';
 import {
 	connectNodeNostrToolsRelay
 } from './connect-node-nostr-tools-relay.js';

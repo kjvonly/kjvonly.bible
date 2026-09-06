@@ -1,30 +1,11 @@
-import {
-	authenticateNostrToolsRelay
-} from './authenticate-nostr-tools-relay.js';
+import { Logger } from "../../../ports/logging/logger.js";
+import { EventSigner } from "../../../ports/nostr/event-signer.js";
+import { NostrRelayReconciler, NostrRelayReconciliationRequest } from "../../../ports/nostr/nostr-relay-reconciler.js";
+import { authenticateNostrToolsRelay } from "../auth/authenticate-nostr-tools-relay.js";
+import { NostrToolsAuthSigner, createNostrToolsAuthSigner } from "../auth/nostr-tools-auth-signer.js";
+import { NegentropyRelay, reconcileNostrToolsNegentropy, NostrToolsNegentropyError } from "../negentropy/nostr-tools-negentropy-session.js";
+import { createNostrToolsNegentropyStorage } from "../negentropy/nostr-tools-negentropy-storage.js";
 
-import {
-	createNostrToolsAuthSigner
-} from './nostr-tools-auth-signer.js';
-
-import {
-	createNostrToolsNegentropyStorage
-} from './nostr-tools-negentropy-storage.js';
-
-import {
-	NostrToolsNegentropyError,
-	reconcileNostrToolsNegentropy
-} from './nostr-tools-negentropy-session.js';
-
-import type {
-	NegentropyRelay
-} from './nostr-tools-negentropy-session.js';
-
-import type {
-	NostrToolsAuthSigner
-} from './nostr-tools-auth-signer.js';
-import { Logger } from '../../ports/logging/logger.js';
-import { EventSigner } from '../../ports/nostr/event-signer.js';
-import { NostrRelayReconciler, NostrRelayReconciliationRequest } from '../../ports/nostr/nostr-relay-reconciler.js';
 
 
 export interface NostrToolsRelayConnection
