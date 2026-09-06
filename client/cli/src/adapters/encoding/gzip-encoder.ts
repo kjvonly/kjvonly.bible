@@ -1,10 +1,7 @@
 import {
 	gzipSync
 } from 'node:zlib';
-
-import type {
-	ByteEncoder
-} from '../../application/encoding/byte-encoder.js';
+import { ByteEncoder } from '../../ports/encoding/byte-encoder.js';
 
 
 export class GzipEncoder
