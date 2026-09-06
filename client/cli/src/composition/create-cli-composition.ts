@@ -198,7 +198,8 @@ export function createCliComposition() {
 		new ObjectArtifactStager(
 			sourceRepository,
 			encodingRegistry,
-			artifactStagingRepository
+			artifactStagingRepository,
+			logger
 		);
 
 

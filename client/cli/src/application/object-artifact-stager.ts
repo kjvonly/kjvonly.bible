@@ -26,17 +26,18 @@ import type {
 import type {
 	SourceRepository
 } from '../ports/source-repository.js';
+import { Logger } from '../ports/logger.js';
 
 
 export interface StageObjectArtifactsRequest {
 	readonly stagingRoot:
-		string;
+	string;
 
 	readonly resourceName:
-		string;
+	string;
 
 	readonly sources:
-		readonly ConcreteSource[];
+	readonly ConcreteSource[];
 }
 
 
@@ -50,8 +51,11 @@ export class ObjectArtifactStager {
 			EncodingRegistry,
 
 		private readonly stagingRepository:
-			ArtifactStagingRepository
-	) {}
+			ArtifactStagingRepository,
+
+		private readonly logger:
+			Logger
+	) { }
 
 
 	async stage(
@@ -90,7 +94,7 @@ export class ObjectArtifactStager {
 
 		const current:
 			StagedArtifactEntry[] =
-				[];
+			[];
 
 
 		for (
@@ -103,7 +107,7 @@ export class ObjectArtifactStager {
 
 			if (
 				objectUpload ===
-					undefined
+				undefined
 			) {
 				throw new Error(
 					`Resource "${request.resourceName}" source "${source.key}" has no object-upload definition.`
@@ -138,22 +142,29 @@ export class ObjectArtifactStager {
 
 			if (
 				previous !==
-					undefined &&
+				undefined &&
 				previous
 					.metadata
 					.sourceMtimeMs ===
-						sourceMetadata
-							.mtimeMs &&
+				sourceMetadata
+					.mtimeMs &&
 				previous
 					.metadata
 					.sourceSize ===
-						sourceMetadata
-							.size &&
+				sourceMetadata
+					.size &&
 				previous
 					.metadata
 					.artifactRevision ===
-						artifactRevision
+				artifactRevision
 			) {
+
+				this.logArtifactReused(
+					request.resourceName,
+					source.key,
+					previous
+				);
+
 				current.push(
 					previous
 				);
@@ -178,7 +189,7 @@ export class ObjectArtifactStager {
 				objectUpload
 					.encoding
 					.length ===
-						0
+				0
 			) {
 				artifact =
 					await this
@@ -212,6 +223,13 @@ export class ObjectArtifactStager {
 
 							previous
 						});
+
+				this.logArtifactStaged(
+					request.resourceName,
+					source.key,
+					'identity',
+					artifact
+				);
 			}
 			else {
 				const sourceBytes =
@@ -263,6 +281,15 @@ export class ObjectArtifactStager {
 
 							previous
 						});
+
+
+				this.logArtifactStaged(
+					request.resourceName,
+					source.key,
+					'materialized',
+					artifact
+				);
+
 			}
 
 
@@ -291,5 +318,63 @@ export class ObjectArtifactStager {
 
 
 		return current;
+	}
+
+	private logArtifactReused(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		artifact:
+			StagedArtifactEntry
+	): void {
+
+		this.logger.verbose(
+			'artifact.reused',
+			{
+				resourceName,
+				key,
+
+				sha256:
+					artifact
+						.metadata
+						.sha256
+			}
+		);
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// Log Helpers
+
+	private logArtifactStaged(
+		resourceName:
+			string,
+
+		key:
+			string,
+
+		mode:
+			'identity' |
+			'materialized',
+
+		artifact:
+			StagedArtifactEntry
+	): void {
+
+		this.logger.verbose(
+			'artifact.staged',
+			{
+				resourceName,
+				key,
+				mode,
+
+				sha256:
+					artifact
+						.metadata
+						.sha256
+			}
+		);
 	}
 }

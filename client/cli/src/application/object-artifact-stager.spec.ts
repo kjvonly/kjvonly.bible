@@ -138,7 +138,10 @@ function createStager(
 	artifactRepository:
 		NodeArtifactStagingRepository
 ): ObjectArtifactStager {
-
+    const logger = {
+        verbose:
+            vi.fn()
+    };
 	return new ObjectArtifactStager(
 		sourceRepository,
 
@@ -147,7 +150,8 @@ function createStager(
 			new HexEncoder()
 		]),
 
-		artifactRepository
+		artifactRepository,
+		logger
 	);
 }
 

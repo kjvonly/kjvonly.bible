@@ -236,7 +236,8 @@ function createBuild(
         new ObjectArtifactStager(
             sourceRepository,
             encodingRegistry,
-            artifactStagingRepository
+            artifactStagingRepository,
+            logger
         );
 
 
