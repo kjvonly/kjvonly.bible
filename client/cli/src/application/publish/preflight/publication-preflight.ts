@@ -135,8 +135,8 @@ export class PublicationPreflight {
                 )
             );
         }
-        this.logPreflightStart(
-            manifest
+        this.logPreflightComplete(
+           checks.length 
         );
     }
 

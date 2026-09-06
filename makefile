@@ -27,7 +27,7 @@ seed-kjvs:
 seed-kjv:
 	cd client/cli && \
 	npm run build && \
-	node dist/main.js sync ../../zarf/manifest/kjv.yaml
+	node dist/main.js sync -v ../../zarf/manifest/kjv.yaml
 
 ## STRONGS
 seed-strongs:
