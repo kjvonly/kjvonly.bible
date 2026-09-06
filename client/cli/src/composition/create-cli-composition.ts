@@ -28,7 +28,7 @@ import {
 
 import {
 	SyncManifestUseCase
-} from '../application/sync/sync-manifest.js';
+} from '#application/sync/sync-manifest.js';
 
 import {
 	createCli
@@ -57,21 +57,21 @@ import {
 
 //application
 import { ConsoleLogger } from '../adapters/logging/console-logger.js';
-import { ObjectArtifactStager } from '../application/build/artifact/object-artifact-stager.js';
-import { BuildManifestUseCase } from '../application/build/build-manifest.js';
-import { CollectionBuilder } from '../application/build/collection/collection-builder.js';
-import { CollectionEventBuilder } from '../application/build/collection/collection-event-builder.js';
-import { DescriptorBackedResourceBuilder } from '../application/build/descriptor/descriptor-backed-resource-builder.js';
-import { DescriptorEventBuilder } from '../application/build/descriptor/descriptor-event-builder.js';
-import { DescriptorStrategyRegistry } from '../application/build/descriptor/descriptor-strategy-registry.js';
-import { ResourceDescriptorBuilder } from '../application/build/descriptor/resource-descriptor-builder.js';
-import { EncodingRegistry } from '../application/build/encoding/encoding-registry.js';
-import { InlineEventBuilder } from '../application/build/inline/inline-event-builder.js';
-import { SourceExpander } from '../application/build/source/source-expander.js';
-import { BlossomArtifactPublisher } from '../application/publish/blossom/blossom-artifact-publisher.js';
-import { NostrStagedEventPublisher } from '../application/publish/nostr/nostr-staged-event-publisher.js';
-import { PublicationPreflight } from '../application/publish/preflight/publication-preflight.js';
-import { PublishManifestUseCase } from '../application/publish/publish-manifest.js';
+import { ObjectArtifactStager } from '#application/build/artifact/object-artifact-stager.js';
+import { BuildManifestUseCase } from '#application/build/build-manifest.js';
+import { CollectionBuilder } from '#application/build/collection/collection-builder.js';
+import { CollectionEventBuilder } from '#application/build/collection/collection-event-builder.js';
+import { DescriptorBackedResourceBuilder } from '#application/build/descriptor/descriptor-backed-resource-builder.js';
+import { DescriptorEventBuilder } from '#application/build/descriptor/descriptor-event-builder.js';
+import { DescriptorStrategyRegistry } from '#application/build/descriptor/descriptor-strategy-registry.js';
+import { ResourceDescriptorBuilder } from '#application/build/descriptor/resource-descriptor-builder.js';
+import { EncodingRegistry } from '#application/build/encoding/encoding-registry.js';
+import { InlineEventBuilder } from '#application/build/inline/inline-event-builder.js';
+import { SourceExpander } from '#application/build/source/source-expander.js';
+import { BlossomArtifactPublisher } from '#application/publish/blossom/blossom-artifact-publisher.js';
+import { NostrStagedEventPublisher } from '#application/publish/nostr/nostr-staged-event-publisher.js';
+import { PublicationPreflight } from '#application/publish/preflight/publication-preflight.js';
+import { PublishManifestUseCase } from '#application/publish/publish-manifest.js';
 import { NostrToolsEventPublisher } from '../adapters/nostr/publication/nostr-tools-event-publisher.js';
 import { connectNodeNostrToolsRelay } from '../adapters/nostr/relay/connect-node-nostr-tools-relay.js';
 import { NostrToolsRelayPreflight } from '../adapters/nostr/relay/nostr-tools-relay-preflight.js';

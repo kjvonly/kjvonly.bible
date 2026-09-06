@@ -4,13 +4,13 @@ import {
 
 import type {
 	PublishManifest
-} from '../application/publish/publish-manifest.js';
+} from '#application/publish/publish-manifest.js';
 
 import type {
 	SyncManifest
-} from '../application/sync/sync-manifest.js';
+} from '#application/sync/sync-manifest.js';
 
-import { BuildManifest } from '../application/build/build-manifest.js';
+import { BuildManifest } from '#application/build/build-manifest.js';
 
 
 export interface CliDependencies {
