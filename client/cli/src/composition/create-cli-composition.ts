@@ -266,8 +266,8 @@ export function createCliComposition() {
 
 	const publicationPreflight =
 		new PublicationPreflight(
-			new NostrToolsRelayPreflight(),
-			new NodeBlossomPreflight()
+			new NostrToolsRelayPreflight(logger),
+			new NodeBlossomPreflight(logger)
 		);
 
 	const blossomPublicationClient =

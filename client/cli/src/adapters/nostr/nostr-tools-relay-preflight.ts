@@ -1,3 +1,4 @@
+import { Logger } from '../../ports/logger.js';
 import type {
 	PublicationEndpointPreflight
 } from '../../ports/publication-endpoint-preflight.js';
@@ -13,7 +14,7 @@ import type {
 
 export interface NostrPreflightData {
 	readonly relays:
-		readonly string[];
+	readonly string[];
 }
 
 
@@ -21,10 +22,13 @@ export class NostrToolsRelayPreflight
 	implements PublicationEndpointPreflight {
 
 	constructor(
+		private readonly logger:
+			Logger,
+
 		private readonly connectRelay:
 			NostrToolsRelayConnector =
-				connectNodeNostrToolsRelay
-	) {}
+			connectNodeNostrToolsRelay
+	) { }
 
 
 	async check(
@@ -52,6 +56,11 @@ export class NostrToolsRelayPreflight
 			string
 	): Promise<void> {
 
+		this.logCheckStart(
+			url
+		);
+
+
 		try {
 			const relay =
 				await this.connectRelay(
@@ -62,18 +71,52 @@ export class NostrToolsRelayPreflight
 			relay.close();
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			throw new Error(
-				`Unable to reach Nostr relay "${url}": ${
-					error instanceof Error
-						? error.message
-						: String(
-							error
-						)
+				`Unable to reach Nostr relay "${url}": ${error instanceof Error
+					? error.message
+					: String(
+						error
+					)
 				}`
 			);
 		}
+
+
+		this.logCheckComplete(
+			url
+		);
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// Log Helpers
+
+	private logCheckStart(
+		url:
+			string
+	): void {
+
+		this.logger.verbose(
+			'preflight.relay.start',
+			{
+				url
+			}
+		);
+	}
+
+
+	private logCheckComplete(
+		url:
+			string
+	): void {
+
+		this.logger.verbose(
+			'preflight.relay.complete',
+			{
+				url
+			}
+		);
 	}
 }

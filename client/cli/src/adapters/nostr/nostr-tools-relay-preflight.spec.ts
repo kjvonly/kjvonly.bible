@@ -51,7 +51,7 @@ describe(
 
 							if (
 								url ===
-									'wss://relay-a.example'
+								'wss://relay-a.example'
 							) {
 								return relayA;
 							}
@@ -61,9 +61,14 @@ describe(
 						}
 					);
 
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 
 				const preflight =
 					new NostrToolsRelayPreflight(
+						logger,
 						connectRelay
 					);
 
@@ -134,7 +139,7 @@ describe(
 
 							if (
 								url ===
-									'wss://relay-b.example'
+								'wss://relay-b.example'
 							) {
 								throw new Error(
 									'connection failed'
@@ -146,9 +151,14 @@ describe(
 						}
 					);
 
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 
 				const preflight =
 					new NostrToolsRelayPreflight(
+						logger,
 						connectRelay
 					);
 

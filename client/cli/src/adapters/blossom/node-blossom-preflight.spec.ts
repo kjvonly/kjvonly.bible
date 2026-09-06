@@ -9,7 +9,7 @@ import {
 import {
 	NodeBlossomPreflight
 } from './node-blossom-preflight.js';
-
+import { beforeEach } from 'node:test';
 
 afterEach(
 	() => {
@@ -47,9 +47,12 @@ describe(
 					fetchMock
 				);
 
-
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 				const preflight =
-					new NodeBlossomPreflight();
+					new NodeBlossomPreflight(logger);
 
 
 				await preflight.check({
@@ -110,7 +113,7 @@ describe(
 								String(
 									input
 								) ===
-									'https://blossom-b.example'
+								'https://blossom-b.example'
 							) {
 								throw new Error(
 									'offline'
@@ -134,9 +137,13 @@ describe(
 					fetchMock
 				);
 
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 
 				const preflight =
-					new NodeBlossomPreflight();
+					new NodeBlossomPreflight(logger);
 
 
 				await expect(
