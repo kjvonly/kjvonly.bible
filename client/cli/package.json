@@ -6,6 +6,14 @@
 	"bin": {
 		"kjvonly": "./dist/main.js"
 	},
+	"imports": {
+		"#adapters/*": "./dist/adapters/*",
+		"#application/*": "./dist/application/*",
+		"#cli/*": "./dist/cli/*",
+		"#composition/*": "./dist/composition/*",
+		"#domain/*": "./dist/domain/*",
+		"#ports/*": "./dist/ports/*"
+	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"test": "vitest run --config vitest.config.ts"
