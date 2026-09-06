@@ -14,6 +14,10 @@ import type {
 } from '../ports/event-signer.js';
 
 import type {
+    Logger
+} from '../ports/logger.js';
+
+import type {
     NostrEventStagingRepository
 } from '../ports/nostr-event-staging-repository.js';
 
@@ -28,6 +32,17 @@ import {
 import type {
     NostrEventPublisher
 } from '../ports/nostr-event-publisher.js';
+
+
+function createLogger():
+    Logger {
+
+    return {
+        verbose:
+            vi.fn()
+    };
+}
+
 
 function createManifest() {
 
@@ -155,12 +170,17 @@ describe(
                 };
 
 
+                const logger =
+                    createLogger();
+
+
                 const nostrPublisher =
                     new NostrStagedEventPublisher(
                         stagingRepository,
                         signer,
                         reconciler,
-                        eventPublisher
+                        eventPublisher,
+                        logger
                     );
 
 
@@ -270,6 +290,46 @@ describe(
                 expect(
                     publishEvent
                 ).not.toHaveBeenCalled();
+
+
+                expect(
+                    logger.verbose
+                ).toHaveBeenCalledWith(
+                    'nostr.publish.start',
+                    {
+                        stagingRoot:
+                            '/staging',
+
+                        relayCount:
+                            2
+                    }
+                );
+
+
+                expect(
+                    logger.verbose
+                ).toHaveBeenCalledWith(
+                    'nostr.event.already-present',
+                    {
+                        relay:
+                            'wss://relay-a.example',
+
+                        eventId:
+                            stagedEvents[0]!
+                                .eventId
+                    }
+                );
+
+
+                expect(
+                    logger.verbose
+                ).toHaveBeenCalledWith(
+                    'nostr.publish.complete',
+                    {
+                        resultCount:
+                            4
+                    }
+                );
             }
 
 
@@ -384,7 +444,8 @@ describe(
                         stagingRepository,
                         signer,
                         reconciler,
-                        eventPublisher
+                        eventPublisher,
+                        createLogger()
                     );
 
 
@@ -557,7 +618,8 @@ describe(
                         stagingRepository,
                         signer,
                         reconciler,
-                        eventPublisher
+                        eventPublisher,
+                        createLogger()
                     );
 
 
@@ -708,7 +770,8 @@ describe(
                         stagingRepository,
                         signer,
                         reconciler,
-                        eventPublisher
+                        eventPublisher,
+                        createLogger()
                     );
 
 

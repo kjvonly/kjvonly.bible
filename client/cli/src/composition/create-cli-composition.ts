@@ -312,7 +312,8 @@ export function createCliComposition() {
 			nostrEventStagingRepository,
 			signer,
 			nostrRelayReconciler,
-			nostrEventPublisher
+			nostrEventPublisher,
+			logger
 		);
 
 	const publishManifest =

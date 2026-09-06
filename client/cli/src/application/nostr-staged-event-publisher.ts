@@ -11,6 +11,10 @@ import type {
 } from '../ports/event-signer.js';
 
 import type {
+    Logger
+} from '../ports/logger.js';
+
+import type {
     NostrEventPublisher
 } from '../ports/nostr-event-publisher.js';
 
@@ -36,7 +40,10 @@ export class NostrStagedEventPublisher {
             NostrRelayReconciler,
 
         private readonly eventPublisher:
-            NostrEventPublisher
+            NostrEventPublisher,
+
+        private readonly logger:
+            Logger
     ) { }
 
 
@@ -50,12 +57,23 @@ export class NostrStagedEventPublisher {
         readonly NostrPublicationResult[]
     > {
 
+        this.logPublishStart(
+            stagingRoot,
+            manifest.nostr.relays.length
+        );
+
+
         const stagedEvents =
             await this
                 .stagingRepository
                 .list(
                     stagingRoot
                 );
+
+
+        this.logStagedEventsLoaded(
+            stagedEvents.length
+        );
 
 
         const publisher =
@@ -75,6 +93,7 @@ export class NostrStagedEventPublisher {
                 })
             );
 
+
         const stagedEventIds =
             new Set(
                 stagedEvents.map(
@@ -83,15 +102,22 @@ export class NostrStagedEventPublisher {
                 )
             );
 
+
         const results:
             NostrPublicationResult[] =
-            [];
+                [];
 
 
         for (
             const relay
             of manifest.nostr.relays
         ) {
+            this.logRelayStart(
+                relay,
+                stagedEvents.length
+            );
+
+
             const missingEventIds =
                 await this
                     .reconciler
@@ -113,6 +139,7 @@ export class NostrStagedEventPublisher {
                     missingEventIds
                 );
 
+
             for (
                 const eventId
                 of missing
@@ -128,6 +155,23 @@ export class NostrStagedEventPublisher {
                 }
             }
 
+
+            this.logRelayReconciled(
+                relay,
+                missing.size,
+                stagedEvents.length -
+                    missing.size
+            );
+
+
+            let publishedCount =
+                0;
+
+
+            let alreadyPresentCount =
+                0;
+
+
             for (
                 const entry
                 of stagedEvents
@@ -137,6 +181,12 @@ export class NostrStagedEventPublisher {
                         entry.eventId
                     )
                 ) {
+                    this.logEventRead(
+                        relay,
+                        entry.eventId
+                    );
+
+
                     const event =
                         await this
                             .stagingRepository
@@ -145,12 +195,28 @@ export class NostrStagedEventPublisher {
                             );
 
 
+                    this.logEventPublishStart(
+                        relay,
+                        entry.eventId
+                    );
+
+
                     await this
                         .eventPublisher
                         .publish(
                             relay,
                             event
                         );
+
+
+                    this.logEventPublishComplete(
+                        relay,
+                        entry.eventId
+                    );
+
+
+                    publishedCount +=
+                        1;
 
 
                     results.push({
@@ -168,6 +234,16 @@ export class NostrStagedEventPublisher {
                 }
 
 
+                this.logEventAlreadyPresent(
+                    relay,
+                    entry.eventId
+                );
+
+
+                alreadyPresentCount +=
+                    1;
+
+
                 results.push({
                     eventId:
                         entry.eventId,
@@ -178,9 +254,201 @@ export class NostrStagedEventPublisher {
                         'already-present'
                 });
             }
+
+
+            this.logRelayComplete(
+                relay,
+                publishedCount,
+                alreadyPresentCount
+            );
         }
 
 
+        this.logPublishComplete(
+            results.length
+        );
+
+
         return results;
+    }
+
+
+    private logPublishStart(
+        stagingRoot:
+            string,
+
+        relayCount:
+            number
+    ): void {
+
+        this.logger.verbose(
+            'nostr.publish.start',
+            {
+                stagingRoot,
+                relayCount
+            }
+        );
+    }
+
+
+    private logStagedEventsLoaded(
+        eventCount:
+            number
+    ): void {
+
+        this.logger.verbose(
+            'nostr.staged.loaded',
+            {
+                eventCount
+            }
+        );
+    }
+
+
+    private logRelayStart(
+        relay:
+            string,
+
+        eventCount:
+            number
+    ): void {
+
+        this.logger.verbose(
+            'nostr.relay.start',
+            {
+                relay,
+                eventCount
+            }
+        );
+    }
+
+
+    private logRelayReconciled(
+        relay:
+            string,
+
+        missingCount:
+            number,
+
+        presentCount:
+            number
+    ): void {
+
+        this.logger.verbose(
+            'nostr.relay.reconciled',
+            {
+                relay,
+                missingCount,
+                presentCount
+            }
+        );
+    }
+
+
+    private logEventAlreadyPresent(
+        relay:
+            string,
+
+        eventId:
+            string
+    ): void {
+
+        this.logger.verbose(
+            'nostr.event.already-present',
+            {
+                relay,
+                eventId
+            }
+        );
+    }
+
+
+    private logEventRead(
+        relay:
+            string,
+
+        eventId:
+            string
+    ): void {
+
+        this.logger.verbose(
+            'nostr.event.read',
+            {
+                relay,
+                eventId
+            }
+        );
+    }
+
+
+    private logEventPublishStart(
+        relay:
+            string,
+
+        eventId:
+            string
+    ): void {
+
+        this.logger.verbose(
+            'nostr.event.publish.start',
+            {
+                relay,
+                eventId
+            }
+        );
+    }
+
+
+    private logEventPublishComplete(
+        relay:
+            string,
+
+        eventId:
+            string
+    ): void {
+
+        this.logger.verbose(
+            'nostr.event.publish.complete',
+            {
+                relay,
+                eventId
+            }
+        );
+    }
+
+
+    private logRelayComplete(
+        relay:
+            string,
+
+        publishedCount:
+            number,
+
+        alreadyPresentCount:
+            number
+    ): void {
+
+        this.logger.verbose(
+            'nostr.relay.complete',
+            {
+                relay,
+                publishedCount,
+                alreadyPresentCount
+            }
+        );
+    }
+
+
+    private logPublishComplete(
+        resultCount:
+            number
+    ): void {
+
+        this.logger.verbose(
+            'nostr.publish.complete',
+            {
+                resultCount
+            }
+        );
     }
 }

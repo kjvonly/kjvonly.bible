@@ -210,7 +210,8 @@ export class NostrToolsRelayReconciler
 				kinds: [
 					request.kind
 				]
-			}
+			},
+			this.logger
 		);
 	}
 

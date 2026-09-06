@@ -9,6 +9,10 @@ import {
     nip77
 } from 'nostr-tools';
 
+import type {
+    Logger
+} from '../../ports/logger.js';
+
 import {
     createNostrToolsNegentropyStorage
 } from './nostr-tools-negentropy-storage.js';
@@ -17,6 +21,16 @@ import {
     NostrToolsNegentropyError,
     reconcileNostrToolsNegentropy
 } from './nostr-tools-negentropy-session.js';
+
+
+function createLogger():
+    Logger {
+
+    return {
+        verbose:
+            vi.fn()
+    };
+}
 
 
 describe(
@@ -171,7 +185,8 @@ describe(
                             kinds: [
                                 37770
                             ]
-                        }
+                        },
+                        createLogger()
                     )
                 ).resolves.toEqual([
                     missingId
@@ -282,7 +297,8 @@ describe(
 					kinds: [
 						37770
 					]
-				}
+				},
+				createLogger()
 			)
 		).rejects.toMatchObject({
 			name:
@@ -373,7 +389,8 @@ describe(
                             kinds: [
                                 37770
                             ]
-                        }
+                        },
+                        createLogger()
                     )
                 ).rejects.toMatchObject({
                     name:

@@ -6,6 +6,11 @@ import type {
 	Filter
 } from 'nostr-tools/filter';
 
+import type {
+	Logger
+} from '../../ports/logger.js';
+
+
 export class NostrToolsNegentropyError
 	extends Error {
 
@@ -23,15 +28,16 @@ export class NostrToolsNegentropyError
 	}
 }
 
+
 interface NegentropySubscription {
 	readonly id:
-	string;
+		string;
 
 	oncustom?:
-	(
-		data:
-			string[]
-	) => void;
+		(
+			data:
+				string[]
+		) => void;
 
 	close():
 		void;
@@ -45,7 +51,7 @@ export interface NegentropyRelay {
 
 		params: {
 			readonly label:
-			string;
+				string;
 		}
 	): NegentropySubscription;
 
@@ -65,7 +71,10 @@ export function reconcileNostrToolsNegentropy(
 		nip77.NegentropyStorageVector,
 
 	filter:
-		Filter
+		Filter,
+
+	logger:
+		Logger
 ): Promise<
 	readonly string[]
 > {
@@ -117,6 +126,13 @@ export function reconcileNostrToolsNegentropy(
 						true;
 
 
+					logNegentropyComplete(
+						logger,
+						subscription.id,
+						have.size
+					);
+
+
 					resolve(
 						[
 							...have
@@ -142,6 +158,13 @@ export function reconcileNostrToolsNegentropy(
 						true;
 
 
+					logNegentropyError(
+						logger,
+						subscription.id,
+						error
+					);
+
+
 					reject(
 						error instanceof Error
 							? error
@@ -158,7 +181,7 @@ export function reconcileNostrToolsNegentropy(
 				data => {
 
 					switch (
-					data[0]
+						data[0]
 					) {
 						case 'NEG-MSG': {
 
@@ -168,7 +191,7 @@ export function reconcileNostrToolsNegentropy(
 
 							if (
 								message ===
-								undefined
+									undefined
 							) {
 								fail(
 									new Error(
@@ -194,9 +217,18 @@ export function reconcileNostrToolsNegentropy(
 									);
 
 
+								logNegentropyMessage(
+									logger,
+									subscription.id,
+									have.size,
+									response !==
+										null
+								);
+
+
 								if (
 									response !==
-									null
+										null
 								) {
 									relay.send(
 										JSON.stringify([
@@ -299,6 +331,12 @@ export function reconcileNostrToolsNegentropy(
 			}
 
 
+			logNegentropyOpen(
+				logger,
+				subscription.id
+			);
+
+
 			relay.send(
 				JSON.stringify([
 					'NEG-OPEN',
@@ -309,6 +347,96 @@ export function reconcileNostrToolsNegentropy(
 			).catch(
 				fail
 			);
+		}
+	);
+}
+
+
+function logNegentropyOpen(
+	logger:
+		Logger,
+
+	subscriptionId:
+		string
+): void {
+
+	logger.verbose(
+		'negentropy.open',
+		{
+			subscriptionId
+		}
+	);
+}
+
+
+function logNegentropyMessage(
+	logger:
+		Logger,
+
+	subscriptionId:
+		string,
+
+	missingCount:
+		number,
+
+	hasResponse:
+		boolean
+): void {
+
+	logger.verbose(
+		'negentropy.message',
+		{
+			subscriptionId,
+			missingCount,
+			hasResponse
+		}
+	);
+}
+
+
+function logNegentropyError(
+	logger:
+		Logger,
+
+	subscriptionId:
+		string,
+
+	error:
+		unknown
+): void {
+
+	logger.verbose(
+		'negentropy.error',
+		{
+			subscriptionId,
+
+			error:
+				error instanceof Error
+					? error.message
+					: String(
+						error
+					)
+		}
+	);
+}
+
+
+function logNegentropyComplete(
+	logger:
+		Logger,
+
+	subscriptionId:
+		string,
+
+	missingCount:
+		number
+): void {
+
+	logger.verbose(
+		'negentropy.complete',
+		{
+			subscriptionId,
+			missingCount
 		}
 	);
 }
