@@ -1,6 +1,6 @@
-import { Logger } from "../../../ports/logging/logger.js";
-import { EventSigner } from "../../../ports/nostr/event-signer.js";
-import { NostrRelayReconciler, NostrRelayReconciliationRequest } from "../../../ports/nostr/nostr-relay-reconciler.js";
+import { Logger } from "#ports/logging/logger.js";
+import { EventSigner } from "#ports/nostr/event-signer.js";
+import { NostrRelayReconciler, NostrRelayReconciliationRequest } from "#ports/nostr/nostr-relay-reconciler.js";
 import { authenticateNostrToolsRelay } from "../auth/authenticate-nostr-tools-relay.js";
 import { NostrToolsAuthSigner, createNostrToolsAuthSigner } from "../auth/nostr-tools-auth-signer.js";
 import { NegentropyRelay, reconcileNostrToolsNegentropy, NostrToolsNegentropyError } from "../negentropy/nostr-tools-negentropy-session.js";

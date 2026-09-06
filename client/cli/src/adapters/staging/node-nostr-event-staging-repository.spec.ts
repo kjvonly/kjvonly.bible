@@ -26,11 +26,11 @@ import {
 
 import type {
     CollectionEventStagingRepository
-} from '../../ports/collection-event-staging-repository.js';
+} from '#ports/collection-event-staging-repository.js';
 
 import type {
     SignedEventStagingRepository
-} from '../../ports/signed-event-staging-repository.js';
+} from '#ports/signed-event-staging-repository.js';
 
 
 describe(

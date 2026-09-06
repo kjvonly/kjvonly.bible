@@ -20,7 +20,7 @@ import {
 } from 'nostr-tools/pure';
 
 
-import { CollectionEventStagingRepository, StagedCollectionEventEntry, StageCollectionEventRequest } from '../../ports/staging/collection-event-staging-repository.js';
+import { CollectionEventStagingRepository, StagedCollectionEventEntry, StageCollectionEventRequest } from '#ports/staging/collection-event-staging-repository.js';
 import { parseSignedNostrEvent } from '../../domain/event/parse-signed-nostr-event.js';
 import { parseStagedCollectionEventFilename, buildStagedCollectionEventFilename } from '../../domain/staging/staged-collection-event-filename.js';
 

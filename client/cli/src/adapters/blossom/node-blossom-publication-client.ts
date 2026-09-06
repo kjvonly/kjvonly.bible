@@ -10,10 +10,10 @@ import {
 	Readable
 } from 'node:stream';
 
-import { BlossomPublicationClient, BlossomPublicationRequest } from '../../ports/blossom/blossom-publication-client.js';
-import { Logger } from '../../ports/logging/logger.js';
-import { EventSigner } from '../../ports/nostr/event-signer.js';
-import { Clock } from '../../ports/time/clock.js';
+import { BlossomPublicationClient, BlossomPublicationRequest } from '#ports/blossom/blossom-publication-client.js';
+import { Logger } from '#ports/logging/logger.js';
+import { EventSigner } from '#ports/nostr/event-signer.js';
+import { Clock } from '#ports/time/clock.js';
 
 
 const BLOSSOM_AUTH_KIND =

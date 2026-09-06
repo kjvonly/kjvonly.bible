@@ -22,7 +22,7 @@ import {
 } from 'node:path';
 
 
-import { ArtifactStagingRepository, StagedArtifactEntry, StageIdentityArtifactRequest, StageMaterializedArtifactRequest } from '../../ports/staging/artifact-staging-repository.js';
+import { ArtifactStagingRepository, StagedArtifactEntry, StageIdentityArtifactRequest, StageMaterializedArtifactRequest } from '#ports/staging/artifact-staging-repository.js';
 import { parseStagedArtifactFilename, buildStagedArtifactFilename } from '../../domain/staging/staged-artifact-filename.js';
 
 export class NodeArtifactStagingRepository

@@ -11,7 +11,7 @@ import {
 
 import type {
     Logger
-} from '../../ports/logging/logger.js';
+} from '#ports/logging/logger.js';
 
 import {
     createNostrToolsNegentropyStorage

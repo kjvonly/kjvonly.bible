@@ -4,7 +4,7 @@ import {
 } from 'node:path';
 
 
-import { SourceRepository, SourceDirectoryEntry } from '../../../ports/source/source-repository.js';
+import { SourceRepository, SourceDirectoryEntry } from '#ports/source/source-repository.js';
 import { ResourceDefinition } from '../../../domain/manifest/manifest.js';
 import { ConcreteSource } from '../../../domain/source/concrete-source.js';
 import { interpolateEventKey } from '../../../domain/source/interpolate-key.js';

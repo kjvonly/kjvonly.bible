@@ -6,7 +6,7 @@ import type {
 
 import type {
 	Logger
-} from '../../ports/logging/logger.js';
+} from '#ports/logging/logger.js';
 import { BuildManifest } from '../build/build-manifest.js';
 
 

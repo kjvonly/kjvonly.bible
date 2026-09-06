@@ -12,11 +12,11 @@ import type {
 import type {
 	ArtifactStagingRepository,
 	StagedArtifactEntry
-} from '../../../ports/artifact-staging-repository.js';
+} from '#ports/artifact-staging-repository.js';
 
 import type {
 	Logger
-} from '../../../ports/logger.js';
+} from '#ports/logger.js';
 
 import {
 	BlossomArtifactPublisher

@@ -1,8 +1,8 @@
 
 import { Manifest } from '../../../domain/manifest/manifest.js';
 import { ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
-import { Logger } from '../../../ports/logging/logger.js';
-import { CollectionEventStagingRepository, StagedCollectionEventEntry } from '../../../ports/staging/collection-event-staging-repository.js';
+import { Logger } from '#ports/logging/logger.js';
+import { CollectionEventStagingRepository, StagedCollectionEventEntry } from '#ports/staging/collection-event-staging-repository.js';
 
 import {
 	CollectionEventBuilder

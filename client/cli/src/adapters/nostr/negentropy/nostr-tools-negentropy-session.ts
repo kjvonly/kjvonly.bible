@@ -5,7 +5,7 @@ import {
 import type {
 	Filter
 } from 'nostr-tools/filter';
-import { Logger } from '../../../ports/logging/logger.js';
+import { Logger } from '#ports/logging/logger.js';
 
 
 

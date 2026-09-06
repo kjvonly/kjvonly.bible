@@ -24,7 +24,7 @@ import {
 import type {
 	LoadedManifest,
 	ManifestLoader
-} from '../../ports/manifest/manifest-loader.js';
+} from '#ports/manifest/manifest-loader.js';
 
 
 const NOSTR_SECRET_KEY =

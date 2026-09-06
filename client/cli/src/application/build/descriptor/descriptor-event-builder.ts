@@ -11,9 +11,9 @@ import type {
 import {
 	ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
-import { EventSigner } from '../../../ports/nostr/event-signer.js';
-import { StagedArtifactEntry } from '../../../ports/staging/artifact-staging-repository.js';
-import { Clock } from '../../../ports/time/clock.js';
+import { EventSigner } from '#ports/nostr/event-signer.js';
+import { StagedArtifactEntry } from '#ports/staging/artifact-staging-repository.js';
+import { Clock } from '#ports/time/clock.js';
 import { SignedNostrEvent } from '../../../domain/event/nostr-event.js';
 import { ResourceDescriptorStrategy, ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';
 import { ConcreteSource } from '../../../domain/source/concrete-source.js';

@@ -1,7 +1,7 @@
 
 import { ResourceDescriptorStrategy } from '../../../domain/resource/resource-descriptor.js';
-import { DescriptorStrategyBuilder, DescriptorStrategyDefinition } from '../../../ports/descriptor/descriptor-strategy-builder.js';
-import { StagedArtifactEntry } from '../../../ports/staging/artifact-staging-repository.js';
+import { DescriptorStrategyBuilder, DescriptorStrategyDefinition } from '#ports/descriptor/descriptor-strategy-builder.js';
+import { StagedArtifactEntry } from '#ports/staging/artifact-staging-repository.js';
 
 export class DescriptorStrategyRegistry {
 

@@ -15,9 +15,9 @@ import {
 import {
 	ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
-import { Logger } from '../../../ports/logging/logger.js';
-import { EventSigner } from '../../../ports/nostr/event-signer.js';
-import { SignedEventStagingRepository, StagedEventEntry } from '../../../ports/staging/signed-event-staging-repository.js';
+import { Logger } from '#ports/logging/logger.js';
+import { EventSigner } from '#ports/nostr/event-signer.js';
+import { SignedEventStagingRepository, StagedEventEntry } from '#ports/staging/signed-event-staging-repository.js';
 import { calculateDescriptorEventDefinitionRevision } from '../../../domain/event/descriptor-event-definition-revision.js';
 import { Manifest } from '../../../domain/manifest/manifest.js';
 import { ResourceDescriptor } from '../../../domain/resource/resource-descriptor.js';

@@ -16,8 +16,8 @@ import {
 import type {
     NostrToolsAuthSigner
 } from './nostr-tools-auth-signer.js';
-import { Logger } from '../../ports/logging/logger.js';
-import { EventSigner } from '../../ports/nostr/event-signer.js';
+import { Logger } from '#ports/logging/logger.js';
+import { EventSigner } from '#ports/nostr/event-signer.js';
 
 function createSigner():
     EventSigner {

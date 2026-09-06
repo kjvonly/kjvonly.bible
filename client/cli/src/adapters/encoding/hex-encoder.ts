@@ -1,4 +1,4 @@
-import { ByteEncoder } from "../../ports/encoding/byte-encoder.js";
+import { ByteEncoder } from "#ports/encoding/byte-encoder.js";
 
 
 

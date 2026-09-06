@@ -1,4 +1,4 @@
-import { Clock } from "../../ports/time/clock.js";
+import { Clock } from "#ports/time/clock.js";
 
 export class SystemClock
 	implements Clock {

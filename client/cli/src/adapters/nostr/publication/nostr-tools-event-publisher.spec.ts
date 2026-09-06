@@ -9,8 +9,8 @@ import {
 import {
 	NostrToolsEventPublisher
 } from './nostr-tools-event-publisher.js';
-import { Logger } from '../../ports/logging/logger.js';
-import { EventSigner } from '../../ports/nostr/event-signer.js';
+import { Logger } from '#ports/logging/logger.js';
+import { EventSigner } from '#ports/nostr/event-signer.js';
 
 
 function createSigner():

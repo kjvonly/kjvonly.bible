@@ -11,11 +11,11 @@ import type {
 
 import type {
 	ManifestLoader
-} from '../ports/manifest-loader.js';
+} from '#ports/manifest-loader.js';
 
 import type {
 	Logger
-} from '../ports/logger.js';
+} from '#ports/logger.js';
 
 import type {
 	BlossomArtifactPublisher

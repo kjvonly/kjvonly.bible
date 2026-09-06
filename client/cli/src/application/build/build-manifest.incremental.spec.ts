@@ -46,7 +46,7 @@ import {
 
 import type {
     ManifestLoader
-} from '../../ports/manifest/manifest-loader.js';
+} from '#ports/manifest/manifest-loader.js';
 
 import {
     BuildManifestUseCase
