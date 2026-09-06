@@ -2,7 +2,7 @@
 
 import type {
 	PublishManifest
-} from './publish-manifest.js';
+} from './publish/publish-manifest.js';
 
 import type {
 	Logger

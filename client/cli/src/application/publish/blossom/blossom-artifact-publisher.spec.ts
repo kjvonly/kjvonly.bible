@@ -7,16 +7,16 @@ import {
 
 import type {
 	Manifest
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import type {
 	ArtifactStagingRepository,
 	StagedArtifactEntry
-} from '../ports/artifact-staging-repository.js';
+} from '../../../ports/artifact-staging-repository.js';
 
 import type {
 	Logger
-} from '../ports/logger.js';
+} from '../../../ports/logger.js';
 
 import {
 	BlossomArtifactPublisher

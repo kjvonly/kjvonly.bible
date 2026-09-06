@@ -1,30 +1,11 @@
-import type {
-    Manifest
-} from '../domain/manifest.js';
+import { Manifest } from "../../../domain/manifest.js";
+import { NostrPublicationResult } from "../../../domain/nostr-publication-result.js";
+import { EventSigner } from "../../../ports/event-signer.js";
+import { Logger } from "../../../ports/logger.js";
+import { NostrEventPublisher } from "../../../ports/nostr-event-publisher.js";
+import { NostrEventStagingRepository } from "../../../ports/nostr-event-staging-repository.js";
+import { NostrRelayReconciler } from "../../../ports/nostr-relay-reconciler.js";
 
-import type {
-    NostrPublicationResult
-} from '../domain/nostr-publication-result.js';
-
-import type {
-    EventSigner
-} from '../ports/event-signer.js';
-
-import type {
-    Logger
-} from '../ports/logger.js';
-
-import type {
-    NostrEventPublisher
-} from '../ports/nostr-event-publisher.js';
-
-import type {
-    NostrEventStagingRepository
-} from '../ports/nostr-event-staging-repository.js';
-
-import type {
-    NostrRelayReconciler
-} from '../ports/nostr-relay-reconciler.js';
 
 
 export class NostrStagedEventPublisher {

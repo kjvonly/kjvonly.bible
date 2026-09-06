@@ -7,7 +7,7 @@ import {
 
 import type {
 	Manifest
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import {
 	PublicationPreflight

@@ -7,23 +7,23 @@ import {
 
 import type {
     Manifest
-} from '../domain/manifest.js';
+} from '../../../domain/manifest.js';
 
 import type {
     EventSigner
-} from '../ports/event-signer.js';
+} from '../../../ports/event-signer.js';
 
 import type {
     Logger
-} from '../ports/logger.js';
+} from '../../../ports/logger.js';
 
 import type {
     NostrEventStagingRepository
-} from '../ports/nostr-event-staging-repository.js';
+} from '../../../ports/nostr-event-staging-repository.js';
 
 import type {
     NostrRelayReconciler
-} from '../ports/nostr-relay-reconciler.js';
+} from '../../../ports/nostr-relay-reconciler.js';
 
 import {
     NostrStagedEventPublisher
@@ -31,7 +31,7 @@ import {
 
 import type {
     NostrEventPublisher
-} from '../ports/nostr-event-publisher.js';
+} from '../../../ports/nostr-event-publisher.js';
 
 
 function createLogger():

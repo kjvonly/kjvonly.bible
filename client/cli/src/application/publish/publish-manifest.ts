@@ -1,30 +1,13 @@
-import type {
-	ManifestLoader
-} from '../ports/manifest-loader.js';
-
-import type {
-	Logger
-} from '../ports/logger.js';
-
-import {
-	PublicationPreflight
-} from './publication-preflight.js';
-
 import {
 	resolve
 } from 'node:path';
+import { PublicationResult } from '../../domain/publication-result.js';
+import { Logger } from '../../ports/logger.js';
+import { ManifestLoader } from '../../ports/manifest-loader.js';
+import { BlossomArtifactPublisher } from './blossom/blossom-artifact-publisher.js';
+import { NostrStagedEventPublisher } from './nostr/nostr-staged-event-publisher.js';
+import { PublicationPreflight } from './preflight/publication-preflight.js';
 
-import {
-	BlossomArtifactPublisher
-} from './blossom-artifact-publisher.js';
-
-import type {
-	PublicationResult
-} from '../domain/publication-result.js';
-
-import {
-	NostrStagedEventPublisher
-} from './nostr-staged-event-publisher.js';
 
 
 export interface PublishManifest {

@@ -30,16 +30,6 @@ import {
 	SystemClock
 } from '../adapters/time/system-clock.js';
 
-
-
-
-
-import {
-	PublishManifestUseCase
-} from '../application/publish-manifest.js';
-
-
-
 import {
 	SyncManifestUseCase
 } from '../application/sync-manifest.js';
@@ -56,8 +46,6 @@ import {
 	NodeArtifactStagingRepository
 } from '../adapters/staging/node-artifact-staging-repository.js';
 
-
-
 import {
 	NodeCollectionEventStagingRepository
 } from '../adapters/staging/node-collection-event-staging-repository.js';
@@ -66,9 +54,7 @@ import {
 	NostrToolsRelayPreflight
 } from '../adapters/nostr/nostr-tools-relay-preflight.js';
 import { NodeBlossomPreflight } from '../adapters/blossom/node-blossom-preflight.js';
-import { PublicationPreflight } from '../application/publication-preflight.js';
 import { NodeBlossomPublicationClient } from '../adapters/blossom/node-blossom-publication-client.js';
-import { BlossomArtifactPublisher } from '../application/blossom-artifact-publisher.js';
 
 import {
 	connectNodeNostrToolsRelay
@@ -86,10 +72,6 @@ import {
 	NodeNostrEventStagingRepository
 } from '../adapters/staging/node-nostr-event-staging-repository.js';
 
-import {
-	NostrStagedEventPublisher
-} from '../application/nostr-staged-event-publisher.js';
-
 //application
 import { ConsoleLogger } from '../adapters/logging/console-logger.js';
 import { ObjectArtifactStager } from '../application/build/artifact/object-artifact-stager.js';
@@ -103,6 +85,10 @@ import { ResourceDescriptorBuilder } from '../application/build/descriptor/resou
 import { EncodingRegistry } from '../application/build/encoding/encoding-registry.js';
 import { InlineEventBuilder } from '../application/build/inline/inline-event-builder.js';
 import { SourceExpander } from '../application/build/source/source-expander.js';
+import { BlossomArtifactPublisher } from '../application/publish/blossom/blossom-artifact-publisher.js';
+import { NostrStagedEventPublisher } from '../application/publish/nostr/nostr-staged-event-publisher.js';
+import { PublicationPreflight } from '../application/publish/preflight/publication-preflight.js';
+import { PublishManifestUseCase } from '../application/publish/publish-manifest.js';
 
 export function createCliComposition() {
 	const logger =

@@ -4,7 +4,7 @@ import {
 
 import type {
 	PublishManifest
-} from '../application/publish-manifest.js';
+} from '../application/publish/publish-manifest.js';
 
 import type {
 	SyncManifest
