@@ -275,7 +275,8 @@ export function createCliComposition() {
 	const blossomPublicationClient =
 		new NodeBlossomPublicationClient(
 			signer,
-			clock
+			clock,
+			logger
 		);
 
 

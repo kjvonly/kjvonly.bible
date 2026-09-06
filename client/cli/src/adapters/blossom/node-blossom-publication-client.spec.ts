@@ -32,6 +32,10 @@ describe(
 							)
 						);
 
+const logger = {
+	verbose:
+		vi.fn()
+};
 
 				const client =
 					new NodeBlossomPublicationClient(
@@ -45,6 +49,8 @@ describe(
 								() =>
 									1000
 						},
+
+						logger,
 
 						fetcher
 					);
@@ -177,7 +183,10 @@ describe(
 							)
 						);
 
-
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 				const client =
 					new NodeBlossomPublicationClient(
 						signer as never,
@@ -187,6 +196,8 @@ describe(
 								() =>
 									1000
 						},
+
+						logger,
 
 						fetcher
 					);
@@ -247,13 +258,13 @@ describe(
 
 				const uploadCall =
 					fetcher.mock.calls[
-						1
+					1
 					];
 
 
 				expect(
 					uploadCall?.[
-						0
+					0
 					]
 				).toBe(
 					'https://blossom.example/upload'
@@ -262,7 +273,7 @@ describe(
 
 				expect(
 					uploadCall?.[
-						1
+					1
 					]
 				).toEqual(
 					expect.objectContaining({
@@ -303,6 +314,10 @@ describe(
 							)
 						);
 
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 
 				const client =
 					new NodeBlossomPublicationClient(
@@ -313,6 +328,8 @@ describe(
 								() =>
 									1000
 						},
+
+						logger,
 
 						fetcher
 					);
@@ -381,6 +398,10 @@ describe(
 							)
 						);
 
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 
 				const client =
 					new NodeBlossomPublicationClient(
@@ -421,6 +442,8 @@ describe(
 								() =>
 									1000
 						},
+
+						logger,
 
 						fetcher
 					);

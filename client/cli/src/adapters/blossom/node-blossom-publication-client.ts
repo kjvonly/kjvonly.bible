@@ -22,6 +22,7 @@ import type {
 	BlossomPublicationClient,
 	BlossomPublicationRequest
 } from '../../ports/blossom-publication-client.js';
+import { Logger } from '../../ports/logger.js';
 
 
 const BLOSSOM_AUTH_KIND =
@@ -42,12 +43,17 @@ export class NodeBlossomPublicationClient
 		private readonly clock:
 			Clock,
 
+
+		private readonly logger:
+			Logger,
+
+
 		private readonly fetcher:
 			typeof fetch =
-				globalThis.fetch.bind(
-					globalThis
-				)
-	) {}
+			globalThis.fetch.bind(
+				globalThis
+			)
+	) { }
 
 
 	async ensure(
@@ -65,14 +71,26 @@ export class NodeBlossomPublicationClient
 		if (
 			exists
 		) {
+
+			this.logArtifactPresent(
+				request
+			);
+
 			return 'already-present' as const;
 		}
 
+		this.logArtifactUploadStart(
+			request
+		);
 
 		await this.upload(
 			request
 		);
 
+
+		this.logArtifactUploadComplete(
+			request
+		);
 
 		return 'uploaded' as const;
 	}
@@ -108,8 +126,8 @@ export class NodeBlossomPublicationClient
 				);
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			throw new Error(
 				`Blossom existence check failed for "${url}".`,
@@ -123,7 +141,7 @@ export class NodeBlossomPublicationClient
 
 		if (
 			response.status ===
-				200
+			200
 		) {
 			return true;
 		}
@@ -131,7 +149,7 @@ export class NodeBlossomPublicationClient
 
 		if (
 			response.status ===
-				404
+			404
 		) {
 			return false;
 		}
@@ -209,13 +227,13 @@ export class NodeBlossomPublicationClient
 							'half'
 					} as RequestInit & {
 						readonly duplex:
-							'half';
+						'half';
 					}
 				);
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			nodeStream.destroy();
 
@@ -232,9 +250,9 @@ export class NodeBlossomPublicationClient
 
 		if (
 			response.status !==
-				200 &&
+			200 &&
 			response.status !==
-				201
+			201
 		) {
 			throw new Error(
 				`Blossom upload failed for "${request.serverUrl}": HTTP ${response.status}.`
@@ -341,8 +359,8 @@ export class NodeBlossomPublicationClient
 				await response.json();
 		}
 		catch (
-			error:
-				unknown
+		error:
+			unknown
 		) {
 			throw new Error(
 				`Invalid Blossom upload response from "${request.serverUrl}".`,
@@ -356,9 +374,9 @@ export class NodeBlossomPublicationClient
 
 		if (
 			typeof value !==
-				'object' ||
+			'object' ||
 			value ===
-				null ||
+			null ||
 			Array.isArray(
 				value
 			)
@@ -378,7 +396,7 @@ export class NodeBlossomPublicationClient
 
 		if (
 			descriptor.sha256 !==
-				request.sha256
+			request.sha256
 		) {
 			throw new Error(
 				`Blossom upload SHA-256 mismatch from "${request.serverUrl}".`
@@ -417,6 +435,67 @@ export class NodeBlossomPublicationClient
 				''
 			) +
 			'/upload'
+		);
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// Log Helpers
+
+	private logArtifactPresent(
+		request:
+			BlossomPublicationRequest
+	): void {
+
+		this.logger.verbose(
+			'blossom.artifact.present',
+			{
+				serverUrl:
+					request.serverUrl,
+
+				sha256:
+					request.sha256
+			}
+		);
+	}
+
+	private logArtifactUploadStart(
+		request:
+			BlossomPublicationRequest
+	): void {
+
+		this.logger.verbose(
+			'blossom.artifact.upload.start',
+			{
+				serverUrl:
+					request.serverUrl,
+
+				sha256:
+					request.sha256,
+
+				size:
+					request.size
+			}
+		);
+	}
+
+
+	private logArtifactUploadComplete(
+		request:
+			BlossomPublicationRequest
+	): void {
+
+		this.logger.verbose(
+			'blossom.artifact.upload.complete',
+			{
+				serverUrl:
+					request.serverUrl,
+
+				sha256:
+					request.sha256,
+
+				size:
+					request.size
+			}
 		);
 	}
 }
