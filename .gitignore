@@ -2,7 +2,7 @@
 .excalidraw
 database-data/
 coverage
-.kjvonly
+.kjvonly*
 # Mac
 .DS_Store
 

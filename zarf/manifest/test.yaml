@@ -1,0 +1,39 @@
+version: 1
+
+kind: 37770
+
+staging:
+  path: ./.kjvonly-test
+
+nostr:
+  relays:
+    - ws://localhost:3334
+
+defaults:
+  strategy: local
+
+strategies:
+  local:
+    type: blossom
+    urls:
+      - http://localhost:3335
+
+resources:
+  blossom-upload-test:
+    path: ../../client/cli/integration/data/test.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/test/blossom-upload"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/test"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+collections: {}

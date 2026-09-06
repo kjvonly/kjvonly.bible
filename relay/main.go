@@ -123,6 +123,8 @@ func main() {
 
 	relay.OnConnect = append(relay.OnConnect, func(ctx context.Context) {
 		log.Printf("[relay] client connected")
+
+		khatru.RequestAuth(ctx)
 	})
 
 	relay.OnDisconnect = append(relay.OnDisconnect, func(ctx context.Context) {
