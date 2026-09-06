@@ -32,7 +32,7 @@ import {
 
 import {
 	createCli
-} from '../cli/create-cli.js';
+} from '#cli/create-cli.js';
 
 import {
 	BlossomDescriptorStrategyBuilder
