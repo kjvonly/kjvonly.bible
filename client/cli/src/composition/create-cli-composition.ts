@@ -319,9 +319,9 @@ export function createCliComposition() {
 	const syncManifest =
 		new SyncManifestUseCase(
 			buildManifest,
-			publishManifest
+			publishManifest,
+			logger
 		);
-
 
 	const cli =
 		createCli({

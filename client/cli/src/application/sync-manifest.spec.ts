@@ -62,10 +62,16 @@ describe(
 						)
 				};
 
+				const logger = {
+					verbose:
+						vi.fn()
+				};
+
 				const syncManifest =
 					new SyncManifestUseCase(
 						buildManifest,
-						publishManifest
+						publishManifest,
+						logger
 					);
 
 
@@ -80,6 +86,54 @@ describe(
 					'build',
 					'publish'
 				]);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenNthCalledWith(
+					1,
+					'sync.build.start',
+					{
+						manifestPath:
+							'./manifest.yaml'
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenNthCalledWith(
+					2,
+					'sync.build.complete',
+					{
+						manifestPath:
+							'./manifest.yaml'
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenNthCalledWith(
+					3,
+					'sync.publish.start',
+					{
+						manifestPath:
+							'./manifest.yaml'
+					}
+				);
+
+
+				expect(
+					logger.verbose
+				).toHaveBeenNthCalledWith(
+					4,
+					'sync.publish.complete',
+					{
+						manifestPath:
+							'./manifest.yaml'
+					}
+				);
 			}
 		);
 
@@ -107,11 +161,16 @@ describe(
 						vi.fn()
 				};
 
+				const logger = {
+					verbose:
+						vi.fn()
+				};
 
 				const syncManifest =
 					new SyncManifestUseCase(
 						buildManifest,
-						publishManifest
+						publishManifest,
+						logger
 					);
 
 
