@@ -17,6 +17,12 @@ func main() {
 	// create the relay instance
 	relay := khatru.NewRelay()
 
+	relay.Negentropy = true
+	relay.Info.SupportedNIPs =
+		append(
+			relay.Info.SupportedNIPs,
+			77,
+		)
 	// set up some basic properties (will be returned on the NIP-11 endpoint)
 	relay.Info.Name = "my relay"
 	relay.Info.PubKey = "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
