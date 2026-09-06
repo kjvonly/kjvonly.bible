@@ -1,6 +1,6 @@
 import type {
 	BlossomPublicationStatus
-} from '../domain/blossom-publication-result.js';
+} from '../../domain/blossom-publication-result.js';
 
 
 export interface BlossomPublicationRequest {

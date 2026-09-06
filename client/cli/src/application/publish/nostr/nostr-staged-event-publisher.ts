@@ -1,10 +1,11 @@
 import { Manifest } from "../../../domain/manifest.js";
 import { NostrPublicationResult } from "../../../domain/nostr-publication-result.js";
-import { EventSigner } from "../../../ports/event-signer.js";
-import { Logger } from "../../../ports/logger.js";
-import { NostrEventPublisher } from "../../../ports/nostr-event-publisher.js";
-import { NostrEventStagingRepository } from "../../../ports/nostr-event-staging-repository.js";
-import { NostrRelayReconciler } from "../../../ports/nostr-relay-reconciler.js";
+import { Logger } from "../../../ports/logging/logger.js";
+import { EventSigner } from "../../../ports/nostr/event-signer.js";
+import { NostrEventPublisher } from "../../../ports/nostr/nostr-event-publisher.js";
+import { NostrRelayReconciler } from "../../../ports/nostr/nostr-relay-reconciler.js";
+import { NostrEventStagingRepository } from "../../../ports/staging/nostr-event-staging-repository.js";
+
 
 
 

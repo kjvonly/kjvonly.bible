@@ -25,14 +25,7 @@ import {
     buildStagedArtifactFilename,
     parseStagedArtifactFilename
 } from '../../domain/staged-artifact-filename.js';
-
-import type {
-    ArtifactStagingRepository,
-    StageIdentityArtifactRequest,
-    StageMaterializedArtifactRequest,
-    StagedArtifactEntry
-} from '../../ports/artifact-staging-repository.js';
-
+import { ArtifactStagingRepository, StagedArtifactEntry, StageIdentityArtifactRequest, StageMaterializedArtifactRequest } from '../../ports/staging/artifact-staging-repository.js';
 
 export class NodeArtifactStagingRepository
     implements ArtifactStagingRepository {

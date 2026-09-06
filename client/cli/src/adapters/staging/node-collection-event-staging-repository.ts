@@ -27,13 +27,7 @@ import {
 	buildStagedCollectionEventFilename,
 	parseStagedCollectionEventFilename
 } from '../../domain/staged-collection-event-filename.js';
-
-import type {
-	CollectionEventStagingRepository,
-	StageCollectionEventRequest,
-	StagedCollectionEventEntry
-} from '../../ports/collection-event-staging-repository.js';
-
+import { CollectionEventStagingRepository, StagedCollectionEventEntry, StageCollectionEventRequest } from '../../ports/staging/collection-event-staging-repository.js';
 
 export class NodeCollectionEventStagingRepository
 	implements CollectionEventStagingRepository {

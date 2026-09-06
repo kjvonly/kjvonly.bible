@@ -18,12 +18,7 @@ import type {
 import {
 	deriveSourceKey
 } from '../../../domain/source-key.js';
-
-import type {
-	SourceDirectoryEntry,
-	SourceRepository
-} from '../../../ports/source-repository.js';
-
+import { SourceRepository, SourceDirectoryEntry } from '../../../ports/source/source-repository.js';
 
 export interface ExpandSourceRequest {
 	readonly manifestDirectory:

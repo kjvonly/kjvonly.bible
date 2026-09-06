@@ -10,23 +10,6 @@ import type {
 	Manifest
 } from '../../domain/manifest.js';
 
-import type {
-	EventSigner
-} from '../../ports/event-signer.js';
-
-import type {
-	ManifestLoader
-} from '../../ports/manifest-loader.js';
-
-import type {
-	SignedEventStagingRepository,
-	StagedEventEntry
-} from '../../ports/signed-event-staging-repository.js';
-
-import type {
-	SourceRepository
-} from '../../ports/source-repository.js';
-
 import {
 	InlineEventBuilder
 } from './inline/inline-event-builder.js';
@@ -47,7 +30,11 @@ import {
 	CollectionBuilder
 } from './collection/collection-builder.js';
 
-import type{  Logger } from '../../ports/logger.js';
+import type{  Logger } from '../../ports/logging/logger.js';
+import { ManifestLoader } from '../../ports/manifest/manifest-loader.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
+import { SourceRepository } from '../../ports/source/source-repository.js';
+import { SignedEventStagingRepository, StagedEventEntry } from '../../ports/staging/signed-event-staging-repository.js';
 
 export interface BuildManifest {
 	build(

@@ -7,22 +7,9 @@ import {
 	dirname,
 	join
 } from 'node:path';
-
-import type {
-	CollectionEventStagingRepository,
-	StagedCollectionEventEntry
-} from '../../ports/collection-event-staging-repository.js';
-
-import type {
-	NostrEventStagingRepository,
-	StagedNostrEventEntry
-} from '../../ports/nostr-event-staging-repository.js';
-
-import type {
-	SignedEventStagingRepository,
-	StagedEventEntry
-} from '../../ports/signed-event-staging-repository.js';
-
+import { CollectionEventStagingRepository, StagedCollectionEventEntry } from '../../ports/staging/collection-event-staging-repository.js';
+import { NostrEventStagingRepository, StagedNostrEventEntry } from '../../ports/staging/nostr-event-staging-repository.js';
+import { SignedEventStagingRepository, StagedEventEntry } from '../../ports/staging/signed-event-staging-repository.js';
 
 const COLLECTION_DIRECTORY =
 	'__collections__';

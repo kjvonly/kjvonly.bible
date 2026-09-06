@@ -1,11 +1,9 @@
 import type {
     Manifest
 } from '../../../domain/manifest.js';
-import { Logger } from '../../../ports/logger.js';
+import { Logger } from '../../../ports/logging/logger.js';
+import { PublicationEndpointPreflight } from '../../../ports/publication/publication-endpoint-preflight.js';
 
-import type {
-    PublicationEndpointPreflight
-} from '../../../ports/publication-endpoint-preflight.js';
 
 export interface PreflightCheck {
     readonly type:

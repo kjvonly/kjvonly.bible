@@ -22,19 +22,9 @@ import type {
 import type {
 	NostrToolsAuthSigner
 } from './nostr-tools-auth-signer.js';
-
-import type {
-	EventSigner
-} from '../../ports/event-signer.js';
-
-import type {
-	Logger
-} from '../../ports/logger.js';
-
-import type {
-	NostrRelayReconciler,
-	NostrRelayReconciliationRequest
-} from '../../ports/nostr-relay-reconciler.js';
+import { Logger } from '../../ports/logging/logger.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
+import { NostrRelayReconciler, NostrRelayReconciliationRequest } from '../../ports/nostr/nostr-relay-reconciler.js';
 
 
 export interface NostrToolsRelayConnection

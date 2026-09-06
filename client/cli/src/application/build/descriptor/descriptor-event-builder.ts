@@ -19,21 +19,12 @@ import type {
 	SignedNostrEvent
 } from '../../../domain/nostr-event.js';
 
-import type {
-	StagedArtifactEntry
-} from '../../../ports/artifact-staging-repository.js';
-
-import type {
-	Clock
-} from '../../../ports/clock.js';
-
-import type {
-	EventSigner
-} from '../../../ports/event-signer.js';
-
 import {
 	ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
+import { EventSigner } from '../../../ports/nostr/event-signer.js';
+import { StagedArtifactEntry } from '../../../ports/staging/artifact-staging-repository.js';
+import { Clock } from '../../../ports/time/clock.js';
 
 
 export interface BuildDescriptorEventRequest {

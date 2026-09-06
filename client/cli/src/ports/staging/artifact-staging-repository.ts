@@ -1,6 +1,6 @@
 import type {
 	StagedArtifactMetadata
-} from '../domain/staged-artifact-filename.js';
+} from '../../domain/staged-artifact-filename.js';
 
 
 export type StagedArtifactKind =

@@ -11,10 +11,9 @@ import type {
 	SignedNostrEvent,
 	UnsignedNostrEvent
 } from '../../domain/nostr-event.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
 
-import type {
-	EventSigner
-} from '../../ports/event-signer.js';
+
 
 
 export class LocalNostrSigner

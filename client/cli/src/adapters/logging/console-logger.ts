@@ -1,7 +1,4 @@
-import type {
-	Logger
-} from '../../ports/logger.js';
-
+import { Logger } from "../../ports/logging/logger.js";
 
 export class ConsoleLogger
 	implements Logger {

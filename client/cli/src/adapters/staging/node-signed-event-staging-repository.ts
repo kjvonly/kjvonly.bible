@@ -27,13 +27,7 @@ import {
 	buildStagedEventFilename,
 	parseStagedEventFilename
 } from '../../domain/staged-event-filename.js';
-
-import type {
-	SignedEventStagingRepository,
-	StageSignedEventRequest,
-	StagedEventEntry
-} from '../../ports/signed-event-staging-repository.js';
-
+import { SignedEventStagingRepository, StagedEventEntry, StageSignedEventRequest } from '../../ports/staging/signed-event-staging-repository.js';
 
 export class NodeSignedEventStagingRepository
 	implements SignedEventStagingRepository {

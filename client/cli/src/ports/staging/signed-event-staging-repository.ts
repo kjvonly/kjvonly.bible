@@ -1,10 +1,10 @@
 import type {
 	SignedNostrEvent
-} from '../domain/nostr-event.js';
+} from '../../domain/nostr-event.js';
 
 import type {
 	StagedEventMetadata
-} from '../domain/staged-event-filename.js';
+} from '../../domain/staged-event-filename.js';
 
 
 export interface StagedEventEntry {

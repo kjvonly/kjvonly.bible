@@ -6,10 +6,9 @@ import type {
 import type {
 	SignedNostrEvent
 } from '../../domain/nostr-event.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
 
-import type {
-	EventSigner
-} from '../../ports/event-signer.js';
+
 
 export type NostrToolsAuthSigner =
 	(

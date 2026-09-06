@@ -53,7 +53,7 @@ import type {
 
 import type {
     ManifestLoader
-} from '../../ports/manifest-loader.js';
+} from '../../ports/manifest/manifest-loader.js';
 
 import {
     BuildManifestUseCase

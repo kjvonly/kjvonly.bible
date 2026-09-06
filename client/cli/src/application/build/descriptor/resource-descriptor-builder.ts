@@ -6,10 +6,7 @@ import type {
 	ResourceDescriptor,
 	ResourceDescriptorStrategy
 } from '../../../domain/resource-descriptor.js';
-
-import type {
-	StagedArtifactEntry
-} from '../../../ports/artifact-staging-repository.js';
+import { StagedArtifactEntry } from '../../../ports/staging/artifact-staging-repository.js';
 
 
 export interface BuildResourceDescriptorRequest {

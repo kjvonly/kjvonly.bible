@@ -1,6 +1,6 @@
 import type {
 	Manifest
-} from '../domain/manifest.js';
+} from '../../domain/manifest.js';
 
 
 export interface LoadedManifest {

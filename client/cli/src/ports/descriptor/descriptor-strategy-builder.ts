@@ -1,11 +1,10 @@
 import type {
 	ResourceDescriptorStrategy
-} from '../domain/resource-descriptor.js';
+} from '../../domain/resource-descriptor.js';
 
 import type {
 	StagedArtifactEntry
-} from './artifact-staging-repository.js';
-
+} from '../staging/artifact-staging-repository.js';
 
 export interface DescriptorStrategyDefinition {
 	readonly type:

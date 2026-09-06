@@ -1,7 +1,4 @@
-import type {
-	Clock
-} from '../../ports/clock.js';
-
+import { Clock } from "../../ports/time/clock.js";
 
 export class SystemClock
 	implements Clock {

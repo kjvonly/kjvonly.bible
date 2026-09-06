@@ -5,15 +5,8 @@ import type {
 import type {
 	ResourceDescriptor
 } from '../../../domain/resource-descriptor.js';
-
-import type {
-	CollectionEventStagingRepository,
-	StagedCollectionEventEntry
-} from '../../../ports/collection-event-staging-repository.js';
-
-import type {
-	Logger
-} from '../../../ports/logger.js';
+import { Logger } from '../../../ports/logging/logger.js';
+import { CollectionEventStagingRepository, StagedCollectionEventEntry } from '../../../ports/staging/collection-event-staging-repository.js';
 
 import {
 	CollectionEventBuilder

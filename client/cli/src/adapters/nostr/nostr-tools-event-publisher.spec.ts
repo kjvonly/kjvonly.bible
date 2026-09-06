@@ -5,17 +5,12 @@ import {
 	vi
 } from 'vitest';
 
-import type {
-	EventSigner
-} from '../../ports/event-signer.js';
-
-import type {
-	Logger
-} from '../../ports/logger.js';
 
 import {
 	NostrToolsEventPublisher
 } from './nostr-tools-event-publisher.js';
+import { Logger } from '../../ports/logging/logger.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
 
 
 function createSigner():

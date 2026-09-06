@@ -1,6 +1,6 @@
 import type {
 	NostrReconciliationEntry
-} from '../domain/nostr-reconciliation-entry.js';
+} from '../../domain/nostr-reconciliation-entry.js';
 
 
 export interface NostrRelayReconciliationRequest {

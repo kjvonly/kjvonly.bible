@@ -9,14 +9,6 @@ import {
     nip77
 } from 'nostr-tools';
 
-import type {
-    EventSigner
-} from '../../ports/event-signer.js';
-
-import type {
-    Logger
-} from '../../ports/logger.js';
-
 import {
     NostrToolsRelayReconciler
 } from './nostr-tools-relay-reconciler.js';
@@ -24,6 +16,8 @@ import {
 import type {
     NostrToolsAuthSigner
 } from './nostr-tools-auth-signer.js';
+import { Logger } from '../../ports/logging/logger.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
 
 function createSigner():
     EventSigner {

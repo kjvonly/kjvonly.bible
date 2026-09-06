@@ -17,15 +17,8 @@ import type {
 import type {
 	SignedNostrEvent
 } from '../../../domain/nostr-event.js';
-
-import type {
-	Clock
-} from '../../../ports/clock.js';
-
-import type {
-	EventSigner
-} from '../../../ports/event-signer.js';
-
+import { EventSigner } from '../../../ports/nostr/event-signer.js';
+import { Clock } from '../../../ports/time/clock.js';
 
 export interface BuildCollectionEventRequest {
 	readonly kind:

@@ -9,17 +9,6 @@ import type {
 	SignedNostrEvent
 } from '../../domain/nostr-event.js';
 
-import type {
-	EventSigner
-} from '../../ports/event-signer.js';
-
-import type {
-	Logger
-} from '../../ports/logger.js';
-
-import type {
-	NostrEventPublisher
-} from '../../ports/nostr-event-publisher.js';
 
 import {
 	createNostrToolsAuthSigner
@@ -28,6 +17,9 @@ import {
 import type {
 	NostrToolsAuthSigner
 } from './nostr-tools-auth-signer.js';
+import { Logger } from '../../ports/logging/logger.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
+import { NostrEventPublisher } from '../../ports/nostr/nostr-event-publisher.js';
 
 
 useWebSocketImplementation(

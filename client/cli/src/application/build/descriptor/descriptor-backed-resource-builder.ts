@@ -14,15 +14,6 @@ import type {
 	ResourceDescriptor
 } from '../../../domain/resource-descriptor.js';
 
-import type {
-	EventSigner
-} from '../../../ports/event-signer.js';
-
-import type {
-	SignedEventStagingRepository,
-	StagedEventEntry
-} from '../../../ports/signed-event-staging-repository.js';
-
 import {
 	DescriptorEventBuilder
 } from './descriptor-event-builder.js';
@@ -38,8 +29,9 @@ import {
 import {
 	ResourceDescriptorBuilder
 } from './resource-descriptor-builder.js';
-import { Logger } from '../../../ports/logger.js';
-
+import { Logger } from '../../../ports/logging/logger.js';
+import { EventSigner } from '../../../ports/nostr/event-signer.js';
+import { SignedEventStagingRepository, StagedEventEntry } from '../../../ports/staging/signed-event-staging-repository.js';
 
 export interface BuildDescriptorBackedResourceRequest {
 	readonly manifest:

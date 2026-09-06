@@ -17,17 +17,9 @@ import type {
 import {
 	deriveSourceExtension
 } from '../../../domain/source-extension.js';
-
-import type {
-	ArtifactStagingRepository,
-	StagedArtifactEntry
-} from '../../../ports/artifact-staging-repository.js';
-
-import type {
-	SourceRepository
-} from '../../../ports/source-repository.js';
-import { Logger } from '../../../ports/logger.js';
-
+import { Logger } from '../../../ports/logging/logger.js';
+import { SourceRepository } from '../../../ports/source/source-repository.js';
+import { ArtifactStagingRepository, StagedArtifactEntry } from '../../../ports/staging/artifact-staging-repository.js';
 
 export interface StageObjectArtifactsRequest {
 	readonly stagingRoot:

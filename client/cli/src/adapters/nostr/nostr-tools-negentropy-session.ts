@@ -8,7 +8,7 @@ import type {
 
 import type {
 	Logger
-} from '../../ports/logger.js';
+} from '../../ports/logging/logger.js';
 
 
 export class NostrToolsNegentropyError

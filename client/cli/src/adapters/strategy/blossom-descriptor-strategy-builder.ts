@@ -1,15 +1,9 @@
 import type {
 	ResourceDescriptorStrategy
 } from '../../domain/resource-descriptor.js';
+import { DescriptorStrategyDefinition, DescriptorStrategyBuilder } from '../../ports/descriptor/descriptor-strategy-builder.js';
+import { StagedArtifactEntry } from '../../ports/staging/artifact-staging-repository.js';
 
-import type {
-	StagedArtifactEntry
-} from '../../ports/artifact-staging-repository.js';
-
-import type {
-	DescriptorStrategyBuilder,
-	DescriptorStrategyDefinition
-} from '../../ports/descriptor-strategy-builder.js';
 
 
 interface BlossomStrategyDefinition

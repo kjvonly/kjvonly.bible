@@ -8,10 +8,9 @@ import {
 import {
 	createNostrToolsAuthSigner
 } from './nostr-tools-auth-signer.js';
+import { EventSigner } from '../../ports/nostr/event-signer.js';
 
-import type {
-	EventSigner
-} from '../../ports/event-signer.js';
+
 
 
 describe(

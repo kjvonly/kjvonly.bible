@@ -13,18 +13,11 @@ import type {
 import type {
 	SignedNostrEvent
 } from '../../../domain/nostr-event.js';
+import { SourceRepository } from '../../../ports/source/source-repository.js';
+import { EventSigner } from '../../../ports/nostr/event-signer.js';
+import { Clock } from '../../../ports/time/clock.js';
 
-import type {
-	Clock
-} from '../../../ports/clock.js';
 
-import type {
-	EventSigner
-} from '../../../ports/event-signer.js';
-
-import type {
-	SourceRepository
-} from '../../../ports/source-repository.js';
 
 
 export class InlineEventBuilder {

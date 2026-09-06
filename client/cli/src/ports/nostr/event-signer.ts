@@ -1,7 +1,7 @@
 import type {
 	SignedNostrEvent,
 	UnsignedNostrEvent
-} from '../domain/nostr-event.js';
+} from '../../domain/nostr-event.js';
 
 
 export interface EventSigner {

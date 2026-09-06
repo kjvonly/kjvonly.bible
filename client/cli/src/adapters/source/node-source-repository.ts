@@ -7,15 +7,7 @@ import {
 import {
 	join
 } from 'node:path';
-
-import type {
-	SourceDirectoryEntry,
-	SourceDirectoryEntryType,
-	SourceFileMetadata,
-	SourcePathType,
-	SourceRepository
-} from '../../ports/source-repository.js';
-
+import { SourceRepository, SourcePathType, SourceDirectoryEntry, SourceFileMetadata, SourceDirectoryEntryType } from '../../ports/source/source-repository.js';
 
 export class NodeSourceRepository
 	implements SourceRepository {

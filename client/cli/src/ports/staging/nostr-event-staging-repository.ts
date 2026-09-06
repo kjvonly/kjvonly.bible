@@ -1,6 +1,6 @@
 import type {
 	SignedNostrEvent
-} from '../domain/nostr-event.js';
+} from '../../domain/nostr-event.js';
 
 
 export interface StagedNostrEventEntry {
