@@ -21,16 +21,16 @@ import {
 
 import {
 	GzipEncoder
-} from '../../../adapters/encoding/gzip-encoder.js';
+} from '#adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../../../adapters/encoding/hex-encoder.js';
+} from '#adapters/encoding/hex-encoder.js';
 
 
 import {
 	NodeCollectionEventStagingRepository
-} from '../../../adapters/staging/node-collection-event-staging-repository.js';
+} from '#adapters/staging/node-collection-event-staging-repository.js';
 
 
 
@@ -45,7 +45,7 @@ import {
 import {
 	EncodingRegistry
 } from '../encoding/encoding-registry.js';
-import { LocalNostrSigner } from '../../../adapters/nostr/signer/local-nostr-signer.js';
+import { LocalNostrSigner } from '#adapters/nostr/signer/local-nostr-signer.js';
 import { Manifest } from '#domain/manifest/manifest.js';
 import { ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
 import { Logger } from '#ports/logging/logger.js';

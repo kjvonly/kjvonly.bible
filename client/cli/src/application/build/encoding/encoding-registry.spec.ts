@@ -11,11 +11,11 @@ import {
 
 import {
 	GzipEncoder
-} from '../../../adapters/encoding/gzip-encoder.js';
+} from '#adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../../../adapters/encoding/hex-encoder.js';
+} from '#adapters/encoding/hex-encoder.js';
 
 import {
 	EncodingRegistry

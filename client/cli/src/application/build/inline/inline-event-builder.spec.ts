@@ -29,15 +29,15 @@ import {
 
 import {
 	GzipEncoder
-} from '../../../adapters/encoding/gzip-encoder.js';
+} from '#adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../../../adapters/encoding/hex-encoder.js';
+} from '#adapters/encoding/hex-encoder.js';
 
 import {
 	NodeSourceRepository
-} from '../../../adapters/source/node-source-repository.js';
+} from '#adapters/source/node-source-repository.js';
 
 import {
 	EncodingRegistry
@@ -46,7 +46,7 @@ import {
 import {
 	InlineEventBuilder
 } from './inline-event-builder.js';
-import { LocalNostrSigner } from '../../../adapters/nostr/signer/local-nostr-signer.js';
+import { LocalNostrSigner } from '#adapters/nostr/signer/local-nostr-signer.js';
 
 
 const directories:

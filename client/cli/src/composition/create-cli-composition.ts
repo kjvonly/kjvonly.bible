@@ -4,27 +4,27 @@ import {
 
 import {
 	GzipEncoder
-} from '../adapters/encoding/gzip-encoder.js';
+} from '#adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../adapters/encoding/hex-encoder.js';
+} from '#adapters/encoding/hex-encoder.js';
 
 import {
 	NodeManifestLoader
-} from '../adapters/manifest/node-manifest-loader.js';
+} from '#adapters/manifest/node-manifest-loader.js';
 
 import {
 	NodeSourceRepository
-} from '../adapters/source/node-source-repository.js';
+} from '#adapters/source/node-source-repository.js';
 
 import {
 	NodeSignedEventStagingRepository
-} from '../adapters/staging/node-signed-event-staging-repository.js';
+} from '#adapters/staging/node-signed-event-staging-repository.js';
 
 import {
 	SystemClock
-} from '../adapters/time/system-clock.js';
+} from '#adapters/time/system-clock.js';
 
 import {
 	SyncManifestUseCase
@@ -36,27 +36,27 @@ import {
 
 import {
 	BlossomDescriptorStrategyBuilder
-} from '../adapters/strategy/blossom-descriptor-strategy-builder.js';
+} from '#adapters/strategy/blossom-descriptor-strategy-builder.js';
 
 import {
 	NodeArtifactStagingRepository
-} from '../adapters/staging/node-artifact-staging-repository.js';
+} from '#adapters/staging/node-artifact-staging-repository.js';
 
 import {
 	NodeCollectionEventStagingRepository
-} from '../adapters/staging/node-collection-event-staging-repository.js';
+} from '#adapters/staging/node-collection-event-staging-repository.js';
 
-import { NodeBlossomPreflight } from '../adapters/blossom/node-blossom-preflight.js';
-import { NodeBlossomPublicationClient } from '../adapters/blossom/node-blossom-publication-client.js';
+import { NodeBlossomPreflight } from '#adapters/blossom/node-blossom-preflight.js';
+import { NodeBlossomPublicationClient } from '#adapters/blossom/node-blossom-publication-client.js';
 
 
 
 import {
 	NodeNostrEventStagingRepository
-} from '../adapters/staging/node-nostr-event-staging-repository.js';
+} from '#adapters/staging/node-nostr-event-staging-repository.js';
 
 //application
-import { ConsoleLogger } from '../adapters/logging/console-logger.js';
+import { ConsoleLogger } from '#adapters/logging/console-logger.js';
 import { ObjectArtifactStager } from '#application/build/artifact/object-artifact-stager.js';
 import { BuildManifestUseCase } from '#application/build/build-manifest.js';
 import { CollectionBuilder } from '#application/build/collection/collection-builder.js';
@@ -72,11 +72,11 @@ import { BlossomArtifactPublisher } from '#application/publish/blossom/blossom-a
 import { NostrStagedEventPublisher } from '#application/publish/nostr/nostr-staged-event-publisher.js';
 import { PublicationPreflight } from '#application/publish/preflight/publication-preflight.js';
 import { PublishManifestUseCase } from '#application/publish/publish-manifest.js';
-import { NostrToolsEventPublisher } from '../adapters/nostr/publication/nostr-tools-event-publisher.js';
-import { connectNodeNostrToolsRelay } from '../adapters/nostr/relay/connect-node-nostr-tools-relay.js';
-import { NostrToolsRelayPreflight } from '../adapters/nostr/relay/nostr-tools-relay-preflight.js';
-import { NostrToolsRelayReconciler } from '../adapters/nostr/relay/nostr-tools-relay-reconciler.js';
-import { LocalNostrSigner } from '../adapters/nostr/signer/local-nostr-signer.js';
+import { NostrToolsEventPublisher } from '#adapters/nostr/publication/nostr-tools-event-publisher.js';
+import { connectNodeNostrToolsRelay } from '#adapters/nostr/relay/connect-node-nostr-tools-relay.js';
+import { NostrToolsRelayPreflight } from '#adapters/nostr/relay/nostr-tools-relay-preflight.js';
+import { NostrToolsRelayReconciler } from '#adapters/nostr/relay/nostr-tools-relay-reconciler.js';
+import { LocalNostrSigner } from '#adapters/nostr/signer/local-nostr-signer.js';
 
 export function createCliComposition() {
 	const logger =

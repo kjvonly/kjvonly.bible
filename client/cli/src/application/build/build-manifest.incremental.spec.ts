@@ -29,19 +29,19 @@ import {
 
 import {
     GzipEncoder
-} from '../../adapters/encoding/gzip-encoder.js';
+} from '#adapters/encoding/gzip-encoder.js';
 
 import {
     HexEncoder
-} from '../../adapters/encoding/hex-encoder.js';
+} from '#adapters/encoding/hex-encoder.js';
 
 import {
     NodeSourceRepository
-} from '../../adapters/source/node-source-repository.js';
+} from '#adapters/source/node-source-repository.js';
 
 import {
     NodeSignedEventStagingRepository
-} from '../../adapters/staging/node-signed-event-staging-repository.js';
+} from '#adapters/staging/node-signed-event-staging-repository.js';
 
 
 import type {
@@ -65,11 +65,11 @@ import {
 } from './source/source-expander.js';
 import {
     BlossomDescriptorStrategyBuilder
-} from '../../adapters/strategy/blossom-descriptor-strategy-builder.js';
+} from '#adapters/strategy/blossom-descriptor-strategy-builder.js';
 
 import {
     NodeArtifactStagingRepository
-} from '../../adapters/staging/node-artifact-staging-repository.js';
+} from '#adapters/staging/node-artifact-staging-repository.js';
 
 import {
     DescriptorBackedResourceBuilder
@@ -93,7 +93,7 @@ import {
 
 import {
     NodeCollectionEventStagingRepository
-} from '../../adapters/staging/node-collection-event-staging-repository.js';
+} from '#adapters/staging/node-collection-event-staging-repository.js';
 
 import {
     CollectionBuilder
@@ -103,7 +103,7 @@ import {
     CollectionEventBuilder
 } from './collection/collection-event-builder.js';
 import { Manifest } from '#domain/manifest/manifest.js';
-import { LocalNostrSigner } from '../../adapters/nostr/signer/local-nostr-signer.js';
+import { LocalNostrSigner } from '#adapters/nostr/signer/local-nostr-signer.js';
 const directories:
     string[] = [];
 

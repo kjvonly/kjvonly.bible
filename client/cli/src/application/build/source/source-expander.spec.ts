@@ -22,7 +22,7 @@ import {
 
 import {
 	NodeSourceRepository
-} from '../../../adapters/source/node-source-repository.js';
+} from '#adapters/source/node-source-repository.js';
 
 import type {
 	ResourceDefinition

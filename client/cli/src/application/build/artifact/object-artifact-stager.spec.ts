@@ -35,19 +35,19 @@ import {
 
 import {
 	GzipEncoder
-} from '../../../adapters/encoding/gzip-encoder.js';
+} from '#adapters/encoding/gzip-encoder.js';
 
 import {
 	HexEncoder
-} from '../../../adapters/encoding/hex-encoder.js';
+} from '#adapters/encoding/hex-encoder.js';
 
 import {
 	NodeSourceRepository
-} from '../../../adapters/source/node-source-repository.js';
+} from '#adapters/source/node-source-repository.js';
 
 import {
 	NodeArtifactStagingRepository
-} from '../../../adapters/staging/node-artifact-staging-repository.js';
+} from '#adapters/staging/node-artifact-staging-repository.js';
 
 import type {
 	ConcreteSource
