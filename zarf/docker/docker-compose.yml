@@ -1,7 +1,6 @@
 services:
   postgres:
     image: postgres:18.1-bookworm
-    container_name: postgres_db
     ports:
       - "${POSTGRES_PORT}:5432"
     environment:
@@ -20,7 +19,6 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2025-05-24T17-08-30Z
-    container_name: minio_server
     ports:
       - "${MINIO_API_PORT}:9000"
       - "${MINIO_CONSOLE_PORT}:9001"
@@ -57,7 +55,6 @@ services:
     build:
       context: ../../relay
       dockerfile: Dockerfile
-    container_name: relay_server
     ports:
       - "${RELAY_PORT}:3334"
     environment:
@@ -71,7 +68,6 @@ services:
     build:
       context: ../../blossom
       dockerfile: Dockerfile
-    container_name: blossom_server
     ports:
       - "${BLOSSOM_PORT}:3335"
     environment:
