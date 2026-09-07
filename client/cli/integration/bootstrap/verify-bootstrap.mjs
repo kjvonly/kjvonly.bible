@@ -43,7 +43,7 @@ const cliRoot =
 const outputRoot =
 	resolve(
 		cliRoot,
-		'.tmp/bootstrap/downloaded'
+		'integration/.tmp/bootstrap/downloaded'
 	);
 
 

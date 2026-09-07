@@ -26,7 +26,7 @@ import {
 
 import type {
 	ResourceDefinition
-} from '#domain/manifest.js';
+} from '#domain/manifest/manifest.js';
 
 import {
 	SourceExpander
