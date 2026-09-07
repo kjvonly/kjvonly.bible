@@ -7,7 +7,7 @@ staging:
 
 nostr:
   relays:
-    - ws://localhost:3334
+    - ws://localhost:13334
 
 defaults:
   strategy: local
@@ -16,13 +16,14 @@ strategies:
   local:
     type: blossom
     urls:
-      - http://localhost:3335
+      - http://localhost:13335
 
 resources:
   bible-chapters-kjv:
     path: ./data/bible/chapters/content/kjv
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/bible/chapters/kjv/${key}"]
         - ["m", "application/json+gzip+hex"]
@@ -33,7 +34,8 @@ resources:
   bible-chapters-kjvs:
     path: ./data/bible/chapters/content/kjvs
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/bible/chapters/kjvs/${key}"]
         - ["m", "application/json+gzip+hex"]
@@ -44,7 +46,8 @@ resources:
   bible-bundle-kjv:
     path: ./data/bible/chapters/bundles/kjv.json.gz
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/bible/chapters/kjv"]
         - ["m", "application/json+hex"]
@@ -58,7 +61,8 @@ resources:
   bible-bundle-kjvs:
     path: ./data/bible/chapters/bundles/kjvs.json.gz
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/bible/chapters/kjvs"]
         - ["m", "application/json+hex"]
@@ -70,9 +74,10 @@ resources:
       encoding: []
 
   bible-paragraphs:
-    path: ./data/bible/overlays/paragraphs/paragraphs.json.gz
+    path: ./data/bible/overlays/paragraphs/bundles/default.json.gz
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/overlays/paragraphs/default"]
         - ["m", "application/json+hex"]
@@ -83,9 +88,10 @@ resources:
       encoding: []
 
   bible-pericopes:
-    path: ./data/bible/overlays/pericopes/pericopes.json.gz
+    path: ./data/bible/overlays/pericopes/bundles/default.json.gz
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/overlays/pericopes/default"]
         - ["m", "application/json+hex"]
@@ -96,9 +102,10 @@ resources:
       encoding: []
 
   bible-index-kjv:
-    path: ./data/bible/indexes/bibleindex.json.gz
+    path: ./data/bible/indexes/bible/bundles/kjv.json.gz
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/search/bible/kjv"]
         - ["m", "application/json+hex"]
@@ -109,9 +116,10 @@ resources:
       encoding: []
 
   bible-booknames:
-    path: ./data/bible/metadata/booknames.json.gz
+    path: ./data/bible/metadata/booknames/bundles/default.json.gz
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/bible/booknames/default"]
         - ["m", "application/json+hex"]
@@ -122,9 +130,10 @@ resources:
       encoding: []
 
   strongs-kjvs:
-    path: ./data/strongs/definitions/strongs.json.gz
+    path: ./data/strongs/definitions/bundles/kjvs.json.gz
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/strongs/definitions/kjvs"]
         - ["m", "application/json+hex"]
@@ -137,7 +146,8 @@ resources:
 collections:
   application-defaults:
     event:
-      encoding: [hex]
+      encoding:
+        - hex
       tags:
         - ["d", "kjvonly/resources/collections/default"]
         - ["m", "application/json+hex"]
