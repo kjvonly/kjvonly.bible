@@ -11,6 +11,7 @@ dist
 kjvonly-pwa/.svelte-kit
 kjvonly-pwa/build
 kjvonly-pwa/site
+.tmp
 __screenshots__
 .vitest-attachments
 
