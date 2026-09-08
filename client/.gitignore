@@ -1,15 +1,17 @@
 node_modules
 
+cli/integration/.kjvonly
 
-
+dist
 # Output
 .output
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
-/site
+kjvonly-pwa/.svelte-kit
+kjvonly-pwa/build
+kjvonly-pwa/site
+.tmp
 __screenshots__
 .vitest-attachments
 

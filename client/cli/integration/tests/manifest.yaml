@@ -1,0 +1,26 @@
+version: 1
+
+kind: 37770
+
+staging:
+  path: ./.kjvonly
+
+nostr:
+  relays:
+    - wss://relay.example
+
+resources:
+  test-bible-chapter:
+    path: ./data/1_1.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/chapters/test/${key}"]
+        - ["m", "application/json+gzip+hex"]
+        - ["t", "kjvonly/bible/chapters"]
+        - ["representation", "content"]
+
+collections: {}

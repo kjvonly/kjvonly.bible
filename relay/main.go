@@ -17,6 +17,12 @@ func main() {
 	// create the relay instance
 	relay := khatru.NewRelay()
 
+	relay.Negentropy = true
+	relay.Info.SupportedNIPs =
+		append(
+			relay.Info.SupportedNIPs,
+			77,
+		)
 	// set up some basic properties (will be returned on the NIP-11 endpoint)
 	relay.Info.Name = "my relay"
 	relay.Info.PubKey = "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
@@ -30,43 +36,6 @@ func main() {
 	if err := db.Init(); err != nil {
 		panic(err)
 	}
-
-	relay.QueryEvents = append(relay.QueryEvents,
-		func(ctx context.Context, filter nostr.Filter) (chan *nostr.Event, error) {
-			log.Printf("[relay] query start filter=%+v", filter)
-
-			events, err := db.QueryEvents(ctx, filter)
-			if err != nil {
-				log.Printf("[relay] query error err=%v", err)
-				return events, err
-			}
-
-			out := make(chan *nostr.Event)
-
-			go func() {
-				defer close(out)
-
-				count := 0
-				for event := range events {
-					count++
-
-					log.Printf(
-						"[relay] query event kind=%d pubkey=%s d=%s id=%s",
-						event.Kind,
-						event.PubKey,
-						event.Tags.GetD(),
-						event.ID,
-					)
-
-					out <- event
-				}
-
-				log.Printf("[relay] query done count=%d filter=%+v", count, filter)
-			}()
-
-			return out, nil
-		},
-	)
 
 	relay.StoreEvent = append(relay.StoreEvent, db.SaveEvent)
 
@@ -154,6 +123,8 @@ func main() {
 
 	relay.OnConnect = append(relay.OnConnect, func(ctx context.Context) {
 		log.Printf("[relay] client connected")
+
+		khatru.RequestAuth(ctx)
 	})
 
 	relay.OnDisconnect = append(relay.OnDisconnect, func(ctx context.Context) {

@@ -20,13 +20,15 @@ seed-chapters-blossom:
 	cd zarf/scripts/seed && \
 	./chapters.sh blossom
 
-seed-kjv:
-	cd zarf/scripts/seed && \
-	./chapters.sh file ../../../data/json.gz/kjv.json.gz "KJV Bible"
-
 seed-kjvs:
 	cd zarf/scripts/seed && \
 	./chapters.sh file ../../../data/json.gz/kjvs.json.gz "KJV Bible with Strongs Concordance"
+
+seed-kjv:
+	cd client/cli && \
+	npm run build && \
+	node dist/main.js sync -v ../../zarf/manifest/kjv.yaml \
+	| node scripts/format-verbose-log.mjs
 
 ## STRONGS
 seed-strongs:
@@ -54,32 +56,109 @@ seed-bootstrap:
 ###############################################################################
 # DOCKER
 
-## Docker Compose
-.PHONY: minio postgres up
+DOCKER_COMPOSE = docker compose \
+	-p kjvonly \
+	-f zarf/docker/docker-compose.yml
+
+DOCKER_COMPOSE_TEST = docker compose \
+	-p kjvonly-test \
+	--env-file zarf/docker/.env.test \
+	-f zarf/docker/docker-compose.yml
+
+
+.PHONY: \
+	up \
+	down \
+	down-clean \
+	logs \
+	logs-postgres \
+	logs-minio \
+	logs-relay \
+	logs-blossom \
+	psql \
+	psql-blossom \
+	test-up \
+	test-down \
+	test-down-clean \
+	test-logs \
+	test-logs-postgres \
+	test-logs-minio \
+	test-logs-relay \
+	test-logs-blossom \
+	test-psql \
+	test-psql-blossom
+
+
+###############################################################################
+## DEFAULT STACK
 
 up:
-	docker compose -f zarf/docker/docker-compose.yml up -d
+	$(DOCKER_COMPOSE) up -d
 
 down:
-	docker compose -f zarf/docker/docker-compose.yml down
+	$(DOCKER_COMPOSE) down
 
 down-clean:
-	docker compose -f zarf/docker/docker-compose.yml down -v
+	$(DOCKER_COMPOSE) down -v
 
 logs:
-	docker compose -f zarf/docker/docker-compose.yml logs -f
+	$(DOCKER_COMPOSE) logs -f
 
 logs-postgres:
-	docker compose -f zarf/docker/docker-compose.yml logs -f postgres
+	$(DOCKER_COMPOSE) logs -f postgres
 
 logs-minio:
-	docker compose -f zarf/docker/docker-compose.yml logs -f minio
+	$(DOCKER_COMPOSE) logs -f minio
+
+logs-relay:
+	$(DOCKER_COMPOSE) logs -f relay
+
+logs-blossom:
+	$(DOCKER_COMPOSE) logs -f blossom
 
 psql:
-	docker exec -it postgres_db psql -U postgres -d kjvonly
+	$(DOCKER_COMPOSE) exec postgres \
+		psql -U postgres -d kjvonly
 
 psql-blossom:
-	docker exec -it postgres_db psql -U postgres -d blossom
+	$(DOCKER_COMPOSE) exec postgres \
+		psql -U postgres -d blossom
+
+
+###############################################################################
+## TEST STACK
+
+test-up:
+	$(DOCKER_COMPOSE_TEST) up -d
+
+test-down:
+	$(DOCKER_COMPOSE_TEST) down
+
+test-down-clean:
+	$(DOCKER_COMPOSE_TEST) down -v
+
+test-logs:
+	$(DOCKER_COMPOSE_TEST) logs -f
+
+test-logs-postgres:
+	$(DOCKER_COMPOSE_TEST) logs -f postgres
+
+test-logs-minio:
+	$(DOCKER_COMPOSE_TEST) logs -f minio
+
+test-logs-relay:
+	$(DOCKER_COMPOSE_TEST) logs -f relay
+
+test-logs-blossom:
+	$(DOCKER_COMPOSE_TEST) logs -f blossom
+
+test-psql:
+	$(DOCKER_COMPOSE_TEST) exec postgres \
+		psql -U postgres -d kjvonly
+
+test-psql-blossom:
+	$(DOCKER_COMPOSE_TEST) exec postgres \
+		psql -U postgres -d blossom
 
 ###############################################################################
 

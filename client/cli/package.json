@@ -1,0 +1,37 @@
+{
+	"name": "@kjvonly/cli",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"bin": {
+		"kjvonly": "./dist/main.js"
+	},
+	"imports": {
+		"#adapters/*": "./dist/adapters/*",
+		"#application/*": "./dist/application/*",
+		"#cli/*": "./dist/cli/*",
+		"#composition/*": "./dist/composition/*",
+		"#domain/*": "./dist/domain/*",
+		"#ports/*": "./dist/ports/*"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"test": "vitest run --config vitest.config.ts"
+	},
+	"dependencies": {
+		"commander": "^14.0.0",
+		"dotenv": "^17.4.2",
+		"nostr-tools": "^2.25.1",
+		"nunjucks": "^3.2.4",
+		"ws": "^8.21.3",
+		"yaml": "^2.9.0",
+		"zod": "^4.5.4"
+	},
+	"devDependencies": {
+		"@types/node": "^24.13.3",
+		"@types/nunjucks": "^3.2.6",
+		"@types/ws": "^8.18.1",
+		"typescript": "^5.8.3",
+		"vitest": "^4.1.11"
+	}
+}

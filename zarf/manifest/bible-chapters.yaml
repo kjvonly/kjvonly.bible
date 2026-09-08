@@ -1,0 +1,70 @@
+version: 1
+
+kind: 37770
+
+staging:
+  path: ./.kjvonly
+
+nostr:
+  relays:
+    - ws://localhost:3334
+
+defaults:
+  strategy: local
+
+strategies:
+  local:
+    type: blossom
+    urls:
+      - http://localhost:3335
+
+resources:
+  bible-bundle-kjv:
+    path: ../../data/json.gz/kjv.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/chapters/kjv"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/bible/chapters"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  bible-bundle-kjvs:
+    path: ../../data/json.gz/kjvs.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/chapters/kjvs"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/bible/chapters"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+collections:
+  bible-chapters:
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/chapters"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/bible/chapters"]
+        - ["representation", "descriptors"]
+
+    resources:
+      - bible-bundle-kjv
+      - bible-bundle-kjvs
