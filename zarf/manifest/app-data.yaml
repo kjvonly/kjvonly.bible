@@ -1,0 +1,192 @@
+version: 1
+
+kind: 37770
+
+staging:
+  path: ./.kjvonly
+
+nostr:
+  relays:
+    - ws://localhost:3334
+
+defaults:
+  strategy: local
+
+strategies:
+  local:
+    type: blossom
+    urls:
+      - http://localhost:3335
+
+resources:
+
+  # ---------------------------------------------------------------------------
+  # Bible Chapters - KJVS - Individual
+  # ---------------------------------------------------------------------------
+
+  bible-chapters-kjvs:
+    path: ../../data/bible/chapters/content/kjvs
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/chapters/kjvs/${key}"]
+        - ["m", "application/json+gzip+hex"]
+        - ["t", "kjvonly/bible/chapters"]
+        - ["representation", "content"]
+
+  # ---------------------------------------------------------------------------
+  # Bible Chapters - KJVS - Bundle
+  # ---------------------------------------------------------------------------
+
+  bible-bundle-kjvs:
+    path: ../../data/bible/chapters/bundles/kjvs.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/chapters/kjvs"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/bible/chapters"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Bible Search Index - KJVS
+  # ---------------------------------------------------------------------------
+
+  bible-search-kjvs:
+    path: ../../data/bible/indexes/bible/bundles/bibleindex.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/search/bible/kjvs"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/search/bible"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Bible Paragraph Overlay
+  # ---------------------------------------------------------------------------
+
+  bible-paragraphs:
+    path: ../../data/bible/overlays/paragraphs/bundles/paragraphs.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/overlays/paragraphs/default"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/overlays/paragraphs"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Bible Pericope Overlay
+  # ---------------------------------------------------------------------------
+
+  bible-pericopes:
+    path: ../../data/bible/overlays/pericopes/bundles/pericopes.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/overlays/pericopes/default"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/overlays/pericopes"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Bible Book Names
+  # ---------------------------------------------------------------------------
+
+  bible-booknames:
+    path: ../../data/bible/metadata/booknames/bundles/booknames.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/booknames/default"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/bible/booknames"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Strong's Definitions - Bundle
+  #
+  # Individual Strong's Resources are intentionally omitted from the
+  # development manifest. They can be added for production publication.
+  # ---------------------------------------------------------------------------
+
+  strongs-kjvs:
+    path: ../../data/strongs/definitions/bundles/strongs.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/strongs/definitions/kjvs"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/strongs/definitions"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+collections:
+
+  # ---------------------------------------------------------------------------
+  # Application Bootstrap Defaults
+  # ---------------------------------------------------------------------------
+
+  application-defaults:
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/resources/collections/default"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/resources/collections"]
+        - ["representation", "descriptors"]
+
+    resources:
+      - bible-bundle-kjvs
+      - bible-search-kjvs
+      - bible-paragraphs
+      - bible-pericopes
+      - bible-booknames
+      - strongs-kjvs

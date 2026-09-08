@@ -111,7 +111,7 @@ describe(
 						})
 					)
 				).rejects.toThrow(
-					'Invalid Blossom strategy URL.'
+					'Invalid Blossom strategy URLs.'
 				);
 			}
 		);
@@ -125,7 +125,7 @@ describe(
 				await expect(
 					strategy.resolve(
 						createDescriptor({
-							url:
+							urls:
 								'not-a-url',
 
 							sha256:
@@ -133,7 +133,7 @@ describe(
 						})
 					)
 				).rejects.toThrow(
-					'Invalid Blossom strategy URL.'
+					'Invalid Blossom strategy URLs.'
 				);
 			}
 		);
@@ -147,7 +147,7 @@ describe(
 				await expect(
 					strategy.resolve(
 						createDescriptor({
-							url:
+							urls:
 								'file:///resource',
 
 							sha256:
@@ -155,7 +155,7 @@ describe(
 						})
 					)
 				).rejects.toThrow(
-					'Invalid Blossom strategy URL.'
+					'Invalid Blossom strategy URLs.'
 				);
 			}
 		);
@@ -169,8 +169,8 @@ describe(
 				await expect(
 					strategy.resolve(
 						createDescriptor({
-							url:
-								'https://example.com/resource',
+							urls:
+								['https://example.com/resource'],
 
 							sha256:
 								'invalid'
@@ -191,8 +191,8 @@ describe(
 				await expect(
 					strategy.resolve(
 						createDescriptor({
-							url:
-								'https://example.com/resource',
+							urls:
+								['https://example.com/resource'],
 
 							sha256:
 								CONTENT_SHA256,
@@ -232,7 +232,7 @@ describe(
 						createDescriptor()
 					)
 				).rejects.toThrow(
-					'Blossom Resource not found.'
+					'Blossom retrieval failed.'
 				);
 			}
 		);
@@ -262,7 +262,7 @@ describe(
 						createDescriptor()
 					)
 				).rejects.toThrow(
-					'Blossom retrieval failed: HTTP 500.'
+					'Blossom retrieval failed.'
 				);
 			}
 		);
@@ -317,8 +317,8 @@ describe(
 				await expect(
 					strategy.resolve(
 						createDescriptor({
-							url:
-								'https://example.com/resource',
+							urls:
+								['https://example.com/resource'],
 
 							sha256:
 								CONTENT_SHA256,
@@ -357,8 +357,8 @@ describe(
 				await expect(
 					strategy.resolve(
 						createDescriptor({
-							url:
-								'https://example.com/resource',
+							urls:
+								['https://example.com/resource'],
 
 							sha256:
 								'0'.repeat(
@@ -406,8 +406,8 @@ describe(
 				const result =
 					await strategy.resolve(
 						createDescriptor({
-							url:
-								'https://example.com/resource',
+							urls:
+								['https://example.com/resource'],
 
 							sha256:
 								'fd72d30440b0bae1b1c6db6c8ad807f238ef3ca613aa7e8d5329e1e8ddf7da72',
@@ -429,9 +429,9 @@ describe(
 
 function createDescriptor(
 	data: unknown = {
-		url:
+		urls: [
 			'https://example.com/resource',
-
+		],
 		sha256:
 			CONTENT_SHA256,
 

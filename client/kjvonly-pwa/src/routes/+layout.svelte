@@ -1,7 +1,7 @@
 <script lang="ts">
 	// CSS
 	import '../app.css';
-	import '../../node_modules/quill/dist/quill.snow.css';
+	import '../../../node_modules/quill/dist/quill.snow.css';
 
 	// SVELTE
 	import { onMount } from 'svelte';

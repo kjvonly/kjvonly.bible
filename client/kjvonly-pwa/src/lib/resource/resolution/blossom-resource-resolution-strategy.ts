@@ -15,8 +15,8 @@ import {
 } from '@noble/hashes/utils.js';
 
 interface BlossomStrategyData {
-	readonly url:
-	string;
+	readonly urls:
+	string[];
 
 	readonly sha256:
 	string;
@@ -53,19 +53,42 @@ export class BlossomResourceResolutionStrategy
 			);
 
 		let response:
-			Response;
+			Response | undefined;
 
-		try {
-			response =
-				await this.fetcher(
-					data.url
-				);
-		} catch (error) {
+		let lastError: unknown;
+
+		for (const url of data.urls) {
+			try {
+				const result =
+					await this.fetcher(
+						url
+					);
+
+				if (!result.ok) {
+					lastError =
+						new Error(
+							`Blossom returned HTTP ${result.status}.`
+						);
+
+					continue;
+				}
+
+				response =
+					result;
+
+				break;
+			} catch (error) {
+				lastError =
+					error;
+			}
+		}
+
+		if (!response) {
 			throw new Error(
-				'Blossom retrieval failed.',
+				`Blossom retrieval failed.`,
 				{
 					cause:
-						error
+						lastError
 				}
 			);
 		}
@@ -131,20 +154,28 @@ function validateStrategyData(
 		);
 	}
 
-	const url =
-		value.url;
+	const urls =
+		value.urls;
 
 	if (
-		typeof url !==
-		'string' ||
-		url.length ===
+		!Array.isArray(
+			urls
+		) ||
+		urls.length ===
 		0 ||
-		!isValidUrl(
-			url
+		!urls.every(
+			(url) =>
+				typeof url ===
+					'string' &&
+				url.length >
+					0 &&
+				isValidUrl(
+					url
+				)
 		)
 	) {
 		throw new Error(
-			'Invalid Blossom strategy URL.'
+			'Invalid Blossom strategy URLs.'
 		);
 	}
 
@@ -184,7 +215,7 @@ function validateStrategyData(
 	}
 
 	return {
-		url,
+		urls,
 		sha256,
 		size
 	};
