@@ -31,9 +31,7 @@
 	import uuid4 from 'uuid4';
 	import { scrollTo, scrollToTop } from '$lib/application/ui/eventHandlers';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
-	import { paragraphsService } from '$lib/domains/bible/services/paragraphs.service';
 	import { settingsService } from '$lib/application/services/settings.service';
-	import { pericopesService } from '$lib/domains/bible/services/pericopes.service';
 
 
 	// NOSTR IMPL
@@ -48,7 +46,9 @@ import type {
 
 
 const {
-	chapterService
+	chapterService,
+	paragraphsService,
+	pericopesService
 } = useApplicationContext();
 	// =============================== BINDINGS ================================
 

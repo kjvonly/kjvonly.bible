@@ -70,9 +70,9 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/search/bible/kjvs"]
+        - ["d", "kjvonly/bible/search/kjvs"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/search/bible"]
+        - ["t", "kjvonly/bible/search"]
         - ["representation", "descriptors"]
 
     object-upload:

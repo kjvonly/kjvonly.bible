@@ -1,3 +1,5 @@
 [submodule "data"]
 	path = data
 	url = https://github.com/kjvonly/data.git
+	branch = master
+	update = rebase

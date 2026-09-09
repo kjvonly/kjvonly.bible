@@ -30,6 +30,14 @@ import type {
 } from '$lib/domains/bible/services/chapter.service';
 
 import type {
+    ParagraphsService
+} from '$lib/domains/bible/services/paragraphs.service';
+
+import type {
+    PericopesService
+} from '$lib/domains/bible/services/pericopes.service';
+
+import type {
     BibleVersionsService
 } from '$lib/domains/bible/services/bibleVersions.service';
 
@@ -74,6 +82,12 @@ export interface ApplicationContext {
 
     readonly chapterService:
     ChapterService;
+
+    readonly paragraphsService:
+    ParagraphsService;
+
+    readonly pericopesService:
+    PericopesService;
 
     readonly verseService:
     VerseService;

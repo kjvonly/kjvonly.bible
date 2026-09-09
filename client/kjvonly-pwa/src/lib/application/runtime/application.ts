@@ -57,6 +57,14 @@ import {
     STRONGS_RESOURCE_TYPE
 } from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
+import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+import { BIBLE_PARAGRAPHS_RESOURCE_TYPE } from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
+
+import { BIBLE_PERICOPES_RESOURCE_TYPE } from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
+
+import { BIBLE_SEARCH_RESOURCE_TYPE } from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -67,6 +75,22 @@ import {
 import {
     ChapterService
 } from '$lib/domains/bible/services/chapter.service';
+
+import {
+    IndexedDBBibleParagraphsStore
+} from '$lib/domains/bible/persistence/indexeddb-bible-paragraphs-store';
+
+import {
+    ParagraphsService
+} from '$lib/domains/bible/services/paragraphs.service';
+
+import {
+    IndexedDBBiblePericopesStore
+} from '$lib/domains/bible/persistence/indexeddb-bible-pericopes-store';
+
+import {
+    PericopesService
+} from '$lib/domains/bible/services/pericopes.service';
 
 import {
     BibleVersionsService
@@ -247,6 +271,34 @@ export class Application {
                             KJVONLY_PUBKEY,
 
                         resourceId:
+                            `${BIBLE_BOOKNAMES_RESOURCE_TYPE}/default`
+                    },
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
+                            `${BIBLE_PARAGRAPHS_RESOURCE_TYPE}/default`
+                    },
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
+                            `${BIBLE_PERICOPES_RESOURCE_TYPE}/default`
+                    },
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
+                            `${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
+                    },
+                    {
+                        publisher:
+                            KJVONLY_PUBKEY,
+
+                        resourceId:
                             `${STRONGS_RESOURCE_TYPE}/kjvs`
                     }
                 ],
@@ -308,6 +360,40 @@ export class Application {
                 chapterResourceLoader
             );
 
+        const paragraphsStore =
+            new IndexedDBBibleParagraphsStore(
+                getApplicationDB
+            );
+
+        const paragraphsResourceLoader =
+            new ResourceLoader<string>(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
+        const paragraphsService =
+            new ParagraphsService(
+                paragraphsStore,
+                paragraphsResourceLoader
+            );
+
+        const pericopesStore =
+            new IndexedDBBiblePericopesStore(
+                getApplicationDB
+            );
+
+        const pericopesResourceLoader =
+            new ResourceLoader<string>(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
+        const pericopesService =
+            new PericopesService(
+                pericopesStore,
+                pericopesResourceLoader
+            );
+
         const verseService =
             new VerseService(
                 chapterService
@@ -356,6 +442,8 @@ export class Application {
             resourceSelectionService,
 
             chapterService,
+            paragraphsService,
+            pericopesService,
             verseService,
             bibleVersionsService,
 
@@ -587,9 +675,9 @@ export class Application {
              */
             if (
                 reference ===
-                    undefined ||
+                undefined ||
                 resourceType ===
-                    undefined
+                undefined
             ) {
                 continue;
             }
@@ -602,9 +690,9 @@ export class Application {
              */
             if (
                 reference.publisher ===
-                    result.requested.publisher &&
+                result.requested.publisher &&
                 reference.resourceId ===
-                    result.requested.resourceId
+                result.requested.resourceId
             ) {
                 continue;
             }

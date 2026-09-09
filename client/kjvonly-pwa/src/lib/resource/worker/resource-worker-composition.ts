@@ -86,6 +86,98 @@ import {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Bible Booknames
+
+import {
+	IndexedDBBibleBooknamesInstallationTransaction
+} from '$lib/domains/bible/persistence/bible-booknames-installation-transaction';
+
+import {
+	BibleBooknamesInstaller
+} from '$lib/domains/bible/resources/booknames/bible-booknames-installer';
+
+import {
+	BibleBooknamesInterpreter
+} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+import {
+	BibleBooknamesValidator
+} from '$lib/domains/bible/resources/booknames/bible-booknames-validator';
+
+import {
+	BibleBooknamesResourceHandler
+} from '$lib/domains/bible/resources/booknames/bible-booknames-resource-handler';
+
+///////////////////////////////////////////////////////////////////////////////
+// Bible Paragraphs
+
+import {
+	IndexedDBBibleParagraphsInstallationTransaction
+} from '$lib/domains/bible/persistence/bible-paragraphs-installation-transaction';
+
+import {
+	BibleParagraphsInstaller
+} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-installer';
+
+import {
+	BibleParagraphsInterpreter
+} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
+
+import {
+	BibleParagraphsValidator
+} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-validator';
+
+import {
+	BibleParagraphsResourceHandler
+} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-resource-handler';
+
+///////////////////////////////////////////////////////////////////////////////
+// Bible Pericopes
+
+import {
+	IndexedDBBiblePericopesInstallationTransaction
+} from '$lib/domains/bible/persistence/bible-pericopes-installation-transaction';
+
+import {
+	BiblePericopesInstaller
+} from '$lib/domains/bible/resources/pericopes/bible-pericopes-installer';
+
+import {
+	BiblePericopesInterpreter
+} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
+
+import {
+	BiblePericopesValidator
+} from '$lib/domains/bible/resources/pericopes/bible-pericopes-validator';
+
+import {
+	BiblePericopesResourceHandler
+} from '$lib/domains/bible/resources/pericopes/bible-pericopes-resource-handler';
+
+///////////////////////////////////////////////////////////////////////////////
+// Bible Search Index
+
+import {
+	IndexedDBBibleSearchIndexInstallationTransaction
+} from '$lib/domains/bible/persistence/bible-search-index-installation-transaction';
+
+import {
+	BibleSearchIndexInstaller
+} from '$lib/domains/bible/resources/search/bible-search-index-installer';
+
+import {
+	BibleSearchIndexInterpreter
+} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
+
+import {
+	BibleSearchIndexValidator
+} from '$lib/domains/bible/resources/search/bible-search-index-validator';
+
+import {
+	BibleSearchIndexResourceHandler
+} from '$lib/domains/bible/resources/search/bible-search-index-resource-handler';
+
+///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import {
@@ -262,6 +354,74 @@ function createResourceHandlers():
 			bibleChapterInstaller
 		);
 
+	const bibleBooknamesInstallationTransaction =
+		new IndexedDBBibleBooknamesInstallationTransaction(
+			getApplicationDB
+		);
+
+	const bibleBooknamesInstaller =
+		new BibleBooknamesInstaller(
+			bibleBooknamesInstallationTransaction
+		);
+
+	const bibleBooknamesResourceHandler =
+		new BibleBooknamesResourceHandler(
+			new BibleBooknamesInterpreter(),
+			new BibleBooknamesValidator(),
+			bibleBooknamesInstaller
+		);
+
+	const bibleParagraphsInstallationTransaction =
+		new IndexedDBBibleParagraphsInstallationTransaction(
+			getApplicationDB
+		);
+
+	const bibleParagraphsInstaller =
+		new BibleParagraphsInstaller(
+			bibleParagraphsInstallationTransaction
+		);
+
+	const bibleParagraphsResourceHandler =
+		new BibleParagraphsResourceHandler(
+			new BibleParagraphsInterpreter(),
+			new BibleParagraphsValidator(),
+			bibleParagraphsInstaller
+		);
+
+	const biblePericopesInstallationTransaction =
+		new IndexedDBBiblePericopesInstallationTransaction(
+			getApplicationDB
+		);
+
+	const biblePericopesInstaller =
+		new BiblePericopesInstaller(
+			biblePericopesInstallationTransaction
+		);
+
+	const biblePericopesResourceHandler =
+		new BiblePericopesResourceHandler(
+			new BiblePericopesInterpreter(),
+			new BiblePericopesValidator(),
+			biblePericopesInstaller
+		);
+
+	const bibleSearchIndexInstallationTransaction =
+		new IndexedDBBibleSearchIndexInstallationTransaction(
+			getApplicationDB
+		);
+
+	const bibleSearchIndexInstaller =
+		new BibleSearchIndexInstaller(
+			bibleSearchIndexInstallationTransaction
+		);
+
+	const bibleSearchIndexResourceHandler =
+		new BibleSearchIndexResourceHandler(
+			new BibleSearchIndexInterpreter(),
+			new BibleSearchIndexValidator(),
+			bibleSearchIndexInstaller
+		);
+
 	const strongsInstallationTransaction =
 		new IndexedDBStrongsInstallationTransaction(
 			getApplicationDB
@@ -281,6 +441,10 @@ function createResourceHandlers():
 
 	return [
 		bibleChapterResourceHandler,
+		bibleBooknamesResourceHandler,
+		bibleParagraphsResourceHandler,
+		biblePericopesResourceHandler,
+		bibleSearchIndexResourceHandler,
 		strongsResourceHandler
 	];
 }
