@@ -40,9 +40,21 @@
 } from '$lib/application/runtime/application-context';
 
 
-import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+import {
+	requireResourceSelection
+} from '$lib/application/resources/resource-selections';
+
+import {
+	BIBLE_CHAPTER_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+import {
+	BIBLE_PARAGRAPHS_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
+
+import {
+	BIBLE_PERICOPES_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
 
 
 const {
@@ -59,7 +71,6 @@ const {
 		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
 		annotations = $bindable<Annotations>(),
-		chapterSource,
 		lastKnownScrollPosition
 	}: {
 		bibleLocationRef: string;
@@ -68,7 +79,6 @@ const {
 		pane: Pane;
 		mode: BibleMode;
 		annotations: Annotations;
-		chapterSource: PublishedResourceReference;
 		lastKnownScrollPosition: number;
 	} = $props();
 
@@ -211,7 +221,17 @@ const {
 		if (!settings.showParagraphs) {
 			resetParagraphs();
 		} else {
-			paragraphs = await paragraphsService.get(bibleLocationRef);
+			const source = requireResourceSelection(
+				pane.buffer.resourceSelections,
+				BIBLE_PARAGRAPHS_RESOURCE_TYPE
+			);
+
+			const installed = await paragraphsService.get(
+				source,
+				bibleLocationRef
+			);
+
+			paragraphs = installed.paragraphs;
 		}
 	}
 
@@ -220,7 +240,17 @@ const {
 		if (!settings.showPericopes) {
 			resetPericopes();
 		} else {
-			pericopes = await pericopesService.get(bibleLocationRef);
+			const source = requireResourceSelection(
+				pane.buffer.resourceSelections,
+				BIBLE_PERICOPES_RESOURCE_TYPE
+			);
+
+			const installed = await pericopesService.get(
+				source,
+				bibleLocationRef
+			);
+
+			pericopes = installed.pericopes;
 		}
 	}
 
@@ -255,8 +285,13 @@ const {
 	}
 
 	async function loadChapter() {
+		const source = requireResourceSelection(
+			pane.buffer.resourceSelections,
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		);
+
 		chapter = await chapterService.get(
-			chapterSource,
+			source,
 			bibleLocationRef
 		);
 		verses = chapter.verses;

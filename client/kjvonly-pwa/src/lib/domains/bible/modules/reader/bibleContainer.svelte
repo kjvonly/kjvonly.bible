@@ -291,7 +291,6 @@ import {
 						bind:pane
 						bind:mode
 						bind:annotations
-						{chapterSource}
 						{lastKnownScrollPosition}
 					></Chapter>
 				{/if}
