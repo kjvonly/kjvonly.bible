@@ -1,6 +1,12 @@
 import type { BibleMode } from '$lib/domains/bible/models/bible.model';
 import type { Modules } from '$lib/application/models/modules.model';
 import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+import {
+	restorePane,
+	serializePane
+} from '$lib/application/runtime/pane/persistence/pane-persistence';
+
+const PANE_STORAGE_KEY = 'pane';
 
 export class PaneService {
 	private static _instance: PaneService;
@@ -35,8 +41,35 @@ export class PaneService {
 		return found;
 	}
 
-	save() {
-		localStorage.setItem('pane', JSON.stringify(this.rootPane));
+	save(): void {
+		localStorage.setItem(
+			PANE_STORAGE_KEY,
+			JSON.stringify(
+				serializePane(
+					this.rootPane
+				)
+			)
+		);
+	}
+
+	restore(): boolean {
+		const serialized =
+			localStorage.getItem(
+				PANE_STORAGE_KEY
+			);
+
+		if (serialized === null) {
+			return false;
+		}
+
+		this.rootPane =
+			restorePane(
+				JSON.parse(
+					serialized
+				)
+			);
+
+		return true;
 	}
 
 	onDeletePane: (pane: Pane, paneID: string) => void = (): void => {};

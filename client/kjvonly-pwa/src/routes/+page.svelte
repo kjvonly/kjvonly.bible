@@ -136,6 +136,8 @@
 			buffer: buffer
 		};
 		p.id = undefined;
+
+		paneService.save();
 		/**
 		 * TODO
 		 * May want to delete other variables too
@@ -184,6 +186,7 @@
 				n.right = undefined;
 			}
 
+			paneService.save();
 			onGridUpdate();
 			return;
 		}
@@ -210,6 +213,7 @@
 				n.right = undefined;
 			}
 
+			paneService.save();
 			onGridUpdate();
 			return;
 		}
@@ -251,17 +255,24 @@
 		link.setAttribute('href', `/manifest.json`);
 		document.getElementById('kjvonly-head')?.appendChild(link);
 
-		paneService.rootPane.buffer = moduleBufferFactory.independent(
-			Modules.BIBLE
-		);
+		paneService.onDeletePane = deletePane;
+		paneService.onSplitPane = splitPane;
+
+		const restored =
+			paneService.restore();
+
+		if (!restored) {
+			paneService.rootPane.buffer =
+				moduleBufferFactory.independent(
+					Modules.BIBLE
+				);
+		}
 
 		/**
 		 * DEV NOTE: Update the component to w/e you are working on
 		 * Save you a few clicks on reload.
 		 */
 
-		paneService.onDeletePane = deletePane;
-		paneService.onSplitPane = splitPane;
 		onGridUpdate();
 
 		trySetDataPersistence();

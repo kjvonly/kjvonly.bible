@@ -103,6 +103,8 @@
 
 				pane =
 					targetPane;
+
+				paneService.save();
 			};
 		}
 
