@@ -24,20 +24,22 @@
   import { useApplicationContext } from '$lib/application/runtime/application-context';
 	const { verseService } = useApplicationContext();
 
-import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+	import {
+		requireResourceSelection
+	} from '$lib/application/resources/resource-selections';
+
+	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 	// =============================== BINDINGS ================================
 
 	let {
 		searchText = $bindable<string>(),
-		chapterSource,
 		paneID,
 		searchID,
 		onFilterBibleLocationRef
 	}: {
 		searchText: string;
-		chapterSource: PublishedResourceReference;
 		paneID: string;
 		searchID: string;
 		onFilterBibleLocationRef: onFilterBibleLocationRefFunction;
@@ -131,12 +133,26 @@ import type {
 
 	async function searchResultIndexToSearchResult(
 		bibleLocationRef: string
-	): Promise<SearchResult | undefined> { 
-		let verse =
-	await verseService.get(
-		chapterSource,
-		bibleLocationRef
-	);
+	): Promise<SearchResult | undefined> {
+		const pane = paneService.findNode(
+			paneService.rootPane,
+			paneID
+		);
+
+		if (!pane) {
+			throw new Error(`Search Pane not found: ${paneID}`);
+		}
+
+		const source = requireResourceSelection(
+			pane.buffer.resourceSelections,
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		);
+
+		const verse = await verseService.get(
+			source,
+			bibleLocationRef
+		);
+
 		if (!verse) {
 			return;
 		}

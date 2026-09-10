@@ -34,20 +34,22 @@
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	const { verseService } = useApplicationContext();
 
-	import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+	import {
+		requireResourceSelection
+	} from '$lib/application/resources/resource-selections';
+
+	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
 	// =============================== BINDINGS ================================
 
 	let {
 		paneID,
-		boundCrossRefs,
-		chapterSource
+		boundCrossRefs
 	}: {
 		paneID: string;
 		boundCrossRefs: string[];
-		chapterSource: PublishedResourceReference;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -94,6 +96,22 @@
 		updateCurrentCrossRefs();
 	}
 
+	function requireChapterSelection() {
+		const pane = paneService.findNode(
+			paneService.rootPane,
+			paneID
+		);
+
+		if (!pane) {
+			throw new Error(`Refs Pane not found: ${paneID}`);
+		}
+
+		return requireResourceSelection(
+			pane.buffer.resourceSelections,
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		);
+	}
+
 	async function getCrossRef(crossRef: string): Promise<CrossRef> {
 		let bibleLocationRef =
 			bibleLocationReferenceService.convertCrossRefToBibleLocationRef(crossRef);
@@ -103,7 +121,10 @@
 			bibleLocationReferenceService.extractVerse(bibleLocationRef);
 		let bookID = bibleLocationReferenceService.extractBookID(bibleLocationRef);
 		let bookName = bookNamesByIDService.get(bookID);
-		let verse = await verseService.get(chapterSource, bibleLocationRef);
+		const verse = await verseService.get(
+			requireChapterSelection(),
+			bibleLocationRef
+		);
 	
 		let verseWithoutNumber = verse.text.slice(verse.text.indexOf(' ') + 1);
 
@@ -165,7 +186,10 @@
 			bibleLocationReferenceService.convertCrossRefToBibleLocationRef(
 				crossRef.crossRef
 			);
-		let verse = await verseService.get(chapterSource, bibleLocationRef);	
+		const verse = await verseService.get(
+			requireChapterSelection(),
+			bibleLocationRef
+		);
 		let crossRefs = [crossRef.crossRef];
 		verse?.words.forEach((w: any) => {
 			w.href?.forEach((ref: string) => {

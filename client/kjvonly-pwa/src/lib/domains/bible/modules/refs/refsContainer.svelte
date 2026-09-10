@@ -21,11 +21,6 @@
 
 
 
-	// 
-	import type {
-		PublishedResourceReference
-	} from '$lib/resource/models/resource.model';
-
 	import {
 		STRONGS_RESOURCE_TYPE
 	} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
@@ -34,9 +29,6 @@ import {
 	requireResourceSelection
 } from '$lib/application/resources/resource-selections';
 
-import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';``
 	// =============================== BINDINGS ================================
 
 	let {
@@ -66,12 +58,6 @@ import {
 		STRONGS_RESOURCE_TYPE
 	);
 
-const chapterSource =
-	requireResourceSelection(
-		pane.buffer
-			.resourceSelections,
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -194,7 +180,6 @@ const chapterSource =
 		<CrossRefsContainer
 			paneID={pane?.id}
 			boundCrossRefs={crossRefs}
-			{chapterSource}
 		></CrossRefsContainer>
 	{/if}
 {/snippet}

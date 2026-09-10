@@ -11,6 +11,7 @@
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 	import { toastService } from '$lib/application/services/toast.service';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';
@@ -31,9 +32,13 @@
 		useApplicationContext
 	} from '$lib/application/runtime/application-context';
 
-	import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+	import {
+		requireResourceSelection
+	} from '$lib/application/resources/resource-selections';
+
+	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
 	const {
 		chapterService
@@ -46,13 +51,11 @@
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		showCopyVersePopup = $bindable<boolean>(),
-		chapterSource,
 		paneID
 	}: {
 		bibleLocationRef: string;
 		bibleVersion: string;
 		showCopyVersePopup: boolean;
-		chapterSource: PublishedResourceReference;
 		paneID: string;
 	} = $props();
 
@@ -88,16 +91,27 @@
 
 	// ================================ FUNCS ==================================
 	async function loadVerses() {
-		const chapter =
-			await chapterService.get(
-				chapterSource,
-				bibleLocationRef
-			);
+		const pane = paneService.findNode(
+			paneService.rootPane,
+			paneID
+		);
 
-		verses =
-			chapter.verses;
+		if (!pane) {
+			throw new Error(`Bible Pane not found: ${paneID}`);
+		}
+
+		const source = requireResourceSelection(
+			pane.buffer.resourceSelections,
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		);
+
+		const chapter = await chapterService.get(
+			source,
+			bibleLocationRef
+		);
+
+		verses = chapter.verses;
 	}
-	
 
 	function setSortedAscVersesKeys() {
 		verseNumbers = Object.keys(verses).sort((a, b) => {

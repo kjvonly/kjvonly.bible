@@ -31,9 +31,6 @@
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 
-	// NOSTR IMPL
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
-
 	import type {
 	PublishedResourceReference
 } from '$lib/resource/models/resource.model';
@@ -72,29 +69,18 @@ import {
 	let annotations: Annotations = $state(newAnnotation());
 	let bibleLocationRef: string = $state('');
 
-	let chapterSource:
-	PublishedResourceReference =
+	let bibleVersion:
+		string =
 		$state(
-			requireResourceSelection(
-				pane.buffer
-					.resourceSelections,
-				BIBLE_CHAPTER_RESOURCE_TYPE
+			getBibleVersionId(
+				requireResourceSelection(
+					pane.buffer
+						.resourceSelections,
+					BIBLE_CHAPTER_RESOURCE_TYPE
+				)
 			)
 		);
 
-	let bibleVersion:
-	string =
-		$state(
-			getBibleVersionId(
-				chapterSource
-			)
-		);
-		``
-	const {
-	resourceSelectionService
-} =
-	useApplicationContext();
-		
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	/** since the {@link header} snippet is part of the body we don't
@@ -244,14 +230,6 @@ import {
 		] =
 		source;
 
-	resourceSelectionService
-		.select(
-			source
-		);
-
-	chapterSource =
-		source;
-
 	bibleVersion =
 		version.id;
 
@@ -263,18 +241,15 @@ import {
 <!-- ================================ HEADER =============================== -->
 
 {#snippet header()}
-	{#if chapterSource}
-		<BibleHeader
-			bind:mode
-			bind:bibleLocationRef
-			bind:bibleVersion
-			bind:clientHeight
-			bind:headerHeight
-			{chapterSource}
-			{onBibleVersionSelected}
-			{paneID}
-		></BibleHeader>
-	{/if}
+	<BibleHeader
+		bind:mode
+		bind:bibleLocationRef
+		bind:bibleVersion
+		bind:clientHeight
+		bind:headerHeight
+		{onBibleVersionSelected}
+		{paneID}
+	></BibleHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
@@ -283,17 +258,15 @@ import {
 	<div class="kjvonly-noselect flex justify-center">
 		<div>
 			<div id="chapter-container-{id}" class="w-full">
-				{#if chapterSource}
-					<Chapter
-						bind:bibleLocationRef
-						bind:bibleVersion
-						bind:id
-						bind:pane
-						bind:mode
-						bind:annotations
-						{lastKnownScrollPosition}
-					></Chapter>
-				{/if}
+				<Chapter
+					bind:bibleLocationRef
+					bind:bibleVersion
+					bind:id
+					bind:pane
+					bind:mode
+					bind:annotations
+					{lastKnownScrollPosition}
+				></Chapter>
 			</div>
 		</div>
 	</div>
