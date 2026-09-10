@@ -22,6 +22,10 @@ import type {
 import type {
     ResourceService
 } from '$lib/resource/services/resource.service';
+
+import type {
+    ModuleBufferFactory
+} from '$lib/application/runtime/buffer/module-buffer-factory';
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -76,6 +80,12 @@ export interface ApplicationContext {
 
     readonly resourceSelectionService:
     ResourceSelectionService;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Workspace Runtime
+
+    readonly moduleBufferFactory:
+    ModuleBufferFactory;
 
     ///////////////////////////////////////////////////////////////////////////
     // Bible

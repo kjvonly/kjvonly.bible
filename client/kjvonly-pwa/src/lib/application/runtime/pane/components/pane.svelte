@@ -4,9 +4,14 @@
 	import { componentMapping } from '$lib/application/services/componentMappingService';
 	import { settingsService } from '$lib/application/services/settings.service';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type { Modules } from '$lib/application/models/modules.model';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');
+
+	const { moduleBufferFactory } =
+		useApplicationContext();
 
 	let { paneID = $bindable<string>() } = $props();
 
@@ -65,10 +70,39 @@
 		 */
 		if (p) {
 			p.toggle = false;
-			p.updateBuffer = (c: string) => {
-				p.buffer.componentName = c;
-				p.toggle = !p.toggle;
-				pane = p;
+			p.updateBuffer = (module: Modules) => {
+				const targetPane =
+					paneService.findNode(
+						paneService.rootPane,
+						paneID
+					);
+
+				if (!targetPane) {
+					return;
+				}
+
+				const currentBuffer =
+					targetPane.buffer;
+
+				if (!currentBuffer) {
+					targetPane.buffer =
+						moduleBufferFactory.independent(
+							module
+						);
+				} else {
+					targetPane.buffer =
+						moduleBufferFactory.related(
+							module,
+							currentBuffer,
+							currentBuffer.bag
+						);
+				}
+
+				targetPane.toggle =
+					!targetPane.toggle;
+
+				pane =
+					targetPane;
 			};
 		}
 

@@ -38,6 +38,14 @@ import {
     ResourceSelectionService
 } from '$lib/application/resources/resource-selection.service';
 
+import {
+    ModuleResourceSelectionBuilder
+} from '$lib/application/resources/module-resource-selection-builder';
+
+import {
+    ModuleBufferFactory
+} from '$lib/application/runtime/buffer/module-buffer-factory';
+
 import type {
     PublishedResourceReference
 } from '$lib/resource/models/resource.model';
@@ -305,6 +313,16 @@ export class Application {
                 resourceSelectionStore
             );
 
+        const moduleResourceSelectionBuilder =
+            new ModuleResourceSelectionBuilder(
+                resourceSelectionService
+            );
+
+        const moduleBufferFactory =
+            new ModuleBufferFactory(
+                moduleResourceSelectionBuilder
+            );
+
         ///////////////////////////////////////////////////////////////////////
         // Bible
 
@@ -440,6 +458,7 @@ export class Application {
                 resourceWorkerClient,
 
             resourceSelectionService,
+            moduleBufferFactory,
 
             chapterService,
             paragraphsService,
