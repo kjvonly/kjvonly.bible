@@ -7,7 +7,6 @@
 	import { onMount } from 'svelte';
 
 	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { Buffer } from '$lib/application/runtime/buffer/models/buffer.model';
 	import PaneContainer from '$lib/application/runtime/pane/components/pane.svelte';
 	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import { toastService } from '$lib/application/services/toast.service';
@@ -114,24 +113,23 @@
 		let val = base26ToDecimal(lastPaneId);
 		let pid = numberToLetters(val + 1);
 
+		const originatingBuffer = p.buffer;
+
 		p.split = split;
 		p.left = {
 			id: p.id,
-			buffer: p.buffer,
+			buffer: originatingBuffer,
 			updateBuffer: p.updateBuffer,
 			toggle: p.toggle
 		};
 
-		let buffer =	new Buffer(
-		structuredClone(
-			p.buffer
-				.resourceSelections
-		)
-	);
+		const buffer = moduleBufferFactory.related(
+			componentName,
+			originatingBuffer,
+			bag
+		);
 
-		buffer.componentName = componentName;
 		buffer.name = `${componentName}`;
-		buffer.bag = bag;
 
 		p.right = {
 			id: pid,
@@ -245,9 +243,7 @@
 		})();
 	}
 
-	const {
-	resourceSelectionService
-} = useApplicationContext();
+	const { moduleBufferFactory } = useApplicationContext();
 
 	onMount(() => {
 		let link = document.createElement('link');
@@ -255,16 +251,14 @@
 		link.setAttribute('href', `/manifest.json`);
 		document.getElementById('kjvonly-head')?.appendChild(link);
 
-		paneService.rootPane.buffer = new Buffer(
-		resourceSelectionService
-			.snapshot()
-	);
+		paneService.rootPane.buffer = moduleBufferFactory.independent(
+			Modules.BIBLE
+		);
 
 		/**
 		 * DEV NOTE: Update the component to w/e you are working on
 		 * Save you a few clicks on reload.
 		 */
-		paneService.rootPane.buffer.componentName = Modules.BIBLE;
 
 		paneService.onDeletePane = deletePane;
 		paneService.onSplitPane = splitPane;
