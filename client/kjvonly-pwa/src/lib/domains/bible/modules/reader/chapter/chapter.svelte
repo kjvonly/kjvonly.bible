@@ -23,7 +23,6 @@
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { notesService } from '$lib/domains/notes/services/notes.service';
-	import { syncService } from '$lib/domains/bible/services/sync.service';
 	import { annotsService } from '$lib/domains/bible/services/annots.service';
 	// API
 
@@ -203,13 +202,13 @@ const {
 	}
 
 	function subscribeToAnnotations() {
-		syncService.subscribe(id, 'annotations', () => {
-			loadAnnotations();
-		});
+		// syncService.subscribe(id, 'annotations', () => {
+		// 	loadAnnotations();
+		// });
 	}
 
 	function unsubscribeToAnnotations() {
-		syncService.unsubscribe(id);
+		//syncService.unsubscribe(id);
 	}
 
 	async function loadAnnotations() {

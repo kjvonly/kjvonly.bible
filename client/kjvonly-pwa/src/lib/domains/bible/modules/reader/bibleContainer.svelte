@@ -27,7 +27,6 @@
 	import uuid4 from 'uuid4';
 
 	import { attachEvents } from '$lib/application/ui/eventHandlers';
-	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 
@@ -90,6 +89,7 @@ import {
 	let zeroHeaderHeight = $state(0);
 	let id = $state(uuid4());
 	const LAST_BIBLE_LOCATION_REF = 'lastBibleLocationReference';
+	const DEFAULT_BIBLE_LOCATION_REF = '52_10_9';
 	let mode: any = $state(newBibleMode());
 
 	// DOM related vars
@@ -167,10 +167,7 @@ import {
 	}
 
 	function setDefaultBibleLocationRef() {
-		let bookID = bookIDByBookNameService.get('Romans');
-		let chapter = 10;
-		let verse = 9;
-		bibleLocationRef = `${bookID}_${chapter}_${verse}`;
+		bibleLocationRef = DEFAULT_BIBLE_LOCATION_REF;
 	}
 
 	function overrideContextMenu() {

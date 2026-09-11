@@ -7,6 +7,10 @@ import {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
 import {
+	BIBLE_BOOKNAMES_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+import {
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE
 } from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
 
@@ -33,17 +37,30 @@ const MODULE_RESOURCE_REQUIREMENTS:
 		BIBLE_CHAPTER_RESOURCE_TYPE,
 		BIBLE_PARAGRAPHS_RESOURCE_TYPE,
 		BIBLE_PERICOPES_RESOURCE_TYPE,
+		BIBLE_BOOKNAMES_RESOURCE_TYPE,
 		STRONGS_RESOURCE_TYPE
 	],
 
 	[Modules.SEARCH]: [
 		BIBLE_SEARCH_RESOURCE_TYPE,
-		BIBLE_CHAPTER_RESOURCE_TYPE
+		BIBLE_CHAPTER_RESOURCE_TYPE,
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
 	],
 
 	[Modules.STRONGS]: [
 		STRONGS_RESOURCE_TYPE,
-		BIBLE_CHAPTER_RESOURCE_TYPE
+		BIBLE_CHAPTER_RESOURCE_TYPE,
+		BIBLE_SEARCH_RESOURCE_TYPE,
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	],
+
+	[Modules.NOTES]: [
+		BIBLE_CHAPTER_RESOURCE_TYPE,
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	],
+
+	[Modules.PLANS]: [
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
 	]
 };
 

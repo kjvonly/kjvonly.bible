@@ -4,14 +4,12 @@
 	import { Modules } from '$lib/application/models/modules.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
 	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
-	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Bible from '$lib/components/svgs/bible.svelte';
@@ -24,10 +22,22 @@
 	import ClearFilter from '$lib/components/svgs/clearFilter.svelte';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 
-	// NOSTR IMPL
-    import { useApplicationContext } from '$lib/application/runtime/application-context';
-	const { verseService } = useApplicationContext();
+	// APPLICATION
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
+	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+	const {
+		verseService,
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 
 
 	// =============================== BINDINGS ================================
@@ -157,18 +167,45 @@
 				version: 0
 			};
 		} else {
-			let verse = await verseService.get(mode.bibleVersion,mode.bibleLocationRef);
+			const chapterSource =
+				moduleResourceSelectionResolver.require(
+					mode.paneID,
+					BIBLE_CHAPTER_RESOURCE_TYPE
+				);
+
+			const booknamesSource =
+				moduleResourceSelectionResolver.require(
+					mode.paneID,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+			const [
+				verse,
+				booknames
+			] = await Promise.all([
+				verseService.get(
+					chapterSource,
+					mode.bibleLocationRef
+				),
+				bibleBooknamesService.get(
+					booknamesSource
+				)
+			]);
+
 			let verseTextWithoutVerseNumber = verse.text.slice(
 				verse.text.indexOf(' ') + 1
 			);
-			let bookName = bibleLocationReferenceService.extractShortBookName(
-				mode.bibleLocationRef
-			);
+
+			let bookName =
+				booknames.shortNames[
+					keys[0]
+				] ?? '';
+
 			let title = `${bookName} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 			newNote = {
 				id: noteID,
 				bibleLocationRef: mode.bibleLocationRef,
-				bcv: `${shortBookNamesByIDService.get(keys[0])} ${keys[1]}:${keys[2]}`,
+				bcv: `${bookName} ${keys[1]}:${keys[2]}`,
 				text: `${title}\n${verseTextWithoutVerseNumber}`,
 				html: `<h1>${title}</h1><p><italic>${verseTextWithoutVerseNumber}</italic></p>`,
 				title: `${title}`,

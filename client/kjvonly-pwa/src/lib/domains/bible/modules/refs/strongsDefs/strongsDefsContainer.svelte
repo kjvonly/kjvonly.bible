@@ -10,8 +10,6 @@
 	// SERVICES
 
 	// API
-	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
-	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import type { Strongs, UsageBy } from '$lib/domains/strongs/models/strongs.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
@@ -27,8 +25,14 @@
 		PublishedResourceReference
 	} from '$lib/resource/models/resource.model';
 
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
 	const {
-		strongsService
+		strongsService,
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -99,9 +103,33 @@
 		});
 	}
 
-	function onByBook(s: Strongs, b: any, idx: number): void {
-		let bookID = bookIDByBookNameService.get(b.text);
-		let shortName = shortBookNamesByIDService.get(bookID);
+	async function onByBook(
+		s: Strongs,
+		b: any,
+		idx: number
+	): Promise<void> {
+		const source =
+			moduleResourceSelectionResolver
+				.require(
+					paneID,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+		const booknames =
+			await bibleBooknamesService.get(
+				source
+			);
+
+		const bookID =
+			booknames.booknamesByName[
+				b.text
+			];
+
+		const shortName =
+			booknames.shortNames[
+				String(bookID)
+			] ?? '';
+
 		let byWord = s.usageByWord;
 
 		let searchText = '';

@@ -1,43 +1,132 @@
-const searchWorker = new Worker(
-	new URL('../workers/kjvsearch.worker?worker', import.meta.url),
-	{
-		type: 'module'
-	}
-);
+import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
 
-class SearchService {
-	subscribers: any[] = [];
-	constructor() {
-		searchWorker.onmessage = (e) => {
-			this.subscribers.forEach((s) => {
-				if (s.id === e.data.id) {
-					s.fn(e.data);
-				}
-			});
-		};
-	}
+import type {
+	SearchResultResponse
+} from '$lib/domains/bible/models/search.model';
 
-	subscribe(id: any, fn: any) {
-		this.subscribers.push({ id: id, fn: fn });
-	}
+import type {
+	SearchRuntime
+} from '$lib/domains/bible/runtime/search/search-runtime';
 
-	unsubscribe(searchID: any) {
-		let tmpSubscribers: any = [];
-		this.subscribers.forEach((s) => {
-			if (s.subID !== searchID) {
-				tmpSubscribers.push();
+export interface SearchService {
+	subscribe(
+		id: string,
+		fn: (response: SearchResultResponse) => void
+	): void;
+
+	unsubscribe(
+		searchID: string
+	): void;
+
+	search(
+		id: string,
+		source:
+			PublishedResourceReference,
+		text: string
+	): Promise<void>;
+}
+
+class DefaultSearchService
+	implements SearchService {
+
+	private readonly subscribers:
+		Array<{
+			readonly id: string;
+			readonly fn:
+				(response: SearchResultResponse) => void;
+		}> = [];
+
+	constructor(
+		private readonly runtime:
+			Pick<
+				SearchRuntime,
+				'search' |
+				'setResultHandler'
+			>
+	) {
+		this.runtime.setResultHandler(
+			(response) => {
+				this.publish(
+					response
+				);
 			}
+		);
+	}
+
+	subscribe(
+		id: string,
+		fn: (response: SearchResultResponse) => void
+	): void {
+		this.subscribers.push({
+			id,
+			fn
 		});
-		this.subscribers = tmpSubscribers;
 	}
 
-	init() {
-		searchWorker.postMessage({ action: 'init' });
+	unsubscribe(
+		searchID: string
+	): void {
+		for (
+			let index =
+				this.subscribers.length - 1;
+			index >= 0;
+			index--
+		) {
+			if (
+				this.subscribers[index].id ===
+				searchID
+			) {
+				this.subscribers.splice(
+					index,
+					1
+				);
+			}
+		}
 	}
 
-	search(id: string, text: string) {
-		searchWorker.postMessage({ action: 'search', id: id, text: text });
+	search(
+		id: string,
+		source:
+			PublishedResourceReference,
+		text: string
+	): Promise<void> {
+		return this.runtime.search(
+			id,
+			source,
+			text
+		);
+	}
+
+	private publish(
+		response:
+			SearchResultResponse
+	): void {
+		this.subscribers.forEach(
+			(subscriber) => {
+				if (
+					subscriber.id ===
+					response.id
+				) {
+					subscriber.fn(
+						response
+					);
+				}
+			}
+		);
 	}
 }
 
-export const searchService = new SearchService();
+export function createSearchService(
+	runtime:
+		Pick<
+			SearchRuntime,
+			'search' |
+			'setResultHandler'
+		>
+): SearchService {
+	return new DefaultSearchService(
+		runtime
+	);
+}

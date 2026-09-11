@@ -29,6 +29,13 @@ import {
 	requireResourceSelection
 } from '$lib/application/resources/resource-selections';
 
+import {
+	isCrossReference,
+	isFootnoteReference,
+	isStrongsReference,
+	tokenizeReferences
+} from '../../services/reference-tokenizer.service';
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -70,7 +77,10 @@ import {
 	// ================================ FUNCS ==================================
 
 	function setRefs(): void {
-		let refs: string[] = getRefs();
+		const refs = tokenizeReferences(
+			getRefs()
+		);
+
 		refs.forEach((ref: string) => {
 			matchStrongsRef(ref);
 			matchFootnote(ref);
@@ -95,22 +105,19 @@ import {
 	}
 
 	function matchStrongsRef(ref: string): void {
-		let match = new RegExp('^[GH]', 'm').test(ref);
-		if (match) {
+		if (isStrongsReference(ref)) {
 			strongsRefs.push(ref);
 		}
 	}
 
 	function matchFootnote(ref: string): void {
-		let match = new RegExp('\\d+_\\d+_\\d+', 'gm').test(ref);
-		if (match) {
+		if (isFootnoteReference(ref)) {
 			footnotes.push(ref);
 		}
 	}
 
 	function matchCrossRef(ref: string): void {
-		let match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
-		if (match) {
+		if (isCrossReference(ref)) {
 			crossRefs.push(ref);
 		}
 	}

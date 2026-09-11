@@ -1,4 +1,5 @@
 import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
+import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import uuid4 from 'uuid4';
 import type { BCV } from '../../bible/models/bible.model';
 
@@ -122,9 +123,13 @@ export interface CachedSub {
   version: number;
 }
 
-export function cachedSubToSub(cs: CachedSub): Sub {
+export function cachedSubToSub(
+  cs: CachedSub,
+  bookNameLookup: BookNameLookup
+): Sub {
   let nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
-    cs.encodedReadings
+    cs.encodedReadings,
+    bookNameLookup
   );
 
   return {

@@ -18,11 +18,15 @@
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { searchService } from '$lib/domains/bible/services/search.service';
 
-	// NOSTR IMPL
-  import { useApplicationContext } from '$lib/application/runtime/application-context';
-	const { verseService } = useApplicationContext();
+	// APPLICATION
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	const {
+		verseService,
+		searchService,
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 
 	import {
 		requireResourceSelection
@@ -31,6 +35,14 @@
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
 	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+	import type {
+		BibleBooknames
+	} from '$lib/domains/bible/models/bible-booknames.model';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -44,6 +56,10 @@
 		searchID: string;
 		onFilterBibleLocationRef: onFilterBibleLocationRefFunction;
 	} = $props();
+
+	let booknamesPromise:
+		Promise<BibleBooknames> |
+		undefined;
 
 	// ================================== VARS =================================
 
@@ -81,6 +97,28 @@
 	}
 
 	// ================================ FUNCS ==================================
+
+	function getBooknames():
+		Promise<BibleBooknames> {
+		booknamesPromise ??=
+			loadBooknames();
+
+		return booknamesPromise;
+	}
+
+	async function loadBooknames():
+		Promise<BibleBooknames> {
+		const source =
+			moduleResourceSelectionResolver
+				.require(
+					paneID,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+		return bibleBooknamesService.get(
+			source
+		);
+	}
 
 	async function onSearchResult(srr: SearchResultResponse) {
 		if (onFilterBibleLocationRef) {
@@ -148,18 +186,33 @@
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 
-		const verse = await verseService.get(
-			source,
-			bibleLocationRef
-		);
+		const [
+			verse,
+			booknames
+		] = await Promise.all([
+			verseService.get(
+				source,
+				bibleLocationRef
+			),
+			getBooknames()
+		]);
 
 		if (!verse) {
 			return;
 		}
 
+		const bookID =
+			bibleLocationReferenceService
+				.extractBookID(
+					bibleLocationRef
+				);
+
 		let sr: SearchResult = {
 			key: bibleLocationRef,
-			bookName: bibleLocationReferenceService.extractBookName(bibleLocationRef),
+			bookName:
+				booknames.booknamesById[
+					bookID
+				] ?? '',
 			number: bibleLocationReferenceService.extractChapter(bibleLocationRef),
 			verseNumber: verse.number,
 			text: verse.text

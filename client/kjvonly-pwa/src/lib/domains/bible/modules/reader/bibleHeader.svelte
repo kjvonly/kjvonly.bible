@@ -31,9 +31,13 @@
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import { settingsService } from '$lib/application/services/settings.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
 	// OTHER
 	import uuid4 from 'uuid4';
@@ -43,6 +47,12 @@
 import type {
 	BibleVersion
 } from '$lib/domains/bible/models/bible-version.model';
+
+	const {
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -94,7 +104,6 @@ import type {
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		setBookNameAndChapter();
 		subscribeToSettings();
 	});
 
@@ -105,18 +114,54 @@ import type {
 	$effect(() => {
 		bibleLocationRef;
 		untrack(() => {
-			setBookNameAndChapter();
+			void setBookNameAndChapter();
 			setVerses();
 		});
 	});
 
 	// ================================ FUNCS ==================================
 
-	function setBookNameAndChapter() {
-		let bookID = bibleLocationReferenceService.extractBookID(bibleLocationRef);
-		bookName = shortBookNamesByIDService.get(bookID);
+	async function setBookNameAndChapter():
+		Promise<void> {
+		const locationRef =
+			bibleLocationRef;
+
+		const bookID =
+			bibleLocationReferenceService
+				.extractBookID(
+					locationRef
+				);
+
+		const source =
+			moduleResourceSelectionResolver
+				.require(
+					paneID,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+		const booknames =
+			await bibleBooknamesService
+				.get(
+					source
+				);
+
+		if (
+			bibleLocationRef !==
+			locationRef
+		) {
+			return;
+		}
+
+		bookName =
+			booknames.shortNames[
+				bookID
+			] ?? '';
+
 		bookChapter =
-			bibleLocationReferenceService.extractChapter(bibleLocationRef);
+			bibleLocationReferenceService
+				.extractChapter(
+					locationRef
+				);
 	}
 
 	function setVerses() {
@@ -284,7 +329,10 @@ import type {
 {#snippet bookChapterPopup()}
 	{#if showBookChapterPopup}
 		<PopupContainer bind:clientHeight>
-			<BookChapterPopup bind:showBookChapterPopup bind:bibleLocationRef
+			<BookChapterPopup
+				{paneID}
+				bind:showBookChapterPopup
+				bind:bibleLocationRef
 			></BookChapterPopup>
 		</PopupContainer>
 	{/if}

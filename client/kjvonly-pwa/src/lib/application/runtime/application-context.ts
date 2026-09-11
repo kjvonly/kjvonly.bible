@@ -26,6 +26,10 @@ import type {
 import type {
     ModuleBufferFactory
 } from '$lib/application/runtime/buffer/module-buffer-factory';
+
+import type {
+    ModuleResourceSelectionResolver
+} from '$lib/application/resources/module-resource-selection-resolver';
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -40,6 +44,14 @@ import type {
 import type {
     PericopesService
 } from '$lib/domains/bible/services/pericopes.service';
+
+import type {
+    BibleBooknamesService
+} from '$lib/domains/bible/services/bible-booknames.service';
+
+import type {
+    SearchService
+} from '$lib/domains/bible/services/search.service';
 
 import type {
     BibleVersionsService
@@ -87,6 +99,9 @@ export interface ApplicationContext {
     readonly moduleBufferFactory:
     ModuleBufferFactory;
 
+    readonly moduleResourceSelectionResolver:
+    ModuleResourceSelectionResolver;
+
     ///////////////////////////////////////////////////////////////////////////
     // Bible
 
@@ -98,6 +113,12 @@ export interface ApplicationContext {
 
     readonly pericopesService:
     PericopesService;
+
+    readonly bibleBooknamesService:
+    BibleBooknamesService;
+
+    readonly searchService:
+    SearchService;
 
     readonly verseService:
     VerseService;

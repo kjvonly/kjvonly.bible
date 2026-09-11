@@ -17,12 +17,11 @@
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
 	import { newCrossRef, type CrossRef } from '$lib/domains/bible/models/bible.model';
+	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
@@ -30,9 +29,13 @@
 	import { findElement, scrollTo } from '$lib/application/ui/eventHandlers';
 	import { sleep } from '$lib/infrastructure/utils/sleep';
 
-	// NOSTR IMPL
+	// APPLICATION
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	const { verseService } = useApplicationContext();
+	const {
+		verseService,
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 
 	import {
 		requireResourceSelection
@@ -41,6 +44,15 @@
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
 	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+	import {
+		isCrossReference,
+		tokenizeReferences
+	} from '../../../services/reference-tokenizer.service';
 
 	// =============================== BINDINGS ================================
 
@@ -66,11 +78,13 @@
 	let currentCrossRefs: CrossRef[] = $state([]);
 	let currentCrossRef: CrossRef = $state(newCrossRef());
 	let breadcrumbCrossRefs: CrossRef[] = $state([]);
+	let booknames: BibleBooknames | undefined = $state();
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		setCrossRefs();
+		await loadBooknames();
+		await setCrossRefs();
 	});
 
 	// ================================ FUNCS ==================================
@@ -80,6 +94,16 @@
 	 */
 	async function setCrossRefs(): Promise<void> {
 		addCrossRefs(boundCrossRefs);
+	}
+
+	async function loadBooknames(): Promise<void> {
+		const source =
+			moduleResourceSelectionResolver.require(
+				paneID,
+				BIBLE_BOOKNAMES_RESOURCE_TYPE
+			);
+
+		booknames = await bibleBooknamesService.get(source);
 	}
 
 	async function addCrossRefs(crossRefs: string[]): Promise<void> {
@@ -120,7 +144,7 @@
 		let verseNumber =
 			bibleLocationReferenceService.extractVerse(bibleLocationRef);
 		let bookID = bibleLocationReferenceService.extractBookID(bibleLocationRef);
-		let bookName = bookNamesByIDService.get(bookID);
+		let bookName = booknames?.booknamesById[bookID] ?? '';
 		const verse = await verseService.get(
 			requireChapterSelection(),
 			bibleLocationRef
@@ -192,9 +216,12 @@
 		);
 		let crossRefs = [crossRef.crossRef];
 		verse?.words.forEach((w: any) => {
-			w.href?.forEach((ref: string) => {
-				let match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
-				if (match) {
+			const refs = tokenizeReferences(
+				w.href ?? []
+			);
+
+			refs.forEach((ref: string) => {
+				if (isCrossReference(ref)) {
 					crossRefs.push(ref);
 				}
 			});
@@ -319,7 +346,7 @@
 				}}
 			>
 				<span
-					>{shortBookNamesByIDService.get(ref.bookId)}
+					>{booknames?.shortNames[ref.bookId] ?? ''}
 					{ref.chapterNumber}:{ref.verseNumber}</span
 				></button
 			>

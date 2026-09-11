@@ -16,11 +16,22 @@
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { searchService } from '$lib/domains/bible/services/search.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+
+	// RESOURCE SELECTION
+	import { requireResourceSelection } from '$lib/application/resources/resource-selections';
+	import { BIBLE_SEARCH_RESOURCE_TYPE } from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
+
+	import type {
+		PublishedResourceReference
+	} from '$lib/resource/models/resource.model';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+
+	const { searchService } =
+		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -42,14 +53,40 @@
 	// component vars
 	let searchID: string = uuid4();
 	let searchText = $state('');
+	let searchSource:
+		PublishedResourceReference |
+		undefined =
+			$state();
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
+		const owningPane =
+			pane ??
+			paneService.findNode(
+				paneService.rootPane,
+				paneID
+			);
+
+		if (!owningPane) {
+			throw new Error(
+				`Search Pane not found: ${paneID}`
+			);
+		}
+
+		searchSource =
+			requireResourceSelection(
+				owningPane.buffer
+					.resourceSelections,
+				BIBLE_SEARCH_RESOURCE_TYPE
+			);
+
+
 		if (searchTerms?.length > 0) {
 			searchText = searchTerms;
-			searchService.search(
+			await searchService.search(
 				searchID,
+				searchSource,
 				searchTerms
 			);
 		}
@@ -84,10 +121,11 @@
 <!-- ================================= BODY ================================ -->
 
 {#snippet body()}
-	{#if showInput}
+	{#if showInput && searchSource}
 		<SearchInput
 			bind:searchText
 			ID={searchID}
+			{searchSource}
 			{onFilterBibleLocationRef}
 		></SearchInput>
 	{/if}

@@ -13,20 +13,25 @@
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 	import Toggle from '$lib/components/toggle.svelte';
 
+	// MODELS
+	import type {
+		BibleBooknames
+	} from '$lib/domains/bible/models/bible-booknames.model';
+
 	// SERVICES
-	import { booksChaptersVerseCountByIDService } from '$lib/domains/bible/services/bibleMetadata/booksChaptersVerseCountByID.service';
-	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// =============================== BINDINGS ================================
 
 	let {
+		booknames,
 		selectedBookID = $bindable<string>(),
 		selectedChapter = $bindable<string>(),
 		bibleLocationRef = $bindable<string>(),
 		showBookChapterPopup = $bindable<boolean>(),
 		goToVerses = $bindable<boolean>()
 	}: {
+		booknames: BibleBooknames;
 		selectedBookID: string;
 		selectedChapter: string;
 		bibleLocationRef: string;
@@ -52,15 +57,25 @@
 	// ================================ FUNCS ==================================
 
 	function setBookName(): void {
-		bookName = bookNamesByIDService.get(selectedBookID);
+		bookName =
+			booknames.booknamesById[
+				selectedBookID
+			] ?? '';
 	}
 
 	function setChapters(): void {
-		chapters = booksChaptersVerseCountByIDService
-			.get(selectedBookID)
-			?.keys()
-			.toArray()
-			.sort((a, b) => Number(a) - Number(b));
+		chapters = Object
+			.keys(
+				booknames
+					.bookchapterversecountById[
+						selectedBookID
+					] ?? {}
+			)
+			.sort(
+				(a, b) =>
+					Number(a) -
+					Number(b)
+			);
 	}
 
 	function chapterSelected(ch: any): void {

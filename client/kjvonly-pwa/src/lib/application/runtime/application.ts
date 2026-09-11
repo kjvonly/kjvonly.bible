@@ -46,6 +46,14 @@ import {
     ModuleBufferFactory
 } from '$lib/application/runtime/buffer/module-buffer-factory';
 
+import {
+    createModuleResourceSelectionResolver
+} from '$lib/application/resources/module-resource-selection-resolver';
+
+import {
+    paneService
+} from '$lib/application/services/pane.service.svelte';
+
 import type {
     PublishedResourceReference
 } from '$lib/resource/models/resource.model';
@@ -99,6 +107,30 @@ import {
 import {
     PericopesService
 } from '$lib/domains/bible/services/pericopes.service';
+
+import {
+    IndexedDBBibleBooknamesStore
+} from '$lib/domains/bible/persistence/indexeddb-bible-booknames-store';
+
+import {
+    BibleBooknamesService
+} from '$lib/domains/bible/services/bible-booknames.service';
+
+import {
+    IndexedDBBibleSearchIndexStore
+} from '$lib/domains/bible/persistence/indexeddb-bible-search-index-store';
+
+import {
+    BibleSearchIndexService
+} from '$lib/domains/bible/services/bible-search-index.service';
+
+import {
+    createSearchService
+} from '$lib/domains/bible/services/search.service';
+
+import {
+    SearchRuntime
+} from '$lib/domains/bible/runtime/search/search-runtime';
 
 import {
     BibleVersionsService
@@ -323,6 +355,11 @@ export class Application {
                 moduleResourceSelectionBuilder
             );
 
+        const moduleResourceSelectionResolver =
+            createModuleResourceSelectionResolver(
+                paneService
+            );
+
         ///////////////////////////////////////////////////////////////////////
         // Bible
 
@@ -412,6 +449,38 @@ export class Application {
                 pericopesResourceLoader
             );
 
+        const bibleBooknamesStore =
+            new IndexedDBBibleBooknamesStore(
+                getApplicationDB
+            );
+
+        const bibleBooknamesService =
+            new BibleBooknamesService(
+                bibleBooknamesStore,
+                resourceWorkerClient
+            );
+
+        const bibleSearchIndexStore =
+            new IndexedDBBibleSearchIndexStore(
+                getApplicationDB
+            );
+
+        const bibleSearchIndexService =
+            new BibleSearchIndexService(
+                bibleSearchIndexStore,
+                resourceWorkerClient
+            );
+
+        const searchRuntime =
+            new SearchRuntime(
+                bibleSearchIndexService
+            );
+
+        const searchService =
+            createSearchService(
+                searchRuntime
+            );
+
         const verseService =
             new VerseService(
                 chapterService
@@ -459,10 +528,13 @@ export class Application {
 
             resourceSelectionService,
             moduleBufferFactory,
+            moduleResourceSelectionResolver,
 
             chapterService,
             paragraphsService,
             pericopesService,
+            bibleBooknamesService,
+            searchService,
             verseService,
             bibleVersionsService,
 

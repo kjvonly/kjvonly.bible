@@ -13,6 +13,10 @@ import {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
 import {
+	BIBLE_BOOKNAMES_RESOURCE_TYPE
+} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+import {
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE
 } from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
 
@@ -46,6 +50,7 @@ describe(
 					BIBLE_CHAPTER_RESOURCE_TYPE,
 					BIBLE_PARAGRAPHS_RESOURCE_TYPE,
 					BIBLE_PERICOPES_RESOURCE_TYPE,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE,
 					STRONGS_RESOURCE_TYPE
 				]);
 			}
@@ -60,7 +65,8 @@ describe(
 					)
 				).toEqual([
 					BIBLE_SEARCH_RESOURCE_TYPE,
-					BIBLE_CHAPTER_RESOURCE_TYPE
+					BIBLE_CHAPTER_RESOURCE_TYPE,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				]);
 			}
 		);
@@ -74,7 +80,36 @@ describe(
 					)
 				).toEqual([
 					STRONGS_RESOURCE_TYPE,
-					BIBLE_CHAPTER_RESOURCE_TYPE
+					BIBLE_CHAPTER_RESOURCE_TYPE,
+					BIBLE_SEARCH_RESOURCE_TYPE,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				]);
+			}
+		);
+
+		it(
+			'declares the Resource Types required by the Notes module',
+			() => {
+				expect(
+					getModuleResourceRequirements(
+						Modules.NOTES
+					)
+				).toEqual([
+					BIBLE_CHAPTER_RESOURCE_TYPE,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				]);
+			}
+		);
+
+		it(
+			'declares the Resource Types required by the Plans module',
+			() => {
+				expect(
+					getModuleResourceRequirements(
+						Modules.PLANS
+					)
+				).toEqual([
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				]);
 			}
 		);
@@ -85,8 +120,6 @@ describe(
 				for (
 					const module of [
 						Modules.MODULES,
-						Modules.NOTES,
-						Modules.PLANS,
 						Modules.USER_GUIDE,
 						Modules.LOGIN,
 						Modules.SETTINGS,

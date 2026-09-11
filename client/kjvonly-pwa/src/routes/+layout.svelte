@@ -9,9 +9,6 @@
 	// COMPONENTS
 	import Container from '$lib/components/container.svelte';
 
-	// SERVICES
-	import { syncService } from '$lib/domains/bible/services/sync.service';
-
 	// TODO reorg imports
 	import { browser } from '$app/environment';
 	import { rxNostr } from '$lib/nostr/timelines/MainTimeline';
@@ -53,7 +50,7 @@ let applicationStartupError =
 	function register() {
 		// Listen for connection coming online
 		window.addEventListener('online', () => {
-			syncService.sync();
+			
 			console.log('Network connection restored.');
 		});
 
@@ -65,7 +62,6 @@ let applicationStartupError =
 
 		document.addEventListener('visibilitychange', () => {
 			if (!document.hidden) {
-				syncService.sync();
 				console.log('Page is now visible (returned to foreground)');
 			}
 		});
@@ -144,96 +140,6 @@ onMount(() => {
 		void application.stop();
 	};
 });
-
-	// onMount(() => {
-	// let syncTimer:
-	// 	ReturnType<typeof setTimeout> |
-	// 	undefined;
-
-	// async function start():
-	// 	Promise<void> {
-
-	// 	try {
-	// 		/*
-	// 		 * New application Composition Root.
-	// 		 *
-	// 		 * Currently this initializes the new
-	// 		 * ResourceClient infrastructure.
-	// 		 */
-	// 		await application.start();
-
-	// 		/*
-	// 		 * Legacy startup.
-	// 		 *
-	// 		 * These responsibilities will move into
-	// 		 * Application.start() incrementally.
-	// 		 */
-	// 		await getBibleDB();
-
-	// 		console.debug(
-	// 			'[layout load]'
-	// 		);
-
-	// 		let authenticated =
-	// 			false;
-
-	// 		if (browser) {
-	// 			rxNostr.setDefaultRelays(
-	// 				defaultRelays
-	// 			);
-
-	// 			authenticated =
-	// 				await tryLogin();
-	// 		}
-
-	// 		if (!authenticated) {
-	// 			console.debug(
-	// 				'[layout load] not logged in'
-	// 			);
-	// 		}
-
-	// 		/*
-	// 		 * Existing deferred background sync.
-	// 		 *
-	// 		 * This remains legacy behavior for now.
-	// 		 */
-	// 		syncTimer =
-	// 			setTimeout(
-	// 				() => {
-	// 					//syncService.init();
-	// 				},
-	// 				5000
-	// 			);
-
-	// 		applicationReady =
-	// 			true;
-	// 	} catch (cause) {
-	// 		console.error(
-	// 			'[application startup]',
-	// 			cause
-	// 		);
-
-	// 		applicationStartupError =
-	// 			cause;
-	// 	}
-	// }
-
-// 	void start();
-
-// 	return () => {
-// 		if (
-// 			syncTimer !==
-// 			undefined
-// 		) {
-// 			clearTimeout(
-// 				syncTimer
-// 			);
-// 		}
-
-// 		void application.stop();
-// 	};
-// });
-
 
 	let { children } = $props();
 </script>

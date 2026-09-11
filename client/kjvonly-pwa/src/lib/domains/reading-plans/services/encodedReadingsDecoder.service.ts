@@ -1,6 +1,5 @@
 import type { BCV } from '$lib/domains/bible/models/bible.model';
 import type { Readings } from '$lib/domains/reading-plans/models/plans.model';
-import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 
 /**
  * {@link CachedPlan.readings} are stored encoded in the backend. This service decodes the
@@ -92,6 +91,8 @@ import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/
  *
  *
  * */
+export type BookNameLookup = (bookID: string) => string;
+
 export class EncodedReadingsDecoderService {
 	/**
 	 *	Loops through all encoded readings decoding them and setting
@@ -103,9 +104,15 @@ export class EncodedReadingsDecoderService {
 	 * @returns list of {@link Readings}[]
 	 *
 	 */
-	parseEncodedReadings(encodedReadings: string[]): Readings[] {
+	parseEncodedReadings(
+		encodedReadings: string[],
+		bookNameLookup: BookNameLookup
+	): Readings[] {
 		return encodedReadings.map((ers: string) => {
-			let bcvs = this.decodeReadings(ers);
+			let bcvs = this.decodeReadings(
+				ers,
+				bookNameLookup
+			);
 			return {
 				bcvs: bcvs,
 				totalVerses: this.setTotalVerses(bcvs)
@@ -119,11 +126,14 @@ export class EncodedReadingsDecoderService {
 	 * @param encodedReadings  semicolon delimited string of readings
 	 * @returns decoded readings as {@link BCV}[]
 	 */
-	decodeReadings(encodedReadings: string): BCV[] {
+	decodeReadings(
+		encodedReadings: string,
+		bookNameLookup: BookNameLookup
+	): BCV[] {
 		return encodedReadings.split(';').map((r) => {
 			let bcv = r.split('/');
 			return {
-				bookName: bookNamesByIDService.get(bcv[0]),
+				bookName: bookNameLookup(bcv[0]),
 				bookID: parseInt(bcv[0]),
 				chapter: parseInt(bcv[1]),
 				verses: bcv[2],
