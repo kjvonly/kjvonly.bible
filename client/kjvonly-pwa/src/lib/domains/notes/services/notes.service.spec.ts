@@ -30,6 +30,10 @@ import type {
 	ResourcePublication
 } from '$lib/resource/publication/resource-publication';
 
+import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
 function createNote(
 	id: string =
 		'publisher/default/note-1'
@@ -70,8 +74,23 @@ class FakeRuntime {
 	put =
 		vi.fn<(note: Note) => void>();
 
+	putAll =
+		vi.fn<(notes: Note[]) => void>();
+
 	remove =
 		vi.fn<(noteId: string) => void>();
+}
+
+class FakeResourceAcquisition {
+	readonly acquire =
+		vi.fn<
+			(
+				source:
+					PublishedResourceReference
+			) => Promise<readonly Note[]>
+		>(
+			async () => []
+		);
 }
 
 class FakeWriteTransaction
@@ -184,6 +203,199 @@ describe(
 				).toHaveBeenCalledWith([
 					note
 				]);
+			}
+		);
+
+		it(
+			'acquires one selected Notes source and batches accepted Notes into the search runtime',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				const runtime =
+					new FakeRuntime();
+
+				const acquisition =
+					new FakeResourceAcquisition();
+
+				const notes = [
+					createNote(),
+					createNote(
+						'publisher/default/note-2'
+					)
+				];
+
+				acquisition.acquire
+					.mockResolvedValue(
+						notes
+					);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						acquisition
+					);
+
+				const source = {
+					publisher:
+						'publisher',
+					resourceId:
+						'kjvonly/notes/entries/default'
+				};
+
+				await service.acquire(
+					source
+				);
+
+				expect(
+					acquisition.acquire
+				).toHaveBeenCalledWith(
+					source
+				);
+
+				expect(
+					runtime.putAll
+				).toHaveBeenCalledWith(
+					notes
+				);
+
+				await service.acquire(
+					source
+				);
+
+				expect(
+					acquisition.acquire
+				).toHaveBeenCalledTimes(
+					1
+				);
+			}
+		);
+
+		it(
+			'shares one in-flight acquisition when multiple consumers request the same source',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				const runtime =
+					new FakeRuntime();
+
+				const acquisition =
+					new FakeResourceAcquisition();
+
+				let resolveAcquisition:
+					((notes: readonly Note[]) => void) |
+					undefined;
+
+				acquisition.acquire
+					.mockReturnValue(
+						new Promise(
+							(resolve) => {
+								resolveAcquisition =
+									resolve;
+							}
+						)
+					);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						acquisition
+					);
+
+				const source = {
+					publisher:
+						'publisher',
+					resourceId:
+						'kjvonly/notes/entries/default'
+				};
+
+				const first =
+					service.acquire(
+						source
+					);
+
+				const second =
+					service.acquire(
+						source
+					);
+
+				await Promise.resolve();
+				await Promise.resolve();
+
+				expect(
+					acquisition.acquire
+				).toHaveBeenCalledTimes(
+					1
+				);
+
+				resolveAcquisition?.([]);
+
+				await Promise.all([
+					first,
+					second
+				]);
+			}
+		);
+
+		it(
+			'acquires different Notes sources independently',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				const runtime =
+					new FakeRuntime();
+
+				const acquisition =
+					new FakeResourceAcquisition();
+
+				acquisition.acquire
+					.mockResolvedValue([]);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						acquisition
+					);
+
+				await service.acquire({
+					publisher:
+						'publisher',
+					resourceId:
+						'kjvonly/notes/entries/default'
+				});
+
+				await service.acquire({
+					publisher:
+						'publisher-2',
+					resourceId:
+						'kjvonly/notes/entries/subscribed'
+				});
+
+				expect(
+					acquisition.acquire
+				).toHaveBeenCalledTimes(
+					2
+				);
 			}
 		);
 
@@ -412,10 +624,15 @@ function createService(
 
 	wake:
 		ReturnType<typeof vi.fn> =
-			vi.fn()
+			vi.fn(),
+
+	resourceAcquisition:
+		FakeResourceAcquisition =
+			new FakeResourceAcquisition()
 ): NotesService {
 	return new NotesService(
 		store,
+		resourceAcquisition,
 		writeTransaction,
 		new NotesResourcePublication(),
 		{

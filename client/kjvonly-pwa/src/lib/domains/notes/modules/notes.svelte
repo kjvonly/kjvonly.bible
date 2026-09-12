@@ -27,13 +27,18 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
 	import NotesList from './notesList/notesList.svelte';
 
+	import {
+		NOTES_RESOURCE_TYPE
+	} from '$lib/domains/notes/resources/note-interpreter';
+
 	// APPLICATION
 	import {
 		useApplicationContext
 	} from '$lib/application/runtime/application-context';
 
 	const {
-		notesService
+		notesService,
+		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -80,6 +85,16 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		);
 		notesService.subscribe(NOTE_SUBSCRIPTION_ID, '*', onSearchResults);
 		notesService.getAllNotes('*');
+
+		const source =
+			moduleResourceSelectionResolver.require(
+				mode.paneID,
+				NOTES_RESOURCE_TYPE
+			);
+
+		await notesService.acquire(
+			source
+		);
 	});
 
 	// ================================ FUNCS ==================================

@@ -23,6 +23,14 @@ import type {
 } from '$lib/domains/notes/resources/notes-resource-publication';
 
 import type {
+	NotesResourceAcquisition
+} from '$lib/domains/notes/resources/notes-resource-acquisition';
+
+import type {
+	PublishedResourceReference
+} from '$lib/resource/models/resource.model';
+
+import type {
 	OutboxWakeup
 } from '$lib/resource/outbox/outbox-wakeup';
 
@@ -50,6 +58,10 @@ interface NotesSearchRuntimePort {
 		note: Note
 	): void;
 
+	putAll(
+		notes: Note[]
+	): void;
+
 	remove(
 		noteId: string
 	): void;
@@ -69,9 +81,9 @@ interface NotesSubscriber {
  * NotesStore abstraction, then handed to the pure local search runtime.
  *
  * Initial accepted Notes are loaded once from the Domain store. Normal Note
- * changes are applied incrementally to the search runtime. Resource acquisition
- * can later hand a newly accepted Note to this service without coupling the
- * installer to the search runtime.
+ * changes are applied incrementally to the search runtime. Selected Notes
+ * Resources are acquired through the Resource lifecycle and accepted Notes are
+ * then batched into the same search runtime without coupling installers to it.
  */
 export class NotesService {
 	private subscribers:
@@ -81,11 +93,26 @@ export class NotesService {
 	private ready:
 		Promise<void>;
 
+	private readonly acquiredSources =
+		new Set<string>();
+
+	private readonly inFlightAcquisitions =
+		new Map<
+			string,
+			Promise<void>
+		>();
+
 	constructor(
 		private readonly store:
 			Pick<
 				NotesStore,
 				'getAll'
+			>,
+
+		private readonly resourceAcquisition:
+			Pick<
+				NotesResourceAcquisition,
+				'acquire'
 			>,
 
 		private readonly writeTransaction:
@@ -138,6 +165,60 @@ export class NotesService {
 			id,
 			fn
 		});
+	}
+
+	async acquire(
+		source: PublishedResourceReference
+	): Promise<void> {
+		await this.ready;
+
+		const key =
+			this.createSourceKey(
+				source
+			);
+
+		if (
+			this.acquiredSources.has(
+				key
+			)
+		) {
+			return;
+		}
+
+		const inFlight =
+			this.inFlightAcquisitions.get(
+				key
+			);
+
+		if (inFlight !== undefined) {
+			await inFlight;
+			return;
+		}
+
+		const acquisition =
+			this.acquireSource(
+				source,
+				key
+			);
+
+		this.inFlightAcquisitions.set(
+			key,
+			acquisition
+		);
+
+		try {
+			await acquisition;
+		} finally {
+			if (
+				this.inFlightAcquisitions.get(
+					key
+				) === acquisition
+			) {
+				this.inFlightAcquisitions.delete(
+					key
+				);
+			}
+		}
 	}
 
 	searchNotes(
@@ -218,6 +299,35 @@ export class NotesService {
 		);
 	}
 
+
+	private async acquireSource(
+		source: PublishedResourceReference,
+		key: string
+	): Promise<void> {
+		const notes =
+			await this.resourceAcquisition.acquire(
+				source
+			);
+
+		if (notes.length > 0) {
+			this.runtime.putAll(
+				[...notes]
+			);
+		}
+
+		this.acquiredSources.add(
+			key
+		);
+	}
+
+	private createSourceKey(
+		source: PublishedResourceReference
+	): string {
+		return JSON.stringify([
+			source.publisher,
+			source.resourceId
+		]);
+	}
 
 	private async loadAcceptedNotes():
 		Promise<void> {

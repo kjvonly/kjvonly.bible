@@ -51,6 +51,10 @@
 		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 	} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
 
+	import {
+		NOTES_RESOURCE_TYPE
+	} from '$lib/domains/notes/resources/note-interpreter';
+
 	const {
 		chapterService,
 		paragraphsService,
@@ -308,6 +312,16 @@
 			notesID,
 			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef),
 			['bookChapter']
+		);
+
+		const source =
+			moduleResourceSelectionResolver.require(
+				pane.id,
+				NOTES_RESOURCE_TYPE
+			);
+
+		await notesService.acquire(
+			source
 		);
 	}
 

@@ -89,6 +89,30 @@ function createIndexedNote(
 function putNote(
 	note: Note
 ): void {
+	indexNote(
+		note
+	);
+
+	getAllNotes('*');
+}
+
+function putNotes(
+	acceptedNotes: Note[]
+): void {
+	for (
+		const note of acceptedNotes
+	) {
+		indexNote(
+			note
+		);
+	}
+
+	getAllNotes('*');
+}
+
+function indexNote(
+	note: Note
+): void {
 	const indexedNote =
 		createIndexedNote(
 			note
@@ -101,8 +125,6 @@ function putNote(
 		note.id,
 		indexedNote
 	);
-
-	getAllNotes('*');
 }
 
 function removeNote(
@@ -184,6 +206,12 @@ onmessage = async (
 		case 'put':
 			putNote(
 				e.data.note
+			);
+			break;
+
+		case 'put-all':
+			putNotes(
+				e.data.notes
 			);
 			break;
 

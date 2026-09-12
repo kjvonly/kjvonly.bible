@@ -63,6 +63,15 @@ export class NotesSearchRuntime {
 		});
 	}
 
+	putAll(
+		notes: Note[]
+	): void {
+		this.worker.postMessage({
+			action: 'put-all',
+			notes
+		});
+	}
+
 	remove(
 		noteId: string
 	): void {
