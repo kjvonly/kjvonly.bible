@@ -229,3 +229,6 @@ collections:
       - bible-pericopes
       - bible-booknames
       - strongs-kjvs
+
+    collections:
+      - plans-readings-default
