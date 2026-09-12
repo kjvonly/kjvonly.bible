@@ -3,6 +3,7 @@ import { bibleLocationReferenceService } from '$lib/domains/bible/services/bible
 import {  getBibleDB, SEARCH } from '$lib/domains/bible/persistence/bible.db';
 import { sleep } from '$lib/infrastructure/utils/sleep';
 import FlexSearch, { type Id } from 'flexsearch';
+import type { Note } from '$lib/domains/notes/models/note.model';
 
 let bibleDB = await getBibleDB()
 
@@ -24,31 +25,41 @@ let notesDocument = new FlexSearch.Document({
   }
 });
 
-let notes: any = {};
+type IndexedNote = Note & {
+  bookChapter?: string;
+};
+
+let notes: Record<string, IndexedNote> = {};
 
 async function init() {
   let cachedNotes = await notesApi.gets();
   notes = {};
   for (let i = 0; i < cachedNotes.length; i++) {
-    let nn = cachedNotes[i];
-    if (nn?.bibleLocationRef) {
-      nn.bookChapter = bibleLocationReferenceService.extractBookIDChapter(
-        nn.bibleLocationRef
-      );
-      await notesDocument.addAsync(nn.id, nn);
-      notes[nn.id] = nn;
-    }
+    const note = createIndexedNote(cachedNotes[i]);
+    await notesDocument.addAsync(note.id, note);
+    notes[note.id] = note;
   }
 
   getAllNotes('*');
 }
 
-function addNote(noteID: string, note: any) {
-  note.bookChapter = bibleLocationReferenceService.extractBookIDChapter(
-    note.bibleLocationRef
-  );
-  notes[noteID] = note;
-  notesDocument.add(noteID, note);
+function createIndexedNote(note: Note): IndexedNote {
+  if (!note.bibleLocationRef) {
+    return { ...note };
+  }
+
+  return {
+    ...note,
+    bookChapter: bibleLocationReferenceService.extractBookIDChapter(
+      note.bibleLocationRef
+    )
+  };
+}
+
+function addNote(noteID: string, note: Note) {
+  const indexedNote = createIndexedNote(note);
+  notes[noteID] = indexedNote;
+  notesDocument.add(noteID, indexedNote);
   getAllNotes('*');
 }
 

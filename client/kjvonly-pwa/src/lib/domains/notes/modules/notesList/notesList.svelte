@@ -2,6 +2,7 @@
 	// ================================ IMPORTS ================================
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
+	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
@@ -57,13 +58,13 @@
 		mode: any;
 		filterInput: string;
 		noteKeys: string[];
-		notes: any;
-		note: any;
+		notes: NotesById;
+		note: Note | undefined;
 		allNotes: boolean;
 		filterParams: any;
 		noteIDToOpen: string;
 		onFilterInputChanged: any;
-		onAddNewNote: any;
+		onAddNewNote: (note: Note) => void;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -101,6 +102,10 @@
 		let data: any = {};
 		noteKeys.forEach((k) => {
 			let n = notes[k];
+			if (!n.bibleLocationRef) {
+				return;
+			}
+
 			let keys = n.bibleLocationRef.split('_');
 			let bibleLocationRef = `${keys[0]}_${keys[1]}`;
 			let verseNumber = `${keys[2]}`;
@@ -150,21 +155,23 @@
 	}
 
 	async function onAdd() {
-		let keys = mode.bibleLocationRef?.split('_');
+		const bibleLocationRef: string | undefined =
+			mode.bibleLocationRef;
+		const keys = bibleLocationRef?.split('_');
 		let now = Date.now();
-		let newNote = undefined;
+		let newNote: Note;
 		let noteID = uuid4();
-		if (keys[0] === '0') {
+		if (!bibleLocationRef || !keys) {
 			newNote = {
 				id: noteID,
-				bibleLocationRef: mode.bibleLocationRef,
+				bibleLocationRef: undefined,
+				bibleReferenceText: undefined,
 				text: ``,
 				html: ``,
 				title: `Note`,
 				dateCreated: now,
 				dateUpdated: now,
-				tags: [],
-				version: 0
+				tags: []
 			};
 		} else {
 			const chapterSource =
@@ -185,7 +192,7 @@
 			] = await Promise.all([
 				verseService.get(
 					chapterSource,
-					mode.bibleLocationRef
+					bibleLocationRef
 				),
 				bibleBooknamesService.get(
 					booknamesSource
@@ -204,15 +211,14 @@
 			let title = `${bookName} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 			newNote = {
 				id: noteID,
-				bibleLocationRef: mode.bibleLocationRef,
-				bcv: `${bookName} ${keys[1]}:${keys[2]}`,
+				bibleLocationRef,
+				bibleReferenceText: `${bookName} ${keys[1]}:${keys[2]}`,
 				text: `${title}\n${verseTextWithoutVerseNumber}`,
 				html: `<h1>${title}</h1><p><italic>${verseTextWithoutVerseNumber}</italic></p>`,
 				title: `${title}`,
 				dateCreated: now,
 				dateUpdated: now,
-				tags: [],
-				version: 0
+				tags: []
 			};
 		}
 
@@ -223,7 +229,7 @@
 		note = notes[noteId];
 	}
 
-	function onBibleClicked(e: Event, note: any): void {
+	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
 		paneService.onSplitPane(mode.paneID, 'h', Modules.BIBLE, {
 			bibleLocationRef: note.bibleLocationRef
@@ -333,10 +339,10 @@
 	</div>
 {/snippet}
 
-{#snippet actions(note: any, nk: string)}
+{#snippet actions(note: Note, nk: string)}
 	<div class="flex w-full flex-row justify-end space-x-4">
 		<!-- bible -->
-		{#if !note?.bibleLocationRef?.startsWith('0')}
+		{#if note.bibleLocationRef}
 			<KJVButton classes="" onClick={(e: Event) => onBibleClicked(e, note)}>
 				<Bible></Bible>
 			</KJVButton>
@@ -370,8 +376,8 @@
 					>{new Date(notes[nk].dateUpdated).toLocaleDateString()}
 					{new Date(notes[nk].dateUpdated).toLocaleTimeString()}</span
 				>
-				{#if notes[nk].bcv}
-					<span class="text-neutral-400">{notes[nk].bcv}</span>
+				{#if notes[nk].bibleReferenceText}
+					<span class="text-neutral-400">{notes[nk].bibleReferenceText}</span>
 				{/if}
 				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
 					{#each notes[nk].tags as t}

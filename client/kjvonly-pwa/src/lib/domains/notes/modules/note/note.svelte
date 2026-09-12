@@ -18,6 +18,7 @@
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
+	import type { NoteTag } from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
 	import { notesService } from '$lib/domains/notes/services/notes.service';
@@ -133,7 +134,6 @@
 			noteID = savedNote.id;
 			note.id = savedNote.id;
 			note.bibleLocationRef = savedNote.bibleLocationRef;
-			note.version = savedNote.version;
 			note.dateCreated = savedNote.dateCreated;
 			note.dateUpdated = savedNote.dateUpdated;
 			toastService.showToast(toastMessage);
@@ -167,7 +167,7 @@
 
 	function onDeleteTag(tagID: string) {
 		if (note) {
-			note.tags = note.tags.filter((t: any) => {
+			note.tags = note.tags.filter((t: NoteTag) => {
 				if (t.id !== tagID) {
 					return t;
 				}
