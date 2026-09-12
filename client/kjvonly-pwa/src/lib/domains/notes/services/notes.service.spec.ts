@@ -27,7 +27,7 @@ import type {
 } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 
 import type {
-	ResourcePublication
+	ResourcePublicationIntent
 } from '$lib/resource/publication/resource-publication';
 
 import type {
@@ -99,10 +99,14 @@ class FakeWriteTransaction
 		Note[] =
 			[];
 
+	readonly deletedNoteIds:
+		string[] =
+			[];
+
 	readonly publications:
 		Array<{
 			objectId: string;
-			resource: ResourcePublication;
+			resource: ResourcePublicationIntent;
 		}> =
 			[];
 
@@ -135,6 +139,15 @@ class FakeWriteTransaction
 						) => {
 							this.notes.push(
 								note
+							);
+						},
+
+					delete:
+						async (
+							noteId
+						) => {
+							this.deletedNoteIds.push(
+								noteId
 							);
 						}
 				},
@@ -561,6 +574,98 @@ describe(
 		);
 
 		it(
+			'deletes the Note and queues deletion before updating the runtime and waking the Outbox',
+			async () => {
+				const events:
+					string[] =
+						[];
+
+				const store =
+					new FakeNotesStore();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				const runtime =
+					new FakeRuntime();
+
+				runtime.remove.mockImplementation(
+					() => {
+						events.push(
+							'runtime'
+						);
+					}
+				);
+
+				const writeTransaction =
+					new FakeWriteTransaction(
+						() => {
+							events.push(
+								'commit'
+							);
+						}
+					);
+
+				const wake =
+					vi.fn(
+						() => {
+							events.push(
+								'wake'
+							);
+						}
+					);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						writeTransaction,
+						wake
+					);
+
+				const noteId =
+					'publisher/default/note-1';
+
+				await service.delete(
+					noteId
+				);
+
+				expect(
+					writeTransaction.deletedNoteIds
+				).toEqual([
+					noteId
+				]);
+
+				expect(
+					writeTransaction.publications
+				).toEqual([
+					{
+						objectId:
+							noteId,
+						resource: {
+							operation:
+								'delete',
+							publisher:
+								'publisher',
+							resourceType:
+								'kjvonly/notes/entries',
+							resourceId:
+								'kjvonly/notes/entries/default/note-1'
+						}
+					}
+				]);
+
+				expect(
+					events
+				).toEqual([
+					'commit',
+					'runtime',
+					'wake'
+				]);
+			}
+		);
+
+		it(
 			'does not update the runtime or wake the Outbox when the local write fails',
 			async () => {
 				const store =
@@ -601,6 +706,55 @@ describe(
 
 				expect(
 					runtime.put
+				).not.toHaveBeenCalled();
+
+				expect(
+					wake
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
+			'does not remove the Note from the runtime or wake the Outbox when delete persistence fails',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				const runtime =
+					new FakeRuntime();
+
+				const error =
+					new Error(
+						'delete failed'
+					);
+
+				const wake =
+					vi.fn();
+
+				const service =
+					createService(
+						store,
+						runtime,
+						new FakeWriteTransaction(
+							() => {},
+							error
+						),
+						wake
+					);
+
+				await expect(
+					service.delete(
+						'publisher/default/note-1'
+					)
+				).rejects.toBe(
+					error
+				);
+
+				expect(
+					runtime.remove
 				).not.toHaveBeenCalled();
 
 				expect(

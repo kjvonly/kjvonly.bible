@@ -135,6 +135,40 @@ describe(
 		);
 
 		it(
+			'deletes a Note from the shared Domain Object store',
+			async () => {
+				const deleteValue =
+					vi.fn()
+						.mockResolvedValue(
+							undefined
+						);
+
+				const store =
+					createStore({
+						delete:
+							deleteValue
+					});
+
+				const note =
+					createNote();
+
+				await store.delete(
+					note.id
+				);
+
+				expect(
+					deleteValue
+				).toHaveBeenCalledWith(
+					DOMAIN_OBJECTS,
+					createStoredDomainObjectId(
+						NOTE_OBJECT_TYPE,
+						note.id
+					)
+				);
+			}
+		);
+
+		it(
 			'puts a Note in the shared Domain Object envelope',
 			async () => {
 				const put =

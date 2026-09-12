@@ -94,4 +94,19 @@ export class IndexedDBNotesStore
 			stored
 		);
 	}
+
+	async delete(
+		id: string
+	): Promise<void> {
+		const db =
+			await this.getDB();
+
+		await db.delete(
+			DOMAIN_OBJECTS,
+			createStoredDomainObjectId(
+				NOTE_OBJECT_TYPE,
+				id
+			)
+		);
+	}
 }

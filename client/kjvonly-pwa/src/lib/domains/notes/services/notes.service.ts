@@ -121,7 +121,8 @@ export class NotesService {
 		private readonly resourcePublication:
 			Pick<
 				NotesResourcePublication,
-				'create'
+				'create' |
+					'createDeletion'
 			>,
 
 		private readonly outbox:
@@ -286,17 +287,41 @@ export class NotesService {
 		this.outbox.wake();
 	}
 
-	deleteNote(
-		_id: string,
-		noteID: string
-	): void {
-		void this.ready.then(
-			() => {
-				this.runtime.remove(
-					noteID
+	async delete(
+		noteId: string
+	): Promise<void> {
+		await this.ready;
+
+		const deletion =
+			this.resourcePublication
+				.createDeletion(
+					noteId
 				);
+
+		await this.writeTransaction.run(
+			async (
+				stores
+			) => {
+				await stores
+					.notes
+					.delete(
+						noteId
+					);
+
+				await stores
+					.outbox
+					.put(
+						noteId,
+						deletion
+					);
 			}
 		);
+
+		this.runtime.remove(
+			noteId
+		);
+
+		this.outbox.wake();
 	}
 
 

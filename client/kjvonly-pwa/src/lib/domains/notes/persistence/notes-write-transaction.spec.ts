@@ -23,6 +23,7 @@ import {
 } from './notes-write-transaction';
 
 import type {
+	ResourceDeletionPublication,
 	ResourcePublication
 } from '$lib/resource/publication/resource-publication';
 
@@ -131,6 +132,73 @@ describe(
 		);
 
 		it(
+			'deletes the Note and queues the Resource deletion in the same transaction',
+			async () => {
+				const db =
+					new FakeApplicationDB();
+
+				const transaction =
+					new IndexedDBNotesWriteTransaction(
+						async () =>
+							db.asApplicationDB()
+					);
+
+				const note =
+					createNote();
+
+				await transaction.run(
+					async (stores) => {
+						await stores.notes.put(
+							note
+						);
+					}
+				);
+
+				const deletion =
+					createDeletion();
+
+				await transaction.run(
+					async (stores) => {
+						await stores.notes.delete(
+							note.id
+						);
+
+						await stores.outbox.put(
+							note.id,
+							deletion
+						);
+					}
+				);
+
+				const storedId =
+					`${NOTE_OBJECT_TYPE}:${note.id}`;
+
+				expect(
+					db.getStoredValue(
+						DOMAIN_OBJECTS,
+						storedId
+					)
+				).toBeUndefined();
+
+				expect(
+					db.getStoredValue(
+						OUTBOX,
+						storedId
+					)
+				).toEqual({
+					id:
+						storedId,
+					resource:
+						deletion,
+					status:
+						'pending',
+					attempts:
+						0
+				});
+			}
+		);
+
+		it(
 			'aborts the shared transaction when the write operation fails',
 			async () => {
 				const error =
@@ -222,6 +290,20 @@ function createPublication():
 			title:
 				'Title'
 		}
+	};
+}
+
+function createDeletion():
+	ResourceDeletionPublication {
+	return {
+		operation:
+			'delete',
+		publisher:
+			'publisher',
+		resourceType:
+			'kjvonly/notes/entries',
+		resourceId:
+			'kjvonly/notes/entries/default/note-1'
 	};
 }
 
@@ -364,6 +446,15 @@ class FakeApplicationDB {
 					store?.set(
 						value.id,
 						value
+					);
+				},
+
+			delete:
+				async (
+					id: string
+				) => {
+					store?.delete(
+						id
 					);
 				}
 		};

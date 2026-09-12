@@ -24,9 +24,6 @@
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { toastService } from '$lib/application/services/toast.service';
 
-	// APIS
-	import { notesApi } from '$lib/nostr/events/notes.nostr';
-
 	// OTHER
 	import Quill from 'quill';
 	import uuid4 from 'uuid4';
@@ -130,8 +127,10 @@
 	// ============================== CLICK FUNCS ==============================
 
 	async function onConfirmDelete() {
-		notesApi.delete(noteID);
-		notesService.deleteNote('*', note.id);
+		await notesService.delete(
+			note.id
+		);
+
 		note = undefined;
 	}
 

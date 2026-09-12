@@ -4,8 +4,9 @@ import {
 	type ApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
-import type {
-	ResourcePublication
+import {
+	isResourceDeletionPublication,
+	type ResourcePublicationIntent
 } from '$lib/resource/publication/resource-publication';
 
 import type {
@@ -115,9 +116,35 @@ export class IndexedDBOutboxStore
 }
 
 function isSameResourcePublication(
-	left: ResourcePublication,
-	right: ResourcePublication
+	left: ResourcePublicationIntent,
+	right: ResourcePublicationIntent
 ): boolean {
+	const leftIsDeletion =
+		isResourceDeletionPublication(
+			left
+		);
+
+	const rightIsDeletion =
+		isResourceDeletionPublication(
+			right
+		);
+
+	if (
+		leftIsDeletion ||
+		rightIsDeletion
+	) {
+		return (
+			leftIsDeletion &&
+			rightIsDeletion &&
+			left.publisher ===
+				right.publisher &&
+			left.resourceType ===
+				right.resourceType &&
+			left.resourceId ===
+				right.resourceId
+		);
+	}
+
 	return (
 		left.publisher ===
 			right.publisher &&
@@ -125,6 +152,10 @@ function isSameResourcePublication(
 			right.resourceType &&
 		left.resourceId ===
 			right.resourceId &&
+		left.representation ===
+			right.representation &&
+		left.mediaType ===
+			right.mediaType &&
 		JSON.stringify(
 			left.value
 		) ===

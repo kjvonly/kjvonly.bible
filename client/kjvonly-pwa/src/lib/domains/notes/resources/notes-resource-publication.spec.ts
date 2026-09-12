@@ -127,6 +127,33 @@ describe(
 		);
 
 		it(
+			'creates an explicit Resource deletion from the Note Domain identity',
+			() => {
+				const deletion =
+					new NotesResourcePublication()
+						.createDeletion(
+							'publisher/default/note-1'
+						);
+
+				expect(
+					deletion
+				).toEqual({
+					operation:
+						'delete',
+
+					publisher:
+						'publisher',
+
+					resourceType:
+						'kjvonly/notes/entries',
+
+					resourceId:
+						'kjvonly/notes/entries/default/note-1'
+				});
+			}
+		);
+
+		it(
 			'rejects an invalid Note application identity',
 			() => {
 				expect(

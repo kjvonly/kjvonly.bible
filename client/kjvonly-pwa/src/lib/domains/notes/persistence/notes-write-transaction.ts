@@ -88,7 +88,20 @@ export class IndexedDBNotesWriteTransaction
 							await domainObjects.put(
 								stored
 							);
+						},
+
+					delete:
+						async (
+							id
+						) => {
+							await domainObjects.delete(
+								createStoredDomainObjectId(
+									NOTE_OBJECT_TYPE,
+									id
+								)
+							);
 						}
+
 				},
 
 				outbox: {

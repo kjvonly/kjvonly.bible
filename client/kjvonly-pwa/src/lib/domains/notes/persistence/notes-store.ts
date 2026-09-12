@@ -20,4 +20,8 @@ export interface NotesStore {
 	put(
 		note: Note
 	): Promise<void>;
+
+	delete(
+		id: string
+	): Promise<void>;
 }

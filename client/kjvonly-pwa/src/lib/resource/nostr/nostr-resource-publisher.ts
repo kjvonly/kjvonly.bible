@@ -14,13 +14,18 @@ import {
 	RESOURCE_KIND
 } from '$lib/resource/models/resource.model';
 
-import type {
-	ResourcePublication
+import {
+	isResourceDeletionPublication,
+	type ResourceDeletionPublication,
+	type ResourcePublication,
+	type ResourcePublicationIntent
 } from '$lib/resource/publication/resource-publication';
 
 import type {
 	ResourcePublisher
 } from '$lib/resource/publication/resource-publisher';
+
+const NOSTR_DELETION_KIND = 5;
 
 export class NostrResourcePublisher
 	implements ResourcePublisher {
@@ -30,7 +35,7 @@ export class NostrResourcePublisher
 			Pick<
 				EventSigner,
 				'getPublicKey' |
-				'signEvent'
+					'signEvent'
 			>,
 
 		private readonly client:
@@ -48,7 +53,7 @@ export class NostrResourcePublisher
 
 	async publish(
 		resource:
-			ResourcePublication
+			ResourcePublicationIntent
 	): Promise<void> {
 		const pubkey =
 			await this.signer
@@ -63,6 +68,27 @@ export class NostrResourcePublisher
 			);
 		}
 
+		if (
+			isResourceDeletionPublication(
+				resource
+			)
+		) {
+			await this.publishDeletion(
+				resource
+			);
+
+			return;
+		}
+
+		await this.publishResource(
+			resource
+		);
+	}
+
+	private async publishResource(
+		resource:
+			ResourcePublication
+	): Promise<void> {
 		const content =
 			await this.contentEncoder
 				.encode(
@@ -97,6 +123,50 @@ export class NostrResourcePublisher
 					content
 				});
 
+		await this.publishEvent(
+			event,
+			resource.resourceId
+		);
+	}
+
+	private async publishDeletion(
+		resource:
+			ResourceDeletionPublication
+	): Promise<void> {
+		const event =
+			await this.signer
+				.signEvent({
+					kind:
+						NOSTR_DELETION_KIND,
+
+					tags: [
+						[
+							'a',
+							`${RESOURCE_KIND}:${resource.publisher}:${resource.resourceId}`
+						],
+						[
+							'k',
+							`${RESOURCE_KIND}`
+						]
+					],
+
+					content:
+						''
+				});
+
+		await this.publishEvent(
+			event,
+			resource.resourceId
+		);
+	}
+
+	private async publishEvent(
+		event:
+			Parameters<
+				ResourceClient['publishEvent']
+			>[0],
+		resourceId: string
+	): Promise<void> {
 		const result =
 			await this.client
 				.publishEvent(
@@ -107,7 +177,7 @@ export class NostrResourcePublisher
 			!result.acceptedByAnyRelay
 		) {
 			throw new Error(
-				`Resource publication was rejected by all configured relays: ${resource.resourceId}`
+				`Resource publication was rejected by all configured relays: ${resourceId}`
 			);
 		}
 	}

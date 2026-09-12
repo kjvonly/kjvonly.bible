@@ -180,6 +180,71 @@ describe(
 		);
 
 		it(
+			'does not delete a newer Resource deletion when an older publication completes',
+			async () => {
+				const publication =
+					createEntry();
+
+				const deletion =
+					createPendingResourcePublication(
+						publication.id,
+						{
+							operation:
+								'delete',
+							publisher:
+								'publisher',
+							resourceType:
+								'kjvonly/overlays/text-markup',
+							resourceId:
+								'kjvonly/overlays/text-markup/kjvs/1_1'
+						}
+					);
+
+				const deleteEntry =
+					vi.fn();
+
+				const objectStore = {
+					get:
+						vi.fn()
+							.mockResolvedValue(
+								deletion
+							),
+
+					delete:
+						deleteEntry
+				};
+
+				const store =
+					createStore({
+						transaction:
+							vi.fn()
+								.mockReturnValue({
+									objectStore:
+										vi.fn()
+											.mockReturnValue(
+												objectStore
+											),
+
+									done:
+										Promise.resolve()
+								})
+					} as unknown as Partial<ApplicationDB>);
+
+				await expect(
+					store.deleteIfCurrent(
+						publication
+					)
+				).resolves.toBe(
+					false
+				);
+
+				expect(
+					deleteEntry
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
 			'lists Outbox entries by publication status',
 			async () => {
 				const entry =

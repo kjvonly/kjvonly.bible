@@ -7,6 +7,7 @@ import {
 } from '$lib/domains/notes/models/note-id';
 
 import type {
+	ResourceDeletionPublication,
 	ResourcePublication
 } from '$lib/resource/publication/resource-publication';
 
@@ -19,22 +20,13 @@ export class NotesResourcePublication {
 	create(
 		note: Note
 	): ResourcePublication {
-		const {
-			publisher,
-			name,
-			noteId
-		} = parseNoteId(
-			note.id
-		);
+		const identity =
+			this.createResourceIdentity(
+				note.id
+			);
 
 		return {
-			publisher,
-
-			resourceType:
-				NOTES_RESOURCE_TYPE,
-
-			resourceId:
-				`${NOTES_RESOURCE_TYPE}/${name}/${noteId}`,
+			...identity,
 
 			representation:
 				'content',
@@ -46,6 +38,45 @@ export class NotesResourcePublication {
 				createResourceValue(
 					note
 				)
+		};
+	}
+
+	createDeletion(
+		noteId: string
+	): ResourceDeletionPublication {
+		return {
+			operation:
+				'delete',
+
+			...this.createResourceIdentity(
+				noteId
+			)
+		};
+	}
+
+	private createResourceIdentity(
+		noteId: string
+	): {
+		readonly publisher: string;
+		readonly resourceType: string;
+		readonly resourceId: string;
+	} {
+		const {
+			publisher,
+			name,
+			noteId: resourceNoteId
+		} = parseNoteId(
+			noteId
+		);
+
+		return {
+			publisher,
+
+			resourceType:
+				NOTES_RESOURCE_TYPE,
+
+			resourceId:
+				`${NOTES_RESOURCE_TYPE}/${name}/${resourceNoteId}`
 		};
 	}
 }

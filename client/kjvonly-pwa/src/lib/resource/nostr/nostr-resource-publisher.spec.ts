@@ -186,6 +186,84 @@ describe(
 		);
 
 		it(
+			'publishes an addressable Resource deletion as a NIP-09 deletion request',
+			async () => {
+				const signEvent =
+					vi.fn(
+						async (
+							params:
+								EventParameters
+						) =>
+							createSignedEvent(
+								params
+							)
+					);
+
+				const publishEvent =
+					vi.fn()
+						.mockResolvedValue(
+							createAcceptedResult()
+						);
+
+				const encode =
+					vi.fn();
+
+				const publisher =
+					new NostrResourcePublisher(
+						createSigner({
+							signEvent
+						}),
+						createClient(
+							publishEvent
+						),
+						{ encode }
+					);
+
+				await publisher.publish({
+					operation:
+						'delete',
+					publisher:
+						PUBKEY,
+					resourceType:
+						'kjvonly/notes/entries',
+					resourceId:
+						'kjvonly/notes/entries/default/note-1'
+				});
+
+				expect(
+					encode
+				).not.toHaveBeenCalled();
+
+				expect(
+					signEvent
+				).toHaveBeenCalledWith({
+					kind:
+						5,
+
+					tags: [
+						[
+							'a',
+							`37770:${PUBKEY}:kjvonly/notes/entries/default/note-1`
+						],
+						[
+							'k',
+							'37770'
+						]
+					],
+
+					content:
+						''
+				});
+
+				expect(
+					publishEvent
+				).toHaveBeenCalledTimes(
+					1
+				);
+			}
+		);
+
+		it(
 			'rejects publication when the Resource publisher is not the configured signer',
 			async () => {
 				const publishEvent =

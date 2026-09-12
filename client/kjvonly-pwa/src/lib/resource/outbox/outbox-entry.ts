@@ -1,5 +1,5 @@
 import type {
-	ResourcePublication
+	ResourcePublicationIntent
 } from '$lib/resource/publication/resource-publication';
 
 export type OutboxStatus =
@@ -13,7 +13,7 @@ export interface OutboxEntry {
 		string;
 
 	readonly resource:
-		ResourcePublication;
+		ResourcePublicationIntent;
 
 	readonly status:
 		OutboxStatus;
@@ -25,7 +25,7 @@ export interface OutboxEntry {
 export function createPendingResourcePublication(
 	id: string,
 	resource:
-		ResourcePublication
+		ResourcePublicationIntent
 ): OutboxEntry {
 	return {
 		id,

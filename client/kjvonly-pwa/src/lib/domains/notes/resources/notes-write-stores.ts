@@ -3,14 +3,15 @@ import type {
 } from '$lib/domains/notes/persistence/notes-store';
 
 import type {
-	ResourcePublication
+	ResourcePublicationIntent
 } from '$lib/resource/publication/resource-publication';
 
 export interface NotesWriteStores {
 	readonly notes:
 		Pick<
 			NotesStore,
-			'put'
+			'put' |
+				'delete'
 		>;
 
 	readonly outbox: {
@@ -19,7 +20,7 @@ export interface NotesWriteStores {
 				string,
 
 			resource:
-				ResourcePublication
+				ResourcePublicationIntent
 		): Promise<void>;
 	};
 }
