@@ -52,8 +52,8 @@
 	} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
 
 	import {
-		NOTES_RESOURCE_TYPE
-	} from '$lib/domains/notes/resources/note-interpreter';
+		NOTES_COLLECTION_CHANGED
+	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 
 	const {
 		chapterService,
@@ -300,28 +300,22 @@
 
 	function subscribeToNotes() {
 		notesService.subscribe(id, notesID, onSearchResults);
-		notesService.subscribe(id, '*', loadNotes);
+		notesService.subscribe(
+			id,
+			NOTES_COLLECTION_CHANGED,
+			loadNotes
+		);
 	}
 
 	function unsubscribeToNotes() {
 		notesService.unsubscribe(id);
 	}
 
-	async function loadNotes() {
+	function loadNotes() {
 		notesService.searchNotes(
 			notesID,
 			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef),
 			['bookChapter']
-		);
-
-		const source =
-			moduleResourceSelectionResolver.require(
-				pane.id,
-				NOTES_RESOURCE_TYPE
-			);
-
-		await notesService.acquire(
-			source
 		);
 	}
 

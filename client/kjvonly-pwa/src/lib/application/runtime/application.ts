@@ -256,10 +256,6 @@ import {
 } from '$lib/domains/notes/resources/notes-resource-publication';
 
 import {
-    NotesResourceAcquisition
-} from '$lib/domains/notes/resources/notes-resource-acquisition';
-
-import {
     NotesService
 } from '$lib/domains/notes/services/notes.service';
 
@@ -736,17 +732,9 @@ export class Application {
         const notesResourcePublication =
             new NotesResourcePublication();
 
-        const notesResourceAcquisition =
-            new NotesResourceAcquisition(
-                resourceDiscovery,
-                resourceWorkerClient,
-                notesStore
-            );
-
         const notesService =
             new NotesService(
                 notesStore,
-                notesResourceAcquisition,
                 notesWriteTransaction,
                 notesResourcePublication,
                 outboxProcessor

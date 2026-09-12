@@ -25,11 +25,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import uuid4 from 'uuid4';
 	import NoteComponent from './note/note.svelte';
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
-	import NotesList from './notesList/notesList.svelte';
-
 	import {
-		NOTES_RESOURCE_TYPE
-	} from '$lib/domains/notes/resources/note-interpreter';
+		NOTES_COLLECTION_CHANGED
+	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+	import NotesList from './notesList/notesList.svelte';
 
 	// APPLICATION
 	import {
@@ -37,8 +36,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	} from '$lib/application/runtime/application-context';
 
 	const {
-		notesService,
-		moduleResourceSelectionResolver
+		notesService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -77,23 +75,19 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(async () => {
+	onMount(() => {
 		notesService.subscribe(
 			NOTE_SUBSCRIPTION_ID,
 			NOTE_SEARCH_ID,
 			onFilterInputResults
 		);
-		notesService.subscribe(NOTE_SUBSCRIPTION_ID, '*', onSearchResults);
-		notesService.getAllNotes('*');
-
-		const source =
-			moduleResourceSelectionResolver.require(
-				mode.paneID,
-				NOTES_RESOURCE_TYPE
-			);
-
-		await notesService.acquire(
-			source
+		notesService.subscribe(
+			NOTE_SUBSCRIPTION_ID,
+			NOTES_COLLECTION_CHANGED,
+			onSearchResults
+		);
+		notesService.getAllNotes(
+			NOTES_COLLECTION_CHANGED
 		);
 	});
 

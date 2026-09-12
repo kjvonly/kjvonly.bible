@@ -9,8 +9,9 @@ import type {
 	NotesById
 } from '$lib/domains/notes/models/note.model';
 
-import type {
-	NotesSearchWorkerRequest
+import {
+	NOTES_COLLECTION_CHANGED,
+	type NotesSearchWorkerRequest
 } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 
 type IndexedNote = Note & {
@@ -64,7 +65,9 @@ async function initialize(
 			note;
 	}
 
-	getAllNotes('*');
+	getAllNotes(
+		NOTES_COLLECTION_CHANGED
+	);
 }
 
 function createIndexedNote(
@@ -93,7 +96,9 @@ function putNote(
 		note
 	);
 
-	getAllNotes('*');
+	getAllNotes(
+		NOTES_COLLECTION_CHANGED
+	);
 }
 
 function putNotes(
@@ -107,7 +112,9 @@ function putNotes(
 		);
 	}
 
-	getAllNotes('*');
+	getAllNotes(
+		NOTES_COLLECTION_CHANGED
+	);
 }
 
 function indexNote(
@@ -136,7 +143,9 @@ function removeNote(
 		noteId
 	);
 
-	getAllNotes('*');
+	getAllNotes(
+		NOTES_COLLECTION_CHANGED
+	);
 }
 
 async function searchNotes(
