@@ -101,22 +101,6 @@ function putNote(
 	);
 }
 
-function putNotes(
-	acceptedNotes: Note[]
-): void {
-	for (
-		const note of acceptedNotes
-	) {
-		indexNote(
-			note
-		);
-	}
-
-	getAllNotes(
-		NOTES_COLLECTION_CHANGED
-	);
-}
-
 function indexNote(
 	note: Note
 ): void {
@@ -215,12 +199,6 @@ onmessage = async (
 		case 'put':
 			putNote(
 				e.data.note
-			);
-			break;
-
-		case 'put-all':
-			putNotes(
-				e.data.notes
 			);
 			break;
 

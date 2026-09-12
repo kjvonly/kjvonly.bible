@@ -67,10 +67,6 @@ describe(
 					note
 				);
 
-				runtime.putAll([
-					note
-				]);
-
 				runtime.remove(
 					note.id
 				);
@@ -99,16 +95,6 @@ describe(
 					worker.postMessage
 				).toHaveBeenNthCalledWith(
 					3,
-					{
-						action: 'put-all',
-						notes: [note]
-					}
-				);
-
-				expect(
-					worker.postMessage
-				).toHaveBeenNthCalledWith(
-					4,
 					{
 						action: 'remove',
 						noteId: note.id

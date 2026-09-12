@@ -16,10 +16,6 @@ export type NotesSearchWorkerRequest =
 		note: Note;
 	}
 	| {
-		action: 'put-all';
-		notes: Note[];
-	}
-	| {
 		action: 'remove';
 		noteId: string;
 	}
