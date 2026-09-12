@@ -2,23 +2,42 @@ import type {
 	ResourceSelections
 } from './resource-selections';
 
-import {
-	getModuleResourceRequirements
-} from './module-resource-requirements';
-
 import type {
 	Modules
 } from '$lib/application/models/modules.model';
+
+import type {
+	ModuleResourceSelectionContributor
+} from './module-resource-selection-contributor';
 
 export interface ResourceSelectionSnapshotProvider {
 	snapshot(): ResourceSelections;
 }
 
 export class ModuleResourceSelectionBuilder {
+	private readonly contributors:
+		ReadonlyMap<
+			Modules,
+			ModuleResourceSelectionContributor
+		>;
+
 	constructor(
 		private readonly selections:
-			ResourceSelectionSnapshotProvider
-	) {}
+			ResourceSelectionSnapshotProvider,
+
+		contributors:
+			readonly ModuleResourceSelectionContributor[]
+	) {
+		this.contributors =
+			new Map(
+				contributors.map(
+					contributor => [
+						contributor.module,
+						contributor
+					] as const
+				)
+			);
+	}
 
 	independent(
 		module: Modules
@@ -45,38 +64,22 @@ export class ModuleResourceSelectionBuilder {
 		originatingSelections:
 			ResourceSelections
 	): ResourceSelections {
-		const currentSelections =
-			this.selections.snapshot();
-
-		const result:
-			ResourceSelections =
-			{};
-
-		for (
-			const resourceType of
-			getModuleResourceRequirements(
+		const contributor =
+			this.contributors.get(
 				module
-			)
-		) {
-			const selection =
-				originatingSelections[
-					resourceType
-				] ??
-				currentSelections[
-					resourceType
-				];
+			);
 
-			if (!selection) {
-				continue;
-			}
-
-			result[
-				resourceType
-			] = {
-				...selection
-			};
+		if (!contributor) {
+			throw new Error(
+				`No Resource selection contributor registered for module: ${module}`
+			);
 		}
 
-		return result;
+		return contributor.build({
+			originatingSelections,
+			currentSelections:
+				this.selections
+					.snapshot()
+		});
 	}
 }

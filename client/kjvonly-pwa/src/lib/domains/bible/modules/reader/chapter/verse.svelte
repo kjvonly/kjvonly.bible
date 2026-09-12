@@ -2,13 +2,15 @@
 	// ================================ IMPORTS ================================
 	// MODELS
 	import {
-		type Annotations,
 		type Paragraphs,
 		type BibleMode,
 		type Verse,
 		type Pericopes
 	} from '$lib/domains/bible/models/bible.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type {
+		BibleTextMarkup
+	} from '$lib/domains/bible/models/bible-text-markup.model';
 	import Paragraph from './paragraph.svelte';
 	import Pericope from './pericope.svelte';
 
@@ -18,7 +20,7 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		annotations = $bindable<Annotations>(),
+		textMarkup = $bindable<BibleTextMarkup>(),
 		paragraphs = $bindable<Paragraphs>(),
 		pericopes = $bindable<Pericopes>(),
 		pane = $bindable<Pane>(),
@@ -30,7 +32,7 @@
 		lastKnownScrollPosition,
 		verse
 	}: {
-		annotations: Annotations;
+		textMarkup: BibleTextMarkup;
 		paragraphs: Paragraphs;
 		pericopes: Pericopes;
 		pane: Pane;
@@ -59,7 +61,7 @@
 	<span class="inline-block">
 		{#each verse.words.slice(0, 2) as word, idx}<Word
 				bind:pane
-				bind:annotations
+				bind:textMarkup
 				bind:notes
 				bind:mode
 				{verse}
@@ -74,7 +76,7 @@
 	</span>{#each verse.words.slice(2) as word, idx}
 		<Word
 			bind:pane
-			bind:annotations
+			bind:textMarkup
 			bind:notes
 			bind:mode
 			{verse}

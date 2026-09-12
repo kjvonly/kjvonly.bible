@@ -10,7 +10,6 @@
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { toastService } from '$lib/application/services/toast.service';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';
@@ -30,10 +29,6 @@
 	import {
 		useApplicationContext
 	} from '$lib/application/runtime/application-context';
-
-	import {
-		requireResourceSelection
-	} from '$lib/application/resources/resource-selections';
 
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
@@ -98,17 +93,8 @@
 
 	// ================================ FUNCS ==================================
 	async function loadVerses() {
-		const pane = paneService.findNode(
-			paneService.rootPane,
-			paneID
-		);
-
-		if (!pane) {
-			throw new Error(`Bible Pane not found: ${paneID}`);
-		}
-
-		const source = requireResourceSelection(
-			pane.buffer.resourceSelections,
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 

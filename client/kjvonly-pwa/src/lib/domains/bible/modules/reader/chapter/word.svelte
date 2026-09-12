@@ -10,13 +10,15 @@
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type {
+		BibleTextMarkup,
+		BibleTextMarkupMarking
+	} from '$lib/domains/bible/models/bible-text-markup.model';
 	import {
 		BIBLE_MODES,
-		type Annotations,
 		type BibleMode,
 		type Verse,
-		type Word,
-		type WordAnnots
+		type Word
 	} from '$lib/domains/bible/models/bible.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Notes from '$lib/components/svgs/notes.svelte';
@@ -25,7 +27,7 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		annotations = $bindable<Annotations>(),
+		textMarkup = $bindable<BibleTextMarkup>(),
 		pane = $bindable(),
 		mode = $bindable<BibleMode>(),
 		notes = $bindable(),
@@ -37,7 +39,7 @@
 		word,
 		wordIdx
 	}: {
-		annotations: Annotations;
+		textMarkup: BibleTextMarkup;
 		pane: Pane;
 		mode: BibleMode;
 		notes: any;
@@ -53,7 +55,7 @@
 	// ================================= VARS ==================================
 
 	let track: any = {};
-	let wordAnnotations: any = $state();
+	let wordMarkup: any = $state();
 	let wordHasNotes: boolean = $state(false);
 	let verseHasReferences = $state(false);
 	let pressThresholdInMilliseconds = 1000;
@@ -61,8 +63,8 @@
 	// =============================== LIFECYCLE ===============================
 
 	$effect(() => {
-		annotations;
-		setWordAnnotations();
+		textMarkup;
+		setWordMarkup();
 	});
 
 	$effect(() => {
@@ -94,13 +96,15 @@
 		return wordIdx === 0;
 	}
 
-	function setWordAnnotations() {
+	function setWordMarkup() {
+		wordMarkup = undefined;
+
 		if (
-			annotations.annots &&
-			annotations.annots[verse.number] &&
-			annotations.annots[verse.number][wordIdx]
+			textMarkup.markings &&
+			textMarkup.markings[verse.number] &&
+			textMarkup.markings[verse.number][wordIdx]
 		) {
-			wordAnnotations = annotations.annots[verse.number][wordIdx];
+			wordMarkup = textMarkup.markings[verse.number][wordIdx];
 		}
 	}
 
@@ -157,9 +161,9 @@
 
 	function onEditClick() {
 		if (isWordAVerseNumber()) {
-			applyAnnotationToVerse();
+			applyMarkupToVerse();
 		} else {
-			applyAnnotationToWord();
+			applyMarkupToWord();
 		}
 	}
 
@@ -183,39 +187,39 @@
 		});
 	}
 
-	function applyAnnotationToVerse() {
-		let w = initWordAnnotations(0);
-		let exists = getExistingAnnotationIndex(w) !== undefined;
+	function applyMarkupToVerse() {
+		let w = initWordMarkup(0);
+		let exists = getExistingMarkupIndex(w) !== undefined;
 		let wordIndexes = getWordIndexesToEdit();
 		wordIndexes.forEach((i) => {
-			let w = initWordAnnotations(i);
+			let w = initWordMarkup(i);
 			if (exists) {
-				clearAnnotation(w);
+				clearMarkup(w);
 			} else {
-				clearAnnotation(w);
-				addAnnotation(w.class);
+				clearMarkup(w);
+				addMarkup(w.class);
 			}
 		});
 	}
 
-	function applyAnnotationToWord() {
-		let w = initWordAnnotations(wordIdx);
-		updateAnnotation(w);
+	function applyMarkupToWord() {
+		let w = initWordMarkup(wordIdx);
+		updateMarkup(w);
 	}
 
-	function initWordAnnotations(wordIndex: number): WordAnnots {
-		if (!annotations.annots[verse.number]) {
-			annotations.annots[verse.number] = {};
+	function initWordMarkup(wordIndex: number): BibleTextMarkupMarking {
+		if (!textMarkup.markings[verse.number]) {
+			textMarkup.markings[verse.number] = {};
 		}
 
-		if (!annotations.annots[verse.number][wordIndex]) {
-			annotations.annots[verse.number][wordIndex] = { class: [] };
+		if (!textMarkup.markings[verse.number][wordIndex]) {
+			textMarkup.markings[verse.number][wordIndex] = { class: [] };
 		}
 
-		return annotations.annots[verse.number][wordIndex];
+		return textMarkup.markings[verse.number][wordIndex];
 	}
 
-	function getExistingAnnotationIndex(w: WordAnnots): number | undefined {
+	function getExistingMarkupIndex(w: BibleTextMarkupMarking): number | undefined {
 		let indexOf: number | undefined;
 		w.class?.forEach((c: string, idx: number) => {
 			if (c.startsWith(mode.type)) {
@@ -233,14 +237,14 @@
 		return wordIndexes;
 	}
 
-	function clearAnnotation(w: WordAnnots) {
-		let indexOf = getExistingAnnotationIndex(w);
+	function clearMarkup(w: BibleTextMarkupMarking) {
+		let indexOf = getExistingMarkupIndex(w);
 		if (indexOf !== undefined) {
-			removeAnnotation(w.class, indexOf);
+			removeMarkup(w.class, indexOf);
 		}
 	}
 
-	function removeAnnotation(cls: string[], indexOf: number) {
+	function removeMarkup(cls: string[], indexOf: number) {
 		cls.splice(indexOf, 1);
 		removeClassDecorations(cls);
 	}
@@ -258,13 +262,13 @@
 		}
 	}
 
-	function addAnnotation(cls: string[]) {
-		addColorAnnotation(cls);
+	function addMarkup(cls: string[]) {
+		addColorMarkup(cls);
 		addClassDecorations(cls);
 	}
 
-	function addColorAnnotation(cls: string[]) {
-		cls.push(mode.colorAnnotation);
+	function addColorMarkup(cls: string[]) {
+		cls.push(mode.colorMarkup);
 	}
 
 	function addClassDecorations(cls: string[]) {
@@ -273,12 +277,12 @@
 		}
 	}
 
-	function updateAnnotation(w: WordAnnots) {
-		let indexOf = getExistingAnnotationIndex(w);
+	function updateMarkup(w: BibleTextMarkupMarking) {
+		let indexOf = getExistingMarkupIndex(w);
 		if (indexOf !== undefined) {
-			removeAnnotation(w.class, indexOf);
+			removeMarkup(w.class, indexOf);
 		} else {
-			addAnnotation(w.class);
+			addMarkup(w.class);
 		}
 	}
 
@@ -353,14 +357,14 @@
 </script>
 
 {#if wordHasNotes}
-	<span class={wordAnnotations?.class?.join(' ')}>
+	<span class={wordMarkup?.class?.join(' ')}>
 		&nbsp;<KJVButton classes="" onClick={onNotesClicked}>
 			<NoteStack classes="fill-support-a-500"></NoteStack>
 		</KJVButton>
 	</span>
 {/if}{#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
-	<span class={wordAnnotations?.class?.join(' ')}>
-		<span class={wordAnnotations?.class?.join(' ')}>&nbsp;</span><span
+	<span class={wordMarkup?.class?.join(' ')}>
+		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
 			role="button"
 			tabindex="-1"
 			onkeydown={() => {}}
@@ -371,12 +375,12 @@
 			onmouseup={onMouseUpTouchEnd}
 			class="{word.class?.join(' ')} {verseHasReferences
 				? 'vno-refs'
-				: ''} {wordAnnotations?.class?.join(' ')}">{word.text}</span
+				: ''} {wordMarkup?.class?.join(' ')}">{word.text}</span
 		></span
 	>
 {:else if mode.value === BIBLE_MODES.EDIT}
-	<span class=" {wordAnnotations?.class?.join(' ')}">
-		<span class={wordAnnotations?.class?.join(' ')}>&nbsp;</span><span
+	<span class=" {wordMarkup?.class?.join(' ')}">
+		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
 			tabindex="-1"
 			role="button"
 			onkeydown={() => {}}
@@ -385,13 +389,13 @@
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
 			onclick={onEditClick}
-			class="{word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}"
+			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"
 			>{word.text}</span
 		></span
 	>
 {:else}
-	<span class=" {wordAnnotations?.class?.join(' ')}">
-		<span class={wordAnnotations?.class?.join(' ')}>&nbsp;</span><span
+	<span class=" {wordMarkup?.class?.join(' ')}">
+		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
 			tabindex="-1"
 			role="button"
 			onkeydown={() => {}}
@@ -399,7 +403,7 @@
 			ontouchend={onMouseUpTouchEnd}
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
-			class="{word.class?.join(' ')} {wordAnnotations?.class?.join(' ')}"
+			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"
 			>{word.text}</span
 		></span
 	>

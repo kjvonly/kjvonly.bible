@@ -18,8 +18,6 @@
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
-	// RESOURCE SELECTION
-	import { requireResourceSelection } from '$lib/application/resources/resource-selections';
 	import { BIBLE_SEARCH_RESOURCE_TYPE } from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
 
 	import type {
@@ -30,7 +28,10 @@
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
-	const { searchService } =
+	const {
+		searchService,
+		moduleResourceSelectionResolver
+	} =
 		useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -61,23 +62,9 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		const owningPane =
-			pane ??
-			paneService.findNode(
-				paneService.rootPane,
-				paneID
-			);
-
-		if (!owningPane) {
-			throw new Error(
-				`Search Pane not found: ${paneID}`
-			);
-		}
-
 		searchSource =
-			requireResourceSelection(
-				owningPane.buffer
-					.resourceSelections,
+			moduleResourceSelectionResolver.require(
+				paneID,
 				BIBLE_SEARCH_RESOURCE_TYPE
 			);
 

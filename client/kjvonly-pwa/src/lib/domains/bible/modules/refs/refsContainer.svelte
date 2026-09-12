@@ -26,8 +26,8 @@
 	} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
 import {
-	requireResourceSelection
-} from '$lib/application/resources/resource-selections';
+	useApplicationContext
+} from '$lib/application/runtime/application-context';
 
 import {
 	isCrossReference,
@@ -35,6 +35,10 @@ import {
 	isStrongsReference,
 	tokenizeReferences
 } from '../../services/reference-tokenizer.service';
+
+	const {
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -59,9 +63,8 @@ import {
 	let bibleVersion: string = $state('');
 
 	const strongsSource =
-	requireResourceSelection(
-		pane.buffer
-			.resourceSelections,
+	moduleResourceSelectionResolver.require(
+		paneID,
 		STRONGS_RESOURCE_TYPE
 	);
 

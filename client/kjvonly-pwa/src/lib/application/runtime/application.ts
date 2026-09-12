@@ -43,6 +43,34 @@ import {
 } from '$lib/application/resources/module-resource-selection-builder';
 
 import {
+    BibleModuleResourceSelectionContributor
+} from '$lib/domains/bible/resources/bible-module-resource-selection-contributor';
+
+import {
+    SearchModuleResourceSelectionContributor
+} from '$lib/domains/bible/resources/search/search-module-resource-selection-contributor';
+
+import {
+    StrongsModuleResourceSelectionContributor
+} from '$lib/domains/strongs/resources/strongs-module-resource-selection-contributor';
+
+import {
+    NotesModuleResourceSelectionContributor
+} from '$lib/domains/notes/resources/notes-module-resource-selection-contributor';
+
+import {
+    PlansModuleResourceSelectionContributor
+} from '$lib/domains/reading-plans/resources/plans-module-resource-selection-contributor';
+
+import {
+    NoResourceModuleResourceSelectionContributor
+} from '$lib/application/resources/no-resource-module-resource-selection-contributor';
+
+import {
+    Modules
+} from '$lib/application/models/modules.model';
+
+import {
     ModuleBufferFactory
 } from '$lib/application/runtime/buffer/module-buffer-factory';
 
@@ -61,6 +89,42 @@ import type {
 import type {
     ResourceInstallResult
 } from '$lib/resource/services/resource-install-result';
+
+import {
+    AuthenticationService
+} from '$lib/application/services/authentication.service';
+
+import {
+    IndexedDBOutboxStore
+} from '$lib/resource/outbox/indexeddb-outbox-store';
+
+import {
+    OutboxProcessor
+} from '$lib/resource/outbox/outbox-processor';
+
+import {
+    NostrResourcePublisher
+} from '$lib/resource/nostr/nostr-resource-publisher';
+
+import {
+    ResourceContentEncoder
+} from '$lib/resource/content/resource-content-encoder';
+
+import {
+    ResourceContentDecoratorBuilder
+} from '$lib/resource/content/resource-content-decorator-builder';
+
+import {
+    JsonResourceContentDecorator
+} from '$lib/resource/content/json-resource-content-decorator';
+
+import {
+    GzipResourceContentDecorator
+} from '$lib/resource/content/gzip-resource-content-decorator';
+
+import {
+    HexResourceContentDecorator
+} from '$lib/resource/content/hex-resource-content-decorator';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Resource Types
@@ -107,6 +171,22 @@ import {
 import {
     PericopesService
 } from '$lib/domains/bible/services/pericopes.service';
+
+import {
+    IndexedDBBibleTextMarkupStore
+} from '$lib/domains/bible/persistence/indexeddb-bible-text-markup-store';
+
+import {
+    IndexedDBBibleTextMarkupWriteTransaction
+} from '$lib/domains/bible/persistence/bible-text-markup-write-transaction';
+
+import {
+    BibleTextMarkupService
+} from '$lib/domains/bible/services/bible-text-markup.service';
+
+import {
+    BibleTextMarkupResourcePublication
+} from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-publication';
 
 import {
     IndexedDBBibleBooknamesStore
@@ -222,10 +302,21 @@ export class Application {
     private readonly resourceWorkerClient:
         ResourceWorkerClient;
 
+    private readonly outboxProcessor:
+        OutboxProcessor;
+
     constructor(
         private readonly config:
             ApplicationConfig
     ) {
+
+        ///////////////////////////////////////////////////////////////////////
+        // Authentication
+
+        const authenticationService =
+            new AuthenticationService(
+                localStorage
+            );
 
         ///////////////////////////////////////////////////////////////////////
         // Nostr
@@ -252,6 +343,69 @@ export class Application {
             new ResourceDiscovery(
                 resourceClient
             );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Outbox
+
+        const resourceContentDecoratorBuilder =
+            new ResourceContentDecoratorBuilder([
+                {
+                    token:
+                        'application/json',
+
+                    decorate:
+                        (inner) =>
+                            new JsonResourceContentDecorator(
+                                inner
+                            )
+                },
+                {
+                    token:
+                        'gzip',
+
+                    decorate:
+                        (inner) =>
+                            new GzipResourceContentDecorator(
+                                inner
+                            )
+                },
+                {
+                    token:
+                        'hex',
+
+                    decorate:
+                        (inner) =>
+                            new HexResourceContentDecorator(
+                                inner
+                            )
+                }
+            ]);
+
+        const resourceContentEncoder =
+            new ResourceContentEncoder(
+                resourceContentDecoratorBuilder
+            );
+
+        const resourcePublisher =
+            new NostrResourcePublisher(
+                nostrSigner,
+                resourceClient,
+                resourceContentEncoder
+            );
+
+        const outboxStore =
+            new IndexedDBOutboxStore(
+                getApplicationDB
+            );
+
+        const outboxProcessor =
+            new OutboxProcessor(
+                outboxStore,
+                resourcePublisher
+            );
+
+        this.outboxProcessor =
+            outboxProcessor;
 
         ///////////////////////////////////////////////////////////////////////
         // Resource Worker
@@ -347,7 +501,34 @@ export class Application {
 
         const moduleResourceSelectionBuilder =
             new ModuleResourceSelectionBuilder(
-                resourceSelectionService
+                resourceSelectionService,
+                [
+                    new BibleModuleResourceSelectionContributor(
+                        authenticationService
+                    ),
+                    new SearchModuleResourceSelectionContributor(),
+                    new StrongsModuleResourceSelectionContributor(),
+                    new NotesModuleResourceSelectionContributor(),
+                    new PlansModuleResourceSelectionContributor(),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.MODULES
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.USER_GUIDE
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.LOGIN
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.SETTINGS
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.NULL
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.PROFILE
+                    )
+                ]
             );
 
         const moduleBufferFactory =
@@ -449,6 +630,34 @@ export class Application {
                 pericopesResourceLoader
             );
 
+        const bibleTextMarkupStore =
+            new IndexedDBBibleTextMarkupStore(
+                getApplicationDB
+            );
+
+        const bibleTextMarkupResourceLoader =
+            new ResourceLoader<string>(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
+        const bibleTextMarkupWriteTransaction =
+            new IndexedDBBibleTextMarkupWriteTransaction(
+                getApplicationDB
+            );
+
+        const bibleTextMarkupResourcePublication =
+            new BibleTextMarkupResourcePublication();
+
+        const bibleTextMarkupService =
+            new BibleTextMarkupService(
+                bibleTextMarkupStore,
+                bibleTextMarkupResourceLoader,
+                bibleTextMarkupWriteTransaction,
+                bibleTextMarkupResourcePublication,
+                outboxProcessor
+            );
+
         const bibleBooknamesStore =
             new IndexedDBBibleBooknamesStore(
                 getApplicationDB
@@ -518,6 +727,8 @@ export class Application {
          * resource.worker.ts.
          */
         this.context = {
+            authenticationService,
+
             nostrSigner,
 
             resourceClient,
@@ -533,6 +744,7 @@ export class Application {
             chapterService,
             paragraphsService,
             pericopesService,
+            bibleTextMarkupService,
             bibleBooknamesService,
             searchService,
             verseService,
@@ -634,6 +846,14 @@ export class Application {
                     this.config
                         .resourceRelays
                 );
+
+            /*
+             * Pending outbound Resources are durable.
+             * Startup only needs to wake the Outbox after
+             * signing and relay configuration are ready.
+             */
+            this.outboxProcessor
+                .wake();
 
             /*
              * The application is interactive before

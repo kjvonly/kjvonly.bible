@@ -38,10 +38,6 @@
 	} = useApplicationContext();
 
 	import {
-		requireResourceSelection
-	} from '$lib/application/resources/resource-selections';
-
-	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
 	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
@@ -121,17 +117,8 @@
 	}
 
 	function requireChapterSelection() {
-		const pane = paneService.findNode(
-			paneService.rootPane,
-			paneID
-		);
-
-		if (!pane) {
-			throw new Error(`Refs Pane not found: ${paneID}`);
-		}
-
-		return requireResourceSelection(
-			pane.buffer.resourceSelections,
+		return moduleResourceSelectionResolver.require(
+			paneID,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 	}

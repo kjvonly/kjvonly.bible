@@ -14,14 +14,16 @@
 	// MODELS
 	import {
 		BIBLE_MODES,
-		newAnnotation,
-		newBibleMode,
-		type Annotations
+		newBibleMode
 	} from '$lib/domains/bible/models/bible.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type {
+		BibleTextMarkup
+	} from '$lib/domains/bible/models/bible-text-markup.model';
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// OTHER
 	import uuid4 from 'uuid4';
@@ -43,16 +45,16 @@ import type {
 } from '$lib/domains/bible/models/bible-version.model';
 
 import {
-	requireResourceSelection
-} from '$lib/application/resources/resource-selections';
-
-import {
 	parseResourceIdentifier
 } from '$lib/resource/utils/resource-identifier';
 
 import {
 	createBibleVersionId
 } from '$lib/domains/bible/utils/bible-identity';
+
+	const {
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 	// =============================== BINDINGS ================================
 
 	let {
@@ -65,16 +67,19 @@ import {
 
 	// ================================= VARS ==================================
 
-	let annotations: Annotations = $state(newAnnotation());
+	let textMarkup: BibleTextMarkup = $state({
+		id: '',
+		chapterRef: '',
+		markings: {}
+	});
 	let bibleLocationRef: string = $state('');
 
 	let bibleVersion:
 		string =
 		$state(
 			getBibleVersionId(
-				requireResourceSelection(
-					pane.buffer
-						.resourceSelections,
+				moduleResourceSelectionResolver.require(
+					paneID,
 					BIBLE_CHAPTER_RESOURCE_TYPE
 				)
 			)
@@ -261,7 +266,7 @@ import {
 					bind:id
 					bind:pane
 					bind:mode
-					bind:annotations
+					bind:textMarkup
 					{lastKnownScrollPosition}
 				></Chapter>
 			</div>
@@ -289,7 +294,12 @@ import {
 					class="sticky z-10"
 				>
 					<div class="absolute bottom-0 w-full">
-						<EditOptions bind:mode bind:annotations></EditOptions>
+						<EditOptions
+							bind:mode
+							bind:textMarkup
+							{paneID}
+							{bibleLocationRef}
+						></EditOptions>
 					</div>
 				</div>
 			{/if}

@@ -155,6 +155,29 @@ import {
 } from '$lib/domains/bible/resources/pericopes/bible-pericopes-resource-handler';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Bible Text Markup
+
+import {
+	IndexedDBBibleTextMarkupInstallationTransaction
+} from '$lib/domains/bible/persistence/bible-text-markup-installation-transaction';
+
+import {
+	BibleTextMarkupInstaller
+} from '$lib/domains/bible/resources/text-markup/bible-text-markup-installer';
+
+import {
+	BibleTextMarkupInterpreter
+} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+
+import {
+	BibleTextMarkupValidator
+} from '$lib/domains/bible/resources/text-markup/bible-text-markup-validator';
+
+import {
+	BibleTextMarkupResourceHandler
+} from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-handler';
+
+///////////////////////////////////////////////////////////////////////////////
 // Bible Search Index
 
 import {
@@ -405,6 +428,23 @@ function createResourceHandlers():
 			biblePericopesInstaller
 		);
 
+	const bibleTextMarkupInstallationTransaction =
+		new IndexedDBBibleTextMarkupInstallationTransaction(
+			getApplicationDB
+		);
+
+	const bibleTextMarkupInstaller =
+		new BibleTextMarkupInstaller(
+			bibleTextMarkupInstallationTransaction
+		);
+
+	const bibleTextMarkupResourceHandler =
+		new BibleTextMarkupResourceHandler(
+			new BibleTextMarkupInterpreter(),
+			new BibleTextMarkupValidator(),
+			bibleTextMarkupInstaller
+		);
+
 	const bibleSearchIndexInstallationTransaction =
 		new IndexedDBBibleSearchIndexInstallationTransaction(
 			getApplicationDB
@@ -444,6 +484,7 @@ function createResourceHandlers():
 		bibleBooknamesResourceHandler,
 		bibleParagraphsResourceHandler,
 		biblePericopesResourceHandler,
+		bibleTextMarkupResourceHandler,
 		bibleSearchIndexResourceHandler,
 		strongsResourceHandler
 	];

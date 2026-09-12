@@ -3,7 +3,15 @@ import { newAnnotation, type Annotations } from '$lib/domains/bible/models/bible
 import { bibleStorer } from '$lib/domains/bible/persistence/bible.storer';
 import { ANNOTATIONS } from '$lib/domains/bible/persistence/bible.db';
 
+type AnnotationSubscriber = {
+  subscriberID: string;
+  annotationID: string;
+  fn: (annotations: Annotations) => void;
+};
+
 export class AnnotsService {
+  private subscribers: AnnotationSubscriber[] = [];
+
   async get(bibleLocationRef: string): Promise<Annotations> {
     try {
       return await annotsApi.getAnnotations(bibleLocationRef);
@@ -13,7 +21,36 @@ export class AnnotsService {
   }
 
   async put(annots: Annotations): Promise<Annotations> {
-    return await annotsApi.putAnnotations(annots)
+    const saved = await annotsApi.putAnnotations(annots);
+
+    if (saved !== undefined) {
+      this.notify(saved);
+    }
+
+    return saved;
+  }
+
+  subscribe(
+    subscriberID: string,
+    annotationID: string,
+    fn: (annotations: Annotations) => void
+  ) {
+    this.unsubscribe(subscriberID);
+    this.subscribers.push({ subscriberID, annotationID, fn });
+  }
+
+  unsubscribe(subscriberID: string) {
+    this.subscribers = this.subscribers.filter(
+      (subscriber) => subscriber.subscriberID !== subscriberID
+    );
+  }
+
+  private notify(annotations: Annotations) {
+    this.subscribers.forEach((subscriber) => {
+      if (subscriber.annotationID === annotations.id) {
+        subscriber.fn(annotations);
+      }
+    });
   }
 
   // TODO update import export

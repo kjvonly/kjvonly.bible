@@ -29,10 +29,6 @@
 	} = useApplicationContext();
 
 	import {
-		requireResourceSelection
-	} from '$lib/application/resources/resource-selections';
-
-	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
 	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
@@ -172,17 +168,8 @@
 	async function searchResultIndexToSearchResult(
 		bibleLocationRef: string
 	): Promise<SearchResult | undefined> {
-		const pane = paneService.findNode(
-			paneService.rootPane,
-			paneID
-		);
-
-		if (!pane) {
-			throw new Error(`Search Pane not found: ${paneID}`);
-		}
-
-		const source = requireResourceSelection(
-			pane.buffer.resourceSelections,
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 

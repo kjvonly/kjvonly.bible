@@ -9,32 +9,13 @@ import {
 } from '$lib/application/models/modules.model';
 
 import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
-
-import type {
 	ResourceSelections
 } from './resource-selections';
 
-import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-	BIBLE_PARAGRAPHS_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
-
-import {
-	BIBLE_PERICOPES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
-
-import {
-	BIBLE_SEARCH_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
-
-import {
-	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+import type {
+	ModuleResourceSelectionBuildContext,
+	ModuleResourceSelectionContributor
+} from './module-resource-selection-contributor';
 
 import {
 	ModuleResourceSelectionBuilder,
@@ -45,350 +26,252 @@ describe(
 	'ModuleResourceSelectionBuilder',
 	() => {
 		it(
-			'creates an independent module snapshot from current global selections',
+			'delegates independent module selection construction to the registered contributor',
 			() => {
-				const currentSelections = {
-					[BIBLE_CHAPTER_RESOURCE_TYPE]:
-						createReference(
-							'global-chapters',
-							`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-						),
+				let received:
+					ModuleResourceSelectionBuildContext |
+					undefined;
 
-					[BIBLE_PARAGRAPHS_RESOURCE_TYPE]:
-						createReference(
-							'global-paragraphs',
-							`${BIBLE_PARAGRAPHS_RESOURCE_TYPE}/default`
-						),
-
-					[BIBLE_PERICOPES_RESOURCE_TYPE]:
-						createReference(
-							'global-pericopes',
-							`${BIBLE_PERICOPES_RESOURCE_TYPE}/default`
-						),
-
-					[STRONGS_RESOURCE_TYPE]:
-						createReference(
-							'global-strongs',
-							`${STRONGS_RESOURCE_TYPE}/kjvs`
-						),
-
-					[BIBLE_SEARCH_RESOURCE_TYPE]:
-						createReference(
-							'global-search',
-							`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
-						)
+				const result = {
+					'test/resource': {
+						publisher: 'publisher',
+						resourceId: 'test/resource/default'
+					}
 				};
 
 				const builder =
-					createBuilder(
-						currentSelections
-					);
-
-				expect(
-					builder.independent(
-						Modules.BIBLE
-					)
-				).toEqual({
-					[BIBLE_CHAPTER_RESOURCE_TYPE]:
-						currentSelections[
-							BIBLE_CHAPTER_RESOURCE_TYPE
-						],
-
-					[BIBLE_PARAGRAPHS_RESOURCE_TYPE]:
-						currentSelections[
-							BIBLE_PARAGRAPHS_RESOURCE_TYPE
-						],
-
-					[BIBLE_PERICOPES_RESOURCE_TYPE]:
-						currentSelections[
-							BIBLE_PERICOPES_RESOURCE_TYPE
-						],
-
-					[STRONGS_RESOURCE_TYPE]:
-						currentSelections[
-							STRONGS_RESOURCE_TYPE
-						]
-				});
-			}
-		);
-
-		it(
-			'does not copy Resource Types the target module does not require',
-			() => {
-				const builder =
-					createBuilder({
-						[BIBLE_CHAPTER_RESOURCE_TYPE]:
-							createReference(
-								'chapters',
-								`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-							),
-
-						[BIBLE_SEARCH_RESOURCE_TYPE]:
-							createReference(
-								'search',
-								`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
+					new ModuleResourceSelectionBuilder(
+						createSnapshotProvider({
+							'global/resource': {
+								publisher: 'global',
+								resourceId: 'global/resource/default'
+							}
+						}),
+						[
+							createContributor(
+								Modules.BIBLE,
+								context => {
+									received = context;
+									return result;
+								}
 							)
-					});
+						]
+					);
 
-				const selections =
+				expect(
 					builder.independent(
 						Modules.BIBLE
-					);
-
-				expect(
-					selections[
-						BIBLE_SEARCH_RESOURCE_TYPE
-					]
-				).toBeUndefined();
-			}
-		);
-
-		it(
-			'prefers originating Buffer selections when creating a related module',
-			() => {
-				const globalChapter =
-					createReference(
-						'global-chapters',
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-					);
-
-				const globalSearch =
-					createReference(
-						'global-search',
-						`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
-					);
-
-				const originatingChapter =
-					createReference(
-						'origin-chapters',
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
-					);
-
-				const builder =
-					createBuilder({
-						[BIBLE_CHAPTER_RESOURCE_TYPE]:
-							globalChapter,
-
-						[BIBLE_SEARCH_RESOURCE_TYPE]:
-							globalSearch
-					});
-
-				expect(
-					builder.related(
-						Modules.SEARCH,
-						{
-							[BIBLE_CHAPTER_RESOURCE_TYPE]:
-								originatingChapter
-						}
 					)
-				).toEqual({
-					[BIBLE_SEARCH_RESOURCE_TYPE]:
-						globalSearch,
+				).toBe(result);
 
-					[BIBLE_CHAPTER_RESOURCE_TYPE]:
-						originatingChapter
+				expect(
+					received
+				).toEqual({
+					originatingSelections: {},
+					currentSelections: {
+						'global/resource': {
+							publisher: 'global',
+							resourceId: 'global/resource/default'
+						}
+					}
 				});
 			}
 		);
 
 		it(
-			'uses the current global selection when the originating Buffer lacks a required Resource Type',
+			'passes originating Buffer selections to the contributor for related module construction',
 			() => {
-				const globalSearch =
-					createReference(
-						'global-search',
-						`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
-					);
+				let received:
+					ModuleResourceSelectionBuildContext |
+					undefined;
 
-				const builder =
-					createBuilder({
-						[BIBLE_SEARCH_RESOURCE_TYPE]:
-							globalSearch
-					});
-
-				expect(
-					builder.related(
-						Modules.SEARCH,
-						{}
-					)[
-						BIBLE_SEARCH_RESOURCE_TYPE
-					]
-				).toEqual(
-					globalSearch
-				);
-			}
-		);
-
-		it(
-			'keeps a missing required selection missing when neither source contains it',
-			() => {
-				const builder =
-					createBuilder({});
-
-				const selections =
-					builder.related(
-						Modules.BIBLE,
-						{}
-					);
-
-				expect(
-					selections
-				).toEqual({});
-			}
-		);
-
-		it(
-			'does not copy unrelated originating Buffer selections',
-			() => {
-				const originatingSearch =
-					createReference(
-						'origin-search',
-						`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
-					);
-
-				const builder =
-					createBuilder({});
-
-				const selections =
-					builder.related(
-						Modules.BIBLE,
-						{
-							[BIBLE_SEARCH_RESOURCE_TYPE]:
-								originatingSearch
-						}
-					);
-
-				expect(
-					selections[
-						BIBLE_SEARCH_RESOURCE_TYPE
-					]
-				).toBeUndefined();
-			}
-		);
-
-		it(
-			'copies references into the module snapshot',
-			() => {
-				const chapter =
-					createReference(
-						'publisher',
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-					);
-
-				const builder =
-					createBuilder({
-						[BIBLE_CHAPTER_RESOURCE_TYPE]:
-							chapter
-					});
-
-				const selections =
-					builder.independent(
-						Modules.BIBLE
-					);
-
-				expect(
-					selections[
-						BIBLE_CHAPTER_RESOURCE_TYPE
-					]
-				).toEqual(
-					chapter
-				);
-
-				expect(
-					selections[
-						BIBLE_CHAPTER_RESOURCE_TYPE
-					]
-				).not.toBe(
-					chapter
-				);
-			}
-		);
-
-		it(
-			'asks for a fresh global snapshot for each module creation',
-			() => {
-				const firstChapter =
-					createReference(
-						'publisher-a',
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
-					);
-
-				const secondChapter =
-					createReference(
-						'publisher-b',
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
-					);
-
-				let current =
-					firstChapter;
-
-				const provider:
-					ResourceSelectionSnapshotProvider = {
-						snapshot() {
-							return {
-								[BIBLE_CHAPTER_RESOURCE_TYPE]:
-									current
-							};
-						}
-					};
+				const originatingSelections = {
+					'origin/resource': {
+						publisher: 'origin',
+						resourceId: 'origin/resource/default'
+					}
+				};
 
 				const builder =
 					new ModuleResourceSelectionBuilder(
-						provider
+						createSnapshotProvider({}),
+						[
+							createContributor(
+								Modules.SEARCH,
+								context => {
+									received = context;
+									return {};
+								}
+							)
+						]
 					);
 
-				const first =
-					builder.independent(
-						Modules.BIBLE
-					);
-
-				current =
-					secondChapter;
-
-				const second =
-					builder.independent(
-						Modules.BIBLE
-					);
-
-				expect(
-					first[
-						BIBLE_CHAPTER_RESOURCE_TYPE
-					]
-				).toEqual(
-					firstChapter
+				builder.related(
+					Modules.SEARCH,
+					originatingSelections
 				);
 
 				expect(
-					second[
-						BIBLE_CHAPTER_RESOURCE_TYPE
-					]
-				).toEqual(
-					secondChapter
+					received?.originatingSelections
+				).toBe(
+					originatingSelections
+				);
+			}
+		);
+
+		it(
+			'applies only the contributor registered for the target module',
+			() => {
+				const bibleBuild =
+					{ count: 0 };
+
+				const searchBuild =
+					{ count: 0 };
+
+				const builder =
+					new ModuleResourceSelectionBuilder(
+						createSnapshotProvider({}),
+						[
+							createContributor(
+								Modules.BIBLE,
+								() => {
+									bibleBuild.count += 1;
+									return {};
+								}
+							),
+							createContributor(
+								Modules.SEARCH,
+								() => {
+									searchBuild.count += 1;
+									return {};
+								}
+							)
+						]
+					);
+
+				builder.independent(
+					Modules.BIBLE
+				);
+
+				expect(
+					bibleBuild.count
+				).toBe(1);
+
+				expect(
+					searchBuild.count
+				).toBe(0);
+			}
+		);
+
+		it(
+			'asks for a fresh global snapshot for every module build',
+			() => {
+				let current =
+					'first';
+
+				const provider:
+					ResourceSelectionSnapshotProvider = {
+					snapshot() {
+						return {
+							[current]: {
+								publisher: current,
+								resourceId: current
+							}
+						};
+					}
+				};
+
+				const observed:
+					ResourceSelections[] =
+					[];
+
+				const builder =
+					new ModuleResourceSelectionBuilder(
+						provider,
+						[
+							createContributor(
+								Modules.BIBLE,
+								context => {
+									observed.push(
+										context.currentSelections
+									);
+									return {};
+								}
+							)
+						]
+					);
+
+				builder.independent(
+					Modules.BIBLE
+				);
+
+				current = 'second';
+
+				builder.independent(
+					Modules.BIBLE
+				);
+
+				expect(
+					Object.keys(
+						observed[0] ?? {}
+					)
+				).toEqual([
+					'first'
+				]);
+
+				expect(
+					Object.keys(
+						observed[1] ?? {}
+					)
+				).toEqual([
+					'second'
+				]);
+			}
+		);
+
+		it(
+			'fails when a module has no registered Resource selection contributor',
+			() => {
+				const builder =
+					new ModuleResourceSelectionBuilder(
+						createSnapshotProvider({}),
+						[]
+					);
+
+				expect(
+					() => builder.independent(
+						Modules.BIBLE
+					)
+				).toThrow(
+					'No Resource selection contributor registered for module'
 				);
 			}
 		);
 	}
 );
 
-function createBuilder(
+function createSnapshotProvider(
 	selections:
 		ResourceSelections
-): ModuleResourceSelectionBuilder {
-	return new ModuleResourceSelectionBuilder({
+): ResourceSelectionSnapshotProvider {
+	return {
 		snapshot() {
 			return {
 				...selections
 			};
 		}
-	});
+	};
 }
 
-function createReference(
-	publisher: string,
-	resourceId: string
-): PublishedResourceReference {
+function createContributor(
+	module: Modules,
+	build: (
+		context:
+			ModuleResourceSelectionBuildContext
+	) => ResourceSelections
+): ModuleResourceSelectionContributor {
 	return {
-		publisher,
-		resourceId
+		module,
+		build
 	};
 }

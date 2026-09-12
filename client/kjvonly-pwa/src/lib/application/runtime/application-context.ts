@@ -30,6 +30,10 @@ import type {
 import type {
     ModuleResourceSelectionResolver
 } from '$lib/application/resources/module-resource-selection-resolver';
+
+import type {
+    AuthenticationService
+} from '$lib/application/services/authentication.service';
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -44,6 +48,10 @@ import type {
 import type {
     PericopesService
 } from '$lib/domains/bible/services/pericopes.service';
+
+import type {
+    BibleTextMarkupService
+} from '$lib/domains/bible/services/bible-text-markup.service';
 
 import type {
     BibleBooknamesService
@@ -71,6 +79,9 @@ import type {
 ///////////////////////////////////////////////////////////////////////////////
 
 export interface ApplicationContext {
+
+    readonly authenticationService:
+    AuthenticationService;
 
     readonly nostrSigner:
     NostrSigner;
@@ -113,6 +124,9 @@ export interface ApplicationContext {
 
     readonly pericopesService:
     PericopesService;
+
+    readonly bibleTextMarkupService:
+    BibleTextMarkupService;
 
     readonly bibleBooknamesService:
     BibleBooknamesService;
