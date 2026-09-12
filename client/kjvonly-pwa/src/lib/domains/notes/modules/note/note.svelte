@@ -136,17 +136,18 @@
 	}
 
 	async function onSave(toastMessage: string) {
-		let savedNote = await notesApi.put(JSON.parse(JSON.stringify(note)));
+		await notesService.put(
+			JSON.parse(
+				JSON.stringify(
+					note
+				)
+			)
+		);
 
-		if (savedNote) {
-			noteID = savedNote.id;
-			note.id = savedNote.id;
-			note.bibleLocationRef = savedNote.bibleLocationRef;
-			note.dateCreated = savedNote.dateCreated;
-			note.dateUpdated = savedNote.dateUpdated;
-			toastService.showToast(toastMessage);
-			notesService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
-		}
+		noteID = note.id;
+		toastService.showToast(
+			toastMessage
+		);
 	}
 
 	async function onAddTag() {

@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+	createNoteIdForSource,
 	parseNotesResourceSource
 } from './notes-resource-source';
 
@@ -26,6 +27,26 @@ describe(
 					name:
 						'default'
 				});
+			}
+		);
+
+		it(
+			'creates an application Note id from the selected Notes source',
+			() => {
+				expect(
+					createNoteIdForSource(
+						{
+							publisher:
+								'publisher',
+
+							resourceId:
+								'kjvonly/notes/entries/default'
+						},
+						'note-1'
+					)
+				).toBe(
+					'publisher/default/note-1'
+				);
 			}
 		);
 

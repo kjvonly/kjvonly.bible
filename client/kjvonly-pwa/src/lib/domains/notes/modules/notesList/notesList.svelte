@@ -34,6 +34,14 @@
 		BIBLE_BOOKNAMES_RESOURCE_TYPE
 	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
+	import {
+		NOTES_RESOURCE_TYPE
+	} from '$lib/domains/notes/resources/note-interpreter';
+
+	import {
+		createNoteIdForSource
+	} from '$lib/domains/notes/resources/notes-resource-source';
+
 	const {
 		verseService,
 		bibleBooknamesService,
@@ -160,7 +168,17 @@
 		const keys = bibleLocationRef?.split('_');
 		let now = Date.now();
 		let newNote: Note;
-		let noteID = uuid4();
+		const notesSource =
+			moduleResourceSelectionResolver.require(
+				mode.paneID,
+				NOTES_RESOURCE_TYPE
+			);
+
+		const noteID =
+			createNoteIdForSource(
+				notesSource,
+				uuid4()
+			);
 		if (!bibleLocationRef || !keys) {
 			newNote = {
 				id: noteID,

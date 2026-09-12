@@ -7,6 +7,10 @@ import {
 } from '$lib/resource/utils/resource-identifier';
 
 import {
+	createNoteId
+} from '$lib/domains/notes/models/note-id';
+
+import {
 	NOTES_RESOURCE_TYPE
 } from './note-interpreter';
 
@@ -46,4 +50,22 @@ export function parseNotesResourceSource(
 		name:
 			identifier.path[0]
 	};
+}
+
+export function createNoteIdForSource(
+	source:
+		PublishedResourceReference,
+	noteId: string
+): string {
+	const {
+		name
+	} = parseNotesResourceSource(
+		source
+	);
+
+	return createNoteId(
+		source.publisher,
+		name,
+		noteId
+	);
 }

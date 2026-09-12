@@ -218,20 +218,6 @@ export class NotesService {
 		);
 	}
 
-	addNote(
-		_id: string,
-		_noteID: string,
-		note: Note
-	): void {
-		void this.ready.then(
-			() => {
-				this.runtime.put(
-					note
-				);
-			}
-		);
-	}
-
 
 	private async loadAcceptedNotes():
 		Promise<void> {
