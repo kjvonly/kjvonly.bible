@@ -20,6 +20,15 @@
 	import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
 
+	// APPLICATION
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+	const {
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
 	// API
 	import { plansApi } from '$lib/nostr/events/plans.nostr';
 
@@ -59,12 +68,37 @@
 
 	async function onGetAllPlans(data: any) {
 		if (data) {
+			const booknamesSource =
+				moduleResourceSelectionResolver.require(
+					paneID,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+			const booknames =
+				await bibleBooknamesService.get(
+					booknamesSource
+				);
+
+			const bookNameLookup =
+				(bookID: string): string =>
+					booknames.booknamesById[bookID] ?? '';
+
 			plansMap = data.plans;
+
+			for (const plan of plansMap.values()) {
+				plan.nestedReadings =
+					encodedReadingsDecoderService.parseEncodedReadings(
+						plan.encodedReadings,
+						bookNameLookup
+					);
+			}
+
 			let cachedPlan = await plansApi.getPlansFromPeopleYouFollow();
 			for (let c of cachedPlan) {
 				let p = cachedPlanToPlan(c);
 				p.nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
-					c.encodedReadings
+					c.encodedReadings,
+					bookNameLookup
 				);
 
 				plansMap.set(p.id, p);

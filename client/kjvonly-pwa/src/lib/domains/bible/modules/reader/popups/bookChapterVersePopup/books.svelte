@@ -16,16 +16,18 @@
 
 	// MODELS
 	import type { Book, BookGrouping } from '$lib/domains/bible/models/bible.model';
+	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
 
 	// SERVICES
 	import { bookGroupingsService } from '$lib/domains/bible/services/bibleMetadata/bookGroupingByBookID.service';
-	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 
 	// =============================== BINDINGS ================================
 	let {
+		booknames,
 		showBookChapterPopup = $bindable<boolean>(),
 		selectedBookID = $bindable<string>()
 	}: {
+		booknames: BibleBooknames;
 		showBookChapterPopup: boolean;
 		selectedBookID: string;
 	} = $props();
@@ -78,14 +80,25 @@
 	}
 
 	function setBookNames(): void {
-		bookNamesSorted = bookNamesByIDService.map
-			.entries()
-			.toArray()
-			.sort((a, b) => Number(a[0]) - Number(b[0]))
+		bookNamesSorted = Object
+			.entries(
+				booknames.booknamesById
+			)
+			.sort(
+				(a, b) =>
+					Number(a[0]) -
+					Number(b[0])
+			)
 			.map((a) => {
-				return { id: a[0], name: a[1] };
+				return {
+					id: a[0],
+					name: a[1]
+				};
 			});
-		filteredBooks = [...bookNamesSorted];
+
+		filteredBooks = [
+			...bookNamesSorted
+		];
 	}
 
 	function setBookGroupings(): void {
@@ -115,7 +128,7 @@
 		showBookByList = false;
 	}
 
-	function onBookSelected(e: Event, bookID: any): void {
+	function onBookSelected(e: Event, bookID: string): void {
 		e.stopPropagation();
 		selectedBookID = bookID;
 	}
@@ -195,7 +208,7 @@
 		{#each filteredBooks as bn}
 			<div class="w-full">
 				<button
-					onclick={(event) => onBookSelected(event, bn)}
+					onclick={(event) => onBookSelected(event, bn.id)}
 					class="hover:bg-primary-100 w-full bg-neutral-50 p-4 text-start"
 					>{bn.name}</button
 				>

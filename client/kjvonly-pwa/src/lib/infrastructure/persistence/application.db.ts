@@ -12,6 +12,11 @@ import type {
 	ResourceReceipt
 } from '$lib/resource/receipts/resource-receipt';
 
+import type {
+	OutboxEntry,
+	OutboxStatus
+} from '$lib/resource/outbox/outbox-entry';
+
 export const DOMAIN_OBJECTS =
 	'domain_objects';
 
@@ -21,14 +26,20 @@ export const RESOURCE_INSTALLATIONS =
 export const RESOURCE_RECEIPTS =
 	'resource_receipts';
 
+export const OUTBOX =
+	'outbox';
+
 export const OBJECT_TYPE_INDEX =
 	'objectType';
+
+export const OUTBOX_STATUS_INDEX =
+	'status';
 
 const DATABASE_NAME =
 	'kjvonly-application';
 
 const DATABASE_VERSION =
-	1;
+	2;
 
 export interface StoredDomainObject {
 	readonly id:
@@ -75,6 +86,19 @@ export interface ApplicationDBSchema
 		value:
 		ResourceReceipt;
 	};
+
+	outbox: {
+		key:
+		string;
+
+		value:
+		OutboxEntry;
+
+		indexes: {
+			status:
+			OutboxStatus;
+		};
+	};
 }
 
 export type ApplicationDB =
@@ -100,36 +124,74 @@ export function getApplicationDB():
 					upgrade(
 						db
 					) {
-						const domainObjects =
+						if (
+							!db.objectStoreNames.contains(
+								DOMAIN_OBJECTS
+							)
+						) {
+							const domainObjects =
+								db.createObjectStore(
+									DOMAIN_OBJECTS,
+									{
+										keyPath:
+											'id'
+									}
+								);
+
+							domainObjects
+								.createIndex(
+									OBJECT_TYPE_INDEX,
+									'objectType'
+								);
+						}
+
+						if (
+							!db.objectStoreNames.contains(
+								RESOURCE_INSTALLATIONS
+							)
+						) {
 							db.createObjectStore(
-								DOMAIN_OBJECTS,
+								RESOURCE_INSTALLATIONS,
 								{
 									keyPath:
 										'id'
 								}
 							);
+						}
 
-						domainObjects
-							.createIndex(
-								OBJECT_TYPE_INDEX,
-								'objectType'
+						if (
+							!db.objectStoreNames.contains(
+								RESOURCE_RECEIPTS
+							)
+						) {
+							db.createObjectStore(
+								RESOURCE_RECEIPTS,
+								{
+									keyPath:
+										'id'
+								}
 							);
+						}
 
-						db.createObjectStore(
-							RESOURCE_INSTALLATIONS,
-							{
-								keyPath:
-									'id'
-							}
-						);
+						if (
+							!db.objectStoreNames.contains(
+								OUTBOX
+							)
+						) {
+							const outbox =
+								db.createObjectStore(
+									OUTBOX,
+									{
+										keyPath:
+											'id'
+									}
+								);
 
-						db.createObjectStore(
-							RESOURCE_RECEIPTS,
-							{
-								keyPath:
-									'id'
-							}
-						);
+							outbox.createIndex(
+								OUTBOX_STATUS_INDEX,
+								'status'
+							);
+						}
 					}
 				}
 			);

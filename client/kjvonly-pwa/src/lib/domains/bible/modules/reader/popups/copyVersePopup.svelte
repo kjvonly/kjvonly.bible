@@ -9,7 +9,6 @@
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// COMPONENTS
@@ -31,12 +30,18 @@
 		useApplicationContext
 	} from '$lib/application/runtime/application-context';
 
-	import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
 	const {
-		chapterService
+		chapterService,
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
 
@@ -46,13 +51,11 @@
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		showCopyVersePopup = $bindable<boolean>(),
-		chapterSource,
 		paneID
 	}: {
 		bibleLocationRef: string;
 		bibleVersion: string;
 		showCopyVersePopup: boolean;
-		chapterSource: PublishedResourceReference;
 		paneID: string;
 	} = $props();
 
@@ -72,8 +75,10 @@
 
 	onMount(async () => {
 		closePopupOnInvalidBibleLocationReference();
-		setTitle();
-		await loadVerses();
+		await Promise.all([
+			setTitle(),
+			loadVerses()
+		]);
 		initializeCheckedVersesByIdMap();
 		setSortedAscVersesKeys();
 	});
@@ -88,16 +93,18 @@
 
 	// ================================ FUNCS ==================================
 	async function loadVerses() {
-		const chapter =
-			await chapterService.get(
-				chapterSource,
-				bibleLocationRef
-			);
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		);
 
-		verses =
-			chapter.verses;
+		const chapter = await chapterService.get(
+			source,
+			bibleLocationRef
+		);
+
+		verses = chapter.verses;
 	}
-	
 
 	function setSortedAscVersesKeys() {
 		verseNumbers = Object.keys(verses).sort((a, b) => {
@@ -109,11 +116,36 @@
 		checked = Array<boolean>(Object.keys(verses).length);
 	}
 
-	function setTitle() {
-		let bookID = bibleLocationReferenceService.extractBookID(bibleLocationRef);
-		let bookName = bookNamesByIDService.get(bookID);
-		let chapterNumber =
-			bibleLocationReferenceService.extractChapter(bibleLocationRef);
+	async function setTitle(): Promise<void> {
+		const bookID =
+			bibleLocationReferenceService
+				.extractBookID(
+					bibleLocationRef
+				);
+
+		const source =
+			moduleResourceSelectionResolver
+				.require(
+					paneID,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+		const booknames =
+			await bibleBooknamesService.get(
+				source
+			);
+
+		const bookName =
+			booknames.booknamesById[
+				bookID
+			] ?? '';
+
+		const chapterNumber =
+			bibleLocationReferenceService
+				.extractChapter(
+					bibleLocationRef
+				);
+
 		title = `${bookName} ${chapterNumber}`;
 	}
 

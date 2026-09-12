@@ -18,20 +18,26 @@
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
+	import type { NoteTag } from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
-	import { notesService } from '$lib/domains/notes/services/notes.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { toastService } from '$lib/application/services/toast.service';
-
-	// APIS
-	import { notesApi } from '$lib/nostr/events/notes.nostr';
 
 	// OTHER
 	import Quill from 'quill';
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
 	import { findElement } from '$lib/application/ui/eventHandlers';
+
+	// APPLICATION
+	import {
+		useApplicationContext
+	} from '$lib/application/runtime/application-context';
+
+	const {
+		notesService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -121,24 +127,26 @@
 	// ============================== CLICK FUNCS ==============================
 
 	async function onConfirmDelete() {
-		notesApi.delete(noteID);
-		notesService.deleteNote('*', note.id);
+		await notesService.delete(
+			note.id
+		);
+
 		note = undefined;
 	}
 
 	async function onSave(toastMessage: string) {
-		let savedNote = await notesApi.put(JSON.parse(JSON.stringify(note)));
+		await notesService.put(
+			JSON.parse(
+				JSON.stringify(
+					note
+				)
+			)
+		);
 
-		if (savedNote) {
-			noteID = savedNote.id;
-			note.id = savedNote.id;
-			note.bibleLocationRef = savedNote.bibleLocationRef;
-			note.version = savedNote.version;
-			note.dateCreated = savedNote.dateCreated;
-			note.dateUpdated = savedNote.dateUpdated;
-			toastService.showToast(toastMessage);
-			notesService.addNote('*', noteID, JSON.parse(JSON.stringify(note)));
-		}
+		noteID = note.id;
+		toastService.showToast(
+			toastMessage
+		);
 	}
 
 	async function onAddTag() {
@@ -167,7 +175,7 @@
 
 	function onDeleteTag(tagID: string) {
 		if (note) {
-			note.tags = note.tags.filter((t: any) => {
+			note.tags = note.tags.filter((t: NoteTag) => {
 				if (t.id !== tagID) {
 					return t;
 				}

@@ -30,6 +30,9 @@ const EVENT_ID =
 const RESOURCE_ID =
 	'kjvonly/bible/chapters/kjv/1_1';
 
+const SECOND_RESOURCE_ID =
+	'kjvonly/bible/chapters/kjv/1_2';
+
 describe(
 	'ResourceDiscovery',
 	() => {
@@ -176,12 +179,129 @@ describe(
 				});
 			}
 		);
+		it(
+			'queries current Published Resources by publisher and Resource Type',
+			async () => {
+				const getEvents =
+					vi.fn<
+						ResourceClient[
+							'getEvents'
+						]
+					>(
+						async () => [
+							createResourceEvent()
+						]
+					);
+
+				const discovery =
+					new ResourceDiscovery(
+						createResourceClient(
+							undefined,
+							getEvents
+						)
+					);
+
+				await discovery.listByType(
+					PUBLISHER,
+					'kjvonly/bible/chapters'
+				);
+
+				expect(
+					getEvents
+				).toHaveBeenCalledWith({
+					kinds: [
+						RESOURCE_KIND
+					],
+
+					authors: [
+						PUBLISHER
+					],
+
+					'#t': [
+						'kjvonly/bible/chapters'
+					]
+				});
+			}
+		);
+
+		it(
+			'keeps only the newest Resource for each Resource id when relays return multiple addressable-event versions',
+			async () => {
+				const newest =
+					createResourceEvent({
+						id:
+							'd'.repeat(64),
+						createdAt:
+							200
+					});
+
+				const older =
+					createResourceEvent({
+						id:
+							'e'.repeat(64),
+						createdAt:
+							100
+					});
+
+				const second =
+					createResourceEvent({
+						id:
+							'f'.repeat(64),
+						resourceId:
+							SECOND_RESOURCE_ID,
+						createdAt:
+							150
+					});
+
+				const discovery =
+					new ResourceDiscovery(
+						createResourceClient(
+							undefined,
+							async () => [
+								older,
+								second,
+								newest
+							]
+						)
+					);
+
+				const result =
+					await discovery.listByType(
+						PUBLISHER,
+						'kjvonly/bible/chapters'
+					);
+
+				expect(
+					result.map(
+						(resource) => [
+							resource.resourceId,
+							resource.eventId
+						]
+					)
+				).toEqual([
+					[
+						RESOURCE_ID,
+						newest.id
+					],
+					[
+						SECOND_RESOURCE_ID,
+						second.id
+					]
+				]);
+			}
+		);
+
 	}
 );
 
 function createResourceClient(
 	getEvent:
-		ResourceClient['getEvent']
+		ResourceClient['getEvent'] =
+			async () => null,
+
+	getEvents:
+		ResourceClient['getEvents'] =
+			async () => []
 ): ResourceClient {
 	return {
 		setDefaultRelays:
@@ -189,8 +309,7 @@ function createResourceClient(
 
 		getEvent,
 
-		getEvents:
-			async () => [],
+		getEvents,
 
 		publishEvent:
 			async () => {
@@ -210,16 +329,23 @@ function createResourceClient(
 	};
 }
 
-function createResourceEvent():
-	Event {
+function createResourceEvent(
+	overrides: {
+		readonly id?: string;
+		readonly resourceId?: string;
+		readonly createdAt?: number;
+	} = {}
+): Event {
 	return {
 		id:
+			overrides.id ??
 			EVENT_ID,
 
 		pubkey:
 			PUBLISHER,
 
 		created_at:
+			overrides.createdAt ??
 			123456,
 
 		kind:
@@ -228,7 +354,8 @@ function createResourceEvent():
 		tags: [
 			[
 				'd',
-				RESOURCE_ID
+				overrides.resourceId ??
+					RESOURCE_ID
 			],
 			[
 				't',

@@ -237,9 +237,6 @@ describe(
 						resourceId:
 							'kjvonly/bible/chapters/kjvs',
 
-						eventId:
-							'event-id',
-
 						modifiedAt:
 							123456
 					};

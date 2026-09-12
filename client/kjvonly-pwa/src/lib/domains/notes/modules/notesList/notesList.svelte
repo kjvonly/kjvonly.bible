@@ -2,16 +2,15 @@
 	// ================================ IMPORTS ================================
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
+	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
 	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
-	import { shortBookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/shortBookNamesByID.service';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Bible from '$lib/components/svgs/bible.svelte';
@@ -24,10 +23,30 @@
 	import ClearFilter from '$lib/components/svgs/clearFilter.svelte';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 
-	// NOSTR IMPL
-    import { useApplicationContext } from '$lib/application/runtime/application-context';
-	const { verseService } = useApplicationContext();
+	// APPLICATION
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
+	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+
+	import {
+		NOTES_RESOURCE_TYPE
+	} from '$lib/domains/notes/resources/note-interpreter';
+
+	import {
+		createNoteIdForSource
+	} from '$lib/domains/notes/resources/notes-resource-source';
+
+	const {
+		verseService,
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 
 
 	// =============================== BINDINGS ================================
@@ -47,13 +66,13 @@
 		mode: any;
 		filterInput: string;
 		noteKeys: string[];
-		notes: any;
-		note: any;
+		notes: NotesById;
+		note: Note | undefined;
 		allNotes: boolean;
 		filterParams: any;
 		noteIDToOpen: string;
 		onFilterInputChanged: any;
-		onAddNewNote: any;
+		onAddNewNote: (note: Note) => void;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -91,6 +110,10 @@
 		let data: any = {};
 		noteKeys.forEach((k) => {
 			let n = notes[k];
+			if (!n.bibleLocationRef) {
+				return;
+			}
+
 			let keys = n.bibleLocationRef.split('_');
 			let bibleLocationRef = `${keys[0]}_${keys[1]}`;
 			let verseNumber = `${keys[2]}`;
@@ -128,7 +151,7 @@
 			'data:application/json;charset=utf-8,' +
 				encodeURIComponent(JSON.stringify(dataList))
 		);
-		element.setAttribute('download', 'annotations');
+		element.setAttribute('download', 'notes');
 
 		element.style.display = 'none';
 		document.body.appendChild(element);
@@ -140,42 +163,80 @@
 	}
 
 	async function onAdd() {
-		let keys = mode.bibleLocationRef?.split('_');
+		const bibleLocationRef: string | undefined =
+			mode.bibleLocationRef;
+		const keys = bibleLocationRef?.split('_');
 		let now = Date.now();
-		let newNote = undefined;
-		let noteID = uuid4();
-		if (keys[0] === '0') {
+		let newNote: Note;
+		const notesSource =
+			moduleResourceSelectionResolver.require(
+				mode.paneID,
+				NOTES_RESOURCE_TYPE
+			);
+
+		const noteID =
+			createNoteIdForSource(
+				notesSource,
+				uuid4()
+			);
+		if (!bibleLocationRef || !keys) {
 			newNote = {
 				id: noteID,
-				bibleLocationRef: mode.bibleLocationRef,
+				bibleLocationRef: undefined,
+				bibleReferenceText: undefined,
 				text: ``,
 				html: ``,
 				title: `Note`,
 				dateCreated: now,
 				dateUpdated: now,
-				tags: [],
-				version: 0
+				tags: []
 			};
 		} else {
-			let verse = await verseService.get(mode.bibleVersion,mode.bibleLocationRef);
+			const chapterSource =
+				moduleResourceSelectionResolver.require(
+					mode.paneID,
+					BIBLE_CHAPTER_RESOURCE_TYPE
+				);
+
+			const booknamesSource =
+				moduleResourceSelectionResolver.require(
+					mode.paneID,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+			const [
+				verse,
+				booknames
+			] = await Promise.all([
+				verseService.get(
+					chapterSource,
+					bibleLocationRef
+				),
+				bibleBooknamesService.get(
+					booknamesSource
+				)
+			]);
+
 			let verseTextWithoutVerseNumber = verse.text.slice(
 				verse.text.indexOf(' ') + 1
 			);
-			let bookName = bibleLocationReferenceService.extractShortBookName(
-				mode.bibleLocationRef
-			);
+
+			let bookName =
+				booknames.shortNames[
+					keys[0]
+				] ?? '';
+
 			let title = `${bookName} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
 			newNote = {
 				id: noteID,
-				bibleLocationRef: mode.bibleLocationRef,
-				bcv: `${shortBookNamesByIDService.get(keys[0])} ${keys[1]}:${keys[2]}`,
+				bibleLocationRef,
+				bibleReferenceText: `${bookName} ${keys[1]}:${keys[2]}`,
 				text: `${title}\n${verseTextWithoutVerseNumber}`,
 				html: `<h1>${title}</h1><p><italic>${verseTextWithoutVerseNumber}</italic></p>`,
 				title: `${title}`,
 				dateCreated: now,
 				dateUpdated: now,
-				tags: [],
-				version: 0
+				tags: []
 			};
 		}
 
@@ -186,7 +247,7 @@
 		note = notes[noteId];
 	}
 
-	function onBibleClicked(e: Event, note: any): void {
+	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
 		paneService.onSplitPane(mode.paneID, 'h', Modules.BIBLE, {
 			bibleLocationRef: note.bibleLocationRef
@@ -296,10 +357,10 @@
 	</div>
 {/snippet}
 
-{#snippet actions(note: any, nk: string)}
+{#snippet actions(note: Note, nk: string)}
 	<div class="flex w-full flex-row justify-end space-x-4">
 		<!-- bible -->
-		{#if !note?.bibleLocationRef?.startsWith('0')}
+		{#if note.bibleLocationRef}
 			<KJVButton classes="" onClick={(e: Event) => onBibleClicked(e, note)}>
 				<Bible></Bible>
 			</KJVButton>
@@ -333,8 +394,8 @@
 					>{new Date(notes[nk].dateUpdated).toLocaleDateString()}
 					{new Date(notes[nk].dateUpdated).toLocaleTimeString()}</span
 				>
-				{#if notes[nk].bcv}
-					<span class="text-neutral-400">{notes[nk].bcv}</span>
+				{#if notes[nk].bibleReferenceText}
+					<span class="text-neutral-400">{notes[nk].bibleReferenceText}</span>
 				{/if}
 				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
 					{#each notes[nk].tags as t}

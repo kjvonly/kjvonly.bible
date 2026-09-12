@@ -21,22 +21,25 @@
 
 
 
-	// 
-	import type {
-		PublishedResourceReference
-	} from '$lib/resource/models/resource.model';
-
 	import {
 		STRONGS_RESOURCE_TYPE
 	} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
 import {
-	requireResourceSelection
-} from '$lib/application/resources/resource-selections';
+	useApplicationContext
+} from '$lib/application/runtime/application-context';
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';``
+	isCrossReference,
+	isFootnoteReference,
+	isStrongsReference,
+	tokenizeReferences
+} from '../../services/reference-tokenizer.service';
+
+	const {
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -60,18 +63,11 @@ import {
 	let bibleVersion: string = $state('');
 
 	const strongsSource =
-	requireResourceSelection(
-		pane.buffer
-			.resourceSelections,
+	moduleResourceSelectionResolver.require(
+		paneID,
 		STRONGS_RESOURCE_TYPE
 	);
 
-const chapterSource =
-	requireResourceSelection(
-		pane.buffer
-			.resourceSelections,
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -84,7 +80,10 @@ const chapterSource =
 	// ================================ FUNCS ==================================
 
 	function setRefs(): void {
-		let refs: string[] = getRefs();
+		const refs = tokenizeReferences(
+			getRefs()
+		);
+
 		refs.forEach((ref: string) => {
 			matchStrongsRef(ref);
 			matchFootnote(ref);
@@ -109,22 +108,19 @@ const chapterSource =
 	}
 
 	function matchStrongsRef(ref: string): void {
-		let match = new RegExp('^[GH]', 'm').test(ref);
-		if (match) {
+		if (isStrongsReference(ref)) {
 			strongsRefs.push(ref);
 		}
 	}
 
 	function matchFootnote(ref: string): void {
-		let match = new RegExp('\\d+_\\d+_\\d+', 'gm').test(ref);
-		if (match) {
+		if (isFootnoteReference(ref)) {
 			footnotes.push(ref);
 		}
 	}
 
 	function matchCrossRef(ref: string): void {
-		let match = new RegExp('\\d+\/\\d+\/\\d+', 'gm').test(ref);
-		if (match) {
+		if (isCrossReference(ref)) {
 			crossRefs.push(ref);
 		}
 	}
@@ -194,7 +190,6 @@ const chapterSource =
 		<CrossRefsContainer
 			paneID={pane?.id}
 			boundCrossRefs={crossRefs}
-			{chapterSource}
 		></CrossRefsContainer>
 	{/if}
 {/snippet}

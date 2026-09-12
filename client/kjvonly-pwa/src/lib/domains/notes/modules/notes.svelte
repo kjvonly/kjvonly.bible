@@ -5,8 +5,8 @@ The challenge to solve stemmed from two types of notes.
 1. There are notes associated to verse words
 2. There are notes independent of verse words i.e sermon notes, bible study etc...
 
-bibleLocationRef variable maps to a location in the bible. <book>_<chapter>_<verse>_<word>. 0_0_0_0 
-key is a standalone/independent note.
+bibleLocationRef maps a Bible-linked Note to <book>_<chapter>_<verse>_<word>.
+Standalone Notes use an undefined bibleLocationRef.
 
 kjvsearch worker uses flexsearch to index all the notes. We store all notes in indexdb and 
 load the notes into a flexsearch index to quickly query notes locally.
@@ -21,13 +21,23 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	// SVELTE
 	import { onMount } from 'svelte';
 
-	// SERVICES
-	import { notesService } from '$lib/domains/notes/services/notes.service';
-
 	// OTHER
 	import uuid4 from 'uuid4';
-	import Note from './note/note.svelte';
+	import NoteComponent from './note/note.svelte';
+	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import {
+		NOTES_COLLECTION_CHANGED
+	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 	import NotesList from './notesList/notesList.svelte';
+
+	// APPLICATION
+	import {
+		useApplicationContext
+	} from '$lib/application/runtime/application-context';
+
+	const {
+		notesService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -37,8 +47,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	let noteID: string = '';
 	let NOTE_SUBSCRIPTION_ID = uuid4();
-	let note: any = $state();
-	let notes: any = $state({});
+	let note: Note | undefined = $state();
+	let notes: NotesById = $state({});
 	let noteKeys: string[] = $state([]);
 
 	let NOTE_SEARCH_ID = uuid4();
@@ -65,14 +75,20 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(async () => {
+	onMount(() => {
 		notesService.subscribe(
 			NOTE_SUBSCRIPTION_ID,
 			NOTE_SEARCH_ID,
 			onFilterInputResults
 		);
-		notesService.subscribe(NOTE_SUBSCRIPTION_ID, '*', onSearchResults);
-		notesService.getAllNotes('*');
+		notesService.subscribe(
+			NOTE_SUBSCRIPTION_ID,
+			NOTES_COLLECTION_CHANGED,
+			onSearchResults
+		);
+		notesService.getAllNotes(
+			NOTES_COLLECTION_CHANGED
+		);
 	});
 
 	// ================================ FUNCS ==================================
@@ -82,7 +98,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		});
 	}
 
-	function onSearchResults(results: any) {
+	function onSearchResults(results: { notes: NotesById }) {
 		if (allNotes) {
 			noteKeys = [];
 			notes = results.notes;
@@ -132,7 +148,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		note = notes[noteId];
 	}
 
-	function onAddNewNote(newNote: any) {
+	function onAddNewNote(newNote: Note) {
 		notes[newNote.id] = newNote;
 		noteKeys = [newNote.id, ...noteKeys];
 		note = newNote;
@@ -141,7 +157,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<Note bind:mode bind:note></Note>
+	<NoteComponent bind:mode bind:note></NoteComponent>
 {:else}
 	<NotesList
 		bind:mode

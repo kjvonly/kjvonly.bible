@@ -15,6 +15,10 @@ import {
 import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
 import FlexSearch from 'flexsearch';
+import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
+
+const legacyBookNameLookup = (bookID: string): string =>
+  bookNamesByIDService.get(bookID);
 
 let workerHasInitialized = false;
 
@@ -65,7 +69,8 @@ async function initializePlans() {
   for (let cp of cachedPlans) {
     let p = cachedPlanToPlan(cp);
     p.nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
-      cp.encodedReadings
+      cp.encodedReadings,
+      legacyBookNameLookup
     );
     await plansDocument.addAsync(p.id, p);
     plans.set(p.id, p);
@@ -75,7 +80,10 @@ async function initializePlans() {
 async function initializeSubs() {
   let cachedSubs: CachedSub[] = await subsApi.gets();
   for (let cs of cachedSubs) {
-    let s = cachedSubToSub(cs);
+    let s = cachedSubToSub(
+      cs,
+      legacyBookNameLookup
+    );
     await subsDocument.addAsync(s.id, s);
     subs.set(s.id, s);
   }
@@ -213,7 +221,10 @@ function publishSubs() {
 }
 
 async function putSub(cs: CachedSub) {
-  let s = cachedSubToSub(cs);
+  let s = cachedSubToSub(
+    cs,
+    legacyBookNameLookup
+  );
   subs.set(s.id, s);
   if (s) {
     await enrichSub(s);

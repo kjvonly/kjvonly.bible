@@ -14,25 +14,23 @@
 	// MODELS
 	import {
 		BIBLE_MODES,
-		newAnnotation,
-		newBibleMode,
-		type Annotations
+		newBibleMode
 	} from '$lib/domains/bible/models/bible.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type {
+		BibleTextMarkup
+	} from '$lib/domains/bible/models/bible-text-markup.model';
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 
 	import { attachEvents } from '$lib/application/ui/eventHandlers';
-	import { bookIDByBookNameService } from '$lib/domains/bible/services/bibleMetadata/bookIDByBookName.service';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-
-	// NOSTR IMPL
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	import type {
 	PublishedResourceReference
@@ -47,16 +45,16 @@ import type {
 } from '$lib/domains/bible/models/bible-version.model';
 
 import {
-	requireResourceSelection
-} from '$lib/application/resources/resource-selections';
-
-import {
 	parseResourceIdentifier
 } from '$lib/resource/utils/resource-identifier';
 
 import {
 	createBibleVersionId
 } from '$lib/domains/bible/utils/bible-identity';
+
+	const {
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 	// =============================== BINDINGS ================================
 
 	let {
@@ -69,32 +67,24 @@ import {
 
 	// ================================= VARS ==================================
 
-	let annotations: Annotations = $state(newAnnotation());
+	let textMarkup: BibleTextMarkup = $state({
+		id: '',
+		chapterRef: '',
+		markings: {}
+	});
 	let bibleLocationRef: string = $state('');
 
-	let chapterSource:
-	PublishedResourceReference =
+	let bibleVersion:
+		string =
 		$state(
-			requireResourceSelection(
-				pane.buffer
-					.resourceSelections,
-				BIBLE_CHAPTER_RESOURCE_TYPE
+			getBibleVersionId(
+				moduleResourceSelectionResolver.require(
+					paneID,
+					BIBLE_CHAPTER_RESOURCE_TYPE
+				)
 			)
 		);
 
-	let bibleVersion:
-	string =
-		$state(
-			getBibleVersionId(
-				chapterSource
-			)
-		);
-		``
-	const {
-	resourceSelectionService
-} =
-	useApplicationContext();
-		
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	/** since the {@link header} snippet is part of the body we don't
@@ -104,6 +94,7 @@ import {
 	let zeroHeaderHeight = $state(0);
 	let id = $state(uuid4());
 	const LAST_BIBLE_LOCATION_REF = 'lastBibleLocationReference';
+	const DEFAULT_BIBLE_LOCATION_REF = '52_10_9';
 	let mode: any = $state(newBibleMode());
 
 	// DOM related vars
@@ -181,10 +172,7 @@ import {
 	}
 
 	function setDefaultBibleLocationRef() {
-		let bookID = bookIDByBookNameService.get('Romans');
-		let chapter = 10;
-		let verse = 9;
-		bibleLocationRef = `${bookID}_${chapter}_${verse}`;
+		bibleLocationRef = DEFAULT_BIBLE_LOCATION_REF;
 	}
 
 	function overrideContextMenu() {
@@ -244,14 +232,6 @@ import {
 		] =
 		source;
 
-	resourceSelectionService
-		.select(
-			source
-		);
-
-	chapterSource =
-		source;
-
 	bibleVersion =
 		version.id;
 
@@ -263,18 +243,15 @@ import {
 <!-- ================================ HEADER =============================== -->
 
 {#snippet header()}
-	{#if chapterSource}
-		<BibleHeader
-			bind:mode
-			bind:bibleLocationRef
-			bind:bibleVersion
-			bind:clientHeight
-			bind:headerHeight
-			{chapterSource}
-			{onBibleVersionSelected}
-			{paneID}
-		></BibleHeader>
-	{/if}
+	<BibleHeader
+		bind:mode
+		bind:bibleLocationRef
+		bind:bibleVersion
+		bind:clientHeight
+		bind:headerHeight
+		{onBibleVersionSelected}
+		{paneID}
+	></BibleHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
@@ -283,18 +260,15 @@ import {
 	<div class="kjvonly-noselect flex justify-center">
 		<div>
 			<div id="chapter-container-{id}" class="w-full">
-				{#if chapterSource}
-					<Chapter
-						bind:bibleLocationRef
-						bind:bibleVersion
-						bind:id
-						bind:pane
-						bind:mode
-						bind:annotations
-						{chapterSource}
-						{lastKnownScrollPosition}
-					></Chapter>
-				{/if}
+				<Chapter
+					bind:bibleLocationRef
+					bind:bibleVersion
+					bind:id
+					bind:pane
+					bind:mode
+					bind:textMarkup
+					{lastKnownScrollPosition}
+				></Chapter>
 			</div>
 		</div>
 	</div>
@@ -320,7 +294,12 @@ import {
 					class="sticky z-10"
 				>
 					<div class="absolute bottom-0 w-full">
-						<EditOptions bind:mode bind:annotations></EditOptions>
+						<EditOptions
+							bind:mode
+							bind:textMarkup
+							{paneID}
+							{bibleLocationRef}
+						></EditOptions>
 					</div>
 				</div>
 			{/if}

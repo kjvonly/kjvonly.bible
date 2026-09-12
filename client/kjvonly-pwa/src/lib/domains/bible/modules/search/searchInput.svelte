@@ -1,13 +1,17 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SERVICES
-	import { searchService } from '$lib/domains/bible/services/search.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+
+	const { searchService } =
+		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
 		searchText = $bindable<string>(),
 		ID,
+		searchSource,
 		onFilterBibleLocationRef
 	} = $props();
 
@@ -16,7 +20,11 @@
 		onFilterBibleLocationRef = undefined;
 		if (searchText.length > 2) {
 			console.log(searchText);
-			searchService.search(ID, searchText);
+			searchService.search(
+				ID,
+				searchSource,
+				searchText
+			);
 		}
 	}
 </script>

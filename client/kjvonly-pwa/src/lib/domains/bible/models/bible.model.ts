@@ -112,7 +112,7 @@ export interface BibleMode {
   notePopup: NotePopup;
 
   // edit options, word
-  colorAnnotation: string;
+  colorMarkup: string;
   type: string;
 }
 
@@ -126,7 +126,7 @@ export function newBibleMode(): BibleMode {
   return {
     value: BIBLE_MODES.READING,
     navReadings: undefined,
-    colorAnnotation: 'bg-highlighta',
+    colorMarkup: 'bg-highlighta',
     type: '',
     bibleLocationRef: '73_1_1_1',
     bibleVersion: 'kjvs',

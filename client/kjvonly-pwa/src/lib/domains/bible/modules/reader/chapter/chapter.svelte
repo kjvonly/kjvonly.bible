@@ -9,47 +9,61 @@
 	// MODELS
 	import {
 		BIBLE_MODES,
-		newAnnotation,
 		newParagraphs,
 		newPericopes,
-		type Annotations,
 		type BibleMode,
 		type Paragraphs,
 		type Pericopes,
 		type Verse as VerseModel
 	} from '$lib/domains/bible/models/bible.model';
 	import { type Chapter } from '$lib/domains/bible/models/bible.model';
+	import type {
+		BibleTextMarkup
+	} from '$lib/domains/bible/models/bible-text-markup.model';
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { notesService } from '$lib/domains/notes/services/notes.service';
-	import { syncService } from '$lib/domains/bible/services/sync.service';
-	import { annotsService } from '$lib/domains/bible/services/annots.service';
-	// API
-
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { scrollTo, scrollToTop } from '$lib/application/ui/eventHandlers';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
-	import { paragraphsService } from '$lib/domains/bible/services/paragraphs.service';
 	import { settingsService } from '$lib/application/services/settings.service';
-	import { pericopesService } from '$lib/domains/bible/services/pericopes.service';
 
 
-	// NOSTR IMPL
+	// APPLICATION CONTEXT
 	import {
-	useApplicationContext
-} from '$lib/application/runtime/application-context';
+		useApplicationContext
+	} from '$lib/application/runtime/application-context';
 
+	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
-import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+	import {
+		BIBLE_PARAGRAPHS_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
 
+	import {
+		BIBLE_PERICOPES_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
 
-const {
-	chapterService
-} = useApplicationContext();
+	import {
+		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+
+	import {
+		NOTES_COLLECTION_CHANGED
+	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+
+	const {
+		chapterService,
+		paragraphsService,
+		pericopesService,
+		bibleTextMarkupService,
+		notesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -58,8 +72,7 @@ const {
 		id = $bindable<string>(),
 		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
-		annotations = $bindable<Annotations>(),
-		chapterSource,
+		textMarkup = $bindable<BibleTextMarkup>(),
 		lastKnownScrollPosition
 	}: {
 		bibleLocationRef: string;
@@ -67,8 +80,7 @@ const {
 		id: string;
 		pane: Pane;
 		mode: BibleMode;
-		annotations: Annotations;
-		chapterSource: PublishedResourceReference;
+		textMarkup: BibleTextMarkup;
 		lastKnownScrollPosition: number;
 	} = $props();
 
@@ -89,8 +101,8 @@ const {
 	let pericopes: Pericopes = $state({});
 
 	/**
-	 * svelte isn't updating annotations on chapter change. Need to toggle
-	 * to update annotations
+	 * svelte isn't updating Text Markup on chapter change. Need to toggle
+	 * to update Text Markup
 	 */
 	let toggleVersesView: boolean = $state(true);
 	let verses: { [verseNumber: string]: VerseModel } = $state({});
@@ -99,13 +111,12 @@ const {
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		subscribeToAnnotations();
 		subscribeToNotes();
 		subscribeToSettings();
 	});
 
 	onDestroy(() => {
-		unsubscribeToAnnotations();
+		unsubscribeFromTextMarkup();
 		unsubscribeToNotes();
 		unsubscribeToSettings();
 	});
@@ -113,7 +124,7 @@ const {
 	/**
 	 * CORE NOTE: on new bibleLocationRef we must reset the chapter prior to
 	 * loading new content. Otehrwise, the rendering will render previous chapter
-	 * annotations, paragraphs, and pericopes on the new chapter.
+	 * Text Markup, paragraphs, and pericopes on the new chapter.
 	 */
 
 	$effect(() => {
@@ -122,13 +133,14 @@ const {
 		untrack(() => {
 			resetChapter();
 			resetMode();
-			resetAnnotations();
+			unsubscribeFromTextMarkup();
+			resetTextMarkup();
 			resetParagraphs();
 			resetPericopes();
 			toggleVersesViewFn();
 			setVerseRanges();
 			scrollToVerse();
-			loadAnnotations();
+			loadTextMarkup();
 			loadParagraphs();
 			loadPericopes();
 			loadNotes();
@@ -155,8 +167,12 @@ const {
 		mode.value = BIBLE_MODES.READING;
 	}
 
-	function resetAnnotations() {
-		annotations = newAnnotation();
+	function resetTextMarkup() {
+		textMarkup = {
+			id: '',
+			chapterRef: '',
+			markings: {}
+		};
 	}
 
 	function resetParagraphs() {
@@ -192,18 +208,56 @@ const {
 		}, 4000);
 	}
 
-	function subscribeToAnnotations() {
-		syncService.subscribe(id, 'annotations', () => {
-			loadAnnotations();
-		});
+	function subscribeToTextMarkup(
+		textMarkupId: string
+	) {
+		bibleTextMarkupService.subscribe(
+			id,
+			textMarkupId,
+			onTextMarkupChange
+		);
 	}
 
-	function unsubscribeToAnnotations() {
-		syncService.unsubscribe(id);
+	function unsubscribeFromTextMarkup() {
+		bibleTextMarkupService.unsubscribe(
+			id
+		);
 	}
 
-	async function loadAnnotations() {
-		annotations = await annotsService.get(bibleLocationRef);
+	function onTextMarkupChange(
+		updated: BibleTextMarkup
+	) {
+		textMarkup =
+			JSON.parse(
+				JSON.stringify(
+					updated
+				)
+			);
+	}
+
+	async function loadTextMarkup() {
+		const source =
+			moduleResourceSelectionResolver.require(
+				pane.id,
+				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+			);
+
+		const installed =
+			await bibleTextMarkupService.get(
+				source,
+				bibleLocationRef
+			);
+
+		textMarkup =
+			JSON.parse(
+				JSON.stringify(
+					installed
+				)
+			);
+
+		subscribeToTextMarkup(
+			installed.id
+		);
 	}
 
 	async function loadParagraphs() {
@@ -211,7 +265,17 @@ const {
 		if (!settings.showParagraphs) {
 			resetParagraphs();
 		} else {
-			paragraphs = await paragraphsService.get(bibleLocationRef);
+			const source = moduleResourceSelectionResolver.require(
+				pane.id,
+				BIBLE_PARAGRAPHS_RESOURCE_TYPE
+			);
+
+			const installed = await paragraphsService.get(
+				source,
+				bibleLocationRef
+			);
+
+			paragraphs = installed.paragraphs;
 		}
 	}
 
@@ -220,20 +284,34 @@ const {
 		if (!settings.showPericopes) {
 			resetPericopes();
 		} else {
-			pericopes = await pericopesService.get(bibleLocationRef);
+			const source = moduleResourceSelectionResolver.require(
+				pane.id,
+				BIBLE_PERICOPES_RESOURCE_TYPE
+			);
+
+			const installed = await pericopesService.get(
+				source,
+				bibleLocationRef
+			);
+
+			pericopes = installed.pericopes;
 		}
 	}
 
 	function subscribeToNotes() {
 		notesService.subscribe(id, notesID, onSearchResults);
-		notesService.subscribe(id, '*', loadNotes);
+		notesService.subscribe(
+			id,
+			NOTES_COLLECTION_CHANGED,
+			loadNotes
+		);
 	}
 
 	function unsubscribeToNotes() {
 		notesService.unsubscribe(id);
 	}
 
-	async function loadNotes() {
+	function loadNotes() {
 		notesService.searchNotes(
 			notesID,
 			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef),
@@ -255,8 +333,13 @@ const {
 	}
 
 	async function loadChapter() {
+		const source = moduleResourceSelectionResolver.require(
+			pane.id,
+			BIBLE_CHAPTER_RESOURCE_TYPE
+		);
+
 		chapter = await chapterService.get(
-			chapterSource,
+			source,
 			bibleLocationRef
 		);
 		verses = chapter.verses;
@@ -292,7 +375,7 @@ const {
 		<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
 			<Verse
 				bind:pane
-				bind:annotations
+				bind:textMarkup
 				bind:paragraphs
 				bind:pericopes
 				bind:notes

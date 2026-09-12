@@ -1,65 +1,272 @@
-const notesWorker = new Worker(
-  new URL('../workers/kjvnotes.worker?worker', import.meta.url),
-  {
-    type: 'module'
-  }
-);
+import type {
+	Note
+} from '$lib/domains/notes/models/note.model';
 
-// TODO this needs to call into notes.api/notes.nostr
+import type {
+	NotesStore
+} from '$lib/domains/notes/persistence/notes-store';
 
-/**
- * Note the * character is wildcard for get all notes. Will change in the future.
- */
-class NotesService {
-  unsubscribe(subID: any) {
-    let tmpSubscribers: any = [];
-    this.subscribers.forEach((s) => {
-      if (s.subID !== subID) {
-        tmpSubscribers.push();
-      }
-    });
-    this.subscribers = tmpSubscribers;
-  }
+import {
+	NotesSearchRuntime
+} from '$lib/domains/notes/runtime/search/notes-search-runtime';
 
-  subscribers: any[] = [];
-  constructor() {
-    notesWorker.onmessage = (e) => {
-      this.subscribers.forEach((s) => {
-        if (s.id === e.data.id) {
-          s.fn(e.data);
-        }
-      });
-    };
-  }
+import type {
+	NotesSearchResult
+} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 
-  subscribe(subID: string, id: any, fn: any) {
-    this.subscribers.push({ subID: subID, id: id, fn: fn });
-  }
+import type {
+	NotesWriteTransaction
+} from '$lib/domains/notes/resources/notes-write-stores';
 
-  searchNotes(id: string, text: string, indexes: string[]) {
-    notesWorker.postMessage({
-      action: 'searchNotes',
-      id: id,
-      text: text,
-      indexes: indexes
-    });
-  }
+import type {
+	NotesResourcePublication
+} from '$lib/domains/notes/resources/notes-resource-publication';
 
-  getAllNotes(id: string) {
-    notesWorker.postMessage({ action: 'getAllNotes', id: id });
-  }
+import type {
+	OutboxWakeup
+} from '$lib/resource/outbox/outbox-wakeup';
 
-  deleteNote(id: string, noteID: string) {
-    notesWorker.postMessage({ action: 'deleteNote', noteID: noteID });
-  }
+interface NotesSearchRuntimePort {
+	setResultHandler(
+		handler:
+			(response: NotesSearchResult) => void
+	): void;
 
-  addNote(id: string, noteID: string, note: any) {
-    notesWorker.postMessage({ action: 'addNote', noteID: noteID, note: note });
-  }
+	initialize(
+		notes: Note[]
+	): void;
 
-  init() {
-    notesWorker.postMessage({ action: 'init' });
-  }
+	search(
+		id: string,
+		text: string,
+		indexes: string[]
+	): void;
+
+	getAll(
+		id: string
+	): void;
+
+	put(
+		note: Note
+	): void;
+
+	remove(
+		noteId: string
+	): void;
 }
 
-export const notesService = new NotesService();
+interface NotesSubscriber {
+	readonly subID: string;
+	readonly id: string;
+	readonly fn:
+		(response: NotesSearchResult) => void;
+}
+
+/**
+ * Application-facing Notes service.
+ *
+ * Accepted Notes are loaded from the shared Domain Object store through the
+ * NotesStore abstraction, then handed to the pure local search runtime.
+ *
+ * Initial accepted Notes are loaded once from the Domain store. Normal Note
+ * changes are applied incrementally to the search runtime. Resource discovery
+ * and synchronization are intentionally outside this service.
+ */
+export class NotesService {
+	private subscribers:
+		NotesSubscriber[] =
+			[];
+
+	private ready:
+		Promise<void>;
+
+	constructor(
+		private readonly store:
+			Pick<
+				NotesStore,
+				'getAll'
+			>,
+
+		private readonly writeTransaction:
+			NotesWriteTransaction,
+
+		private readonly resourcePublication:
+			Pick<
+				NotesResourcePublication,
+				'create' |
+					'createDeletion'
+			>,
+
+		private readonly outbox:
+			OutboxWakeup,
+
+		private readonly runtime:
+			NotesSearchRuntimePort =
+				new NotesSearchRuntime()
+	) {
+		this.runtime.setResultHandler(
+			(response) => {
+				this.publish(
+					response
+				);
+			}
+		);
+
+		this.ready =
+			this.loadAcceptedNotes();
+	}
+
+	unsubscribe(
+		subID: string
+	): void {
+		this.subscribers =
+			this.subscribers.filter(
+				(subscriber) =>
+					subscriber.subID !==
+						subID
+			);
+	}
+
+	subscribe(
+		subID: string,
+		id: string,
+		fn:
+			(response: NotesSearchResult) => void
+	): void {
+		this.subscribers.push({
+			subID,
+			id,
+			fn
+		});
+	}
+
+	searchNotes(
+		id: string,
+		text: string,
+		indexes: string[]
+	): void {
+		void this.ready.then(
+			() => {
+				this.runtime.search(
+					id,
+					text,
+					indexes
+				);
+			}
+		);
+	}
+
+	getAllNotes(
+		id: string
+	): void {
+		void this.ready.then(
+			() => {
+				this.runtime.getAll(
+					id
+				);
+			}
+		);
+	}
+
+	async put(
+		note: Note
+	): Promise<void> {
+		await this.ready;
+
+		const publication =
+			this.resourcePublication
+				.create(
+					note
+				);
+
+		await this.writeTransaction.run(
+			async (
+				stores
+			) => {
+				await stores
+					.notes
+					.put(
+						note
+					);
+
+				await stores
+					.outbox
+					.put(
+						note.id,
+						publication
+					);
+			}
+		);
+
+		this.runtime.put(
+			note
+		);
+
+		this.outbox.wake();
+	}
+
+	async delete(
+		noteId: string
+	): Promise<void> {
+		await this.ready;
+
+		const deletion =
+			this.resourcePublication
+				.createDeletion(
+					noteId
+				);
+
+		await this.writeTransaction.run(
+			async (
+				stores
+			) => {
+				await stores
+					.notes
+					.delete(
+						noteId
+					);
+
+				await stores
+					.outbox
+					.put(
+						noteId,
+						deletion
+					);
+			}
+		);
+
+		this.runtime.remove(
+			noteId
+		);
+
+		this.outbox.wake();
+	}
+
+	private async loadAcceptedNotes():
+		Promise<void> {
+		const notes =
+			await this.store.getAll();
+
+		this.runtime.initialize(
+			[...notes]
+		);
+	}
+
+	private publish(
+		response:
+			NotesSearchResult
+	): void {
+		this.subscribers.forEach(
+			(subscriber) => {
+				if (
+					subscriber.id ===
+						response.id
+				) {
+					subscriber.fn(
+						response
+					);
+				}
+			}
+		);
+	}
+}

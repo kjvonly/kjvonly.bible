@@ -113,7 +113,7 @@ describe('set total verses', () => {
 });
 
 describe('parseEncodedReadings', () => {
-	it('should decode encoded readings', () => {
+	it('should decode encoded readings using the provided book names', () => {
 		let encodedReadings = ['1/1/1-31;47/1/1-25;15/1/1-11;51/1/1-26'];
 
 		let expectedReadings: Readings[] = [
@@ -152,8 +152,18 @@ describe('parseEncodedReadings', () => {
 			}
 		];
 
+		const booknamesById: Record<string, string> = {
+			'1': 'Genesis',
+			'15': 'Ezra',
+			'47': 'Matthew',
+			'51': 'Acts'
+		};
+
 		let nestedReadings =
-			encodedReadingsDecoderService.parseEncodedReadings(encodedReadings);
+			encodedReadingsDecoderService.parseEncodedReadings(
+				encodedReadings,
+				(bookID) => booknamesById[bookID] ?? ''
+			);
 
 		expect(nestedReadings).toMatchObject(expectedReadings);
 	});

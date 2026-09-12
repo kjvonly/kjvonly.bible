@@ -1,6 +1,3 @@
-import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
-import { shortBookNamesByIDService } from './bibleMetadata/shortBookNamesByID.service';
-
 class BibleLocationReferenceService {
 	/**
 	 * Reduces a reference chapter key to BookID.
@@ -14,36 +11,6 @@ class BibleLocationReferenceService {
 			ref = bcvw[0];
 		}
 		return ref;
-	}
-
-	/**
-	 * Returns the bookName from the ref.
-	 *
-	 * @param ref any reference
-	 * @returns
-	 */
-	extractBookName(ref: string): string {
-		let bcvw = ref.split('_');
-		if (bcvw.length > 0) {
-			ref = bcvw[0];
-			return bookNamesByIDService.get(this.extractBookID(ref));
-		}
-		return '';
-	}
-
-	/**
-	 * Returns the bookName from the ref.
-	 *
-	 * @param ref any reference
-	 * @returns
-	 */
-	extractShortBookName(ref: string): string {
-		let bcvw = ref.split('_');
-		if (bcvw.length > 0) {
-			ref = bcvw[0];
-			return shortBookNamesByIDService.get(this.extractBookID(ref));
-		}
-		return '';
 	}
 
 	/**

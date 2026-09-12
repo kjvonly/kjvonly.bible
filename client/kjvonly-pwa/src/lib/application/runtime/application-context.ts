@@ -22,6 +22,18 @@ import type {
 import type {
     ResourceService
 } from '$lib/resource/services/resource.service';
+
+import type {
+    ModuleBufferFactory
+} from '$lib/application/runtime/buffer/module-buffer-factory';
+
+import type {
+    ModuleResourceSelectionResolver
+} from '$lib/application/resources/module-resource-selection-resolver';
+
+import type {
+    AuthenticationService
+} from '$lib/application/services/authentication.service';
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -30,12 +42,39 @@ import type {
 } from '$lib/domains/bible/services/chapter.service';
 
 import type {
+    ParagraphsService
+} from '$lib/domains/bible/services/paragraphs.service';
+
+import type {
+    PericopesService
+} from '$lib/domains/bible/services/pericopes.service';
+
+import type {
+    BibleTextMarkupService
+} from '$lib/domains/bible/services/bible-text-markup.service';
+
+import type {
+    BibleBooknamesService
+} from '$lib/domains/bible/services/bible-booknames.service';
+
+import type {
+    SearchService
+} from '$lib/domains/bible/services/search.service';
+
+import type {
     BibleVersionsService
 } from '$lib/domains/bible/services/bibleVersions.service';
 
 import type {
     VerseService
 } from '$lib/domains/bible/services/verse.service';
+
+///////////////////////////////////////////////////////////////////////////////
+// Notes
+
+import type {
+    NotesService
+} from '$lib/domains/notes/services/notes.service';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
@@ -47,6 +86,9 @@ import type {
 ///////////////////////////////////////////////////////////////////////////////
 
 export interface ApplicationContext {
+
+    readonly authenticationService:
+    AuthenticationService;
 
     readonly nostrSigner:
     NostrSigner;
@@ -70,16 +112,46 @@ export interface ApplicationContext {
     ResourceSelectionService;
 
     ///////////////////////////////////////////////////////////////////////////
+    // Workspace Runtime
+
+    readonly moduleBufferFactory:
+    ModuleBufferFactory;
+
+    readonly moduleResourceSelectionResolver:
+    ModuleResourceSelectionResolver;
+
+    ///////////////////////////////////////////////////////////////////////////
     // Bible
 
     readonly chapterService:
     ChapterService;
+
+    readonly paragraphsService:
+    ParagraphsService;
+
+    readonly pericopesService:
+    PericopesService;
+
+    readonly bibleTextMarkupService:
+    BibleTextMarkupService;
+
+    readonly bibleBooknamesService:
+    BibleBooknamesService;
+
+    readonly searchService:
+    SearchService;
 
     readonly verseService:
     VerseService;
 
     readonly bibleVersionsService:
     BibleVersionsService;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Notes
+
+    readonly notesService:
+    NotesService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Strong's

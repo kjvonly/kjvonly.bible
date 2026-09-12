@@ -6,26 +6,43 @@
 	// MODEL
 	import {
 		BIBLE_MODES,
-		type Annotations,
 		type BibleMode
 	} from '$lib/domains/bible/models/bible.model';
 
-	// API
-	import { annotsService } from '$lib/domains/bible/services/annots.service';
+	import type {
+		BibleTextMarkup
+	} from '$lib/domains/bible/models/bible-text-markup.model';
+
+	import {
+		useApplicationContext
+	} from '$lib/application/runtime/application-context';
+
+	import {
+		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+	} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
 
 	// =============================== BINDINGS ================================
 	let {
 		mode = $bindable<BibleMode>(),
-		annotations = $bindable<Annotations>()
+		textMarkup = $bindable<BibleTextMarkup>(),
+		paneID,
+		bibleLocationRef
 	}: {
 		mode: BibleMode;
-		annotations: Annotations;
+		textMarkup: BibleTextMarkup;
+		paneID: string;
+		bibleLocationRef: string;
 	} = $props();
+
+	const {
+		bibleTextMarkupService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
 
 	// ================================= VARS ==================================
 
 	let selectedColor = $state('a');
-	let selectedAnnotation = $state('bg');
+	let selectedMarkup = $state('bg');
 	let selectedType = $state(1);
 
 	let underlineColor = $state(5);
@@ -35,7 +52,7 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		mode.colorAnnotation = 'bg-highlighta';
+		mode.colorMarkup = 'bg-highlighta';
 		mode.type = 'bg';
 	});
 
@@ -44,25 +61,44 @@
 	function onSelectColor(color: string) {
 		selectedColor = color;
 		onType(selectedType);
-		updateColorAnnotation();
+		updateColorMarkup();
 	}
 
 	async function onSave() {
-		let resp = await annotsService.put(JSON.parse(JSON.stringify(annotations)));
-		if (resp !== undefined) {
-			annotations.version = resp.version;
-			annotations = resp;
-		}
+		await bibleTextMarkupService.put(
+			JSON.parse(
+				JSON.stringify(
+					textMarkup
+				)
+			)
+		);
 	}
 
 	async function onClose() {
-		let data = await annotsService.get(annotations.id);
-		annotations = data;
+		const source =
+			moduleResourceSelectionResolver.require(
+				paneID,
+				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+			);
+
+		const installed =
+			await bibleTextMarkupService.get(
+				source,
+				bibleLocationRef
+			);
+
+		textMarkup =
+			JSON.parse(
+				JSON.stringify(
+					installed
+				)
+			);
+
 		mode.value = BIBLE_MODES.READING;
 	}
 
-	function updateColorAnnotation() {
-		mode.colorAnnotation = selectedAnnotation + '-highlight' + selectedColor;
+	function updateColorMarkup() {
+		mode.colorMarkup = selectedMarkup + '-highlight' + selectedColor;
 	}
 
 	function onType(index: number) {
@@ -70,9 +106,9 @@
 			if (i == index) {
 				fill[i] = 'fill-highlight' + selectedColor;
 				selectedType = index;
-				selectedAnnotation = types[index];
-				mode.type = selectedAnnotation;
-				updateColorAnnotation();
+				selectedMarkup = types[index];
+				mode.type = selectedMarkup;
+				updateColorMarkup();
 			} else {
 				fill[i] = 'fill-neutral-700';
 			}

@@ -1,5 +1,3 @@
-import { annotsService } from '$lib/domains/bible/services/annots.service';
-import { notesService } from '$lib/domains/notes/services/notes.service';
 import { toastService } from '$lib/application/services/toast.service';
 import { deepMergeService } from './deepMerge.service';
 
@@ -15,7 +13,7 @@ export class ImporterService {
         try {
           toastService.showToast('starting import data');
           let newAnnotations = JSON.parse(result);
-          let annotations = await annotsService.getAllAnnotations();
+          let annotations; 
 
           if (!annotations) {
             annotations = {};
@@ -47,7 +45,6 @@ export class ImporterService {
           });
 
           await annotsService.putAllAnnotations(mergedList);
-          notesService.init();
           document.getElementById('kjvonly-import')?.remove();
           toastService.showToast('finished import data');
         } catch (ex) {

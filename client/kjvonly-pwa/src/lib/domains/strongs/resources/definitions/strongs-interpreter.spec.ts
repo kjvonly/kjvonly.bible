@@ -390,9 +390,6 @@ function createResource(
 		resourceType:
 			STRONGS_RESOURCE_TYPE,
 
-		eventId:
-			'event-id',
-
 		modifiedAt:
 			123,
 

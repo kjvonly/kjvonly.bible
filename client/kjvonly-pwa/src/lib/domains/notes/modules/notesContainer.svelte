@@ -10,7 +10,7 @@
 	let { paneID = $bindable<string>(), pane = $bindable() } = $props();
 
 	let mode = $state({
-		bibleLocationRef: '0_0_0_0',
+		bibleLocationRef: undefined as string | undefined,
 		bibleVersion: 'kjvs',
 		notePopup: { show: false },
 		paneID: paneID

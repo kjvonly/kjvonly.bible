@@ -1,100 +1,225 @@
-import { notesApi } from '$lib/nostr/events/notes.nostr';
-import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-import {  getBibleDB, SEARCH } from '$lib/domains/bible/persistence/bible.db';
-import { sleep } from '$lib/infrastructure/utils/sleep';
-import FlexSearch, { type Id } from 'flexsearch';
+import FlexSearch from 'flexsearch';
 
-let bibleDB = await getBibleDB()
+import {
+	bibleLocationReferenceService
+} from '$lib/domains/bible/services/bibleLocationReference.service';
 
-async function waitForSearchIndex(): Promise<boolean> {
-  while (1) {
-    let searchIndex = await bibleDB.getValue(SEARCH, 'v1');
-    if (searchIndex) {
-      return true;
-    }
-    await sleep(1000);
-  }
-  return false;
-}
+import type {
+	Note,
+	NotesById
+} from '$lib/domains/notes/models/note.model';
 
-let notesDocument = new FlexSearch.Document({
-  document: {
-    id: 'id',
-    index: ['title', 'text', 'tags[]:tag', 'bookChapter', 'bibleLocationRef']
-  }
-});
+import {
+	NOTES_COLLECTION_CHANGED,
+	type NotesSearchWorkerRequest
+} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 
-let notes: any = {};
-
-async function init() {
-  let cachedNotes = await notesApi.gets();
-  notes = {};
-  for (let i = 0; i < cachedNotes.length; i++) {
-    let nn = cachedNotes[i];
-    if (nn?.bibleLocationRef) {
-      nn.bookChapter = bibleLocationReferenceService.extractBookIDChapter(
-        nn.bibleLocationRef
-      );
-      await notesDocument.addAsync(nn.id, nn);
-      notes[nn.id] = nn;
-    }
-  }
-
-  getAllNotes('*');
-}
-
-function addNote(noteID: string, note: any) {
-  note.bookChapter = bibleLocationReferenceService.extractBookIDChapter(
-    note.bibleLocationRef
-  );
-  notes[noteID] = note;
-  notesDocument.add(noteID, note);
-  getAllNotes('*');
-}
-
-function deleteNote(noteID: string) {
-  delete notes[noteID];
-  notesDocument.remove(noteID);
-  getAllNotes('*');
-}
-
-async function searchNotes(id: string, searchTerm: string, indexes: string[]) {
-  const results = await notesDocument.searchAsync(searchTerm, {
-    index: indexes
-  });
-
-  let filteredNotes: any = {};
-  results.forEach((r) => {
-    r.result.forEach((id) => {
-      filteredNotes[id] = notes[id];
-    });
-  });
-  if (Object.keys(filteredNotes).length > 0) {
-    postMessage({ id: id, notes: filteredNotes });
-  }
-}
-
-function getAllNotes(id: string) {
-  postMessage({ id: id, notes: notes });
-}
-
-onmessage = async (e) => {
-  switch (e.data.action) {
-    case 'init':
-      await init();
-      break;
-    case 'addNote':
-      addNote(e.data.noteID, e.data.note);
-      break;
-    case 'deleteNote':
-      deleteNote(e.data.noteID);
-      break;
-    case 'searchNotes':
-      await searchNotes(e.data.id, e.data.text, e.data.indexes);
-      break;
-    case 'getAllNotes':
-      getAllNotes(e.data.id);
-  }
+type IndexedNote = Note & {
+	bookChapter?: string;
 };
 
-init();
+function createNotesDocument() {
+	return new FlexSearch.Document({
+		document: {
+			id: 'id',
+			index: [
+				'title',
+				'text',
+				'tags[]:tag',
+				'bookChapter',
+				'bibleLocationRef'
+			]
+		}
+	});
+}
+
+let notesDocument =
+	createNotesDocument();
+
+let notes:
+	Record<string, IndexedNote> =
+	{};
+
+async function initialize(
+	acceptedNotes: Note[]
+): Promise<void> {
+	notesDocument =
+		createNotesDocument();
+
+	notes = {};
+
+	for (
+		const acceptedNote of acceptedNotes
+	) {
+		const note =
+			createIndexedNote(
+				acceptedNote
+			);
+
+		await notesDocument.addAsync(
+			note.id,
+			note
+		);
+
+		notes[note.id] =
+			note;
+	}
+
+	getAllNotes(
+		NOTES_COLLECTION_CHANGED
+	);
+}
+
+function createIndexedNote(
+	note: Note
+): IndexedNote {
+	if (!note.bibleLocationRef) {
+		return {
+			...note
+		};
+	}
+
+	return {
+		...note,
+		bookChapter:
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					note.bibleLocationRef
+				)
+	};
+}
+
+function putNote(
+	note: Note
+): void {
+	indexNote(
+		note
+	);
+
+	getAllNotes(
+		NOTES_COLLECTION_CHANGED
+	);
+}
+
+function indexNote(
+	note: Note
+): void {
+	const indexedNote =
+		createIndexedNote(
+			note
+		);
+
+	notes[note.id] =
+		indexedNote;
+
+	notesDocument.add(
+		note.id,
+		indexedNote
+	);
+}
+
+function removeNote(
+	noteId: string
+): void {
+	delete notes[noteId];
+
+	notesDocument.remove(
+		noteId
+	);
+
+	getAllNotes(
+		NOTES_COLLECTION_CHANGED
+	);
+}
+
+async function searchNotes(
+	id: string,
+	searchTerm: string,
+	indexes: string[]
+): Promise<void> {
+	const results =
+		await notesDocument.searchAsync(
+			searchTerm,
+			{
+				index: indexes
+			}
+		);
+
+	const filteredNotes:
+		NotesById =
+		{};
+
+	results.forEach(
+		(result) => {
+			result.result.forEach(
+				(noteId) => {
+					const note =
+						notes[String(noteId)];
+
+					if (note) {
+						filteredNotes[String(noteId)] =
+							note;
+					}
+				}
+			);
+		}
+	);
+
+	if (
+		Object.keys(
+			filteredNotes
+		).length > 0
+	) {
+		postMessage({
+			id,
+			notes: filteredNotes
+		});
+	}
+}
+
+function getAllNotes(
+	id: string
+): void {
+	postMessage({
+		id,
+		notes
+	});
+}
+
+onmessage = async (
+	e: MessageEvent<NotesSearchWorkerRequest>
+) => {
+	switch (e.data.action) {
+		case 'initialize':
+			await initialize(
+				e.data.notes
+			);
+			break;
+
+		case 'put':
+			putNote(
+				e.data.note
+			);
+			break;
+
+		case 'remove':
+			removeNote(
+				e.data.noteId
+			);
+			break;
+
+		case 'search':
+			await searchNotes(
+				e.data.id,
+				e.data.text,
+				e.data.indexes
+			);
+			break;
+
+		case 'get-all':
+			getAllNotes(
+				e.data.id
+			);
+			break;
+	}
+};

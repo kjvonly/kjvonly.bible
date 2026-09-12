@@ -5,7 +5,7 @@ coverage
 .kjvonly*
 # Mac
 .DS_Store
-
+logs
 # Backup files
 *~*
 

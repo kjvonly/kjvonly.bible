@@ -12,18 +12,21 @@
 	// // SVGS
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
-	// SERVICES
-	import { booksChaptersVerseCountByIDService } from '$lib/domains/bible/services/bibleMetadata/booksChaptersVerseCountByID.service';
-	import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
+	// MODELS
+	import type {
+		BibleBooknames
+	} from '$lib/domains/bible/models/bible-booknames.model';
 
 	// =============================== BINDINGS ================================
 
 	let {
+		booknames,
 		selectedBookID,
 		selectedChapter = $bindable<string>(),
 		bibleLocationRef = $bindable<string>(),
 		showBookChapterPopup = $bindable<boolean>()
 	}: {
+		booknames: BibleBooknames;
 		selectedBookID: string;
 		selectedChapter: string;
 		bibleLocationRef: string;
@@ -48,15 +51,24 @@
 	// ================================ FUNCS ==================================
 
 	function setBookName(): void {
-		bookName = bookNamesByIDService.get(selectedBookID);
+		bookName =
+			booknames.booknamesById[
+				selectedBookID
+			] ?? '';
 	}
 
 	function setVerses(): void {
-		let verseCount = booksChaptersVerseCountByIDService
-			.get(selectedBookID)
-			?.get(selectedChapter);
+		const verseCount =
+			booknames
+				.bookchapterversecountById[
+					selectedBookID
+				]?.[
+					selectedChapter
+				];
 
-		verses = verseCount ? Array(Number(verseCount)) : [];
+		verses = verseCount
+			? Array(verseCount)
+			: [];
 	}
 
 	// ============================== CLICK FUNCS ==============================
