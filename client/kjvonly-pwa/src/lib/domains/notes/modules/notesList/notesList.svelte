@@ -138,7 +138,7 @@
 			'data:application/json;charset=utf-8,' +
 				encodeURIComponent(JSON.stringify(dataList))
 		);
-		element.setAttribute('download', 'annotations');
+		element.setAttribute('download', 'notes');
 
 		element.style.display = 'none';
 		document.body.appendChild(element);
