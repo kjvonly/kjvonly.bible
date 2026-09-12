@@ -51,4 +51,74 @@ export class ResourceDiscovery {
 			event
 		);
 	}
+	async listByType(
+		publisher:
+			string,
+		resourceType:
+			string
+	): Promise<readonly ResourceRepresentation[]> {
+		const events =
+			await this.resourceClient
+				.getEvents({
+					kinds: [
+						RESOURCE_KIND
+					],
+
+					authors: [
+						publisher
+					],
+
+					'#t': [
+						resourceType
+					]
+				});
+
+		const current =
+			new Map<
+				string,
+				ResourceRepresentation
+			>();
+
+		for (
+			const event of events
+		) {
+			const resource =
+				toResourceRepresentation(
+					event
+				);
+
+			if (
+				resource.publisher !==
+					publisher ||
+				resource.resourceType !==
+					resourceType
+			) {
+				continue;
+			}
+
+			const existing =
+				current.get(
+					resource.resourceId
+				);
+
+			if (
+				existing !==
+					undefined &&
+				existing.modifiedAt >=
+					resource.modifiedAt
+			) {
+				continue;
+			}
+
+			current.set(
+				resource.resourceId,
+				resource
+			);
+		}
+
+		return [
+			...current.values()
+		];
+	}
+
 }
