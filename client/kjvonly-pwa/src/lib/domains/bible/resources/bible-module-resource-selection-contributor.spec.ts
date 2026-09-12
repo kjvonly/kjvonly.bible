@@ -41,6 +41,10 @@ import {
 } from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
 
 import {
+	NOTES_RESOURCE_TYPE
+} from '$lib/domains/notes/resources/note-interpreter';
+
+import {
 	BibleModuleResourceSelectionContributor
 } from './bible-module-resource-selection-contributor';
 
@@ -100,7 +104,8 @@ describe(
 					BIBLE_PERICOPES_RESOURCE_TYPE,
 					BIBLE_BOOKNAMES_RESOURCE_TYPE,
 					STRONGS_RESOURCE_TYPE,
-					BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
+					NOTES_RESOURCE_TYPE
 				]);
 
 				expect(
@@ -108,6 +113,59 @@ describe(
 						BIBLE_SEARCH_RESOURCE_TYPE
 					]
 				).toBeUndefined();
+			}
+		);
+
+		it(
+			'derives the default Notes selection from the current user',
+			() => {
+				const selections =
+					createContributor(
+						'user-pubkey'
+					).build(
+						createContext({})
+					);
+
+				expect(
+					selections[
+						NOTES_RESOURCE_TYPE
+					]
+				).toEqual({
+					publisher:
+						'user-pubkey',
+					resourceId:
+						`${NOTES_RESOURCE_TYPE}/default`
+				});
+			}
+		);
+
+		it(
+			'preserves an existing Notes selection',
+			() => {
+				const selectedNotes =
+					createReference(
+						'other-publisher',
+						`${NOTES_RESOURCE_TYPE}/study`
+					);
+
+				const selections =
+					createContributor(
+						'user-pubkey'
+					).build({
+						originatingSelections: {
+							[NOTES_RESOURCE_TYPE]:
+								selectedNotes
+						},
+						currentSelections: {}
+					});
+
+				expect(
+					selections[
+						NOTES_RESOURCE_TYPE
+					]
+				).toEqual(
+					selectedNotes
+				);
 			}
 		);
 
@@ -255,6 +313,12 @@ describe(
 				expect(
 					selections[
 						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					]
+				).toBeUndefined();
+
+				expect(
+					selections[
+						NOTES_RESOURCE_TYPE
 					]
 				).toBeUndefined();
 			}

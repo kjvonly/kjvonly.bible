@@ -43,13 +43,22 @@ import {
 	createDefaultBibleTextMarkupSelection
 } from '$lib/domains/bible/resources/text-markup/bible-text-markup-default-selection';
 
+import {
+	NOTES_RESOURCE_TYPE
+} from '$lib/domains/notes/resources/note-interpreter';
+
+import {
+	createDefaultNotesSelection
+} from '$lib/domains/notes/resources/notes-default-selection';
+
 const RESOURCE_TYPES = [
 	BIBLE_CHAPTER_RESOURCE_TYPE,
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE,
 	BIBLE_PERICOPES_RESOURCE_TYPE,
 	BIBLE_BOOKNAMES_RESOURCE_TYPE,
 	STRONGS_RESOURCE_TYPE,
-	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+	BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
+	NOTES_RESOURCE_TYPE
 ] as const;
 
 export interface CurrentUserPubkeyProvider {
@@ -78,6 +87,27 @@ implements ModuleResourceSelectionContributor {
 				context
 			);
 
+		const publisher =
+			this.currentUser
+				.tryGetPubkey();
+
+		if (!publisher) {
+			return selections;
+		}
+
+		if (
+			selections[
+				NOTES_RESOURCE_TYPE
+			] === undefined
+		) {
+			selections[
+				NOTES_RESOURCE_TYPE
+			] =
+				createDefaultNotesSelection(
+					publisher
+				);
+		}
+
 		if (
 			selections[
 				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
@@ -92,14 +122,6 @@ implements ModuleResourceSelectionContributor {
 			];
 
 		if (!chapterSource) {
-			return selections;
-		}
-
-		const publisher =
-			this.currentUser
-				.tryGetPubkey();
-
-		if (!publisher) {
 			return selections;
 		}
 

@@ -23,23 +23,69 @@ import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
 } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
+import {
+	NOTES_RESOURCE_TYPE
+} from './note-interpreter';
+
+import {
+	createDefaultNotesSelection
+} from './notes-default-selection';
+
 const RESOURCE_TYPES = [
 	BIBLE_CHAPTER_RESOURCE_TYPE,
-	BIBLE_BOOKNAMES_RESOURCE_TYPE
+	BIBLE_BOOKNAMES_RESOURCE_TYPE,
+	NOTES_RESOURCE_TYPE
 ] as const;
+
+export interface CurrentUserPubkeyProvider {
+	tryGetPubkey():
+		string |
+		undefined;
+}
 
 export class NotesModuleResourceSelectionContributor
 implements ModuleResourceSelectionContributor {
 	readonly module =
 		Modules.NOTES;
 
+	constructor(
+		private readonly currentUser:
+			CurrentUserPubkeyProvider
+	) {}
+
 	build(
 		context:
 			ModuleResourceSelectionBuildContext
 	): ResourceSelections {
-		return buildRequiredResourceSelections(
-			RESOURCE_TYPES,
-			context
-		);
+		const selections =
+			buildRequiredResourceSelections(
+				RESOURCE_TYPES,
+				context
+			);
+
+		if (
+			selections[
+				NOTES_RESOURCE_TYPE
+			] !== undefined
+		) {
+			return selections;
+		}
+
+		const publisher =
+			this.currentUser
+				.tryGetPubkey();
+
+		if (!publisher) {
+			return selections;
+		}
+
+		selections[
+			NOTES_RESOURCE_TYPE
+		] =
+			createDefaultNotesSelection(
+				publisher
+			);
+
+		return selections;
 	}
 }

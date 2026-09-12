@@ -508,7 +508,9 @@ export class Application {
                     ),
                     new SearchModuleResourceSelectionContributor(),
                     new StrongsModuleResourceSelectionContributor(),
-                    new NotesModuleResourceSelectionContributor(),
+                    new NotesModuleResourceSelectionContributor(
+                        authenticationService
+                    ),
                     new PlansModuleResourceSelectionContributor(),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.MODULES
