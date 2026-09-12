@@ -1,4 +1,3 @@
-import { annotsService } from '$lib/domains/bible/services/annots.service';
 import { toastService } from '$lib/application/services/toast.service';
 
 /**
@@ -7,8 +6,7 @@ import { toastService } from '$lib/application/services/toast.service';
 export class ExporterService {
   async export() {
     toastService.showToast('starting export data');
-    let data = await annotsService.getAllAnnotations();
-
+    let data;
     var element = document.createElement('a');
     element.setAttribute(
       'href',
