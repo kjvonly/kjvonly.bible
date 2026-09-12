@@ -212,6 +212,119 @@ describe(
 
 
 		it(
+			'accepts a collection that references another collection',
+			() => {
+
+				const value =
+					createManifest();
+
+
+				value.collections = {
+					child: {
+						event: {
+							encoding: [
+								'hex'
+							],
+
+							tags: [
+								[
+									'd',
+									'child'
+								]
+							]
+						},
+
+						resources: [
+							'bundle'
+						]
+					},
+
+					parent: {
+						event: {
+							encoding: [
+								'hex'
+							],
+
+							tags: [
+								[
+									'd',
+									'parent'
+								]
+							]
+						},
+
+						resources: [],
+
+						collections: [
+							'child'
+						]
+					}
+				};
+
+
+				const manifest =
+					validateManifest(
+						value
+					);
+
+
+				expect(
+					manifest
+						.collections
+						.parent
+						.collections
+				).toEqual([
+					'child'
+				]);
+			}
+		);
+
+
+		it(
+			'rejects an unknown nested collection',
+			() => {
+
+				const value =
+					createManifest();
+
+
+				value.collections = {
+					parent: {
+						event: {
+							encoding: [
+								'hex'
+							],
+
+							tags: [
+								[
+									'd',
+									'parent'
+								]
+							]
+						},
+
+						resources: [],
+
+						collections: [
+							'missing'
+						]
+					}
+				};
+
+
+				expect(
+					() =>
+						validateManifest(
+							value
+						)
+				).toThrow(
+					'Unknown Collection: missing'
+				);
+			}
+		);
+
+
+		it(
 			'rejects an unknown collection Resource',
 			() => {
 
