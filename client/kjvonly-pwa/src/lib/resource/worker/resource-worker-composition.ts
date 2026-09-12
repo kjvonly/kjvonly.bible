@@ -200,6 +200,30 @@ import {
 	BibleSearchIndexResourceHandler
 } from '$lib/domains/bible/resources/search/bible-search-index-resource-handler';
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Notes
+
+import {
+	IndexedDBNotesInstallationTransaction
+} from '$lib/domains/notes/persistence/notes-installation-transaction';
+
+import {
+	NoteInstaller
+} from '$lib/domains/notes/resources/note-installer';
+
+import {
+	NoteInterpreter
+} from '$lib/domains/notes/resources/note-interpreter';
+
+import {
+	NoteValidator
+} from '$lib/domains/notes/resources/note-validator';
+
+import {
+	NoteResourceHandler
+} from '$lib/domains/notes/resources/note-resource-handler';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
@@ -462,6 +486,24 @@ function createResourceHandlers():
 			bibleSearchIndexInstaller
 		);
 
+
+	const notesInstallationTransaction =
+		new IndexedDBNotesInstallationTransaction(
+			getApplicationDB
+		);
+
+	const noteInstaller =
+		new NoteInstaller(
+			notesInstallationTransaction
+		);
+
+	const noteResourceHandler =
+		new NoteResourceHandler(
+			new NoteInterpreter(),
+			new NoteValidator(),
+			noteInstaller
+		);
+
 	const strongsInstallationTransaction =
 		new IndexedDBStrongsInstallationTransaction(
 			getApplicationDB
@@ -486,6 +528,7 @@ function createResourceHandlers():
 		biblePericopesResourceHandler,
 		bibleTextMarkupResourceHandler,
 		bibleSearchIndexResourceHandler,
+		noteResourceHandler,
 		strongsResourceHandler
 	];
 }
