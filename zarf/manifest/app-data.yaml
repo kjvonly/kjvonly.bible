@@ -166,7 +166,46 @@ resources:
       mediaType: application/json+gzip
       encoding: []
 
+  # ---------------------------------------------------------------------------
+  # Reading Plans - Default - Individual
+  # ---------------------------------------------------------------------------
+
+  plans-readings-default-items:
+    path: ../../data/plans/readings/default
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/plans/readings/default/${key}"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/plans/readings"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
 collections:
+
+  # ---------------------------------------------------------------------------
+  # Reading Plans - Default
+  # ---------------------------------------------------------------------------
+
+  plans-readings-default:
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/plans/readings/default"]
+        - ["m", "application/json+hex"]
+        - ["t", "kjvonly/plans/readings"]
+        - ["representation", "descriptors"]
+
+    resources:
+      - plans-readings-default-items
 
   # ---------------------------------------------------------------------------
   # Application Bootstrap Defaults
