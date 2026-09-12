@@ -14,6 +14,18 @@ import type {
 	NotesSearchResult
 } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 
+import type {
+	NotesWriteTransaction
+} from '$lib/domains/notes/resources/notes-write-stores';
+
+import type {
+	NotesResourcePublication
+} from '$lib/domains/notes/resources/notes-resource-publication';
+
+import type {
+	OutboxWakeup
+} from '$lib/resource/outbox/outbox-wakeup';
+
 interface NotesSearchRuntimePort {
 	setResultHandler(
 		handler:
@@ -75,6 +87,18 @@ export class NotesService {
 				NotesStore,
 				'getAll'
 			>,
+
+		private readonly writeTransaction:
+			NotesWriteTransaction,
+
+		private readonly resourcePublication:
+			Pick<
+				NotesResourcePublication,
+				'create'
+			>,
+
+		private readonly outbox:
+			OutboxWakeup,
 
 		private readonly runtime:
 			NotesSearchRuntimePort =
@@ -142,6 +166,43 @@ export class NotesService {
 				);
 			}
 		);
+	}
+
+	async put(
+		note: Note
+	): Promise<void> {
+		await this.ready;
+
+		const publication =
+			this.resourcePublication
+				.create(
+					note
+				);
+
+		await this.writeTransaction.run(
+			async (
+				stores
+			) => {
+				await stores
+					.notes
+					.put(
+						note
+					);
+
+				await stores
+					.outbox
+					.put(
+						note.id,
+						publication
+					);
+			}
+		);
+
+		this.runtime.put(
+			note
+		);
+
+		this.outbox.wake();
 	}
 
 	deleteNote(

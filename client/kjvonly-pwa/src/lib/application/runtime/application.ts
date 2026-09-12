@@ -248,6 +248,14 @@ import {
 } from '$lib/domains/notes/persistence/indexeddb-notes-store';
 
 import {
+    IndexedDBNotesWriteTransaction
+} from '$lib/domains/notes/persistence/notes-write-transaction';
+
+import {
+    NotesResourcePublication
+} from '$lib/domains/notes/resources/notes-resource-publication';
+
+import {
     NotesService
 } from '$lib/domains/notes/services/notes.service';
 
@@ -716,9 +724,20 @@ export class Application {
                 getApplicationDB
             );
 
+        const notesWriteTransaction =
+            new IndexedDBNotesWriteTransaction(
+                getApplicationDB
+            );
+
+        const notesResourcePublication =
+            new NotesResourcePublication();
+
         const notesService =
             new NotesService(
-                notesStore
+                notesStore,
+                notesWriteTransaction,
+                notesResourcePublication,
+                outboxProcessor
             );
 
         ///////////////////////////////////////////////////////////////////////
