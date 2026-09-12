@@ -241,6 +241,17 @@ import {
 } from '$lib/domains/bible/utils/bible-identity';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Notes
+
+import {
+    IndexedDBNotesStore
+} from '$lib/domains/notes/persistence/indexeddb-notes-store';
+
+import {
+    NotesService
+} from '$lib/domains/notes/services/notes.service';
+
+///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import {
@@ -698,6 +709,19 @@ export class Application {
             );
 
         ///////////////////////////////////////////////////////////////////////
+        // Notes
+
+        const notesStore =
+            new IndexedDBNotesStore(
+                getApplicationDB
+            );
+
+        const notesService =
+            new NotesService(
+                notesStore
+            );
+
+        ///////////////////////////////////////////////////////////////////////
         // Strong's
 
         const strongsStore =
@@ -751,6 +775,8 @@ export class Application {
             searchService,
             verseService,
             bibleVersionsService,
+
+            notesService,
 
             strongsService
         };

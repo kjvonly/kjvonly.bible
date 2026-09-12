@@ -21,7 +21,6 @@
 	import type { NoteTag } from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
-	import { notesService } from '$lib/domains/notes/services/notes.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { toastService } from '$lib/application/services/toast.service';
 
@@ -33,6 +32,15 @@
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
 	import { findElement } from '$lib/application/ui/eventHandlers';
+
+	// APPLICATION
+	import {
+		useApplicationContext
+	} from '$lib/application/runtime/application-context';
+
+	const {
+		notesService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 

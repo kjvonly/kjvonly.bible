@@ -21,14 +21,20 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	// SVELTE
 	import { onMount } from 'svelte';
 
-	// SERVICES
-	import { notesService } from '$lib/domains/notes/services/notes.service';
-
 	// OTHER
 	import uuid4 from 'uuid4';
 	import NoteComponent from './note/note.svelte';
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
 	import NotesList from './notesList/notesList.svelte';
+
+	// APPLICATION
+	import {
+		useApplicationContext
+	} from '$lib/application/runtime/application-context';
+
+	const {
+		notesService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 

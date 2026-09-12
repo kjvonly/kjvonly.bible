@@ -23,7 +23,6 @@
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { notesService } from '$lib/domains/notes/services/notes.service';
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { scrollTo, scrollToTop } from '$lib/application/ui/eventHandlers';
@@ -57,6 +56,7 @@
 		paragraphsService,
 		pericopesService,
 		bibleTextMarkupService,
+		notesService,
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
 

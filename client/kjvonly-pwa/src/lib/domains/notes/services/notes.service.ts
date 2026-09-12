@@ -2,6 +2,10 @@ import type {
 	Note
 } from '$lib/domains/notes/models/note.model';
 
+import type {
+	NotesStore
+} from '$lib/domains/notes/persistence/notes-store';
+
 import {
 	NotesSearchRuntime
 } from '$lib/domains/notes/runtime/search/notes-search-runtime';
@@ -9,14 +13,6 @@ import {
 import type {
 	NotesSearchResult
 } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
-
-import {
-	notesApi
-} from '$lib/nostr/events/notes.nostr';
-
-interface NotesCollectionSource {
-	getAll(): Promise<Note[]>;
-}
 
 interface NotesSearchRuntimePort {
 	setResultHandler(
@@ -55,28 +51,34 @@ interface NotesSubscriber {
 }
 
 /**
- * Temporary Notes application-facing service.
+ * Application-facing Notes service.
  *
- * The worker behind this service is now a pure local search runtime. The
- * legacy source remains here only until the following Notes persistence/write
- * slices switch service composition to NotesStore + Resource/Outbox flows.
+ * Accepted Notes are loaded from the shared Domain Object store through the
+ * NotesStore abstraction, then handed to the pure local search runtime.
+ *
+ * Initial accepted Notes are loaded once from the Domain store. Normal Note
+ * changes are applied incrementally to the search runtime. Resource acquisition
+ * can later hand a newly accepted Note to this service without coupling the
+ * installer to the search runtime.
  */
 export class NotesService {
 	private subscribers:
 		NotesSubscriber[] =
-		[];
+			[];
 
 	private ready:
 		Promise<void>;
 
 	constructor(
+		private readonly store:
+			Pick<
+				NotesStore,
+				'getAll'
+			>,
+
 		private readonly runtime:
 			NotesSearchRuntimePort =
-				new NotesSearchRuntime(),
-
-		private readonly source:
-			NotesCollectionSource =
-				legacyNotesSource
+				new NotesSearchRuntime()
 	) {
 		this.runtime.setResultHandler(
 			(response) => {
@@ -87,7 +89,7 @@ export class NotesService {
 		);
 
 		this.ready =
-			this.loadSource();
+			this.loadAcceptedNotes();
 	}
 
 	unsubscribe(
@@ -97,7 +99,7 @@ export class NotesService {
 			this.subscribers.filter(
 				(subscriber) =>
 					subscriber.subID !==
-					subID
+						subID
 			);
 	}
 
@@ -169,20 +171,14 @@ export class NotesService {
 		);
 	}
 
-	init(): Promise<void> {
-		this.ready =
-			this.loadSource();
 
-		return this.ready;
-	}
-
-	private async loadSource():
+	private async loadAcceptedNotes():
 		Promise<void> {
 		const notes =
-			await this.source.getAll();
+			await this.store.getAll();
 
 		this.runtime.initialize(
-			notes
+			[...notes]
 		);
 	}
 
@@ -194,7 +190,7 @@ export class NotesService {
 			(subscriber) => {
 				if (
 					subscriber.id ===
-					response.id
+						response.id
 				) {
 					subscriber.fn(
 						response
@@ -204,12 +200,3 @@ export class NotesService {
 		);
 	}
 }
-
-const legacyNotesSource:
-	NotesCollectionSource = {
-	getAll:
-		() => notesApi.gets()
-};
-
-export const notesService =
-	new NotesService();
