@@ -550,7 +550,9 @@ export class Application {
                     new NotesModuleResourceSelectionContributor(
                         authenticationService
                     ),
-                    new PlansModuleResourceSelectionContributor(),
+                    new PlansModuleResourceSelectionContributor(
+                        authenticationService
+                    ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.MODULES
                     ),
