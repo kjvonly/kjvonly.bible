@@ -290,6 +290,22 @@ import {
     PlanSubscriptionsService
 } from '$lib/domains/reading-plans/services/plan-subscriptions.service';
 
+import {
+    IndexedDBPlanProgressStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-progress-store';
+
+import {
+    IndexedDBPlanProgressWriteTransaction
+} from '$lib/domains/reading-plans/persistence/plan-progress-write-transaction';
+
+import {
+    PlanProgressResourcePublication
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-publication';
+
+import {
+    PlanProgressService
+} from '$lib/domains/reading-plans/services/plan-progress.service';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
@@ -812,6 +828,27 @@ export class Application {
                 outboxProcessor
             );
 
+        const planProgressStore =
+            new IndexedDBPlanProgressStore(
+                getApplicationDB
+            );
+
+        const planProgressWriteTransaction =
+            new IndexedDBPlanProgressWriteTransaction(
+                getApplicationDB
+            );
+
+        const planProgressResourcePublication =
+            new PlanProgressResourcePublication();
+
+        const planProgressService =
+            new PlanProgressService(
+                planProgressStore,
+                planProgressWriteTransaction,
+                planProgressResourcePublication,
+                outboxProcessor
+            );
+
         ///////////////////////////////////////////////////////////////////////
         // Strong's
 
@@ -871,6 +908,7 @@ export class Application {
 
             planDefinitionsService,
             planSubscriptionsService,
+            planProgressService,
 
             strongsService
         };

@@ -42,7 +42,7 @@ export interface Sub {
   name: string;
   description: string;
   nestedReadings: Readings[];
-  completedReadings: Map<number, CompletedReadings>;
+  completedReadingIndexes: Set<number>;
 
   nextReadingsIndex: number;
   percentCompleted: number;
@@ -56,7 +56,7 @@ export function NullSub(): Sub {
     name: '',
     description: '',
     nestedReadings: [],
-    completedReadings: new Map(),
+    completedReadingIndexes: new Set(),
     nextReadingsIndex: 0,
     percentCompleted: 0
   };
@@ -78,7 +78,7 @@ export function planSubscriptionToSub(
     name: subscription.name,
     description: subscription.description,
     nestedReadings,
-    completedReadings: new Map(),
+    completedReadingIndexes: new Set(),
     nextReadingsIndex: 0,
     percentCompleted: 0
   };
@@ -105,29 +105,6 @@ export function NullReadings(): Readings {
   return {
     totalVerses: 0,
     bcvs: []
-  };
-}
-
-/**
- * Simple data structure that tracks completed subscription readings.
- * {@link CompletedReadings.id} is the {@link Sub.id}/{@link CompletedReadings.index}
- * eg. "00000000-0000-0000-0000-000000000000/0". The index is the {@link Sub.nestedReadings}
- * index.
- */
-export interface CompletedReadings {
-  id: string;
-  subID: string;
-  index: number;
-  version: number;
-  // TODO date created/updated
-}
-
-export function NullCompletedReadings(): CompletedReadings {
-  return {
-    id: '',
-    subID: '',
-    index: 0,
-    version: 0
   };
 }
 
@@ -181,5 +158,5 @@ export enum PLANS_VIEWS {
 export enum PLAN_PUBSUB_SUBSCRIPTIONS {
   GET_ALL_SUBS = 2,
   PUT_SUB = 3,
-  PUT_READING = 4
+  PUT_PROGRESS = 4
 }

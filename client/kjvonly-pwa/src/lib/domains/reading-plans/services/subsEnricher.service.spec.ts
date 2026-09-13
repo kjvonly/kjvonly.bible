@@ -2,9 +2,7 @@ import { assert, describe, expect, it } from 'vitest';
 import { subsEnricherService } from './subsEnricher.service';
 import {
 	type Sub,
-	type CompletedReadings,
 	NullSub,
-	NullCompletedReadings,
 	NullReadings
 } from '$lib/domains/reading-plans/models/plans.model';
 
@@ -47,11 +45,8 @@ describe('path util functions', () => {
 	for (const t of testTable) {
 		it('should set the next reading index', () => {
 			let sub: Sub = NullSub();
-			let completedReading = new Map<number, CompletedReadings>();
-			for (const cr of t.completedReadings) {
-				completedReading.set(cr, NullCompletedReadings());
-			}
-			sub.completedReadings = completedReading;
+			sub.completedReadingIndexes =
+				new Set(t.completedReadings);
 			subsEnricherService.setNextReadingIndex(sub);
 			assert.equal(
 				sub.nextReadingsIndex,
@@ -105,10 +100,12 @@ describe('set percent complete', () => {
 				sub.nestedReadings.push(NullReadings());
 			}
 
-			let index = 0;
-			for (let _ of Array(t.completedReadingsCount)) {
-				sub.completedReadings.set(index, NullCompletedReadings());
-				index += 1;
+			for (
+				let index = 0;
+				index < t.completedReadingsCount;
+				index += 1
+			) {
+				sub.completedReadingIndexes.add(index);
 			}
 
 			subsEnricherService.setPercentComplete(sub);

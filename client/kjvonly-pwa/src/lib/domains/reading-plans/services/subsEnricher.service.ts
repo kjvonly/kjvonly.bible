@@ -16,16 +16,16 @@ export class SubsEnricherService {
 	 * @param completedReadingIndexes completed reading indexes
 	 * @returns lowest incomplete reading index
 	 */
-	getNextReadingIndex(completedReadings: number[]): number {
+	getNextReadingIndex(completedReadingIndexes: number[]): number {
 		return (
-			completedReadings
+			completedReadingIndexes
 				.sort((a, b) => a - b)
 				.map((i, idx) => ({
 					readingIndex: i,
 					arrayIndex: idx
 				}))
 				.filter((i, idx) => i.readingIndex != idx)
-				.at(0)?.arrayIndex || completedReadings.length
+				.at(0)?.arrayIndex || completedReadingIndexes.length
 		);
 	}
 
@@ -38,13 +38,13 @@ export class SubsEnricherService {
 	 */
 	setNextReadingIndex(sub: Sub) {
 		sub.nextReadingsIndex = this.getNextReadingIndex(
-			sub.completedReadings.keys().toArray()
+			[...sub.completedReadingIndexes]
 		);
 	}
 
 	setPercentComplete(sub: Sub) {
 		sub.percentCompleted = Math.ceil(
-			(sub.completedReadings.size / sub.nestedReadings.length) * 100
+			(sub.completedReadingIndexes.size / sub.nestedReadings.length) * 100
 		);
 	}
 }

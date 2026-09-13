@@ -87,6 +87,10 @@ import type {
     PlanSubscriptionsService
 } from '$lib/domains/reading-plans/services/plan-subscriptions.service';
 
+import type {
+    PlanProgressService
+} from '$lib/domains/reading-plans/services/plan-progress.service';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
@@ -172,6 +176,9 @@ export interface ApplicationContext {
 
     readonly planSubscriptionsService:
     PlanSubscriptionsService;
+
+    readonly planProgressService:
+    PlanProgressService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Strong's

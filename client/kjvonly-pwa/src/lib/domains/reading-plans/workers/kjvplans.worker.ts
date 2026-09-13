@@ -1,11 +1,10 @@
-import { completedReadingsApi } from '$lib/nostr/events/completedReadings.nostr';
 import {
   planSubscriptionToSub,
   PLAN_PUBSUB_SUBSCRIPTIONS,
-  type CompletedReadings,
   type Sub
 } from '$lib/domains/reading-plans/models/plans.model';
 import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
+import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
 import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
 import FlexSearch from 'flexsearch';
@@ -18,7 +17,7 @@ let workerHasInitialized = false;
 // ================================ PLANS DATA =================================
 
 let subs: Map<string, Sub> = new Map();
-let completedReadings: Map<string, CompletedReadings> = new Map();
+let progressBySubscriptionId: Map<string, PlanProgress> = new Map();
 
 // ================================ FLEX DOCS ==================================
 
@@ -29,24 +28,18 @@ let subsDocument = new FlexSearch.Document({
   }
 });
 
-let completedReadingsDocument = new FlexSearch.Document({
-  document: {
-    id: 'id',
-    index: ['subID']
-  }
-});
-
 // ================================== INIT =====================================
 
 async function init(
   booknamesById: Record<string, string>,
-  subscriptions: readonly PlanSubscription[]
+  subscriptions: readonly PlanSubscription[],
+  progress: readonly PlanProgress[]
 ) {
   bookNameLookup = (bookID: string): string =>
     booknamesById[bookID] ?? '';
 
+  initializeProgress(progress);
   await initializeSubs(subscriptions);
-  await initializeCompletedReadings();
   await enrichSubs();
 
   workerHasInitialized = true;
@@ -68,25 +61,23 @@ async function initializeSubs(
   }
 }
 
-async function initializeCompletedReadings() {
-  let cachedReadings = await completedReadingsApi.gets();
-  for (let r of cachedReadings) {
-    await completedReadingsDocument.addAsync(r.id, r);
-    completedReadings.set(r.id, r);
+function initializeProgress(
+  progress: readonly PlanProgress[]
+) {
+  for (const planProgress of progress) {
+    progressBySubscriptionId.set(
+      planProgress.id,
+      planProgress
+    );
   }
 }
 
 // =================================== SUB =====================================
 
 /**
- * Accepted Plan Subscriptions are stored in shared Domain persistence.
- * The Sub readings data exists in the subscription snapshot itself. Users progress on a subscription is
- * determined by the {@link completedReadings} for the subscription.
- * {@link CompletedReadings} are stored in the DB with an ID of
- * <SubID/ReadingsIndex> and a SubID column. Enriching the sub includes fetching
- * the {@link completedReading} for the Sub and assigning it to
- * {@link Sub.completedReadings}. Additionally, other useful data is added to
- * the Sub such as {@link Sub.nextReadingsIndex} and {@link Sub.percentCompleted}.
+ * Accepted Plan Subscriptions and Plan Progress are stored in shared Domain
+ * persistence. The worker combines those accepted objects into a derived Sub
+ * projection for display/navigation.
  */
 async function enrichSubs() {
   for (let [_, sub] of subs) {
@@ -96,32 +87,20 @@ async function enrichSubs() {
 
 async function enrichSub(sub: Sub | undefined) {
   if (sub) {
-    await setCompletedReadings(sub);
+    setCompletedReadingIndexes(sub);
     subsEnricherService.setNextReadingIndex(sub);
     subsEnricherService.setPercentComplete(sub);
   }
 }
 
-async function setCompletedReadings(sub: Sub) {
-  sub.completedReadings = new Map<number, CompletedReadings>();
-  let result = await getCompletedReadings(sub.id, ['subID']);
-  result.forEach((r) => {
-    r.result.forEach((id) => {
-      let cr = completedReadings.get(id.toString());
-      if (cr) {
-        sub.completedReadings.set(cr.index, cr);
-      }
-    });
-  });
-}
+function setCompletedReadingIndexes(sub: Sub) {
+  const progress =
+    progressBySubscriptionId.get(sub.id);
 
-async function getCompletedReadings(
-  search: string,
-  index: string[]
-): Promise<FlexSearch.SimpleDocumentSearchResultSetUnit[]> {
-  return completedReadingsDocument.searchAsync(search, {
-    index: index
-  });
+  sub.completedReadingIndexes =
+    new Set(
+      progress?.completedReadingIndexes ?? []
+    );
 }
 
 // ================================== PUB SUB ==================================
@@ -137,17 +116,6 @@ function deleteSub(subID: string) {
   subs.delete(subID);
   subsDocument.remove(subID);
   publishSubs();
-}
-
-async function putReading(data: any, subID: any) {
-  await completedReadingsDocument.addAsync(data.id, data);
-  completedReadings.set(data.id, data);
-  let sub = subs.get(subID);
-  if (sub) {
-    sub.completedReadings.set(data.index, data);
-    await enrichSub(sub);
-    publishSubs();
-  }
 }
 
 async function search(
@@ -191,6 +159,21 @@ async function putSub(subscription: PlanSubscription) {
   }
 }
 
+async function putProgress(progress: PlanProgress) {
+  progressBySubscriptionId.set(
+    progress.id,
+    progress
+  );
+
+  const sub =
+    subs.get(progress.id);
+
+  if (sub) {
+    await enrichSub(sub);
+    publishSubs();
+  }
+}
+
 function requireBookNameLookup(): BookNameLookup {
   if (!bookNameLookup) {
     throw new Error('Plans worker Booknames have not been initialized');
@@ -206,7 +189,8 @@ onmessage = async (e) => {
     case 'init':
       await init(
         e.data.booknamesById,
-        e.data.subscriptions
+        e.data.subscriptions,
+        e.data.progress
       );
       break;
     case PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS:
@@ -215,8 +199,8 @@ onmessage = async (e) => {
     case PLAN_PUBSUB_SUBSCRIPTIONS.PUT_SUB:
       putSub(e.data.data);
       break;
-    case PLAN_PUBSUB_SUBSCRIPTIONS.PUT_READING:
-      putReading(e.data.data, e.data.subID);
+    case PLAN_PUBSUB_SUBSCRIPTIONS.PUT_PROGRESS:
+      putProgress(e.data.data);
       break;
   }
 };

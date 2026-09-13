@@ -2,6 +2,7 @@ import {
   PLAN_PUBSUB_SUBSCRIPTIONS
 } from '$lib/domains/reading-plans/models/plans.model';
 import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
+import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
 
 const PLANS_WORKER_INITIALIZED = 'plans-worker-initialized';
 
@@ -48,7 +49,8 @@ export class PlansPubSubService {
 
   initialize(
     booknamesById: Record<string, string>,
-    subscriptions: readonly PlanSubscription[]
+    subscriptions: readonly PlanSubscription[],
+    progress: readonly PlanProgress[]
   ): Promise<void> {
     if (this.initialization) {
       return this.initialization;
@@ -60,7 +62,8 @@ export class PlansPubSubService {
       plansWorker.postMessage({
         action: 'init',
         booknamesById,
-        subscriptions
+        subscriptions,
+        progress
       });
     });
 
@@ -88,12 +91,10 @@ export class PlansPubSubService {
     });
   }
 
-  putReading(data: any, subID: string) {
+  putProgress(progress: PlanProgress) {
     plansWorker.postMessage({
-      action: PLAN_PUBSUB_SUBSCRIPTIONS.PUT_READING,
-      id: PLAN_PUBSUB_SUBSCRIPTIONS.PUT_READING,
-      data: data,
-      subID: subID
+      action: PLAN_PUBSUB_SUBSCRIPTIONS.PUT_PROGRESS,
+      data: progress
     });
   }
 
