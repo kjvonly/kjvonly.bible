@@ -46,7 +46,10 @@ export class PlansPubSubService {
     });
   }
 
-  initialize(booknamesById: Record<string, string>): Promise<void> {
+  initialize(
+    booknamesById: Record<string, string>,
+    subscriptions: readonly PlanSubscription[]
+  ): Promise<void> {
     if (this.initialization) {
       return this.initialization;
     }
@@ -56,7 +59,8 @@ export class PlansPubSubService {
 
       plansWorker.postMessage({
         action: 'init',
-        booknamesById
+        booknamesById,
+        subscriptions
       });
     });
 

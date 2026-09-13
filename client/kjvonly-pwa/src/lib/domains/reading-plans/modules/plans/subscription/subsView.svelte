@@ -70,7 +70,7 @@
 			subsByID
 				.values()
 				.toArray()
-				.sort((a: any, b: any) => a.dateCreated - b.dateCreated)
+				.sort((a: Sub, b: Sub) => a.dateSubscribed - b.dateSubscribed)
 				.forEach((s: any) => subs.push(s));
 
 			await processNavReadings();

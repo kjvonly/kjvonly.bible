@@ -16,7 +16,8 @@
 
 	const {
 		bibleBooknamesService,
-		moduleResourceSelectionResolver
+		moduleResourceSelectionResolver,
+		planSubscriptionsService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -41,8 +42,12 @@
 				booknamesSource
 			);
 
+		const subscriptions =
+			await planSubscriptionsService.list();
+
 		await plansPubSubService.initialize(
-			booknames.booknamesById
+			booknames.booknamesById,
+			subscriptions
 		);
 
 		let plan = pane?.buffer?.bag?.navReadings;

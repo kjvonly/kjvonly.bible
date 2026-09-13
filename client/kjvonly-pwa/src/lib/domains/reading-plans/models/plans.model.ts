@@ -1,10 +1,8 @@
 import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-import uuid4 from 'uuid4';
 import type { BCV } from '../../bible/models/bible.model';
 import type { PlanDefinition } from './plan-definition';
 import type { PlanSubscription } from './plan-subscription';
-import { parsePlanSubscriptionId } from './plan-subscription-id';
 
 // ============================= PLAN DEFINITION VIEW =============================
 
@@ -30,12 +28,16 @@ export function NullPlanDefinitionView(): PlanDefinitionView {
 
 // =================================== SUBS ====================================
 
+/**
+ * Runtime/UI projection of an accepted Plan Subscription.
+ *
+ * The subscription Domain Object remains authoritative persisted state.
+ * Readings and progress metadata are derived locally for display/navigation.
+ */
 export interface Sub {
   id: string;
-  planID: string;
-  userID: string;
+  planDefinitionId: string;
   dateSubscribed: number;
-  version: number;
 
   name: string;
   description: string;
@@ -49,10 +51,8 @@ export interface Sub {
 export function NullSub(): Sub {
   return {
     id: '',
-    planID: '',
-    userID: '',
+    planDefinitionId: '',
     dateSubscribed: 0,
-    version: 0,
     name: '',
     description: '',
     nestedReadings: [],
@@ -61,38 +61,11 @@ export function NullSub(): Sub {
     percentCompleted: 0
   };
 }
-export function PlanDefinitionToCachedSub(
-  plan: PlanDefinition
-): CachedSub {
-  return {
-    id: uuid4(),
-    planID: plan.id,
-    userID: '00000000-0000-0000-0000-000000000000',
-    name: plan.name,
-    description: plan.description,
-    encodedReadings: [...plan.encodedReadings],
-    dateSubscribed: Date.now(),
-    version: 0
-  };
-}
-
-export interface CachedSub {
-  id: string;
-  planID: string;
-  userID: string;
-  name: string;
-  description: string;
-  encodedReadings: string[];
-  dateSubscribed: number;
-  version: number;
-}
-
 
 export function planSubscriptionToSub(
   subscription: PlanSubscription,
   bookNameLookup: BookNameLookup
 ): Sub {
-  const { publisher } = parsePlanSubscriptionId(subscription.id);
   const nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
     [...subscription.encodedReadings],
     bookNameLookup
@@ -100,37 +73,11 @@ export function planSubscriptionToSub(
 
   return {
     id: subscription.id,
-    planID: subscription.planDefinitionId,
-    userID: publisher,
+    planDefinitionId: subscription.planDefinitionId,
     dateSubscribed: subscription.dateSubscribed,
-    version: 0,
     name: subscription.name,
     description: subscription.description,
     nestedReadings,
-    completedReadings: new Map(),
-    nextReadingsIndex: 0,
-    percentCompleted: 0
-  };
-}
-
-export function cachedSubToSub(
-  cs: CachedSub,
-  bookNameLookup: BookNameLookup
-): Sub {
-  let nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
-    cs.encodedReadings,
-    bookNameLookup
-  );
-
-  return {
-    id: cs.id,
-    planID: cs.planID,
-    userID: cs.userID,
-    dateSubscribed: cs.dateSubscribed,
-    version: cs.version,
-    name: cs.name,
-    description: cs.description,
-    nestedReadings: nestedReadings,
     completedReadings: new Map(),
     nextReadingsIndex: 0,
     percentCompleted: 0

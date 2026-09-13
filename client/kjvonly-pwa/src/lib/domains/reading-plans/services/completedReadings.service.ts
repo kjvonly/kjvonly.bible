@@ -4,7 +4,6 @@ import {
   type NavReadings,
   type CompletedReadings,
   type Sub,
-  type Plan,
   type Readings,
   NullSub
 } from '$lib/domains/reading-plans/models/plans.model';
@@ -59,7 +58,7 @@ export class CompletedReadingsService {
    * The worker on boot initializes the data that exists in indexedDB.
    * After the initialization it's the responsibility of the developer to
    * publish any updates to the worker that modify the stored state e.g.
-   * {@link Plan}, {@link Sub}, {@link CompletedReadings} maps.
+   * {@link Sub} and {@link CompletedReadings} maps.
    */
   notifyWorker(cr: CompletedReadings) {
     plansPubSubService.putReading(cr, cr.subID);

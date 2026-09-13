@@ -1,10 +1,7 @@
 import { completedReadingsApi } from '$lib/nostr/events/completedReadings.nostr';
-import { subsApi } from '$lib/nostr/events/subs.nostr';
 import {
-  cachedSubToSub,
   planSubscriptionToSub,
   PLAN_PUBSUB_SUBSCRIPTIONS,
-  type CachedSub,
   type CompletedReadings,
   type Sub
 } from '$lib/domains/reading-plans/models/plans.model';
@@ -41,11 +38,14 @@ let completedReadingsDocument = new FlexSearch.Document({
 
 // ================================== INIT =====================================
 
-async function init(booknamesById: Record<string, string>) {
+async function init(
+  booknamesById: Record<string, string>,
+  subscriptions: readonly PlanSubscription[]
+) {
   bookNameLookup = (bookID: string): string =>
     booknamesById[bookID] ?? '';
 
-  await initializeSubs();
+  await initializeSubs(subscriptions);
   await initializeCompletedReadings();
   await enrichSubs();
 
@@ -54,15 +54,17 @@ async function init(booknamesById: Record<string, string>) {
   postMessage({ id: PLANS_WORKER_INITIALIZED });
 }
 
-async function initializeSubs() {
-  let cachedSubs: CachedSub[] = await subsApi.gets();
-  for (let cs of cachedSubs) {
-    let s = cachedSubToSub(
-      cs,
+async function initializeSubs(
+  subscriptions: readonly PlanSubscription[]
+) {
+  for (const subscription of subscriptions) {
+    const sub = planSubscriptionToSub(
+      subscription,
       requireBookNameLookup()
     );
-    await subsDocument.addAsync(s.id, s);
-    subs.set(s.id, s);
+
+    await subsDocument.addAsync(sub.id, sub);
+    subs.set(sub.id, sub);
   }
 }
 
@@ -77,8 +79,8 @@ async function initializeCompletedReadings() {
 // =================================== SUB =====================================
 
 /**
- * User subs are stored normalized in the DB. The Sub readings data exists in
- * the subscription snapshot itself. Users progress on a subscription is
+ * Accepted Plan Subscriptions are stored in shared Domain persistence.
+ * The Sub readings data exists in the subscription snapshot itself. Users progress on a subscription is
  * determined by the {@link completedReadings} for the subscription.
  * {@link CompletedReadings} are stored in the DB with an ID of
  * <SubID/ReadingsIndex> and a SubID column. Enriching the sub includes fetching
@@ -202,7 +204,10 @@ function requireBookNameLookup(): BookNameLookup {
 onmessage = async (e) => {
   switch (e.data.action) {
     case 'init':
-      await init(e.data.booknamesById);
+      await init(
+        e.data.booknamesById,
+        e.data.subscriptions
+      );
       break;
     case PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS:
       publishSubs();
