@@ -37,18 +37,33 @@ export class HexResourceContentDecorator
 	async decode(
 		value: unknown
 	): Promise<unknown> {
+		let serialized:
+			string;
+
 		if (
-			typeof value !==
-			'string'
+			typeof value ===
+				'string'
 		) {
+			serialized =
+				value;
+		} else if (
+			value instanceof
+				Uint8Array
+		) {
+			serialized =
+				new TextDecoder()
+					.decode(
+						value
+					);
+		} else {
 			throw new Error(
-				'Hex Resource content must be a string when decoding.'
+				'Hex Resource content must be a string or Uint8Array when decoding.'
 			);
 		}
 
 		const bytes =
 			decodeHex(
-				value
+				serialized
 			);
 
 		return this.inner.decode(
