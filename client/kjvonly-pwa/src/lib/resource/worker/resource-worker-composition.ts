@@ -229,6 +229,29 @@ import {
 } from '$lib/domains/notes/resources/note-resource-handler';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Reading Plans
+
+import {
+	IndexedDBPlanDefinitionInstallationTransaction
+} from '$lib/domains/reading-plans/persistence/plan-definition-installation-transaction';
+
+import {
+	PlanDefinitionInstaller
+} from '$lib/domains/reading-plans/resources/definitions/plan-definition-installer';
+
+import {
+	PlanDefinitionInterpreter
+} from '$lib/domains/reading-plans/resources/definitions/plan-definition-interpreter';
+
+import {
+	PlanDefinitionValidator
+} from '$lib/domains/reading-plans/resources/definitions/plan-definition-validator';
+
+import {
+	PlanDefinitionResourceHandler
+} from '$lib/domains/reading-plans/resources/definitions/plan-definition-resource-handler';
+
+///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import {
@@ -526,6 +549,23 @@ function createResourceHandlers():
 			noteInstaller
 		);
 
+	const planDefinitionInstallationTransaction =
+		new IndexedDBPlanDefinitionInstallationTransaction(
+			getApplicationDB
+		);
+
+	const planDefinitionInstaller =
+		new PlanDefinitionInstaller(
+			planDefinitionInstallationTransaction
+		);
+
+	const planDefinitionResourceHandler =
+		new PlanDefinitionResourceHandler(
+			new PlanDefinitionInterpreter(),
+			new PlanDefinitionValidator(),
+			planDefinitionInstaller
+		);
+
 	const strongsInstallationTransaction =
 		new IndexedDBStrongsInstallationTransaction(
 			getApplicationDB
@@ -551,6 +591,7 @@ function createResourceHandlers():
 		bibleTextMarkupResourceHandler,
 		bibleSearchIndexResourceHandler,
 		noteResourceHandler,
+		planDefinitionResourceHandler,
 		strongsResourceHandler
 	];
 }
