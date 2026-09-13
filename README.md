@@ -22,6 +22,7 @@ git clone --recursive <repo-url>
 
 ```bash
 git submodule update --init --recursive
+git submodule foreach --recursive 'git lfs pull'
 ```
 
 ```bash
