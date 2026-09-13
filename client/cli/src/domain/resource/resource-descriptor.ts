@@ -20,6 +20,9 @@ export interface ResourceDescriptorMetadata {
 	readonly modifiedAt:
 		number;
 
+	readonly representation:
+		'content' | 'descriptors';
+
 	readonly mediaType:
 		string;
 }

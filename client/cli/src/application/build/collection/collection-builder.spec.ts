@@ -114,6 +114,9 @@ function createDescriptor(
 
 			modifiedAt,
 
+			representation:
+				'content',
+
 			mediaType:
 				'application/json+gzip'
 		},
@@ -643,6 +646,9 @@ describe(
 
 						category:
 							'kjvonly/plans/readings',
+
+						representation:
+							'descriptors',
 
 						mediaType:
 							'application/json+hex'

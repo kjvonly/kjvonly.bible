@@ -456,6 +456,9 @@ function createDescriptor(
 			modifiedAt:
 				100,
 
+			representation:
+				'content',
+
 			mediaType:
 				'application/json+gzip'
 		},

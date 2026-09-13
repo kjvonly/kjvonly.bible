@@ -1091,6 +1091,9 @@ function createDescriptor(
 			modifiedAt:
 				options.modifiedAt,
 
+			representation:
+				'content',
+
 			mediaType:
 				'application/json'
 		},

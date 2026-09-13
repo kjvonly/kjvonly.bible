@@ -71,6 +71,9 @@ export class ResourceDescriptorBuilder {
 				modifiedAt:
 					request.modifiedAt,
 
+				representation:
+					'content',
+
 				mediaType:
 					objectUpload
 						.mediaType

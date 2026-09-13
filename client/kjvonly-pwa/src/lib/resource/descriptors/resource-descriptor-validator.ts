@@ -102,6 +102,20 @@ export class ResourceDescriptorValidator {
 			);
 		}
 
+		const representation =
+			value.representation;
+
+		if (
+			representation !==
+				'content' &&
+			representation !==
+				'descriptors'
+		) {
+			throw new Error(
+				'Invalid Resource descriptor representation.'
+			);
+		}
+
 		const mediaType =
 			requireString(
 				value.mediaType,
@@ -113,6 +127,7 @@ export class ResourceDescriptorValidator {
 			resourceId,
 			category,
 			modifiedAt,
+			representation,
 			mediaType
 		};
 	}

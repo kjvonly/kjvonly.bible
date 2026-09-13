@@ -454,6 +454,8 @@ export class CollectionBuilder {
 				modifiedAt:
 					event.created_at,
 
+				representation,
+
 				mediaType
 			},
 

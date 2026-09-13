@@ -275,6 +275,9 @@ describe(
 							modifiedAt:
 								200,
 
+							representation:
+								'content',
+
 							mediaType:
 								'application/json+gzip'
 						}
@@ -441,6 +444,9 @@ describe(
 
 							modifiedAt:
 								200,
+
+							representation:
+								'content',
 
 							mediaType:
 								'application/json+gzip'
@@ -704,6 +710,9 @@ function createDescriptor(
 
 				modifiedAt:
 					100,
+
+				representation:
+					'content',
 
 				mediaType:
 					'application/json+gzip'

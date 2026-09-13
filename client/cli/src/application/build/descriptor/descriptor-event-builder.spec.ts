@@ -243,6 +243,15 @@ describe(
 				).toBe(
 					1000
 				);
+
+
+				expect(
+					decoded[0]
+						.metadata
+						.representation
+				).toBe(
+					'content'
+				);
 			}
 		);
 	}
