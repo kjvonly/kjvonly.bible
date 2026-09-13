@@ -33,6 +33,17 @@ import type {
 	ResourceResolutionStrategy
 } from './resource-resolution-strategy';
 
+const MAX_DESCRIPTOR_NESTING_DEPTH =
+	3;
+
+interface DescriptorResolutionContext {
+	readonly depth:
+		number;
+
+	readonly visited:
+		ReadonlySet<string>;
+}
+
 export class DescriptorsRepresentationResolver
 	implements ResourceRepresentationResolver {
 
@@ -137,6 +148,32 @@ export class DescriptorsRepresentationResolver
 			};
 		}
 
+		return this.resolveEntries(
+			entries,
+			{
+				depth:
+					0,
+
+				visited:
+					new Set([
+						createResourceIdentity(
+							resource.publisher,
+							resource.resourceId
+						)
+					])
+			}
+		);
+	}
+
+	private async resolveEntries(
+		entries:
+			readonly unknown[],
+
+		context:
+			DescriptorResolutionContext
+	): Promise<
+		ResourceResolutionResult
+	> {
 		const contents:
 			VerifiedResourceContent[] =
 				[];
@@ -199,6 +236,82 @@ export class DescriptorsRepresentationResolver
 					);
 				}
 
+				if (
+					descriptor.metadata.representation ===
+					'descriptors'
+				) {
+					const identity =
+						createResourceIdentity(
+							descriptor.metadata.publisher,
+							descriptor.metadata.resourceId
+						);
+
+					if (
+						context.visited.has(
+							identity
+						)
+					) {
+						throw new Error(
+							`Resource descriptor cycle: ${descriptor.metadata.publisher}/${descriptor.metadata.resourceId}`
+						);
+					}
+
+					if (
+						context.depth >=
+						MAX_DESCRIPTOR_NESTING_DEPTH
+					) {
+						throw new Error(
+							`Maximum Resource descriptor nesting depth exceeded: ${MAX_DESCRIPTOR_NESTING_DEPTH}`
+						);
+					}
+
+					const content =
+						await strategy.resolve(
+							descriptor
+						);
+
+					const nestedEntries =
+						await this.documentDecoder.decode(
+							descriptor.metadata.mediaType,
+							content
+						);
+
+					const visited =
+						new Set(
+							context.visited
+						);
+
+					visited.add(
+						identity
+					);
+
+					const nested =
+						await this.resolveEntries(
+							nestedEntries,
+							{
+								depth:
+									context.depth +
+									1,
+
+								visited
+							}
+						);
+
+					contents.push(
+						...nested.contents
+					);
+
+					current.push(
+						...nested.current
+					);
+
+					failures.push(
+						...nested.failures
+					);
+
+					continue;
+				}
+
 				const content =
 					await strategy.resolve(
 						descriptor
@@ -255,4 +368,17 @@ export class DescriptorsRepresentationResolver
 			failures
 		};
 	}
+}
+
+function createResourceIdentity(
+	publisher:
+		string,
+
+	resourceId:
+		string
+): string {
+	return JSON.stringify([
+		publisher,
+		resourceId
+	]);
 }
