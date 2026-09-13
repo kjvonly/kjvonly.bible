@@ -3,10 +3,6 @@ import type {
 } from '$lib/resource/descriptors/resource-descriptor';
 
 import type {
-	ResolvedResourceRepresentation
-} from '$lib/resource/models/resource.model';
-
-import type {
 	ResourceResolutionStrategy
 } from './resource-resolution-strategy';
 
@@ -49,7 +45,7 @@ export class BlossomResourceResolutionStrategy
 		descriptor:
 			ResourceDescriptor
 	): Promise<
-		ResolvedResourceRepresentation
+		Uint8Array
 	> {
 		const data =
 			validateStrategyData(
@@ -144,28 +140,7 @@ export class BlossomResourceResolutionStrategy
 			);
 		}
 
-		return {
-			publisher:
-				descriptor.metadata.publisher,
-
-			resourceId:
-				descriptor.metadata.resourceId,
-
-			resourceType:
-				descriptor.metadata.category,
-
-			modifiedAt:
-				descriptor.metadata.modifiedAt,
-
-			representation:
-				'content',
-
-			mediaType:
-				descriptor.metadata.mediaType,
-
-			payload:
-				content
-		};
+		return content;
 	}
 }
 

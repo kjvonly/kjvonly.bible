@@ -10,34 +10,28 @@ export interface PublishedResourceReference {
 	resourceId: string;
 }
 
-export type SerializedResourceContent =
-	| string
-	| Uint8Array;
+export interface ResourceRepresentation {
+	publisher: string;
 
-export interface ResolvedResourceRepresentation {
-	readonly publisher: string;
+	resourceId: string;
 
-	readonly resourceId: string;
+	resourceType: string;
 
-	readonly resourceType: string;
+	eventId: string;
 
-	readonly modifiedAt: number;
+	modifiedAt: number;
 
-	readonly representation:
+	representation:
 		ResourceRepresentationType;
 
-	readonly mediaType: string;
-
-	readonly payload:
-		SerializedResourceContent;
-}
-
-export interface ResourceRepresentation
-	extends ResolvedResourceRepresentation {
-	eventId: string;
+	mediaType: string;
 
 	payload: string;
 }
+
+export type SerializedResourceContent =
+	| string
+	| Uint8Array;
 
 export interface VerifiedResourceContent {
 	readonly publisher: string;

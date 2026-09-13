@@ -1,5 +1,5 @@
 import type {
-	ResolvedResourceRepresentation
+	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
 import type {
@@ -18,7 +18,7 @@ export class ContentRepresentationResolver
 
 	async resolve(
 		resource:
-			ResolvedResourceRepresentation
+			ResourceRepresentation
 	): Promise<
 		ResourceResolutionResult
 	> {

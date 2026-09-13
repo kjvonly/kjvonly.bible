@@ -1,5 +1,5 @@
 import type {
-	ResolvedResourceRepresentation,
+	ResourceRepresentation,
 	VerifiedResourceContent
 } from '$lib/resource/models/resource.model';
 
@@ -99,26 +99,7 @@ export class DescriptorsRepresentationResolver
 
 	async resolve(
 		resource:
-			ResolvedResourceRepresentation
-	): Promise<
-		ResourceResolutionResult
-	> {
-		return this.resolveRepresentation(
-			resource,
-			new Set([
-				this.createResourceIdentity(
-					resource
-				)
-			])
-		);
-	}
-
-	private async resolveRepresentation(
-		resource:
-			ResolvedResourceRepresentation,
-
-		visited:
-			ReadonlySet<string>
+			ResourceRepresentation
 	): Promise<
 		ResourceResolutionResult
 	> {
@@ -218,83 +199,28 @@ export class DescriptorsRepresentationResolver
 					);
 				}
 
-				const resolved =
+				const content =
 					await strategy.resolve(
 						descriptor
 					);
 
-				this.assertMatchesDescriptor(
-					descriptor,
-					resolved
-				);
-
-				if (
-					resolved.representation ===
-					'descriptors'
-				) {
-					const identity =
-						this.createResourceIdentity(
-							resolved
-						);
-
-					if (
-						visited.has(
-							identity
-						)
-					) {
-						throw new Error(
-							`Recursive Resource descriptor cycle: ${resolved.publisher}/${resolved.resourceId}`
-						);
-					}
-
-					const nestedVisited =
-						new Set(
-							visited
-						);
-
-					nestedVisited.add(
-						identity
-					);
-
-					const nested =
-						await this.resolveRepresentation(
-							resolved,
-							nestedVisited
-						);
-
-					contents.push(
-						...nested.contents
-					);
-
-					current.push(
-						...nested.current
-					);
-
-					failures.push(
-						...nested.failures
-					);
-
-					continue;
-				}
-
 				contents.push({
 					publisher:
-						resolved.publisher,
+						descriptor.metadata.publisher,
 
 					resourceId:
-						resolved.resourceId,
+						descriptor.metadata.resourceId,
 
 					resourceType:
-						resolved.resourceType,
+						descriptor.metadata.category,
 
 					modifiedAt:
-						resolved.modifiedAt,
+						descriptor.metadata.modifiedAt,
 
 					mediaType:
-						resolved.mediaType,
+						descriptor.metadata.mediaType,
 
-					content:
-						resolved.payload
+					content
 				});
 			} catch (error) {
 				if (
@@ -328,45 +254,5 @@ export class DescriptorsRepresentationResolver
 			current,
 			failures
 		};
-	}
-
-	private assertMatchesDescriptor(
-		descriptor:
-			ResourceDescriptor,
-
-		resolved:
-			ResolvedResourceRepresentation
-	): void {
-
-		if (
-			resolved.publisher !==
-				descriptor.metadata.publisher ||
-			resolved.resourceId !==
-				descriptor.metadata.resourceId ||
-			resolved.resourceType !==
-				descriptor.metadata.category ||
-			resolved.modifiedAt !==
-				descriptor.metadata.modifiedAt ||
-			resolved.mediaType !==
-				descriptor.metadata.mediaType
-		) {
-			throw new Error(
-				'Resolved Resource does not match its descriptor.'
-			);
-		}
-	}
-
-	private createResourceIdentity(
-		resource:
-			Pick<
-				ResolvedResourceRepresentation,
-				'publisher' |
-				'resourceId'
-			>
-	): string {
-		return JSON.stringify([
-			resource.publisher,
-			resource.resourceId
-		]);
 	}
 }
