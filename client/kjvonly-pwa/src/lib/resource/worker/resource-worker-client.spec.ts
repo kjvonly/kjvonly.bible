@@ -9,6 +9,14 @@ import type {
 	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
+import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
+	ResourceResolutionStrategy
+} from '$lib/resource/resolution/resource-resolution-strategy';
+
 import {
 	ResourceWorkerClient,
 	type ResourceWorkerPort
@@ -816,8 +824,128 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'executes Resource resolution strategy requests on the main thread',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const descriptor =
+					createDescriptor();
+
+				const content =
+					new Uint8Array([
+						1,
+						2,
+						3
+					]);
+
+				const calls:
+					ResourceDescriptor[] =
+						[];
+
+				const strategy:
+					ResourceResolutionStrategy = {
+						type:
+							'nostr',
+
+						resolve:
+							async (received) => {
+								calls.push(
+									received
+								);
+
+								return content;
+							}
+					};
+
+				new ResourceWorkerClient(
+					worker,
+					new FakeDiscovery(
+						null
+					),
+					[
+						strategy
+					]
+				);
+
+				worker.emit({
+					type:
+						'strategy-resolve',
+
+					requestId:
+						'strategy-1',
+
+					descriptor
+				});
+
+				await flushAsync();
+
+				expect(
+					calls
+				).toEqual([
+					descriptor
+				]);
+
+				expect(
+					worker.messages
+				).toEqual([
+					{
+						type:
+							'strategy-resolve-result',
+
+						requestId:
+							'strategy-1',
+
+						content
+					}
+				]);
+			}
+		);
 	}
 );
+
+function createDescriptor():
+	ResourceDescriptor {
+	return {
+		metadata: {
+			publisher:
+				'a'.repeat(
+					64
+				),
+
+			resourceId:
+				'kjvonly/plans/readings/default',
+
+			category:
+				'kjvonly/plans/readings',
+
+			modifiedAt:
+				100,
+
+			representation:
+				'descriptors',
+
+			mediaType:
+				'application/json+hex'
+		},
+
+		strategy: {
+			type:
+				'nostr',
+
+			data: {
+				kind:
+					37770,
+
+				relays: [
+					'wss://relay.example'
+				]
+			}
+		}
+	};
+}
 
 function createReference():
 	PublishedResourceReference {

@@ -3,12 +3,20 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
 	ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
 
 import type {
 	ResourceInstallResult
 } from '$lib/resource/services/resource-install-result';
+
+import type {
+	ResourceResolutionStrategy
+} from '$lib/resource/resolution/resource-resolution-strategy';
 
 import {
 	deserializeResourceWorkerError,
@@ -138,6 +146,12 @@ export class ResourceWorkerClient {
 		Error |
 		undefined;
 
+	private readonly strategies:
+		ReadonlyMap<
+			string,
+			ResourceResolutionStrategy
+		>;
+
 	constructor(
 		private readonly worker:
 			ResourceWorkerPort,
@@ -146,8 +160,40 @@ export class ResourceWorkerClient {
 			Pick<
 				ResourceDiscovery,
 				'get'
-			>
+			>,
+
+		strategies:
+			readonly ResourceResolutionStrategy[] =
+				[]
 	) {
+		const strategyMap =
+			new Map<
+				string,
+				ResourceResolutionStrategy
+			>();
+
+		for (
+			const strategy
+			of strategies
+		) {
+			if (
+				strategyMap.has(
+					strategy.type
+				)
+			) {
+				throw new Error(
+					`Duplicate main-thread Resource resolution strategy: ${strategy.type}`
+				);
+			}
+
+			strategyMap.set(
+				strategy.type,
+				strategy
+			);
+		}
+
+		this.strategies =
+			strategyMap;
 
 		this.worker
 			.addEventListener(
@@ -311,6 +357,15 @@ export class ResourceWorkerClient {
 					void this.handleDiscovery(
 						message.requestId,
 						message.reference
+					);
+
+					return;
+
+				case 'strategy-resolve':
+
+					void this.handleStrategyResolve(
+						message.requestId,
+						message.descriptor
 					);
 
 					return;
@@ -488,6 +543,66 @@ export class ResourceWorkerClient {
 		}
 	}
 
+	private async handleStrategyResolve(
+		requestId:
+			string,
+
+		descriptor:
+			ResourceDescriptor
+	): Promise<void> {
+		try {
+			const strategy =
+				this.strategies.get(
+					descriptor.strategy.type
+				);
+
+			if (
+				strategy ===
+				undefined
+			) {
+				throw new Error(
+					`Unsupported main-thread Resource resolution strategy: ${descriptor.strategy.type}`
+				);
+			}
+
+			const content =
+				await strategy.resolve(
+					descriptor
+				);
+
+			if (
+				this.state !==
+				'active'
+			) {
+				return;
+			}
+
+			this.worker.postMessage({
+				type:
+					'strategy-resolve-result',
+				requestId,
+				content
+			});
+		} catch (error) {
+			if (
+				this.state !==
+				'active'
+			) {
+				return;
+			}
+
+			this.worker.postMessage({
+				type:
+					'strategy-resolve-error',
+				requestId,
+				error:
+					serializeResourceWorkerError(
+						error
+					)
+			});
+		}
+	}
+
 	private close(
 		state:
 			Exclude<
@@ -597,7 +712,11 @@ export function createBrowserResourceWorkerClient(
 		Pick<
 			ResourceDiscovery,
 			'get'
-		>
+		>,
+
+	strategies:
+		readonly ResourceResolutionStrategy[] =
+			[]
 ): ResourceWorkerClient {
 
 	const worker =
@@ -614,6 +733,7 @@ export function createBrowserResourceWorkerClient(
 
 	return new ResourceWorkerClient(
 		worker,
-		discovery
+		discovery,
+		strategies
 	);
 }

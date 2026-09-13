@@ -14,6 +14,10 @@ import {
 	BlossomResourceResolutionStrategy
 } from '$lib/resource/resolution/blossom-resource-resolution-strategy';
 
+import type {
+	ResourceResolutionStrategy
+} from '$lib/resource/resolution/resource-resolution-strategy';
+
 import {
 	ResourceContentDecoratorBuilder
 } from '$lib/resource/content/resource-content-decorator-builder';
@@ -280,8 +284,13 @@ export function createContentResourceProcessor():
 	);
 }
 
-export function createDescriptorResourceProcessor():
-	ResourceProcessor {
+export function createDescriptorResourceProcessor(
+	remoteStrategyResolver:
+		Pick<
+			ResourceResolutionStrategy,
+			'resolve'
+		>
+): ResourceProcessor {
 
 	const dependencies =
 		createResourceProcessingDependencies();
@@ -297,13 +306,26 @@ export function createDescriptorResourceProcessor():
 	const blossomStrategy =
 		new BlossomResourceResolutionStrategy();
 
+	const nostrStrategy:
+		ResourceResolutionStrategy = {
+			type:
+				'nostr',
+
+			resolve:
+				(descriptor) =>
+					remoteStrategyResolver.resolve(
+						descriptor
+					)
+		};
+
 	const descriptorsResolver =
 		new DescriptorsRepresentationResolver(
 			descriptorDocumentDecoder,
 			descriptorValidator,
 			dependencies.receipts,
 			[
-				blossomStrategy
+				blossomStrategy,
+				nostrStrategy
 			]
 		);
 

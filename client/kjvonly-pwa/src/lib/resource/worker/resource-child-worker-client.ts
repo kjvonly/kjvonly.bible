@@ -4,17 +4,26 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
 	ResourceInstallResult
 } from '$lib/resource/services/resource-install-result';
 
-import type { 
-	ResourceChildWorkerMessage, 
-	ResourceChildWorkerRequest 
+import type {
+	ResourceChildWorkerMessage,
+	ResourceChildWorkerRequest
 } from './resource-child-worker-message';
+
+import type {
+	ResourceWorkerStrategyResolver
+} from './resource-worker-strategy-resolver';
 
 import {
 	deserializeResourceWorkerError,
-	deserializeResourceWorkerInstallResult
+	deserializeResourceWorkerInstallResult,
+	serializeResourceWorkerError
 } from './resource-worker-message';
 
 
@@ -53,7 +62,13 @@ export class ResourceChildWorkerClient {
 
 	constructor(
 		private readonly worker:
-			Worker
+			Worker,
+
+		private readonly strategyResolver?:
+			Pick<
+				ResourceWorkerStrategyResolver,
+				'resolve'
+			>
 	) {
 		this.worker.addEventListener(
 			'message',
@@ -191,6 +206,18 @@ export class ResourceChildWorkerClient {
 			const message =
 				event.data;
 
+			if (
+				message.type ===
+				'strategy-resolve'
+			) {
+				void this.handleStrategyResolve(
+					message.requestId,
+					message.descriptor
+				);
+
+				return;
+			}
+
 			const pending =
 				this.pending.get(
 					message.requestId
@@ -226,6 +253,63 @@ export class ResourceChildWorkerClient {
 				)
 			);
 		};
+
+	private async handleStrategyResolve(
+		requestId:
+			string,
+
+		descriptor:
+			ResourceDescriptor
+	): Promise<void> {
+		try {
+			if (
+				this.strategyResolver ===
+				undefined
+			) {
+				throw new Error(
+					'Resource child worker strategy resolution is unavailable.'
+				);
+			}
+
+			const content =
+				await this.strategyResolver.resolve(
+					descriptor
+				);
+
+			if (
+				this.disposed ||
+				this.failure !==
+				undefined
+			) {
+				return;
+			}
+
+			this.worker.postMessage({
+				type:
+					'strategy-resolve-result',
+				requestId,
+				content
+			});
+		} catch (error) {
+			if (
+				this.disposed ||
+				this.failure !==
+				undefined
+			) {
+				return;
+			}
+
+			this.worker.postMessage({
+				type:
+					'strategy-resolve-error',
+				requestId,
+				error:
+					serializeResourceWorkerError(
+						error
+					)
+			});
+		}
+	}
 
 	private readonly handleError =
 		(

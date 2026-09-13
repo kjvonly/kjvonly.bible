@@ -5,12 +5,18 @@ import {
 
 import type {
 	ResourceChildWorkerMessage,
+	ResourceChildWorkerProcessRequest,
 	ResourceChildWorkerRequest
 } from './resource-child-worker-message';
 
 import {
 	createDescriptorResourceProcessor
 } from './resource-worker-composition';
+
+import {
+	ResourceWorkerStrategyResolver,
+	type ResourceWorkerStrategyResolverPort
+} from './resource-worker-strategy-resolver';
 
 interface ResourceDescriptorWorkerPort {
 	postMessage(
@@ -36,8 +42,16 @@ const workerPort =
 	self as unknown as
 		ResourceDescriptorWorkerPort;
 
+const strategyResolver =
+	new ResourceWorkerStrategyResolver(
+		workerPort as unknown as
+			ResourceWorkerStrategyResolverPort
+	);
+
 const resourceProcessor =
-	createDescriptorResourceProcessor();
+	createDescriptorResourceProcessor(
+		strategyResolver
+	);
 
 workerPort.addEventListener(
 	'message',
@@ -61,7 +75,7 @@ workerPort.addEventListener(
 
 async function handleProcess(
 	message:
-		ResourceChildWorkerRequest
+		ResourceChildWorkerProcessRequest
 ): Promise<void> {
 
 	try {

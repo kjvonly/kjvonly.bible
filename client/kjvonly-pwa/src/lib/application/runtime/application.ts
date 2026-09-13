@@ -18,6 +18,10 @@ import {
     ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
 
+import {
+    NostrResourceResolutionStrategy
+} from '$lib/resource/resolution/nostr-resource-resolution-strategy';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Resource
 
@@ -455,7 +459,12 @@ export class Application {
          */
         const resourceWorkerClient =
             createBrowserResourceWorkerClient(
-                resourceDiscovery
+                resourceDiscovery,
+                [
+                    new NostrResourceResolutionStrategy(
+                        resourceClient
+                    )
+                ]
             );
 
         this.resourceWorkerClient =

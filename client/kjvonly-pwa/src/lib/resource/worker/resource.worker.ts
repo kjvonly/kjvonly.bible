@@ -4,6 +4,11 @@ import {
 } from './resource-worker-discovery';
 
 import {
+	ResourceWorkerStrategyResolver,
+	type ResourceWorkerStrategyResolverPort
+} from './resource-worker-strategy-resolver';
+
+import {
 	serializeResourceWorkerError,
 	serializeResourceWorkerInstallResult,
 	type ResourceWorkerInstallRequest
@@ -45,6 +50,12 @@ const resourceDiscovery =
 		workerPort
 	);
 
+const strategyResolver =
+	new ResourceWorkerStrategyResolver(
+		workerPort as unknown as
+			ResourceWorkerStrategyResolverPort
+	);
+
 ///////////////////////////////////////////////////////////////////////////////
 // Child Resource Workers
 
@@ -82,7 +93,8 @@ function createDescriptorWorkerClient():
 				type:
 					'module'
 			}
-		)
+		),
+		strategyResolver
 	);
 }
 
