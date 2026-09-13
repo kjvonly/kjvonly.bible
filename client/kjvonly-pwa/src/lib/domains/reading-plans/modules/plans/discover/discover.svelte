@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// COMPONENTS
 	import DiscoverList from './discoverList.svelte';
@@ -9,16 +9,13 @@
 
 	// MODELS
 	import {
-		cachedPlanToPlan,
-		NullPlan,
-		PLAN_PUBSUB_SUBSCRIPTIONS,
+		NullPlanDefinitionView,
 		PLANS_VIEWS,
-		type Plan
+		type PlanDefinitionView
 	} from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
 
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
@@ -26,14 +23,9 @@
 
 	const {
 		bibleBooknamesService,
-		moduleResourceSelectionResolver
+		moduleResourceSelectionResolver,
+		planDefinitionsService
 	} = useApplicationContext();
-
-	// API
-	import { plansApi } from '$lib/nostr/events/plans.nostr';
-
-	// OTHER
-	import uuid4 from 'uuid4';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -44,71 +36,41 @@
 	} = $props();
 
 	// ================================== VARS =================================
-	let SUBSCRIBER_ID: string = uuid4();
-	let plansMap: Map<string, Plan> = $state(new Map());
-	let planList: Plan[] = $state([]);
-	let selectedPlan: Plan = $state(NullPlan());
+	let planList: PlanDefinitionView[] = $state([]);
+	let selectedPlan: PlanDefinitionView = $state(NullPlanDefinitionView());
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(() => {
-		plansPubSubService.subscribe(
-			PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_PLANS,
-			onGetAllPlans,
-			SUBSCRIBER_ID
-		);
-		plansPubSubService.getAllPlans();
-	});
+	onMount(async () => {
+		const booknamesSource =
+			moduleResourceSelectionResolver.require(
+				paneID,
+				BIBLE_BOOKNAMES_RESOURCE_TYPE
+			);
 
-	onDestroy(() => {
-		plansPubSubService.unsubscribe(SUBSCRIBER_ID);
-	});
+		const booknames =
+			await bibleBooknamesService.get(
+				booknamesSource
+			);
 
-	// ============================== CLICK FUNCS ==============================
+		const bookNameLookup =
+			(bookID: string): string =>
+				booknames.booknamesById[bookID] ?? '';
 
-	async function onGetAllPlans(data: any) {
-		if (data) {
-			const booknamesSource =
-				moduleResourceSelectionResolver.require(
-					paneID,
-					BIBLE_BOOKNAMES_RESOURCE_TYPE
-				);
+		const definitions =
+			await planDefinitionsService.list();
 
-			const booknames =
-				await bibleBooknamesService.get(
-					booknamesSource
-				);
-
-			const bookNameLookup =
-				(bookID: string): string =>
-					booknames.booknamesById[bookID] ?? '';
-
-			plansMap = data.plans;
-
-			for (const plan of plansMap.values()) {
-				plan.nestedReadings =
+		planList = definitions.map(
+			(definition): PlanDefinitionView => ({
+				...definition,
+				nestedReadings:
 					encodedReadingsDecoderService.parseEncodedReadings(
-						plan.encodedReadings,
+						[...definition.encodedReadings],
 						bookNameLookup
-					);
-			}
-
-			let cachedPlan = await plansApi.getPlansFromPeopleYouFollow();
-			for (let c of cachedPlan) {
-				let p = cachedPlanToPlan(c);
-				p.nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
-					c.encodedReadings,
-					bookNameLookup
-				);
-
-				plansMap.set(p.id, p);
-			}
-			planList = plansMap
-				.values()
-				.toArray()
-				.sort((a: Plan, b: Plan) => a.dateCreated - b.dateCreated);
-		}
-	}
+					)
+			})
+		);
+	});
 </script>
 
 {#if plansDisplay === PLANS_VIEWS.PLANS_LIST}

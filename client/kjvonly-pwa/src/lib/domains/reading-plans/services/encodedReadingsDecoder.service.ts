@@ -2,8 +2,8 @@ import type { BCV } from '$lib/domains/bible/models/bible.model';
 import type { Readings } from '$lib/domains/reading-plans/models/plans.model';
 
 /**
- * {@link CachedPlan.readings} are stored encoded in the backend. This service decodes the
- * plan {@link CachedPlan.readings}[] (a string[]) to {@link Readings}[] that include an
+ * Plan Definition readings are stored encoded. This service decodes the
+ * Plan Definition encodedReadings (a string[]) to {@link Readings}[] that include an
  * array of {@link BCV}[]
  * (i.e. book chapter verses) that contain all grouped readings a user would
  * read in together in sequence.

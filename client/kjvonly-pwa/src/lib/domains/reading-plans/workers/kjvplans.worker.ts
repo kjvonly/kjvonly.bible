@@ -1,41 +1,27 @@
-import { plansApi } from '$lib/nostr/events/plans.nostr';
 import { completedReadingsApi } from '$lib/nostr/events/completedReadings.nostr';
 import { subsApi } from '$lib/nostr/events/subs.nostr';
 import {
-  cachedPlanToPlan,
   cachedSubToSub,
-  NullPlan,
   PLAN_PUBSUB_SUBSCRIPTIONS,
-  type CachedPlan,
   type CachedSub,
   type CompletedReadings,
-  type Plan,
   type Sub
 } from '$lib/domains/reading-plans/models/plans.model';
-import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
+import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
 import FlexSearch from 'flexsearch';
-import { bookNamesByIDService } from '$lib/domains/bible/services/bibleMetadata/bookNamesByID.service';
 
-const legacyBookNameLookup = (bookID: string): string =>
-  bookNamesByIDService.get(bookID);
+const PLANS_WORKER_INITIALIZED = 'plans-worker-initialized';
 
+let bookNameLookup: BookNameLookup | undefined;
 let workerHasInitialized = false;
 
 // ================================ PLANS DATA =================================
 
-let plans: Map<string, Plan> = new Map();
 let subs: Map<string, Sub> = new Map();
 let completedReadings: Map<string, CompletedReadings> = new Map();
 
 // ================================ FLEX DOCS ==================================
-
-let plansDocument = new FlexSearch.Document({
-  document: {
-    id: 'id',
-    index: []
-  }
-});
 
 let subsDocument = new FlexSearch.Document({
   document: {
@@ -53,28 +39,17 @@ let completedReadingsDocument = new FlexSearch.Document({
 
 // ================================== INIT =====================================
 
-async function init() {
-  await initializePlans();
+async function init(booknamesById: Record<string, string>) {
+  bookNameLookup = (bookID: string): string =>
+    booknamesById[bookID] ?? '';
+
   await initializeSubs();
   await initializeCompletedReadings();
   await enrichSubs();
 
   workerHasInitialized = true;
-  publishPlans();
   publishSubs();
-}
-
-async function initializePlans() {
-  let cachedPlans: CachedPlan[] = await plansApi.gets();
-  for (let cp of cachedPlans) {
-    let p = cachedPlanToPlan(cp);
-    p.nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
-      cp.encodedReadings,
-      legacyBookNameLookup
-    );
-    await plansDocument.addAsync(p.id, p);
-    plans.set(p.id, p);
-  }
+  postMessage({ id: PLANS_WORKER_INITIALIZED });
 }
 
 async function initializeSubs() {
@@ -82,7 +57,7 @@ async function initializeSubs() {
   for (let cs of cachedSubs) {
     let s = cachedSubToSub(
       cs,
-      legacyBookNameLookup
+      requireBookNameLookup()
     );
     await subsDocument.addAsync(s.id, s);
     subs.set(s.id, s);
@@ -101,16 +76,14 @@ async function initializeCompletedReadings() {
 
 /**
  * User subs are stored normalized in the DB. The Sub readings data exists in
- * the initialized {@link plans} and can be looked up by the {@link Sub.planID}.
- *  Users progress on a subscription is determined by the
- * {@link completedReadings} for the subscription. {@link CompletedReadings} are
- * stored in the DB with an ID of <SubID/ReadingsIndex> and a SubID column.
- * Enriching the sub includes fetching the {@link completedReading} for the Sub
- * and assigning it to {@link Sub.completedReadings} field. Additionally, other
- * useful data is added to the Sub such as {@link Sub.nextReadingsIndex} and
- *  {@link Sub.percentCompleted}.
- *
- * */
+ * the subscription snapshot itself. Users progress on a subscription is
+ * determined by the {@link completedReadings} for the subscription.
+ * {@link CompletedReadings} are stored in the DB with an ID of
+ * <SubID/ReadingsIndex> and a SubID column. Enriching the sub includes fetching
+ * the {@link completedReading} for the Sub and assigning it to
+ * {@link Sub.completedReadings}. Additionally, other useful data is added to
+ * the Sub such as {@link Sub.nextReadingsIndex} and {@link Sub.percentCompleted}.
+ */
 async function enrichSubs() {
   for (let [_, sub] of subs) {
     await enrichSub(sub);
@@ -148,18 +121,6 @@ async function getCompletedReadings(
 }
 
 // ================================== PUB SUB ==================================
-
-function addPlan(planID: string, plan: any) {
-  plans.set(planID, plan);
-  plansDocument.add(planID, plan);
-  publishPlans();
-}
-
-function deletePlan(planID: string) {
-  plans.delete(planID);
-  plansDocument.remove(planID);
-  publishPlans();
-}
 
 async function addSubs(subID: string, sub: any) {
   subs.set(subID, sub);
@@ -208,12 +169,6 @@ async function search(
   }
 }
 
-function publishPlans() {
-  if (workerHasInitialized) {
-    postMessage({ id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_PLANS, plans: plans });
-  }
-}
-
 function publishSubs() {
   if (workerHasInitialized) {
     postMessage({ id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS, subs: subs });
@@ -223,7 +178,7 @@ function publishSubs() {
 async function putSub(cs: CachedSub) {
   let s = cachedSubToSub(
     cs,
-    legacyBookNameLookup
+    requireBookNameLookup()
   );
   subs.set(s.id, s);
   if (s) {
@@ -232,12 +187,20 @@ async function putSub(cs: CachedSub) {
   }
 }
 
+function requireBookNameLookup(): BookNameLookup {
+  if (!bookNameLookup) {
+    throw new Error('Plans worker Booknames have not been initialized');
+  }
+
+  return bookNameLookup;
+}
+
 // ================================= ONMESSAGE =================================
 
 onmessage = async (e) => {
   switch (e.data.action) {
-    case PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_PLANS:
-      publishPlans();
+    case 'init':
+      await init(e.data.booknamesById);
       break;
     case PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS:
       publishSubs();
@@ -250,8 +213,3 @@ onmessage = async (e) => {
       break;
   }
 };
-
-/**
- * Initialize worker on start
- */
-init();

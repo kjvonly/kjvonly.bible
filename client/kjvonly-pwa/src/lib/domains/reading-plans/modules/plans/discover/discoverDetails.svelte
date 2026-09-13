@@ -11,10 +11,9 @@
 	import ReadingsComponent from '../components/readings.svelte';
 	// MODELS
 	import {
-		CachedPlanToCachedSub,
+		PlanDefinitionToCachedSub,
 		PLANS_VIEWS,
-		PlanToCachedSub,
-		type Plan
+		type PlanDefinitionView
 	} from '$lib/domains/reading-plans/models/plans.model';
 	// SERVICES
 	import { toastService } from '$lib/application/services/toast.service';
@@ -26,11 +25,11 @@
 	// =============================== BINDINGS ================================
 	let {
 		plansDisplay = $bindable<PLANS_VIEWS>(),
-		selectedPlan = $bindable<Plan>()
+		selectedPlan = $bindable<PlanDefinitionView>()
 	}: {
 		plansDisplay: PLANS_VIEWS;
 
-		selectedPlan: Plan;
+		selectedPlan: PlanDefinitionView;
 	} = $props();
 	// ================================== VARS =================================
 	let clientHeight: number = $state(0);
@@ -99,9 +98,13 @@
 	async function onAddPlanClicked() {
 		toastService.showToast('Plan added to My Plans');
 		plansDisplay = PLANS_VIEWS.SUBS_LIST;
-		let s = PlanToCachedSub(JSON.parse(JSON.stringify(selectedPlan)));
-		await subsApi.put(s);
-		plansPubSubService.putSub(s);
+		let sub = PlanDefinitionToCachedSub(
+			JSON.parse(
+				JSON.stringify(selectedPlan)
+			)
+		);
+		await subsApi.put(sub);
+		plansPubSubService.putSub(sub);
 	}
 </script>
 

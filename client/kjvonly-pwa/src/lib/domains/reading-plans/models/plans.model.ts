@@ -2,53 +2,27 @@ import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/servic
 import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import uuid4 from 'uuid4';
 import type { BCV } from '../../bible/models/bible.model';
+import type { PlanDefinition } from './plan-definition';
 
-// =================================== PLAN ====================================
+// ============================= PLAN DEFINITION VIEW =============================
 
-export interface Plan {
-  id: string;
-  userID: string;
-  name: string;
-  description: string;
-  encodedReadings: string[],
+/**
+ * Runtime/UI projection of an accepted Plan Definition.
+ *
+ * The Plan Definition remains the authoritative persisted Domain Object.
+ * nestedReadings is derived locally from encodedReadings + selected Booknames.
+ */
+export interface PlanDefinitionView extends PlanDefinition {
   nestedReadings: Readings[];
-  dateCreated: number;
-  version: number;
 }
 
-export function NullPlan(): Plan {
+export function NullPlanDefinitionView(): PlanDefinitionView {
   return {
     id: '',
-    userID: '',
     name: '',
     description: '',
     encodedReadings: [],
-    nestedReadings: [],
-    dateCreated: 0,
-    version: 0
-  };
-}
-
-export interface CachedPlan {
-  id: string;
-  userID: string;
-  name: string;
-  description: string;
-  encodedReadings: string[];
-  dateCreated: number;
-  version: number;
-}
-
-export function cachedPlanToPlan(cp: CachedPlan): Plan {
-  return {
-    id: cp.id,
-    userID: cp.userID,
-    name: cp.name,
-    description: cp.description,
-    encodedReadings: cp.encodedReadings,
-    nestedReadings: [],
-    dateCreated: cp.dateCreated,
-    version: cp.version
+    nestedReadings: []
   };
 }
 
@@ -85,28 +59,16 @@ export function NullSub(): Sub {
     percentCompleted: 0
   };
 }
-export function PlanToCachedSub(p: Plan): CachedSub {
+export function PlanDefinitionToCachedSub(
+  plan: PlanDefinition
+): CachedSub {
   return {
     id: uuid4(),
-    planID: p.id,
+    planID: plan.id,
     userID: '00000000-0000-0000-0000-000000000000',
-    name: p.name,
-    description: p.description,
-    encodedReadings: p.encodedReadings,
-    dateSubscribed: Date.now(),
-    version: 0
-  };
-}
-
-
-export function CachedPlanToCachedSub(p: CachedPlan): CachedSub {
-  return {
-    id: uuid4(),
-    planID: p.id,
-    userID: '00000000-0000-0000-0000-000000000000',
-    name: p.name,
-    description: p.description,
-    encodedReadings: p.encodedReadings,
+    name: plan.name,
+    description: plan.description,
+    encodedReadings: [...plan.encodedReadings],
     dateSubscribed: Date.now(),
     version: 0
   };
@@ -242,8 +204,7 @@ export enum PLANS_VIEWS {
 }
 
 export enum PLAN_PUBSUB_SUBSCRIPTIONS {
-  GET_ALL_PLANS = 1,
-  GET_ALL_SUBS,
-  PUT_SUB,
-  PUT_READING
+  GET_ALL_SUBS = 2,
+  PUT_SUB = 3,
+  PUT_READING = 4
 }
