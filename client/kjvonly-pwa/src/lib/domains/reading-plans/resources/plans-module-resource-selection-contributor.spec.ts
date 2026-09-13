@@ -21,6 +21,10 @@ import {
 } from './definitions/plan-definition-interpreter';
 
 import {
+	PLAN_SUBSCRIPTION_RESOURCE_TYPE
+} from './subscriptions/plan-subscription-resource-source';
+
+import {
 	PlansModuleResourceSelectionContributor
 } from './plans-module-resource-selection-contributor';
 
@@ -46,6 +50,11 @@ describe(
 									'plans-publisher',
 									`${PLAN_DEFINITION_RESOURCE_TYPE}/study`
 								),
+							[PLAN_SUBSCRIPTION_RESOURCE_TYPE]:
+								createReference(
+									'subscriptions-publisher',
+									`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default`
+								),
 							[BIBLE_CHAPTER_RESOURCE_TYPE]:
 								createReference(
 									'chapters',
@@ -58,7 +67,8 @@ describe(
 					Object.keys(selections)
 				).toEqual([
 					BIBLE_BOOKNAMES_RESOURCE_TYPE,
-					PLAN_DEFINITION_RESOURCE_TYPE
+					PLAN_DEFINITION_RESOURCE_TYPE,
+					PLAN_SUBSCRIPTION_RESOURCE_TYPE
 				]);
 			}
 		);
@@ -84,6 +94,31 @@ describe(
 
 					resourceId:
 						`${PLAN_DEFINITION_RESOURCE_TYPE}/default`
+				});
+			}
+		);
+
+		it(
+			'derives the default Plan Subscription selection from the current user',
+			() => {
+				const selections =
+					createContributor(
+						'user-pubkey'
+					).build({
+						originatingSelections: {},
+						currentSelections: {}
+					});
+
+				expect(
+					selections[
+						PLAN_SUBSCRIPTION_RESOURCE_TYPE
+					]
+				).toEqual({
+					publisher:
+						'user-pubkey',
+
+					resourceId:
+						`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default`
 				});
 			}
 		);
@@ -119,6 +154,36 @@ describe(
 		);
 
 		it(
+			'preserves an existing Plan Subscription selection',
+			() => {
+				const selectedSubscriptions =
+					createReference(
+						'other-publisher',
+						`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/study`
+					);
+
+				const selections =
+					createContributor(
+						'user-pubkey'
+					).build({
+						originatingSelections: {
+							[PLAN_SUBSCRIPTION_RESOURCE_TYPE]:
+								selectedSubscriptions
+						},
+						currentSelections: {}
+					});
+
+				expect(
+					selections[
+						PLAN_SUBSCRIPTION_RESOURCE_TYPE
+					]
+				).toEqual(
+					selectedSubscriptions
+				);
+			}
+		);
+
+		it(
 			'leaves Plan Definition selection missing when no current user is available',
 			() => {
 				const selections =
@@ -130,6 +195,12 @@ describe(
 				expect(
 					selections[
 						PLAN_DEFINITION_RESOURCE_TYPE
+					]
+				).toBeUndefined();
+
+				expect(
+					selections[
+						PLAN_SUBSCRIPTION_RESOURCE_TYPE
 					]
 				).toBeUndefined();
 			}

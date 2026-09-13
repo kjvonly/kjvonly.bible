@@ -27,9 +27,15 @@ import {
 	createDefaultPlanDefinitionSelection
 } from './definitions/plan-definition-default-selection';
 
+import {
+	PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+	createDefaultPlanSubscriptionSelection
+} from './subscriptions/plan-subscription-resource-source';
+
 const RESOURCE_TYPES = [
 	BIBLE_BOOKNAMES_RESOURCE_TYPE,
-	PLAN_DEFINITION_RESOURCE_TYPE
+	PLAN_DEFINITION_RESOURCE_TYPE,
+	PLAN_SUBSCRIPTION_RESOURCE_TYPE
 ] as const;
 
 export interface CurrentUserPubkeyProvider {
@@ -58,10 +64,19 @@ implements ModuleResourceSelectionContributor {
 				context
 			);
 
-		if (
+		const needsPlanDefinitionSelection =
 			selections[
 				PLAN_DEFINITION_RESOURCE_TYPE
-			] !== undefined
+			] === undefined;
+
+		const needsPlanSubscriptionSelection =
+			selections[
+				PLAN_SUBSCRIPTION_RESOURCE_TYPE
+			] === undefined;
+
+		if (
+			!needsPlanDefinitionSelection &&
+			!needsPlanSubscriptionSelection
 		) {
 			return selections;
 		}
@@ -74,12 +89,23 @@ implements ModuleResourceSelectionContributor {
 			return selections;
 		}
 
-		selections[
-			PLAN_DEFINITION_RESOURCE_TYPE
-		] =
-			createDefaultPlanDefinitionSelection(
-				publisher
-			);
+		if (needsPlanDefinitionSelection) {
+			selections[
+				PLAN_DEFINITION_RESOURCE_TYPE
+			] =
+				createDefaultPlanDefinitionSelection(
+					publisher
+				);
+		}
+
+		if (needsPlanSubscriptionSelection) {
+			selections[
+				PLAN_SUBSCRIPTION_RESOURCE_TYPE
+			] =
+				createDefaultPlanSubscriptionSelection(
+					publisher
+				);
+		}
 
 		return selections;
 	}
