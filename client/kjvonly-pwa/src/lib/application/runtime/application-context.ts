@@ -77,6 +77,13 @@ import type {
 } from '$lib/domains/notes/services/notes.service';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Reading Plans
+
+import type {
+    PlanDefinitionsService
+} from '$lib/domains/reading-plans/services/plan-definitions.service';
+
+///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import type {
@@ -152,6 +159,12 @@ export interface ApplicationContext {
 
     readonly notesService:
     NotesService;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Reading Plans
+
+    readonly planDefinitionsService:
+    PlanDefinitionsService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Strong's

@@ -264,6 +264,17 @@ import {
 } from '$lib/domains/notes/services/notes.service';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Reading Plans
+
+import {
+    IndexedDBPlanDefinitionsStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-definitions-store';
+
+import {
+    PlanDefinitionsService
+} from '$lib/domains/reading-plans/services/plan-definitions.service';
+
+///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import {
@@ -750,6 +761,19 @@ export class Application {
             );
 
         ///////////////////////////////////////////////////////////////////////
+        // Reading Plans
+
+        const planDefinitionsStore =
+            new IndexedDBPlanDefinitionsStore(
+                getApplicationDB
+            );
+
+        const planDefinitionsService =
+            new PlanDefinitionsService(
+                planDefinitionsStore
+            );
+
+        ///////////////////////////////////////////////////////////////////////
         // Strong's
 
         const strongsStore =
@@ -805,6 +829,8 @@ export class Application {
             bibleVersionsService,
 
             notesService,
+
+            planDefinitionsService,
 
             strongsService
         };
