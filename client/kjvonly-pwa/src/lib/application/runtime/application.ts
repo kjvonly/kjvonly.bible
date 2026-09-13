@@ -1053,6 +1053,9 @@ export class Application {
                 PublishedResourceReference
             >();
 
+        const multipleResourceTypes =
+            new Set<string>();
+
         for (
             const resource of
             result.resources
@@ -1093,19 +1096,52 @@ export class Application {
             }
 
             /*
-             * Generic descriptor collections may contain
-             * multiple Resources of the same Resource
-             * Type, but the application-default collection
-             * may contain at most one default per type.
+             * ResourceInstallResult contains terminal
+             * Resources after recursive descriptor
+             * processing. A nested collection may therefore
+             * install multiple distinct Resources of the
+             * same Resource Type.
+             *
+             * Such a type cannot initialize one global
+             * Resource selection. Leave that selection to
+             * module/domain policy while preserving all
+             * unambiguous bootstrap selections.
              */
             if (
-                selections.has(
+                multipleResourceTypes.has(
                     resourceType
                 )
             ) {
-                throw new Error(
-                    `Duplicate application bootstrap Resource Type: ${resourceType}`
+                continue;
+            }
+
+            const existing =
+                selections.get(
+                    resourceType
                 );
+
+            if (
+                existing !==
+                undefined
+            ) {
+                if (
+                    existing.publisher ===
+                        reference.publisher &&
+                    existing.resourceId ===
+                        reference.resourceId
+                ) {
+                    continue;
+                }
+
+                selections.delete(
+                    resourceType
+                );
+
+                multipleResourceTypes.add(
+                    resourceType
+                );
+
+                continue;
             }
 
             selections.set(

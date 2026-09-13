@@ -240,7 +240,7 @@ describe(
 		);
 
 		it(
-			'rejects duplicate bootstrap Resource Types without changing existing selections',
+			'omits a Resource Type with multiple bootstrap Resources while initializing unique types',
 			async () => {
 
 				const existingSelections:
@@ -263,14 +263,6 @@ describe(
 					)
 				);
 
-				const warn =
-					vi.spyOn(
-						console,
-						'warn'
-					).mockImplementation(
-						() => {}
-					);
-
 				vi.spyOn(
 					ResourceWorkerClient.prototype,
 					'install'
@@ -287,31 +279,22 @@ describe(
 					() => {
 
 						expect(
-							warn
-						).toHaveBeenCalledWith(
-							'[Application bootstrap Resource selection initialization failed]',
-							expect.objectContaining({
-								reference: {
-									publisher:
-										KJVONLY_PUBKEY,
+							readSelections()
+						).toEqual({
+							[BIBLE_CHAPTER_RESOURCE_TYPE]:
+								existingSelections[
+									BIBLE_CHAPTER_RESOURCE_TYPE
+								],
 
-									resourceId:
-										BOOTSTRAP_RESOURCE_ID
-								},
+							[STRONGS_RESOURCE_TYPE]: {
+								publisher:
+									KJVONLY_PUBKEY,
 
-								error:
-									expect.any(
-										Error
-									)
-							})
-						);
+								resourceId:
+									STRONGS_RESOURCE_ID
+							}
+						});
 					}
-				);
-
-				expect(
-					readSelections()
-				).toEqual(
-					existingSelections
 				);
 			}
 		);
@@ -521,6 +504,21 @@ function createDuplicateBootstrapResult():
 
 				resourceType:
 					BIBLE_CHAPTER_RESOURCE_TYPE,
+
+				status:
+					'handled'
+			},
+			{
+				reference: {
+					publisher:
+						KJVONLY_PUBKEY,
+
+					resourceId:
+						STRONGS_RESOURCE_ID
+				},
+
+				resourceType:
+					STRONGS_RESOURCE_TYPE,
 
 				status:
 					'handled'
