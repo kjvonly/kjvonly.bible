@@ -76,6 +76,6 @@
 {#if plansDisplay === PLANS_VIEWS.PLANS_LIST}
 	<DiscoverList bind:selectedPlan bind:planList bind:plansDisplay {paneID}
 	></DiscoverList>
-{:else if plansDisplay === PLANS_VIEWS.PLANS_ACTIONS}{:else if plansDisplay === PLANS_VIEWS.PLANS_DETAILS}
+{:else if plansDisplay === PLANS_VIEWS.PLANS_DETAILS}
 	<DiscoverDetails bind:plansDisplay bind:selectedPlan {paneID}></DiscoverDetails>
 {/if}

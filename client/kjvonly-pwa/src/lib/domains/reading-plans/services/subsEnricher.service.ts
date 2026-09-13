@@ -42,6 +42,10 @@ export class SubsEnricherService {
 		);
 	}
 
+	hasNextReading(sub: Sub): boolean {
+		return sub.nextReadingsIndex < sub.nestedReadings.length;
+	}
+
 	setPercentComplete(sub: Sub) {
 		sub.percentCompleted = Math.ceil(
 			(sub.completedReadingIndexes.size / sub.nestedReadings.length) * 100

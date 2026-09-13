@@ -117,3 +117,33 @@ describe('set percent complete', () => {
 		}
 	});
 });
+
+describe('has next reading', () => {
+	it('includes the final unread reading', () => {
+		const sub = NullSub();
+		sub.nestedReadings = [
+			NullReadings(),
+			NullReadings(),
+			NullReadings()
+		];
+		sub.nextReadingsIndex = 2;
+
+		expect(
+			subsEnricherService.hasNextReading(sub)
+		).toBe(true);
+	});
+
+	it('excludes a completed subscription', () => {
+		const sub = NullSub();
+		sub.nestedReadings = [
+			NullReadings(),
+			NullReadings(),
+			NullReadings()
+		];
+		sub.nextReadingsIndex = 3;
+
+		expect(
+			subsEnricherService.hasNextReading(sub)
+		).toBe(false);
+	});
+});

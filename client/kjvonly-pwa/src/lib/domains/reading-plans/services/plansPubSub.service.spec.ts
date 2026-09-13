@@ -1,18 +1,29 @@
-import { describe, expect, it } from 'vitest';
-import { plansPubSubService } from './plansPubSub.service';
+import { describe, expect, it, vi } from 'vitest';
+import { PlansPubSubService } from './plansPubSub.service';
 
 describe('PlansPubSubService', () => {
-	it('should subscribe subscribers', () => {
-		let id = 'test';
-		let called = false;
-		let func = (e: any) => {
-			called = true;
-		};
+	it('notifies matching subscribers', () => {
+		const service = new PlansPubSubService();
+		const listener = vi.fn();
 
-		plansPubSubService.subscribe(id, func, 'a');
+		service.subscribe('test', listener, 'subscriber-a');
+		service.onMessage({ data: { id: 'test' } });
 
-		plansPubSubService.onMessage({ data: { id: id } });
+		expect(listener).toHaveBeenCalledTimes(1);
+	});
 
-		expect(called).toBeTruthy();
+	it('removes only the requested subscriber', () => {
+		const service = new PlansPubSubService();
+		const first = vi.fn();
+		const second = vi.fn();
+
+		service.subscribe('test', first, 'subscriber-a');
+		service.subscribe('test', second, 'subscriber-b');
+
+		service.unsubscribe('subscriber-a');
+		service.onMessage({ data: { id: 'test' } });
+
+		expect(first).not.toHaveBeenCalled();
+		expect(second).toHaveBeenCalledTimes(1);
 	});
 });

@@ -25,6 +25,7 @@
 
 	// SERVICES
 	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
+	import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// OTHER
@@ -125,8 +126,8 @@
 	 *
 	 * @param s
 	 */
-	function filterSubsForNextReadings(s: Sub): Boolean {
-		return s.nestedReadings.length - 1 > s.nextReadingsIndex;
+	function filterSubsForNextReadings(s: Sub): boolean {
+		return subsEnricherService.hasNextReading(s);
 	}
 
 	function subToNextReadings(s: Sub): NextReadings {

@@ -143,7 +143,6 @@ export enum PLANS_VIEWS {
   // PLAN
 
   PLANS_LIST = 1,
-  PLANS_ACTIONS = 2,
   PLANS_DETAILS = 3,
 
   // SUB

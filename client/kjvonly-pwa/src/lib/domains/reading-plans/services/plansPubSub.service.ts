@@ -78,7 +78,7 @@ export class PlansPubSubService {
     let tmpSubscribers: any[] = [];
     this.subscribers.forEach((s) => {
       if (s.subID !== subID) {
-        tmpSubscribers.push();
+        tmpSubscribers.push(s);
       }
     });
     this.subscribers = tmpSubscribers;

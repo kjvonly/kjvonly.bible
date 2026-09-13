@@ -7,7 +7,6 @@ import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-su
 import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
 import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
-import FlexSearch from 'flexsearch';
 
 const PLANS_WORKER_INITIALIZED = 'plans-worker-initialized';
 
@@ -18,15 +17,6 @@ let workerHasInitialized = false;
 
 let subs: Map<string, Sub> = new Map();
 let progressBySubscriptionId: Map<string, PlanProgress> = new Map();
-
-// ================================ FLEX DOCS ==================================
-
-let subsDocument = new FlexSearch.Document({
-  document: {
-    id: 'id',
-    index: []
-  }
-});
 
 // ================================== INIT =====================================
 
@@ -39,7 +29,7 @@ async function init(
     booknamesById[bookID] ?? '';
 
   initializeProgress(progress);
-  await initializeSubs(subscriptions);
+  initializeSubs(subscriptions);
   await enrichSubs();
 
   workerHasInitialized = true;
@@ -47,7 +37,7 @@ async function init(
   postMessage({ id: PLANS_WORKER_INITIALIZED });
 }
 
-async function initializeSubs(
+function initializeSubs(
   subscriptions: readonly PlanSubscription[]
 ) {
   for (const subscription of subscriptions) {
@@ -56,7 +46,6 @@ async function initializeSubs(
       requireBookNameLookup()
     );
 
-    await subsDocument.addAsync(sub.id, sub);
     subs.set(sub.id, sub);
   }
 }
@@ -104,42 +93,6 @@ function setCompletedReadingIndexes(sub: Sub) {
 }
 
 // ================================== PUB SUB ==================================
-
-async function addSubs(subID: string, sub: any) {
-  subs.set(subID, sub);
-  subsDocument.add(subID, sub);
-  await enrichSubs(); //TODO this could be enrich sub only
-  publishSubs();
-}
-
-function deleteSub(subID: string) {
-  subs.delete(subID);
-  subsDocument.remove(subID);
-  publishSubs();
-}
-
-async function search(
-  id: string,
-  searchTerm: string,
-  indexes: string[],
-  flexDocument: any,
-  map: any
-) {
-  const results = await flexDocument.searchAsync(searchTerm, {
-    index: indexes
-  });
-
-  let filtered: any = {};
-  results.forEach((r: any) => {
-    r.result.forEach((id: any) => {
-      filtered[id] = map[id];
-    });
-  });
-
-  if (Object.keys(filtered).length > 0) {
-    postMessage({ id: id, results: filtered });
-  }
-}
 
 function publishSubs() {
   if (workerHasInitialized) {
