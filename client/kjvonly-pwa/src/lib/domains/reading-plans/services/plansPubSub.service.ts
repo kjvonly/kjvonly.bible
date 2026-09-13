@@ -1,7 +1,7 @@
 import {
-  PLAN_PUBSUB_SUBSCRIPTIONS,
-  type CachedSub
+  PLAN_PUBSUB_SUBSCRIPTIONS
 } from '$lib/domains/reading-plans/models/plans.model';
+import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
 
 const PLANS_WORKER_INITIALIZED = 'plans-worker-initialized';
 
@@ -93,11 +93,11 @@ export class PlansPubSubService {
     });
   }
 
-  putSub(cachedSub: CachedSub) {
+  putSub(subscription: PlanSubscription) {
     // TODO type post messages
     plansWorker.postMessage({
       action: PLAN_PUBSUB_SUBSCRIPTIONS.PUT_SUB,
-      data: cachedSub
+      data: subscription
     });
   }
 }

@@ -2,11 +2,13 @@ import { completedReadingsApi } from '$lib/nostr/events/completedReadings.nostr'
 import { subsApi } from '$lib/nostr/events/subs.nostr';
 import {
   cachedSubToSub,
+  planSubscriptionToSub,
   PLAN_PUBSUB_SUBSCRIPTIONS,
   type CachedSub,
   type CompletedReadings,
   type Sub
 } from '$lib/domains/reading-plans/models/plans.model';
+import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
 import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
 import FlexSearch from 'flexsearch';
@@ -175,9 +177,9 @@ function publishSubs() {
   }
 }
 
-async function putSub(cs: CachedSub) {
-  let s = cachedSubToSub(
-    cs,
+async function putSub(subscription: PlanSubscription) {
+  let s = planSubscriptionToSub(
+    subscription,
     requireBookNameLookup()
   );
   subs.set(s.id, s);

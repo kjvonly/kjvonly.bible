@@ -274,6 +274,22 @@ import {
     PlanDefinitionsService
 } from '$lib/domains/reading-plans/services/plan-definitions.service';
 
+import {
+    IndexedDBPlanSubscriptionsStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-subscriptions-store';
+
+import {
+    IndexedDBPlanSubscriptionWriteTransaction
+} from '$lib/domains/reading-plans/persistence/plan-subscription-write-transaction';
+
+import {
+    PlanSubscriptionResourcePublication
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-publication';
+
+import {
+    PlanSubscriptionsService
+} from '$lib/domains/reading-plans/services/plan-subscriptions.service';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
@@ -775,6 +791,27 @@ export class Application {
                 planDefinitionsStore
             );
 
+        const planSubscriptionsStore =
+            new IndexedDBPlanSubscriptionsStore(
+                getApplicationDB
+            );
+
+        const planSubscriptionWriteTransaction =
+            new IndexedDBPlanSubscriptionWriteTransaction(
+                getApplicationDB
+            );
+
+        const planSubscriptionResourcePublication =
+            new PlanSubscriptionResourcePublication();
+
+        const planSubscriptionsService =
+            new PlanSubscriptionsService(
+                planSubscriptionsStore,
+                planSubscriptionWriteTransaction,
+                planSubscriptionResourcePublication,
+                outboxProcessor
+            );
+
         ///////////////////////////////////////////////////////////////////////
         // Strong's
 
@@ -833,6 +870,7 @@ export class Application {
             notesService,
 
             planDefinitionsService,
+            planSubscriptionsService,
 
             strongsService
         };

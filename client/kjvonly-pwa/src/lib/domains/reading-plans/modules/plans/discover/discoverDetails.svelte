@@ -11,25 +11,37 @@
 	import ReadingsComponent from '../components/readings.svelte';
 	// MODELS
 	import {
-		PlanDefinitionToCachedSub,
 		PLANS_VIEWS,
 		type PlanDefinitionView
 	} from '$lib/domains/reading-plans/models/plans.model';
+	import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
 	// SERVICES
 	import { toastService } from '$lib/application/services/toast.service';
 	import uuid4 from 'uuid4';
 	import { sleep } from '$lib/infrastructure/utils/sleep';
 	import { onMount } from 'svelte';
-	import { subsApi } from '$lib/nostr/events/subs.nostr';
 	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import {
+		PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+		createPlanSubscriptionIdForSource
+	} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-source';
 	// =============================== BINDINGS ================================
+	const {
+		moduleResourceSelectionResolver,
+		planSubscriptionsService
+	} = useApplicationContext();
+
 	let {
 		plansDisplay = $bindable<PLANS_VIEWS>(),
-		selectedPlan = $bindable<PlanDefinitionView>()
+		selectedPlan = $bindable<PlanDefinitionView>(),
+		paneID
 	}: {
 		plansDisplay: PLANS_VIEWS;
 
 		selectedPlan: PlanDefinitionView;
+
+		paneID: string;
 	} = $props();
 	// ================================== VARS =================================
 	let clientHeight: number = $state(0);
@@ -96,15 +108,45 @@
 	}
 
 	async function onAddPlanClicked() {
-		toastService.showToast('Plan added to My Plans');
-		plansDisplay = PLANS_VIEWS.SUBS_LIST;
-		let sub = PlanDefinitionToCachedSub(
-			JSON.parse(
-				JSON.stringify(selectedPlan)
-			)
+		const subscriptionSource =
+			moduleResourceSelectionResolver.require(
+				paneID,
+				PLAN_SUBSCRIPTION_RESOURCE_TYPE
+			);
+
+		const subscription: PlanSubscription = {
+			id:
+				createPlanSubscriptionIdForSource(
+					subscriptionSource,
+					uuid4()
+				),
+			planDefinitionId:
+				selectedPlan.id,
+			name:
+				selectedPlan.name,
+			description:
+				selectedPlan.description,
+			encodedReadings: [
+				...selectedPlan.encodedReadings
+			],
+			dateSubscribed:
+				Date.now()
+		};
+
+		await planSubscriptionsService.put(
+			subscription
 		);
-		await subsApi.put(sub);
-		plansPubSubService.putSub(sub);
+
+		plansPubSubService.putSub(
+			subscription
+		);
+
+		toastService.showToast(
+			'Plan added to My Plans'
+		);
+
+		plansDisplay =
+			PLANS_VIEWS.SUBS_LIST;
 	}
 </script>
 

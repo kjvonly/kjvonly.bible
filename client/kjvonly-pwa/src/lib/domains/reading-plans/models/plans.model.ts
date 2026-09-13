@@ -3,6 +3,8 @@ import type { BookNameLookup } from '$lib/domains/reading-plans/services/encoded
 import uuid4 from 'uuid4';
 import type { BCV } from '../../bible/models/bible.model';
 import type { PlanDefinition } from './plan-definition';
+import type { PlanSubscription } from './plan-subscription';
+import { parsePlanSubscriptionId } from './plan-subscription-id';
 
 // ============================= PLAN DEFINITION VIEW =============================
 
@@ -83,6 +85,32 @@ export interface CachedSub {
   encodedReadings: string[];
   dateSubscribed: number;
   version: number;
+}
+
+
+export function planSubscriptionToSub(
+  subscription: PlanSubscription,
+  bookNameLookup: BookNameLookup
+): Sub {
+  const { publisher } = parsePlanSubscriptionId(subscription.id);
+  const nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
+    [...subscription.encodedReadings],
+    bookNameLookup
+  );
+
+  return {
+    id: subscription.id,
+    planID: subscription.planDefinitionId,
+    userID: publisher,
+    dateSubscribed: subscription.dateSubscribed,
+    version: 0,
+    name: subscription.name,
+    description: subscription.description,
+    nestedReadings,
+    completedReadings: new Map(),
+    nextReadingsIndex: 0,
+    percentCompleted: 0
+  };
 }
 
 export function cachedSubToSub(
