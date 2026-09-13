@@ -73,9 +73,30 @@ describe(
 
 				expect(
 					result
-				).toEqual(
-					CONTENT
-				);
+				).toEqual({
+					publisher:
+						'a'.repeat(
+							64
+						),
+
+					resourceId:
+						'kjvonly/bible/chapters/kjvs',
+
+					resourceType:
+						'kjvonly/bible/chapters',
+
+					modifiedAt:
+						100,
+
+					representation:
+						'content',
+
+					mediaType:
+						'application/json+gzip',
+
+					payload:
+						CONTENT
+				});
 			}
 		);
 
@@ -418,7 +439,7 @@ describe(
 					);
 
 				expect(
-					result
+					result.payload
 				).toEqual(
 					content
 				);

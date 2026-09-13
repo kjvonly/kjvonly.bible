@@ -2,6 +2,10 @@ import type {
 	ResourceDescriptor
 } from '$lib/resource/descriptors/resource-descriptor';
 
+import type {
+	ResolvedResourceRepresentation
+} from '$lib/resource/models/resource.model';
+
 export interface ResourceResolutionStrategy {
 	readonly type:
 		string;
@@ -10,6 +14,6 @@ export interface ResourceResolutionStrategy {
 		descriptor:
 			ResourceDescriptor
 	): Promise<
-		Uint8Array
+		ResolvedResourceRepresentation
 	>;
 }

@@ -1,5 +1,5 @@
 import type {
-	ResourceRepresentation,
+	ResolvedResourceRepresentation,
 	ResourceRepresentationType
 } from '$lib/resource/models/resource.model';
 
@@ -13,7 +13,7 @@ export interface ResourceRepresentationResolver {
 
 	resolve(
 		resource:
-			ResourceRepresentation
+			ResolvedResourceRepresentation
 	): Promise<
 		ResourceResolutionResult
 	>;
