@@ -18,6 +18,10 @@ import {
     ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
 
+import {
+    NostrResourceResolutionStrategy
+} from '$lib/resource/resolution/nostr-resource-resolution-strategy';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Resource
 
@@ -260,6 +264,49 @@ import {
 } from '$lib/domains/notes/services/notes.service';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Reading Plans
+
+import {
+    IndexedDBPlanDefinitionsStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-definitions-store';
+
+import {
+    PlanDefinitionsService
+} from '$lib/domains/reading-plans/services/plan-definitions.service';
+
+import {
+    IndexedDBPlanSubscriptionsStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-subscriptions-store';
+
+import {
+    IndexedDBPlanSubscriptionWriteTransaction
+} from '$lib/domains/reading-plans/persistence/plan-subscription-write-transaction';
+
+import {
+    PlanSubscriptionResourcePublication
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-publication';
+
+import {
+    PlanSubscriptionsService
+} from '$lib/domains/reading-plans/services/plan-subscriptions.service';
+
+import {
+    IndexedDBPlanProgressStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-progress-store';
+
+import {
+    IndexedDBPlanProgressWriteTransaction
+} from '$lib/domains/reading-plans/persistence/plan-progress-write-transaction';
+
+import {
+    PlanProgressResourcePublication
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-publication';
+
+import {
+    PlanProgressService
+} from '$lib/domains/reading-plans/services/plan-progress.service';
+
+///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import {
@@ -455,7 +502,12 @@ export class Application {
          */
         const resourceWorkerClient =
             createBrowserResourceWorkerClient(
-                resourceDiscovery
+                resourceDiscovery,
+                [
+                    new NostrResourceResolutionStrategy(
+                        resourceClient
+                    )
+                ]
             );
 
         this.resourceWorkerClient =
@@ -530,7 +582,9 @@ export class Application {
                     new NotesModuleResourceSelectionContributor(
                         authenticationService
                     ),
-                    new PlansModuleResourceSelectionContributor(),
+                    new PlansModuleResourceSelectionContributor(
+                        authenticationService
+                    ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.MODULES
                     ),
@@ -741,6 +795,61 @@ export class Application {
             );
 
         ///////////////////////////////////////////////////////////////////////
+        // Reading Plans
+
+        const planDefinitionsStore =
+            new IndexedDBPlanDefinitionsStore(
+                getApplicationDB
+            );
+
+        const planDefinitionsService =
+            new PlanDefinitionsService(
+                planDefinitionsStore
+            );
+
+        const planSubscriptionsStore =
+            new IndexedDBPlanSubscriptionsStore(
+                getApplicationDB
+            );
+
+        const planSubscriptionWriteTransaction =
+            new IndexedDBPlanSubscriptionWriteTransaction(
+                getApplicationDB
+            );
+
+        const planSubscriptionResourcePublication =
+            new PlanSubscriptionResourcePublication();
+
+        const planSubscriptionsService =
+            new PlanSubscriptionsService(
+                planSubscriptionsStore,
+                planSubscriptionWriteTransaction,
+                planSubscriptionResourcePublication,
+                outboxProcessor
+            );
+
+        const planProgressStore =
+            new IndexedDBPlanProgressStore(
+                getApplicationDB
+            );
+
+        const planProgressWriteTransaction =
+            new IndexedDBPlanProgressWriteTransaction(
+                getApplicationDB
+            );
+
+        const planProgressResourcePublication =
+            new PlanProgressResourcePublication();
+
+        const planProgressService =
+            new PlanProgressService(
+                planProgressStore,
+                planProgressWriteTransaction,
+                planProgressResourcePublication,
+                outboxProcessor
+            );
+
+        ///////////////////////////////////////////////////////////////////////
         // Strong's
 
         const strongsStore =
@@ -796,6 +905,10 @@ export class Application {
             bibleVersionsService,
 
             notesService,
+
+            planDefinitionsService,
+            planSubscriptionsService,
+            planProgressService,
 
             strongsService
         };
@@ -1016,6 +1129,9 @@ export class Application {
                 PublishedResourceReference
             >();
 
+        const multipleResourceTypes =
+            new Set<string>();
+
         for (
             const resource of
             result.resources
@@ -1056,19 +1172,52 @@ export class Application {
             }
 
             /*
-             * Generic descriptor collections may contain
-             * multiple Resources of the same Resource
-             * Type, but the application-default collection
-             * may contain at most one default per type.
+             * ResourceInstallResult contains terminal
+             * Resources after recursive descriptor
+             * processing. A nested collection may therefore
+             * install multiple distinct Resources of the
+             * same Resource Type.
+             *
+             * Such a type cannot initialize one global
+             * Resource selection. Leave that selection to
+             * module/domain policy while preserving all
+             * unambiguous bootstrap selections.
              */
             if (
-                selections.has(
+                multipleResourceTypes.has(
                     resourceType
                 )
             ) {
-                throw new Error(
-                    `Duplicate application bootstrap Resource Type: ${resourceType}`
+                continue;
+            }
+
+            const existing =
+                selections.get(
+                    resourceType
                 );
+
+            if (
+                existing !==
+                undefined
+            ) {
+                if (
+                    existing.publisher ===
+                        reference.publisher &&
+                    existing.resourceId ===
+                        reference.resourceId
+                ) {
+                    continue;
+                }
+
+                selections.delete(
+                    resourceType
+                );
+
+                multipleResourceTypes.add(
+                    resourceType
+                );
+
+                continue;
             }
 
             selections.set(

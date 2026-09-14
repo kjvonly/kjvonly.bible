@@ -1,70 +1,48 @@
 import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
 import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-import uuid4 from 'uuid4';
 import type { BCV } from '../../bible/models/bible.model';
+import type { PlanDefinition } from './plan-definition';
+import type { PlanSubscription } from './plan-subscription';
 
-// =================================== PLAN ====================================
+// ============================= PLAN DEFINITION VIEW =============================
 
-export interface Plan {
-  id: string;
-  userID: string;
-  name: string;
-  description: string;
-  encodedReadings: string[],
+/**
+ * Runtime/UI projection of an accepted Plan Definition.
+ *
+ * The Plan Definition remains the authoritative persisted Domain Object.
+ * nestedReadings is derived locally from encodedReadings + selected Booknames.
+ */
+export interface PlanDefinitionView extends PlanDefinition {
   nestedReadings: Readings[];
-  dateCreated: number;
-  version: number;
 }
 
-export function NullPlan(): Plan {
+export function NullPlanDefinitionView(): PlanDefinitionView {
   return {
     id: '',
-    userID: '',
     name: '',
     description: '',
     encodedReadings: [],
-    nestedReadings: [],
-    dateCreated: 0,
-    version: 0
-  };
-}
-
-export interface CachedPlan {
-  id: string;
-  userID: string;
-  name: string;
-  description: string;
-  encodedReadings: string[];
-  dateCreated: number;
-  version: number;
-}
-
-export function cachedPlanToPlan(cp: CachedPlan): Plan {
-  return {
-    id: cp.id,
-    userID: cp.userID,
-    name: cp.name,
-    description: cp.description,
-    encodedReadings: cp.encodedReadings,
-    nestedReadings: [],
-    dateCreated: cp.dateCreated,
-    version: cp.version
+    nestedReadings: []
   };
 }
 
 // =================================== SUBS ====================================
 
+/**
+ * Runtime/UI projection of an accepted Plan Subscription.
+ *
+ * The subscription Domain Object remains authoritative persisted state.
+ * Readings and progress metadata are derived locally for display/navigation.
+ */
 export interface Sub {
   id: string;
-  planID: string;
-  userID: string;
+  planDefinitionId: string;
   dateSubscribed: number;
-  version: number;
 
   name: string;
   description: string;
   nestedReadings: Readings[];
-  completedReadings: Map<number, CompletedReadings>;
+  completedReadingIndexes: Set<number>;
 
   nextReadingsIndex: number;
   percentCompleted: number;
@@ -73,75 +51,34 @@ export interface Sub {
 export function NullSub(): Sub {
   return {
     id: '',
-    planID: '',
-    userID: '',
+    planDefinitionId: '',
     dateSubscribed: 0,
-    version: 0,
     name: '',
     description: '',
     nestedReadings: [],
-    completedReadings: new Map(),
+    completedReadingIndexes: new Set(),
     nextReadingsIndex: 0,
     percentCompleted: 0
   };
 }
-export function PlanToCachedSub(p: Plan): CachedSub {
-  return {
-    id: uuid4(),
-    planID: p.id,
-    userID: '00000000-0000-0000-0000-000000000000',
-    name: p.name,
-    description: p.description,
-    encodedReadings: p.encodedReadings,
-    dateSubscribed: Date.now(),
-    version: 0
-  };
-}
 
-
-export function CachedPlanToCachedSub(p: CachedPlan): CachedSub {
-  return {
-    id: uuid4(),
-    planID: p.id,
-    userID: '00000000-0000-0000-0000-000000000000',
-    name: p.name,
-    description: p.description,
-    encodedReadings: p.encodedReadings,
-    dateSubscribed: Date.now(),
-    version: 0
-  };
-}
-
-export interface CachedSub {
-  id: string;
-  planID: string;
-  userID: string;
-  name: string;
-  description: string;
-  encodedReadings: string[];
-  dateSubscribed: number;
-  version: number;
-}
-
-export function cachedSubToSub(
-  cs: CachedSub,
+export function planSubscriptionToSub(
+  subscription: PlanSubscription,
   bookNameLookup: BookNameLookup
 ): Sub {
-  let nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
-    cs.encodedReadings,
+  const nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
+    [...subscription.encodedReadings],
     bookNameLookup
   );
 
   return {
-    id: cs.id,
-    planID: cs.planID,
-    userID: cs.userID,
-    dateSubscribed: cs.dateSubscribed,
-    version: cs.version,
-    name: cs.name,
-    description: cs.description,
-    nestedReadings: nestedReadings,
-    completedReadings: new Map(),
+    id: subscription.id,
+    planDefinitionId: subscription.planDefinitionId,
+    dateSubscribed: subscription.dateSubscribed,
+    name: subscription.name,
+    description: subscription.description,
+    nestedReadings,
+    completedReadingIndexes: new Set(),
     nextReadingsIndex: 0,
     percentCompleted: 0
   };
@@ -168,29 +105,6 @@ export function NullReadings(): Readings {
   return {
     totalVerses: 0,
     bcvs: []
-  };
-}
-
-/**
- * Simple data structure that tracks completed subscription readings.
- * {@link CompletedReadings.id} is the {@link Sub.id}/{@link CompletedReadings.index}
- * eg. "00000000-0000-0000-0000-000000000000/0". The index is the {@link Sub.nestedReadings}
- * index.
- */
-export interface CompletedReadings {
-  id: string;
-  subID: string;
-  index: number;
-  version: number;
-  // TODO date created/updated
-}
-
-export function NullCompletedReadings(): CompletedReadings {
-  return {
-    id: '',
-    subID: '',
-    index: 0,
-    version: 0
   };
 }
 
@@ -229,7 +143,6 @@ export enum PLANS_VIEWS {
   // PLAN
 
   PLANS_LIST = 1,
-  PLANS_ACTIONS = 2,
   PLANS_DETAILS = 3,
 
   // SUB
@@ -242,8 +155,7 @@ export enum PLANS_VIEWS {
 }
 
 export enum PLAN_PUBSUB_SUBSCRIPTIONS {
-  GET_ALL_PLANS = 1,
-  GET_ALL_SUBS,
-  PUT_SUB,
-  PUT_READING
+  GET_ALL_SUBS = 2,
+  PUT_SUB = 3,
+  PUT_PROGRESS = 4
 }

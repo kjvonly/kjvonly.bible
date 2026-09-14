@@ -97,7 +97,7 @@
 			toShow !== BATCH_SIZE_TO_SHOW &&
 			count + subListReadingsToShow < selectedSub.nestedReadings.length
 		) {
-			let hasCompletedReading = selectedSub.completedReadings.get(
+			let hasCompletedReading = selectedSub.completedReadingIndexes.has(
 				subListReadingsToShow + count
 			);
 			count++;
@@ -126,7 +126,7 @@
 	}
 
 	function setHasCompletedReadings(): void {
-		hasCompletedReading = selectedSub.completedReadings.size > 0;
+		hasCompletedReading = selectedSub.completedReadingIndexes.size > 0;
 	}
 
 	// ============================== CLICK FUNCS ==============================
@@ -212,7 +212,7 @@
 	>
 
 	{#each Array(subListReadingsToShow) as _, idx}
-		{#if !sub.completedReadings.get(idx) || (sub.completedReadings.get(idx) && showCompletedReadings)}
+		{#if !sub.completedReadingIndexes.has(idx) || (sub.completedReadingIndexes.has(idx) && showCompletedReadings)}
 			<button
 				onclick={() => onSelectedSubReading(idx, PLANS_VIEWS.SUBS_DETAILS)}
 				class="flex w-full flex-row px-2 py-4 text-base hover:cursor-pointer hover:bg-neutral-100"
@@ -226,7 +226,7 @@
 					<div class="flex w-full">
 						<span class="flex flex-grow"></span>
 						<div
-							class="text-lg {sub.completedReadings.get(idx)?.index === idx
+							class="text-lg {sub.completedReadingIndexes.has(idx)
 								? 'text-support-a-500'
 								: ''}"
 						>

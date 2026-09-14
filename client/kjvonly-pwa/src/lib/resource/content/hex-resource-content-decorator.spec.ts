@@ -148,21 +148,45 @@ describe(
 		);
 
 		it(
-			'rejects non-string decoded input',
+			'decodes UTF-8 byte transport containing hex text',
+			async () => {
+				const decorator =
+					createDecorator();
+
+				const result =
+					await decorator.decode(
+						new TextEncoder()
+							.encode(
+								'48656c6c6f'
+							)
+					);
+
+				expect(
+					result
+				).toEqual(
+					new Uint8Array([
+						72,
+						101,
+						108,
+						108,
+						111
+					])
+				);
+			}
+		);
+
+		it(
+			'rejects unsupported decoded input',
 			async () => {
 				const decorator =
 					createDecorator();
 
 				await expect(
 					decorator.decode(
-						new Uint8Array([
-							1,
-							2,
-							3
-						])
+						123
 					)
 				).rejects.toThrow(
-					'Hex Resource content must be a string when decoding.'
+					'Hex Resource content must be a string or Uint8Array when decoding.'
 				);
 			}
 		);

@@ -18,11 +18,14 @@
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// SERVICES
-	import { completedReadingsService } from '$lib/domains/reading-plans/services/completedReadings.service';
 	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// OTHER
 	import uuid4 from 'uuid4';
+
+	const { planProgressService } =
+		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -70,7 +73,7 @@
 			subsByID
 				.values()
 				.toArray()
-				.sort((a: any, b: any) => a.dateCreated - b.dateCreated)
+				.sort((a: Sub, b: Sub) => a.dateSubscribed - b.dateSubscribed)
 				.forEach((s: any) => subs.push(s));
 
 			await processNavReadings();
@@ -81,18 +84,34 @@
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
-		let nr: NavReadings = pane.buffer.bag?.navReadings;
-		if (nr) {
-			let cr = completedReadingsService.navReadingsToCompletedReadings(nr);
-			await completedReadingsService.save(cr);
-			selectedSub = completedReadingsService.updateSubMetadata(
-				subsByID,
-				nr,
-				cr
-			);
-			completedReadingsService.cleanup(pane);
-			completedReadingsService.notifyWorker(cr);
+		const nr: NavReadings | undefined =
+			pane.buffer.bag?.navReadings;
+
+		if (!nr) {
+			if (selectedSub.id) {
+				selectedSub =
+					subsByID.get(selectedSub.id) ??
+					selectedSub;
+			}
+
+			return;
 		}
+
+		selectedSub =
+			subsByID.get(nr.subID) ??
+			selectedSub;
+
+		const progress =
+			await planProgressService.completeReading(
+				nr.subID,
+				nr.subNestedReadingsIndex
+			);
+
+		delete pane.buffer.bag.navReadings;
+
+		plansPubSubService.putProgress(
+			progress
+		);
 	}
 </script>
 

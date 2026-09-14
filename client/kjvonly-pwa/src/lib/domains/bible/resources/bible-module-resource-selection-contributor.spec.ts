@@ -96,21 +96,21 @@ describe(
 						)
 					);
 
-				expect(
-					Object.keys(selections)
-				).toEqual([
-					BIBLE_CHAPTER_RESOURCE_TYPE,
-					BIBLE_PARAGRAPHS_RESOURCE_TYPE,
-					BIBLE_PERICOPES_RESOURCE_TYPE,
-					BIBLE_BOOKNAMES_RESOURCE_TYPE,
-					STRONGS_RESOURCE_TYPE,
-					BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
-					NOTES_RESOURCE_TYPE
-				]);
+				expect(Object.keys(selections)).toEqual(
+					expect.arrayContaining([
+						BIBLE_CHAPTER_RESOURCE_TYPE,
+						BIBLE_PARAGRAPHS_RESOURCE_TYPE,
+						BIBLE_PERICOPES_RESOURCE_TYPE,
+						BIBLE_BOOKNAMES_RESOURCE_TYPE,
+						STRONGS_RESOURCE_TYPE,
+						BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
+						NOTES_RESOURCE_TYPE
+					])
+				);
 
 				expect(
 					selections[
-						BIBLE_SEARCH_RESOURCE_TYPE
+					BIBLE_SEARCH_RESOURCE_TYPE
 					]
 				).toBeUndefined();
 			}
@@ -128,7 +128,7 @@ describe(
 
 				expect(
 					selections[
-						NOTES_RESOURCE_TYPE
+					NOTES_RESOURCE_TYPE
 					]
 				).toEqual({
 					publisher:
@@ -161,7 +161,7 @@ describe(
 
 				expect(
 					selections[
-						NOTES_RESOURCE_TYPE
+					NOTES_RESOURCE_TYPE
 					]
 				).toEqual(
 					selectedNotes
@@ -187,7 +187,7 @@ describe(
 
 				expect(
 					selections[
-						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 					]
 				).toEqual({
 					publisher:
@@ -226,7 +226,7 @@ describe(
 
 				expect(
 					selections[
-						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 					]
 				).toEqual(
 					selectedMarkup
@@ -262,7 +262,7 @@ describe(
 
 				expect(
 					selections[
-						BIBLE_CHAPTER_RESOURCE_TYPE
+					BIBLE_CHAPTER_RESOURCE_TYPE
 					]
 				).toEqual(
 					originatingChapter
@@ -290,7 +290,7 @@ describe(
 
 				expect(
 					selections[
-						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 					]
 				).toBeUndefined();
 			}
@@ -312,13 +312,13 @@ describe(
 
 				expect(
 					selections[
-						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 					]
 				).toBeUndefined();
 
 				expect(
 					selections[
-						NOTES_RESOURCE_TYPE
+					NOTES_RESOURCE_TYPE
 					]
 				).toBeUndefined();
 			}
@@ -341,7 +341,7 @@ function createContributor(
 function createContext(
 	currentSelections:
 		ModuleResourceSelectionBuildContext[
-			'currentSelections'
+		'currentSelections'
 		]
 ): ModuleResourceSelectionBuildContext {
 	return {

@@ -8,6 +8,11 @@ import type {
 	ResourceInstallResult
 } from '$lib/resource/services/resource-install-result';
 
+import type {
+	ResourceWorkerStrategyResolveRequest,
+	ResourceWorkerStrategyResolveResponse
+} from './resource-worker-strategy-message';
+
 export interface ResourceWorkerError {
 	readonly name:
 		string;
@@ -116,7 +121,8 @@ export interface ResourceWorkerDiscoveryError {
 export type ResourceWorkerMainMessage =
 	| ResourceWorkerInstallRequest
 	| ResourceWorkerDiscoveryResult
-	| ResourceWorkerDiscoveryError;
+	| ResourceWorkerDiscoveryError
+	| ResourceWorkerStrategyResolveResponse;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Worker → Main thread
@@ -157,7 +163,8 @@ export interface ResourceWorkerInstallErrorMessage {
 export type ResourceWorkerMessage =
 	| ResourceWorkerDiscoveryRequest
 	| ResourceWorkerInstallResultMessage
-	| ResourceWorkerInstallErrorMessage;
+	| ResourceWorkerInstallErrorMessage
+	| ResourceWorkerStrategyResolveRequest;
 
 ///////////////////////////////////////////////////////////////////////////////
 

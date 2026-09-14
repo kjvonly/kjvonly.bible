@@ -77,6 +77,21 @@ import type {
 } from '$lib/domains/notes/services/notes.service';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Reading Plans
+
+import type {
+    PlanDefinitionsService
+} from '$lib/domains/reading-plans/services/plan-definitions.service';
+
+import type {
+    PlanSubscriptionsService
+} from '$lib/domains/reading-plans/services/plan-subscriptions.service';
+
+import type {
+    PlanProgressService
+} from '$lib/domains/reading-plans/services/plan-progress.service';
+
+///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import type {
@@ -152,6 +167,18 @@ export interface ApplicationContext {
 
     readonly notesService:
     NotesService;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Reading Plans
+
+    readonly planDefinitionsService:
+    PlanDefinitionsService;
+
+    readonly planSubscriptionsService:
+    PlanSubscriptionsService;
+
+    readonly planProgressService:
+    PlanProgressService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Strong's

@@ -1,3 +1,7 @@
+import type {
+	ResourceRepresentationType
+} from '$lib/resource/models/resource.model';
+
 export interface ResourceDescriptor {
 	readonly metadata:
 		ResourceDescriptorMetadata;
@@ -14,6 +18,9 @@ export interface ResourceDescriptorMetadata {
 	readonly category: string;
 
 	readonly modifiedAt: number;
+
+	readonly representation:
+		ResourceRepresentationType;
 
 	readonly mediaType: string;
 }

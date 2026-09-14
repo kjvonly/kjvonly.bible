@@ -24,11 +24,15 @@
 	} from '../../../models/plans.model';
 
 	// SERVICES
-	import { completedReadingsService } from '$lib/domains/reading-plans/services/completedReadings.service';
 	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
+	import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// OTHER
 	import uuid4 from 'uuid4';
+
+	const { planProgressService } =
+		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -86,14 +90,24 @@
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
-		let nr: NavReadings = pane.buffer.bag?.navReadings;
-		if (nr) {
-			let cr = completedReadingsService.navReadingsToCompletedReadings(nr);
-			await completedReadingsService.save(cr);
-			completedReadingsService.updateSubMetadata(subsByID, nr, cr);
-			completedReadingsService.cleanup(pane);
-			completedReadingsService.notifyWorker(cr);
+		const nr: NavReadings | undefined =
+			pane.buffer.bag?.navReadings;
+
+		if (!nr) {
+			return;
 		}
+
+		const progress =
+			await planProgressService.completeReading(
+				nr.subID,
+				nr.subNestedReadingsIndex
+			);
+
+		delete pane.buffer.bag.navReadings;
+
+		plansPubSubService.putProgress(
+			progress
+		);
 	}
 
 	function updateNextReadings() {
@@ -112,8 +126,8 @@
 	 *
 	 * @param s
 	 */
-	function filterSubsForNextReadings(s: Sub): Boolean {
-		return s.nestedReadings.length - 1 > s.nextReadingsIndex;
+	function filterSubsForNextReadings(s: Sub): boolean {
+		return subsEnricherService.hasNextReading(s);
 	}
 
 	function subToNextReadings(s: Sub): NextReadings {

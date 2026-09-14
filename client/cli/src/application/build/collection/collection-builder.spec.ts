@@ -114,6 +114,9 @@ function createDescriptor(
 
 			modifiedAt,
 
+			representation:
+				'content',
+
 			mediaType:
 				'application/json+gzip'
 		},
@@ -229,7 +232,9 @@ describe(
 								resources: [
 									'chapters',
 									'strongs'
-								]
+								],
+
+								collections: []
 							}
 						}
 					} satisfies Manifest;
@@ -432,6 +437,374 @@ describe(
 
 
 		it(
+			'builds referenced child collections before parents and emits a Nostr descriptor',
+			async () => {
+
+				const stagingRoot =
+					await createDirectory();
+
+
+				const manifest =
+					{
+						version:
+							1,
+
+						kind:
+							37770,
+
+						staging: {
+							path:
+								'./.kjvonly'
+						},
+
+						nostr: {
+							relays: [
+								'wss://relay.example'
+							]
+						},
+
+						strategies:
+							{},
+
+						resources:
+							{},
+
+						collections: {
+							parent: {
+								event: {
+									encoding: [
+										'hex'
+									],
+
+									tags: [
+										[
+											'd',
+											'kjvonly/resources/collections/default'
+										],
+										[
+											'm',
+											'application/json+hex'
+										],
+										[
+											't',
+											'kjvonly/resources/collections'
+										],
+										[
+											'representation',
+											'descriptors'
+										]
+									]
+								},
+
+								resources: [],
+
+								collections: [
+									'child'
+								]
+							},
+
+							child: {
+								event: {
+									encoding: [
+										'hex'
+									],
+
+									tags: [
+										[
+											'd',
+											'kjvonly/plans/readings/default'
+										],
+										[
+											'm',
+											'application/json+hex'
+										],
+										[
+											't',
+											'kjvonly/plans/readings'
+										],
+										[
+											'representation',
+											'descriptors'
+										]
+									]
+								},
+
+								resources: [
+									'plans'
+								],
+
+								collections: []
+							}
+						}
+					} satisfies Manifest;
+
+
+				const plan =
+					createDescriptor(
+						'kjvonly/plans/readings/default/mcheyne',
+						100
+					);
+
+
+				const stagingRepository =
+					new NodeCollectionEventStagingRepository();
+
+
+				const builder =
+					new CollectionBuilder(
+						new CollectionEventBuilder(
+							new EncodingRegistry([
+								new GzipEncoder(),
+								new HexEncoder()
+							]),
+
+							new LocalNostrSigner(
+								secretKey
+							),
+
+							{
+								nowEpochSeconds:
+									() =>
+										1000
+							}
+						),
+
+						stagingRepository,
+						createLogger()
+					);
+
+
+				await builder.build({
+					manifest,
+
+					stagingRoot,
+
+					descriptorsByResource:
+						new Map([
+							[
+								'plans',
+								[
+									plan
+								]
+							]
+						])
+				});
+
+
+				const staged =
+					await stagingRepository
+						.list(
+							stagingRoot
+						);
+
+
+				const parentEntry =
+					staged.find(
+						entry =>
+							entry.collectionName ===
+								'parent'
+					);
+
+
+				expect(
+					parentEntry
+				).toBeDefined();
+
+
+				const parentEvent =
+					await stagingRepository
+						.read(
+							parentEntry!
+						);
+
+
+				const descriptors:
+					ResourceDescriptor[] =
+						JSON.parse(
+							Buffer
+								.from(
+									parentEvent.content,
+									'hex'
+								)
+								.toString(
+									'utf8'
+								)
+						);
+
+
+				expect(
+					descriptors
+				).toHaveLength(1);
+
+
+				expect(
+					descriptors[0]
+				).toMatchObject({
+					metadata: {
+						resourceId:
+							'kjvonly/plans/readings/default',
+
+						category:
+							'kjvonly/plans/readings',
+
+						representation:
+							'descriptors',
+
+						mediaType:
+							'application/json+hex'
+					},
+
+					strategy: {
+						type:
+							'nostr',
+
+						data: {
+							kind:
+								37770,
+
+							relays: [
+								'wss://relay.example'
+							]
+						}
+					}
+				});
+			}
+		);
+
+
+		it(
+			'rejects collection dependency cycles',
+			async () => {
+
+				const stagingRoot =
+					await createDirectory();
+
+
+				const createCollection =
+					(
+						resourceId:
+							string,
+
+						collections:
+							string[]
+					) => ({
+						event: {
+							encoding: [
+								'hex' as const
+							],
+
+							tags: [
+								[
+									'd',
+									resourceId
+								],
+								[
+									'm',
+									'application/json+hex'
+								],
+								[
+									't',
+									'kjvonly/resources/collections'
+								],
+								[
+									'representation',
+									'descriptors'
+								]
+							]
+						},
+
+						resources: [],
+
+						collections
+					});
+
+
+				const manifest =
+					{
+						version:
+							1,
+
+						kind:
+							37770,
+
+						staging: {
+							path:
+								'./.kjvonly'
+						},
+
+						nostr: {
+							relays: [
+								'wss://relay.example'
+							]
+						},
+
+						strategies:
+							{},
+
+						resources:
+							{},
+
+						collections: {
+							a:
+								createCollection(
+									'kjvonly/test/a',
+									[
+										'b'
+									]
+								),
+
+							b:
+								createCollection(
+									'kjvonly/test/b',
+									[
+										'a'
+									]
+								)
+						}
+					} satisfies Manifest;
+
+
+				const builder =
+					new CollectionBuilder(
+						new CollectionEventBuilder(
+							new EncodingRegistry([
+								new GzipEncoder(),
+								new HexEncoder()
+							]),
+
+							new LocalNostrSigner(
+								secretKey
+							),
+
+							{
+								nowEpochSeconds:
+									() =>
+										1000
+							}
+						),
+
+						new NodeCollectionEventStagingRepository(),
+						createLogger()
+					);
+
+
+				await expect(
+					builder.build({
+						manifest,
+
+						stagingRoot,
+
+						descriptorsByResource:
+							new Map()
+					})
+				).rejects.toThrow(
+					'Collection dependency cycle: a -> b -> a'
+				);
+			}
+		);
+
+
+		it(
 			'fails when a collection member does not produce descriptors',
 			async () => {
 
@@ -481,7 +854,9 @@ describe(
 
 								resources: [
 									'inline-resource'
-								]
+								],
+
+								collections: []
 							}
 						}
 					} as Manifest;

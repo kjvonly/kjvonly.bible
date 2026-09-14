@@ -123,6 +123,9 @@ describe(
 					modifiedAt:
 						1000,
 
+					representation:
+						'content',
+
 					mediaType:
 						'application/json+gzip'
 				});

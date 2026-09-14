@@ -18,12 +18,6 @@ export const enum STORES {
   UNSYNCED_ANNOTATIONS,
   NOTES,
   UNSYNCED_NOTES,
-  PLANS,
-  UNSYNCED_PLANS,
-  SUBSCRIPTIONS,
-  UNSYNCED_SUBSCRIPTIONS,
-  READINGS,
-  UNSYNCED_READINGS,
 
 
   // NOSTR IMPLE
@@ -46,15 +40,6 @@ export const UNSYNCED_ANNOTATIONS = 'unsynced_annotations';
 
 export const NOTES = 'notes';
 export const UNSYNCED_NOTES = 'unsynced_notes';
-
-export const PLANS = 'plans';
-export const UNSYNCED_PLANS = 'unsynced_plans';
-
-export const SUBSCRIPTIONS = 'subscriptions';
-export const UNSYNCED_SUBSCRIPTIONS = 'unsynced_subscriptions';
-
-export const COMPLETED_READINGS = 'completed_readings';
-export const UNSYNCED_COMPLETED_READINGS = 'unsynced_completed_readings';
 
 // // NOSTR 
 export const RESOURCE_INSTALLATIONS = 'resource_installations';
@@ -102,15 +87,6 @@ export class BibleDB extends IndexedDB {
 
         NOTES,
         UNSYNCED_NOTES,
-
-        PLANS,
-        UNSYNCED_PLANS,
-
-        SUBSCRIPTIONS,
-        UNSYNCED_SUBSCRIPTIONS,
-
-        COMPLETED_READINGS,
-        UNSYNCED_COMPLETED_READINGS,
 
         RESOURCE_INSTALLATIONS,
       ],

@@ -175,6 +175,451 @@ describe(
 			}
 		);
 
+
+		it(
+			'recursively resolves a descriptors Resource into child Resource content',
+			async () => {
+				const resource =
+					createResourceRepresentation();
+
+				const nestedDescriptor =
+					createDescriptor({
+						metadata: {
+							publisher:
+								PUBLISHER,
+
+							resourceId:
+								'kjvonly/resources/collections/plans',
+
+							category:
+								'kjvonly/resources/collections',
+
+							modifiedAt:
+								110,
+
+							representation:
+								'descriptors',
+
+							mediaType:
+								'application/json'
+						}
+					});
+
+				const leafDescriptor =
+					createDescriptor({
+						metadata: {
+							publisher:
+								SECOND_PUBLISHER,
+
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs',
+
+							category:
+								'kjvonly/strongs/definitions',
+
+							modifiedAt:
+								200,
+
+							representation:
+								'content',
+
+							mediaType:
+								'application/json+gzip'
+						}
+					});
+
+				const nestedBytes =
+					new Uint8Array([
+						4,
+						5
+					]);
+
+				const leafContent =
+					new Uint8Array([
+						1,
+						2,
+						3
+					]);
+
+				const documentDecoder = {
+					decode:
+						vi.fn(
+							async (
+								_mediaType:
+									string,
+
+								content:
+									string | Uint8Array
+							) => {
+								if (
+									content ===
+									resource.payload
+								) {
+									return [
+										nestedDescriptor
+									];
+								}
+
+								if (
+									content ===
+									nestedBytes
+								) {
+									return [
+										leafDescriptor
+									];
+								}
+
+								throw new Error(
+									'Unexpected descriptor content.'
+								);
+							}
+						)
+				};
+
+				const receiptService = {
+					needsProcessing:
+						vi.fn(
+							async () =>
+								true
+						)
+				};
+
+				const strategy:
+					ResourceResolutionStrategy = {
+						type:
+							'blossom',
+
+						resolve:
+							vi.fn(
+								async (
+									descriptor
+								) =>
+									descriptor.metadata
+										.representation ===
+									'descriptors'
+										? nestedBytes
+										: leafContent
+							)
+					};
+
+				const resolver =
+					new DescriptorsRepresentationResolver(
+						documentDecoder,
+						new ResourceDescriptorValidator(),
+						receiptService,
+						[
+							strategy
+						]
+					);
+
+				const result =
+					await resolver.resolve(
+						resource
+					);
+
+				expect(
+					result
+				).toEqual({
+					contents: [
+						{
+							publisher:
+								SECOND_PUBLISHER,
+
+							resourceId:
+								'kjvonly/strongs/definitions/kjvs',
+
+							resourceType:
+								'kjvonly/strongs/definitions',
+
+							modifiedAt:
+								200,
+
+							mediaType:
+								'application/json+gzip',
+
+							content:
+								leafContent
+						}
+					],
+
+					current:
+						[],
+
+					failures:
+						[]
+				});
+
+				expect(
+					documentDecoder.decode
+				).toHaveBeenNthCalledWith(
+					2,
+					nestedDescriptor.metadata.mediaType,
+					nestedBytes
+				);
+
+				expect(
+					strategy.resolve
+				).toHaveBeenCalledTimes(
+					2
+				);
+			}
+		);
+
+		it(
+			'rejects a recursive Resource descriptor cycle',
+			async () => {
+				const resource =
+					createResourceRepresentation();
+
+				const cycleDescriptor =
+					createDescriptor({
+						metadata: {
+							publisher:
+								resource.publisher,
+
+							resourceId:
+								resource.resourceId,
+
+							category:
+								resource.resourceType,
+
+							modifiedAt:
+								resource.modifiedAt,
+
+							representation:
+								'descriptors',
+
+							mediaType:
+								'application/json'
+						}
+					});
+
+				const strategy =
+					createStrategy(
+						'blossom'
+					);
+
+				const {
+					resolver
+				} = createResolver({
+					entries: [
+						cycleDescriptor
+					],
+					strategies: [
+						strategy
+					]
+				});
+
+				const result =
+					await resolver.resolve(
+						resource
+					);
+
+				expect(
+					result.contents
+				).toEqual(
+					[]
+				);
+
+				expect(
+					result.failures
+				).toEqual([
+					{
+						publisher:
+							resource.publisher,
+
+						resourceId:
+							resource.resourceId,
+
+						resourceType:
+							resource.resourceType,
+
+						error:
+							expect.objectContaining({
+								message:
+									expect.stringContaining(
+										'Resource descriptor cycle:'
+									)
+							})
+					}
+				]);
+
+				expect(
+					strategy.resolve
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
+			'limits recursive Resource descriptor nesting to three levels',
+			async () => {
+				const resource =
+					createResourceRepresentation();
+
+				const descriptors = [
+					'a',
+					'b',
+					'c',
+					'd'
+				].map(
+					(key, index) =>
+						createDescriptor({
+							metadata: {
+								publisher:
+									PUBLISHER,
+
+								resourceId:
+									`kjvonly/resources/collections/${key}`,
+
+								category:
+									'kjvonly/resources/collections',
+
+								modifiedAt:
+									100 +
+									index,
+
+								representation:
+									'descriptors',
+
+								mediaType:
+									'application/json'
+							}
+						})
+				);
+
+				const bytes = [
+					new Uint8Array([
+						1
+					]),
+					new Uint8Array([
+						2
+					]),
+					new Uint8Array([
+						3
+					])
+				];
+
+				const documentDecoder = {
+					decode:
+						vi.fn(
+							async (
+								_mediaType:
+									string,
+
+								content:
+									string | Uint8Array
+							) => {
+								if (
+									content ===
+									resource.payload
+								) {
+									return [
+										descriptors[0]
+									];
+								}
+
+								const index =
+									bytes.indexOf(
+										content as Uint8Array
+									);
+
+								if (
+									index >=
+									0
+								) {
+									return [
+										descriptors[
+											index +
+											1
+										]
+									];
+								}
+
+								throw new Error(
+									'Unexpected descriptor content.'
+								);
+							}
+						)
+				};
+
+				const receiptService = {
+					needsProcessing:
+						vi.fn(
+							async () =>
+								true
+						)
+				};
+
+				const strategy:
+					ResourceResolutionStrategy = {
+						type:
+							'blossom',
+
+						resolve:
+							vi.fn(
+								async (
+									descriptor
+								) => {
+									const index =
+										descriptors.findIndex(
+											candidate =>
+												candidate.metadata.resourceId ===
+												descriptor.metadata.resourceId
+										);
+
+									return bytes[index];
+								}
+							)
+					};
+
+				const resolver =
+					new DescriptorsRepresentationResolver(
+						documentDecoder,
+						new ResourceDescriptorValidator(),
+						receiptService,
+						[
+							strategy
+						]
+					);
+
+				const result =
+					await resolver.resolve(
+						resource
+					);
+
+				expect(
+					strategy.resolve
+				).toHaveBeenCalledTimes(
+					3
+				);
+
+				expect(
+					result.failures
+				).toHaveLength(
+					1
+				);
+
+				expect(
+					result.failures[0]
+				).toMatchObject({
+					publisher:
+						PUBLISHER,
+
+					resourceId:
+						'kjvonly/resources/collections/d',
+
+					resourceType:
+						'kjvonly/resources/collections',
+
+					error:
+						expect.objectContaining({
+							message:
+								'Maximum Resource descriptor nesting depth exceeded: 3'
+						})
+				});
+			}
+		);
+
 		it(
 			'preserves a child Resource when its receipt is current',
 			async () => {
@@ -274,6 +719,9 @@ describe(
 
 							modifiedAt:
 								200,
+
+							representation:
+								'content',
 
 							mediaType:
 								'application/json+gzip'
@@ -441,6 +889,9 @@ describe(
 
 							modifiedAt:
 								200,
+
+							representation:
+								'content',
 
 							mediaType:
 								'application/json+gzip'
@@ -704,6 +1155,9 @@ function createDescriptor(
 
 				modifiedAt:
 					100,
+
+				representation:
+					'content',
 
 				mediaType:
 					'application/json+gzip'

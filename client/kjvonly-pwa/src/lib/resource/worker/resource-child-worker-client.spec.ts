@@ -9,6 +9,10 @@ import type {
 	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
+import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
 import {
 	ResourceChildWorkerClient
 } from './resource-child-worker-client';
@@ -86,6 +90,73 @@ describe(
 						true,
 					resources:
 						[]
+				});
+			}
+		);
+
+		it(
+			'forwards Resource strategy resolution through the coordinator',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const descriptor =
+					createDescriptor();
+
+				const content =
+					new Uint8Array([
+						4,
+						5
+					]);
+
+				const calls:
+					ResourceDescriptor[] =
+						[];
+
+				new ResourceChildWorkerClient(
+					worker as unknown as
+						Worker,
+					{
+						resolve:
+							async (received) => {
+								calls.push(
+									received
+								);
+
+								return content;
+							}
+					}
+				);
+
+				worker.emitMessage({
+					type:
+						'strategy-resolve',
+
+					requestId:
+						'strategy-1',
+
+					descriptor
+				});
+
+				await Promise.resolve();
+				await Promise.resolve();
+
+				expect(
+					calls
+				).toEqual([
+					descriptor
+				]);
+
+				expect(
+					worker.messages.at(-1)
+				).toEqual({
+					type:
+						'strategy-resolve-result',
+
+					requestId:
+						'strategy-1',
+
+					content
 				});
 			}
 		);
@@ -579,6 +650,41 @@ function createClient(
 		worker as unknown as
 			Worker
 	);
+}
+
+function createDescriptor():
+	ResourceDescriptor {
+	return {
+		metadata: {
+			publisher:
+				'a'.repeat(
+					64
+				),
+
+			resourceId:
+				'kjvonly/plans/readings/default',
+
+			category:
+				'kjvonly/plans/readings',
+
+			modifiedAt:
+				100,
+
+			representation:
+				'descriptors',
+
+			mediaType:
+				'application/json+hex'
+		},
+
+		strategy: {
+			type:
+				'nostr',
+
+			data:
+				{}
+		}
+	};
 }
 
 function createReference(

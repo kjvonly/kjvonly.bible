@@ -8,6 +8,11 @@ import type {
 	ResourceWorkerInstallResult
 } from './resource-worker-message';
 
+import type {
+	ResourceWorkerStrategyResolveRequest,
+	ResourceWorkerStrategyResolveResponse
+} from './resource-worker-strategy-message';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Resource Coordinator → Child Resource Worker
 
@@ -26,7 +31,8 @@ export interface ResourceChildWorkerProcessRequest {
 }
 
 export type ResourceChildWorkerRequest =
-	ResourceChildWorkerProcessRequest;
+	| ResourceChildWorkerProcessRequest
+	| ResourceWorkerStrategyResolveResponse;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Child Resource Worker → Resource Coordinator
@@ -55,4 +61,5 @@ export interface ResourceChildWorkerProcessError {
 
 export type ResourceChildWorkerMessage =
 	| ResourceChildWorkerProcessResult
-	| ResourceChildWorkerProcessError;
+	| ResourceChildWorkerProcessError
+	| ResourceWorkerStrategyResolveRequest;

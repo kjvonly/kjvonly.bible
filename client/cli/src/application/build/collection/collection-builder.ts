@@ -1,6 +1,6 @@
-
 import { Manifest } from '#domain/manifest/manifest.js';
 import { ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
+import { SignedNostrEvent } from '#domain/event/nostr-event.js';
 import { Logger } from '#ports/logging/logger.js';
 import { CollectionEventStagingRepository, StagedCollectionEventEntry } from '#ports/staging/collection-event-staging-repository.js';
 
@@ -73,26 +73,149 @@ export class CollectionBuilder {
 			);
 
 
-		const currentNames =
+		const builtEvents =
+			new Map<
+				string,
+				SignedNostrEvent
+			>();
+
+
+		const visiting =
 			new Set<string>();
 
 
 		for (
-			const [
-				collectionName,
-				collection
-			]
-			of Object.entries(
-				request
-					.manifest
-					.collections
+			const collectionName
+			of Object.keys(
+				request.manifest.collections
 			)
 		) {
-			currentNames.add(
+			await this.buildCollection(
+				collectionName,
+				request,
+				stagedByName,
+				builtEvents,
+				visiting,
+				[]
+			);
+		}
+
+
+		const currentNames =
+			new Set(
+				Object.keys(
+					request.manifest.collections
+				)
+			);
+
+
+		for (
+			const entry
+			of staged
+		) {
+			if (
+				!currentNames.has(
+					entry.collectionName
+				)
+			) {
+				this.logCollectionRemoved(
+					entry.collectionName
+				);
+
+
+				await this
+					.stagingRepository
+					.remove(
+						entry
+					);
+			}
+		}
+
+
+		this.logBuildComplete(
+			currentNames.size
+		);
+	}
+
+
+	private async buildCollection(
+		collectionName:
+			string,
+
+		request:
+			BuildCollectionsRequest,
+
+		stagedByName:
+			ReadonlyMap<
+				string,
+				StagedCollectionEventEntry
+			>,
+
+		builtEvents:
+			Map<
+				string,
+				SignedNostrEvent
+			>,
+
+		visiting:
+			Set<string>,
+
+		path:
+			readonly string[]
+	): Promise<SignedNostrEvent> {
+
+		const alreadyBuilt =
+			builtEvents.get(
 				collectionName
 			);
 
 
+		if (
+			alreadyBuilt !==
+				undefined
+		) {
+			return alreadyBuilt;
+		}
+
+
+		if (
+			visiting.has(
+				collectionName
+			)
+		) {
+			throw new Error(
+				`Collection dependency cycle: ${[
+					...path,
+					collectionName
+				].join(' -> ')}`
+			);
+		}
+
+
+		const collection =
+			request
+				.manifest
+				.collections[
+					collectionName
+				];
+
+
+		if (
+			collection ===
+				undefined
+		) {
+			throw new Error(
+				`Unknown Collection: ${collectionName}`
+			);
+		}
+
+
+		visiting.add(
+			collectionName
+		);
+
+
+		try {
 			this.logCollectionStart(
 				collectionName,
 				collection.resources.length
@@ -135,6 +258,47 @@ export class CollectionBuilder {
 
 				descriptors.push(
 					...resourceDescriptors
+				);
+			}
+
+
+			for (
+				const childCollectionName
+				of collection.collections
+			) {
+				const childEvent =
+					await this.buildCollection(
+						childCollectionName,
+						request,
+						stagedByName,
+						builtEvents,
+						visiting,
+						[
+							...path,
+							collectionName
+						]
+					);
+
+
+				const childDescriptor =
+					this.createCollectionDescriptor(
+						childCollectionName,
+						childEvent,
+						request.manifest.nostr.relays
+					);
+
+
+				this.logCollectionMemberResolved(
+					collectionName,
+					childCollectionName,
+					childDescriptor
+						.metadata
+						.resourceId
+				);
+
+
+				descriptors.push(
+					childDescriptor
 				);
 			}
 
@@ -197,6 +361,12 @@ export class CollectionBuilder {
 				});
 
 
+			builtEvents.set(
+				collectionName,
+				event
+			);
+
+
 			this.logEventStaged(
 				collectionName,
 				event.id
@@ -207,35 +377,149 @@ export class CollectionBuilder {
 				collectionName,
 				descriptors.length
 			);
+
+
+			return event;
+		}
+		finally {
+			visiting.delete(
+				collectionName
+			);
+		}
+	}
+
+
+	private createCollectionDescriptor(
+		collectionName:
+			string,
+
+		event:
+			SignedNostrEvent,
+
+		relays:
+			readonly string[]
+	): ResourceDescriptor {
+
+		const resourceId =
+			this.getRequiredTagValue(
+				collectionName,
+				event,
+				'd'
+			);
+
+
+		const category =
+			this.getRequiredTagValue(
+				collectionName,
+				event,
+				't'
+			);
+
+
+		const mediaType =
+			this.getRequiredTagValue(
+				collectionName,
+				event,
+				'm'
+			);
+
+
+		const representation =
+			this.getRequiredTagValue(
+				collectionName,
+				event,
+				'representation'
+			);
+
+
+		if (
+			representation !==
+				'descriptors'
+		) {
+			throw new Error(
+				`Nested Collection "${collectionName}" must use representation "descriptors".`
+			);
 		}
 
 
-		for (
-			const entry
-			of staged
-		) {
-			if (
-				!currentNames.has(
-					entry.collectionName
+		return {
+			metadata: {
+				publisher:
+					event.pubkey,
+
+				resourceId,
+
+				category,
+
+				modifiedAt:
+					event.created_at,
+
+				representation,
+
+				mediaType
+			},
+
+			strategy: {
+				type:
+					'nostr',
+
+				data: {
+					kind:
+						event.kind,
+
+					relays: [
+						...relays
+					]
+				}
+			}
+		};
+	}
+
+
+	private getRequiredTagValue(
+		collectionName:
+			string,
+
+		event:
+			SignedNostrEvent,
+
+		tagName:
+			string
+	): string {
+
+		const values =
+			event.tags
+				.filter(
+					tag =>
+						tag[0] ===
+							tagName
 				)
-			) {
-				this.logCollectionRemoved(
-					entry.collectionName
+				.map(
+					tag =>
+						tag[1]
+				)
+				.filter(
+					(
+						value
+					): value is string =>
+						value !==
+							undefined &&
+						value.length >
+							0
 				);
 
 
-				await this
-					.stagingRepository
-					.remove(
-						entry
-					);
-			}
+		if (
+			values.length !==
+				1
+		) {
+			throw new Error(
+				`Nested Collection "${collectionName}" requires exactly one "${tagName}" tag.`
+			);
 		}
 
 
-		this.logBuildComplete(
-			currentNames.size
-		);
+		return values[0]!;
 	}
 
 
@@ -292,6 +576,28 @@ export class CollectionBuilder {
 				collectionName,
 				resourceName,
 				descriptorCount
+			}
+		);
+	}
+
+
+	private logCollectionMemberResolved(
+		collectionName:
+			string,
+
+		childCollectionName:
+			string,
+
+		resourceId:
+			string
+	): void {
+
+		this.logger.verbose(
+			'collection.collection.resolved',
+			{
+				collectionName,
+				childCollectionName,
+				resourceId
 			}
 		);
 	}

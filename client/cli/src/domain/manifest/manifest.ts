@@ -91,6 +91,13 @@ export const collectionDefinitionSchema =
 			z.array(
 				nonEmptyString
 			)
+			.default([]),
+
+	collections:
+			z.array(
+				nonEmptyString
+			)
+			.default([])
 	});
 
 
@@ -316,6 +323,33 @@ export const manifestSchema =
 
 							message:
 								`Resource does not produce descriptors: ${resourceName}`
+						});
+					}
+				}
+
+
+				for (
+					const childCollectionName
+					of collection.collections
+				) {
+					if (
+						manifest
+							.collections[
+								childCollectionName
+							] === undefined
+					) {
+						context.addIssue({
+							code:
+								'custom',
+
+							path: [
+								'collections',
+								collectionName,
+								'collections'
+							],
+
+							message:
+								`Unknown Collection: ${childCollectionName}`
 						});
 					}
 				}

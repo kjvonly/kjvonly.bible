@@ -44,6 +44,9 @@ describe(
 						modifiedAt:
 							100,
 
+						representation:
+							'content',
+
 						mediaType:
 							'application/json+gzip'
 					},
@@ -227,6 +230,66 @@ describe(
 		);
 
 		it(
+			'accepts descriptors representation',
+			() => {
+				const validator =
+					new ResourceDescriptorValidator();
+
+				const descriptor =
+					validator.validate(
+						createDescriptor({
+							metadata: {
+								...createMetadata(),
+
+								representation:
+									'descriptors'
+							}
+						})
+					);
+
+				expect(
+					descriptor.metadata
+						.representation
+				).toBe(
+					'descriptors'
+				);
+			}
+		);
+
+		it(
+			'requires representation',
+			() => {
+				const metadata = {
+					...createMetadata()
+				};
+
+				delete metadata.representation;
+
+				expectInvalid(
+					createDescriptor({
+						metadata
+					})
+				);
+			}
+		);
+
+		it(
+			'rejects an invalid representation',
+			() => {
+				expectInvalid(
+					createDescriptor({
+						metadata: {
+							...createMetadata(),
+
+							representation:
+								'future'
+						}
+					})
+				);
+			}
+		);
+
+		it(
 			'requires mediaType',
 			() => {
 				expectInvalid(
@@ -389,6 +452,9 @@ function createMetadata():
 
 		modifiedAt:
 			100,
+
+		representation:
+			'content',
 
 		mediaType:
 			'application/json+gzip'

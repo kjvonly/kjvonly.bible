@@ -10,19 +10,22 @@
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// MODELS
-	import { PLANS_VIEWS, type Plan } from '$lib/domains/reading-plans/models/plans.model';
+	import {
+		PLANS_VIEWS,
+		type PlanDefinitionView
+	} from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	// =============================== BINDINGS ================================
 	let {
 		planList = $bindable(),
 		plansDisplay = $bindable(),
-		selectedPlan = $bindable<Plan | undefined>(),
+		selectedPlan = $bindable<PlanDefinitionView | undefined>(),
 		paneID
 	}: {
-		planList: Plan[];
+		planList: PlanDefinitionView[];
 		plansDisplay: PLANS_VIEWS;
-		selectedPlan: Plan | undefined;
+		selectedPlan: PlanDefinitionView | undefined;
 		paneID: string;
 	} = $props();
 	// ================================== VARS =================================
@@ -35,8 +38,8 @@
 		plansDisplay = PLANS_VIEWS.SUBS_LIST;
 	}
 
-	function onPlanClicked(e: Event, p: Plan) {
-		selectedPlan = p;
+	function onPlanClicked(e: Event, plan: PlanDefinitionView) {
+		selectedPlan = plan;
 		plansDisplay = PLANS_VIEWS.PLANS_DETAILS;
 	}
 </script>
@@ -62,19 +65,19 @@
 {/snippet}
 
 {#snippet plansListView()}
-	{#each planList as p}
+	{#each planList as plan}
 		<button
 			onclick={(e: Event) => {
-				onPlanClicked(e, p);
+				onPlanClicked(e, plan);
 			}}
 			class="col-2 flex w-full flex-col p-2 text-base hover:bg-neutral-100"
 		>
 			<div class="flex w-full">
-				<span class="pb-2 text-2xl">{p.name}</span>
+				<span class="pb-2 text-2xl">{plan.name}</span>
 			</div>
 
 			<div class="text-md text-start">
-				<p class="line-clamp-3 text-start">{p.description}</p>
+				<p class="line-clamp-3 text-start">{plan.description}</p>
 			</div>
 		</button>
 	{/each}
