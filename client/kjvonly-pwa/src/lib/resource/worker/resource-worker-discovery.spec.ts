@@ -133,7 +133,7 @@ describe(
 
 					error: {
 						name:
-							'ResourceClientError',
+							'NostrClientError',
 
 						message:
 							'Relay unavailable.'
@@ -144,7 +144,7 @@ describe(
 					promise
 				).rejects.toMatchObject({
 					name:
-						'ResourceClientError',
+						'NostrClientError',
 
 					message:
 						'Relay unavailable.'

@@ -1,13 +1,13 @@
 import { Modules as modules } from '$lib/application/models/modules.model';
 import BibleContainer from '$lib/domains/bible/modules/reader/bibleContainer.svelte';
-import LoginContainer from '$lib/nostr/modules/login/loginContainer.svelte';
+import LoginContainer from '$lib/application/modules/login/loginContainer.svelte';
 import Modules from '$lib/application/modules/modules/modules.svelte';
 import NotesContainer from '$lib/domains/notes/modules/notesContainer.svelte';
 import PlansContainer from '$lib/domains/reading-plans/modules/plans/plansContainer.svelte';
 import RefsContainer from '$lib/domains/bible/modules/refs/refsContainer.svelte';
 import SettingsContainer from '$lib/application/modules/settings/settingsContainer.svelte';
 import Search from '$lib/domains/bible/modules/search/search.svelte';
-import ProfileContainer from '$lib/nostr/modules/profile/profileContainer.svelte';
+import ProfileContainer from '$lib/application/modules/profile/profileContainer.svelte';
 
 /**
  * Component Mapping is responsible for converting the

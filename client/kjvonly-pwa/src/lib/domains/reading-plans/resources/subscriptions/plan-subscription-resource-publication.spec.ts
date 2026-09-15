@@ -31,6 +31,9 @@ describe(
 				expect(
 					publication
 				).toEqual({
+					type:
+						'resource',
+
 					publisher:
 						'publisher',
 					resourceType:

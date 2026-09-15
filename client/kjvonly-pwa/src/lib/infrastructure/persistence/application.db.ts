@@ -15,7 +15,11 @@ import type {
 import type {
 	OutboxEntry,
 	OutboxStatus
-} from '$lib/resource/outbox/outbox-entry';
+} from '$lib/application/outbox/outbox-entry';
+
+import type {
+	NostrEvent
+} from '$lib/infrastructure/nostr/events/models/nostr-event';
 
 export const DOMAIN_OBJECTS =
 	'domain_objects';
@@ -29,17 +33,29 @@ export const RESOURCE_RECEIPTS =
 export const OUTBOX =
 	'outbox';
 
+export const NOSTR_EVENTS =
+	'nostr_events';
+
 export const OBJECT_TYPE_INDEX =
 	'objectType';
 
 export const OUTBOX_STATUS_INDEX =
 	'status';
 
+export const NOSTR_EVENT_KIND_INDEX =
+	'kind';
+
+export const NOSTR_EVENT_PUBKEY_INDEX =
+	'pubkey';
+
+export const NOSTR_EVENT_KIND_PUBKEY_INDEX =
+	'kindPubkey';
+
 const DATABASE_NAME =
 	'kjvonly-application';
 
 const DATABASE_VERSION =
-	2;
+	3;
 
 export interface StoredDomainObject {
 	readonly id:
@@ -97,6 +113,25 @@ export interface ApplicationDBSchema
 		indexes: {
 			status:
 			OutboxStatus;
+		};
+	};
+
+	nostr_events: {
+		key:
+		string;
+
+		value:
+		NostrEvent;
+
+		indexes: {
+			kind:
+				number;
+
+			pubkey:
+				string;
+
+			kindPubkey:
+				[number, string];
 		};
 	};
 }
@@ -190,6 +225,39 @@ export function getApplicationDB():
 							outbox.createIndex(
 								OUTBOX_STATUS_INDEX,
 								'status'
+							);
+						}
+
+						if (
+							!db.objectStoreNames.contains(
+								NOSTR_EVENTS
+							)
+						) {
+							const nostrEvents =
+								db.createObjectStore(
+									NOSTR_EVENTS,
+									{
+										keyPath:
+											'key'
+									}
+								);
+
+							nostrEvents.createIndex(
+								NOSTR_EVENT_KIND_INDEX,
+								'kind'
+							);
+
+							nostrEvents.createIndex(
+								NOSTR_EVENT_PUBKEY_INDEX,
+								'pubkey'
+							);
+
+							nostrEvents.createIndex(
+								NOSTR_EVENT_KIND_PUBKEY_INDEX,
+								[
+									'kind',
+									'pubkey'
+								]
 							);
 						}
 					}

@@ -8,6 +8,10 @@ import type {
 	BibleTextMarkup
 } from '$lib/domains/bible/models/bible-text-markup.model';
 
+import type {
+	ResourcePublication
+} from '$lib/resource/publication/resource-publication';
+
 import {
 	BIBLE_TEXT_MARKUP_OBJECT_TYPE
 } from './bible-text-markup-store';
@@ -124,8 +128,7 @@ describe(
 					id:
 						storedId,
 
-					resource:
-						publication,
+					publication,
 
 					status:
 						'pending',
@@ -213,8 +216,12 @@ function createTextMarkup():
 	};
 }
 
-function createPublication() {
+function createPublication():
+	ResourcePublication {
 	return {
+		type:
+			'resource',
+
 		publisher:
 			'publisher',
 
@@ -223,6 +230,12 @@ function createPublication() {
 
 		resourceId:
 			'kjvonly/overlays/text-markup/kjvs/1_1',
+
+		representation:
+			'content',
+
+		mediaType:
+			'application/json+gzip+hex',
 
 		value:
 			createTextMarkup().markings

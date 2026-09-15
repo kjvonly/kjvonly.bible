@@ -1,39 +1,44 @@
 import {
     describe,
     expect,
-    it
+    it,
+    vi
 } from 'vitest';
 
-import {
-    getPublicKey,
-    nip19
-} from 'nostr-tools';
+import type {
+    AuthenticationResult,
+    AuthenticationStrategy
+} from './authentication/authentication-strategy';
 
 import {
-    AuthenticationService,
-    LOGIN_STORAGE_KEY
+    AuthenticationService
 } from './authentication.service';
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function createStorage(
-    login:
-        string |
+function createAuthenticationStrategy(
+    result:
+        AuthenticationResult |
         null
-): Pick<Storage, 'getItem'> {
+): AuthenticationStrategy {
 
     return {
-        getItem:
-            (key: string) => {
-                if (
-                    key !==
-                    LOGIN_STORAGE_KEY
-                ) {
-                    return null;
-                }
+        tryLogin:
+            vi.fn(
+                async () =>
+                    result
+            ),
 
-                return login;
-            }
+        login:
+            vi.fn(
+                async () =>
+                    result ?? {
+                        status:
+                            'authenticated',
+                        userId:
+                            'a'.repeat(64)
+                    }
+            )
     };
 }
 
@@ -43,64 +48,169 @@ describe(
     'AuthenticationService',
     () => {
         it(
-            'derives the canonical hex pubkey from the saved nsec login',
+            'starts signed out before authentication restoration',
             () => {
-                const secretKey =
-                    new Uint8Array(
-                        32
-                    );
-
-                secretKey[31] =
-                    1;
-
                 const service =
                     new AuthenticationService(
-                        createStorage(
-                            nip19.nsecEncode(
-                                secretKey
-                            )
+                        createAuthenticationStrategy(
+                            null
                         )
                     );
 
                 expect(
-                    service.getPubkey()
-                ).toBe(
-                    getPublicKey(
-                        secretKey
-                    )
+                    service.getState()
+                ).toEqual({
+                    status:
+                        'signed-out'
+                });
+            }
+        );
+
+        it(
+            'restores authenticated user state',
+            async () => {
+                const userId =
+                    'b'.repeat(64);
+
+                const strategy =
+                    createAuthenticationStrategy({
+                        status:
+                            'authenticated',
+                        userId
+                    });
+
+                const service =
+                    new AuthenticationService(
+                        strategy
+                    );
+
+                await expect(
+                    service.tryLogin()
+                ).resolves.toBe(true);
+
+                expect(
+                    strategy.tryLogin
+                ).toHaveBeenCalledOnce();
+
+                expect(
+                    service.getState()
+                ).toEqual({
+                    status:
+                        'authenticated',
+                    userId
+                });
+
+                expect(
+                    service.getUserId()
+                ).toBe(userId);
+            }
+        );
+
+        it(
+            'restores read-only user state',
+            async () => {
+                const userId =
+                    'c'.repeat(64);
+
+                const service =
+                    new AuthenticationService(
+                        createAuthenticationStrategy({
+                            status:
+                                'read-only',
+                            userId
+                        })
+                    );
+
+                await expect(
+                    service.tryLogin()
+                ).resolves.toBe(true);
+
+                expect(
+                    service.getState()
+                ).toEqual({
+                    status:
+                        'read-only',
+                    userId
+                });
+
+                expect(
+                    service.getUserId()
+                ).toBe(userId);
+            }
+        );
+
+        it(
+            'publishes restored authentication state to subscribers',
+            async () => {
+                const userId =
+                    'd'.repeat(64);
+
+                const service =
+                    new AuthenticationService(
+                        createAuthenticationStrategy({
+                            status:
+                                'authenticated',
+                            userId
+                        })
+                    );
+
+                const subscriber =
+                    vi.fn();
+
+                service.subscribe(
+                    subscriber
+                );
+
+                expect(
+                    subscriber
+                ).toHaveBeenNthCalledWith(
+                    1,
+                    {
+                        status:
+                            'signed-out'
+                    }
+                );
+
+                await service
+                    .tryLogin();
+
+                expect(
+                    subscriber
+                ).toHaveBeenNthCalledWith(
+                    2,
+                    {
+                        status:
+                            'authenticated',
+                        userId
+                    }
                 );
             }
         );
 
         it(
-            'returns undefined when the current pubkey is unavailable',
-            () => {
+            'remains signed out when no saved login is available',
+            async () => {
                 const service =
                     new AuthenticationService(
-                        createStorage(
+                        createAuthenticationStrategy(
                             null
                         )
                     );
+
+                await expect(
+                    service.tryLogin()
+                ).resolves.toBe(false);
 
                 expect(
-                    service.tryGetPubkey()
-                ).toBeUndefined();
-            }
-        );
-
-        it(
-            'fails when no saved login exists',
-            () => {
-                const service =
-                    new AuthenticationService(
-                        createStorage(
-                            null
-                        )
-                    );
+                    service.getState()
+                ).toEqual({
+                    status:
+                        'signed-out'
+                });
 
                 expect(
                     () =>
-                        service.getPubkey()
+                        service.getUserId()
                 ).toThrow(
                     'No saved login is available.'
                 );
@@ -108,40 +218,113 @@ describe(
         );
 
         it(
-            'fails when the saved login uses an unsupported authentication method',
-            () => {
+            'remains signed out when saved login restoration fails',
+            async () => {
+                const strategy =
+                    createAuthenticationStrategy(
+                        null
+                    );
+
+                vi.mocked(
+                    strategy.tryLogin
+                ).mockRejectedValue(
+                    new Error(
+                        'login failed'
+                    )
+                );
+
                 const service =
                     new AuthenticationService(
-                        createStorage(
-                            'npub1unsupported'
-                        )
+                        strategy
                     );
+
+                await expect(
+                    service.tryLogin()
+                ).resolves.toBe(false);
+
+                expect(
+                    service.getState()
+                ).toEqual({
+                    status:
+                        'signed-out'
+                });
 
                 expect(
                     () =>
-                        service.getPubkey()
+                        service.getUserId()
                 ).toThrow(
-                    'Only nsec authentication is currently supported.'
+                    'Saved login could not be restored.'
                 );
             }
         );
 
         it(
-            'fails when the saved nsec is invalid',
+            'logs in with credentials and publishes authenticated state',
+            async () => {
+                const userId =
+                    'e'.repeat(64);
+
+                const strategy =
+                    createAuthenticationStrategy({
+                        status:
+                            'authenticated',
+                        userId
+                    });
+
+                const service =
+                    new AuthenticationService(
+                        strategy
+                    );
+
+                const subscriber =
+                    vi.fn();
+
+                service.subscribe(
+                    subscriber
+                );
+
+                await service
+                    .login(
+                        'credentials'
+                    );
+
+                expect(
+                    strategy.login
+                ).toHaveBeenCalledWith(
+                    'credentials'
+                );
+
+                expect(
+                    service.getState()
+                ).toEqual({
+                    status:
+                        'authenticated',
+                    userId
+                });
+
+                expect(
+                    subscriber
+                ).toHaveBeenLastCalledWith({
+                    status:
+                        'authenticated',
+                    userId
+                });
+            }
+        );
+
+        it(
+            'returns undefined when the current user id is unavailable',
             () => {
                 const service =
                     new AuthenticationService(
-                        createStorage(
-                            'nsec1invalid'
+                        createAuthenticationStrategy(
+                            null
                         )
                     );
 
                 expect(
-                    () =>
-                        service.getPubkey()
-                ).toThrow(
-                    'Saved nsec login is invalid.'
-                );
+                    service.tryGetUserId()
+                ).toBeUndefined();
             }
         );
     }

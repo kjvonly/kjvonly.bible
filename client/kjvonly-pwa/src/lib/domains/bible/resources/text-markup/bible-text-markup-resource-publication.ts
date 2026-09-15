@@ -35,6 +35,9 @@ export class BibleTextMarkupResourcePublication {
 		}
 
 		return {
+			type:
+				'resource',
+
 			publisher,
 
 			resourceType:

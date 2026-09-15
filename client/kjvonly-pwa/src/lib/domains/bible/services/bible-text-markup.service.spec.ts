@@ -428,6 +428,9 @@ describe(
 					writeTransaction.publications
 				).toEqual([
 					{
+						type:
+							'resource',
+
 						publisher:
 							'publisher',
 

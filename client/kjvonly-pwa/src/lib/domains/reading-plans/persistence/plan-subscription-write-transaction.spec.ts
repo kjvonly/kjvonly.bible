@@ -128,8 +128,7 @@ describe(
 				).toEqual({
 					id:
 						storedId,
-					resource:
-						publication,
+					publication,
 					status:
 						'pending',
 					attempts:
@@ -214,6 +213,9 @@ function createSubscription(): PlanSubscription {
 
 function createPublication(): ResourcePublication {
 	return {
+		type:
+			'resource',
+
 		publisher:
 			'publisher',
 		resourceType:

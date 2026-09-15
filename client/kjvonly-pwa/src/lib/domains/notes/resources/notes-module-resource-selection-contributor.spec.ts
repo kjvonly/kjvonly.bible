@@ -146,7 +146,7 @@ function createContributor(
 ): NotesModuleResourceSelectionContributor {
 	return new NotesModuleResourceSelectionContributor(
 		{
-			tryGetPubkey() {
+			tryGetUserId() {
 				return pubkey;
 			}
 		}

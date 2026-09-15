@@ -11,8 +11,12 @@ import {
 } from '$lib/infrastructure/nostr/nostr-signer';
 
 import {
-    createBrowserResourceClient
-} from '$lib/infrastructure/nostr/resource-client';
+    NostrAuthenticationStrategy
+} from '$lib/infrastructure/nostr/authentication/nostr-authentication-strategy';
+
+import {
+    createBrowserNostrClient
+} from '$lib/infrastructure/nostr/client/create-nostr-client';
 
 import {
     ResourceDiscovery
@@ -99,16 +103,48 @@ import {
 } from '$lib/application/services/authentication.service';
 
 import {
+    AccountService
+} from '$lib/application/services/account/account.service';
+
+import {
+    NostrAccountStrategy
+} from '$lib/infrastructure/nostr/account/nostr-account-strategy';
+
+import {
+    NostrAccountRelayProvider
+} from '$lib/infrastructure/nostr/account/nostr-account-relay-provider';
+
+import {
+    IndexedDBNostrEventsStore
+} from '$lib/infrastructure/nostr/events/persistence/indexeddb-nostr-events-store';
+
+import {
+    IndexedDBNostrEventWriteTransaction
+} from '$lib/infrastructure/nostr/events/persistence/nostr-event-write-transaction';
+
+import {
+    NostrEventPublication
+} from '$lib/infrastructure/nostr/events/publication/nostr-event-publication';
+
+import {
+    NostrEventPublicationStrategy
+} from '$lib/infrastructure/nostr/events/publication/nostr-event-publication-strategy';
+
+import {
+    NostrEventsService
+} from '$lib/infrastructure/nostr/events/services/nostr-events.service';
+
+import {
     IndexedDBOutboxStore
-} from '$lib/resource/outbox/indexeddb-outbox-store';
+} from '$lib/application/outbox/indexeddb-outbox-store';
 
 import {
     OutboxProcessor
-} from '$lib/resource/outbox/outbox-processor';
+} from '$lib/application/outbox/outbox-processor';
 
 import {
-    NostrResourcePublisher
-} from '$lib/resource/nostr/nostr-resource-publisher';
+    NostrResourcePublicationStrategy
+} from '$lib/resource/nostr/nostr-resource-publication-strategy';
 
 import {
     ResourceContentEncoder
@@ -326,12 +362,6 @@ import {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-const LOGIN_KEY =
-    'login';
-
-const NOSTR_STORAGE_PREFIX =
-    `${import.meta.env.VITE_NOSTR_STORAGE_PREFIX}`;
-
 const APPLICATION_BOOTSTRAP_RESOURCE:
     PublishedResourceReference = {
 
@@ -365,6 +395,9 @@ export class Application {
         Promise<void> |
         undefined;
 
+    private readonly nostrSigner:
+        NostrSigner;
+
     private readonly resourceWorkerClient:
         ResourceWorkerClient;
 
@@ -377,21 +410,39 @@ export class Application {
     ) {
 
         ///////////////////////////////////////////////////////////////////////
-        // Authentication
-
-        const authenticationService =
-            new AuthenticationService(
-                localStorage
-            );
-
-        ///////////////////////////////////////////////////////////////////////
         // Nostr
 
         const nostrSigner =
             new NostrSigner();
 
-        const resourceClient =
-            createBrowserResourceClient(
+        this.nostrSigner =
+            nostrSigner;
+
+        const nostrAuthenticationStrategy =
+            new NostrAuthenticationStrategy(
+                localStorage,
+                nostrSigner,
+                {
+                    onNip46Auth:
+                        (url) => {
+                            window.open(
+                                url,
+                                '_blank'
+                            );
+                        }
+                }
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Authentication
+
+        const authenticationService =
+            new AuthenticationService(
+                nostrAuthenticationStrategy
+            );
+
+        const nostrClient =
+            createBrowserNostrClient(
                 nostrSigner
             );
 
@@ -407,7 +458,7 @@ export class Application {
          */
         const resourceDiscovery =
             new ResourceDiscovery(
-                resourceClient
+                nostrClient
             );
 
         ///////////////////////////////////////////////////////////////////////
@@ -452,10 +503,9 @@ export class Application {
                 resourceContentDecoratorBuilder
             );
 
-        const resourcePublisher =
-            new NostrResourcePublisher(
-                nostrSigner,
-                resourceClient,
+        const resourcePublicationStrategy =
+            new NostrResourcePublicationStrategy(
+                nostrClient,
                 resourceContentEncoder
             );
 
@@ -464,14 +514,67 @@ export class Application {
                 getApplicationDB
             );
 
+        const nostrEventPublicationStrategy =
+            new NostrEventPublicationStrategy(
+                nostrClient
+            );
+
         const outboxProcessor =
             new OutboxProcessor(
                 outboxStore,
-                resourcePublisher
+                [
+                    resourcePublicationStrategy,
+                    nostrEventPublicationStrategy
+                ]
             );
 
         this.outboxProcessor =
             outboxProcessor;
+
+        ///////////////////////////////////////////////////////////////////////
+        // Nostr Events
+
+        const nostrEventsStore =
+            new IndexedDBNostrEventsStore(
+                getApplicationDB
+            );
+
+        const nostrEventWriteTransaction =
+            new IndexedDBNostrEventWriteTransaction(
+                getApplicationDB
+            );
+
+        const nostrEventPublication =
+            new NostrEventPublication();
+
+        const nostrEventsService =
+            new NostrEventsService(
+                nostrEventsStore,
+                nostrEventWriteTransaction,
+                nostrEventPublication,
+                outboxProcessor
+            );
+
+        ///////////////////////////////////////////////////////////////////////
+        // Account
+
+        const nostrAccountRelayProvider =
+            new NostrAccountRelayProvider();
+
+        const nostrAccountStrategy =
+            new NostrAccountStrategy(
+                nostrClient,
+                nostrEventsService,
+                nostrAccountRelayProvider,
+                this.config
+                    .accountBootstrapRelays,
+                KJVONLY_PUBKEY
+            );
+
+        const accountService =
+            new AccountService(
+                nostrAccountStrategy
+            );
 
         ///////////////////////////////////////////////////////////////////////
         // Resource Worker
@@ -505,7 +608,7 @@ export class Application {
                 resourceDiscovery,
                 [
                     new NostrResourceResolutionStrategy(
-                        resourceClient
+                        nostrClient
                     )
                 ]
             );
@@ -882,10 +985,10 @@ export class Application {
          */
         this.context = {
             authenticationService,
+            accountService,
 
-            nostrSigner,
-
-            resourceClient,
+            nostrClient,
+            nostrAccountStrategy,
             resourceDiscovery,
 
             resourceService:
@@ -970,18 +1073,17 @@ export class Application {
          * main-thread discovery transport.
          *
          * This prevents the Resource Worker from issuing
-         * another discovery request while ResourceClient
+         * another discovery request while NostrClient
          * infrastructure is being torn down.
          */
         this.resourceWorkerClient
             .dispose();
 
         this.context
-            .resourceClient
+            .nostrClient
             .dispose();
 
-        await this.context
-            .nostrSigner
+        await this.nostrSigner
             .clear();
 
         this.state =
@@ -994,21 +1096,49 @@ export class Application {
         Promise<void> {
 
         try {
-            await this.restoreNsec();
-
             this.context
                 .resourceSelectionService
                 .restore();
 
             this.context
-                .resourceClient
+                .nostrClient
                 .setDefaultRelays(
                     this.config
                         .resourceRelays
                 );
 
+            const userId =
+                this.context
+                    .authenticationService
+                    .tryGetUserId();
+
+            if (
+                userId !==
+                undefined
+            ) {
+                await this.context
+                    .accountService
+                    .load(
+                        userId
+                    );
+
+                void this.context
+                    .accountService
+                    .refresh(
+                        userId
+                    )
+                    .catch(
+                        (error) => {
+                            console.warn(
+                                '[Account refresh failed]',
+                                error
+                            );
+                        }
+                    );
+            }
+
             /*
-             * Pending outbound Resources are durable.
+             * Pending application publications are durable.
              * Startup only needs to wake the Outbox after
              * signing and relay configuration are ready.
              */
@@ -1237,29 +1367,4 @@ export class Application {
             );
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-
-    private async restoreNsec():
-        Promise<void> {
-
-        const login =
-            localStorage.getItem(
-                `${NOSTR_STORAGE_PREFIX}:${LOGIN_KEY}`
-            );
-
-        if (
-            !login ||
-            !login.startsWith(
-                'nsec'
-            )
-        ) {
-            return;
-        }
-
-        await this.context
-            .nostrSigner
-            .useNsec(
-                login
-            );
-    }
 }

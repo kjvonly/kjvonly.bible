@@ -26,6 +26,9 @@ export class NotesResourcePublication {
 			);
 
 		return {
+			type:
+				'resource',
+
 			...identity,
 
 			representation:
@@ -45,6 +48,9 @@ export class NotesResourcePublication {
 		noteId: string
 	): ResourceDeletionPublication {
 		return {
+			type:
+				'resource',
+
 			operation:
 				'delete',
 

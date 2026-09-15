@@ -4,12 +4,12 @@ import {
 } from 'svelte';
 
 import type {
-    ResourceClient
-} from '$lib/resource/nostr/resource-client';
+    NostrClient
+} from '$lib/infrastructure/nostr/client/nostr-client';
 
 import type {
-    NostrSigner
-} from '$lib/infrastructure/nostr/nostr-signer';
+    NostrAccountStrategy
+} from '$lib/infrastructure/nostr/account/nostr-account-strategy';
 
 import type {
     ResourceDiscovery
@@ -34,6 +34,10 @@ import type {
 import type {
     AuthenticationService
 } from '$lib/application/services/authentication.service';
+
+import type {
+    AccountService
+} from '$lib/application/services/account/account.service';
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -105,14 +109,20 @@ export interface ApplicationContext {
     readonly authenticationService:
     AuthenticationService;
 
-    readonly nostrSigner:
-    NostrSigner;
+    readonly accountService:
+    AccountService;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Nostr
+
+    readonly nostrClient:
+    NostrClient;
+
+    readonly nostrAccountStrategy:
+    NostrAccountStrategy;
 
     ///////////////////////////////////////////////////////////////////////////
     // Resource
-
-    readonly resourceClient:
-    ResourceClient;
 
     readonly resourceDiscovery:
     ResourceDiscovery;

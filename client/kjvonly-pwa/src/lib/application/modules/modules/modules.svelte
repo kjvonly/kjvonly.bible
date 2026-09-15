@@ -1,7 +1,5 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
-	// SVELTE
-	import { get } from 'svelte/store';
 
 	// COMPONENTS
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
@@ -17,9 +15,7 @@
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { onMount } from 'svelte';
-
-	// NOSTR
-	import { pubkey } from '$lib/nostr/stores/Author';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -40,21 +36,33 @@
 		settings: Modules.SETTINGS
 	});
 
+	const {
+		authenticationService
+	} = useApplicationContext();
+
 	let headerHeight = $state(0);
 	let clientHeight = $state(0);
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		addDynamicModules();
+		return authenticationService.subscribe(
+			(state) => {
+				addDynamicModules(
+					state.status !== 'signed-out'
+				);
+			}
+		);
 	});
 
 	// ================================ FUNCS ==================================
-	function addDynamicModules() {
-		// TODO: i really dont like importing like this. It should really follow a
-		//       DI w/ a service.
-		let pk = get(pubkey);
-		if (pk?.length > 0) {
+	function addDynamicModules(
+		isAuthenticated: boolean
+	) {
+		delete components['profile'];
+		delete components['login'];
+
+		if (isAuthenticated) {
 			components['profile'] = Modules.PROFILE;
 		} else {
 			components['login'] = Modules.LOGIN;

@@ -8,8 +8,8 @@ import type {
 } from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-write-stores';
 
 import {
-	createPendingResourcePublication
-} from '$lib/resource/outbox/outbox-entry';
+	createPendingPublication
+} from '$lib/application/outbox/outbox-entry';
 
 import {
 	DOMAIN_OBJECTS,
@@ -100,7 +100,7 @@ export class IndexedDBPlanSubscriptionWriteTransaction
 								);
 
 							await outbox.put(
-								createPendingResourcePublication(
+								createPendingPublication(
 									storedId,
 									resource
 								)

@@ -61,8 +61,8 @@ const RESOURCE_TYPES = [
 	NOTES_RESOURCE_TYPE
 ] as const;
 
-export interface CurrentUserPubkeyProvider {
-	tryGetPubkey():
+export interface CurrentUserIdentityProvider {
+	tryGetUserId():
 		string |
 		undefined;
 }
@@ -74,7 +74,7 @@ implements ModuleResourceSelectionContributor {
 
 	constructor(
 		private readonly currentUser:
-			CurrentUserPubkeyProvider
+			CurrentUserIdentityProvider
 	) {}
 
 	build(
@@ -89,7 +89,7 @@ implements ModuleResourceSelectionContributor {
 
 		const publisher =
 			this.currentUser
-				.tryGetPubkey();
+				.tryGetUserId();
 
 		if (!publisher) {
 			return selections;

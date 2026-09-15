@@ -41,6 +41,9 @@ const SUBSCRIPTION:
 
 const PUBLICATION:
 	ResourcePublication = {
+		type:
+			'resource',
+
 		publisher:
 			'publisher',
 		resourceType:

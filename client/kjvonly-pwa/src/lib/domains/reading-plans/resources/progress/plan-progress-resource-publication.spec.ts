@@ -38,6 +38,9 @@ describe(
 							progress
 						)
 				).toEqual({
+					type:
+						'resource',
+
 					publisher:
 						'publisher',
 					resourceType:

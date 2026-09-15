@@ -1,8 +1,16 @@
 import type {
+	OutboxPublicationIntent
+} from '$lib/application/outbox/outbox-publication-intent';
+
+import type {
 	ResourceRepresentationType
 } from '$lib/resource/models/resource.model';
 
-export interface ResourcePublication {
+export interface ResourcePublication
+	extends OutboxPublicationIntent {
+	readonly type:
+		'resource';
+
 	readonly publisher:
 		string;
 
@@ -28,7 +36,11 @@ export interface ResourcePublication {
  * A Domain must deliberately create this intent. A local delete does not
  * automatically imply external Resource deletion.
  */
-export interface ResourceDeletionPublication {
+export interface ResourceDeletionPublication
+	extends OutboxPublicationIntent {
+	readonly type:
+		'resource';
+
 	readonly operation:
 		'delete';
 

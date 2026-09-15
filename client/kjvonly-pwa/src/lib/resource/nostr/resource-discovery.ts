@@ -1,6 +1,6 @@
 import type {
-	ResourceClient
-} from './resource-client';
+	NostrClient
+} from '$lib/infrastructure/nostr/client/nostr-client';
 
 import {
 	RESOURCE_KIND,
@@ -14,8 +14,8 @@ import {
 
 export class ResourceDiscovery {
 	constructor(
-		private readonly resourceClient:
-			ResourceClient
+		private readonly nostrClient:
+			NostrClient
 	) {}
 
 	async get(
@@ -26,7 +26,7 @@ export class ResourceDiscovery {
 		null
 	> {
 		const event =
-			await this.resourceClient
+			await this.nostrClient
 				.getEvent({
 					kinds: [
 						RESOURCE_KIND
@@ -58,7 +58,7 @@ export class ResourceDiscovery {
 			string
 	): Promise<readonly ResourceRepresentation[]> {
 		const events =
-			await this.resourceClient
+			await this.nostrClient
 				.getEvents({
 					kinds: [
 						RESOURCE_KIND
