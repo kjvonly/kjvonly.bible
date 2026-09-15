@@ -7,8 +7,8 @@ import type {
 } from '$lib/resource/descriptors/resource-descriptor';
 
 import type {
-	ResourceClient
-} from '$lib/resource/nostr/resource-client';
+	NostrClient
+} from '$lib/infrastructure/nostr/client/nostr-client';
 
 import type {
 	ResourceResolutionStrategy
@@ -29,9 +29,9 @@ export class NostrResourceResolutionStrategy
 		'nostr';
 
 	constructor(
-		private readonly resourceClient:
+		private readonly nostrClient:
 			Pick<
-				ResourceClient,
+				NostrClient,
 				'getEvent'
 			>
 	) {}
@@ -48,7 +48,7 @@ export class NostrResourceResolutionStrategy
 			);
 
 		const event =
-			await this.resourceClient.getEvent(
+			await this.nostrClient.getEvent(
 				{
 					kinds: [
 						data.kind

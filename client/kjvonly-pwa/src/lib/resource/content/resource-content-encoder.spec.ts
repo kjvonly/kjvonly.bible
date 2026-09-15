@@ -47,6 +47,9 @@ describe(
 
 				const content =
 					await encoder.encode({
+						type:
+							'resource',
+
 						publisher:
 							'publisher',
 						resourceType:

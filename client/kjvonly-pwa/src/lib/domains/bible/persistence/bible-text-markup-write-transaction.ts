@@ -12,8 +12,8 @@ import type {
 } from '$lib/domains/bible/resources/text-markup/bible-text-markup-write-stores';
 
 import {
-	createPendingResourcePublication
-} from '$lib/resource/outbox/outbox-entry';
+	createPendingPublication
+} from '$lib/application/outbox/outbox-entry';
 
 import {
 	DOMAIN_OBJECTS,
@@ -104,7 +104,7 @@ export class IndexedDBBibleTextMarkupWriteTransaction
 								);
 
 							await outbox.put(
-								createPendingResourcePublication(
+								createPendingPublication(
 									storedId,
 									resource
 								)

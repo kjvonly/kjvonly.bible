@@ -331,7 +331,7 @@ function createContributor(
 ): BibleModuleResourceSelectionContributor {
 	return new BibleModuleResourceSelectionContributor(
 		{
-			tryGetPubkey() {
+			tryGetUserId() {
 				return pubkey;
 			}
 		}

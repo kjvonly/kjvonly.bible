@@ -28,6 +28,9 @@ export class PlanProgressResourcePublication {
 		);
 
 		return {
+			type:
+				'resource',
+
 			publisher,
 
 			resourceType:

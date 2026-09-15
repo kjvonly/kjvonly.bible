@@ -27,6 +27,9 @@ describe(
 				expect(
 					publication
 				).toEqual({
+					type:
+						'resource',
+
 					publisher:
 						'publisher',
 
@@ -138,6 +141,9 @@ describe(
 				expect(
 					deletion
 				).toEqual({
+					type:
+						'resource',
+
 					operation:
 						'delete',
 

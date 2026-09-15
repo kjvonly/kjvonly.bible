@@ -28,6 +28,9 @@ export class PlanSubscriptionResourcePublication {
 		);
 
 		return {
+			type:
+				'resource',
+
 			publisher,
 
 			resourceType:

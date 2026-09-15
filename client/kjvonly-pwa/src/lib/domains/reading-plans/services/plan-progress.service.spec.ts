@@ -27,6 +27,9 @@ const SUBSCRIPTION_ID =
 
 const PUBLICATION:
 	ResourcePublication = {
+		type:
+			'resource',
+
 		publisher:
 			'publisher',
 		resourceType:

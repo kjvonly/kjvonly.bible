@@ -319,6 +319,9 @@ describe(
 						objectId:
 							note.id,
 						resource: {
+							type:
+								'resource',
+
 							publisher:
 								'publisher',
 							resourceType:
@@ -431,6 +434,9 @@ describe(
 						objectId:
 							noteId,
 						resource: {
+							type:
+								'resource',
+
 							operation:
 								'delete',
 							publisher:

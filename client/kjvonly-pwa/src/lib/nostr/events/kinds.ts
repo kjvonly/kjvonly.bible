@@ -1,4 +1,0 @@
-export let BIBLE_KIND = 37770
-export let ANNOTATIONS_KIND = 37772
-export let NOTES_KIND = 37773
-export let MANIFEST_KIND = 37778

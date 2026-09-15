@@ -121,8 +121,7 @@ describe(
 				).toEqual({
 					id:
 						storedId,
-					resource:
-						publication,
+					publication,
 					status:
 						'pending',
 					attempts:
@@ -188,7 +187,7 @@ describe(
 				).toEqual({
 					id:
 						storedId,
-					resource:
+					publication:
 						deletion,
 					status:
 						'pending',
@@ -276,6 +275,9 @@ function createNote(): Note {
 function createPublication():
 	ResourcePublication {
 	return {
+		type:
+			'resource',
+
 		publisher:
 			'publisher',
 		resourceType:
@@ -296,6 +298,9 @@ function createPublication():
 function createDeletion():
 	ResourceDeletionPublication {
 	return {
+		type:
+			'resource',
+
 		operation:
 			'delete',
 		publisher:

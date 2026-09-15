@@ -213,7 +213,7 @@ function createContributor(
 ): PlansModuleResourceSelectionContributor {
 	return new PlansModuleResourceSelectionContributor(
 		{
-			tryGetPubkey() {
+			tryGetUserId() {
 				return pubkey;
 			}
 		}

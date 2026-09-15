@@ -14,8 +14,8 @@ import {
 } from '$lib/resource/models/resource.model';
 
 import type {
-	ResourceClient
-} from './resource-client';
+	NostrClient
+} from '$lib/infrastructure/nostr/client/nostr-client';
 
 import {
 	ResourceDiscovery
@@ -41,7 +41,7 @@ describe(
 			async () => {
 				const getEvent =
 					vi.fn<
-						ResourceClient[
+						NostrClient[
 							'getEvent'
 						]
 					>(
@@ -51,7 +51,7 @@ describe(
 
 				const discovery =
 					new ResourceDiscovery(
-						createResourceClient(
+						createNostrClient(
 							getEvent
 						)
 					);
@@ -91,7 +91,7 @@ describe(
 			async () => {
 				const getEvent =
 					vi.fn<
-						ResourceClient[
+						NostrClient[
 							'getEvent'
 						]
 					>(
@@ -101,7 +101,7 @@ describe(
 
 				const discovery =
 					new ResourceDiscovery(
-						createResourceClient(
+						createNostrClient(
 							getEvent
 						)
 					);
@@ -126,7 +126,7 @@ describe(
 			async () => {
 				const getEvent =
 					vi.fn<
-						ResourceClient[
+						NostrClient[
 							'getEvent'
 						]
 					>(
@@ -136,7 +136,7 @@ describe(
 
 				const discovery =
 					new ResourceDiscovery(
-						createResourceClient(
+						createNostrClient(
 							getEvent
 						)
 					);
@@ -184,7 +184,7 @@ describe(
 			async () => {
 				const getEvents =
 					vi.fn<
-						ResourceClient[
+						NostrClient[
 							'getEvents'
 						]
 					>(
@@ -195,7 +195,7 @@ describe(
 
 				const discovery =
 					new ResourceDiscovery(
-						createResourceClient(
+						createNostrClient(
 							undefined,
 							getEvents
 						)
@@ -255,7 +255,7 @@ describe(
 
 				const discovery =
 					new ResourceDiscovery(
-						createResourceClient(
+						createNostrClient(
 							undefined,
 							async () => [
 								older,
@@ -294,15 +294,15 @@ describe(
 	}
 );
 
-function createResourceClient(
+function createNostrClient(
 	getEvent:
-		ResourceClient['getEvent'] =
+		NostrClient['getEvent'] =
 			async () => null,
 
 	getEvents:
-		ResourceClient['getEvents'] =
+		NostrClient['getEvents'] =
 			async () => []
-): ResourceClient {
+): NostrClient {
 	return {
 		setDefaultRelays:
 			() => {},

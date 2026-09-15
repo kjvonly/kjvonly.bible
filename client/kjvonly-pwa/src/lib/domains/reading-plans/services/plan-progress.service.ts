@@ -16,7 +16,7 @@ import type {
 
 import type {
 	OutboxWakeup
-} from '$lib/resource/outbox/outbox-wakeup';
+} from '$lib/application/outbox/outbox-wakeup';
 
 export class PlanProgressService {
 

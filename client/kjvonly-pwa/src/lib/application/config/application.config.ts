@@ -1,27 +1,38 @@
 import type {
-	ResourceRelay
-} from '$lib/resource/nostr/resource-client';
+	NostrRelay
+} from '$lib/infrastructure/nostr/client/nostr-client';
 
 export interface ApplicationConfig {
 	readonly resourceRelays:
-		readonly ResourceRelay[];
+		readonly NostrRelay[];
+
+	readonly accountBootstrapRelays:
+		readonly NostrRelay[];
 }
 
 export function createApplicationConfig():
 	ApplicationConfig {
 
+	const relayValue =
+		import.meta.env
+			.VITE_NOSTR_COMMA_DELIMITED_RELAY_URLS;
+
 	return {
 		resourceRelays:
 			parseRelays(
-				import.meta.env
-					.VITE_NOSTR_COMMA_DELIMITED_RELAY_URLS
+				relayValue
+			),
+
+		accountBootstrapRelays:
+			parseRelays(
+				relayValue
 			)
 	};
 }
 
 function parseRelays(
 	value: string | undefined
-): ResourceRelay[] {
+): NostrRelay[] {
 	if (!value) {
 		return [];
 	}
