@@ -8,6 +8,7 @@
 	import { exporterService } from '$lib/application/services/importExport/exporter.service';
 	import { importerService } from '$lib/application/services/importExport/importer.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';
@@ -73,17 +74,17 @@
 	// ============================== CLICK FUNCS ==============================
 
 	function onSplitVertical(): void {
-		paneService.onSplitPane(paneID, 'v', Modules.MODULES, {});
+		paneService.onSplitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 		showMenuPopup = false;
 	}
 
 	function onSplitHorizontal() {
-		paneService.onSplitPane(paneID, 'h', Modules.MODULES, {});
+		paneService.onSplitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 		showMenuPopup = false;
 	}
 
 	function onClosePane() {
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		paneService.onDeletePane(paneID);
 	}
 
 	function onClose() {

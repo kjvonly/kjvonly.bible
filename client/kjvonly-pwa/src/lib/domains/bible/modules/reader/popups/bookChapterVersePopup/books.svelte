@@ -15,7 +15,10 @@
 	import List from '$lib/components/svgs/list.svelte';
 
 	// MODELS
-	import type { Book, BookGrouping } from '$lib/domains/bible/models/bible.model';
+	import type {
+		Book,
+		BookGrouping
+	} from '$lib/domains/bible/models/bible.model';
 	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
 
 	// SERVICES
@@ -80,15 +83,8 @@
 	}
 
 	function setBookNames(): void {
-		bookNamesSorted = Object
-			.entries(
-				booknames.booknamesById
-			)
-			.sort(
-				(a, b) =>
-					Number(a[0]) -
-					Number(b[0])
-			)
+		bookNamesSorted = Object.entries(booknames.booknamesById)
+			.sort((a, b) => Number(a[0]) - Number(b[0]))
 			.map((a) => {
 				return {
 					id: a[0],
@@ -96,9 +92,7 @@
 				};
 			});
 
-		filteredBooks = [
-			...bookNamesSorted
-		];
+		filteredBooks = [...bookNamesSorted];
 	}
 
 	function setBookGroupings(): void {
@@ -194,7 +188,7 @@
 							underline decoration-8 underline-offset-8 {colorByGroupName[
 						bookGroups[b.id].group
 					].color}
-							hover:bg-primary-100"
+							hover:bg-neutral-100"
 				>
 					{bookGroups[b.id].name}
 				</button>
@@ -209,7 +203,7 @@
 			<div class="w-full">
 				<button
 					onclick={(event) => onBookSelected(event, bn.id)}
-					class="hover:bg-primary-100 w-full bg-neutral-50 p-4 text-start"
+					class="w-full bg-neutral-50 p-4 text-start hover:bg-neutral-100"
 					>{bn.name}</button
 				>
 			</div>

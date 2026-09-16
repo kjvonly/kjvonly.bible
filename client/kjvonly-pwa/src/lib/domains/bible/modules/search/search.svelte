@@ -20,18 +20,13 @@
 
 	import { BIBLE_SEARCH_RESOURCE_TYPE } from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
 
-	import type {
-		PublishedResourceReference
-	} from '$lib/resource/models/resource.model';
+	import type { PublishedResourceReference } from '$lib/resource/models/resource.model';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
-	const {
-		searchService,
-		moduleResourceSelectionResolver
-	} =
+	const { searchService, moduleResourceSelectionResolver } =
 		useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -54,28 +49,19 @@
 	// component vars
 	let searchID: string = uuid4();
 	let searchText = $state('');
-	let searchSource:
-		PublishedResourceReference |
-		undefined =
-			$state();
+	let searchSource: PublishedResourceReference | undefined = $state();
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		searchSource =
-			moduleResourceSelectionResolver.require(
-				paneID,
-				BIBLE_SEARCH_RESOURCE_TYPE
-			);
-
+		searchSource = moduleResourceSelectionResolver.require(
+			paneID,
+			BIBLE_SEARCH_RESOURCE_TYPE
+		);
 
 		if (searchTerms?.length > 0) {
 			searchText = searchTerms;
-			await searchService.search(
-				searchID,
-				searchSource,
-				searchTerms
-			);
+			await searchService.search(searchID, searchSource, searchTerms);
 		}
 	});
 
@@ -83,13 +69,10 @@
 		if (onClose) {
 			onClose();
 		} else {
-			paneService.onDeletePane(paneService.rootPane, paneID);
+			paneService.onDeletePane(paneID);
 		}
 	}
-
 </script>
-
-
 
 <!-- ================================ HEADER =============================== -->
 
@@ -116,11 +99,7 @@
 			{onFilterBibleLocationRef}
 		></SearchInput>
 	{/if}
-	<SearchResults
-		{paneID}
-		bind:searchText
-		{searchID}
-		{onFilterBibleLocationRef}
+	<SearchResults {paneID} bind:searchText {searchID} {onFilterBibleLocationRef}
 	></SearchResults>
 	<div class="h-6"></div>
 {/snippet}
@@ -132,7 +111,7 @@
 		{@render header()}
 	</BufferHeader>
 
-	<BufferBody ID={searchID} bind:headerHeight bind:clientHeight>
+	<BufferBody ID={searchID} bind:headerHeight bind:clientHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

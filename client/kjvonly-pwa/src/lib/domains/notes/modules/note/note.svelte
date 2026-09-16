@@ -22,6 +22,7 @@
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
@@ -65,12 +66,12 @@
 			showConfirmDelete = true;
 		},
 		'split vertical': () => {
-			paneService.onSplitPane(mode.paneID, 'v', Modules.MODULES, {});
+			paneService.onSplitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteActions = false;
 		},
 
 		'split horizontal': () => {
-			paneService.onSplitPane(mode.paneID, 'h', Modules.MODULES, {});
+			paneService.onSplitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteActions = false;
 		}
 	};

@@ -14,9 +14,7 @@
 	import Toggle from '$lib/components/toggle.svelte';
 
 	// MODELS
-	import type {
-		BibleBooknames
-	} from '$lib/domains/bible/models/bible-booknames.model';
+	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
 
 	// SERVICES
 	import { toastService } from '$lib/application/services/toast.service';
@@ -57,25 +55,13 @@
 	// ================================ FUNCS ==================================
 
 	function setBookName(): void {
-		bookName =
-			booknames.booknamesById[
-				selectedBookID
-			] ?? '';
+		bookName = booknames.booknamesById[selectedBookID] ?? '';
 	}
 
 	function setChapters(): void {
-		chapters = Object
-			.keys(
-				booknames
-					.bookchapterversecountById[
-						selectedBookID
-					] ?? {}
-			)
-			.sort(
-				(a, b) =>
-					Number(a) -
-					Number(b)
-			);
+		chapters = Object.keys(
+			booknames.bookchapterversecountById[selectedBookID] ?? {}
+		).sort((a, b) => Number(a) - Number(b));
 	}
 
 	function chapterSelected(ch: any): void {
@@ -132,7 +118,7 @@
 	<div class="grid w-[100%] grid-cols-5">
 		{#each chapters as ch}
 			<button
-				class="hover:bg-primary-50 row-span-1 bg-neutral-50 p-4"
+				class="row-span-1 bg-neutral-50 p-4 hover:bg-neutral-100"
 				onclick={() => {
 					chapterSelected(ch);
 				}}
@@ -149,7 +135,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

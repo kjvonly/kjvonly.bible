@@ -26,24 +26,21 @@
 	import uuid4 from 'uuid4';
 
 	// NOSTR IMPL
-	import {
-		useApplicationContext
-	} from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
-	import {
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
-	import {
-		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
+	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
+	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
 
 	const {
 		chapterService,
 		bibleBooknamesService,
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
-
 
 	// =============================== BINDINGS ================================
 
@@ -75,17 +72,13 @@
 
 	onMount(async () => {
 		closePopupOnInvalidBibleLocationReference();
-		await Promise.all([
-			setTitle(),
-			loadVerses()
-		]);
+		await Promise.all([setTitle(), loadVerses()]);
 		initializeCheckedVersesByIdMap();
 		setSortedAscVersesKeys();
 	});
 
 	$effect(() => {
 		checked;
-		console.log('clicked');
 		untrack(() => {
 			setSelectedVerses();
 		});
@@ -98,10 +91,7 @@
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 
-		const chapter = await chapterService.get(
-			source,
-			bibleLocationRef
-		);
+		const chapter = await chapterService.get(source, bibleLocationRef);
 
 		verses = chapter.verses;
 	}
@@ -118,33 +108,19 @@
 
 	async function setTitle(): Promise<void> {
 		const bookID =
-			bibleLocationReferenceService
-				.extractBookID(
-					bibleLocationRef
-				);
+			bibleLocationReferenceService.extractBookID(bibleLocationRef);
 
-		const source =
-			moduleResourceSelectionResolver
-				.require(
-					paneID,
-					BIBLE_BOOKNAMES_RESOURCE_TYPE
-				);
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
+			BIBLE_BOOKNAMES_RESOURCE_TYPE
+		);
 
-		const booknames =
-			await bibleBooknamesService.get(
-				source
-			);
+		const booknames = await bibleBooknamesService.get(source);
 
-		const bookName =
-			booknames.booknamesById[
-				bookID
-			] ?? '';
+		const bookName = booknames.booknamesById[bookID] ?? '';
 
 		const chapterNumber =
-			bibleLocationReferenceService
-				.extractChapter(
-					bibleLocationRef
-				);
+			bibleLocationReferenceService.extractChapter(bibleLocationRef);
 
 		title = `${bookName} ${chapterNumber}`;
 	}
@@ -318,6 +294,23 @@
 		navigator.clipboard.writeText(copyText);
 		toastService.showToast('Copied Verses');
 	}
+
+	function onSplitScreenHorizontal(e: Event, verseNumber: number): void {
+		e.stopPropagation();
+		let bibleLocationRef = getVerseBibleLocationReference(verseNumber);
+
+		paneService.onSplitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
+			bibleLocationRef: bibleLocationRef
+		});
+	}
+
+	function onSplitScreenVertical(e: Event, verseNumber: number): void {
+		e.stopPropagation();
+		let bibleLocationRef = getVerseBibleLocationReference(verseNumber);
+		paneService.onSplitPane(paneID, PaneSplit.VERTICAL, Modules.BIBLE, {
+			bibleLocationRef: bibleLocationRef
+		});
+	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
@@ -370,9 +363,9 @@
 {/snippet}
 
 {#snippet horizontalVerses()}
-	<div class="flex max-w-lg flex-row">
+	<div class="flex flex-row">
 		<div class="min-w-20 bg-neutral-50"></div>
-		<div class="w-lg overflow-x-scroll">
+		<div class="w-full overflow-x-scroll">
 			<div class="whitespace-nowrap">
 				{#each verseNumbers as vn, idx}
 					<button
@@ -398,7 +391,7 @@
 			tabindex="-1"
 			onkeydown={() => {}}
 			onclick={() => onVerseClicked(idx)}
-			class="hover:bg-primary-100 flex flex-row items-center justify-center py-6 leading-loose hover:cursor-pointer"
+			class="flex flex-row items-center justify-start py-6 leading-loose hover:cursor-pointer hover:bg-neutral-100"
 		>
 			<div class="flex min-w-16 justify-center">
 				<input
@@ -408,7 +401,7 @@
 					onchange={areAllVersesChecked}
 				/>
 			</div>
-			<div class="flex flex-col px-4">
+			<div class="flex w-full flex-col px-4">
 				<span class="whitespace-normal">
 					{verses[verseNumber]?.text}
 				</span>
@@ -424,17 +417,18 @@
 			<Copy classes=""></Copy>
 		</KJVButton>
 
-		<HorizontalSplit
-			bind:paneID
-			module={Modules.BIBLE}
-			data={{ bibleLocationRef: getVerseBibleLocationReference(verseNumber) }}
-		></HorizontalSplit>
-
-		<VerticalSplit
-			bind:paneID
-			module={Modules.BIBLE}
-			data={{ bibleLocationRef: getVerseBibleLocationReference(verseNumber) }}
-		></VerticalSplit>
+		<KJVButton
+			classes=""
+			onClick={(e: Event) => onSplitScreenHorizontal(e, verseNumber)}
+		>
+			<SplitScreenBottom></SplitScreenBottom>
+		</KJVButton>
+		<KJVButton
+			classes=""
+			onClick={(e: Event) => onSplitScreenVertical(e, verseNumber)}
+		>
+			<SplitScreenRight></SplitScreenRight>
+		</KJVButton>
 	</div>
 {/snippet}
 

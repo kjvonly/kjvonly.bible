@@ -2,13 +2,19 @@
 	import {
 		base26ToDecimal,
 		numberToLetters,
-		renderGridTemplateAreas
+		renderGridTemplateAreas,
+		renderGridTemplateColumns
 	} from '$lib/application/services/dynamicGrid.service';
 	import { onMount } from 'svelte';
 
 	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import PaneContainer from '$lib/application/runtime/pane/components/pane.svelte';
-	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
+	import {
+		deletePane as deletePaneFromTree,
+		findPane,
+		splitPane as splitPaneInTree
+	} from '$lib/application/runtime/workspace/workspace-pane-tree';
 	import { toastService } from '$lib/application/services/toast.service';
 	import { Modules } from '$lib/application/models/modules.model';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
@@ -42,7 +48,7 @@
 
 		template = `display: grid;
 		max-height: 100vh;
-		grid-template-columns: repeat(${gta.length}, ${gta[0].length});
+		grid-template-columns: ${renderGridTemplateColumns(gta)};
 
   		grid-template-areas:
 			${grid};`;
@@ -75,37 +81,19 @@
 		paneService.publishHw(heightWidth);
 	}
 
-	function findPane(p: Pane, paneID: string): Pane | undefined {
-		if (p.id === paneID) {
-			return p;
-		}
-		let found;
-
-		if (p.left) {
-			found = findPane(p.left, paneID);
-		}
-
-		if (found) {
-			return found;
-		}
-
-		if (p.right) {
-			found = findPane(p.right, paneID);
-		}
-
-		return found;
-	}
-
 	function splitPane(
 		paneID: string,
-		split: string,
+		split: PaneSplit,
 		componentName: Modules,
 		bag: any
 	) {
-		let p = findPane(paneService.rootPane, paneID);
+		const pane = findPane(
+			paneService.rootPane,
+			paneID
+		);
 
-		/** p should never be undefined */
-		if (!p) {
+		/** pane should never be undefined */
+		if (!pane) {
 			return;
 		}
 
@@ -113,16 +101,7 @@
 		let val = base26ToDecimal(lastPaneId);
 		let pid = numberToLetters(val + 1);
 
-		const originatingBuffer = p.buffer;
-
-		p.split = split;
-		p.left = {
-			id: p.id,
-			buffer: originatingBuffer,
-			updateBuffer: p.updateBuffer,
-			toggle: p.toggle
-		};
-
+		const originatingBuffer = pane.buffer;
 		const buffer = moduleBufferFactory.related(
 			componentName,
 			originatingBuffer,
@@ -131,92 +110,60 @@
 
 		buffer.name = `${componentName}`;
 
-		p.right = {
-			id: pid,
-			buffer: buffer
-		};
-		p.id = undefined;
+		if (
+			!splitPaneInTree({
+				rootPane:
+					paneService.rootPane,
+				paneID,
+				newPaneID:
+					pid,
+				split,
+				buffer
+			})
+		) {
+			return;
+		}
 
 		paneService.save();
-		/**
-		 * TODO
-		 * May want to delete other variables too
-		 * need to make sure it does not effect
-		 * the left node vars we just copied.
-		 */
-
 		onGridUpdate();
 	}
 
-	function deletePane(n: Pane, key: string) {
+	function deletePane(paneID: string) {
+		const rootPane =
+			paneService.rootPane;
+
 		if (
-			n.id === paneService.rootPane.id &&
-			n.left === undefined &&
-			n.right === undefined
+			rootPane.id === paneID &&
+			rootPane.left === undefined &&
+			rootPane.right === undefined
 		) {
-			n.buffer.componentName = Modules.MODULES;
-			n.buffer.bag = {};
-			n.updateBuffer(Modules.MODULES);
-		}
-
-		if (n.id === key) {
-			return n;
-		}
-		let found;
-
-		if (n.left) {
-			found = deletePane(n.left, key);
-		}
-
-		if (found) {
-			deletedPaneIds[n.left.id] = n.left.id;
-			paneService.unsubscribe(n.left.id);
-			//do delete. this is the parent
-			if (n.right.split) {
-				n.split = n.right.split;
-				n.left = n.right.left;
-				n.right = n.right.right;
-			} else {
-				n.id = n.right.id;
-				n.updateBuffer = n.right.updateBuffer;
-				n.toggle = n.right.toggle;
-				n.buffer = n.right.buffer;
-				n.split = undefined;
-				n.left = undefined;
-				n.right = undefined;
-			}
-
-			paneService.save();
-			onGridUpdate();
+			rootPane.buffer.componentName =
+				Modules.MODULES;
+			rootPane.buffer.bag = {};
+			rootPane.updateBuffer(
+				Modules.MODULES
+			);
 			return;
 		}
 
-		if (n.right) {
-			found = deletePane(n.right, key);
-		}
+		const result =
+			deletePaneFromTree(
+				rootPane,
+				paneID
+			);
 
-		if (found) {
-			deletedPaneIds[n.right.id] = n.right.id;
-			paneService.unsubscribe(n.right.id);
-			//do delete this is the parent
-			if (n.left.split) {
-				n.split = n.left.split;
-				n.right = n.left.right;
-				n.left = n.left.left;
-			} else {
-				n.id = n.left.id;
-				n.updateBuffer = n.left.updateBuffer;
-				n.toggle = n.left.toggle;
-				n.buffer = n.left.buffer;
-				n.split = undefined;
-				n.left = undefined;
-				n.right = undefined;
-			}
-
-			paneService.save();
-			onGridUpdate();
+		if (!result) {
 			return;
 		}
+
+		deletedPaneIds[
+			result.deletedPaneID
+		] = result.deletedPaneID;
+		paneService.unsubscribe(
+			result.deletedPaneID
+		);
+		paneService.save();
+		onGridUpdate();
 	}
 
 	

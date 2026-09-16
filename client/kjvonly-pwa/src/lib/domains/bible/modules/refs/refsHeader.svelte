@@ -21,7 +21,7 @@
 
 	function onClose(e: Event): void {
 		e.stopPropagation();
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		paneService.onDeletePane(paneID);
 	}
 </script>
 

@@ -17,6 +17,10 @@ import type {
 } from '$lib/application/runtime/pane/models/pane.model';
 
 import {
+	PaneSplit
+} from '$lib/application/runtime/pane/models/pane-split';
+
+import {
 	restorePane,
 	serializePane
 } from './pane-persistence';
@@ -54,7 +58,7 @@ describe(
 					id:
 						undefined,
 					split:
-						'h',
+						PaneSplit.HORIZONTAL,
 					left: {
 						id:
 							'a',
@@ -204,7 +208,7 @@ describe(
 						}
 					});
 
-				expect(root.split).toBe('v');
+				expect(root.split).toBe(PaneSplit.VERTICAL);
 				expect(root.id).toBeUndefined();
 				expect(root.buffer).toBeUndefined();
 

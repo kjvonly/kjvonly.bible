@@ -6,6 +6,7 @@
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
@@ -92,12 +93,12 @@
 			onExport();
 		},
 		'split vertical': () => {
-			paneService.onSplitPane(mode.paneID, 'v', Modules.MODULES, {});
+			paneService.onSplitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		},
 
 		'split horizontal': () => {
-			paneService.onSplitPane(mode.paneID, 'h', Modules.MODULES, {});
+			paneService.onSplitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		}
 	};
@@ -249,28 +250,28 @@
 
 	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
-		paneService.onSplitPane(mode.paneID, 'h', Modules.BIBLE, {
+		paneService.onSplitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
 			bibleLocationRef: note.bibleLocationRef
 		});
 	}
 
 	function onHorizontalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		paneService.onSplitPane(mode.paneID, 'h', Modules.NOTES, {
+		paneService.onSplitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onVerticalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		paneService.onSplitPane(mode.paneID, 'v', Modules.NOTES, {
+		paneService.onSplitPane(mode.paneID, PaneSplit.VERTICAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onClose(): void {
 		if (allNotes) {
-			paneService.onDeletePane(paneService.rootPane, mode.paneID);
+			paneService.onDeletePane(mode.paneID);
 		} else {
 			mode.notePopup.show = false;
 		}

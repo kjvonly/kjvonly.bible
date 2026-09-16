@@ -1,4 +1,5 @@
 import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 
 export function numberToLetters(number: number) {
 	let result = '';
@@ -9,6 +10,10 @@ export function numberToLetters(number: number) {
 		number = (number - remainder) / 26;
 	}
 	return result;
+}
+
+export function renderGridTemplateColumns(gridTemplateAreas: string[][]): string {
+	return `repeat(${gridTemplateAreas[0].length}, 1fr)`;
 }
 
 export function base26ToDecimal(base26: string): number {
@@ -150,17 +155,17 @@ function joinHorizontalGridTemplateAreas(gta: string[][], lrgta: string[][], rrg
  *
  * @param lrgta left grid template area that is rendered.
  * @param rrgta right grid template area that is rendered.
- * @param split how to join them. v for vertical. h for horizontal.
+ * @param split how to join the rendered child areas.
  * @returns returns the joined grid template areas. updating the areas as needed e.g. filling in the grid as necessary.
  */
-function joinGridTemplateAreas(lrgta: string[][], rrgta: string[][], split: string) {
+function joinGridTemplateAreas(lrgta: string[][], rrgta: string[][], split: PaneSplit) {
 	let gta: string[][] = [];
 
-	if (split === 'v') {
+	if (split === PaneSplit.VERTICAL) {
 		joinVerticalGridTemplateAreas(gta, lrgta, rrgta);
 	}
 
-	if (split === 'h') {
+	if (split === PaneSplit.HORIZONTAL) {
 		joinHorizontalGridTemplateAreas(gta, lrgta, rrgta);
 	}
 
@@ -179,12 +184,6 @@ export function renderGridTemplateAreas(n: Pane | any) {
 			n.split
 		);
 
-		for (let i = 0; i < renderedGridTemplateAreas.length; i++) {
-			let s = '';
-			for (let j = 0; j < renderedGridTemplateAreas[i].length; j++) {
-				s += `${renderedGridTemplateAreas[i][j]} `;
-			}
-		}
 		return renderedGridTemplateAreas;
 	}
 }

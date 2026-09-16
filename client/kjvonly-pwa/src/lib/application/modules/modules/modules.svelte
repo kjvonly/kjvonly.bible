@@ -36,9 +36,7 @@
 		settings: Modules.SETTINGS
 	});
 
-	const {
-		authenticationService
-	} = useApplicationContext();
+	const { authenticationService } = useApplicationContext();
 
 	let headerHeight = $state(0);
 	let clientHeight = $state(0);
@@ -46,19 +44,13 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		return authenticationService.subscribe(
-			(state) => {
-				addDynamicModules(
-					state.status !== 'signed-out'
-				);
-			}
-		);
+		return authenticationService.subscribe((state) => {
+			addDynamicModules(state.status !== 'signed-out');
+		});
 	});
 
 	// ================================ FUNCS ==================================
-	function addDynamicModules(
-		isAuthenticated: boolean
-	) {
+	function addDynamicModules(isAuthenticated: boolean) {
 		delete components['profile'];
 		delete components['login'];
 
@@ -71,7 +63,7 @@
 
 	// ============================== CLICK FUNCS ==============================
 	function onClose(): void {
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		paneService.onDeletePane(paneID);
 	}
 </script>
 
@@ -104,7 +96,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

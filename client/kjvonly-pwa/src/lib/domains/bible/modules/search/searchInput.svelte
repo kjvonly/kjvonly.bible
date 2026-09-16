@@ -3,8 +3,7 @@
 	// SERVICES
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
-	const { searchService } =
-		useApplicationContext();
+	const { searchService } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -19,18 +18,13 @@
 	function onSearchTextChanged() {
 		onFilterBibleLocationRef = undefined;
 		if (searchText.length > 2) {
-			console.log(searchText);
-			searchService.search(
-				ID,
-				searchSource,
-				searchText
-			);
+			searchService.search(ID, searchSource, searchText);
 		}
 	}
 </script>
 
 <div
-	class="sticky top-0 flex w-full max-w-lg justify-center border-t border-neutral-400 bg-neutral-50 py-2"
+	class="sticky top-0 flex w-full max-w-lg justify-center border-t border-neutral-400 bg-neutral-50 px-4 py-2"
 >
 	<input
 		class="border-primary-500 w-full max-w-3xl border-b bg-neutral-50 outline-none"

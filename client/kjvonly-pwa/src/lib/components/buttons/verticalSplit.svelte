@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 
 	let { paneID = $bindable(), module, data, classes = 'h-8 w-8' } = $props();
 </script>
@@ -8,7 +9,7 @@
 	aria-label="horizontal split"
 	onclick={(e) => {
 		e.stopPropagation();
-		paneService.onSplitPane(paneID, 'v', module, data);
+		paneService.onSplitPane(paneID, PaneSplit.VERTICAL, module, data);
 	}}
 >
 	<svg

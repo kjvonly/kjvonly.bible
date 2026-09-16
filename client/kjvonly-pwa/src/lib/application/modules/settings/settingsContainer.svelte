@@ -6,7 +6,7 @@
 
 	let { pane = $bindable<Pane>() } = $props();
 	function onClose() {
-		paneService.onDeletePane(paneService.rootPane, pane.id);
+		paneService.onDeletePane(pane.id);
 	}
 </script>
 

@@ -207,7 +207,7 @@
 
 {#snippet subListView(sub: any)}
 	<span
-		class=" sticky top-0 border-t border-neutral-400 bg-neutral-50 pb-2 text-2xl"
+		class=" sticky top-0 border-t border-neutral-400 bg-neutral-50 p-2 text-2xl"
 		>{sub.name}</span
 	>
 
@@ -250,7 +250,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody ID={subListViewID} bind:clientHeight bind:headerHeight>
+	<BufferBody ID={subListViewID} bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

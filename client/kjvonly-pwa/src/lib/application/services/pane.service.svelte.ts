@@ -1,6 +1,7 @@
-import type { BibleMode } from '$lib/domains/bible/models/bible.model';
 import type { Modules } from '$lib/application/models/modules.model';
 import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+import type { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
+import { findPane } from '$lib/application/runtime/workspace/workspace-pane-tree';
 import {
 	restorePane,
 	serializePane
@@ -21,24 +22,10 @@ export class PaneService {
 	heightWidth: any = {};
 
 	findNode(n: Pane, key: string): Pane | undefined {
-		if (n.id === key) {
-			return n;
-		}
-		let found;
-
-		if (n.left) {
-			found = this.findNode(n.left, key);
-		}
-
-		if (found) {
-			return found;
-		}
-
-		if (n.right) {
-			found = this.findNode(n.right, key);
-		}
-
-		return found;
+		return findPane(
+			n,
+			key
+		);
 	}
 
 	save(): void {
@@ -72,10 +59,10 @@ export class PaneService {
 		return true;
 	}
 
-	onDeletePane: (pane: Pane, paneID: string) => void = (): void => {};
+	onDeletePane: (paneID: string) => void = (): void => {};
 	onSplitPane: (
 		paneID: string,
-		orientation: string,
+		split: PaneSplit,
 		module: Modules,
 		data: any
 	) => void = () => {};

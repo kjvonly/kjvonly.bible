@@ -9,6 +9,7 @@
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 	import type {
 		BibleTextMarkup,
@@ -171,7 +172,7 @@
 		let refs = extractAllVerseRefs();
 		let strongsWords = extractStrongsWords();
 
-		paneService.onSplitPane(pane.id, 'h', Modules.STRONGS, {
+		paneService.onSplitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
 			refs: refs,
@@ -180,7 +181,7 @@
 	}
 
 	function nonVerseNumberClicked() {
-		paneService.onSplitPane(pane.id, 'h', Modules.STRONGS, {
+		paneService.onSplitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			word: word,
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),

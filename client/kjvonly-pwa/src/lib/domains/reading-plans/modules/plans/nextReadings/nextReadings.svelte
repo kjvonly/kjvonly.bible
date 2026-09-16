@@ -31,8 +31,7 @@
 	// OTHER
 	import uuid4 from 'uuid4';
 
-	const { planProgressService } =
-		useApplicationContext();
+	const { planProgressService } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -90,24 +89,20 @@
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
-		const nr: NavReadings | undefined =
-			pane.buffer.bag?.navReadings;
+		const nr: NavReadings | undefined = pane.buffer.bag?.navReadings;
 
 		if (!nr) {
 			return;
 		}
 
-		const progress =
-			await planProgressService.completeReading(
-				nr.subID,
-				nr.subNestedReadingsIndex
-			);
+		const progress = await planProgressService.completeReading(
+			nr.subID,
+			nr.subNestedReadingsIndex
+		);
 
 		delete pane.buffer.bag.navReadings;
 
-		plansPubSubService.putProgress(
-			progress
-		);
+		plansPubSubService.putProgress(progress);
 	}
 
 	function updateNextReadings() {
@@ -232,7 +227,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

@@ -65,7 +65,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

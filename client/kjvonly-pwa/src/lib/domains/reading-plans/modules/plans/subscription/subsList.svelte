@@ -11,7 +11,10 @@
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// MODELS
-	import { PLANS_VIEWS, type Sub } from '$lib/domains/reading-plans/models/plans.model';
+	import {
+		PLANS_VIEWS,
+		type Sub
+	} from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
 	import { paneService } from '$lib/application/services/pane.service.svelte';
@@ -43,7 +46,7 @@
 	}
 
 	function onClosePlansList(): void {
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		paneService.onDeletePane(paneID);
 	}
 
 	function onMenuClicked(): void {
@@ -101,7 +104,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render subsListView()}
 	</BufferBody>
 </BufferContainer>

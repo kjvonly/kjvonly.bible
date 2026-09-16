@@ -16,12 +16,16 @@
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
-	import { newCrossRef, type CrossRef } from '$lib/domains/bible/models/bible.model';
+	import {
+		newCrossRef,
+		type CrossRef
+	} from '$lib/domains/bible/models/bible.model';
 	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
 
 	// SERVICES
 	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 	import { toastService } from '$lib/application/services/toast.service';
 
 	// OTHER
@@ -37,13 +41,9 @@
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
-	import {
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
-	import {
-		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
 	import {
 		isCrossReference,
@@ -93,11 +93,10 @@
 	}
 
 	async function loadBooknames(): Promise<void> {
-		const source =
-			moduleResourceSelectionResolver.require(
-				paneID,
-				BIBLE_BOOKNAMES_RESOURCE_TYPE
-			);
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
+			BIBLE_BOOKNAMES_RESOURCE_TYPE
+		);
 
 		booknames = await bibleBooknamesService.get(source);
 	}
@@ -136,7 +135,7 @@
 			requireChapterSelection(),
 			bibleLocationRef
 		);
-	
+
 		let verseWithoutNumber = verse.text.slice(verse.text.indexOf(' ') + 1);
 
 		return {
@@ -187,7 +186,9 @@
 		e.stopPropagation();
 		let verse = `${crossRef.bookName} ${crossRef.chapterNumber}:${crossRef.verseNumber}\n${crossRef.text}`;
 		navigator.clipboard.writeText(verse);
-		toastService.showToast('Copied Verse');
+		toastService.showToast(
+			`Copied ${crossRef.bookName} ${crossRef.chapterNumber}:${crossRef.verseNumber}`
+		);
 	}
 
 	// ============================== CLICK FUNCS ==============================
@@ -203,9 +204,7 @@
 		);
 		let crossRefs = [crossRef.crossRef];
 		verse?.words.forEach((w: any) => {
-			const refs = tokenizeReferences(
-				w.href ?? []
-			);
+			const refs = tokenizeReferences(w.href ?? []);
 
 			refs.forEach((ref: string) => {
 				if (isCrossReference(ref)) {
@@ -230,14 +229,14 @@
 
 	function onSplitScreenHorizontal(e: Event, crossRef: CrossRef): void {
 		e.stopPropagation();
-		paneService.onSplitPane(paneID, 'h', Modules.BIBLE, {
+		paneService.onSplitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
 			bibleLocationRef: `${crossRef.bookId}_${crossRef.chapterNumber}_${crossRef.verseNumber}`
 		});
 	}
 
 	function onSplitScreenVertical(e: Event, crossRef: CrossRef): void {
 		e.stopPropagation();
-		paneService.onSplitPane(paneID, 'v', Modules.BIBLE, {
+		paneService.onSplitPane(paneID, PaneSplit.VERTICAL, Modules.BIBLE, {
 			bibleLocationRef: `${crossRef.bookId}_${crossRef.chapterNumber}_${crossRef.verseNumber}`
 		});
 	}
@@ -274,7 +273,7 @@
 				{currentCrossRef.chapterNumber}:{currentCrossRef.verseNumber}</span
 			><br />
 			{#each currentCrossRef.text.trim().split(' ') as w}
-				<span class="inline-block">{w}</span>&nbsp;
+				<span class="inline-block">{w}&nbsp;</span>
 			{/each}
 			{@render actions(currentCrossRef)}
 		</p>
@@ -283,21 +282,25 @@
 
 {#snippet crossRefListItem(crossRef: CrossRef)}
 	{#if crossRef}
-		<div class="hover:bg-primary-100 flex w-full">
-			<button class="w-full" onclick={() => onCrossRefClicked(crossRef)}>
-				<p class=" px-4 py-2 text-left">
-					<span class="font-bold text-neutral-500"
-						>{crossRef.bookName}
-						{crossRef.chapterNumber}:{crossRef.verseNumber}</span
-					><br />
+		<div class="hover:bg-neutral-100">
+			<div class="flex w-full">
+				<button class="w-full" onclick={() => onCrossRefClicked(crossRef)}>
+					<p class=" px-4 py-2 text-left">
+						<span class="font-bold text-neutral-500"
+							>{crossRef.bookName}
+							{crossRef.chapterNumber}:{crossRef.verseNumber}</span
+						><br />
 
-					{#each crossRef.text.trim().split(' ') as w}<span
-							><span class="inline-block">{w}&nbsp;</span><span></span></span
-						>
-					{/each}
-					{@render actions(crossRef)}
-				</p>
-			</button>
+						{#each crossRef.text.trim().split(' ') as w}<span
+								><span class="inline-block">{w}&nbsp;</span><span></span></span
+							>
+						{/each}
+					</p>
+				</button>
+			</div>
+			<div>
+				{@render actions(crossRef)}
+			</div>
 		</div>
 	{/if}
 {/snippet}
