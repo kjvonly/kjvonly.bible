@@ -16,7 +16,12 @@ import {
 } from '$lib/application';
 
 import {
+	isResourceDeletionPublication
+} from '$lib/resource';
+
+import {
 	DOMAIN_OBJECTS,
+	RESOURCE_INSTALLATIONS,
 	OUTBOX,
 	createStoredDomainObjectId,
 	type ApplicationDB,
@@ -28,7 +33,13 @@ export class IndexedDBNotesWriteTransaction
 
 	constructor(
 		private readonly getDB:
-			() => Promise<ApplicationDB>
+			() => Promise<ApplicationDB>,
+
+		private readonly nowEpochSeconds:
+			() => number =
+				() => Math.floor(
+					Date.now() / 1000
+				)
 	) {}
 
 	async run<TResult>(
@@ -45,6 +56,7 @@ export class IndexedDBNotesWriteTransaction
 			db.transaction(
 				[
 					DOMAIN_OBJECTS,
+					RESOURCE_INSTALLATIONS,
 					OUTBOX
 				],
 				'readwrite'
@@ -53,6 +65,11 @@ export class IndexedDBNotesWriteTransaction
 		const domainObjects =
 			transaction.objectStore(
 				DOMAIN_OBJECTS
+			);
+
+		const resourceInstallations =
+			transaction.objectStore(
+				RESOURCE_INSTALLATIONS
 			);
 
 		const outbox =
@@ -116,10 +133,45 @@ export class IndexedDBNotesWriteTransaction
 									objectId
 								);
 
+							const existing =
+								await resourceInstallations.get(
+									storedId
+								);
+
+							const modifiedAt =
+								Math.max(
+									this.nowEpochSeconds(),
+									(existing?.modifiedAt ?? 0) + 1
+								);
+
+							if (
+								isResourceDeletionPublication(
+									resource
+								)
+							) {
+								await resourceInstallations.delete(
+									storedId
+								);
+							} else {
+								await resourceInstallations.put({
+									id:
+										storedId,
+									objectType:
+										NOTE_OBJECT_TYPE,
+									objectId,
+									publisher:
+										resource.publisher,
+									modifiedAt
+								});
+							}
+
 							await outbox.put(
 								createPendingPublication(
 									storedId,
-									resource
+									{
+										...resource,
+										modifiedAt
+									}
 								)
 							);
 						}

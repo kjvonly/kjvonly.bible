@@ -11,7 +11,7 @@ export interface ResourceInstallation {
 	readonly publisher:
 		string;
 
-	readonly resourceId:
+	readonly resourceId?:
 		string;
 
 	readonly modifiedAt:

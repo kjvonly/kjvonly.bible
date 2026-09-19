@@ -105,6 +105,15 @@ export class NostrResourcePublicationStrategy
 				kind:
 					RESOURCE_KIND,
 
+				...(
+					resource.modifiedAt === undefined
+						? {}
+						: {
+							created_at:
+								resource.modifiedAt
+						}
+				),
+
 				tags: [
 					[
 						'd',
@@ -138,6 +147,15 @@ export class NostrResourcePublicationStrategy
 			{
 				kind:
 					NOSTR_DELETION_KIND,
+
+				...(
+					resource.modifiedAt === undefined
+						? {}
+						: {
+							created_at:
+								resource.modifiedAt
+						}
+				),
 
 				tags: [
 					[

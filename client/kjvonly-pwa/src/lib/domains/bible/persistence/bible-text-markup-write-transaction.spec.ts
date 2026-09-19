@@ -18,6 +18,7 @@ import {
 
 import {
 	DOMAIN_OBJECTS,
+	RESOURCE_INSTALLATIONS,
 	OUTBOX,
 	type ApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
@@ -30,7 +31,7 @@ describe(
 	'IndexedDBBibleTextMarkupWriteTransaction',
 	() => {
 		it(
-			'opens one readwrite transaction over Domain Objects and Outbox',
+			'opens one readwrite transaction over Domain Objects, Resource Installations, and Outbox',
 			async () => {
 				const db =
 					new FakeApplicationDB();
@@ -49,6 +50,7 @@ describe(
 					db.storeNames
 				).toEqual([
 					DOMAIN_OBJECTS,
+					RESOURCE_INSTALLATIONS,
 					OUTBOX
 				]);
 
@@ -69,7 +71,8 @@ describe(
 				const transaction =
 					new IndexedDBBibleTextMarkupWriteTransaction(
 						async () =>
-							db.asApplicationDB()
+							db.asApplicationDB(),
+						() => 100
 					);
 
 				const textMarkup =
@@ -121,6 +124,24 @@ describe(
 
 				expect(
 					db.getStoredValue(
+						RESOURCE_INSTALLATIONS,
+						storedId
+					)
+				).toEqual({
+					id:
+						storedId,
+					objectType:
+						BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+					objectId:
+						textMarkup.id,
+					publisher:
+						'publisher',
+					modifiedAt:
+						100
+				});
+
+				expect(
+					db.getStoredValue(
 						OUTBOX,
 						storedId
 					)
@@ -128,13 +149,79 @@ describe(
 					id:
 						storedId,
 
-					publication,
+					publication: {
+						...publication,
+						modifiedAt:
+							100
+					},
 
 					status:
 						'pending',
 
 					attempts:
 						0
+				});
+			}
+		);
+
+
+		it(
+			'increments modifiedAt when another local write occurs in the same second',
+			async () => {
+				const db =
+					new FakeApplicationDB();
+
+				const transaction =
+					new IndexedDBBibleTextMarkupWriteTransaction(
+						async () =>
+							db.asApplicationDB(),
+						() => 100
+					);
+
+				const textMarkup =
+					createTextMarkup();
+
+				const publication =
+					createPublication();
+
+				for (let index = 0; index < 2; index++) {
+					await transaction.run(
+						async (stores) => {
+							await stores.textMarkup.put(
+								textMarkup
+							);
+
+							await stores.outbox.put(
+								textMarkup.id,
+								publication
+							);
+						}
+					);
+				}
+
+				const storedId =
+					`${BIBLE_TEXT_MARKUP_OBJECT_TYPE}:${textMarkup.id}`;
+
+				expect(
+					db.getStoredValue(
+						RESOURCE_INSTALLATIONS,
+						storedId
+					)
+				).toMatchObject({
+					modifiedAt:
+						101
+				});
+
+				expect(
+					db.getStoredValue(
+						OUTBOX,
+						storedId
+					)
+				).toMatchObject({
+					publication: {
+						modifiedAt:
+							101
+					}
 				});
 			}
 		);
@@ -365,6 +452,14 @@ class FakeApplicationDB {
 		}
 
 		return {
+			get:
+				async (
+					id: string
+				) =>
+					store?.get(
+						id
+					),
+
 			put:
 				async (
 					value: {

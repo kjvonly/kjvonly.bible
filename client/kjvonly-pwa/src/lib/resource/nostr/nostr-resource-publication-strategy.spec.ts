@@ -77,6 +77,9 @@ describe(
 					resourceId:
 						'kjvonly/overlays/text-markup/kjvs/1_1',
 
+					modifiedAt:
+						123,
+
 					representation:
 						'content',
 
@@ -99,6 +102,9 @@ describe(
 				).toHaveBeenCalledWith({
 					kind:
 						37770,
+
+					created_at:
+						123,
 
 					tags: [
 						[
@@ -189,7 +195,10 @@ describe(
 					resourceType:
 						'kjvonly/notes/entries',
 					resourceId:
-						'kjvonly/notes/entries/default/note-1'
+						'kjvonly/notes/entries/default/note-1',
+
+					modifiedAt:
+						124
 				});
 
 				expect(
@@ -201,6 +210,9 @@ describe(
 				).toHaveBeenCalledWith({
 					kind:
 						5,
+
+					created_at:
+						124,
 
 					tags: [
 						[
