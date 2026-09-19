@@ -82,29 +82,13 @@ export function matchesObjectIdPatterns(
 	const tail =
 		segments.join('/');
 
-	const targets = [
-		...segments,
-		...(
-			tail.length > 0
-				? [tail]
-				: []
-		)
-	];
-
 	return normalizedPatterns.some(
-		(pattern) => {
-			const matcher =
-				compileGlob(
-					pattern
-				);
-
-			return targets.some(
-				(target) =>
-					matcher.test(
-						target
-					)
-			);
-		}
+		(pattern) =>
+			compileGlob(
+				pattern
+			).test(
+				tail
+			)
 	);
 }
 

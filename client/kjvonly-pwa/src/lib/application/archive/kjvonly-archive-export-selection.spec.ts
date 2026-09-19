@@ -34,12 +34,17 @@ describe(
 		it.each([
 			[
 				'publisher/kjvs/10_13',
-				['kjvs'],
+				['kjvs/*'],
 				true
 			],
 			[
 				'publisher/kjvs/10_13',
-				['kjv'],
+				['kjvs'],
+				false
+			],
+			[
+				'publisher/kjvs/10_13',
+				['kjv/*'],
 				false
 			],
 			[
@@ -49,8 +54,13 @@ describe(
 			],
 			[
 				'publisher/default/my-sermon-note-001',
-				['default*'],
+				['default/*'],
 				true
+			],
+			[
+				'publisher/default/my-sermon-note-001',
+				['default'],
+				false
 			],
 			[
 				'publisher/default/my-sermon-note-001',
@@ -111,7 +121,7 @@ describe(
 									objectType:
 										'notes/note',
 									patterns: [
-										'*sermon*'
+										'default/*sermon*'
 									]
 								}
 							]
@@ -128,7 +138,7 @@ describe(
 									objectType:
 										'bible/chapter',
 									patterns: [
-										'*sermon*'
+										'default/*sermon*'
 									]
 								}
 							]
