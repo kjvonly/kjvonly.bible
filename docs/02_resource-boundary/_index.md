@@ -202,9 +202,9 @@ A newer network publication still follows the normal acceptance lifecycle.
 
 Resource Archives make Resources portable without requiring live relay or external-storage access.
 
-Archives preserve Resource boundaries and serialized Resource content.
+Archives preserve selected accepted Resource-backed Domain state and the Resource revision information needed to reconstruct normal inbound Resource candidates.
 
-They do not automatically include arbitrary application state that has no Resource representation.
+They do not need to preserve original transport packaging, and they do not automatically include arbitrary application state that has no Resource representation.
 
 ---
 

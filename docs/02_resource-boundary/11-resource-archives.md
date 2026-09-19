@@ -8,18 +8,18 @@ Accepted
 
 # Problem
 
-Resources are normally published, discovered, and synchronized through Nostr.
+Resources are normally published, discovered, and synchronized through the Resource Boundary.
 
-Users also need to move or preserve Resources when live relay or external-storage access is unavailable.
+Users also need to move or preserve accepted Resource-backed information when live relay or external-storage access is unavailable.
 
 Examples include:
 
-* sharing selected Resources,
-* transferring Resources between devices,
-* preserving Resources for later restoration,
-* and exporting a collection of Resources for backup.
+* sharing selected user-created information,
+* transferring accepted information between devices,
+* preserving information for later restoration,
+* and exporting selected Resource-backed information for backup.
 
-The Resource Boundary therefore needs a portable format that preserves existing Resource identity and serialization without introducing a second Resource model.
+The Resource Boundary therefore needs a portable format that can reconstruct Resource candidates without introducing a second Domain validation or Installation lifecycle.
 
 ---
 
@@ -27,14 +27,14 @@ The Resource Boundary therefore needs a portable format that preserves existing 
 
 KJVOnly defines a **Resource Archive**.
 
-A Resource Archive is a portable collection of serialized Resources.
+A Resource Archive is a portable, normalized representation of accepted Resource-backed Domain state.
 
-It is independent of live Nostr relay access and does not contain Nostr events as its primary archive representation.
+It is independent of live Nostr relay access and does not preserve Nostr events, transport encoding, or original Resource packaging as its primary archive representation.
 
 Conceptually:
 
-```text id="8n41i5"
-Resources
+```text id="71tmrg"
+Accepted Resource-Backed Domain State
     ↓
 Resource Archive
     ↓
@@ -42,12 +42,14 @@ Transfer / Preservation
     ↓
 Import
     ↓
-Resource Installation
+Reconstruct Resource Candidate
+    ↓
+Normal Domain Validation / Installation
 ```
 
-The archive preserves existing Resource boundaries and serialized Resource content.
+The archive does not define a separate Domain model.
 
-It does not define a separate Domain serialization model.
+The archive does not make archived information authoritative merely because it was previously accepted elsewhere.
 
 ---
 
@@ -55,13 +57,13 @@ It does not define a separate Domain serialization model.
 
 Resource Archives use the file extension:
 
-```text id="qwz4t7"
+```text id="mr4c9l"
 .kjva
 ```
 
 A `.kjva` file is a gzip-compressed UTF-8 JSON document.
 
-```text id="p04zvn"
+```text id="zpn0u8"
 Archive Object
     ↓
 UTF-8 JSON
@@ -71,212 +73,219 @@ gzip
 .kjva
 ```
 
-The archive envelope MUST contain a version identifier so that the archive format can evolve independently of individual Resource schemas.
+The archive envelope MUST contain a version identifier so that the archive format can evolve independently of individual Domain and Resource schemas.
 
 ---
 
-# Archive Structure
+# Archive Contents
 
-A Resource Archive contains:
-
-```text id="dshj10"
-Resource Archive
-├── metadata
-└── resources
-```
-
-Archive metadata describes the archive itself.
-
-The `resources` collection contains the archived Resource entries.
-
-The archive MUST NOT depend on the application's local persistence schema or another implementation-specific storage layout.
-
----
-
-# Resource Entries
-
-Each entry represents one Resource.
-
-An entry MUST preserve enough information to identify and later interpret that Resource.
-
-For a Nostr-published Resource, this includes its Published Resource Identity:
-
-```text id="gkhx43"
-kind
-publisher public key
-Resource Identifier
-```
-
-An entry also preserves:
-
-* serialized Resource content,
-* media type,
-* optional provenance,
-* and optional integrity metadata.
+A Resource Archive contains selected accepted Resource-backed Domain information together with the Resource metadata required to reconstruct inbound Resource candidates.
 
 Conceptually:
 
-```json id="1v08bh"
-{
-  "kind": 37770,
-  "publisher": "<publisher-pubkey>",
-  "resourceId": "kjvonly/bible/chapters/kjv",
-  "mediaType": "application/json",
-  "content": { }
-}
+```text id="csik45"
+Resource Archive
+├── archive version
+├── accepted Domain Objects
+└── Resource association / revision metadata
 ```
 
-The archive envelope determines how serialized content is represented safely within JSON.
+The archive therefore preserves the information required to answer:
 
-Individual Resource schemas remain independent of the archive format.
+```text id="81u1u0"
+Which Domain Object is this?
+
+Which publisher is associated with it?
+
+Which Resource revision does it represent?
+
+How can the owning Domain reconstruct
+its Resource representation?
+```
+
+The archive does not need to preserve transport details that are no longer required after Resource content has already been accepted by the application.
 
 ---
 
-# Serialized Resource Content
+# Normalized Archive Representation
 
-Archives carry the serialized content of the Resource rather than the Nostr event that published it.
+A Resource Archive is normalized around accepted Domain Objects rather than the original transport packaging of a Resource.
+
+For example, one externally acquired Resource may install many Domain Objects.
+
+After acceptance, those Domain Objects may be archived independently when the owning Domain can reconstruct valid Resource candidates for them.
 
 Therefore:
 
-```text id="5c8yzb"
-Nostr Event
+```text id="a2uwkt"
+Original Resource Packaging
     ≠
-Archive Entry
+Required Archive Packaging
 ```
 
-A Resource originally represented on Nostr through a `descriptor` may still be archived using the verified serialized Resource content obtained through Resource Resolution.
-
-The archive therefore does not need to preserve the original storage provider merely to make that Resource portable.
+The archive preserves accepted Resource-backed meaning, not the byte-for-byte representation or grouping through which that meaning originally arrived.
 
 ---
 
-# Self-Contained Portability
+# Resource Identity
 
-A Resource Archive is intended to remain usable without access to the relay or external storage location from which its Resources were originally obtained.
+The archive MUST preserve or reconstruct enough information for the owning Domain to produce the Resource identity required by normal inbound processing.
 
-Archived Resource entries SHOULD therefore contain the serialized content required to reconstruct the Resource rather than relying only on external URLs or live descriptor targets.
+Resource identity may be derived from:
 
-Provenance MAY preserve information about the original publication or storage source.
+* the accepted Domain Object identity,
+* its publisher association,
+* applicable Resource metadata,
+* and the owning Domain's Resource contract.
 
-That provenance does not replace the archived content.
+The archive does not need to persist Nostr kind merely to reconstruct a Domain Resource candidate.
+
+Transport-specific identity is applied again when information is later published through that transport.
 
 ---
 
-# Resource Boundaries
+# Resource Revision
 
-Archive boundaries follow Resource boundaries.
+Archived Resource-backed state MUST preserve the revision ordering value associated with the accepted Domain Object.
 
-A Resource containing many Domain Objects remains one archive entry when that is its defined Resource granularity.
+That value is reused during import so normal Installation freshness rules can determine whether archived information is newer than accepted local state.
 
-For example:
+Export MUST NOT generate a new Resource revision merely because an archive is being created.
 
-```text id="hyg2j8"
-kjvonly/bible/chapters/kjv
+Therefore:
+
+```text id="bl3x86"
+Archive Creation Time
+    ≠
+Resource Revision Time
 ```
 
-may contain many chapter records while remaining one Resource entry.
+Archive creation does not make an older Domain Object newer.
 
-The archive MUST NOT split Resources into separate entries merely because they later produce multiple Domain Objects.
+---
 
-Likewise, multiple independently identifiable Resources MUST NOT be collapsed into one new archive-specific Resource identity.
+# Locally Authored Resource-Backed State
+
+Resource-backed Domain information may exist locally before or without successful external publication.
+
+Such information MAY still be exported when the application has enough Resource association and revision information to reconstruct its Resource candidate.
+
+Archive portability therefore does not depend on successful relay publication.
+
+Publication state and archive eligibility are separate concerns.
+
+---
+
+# Export Selection
+
+Export MAY contain all exportable Resource-backed Domain information or a user-selected subset.
+
+Typical selections may include:
+
+* Notes,
+* Bible text markups,
+* Reading Plan subscriptions and progress,
+* Bible content,
+* Strong's information,
+* or other Resource-backed Domain types.
+
+Selection is an application concern.
+
+Selecting a subset does not create new Resource identity or Domain schemas.
 
 ---
 
 # Export
 
-Export converts selected Resource information into archive entries.
+Export collects selected accepted Resource-backed Domain information and the Resource metadata needed to reconstruct it later.
 
 Conceptually:
 
-```text id="03a2bw"
-Resource
+```text id="mgvypj"
+Accepted Resource-Backed Domain State
     ↓
-Serialized Resource Content
+Select Exportable Information
     ↓
-Archive Entry
+Archive Representation
     ↓
 Resource Archive
 ```
 
-Export MAY include:
+Export does not need to reconstruct Nostr events or transport encodings.
 
-* installed Resources,
-* locally created Resources intended for external portability,
-* user-selected Resources,
-* or all exportable Resources available to the workflow.
-
-How accepted Domain information is represented as a Resource is defined by the applicable Resource contract and owning Domain.
-
-This ADR does not prescribe the internal mechanism used to construct that Resource.
+It also does not need to preserve whether accepted information originally arrived inline, through a descriptor, from external storage, or as part of a larger Resource bundle.
 
 ---
 
 # Import
 
-Import reverses the archive envelope and feeds each Resource through the normal inbound Resource lifecycle.
+Import reverses the archive envelope and reconstructs normal decoded Resource input for the owning Domain.
 
-```text id="pjnnzj"
+```text id="zkj1ca"
 .kjva
     ↓
 Decompress
     ↓
 Validate Archive
     ↓
-Resource Entry
+Archived Domain Information
+    +
+Resource Metadata
     ↓
-Serialized Resource Content
+Reconstruct Decoded Resource Input
     ↓
 Domain Interpretation / Validation
     ↓
 Resource Installation
 ```
 
-Archive import MUST NOT bypass Domain validation or Resource Installation.
+Archive import MUST NOT directly accept archived Domain information merely because it came from a previously accepted archive record.
 
-An archive entry is external Resource information.
-
-Its presence in an archive does not automatically make it accepted local state.
+Imported information MUST pass through the same Domain interpretation, validation, freshness, and Installation rules as equivalent externally acquired decoded Resource content.
 
 ---
 
 # Archive Validation
 
-Before Resource entries are processed, the archive envelope MUST be validated.
+Before archived information is processed, the archive envelope MUST be validated.
 
-Validation includes at least:
+Archive validation includes at least:
 
 * supported archive version,
 * valid archive structure,
-* valid Resource entry structure,
-* and any archive-level integrity information required by that archive version.
+* valid relationships between archived Domain information and its Resource metadata,
+* and any archive-level integrity rules defined by that archive version.
 
-Resource-specific validation remains part of the normal Resource lifecycle.
+Archive validation does not replace Domain validation.
+
+Resource-specific meaning remains owned by the applicable Domain Resource contract.
 
 ---
 
 # Independent Entry Processing
 
-Resource entries are processed independently unless an applicable Resource dependency requires coordination.
+Archived Resource-backed Domain Objects are processed independently unless an applicable Domain dependency requires coordination.
 
-Failure to import one independent Resource MUST NOT automatically prevent unrelated Resources from being processed.
+Failure to import one independent object MUST NOT automatically prevent unrelated objects from being processed.
 
 An import may therefore produce partial success.
 
 For example:
 
-```text id="cf2eut"
-Resource A → installed
-Resource B → validation failure
-Resource C → installed
+```text id="v7z9o8"
+Object A → installed
+Object B → validation failure
+Object C → already current
+Object D → installed
 ```
 
-The caller SHOULD receive enough information to identify failed entries.
+The caller SHOULD receive enough information to identify failed or skipped entries.
 
 ---
 
 # Resource Dependencies
 
-If an archived Resource depends on another Resource, normal Resource Installation dependency rules apply.
+If reconstructed Resource information depends on another Resource or accepted Domain capability, normal Resource Installation dependency rules apply.
 
 The archive itself does not create a second dependency model.
 
@@ -292,7 +301,7 @@ Installation determines whether the dependency requirements are satisfied.
 
 # Local Authority
 
-An archive is a Resource transport mechanism.
+An archive is a portability mechanism.
 
 It is not automatically authoritative application state.
 
@@ -300,7 +309,7 @@ Therefore:
 
 > **The archive proposes. The application decides.**
 
-Imported Resource information must satisfy the same Domain validation and Installation rules as equivalent information obtained through Nostr.
+Imported information must satisfy the same Domain validation and Installation rules as equivalent information obtained through another Resource Boundary source.
 
 ---
 
@@ -308,7 +317,7 @@ Imported Resource information must satisfy the same Domain validation and Instal
 
 This ADR does not define a separate archive conflict-resolution algorithm.
 
-If imported Resource information corresponds to already accepted local information, the normal Installation and, where applicable, Multi-Device Synchronization policies determine whether the imported state replaces the local state.
+If archived information corresponds to already accepted local information, the normal Resource revision and Installation rules determine whether the imported state replaces the local state.
 
 Resource Archives MUST NOT introduce:
 
@@ -317,31 +326,30 @@ Resource Archives MUST NOT introduce:
 * automatic merging,
 * or conflict-copy identity.
 
+An implementation MAY prefilter archive entries that are already known to be current or older, but normal Installation policy remains authoritative.
+
 ---
 
 # Provenance
 
-Archive entries MAY preserve provenance from their original Resource publication.
+Archive metadata MAY preserve Resource provenance that remains useful after acceptance.
 
 Useful provenance may include:
 
-```text id="hsy6te"
+```text id="k2vyyt"
 publisher public key
-Resource Identifier
-source event id
+original Resource Identifier
 ```
 
-The event ID identifies the source publication.
+Provenance helps describe where accepted Resource-backed state came from.
 
-It does not become the identity of the archive entry or define a new Resource revision.
-
-Import SHOULD preserve applicable provenance when constructing candidate Domain information.
+It does not make archived information authoritative and does not create a new Resource revision.
 
 ---
 
 # Integrity
 
-An archive MAY contain archive-level or per-Resource integrity metadata.
+An archive MAY contain archive-level integrity metadata.
 
 Integrity metadata verifies that archived bytes have not changed.
 
@@ -349,9 +357,8 @@ It does not replace:
 
 * Domain validation,
 * Resource Installation,
+* Resource revision ordering,
 * or publisher identity semantics.
-
-Where Resource content already has a defined integrity value, an archive SHOULD preserve it where practical.
 
 ---
 
@@ -361,30 +368,29 @@ The archive envelope has its own version.
 
 That version governs:
 
-* archive metadata,
-* entry structure,
-* content encoding within the JSON envelope,
+* archive structure,
+* archive-level metadata,
 * and archive-level features.
 
-It does not define versions of individual Resources.
+It does not define versions of individual Resources or Domain Objects.
 
 Resource schemas evolve according to their own Resource and Domain contracts.
 
 Therefore:
 
-```text id="hpf53s"
+```text id="rlg69w"
 Archive Version
     ≠
 Resource Version
 ```
 
-Changing the archive envelope does not create a different Published Resource.
+Changing the archive envelope does not create a different Resource revision.
 
 ---
 
-# Resource Archives Are Not Application Backups
+# Resource Archives Are Not Whole-Application Backups
 
-A Resource Archive contains Resources.
+A Resource Archive contains selected Resource-backed Domain state.
 
 It does not automatically contain every piece of local application state.
 
@@ -394,11 +400,12 @@ Examples of information that MUST NOT be added merely because a user wants a com
 * arbitrary UI settings,
 * local-only preferences,
 * Discovery Root configuration,
-* installation bookkeeping,
 * transient caches,
-* and pending Outbox work.
+* and pending publication work.
 
-Such information may only appear in a Resource Archive when it deliberately has a Resource representation under the Domain Resource Model.
+Resource-related metadata needed to reconstruct and compare archived Resource candidates is part of the archive model.
+
+Unrelated local implementation bookkeeping is not.
 
 A whole-application backup is a separate application concern.
 
@@ -406,7 +413,7 @@ A whole-application backup is a separate application concern.
 
 # Offline Behavior
 
-Creating or importing a Resource Archive MUST NOT require live relay access when all required Resource content is already locally available.
+Creating or importing a Resource Archive MUST NOT require live relay access when all required Resource-backed information is already locally available.
 
 Likewise, Resources successfully imported and installed from an archive remain usable offline.
 
@@ -418,26 +425,31 @@ Archive portability therefore complements rather than replaces the Nostr Resourc
 
 A compatible implementation MUST preserve these rules:
 
-```text id="5n29l7"
-A Resource Archive contains Resources,
+```text id="yz6h2t"
+A Resource Archive contains selected
+Resource-backed Domain state,
 not arbitrary application state.
 
 .kjva is a gzip-compressed UTF-8 JSON archive.
 
 The archive envelope is versioned.
 
-Resource boundaries are preserved.
+The archive preserves the Resource revision
+associated with accepted Domain state.
 
-Archived Resources carry serialized Resource content.
+Export does not create a newer revision.
 
-Nostr events are not the archive's primary data model.
+Original transport packaging and encoding
+need not be preserved.
+
+Import reconstructs decoded Resource input.
 
 Import uses normal Domain validation
 and Resource Installation.
 
 Archive presence does not imply local authority.
 
-Independent Resource entries may partially succeed.
+Independent archived objects may partially succeed.
 
 Archive versioning does not create
 Resource versioning.
@@ -454,22 +466,23 @@ This ADR defines:
 * Resource Archives,
 * the `.kjva` format,
 * archive envelope versioning,
-* Resource entries,
-* preservation of Resource boundaries,
-* serialized Resource content in archives,
-* Resource export,
-* Resource import,
+* normalized accepted Resource-backed Domain state in archives,
+* preservation of Resource revision information,
+* selective Resource export,
+* Resource reconstruction during import,
+* normal validation and Installation on import,
 * independent entry processing,
-* archive provenance,
+* applicable Resource provenance,
 * and archive portability.
 
 It does not define:
 
 * arbitrary application backup,
 * Runtime or UI-state backup,
+* Domain schemas,
 * Resource serialization schemas,
 * Resource Discovery,
-* Resource Resolution,
+* network Resource Resolution,
 * Domain validation rules,
 * Resource Installation mechanics,
 * synchronization policy,
@@ -482,22 +495,18 @@ Those concerns belong to their corresponding Resource Boundary, Application Arch
 
 # Big Takeaway
 
-A Resource Archive makes Resources portable without requiring live Nostr infrastructure.
+A Resource Archive makes accepted Resource-backed Domain state portable without requiring live Nostr infrastructure or preservation of its original transport packaging.
 
-```text id="ug4twt"
-Resource
-    ↓
-Serialized Resource Content
+```text id="57zdrq"
+Accepted Resource-Backed Domain State
     ↓
 .kjva Archive
     ↓
 Transfer / Preserve
     ↓
-Import
+Reconstruct Resource Candidate
     ↓
-Resource Installation
+Normal Validation / Installation
 ```
 
-It preserves the existing Resource model rather than inventing another one.
-
-> **Archive Resources as Resources; do not turn the Resource Archive into a dump of the entire application.**
+> **Archive accepted Resource-backed state; re-enter through the normal Resource acceptance boundary.**

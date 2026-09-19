@@ -691,11 +691,11 @@ Synchronization therefore preserves both:
 
 # Resource Archives
 
-Resources may also be transported in archive form.
+Accepted Resource-backed Domain state may also be made portable in archive form.
 
-An archive preserves Resource boundaries so that import/export does not require a separate application data model.
+An archive preserves the Resource association and revision information needed to reconstruct normal inbound Resource candidates without preserving original transport packaging.
 
-The important architectural idea is that archived information remains Resource information and returns through the same acceptance boundaries before becoming local Domain state.
+The important architectural idea is that archived information returns through the same Domain interpretation, validation, freshness, and Installation boundaries before becoming accepted local Domain state.
 
 ---
 
