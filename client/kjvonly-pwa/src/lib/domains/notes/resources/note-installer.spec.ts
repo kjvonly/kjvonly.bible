@@ -16,9 +16,10 @@ import {
 	NOTE_OBJECT_TYPE
 } from '$lib/domains/notes/persistence/notes-store';
 
-import type {
-	DecodedResourceContent,
-	ResourceInstallation
+import {
+	createResourceInstallationId,
+	type DecodedResourceContent,
+	type ResourceInstallation
 } from '$lib/resource';
 
 import type {
@@ -113,7 +114,7 @@ describe(
 		);
 
 		it(
-			'does not replace an already accepted local Note',
+			'does not replace a Note when the accepted Resource revision is current',
 			async () => {
 				const transaction =
 					new FakeInstallationTransaction();
@@ -133,33 +134,38 @@ describe(
 
 				transaction.notes.set(
 					id,
+					createLocalNote(
+						id
+					)
+				);
+
+				transaction.currentInstallations.set(
+					createResourceInstallationId(
+						NOTE_OBJECT_TYPE,
+						id
+					),
 					{
-						id,
-						bibleLocationRef:
-							undefined,
-						bibleReferenceText:
-							undefined,
-						text:
-							'Local text',
-						html:
-							'<p>Local text</p>',
-						title:
-							'Local Note',
-						dateCreated:
-							100,
-						dateUpdated:
-							250,
-						tags:
-							[]
+						id:
+							createResourceInstallationId(
+								NOTE_OBJECT_TYPE,
+								id
+							),
+						objectType:
+							NOTE_OBJECT_TYPE,
+						objectId:
+							id,
+						publisher:
+							resource.publisher,
+						resourceId:
+							resource.resourceId,
+						modifiedAt:
+							300
 					}
 				);
 
-				const installer =
-					new NoteInstaller(
-						transaction
-					);
-
-				await installer.install(
+				await new NoteInstaller(
+					transaction
+				).install(
 					resource,
 					[
 						createCandidate()
@@ -177,6 +183,86 @@ describe(
 				expect(
 					transaction.installations
 				).toEqual([]);
+			}
+		);
+
+		it(
+			'replaces a Note when the incoming Resource revision is newer',
+			async () => {
+				const transaction =
+					new FakeInstallationTransaction();
+
+				const resource =
+					createResource({
+						modifiedAt:
+							301
+					});
+
+				const id =
+					createNoteId(
+						resource.publisher,
+						'default',
+						'note-1'
+					);
+
+				transaction.notes.set(
+					id,
+					createLocalNote(
+						id
+					)
+				);
+
+				transaction.currentInstallations.set(
+					createResourceInstallationId(
+						NOTE_OBJECT_TYPE,
+						id
+					),
+					{
+						id:
+							createResourceInstallationId(
+								NOTE_OBJECT_TYPE,
+								id
+							),
+						objectType:
+							NOTE_OBJECT_TYPE,
+						objectId:
+							id,
+						publisher:
+							resource.publisher,
+						resourceId:
+							resource.resourceId,
+						modifiedAt:
+							300
+					}
+				);
+
+				await new NoteInstaller(
+					transaction
+				).install(
+					resource,
+					[
+						createCandidate()
+					]
+				);
+
+				expect(
+					transaction.notes.get(
+						id
+					)?.text
+				).toBe(
+					'Note text'
+				);
+
+				expect(
+					transaction.installations
+				).toEqual([
+					expect.objectContaining({
+						objectId:
+							id,
+						modifiedAt:
+							301
+					})
+				]);
 			}
 		);
 
@@ -222,6 +308,12 @@ class FakeInstallationTransaction
 		ResourceInstallation[] =
 		[];
 
+	readonly currentInstallations =
+		new Map<
+			string,
+			ResourceInstallation
+		>();
+
 	async run<TResult>(
 		operation:
 			(
@@ -254,13 +346,26 @@ class FakeInstallationTransaction
 
 			resourceInstallations: {
 				get:
-					async () =>
-						undefined,
+					async (
+						objectType,
+						objectId
+					) =>
+						this.currentInstallations.get(
+							createResourceInstallationId(
+								objectType,
+								objectId
+							)
+						),
 
 				put:
 					async (
 						installation
 					) => {
+						this.currentInstallations.set(
+							installation.id,
+							installation
+						);
+
 						this.installations.push(
 							installation
 						);
@@ -268,6 +373,30 @@ class FakeInstallationTransaction
 			}
 		});
 	}
+}
+
+function createLocalNote(
+	id: string
+): Note {
+	return {
+		id,
+		bibleLocationRef:
+			undefined,
+		bibleReferenceText:
+			undefined,
+		text:
+			'Local text',
+		html:
+			'<p>Local text</p>',
+		title:
+			'Local Note',
+		dateCreated:
+			100,
+		dateUpdated:
+			250,
+		tags:
+			[]
+	};
 }
 
 function createCandidate(

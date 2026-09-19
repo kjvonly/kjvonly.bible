@@ -120,6 +120,87 @@ describe(
 		);
 
 		it(
+			'handles already decoded Resource content without invoking the decoder',
+			async () => {
+				const handler =
+					new FakeHandler(
+						'kjvonly/notes/entries'
+					);
+
+				const decoder =
+					new FakeDecoder();
+
+				const receipts =
+					new FakeReceiptService();
+
+				const processor =
+					createProcessor({
+						contents:
+							[],
+						decoder,
+						receipts,
+						handlers: [
+							handler
+						]
+					});
+
+				const decoded:
+					DecodedResourceContent = {
+						publisher:
+							'publisher',
+						resourceId:
+							'kjvonly/notes/entries/default/note-1',
+						resourceType:
+							'kjvonly/notes/entries',
+						modifiedAt:
+							200,
+						mediaType:
+							'application/json+gzip+hex',
+						value: {
+							text:
+								'note'
+						}
+					};
+
+				const outcome =
+					await processor.processDecoded(
+						decoded
+					);
+
+				expect(
+					outcome.status
+				).toBe(
+					'handled'
+				);
+
+				expect(
+					decoder.contents
+				).toHaveLength(
+					0
+				);
+
+				expect(
+					handler.resources
+				).toEqual([
+					decoded
+				]);
+
+				expect(
+					receipts.calls
+				).toEqual([
+					{
+						publisher:
+							decoded.publisher,
+						resourceId:
+							decoded.resourceId,
+						modifiedAt:
+							decoded.modifiedAt
+					}
+				]);
+			}
+		);
+
+		it(
 			'folds a Resource resolution failure into the install result',
 			async () => {
 				const error =

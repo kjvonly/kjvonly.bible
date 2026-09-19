@@ -75,12 +75,19 @@ export class NoteInstaller {
 							candidate.noteId
 						);
 
-					const existing =
-						await stores.notes.get(
-							noteId
-						);
+					const currentInstallation =
+						await stores
+							.resourceInstallations
+							.get(
+								NOTE_OBJECT_TYPE,
+								noteId
+							);
 
-					if (existing) {
+					if (
+						currentInstallation &&
+						resource.modifiedAt <=
+							currentInstallation.modifiedAt
+					) {
 						continue;
 					}
 

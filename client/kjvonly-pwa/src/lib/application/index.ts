@@ -130,3 +130,10 @@ export {
 	KJVOnlyArchiveExporter,
 	type KJVOnlyArchiveExportSelection
 } from './archive/kjvonly-archive-exporter';
+
+export {
+	KJVOnlyArchiveImporter,
+	type KJVOnlyArchiveImportOutcome,
+	type KJVOnlyArchiveImportResult,
+	type KJVOnlyArchiveImportStatus
+} from './archive/kjvonly-archive-importer';
