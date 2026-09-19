@@ -125,3 +125,8 @@ export {
 export {
 	KJVOnlyArchiveCodec
 } from './archive/kjvonly-archive-codec';
+
+export {
+	KJVOnlyArchiveExporter,
+	type KJVOnlyArchiveExportSelection
+} from './archive/kjvonly-archive-exporter';
