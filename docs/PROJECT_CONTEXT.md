@@ -1,35 +1,116 @@
 # KJVOnly Project Context
 
-# Introduction
+## Purpose
 
-Welcome to the KJVOnly project.
+This document provides the mental model required to understand the KJVOnly project before reading its detailed architecture or source code.
 
-This document is the recommended starting point for a developer, contributor, or AI agent working in the repository.
+It connects the major concepts without replacing the documents that define them precisely.
 
-Its purpose is to provide enough context to understand:
+Use this document to understand:
 
-* what KJVOnly is,
+* what the application is trying to accomplish,
 * how the application is organized,
-* which architectural concepts own which responsibilities,
-* how the Resource Boundary fits into the Application Architecture,
-* how the current implementation relates to the target architecture,
-* and where to look next when more detail is required.
+* what the major architectural owners are,
+* how the Resource Boundary relates to the application,
+* how information moves between local Domain state and external Resources,
+* and where to look for more detailed documentation.
 
-This is not an architecture specification.
+This is an orientation document.
 
-It is a map of the architecture.
-
-The authoritative decisions live in the Principles, Application Architecture, Resource Boundary ADRs, and implementation documentation.
-
-The goal of this document is to make those documents—and eventually the source code—much easier to understand.
+It intentionally avoids current source paths, concrete classes, framework wiring, storage schemas, and other implementation mechanics.
 
 ---
 
-# The Mental Model
+# Reading The Repository
 
-KJVOnly is an offline-first Bible study application organized around **meaning and ownership**.
+The recommended reading order is:
 
-The architecture follows this progression:
+```text
+Project Context
+    ↓
+Principles
+    ↓
+Application Architecture
+    ↓
+Resource Boundary
+    ↓
+Implementation
+    ↓
+Developer Guide
+    ↓
+Source Code
+```
+
+Each layer answers a different question.
+
+## Principles
+
+Principles explain how architectural decisions should be made.
+
+They establish ideas such as ownership, loose coupling, local authority, responsibility before technology, and requesting capabilities through intentional boundaries.
+
+## Application Architecture
+
+Application Architecture defines the application's enduring responsibilities and how those responsibilities collaborate.
+
+It describes concepts such as:
+
+* Workspace Runtime,
+* Panes,
+* Buffers,
+* Modules,
+* Domains,
+* Public APIs,
+* Data Access,
+* Technical Infrastructure,
+* Persistence,
+* Startup,
+* Background Processing,
+* User Interface,
+* and Application Events.
+
+## Resource Boundary
+
+The Resource Boundary defines how Domain information participates in an external Resource lifecycle using Nostr.
+
+It defines concepts such as:
+
+* Resources,
+* Resource identity,
+* Resource representations,
+* Discovery Roots,
+* Discovery,
+* Resolution,
+* Installation,
+* publication,
+* synchronization,
+* and archives.
+
+## Implementation
+
+Implementation documentation explains how the current codebase realizes those architectural responsibilities.
+
+Implementation may change more frequently than architecture.
+
+## Developer Guide
+
+The Developer Guide explains how contributors should work within the architecture and current repository conventions.
+
+## Source Code
+
+The source is the executable form of the current implementation.
+
+Architecture should not be rewritten merely because an implementation happens to use a particular mechanism today.
+
+Likewise, implementation documentation should be updated when the source has changed.
+
+---
+
+# The Core Design Sequence
+
+KJVOnly begins with application meaning rather than technology.
+
+The design sequence is:
 
 ```text
 Meaning
@@ -38,2237 +119,787 @@ Ownership
     ↓
 Responsibility
     ↓
-Public Boundary
+Public API
     ↓
 Implementation
 ```
 
-When working on the repository, the first question should usually be:
+A concept should live with the architectural owner that gives it meaning.
 
-> **Who owns this responsibility?**
+Its responsibility should be understood before choosing the implementation mechanism used to fulfill that responsibility.
 
-not:
-
-> Which service, component, worker, or database should contain this code?
-
-Implementation follows ownership.
-
----
-
-# One Application Architecture
-
-KJVOnly has **one Application Architecture**.
-
-The Resource Boundary is part of that architecture.
-
-It is not a separate Resource Architecture.
-
-At the highest level:
-
-```text
-Application
-
-    Domain
-        ↓
-    Domain Object
-
-========== Resource Boundary ==========
-
-    Resource
-        ↓
-    Nostr Representation
-        ↓
-    Nostr Protocol / Relays
-```
-
-The application owns application meaning.
-
-The Resource Boundary defines how Domain information participates in an external lifecycle using Nostr.
-
-This distinction is one of the most important concepts in the project.
+This rule is the foundation for both architecture and repository organization.
 
 ---
 
 # What KJVOnly Is
 
-KJVOnly is an offline-first Bible study application designed around sustained study rather than page navigation.
+KJVOnly is an offline-first Bible study application.
 
-The application supports capabilities such as:
+The local application experience remains primary.
 
-* Bible reading,
-* Bible search,
-* Strong's information,
-* Bible annotations and highlights,
-* personal Notes,
-* Notes search,
-* Reading Plans,
-* reading progress,
-* completed readings,
-* multiple simultaneous study panes,
-* and persistent study environments.
+Normal reading, study, notes, reading-plan activity, and other accepted local behavior should remain usable without requiring continuous network access.
 
-Normal study behavior should remain available without network connectivity.
+External communication exists to distribute, publish, synchronize, share, discover, and preserve information.
 
-Nostr enhances the application by allowing Resources to be published, discovered, synchronized, shared, and recovered.
+It supports the application rather than becoming the application's source of meaning.
 
-Nostr does not define the application's internal model.
+The central architectural distinction is therefore:
+
+```text
+Application meaning and accepted local state
+
+            ≠
+
+External representation and distribution
+```
+
+The Application Architecture owns the first side.
+
+The Resource Boundary defines the second side for Resource-backed Domain information.
 
 ---
 
-# Offline First
+# One Application Architecture
 
-Offline-first is a fundamental architectural constraint.
+KJVOnly has one Application Architecture.
 
-The application should remain useful when:
+The Resource Boundary is not a second architecture competing with the application.
 
-```text
-relay unavailable
-network unavailable
-external content server unavailable
-another device unavailable
-```
+It is a boundary within the overall system that defines how applicable Domain information exists outside the application's local Domain model.
 
-Local application behavior therefore comes first.
-
-For user-created information:
+Conceptually:
 
 ```text
-User Action
-    ↓
-Domain Operation
-    ↓
-Accepted Local State
-    ↓
-Application Continues
+Application
+
+    Workspace Runtime
+    Modules
+    Domains
+    Domain Objects
+    Application-owned capabilities
+
+================ Resource Boundary ================
+
+    Resources
+    Resource Representations
+    Nostr publication / discovery / synchronization
 ```
 
-If the change must be published:
+The application remains responsible for application meaning on both sides of the boundary.
 
-```text
-Accepted Local State
-    ↓
-Durable Publication Intent
-    ↓
-Outbox
-    ↓
-Publication when possible
-```
-
-The network is asynchronous with respect to normal local application behavior.
-
-A local operation MUST NOT require successful relay publication before becoming usable.
+The Resource Boundary does not become the owner of Bible, Notes, Reading Plans, Strong's, or other Domain concepts merely because those concepts are distributed externally.
 
 ---
 
-# Application Authority
+# Application Model
 
-The application owns its accepted local state.
+At a high level, the application is organized around four complementary ideas:
 
-External information is not automatically application state merely because it:
+```text
+Workspace Runtime
+    ↓ hosts
+Module Instances
+    ↓ present
+Domain Behavior
+    ↓ operates on
+Domain Objects
+```
 
-* exists on a relay,
-* has a valid Nostr signature,
-* has a newer timestamp,
-* was returned by Resource Discovery,
-* or passed Resource integrity verification.
+The Resource Boundary intersects this model only when Domain information requires an external lifecycle.
 
-The governing principle is:
-
-> **The network proposes. The application decides.**
-
-For locally created information:
-
-> **Accept locally first. Publish externally independently.**
-
-These rules connect the offline-first Application Architecture with the Resource Boundary.
+Each concept has a different responsibility.
 
 ---
 
-# The Application Model
+# Workspace Runtime
 
-Inside the application, information is understood through **Domains** and **Domain Objects**.
+The Workspace Runtime owns the user's active study environment.
 
-Domains give information meaning.
+It manages the structural model through which multiple active interactions can coexist.
 
-Domain Objects are application-facing representations of that meaning.
+Its enduring concepts are:
+
+* Workspace,
+* Pane,
+* Buffer,
+* Module Instance,
+* layout and composition,
+* navigation between active interactions,
+* and preservation of Runtime state.
+
+The Runtime does not own Bible behavior, Notes behavior, Reading Plans behavior, or Strong's behavior.
+
+It provides the environment in which those behaviors are presented.
+
+---
+
+# Panes
+
+A Pane represents a structural region of the Workspace.
+
+Panes define how the Workspace is divided and where active interactions appear.
+
+A Pane owns structural placement.
+
+It does not own the business behavior displayed within it.
+
+---
+
+# Buffers
+
+A Buffer represents one active Module interaction hosted by the Workspace.
+
+Conceptually, it preserves the Runtime context associated with that interaction.
+
+This distinction matters:
+
+```text
+Pane
+    = where an interaction is placed
+
+Buffer
+    = the active interaction occupying that place
+```
+
+Workspace structure and Module state therefore remain related without becoming the same concept.
+
+---
+
+# Modules
+
+A Module is an independently active user interaction hosted by the Workspace Runtime.
+
+Modules present Domain behavior.
+
+They do not become the owner of the Domain concepts they expose.
 
 For example:
 
 ```text
-Bible Domain
-    ↓
-Bible Chapter
+Bible Reader Module
+    → presents Bible behavior
 
-Notes Domain
-    ↓
-Note
+Bible Search Module
+    → presents Bible search behavior
 
-Reading Plans Domain
-    ↓
-Reading Plan
+Notes Module
+    → presents Notes behavior
+
+Reading Plans Module
+    → presents Reading Plans behavior
 ```
 
-The application does not use raw Nostr events as its Domain model.
+A Domain may support several Modules.
 
-It does not treat relay events, Blossom files, Resource descriptors, or database records as Domain Objects merely because they contain similar information.
+A Module exists because a behavior needs an independently active Runtime interaction, not because it constitutes a new Domain.
 
 ---
 
-# Major Domains
+# Domains
 
-The current primary Domains are:
+Domains organize the application around enduring areas of meaning and behavior.
+
+The current Domain model is:
 
 ```text
-Bible
-Notes
-Reading Plans
-Settings
+Bible Domain
+    Bible content
+    Bible navigation
+    Bible references
+    Bible search
+    Bible text markup
+
+Notes Domain
+    Notes
+    Notes search
+    Scripture associations
+
+Reading Plans Domain
+    Plan definitions
+    Plan subscriptions
+    Plan progress
+
+Strong's Domain
+    Strong's definitions
 ```
 
-Search is not a standalone Domain.
+Application-wide concerns such as Settings and Workspace coordination are not Domains merely because they have state or user interfaces.
 
-Annotations are not a standalone Domain.
-
-Workspace is not a Domain.
-
-Those distinctions matter when reorganizing the implementation.
+Ownership follows meaning.
 
 ---
 
 # Bible Domain
 
-The Bible Domain owns application meaning related to Scripture.
+The Bible Domain owns concepts whose meaning comes from Scripture.
 
-Its responsibilities include:
+This includes:
 
 * Bible content,
 * Bible locations,
-* chapters,
-* verses,
-* Bible navigation,
-* Bible Search,
-* Strong's integration,
-* Bible annotations,
-* verse highlights,
-* word highlights,
-* Bible-specific indexing,
-* and Bible Resource interpretation.
+* navigation within Bible content,
+* Bible references,
+* Bible search,
+* and Bible text markup.
 
-Bible Search belongs to Bible because it searches Bible information.
+Bible search does not require a separate Search Domain because its meaning comes from Bible content.
 
-Bible annotations belong to Bible because they enrich Bible information.
-
-Strong's currently belongs with Bible because its application purpose is Scripture study.
+Bible text markup does not require a separate Markup Domain because its meaning exists only in relation to Bible content.
 
 ---
 
 # Notes Domain
 
-The Notes Domain owns personal study Notes.
+The Notes Domain owns user Notes and behavior whose meaning comes from Notes.
 
-Its responsibilities include:
+Notes may refer to Bible locations without becoming part of the Bible Domain.
 
-* Note Domain Objects,
-* Note creation and editing,
-* Note organization,
-* Notes Search,
-* Note persistence behavior,
-* Note validation,
-* and Notes Resource interpretation.
+A relationship to another Domain does not transfer ownership.
 
-Notes Search belongs to Notes.
+Conceptually:
 
-It is not part of a generic Search Domain.
+```text
+Note
+    └── may reference Bible information
+
+Note ownership
+    = Notes Domain
+
+Bible-reference ownership
+    = Bible Domain
+```
+
+Cross-Domain collaboration should preserve both sides of that distinction.
 
 ---
 
 # Reading Plans Domain
 
-The Reading Plans Domain owns structured reading behavior.
+The Reading Plans Domain owns the concepts used to define and follow reading plans.
 
-Its responsibilities include:
+Its enduring concepts include:
 
-* Reading Plans,
-* reading schedules,
-* progression,
-* completed readings,
-* and Reading Plan Resource interpretation.
+* Plan Definitions,
+* Plan Subscriptions,
+* and Plan Progress.
 
-Completed readings may have their own Resource representation without becoming a separate Domain.
+Reading Plans may reference Bible locations and initiate Bible reading interactions, but they do not own Bible behavior.
 
-Reading Plans collaborate with Bible when a plan sends the user to Scripture.
+The Reading Plans Domain determines the reading-plan state.
 
-That collaboration does not transfer Bible ownership to Reading Plans.
+The Bible Domain owns the Scripture concepts used to perform the reading.
 
 ---
 
-# Settings Domain
+# Strong's Domain
 
-Settings owns meaningful application preferences.
+Strong's is a separate Domain.
 
-Some settings may be entirely local.
+It owns Strong's definitions and the behavior associated with that body of information.
 
-A setting does not become a Resource merely because it is persisted.
+Bible interactions may consume Strong's information, but consumption does not move Strong's ownership into the Bible Domain.
 
-Only information that deliberately participates in an external Resource lifecycle needs a Resource representation.
+This follows the same general rule used throughout the application:
 
----
-
-# Domains and Modules Are Different
-
-A **Domain** owns application behavior.
-
-A **Module** presents Domain behavior within the Workspace Runtime.
-
-For example:
-
-```text
-Bible Domain
-    ├── Bible Reading Module
-    └── Bible Search Module
-
-Notes Domain
-    ├── Notes List Module
-    └── Notes Search Module
-```
-
-Multiple instances of the same Module may exist simultaneously.
-
-A user may have several Bible readers open at once.
-
-They are separate Module Instances using the same Bible Domain.
-
-Modules do not own Domain behavior simply because they display it.
+> Usage creates a dependency. It does not transfer ownership.
 
 ---
 
-# The Workspace Runtime
+# Application-Owned Capabilities
 
-KJVOnly is a single-page application, but it is not organized around route-driven navigation.
+Not every application responsibility belongs to a Domain.
 
-The current application uses one primary route:
-
-```text
-/
-```
-
-Study interaction occurs through the **Workspace Runtime**.
-
-The core Runtime relationship is:
-
-```text
-Workspace
-    ↓
-Pane
-    ↓
-Buffer
-    ↓
-Module Instance
-```
-
-This model is central to understanding the client.
-
----
-
-# Workspace
-
-A Workspace represents an active study environment.
-
-Today, the root Pane tree effectively acts as the Workspace.
-
-The Runtime owns the Workspace arrangement.
-
-Future support may include named Workspace snapshots that allow a user to save and restore different study contexts.
-
-Workspace is an Application Runtime concept, not a Domain.
-
----
-
-# Pane
-
-A Pane is a region of the Workspace.
-
-Panes form a tree and may be:
-
-* split,
-* closed,
-* replaced,
-* reorganized,
-* or resized.
-
-Pane layout is owned by the Workspace Runtime.
-
-Domains should not directly manipulate the Pane tree.
-
----
-
-# Buffer
-
-A Buffer connects a Pane with the interaction being presented there.
-
-Conceptually:
-
-```text
-Pane
-    ↓
-Buffer
-    ├── Navigation Context
-    └── Module Instance
-```
-
-The Buffer is Domain-agnostic.
-
-Its purpose is to allow the Runtime to host different kinds of Modules without learning their Domain behavior.
-
----
-
-# Navigation Context
-
-A Buffer carries navigation context required to initialize or continue a Module interaction.
+Some capabilities exist because the application as a whole needs them.
 
 Examples include:
 
-* a Bible location,
-* a Reading Plan queue,
-* selected Domain information,
-* or other Module initialization state.
+* Settings,
+* Workspace-wide coordination,
+* application startup and lifecycle,
+* authentication state,
+* account state,
+* and other cross-cutting application capabilities.
 
-Navigation Context is not intended to become a generic dependency container.
-
-It communicates interaction context.
+These responsibilities should not be forced into a Domain when their meaning belongs to the application itself.
 
 ---
 
-# Module Instance
+# Domain Objects
 
-A Module Instance presents Domain capabilities within a Pane.
+Domain Objects express information according to application meaning.
 
 Examples include:
 
 ```text
-Bible Reading
-Bible Search
-Notes List
-Notes Search
-Reading Plan
+Bible
+    Chapter
+    Text Markup
+
+Notes
+    Note
+
+Reading Plans
+    Plan Definition
+    Plan Subscription
+    Plan Progress
+
+Strong's
+    Strong's Definition
 ```
 
-The Runtime determines where the Module appears.
+A Domain Object is not defined by:
 
-The owning Domain determines what the Module means and what behavior it can perform.
+* its network representation,
+* a protocol event,
+* a persistence record,
+* or the mechanism used to load it.
 
----
-
-# Runtime Collaboration
-
-The normal user interaction path looks approximately like:
-
-```text
-User
-    ↓
-Workspace
-    ↓
-Pane
-    ↓
-Buffer
-    ↓
-Module Instance
-    ↓
-Domain Public API
-    ↓
-Domain
-    ↓
-Domain Objects
-```
-
-The Runtime coordinates interaction.
-
-The Domain owns meaning.
-
-Neither should absorb the responsibility of the other.
-
----
-
-# Architectural Ownership
-
-A recurring principle throughout the project is:
-
-> **Ownership is the assignment of responsibility to the part of the application that gives that responsibility meaning.**
-
-There are several major ownership categories.
-
-```text
-Domains
-    application meaning
-
-Application Runtime
-    study environment and interaction composition
-
-Application Services
-    genuinely cross-owner coordination
-
-Resource Boundary
-    external Resource lifecycle
-
-Technical Infrastructure
-    technical capability
-
-User Interface
-    shared presentation conventions
-```
-
-Shared use does not imply shared ownership.
+Those mechanisms may preserve or reconstruct Domain information, but they do not define its meaning.
 
 ---
 
 # Public APIs
 
-Architectural owners collaborate through explicit boundaries.
+Architectural owners collaborate through intentional Public APIs.
 
-A **Public API** means:
-
-> **Please do this.**
+A Public API represents what another owner is allowed to depend upon.
 
 Conceptually:
 
 ```text
 Consumer
     ↓
-Public API
+Owner Public API
     ↓
-Owner
+Owning Responsibility
     ↓
 Internal Implementation
 ```
 
-A caller should request behavior from the owner rather than manipulating the owner's persistence, services, or internal types directly.
+Public APIs expose meaningful capabilities and concepts while allowing internal implementation to evolve.
+
+They do not transfer ownership to consumers.
+
+A small Public API is preferable to exposing internal implementation merely for convenience.
 
 ---
 
-# Application Events
+# Cross-Owner Collaboration
 
-An **Application Event** means:
-
-> **This happened.**
-
-Events announce completed facts.
-
-They are not substitutes for behavior APIs.
+Cross-owner dependencies are allowed when they reflect genuine application relationships.
 
 For example:
 
 ```text
-Public API
-    "Save this Note."
+Reading Plans
+    → Bible-owned location/navigation concepts
 
-Application Event
-    "The Note changed."
+Notes
+    → Bible-owned location concepts
+
+Bible interaction
+    → Strong's definitions
 ```
 
-Commands and events serve different purposes.
+The important rule is that dependencies point toward the owner of meaning.
+
+When collaboration becomes awkward, first reconsider ownership and responsibility rather than immediately creating a global abstraction.
 
 ---
 
-# Other Collaboration Mechanisms
+# Local Authority
 
-Architectural owners may also collaborate through:
+KJVOnly is offline-first because accepted local state belongs to the application.
 
-```text
-Shared Identifier
+External information does not become authoritative merely because it exists on a network or is newer than local information.
 
-Navigation Context
-```
+The guiding rule is:
 
-A Shared Identifier identifies information understood across boundaries.
+> **The network proposes. The application decides.**
 
-Navigation Context initializes or continues a Runtime interaction.
+External information must pass the applicable Resource, Domain, validation, and acceptance boundaries before it replaces accepted local Domain state.
 
-The mechanism should match the meaning of the collaboration.
-
----
-
-# Application Services
-
-An Application Service owns behavior only when that behavior is genuinely cross-Domain or application-wide.
-
-Using a service from two places does not automatically make it an Application Service.
-
-For example, the Bible location reference is used by Bible and Reading Plans and therefore participates in application-level collaboration.
-
-Bible chapter retrieval, however, remains Bible-owned even if several Modules use it.
-
----
-
-# Background Processing
-
-Background Processing changes when or where work executes.
-
-It does not change ownership.
-
-For example:
-
-```text
-Resource Synchronization
-    ↓
-may execute in background
-```
-
-but:
-
-```text
-Background Processing
-    ≠
-owner of Resource Synchronization
-```
-
-Likewise:
-
-```text
-Bible indexing
-    ↓
-may execute in a worker
-```
-
-while Bible remains the owner of the indexing behavior.
-
-The rule is:
-
-> **Execution changes. Ownership does not.**
-
----
-
-# Persistence
-
-Persistence answers:
-
-> **How does accepted application state survive execution?**
-
-Persistence is not itself the owner of Domain meaning.
-
-A Domain may use:
-
-* a repository,
-* a Store,
-* IndexedDB,
-* an adapter,
-* or another persistence mechanism.
-
-The physical storage mechanism does not determine architectural ownership.
-
-For example:
-
-```text
-Notes data
-    → Notes-owned persistence
-
-Bible data
-    → Bible-owned persistence
-
-Workspace snapshots
-    → Application Runtime persistence
-
-Outbox entries
-    → Resource Boundary persistence
-```
-
-All of these may physically use one IndexedDB database.
-
-That does not make them one architectural responsibility.
+This preserves a stable local model even when external systems are unavailable, inconsistent, or malicious.
 
 ---
 
 # The Resource Boundary
 
-The Resource Boundary is one of the most important concepts in the project.
+Some Domain information needs an external lifecycle.
 
-It defines:
+It may need to be:
 
-> **How Domain information participates in an external Nostr Resource lifecycle.**
+* published,
+* discovered,
+* distributed,
+* synchronized,
+* shared,
+* installed,
+* or archived.
 
-It is specifically a **Nostr Resource Boundary**.
+When that is required, the information participates in the Resource Boundary.
 
-Nostr is not an incidental implementation detail that could simply be replaced by REST without changing the specification.
+A Resource is the independently identifiable unit used for that external lifecycle.
 
-The Resource Boundary ADRs deliberately define how Resources use:
+Not every Domain Object must become a Resource.
 
-* Nostr events,
-* publisher public keys,
-* kinds,
-* `d` tags,
-* `t` tags,
-* `created_at`,
-* event IDs,
-* signed publications,
-* addressable-event semantics,
-* relay queries,
-* and related external Resource mechanisms.
-
-Blossom and HTTP may participate as external Resource-content storage.
-
-They do not replace Nostr as the Resource publication and discovery protocol defined by this specification.
+Local-only preferences, Runtime state, transient interaction state, and other purely local information may remain entirely inside the application.
 
 ---
 
-# Domain Resource Model
+# Resources Are Not Domain Objects
 
-The **Domain Resource Model** is the conceptual foundation of the Resource Boundary.
-
-It defines concepts such as:
-
-```text
-Domain Object
-Resource
-Resource Identifier
-Published Resource Identity
-Resource Type
-Resource Classification
-Resource Representation
-Resource Granularity
-```
-
-It does not itself own Discovery, Resolution, Installation, publication, synchronization, or archives.
-
-Those responsibilities are defined by subsequent Resource Boundary specifications.
-
----
-
-# Domain Objects and Resources
-
-A Domain Object represents information according to application meaning.
-
-A Resource represents Domain information in a form that can participate in an external lifecycle.
-
-They serve different purposes.
+Domain Objects and Resources are related but distinct.
 
 ```text
 Domain Object
     ≠
 Resource
+    ≠
+Nostr Event
 ```
 
-Not every Domain Object is a Resource.
+A Domain Object expresses application meaning.
 
-Information needs a Resource representation when it must participate in external behavior such as:
+A Resource expresses distributable Domain information at the Resource Boundary.
 
-* publication,
-* discovery,
-* distribution,
-* synchronization,
-* sharing,
-* archival,
-* or external retrieval.
+A Nostr event is a protocol representation used to publish or discover Resource information.
 
-Runtime state and purely local information may never cross the Resource Boundary.
+Keeping these concepts distinct prevents protocol and distribution concerns from becoming part of the Domain model.
 
 ---
 
-# Resource Identity
+# Nostr And The Resource Boundary
 
-A Published Resource uses Nostr addressable-event identity.
+The KJVOnly Resource Boundary uses Nostr as its Resource protocol.
 
-Its identity is:
+Nostr therefore belongs in the Resource Boundary specification where protocol behavior defines the Resource contract.
 
-```text
-kind + publisher pubkey + d
-```
+This includes concepts such as:
 
-The `d` tag contains the Resource Identifier.
+* publisher identity,
+* addressable Resource identity,
+* signed publication,
+* relay discovery,
+* and synchronization ordering.
 
-For example:
+Resource content may also be stored externally and referenced through Resource representations.
 
-```text
-kjvonly/bible/chapters/kjv
-```
+External storage does not change Domain ownership or Resource identity.
 
-A Nostr event ID serves a different purpose.
-
-```text
-kind + pubkey + d
-    identifies the Published Resource
-
-event id
-    identifies one signed publication
-```
-
-The architecture does not introduce another Resource revision identity system.
+The Resource Boundary should not be treated as a generic synonym for every external protocol capability in the application.
 
 ---
 
-# Resource Representations
+# Inbound Resource Lifecycle
 
-A Resource can use three established representations:
-
-```text
-content
-descriptor
-descriptors
-```
-
-A `content` representation carries serialized Resource content directly in the Nostr event.
-
-A `descriptor` representation describes externally stored Resource content.
-
-A `descriptors` representation describes a collection of independently identifiable Resources.
-
-Representation does not determine Resource identity or Domain meaning.
-
----
-
-# External Resource Content
-
-Some Resources are too large or otherwise inappropriate to carry directly inside a Nostr event.
-
-A descriptor may therefore reference external content.
-
-Conceptually:
+The inbound Resource lifecycle is conceptually:
 
 ```text
-Nostr Resource Representation
-        ↓
-Descriptor
-        ↓
-Blossom / HTTP / other supported content source
-        ↓
-Serialized Resource Content
+Discovery Root / Resource Reference
+    ↓
+Resource Discovery
+    ↓
+Resource Representation
+    ↓
+Resource Resolution
+    ↓
+Verified Serialized Content
+    ↓
+Domain Interpretation
+    ↓
+Candidate Domain Information
+    ↓
+Domain Validation
+    ↓
+Installation Decision
+    ↓
+Accepted Local Domain State
 ```
 
-External content is verified by Resource Resolution before it can proceed toward Domain interpretation.
+Each stage answers a different question.
 
-Storage location is not Resource identity.
+Discovery asks what representation is available.
+
+Resolution obtains and verifies the represented content.
+
+Domain interpretation determines what the content means.
+
+Domain validation determines whether it is valid for that Domain.
+
+Installation decides whether the proposed external information should become accepted local state.
+
+Successful discovery or resolution alone does not modify authoritative Domain state.
 
 ---
 
 # Discovery Roots
 
-A Discovery Root is a publisher from which the application permits open-ended Resource Discovery.
+Open-ended Resource discovery begins from configured Discovery Roots.
 
-It establishes where broad discovery may begin.
+A Discovery Root establishes a publisher from which the application permits open-ended discovery.
 
-It does not automatically mean:
+An explicit Resource reference may be narrower than a Discovery Root.
 
-* every Resource should be installed,
-* the publisher controls accepted local state,
-* every publisher referenced later becomes another root,
-* or all Domain information from that publisher is authoritative.
-
-A specific Resource reference to another publisher may permit bounded discovery without promoting that publisher to a Discovery Root.
+This distinction prevents one explicit cross-publisher relationship from silently widening the application's general trust/discovery scope.
 
 ---
 
-# Resource Discovery
+# Outbound Resource Lifecycle
 
-Resource Discovery answers:
+Locally created or changed Domain information becomes accepted local state before external publication succeeds.
 
-> **Which Resource Representations are available?**
-
-It uses Nostr.
-
-Discovery may query by:
-
-* publisher,
-* Published Resource Identity,
-* Resource Classification,
-* Resource reference,
-* or exact event ID.
-
-Discovery finds Resource Representations.
-
-It does not:
-
-* retrieve descriptor content,
-* interpret Domain meaning,
-* install Domain Objects,
-* or replace accepted local state.
-
----
-
-# Resource Resolution
-
-Resource Resolution answers:
-
-> **How does a known Resource Representation become verified serialized Resource content?**
-
-Conceptually:
-
-```text
-Resource Representation
-        ↓
-Resolve Representation
-        ↓
-Serialized Resource Content
-        ↓
-Integrity Verification
-        ↓
-Verified Resource Content
-```
-
-Resolution may read embedded content or retrieve externally stored content.
-
-Resolution verifies Resource integrity.
-
-It does not validate application meaning.
-
----
-
-# Resource Integrity and Domain Validity
-
-These are deliberately separate:
-
-```text
-Resource Resolution
-    verifies Resource content
-
-Domain Validation
-    verifies application meaning
-```
-
-Content may be cryptographically correct while still being invalid according to a Domain.
-
-Successful Resolution therefore does not imply Installation.
-
----
-
-# Resource Installation
-
-Installation answers:
-
-> **When does verified external Resource information become accepted local application state?**
-
-The inbound acceptance path is:
-
-```text
-Nostr / External Content
-        ↓
-Resource Representation
-        ↓
-Resource Resolution
-        ↓
-Verified Resource Content
-        ↓
-Domain Interpretation
-        ↓
-Candidate Domain Object
-        ↓
-Domain Validation
-        ↓
-Installation Decision
-        ↓
-Accepted Local State
-```
-
-Installation is the acceptance boundary.
-
-Persistence may follow acceptance.
-
-Persistence is not the definition of Installation.
-
----
-
-# Local Authority at the Resource Boundary
-
-Finding newer network information does not automatically replace local state.
-
-The application may:
-
-* reject invalid information,
-* reject an installation,
-* retain existing local state,
-* or reconcile through synchronization policy.
-
-The network supplies candidate Resource information.
-
-The application determines accepted Domain information.
-
----
-
-# Outbox and Publishing
-
-Local Domain changes are accepted before publication.
-
-When accepted Domain information must be published:
+When that information requires publication, the conceptual flow is:
 
 ```text
 Local Domain Change
-        ↓
+    ↓
 Accepted Local State
-        ↓
+    ↓
 Durable Publication Intent
-        ↓
-Resource
-        ↓
+    ↓
 Resource Representation
-        ↓
-Nostr Event
-        ↓
-Signing
-        ↓
-Relay Publication
+    ↓
+Signed Nostr Publication
+    ↓
+Relay Distribution
 ```
 
-The persistent Outbox ensures required publication is not forgotten when the application is offline.
+Publication is therefore asynchronous with respect to local application success.
 
-Relay failure does not invalidate the local change.
+Network failure does not invalidate an already accepted local change.
 
 ---
 
-# Multi-Device Synchronization
+# Synchronization
 
-Different devices may independently modify the same Published Resource while offline.
+Synchronization reconciles accepted local state with valid externally published state.
 
-KJVOnly uses **Last Write Wins** for reconciliation.
+It is not the same responsibility as normal Domain reads, Resource Discovery, Resource Resolution, or Outbox publication.
 
-For synchronizable information:
+For synchronizable Resources, the architecture uses Last Write Wins as the conflict policy.
 
-```text
-Domain modifiedAt
-    =
-Nostr created_at
-```
+A remote publication that wins ordering still must pass normal validation and Installation before replacing accepted local state.
 
-The later valid logical write wins reconciliation for the same Published Resource Identity.
+Synchronization therefore preserves both:
 
-This does not mean:
-
-```text
-newest network event
-    =
-automatic local authority
-```
-
-A remote winner still proceeds through normal Resource validation and Installation.
-
-The synchronization model intentionally does not introduce:
-
-* locking,
-* automatic merging,
-* conflict copies,
-* a separate logical clock,
-* or a Resource revision system.
-
-Clock skew remains an accepted limitation.
+* deterministic reconciliation,
+* and local authority.
 
 ---
 
 # Resource Archives
 
-Resources may be made portable without live relay or external-content access using Resource Archives.
+Resources may also be transported in archive form.
 
-The archive format is:
+An archive preserves Resource boundaries so that import/export does not require a separate application data model.
 
-```text
-.kjva
-```
-
-A Resource Archive contains serialized Resources while preserving their Resource boundaries and applicable provenance.
-
-Archive import still uses the normal Domain validation and Installation process.
-
-A Resource Archive is not automatically a complete dump of application state.
-
-Runtime state, arbitrary settings, caches, installation bookkeeping, and other local-only information do not become archive content unless they deliberately have a Resource representation.
+The important architectural idea is that archived information remains Resource information and returns through the same acceptance boundaries before becoming local Domain state.
 
 ---
 
-# Resource Boundary Lifecycle
+# Persistence
 
-The complete conceptual model is:
+Persistence preserves accepted application state across sessions.
 
-```text
-                     OUTBOUND
+Architecture distinguishes persistence from Domain meaning and from the Resource lifecycle.
 
-Accepted Domain Information
-        ↓
-Resource
-        ↓
-Resource Representation
-        ↓
-Nostr Event
-        ↓
-Nostr Relays
+Domains own the meaning of their information.
 
+Persistence preserves that accepted information.
 
-                     INBOUND
+The Resource Boundary records the external provenance and lifecycle information required by Resource-backed state.
 
-Nostr Relays / Resource Archive
-        ↓
-Resource Representation
-        ↓
-Resource Discovery / Resolution
-        ↓
-Verified Resource Content
-        ↓
-Domain Interpretation
-        ↓
-Candidate Domain Object
-        ↓
-Domain Validation
-        ↓
-Installation
-        ↓
-Accepted Domain Information
-```
-
-Nostr is the protocol contract around Resource publication and discovery.
-
-Domains retain ownership of application meaning on both sides.
+The exact persistence technology belongs to Implementation.
 
 ---
 
-# The Resource Boundary Specifications
+# Data Access
 
-The Resource Boundary ADRs are intended to be read in order:
+Application behavior should request Domain information through Domain-owned capabilities rather than asking callers to know where that information is stored or retrieved.
+
+Conceptually:
 
 ```text
-00  Resource Boundary Overview
-
-01  Domain Resource Model
-02  Data Distribution Strategy
-03  Nostr Event Model
-04  Nostr Resource Identity
-
-05  Discovery Roots
-06  Resource Discovery
-07  Resource Resolution
-08  Resource Installation Lifecycle
-
-09  Outbox and Publishing
-10  Multi-Device Synchronization
-11  Resource Archives
+Consumer
+    ↓ asks for Domain information
+Domain capability
+    ↓
+Accepted local state
 ```
 
-Each specification answers one Resource lifecycle question.
+If obtaining missing or updated information requires Resource activity, that activity occurs beneath the appropriate boundary rather than becoming the consumer's responsibility.
 
-Do not reinterpret one ADR in isolation from the concepts established before it.
+This keeps application behavior expressed in Domain terms.
 
 ---
 
-# Application Architecture vs Resource Boundary
+# Background Processing
 
-These should not be thought of as two independent architectures.
+Not all maintenance work must block foreground interaction.
 
-There is one Application Architecture.
+Background Processing exists for responsibilities that improve or maintain application state independently of an immediate user action.
 
-The Resource Boundary is one responsibility within it.
+Examples may include:
 
-A useful distinction is:
+* Resource maintenance,
+* synchronization,
+* publication retries,
+* derived-data maintenance,
+* or other deferred work.
 
-```text
-Application Architecture
+Background execution does not change ownership.
 
-    defines:
-        Runtime
-        Domains
-        Public APIs
-        Events
-        Persistence responsibility
-        Background Processing
-        User Interface
-        Repository Organization
-        Resource Boundary
-
-
-Resource Boundary
-
-    defines:
-        Resource model
-        Nostr representation
-        Resource identity
-        discovery
-        resolution
-        installation
-        publication
-        synchronization
-        archives
-```
-
-The Resource Boundary does not own all communication in the abstract.
-
-It owns the application's defined Nostr Resource lifecycle.
+The subsystem that owns the underlying behavior remains responsible for its rules even when the work executes later.
 
 ---
 
 # Technical Infrastructure
 
-Technical Infrastructure provides capabilities used by architectural owners.
+Technical Infrastructure provides mechanisms used by architectural owners.
 
-Examples include:
+Examples include networking, persistence engines, cryptography, workers, browser APIs, and other technical capabilities.
+
+Infrastructure does not become an architectural owner merely because many parts of the application depend upon it.
+
+Architectural owners depend on technical mechanisms through boundaries that preserve application meaning.
+
+---
+
+# Application Events
+
+Independent parts of the application sometimes need to observe meaningful changes owned elsewhere.
+
+Application Events describe that communication responsibility.
+
+An event communicates that something happened.
+
+It does not become the owner of the behavior that produced the change.
+
+The architecture does not require every change to flow through one global event bus.
+
+Owners may expose appropriate notification boundaries while preserving ownership of the underlying state and behavior.
+
+---
+
+# Growth And Evolution
+
+The architecture should grow by extending existing ownership whenever the new capability derives its meaning from an existing owner.
+
+A new Domain should represent a genuinely new area of enduring application meaning, not merely:
+
+* a new screen,
+* a new storage requirement,
+* a new protocol,
+* a new service,
+* or a new implementation technique.
+
+Likewise, new Resource behavior should extend the Resource Boundary when it concerns the external lifecycle of Domain information rather than creating a competing application data model.
+
+Implementation may evolve significantly while these responsibilities remain stable.
+
+---
+
+# Documentation Boundaries
+
+The documentation deliberately separates concepts from current realization.
 
 ```text
-Nostr relay connectivity
-IndexedDB
-HTTP
-Blossom access
-workers
-gzip
-SHA-256
-signing support
-```
-
-Infrastructure answers:
-
-> **How can this technical operation be performed?**
-
-It does not answer:
-
-> **What does this information mean?**
-
-or:
-
-> **Should this Resource become accepted local state?**
-
-Those decisions belong elsewhere.
-
----
-
-# Current Implementation State
-
-The architecture documents describe the target ownership model.
-
-The source code is currently being refactored toward that model.
-
-Do not assume that existing file placement represents architectural ownership.
-
-Historically, the client has been organized primarily by technical roles such as:
-
-```text
-components/
-models/
-modules/
-services/
-workers/
-nostr/
-```
-
-Those directories may currently contain responsibilities belonging to several different architectural owners.
-
-The ongoing refactor is moving toward ownership-oriented organization.
-
----
-
-# Target Client Organization
-
-The intended high-level structure is:
-
-```text
-client/src/lib/
-
-    application/
-        application coordination
-        Workspace Runtime
-        navigation
-        events
-
-    domains/
-        bible/
-        notes/
-        reading-plans/
-        settings/
-
-    resource/
-        Nostr Resource processing
-        discovery
-        resolution
-        installation
-        publishing
-        synchronization
-        archives
-
-    infrastructure/
-        Nostr transport
-        persistence mechanics
-        HTTP
-        Blossom
-        workers
-        technical utilities
-
-    components/
-        genuinely shared presentation
-```
-
-This is a target direction.
-
-The current repository may not yet fully match it.
-
----
-
-# DDD in This Project
-
-DDD here does not mean reproducing a standard folder template or creating a Repository, Factory, Aggregate, Manager, and Controller for every concept.
-
-DDD primarily means:
-
-```text
-Meaning
-    ↓
-Ownership
-    ↓
-Boundary
-    ↓
-Code location
-```
-
-If Bible meaning gives a responsibility its purpose, that responsibility belongs to Bible.
-
-If Notes meaning gives it purpose, it belongs to Notes.
-
-If it exists to compose the study environment, it belongs to the Application Runtime.
-
-If it implements the external Resource lifecycle, it belongs to the Resource Boundary.
-
-If it only provides technical capability, it belongs to Infrastructure.
-
----
-
-# Current Refactoring Rule
-
-The structural refactor should preserve behavior wherever practical.
-
-The preferred sequence is:
-
-```text
-Identify responsibility
-        ↓
-Identify owner
-        ↓
-Establish Public Boundary
-        ↓
-Move implementation
-        ↓
-Update dependencies
-        ↓
-Verify behavior
-        ↓
-Commit
-```
-
-Do not redesign working behavior merely because code is being moved.
-
-Architecture alignment and behavioral change should remain separable whenever practical.
-
----
-
-# Important Current Implementation Areas
-
-Several existing areas require special attention during the refactor.
-
-## `+page.svelte`
-
-The application remains a single-route SPA.
-
-`+page.svelte` currently contains substantial Workspace Runtime logic.
-
-The target is for it to become primarily the SPA shell and rendering entry while Workspace behavior moves behind the Runtime boundary.
-
-Do not replace the Pane-based interaction model with route-based navigation.
-
----
-
-## Existing `modules/`
-
-The Module concept remains valid.
-
-Modules are Runtime presentation units.
-
-During the refactor, Domain-specific Modules should become associated with their owning Domain rather than remaining one globally owned application concept.
-
----
-
-## Existing `services/`
-
-The global services area should be treated as a migration source.
-
-For each service, determine:
-
-```text
-one Domain gives it meaning
-    → Domain
-
-cross-Domain coordination
-    → Application
-
-Resource lifecycle
-    → Resource Boundary
-
-pure technical capability
-    → Infrastructure
-```
-
-Do not preserve global sharing merely because multiple files currently import a service.
-
----
-
-## Existing `models/`
-
-Models should move according to meaning.
-
-Examples:
-
-```text
-Note
-    → Notes
-
-Reading Plan
-    → Reading Plans
-
-Pane
-    → Workspace Runtime
-
-Resource Representation
-    → Resource Boundary
-```
-
-The long-term architecture does not require one global `models/` owner.
-
----
-
-## Existing `nostr/`
-
-Current Nostr code may mix:
-
-* Domain-specific Resource behavior,
-* Resource lifecycle behavior,
-* and generic Nostr transport.
-
-These responsibilities should be separated.
-
-For example, Bible-specific chapter Resource interpretation belongs to Bible.
-
-Generic Resource event processing belongs to the Resource Boundary.
-
-Relay connectivity belongs to Infrastructure.
-
-Do not simply rename the existing `nostr/` directory and assume the boundary has been fixed.
-
----
-
-# Repository Areas
-
-At a high level, the repository contains:
-
-```text
-docs/
-    architecture and implementation documentation
-
-client/
-    SvelteKit browser application
-
-relay/
-    local Nostr relay implementation
-
-blossom/
-    external Resource-content service
-
-data/
-    application Resource source data
-
-zarf/
-    development and seed tooling
-```
-
-The client is an offline-first browser application.
-
-The relay and Blossom service support the Resource lifecycle.
-
-They are not the owners of application meaning.
-
----
-
-# Client Runtime
-
-The browser client uses SvelteKit but does not use server-side rendering as its application model.
-
-The application behaves as an SPA.
-
-Svelte is the presentation implementation.
-
-The architectural model remains:
-
-```text
-Workspace
-    ↓
-Pane
-    ↓
-Buffer
-    ↓
-Module Instance
-    ↓
-Domain
-```
-
-Framework structure should not be mistaken for application architecture.
-
----
-
-# How To Navigate the Documentation
-
-The recommended reading order is:
-
-```text
-PROJECT_CONTEXT.md
-        ↓
 Principles
-        ↓
+    = decision philosophy
+
 Application Architecture
-        ↓
+    = application responsibilities and ownership
+
 Resource Boundary
-        ↓
+    = external Resource lifecycle and protocol contract
+
 Implementation
-        ↓
+    = current realization of those responsibilities
+
 Developer Guide
-        ↓
-Source Code
+    = contributor workflow and repository conventions
 ```
 
-Each layer answers a different question.
+This separation is important.
+
+Architecture should not accumulate current implementation mechanics.
+
+Implementation documentation should not redefine architectural ownership.
+
+Developer guidance should not become a hidden source of architecture decisions.
 
 ---
 
-# Principles
+# How To Approach A Change
 
-The Principles explain **how architectural decisions are made**.
-
-They establish concepts such as:
-
-* ownership,
-* loose coupling,
-* architecture before implementation,
-* Local Authority,
-* and requesting data rather than storage location.
-
-When interpreting an ambiguous design decision, start with the Principles.
-
----
-
-# Application Architecture
-
-The Application Architecture explains **how the application is organized and behaves**.
-
-Important topics include:
+When introducing or refactoring functionality, reason in this order:
 
 ```text
-Domains
-Public APIs
-Data Access
-Technical Infrastructure
-Resource Boundary
-Persistence
-Application Startup
-Background Processing
-Module Presentation
-User Interface
-Application Events
-Workspace Runtime
-```
-
-These specifications define ownership and collaboration.
-
----
-
-# Resource Boundary
-
-The Resource Boundary explains **how Domain information participates in the Nostr Resource lifecycle**.
-
-Start with:
-
-```text
-00-resource-boundary-overview.md
-```
-
-and read through:
-
-```text
-11-resource-archives.md
-```
-
-The ADRs are intentionally ordered.
-
-Later documents rely on decisions established earlier.
-
----
-
-# Implementation Documentation
-
-Implementation documents describe **how the current application realizes the architecture**.
-
-These documents may describe concrete mechanisms such as:
-
-* Workspace implementation,
-* Runtime rendering,
-* Nostr event processing,
-* Resource Discovery implementation,
-* Resource Resolution implementation,
-* Resource Installation implementation,
-* IndexedDB persistence,
-* Outbox processing,
-* Domain implementation mapping,
-* and target code organization.
-
-Implementation documents may change more quickly than architecture documents.
-
-They must not silently redefine architecture.
-
----
-
-# Refactoring Documentation
-
-Two implementation documents are particularly important during the current restructuring:
-
-```text
-010-domain-implementation-map.md
-
-011-target-code-organization.md
-```
-
-The Domain Implementation Map answers:
-
-> **Which architectural owner should existing implementation responsibilities belong to?**
-
-The Target Code Organization answers:
-
-> **How should those owners become visible in the physical TypeScript/Svelte structure?**
-
-Use those documents before performing broad file moves.
-
----
-
-# Source Code
-
-The source code is currently converging toward the documented architecture.
-
-During the refactor, the following may all be true at the same time:
-
-```text
-architecture says where responsibility belongs
-
-implementation docs describe the target
-
-existing source still reflects older organization
-```
-
-Do not automatically infer architecture from current directories.
-
-When implementation and architecture differ, first determine whether the source simply has not been migrated yet.
-
----
-
-# Working Rules for Developers
-
-When introducing or moving functionality:
-
-1. Determine the owner.
-2. Use the owner's Public API from outside that owner.
-3. Keep Domain meaning out of Infrastructure.
-4. Keep raw Nostr transport out of normal Domain behavior.
-5. Keep Workspace layout behavior out of Domains.
-6. Keep Resource lifecycle policy inside the Resource Boundary.
-7. Keep persistence separate from ownership.
-8. Preserve offline-first behavior.
-9. Prefer incremental refactoring over repository-wide rewrites.
-10. Do not invent architecture when an accepted specification already answers the question.
-
----
-
-# Working Rules for AI Agents
-
-AI agents working in this repository should treat the architecture documents as intentional constraints rather than suggestions.
-
-Before proposing a new abstraction, first determine whether an existing owner already owns the responsibility.
-
-Do not casually introduce:
-
-```text
-new Domain
-new architectural layer
-generic Manager
-global Store
-generic Service
-shared module
-new Resource identity concept
-new synchronization mechanism
-```
-
-merely because such patterns are common elsewhere.
-
-The project deliberately avoids architecture-by-template.
-
-When working on implementation:
-
-```text
-read the relevant architecture
-        ↓
-identify ownership
-        ↓
-inspect current implementation
-        ↓
-determine migration gap
-        ↓
-change implementation
-```
-
-Do not redesign accepted architecture unless the requested implementation cannot satisfy it.
-
-If a real conflict is discovered, surface the conflict explicitly.
-
----
-
-# Architecture Is Authoritative
-
-Accepted architecture documents should be treated as read-only unless a task explicitly asks to revise them.
-
-Implementation work should attempt to satisfy the architecture before proposing an architecture change.
-
-The fact that existing code behaves differently is not, by itself, evidence that the architecture should change.
-
-The implementation is currently undergoing alignment.
-
----
-
-# Useful Distinctions
-
-Several distinctions recur throughout the project.
-
-They are worth memorizing.
-
-```text
-Domain
-    ≠
-Module
-
-Domain Object
-    ≠
-Resource
-
-Resource
-    ≠
-Nostr Event
-
-Published Resource Identity
-    ≠
-Event ID
-
-Resource Integrity
-    ≠
-Domain Validity
-
-Discovery
-    ≠
-Resolution
-
-Resolution
-    ≠
-Installation
-
-Installation
-    ≠
-Persistence
-
-Publication
-    ≠
-Persistence
-
-Last Write Wins
-    ≠
-automatic network authority
-
-Background Execution
-    ≠
-ownership
-
-Shared Use
-    ≠
-shared ownership
-```
-
-Many architectural mistakes come from collapsing one of these distinctions.
-
----
-
-# The Complete Application Model
-
-A useful high-level picture is:
-
-```text
-                            APPLICATION
-
-User
- ↓
-Workspace Runtime
- ↓
-Pane
- ↓
-Buffer
- ↓
-Module Instance
- ↓
-Domain Public API
- ↓
-Domain
- ↓
-Domain Objects
- │
- │ when external lifecycle is required
- ▼
-
-===================== RESOURCE BOUNDARY =====================
-
-Resource
- ↓
-Resource Representation
- ↓
-Nostr Event / Descriptor
- ↓
-Nostr Relays + External Resource Content
-
-=============================================================
-
-Inbound information returns through:
-
-Discovery
- ↓
-Resolution
- ↓
-Verified Resource Content
- ↓
-Domain Interpretation
- ↓
-Candidate Domain Object
- ↓
-Domain Validation
- ↓
-Installation
- ↓
-Accepted Local Domain State
-```
-
-The Runtime owns the study environment.
-
-Domains own application meaning.
-
-The Resource Boundary owns the external Nostr Resource lifecycle.
-
-Infrastructure provides the technical capabilities used to implement all three.
-
----
-
-# How New Functionality Should Be Reasoned About
-
-When adding functionality, reason in this order:
-
-```text
-What does this mean?
-        ↓
+What does this capability mean?
+    ↓
 Who owns that meaning?
-        ↓
+    ↓
 What responsibility is required?
-        ↓
-How should other owners collaborate with it?
-        ↓
-Does the information need an external Resource lifecycle?
-        ↓
-Which existing architecture applies?
-        ↓
-How should it be implemented?
+    ↓
+What must other owners be allowed to consume?
+    ↓
+What implementation best fulfills that contract today?
 ```
 
-Do not begin with the folder or framework feature.
-
-Begin with meaning.
+This keeps changes aligned with the architecture without freezing the implementation.
 
 ---
 
-# Example — Bible Search
+# Key Invariants
 
-Question:
+The following ideas should remain recognizable throughout the project:
 
-> Where does Bible Search belong?
-
-Reasoning:
-
-```text
-What is being searched?
-    Bible information
-
-Who owns Bible information?
-    Bible Domain
-
-Therefore:
-    Bible Search belongs to Bible
-```
-
-A shared search engine may still exist in Technical Infrastructure.
-
-Technical reuse does not transfer application ownership.
-
----
-
-# Example — Reading Plan Opens Scripture
-
-Question:
-
-> How should Reading Plans open a Bible chapter?
-
-Reading Plans should not import Bible internals or mutate Workspace state directly.
-
-Conceptually:
-
-```text
-Reading Plans
-    ↓
-Navigation Context / Shared Bible Location
-    ↓
-Workspace Runtime
-    ↓
-Bible Module
-    ↓
-Bible Public API
-```
-
-Each owner retains its responsibility.
+* KJVOnly has one Application Architecture.
+* The application operates on Domain Objects.
+* Domains own application meaning and behavior.
+* Workspace Runtime owns study-session structure rather than Domain behavior.
+* Modules present Domain behavior as independently active interactions.
+* Public APIs expose intentional cross-owner contracts.
+* Usage does not transfer ownership.
+* Strong's is its own Domain.
+* Settings is application-owned rather than a Domain.
+* Bible search and Bible text markup belong to the Bible Domain.
+* Reading Plans own Plan Definitions, Plan Subscriptions, and Plan Progress.
+* Accepted local state remains authoritative for normal application behavior.
+* The network proposes; the application decides.
+* Resources represent Domain information that requires an external lifecycle.
+* Not every Domain Object must become a Resource.
+* Resource, Domain Object, and Nostr Event are distinct concepts.
+* Discovery, Resolution, Installation, publication, and synchronization are distinct responsibilities.
+* Nostr is the protocol defined by the Resource Boundary for Resource publication and discovery.
+* Implementation mechanisms remain subordinate to architectural responsibility.
 
 ---
 
-# Example — Incoming Note Resource
+# Where To Go Next
 
-Question:
-
-> What happens when another device publishes an updated Note?
-
-Conceptually:
+After this document, continue through the repository in this order:
 
 ```text
-Nostr Publication
-        ↓
-Resource Discovery
-        ↓
-Resource Resolution
-        ↓
-Verified Note Resource Content
-        ↓
-Notes Domain Interpretation
-        ↓
-Candidate Note
-        ↓
-Notes Validation
-        ↓
-LWW Reconciliation if applicable
-        ↓
-Installation
-        ↓
-Accepted Local Note
+docs/00_principles/
+    ↓
+docs/01_application-architecture/
+    ↓
+docs/02_resource-boundary/
+    ↓
+docs/03_implementation/
+    ↓
+docs/05_developer-guide/
+    ↓
+source code
 ```
 
-The relay never directly writes a Note into accepted application state.
+The architecture documents explain what the system owns and why.
 
----
+The implementation documents explain how those responsibilities are currently realized.
 
-# Example — Offline Note Edit
+The Developer Guide explains how to change the codebase without weakening those boundaries.
 
-Question:
-
-> What happens when a user edits a Note while offline?
-
-```text
-User Edit
-    ↓
-Notes Domain
-    ↓
-Accepted Local Note
-    ↓
-Persist Local State
-    +
-Durable Publication Intent
-    ↓
-User Continues Working
-```
-
-Later:
-
-```text
-Connectivity
-    ↓
-Outbox
-    ↓
-Resource Representation
-    ↓
-Signed Nostr Event
-    ↓
-Relay
-```
-
-Offline behavior remains the default rather than an exception.
-
----
-
-# What Should Remain Stable
-
-The following concepts are intended to survive implementation changes:
-
-```text
-Domain ownership
-
-Workspace → Pane → Buffer → Module Instance
-
-Public APIs
-
-Application Events
-
-Resource Boundary
-
-Resource Identity
-
-Local Authority
-
-Discovery / Resolution / Installation separation
-
-durable Outbox publication
-
-Last Write Wins synchronization
-
-Resource Archives
-
-offline-first behavior
-```
-
-Frameworks, libraries, adapters, directory details, and implementation patterns may change.
-
-The responsibilities should change much more slowly.
-
----
-
-# What Is Currently Changing
-
-The source code is being refactored to better express the documented architecture.
-
-The main direction is:
-
-```text
-technical-role organization
-
-    components/
-    models/
-    modules/
-    services/
-    workers/
-    nostr/
-
-            ↓
-
-ownership-oriented organization
-
-    application/
-    domains/
-    resource/
-    infrastructure/
-    components/
-```
-
-This is intended as an incremental refactor.
-
-The existing application is not being discarded.
-
-Behavior should remain stable while ownership and dependency boundaries become explicit.
-
----
-
-# What To Do When Something Is Unclear
-
-When you encounter an unfamiliar piece of code:
-
-```text
-1. Determine what information or behavior it represents.
-
-2. Identify the architectural owner.
-
-3. Read that owner's architecture specification.
-
-4. Check the Domain Implementation Map.
-
-5. Check the Target Code Organization.
-
-6. Inspect the current source implementation.
-
-7. Decide whether the code is:
-       already aligned,
-       waiting to be migrated,
-       or genuinely conflicting with architecture.
-```
-
-Do not infer a new architectural rule merely from legacy file placement.
-
----
-
-# Documentation Authority
-
-The documentation has different levels of purpose.
-
-```text
-Principles
-    establish design rules
-
-Application Architecture
-    establishes ownership and collaboration
-
-Resource Boundary ADRs
-    establish Nostr Resource lifecycle contracts
-
-Implementation Docs
-    describe current and target implementation
-
-Developer Guide
-    describes development practice
-
-Source Code
-    realizes those decisions
-```
-
-Architecture is more stable than implementation.
-
-Implementation documentation should evolve as the refactor progresses.
-
----
-
-# Recommended Reading Path
-
-For a developer or AI agent beginning work:
-
-```text
-1. PROJECT_CONTEXT.md
-
-2. Principles
-
-3. Application Architecture
-       especially:
-           Domains
-           Public APIs
-           Resource Boundary
-           Persistence
-           Module Presentation
-           Application Events
-
-4. Resource Boundary
-       00 → 11 in order
-
-5. Implementation
-       Workspace Runtime
-       Runtime Rendering
-       Domain Implementation Map
-       Target Code Organization
-       relevant Resource implementation docs
-
-6. Developer Guide
-
-7. Source Code
-```
-
-It is usually unnecessary to memorize every document before making a small change.
-
-Read this context first, then follow the ownership of the task into the relevant specifications.
-
----
-
-# Key Takeaways
-
-KJVOnly is an offline-first Bible study application built around one Application Architecture.
-
-The architecture begins with meaning.
-
-Meaning determines ownership.
-
-Domains own application meaning.
-
-The Workspace Runtime owns the study environment.
-
-Modules present Domain capabilities.
-
-Architectural owners collaborate through explicit Public APIs, Application Events, Shared Identifiers, and Navigation Context.
-
-The Resource Boundary is part of the Application Architecture.
-
-It defines how Domain information participates in a **Nostr-specific external Resource lifecycle**.
-
-A Domain Object is not automatically a Resource.
-
-A Resource is not a Nostr event.
-
-A Nostr event does not automatically become accepted application state.
-
-Published Resource Identity is:
-
-```text
-kind + publisher pubkey + d
-```
-
-while an event ID identifies one publication.
-
-Incoming Resource information moves through:
-
-```text
-Discovery
-    ↓
-Resolution
-    ↓
-Domain Interpretation
-    ↓
-Domain Validation
-    ↓
-Installation
-```
-
-Local application information is accepted first and published independently through a durable Outbox.
-
-Multi-device synchronization uses Last Write Wins while preserving Local Authority.
-
-Resource Archives make Resources portable without turning them into arbitrary application backups.
-
-Persistence implements durability but does not own application meaning.
-
-Technical Infrastructure provides capabilities but does not own policy.
-
-The source code is currently being incrementally refactored from technical-role organization toward ownership-oriented organization.
-
-When source structure and architecture differ, do not assume the source structure is the intended architecture.
-
-Start with ownership.
-
-Then understand the current implementation.
-
-Then refactor toward the documented boundary.
-
----
-
-# Final Mental Model
-
-If only one model is remembered, use this one:
-
-```text
-Meaning
-    ↓
-Domain Ownership
-    ↓
-Domain Objects
-    ↓
-Application Behavior
-
-        ↕
-
-Workspace Runtime
-    composes interaction
-
-        ↕
-
-Resource Boundary
-    gives selected Domain information
-    an external Nostr Resource lifecycle
-
-        ↕
-
-Nostr / Relays / External Resource Content
-```
-
-The application remains locally authoritative and offline-first.
-
-Nostr enables decentralized publication, discovery, and synchronization without becoming the application's internal model.
-
-The implementation exists to realize these responsibilities.
-
-> **Understand the owner first. The code becomes much easier to understand afterward.**
+By the time the source is examined, the purpose of its major boundaries should already be clear.

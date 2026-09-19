@@ -1,6 +1,7 @@
-import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+import {
+	type PublishedResourceReference,
+	type ResourceLoader
+} from '$lib/resource';
 
 import type {
 	BibleTextMarkup
@@ -14,9 +15,6 @@ import type {
 	BibleTextMarkupStore
 } from '$lib/domains/bible/persistence/bible-text-markup-store';
 
-import type {
-	ResourceLoader
-} from '$lib/resource/loading/resource-loader';
 
 import type {
 	BibleTextMarkupWriteTransaction
@@ -28,14 +26,14 @@ import type {
 
 import type {
 	OutboxWakeup
-} from '$lib/application/outbox/outbox-wakeup';
+} from '$lib/application';
 
 import {
 	parseBibleTextMarkupResourceSource
 } from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-source';
 
-import {
-	bibleLocationReferenceService
+import type {
+	BibleLocationReferenceService
 } from './bibleLocationReference.service';
 
 type BibleTextMarkupSubscriber = {
@@ -81,7 +79,13 @@ export class BibleTextMarkupService {
 			>,
 
 		private readonly outbox:
-			OutboxWakeup
+			OutboxWakeup,
+
+		private readonly bibleLocationReferenceService:
+			Pick<
+				BibleLocationReferenceService,
+				'extractBookIDChapter'
+			>
 	) {}
 
 	async put(
@@ -166,7 +170,7 @@ export class BibleTextMarkupService {
 			);
 
 		const chapterRef =
-			bibleLocationReferenceService
+			this.bibleLocationReferenceService
 				.extractBookIDChapter(
 					bibleLocationRef
 				);

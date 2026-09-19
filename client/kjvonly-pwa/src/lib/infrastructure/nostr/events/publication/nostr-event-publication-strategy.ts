@@ -1,10 +1,10 @@
 import type {
 	OutboxPublicationIntent
-} from '$lib/application/outbox/outbox-publication-intent';
+} from '$lib/application';
 
 import type {
 	OutboxPublicationStrategy
-} from '$lib/application/outbox/outbox-publication-strategy';
+} from '$lib/application';
 
 import type {
 	NostrClient

@@ -21,7 +21,7 @@
 	{#each fontWeights as fw}
 		<button
 			style="font-weight: {fw}"
-			class="{fw === settings?.fontWeight
+			class="{fw === settings.fontWeight
 				? 'bg-primary-500 text-neutral-50'
 				: ''} border border-1 border-neutral-400 p-2 hover:cursor-pointer"
 			onclick={() => onFontWeightSelected(fw)}

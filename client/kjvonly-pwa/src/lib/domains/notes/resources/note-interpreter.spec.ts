@@ -6,7 +6,7 @@ import {
 
 import type {
 	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
 	NOTES_RESOURCE_TYPE,

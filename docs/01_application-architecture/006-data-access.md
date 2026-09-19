@@ -63,10 +63,10 @@ The request is for a Bible Chapter.
 It is not a request for:
 
 ```text
-IndexedDB record
-Nostr event
-Blossom object
-relay query
+Persistence record
+Protocol event
+External storage object
+external query
 ```
 
 Those concepts describe possible implementation or retrieval mechanisms.
@@ -356,11 +356,11 @@ Choose implementation
 The caller should never need to decide:
 
 ```text
-Should I read IndexedDB?
+Which storage mechanism should I query?
 
-Should I query a relay?
+Which external source should I query?
 
-Should I download from Blossom?
+Which external storage provider should I use?
 ```
 
 Those questions belong beneath the architectural request.

@@ -6,7 +6,7 @@ import {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import type {
 	BiblePericopes
@@ -19,6 +19,10 @@ import {
 import {
 	PericopesService
 } from './pericopes.service';
+
+import {
+	BibleLocationReferenceService
+} from './bibleLocationReference.service';
 
 describe(
 	'PericopesService',
@@ -47,7 +51,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						loader
 					);
@@ -110,7 +114,7 @@ describe(
 					);
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						loader
 					);
@@ -168,7 +172,7 @@ describe(
 					);
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						loader
 					);
@@ -202,7 +206,7 @@ describe(
 			'throws when no Resource can provide the Pericopes',
 			async () => {
 				const service =
-					new PericopesService(
+					createPericopesService(
 						new FakePericopesStore(),
 						new FakeResourceLoader(
 							async () =>
@@ -228,7 +232,7 @@ describe(
 					new FakePericopesStore();
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						new FakeResourceLoader(
 							async () =>
@@ -258,7 +262,7 @@ describe(
 					new FakePericopesStore();
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						new FakeResourceLoader(
 							async () =>
@@ -288,7 +292,7 @@ describe(
 			'propagates Resource loading failures',
 			async () => {
 				const service =
-					new PericopesService(
+					createPericopesService(
 						new FakePericopesStore(),
 						new FakeResourceLoader(
 							async () => {
@@ -320,7 +324,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						loader
 					);
@@ -357,7 +361,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						loader
 					);
@@ -394,7 +398,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new PericopesService(
+					createPericopesService(
 						store,
 						loader
 					);
@@ -422,6 +426,17 @@ describe(
 		);
 	}
 );
+
+function createPericopesService(
+	store: FakePericopesStore,
+	loader: FakeResourceLoader
+): PericopesService {
+	return new PericopesService(
+		store,
+		loader,
+		new BibleLocationReferenceService()
+	);
+}
 
 class FakePericopesStore {
 

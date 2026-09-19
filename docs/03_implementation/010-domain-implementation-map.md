@@ -1,60 +1,38 @@
 # Domain Implementation Map
 
-**Status**
-
-Refactoring Guide
+**Status:** Current Implementation Guide
 
 ---
 
 # Purpose
 
-This document maps the current KJVOnly implementation to the ownership model defined by the Application Architecture and Resource Boundary specifications.
+This document maps the current KJVOnly client implementation to its architectural owners.
 
-Its purpose is to answer:
+It answers:
 
-> **Which architectural owner should each existing implementation responsibility belong to during the refactor?**
+> **Which part of the application owns each implementation responsibility, and through which boundary should other parts of the application collaborate with it?**
 
-This is not a new architecture specification.
+This document is not a new architecture specification.
 
-The architecture is already defined.
+It records the ownership model that is now implemented in the client after the runtime, Resource, authentication, Notes, Reading Plans, Outbox, and general-cleanup refactors.
 
-This document translates those decisions into a practical migration map for the existing codebase.
+The current source remains authoritative when an older document or historical example disagrees with this map.
 
----
-
-# Refactoring Goal
-
-The refactor should reorganize the existing application around explicit ownership without unnecessarily changing behavior.
-
-The desired progression is:
+Physical directory and import-boundary conventions are documented separately in:
 
 ```text
-Current Implementation
-        ↓
-Identify Responsibility
-        ↓
-Identify Architectural Owner
-        ↓
-Move Behind Owner Boundary
-        ↓
-Preserve Existing Behavior
-        ↓
-Remove Obsolete Cross-Boundary Dependencies
+011-target-code-organization.md
 ```
-
-The initial goal is structural clarity.
-
-Behavioral redesign should happen separately unless the current behavior cannot satisfy the architecture.
 
 ---
 
-# Ownership Model
+# Core Ownership Principle
 
-Implementation ownership follows the principle:
+Implementation ownership follows the rule:
 
-> **Ownership is the assignment of responsibility to the part of the application that gives that responsibility meaning.**
+> **Code belongs to the owner that gives the code its application meaning.**
 
-KJVOnly uses four important implementation areas:
+KJVOnly currently has five important ownership areas:
 
 ```text
 Domains
@@ -63,245 +41,506 @@ Application
 
 Resource Boundary
 
-Technical Infrastructure
+Infrastructure
+
+Shared
 ```
 
-These areas collaborate but do not share ownership merely because code is reused.
+These areas collaborate, but collaboration does not transfer ownership.
+
+A technical mechanism also does not become an owner merely because multiple parts of the application use it.
 
 ---
 
-# Domain Ownership
+# Current High-Level Ownership Model
 
-Domains own application meaning.
+```text
+Application
+    = composition root
+      + runtime coordination
+      + cross-domain application behavior
+      + application-owned services
+      + publication/outbox coordination
 
-Current primary Domains are:
+Domains
+    = application meaning
+      + domain objects
+      + domain behavior
+      + domain persistence adapters
+      + domain Resource interpretation/publication
+      + domain presentation
+
+Resource
+    = generic Resource lifecycle contracts and machinery
+
+Infrastructure
+    = concrete technical capabilities
+      such as IndexedDB and Nostr transport
+
+Shared
+    = owner-neutral utilities only
+```
+
+The dependency direction should make those responsibilities visible.
+
+---
+
+# Current Domains
+
+The current primary Domains are:
 
 ```text
 Bible
-
 Notes
-
 Reading Plans
-
-Settings
+Strong's
 ```
 
-A Domain owns:
+There is **not** currently a separate Settings Domain.
 
-* its Domain Objects,
-* Domain behavior,
-* Domain validation,
-* Domain-specific services,
-* Domain-specific persistence behavior,
-* Resource interpretation for its Domain information,
-* Resource serialization for its Domain information,
-* and presentation Modules whose behavior belongs primarily to that Domain.
+Settings are application preferences and are owned by the Application layer through `SettingsService`.
 
-A Domain does not own generic Nostr transport, Workspace layout, or shared technical infrastructure.
+Strong's is also no longer treated as merely an internal Bible helper. It has its own Domain boundary and Resource lifecycle, while still being consumed primarily from Bible-related presentation.
+
+---
+
+# Public Owner Boundaries
+
+The current public boundaries include:
+
+```text
+$lib/application
+$lib/application/ui
+
+$lib/domains/bible
+$lib/domains/bible/ui
+
+$lib/domains/notes
+$lib/domains/notes/ui
+
+$lib/domains/reading-plans
+$lib/domains/reading-plans/ui
+
+$lib/domains/strongs
+
+$lib/resource
+$lib/shared
+```
+
+The root API represents the logical owner.
+
+A separate `/ui` API exists only where Svelte/browser-only presentation must remain separate from Node-safe contracts and services.
+
+Internal implementation code may use direct internal imports where appropriate.
+
+Composition roots and integration tests may intentionally import concrete implementations.
 
 ---
 
 # Application Ownership
 
-Application-level responsibilities coordinate multiple Domains or the application Runtime itself.
+The Application layer owns behavior that is application-wide rather than meaningful to one Domain.
 
-Current application responsibilities include:
+Current Application responsibilities include:
 
 ```text
+Application composition
+ApplicationContext
 Workspace Runtime
-
-Pane
-
-Buffer
-
-Module Instance lifecycle
-
-cross-Domain navigation
-
-shared application services
-
-application settings coordination
-
-application events
+Pane / Buffer coordination
+Module Resource selection
+application settings
+account/authentication coordination
+Toast behavior
+per-container NavigationService creation
+Outbox publication coordination
+application configuration
 ```
 
-Application responsibilities must not absorb Domain behavior merely because several Domains use the application Runtime.
+The Application layer must not absorb Domain behavior merely because it constructs or coordinates Domain services.
 
 ---
 
-# Resource Boundary Ownership
+# Application as Composition Root
 
-The Resource Boundary owns the external Resource lifecycle.
+The concrete `Application` class is the main browser-runtime composition root.
 
-Implementation responsibilities include:
+It constructs and wires:
 
 ```text
-Nostr event processing
-
-Resource Discovery
-
-Resource Resolution
-
-Resource Installation coordination
-
-Outbox and publication
-
-Multi-Device Synchronization
-
-Resource Archives
+Application services
+Workspace Runtime
+Resource Worker client
+Resource-selection orchestration
+Domain services
+Domain persistence adapters
+Resource handlers
+Outbox
+Nostr infrastructure
+Account/authentication strategies
 ```
 
-The Resource Boundary does not own Domain meaning.
+The direct runtime import rule is intentionally strict:
 
-It coordinates with the owning Domain when Resource content must be interpreted, validated, serialized, or accepted.
+```text
+src/routes/+layout.svelte
+    ↓
+concrete Application
+```
+
+`+layout.svelte` is the browser application bootstrap boundary and is the only runtime location that should directly import the concrete `Application` class.
+
+Normal application code should instead consume:
+
+```text
+$lib/application
+$lib/application/ui
+ApplicationContext
+Domain APIs
+```
+
+This avoids making lower-level code depend back on the concrete composition root.
 
 ---
 
-# Technical Infrastructure Ownership
+# ApplicationContext
 
-Technical Infrastructure supplies reusable capabilities.
+`ApplicationContext` is the intentional Svelte-facing runtime capability surface.
 
-Examples include:
+It is not a registry of every object constructed by `Application`.
+
+Current capabilities include application-wide services such as:
 
 ```text
-IndexedDB access
-
-Nostr relay connections
-
-HTTP access
-
-Blossom access
-
-compression
-
-hashing
-
-worker execution
-
-generic event infrastructure
+AuthenticationService
+AccountService
+ToastService
+SettingsService
+NavigationServiceFactory
+WorkspaceRuntime
+ModuleResourceSelectionResolver
 ```
 
-Infrastructure implements capabilities.
+and Domain-facing services required directly by Svelte presentation, including current Bible, Notes, Reading Plans, and Strong's services.
 
-It does not determine Domain policy or Resource lifecycle policy.
+A service belongs in `ApplicationContext` when:
+
+```text
+Svelte needs the capability
+AND
+Application owns/constructs the runtime instance
+```
+
+A service should not be exposed merely because doing so is convenient for a test or internal implementation.
 
 ---
 
-# Current Repository Areas
+# Per-Container State
 
-The current client implementation primarily lives under:
+Not every Svelte-facing service should be a singleton.
+
+`NavigationService` is the current example.
+
+Login/Profile containers need independent navigation stacks.
+
+Therefore ownership is:
 
 ```text
-client/src/lib/
+Application
+    owns NavigationServiceFactory
+        ↓
+ApplicationContext
+        ↓
+Svelte container
+    creates its own NavigationService instance
 ```
 
-with existing organizational concepts including:
-
-```text
-components/
-models/
-modules/
-services/
-workers/
-nostr/
-```
-
-These directories currently mix several different kinds of ownership.
-
-The refactor should gradually replace organization by technical role with organization by architectural owner where appropriate.
+This preserves application-controlled construction without incorrectly sharing per-container state.
 
 ---
 
-# Target Ownership Model
+# Workspace Runtime Ownership
+
+Workspace behavior belongs to the Application Runtime.
+
+Current ownership is:
+
+```text
+Application
+    ↓
+WorkspaceRuntime
+    ↓
+PaneService
+```
+
+`WorkspaceRuntime` is the public Workspace coordinator.
+
+`PaneService` is an internal implementation detail behind it.
+
+Current Workspace responsibilities include:
+
+```text
+initialization
+Pane lookup
+Pane splitting
+Pane deletion/collapse
+Buffer replacement
+Pane-ID allocation
+Workspace persistence
+layout derivation
+Pane dimension publication/subscription
+Workspace change notifications
+```
+
+Svelte/runtime consumers should use `WorkspaceRuntime`, not `PaneService`.
+
+---
+
+# Pane Ownership
+
+Pane is an Application Runtime object.
+
+A Pane owns structural placement information such as:
+
+```text
+identity
+left/right child relationships
+split orientation
+Buffer association
+transient recreation toggle
+```
+
+Pane IDs are stable rendered identities.
+
+Pane objects may become stale after tree mutation.
+
+Pane IDs are not reused during the page lifetime.
+
+A split preserves the original Pane ID on the existing-side child and assigns a new ID to the newly created sibling.
+
+Delete collapses only the minimum surrounding branch.
+
+---
+
+# `pane.toggle`
+
+`pane.toggle` remains an Application Runtime implementation detail with important learned behavior.
+
+It is used to force Svelte module recreation when required.
+
+It must not be removed casually merely because it appears unusual.
+
+The field is transient and is not persisted.
+
+---
+
+# Buffer Ownership
+
+Buffer is an Application Runtime abstraction.
+
+Current important Buffer state is:
+
+```text
+key
+componentName
+bag
+resourceSelections
+```
 
 Conceptually:
 
 ```text
-client/src/lib/
-
-    domains/
-        bible/
-        notes/
-        reading-plans/
-        settings/
-
-    application/
-        runtime/
-        services/
-        events/
-
-    resource/
-        nostr/
-        discovery/
-        resolution/
-        installation/
-        publishing/
-        synchronization/
-        archives/
-
-    infrastructure/
-        persistence/
-        network/
-        workers/
-
-    components/
+Pane
+    ↓
+Buffer
+    ├── Module identity
+    ├── module runtime/navigation bag
+    └── captured Resource selections
 ```
 
-The exact physical layout is defined separately by the Target Code Organization document.
+Buffer identity is independent from Pane identity.
 
-This document determines ownership rather than final folder names.
+Buffer remains Domain-agnostic.
+
+A new Domain Module should not require a change to Buffer semantics merely because its navigation payload differs.
+
+Historical fields such as `name`, `component`, `keyboardBindings`, `selected`, `onFocus`, and `NullBuffer` are not part of the current contract.
+
+---
+
+# Module Resource Selection Ownership
+
+Resource selection is coordinated by the Application but Domain semantics remain Domain-owned.
+
+Current flow:
+
+```text
+ResourceSelectionService
+    ↓
+ModuleResourceSelectionBuilder
+    ↓
+Domain/module contributor
+    ↓
+ModuleBufferFactory
+    ↓
+Buffer.resourceSelections
+    ↓
+ModuleResourceSelectionResolver
+    ↓
+Module UI
+```
+
+Important ownership rules:
+
+```text
+Application
+    owns selection orchestration and Buffer capture
+
+Domain contributor
+    defines what Resource Types its Module requires
+
+Domain service
+    receives PublishedResourceReference
+    and does not know Pane/Buffer mechanics
+```
+
+Generic application code should not branch on a specific Domain to determine Domain Resource semantics.
+
+---
+
+# Application Settings
+
+Settings are application-owned preferences.
+
+Current ownership is:
+
+```text
+Application
+    ↓
+SettingsService
+    ↓
+ApplicationContext
+    ↓
+Svelte settings UI / interested runtime consumers
+```
+
+Settings persistence and application of settings belong to `SettingsService`.
+
+Settings are not currently modeled as an independent Domain.
+
+Examples of current settings behavior include:
+
+```text
+theme
+font size
+paragraph visibility
+pericope visibility
+Bible version display preferences
+layout-related presentation preferences
+```
+
+Settings subscribers receive the current `Settings` snapshot directly.
+
+Consumers should not respond to a Settings notification by unnecessarily rereading persisted settings.
 
 ---
 
 # Bible Domain
 
-The Bible Domain owns Bible meaning and behavior.
+The Bible Domain owns Bible meaning and Bible-specific behavior.
 
-Current responsibilities that should belong to Bible include:
+Current responsibilities include:
 
-| Responsibility                    | Target owner |
-| --------------------------------- | ------------ |
-| Bible chapter Domain Objects      | Bible        |
-| Bible book/chapter/verse concepts | Bible        |
-| Bible chapter retrieval behavior  | Bible        |
-| Strong's-related Bible behavior   | Bible        |
-| Bible annotations and highlights  | Bible        |
-| Bible Search behavior             | Bible        |
-| Bible-specific search indexes     | Bible        |
-| Bible Resource interpretation     | Bible        |
-| Bible Resource serialization      | Bible        |
-| Bible Domain validation           | Bible        |
-| Bible-specific persistence        | Bible        |
+```text
+Bible chapters
+Bible versions
+book/chapter/verse concepts
+Bible location references
+Bible navigation
+Bible book names
+paragraphs
+pericopes
+text markup
+Bible search
+Bible search indexes
+Bible metadata/groupings
+Bible Resource interpretation
+Bible Resource validation
+Bible Resource publication mapping
+Bible-specific persistence adapters
+Bible presentation Modules
+```
+
+Bible services exposed through the Domain root include capabilities such as:
+
+```text
+ChapterService
+ParagraphsService
+PericopesService
+BibleTextMarkupService
+BibleBooknamesService
+SearchService
+VerseService
+BibleVersionsService
+BookGroupingsService
+BibleLocationReferenceService
+BibleNavigationService
+```
 
 ---
 
-# Bible Chapter Module
+# Bible Chapter Presentation
 
-The existing Bible reading Module remains a Module Instance presented through the Workspace Runtime.
-
-Its application meaning belongs to Bible.
+The Bible reading Module is presentation for the Bible Domain hosted by the Application Runtime.
 
 Conceptually:
 
 ```text
-Workspace Runtime
-        ↓
-Module Instance
-        ↓
-Bible Module
-        ↓
-Bible Public API
-        ↓
-Bible Domain
+WorkspaceRuntime
+    ↓
+Pane
+    ↓
+Buffer
+    ↓
+Bible UI
+    ↓
+Bible services
+    ↓
+Bible Domain persistence / Resource references
 ```
 
-The Module should not directly own:
+The Bible UI does not own:
 
-* pane-tree mutation,
-* Nostr queries,
-* Resource Resolution,
-* IndexedDB implementation,
-* or cross-Domain behavior.
+```text
+Pane-tree mutation
+Resource Resolution
+raw Nostr access
+IndexedDB database construction
+Outbox processing
+```
+
+---
+
+# Bible Text Markup
+
+The current writable Bible annotation/highlight concept is `BibleTextMarkup`.
+
+It replaces the older legacy annotation runtime path.
+
+Text markup is Bible-owned because its meaning is tied to Bible location and token indexes.
+
+Current ownership includes:
+
+```text
+BibleTextMarkup Domain Object
+BibleTextMarkupService
+Bible text-markup persistence
+Bible text-markup Resource interpretation/publication
+```
+
+Publication still passes through generic Resource/Outbox machinery.
+
+Do not reintroduce the removed legacy annotation architecture during cleanup.
 
 ---
 
@@ -311,157 +550,123 @@ Bible Search is a Bible capability.
 
 It is not a standalone Search Domain.
 
-Therefore:
-
-```text
-Bible Search
-    → Bible
-```
-
-Search infrastructure may be shared technically, but:
+Bible owns:
 
 ```text
 Bible query meaning
-Bible indexing policy
 Bible search results
+Bible index interpretation
+Bible search runtime behavior
 ```
 
-remain Bible-owned.
-
-A generic search engine or indexing library belongs to Technical Infrastructure when shared.
+Generic search/index technology could be infrastructure when shared, but Bible search policy remains Bible-owned.
 
 ---
 
-# Strong's
+# Bible Location References
 
-Strong's information currently supports Bible behavior.
+Bible location interpretation belongs to Bible.
 
-Unless future requirements establish an independent Domain, Strong's-related application behavior belongs to Bible.
+`BibleLocationReferenceService` supports the canonical Bible location format used by multiple runtime flows.
 
-This includes:
+Other Domains may carry Bible location values when requesting navigation, but they should not duplicate Bible parsing semantics.
+
+The service supports both versioned and unversioned references where the current contract permits them.
+
+---
+
+# Bible Navigation
+
+`BibleNavigationService` is Bible-owned navigation behavior.
+
+Its current responsibility is moving between Bible chapters while preserving the Bible-location contract.
+
+It does not own Workspace placement.
+
+Current chapter navigation includes Genesis/Revelation wraparound behavior.
+
+Historical internal pub/sub state was removed because no active caller used it.
+
+---
+
+# Strong's Domain
+
+Strong's is a current independent Domain boundary.
+
+It owns:
 
 ```text
-Strong's metadata interpretation
-
-Strong's lookup
-
-Strong's presentation associated with Bible text
-
+Strong's Domain models
+Strong's lookup behavior
 Strong's Resource interpretation
+Strong's Resource-selection contribution
+Strong's persistence
 ```
 
-Its Resource lifecycle still passes through the general Resource Boundary.
-
----
-
-# Bible Annotations
-
-Bible annotations, including verse and word highlights, belong to the Bible Domain.
-
-They should not become an independent Annotation Domain.
-
-Current behavior includes:
+The public boundary is:
 
 ```text
-verse highlight
-
-word highlight
-
-annotation lookup
-
-annotation persistence
-
-annotation publication
+$lib/domains/strongs
 ```
 
-Domain meaning belongs to Bible.
+Bible presentation may consume Strong's behavior, but Bible does not own the Strong's implementation.
 
-Generic publication mechanics belong to the Resource Boundary.
+The generic Resource lifecycle still passes through the Resource Boundary.
 
 ---
 
 # Notes Domain
 
-Notes owns all application meaning associated with Notes.
+Notes owns application meaning associated with Notes.
 
-Responsibilities include:
+Current responsibilities include:
 
-| Responsibility                | Target owner |
-| ----------------------------- | ------------ |
-| Note Domain Objects           | Notes        |
-| Notes List behavior           | Notes        |
-| Notes Search behavior         | Notes        |
-| Note validation               | Notes        |
-| Notes persistence             | Notes        |
-| Notes Resource interpretation | Notes        |
-| Notes Resource serialization  | Notes        |
-| Notes-specific indexes        | Notes        |
+```text
+Note Domain Objects
+Notes listing
+Notes search/index behavior
+Notes persistence
+Notes Resource interpretation
+Notes Resource publication
+Notes collection change notifications
+Notes presentation Modules
+```
+
+The public root is:
+
+```text
+$lib/domains/notes
+```
+
+Browser-only presentation exports are available through:
+
+```text
+$lib/domains/notes/ui
+```
 
 ---
 
-# Notes List Module
+# Notes Synchronization Boundary
 
-The Notes List is a presentation Module for the Notes Domain.
+Normal Notes reads do not own remote synchronization/acquisition.
 
-Conceptually:
+The old `NotesResourceAcquisition` path was removed because it had no production caller and mixed ordinary Notes access with Resource discovery/install behavior.
 
-```text
-Workspace
-    ↓
-Pane
-    ↓
-Buffer
-    ↓
-Notes List Module
-    ↓
-Notes Public API
-```
-
-The Module requests Notes behavior.
-
-It should not manipulate Notes persistence directly.
-
----
-
-# Notes Search
-
-Notes Search belongs to Notes.
-
-It is not part of a generic Search Domain.
-
-Shared indexing machinery may be infrastructure, but:
-
-```text
-what is indexed
-
-how Notes queries are interpreted
-
-how Notes results are represented
-```
-
-belong to Notes.
+Future Notes synchronization should be introduced deliberately as synchronization responsibility rather than hidden inside `NotesService` reads.
 
 ---
 
 # Notes Module Communication
 
-Existing behavior where Notes Search causes Notes List to refresh should eventually cross an explicit application boundary.
+Notes presentation should communicate through Notes/Application boundaries rather than taking ownership of another Notes Module.
 
-The intended ownership relationship is:
+Current Notes collection notifications are Domain-facing facts.
 
-```text
-Notes Search
-    ↓
-Notes Domain change / query result
-    ↓
-Application Event or Notes API
-    ↓
-Notes List reacts
-```
+A completed fact may be represented by a Domain/Application event.
 
-The exact event mechanism is implementation detail.
+A command should remain an explicit behavior request to the owning service.
 
-The important rule is that one Module should not become the owner of another Module.
+Do not use events merely to avoid calling a public behavior API.
 
 ---
 
@@ -469,678 +674,331 @@ The important rule is that one Module should not become the owner of another Mod
 
 Reading Plans owns plan meaning and progression.
 
-Responsibilities include:
+Current responsibilities include:
 
-| Responsibility               | Target owner  |
-| ---------------------------- | ------------- |
-| Reading Plan Domain Objects  | Reading Plans |
-| plan definitions             | Reading Plans |
-| reading progression          | Reading Plans |
-| completed-reading state      | Reading Plans |
-| plan validation              | Reading Plans |
-| plan persistence             | Reading Plans |
-| plan Resource interpretation | Reading Plans |
-| plan Resource serialization  | Reading Plans |
-| Reading Plan Modules         | Reading Plans |
+```text
+PlanDefinition
+PlanSubscription
+PlanProgress
+plan discovery/presentation models
+subscription snapshot behavior
+completed-reading/progress behavior
+Reading Plans persistence
+Reading Plans Resource interpretation
+Reading Plans Resource publication
+Reading Plans worker behavior
+Reading Plans presentation Modules
+```
+
+Current services include:
+
+```text
+PlanDefinitionsService
+PlanSubscriptionsService
+PlanProgressService
+PlansPubSubService
+SubsEnricherService
+EncodedReadingsDecoderService
+```
+
+The public root is:
+
+```text
+$lib/domains/reading-plans
+```
+
+Browser presentation is exposed through:
+
+```text
+$lib/domains/reading-plans/ui
+```
 
 ---
 
-# Completed Readings
+# Reading Plans Subscription Semantics
 
-Completed readings belong to Reading Plans.
+A Reading Plan subscription is a snapshot of the selected plan definition at subscription time.
 
-Their independent Nostr Resource representation does not make them a separate Domain.
+The user may subscribe to a plan they do not own.
 
-Conceptually:
-
-```text
-Reading Plans Domain
-    owns
-        Reading Plan
-        Progress
-        Completed Reading
-```
-
-Different Resource Types may represent these concepts externally without changing Domain ownership.
+The subscription/progress lifecycle remains Reading Plans-owned even though the underlying data is published through generic Resource infrastructure.
 
 ---
 
 # Reading Plans to Bible Navigation
 
-Reading Plans may cause navigation into Bible content.
+Reading Plans may request navigation into Bible content.
 
-Reading Plans should not reach into Bible internals.
-
-The current Buffer Bag/navigation-context mechanism provides an appropriate application-level collaboration boundary.
-
-Conceptually:
+Dependency direction is intentionally one-way:
 
 ```text
 Reading Plans
-    ↓
-Navigation Context
-    ↓
-Workspace Runtime
-    ↓
-Bible Module
-    ↓
-Bible Domain
-```
+    → Bible contracts
 
-The navigation request may include a shared Bible location reference.
-
-The Reading Plans Domain does not perform Bible retrieval itself.
-
----
-
-# Settings Domain
-
-Settings owns application preferences that have Domain meaning.
-
-Examples may include:
-
-```text
-theme-related application settings
-
-user preferences
-
-other durable configurable behavior
-```
-
-Not every setting necessarily becomes a Resource.
-
-Local-only preferences remain local unless the Domain deliberately gives them an external Resource representation.
-
----
-
-# Workspace Runtime
-
-The Workspace Runtime is an Application responsibility.
-
-It owns:
-
-```text
-Workspace
-
-Pane tree
-
-Pane splitting
-
-Pane closing
-
-Buffer lifecycle
-
-Module Instance placement
-
-layout composition
-
-Runtime restoration coordination
-```
-
-It does not own Domain behavior.
-
----
-
-# Workspace
-
-The Workspace represents the active arrangement of application interaction.
-
-The current application effectively uses the root Pane tree as its Workspace.
-
-Future named Workspace snapshots remain an Application Runtime feature.
-
-Workspace state should not be moved into a Domain merely because it is persisted.
-
----
-
-# Pane
-
-Pane is an Application Runtime object.
-
-Current Pane behavior includes:
-
-```text
-identity
-
-left/right child relationships
-
-split orientation
-
-Buffer association
-
-replacement
-
-closing
-
-layout participation
-```
-
-Pane logic should eventually be moved out of `+page.svelte` and behind the Workspace Runtime boundary.
-
----
-
-# Buffer
-
-Buffer is an Application Runtime abstraction.
-
-It connects a Pane with a Module Instance and its navigation context.
-
-Conceptually:
-
-```text
-Pane
-    ↓
-Buffer
-    ├── Navigation Context
-    └── Module Instance
-```
-
-Buffer must remain Domain-agnostic.
-
-A new Domain Module should not require changes to Buffer semantics merely because its navigation payload differs.
-
----
-
-# Navigation Context
-
-The existing Buffer Bag concept is application-level navigation context.
-
-Examples include:
-
-```text
-Bible location reference
-
-Reading Plan queue
-
-Module initialization information
-```
-
-Navigation Context transfers initialization information.
-
-It should not become a general cross-Domain dependency container.
-
----
-
-# Module Instance
-
-A Module Instance is a Runtime/presentation unit hosted by a Buffer.
-
-Examples include:
-
-```text
-Bible Reading
-
-Bible Search
-
-Notes List
-
-Notes Search
-
-Reading Plan
-```
-
-A Module Instance:
-
-* presents Domain behavior,
-* calls the owning Domain's Public API,
-* participates in Workspace Runtime,
-* and may request navigation/layout changes.
-
-It does not own:
-
-* Workspace layout,
-* another Domain,
-* generic persistence,
-* or Resource transport.
-
----
-
-# Pane Service
-
-The Pane Service is an Application service.
-
-Modules may request Runtime operations such as:
-
-```text
-open another Pane
-
-replace current Buffer
-
-navigate to another Module
-
-split layout
-```
-
-through the Pane/Workspace API.
-
-Domains should not directly manipulate the Pane tree.
-
----
-
-# Bible Location Reference
-
-The Bible Location Reference is shared between more than one owner.
-
-It is currently used by Bible and Reading Plans.
-
-Therefore it should remain an Application-level shared identifier/value rather than become private Reading Plans infrastructure.
-
-Conceptually:
-
-```text
-Reading Plans
-        ↓
-Bible Location Reference
-        ↓
-Application Navigation
-        ↓
 Bible
+    ✕ Reading Plans implementation
 ```
 
-Its interpretation as an actual Bible location ultimately belongs to Bible.
+Bible owns the shared Bible-reading navigation shape needed by Bible presentation.
+
+Reading Plans extends that shape with Reading Plans-specific state such as subscription identity and return-view information.
+
+This avoids a Bible ↔ Reading Plans type cycle.
+
+Reading Plans does not perform Bible retrieval itself.
 
 ---
 
-# Application Events
+# Reading Plans Worker
 
-Cross-owner notification should use Application Events where the meaning is:
+The Reading Plans worker is a separate composition root for worker execution.
 
-> **This happened.**
-
-Examples may include:
+It may construct its own local domain helpers such as:
 
 ```text
-Note changed
-
-Workspace changed
-
-Domain information accepted
+SubsEnricherService
+EncodedReadingsDecoderService
 ```
 
-Events should not become command APIs.
+rather than sharing browser Application instances.
 
-If a caller means:
+Worker commands and responses have explicit typed contracts.
 
-> **Please do this**
-
-it should normally call the owner's Public API instead.
+The worker execution environment does not change Domain ownership.
 
 ---
 
-# Current `services/`
+# Resource Boundary
 
-The existing shared `services/` directory should be treated as a migration source rather than a permanent architectural owner.
+The Resource layer owns generic Resource lifecycle concepts and machinery.
 
-Each service should be classified by meaning.
-
-Use:
+Its public root is:
 
 ```text
-Does one Domain give this service meaning?
-    → move to that Domain
-
-Does it coordinate multiple Domains?
-    → Application service
-
-Does it implement the Resource lifecycle?
-    → Resource Boundary implementation
-
-Does it only provide a technical capability?
-    → Technical Infrastructure
+$lib/resource
 ```
 
-The existence of multiple consumers is not sufficient reason to keep a service globally shared.
+Current public concepts include areas such as:
+
+```text
+PublishedResourceReference
+Resource identifiers
+Resource loading
+Resource content encoding/decoding
+Resource descriptors
+Resource resolution
+Resource interpretation/validation contracts
+Resource installation contracts
+Resource receipts
+Resource publication contracts
+Resource worker client
+```
+
+The Resource layer does not own Bible, Notes, Reading Plans, or Strong's meaning.
 
 ---
 
-# Current `models/`
+# Domain Resource Integration
 
-The existing `models/` directory should be decomposed by ownership.
+Domains participate in the Resource lifecycle at Domain-owned boundaries.
 
-A model belongs with the owner that gives it meaning.
-
-Examples:
+Typical ownership is:
 
 ```text
-Bible model
-    → Bible
+Resource Boundary
+    owns generic content / resolution / installation protocol
 
-Note model
-    → Notes
-
-Reading Plan model
-    → Reading Plans
-
-Pane / Buffer model
-    → Application Runtime
-
-Resource representation model
-    → Resource Boundary
+Domain
+    owns Resource Type meaning
+    interpreter
+    validator
+    Domain Object mapping
+    publication mapping
+    persistence transaction semantics
 ```
 
-Avoid maintaining one global application `models/` directory merely because all entries are TypeScript data structures.
-
----
-
-# Current `modules/`
-
-The current Module organization should be retained conceptually but aligned with Domain ownership.
-
-Modules remain Runtime presentation units.
-
-They should live near or clearly reference their owning Domain.
-
-Conceptually:
-
-```text
-Bible
-    modules/
-        reading
-        search
-
-Notes
-    modules/
-        list
-        search
-
-Reading Plans
-    modules/
-        plans
-```
-
-The final physical structure is defined by the Target Code Organization document.
-
----
-
-# Current `nostr/`
-
-The existing `nostr/` implementation currently includes both generic Nostr behavior and Domain-aware Resource access.
-
-These responsibilities should be separated.
-
----
-
-# Generic Nostr Infrastructure
-
-Generic relay/protocol capabilities belong to Technical Infrastructure or the Resource Boundary implementation.
-
-Examples include:
-
-```text
-relay connections
-
-REQ execution
-
-AUTH handling
-
-event verification
-
-event publication
-
-Nostr filter transport
-```
-
-These components should not understand Bible, Notes, or Reading Plans.
-
----
-
-# Resource-Specific Nostr Processing
-
-Resource lifecycle behavior belongs to the Resource Boundary implementation.
-
-Examples include:
-
-```text
-Resource event parsing
-
-Resource Discovery
-
-Resource Resolution
-
-Outbox publication
-
-Resource synchronization
-```
-
-These components understand the Resource protocol contract but not Domain-specific meaning.
-
----
-
-# Domain Resource Mapping
-
-Domain-specific Resource interpretation belongs to the owning Domain.
-
-For example, existing code such as:
-
-```text
-nostr/events/chapters.nostr.ts
-```
-
-contains Bible-specific Resource knowledge.
-
-Its responsibility should ultimately be divided between:
-
-```text
-generic Resource/Nostr mechanics
-        → Resource Boundary
-
-chapter meaning / serialization
-        → Bible Domain
-```
-
-The final implementation should avoid a generic `nostr/events/` folder becoming the owner of Domain knowledge.
-
----
-
-# Existing Offline API
-
-The current offline Nostr abstraction provides useful behavior around:
-
-```text
-cache hits
-
-synced state
-
-unsynced state
-
-event retrieval
-```
-
-During refactoring, it should be decomposed according to responsibility rather than renamed wholesale.
-
-Potential ownership:
-
-```text
-generic local/network retrieval coordination
-    → Resource Boundary / Application Data Access
-
-Domain interpretation
-    → owning Domain
-
-IndexedDB mechanics
-    → Technical Infrastructure
-
-synchronization decisions
-    → Resource Synchronization
-
-publication durability
-    → Outbox
-```
+For example, Bible chapter interpretation belongs to Bible even though the generic `ResourceInterpreter` contract belongs to `$lib/resource`.
 
 ---
 
 # Resource Discovery
 
-Resource Discovery belongs to the Resource Boundary implementation.
+`ResourceDiscovery` is generic Resource lifecycle implementation.
 
-It owns:
+It is composed by `Application` and remains hidden from normal Svelte consumers.
 
-```text
-Nostr discovery inputs
+Svelte code should not receive raw discovery infrastructure through `ApplicationContext` merely for convenience.
 
-relay filter construction
-
-multi-relay result handling
-
-Published Resource grouping
-
-current publication selection
-
-bounded recursive discovery
-```
-
-It must not own Domain interpretation or Installation.
+Discovery identifies published Resources; Domain interpretation/installation remains separate.
 
 ---
 
 # Resource Resolution
 
-Resource Resolution belongs to the Resource Boundary implementation.
-
-It owns:
+Resource Resolution owns generic representation handling such as:
 
 ```text
-content representation handling
-
-descriptor retrieval
-
-descriptor collection handling
-
-Blossom / HTTP retrieval coordination
-
-integrity verification
-
-resolution failures
+inline content
+Resource descriptors
+descriptor collections
+resolution strategies
+content decoding
+verified resolved content
 ```
 
-Provider-specific network access may be implemented by infrastructure adapters.
+Concrete transport-specific strategies may remain on concrete implementation paths when composition needs them.
+
+The root Resource API is not intended to re-export every concrete Nostr/IndexedDB implementation.
 
 ---
 
 # Resource Installation
 
-Resource Installation belongs to the Resource Boundary as an acceptance coordinator.
+Resource Installation is generic acceptance coordination around Domain-owned handlers.
 
-Its implementation coordinates:
+Conceptually:
 
 ```text
-Verified Resource Content
-        ↓
-Owning Domain Interpretation
-        ↓
-Candidate Domain Objects
-        ↓
-Domain Validation
-        ↓
-Installation Decision
-        ↓
-Accepted Local State
+Resolved Resource content
+    ↓
+Domain ResourceHandler / interpreter / validator
+    ↓
+Domain Object
+    ↓
+Domain persistence transaction
+    ↓
+Resource installation metadata / receipt
 ```
 
-Domain-specific parsing does not move into generic Installation infrastructure.
+Generic installation machinery does not become the owner of Domain interpretation.
 
 ---
 
-# Resource Publishing
+# Resource Selection
 
-Publication responsibilities divide cleanly.
+Resource selection is Application-owned orchestration over Domain-defined requirements.
+
+This distinction is important:
 
 ```text
+Application
+    owns current/fallback selections and Buffer capture
+
 Domain
-    determines what information means
-    and how it becomes Resource content
+    owns what Resource Types a Module requires
+```
 
-Resource Boundary
-    creates publication intent
-    and Resource representation lifecycle
+Domain contributors should remain the place where module-specific Resource requirements are defined.
 
-Nostr processing
-    creates/signs protocol event
+---
 
+# Resource Publication
+
+Domain write behavior produces publication intent through Domain-specific mapping.
+
+Current Resource publication flow is conceptually:
+
+```text
+Domain behavior
+    ↓
+Domain persistence/write transaction
+    ↓
+ResourcePublication
+    ↓
 Outbox
-    durably publishes
-
-Infrastructure
-    communicates with relays
+    ↓
+publication strategy
+    ↓
+Nostr transport
 ```
 
-No single service needs to own the entire path.
+Domain code determines what the information means and how it maps to a Resource.
+
+Generic publication infrastructure determines how the publication intent is delivered.
 
 ---
 
-# Outbox
+# Outbox Ownership
 
-The Outbox belongs to the Resource Boundary implementation.
+The current Outbox implementation lives under the Application layer because it coordinates more than one publication-intent family.
 
-It owns:
+It supports publication strategies including:
 
 ```text
-durable publication intent
-
-pending publication state
-
-retry
-
-publication status
-
-safe coalescing
-
-restart recovery
+ResourcePublication
+NostrEventPublication
 ```
 
-It does not own synchronization conflict resolution.
-
----
-
-# Multi-Device Synchronization
-
-Synchronization belongs to the Resource Boundary implementation.
-
-It owns:
+Current ownership includes:
 
 ```text
-same-Resource reconciliation
-
-Last Write Wins comparison
-
-modifiedAt / created_at ordering
-
-remote/local candidate selection
-
-superseding stale publication intent where appropriate
+durable pending publication state
+same-ID overwrite/coalescing
+publication scheduling
+publisher strategy dispatch
+retry/restart behavior
 ```
 
-It still relies on Installation for acceptance.
+The Outbox does not own Domain meaning.
+
+Domain persistence/write transactions create final publication intents and place them into the Outbox atomically with local state changes where required.
 
 ---
 
-# Resource Archives
+# Nostr Infrastructure
 
-Resource Archive behavior belongs to the Resource Boundary implementation.
+Nostr is infrastructure/transport.
 
-It owns:
+Current Nostr infrastructure includes capabilities such as:
 
 ```text
-.kjva envelope
-
-Resource entry export
-
-Resource entry import
-
-archive versioning
-
-portable serialized Resource content
+signing
+AUTH
+relay communication
+Nostr client operations
+account strategy
+Nostr event persistence/publication
 ```
 
-It does not own arbitrary application backup.
+Domains should not depend on raw Nostr transport.
+
+The Application composition root wires Nostr infrastructure to Resource/Application strategies.
 
 ---
 
-# Persistence
+# Authentication and Account Ownership
 
-Persistence is implementation infrastructure used by architectural owners.
+Authentication state/policy is application-owned.
 
-The physical mechanism is expected to remain IndexedDB in the browser application.
+Nostr-specific interpretation is infrastructure strategy behavior.
+
+Current direction:
+
+```text
+AuthenticationService
+    = application-facing authentication capability
+
+NostrAuthenticationStrategy
+    = Nostr-specific implementation
+
+AccountService
+    = application-facing account capability
+
+NostrAccountStrategy
+    = Nostr-specific implementation
+```
+
+Raw Nostr signer/client infrastructure is not exposed to ordinary Svelte consumers.
+
+Relay preferences are part of application account state rather than a separate Nostr-specific UI state channel.
+
+---
+
+# Persistence Ownership
+
+The browser currently uses shared IndexedDB infrastructure.
+
+A shared physical database does not imply shared architectural ownership.
 
 Ownership follows the information being persisted.
 
@@ -1148,382 +1006,370 @@ Examples:
 
 ```text
 Bible records
-    → Bible-owned persistence
+    → Bible persistence adapters
 
 Notes records
-    → Notes-owned persistence
+    → Notes persistence adapters
 
-Reading Plan records
-    → Reading Plans-owned persistence
+Reading Plans records
+    → Reading Plans persistence adapters
 
-Workspace snapshots
+Strong's records
+    → Strong's persistence adapters
+
+Workspace state
     → Application Runtime persistence
 
-Resource installation metadata
-    → Resource Boundary persistence
+Nostr event records
+    → Nostr infrastructure
 
-Outbox
-    → Resource Boundary persistence
+Resource receipts/install metadata
+    → Resource implementation
+
+Outbox entries
+    → Application Outbox
 ```
 
-A shared IndexedDB database does not imply shared ownership.
+Domain persistence adapters may intentionally depend on the concrete shared application database implementation.
+
+That is different from allowing UI code to access IndexedDB directly.
 
 ---
 
 # Workers
 
-Workers are execution mechanisms.
+Workers are execution environments, not architectural owners.
 
-A worker does not become an architectural owner merely because work runs inside it.
+Each worker is also a separate composition root for the code executing inside it.
 
-Classify worker behavior by responsibility:
+Examples:
 
 ```text
-Bible indexing worker
-    → Bible behavior executed in worker infrastructure
+Resource Worker
+    composes Resource installation/runtime processing
 
-Resource download worker
-    → Resource Resolution behavior executed in worker infrastructure
+Bible workers
+    execute Bible-owned indexing/processing behavior
 
-Outbox worker
-    → Publishing behavior executed in worker infrastructure
+Notes worker
+    executes Notes-owned worker behavior
+
+Reading Plans worker
+    executes Reading Plans-owned worker behavior
 ```
+
+A worker may construct its own local stateless/domain helper rather than sharing a browser `ApplicationContext` instance.
 
 > **Execution changes. Ownership does not.**
 
 ---
 
-# Components
+# Shared Ownership
 
-Generic visual components may remain under shared `components/` when they contain no Domain meaning.
+`$lib/shared` is reserved for genuinely owner-neutral utilities.
 
-Examples:
+Current examples include:
 
 ```text
-buttons
-
-menus
-
-layout primitives
-
-generic dialogs
+sleep
+alphabetic sequence conversion
 ```
 
-Domain-specific components should remain associated with their Domain or Module.
+A helper should not be moved into Shared merely because multiple owners could theoretically call it.
 
-A component should not become globally shared merely because it could theoretically be reused.
+If one Domain gives the behavior its meaning, it belongs to that Domain.
 
 ---
 
-# Current `+page.svelte`
+# Shared Components
 
-`+page.svelte` currently acts as the SPA shell and contains significant Workspace Runtime behavior.
-
-Current responsibilities include:
+Generic visual primitives may remain under:
 
 ```text
-root Pane tree management
-
-split handling
-
-close handling
-
-Buffer replacement
-
-Workspace reorganization
-
-Runtime restoration
-
-recursive pane rendering coordination
+$lib/components
 ```
 
-The long-term direction is to reduce `+page.svelte` to an application shell.
+when they contain no Domain meaning.
 
-Workspace behavior should move behind the Workspace Runtime API while rendering remains in Svelte.
+Examples include:
+
+```text
+buttons
+SVG icons
+layout primitives
+generic presentation controls
+```
+
+Domain-specific presentation belongs with the Domain.
+
+---
+
+# Domain UI Ownership
+
+Domain presentation remains Domain-owned but browser-only.
+
+Current public presentation boundaries are:
+
+```text
+$lib/domains/bible/ui
+$lib/domains/notes/ui
+$lib/domains/reading-plans/ui
+```
+
+The root Domain API remains Node-safe.
+
+The `/ui` boundary exists specifically to avoid pulling Svelte/browser dependencies into workers, persistence tests, and Node unit tests.
+
+Same-Domain implementation code may still import concrete Svelte files directly when appropriate.
+
+---
+
+# Module Rendering
+
+The Application Runtime resolves a Buffer's module identity to a Domain presentation component.
 
 Conceptually:
 
 ```text
-+page.svelte
+Pane tree
     ↓
-Workspace Runtime
+deriveWorkspaceLayout()
     ↓
-Pane Tree
+PaneContainer
     ↓
 Buffer
     ↓
-Module Instance
+module component resolver
+    ↓
+Domain /ui API
+    ↓
+Module component
 ```
 
-This extraction should be performed incrementally.
+Unknown module identities should fail clearly rather than silently falling back to Bible.
 
 ---
 
-# Target Dependency Direction
-
-The refactor should move toward:
-
-```text
-UI / Module
-    ↓
-Owner Public API
-    ↓
-Domain or Application Owner
-    ↓
-Persistence / Resource Boundary when required
-    ↓
-Technical Infrastructure
-```
-
-Avoid:
-
-```text
-UI
-    ↓
-IndexedDB
-
-Domain
-    ↓
-raw Nostr relay
-
-Domain A
-    ↓
-Domain B internals
-
-Resource infrastructure
-    ↓
-Workspace Runtime
-```
-
----
-
-# Domain-to-Domain Dependencies
+# Cross-Domain Dependency Rule
 
 One Domain should not import another Domain's private implementation.
 
-Preferred collaboration mechanisms are:
+Preferred collaboration is through:
 
 ```text
-Public API
-
-Application Event
-
-Shared Identifier
-
-Navigation Context
+Domain root API
+Domain /ui API for browser presentation
+Application coordination
+shared owner-defined contract where appropriate
 ```
 
-The mechanism should match the interaction semantics.
+The recent Bible/Reading Plans navigation cleanup is the current example:
+
+```text
+Reading Plans
+    → Bible-owned navigation contract
+
+Bible
+    ✕ Reading Plans model
+```
+
+Dependency direction should reflect meaning rather than convenience.
 
 ---
 
-# Public API Rule
+# Application Events and Domain Notifications
 
-If one owner requires another owner to perform behavior:
+Notifications represent completed facts.
 
-```text
-Consumer
-    ↓
-Public API
-    ↓
-Owner
-```
-
-Do not bypass the owner because an internal repository, Store, service, or model is easier to import.
-
----
-
-# Event Rule
-
-Use an Application Event for completed facts:
+Conceptually:
 
 ```text
 "This happened."
 ```
 
-Do not use events merely to avoid calling a Public API.
+Commands represent requested behavior.
 
-Commands remain explicit behavior requests.
-
----
-
-# Resource Boundary Rule
-
-Domains should not directly depend on Nostr transport.
-
-Preferred direction:
+Conceptually:
 
 ```text
-Domain
-        ↕
-Resource Mapping / Acceptance
-        ↕
-Resource Boundary
-        ↕
-Nostr Infrastructure
+"Please do this."
 ```
 
-This keeps Domain behavior independent of relay availability and protocol libraries.
+Do not use event/pub-sub machinery merely to avoid calling a service API.
+
+Likewise, dead pub/sub state should be removed when no behavior depends on it.
 
 ---
 
-# Migration Classification
+# Import Boundary Rule
 
-Every file moved during the refactor should first be classified into one of these ownership categories:
+External consumers should depend on logical owners.
 
-| Category            | Question                                                  |
-| ------------------- | --------------------------------------------------------- |
-| Bible               | Does Bible meaning give this code its purpose?            |
-| Notes               | Does Notes meaning give this code its purpose?            |
-| Reading Plans       | Does plan/progression meaning give this code its purpose? |
-| Settings            | Does settings behavior give this code its purpose?        |
-| Workspace Runtime   | Does it compose Pane/Buffer/Module interaction?           |
-| Application Service | Does it coordinate multiple owners?                       |
-| Resource Boundary   | Does it implement the external Resource lifecycle?        |
-| Infrastructure      | Does it provide a reusable technical capability?          |
-| Shared UI           | Is it presentation with no Domain meaning?                |
-
-If ownership cannot be identified, that ambiguity should be resolved before moving the file.
-
----
-
-# Initial Migration Inventory
-
-The following high-level migration map should guide the first pass.
-
-| Current area                           | Target ownership                                   |
-| -------------------------------------- | -------------------------------------------------- |
-| Bible Module                           | Bible                                              |
-| Bible Search Module                    | Bible                                              |
-| Strong's behavior                      | Bible                                              |
-| Bible annotations                      | Bible                                              |
-| Notes List                             | Notes                                              |
-| Notes Search                           | Notes                                              |
-| Reading Plans                          | Reading Plans                                      |
-| Completed readings                     | Reading Plans                                      |
-| `bibleLocationReferenceService`        | Application/shared                                 |
-| Pane service                           | Workspace Runtime                                  |
-| Pane/Buffer models                     | Workspace Runtime                                  |
-| Workspace management in `+page.svelte` | Workspace Runtime                                  |
-| Domain models in global `models/`      | respective Domain                                  |
-| shared Domain services in `services/`  | respective owner                                   |
-| `chapters.nostr.ts`                    | split Bible mapping / Resource Boundary mechanics  |
-| `offline.nostr.ts`                     | split Resource/Data Access/Infrastructure concerns |
-| relay connection code                  | Infrastructure                                     |
-| Resource Discovery                     | Resource Boundary                                  |
-| Resource Resolution                    | Resource Boundary                                  |
-| Resource Installation                  | Resource Boundary                                  |
-| Outbox                                 | Resource Boundary                                  |
-| Synchronization                        | Resource Boundary                                  |
-| Archives                               | Resource Boundary                                  |
-| IndexedDB implementation               | Infrastructure                                     |
-| Domain persistence interfaces          | respective Domain                                  |
-| generic workers                        | Infrastructure execution                           |
-| Domain worker behavior                 | respective Domain                                  |
-
----
-
-# Refactoring Rules
-
-The implementation refactor should follow these rules.
-
-## Preserve behavior first
-
-Moving responsibility should not automatically change behavior.
+Prefer:
 
 ```text
-Move
-    ↓
-Compile
-    ↓
-Test
-    ↓
-Commit
+$lib/application
+$lib/application/ui
+$lib/domains/bible
+$lib/domains/bible/ui
+$lib/resource
+$lib/shared
 ```
 
-Behavioral changes should be deliberate follow-up work.
+rather than importing internal folders merely because a file is easy to reach.
 
----
-
-## Move one owner at a time
-
-Avoid a repository-wide directory rewrite.
-
-Prefer vertical slices such as:
+However, direct concrete imports remain appropriate for:
 
 ```text
-Bible
-    ↓
-Notes
-    ↓
-Reading Plans
-    ↓
-Workspace Runtime
-    ↓
-Resource Boundary
+Application composition wiring
+worker composition roots
+infrastructure adapters
+concrete Resource/Nostr strategies
+integration tests of a concrete implementation
+internal implementation files within the same owner
 ```
 
-Each slice should leave the application working.
+The goal is meaningful ownership, not eliminating every deep path.
 
 ---
 
-## Introduce boundaries before deleting compatibility code
+# Current Ownership Classification
 
-When existing code violates the target dependency direction:
+When classifying new or existing code, use:
 
-1. introduce the target Public API,
-2. move consumers to it,
-3. move implementation behind it,
-4. remove the obsolete direct dependency.
+| Owner | Question |
+| --- | --- |
+| Bible | Does Bible meaning give the behavior its purpose? |
+| Notes | Does Notes meaning give the behavior its purpose? |
+| Reading Plans | Does plan/subscription/progress meaning give the behavior its purpose? |
+| Strong's | Does Strong's data/lookup meaning give the behavior its purpose? |
+| Application Runtime | Does it coordinate Pane/Buffer/Module interaction? |
+| Application Service | Is it application-wide coordination or preference/state behavior? |
+| Application Outbox | Does it durably coordinate publication intents across publisher strategies? |
+| Resource | Is it generic Resource lifecycle behavior or contract? |
+| Infrastructure | Is it a concrete reusable technical capability/adaptor? |
+| Shared | Is it genuinely owner-neutral utility behavior? |
+| Shared UI | Is it presentation with no Domain meaning? |
 
-Do not move everything at once and repair imports afterward.
+If ownership is ambiguous, resolve that ambiguity before moving or exposing the code.
 
 ---
 
-## Do not create abstractions solely for the refactor
+# Current Implementation Map
 
-The architecture does not require every owner to contain:
+| Implementation responsibility | Current owner |
+| --- | --- |
+| Bible chapters | Bible |
+| Bible paragraphs | Bible |
+| Bible pericopes | Bible |
+| Bible text markup | Bible |
+| Bible search/index behavior | Bible |
+| Bible location parsing | Bible |
+| Bible chapter navigation | Bible |
+| Bible book names/grouping | Bible |
+| Strong's lookup/data | Strong's |
+| Notes | Notes |
+| Notes search/index behavior | Notes |
+| Reading Plan definitions | Reading Plans |
+| Reading Plan subscriptions | Reading Plans |
+| Reading Plan progress/completed readings | Reading Plans |
+| Settings | Application |
+| Authentication state/policy | Application |
+| Account state | Application |
+| Pane / Buffer / Workspace | Application Runtime |
+| module Resource-selection orchestration | Application |
+| module Resource-selection requirements | owning Domain contributor |
+| Outbox | Application |
+| generic Resource models/contracts | Resource |
+| Resource resolution | Resource |
+| Resource installation coordination | Resource |
+| Resource receipts | Resource |
+| Resource Worker client/runtime | Resource |
+| Nostr client/signer/AUTH | Infrastructure |
+| IndexedDB database implementation | Infrastructure |
+| Domain IndexedDB adapters | owning Domain |
+| Nostr event persistence/publication | Nostr Infrastructure |
+| generic visual controls | Shared Components |
+| owner-neutral utilities | Shared |
+
+---
+
+# Current Cleanup Status
+
+The major structural ownership refactor is substantially complete for the current phase.
+
+Completed direction includes:
 
 ```text
-Factory
-Repository
-Manager
-Controller
-Strategy
-Store
+Domain code organized under explicit Domains
+Application-owned Workspace Runtime
+Application composition root
+ApplicationContext capability boundary
+Domain root APIs
+Domain /ui APIs
+Application root + /ui APIs
+Resource root API
+Shared root API
+Svelte service construction moved behind Application ownership
+legacy global service singletons substantially removed
+dead runtime wrappers and utilities removed
+Bible ↔ Reading Plans type cycle removed
+Resource-selection semantics moved into Domain contributors
 ```
 
-Introduce abstractions only where the implementation needs them.
-
-DDD organization is about ownership and Domain meaning, not reproducing a standard folder template.
+Future cleanup should therefore be evidence-driven rather than assuming another broad ownership migration is required.
 
 ---
 
-# Refactor Completion Criteria
+# Parked / Separate Work
 
-The structural refactor is substantially complete when:
+The following are not part of ordinary ownership cleanup unless explicitly selected:
+
+```text
+large import/export redesign
+named/detached Buffer manager
+focus/selection runtime redesign
+major Resource/Nostr architecture changes
+future synchronization work
+```
+
+Known legacy code in a parked area should not be used as justification for reopening unrelated architecture.
+
+---
+
+# Completion Criteria
+
+For the current phase, ownership is in a good state when:
 
 ```text
 Domain behavior is located with its Domain.
 
-Modules interact through Domain Public APIs.
+Domain root APIs expose intentional non-browser contracts.
 
-Workspace Runtime owns Pane/Buffer composition.
+Domain /ui APIs isolate browser-only presentation.
 
-Domains no longer depend directly on Nostr transport.
+Application owns runtime/composition behavior rather than Domain meaning.
 
-Resource Boundary implementation no longer owns Domain meaning.
+Only +layout.svelte imports the concrete Application runtime root.
 
-Persistence follows architectural ownership.
+ApplicationContext exposes intentional Svelte capabilities,
+not composition internals.
 
-Cross-Domain imports respect Public APIs.
+WorkspaceRuntime owns Pane/Buffer coordination.
 
-Technical Infrastructure contains technical capability,
-not application policy.
+Domains do not depend on raw Nostr transport.
 
-+page.svelte acts primarily as the SPA shell/rendering entry.
+Resource generic behavior does not own Domain meaning.
 
-Global technical-role directories no longer obscure ownership.
+Resource-selection semantics remain Domain-owned.
+
+Cross-Domain dependencies use intentional public contracts.
+
+Workers compose their own runtime dependencies without becoming owners.
+
+Persistence follows the information owner despite a shared physical database.
+
+Concrete implementation imports remain only where composition/testing actually requires them.
 ```
 
 ---
@@ -1532,19 +1378,18 @@ Global technical-role directories no longer obscure ownership.
 
 This document does not define:
 
-* final directory names,
-* exact TypeScript interfaces,
-* repository APIs,
-* Domain Object schemas,
+* exact Domain Object schemas,
+* Resource protocol behavior,
 * IndexedDB schema,
-* individual migration commits,
-* dependency-injection strategy,
-* testing framework,
-* or Resource protocol behavior.
+* exact Svelte layout implementation,
+* future synchronization policy,
+* import/export design,
+* future detached Buffer behavior,
+* or every concrete class dependency.
 
-Those concerns are either already defined by architecture specifications or belong to implementation work.
+Those concerns belong to their corresponding architecture and implementation documents.
 
-The physical target structure is defined by:
+Physical organization and public import conventions are defined in:
 
 ```text
 011-target-code-organization.md
@@ -1554,9 +1399,7 @@ The physical target structure is defined by:
 
 # Big Takeaway
 
-The refactor is not primarily about moving files into a `domains/` directory.
-
-It is about making ownership visible in the implementation.
+The implementation now expresses ownership through both placement and dependency direction.
 
 ```text
 Responsibility
@@ -1574,10 +1417,14 @@ Notes meaning belongs to Notes.
 
 Reading Plan meaning belongs to Reading Plans.
 
-Workspace composition belongs to the Application Runtime.
+Strong's meaning belongs to Strong's.
 
-The external Resource lifecycle belongs to the Resource Boundary.
+Workspace and application coordination belong to Application.
 
-Generic technical capability belongs to Infrastructure.
+Generic Resource lifecycle behavior belongs to Resource.
 
-> **Move code to the owner that gives the code meaning, then enforce that ownership through dependencies.**
+Concrete transport and persistence mechanisms belong to Infrastructure.
+
+Owner-neutral helpers belong to Shared.
+
+> **Keep application meaning with the owner that gives it meaning, and let composition wire owners together without collapsing their boundaries.**

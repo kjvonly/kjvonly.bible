@@ -7,9 +7,6 @@
 
 	let { settings = $bindable<Settings>() } = $props();
 
-	$effect(() => {
-		settings;
-	});
 </script>
 
 <div class="ps-4">Bible Settings</div>

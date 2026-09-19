@@ -4,28 +4,8 @@ import {
 } from 'svelte';
 
 import type {
-    NostrClient
-} from '$lib/infrastructure/nostr/client/nostr-client';
-
-import type {
-    NostrAccountStrategy
-} from '$lib/infrastructure/nostr/account/nostr-account-strategy';
-
-import type {
-    ResourceDiscovery
-} from '$lib/resource/nostr/resource-discovery';
-
-import type {
-    ResourceSelectionService
-} from '$lib/application/resources/resource-selection.service';
-
-import type {
-    ResourceService
-} from '$lib/resource/services/resource.service';
-
-import type {
-    ModuleBufferFactory
-} from '$lib/application/runtime/buffer/module-buffer-factory';
+    WorkspaceRuntime
+} from '$lib/application/runtime/workspace/workspace-runtime';
 
 import type {
     ModuleResourceSelectionResolver
@@ -38,69 +18,60 @@ import type {
 import type {
     AccountService
 } from '$lib/application/services/account/account.service';
+
+import type {
+    ToastService
+} from '$lib/application/services/toast.service';
+
+import type {
+    SettingsService
+} from '$lib/application/services/settings.service';
+
+import type {
+    NavigationServiceFactory
+} from '$lib/application/services/navigation-service-factory';
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
 import type {
-    ChapterService
-} from '$lib/domains/bible/services/chapter.service';
-
-import type {
-    ParagraphsService
-} from '$lib/domains/bible/services/paragraphs.service';
-
-import type {
-    PericopesService
-} from '$lib/domains/bible/services/pericopes.service';
-
-import type {
-    BibleTextMarkupService
-} from '$lib/domains/bible/services/bible-text-markup.service';
-
-import type {
-    BibleBooknamesService
-} from '$lib/domains/bible/services/bible-booknames.service';
-
-import type {
-    SearchService
-} from '$lib/domains/bible/services/search.service';
-
-import type {
-    BibleVersionsService
-} from '$lib/domains/bible/services/bibleVersions.service';
-
-import type {
-    VerseService
-} from '$lib/domains/bible/services/verse.service';
+    ChapterService,
+    ParagraphsService,
+    PericopesService,
+    BibleTextMarkupService,
+    BibleBooknamesService,
+    SearchService,
+    BibleVersionsService,
+    VerseService,
+    BookGroupingsService,
+    BibleLocationReferenceService,
+    BibleNavigationService
+} from '$lib/domains/bible';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Notes
 
 import type {
     NotesService
-} from '$lib/domains/notes/services/notes.service';
+} from '$lib/domains/notes';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reading Plans
 
 import type {
-    PlanDefinitionsService
-} from '$lib/domains/reading-plans/services/plan-definitions.service';
-
-import type {
-    PlanSubscriptionsService
-} from '$lib/domains/reading-plans/services/plan-subscriptions.service';
-
-import type {
-    PlanProgressService
-} from '$lib/domains/reading-plans/services/plan-progress.service';
+    PlanDefinitionsService,
+    PlanSubscriptionsService,
+    PlanProgressService,
+    PlansPubSubService,
+    SubsEnricherService,
+    EncodedReadingsDecoderService
+} from '$lib/domains/reading-plans';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import type {
     StrongsService
-} from '$lib/domains/strongs/services/strongs.service';
+} from '$lib/domains/strongs';
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -112,35 +83,20 @@ export interface ApplicationContext {
     readonly accountService:
     AccountService;
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Nostr
+    readonly toastService:
+    ToastService;
 
-    readonly nostrClient:
-    NostrClient;
+    readonly settingsService:
+    SettingsService;
 
-    readonly nostrAccountStrategy:
-    NostrAccountStrategy;
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Resource
-
-    readonly resourceDiscovery:
-    ResourceDiscovery;
-
-    readonly resourceService:
-    Pick<
-        ResourceService,
-        'install'
-    >;
-
-    readonly resourceSelectionService:
-    ResourceSelectionService;
+    readonly navigationServiceFactory:
+    NavigationServiceFactory;
 
     ///////////////////////////////////////////////////////////////////////////
     // Workspace Runtime
 
-    readonly moduleBufferFactory:
-    ModuleBufferFactory;
+    readonly workspaceRuntime:
+    WorkspaceRuntime;
 
     readonly moduleResourceSelectionResolver:
     ModuleResourceSelectionResolver;
@@ -172,6 +128,15 @@ export interface ApplicationContext {
     readonly bibleVersionsService:
     BibleVersionsService;
 
+    readonly bookGroupingsService:
+    BookGroupingsService;
+
+    readonly bibleLocationReferenceService:
+    BibleLocationReferenceService;
+
+    readonly bibleNavigationService:
+    BibleNavigationService;
+
     ///////////////////////////////////////////////////////////////////////////
     // Notes
 
@@ -189,6 +154,15 @@ export interface ApplicationContext {
 
     readonly planProgressService:
     PlanProgressService;
+
+    readonly plansPubSubService:
+    PlansPubSubService;
+
+    readonly subsEnricherService:
+    SubsEnricherService;
+
+    readonly encodedReadingsDecoderService:
+    EncodedReadingsDecoderService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Strong's

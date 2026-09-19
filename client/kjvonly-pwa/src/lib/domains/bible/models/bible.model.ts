@@ -1,5 +1,3 @@
-import type { NavReadings } from '../../reading-plans/models/plans.model';
-
 /**
  *
  * BCV is an abbreviation for Book, Chapter, Verse[s]. BCV contains metadata
@@ -102,9 +100,16 @@ export function newAnnotation(): Annotations {
   };
 }
 
+export interface BibleReadingNavigation {
+  readings: {
+    bcvs: BCV[];
+  };
+  currentNavReadingsIndex: number;
+}
+
 export interface BibleMode {
   value: BIBLE_MODES;
-  navReadings: NavReadings | undefined;
+  navReadings: BibleReadingNavigation | undefined;
 
   bibleLocationRef: string;
   bibleVersion: string;

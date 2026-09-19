@@ -325,7 +325,7 @@ Local Model
 
 The caller still requests a Domain Object.
 
-It does not request a Resource, relay event, Blossom object, or transport operation.
+It does not request a Resource representation, protocol event, external storage object, or transport operation.
 
 The Resource Boundary is one way the application may make the requested Domain Object available.
 
@@ -335,37 +335,25 @@ The Resource Boundary is one way the application may make the requested Domain O
 
 The Resource Boundary defines Resource meaning and lifecycle.
 
-Infrastructure provides technical mechanisms used to implement those responsibilities.
+Infrastructure provides technical mechanisms used to realize those responsibilities.
 
-For example:
-
-```text
-Resource Publication
-        ↓
-Resource Boundary responsibility
-        ↓
-Networking / Signing
-        ↓
-Technical capabilities
-        ↓
-Nostr / WebSocket / Browser APIs
-```
-
-Likewise:
+Conceptually:
 
 ```text
-External Resource Content
+Resource Boundary Responsibility
         ↓
-Resource Boundary
+Required Technical Capability
         ↓
-Blob Retrieval / Networking
-        ↓
-Blossom / HTTP
+Infrastructure
 ```
 
-Nostr and Blossom are therefore current implementation technologies used beneath Resource Boundary responsibilities.
+For publication this may require networking, signing, serialization, or external communication capabilities.
 
-They do not define the Resource Boundary itself.
+For resolution this may require networking, external storage access, integrity verification, decoding, or decompression capabilities.
+
+The Application Architecture does not select those technologies.
+
+The Resource Boundary specification defines the external Resource protocol, while Infrastructure realizes its technical mechanisms.
 
 ---
 
@@ -439,7 +427,7 @@ Notes Domain
 Note Domain Object
 ```
 
-The first architectural decision is not which Nostr event to create.
+The first architectural decision is not which protocol representation to create.
 
 The decision is that Note information must cross the Resource Boundary.
 
@@ -457,7 +445,7 @@ The Notes Domain continues to define what a valid Note means.
 
 The Resource Boundary defines how that information is represented and participates in publication, identity, discovery, and synchronization.
 
-A particular Nostr event representation is chosen only after those responsibilities are established.
+A particular external Resource representation is chosen only after those responsibilities are established.
 
 ---
 

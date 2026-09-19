@@ -1,0 +1,22 @@
+export type {
+	Note,
+	NoteTag,
+	NotesById
+} from './models/note.model';
+
+export {
+	NotesService
+} from './services/notes.service';
+
+export {
+	NOTES_RESOURCE_TYPE
+} from './resources/note-interpreter';
+
+export {
+	DEFAULT_NOTES_RESOURCE_NAME,
+	createDefaultNotesSelection
+} from './resources/notes-default-selection';
+
+export {
+	NOTES_COLLECTION_CHANGED
+} from './events/notes-events';

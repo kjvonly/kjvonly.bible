@@ -25,7 +25,7 @@ import {
 import type {
 	ResourceDeletionPublication,
 	ResourcePublication
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 describe(
 	'IndexedDBNotesWriteTransaction',

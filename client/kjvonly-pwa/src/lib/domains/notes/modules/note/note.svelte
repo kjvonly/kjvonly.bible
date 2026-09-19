@@ -1,6 +1,5 @@
 <script lang="ts">
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferContainer, BufferHeader } from '$lib/application/ui';
 
 	// SVELTE
 	import { onMount } from 'svelte';
@@ -17,23 +16,23 @@
 	import Tag from '$lib/components/svgs/tag.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/application/models/modules.model';
+	import { Modules } from '$lib/application';
 	import type { NoteTag } from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
-	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { toastService } from '$lib/application/services/toast.service';
+	import { PaneSplit, useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import Quill from 'quill';
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
-	import { findElement } from '$lib/application/ui/eventHandlers';
+	import { findElement } from '$lib/application/ui';
 
 	// APPLICATION
-	import {
-		useApplicationContext
-	} from '$lib/application/runtime/application-context';
+	const {
+		workspaceRuntime,
+		toastService
+	} = useApplicationContext();
 
 	const {
 		notesService
@@ -65,12 +64,12 @@
 			showConfirmDelete = true;
 		},
 		'split vertical': () => {
-			paneService.onSplitPane(mode.paneID, 'v', Modules.MODULES, {});
+			workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteActions = false;
 		},
 
 		'split horizontal': () => {
-			paneService.onSplitPane(mode.paneID, 'h', Modules.MODULES, {});
+			workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteActions = false;
 		}
 	};

@@ -3,19 +3,11 @@ import type {
 } from 'nostr-typedef';
 
 import type {
+    AccountRelay,
     AccountSetup,
+    AccountState,
     AccountStrategy
-} from '$lib/application/services/account/account-strategy';
-
-import type {
-    AccountState
-} from '$lib/application/services/account/account-state';
-
-import {
-    NostrAccountRelayProvider,
-    type NostrAccountRelay,
-    type NostrAccountRelaySubscriber
-} from './nostr-account-relay-provider';
+} from '$lib/application';
 
 import {
     createReplaceableNostrEventKey,
@@ -69,37 +61,12 @@ export class NostrAccountStrategy
         private readonly events:
             AccountNostrEvents,
 
-        private readonly relayProvider:
-            NostrAccountRelayProvider,
-
         private readonly bootstrapRelays:
             readonly NostrRelay[],
 
         private readonly applicationPubkey:
             string
     ) { }
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    getRelays():
-        readonly NostrAccountRelay[] {
-
-        return this.relayProvider
-            .getRelays();
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    subscribeRelays(
-        subscriber:
-            NostrAccountRelaySubscriber
-    ): () => void {
-
-        return this.relayProvider
-            .subscribe(
-                subscriber
-            );
-    }
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -129,15 +96,12 @@ export class NostrAccountStrategy
                 )
         ]);
 
-        this.setRelays(
+        return this.createAccountState(
+            metadata,
             this.readRelayPreferences(
                 relayList,
                 contacts
             )
-        );
-
-        return this.createAccountState(
-            metadata
         );
     }
 
@@ -407,6 +371,9 @@ export class NostrAccountStrategy
                 'content'
             > |
             SignedNostrEvent |
+            undefined,
+        relays:
+            readonly AccountRelay[] |
             undefined
     ): AccountState {
 
@@ -415,9 +382,18 @@ export class NostrAccountStrategy
                 metadata
             );
 
-        return name === undefined
-            ? {}
-            : { name };
+        return {
+            ...(
+                name === undefined
+                    ? {}
+                    : { name }
+            ),
+            ...(
+                relays === undefined
+                    ? {}
+                    : { relays }
+            )
+        };
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -477,7 +453,7 @@ export class NostrAccountStrategy
             > |
             SignedNostrEvent |
             undefined
-    ): readonly NostrAccountRelay[] |
+    ): readonly AccountRelay[] |
         undefined {
 
         if (
@@ -508,12 +484,12 @@ export class NostrAccountStrategy
             readonly (
                 readonly string[]
             )[]
-    ): readonly NostrAccountRelay[] {
+    ): readonly AccountRelay[] {
 
         const relays =
             new Map<
                 string,
-                NostrAccountRelay
+                AccountRelay
             >();
 
         for (
@@ -577,7 +553,7 @@ export class NostrAccountStrategy
 
     private readLegacyRelayContent(
         content: string
-    ): readonly NostrAccountRelay[] {
+    ): readonly AccountRelay[] {
 
         try {
             const parsed =
@@ -597,7 +573,7 @@ export class NostrAccountStrategy
             }
 
             const relays:
-                NostrAccountRelay[] =
+                AccountRelay[] =
                 [];
 
             for (
@@ -679,20 +655,6 @@ export class NostrAccountStrategy
         } catch {
             return false;
         }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    private setRelays(
-        relays:
-            readonly NostrAccountRelay[] |
-            undefined
-    ): void {
-
-        this.relayProvider
-            .setRelays(
-                relays
-            );
     }
 
     ///////////////////////////////////////////////////////////////////////////

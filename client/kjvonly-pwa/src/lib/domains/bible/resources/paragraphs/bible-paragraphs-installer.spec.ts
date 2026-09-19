@@ -17,12 +17,9 @@ import {
 } from '$lib/domains/bible/persistence/bible-paragraphs-store';
 
 import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
-
-import type {
+	DecodedResourceContent,
 	ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 import type {
 	BibleParagraphsInstallationStores,

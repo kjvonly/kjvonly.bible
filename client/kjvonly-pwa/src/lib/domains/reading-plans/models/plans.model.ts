@@ -1,6 +1,11 @@
-import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-import type { BCV } from '../../bible/models/bible.model';
+import type {
+  BookNameLookup,
+  EncodedReadingsDecoderService
+} from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
+import type {
+  BCV,
+  BibleReadingNavigation
+} from '$lib/domains/bible';
 import type { PlanDefinition } from './plan-definition';
 import type { PlanSubscription } from './plan-subscription';
 
@@ -64,7 +69,8 @@ export function NullSub(): Sub {
 
 export function planSubscriptionToSub(
   subscription: PlanSubscription,
-  bookNameLookup: BookNameLookup
+  bookNameLookup: BookNameLookup,
+  encodedReadingsDecoderService: EncodedReadingsDecoderService
 ): Sub {
   const nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
     [...subscription.encodedReadings],
@@ -127,11 +133,10 @@ export interface NextReadings {
  * variable. If it exists the bible module restricts the module to only display
  * the {@link BCV}[] in the readings.
  */
-export interface NavReadings {
+export interface NavReadings extends BibleReadingNavigation {
   subID: string;
   subNestedReadingsIndex: number;
   readings: Readings;
-  currentNavReadingsIndex: number;
   returnView: PLANS_VIEWS;
 }
 

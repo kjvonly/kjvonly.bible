@@ -1,6 +1,6 @@
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
 	PLAN_DEFINITION_RESOURCE_TYPE

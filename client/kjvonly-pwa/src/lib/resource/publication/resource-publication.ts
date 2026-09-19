@@ -1,6 +1,6 @@
 import type {
 	OutboxPublicationIntent
-} from '$lib/application/outbox/outbox-publication-intent';
+} from '$lib/application';
 
 import type {
 	ResourceRepresentationType

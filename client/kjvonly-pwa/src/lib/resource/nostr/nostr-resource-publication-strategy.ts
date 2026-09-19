@@ -18,12 +18,9 @@ import {
 } from '$lib/resource/publication/resource-publication';
 
 import type {
-	OutboxPublicationIntent
-} from '$lib/application/outbox/outbox-publication-intent';
-
-import type {
+	OutboxPublicationIntent,
 	OutboxPublicationStrategy
-} from '$lib/application/outbox/outbox-publication-strategy';
+} from '$lib/application';
 
 const NOSTR_DELETION_KIND = 5;
 

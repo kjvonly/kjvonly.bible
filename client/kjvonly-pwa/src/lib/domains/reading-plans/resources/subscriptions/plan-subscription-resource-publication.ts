@@ -8,7 +8,7 @@ import {
 
 import type {
 	ResourcePublication
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 import {
 	PLAN_SUBSCRIPTION_RESOURCE_TYPE

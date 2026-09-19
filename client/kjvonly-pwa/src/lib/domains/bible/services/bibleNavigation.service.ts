@@ -1,6 +1,6 @@
-import { bibleLocationReferenceService } from './bibleLocationReference.service';
+import type { BibleLocationReferenceService } from './bibleLocationReference.service';
 
-var chapters: string[] = [
+const chapters: string[] = [
   '1_1',
   '1_2',
   '1_3',
@@ -1193,22 +1193,19 @@ var chapters: string[] = [
 ];
 
 export class BibleNavigationService {
-  chapterList: string[];
-  bookNames: any;
-  subscribers: any[] = [];
+  private readonly chapterList = chapters;
 
-  constructor() {
-    this.chapterList = chapters;
-  }
-
-  subscribe(id: string, fn: any) {
-    this.subscribers.push({ id: id, fn: fn });
-  }
+  constructor(
+    private readonly bibleLocationReferenceService: Pick<
+      BibleLocationReferenceService,
+      'extractBookIDChapter'
+    >
+  ) {}
 
   next(bibleLocationRef: string): string {
     bibleLocationRef =
-      bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-    let ci = this.chapterList.indexOf(bibleLocationRef);
+      this.bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
+    const ci = this.chapterList.indexOf(bibleLocationRef);
     if (ci + 1 >= this.chapterList.length) {
       return this.chapterList[0];
     } else {
@@ -1218,21 +1215,12 @@ export class BibleNavigationService {
 
   previous(bibleLocationRef: string): string {
     bibleLocationRef =
-      bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-    let ci = this.chapterList.indexOf(bibleLocationRef);
+      this.bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
+    const ci = this.chapterList.indexOf(bibleLocationRef);
     if (ci - 1 < 0) {
       return this.chapterList[this.chapterList.length - 1];
     } else {
       return this.chapterList[ci - 1];
     }
   }
-
-  async publish(idKey: any) {
-    this.subscribers.forEach((s) => {
-      s.fn(idKey);
-    });
-  }
-
 }
-
-export let bibleNavigationService = new BibleNavigationService();

@@ -850,19 +850,9 @@ How will the owning Domain validate the resolved content?
 Choose implementation
 ```
 
-Do not begin with:
+Do not begin by choosing an implementation structure or allocating a new Nostr kind merely because a feature is new.
 
-```text
-Create an Event Strategy
-
-Create an Event Factory
-
-Add a parser registry
-
-Add a new kind because the feature is new
-```
-
-Those are implementation choices or conclusions that require prior architectural justification.
+Those choices require prior architectural and protocol justification.
 
 ---
 

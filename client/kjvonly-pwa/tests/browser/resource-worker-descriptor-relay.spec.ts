@@ -14,24 +14,22 @@ import {
 } from '$lib/infrastructure/nostr/nostr-signer';
 
 import {
-	createBrowserResourceClient
-} from '$lib/infrastructure/nostr/resource-client';
+	createBrowserNostrClient
+} from '$lib/infrastructure/nostr/client/create-nostr-client';
 
 import {
 	ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
 
 import {
-	createBrowserResourceWorkerClient
-} from '$lib/resource/worker/resource-worker-client';
-
-import {
 	KJVONLY_PUBKEY
 } from '$lib/infrastructure/nostr/nostr';
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	BIBLE_CHAPTER_RESOURCE_TYPE,
+	createBibleVersionId,
+	createChapterId
+} from '$lib/domains/bible';
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
@@ -39,16 +37,11 @@ import {
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+} from '$lib/domains/strongs';
 
 import {
 	STRONGS_DEFINITION_OBJECT_TYPE
 } from '$lib/domains/strongs/persistence/strongs-store';
-
-import {
-	createBibleVersionId,
-	createChapterId
-} from '$lib/domains/bible/utils/bible-identity';
 
 import {
 	createStrongsId
@@ -63,12 +56,11 @@ import {
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
-
-import {
+	createBrowserResourceWorkerClient,
+	createResourceInstallationId,
 	createResourceReceiptId
-} from '$lib/resource/receipts/resource-receipt';
+} from '$lib/resource';
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -124,12 +116,12 @@ describe.skip(
 						generateSecretKey()
 					);
 
-				const resourceClient =
-					createBrowserResourceClient(
+				const nostrClient =
+					createBrowserNostrClient(
 						nostrSigner
 					);
 
-				resourceClient
+				nostrClient
 					.setDefaultRelays([
 						{
 							url:
@@ -145,7 +137,7 @@ describe.skip(
 
 				const resourceDiscovery =
 					new ResourceDiscovery(
-						resourceClient
+						nostrClient
 					);
 
 				const resourceWorkerClient =
@@ -172,7 +164,7 @@ describe.skip(
 					 *         ↓
 					 *     ResourceDiscovery
 					 *         ↓
-					 *     ResourceClient / relay
+					 *     NostrClient / relay
 					 *
 					 * Worker:
 					 *
@@ -662,7 +654,7 @@ describe.skip(
 					resourceWorkerClient
 						.dispose();
 
-					resourceClient
+					nostrClient
 						.dispose();
 
 					await nostrSigner

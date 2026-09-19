@@ -1,15 +1,15 @@
 <script lang="ts">
+	import { useApplicationContext } from '$lib/application';
 	// ================================ IMPORTS ================================
 	// SVELTE
 	import { onMount } from 'svelte';
 
 	// MODELS
-	import { Modules } from '$lib/application/models/modules.model';
+	import { Modules } from '$lib/application';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { PaneSplit } from '$lib/application';
+	import type { Pane } from '$lib/application';
 	import type {
 		BibleTextMarkup,
 		BibleTextMarkupMarking
@@ -23,6 +23,10 @@
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Notes from '$lib/components/svgs/notes.svelte';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';
+	const {
+		workspaceRuntime,
+		bibleLocationReferenceService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -171,7 +175,7 @@
 		let refs = extractAllVerseRefs();
 		let strongsWords = extractStrongsWords();
 
-		paneService.onSplitPane(pane.id, 'h', Modules.STRONGS, {
+		workspaceRuntime.splitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
 			refs: refs,
@@ -180,7 +184,7 @@
 	}
 
 	function nonVerseNumberClicked() {
-		paneService.onSplitPane(pane.id, 'h', Modules.STRONGS, {
+		workspaceRuntime.splitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			word: word,
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),

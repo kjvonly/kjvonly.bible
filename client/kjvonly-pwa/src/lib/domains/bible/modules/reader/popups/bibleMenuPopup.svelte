@@ -1,21 +1,26 @@
 <script lang="ts">
+	import { useApplicationContext } from '$lib/application';
 	// ================================ IMPORTS ================================
 
 	//MODELS
-	import { Modules } from '$lib/application/models/modules.model';
+	import { Modules } from '$lib/application';
 
 	// SERVICES
 	import { exporterService } from '$lib/application/services/importExport/exporter.service';
 	import { importerService } from '$lib/application/services/importExport/importer.service';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
+	import { PaneSplit } from '$lib/application';
 
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
+	import { BufferContainer } from '$lib/application/ui';
+	import { BufferHeader } from '$lib/application/ui';
+	import { BufferBody } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
+	const {
+		workspaceRuntime,
+		toastService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -46,12 +51,16 @@
 			showBibleVersionPopup = true;
 		},
 		search: () => {
-			let p = paneService.findNode(paneService.rootPane, paneID);
-			p?.updateBuffer(Modules.SEARCH);
+			workspaceRuntime.replaceBuffer(
+				paneID,
+				Modules.SEARCH
+			);
 		},
 		notes: () => {
-			let p = paneService.findNode(paneService.rootPane, paneID);
-			p?.updateBuffer(Modules.NOTES);
+			workspaceRuntime.replaceBuffer(
+				paneID,
+				Modules.NOTES
+			);
 		},
 		'split vertical': () => {
 			onSplitVertical();
@@ -60,10 +69,14 @@
 			onSplitHorizontal();
 		},
 		'export data': () => {
-			exporterService.export();
+			exporterService.export(
+				toastService
+			);
 		},
 		'import data': () => {
-			importerService.import();
+			importerService.import(
+				toastService
+			);
 		},
 		close: () => {
 			onClosePane();
@@ -73,17 +86,17 @@
 	// ============================== CLICK FUNCS ==============================
 
 	function onSplitVertical(): void {
-		paneService.onSplitPane(paneID, 'v', Modules.MODULES, {});
+		workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 		showMenuPopup = false;
 	}
 
 	function onSplitHorizontal() {
-		paneService.onSplitPane(paneID, 'h', Modules.MODULES, {});
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 		showMenuPopup = false;
 	}
 
 	function onClosePane() {
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		workspaceRuntime.closePane(paneID);
 	}
 
 	function onClose() {

@@ -130,12 +130,12 @@ For example:
 Bible Domain
 
     Bible reading
-    Bible annotations
+    Bible text markup
         ↓
     Bible Reader Module
 ```
 
-Annotations remain Bible-owned behavior, but they do not necessarily require their own independent Workspace interaction.
+Text markup remains Bible-owned behavior, but it does not necessarily require its own independent Workspace interaction.
 
 ---
 
@@ -150,12 +150,17 @@ Bible Domain
 
     Reading
     Search
-    Strong's
-    Annotations
+    Text Markup
     References
+
+Strong's Domain
+
+    Definitions
 ```
 
-Those capabilities do not automatically become either one Module or five Modules.
+Domain capabilities do not map one-to-one to Modules.
+
+A Domain capability may appear inside an existing interaction, support another Domain's presentation, or justify its own independently openable Module.
 
 The decision depends on how the behavior participates in the Workspace.
 
@@ -219,7 +224,7 @@ Bible Reader Module Instance
 Bible Domain
 
     Chapter
-    Annotation
+    Text Markup
     other Bible-owned state
 ```
 
@@ -394,7 +399,7 @@ For example, a Bible Reader may handle:
 * selection,
 * scrolling,
 * user gestures,
-* presentation of annotations,
+* presentation of text markup,
 * navigation commands,
 * and opening related interactions.
 
@@ -403,7 +408,7 @@ Those responsibilities describe the interaction.
 The Bible Domain still owns:
 
 * Bible content,
-* annotation meaning,
+* text-markup meaning,
 * Bible navigation semantics,
 * and other enduring Bible behavior.
 
@@ -498,7 +503,7 @@ Choose presentation implementation
 Do not begin with:
 
 ```text
-Which Svelte component should I create?
+Which presentation component should I create?
 
 Where should the Module file live?
 

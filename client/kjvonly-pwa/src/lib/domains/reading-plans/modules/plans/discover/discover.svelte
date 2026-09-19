@@ -14,15 +14,13 @@
 		type PlanDefinitionView
 	} from '$lib/domains/reading-plans/models/plans.model';
 
-	// SERVICES
-	import { encodedReadingsDecoderService } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-
 	// APPLICATION
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { useApplicationContext } from '$lib/application';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
 
 	const {
 		bibleBooknamesService,
+		encodedReadingsDecoderService,
 		moduleResourceSelectionResolver,
 		planDefinitionsService
 	} = useApplicationContext();

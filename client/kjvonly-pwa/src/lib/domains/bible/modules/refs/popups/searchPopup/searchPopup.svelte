@@ -1,16 +1,16 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// COMPONENTS
-	import Search from '$lib/domains/bible/modules/search/search.svelte';
+	import SearchContainer from '$lib/domains/bible/modules/search/searchContainer.svelte';
 	// MODELS
-	import type { StrongsPopups } from '$lib/domains/strongs/models/strongs.model';
+	import type { StrongsPopups } from '$lib/domains/strongs';
 
 	// =============================== BINDINGS ================================
 	let { popups = $bindable<StrongsPopups>() }: { popups: StrongsPopups } =
 		$props();
 </script>
 
-<Search
+<SearchContainer
 	paneID={popups?.searchPopup?.paneID}
 	showInput={true}
 	searchTerms={popups?.searchPopup?.searchTerms}
@@ -19,4 +19,4 @@
 	}}
 	onFilterBibleLocationRef={popups?.searchPopup
 		?.onFilterBibleLocationRefByBookID}
-></Search>
+></SearchContainer>

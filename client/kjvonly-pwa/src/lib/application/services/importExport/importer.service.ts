@@ -1,17 +1,20 @@
-import { toastService } from '$lib/application/services/toast.service';
+import type { ToastPublisher } from '$lib/application/services/toast.service';
 import { deepMergeService } from './deepMerge.service';
 
 /**
  * Allow users to import their data
  */
 export class ImporterService {
-  doImport(e: any) {
+  doImport(
+    e: any,
+    toastPublisher: ToastPublisher
+  ) {
     const reader = new FileReader();
     reader.onload = (e2) => {
       let result: any = e2?.target?.result;
       (async () => {
         try {
-          toastService.showToast('starting import data');
+          toastPublisher.showToast('starting import data');
           let newAnnotations = JSON.parse(result);
           let annotations; 
 
@@ -46,7 +49,7 @@ export class ImporterService {
 
           await annotsService.putAllAnnotations(mergedList);
           document.getElementById('kjvonly-import')?.remove();
-          toastService.showToast('finished import data');
+          toastPublisher.showToast('finished import data');
         } catch (ex) {
           console.log(`error importing file ${e.target.files[0]}`, ex);
           document.getElementById('kjvonly-import')?.remove();
@@ -56,12 +59,18 @@ export class ImporterService {
     reader.readAsText(e.target.files[0]);
   }
 
-  async import() {
+  async import(
+    toastPublisher: ToastPublisher
+  ) {
     var element = document.createElement('input');
     element.setAttribute('id', 'kjvonly-import');
     element.setAttribute('type', 'file');
     element.setAttribute('accept', '.json');
-    element.onchange = this.doImport;
+    element.onchange = (event) =>
+      this.doImport(
+        event,
+        toastPublisher
+      );
 
     element.style.display = 'none';
     document.body.appendChild(element);

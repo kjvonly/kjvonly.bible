@@ -12,17 +12,11 @@ import {
 	BIBLE_BOOKNAMES_OBJECT_TYPE
 } from '$lib/domains/bible/persistence/bible-booknames-store';
 
-import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
-
-import type {
-	ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
-
 import {
+	type DecodedResourceContent,
+	type ResourceInstallation,
 	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 import type {
 	BibleBooknamesInstallationStores,

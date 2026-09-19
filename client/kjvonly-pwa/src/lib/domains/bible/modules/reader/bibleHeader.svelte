@@ -7,8 +7,8 @@
 	import BookChapterPopup from './popups/bookChapterVersePopup/bookChapterPopup.svelte';
 	import CopyVersePopup from './popups/copyVersePopup.svelte';
 	import NavReadingsList from './plans/navReadingsList.svelte';
-	import Notes from '$lib/domains/notes/modules/notes.svelte';
-	import Settings from '$lib/application/modules/settings/settings.svelte';
+	import { Notes } from '$lib/domains/notes/ui';
+	import { Settings } from '$lib/application/ui';
 	import Edit from '$lib/components/svgs/edit.svelte';
 	import BibleVersionPopup from './popups/bibleVersionPopup.svelte';
 
@@ -27,30 +27,26 @@
 		ToolbarItems,
 		type BibleMode
 	} from '$lib/domains/bible/models/bible.model';
-	import { Modules } from '$lib/application/models/modules.model';
+	import { Modules } from '$lib/application';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { settingsService } from '$lib/application/services/settings.service';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { PaneSplit } from '$lib/application';
+	import { useApplicationContext } from '$lib/application';
 
-	import {
-		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { extractBibleVersion } from '../../utils/bible-identity';
 
-
-import type {
-	BibleVersion
-} from '$lib/domains/bible/models/bible-version.model';
-
+	import type { BibleVersion } from '$lib/domains/bible/models/bible-version.model';
+	import type { Settings as AppSettings } from '$lib/application';
 	const {
+		workspaceRuntime,
 		bibleBooknamesService,
-		moduleResourceSelectionResolver
+		moduleResourceSelectionResolver,
+		settingsService,
+		bibleLocationReferenceService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -69,7 +65,7 @@ import type {
 		bibleVersion: string;
 		clientHeight: number;
 		headerHeight: number;
-		onBibleVersionSelected:( version: BibleVersion	) => void;
+		onBibleVersionSelected: (version: BibleVersion) => void;
 		paneID: string;
 	} = $props();
 
@@ -121,47 +117,25 @@ import type {
 
 	// ================================ FUNCS ==================================
 
-	async function setBookNameAndChapter():
-		Promise<void> {
-		const locationRef =
-			bibleLocationRef;
+	async function setBookNameAndChapter(): Promise<void> {
+		const locationRef = bibleLocationRef;
 
-		const bookID =
-			bibleLocationReferenceService
-				.extractBookID(
-					locationRef
-				);
+		const bookID = bibleLocationReferenceService.extractBookID(locationRef);
 
-		const source =
-			moduleResourceSelectionResolver
-				.require(
-					paneID,
-					BIBLE_BOOKNAMES_RESOURCE_TYPE
-				);
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
+			BIBLE_BOOKNAMES_RESOURCE_TYPE
+		);
 
-		const booknames =
-			await bibleBooknamesService
-				.get(
-					source
-				);
+		const booknames = await bibleBooknamesService.get(source);
 
-		if (
-			bibleLocationRef !==
-			locationRef
-		) {
+		if (bibleLocationRef !== locationRef) {
 			return;
 		}
 
-		bookName =
-			booknames.shortNames[
-				bookID
-			] ?? '';
+		bookName = booknames.shortNames[bookID] ?? '';
 
-		bookChapter =
-			bibleLocationReferenceService
-				.extractChapter(
-					locationRef
-				);
+		bookChapter = bibleLocationReferenceService.extractChapter(locationRef);
 	}
 
 	function setVerses() {
@@ -176,15 +150,15 @@ import type {
 
 	function subscribeToSettings() {
 		settingsService.subscribe(id, onSettingsChange);
-		onSettingsChange();
+		onSettingsChange(settingsService.getSettings());
 	}
 
 	function unsubscribeToSettings() {
 		settingsService.unsubscribe(id);
 	}
 
-	function onSettingsChange() {
-		showBibleVersion = settingsService.getSettings().showBibleVersion || false;
+	function onSettingsChange(settings: AppSettings) {
+		showBibleVersion = settings.showBibleVersion;
 	}
 
 	// ============================== CLICK FUNCS ==============================
@@ -226,27 +200,28 @@ import type {
 	}
 
 	function onCloseClick() {
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		workspaceRuntime.closePane(paneID);
 	}
 
 	function onSearchClick() {
-		paneService.onSplitPane(paneID, 'h', Modules.SEARCH, {});
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.SEARCH, {});
 	}
 
 	function onCopyClick() {
 		showCopyVersesPopup = true;
 	}
-
-
 </script>
 
 <!-- =============================== TOOLBAR =============================== -->
 
 {#snippet bookChapterVerseButton()}
 	<button onclick={onBookChapterClick} class=" text-center text-neutral-700">
-		<span class="kjvonly-noselect text-center whitespace-nowrap">
+		<span class="kjvonly-noselect whitespace-wrap text-center">
 			{#if bookName && bookChapter}
-				{#if showBibleVersion}{extractBibleVersion(bibleVersion).toUpperCase()}/{/if}{bookName}
+				{#if showBibleVersion}{extractBibleVersion(
+						bibleVersion
+					).toUpperCase()}<br />{/if}
+				{bookName}
 				{bookChapter}{verses}
 			{/if}
 		</span>
@@ -329,10 +304,7 @@ import type {
 {#snippet bookChapterPopup()}
 	{#if showBookChapterPopup}
 		<PopupContainer bind:clientHeight>
-			<BookChapterPopup
-				{paneID}
-				bind:showBookChapterPopup
-				bind:bibleLocationRef
+			<BookChapterPopup {paneID} bind:showBookChapterPopup bind:bibleLocationRef
 			></BookChapterPopup>
 		</PopupContainer>
 	{/if}
@@ -379,7 +351,6 @@ import type {
 	{#if showBibleVersionPopup}
 		<PopupContainer bind:clientHeight>
 			<BibleVersionPopup {onBibleVersionSelected} bind:showBibleVersionPopup
-
 			></BibleVersionPopup>
 		</PopupContainer>
 	{/if}

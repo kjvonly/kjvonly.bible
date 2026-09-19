@@ -11,7 +11,7 @@ import type {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
 	createModuleResourceSelectionResolver
@@ -35,9 +35,6 @@ describe(
 		it(
 			'returns the selected Resource from the module Buffer',
 			() => {
-				const rootPane =
-					createPane('root');
-
 				const modulePane =
 					createPane(
 						'module-pane',
@@ -49,15 +46,14 @@ describe(
 						}
 					);
 
-				const findNode =
+				const findPane =
 					vi.fn(
 						() => modulePane
 					);
 
 				const resolver =
 					createModuleResourceSelectionResolver({
-						rootPane,
-						findNode
+						findPane
 					});
 
 				expect(
@@ -70,9 +66,8 @@ describe(
 				);
 
 				expect(
-					findNode
+					findPane
 				).toHaveBeenCalledWith(
-					rootPane,
 					'module-pane'
 				);
 			}
@@ -83,10 +78,7 @@ describe(
 			() => {
 				const resolver =
 					createModuleResourceSelectionResolver({
-						rootPane:
-							createPane('root'),
-
-						findNode:
+						findPane:
 							() => undefined
 					});
 
@@ -109,10 +101,7 @@ describe(
 
 				const resolver =
 					createModuleResourceSelectionResolver({
-						rootPane:
-							pane,
-
-						findNode:
+						findPane:
 							() => pane
 					});
 
@@ -141,10 +130,7 @@ describe(
 
 				const resolver =
 					createModuleResourceSelectionResolver({
-						rootPane:
-							pane,
-
-						findNode:
+						findPane:
 							() => pane
 					});
 
@@ -174,8 +160,6 @@ function createPane(
 		split:
 			undefined,
 		buffer,
-		updateBuffer:
-			undefined,
 		toggle:
 			undefined
 	};

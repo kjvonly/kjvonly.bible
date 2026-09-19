@@ -1,14 +1,8 @@
-import type {
-	ResourceSelectionStore
-} from '$lib/application/resources/resource-selection-store';
-
-import type {
-	ResourceSelections
-} from '$lib/application/resources/resource-selections';
-
 import {
-	parseResourceSelections
-} from '$lib/application/resources/resource-selections';
+	parseResourceSelections,
+	type ResourceSelections,
+	type ResourceSelectionStore
+} from '$lib/application';
 
 const STORAGE_KEY =
 	'resourceSelections';

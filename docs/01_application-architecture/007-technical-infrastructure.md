@@ -39,9 +39,7 @@ For example:
 ```text
 Persist Domain Objects
         ↓
-Persistent Storage
-        ↓
-IndexedDB
+Persistent Storage Capability
 ```
 
 or:
@@ -49,9 +47,7 @@ or:
 ```text
 Communicate with external systems
         ↓
-Networking
-        ↓
-HTTP / WebSocket
+Networking Capability
 ```
 
 The architectural responsibility does not become Infrastructure simply because technology is required to implement it.
@@ -79,28 +75,11 @@ Infrastructure
     Timing
 ```
 
-Specific technologies may implement these capabilities.
+Concrete technologies implement these capabilities.
 
-For example:
+Those technologies are replaceable.
 
-```text
-Persistent Storage
-    → IndexedDB
-
-Networking
-    → HTTP
-    → WebSocket
-
-Background Execution
-    → Web Worker
-
-Browser Integration
-    → Browser APIs
-```
-
-The technology is replaceable.
-
-The technical capability describes what the application requires from the platform.
+The technical capability describes what the application requires from the platform without making the selected implementation part of the architectural model.
 
 ---
 
@@ -174,7 +153,7 @@ Resource Boundary
 while:
 
 ```text
-Send WebSocket messages
+Perform network communication
     ↓
 Technical mechanism
     ↓
@@ -286,21 +265,17 @@ Conceptually:
 ```text
 Application Responsibility
         ↓
-Persistent Storage
-        ↓
-IndexedDB
+Persistent Storage Capability
 ```
 
-rather than making IndexedDB itself part of the application's conceptual model.
+rather than making a selected database technology part of the application's conceptual model.
 
 Likewise:
 
 ```text
 Resource Boundary
         ↓
-Network Communication
-        ↓
-WebSocket
+Network Communication Capability
 ```
 
 The architecture can therefore remain stable even when the technology used to implement the capability changes.
@@ -311,7 +286,7 @@ This does not require an abstraction around every browser API or library. A capa
 
 # Infrastructure and the Resource Boundary
 
-The Resource Boundary defines how Domain information is represented and communicated outside the application's local model.
+The Resource Boundary defines how Domain information participates in an external Resource lifecycle.
 
 Infrastructure may provide technical mechanisms required to realize that boundary.
 
@@ -332,23 +307,14 @@ Technical Capabilities
     Serialization
     Compression
     Cryptography
-
-            ↓
-
-Current Technologies
-
-    Nostr
-    Blossom
-    HTTP
-    WebSocket
-    Browser APIs
+    External storage access
 ```
 
 The Resource Boundary determines the meaning of the Resource operation.
 
-Infrastructure performs the technical mechanisms required by the chosen boundary implementation.
+Infrastructure performs the technical mechanisms required by the selected Resource protocol implementation.
 
-Nostr and Blossom therefore do not define the Application Architecture. They are technologies currently used to realize Resource Boundary responsibilities.
+Those mechanisms do not define the Application Architecture.
 
 ---
 
@@ -362,7 +328,7 @@ An architectural owner determines:
 * what that information means,
 * and the rules governing its persistence.
 
-Infrastructure provides the mechanism used to store it.
+Infrastructure provides the mechanism used to make that state durable.
 
 Conceptually:
 
@@ -372,19 +338,15 @@ Owner
 Persistence Requirement
     ↓
 Persistent Storage Capability
-    ↓
-IndexedDB
 ```
 
-The fact that several owners use IndexedDB does not make IndexedDB responsible for their persistence semantics.
-
-It only provides the storage mechanism.
+Sharing one storage mechanism across several owners does not transfer their persistence semantics to Infrastructure.
 
 ---
 
 # Infrastructure and Background Execution
 
-Running work in the background does not determine ownership of that work.
+Running work outside the foreground interaction path does not determine ownership of that work.
 
 For example:
 
@@ -393,16 +355,14 @@ Bible Search Indexing
         ↓
 Bible-owned behavior
         ↓
-Background execution
-        ↓
-Web Worker
+Background Execution Capability
 ```
 
 The Bible Domain still owns the indexing behavior because Bible search gives that work meaning.
 
-Worker infrastructure only determines where or how the work executes.
+Infrastructure only determines how or where the work executes.
 
-The same distinction applies to synchronization, maintenance, parsing, or any other work moved into a worker.
+The same distinction applies to synchronization, maintenance, parsing, or any other work executed through a background mechanism.
 
 ---
 
@@ -413,25 +373,25 @@ A technology should not become an architectural concept merely because it is imp
 Avoid reasoning such as:
 
 ```text
-We use IndexedDB
+We use a particular database
     ↓
-Therefore IndexedDB owns persistence
+Therefore the database owns persistence
 ```
 
 or:
 
 ```text
-We use Web Workers
+We use a background execution mechanism
     ↓
-Therefore workers own background work
+Therefore that mechanism owns background work
 ```
 
 or:
 
 ```text
-We use Nostr
+We use a particular external protocol
     ↓
-Therefore Nostr defines resource behavior
+Therefore that protocol defines application behavior
 ```
 
 Instead reason from responsibility:
@@ -475,11 +435,11 @@ Which technology should implement it?
 Do not begin with:
 
 ```text
-Where should the WebSocket code live?
+Where should the networking adapter live?
 
-Should this use IndexedDB?
+Which storage technology should this use?
 
-Should this run in a worker?
+Which execution mechanism should run this work?
 ```
 
 Begin with the responsibility requiring those technologies.
@@ -505,7 +465,7 @@ The Bible Domain determines:
 * what results mean,
 * and when an index must be updated.
 
-Implementing that behavior may require generic indexing or background-execution capabilities.
+Implementing that behavior may require generic indexing, storage, or background-execution capabilities.
 
 ```text
 Bible Search
@@ -514,24 +474,12 @@ Bible indexing behavior
     ↓
 Technical capabilities
         Index storage
-        Worker execution
+        Background execution
 ```
 
 Those technical capabilities do not become owners of Bible search.
 
-If the current implementation uses IndexedDB and a Web Worker, those technologies sit beneath the technical capabilities:
-
-```text
-Bible Domain
-    ↓
-Bible Search
-    ↓
-Index / Background Execution Capabilities
-    ↓
-IndexedDB / Web Worker
-```
-
-A future change in storage engine or execution mechanism should not change who owns Bible search.
+A future change in storage engine, indexing library, or execution mechanism should not change who owns Bible search.
 
 ---
 

@@ -5,10 +5,22 @@ import {
 } from '$lib/domains/reading-plans/models/plans.model';
 import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
 import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
-import type { BookNameLookup } from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
+import {
+  EncodedReadingsDecoderService,
+  type BookNameLookup
+} from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
+import { SubsEnricherService } from '$lib/domains/reading-plans';
+import {
+  PLANS_WORKER_INITIALIZED,
+  type PlansSubscriptionsMessage,
+  type PlansWorkerCommand,
+  type PlansWorkerInitializedMessage
+} from '$lib/domains/reading-plans/models/plans-worker.model';
 
-const PLANS_WORKER_INITIALIZED = 'plans-worker-initialized';
+const encodedReadingsDecoderService =
+  new EncodedReadingsDecoderService();
+
+const subsEnricherService = new SubsEnricherService();
 
 let bookNameLookup: BookNameLookup | undefined;
 let workerHasInitialized = false;
@@ -34,7 +46,12 @@ async function init(
 
   workerHasInitialized = true;
   publishSubs();
-  postMessage({ id: PLANS_WORKER_INITIALIZED });
+
+  const message: PlansWorkerInitializedMessage = {
+    id: PLANS_WORKER_INITIALIZED
+  };
+
+  postMessage(message);
 }
 
 function initializeSubs(
@@ -43,7 +60,8 @@ function initializeSubs(
   for (const subscription of subscriptions) {
     const sub = planSubscriptionToSub(
       subscription,
-      requireBookNameLookup()
+      requireBookNameLookup(),
+      encodedReadingsDecoderService
     );
 
     subs.set(sub.id, sub);
@@ -96,14 +114,20 @@ function setCompletedReadingIndexes(sub: Sub) {
 
 function publishSubs() {
   if (workerHasInitialized) {
-    postMessage({ id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS, subs: subs });
+    const message: PlansSubscriptionsMessage = {
+      id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+      subs
+    };
+
+    postMessage(message);
   }
 }
 
 async function putSub(subscription: PlanSubscription) {
   let s = planSubscriptionToSub(
     subscription,
-    requireBookNameLookup()
+    requireBookNameLookup(),
+    encodedReadingsDecoderService
   );
   subs.set(s.id, s);
   if (s) {
@@ -137,7 +161,7 @@ function requireBookNameLookup(): BookNameLookup {
 
 // ================================= ONMESSAGE =================================
 
-onmessage = async (e) => {
+onmessage = async (e: MessageEvent<PlansWorkerCommand>) => {
   switch (e.data.action) {
     case 'init':
       await init(

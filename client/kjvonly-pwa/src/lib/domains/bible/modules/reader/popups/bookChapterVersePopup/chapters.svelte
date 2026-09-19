@@ -3,9 +3,9 @@
 	// SVELTE
 	import { onMount } from 'svelte';
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferBody } from '$lib/application/ui';
+	import { BufferContainer } from '$lib/application/ui';
+	import { BufferHeader } from '$lib/application/ui';
 
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
@@ -13,13 +13,15 @@
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 	import Toggle from '$lib/components/toggle.svelte';
 
+	import { useApplicationContext } from '$lib/application';
+
 	// MODELS
-	import type {
-		BibleBooknames
-	} from '$lib/domains/bible/models/bible-booknames.model';
+	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
 
 	// SERVICES
-	import { toastService } from '$lib/application/services/toast.service';
+
+	const { toastService } =
+		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -57,25 +59,13 @@
 	// ================================ FUNCS ==================================
 
 	function setBookName(): void {
-		bookName =
-			booknames.booknamesById[
-				selectedBookID
-			] ?? '';
+		bookName = booknames.booknamesById[selectedBookID] ?? '';
 	}
 
 	function setChapters(): void {
-		chapters = Object
-			.keys(
-				booknames
-					.bookchapterversecountById[
-						selectedBookID
-					] ?? {}
-			)
-			.sort(
-				(a, b) =>
-					Number(a) -
-					Number(b)
-			);
+		chapters = Object.keys(
+			booknames.bookchapterversecountById[selectedBookID] ?? {}
+		).sort((a, b) => Number(a) - Number(b));
 	}
 
 	function chapterSelected(ch: any): void {
@@ -132,7 +122,7 @@
 	<div class="grid w-[100%] grid-cols-5">
 		{#each chapters as ch}
 			<button
-				class="hover:bg-primary-50 row-span-1 bg-neutral-50 p-4"
+				class="row-span-1 bg-neutral-50 p-4 hover:bg-neutral-100"
 				onclick={() => {
 					chapterSelected(ch);
 				}}
@@ -149,7 +139,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

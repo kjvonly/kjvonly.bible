@@ -1,52 +1,42 @@
 # Target Code Organization
 
-**Status**
-
-Refactoring Guide
+**Status:** Current Refactoring Guide
 
 ---
 
 # Purpose
 
-This document defines the target physical organization for the KJVOnly client implementation.
+This document defines the physical organization and import-boundary conventions for the KJVOnly client implementation.
 
-It translates the ownership model defined by the Application Architecture, Resource Boundary, and `010-domain-implementation-map.md` into a concrete TypeScript/Svelte directory structure and dependency direction.
+It translates the current ownership model into practical TypeScript/Svelte rules for:
 
-This document answers:
+* where code belongs,
+* which files form public boundaries,
+* how browser-only presentation code is separated from Node-safe contracts,
+* how Application composition differs from Application public APIs,
+* how Domains collaborate,
+* how the Resource Boundary is exposed,
+* when concrete Infrastructure imports are intentional,
+* and when a new `index.ts` should **not** be created.
 
-> **How should the codebase be physically organized so that architectural ownership is visible and enforceable?**
+This is an implementation organization guide. It does not introduce new architectural ownership.
 
-This is an implementation organization guide.
-
-It does not introduce new architectural ownership.
+The current source is authoritative when an older example or historical document disagrees with this guide.
 
 ---
 
-# Goal
+# Core Goal
 
-The current codebase is primarily organized by technical role:
+The codebase should make ownership visible from directory placement and import paths.
 
-```text
-components/
-models/
-modules/
-services/
-workers/
-nostr/
-```
-
-This makes it difficult to determine which architectural owner gives a file its meaning.
-
-The target organization should instead make ownership apparent from location.
-
-Conceptually:
+Prefer:
 
 ```text
 owner
     ↓
-implementation responsibility
+responsibility
     ↓
-technical mechanism
+technical implementation
 ```
 
 rather than:
@@ -57,584 +47,241 @@ technical mechanism
 unrelated application responsibilities
 ```
 
-The primary organizational boundary is therefore ownership.
+A caller should normally know **which logical owner it consumes**, not the internal folder where that owner currently implements the capability.
+
+Examples of meaningful external boundaries are:
+
+```text
+$lib/application
+$lib/application/ui
+
+$lib/domains/bible
+$lib/domains/bible/ui
+
+$lib/resource
+$lib/shared
+```
+
+External callers should not normally need to know implementation paths such as:
+
+```text
+application/outbox/...
+application/resources/...
+application/runtime/...
+
+domains/bible/services/...
+domains/bible/persistence/...
+
+resource/installation/...
+resource/content/...
+resource/resolution/...
+```
+
+unless the caller is itself part of that owner or is intentionally composing/testing a concrete implementation.
 
 ---
 
-# Target Top-Level Structure
+# Current Top-Level Structure
 
-The intended client organization is:
+The primary client organization is:
 
 ```text
-client/src/lib/
+client/kjvonly-pwa/src/lib/
 
     application/
-
     domains/
-
     resource/
-
     infrastructure/
-
+    shared/
     components/
 ```
 
-Each area has a distinct purpose.
+Responsibilities:
 
 ```text
 application/
-    application-wide coordination and Runtime
+    application-wide composition and runtime coordination
 
 domains/
-    Domain-owned application behavior
+    Domain-owned behavior, models, persistence, Resource integration,
+    workers, and presentation
 
 resource/
-    Resource Boundary implementation
+    generic Resource lifecycle and Resource Boundary implementation
 
 infrastructure/
-    reusable technical capabilities
+    concrete technical capabilities and adapters
+
+shared/
+    genuinely owner-neutral utilities
 
 components/
-    genuinely shared presentation primitives
+    genuinely reusable presentation primitives
 ```
+
+This top-level division is architectural.
+
+Subdirectories beneath each owner are implementation organization and should evolve only when they represent real responsibilities.
 
 ---
 
-# Complete Target Shape
+# Public API Convention
 
-The target structure should evolve approximately toward:
+The current convention is:
 
 ```text
-client/src/lib/
-
-├── application/
-│   ├── runtime/
-│   │   ├── workspace/
-│   │   ├── pane/
-│   │   ├── buffer/
-│   │   └── module/
-│   │
-│   ├── services/
-│   │
-│   ├── events/
-│   │
-│   └── navigation/
-│
-├── domains/
-│   ├── bible/
-│   │   ├── api/
-│   │   ├── objects/
-│   │   ├── services/
-│   │   ├── persistence/
-│   │   ├── resources/
-│   │   ├── modules/
-│   │   │   ├── reading/
-│   │   │   └── search/
-│   │   └── components/
-│   │
-│   ├── notes/
-│   │   ├── api/
-│   │   ├── objects/
-│   │   ├── services/
-│   │   ├── persistence/
-│   │   ├── resources/
-│   │   ├── modules/
-│   │   │   ├── list/
-│   │   │   └── search/
-│   │   └── components/
-│   │
-│   ├── reading-plans/
-│   │   ├── api/
-│   │   ├── objects/
-│   │   ├── services/
-│   │   ├── persistence/
-│   │   ├── resources/
-│   │   ├── modules/
-│   │   └── components/
-│   │
-│   └── settings/
-│       ├── api/
-│       ├── objects/
-│       ├── services/
-│       ├── persistence/
-│       └── components/
-│
-├── resource/
-│   ├── nostr/
-│   ├── discovery/
-│   ├── resolution/
-│   ├── installation/
-│   ├── publishing/
-│   │   └── outbox/
-│   ├── synchronization/
-│   ├── archives/
-│   └── shared/
-│
-├── infrastructure/
-│   ├── nostr/
-│   ├── persistence/
-│   ├── http/
-│   ├── blossom/
-│   ├── workers/
-│   ├── compression/
-│   └── crypto/
-│
-└── components/
-    └── ...
+one public root API for a logical owner
++
+one browser-only /ui API when that owner exposes Svelte/browser code
 ```
 
-This is a target organization, not a requirement to create every directory immediately.
+Current examples:
 
-Directories should be introduced when implementation actually requires them.
+```text
+$lib/application
+$lib/application/ui
+
+$lib/domains/bible
+$lib/domains/bible/ui
+
+$lib/domains/notes
+$lib/domains/notes/ui
+
+$lib/domains/reading-plans
+$lib/domains/reading-plans/ui
+
+$lib/domains/strongs
+
+$lib/resource
+$lib/shared
+```
+
+The goal is **not**:
+
+```text
+one index.ts in every folder
+```
+
+The goal is:
+
+```text
+one deliberate public boundary per logical owner
+```
+
+with a separate `/ui` boundary only when browser-only exports would otherwise contaminate a Node-safe root API.
 
 ---
 
-# Organizational Rule
+# Why Root APIs Matter
 
-The first question when placing code is:
+A public root API lets an external consumer depend on the owner rather than its folder structure.
 
-> **Who owns this responsibility?**
+Prefer:
 
-Only after ownership is known should the implementation role determine the subdirectory.
+```ts
+import {
+    BibleNavigationService,
+    type BCV
+} from '$lib/domains/bible';
+```
 
-For example:
+instead of:
+
+```ts
+import { BibleNavigationService }
+    from '$lib/domains/bible/services/bibleNavigation.service';
+
+import type { BCV }
+    from '$lib/domains/bible/models/bible.model';
+```
+
+The first form says:
+
+> I depend on the Bible Domain.
+
+The second form says:
+
+> I depend on the Bible Domain's current internal folder structure.
+
+The root API should expose only capabilities intentionally available outside the owner.
+
+---
+
+# Why UI Has a Separate Boundary
+
+Svelte components and browser-only libraries must not be re-exported from a root API that is also imported by Node tests, workers, persistence code, or other non-browser code.
+
+This was learned concretely during cleanup.
+
+A root Application barrel temporarily exported Svelte/runtime presentation. That created a transitive path similar to:
 
 ```text
-Bible chapter parser
+$lib/application
     ↓
-Bible owns the meaning
+Pane presentation
     ↓
-domains/bible/resources/
-```
-
-not:
-
-```text
-parser
+Module component resolver
     ↓
-global parsers/
-```
-
-Likewise:
-
-```text
-Notes repository
+Notes presentation
     ↓
-Notes owns the state
+note.svelte
     ↓
-domains/notes/persistence/
-```
-
-not:
-
-```text
-repository
+Quill
     ↓
-global repositories/
+document
 ```
+
+Node Vitest then failed with:
+
+```text
+ReferenceError: document is not defined
+```
+
+Therefore:
+
+```text
+$lib/application
+    Node-safe/browser-safe contracts and runtime capabilities
+
+$lib/application/ui
+    Svelte components and browser-only presentation helpers
+```
+
+The same rule applies to Domains that expose Svelte presentation:
+
+```text
+$lib/domains/bible
+$lib/domains/bible/ui
+```
+
+Root APIs should remain safe for service tests, workers, and non-Svelte consumers.
 
 ---
 
-# Domains
+# Public API, Composition Root, and Runtime Context
 
-Domain code lives beneath:
-
-```text
-domains/
-```
-
-Each Domain should be understandable largely from its own subtree.
-
-The primary Domains are:
+Keep these three concepts separate:
 
 ```text
-domains/
-    bible/
-    notes/
-    reading-plans/
-    settings/
+Application
+    = concrete runtime composition root
+
+ApplicationContext
+    = Svelte-facing runtime capability surface
+
+application/index.ts
+    = compile-time public Application API
 ```
 
-A Domain may contain:
+They solve different problems.
 
-```text
-api/
-objects/
-services/
-persistence/
-resources/
-modules/
-components/
-```
+A type being exported from `$lib/application` does not imply it belongs in `ApplicationContext`.
 
-but none of these subdirectories are mandatory.
-
-Only create them when they represent real implementation responsibilities.
+A service being constructed by `Application` does not imply all callers should import the concrete `Application` class.
 
 ---
 
-# Domain Public API
-
-Each Domain should expose an explicit public boundary.
-
-Preferred location:
-
-```text
-domains/<domain>/api/
-```
-
-The public API is the normal entry point for external consumers.
-
-For example:
-
-```text
-domains/bible/api/
-domains/notes/api/
-domains/reading-plans/api/
-```
-
-Consumers should prefer:
-
-```text
-import { ... } from '$lib/domains/bible/api'
-```
-
-rather than importing internal files such as:
-
-```text
-$lib/domains/bible/services/...
-$lib/domains/bible/persistence/...
-$lib/domains/bible/objects/...
-```
-
-The API boundary makes ownership enforceable.
-
----
-
-# Domain Internals
-
-Everything except the Domain's public API should be treated as private implementation unless explicitly shared.
-
-Conceptually:
-
-```text
-domains/bible/
-
-    api/
-        public
-
-    objects/
-        internal
-
-    services/
-        internal
-
-    persistence/
-        internal
-
-    resources/
-        internal
-
-    modules/
-        presentation owned by Bible
-```
-
-TypeScript export visibility alone does not define architectural visibility.
-
-Directory ownership does.
-
----
-
-# Domain Objects
-
-Domain Objects belong beneath the Domain that gives them meaning.
-
-Preferred location:
-
-```text
-domains/<domain>/objects/
-```
-
-Examples:
-
-```text
-domains/bible/objects/
-    bible-location.ts
-    chapter.ts
-    verse.ts
-
-domains/notes/objects/
-    note.ts
-
-domains/reading-plans/objects/
-    reading-plan.ts
-    completed-reading.ts
-```
-
-A global `models/` directory should gradually disappear.
-
----
-
-# Domain Services
-
-A service belongs under a Domain when only that Domain gives the behavior meaning.
-
-Preferred location:
-
-```text
-domains/<domain>/services/
-```
-
-Examples:
-
-```text
-domains/bible/services/
-    chapter-service.ts
-    annotations-service.ts
-
-domains/notes/services/
-    notes-service.ts
-
-domains/reading-plans/services/
-    progression-service.ts
-```
-
-Do not keep a service globally shared merely because more than one consumer calls it.
-
-The key question is ownership, not caller count.
-
----
-
-# Domain Persistence
-
-Persistence behavior specific to a Domain belongs beneath that Domain.
-
-Preferred location:
-
-```text
-domains/<domain>/persistence/
-```
-
-For example:
-
-```text
-domains/notes/persistence/
-    notes-repository.ts
-
-domains/bible/persistence/
-    chapters-repository.ts
-
-domains/reading-plans/persistence/
-    plan-repository.ts
-```
-
-These components may use generic IndexedDB infrastructure.
-
-They own Domain-specific:
-
-* record mapping,
-* query semantics,
-* indexes required by Domain behavior,
-* and persistence APIs.
-
----
-
-# Resource Mapping Inside a Domain
-
-Domain-specific translation between Resource content and Domain information belongs with the Domain.
-
-Preferred location:
-
-```text
-domains/<domain>/resources/
-```
-
-This directory may contain:
-
-```text
-parser
-serializer
-resource-type mapping
-Domain validation adapter
-Resource-to-Domain conversion
-```
-
-For example:
-
-```text
-domains/bible/resources/
-    chapters-resource.ts
-
-domains/notes/resources/
-    notes-resource.ts
-```
-
-These files understand Bible or Notes meaning.
-
-They should not own relay communication.
-
----
-
-# Domain Modules
-
-Modules are Runtime presentation units, but their application behavior belongs to their Domain.
-
-Preferred location:
-
-```text
-domains/<domain>/modules/
-```
-
-Examples:
-
-```text
-domains/bible/modules/
-    reading/
-    search/
-
-domains/notes/modules/
-    list/
-    search/
-
-domains/reading-plans/modules/
-    reader/
-```
-
-This keeps presentation behavior near the Domain it represents while preserving the Module concept used by the Workspace Runtime.
-
----
-
-# Domain Components
-
-Presentation components meaningful only within one Domain should live with that Domain.
-
-For example:
-
-```text
-domains/bible/components/
-    verse.svelte
-    chapter-header.svelte
-
-domains/notes/components/
-    note-editor.svelte
-```
-
-They should not move into the root `components/` directory simply because they are Svelte components.
-
----
-
-# Bible Domain
-
-The Bible Domain target shape may resemble:
-
-```text
-domains/bible/
-
-├── api/
-│   └── index.ts
-│
-├── objects/
-│   ├── chapter.ts
-│   ├── verse.ts
-│   └── bible-location-reference.ts
-│
-├── services/
-│   ├── chapter-service.ts
-│   ├── annotations-service.ts
-│   └── strongs-service.ts
-│
-├── persistence/
-│   ├── chapter-repository.ts
-│   └── annotations-repository.ts
-│
-├── resources/
-│   ├── chapters-resource.ts
-│   ├── annotations-resource.ts
-│   └── strongs-resource.ts
-│
-├── modules/
-│   ├── reading/
-│   └── search/
-│
-└── components/
-```
-
-Exact names should follow the existing implementation as it is moved.
-
-Do not rename working concepts merely to make this tree look symmetrical.
-
----
-
-# Notes Domain
-
-The Notes target may resemble:
-
-```text
-domains/notes/
-
-├── api/
-├── objects/
-│   └── note.ts
-├── services/
-├── persistence/
-├── resources/
-├── modules/
-│   ├── list/
-│   └── search/
-└── components/
-```
-
-Notes Search remains Notes-owned.
-
-There is no shared Search Domain.
-
----
-
-# Reading Plans Domain
-
-The Reading Plans target may resemble:
-
-```text
-domains/reading-plans/
-
-├── api/
-├── objects/
-│   ├── reading-plan.ts
-│   └── completed-reading.ts
-├── services/
-├── persistence/
-├── resources/
-├── modules/
-└── components/
-```
-
-Completed readings remain part of Reading Plans even if they have an independent Resource representation.
-
----
-
-# Settings Domain
-
-Settings should contain preferences with actual application meaning.
-
-Potential structure:
-
-```text
-domains/settings/
-
-├── api/
-├── objects/
-├── services/
-├── persistence/
-└── components/
-```
-
-Local-only settings do not need Resource-related code.
-
-A `resources/` directory should only be introduced if settings are deliberately given an external Resource lifecycle.
-
----
-
-# Application
+# Application Organization
 
 Application-wide code lives beneath:
 
@@ -642,710 +289,1203 @@ Application-wide code lives beneath:
 application/
 ```
 
-This is not a dumping ground for anything used by more than one Domain.
+Current organization includes responsibilities such as:
 
-Code belongs here only when its meaning is genuinely application-wide.
+```text
+application/
+    application.ts
+    index.ts
+    config/
+    models/
+    modules/
+    outbox/
+    resources/
+    runtime/
+    services/
+    ui/
+```
+
+Application is not a dumping ground for anything used by more than one Domain.
+
+Code belongs here only when its responsibility is genuinely application-wide.
+
+---
+
+# Application Composition Root
+
+The concrete composition root is:
+
+```text
+application/application.ts
+```
+
+It constructs and wires long-lived runtime dependencies such as:
+
+* authentication/account services,
+* Settings,
+* Workspace Runtime,
+* Domain services,
+* Resource services and worker clients,
+* Resource-selection services,
+* Outbox processing,
+* Nostr infrastructure,
+* and other application-owned capabilities.
+
+The concrete `Application` class is intentionally **not** exported from:
+
+```text
+$lib/application
+```
+
+The only runtime source file that should directly import `Application` is:
+
+```text
+src/routes/+layout.svelte
+```
+
+That route layout is the browser bootstrap boundary.
+
+Normal runtime code consumes public Application APIs, ApplicationContext, Domain APIs, or Resource APIs instead.
+
+---
+
+# Application Root API
+
+The public Application root is:
+
+```text
+application/index.ts
+```
+
+External non-UI consumers use:
+
+```text
+$lib/application
+```
+
+Its deliberate public surface includes categories such as:
+
+```text
+Application configuration
+ApplicationContext contracts/helpers
+Settings model/service contracts
+account/auth strategy contracts
+Modules
+Workspace Runtime contracts
+Pane/Workspace layout contracts
+Resource-selection application contracts
+Outbox application contracts
+```
+
+Before adding an export ask:
+
+```text
+Is this a stable Application capability?
+Does an external owner actually need it?
+Can exposing it create an upward barrel cycle?
+Would exporting it load browser-only code?
+```
+
+Do not add an implementation merely because another layer wants a shorter import.
+
+---
+
+# Application UI API
+
+Browser-facing Application presentation uses:
+
+```text
+application/ui/index.ts
+```
+
+External browser code imports:
+
+```text
+$lib/application/ui
+```
+
+This API may expose Svelte components and DOM helpers such as:
+
+```text
+PaneContainer
+Buffer presentation
+Settings presentation
+scroll helpers
+DOM event helpers
+```
+
+Do not re-export these through `$lib/application`.
+
+---
+
+# Application Internal Imports
+
+Code inside `application/` should normally use direct internal imports.
+
+For example:
+
+```text
+application/application.ts
+    → ./runtime/...
+    → ./services/...
+    → ./resources/...
+```
+
+Do not force Application implementation files to import back through `$lib/application`.
+
+That can create self-barrel cycles.
+
+Public barrels are for callers outside the owner.
+
+---
+
+# ApplicationContext
+
+`ApplicationContext` is the capability surface supplied to the Svelte component tree.
+
+Conceptually:
+
+```text
+Application
+    constructs runtime capabilities
+        ↓
+ApplicationContext
+    exposes selected capabilities
+        ↓
+Svelte containers/components
+```
+
+A capability belongs in ApplicationContext only when Svelte actually needs runtime access to it.
+
+Do not expose composition-only infrastructure for convenience.
+
+---
+
+# Per-Container Runtime State
+
+Some state must remain independent per rendered container.
+
+Do not turn such state into a global ApplicationContext singleton merely to centralize construction.
+
+The current Navigation service is the important example.
+
+Use:
+
+```text
+Application
+    → NavigationServiceFactory
+        ↓ ApplicationContext
+Svelte container
+    → factory creates independent NavigationService
+```
+
+This preserves Application-owned construction while keeping Login/Profile navigation stacks independent.
 
 ---
 
 # Application Runtime
 
-Runtime composition belongs under:
+Workspace/runtime implementation remains beneath:
 
 ```text
 application/runtime/
 ```
 
-Expected concepts include:
+Current areas include:
 
 ```text
-workspace/
-pane/
 buffer/
-module/
+pane/
+rendering/
+workspace/
 ```
 
-Conceptually:
+These folders organize implementation.
 
-```text
-application/runtime/
+They do not each need a public barrel.
 
-    workspace/
-        workspace runtime behavior
-
-    pane/
-        pane tree and operations
-
-    buffer/
-        buffer and navigation context
-
-    module/
-        module instance registration/loading
-```
+External callers use `$lib/application` for Node-safe runtime capabilities and `$lib/application/ui` for presentation.
 
 ---
 
 # Workspace Runtime
 
-The Workspace Runtime should eventually own logic currently concentrated in `+page.svelte`.
+`WorkspaceRuntime` is the public Workspace coordinator.
 
-Target:
-
-```text
-application/runtime/workspace/
-```
-
-Responsibilities include:
-
-* root Pane tree,
-* Pane operations,
-* Workspace restoration,
-* layout mutation,
-* Module placement,
-* and future Workspace snapshot behavior.
-
-`+page.svelte` should become primarily the SPA shell and renderer.
-
----
-
-# Pane
-
-Pane implementation belongs under:
+`PaneService` remains an internal implementation detail.
 
 ```text
-application/runtime/pane/
-```
-
-This includes:
-
-* Pane type,
-* tree operations,
-* split behavior,
-* close behavior,
-* replacement behavior,
-* and Pane traversal.
-
-Pane must not contain Domain behavior.
-
----
-
-# Buffer
-
-Buffer belongs under:
-
-```text
-application/runtime/buffer/
-```
-
-It owns the Runtime association between:
-
-```text
-Pane
+Application
     ↓
-Buffer
-    ├── Navigation Context
-    └── Module Instance
+WorkspaceRuntime
+    ↓
+PaneService
 ```
 
-Buffer must remain Domain-agnostic.
+Svelte should consume `WorkspaceRuntime` through ApplicationContext rather than importing `PaneService`.
+
+Current Workspace responsibilities include:
+
+* initialization,
+* Pane lookup,
+* split,
+* delete/collapse,
+* Buffer replacement,
+* Pane-ID allocation,
+* persistence,
+* layout derivation,
+* Pane dimensions,
+* and Workspace change notifications.
+
+The earlier target of moving Workspace logic out of `+page.svelte` is already implemented for the current phase.
 
 ---
 
-# Module Runtime
+# Domains
 
-Generic Module loading and lifecycle behavior belongs under:
+Domain-owned code lives beneath:
 
 ```text
-application/runtime/module/
+domains/
 ```
 
-Domain-specific Module implementations remain inside their Domains.
-
-This produces:
+Current primary Domains are:
 
 ```text
-application/runtime/module/
-    generic Module runtime
+domains/
+    bible/
+    notes/
+    reading-plans/
+    strongs/
+```
 
-domains/bible/modules/
-    Bible modules
+Settings is currently an Application capability, not a separate Settings Domain.
 
-domains/notes/modules/
-    Notes modules
+Do not create `domains/settings/` merely to match an older target tree.
+
+---
+
+# Domain Internal Shape
+
+A Domain may contain directories such as:
+
+```text
+models/
+services/
+persistence/
+resources/
+runtime/
+workers/
+modules/
+ui/
+utils/
+events/
+metadata/
+```
+
+Not every Domain needs every folder.
+
+Do not create empty symmetrical structures.
+
+The first question remains:
+
+> Who owns this responsibility?
+
+Only after ownership is known should implementation role determine the subdirectory.
+
+---
+
+# Domain Root API
+
+Each Domain exposes its intentional external surface from:
+
+```text
+domains/<domain>/index.ts
+```
+
+External non-UI consumers import from:
+
+```text
+$lib/domains/<domain>
+```
+
+Examples:
+
+```text
+$lib/domains/bible
+$lib/domains/notes
+$lib/domains/reading-plans
+$lib/domains/strongs
+```
+
+The previous recommendation to create:
+
+```text
+domains/<domain>/api/index.ts
+```
+
+is obsolete.
+
+The Domain root itself is the public API.
+
+---
+
+# Domain UI API
+
+When a Domain exposes Svelte presentation to another owner, it uses:
+
+```text
+domains/<domain>/ui/index.ts
+```
+
+External presentation consumers use:
+
+```text
+$lib/domains/<domain>/ui
+```
+
+Current examples:
+
+```text
+$lib/domains/bible/ui
+$lib/domains/notes/ui
+$lib/domains/reading-plans/ui
+```
+
+The old public presentation barrels at:
+
+```text
+domains/<domain>/modules/index.ts
+```
+
+were removed.
+
+`modules/` may still contain implementation files; it is not the public presentation boundary.
+
+---
+
+# Domain Internals
+
+Everything not intentionally exported from the Domain root or `/ui` API should be treated as implementation detail by other owners.
+
+Examples:
+
+```text
+domains/bible/services/
+domains/bible/persistence/
+domains/bible/resources/
+domains/bible/models/
+```
+
+TypeScript `export` visibility alone does not define architectural visibility.
+
+A symbol may be exported for use inside the Domain, tests, workers, or composition wiring without becoming part of the Domain public API.
+
+---
+
+# Domain Models
+
+Current code generally uses:
+
+```text
+domains/<domain>/models/
+```
+
+That is acceptable.
+
+Do not rename `models/` to `objects/` solely to satisfy an older target document.
+
+Examples:
+
+```text
+Bible location/reference types
+    → domains/bible/models/
+
+Note models
+    → domains/notes/models/
+
+Reading Plan definition/subscription/progress
+    → domains/reading-plans/models/
 ```
 
 ---
 
-# Application Navigation
+# Domain Services and Construction
 
-Cross-Domain navigation primitives belong under:
+A service belongs under a Domain when that Domain gives the behavior meaning.
 
-```text
-application/navigation/
-```
-
-This may contain shared navigation values and behavior such as:
+Examples:
 
 ```text
-Navigation Context
-
-Bible location navigation reference
-
-Module-opening requests
+domains/bible/services/
+domains/notes/services/
+domains/reading-plans/services/
+domains/strongs/services/
 ```
 
-This layer coordinates navigation.
+Long-lived Domain services used by the main Svelte runtime are normally constructed by `Application` and exposed through ApplicationContext only when Svelte needs them.
 
-It does not own the underlying Domain information.
+That does not move ownership of the service into Application.
+
+Examples established during cleanup include:
+
+```text
+BibleLocationReferenceService
+BibleNavigationService
+BookGroupingsService
+SubsEnricherService
+EncodedReadingsDecoderService
+```
 
 ---
 
-# Shared Identifiers
+# Domain Persistence
 
-A value used to communicate between owners may be application-level when neither consumer should own the dependency.
-
-The existing Bible Location Reference is an important example.
-
-A practical location may be:
+Domain-specific persistence behavior belongs under:
 
 ```text
-application/navigation/bible-location-reference.ts
+domains/<domain>/persistence/
 ```
 
-or another application-level shared-identifiers location.
+Typical responsibilities include:
 
-The final location should reflect how the refactor exposes it.
+* Domain-object write transactions,
+* Domain-specific record mapping,
+* Domain query semantics,
+* Domain indexes,
+* and atomic Domain write + Outbox operations.
+
+These adapters may intentionally import concrete shared database infrastructure such as:
+
+```text
+$lib/infrastructure/persistence/application.db
+```
+
+Do not create a generic Infrastructure barrel merely to hide that dependency.
+
+The important direction is:
+
+```text
+Domain persistence adapter
+    → persistence infrastructure
+```
+
+not the number of path segments.
 
 ---
 
-# Application Services
+# Domain Resource Integration
 
-Cross-Domain coordination belongs beneath:
-
-```text
-application/services/
-```
-
-Examples may include services that genuinely coordinate multiple owners.
-
-A service does not belong here merely because multiple callers use it.
-
-Before placing a service here, ask:
-
-> **Would this behavior still make sense if one of its consuming Domains disappeared?**
-
-If the answer is no, it likely belongs to the remaining owner.
-
----
-
-# Application Events
-
-The event infrastructure and shared event contracts belong under:
-
-```text
-application/events/
-```
-
-Domain-specific event declarations may remain with the Domain if their meaning belongs entirely there.
-
-Application Events represent completed facts.
-
-They should not replace Public APIs for commands.
-
----
-
-# Resource Boundary Implementation
-
-The Resource Boundary implementation lives beneath:
-
-```text
-resource/
-```
-
-This directory owns the external Resource lifecycle.
-
-It does not own Domain meaning or generic transport capability.
-
----
-
-# Resource Structure
-
-Target:
-
-```text
-resource/
-
-├── nostr/
-├── discovery/
-├── resolution/
-├── installation/
-├── publishing/
-│   └── outbox/
-├── synchronization/
-├── archives/
-└── shared/
-```
-
-These directories correspond to Resource Boundary responsibilities rather than individual Domains.
-
----
-
-# Resource Nostr Mapping
-
-Generic Resource-to-Nostr event behavior belongs under:
-
-```text
-resource/nostr/
-```
-
-Potential responsibilities include:
-
-* Resource event parsing,
-* Resource event validation,
-* Resource event construction,
-* Published Resource address extraction,
-* and Resource tag handling.
-
-Generic relay connections themselves belong to Infrastructure.
-
----
-
-# Resource Discovery
-
-Location:
-
-```text
-resource/discovery/
-```
-
-Responsibilities include:
-
-* discovery input handling,
-* Nostr Resource filter creation,
-* relay-result normalization,
-* deduplication,
-* current publication selection,
-* and bounded reference traversal.
-
-Discovery may call generic Nostr Infrastructure.
-
-It must not interpret Domain schemas.
-
----
-
-# Resource Resolution
-
-Location:
-
-```text
-resource/resolution/
-```
-
-Responsibilities include:
-
-* representation dispatch,
-* descriptor parsing,
-* external retrieval coordination,
-* integrity verification,
-* descriptor collection handling,
-* and resolution failures.
-
-Provider-specific retrieval belongs behind Infrastructure adapters.
-
----
-
-# Resource Installation
-
-Location:
-
-```text
-resource/installation/
-```
-
-Generic Installation coordination belongs here.
-
-It coordinates:
-
-```text
-Verified Resource Content
-        ↓
-Owning Domain Resource Mapping
-        ↓
-Candidate Domain Objects
-        ↓
-Domain Validation
-        ↓
-Acceptance
-```
-
-The actual Bible/Notes/Plans interpretation remains in:
+Domain-specific interpretation, validation, Resource publication mapping, installation behavior, and module Resource requirements belong under:
 
 ```text
 domains/<domain>/resources/
 ```
 
----
+This code may know:
 
-# Resource Publishing
+* Domain Resource types,
+* Domain Resource paths,
+* Domain object identities,
+* Domain validation rules,
+* Resource-to-Domain interpretation,
+* publication mapping,
+* and module Resource requirements.
 
-Location:
-
-```text
-resource/publishing/
-```
-
-Generic publication preparation and coordination belongs here.
-
-The durable queue belongs beneath:
-
-```text
-resource/publishing/outbox/
-```
-
-Possible responsibilities include:
-
-* publication intent,
-* Resource publication preparation,
-* Outbox state,
-* retry coordination,
-* safe coalescing,
-* and publication result state.
+It should not own generic relay transport.
 
 ---
 
-# Synchronization
+# Domain Modules and UI
 
-Location:
+Domain module implementations remain near the owning Domain:
 
 ```text
-resource/synchronization/
+domains/<domain>/modules/
 ```
 
-Responsibilities include:
+These are Runtime presentation implementations, not automatically public APIs.
 
-* LWW reconciliation,
-* `modifiedAt` / `created_at` comparison,
-* candidate selection,
-* coordination with Installation,
-* and superseding stale publication work where appropriate.
+Same-Domain implementation files may import them directly.
 
-It does not directly persist Domain state.
+Cross-owner presentation imports should use the Domain `/ui` API.
 
 ---
 
-# Resource Archives
+# Domain Workers
 
-Location:
+Domain workers may live beneath:
 
 ```text
-resource/archives/
+domains/<domain>/workers/
 ```
 
-Responsibilities include:
+A worker is a separate composition root.
 
-* `.kjva` envelope,
-* archive validation,
-* Resource entry export,
-* Resource entry import,
-* and archive format versioning.
+It does not consume Svelte ApplicationContext.
 
-Domain Resource serialization remains with the owning Domain.
+It may construct its own local Domain services and infrastructure adapters.
+
+Conceptually:
+
+```text
+Main browser runtime
+    → Application composition root
+
+Worker runtime
+    → worker composition root
+```
+
+Do not introduce global singletons solely so both runtimes can share construction.
 
 ---
 
-# Resource Shared Code
+# Bible Domain
 
-Use:
-
-```text
-resource/shared/
-```
-
-sparingly.
-
-Only genuinely shared Resource Boundary concepts belong there.
-
-Examples might include:
+The Bible Domain currently contains responsibilities such as:
 
 ```text
-PublishedResourceIdentity
-
-ResourceRepresentation
-
-ResourceDescriptor
+models/
+services/
+persistence/
+resources/
+runtime/
+workers/
+modules/
+ui/
+metadata/
+utils/
 ```
 
-Do not create `shared/` merely to avoid deciding ownership.
+Public boundaries:
+
+```text
+$lib/domains/bible
+$lib/domains/bible/ui
+```
+
+Bible owns Bible location semantics.
+
+`BibleLocationReferenceService` remains Bible-owned even though Application constructs the main runtime instance.
+
+---
+
+# Notes Domain
+
+Notes owns:
+
+* Note models,
+* Note persistence,
+* Notes search/list behavior,
+* Notes Resource mapping,
+* Notes publication transactions,
+* Notes workers,
+* and Notes presentation.
+
+Public boundaries:
+
+```text
+$lib/domains/notes
+$lib/domains/notes/ui
+```
+
+The removed `NotesResourceAcquisition` path should not be recreated as ordinary Notes read behavior.
+
+Remote discovery/synchronization is a synchronization responsibility rather than a hidden side effect of `NotesService` reads.
+
+---
+
+# Reading Plans Domain
+
+Reading Plans owns:
+
+* Plan definitions,
+* subscriptions,
+* progress,
+* Reading Plans Resource mappings,
+* worker/pub-sub behavior,
+* reading enrichment/decoding,
+* and plan presentation.
+
+Public boundaries:
+
+```text
+$lib/domains/reading-plans
+$lib/domains/reading-plans/ui
+```
+
+The Reading Plans worker has an explicit typed command/response contract.
+
+Do not weaken that boundary back to open-ended messages or `any` payloads.
+
+---
+
+# Strong's Domain
+
+Strong's exposes its current public API from:
+
+```text
+$lib/domains/strongs
+```
+
+A `/ui` API should be introduced only if Strong's later exposes browser presentation that another owner must consume.
+
+Do not create it for symmetry.
+
+---
+
+# Cross-Domain Dependencies
+
+Cross-Domain dependencies should be intentional and one-directional where possible.
+
+A Domain should not import another Domain's internal folders.
+
+Prefer:
+
+```text
+Domain A
+    → $lib/domains/domain-b
+```
+
+or for presentation:
+
+```text
+Domain A UI
+    → $lib/domains/domain-b/ui
+```
+
+Avoid:
+
+```text
+Domain A
+    → domains/domain-b/services/...
+    → domains/domain-b/models/...
+    → domains/domain-b/modules/...
+```
+
+---
+
+# Bible / Reading Plans Dependency Direction
+
+The Bible/Reading Plans type cycle was explicitly removed.
+
+Keep the direction:
+
+```text
+Reading Plans
+    → Bible contracts
+
+Bible
+    ✕ Reading Plans
+```
+
+Bible defines the small reading-navigation contract its presentation needs.
+
+Reading Plans may extend/use that Bible-owned contract with plan-specific state.
+
+Do not reintroduce a Bible model dependency on Reading Plans merely because a plan can navigate into Bible content.
+
+---
+
+# Resource Boundary
+
+Generic Resource lifecycle implementation lives beneath:
+
+```text
+resource/
+```
+
+Current implementation areas include:
+
+```text
+content/
+descriptors/
+installation/
+interpretation/
+loading/
+models/
+nostr/
+publication/
+receipts/
+resolution/
+services/
+utils/
+validation/
+worker/
+```
+
+The Resource public API is:
+
+```text
+$lib/resource
+```
+
+---
+
+# Resource Root API
+
+`resource/index.ts` exposes stable Resource concepts and browser-safe Resource services needed by external owners.
+
+Current categories include:
+
+```text
+Resource model contracts
+PublishedResourceReference
+Resource identifiers
+installation contracts and results
+interpretation/validation contracts
+publication contracts
+Resource loading/reference building
+Resource receipt contracts/services
+content decorators/encoder/decoder
+descriptor contracts/decoder/validator
+resolution contracts and generic resolvers
+ResourceService
+ResourceProcessor
+ResourceWorkerClient
+```
+
+The exact export list is deliberate.
+
+---
+
+# Resource Root API Stopping Rule
+
+Not every external Resource import should be forced through `$lib/resource`.
+
+Concrete implementation wiring may remain on concrete paths.
+
+Examples include categories such as:
+
+```text
+IndexedDB Resource receipt storage
+ResourceDiscovery composition
+Nostr-specific Resource resolution strategies
+Nostr-specific Resource publication strategies
+other composition-specific implementations
+```
+
+The correct question is:
+
+> Is this a stable Resource capability external owners should depend on?
+
+not:
+
+> Can this import path be made shorter?
+
+---
+
+# Avoid Resource Barrel Cycles
+
+Before exporting a concrete implementation from `$lib/resource`, inspect its dependency graph.
+
+A concrete store may depend on Application database infrastructure that itself imports Resource types.
+
+A cycle conceptually like:
+
+```text
+resource/index.ts
+    → concrete IndexedDB Resource store
+        → application.db
+            → Resource contracts
+```
+
+is worse than leaving the concrete implementation on a direct path.
+
+Public API cleanup must improve dependency direction, not merely hide it.
+
+---
+
+# Resource and Domain Ownership
+
+Generic Resource lifecycle belongs to `resource/`.
+
+Domain meaning remains with Domains.
+
+Conceptually:
+
+```text
+Published Resource
+    ↓
+Resource resolution
+    ↓
+Domain Resource integration
+    ↓
+Domain Object
+    ↓
+Domain persistence/application behavior
+```
+
+Resource code must not become a global home for Bible/Notes/Plans schema meaning.
+
+---
+
+# Resource Publication and Outbox
+
+Resource publication contracts and Application Outbox contracts participate in the same flow but remain separate owners.
+
+Conceptually:
+
+```text
+Domain change
+    ↓
+Domain Resource publication mapping
+    ↓
+Application publication intent / Outbox
+    ↓
+publication strategy
+    ↓
+transport
+```
+
+Public contracts live at:
+
+```text
+Resource publication
+    → $lib/resource
+
+Application Outbox
+    → $lib/application
+```
+
+Do not merge these merely because both participate in publishing.
 
 ---
 
 # Infrastructure
 
-Technical capabilities live beneath:
+Concrete technical capabilities live beneath:
 
 ```text
 infrastructure/
 ```
 
+Current major areas include:
+
+```text
+infrastructure/nostr/
+infrastructure/persistence/
+```
+
 Infrastructure should know how to perform technical work.
 
-It should not decide application policy.
+It should not own application/domain policy.
+
+---
+
+# Infrastructure Does Not Need a Root Barrel
+
+There is no rule requiring a broad:
+
+```text
+$lib/infrastructure
+```
+
+public API.
+
+Composition roots and persistence adapters may intentionally import concrete paths such as:
+
+```text
+$lib/infrastructure/persistence/application.db
+$lib/infrastructure/nostr/...
+```
+
+A broad barrel can obscure the concrete technology being depended on and can introduce cycles.
+
+Create an Infrastructure public API only when there is a real stable abstraction to expose.
 
 ---
 
 # Nostr Infrastructure
 
-Location:
+Nostr implementation belongs beneath:
 
 ```text
 infrastructure/nostr/
 ```
 
-Responsibilities include:
+Responsibilities include categories such as:
 
-* relay connections,
-* subscriptions,
-* REQ execution,
-* AUTH handling,
-* event publication transport,
-* generic event verification,
-* and Nostr-library adaptation.
+* authentication/account strategy implementation,
+* Nostr client/relay transport,
+* Nostr event persistence,
+* protocol adaptation,
+* and publication/read mechanics.
 
-It should not know:
+Normal Domain UI should not import Nostr infrastructure directly.
 
-```text
-Bible chapter
-Note
-Reading Plan
-Resource Installation policy
-LWW Domain meaning
-```
+Application composition may intentionally wire concrete Nostr implementations.
 
 ---
 
 # Persistence Infrastructure
 
-Location:
+Shared IndexedDB/database mechanics live beneath:
 
 ```text
 infrastructure/persistence/
 ```
 
-Responsibilities include generic storage capabilities such as:
+Domain persistence adapters may use the concrete application database implementation.
 
-* IndexedDB database initialization,
-* transactions,
-* schema/version upgrade mechanics,
-* generic storage helpers,
-* and infrastructure-level adapters.
+That is appropriate when their responsibility is explicitly persistence.
 
-Domain persistence logic remains inside Domains.
-
-Resource Boundary persistence logic remains inside `resource/`.
+Avoid pushing Domain semantics down into the database layer.
 
 ---
 
-# HTTP Infrastructure
+# Shared
 
-Location:
+Genuinely owner-neutral utilities live beneath:
 
 ```text
-infrastructure/http/
+shared/
 ```
 
-Generic HTTP transport lives here.
+The public boundary is:
 
-Resource Resolution decides why a request is needed.
+```text
+$lib/shared
+```
 
-HTTP Infrastructure only performs it.
+Current examples include:
+
+```text
+sleep
+alphabetic sequence conversion
+```
+
+Do not place something in `shared/` merely because two owners use it.
+
+Ask whether the behavior has meaning independent of those owners.
 
 ---
 
-# Blossom Infrastructure
+# Shared vs Infrastructure
 
-Location:
-
-```text
-infrastructure/blossom/
-```
-
-Generic Blossom access may live here if it becomes substantial enough to warrant its own capability.
-
-It should return technical results rather than Domain information.
-
----
-
-# Worker Infrastructure
-
-Location:
-
-```text
-infrastructure/workers/
-```
-
-This directory owns worker execution capabilities, not worker business responsibility.
-
-Avoid a design where all worker code is moved here regardless of meaning.
-
-For example:
-
-```text
-Bible indexing behavior
-    belongs to Bible
-
-worker message/execution adapter
-    belongs to Infrastructure
-```
-
----
-
-# Compression and Crypto
-
-Generic technical operations may live under:
-
-```text
-infrastructure/compression/
-infrastructure/crypto/
-```
+Use `shared/` for owner-neutral code that is not an external technical adapter.
 
 Examples:
 
-* gzip,
-* SHA-256,
-* byte transformations,
-* signing adapters where appropriate.
+```text
+timer helper
+simple sequence conversion
+```
 
-Resource policy remains outside these directories.
+Use `infrastructure/` when code adapts or implements a technical capability such as:
+
+```text
+IndexedDB
+Nostr
+external transport
+platform integration
+```
+
+A simple `sleep()` helper is not Infrastructure.
 
 ---
 
 # Shared Components
 
-Root:
+Root presentation primitives live beneath:
 
 ```text
 components/
 ```
 
-should contain only genuinely reusable presentation primitives without Domain meaning.
+They should be genuinely reusable and carry no Domain meaning.
 
-Examples:
+Domain-specific presentation stays beneath the owning Domain.
 
-```text
-Button.svelte
-Menu.svelte
-Dialog.svelte
-Splitter.svelte
-```
-
-Domain-specific presentation stays with the Domain.
-
-Application Runtime presentation may stay near the Runtime when it is meaningful only there.
+Application-runtime presentation stays beneath Application implementation and is exposed through `$lib/application/ui` when external browser consumers need it.
 
 ---
 
-# No Global `models/`
+# Svelte Service Consumption
 
-The current global:
+Svelte components should not normally construct long-lived application/domain services directly.
 
-```text
-models/
+Avoid:
+
+```ts
+const service = new SomeDomainService(...);
 ```
 
-should disappear over time.
+inside a Svelte container when the service belongs to the application runtime.
 
-Replace it with owner-local types.
+Prefer:
 
 ```text
-models/note
-    → domains/notes/objects/
-
-models/pane
-    → application/runtime/pane/
-
-models/resource
-    → resource/shared/
+Application
+    constructs service/factory
+        ↓
+ApplicationContext
+        ↓
+Svelte
 ```
 
-A TypeScript type is not architecturally shared merely because it is a model.
+This keeps ownership and lifecycle explicit.
 
 ---
 
-# No Generic Global `services/`
+# Svelte Must Not Reach Into Infrastructure
 
-The current global:
-
-```text
-services/
-```
-
-should also shrink substantially or disappear.
-
-Services move according to ownership:
-
-```text
-Bible-only
-    → domains/bible/services/
-
-Notes-only
-    → domains/notes/services/
-
-Runtime
-    → application/runtime/ or application/services/
-
-Resource lifecycle
-    → resource/
-
-technical capability
-    → infrastructure/
-```
-
-This is one of the most important changes in the refactor.
-
----
-
-# No Domain-Owned Raw Nostr Transport
-
-A Domain should not import:
-
-```text
-infrastructure/nostr/
-```
-
-directly for ordinary Resource behavior.
+Active Svelte code should consume application/domain capabilities rather than concrete infrastructure.
 
 Avoid:
 
 ```text
-Bible
-    ↓
-Relay
+Svelte
+    → infrastructure/persistence
+
+Svelte
+    → infrastructure/nostr
 ```
 
 Prefer:
 
 ```text
-Bible
-    ↕
-Resource Boundary
-    ↕
-Nostr Infrastructure
+Svelte
+    → ApplicationContext / Domain API
+        → service
+            → persistence/transport implementation
 ```
 
-This preserves offline-first behavior and protocol isolation.
+---
+
+# Internal Imports
+
+Inside one owner, direct internal imports are normal.
+
+For example:
+
+```text
+domains/bible/services/chapter.service.ts
+    → ../models/...
+    → ../resources/...
+```
+
+or:
+
+```text
+application/application.ts
+    → ./runtime/...
+    → ./services/...
+```
+
+Do not route every internal dependency through the owner's public barrel.
+
+Public/DDD boundaries exist between owners, not between every pair of files.
+
+---
+
+# Composition-Root Imports
+
+Composition roots are a deliberate exception to ordinary public-API consumption.
+
+`Application` may need concrete implementations from Domains, Resource, and Infrastructure.
+
+A worker composition root may need concrete Domain and Infrastructure implementations as well.
+
+Those imports are wiring, not architectural leaks.
+
+Do not replace useful concrete composition imports with broad barrels merely for consistency.
+
+---
+
+# Test Imports
+
+Tests should use the public surface appropriate to what they test.
+
+Examples:
+
+```text
+Domain behavior test
+    → Domain public API when practical
+
+Resource contract/integration test
+    → $lib/resource
+
+browser UI test
+    → public /ui boundary where appropriate
+```
+
+A test whose subject is a concrete implementation may import that implementation directly.
+
+For example:
+
+```text
+Nostr strategy integration test
+    → concrete Nostr strategy
+
+IndexedDB adapter test
+    → concrete IndexedDB adapter
+```
+
+Do not hide the subject under a barrel just to satisfy an import-style rule.
+
+---
+
+# Entry Points Are Special
+
+Files loaded by the platform/runtime may have no ordinary inbound TypeScript import.
+
+Examples include:
+
+```text
+Svelte route entrypoints
+worker entrypoints
+```
+
+Do not classify a file as dead solely because static import tracing reports zero callers.
+
+Before deleting a zero-reference file, determine whether it is:
+
+* a route,
+* a worker entrypoint,
+* loaded dynamically,
+* referenced by configuration,
+* or intentionally retained reference/generator code.
+
+---
+
+# Dead-Code Audit Rule
+
+Before deleting code:
+
+```text
+1. trace static callers
+2. check dynamic/module-resolver usage
+3. check worker/route/config entrypoints
+4. inspect tests
+5. determine actual responsibility
+6. remove only when genuinely dead
+```
+
+Do not delete based only on filename age or visual similarity to newer code.
+
+---
+
+# Reference / Generator Code
+
+Some historical metadata/data-generation specs are intentionally retained as reference material even though they are skipped and are not normal runtime behavior.
+
+Do not delete such files merely because they have no production callers.
+
+Intentional reference code is different from accidental dead code.
 
 ---
 
 # Allowed Dependency Direction
 
-The target dependency direction is:
+A useful high-level direction is:
 
 ```text
 Presentation
     ↓
-Owner Public API
+ApplicationContext / Owner public API
     ↓
-Domain / Application Owner
+Application or Domain behavior
     ↓
 Resource Boundary when external lifecycle is required
     ↓
@@ -1355,622 +1495,289 @@ Infrastructure
 More concretely:
 
 ```text
-Domain Module
-    → same Domain API
+Domain UI
+    → same Domain API/service
 
 Application Runtime
-    → Domain APIs
-
-Domain
-    → Domain-local persistence abstraction
-
-Resource Boundary
-    → Domain public Resource integration point
+    → Domain public APIs/contracts
 
 Domain persistence
     → persistence infrastructure
 
-Resource Boundary
-    → Nostr / HTTP / Blossom infrastructure
+Domain Resource integration
+    → Resource contracts
+
+Resource concrete strategy
+    → transport infrastructure
+
+Application composition root
+    → concrete implementations across owners
 ```
 
 ---
 
-# Forbidden Dependency Direction
+# Forbidden / Suspicious Dependency Directions
 
-The refactor should eliminate patterns such as:
+Treat patterns such as these as architectural smells requiring explanation:
 
 ```text
 Domain A
     → Domain B internals
 
 Domain
-    → raw relay API
+    → raw Nostr transport for ordinary Resource behavior
 
-UI Module
+Svelte UI
     → IndexedDB directly
 
+Svelte UI
+    → Nostr client directly
+
 Infrastructure
-    → Domain service
+    → Domain service/policy
 
-Resource Discovery
-    → Domain repository
-
-Outbox
-    → Workspace Runtime
+Resource generic code
+    → Bible/Notes/Plans meaning
 
 Domain persistence
-    → Pane service
+    → Pane/Workspace Runtime
+
+lower-level owner
+    → Application composition root
 ```
 
-These directions violate ownership.
+Some tests/composition roots may be exceptions, but those exceptions should be explicit.
 
 ---
 
 # Domain-to-Domain Collaboration
 
-Cross-Domain collaboration must use an explicit boundary.
+Cross-Domain collaboration should use an intentional contract.
 
-Allowed mechanisms are:
-
-```text
-Public API
-
-Application Event
-
-Shared Identifier
-
-Navigation Context
-```
-
-Example:
+Possible forms include:
 
 ```text
-Reading Plans
-    ↓
-Bible Location Reference
-    ↓
-Navigation Context
-    ↓
-Workspace Runtime
-    ↓
-Bible Module
+Domain root public API
+Domain /ui API
+shared owner-neutral contract
+Application coordination capability
 ```
 
-Reading Plans does not import Bible internals simply because it opens Bible content.
+Do not introduce a generic shared abstraction merely to avoid choosing dependency direction.
+
+When one Domain conceptually depends on another, make that direction explicit and avoid a reverse dependency.
 
 ---
 
-# Domain Public API Imports
+# Public API Export Checklist
 
-A useful convention is to expose a Domain barrel:
-
-```text
-domains/bible/api/index.ts
-```
-
-Consumers may import from that boundary.
-
-Avoid broad barrels at:
+Before adding a symbol to an owner root `index.ts`, ask:
 
 ```text
-domains/bible/index.ts
+1. Is it intentionally usable outside this owner?
+2. Is it stable enough to be part of the owner boundary?
+3. Is it browser-safe for the root API?
+4. Would exporting it create a barrel cycle?
+5. Is it a concrete composition implementation that should remain direct?
+6. Is there an actual external caller requiring it?
 ```
 
-if that makes private implementation accidentally public.
+If the answer is unclear, keep the implementation private until a real external need exists.
 
-Public surface area should remain deliberate.
+Prefer explicit exports over broad `export *`.
+
+The intended public surface should be reviewable in one file.
 
 ---
 
-# Internal Imports
+# When to Add `/ui`
 
-Within one owner, ordinary relative or owner-local imports are acceptable.
-
-For example:
+Add a `/ui` public API when both are true:
 
 ```text
-domains/bible/services/chapter-service.ts
-    → ../persistence/chapter-repository
+1. the owner has browser/Svelte presentation external callers need
+2. exporting it from the root would make the root browser-only or Node-unsafe
 ```
 
-The architecture does not require interfaces between every pair of files inside the same owner.
+Do not create `/ui` merely for symmetry.
 
-DDD boundaries exist between owners, not between every class.
+Strong's currently does not require one simply because Bible, Notes, and Reading Plans have one.
 
 ---
 
-# Resource-to-Domain Integration
+# When Not to Add an `index.ts`
 
-The Resource Boundary needs a deliberate way to ask the owning Domain to interpret Resource content.
+Do not add a public `index.ts` merely because a folder exists.
 
-A target dependency might conceptually be:
+Folders such as these normally remain implementation organization beneath an existing owner boundary:
 
 ```text
+application/outbox/
+application/resources/
+application/runtime/
+
+resource/content/
 resource/installation/
-        ↓
-Domain Resource Integration API
-        ↓
-domains/bible/resources/
-```
-
-The exact interface is intentionally left to implementation work.
-
-Important constraints:
-
-* Resource code does not parse Bible schema itself.
-* Bible code does not perform relay Discovery itself.
-* Installation coordinates the boundary.
-* Bible validates Bible meaning.
-
----
-
-# Domain-to-Resource Publication
-
-The reverse path should preserve the same ownership.
-
-Conceptually:
-
-```text
-Bible Domain
-    ↓
-Bible Resource Mapping
-    ↓
-Resource Publishing
-    ↓
-Nostr Event Processing
-    ↓
-Nostr Infrastructure
-```
-
-The Domain determines the information being represented.
-
-The Resource Boundary determines its external lifecycle.
-
----
-
-# Existing Nostr Files
-
-Existing files under:
-
-```text
-client/src/lib/nostr/
-```
-
-should not simply be moved wholesale into:
-
-```text
-resource/nostr/
-```
-
-They first need classification.
-
-For example:
-
-```text
-chapters.nostr.ts
-```
-
-likely contains two responsibilities:
-
-```text
-Bible-specific Resource knowledge
-    → domains/bible/resources/
-
-generic event/query behavior
-    → resource/ or infrastructure/nostr/
-```
-
-Likewise:
-
-```text
-offline.nostr.ts
-```
-
-should be decomposed based on actual responsibilities rather than renamed as one unit.
-
----
-
-# `+page.svelte`
-
-The route remains:
-
-```text
-client/src/routes/+page.svelte
-```
-
-because the application is still a single-route SPA.
-
-The target is not to remove it.
-
-The target is to reduce its responsibilities.
-
-Eventually:
-
-```text
-+page.svelte
-    owns:
-        shell rendering
-        Runtime attachment
-        recursive presentation hookup
-
-Workspace Runtime
-    owns:
-        Workspace state
-        Pane tree mutation
-        Buffer lifecycle
-        Runtime commands
-```
-
-Routing must not become the application's primary navigation model.
-
-Panes remain the navigation/composition model.
-
----
-
-# Svelte Components and Domain APIs
-
-A Domain Module component may call its own Domain API directly.
-
-For example:
-
-```text
-BibleReading.svelte
-    ↓
-Bible API
-```
-
-It does not need an Application Service simply because the caller is UI code.
-
-Application Services are for genuinely application-level coordination.
-
----
-
-# Persistence Dependency Rule
-
-Domain persistence implementation may depend on generic IndexedDB infrastructure:
-
-```text
-domains/notes/persistence/
-    ↓
-infrastructure/persistence/
-```
-
-But generic persistence infrastructure must not depend back on Notes.
-
-Likewise:
-
-```text
-resource/publishing/outbox/
-    ↓
-infrastructure/persistence/
-```
-
-is allowed.
-
----
-
-# Search Organization
-
-Search remains a feature within its owner.
-
-Target examples:
-
-```text
-domains/bible/modules/search/
-domains/bible/services/search-service.ts
-
-domains/notes/modules/search/
-domains/notes/services/search-service.ts
-```
-
-If shared search-engine integration is substantial, technical adapters may live in Infrastructure.
-
-For example:
-
-```text
-infrastructure/search/
-    flexsearch adapter
-```
-
-The adapter knows how to execute indexing/search operations.
-
-It does not determine Bible or Notes search meaning.
-
----
-
-# Tests
-
-Tests should follow ownership where practical.
-
-For example:
-
-```text
-domains/bible/
-    ...
-    tests/
-
 resource/resolution/
-    ...
-    tests/
 ```
 
-or colocated test files.
-
-The exact test layout is not architecturally important.
-
-The important rule is that tests should reinforce ownership boundaries rather than require importing private code across owners.
+Only add another public entry point when it represents a genuinely separate boundary, such as browser-only `/ui`.
 
 ---
 
 # Naming
 
-Prefer names that describe application responsibility.
+Prefer names that expose responsibility.
 
 Good:
 
 ```text
-BibleApi
-
-ChapterService
-
-ResourceResolver
-
-OutboxRepository
-
 WorkspaceRuntime
+ChapterService
+ResourceResolver
+ResourceReceiptService
+ModuleResourceSelectionContributor
+BibleNavigationService
 ```
 
-Avoid generic names that erase ownership:
+Be suspicious of generic names such as:
 
 ```text
 DataService
-
 CommonManager
-
 GlobalStore
-
 UtilityService
-
 ResourceHelper
 ```
 
-A generic name is often a warning that responsibility is unclear.
+Generic names often indicate unclear ownership.
 
 ---
 
-# `shared/` Policy
+# Refactoring Strategy
 
-Avoid broad global `shared/` directories.
+Do not reorganize the whole codebase at once.
 
-A shared directory frequently becomes an escape hatch from ownership.
+Use small slices.
 
-Before placing anything in shared code, ask:
+A typical boundary cleanup should be:
 
 ```text
-Does one owner give this concept meaning?
-    yes → put it there
-
-Is it genuinely application-wide?
-    yes → application/
-
-Is it a generic technical capability?
-    yes → infrastructure/
-
-Is it a Resource protocol concept?
-    yes → resource/
+1. identify one owner boundary
+2. trace external callers
+3. decide which symbols are truly public
+4. add/adjust the root API
+5. update external callers
+6. keep internal imports direct
+7. verify browser-only code did not leak into Node-safe barrels
+8. run tests/build
 ```
 
-Only create a shared location after those answers fail legitimately.
+For dead-code cleanup:
+
+```text
+1. trace callers
+2. verify entrypoint status
+3. verify replacement behavior
+4. remove implementation + orphaned tests together
+5. validate
+```
 
 ---
 
-# Dependency Cycles
+# Current Boundary Stopping Point
 
-The target organization should avoid owner-level dependency cycles.
-
-Especially avoid:
+The current cleanup has already established the major intended boundaries:
 
 ```text
-Bible → Reading Plans → Bible
+$lib/application
+$lib/application/ui
 
-Domain → Resource → Domain private implementation
+$lib/domains/bible
+$lib/domains/bible/ui
 
-Application Runtime → Domain internal → Runtime
+$lib/domains/notes
+$lib/domains/notes/ui
+
+$lib/domains/reading-plans
+$lib/domains/reading-plans/ui
+
+$lib/domains/strongs
+
+$lib/resource
+$lib/shared
 ```
 
-Where collaboration creates a cycle, introduce the appropriate public boundary or application-level coordination.
+Do not continue broad import churn merely because some concrete paths remain.
 
-Do not solve cycles by moving unrelated code into `shared/`.
+Remaining direct implementation imports should be evaluated by responsibility rather than automatically normalized.
+
+Further cleanup should generally prioritize:
+
+```text
+correctness
+ownership
+stale behavior
+missing tests
+dead state
+misleading documentation
+```
+
+rather than further broad barrel creation.
 
 ---
 
-# Migration Strategy
+# Decision Checklist
 
-The target directories should be introduced incrementally.
-
-Do not create the entire empty hierarchy before the code requires it.
-
-Recommended pattern:
+When deciding where code belongs, ask:
 
 ```text
-select one owner
-    ↓
-create target boundary
-    ↓
-move implementation
-    ↓
-update imports
-    ↓
-verify behavior
-    ↓
-commit
+1. Who owns the meaning?
+2. Is this Application-wide coordination or Domain behavior?
+3. Is this generic Resource lifecycle or Domain Resource meaning?
+4. Is this technical Infrastructure?
+5. Is it genuinely owner-neutral Shared code?
+6. Is the caller external to the owner?
+7. Does the caller need Node-safe code or browser UI?
+8. Is a direct concrete import intentional composition wiring?
+9. Would a new barrel create a dependency cycle?
+10. Is there a real caller requiring the proposed public export?
 ```
 
-A practical initial sequence is:
-
-```text
-1. Bible
-2. Notes
-3. Reading Plans
-4. Workspace Runtime
-5. Resource Boundary
-6. Persistence cleanup
-7. Infrastructure cleanup
-```
-
-The exact sequence may change when dependency analysis begins.
+The physical organization should make the answers increasingly obvious.
 
 ---
 
-# Compatibility During Migration
+# Final Rule
 
-Temporary compatibility imports or facades are acceptable when they allow gradual migration.
+The directory tree and import graph should communicate ownership.
 
-For example:
-
-```text
-old service import
-    ↓
-temporary forwarding API
-    ↓
-new Domain API
-```
-
-These should be visibly temporary and removed once consumers have migrated.
-
-Avoid maintaining two authoritative implementations.
-
----
-
-# Target End State
-
-After the structural refactor, the repository should communicate architecture through location.
-
-A developer encountering:
+Prefer:
 
 ```text
-domains/notes/
+external caller
+    → owner root API
+
+external browser presentation caller
+    → owner /ui API
+
+owner implementation
+    → direct internal imports
+
+composition root
+    → concrete implementations when wiring requires them
 ```
 
-should know that Notes owns the code.
-
-A developer encountering:
+Avoid both extremes:
 
 ```text
-resource/resolution/
+everything imports internals everywhere
 ```
 
-should know the code handles generic Resource Resolution.
-
-A developer encountering:
+and:
 
 ```text
-infrastructure/nostr/
+every folder gets a barrel and every concrete implementation is hidden behind it
 ```
 
-should know the code implements protocol transport capability rather than Domain behavior.
-
-A developer encountering:
-
-```text
-application/runtime/
-```
-
-should know the code composes Workspace interaction rather than owning application content.
-
----
-
-# Completion Criteria
-
-The target organization is substantially established when:
-
-* Domain files live primarily beneath their Domain.
-* Domain consumers use explicit public APIs.
-* Domain internals are no longer casually imported cross-Domain.
-* Workspace, Pane, Buffer, and Module Runtime live under Application Runtime.
-* `+page.svelte` no longer owns most Runtime mutation logic.
-* generic Nostr transport is separated from Resource-specific processing.
-* Domains do not directly query relays for ordinary Resource behavior.
-* Resource Discovery, Resolution, Installation, Publishing, Synchronization, and Archives have clear implementation homes.
-* Domain-specific Resource mapping remains Domain-owned.
-* IndexedDB mechanics are separated from Domain persistence semantics.
-* global `models/` and `services/` directories have largely disappeared.
-* shared UI components contain genuinely shared presentation only.
-* directory structure communicates architectural ownership without needing a separate explanation for every file.
-
----
-
-# What This Document Does Not Require
-
-This structure does not require every Domain to have:
-
-```text
-api/
-objects/
-services/
-persistence/
-resources/
-modules/
-components/
-```
-
-Empty symmetry is not a goal.
-
-It also does not require:
-
-* repository interfaces for every persisted object,
-* factories for every Domain Object,
-* dependency injection containers,
-* controller layers,
-* strategy objects,
-* or one class per responsibility.
-
-These are implementation tools, not DDD requirements.
-
-Introduce them only when the implementation benefits from them.
-
----
-
-# Big Takeaway
-
-The target codebase should make ownership visible at the filesystem level.
-
-```text
-client/src/lib/
-
-    domains/
-        application meaning
-
-    application/
-        application coordination and Runtime
-
-    resource/
-        external Resource lifecycle
-
-    infrastructure/
-        technical capability
-
-    components/
-        genuinely shared presentation
-```
-
-The directory structure should reinforce the same rule as the architecture:
-
-> **Place code with the owner that gives the responsibility meaning.**
-
-DDD in KJVOnly is therefore not a folder template.
-
-It is the alignment of:
-
-```text
-Meaning
-    ↓
-Ownership
-    ↓
-Dependency Boundary
-    ↓
-Code Location
-```
-
-When those four agree, the implementation reflects the architecture.
+The target is a small number of meaningful, stable boundaries that match the actual runtime architecture.

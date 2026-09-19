@@ -30,8 +30,7 @@ Application
         Bible navigation
         Bible references
         Bible search
-        Strong's information
-        Bible annotations
+        Bible text markup
 
     Notes Domain
         Notes
@@ -39,17 +38,21 @@ Application
         Scripture associations
 
     Reading Plans Domain
-        Reading Plans
-        Reading progress
-        Completed readings
+        Plan definitions
+        Plan subscriptions
+        Plan progress
 
-    Settings Domain
-        Application preferences
+    Strong's Domain
+        Strong's definitions
+
+    Application-owned capabilities
+        Settings
+        Workspace-wide coordination
 ```
 
 Each Domain groups concepts and behavior that derive their meaning from the same area of the application.
 
-For example, Bible search belongs to the Bible Domain because the Bible gives that search behavior meaning. Annotations also belong to the Bible Domain because they describe selections within Bible content.
+For example, Bible search belongs to the Bible Domain because the Bible gives that search behavior meaning. Bible text markup also belongs to the Bible Domain because it describes markings over Bible content. Strong's remains a separate Domain because it owns a distinct body of definitions and behavior even when Bible interactions consume it.
 
 A capability does not become a separate Domain merely because it has its own implementation, Module, storage requirements, or user interface.
 
@@ -121,8 +124,7 @@ Bible Domain
     Reading
     Search
     References
-    Strong's
-    Annotations
+    Text Markup
 ```
 
 These capabilities are different behaviors, but they all operate on concepts whose meaning comes from the Bible.
@@ -149,7 +151,7 @@ If the answer is no, it probably belongs within an existing Domain.
 
 For example, Bible Search does not require a Search Domain because its results, rules, and meaning all depend upon Bible content.
 
-Likewise, Bible annotations do not require an Annotations Domain because their meaning exists only in relation to Scripture.
+Likewise, Bible text markup does not require a separate Markup Domain because its meaning exists only in relation to Scripture.
 
 A new Domain should therefore represent a new conceptual area of the application rather than a new technical capability or presentation feature.
 
@@ -166,18 +168,21 @@ Examples include:
 ```text id="5dwrkb"
 Bible Domain
     Chapter
-    Annotation
-    Strong's Entry
+    Text Markup
 
 Notes Domain
     Note
 
 Reading Plans Domain
-    Reading Plan
-    Completed Reading
+    Plan Definition
+    Plan Subscription
+    Plan Progress
+
+Strong's Domain
+    Strong's Definition
 ```
 
-A Nostr event, IndexedDB record, serialized JSON object, or other external representation is not itself a Domain Object.
+A protocol event, persistence record, serialized object, or other external representation is not itself a Domain Object.
 
 Those representations may contain the information required to reconstruct one.
 
@@ -196,17 +201,17 @@ That Domain owns the object.
 For example:
 
 ```text id="7l4n2x"
-Annotation
+Text Markup
     ↓
-Describes Bible content
+Describes markings over Bible content
     ↓
 Bible Domain
 ```
 
 ```text id="r0szt7"
-Completed Reading
+Plan Progress
     ↓
-Describes Reading Plan progress
+Describes progress within a Reading Plan subscription
     ↓
 Reading Plans Domain
 ```
@@ -270,7 +275,7 @@ Bible Search is independently useful and can occupy its own Buffer, so it can be
 
 Other behavior may remain part of an existing Module.
 
-For example, Bible annotations belong to the Bible Domain but can be presented within the Bible Reader interaction.
+For example, Bible text markup belongs to the Bible Domain but can be presented within the Bible Reader interaction.
 
 Conceptually:
 
@@ -281,7 +286,7 @@ Bible Domain
         ↓
     Bible Reader Module
         ├── Scripture presentation
-        └── Annotation interaction
+        └── Text Markup interaction
 ```
 
 Domain ownership and Module composition are separate decisions.
@@ -485,7 +490,7 @@ Resource Boundary
 Resource
 ```
 
-The Domain should not need to know whether the resulting Resource is ultimately transported through Nostr, Blossom, another protocol, or some future mechanism.
+The Domain should not need to know which transport or external storage mechanism ultimately carries the resulting Resource.
 
 Those mechanisms exist beneath the Resource Boundary.
 

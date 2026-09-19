@@ -5,20 +5,27 @@
 	import { fade } from 'svelte/transition';
 
 	// MODELS
-	import { Modules } from '$lib/application/models/modules.model';
-	import type { NavReadings } from '$lib/domains/reading-plans/models/plans.model';
+	import { Modules } from '$lib/application';
 
 	// SERVICES
-	import { bibleNavigationService } from '$lib/domains/bible/services/bibleNavigation.service';
+	import { useApplicationContext } from '$lib/application';
 
 	// COMPONENTS
 	import LeftChevron from '$lib/components/buttons/chevrons/leftChevron.svelte';
 	import RightChevron from '$lib/components/buttons/chevrons/rightChevron.svelte';
 
 	// OTHER
-	import { attachEvents } from '$lib/application/ui/eventHandlers';
-	import type { BibleMode } from '$lib/domains/bible/models/bible.model';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { attachEvents } from '$lib/application/ui';
+	import type {
+		BibleMode,
+		BibleReadingNavigation
+	} from '$lib/domains/bible/models/bible.model';
+	import type { Pane } from '$lib/application';
+
+	const {
+		workspaceRuntime,
+		bibleNavigationService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -28,6 +35,7 @@
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		showNavButtons = $bindable<boolean>(),
+		paneID,
 		ID
 	}: {
 		mode: BibleMode;
@@ -35,6 +43,7 @@
 		bibleLocationRef: string;
 		bibleVersion: string;
 		showNavButtons: boolean;
+		paneID: string;
 		ID: string;
 	} = $props();
 
@@ -82,18 +91,21 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	async function _nextPlanChapter(nr: NavReadings) {
+	async function _nextPlanChapter(nr: BibleReadingNavigation) {
 		let ci = nr.currentNavReadingsIndex;
 		let nextIndex = ci + 1;
 		if (nextIndex > nr.readings.bcvs.length - 1) {
-			pane.updateBuffer(Modules.PLANS);
+			workspaceRuntime.replaceBuffer(
+				paneID,
+				Modules.PLANS
+			);
 		} else {
 			nr.currentNavReadingsIndex = nextIndex;
 			bibleLocationRef = nr.readings.bcvs[nextIndex].bibleLocationRef;
 		}
 	}
 
-	async function _previousPlanChapter(nr: NavReadings) {
+	async function _previousPlanChapter(nr: BibleReadingNavigation) {
 		let ci = nr.currentNavReadingsIndex;
 		let nextIndex = ci - 1;
 		if (nextIndex >= 0) {

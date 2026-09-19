@@ -1,5 +1,6 @@
 import {
-	generateSecretKey
+	generateSecretKey,
+	nip19
 } from 'nostr-tools';
 
 import {
@@ -11,12 +12,21 @@ import {
 } from 'vitest';
 
 import {
+	NostrSigner
+} from '$lib/infrastructure/nostr/nostr-signer';
+
+import {
+	createBrowserNostrClient
+} from '$lib/infrastructure/nostr/client/create-nostr-client';
+
+import {
 	Application
 } from '$lib/application/runtime/application';
 
 import {
-	RESOURCE_KIND
-} from '$lib/resource/models/resource.model';
+	RESOURCE_KIND,
+	createResourceInstallationId
+} from '$lib/resource';
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
@@ -32,11 +42,8 @@ import {
 import {
 	createBibleVersionId,
 	createChapterId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '$lib/domains/bible';
 
-import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
 
 const RELAY_URL =
 	import.meta.env
@@ -52,11 +59,54 @@ describe(
 		let application:
 			Application;
 
+		let fixtureSigner:
+			NostrSigner;
+
+		let fixtureNostrClient:
+			ReturnType<
+				typeof createBrowserNostrClient
+			>;
+
 		let publisher:
 			string;
 
 		beforeEach(
 			async () => {
+				const secretKey =
+					generateSecretKey();
+
+				const nsec =
+					nip19.nsecEncode(
+						secretKey
+					);
+
+				fixtureSigner =
+					new NostrSigner();
+
+				await fixtureSigner
+					.useSecretKey(
+						secretKey
+					);
+
+				fixtureNostrClient =
+					createBrowserNostrClient(
+						fixtureSigner
+					);
+
+				fixtureNostrClient
+					.setDefaultRelays([
+						{
+							url:
+								RELAY_URL,
+
+							read:
+								true,
+
+							write:
+								true
+						}
+					]);
+
 				application =
 					new Application({
 						resourceRelays: [
@@ -75,16 +125,16 @@ describe(
 
 				await application
 					.context
-					.nostrSigner
-					.useSecretKey(
-						generateSecretKey()
+					.authenticationService
+					.login(
+						nsec
 					);
 
 				publisher =
-					await application
+					application
 						.context
-						.nostrSigner
-						.getPublicKey();
+						.authenticationService
+						.getUserId();
 
 				await application.start();
 			}
@@ -93,6 +143,12 @@ describe(
 		afterEach(
 			async () => {
 				await application.stop();
+
+				fixtureNostrClient
+					.dispose();
+
+				await fixtureSigner
+					.clear();
 			}
 		);
 
@@ -102,8 +158,11 @@ describe(
 				const resourceType =
 					'kjvonly/bible/chapters';
 
+				const resourceSourceId =
+					`${resourceType}/kjvs`;
+
 				const resourceId =
-					`${resourceType}/kjvs/1_1`;
+					`${resourceSourceId}/1_1`;
 
 				const content =
 					createChapterContent();
@@ -113,9 +172,7 @@ describe(
 				 * the local Nostr relay.
 				 */
 				const publication =
-					await application
-						.context
-						.resourceClient
+					await fixtureNostrClient
 						.publishEvent({
 							kind:
 								RESOURCE_KIND,
@@ -152,47 +209,6 @@ describe(
 					true
 				);
 
-				/*
-				 * Enter through the generic
-				 * application ResourceService.
-				 *
-				 * Nothing below this point is faked.
-				 */
-				const result =
-					await application
-						.context
-						.resourceService
-						.install({
-							publisher,
-							resourceId
-						});
-
-				expect(
-					result
-				).toEqual({
-					requested: {
-						publisher,
-						resourceId
-					},
-
-					found:
-						true,
-
-					resources: [
-						{
-							reference: {
-								publisher,
-								resourceId
-							},
-
-							resourceType,
-
-							status:
-								'handled'
-						}
-					]
-				});
-
 				const chapterId =
 					createChapterId(
 						createBibleVersionId(
@@ -207,6 +223,34 @@ describe(
 						publisher,
 						'kjvs'
 					);
+
+				/*
+				 * Enter through the Bible Domain service,
+				 * exactly as application code does on a miss.
+				 *
+				 * Nothing below this point is faked.
+				 */
+				const chapter =
+					await application
+						.context
+						.chapterService
+						.get(
+							{
+								publisher,
+								resourceId:
+									resourceSourceId
+							},
+							'1_1'
+						);
+
+				expect(
+					chapter
+				).toEqual({
+					id:
+						chapterId,
+
+					...content
+				});
 
 				const installationId =
 					createResourceInstallationId(

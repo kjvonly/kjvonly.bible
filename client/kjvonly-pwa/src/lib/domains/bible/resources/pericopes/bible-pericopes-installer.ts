@@ -12,12 +12,9 @@ import {
 
 import {
 	createResourceInstallationId,
-	type ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
-
-import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
+	type ResourceInstallation,
+	type DecodedResourceContent
+} from '$lib/resource';
 
 import type {
 	BiblePericopesInstallationTransaction

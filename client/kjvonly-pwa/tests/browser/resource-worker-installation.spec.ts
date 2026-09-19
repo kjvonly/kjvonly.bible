@@ -5,15 +5,14 @@ import {
 	it
 } from 'vitest';
 
-import type {
-	PublishedResourceReference,
-	ResourceRepresentation
-} from '$lib/resource/models/resource.model';
-
 import {
+	type PublishedResourceReference,
+	type ResourceRepresentation,
+	createResourceInstallationId,
+	createResourceReceiptId,
 	createBrowserResourceWorkerClient,
 	ResourceWorkerClient
-} from '$lib/resource/worker/resource-worker-client';
+} from '$lib/resource';
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
@@ -24,13 +23,6 @@ import {
 	createChapterId
 } from '$lib/domains/bible/utils/bible-identity';
 
-import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
-
-import {
-	createResourceReceiptId
-} from '$lib/resource/receipts/resource-receipt';
 
 import {
 	DOMAIN_OBJECTS,

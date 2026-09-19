@@ -6,15 +6,12 @@ import {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
-	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
-
-import {
+	BIBLE_BOOKNAMES_RESOURCE_TYPE,
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+} from '$lib/domains/bible';
 
 import {
 	PLAN_DEFINITION_RESOURCE_TYPE

@@ -1,20 +1,22 @@
 <script lang="ts">
+	import { useApplicationContext } from '$lib/application';
 	// ================================ IMPORTS ================================
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	// // SVGS
 	import Close from '$lib/components/svgs/close.svelte';
 	import Menu from '$lib/components/svgs/menu.svelte';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type { Pane } from '$lib/application';
 
 	// MODELS
-	import { PLANS_VIEWS, type Sub } from '$lib/domains/reading-plans/models/plans.model';
+	import {
+		PLANS_VIEWS,
+		type Sub
+	} from '$lib/domains/reading-plans/models/plans.model';
+	const { workspaceRuntime } = useApplicationContext();
 
 	// SERVICES
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -43,7 +45,7 @@
 	}
 
 	function onClosePlansList(): void {
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		workspaceRuntime.closePane(paneID);
 	}
 
 	function onMenuClicked(): void {
@@ -101,7 +103,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render subsListView()}
 	</BufferBody>
 </BufferContainer>

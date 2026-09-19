@@ -354,13 +354,9 @@ A valid, discovered, resolved, or newer network publication is still external in
 
 The implementation responsibility that makes accepted local state durable.
 
-Persistence may use:
+Persistence may use any suitable local storage mechanism.
 
-* repositories,
-* Stores,
-* IndexedDB,
-* adapters,
-* or another storage mechanism.
+The selected persistence technology is outside the Resource Boundary specification.
 
 Persistence is not a Resource Boundary lifecycle stage and does not determine whether external information should be installed.
 

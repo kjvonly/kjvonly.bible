@@ -1,11 +1,13 @@
-import { toastService } from '$lib/application/services/toast.service';
+import type { ToastPublisher } from '$lib/application/services/toast.service';
 
 /**
  * Allow user to export their data
  */
 export class ExporterService {
-  async export() {
-    toastService.showToast('starting export data');
+  async export(
+    toastPublisher: ToastPublisher
+  ) {
+    toastPublisher.showToast('starting export data');
     let data;
     var element = document.createElement('a');
     element.setAttribute(
@@ -21,7 +23,7 @@ export class ExporterService {
     element.click();
 
     document.body.removeChild(element);
-    toastService.showToast('finished export data');
+    toastPublisher.showToast('finished export data');
   }
 }
 

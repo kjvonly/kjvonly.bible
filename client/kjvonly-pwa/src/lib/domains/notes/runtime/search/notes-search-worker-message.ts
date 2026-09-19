@@ -3,9 +3,6 @@ import type {
 	NotesById
 } from '$lib/domains/notes/models/note.model';
 
-export const NOTES_COLLECTION_CHANGED =
-	'notes:collection-changed' as const;
-
 export type NotesSearchWorkerRequest =
 	| {
 		action: 'initialize';

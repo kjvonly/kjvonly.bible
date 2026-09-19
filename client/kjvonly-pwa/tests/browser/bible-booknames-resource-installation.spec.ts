@@ -4,23 +4,20 @@ import {
 	it
 } from 'vitest';
 
-import type {
-	PublishedResourceReference,
-	ResourceRepresentation,
-	VerifiedResourceContent
-} from '$lib/resource/models/resource.model';
-
 import {
-	ResourceContentDecoratorBuilder
-} from '$lib/resource/content/resource-content-decorator-builder';
-
-import {
-	JsonResourceContentDecorator
-} from '$lib/resource/content/json-resource-content-decorator';
-
-import {
-	ResourceContentDecoder
-} from '$lib/resource/content/resource-content-decoder';
+	type PublishedResourceReference,
+	type ResourceRepresentation,
+	type VerifiedResourceContent,
+	createResourceInstallationId,
+	createResourceReceiptId,
+	type ResourceResolutionResult,
+	ResourceContentDecoratorBuilder,
+	JsonResourceContentDecorator,
+	ResourceContentDecoder,
+	ResourceService,
+	ResourceProcessor,
+	ResourceReceiptService
+} from '$lib/resource';
 
 import {
 	BibleBooknamesInterpreter,
@@ -56,38 +53,14 @@ import {
 } from '$lib/domains/bible/models/bible-booknames.model';
 
 import {
-	ResourceService
-} from '$lib/resource/services/resource.service';
-
-import {
-	ResourceProcessor
-} from '$lib/resource/services/resource-processor';
-
-import {
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
-
-import {
 	IndexedDBResourceReceiptStore
 } from '$lib/resource/receipts/indexeddb-resource-receipt-store';
-
-import {
-	ResourceReceiptService
-} from '$lib/resource/receipts/resource-receipt.service';
-
-import {
-	createResourceReceiptId
-} from '$lib/resource/receipts/resource-receipt';
-
-import type {
-	ResourceResolutionResult
-} from '$lib/resource/resolution/resource-resolution-result';
 
 describe(
 	'Bible Booknames Resource installation',

@@ -8,7 +8,7 @@ import type {
 
 import type {
 	ResourceValidator
-} from '$lib/resource/validation/resource-validator';
+} from '$lib/resource';
 
 import type {
 	StrongsCandidate

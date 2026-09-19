@@ -396,9 +396,9 @@ Verified Serialized Resource Content
 
 Installation begins from that verified content and determines whether the resulting Domain information becomes accepted local state.
 
-Resolution does not require a particular parser, Domain Object Factory, repository, or persistence mechanism.
+Resolution does not prescribe the internal mechanism used to perform content interpretation, Domain validation, or persistence.
 
-Those are outside this responsibility.
+Those mechanisms are outside this responsibility.
 
 ---
 

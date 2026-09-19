@@ -78,9 +78,7 @@ Conceptually, that includes:
 * publication status,
 * and retry state.
 
-The exact persistence format is implementation-defined.
-
-The Outbox does not require a particular `Resource Serializer`, repository, database schema, or queue implementation.
+The exact mechanism used to preserve and later materialize publication intent is outside this specification.
 
 ---
 
@@ -98,9 +96,7 @@ before considering the publish-required operation durably complete.
 
 A crash MUST NOT be able to leave the application with a committed local change whose required publication intent was silently lost.
 
-How an implementation preserves this invariant is a persistence concern.
-
-It does not require a `Domain Store` architectural abstraction.
+How this invariant is preserved is a persistence concern outside the Resource Boundary.
 
 ---
 

@@ -6,7 +6,7 @@ import {
 
 import type {
 	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE,

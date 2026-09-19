@@ -1,15 +1,21 @@
+/**
+ * Application module identity persisted in Buffer.componentName.
+ *
+ * Keep the numeric values explicit. Renumbering is a deliberate persisted-state
+ * compatibility break unless accompanied by a migration.
+ */
 export enum Modules {
-  MODULES = 1,
-  BIBLE,
-  STRONGS,
-  SEARCH,
-  NOTES,
-  PLANS,
-  USER_GUIDE,
-  LOGIN,
-  SETTINGS,
-  NULL,
+	MODULES = 1,
+	BIBLE = 2,
+	STRONGS = 3,
+	SEARCH = 4,
+	NOTES = 5,
+	PLANS = 6,
+	LOGIN = 7,
+	SETTINGS = 8,
 
+	// Buffer sentinel: intentionally has no renderable component.
+	NULL = 9,
 
-  PROFILE
+	PROFILE = 10
 }

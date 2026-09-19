@@ -1,35 +1,23 @@
 import {
 	Modules
-} from '$lib/application/models/modules.model';
-
-import type {
-	ModuleResourceSelectionBuildContext,
-	ModuleResourceSelectionContributor
-} from '$lib/application/resources/module-resource-selection-contributor';
+} from '$lib/application';
 
 import {
-	buildRequiredResourceSelections
-} from '$lib/application/resources/module-resource-selection-contributor';
+	buildRequiredResourceSelections,
+	type ModuleResourceSelectionBuildContext,
+	type ModuleResourceSelectionContributor,
+	type ResourceSelections
+} from '$lib/application';
 
-import type {
-	ResourceSelections
-} from '$lib/application/resources/resource-selections';
+import {
+	BIBLE_CHAPTER_RESOURCE_TYPE,
+	BIBLE_SEARCH_RESOURCE_TYPE,
+	BIBLE_BOOKNAMES_RESOURCE_TYPE
+} from '$lib/domains/bible';
 
 import {
 	STRONGS_RESOURCE_TYPE
 } from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
-
-import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-	BIBLE_SEARCH_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
-
-import {
-	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
 const RESOURCE_TYPES = [
 	STRONGS_RESOURCE_TYPE,

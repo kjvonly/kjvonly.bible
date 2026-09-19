@@ -1,10 +1,12 @@
 import { assert, describe, expect, it } from 'vitest';
-import { subsEnricherService } from './subsEnricher.service';
+import { SubsEnricherService } from './subsEnricher.service';
 import {
 	type Sub,
 	NullSub,
 	NullReadings
 } from '$lib/domains/reading-plans/models/plans.model';
+
+const subsEnricherService = new SubsEnricherService();
 
 describe('path util functions', () => {
 	interface tt {

@@ -2,6 +2,10 @@ import type {
 	Pane
 } from '$lib/application/runtime/pane/models/pane.model';
 
+import {
+	PaneSplit
+} from '$lib/application/runtime/pane/models/pane-split';
+
 import type {
 	PersistedBuffer
 } from '$lib/application/runtime/buffer/persistence/buffer-persistence';
@@ -17,7 +21,7 @@ export interface PersistedLeafPane {
 }
 
 export interface PersistedBranchPane {
-	split: 'h' | 'v';
+	split: PaneSplit;
 	left: PersistedPane;
 	right: PersistedPane;
 }
@@ -119,9 +123,6 @@ export function restorePane(
 			buffer:
 				undefined,
 
-			updateBuffer:
-				undefined,
-
 			toggle:
 				undefined
 		};
@@ -144,9 +145,6 @@ export function restorePane(
 			restoreBuffer(
 				persisted.buffer
 			),
-
-		updateBuffer:
-			undefined,
 
 		toggle:
 			undefined
@@ -231,10 +229,10 @@ function isPersistedBranchPane(
 
 function isSplit(
 	value: unknown
-): value is 'h' | 'v' {
+): value is PaneSplit {
 	return (
-		value === 'h' ||
-		value === 'v'
+		value === PaneSplit.HORIZONTAL ||
+		value === PaneSplit.VERTICAL
 	);
 }
 

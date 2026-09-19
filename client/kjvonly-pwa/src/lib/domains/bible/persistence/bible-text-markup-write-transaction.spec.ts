@@ -10,7 +10,7 @@ import type {
 
 import type {
 	ResourcePublication
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 import {
 	BIBLE_TEXT_MARKUP_OBJECT_TYPE

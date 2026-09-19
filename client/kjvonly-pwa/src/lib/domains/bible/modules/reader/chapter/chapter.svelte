@@ -22,18 +22,17 @@
 	} from '$lib/domains/bible/models/bible-text-markup.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
 	// OTHER
 	import uuid4 from 'uuid4';
-	import { scrollTo, scrollToTop } from '$lib/application/ui/eventHandlers';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
-	import { settingsService } from '$lib/application/services/settings.service';
+	import { scrollTo, scrollToTop } from '$lib/application/ui';
+	import type { Pane } from '$lib/application';
+	import type { Settings as AppSettings } from '$lib/application';
 
 
 	// APPLICATION CONTEXT
 	import {
 		useApplicationContext
-	} from '$lib/application/runtime/application-context';
+	} from '$lib/application';
 
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
@@ -53,7 +52,7 @@
 
 	import {
 		NOTES_COLLECTION_CHANGED
-	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+	} from '$lib/domains/notes';
 
 	const {
 		chapterService,
@@ -61,7 +60,9 @@
 		pericopesService,
 		bibleTextMarkupService,
 		notesService,
-		moduleResourceSelectionResolver
+		moduleResourceSelectionResolver,
+		settingsService,
+		bibleLocationReferenceService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -99,6 +100,7 @@
 	let chapter: Chapter | undefined = $state();
 	let paragraphs: Paragraphs = $state({});
 	let pericopes: Pericopes = $state({});
+	let currentSettings: AppSettings = settingsService.getSettings();
 
 	/**
 	 * svelte isn't updating Text Markup on chapter change. Need to toggle
@@ -141,8 +143,8 @@
 			setVerseRanges();
 			scrollToVerse();
 			loadTextMarkup();
-			loadParagraphs();
-			loadPericopes();
+			void loadParagraphs(currentSettings);
+			void loadPericopes(currentSettings);
 			loadNotes();
 			loadChapter();
 		});
@@ -260,42 +262,58 @@
 		);
 	}
 
-	async function loadParagraphs() {
-		let settings = settingsService.getSettings();
+	async function loadParagraphs(settings: AppSettings) {
 		if (!settings.showParagraphs) {
 			resetParagraphs();
-		} else {
-			const source = moduleResourceSelectionResolver.require(
-				pane.id,
-				BIBLE_PARAGRAPHS_RESOURCE_TYPE
-			);
-
-			const installed = await paragraphsService.get(
-				source,
-				bibleLocationRef
-			);
-
-			paragraphs = installed.paragraphs;
+			return;
 		}
+
+		const locationRef = bibleLocationRef;
+		const source = moduleResourceSelectionResolver.require(
+			pane.id,
+			BIBLE_PARAGRAPHS_RESOURCE_TYPE
+		);
+
+		const installed = await paragraphsService.get(
+			source,
+			locationRef
+		);
+
+		if (
+			!currentSettings.showParagraphs
+			|| bibleLocationRef !== locationRef
+		) {
+			return;
+		}
+
+		paragraphs = installed.paragraphs;
 	}
 
-	async function loadPericopes() {
-		let settings = settingsService.getSettings();
+	async function loadPericopes(settings: AppSettings) {
 		if (!settings.showPericopes) {
 			resetPericopes();
-		} else {
-			const source = moduleResourceSelectionResolver.require(
-				pane.id,
-				BIBLE_PERICOPES_RESOURCE_TYPE
-			);
-
-			const installed = await pericopesService.get(
-				source,
-				bibleLocationRef
-			);
-
-			pericopes = installed.pericopes;
+			return;
 		}
+
+		const locationRef = bibleLocationRef;
+		const source = moduleResourceSelectionResolver.require(
+			pane.id,
+			BIBLE_PERICOPES_RESOURCE_TYPE
+		);
+
+		const installed = await pericopesService.get(
+			source,
+			locationRef
+		);
+
+		if (
+			!currentSettings.showPericopes
+			|| bibleLocationRef !== locationRef
+		) {
+			return;
+		}
+
+		pericopes = installed.pericopes;
 	}
 
 	function subscribeToNotes() {
@@ -323,9 +341,10 @@
 		settingsService.subscribe(id, onSettingsChange);
 	}
 
-	function onSettingsChange() {
-		loadParagraphs();
-		loadPericopes();
+	function onSettingsChange(settings: AppSettings) {
+		currentSettings = settings;
+		void loadParagraphs(settings);
+		void loadPericopes(settings);
 	}
 
 	function unsubscribeToSettings() {

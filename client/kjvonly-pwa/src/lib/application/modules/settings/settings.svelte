@@ -17,9 +17,11 @@
 	import { newSettings, type Settings } from '$lib/application/models/settings.model';
 
 	// SERVICES
-	import { settingsService } from '$lib/application/services/settings.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import Close from '$lib/components/svgs/close.svelte';
 	import BibleSettings from './bible/bibleSettings.svelte';
+
+	const { settingsService } = useApplicationContext();
 	// =============================== BINDINGS ================================
 
 	let { onClose } = $props();
@@ -29,35 +31,29 @@
 	let headerHeight = $state(0);
 	let clientHeight = $state(0);
 	let settings: Settings = $state(newSettings());
+	let settingsLoaded = $state(false);
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(async () => {
+	onMount(() => {
 		setSettings();
+		settingsLoaded = true;
 	});
 
 	$effect(() => {
+		if (!settingsLoaded) {
+			return;
+		}
+
 		settings;
-		storeSettings();
-		applySettings();
+
+		settingsService.updateSettings(settings);
 	});
 
 	// ================================ FUNCS ==================================
 
 	function setSettings(): void {
 		settings = settingsService.getSettings();
-	}
-
-	function storeSettings() {
-		if (settings !== undefined) {
-			localStorage.setItem('settings', JSON.stringify(settings));
-		}
-	}
-
-	function applySettings(): void {
-		if (settings && settings.colorTheme) {
-			settingsService.applySettings();
-		}
 	}
 </script>
 

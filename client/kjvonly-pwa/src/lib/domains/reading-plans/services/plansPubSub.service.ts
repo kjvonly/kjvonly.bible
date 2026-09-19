@@ -3,15 +3,48 @@ import {
 } from '$lib/domains/reading-plans/models/plans.model';
 import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
 import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
+import {
+  PLANS_WORKER_INITIALIZED,
+  type PlansSubscriptionsMessage,
+  type PlansWorkerCommand,
+  type PlansWorkerMessage
+} from '$lib/domains/reading-plans/models/plans-worker.model';
 
-const PLANS_WORKER_INITIALIZED = 'plans-worker-initialized';
+export interface PlansWorkerPort {
+  onmessage:
+    | ((event: MessageEvent<PlansWorkerMessage>) => void)
+    | null;
 
-const isBrowser = typeof window !== 'undefined';
-let plansWorker: any;
+  postMessage(message: PlansWorkerCommand): void;
+}
 
-if (isBrowser) {
-  plansWorker = new Worker(
-    new URL('../workers/kjvplans.worker?worker', import.meta.url),
+type PlansSubscriber = {
+  id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS;
+  subscriberID: string;
+  listener: (data: PlansSubscriptionsMessage) => void;
+};
+
+/**
+ * Creates the browser worker used by the Reading Plans runtime projection.
+ *
+ * Application owns the returned worker through PlansPubSubService. Returning
+ * undefined outside the browser keeps Application construction safe in build
+ * and test environments where Worker is unavailable.
+ */
+export function createPlansWorker():
+  PlansWorkerPort |
+  undefined {
+  if (
+    typeof window === 'undefined'
+  ) {
+    return undefined;
+  }
+
+  return new Worker(
+    new URL(
+      '../workers/kjvplans.worker?worker',
+      import.meta.url
+    ),
     {
       type: 'module'
     }
@@ -20,91 +53,166 @@ if (isBrowser) {
 
 /**
  * Manages communication between the Plans web worker and the main thread.
+ *
+ * This is a stateful application capability. Application owns its lifetime;
+ * Svelte consumers receive the same instance through ApplicationContext.
  */
 export class PlansPubSubService {
-  subscribers: any[] = [];
-  private initialization: Promise<void> | undefined;
-  private resolveInitialization: (() => void) | undefined;
+  private subscribers:
+    PlansSubscriber[] = [];
 
-  constructor() {
-    if (isBrowser) {
-      plansWorker.onmessage = (e: any) => {
-        this.onMessage(e);
-      };
+  private initialization:
+    Promise<void> |
+    undefined;
+
+  private resolveInitialization:
+    (() => void) |
+    undefined;
+
+  constructor(
+    private readonly worker:
+      PlansWorkerPort |
+      undefined = undefined
+  ) {
+    if (
+      this.worker
+    ) {
+      this.worker.onmessage =
+        (event) => {
+          this.onMessage(event);
+        };
     }
   }
 
-  onMessage(e: any) {
-    if (e.data.id === PLANS_WORKER_INITIALIZED) {
+  onMessage(
+    event:
+      Pick<
+        MessageEvent<PlansWorkerMessage>,
+        'data'
+      >
+  ): void {
+    if (
+      event.data.id ===
+      PLANS_WORKER_INITIALIZED
+    ) {
       this.resolveInitialization?.();
       return;
     }
 
-    this.subscribers.forEach((s) => {
-      if (s.id === e.data.id) {
-        s.fn(e.data);
+    for (
+      const subscriber
+      of this.subscribers
+    ) {
+      if (
+        subscriber.id ===
+        event.data.id
+      ) {
+        subscriber.listener(
+          event.data
+        );
       }
-    });
+    }
   }
 
   initialize(
-    booknamesById: Record<string, string>,
-    subscriptions: readonly PlanSubscription[],
-    progress: readonly PlanProgress[]
+    booknamesById:
+      Record<string, string>,
+    subscriptions:
+      readonly PlanSubscription[],
+    progress:
+      readonly PlanProgress[]
   ): Promise<void> {
-    if (this.initialization) {
+    if (
+      this.initialization
+    ) {
       return this.initialization;
     }
 
-    this.initialization = new Promise<void>((resolve) => {
-      this.resolveInitialization = resolve;
+    const worker =
+      this.requireWorker();
 
-      plansWorker.postMessage({
-        action: 'init',
-        booknamesById,
-        subscriptions,
-        progress
-      });
-    });
+    this.initialization =
+      new Promise<void>(
+        (resolve) => {
+          this.resolveInitialization =
+            resolve;
+
+          worker.postMessage({
+            action: 'init',
+            booknamesById,
+            subscriptions,
+            progress
+          });
+        }
+      );
 
     return this.initialization;
   }
 
-  subscribe(id: any, fn: any, subID: any) {
-    this.subscribers.push({ id: id, fn: fn, subID: subID });
-  }
-
-  unsubscribe(subID: any) {
-    let tmpSubscribers: any[] = [];
-    this.subscribers.forEach((s) => {
-      if (s.subID !== subID) {
-        tmpSubscribers.push(s);
-      }
-    });
-    this.subscribers = tmpSubscribers;
-  }
-
-  getAllSubs() {
-    plansWorker.postMessage({
-      action: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
-      id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS
+  subscribe(
+    id:
+      PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+    listener:
+      (data: PlansSubscriptionsMessage) => void,
+    subscriberID: string
+  ): void {
+    this.subscribers.push({
+      id,
+      listener,
+      subscriberID
     });
   }
 
-  putProgress(progress: PlanProgress) {
-    plansWorker.postMessage({
-      action: PLAN_PUBSUB_SUBSCRIPTIONS.PUT_PROGRESS,
+  unsubscribe(
+    subscriberID: string
+  ): void {
+    this.subscribers =
+      this.subscribers.filter(
+        (subscriber) =>
+          subscriber.subscriberID !==
+          subscriberID
+      );
+  }
+
+  getAllSubs(): void {
+    this.requireWorker().postMessage({
+      action:
+        PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+      id:
+        PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS
+    });
+  }
+
+  putProgress(
+    progress: PlanProgress
+  ): void {
+    this.requireWorker().postMessage({
+      action:
+        PLAN_PUBSUB_SUBSCRIPTIONS.PUT_PROGRESS,
       data: progress
     });
   }
 
-  putSub(subscription: PlanSubscription) {
-    // TODO type post messages
-    plansWorker.postMessage({
-      action: PLAN_PUBSUB_SUBSCRIPTIONS.PUT_SUB,
+  putSub(
+    subscription: PlanSubscription
+  ): void {
+    this.requireWorker().postMessage({
+      action:
+        PLAN_PUBSUB_SUBSCRIPTIONS.PUT_SUB,
       data: subscription
     });
   }
-}
 
-export let plansPubSubService = new PlansPubSubService();
+  private requireWorker():
+    PlansWorkerPort {
+    if (
+      !this.worker
+    ) {
+      throw new Error(
+        'Plans worker is not available.'
+      );
+    }
+
+    return this.worker;
+  }
+}

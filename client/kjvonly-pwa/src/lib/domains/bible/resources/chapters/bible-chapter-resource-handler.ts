@@ -1,14 +1,15 @@
 import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
+	DecodedResourceContent,
+	ResourceHandler
+} from '$lib/resource';
 
 import type {
 	ResourceInterpreter
-} from '$lib/resource/interpretation/resource-interpreter';
+} from '$lib/resource';
 
 import type {
 	ResourceValidator
-} from '$lib/resource/validation/resource-validator';
+} from '$lib/resource';
 
 import type {
 	BibleChapterCandidate
@@ -18,10 +19,6 @@ import type {
 	ValidatedBibleChapterCandidate
 } from './validated-bible-chapter-candidate';
 
-
-import type {
-	ResourceHandler
-} from '$lib/resource/installation/resource-handler';
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE,

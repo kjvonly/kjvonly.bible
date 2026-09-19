@@ -89,7 +89,7 @@ Archive metadata describes the archive itself.
 
 The `resources` collection contains the archived Resource entries.
 
-The archive MUST NOT depend on the application's local IndexedDB schema or another implementation-specific persistence layout.
+The archive MUST NOT depend on the application's local persistence schema or another implementation-specific storage layout.
 
 ---
 
@@ -205,9 +205,9 @@ Export MAY include:
 * user-selected Resources,
 * or all exportable Resources available to the workflow.
 
-How accepted Domain information is serialized into a Resource is defined by the applicable Resource contract and owning Domain.
+How accepted Domain information is represented as a Resource is defined by the applicable Resource contract and owning Domain.
 
-This ADR does not require a `Resource Serializer` architectural component.
+This ADR does not prescribe the internal mechanism used to construct that Resource.
 
 ---
 

@@ -6,11 +6,11 @@ import {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import type {
 	ModuleResourceSelectionBuildContext
-} from '$lib/application/resources/module-resource-selection-contributor';
+} from '$lib/application';
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
@@ -38,11 +38,11 @@ import {
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+} from '$lib/domains/strongs';
 
 import {
 	NOTES_RESOURCE_TYPE
-} from '$lib/domains/notes/resources/note-interpreter';
+} from '$lib/domains/notes';
 
 import {
 	BibleModuleResourceSelectionContributor

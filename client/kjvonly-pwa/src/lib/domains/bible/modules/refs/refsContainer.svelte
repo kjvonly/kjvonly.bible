@@ -4,9 +4,9 @@
 	import { onMount } from 'svelte';
 
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferBody } from '$lib/application/ui';
+	import { BufferContainer } from '$lib/application/ui';
+	import { BufferHeader } from '$lib/application/ui';
 	import FootnoteContainer from './footnote/footnoteContainer.svelte';
 	import StrongsDefsContainer from './strongsDefs/strongsDefsContainer.svelte';
 	import RefsHeader from './refsHeader.svelte';
@@ -16,18 +16,18 @@
 	import {
 		newStrongsPopups,
 		type StrongsPopups
-	} from '$lib/domains/strongs/models/strongs.model';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	} from '$lib/domains/strongs';
+	import type { Pane } from '$lib/application';
 
 
 
 	import {
 		STRONGS_RESOURCE_TYPE
-	} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+	} from '$lib/domains/strongs';
 
 import {
 	useApplicationContext
-} from '$lib/application/runtime/application-context';
+} from '$lib/application';
 
 import {
 	isCrossReference,

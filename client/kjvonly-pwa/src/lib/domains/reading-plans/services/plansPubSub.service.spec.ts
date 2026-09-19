@@ -1,29 +1,197 @@
-import { describe, expect, it, vi } from 'vitest';
-import { PlansPubSubService } from './plansPubSub.service';
+import {
+	describe,
+	expect,
+	it,
+	vi
+} from 'vitest';
 
-describe('PlansPubSubService', () => {
-	it('notifies matching subscribers', () => {
-		const service = new PlansPubSubService();
-		const listener = vi.fn();
+import {
+	PLAN_PUBSUB_SUBSCRIPTIONS,
+	type Sub
+} from '$lib/domains/reading-plans/models/plans.model';
+import {
+	PLANS_WORKER_INITIALIZED,
+	type PlansSubscriptionsMessage,
+	type PlansWorkerCommand
+} from '$lib/domains/reading-plans/models/plans-worker.model';
 
-		service.subscribe('test', listener, 'subscriber-a');
-		service.onMessage({ data: { id: 'test' } });
+import {
+	PlansPubSubService,
+	type PlansWorkerPort
+} from './plansPubSub.service';
 
-		expect(listener).toHaveBeenCalledTimes(1);
-	});
+function worker(): {
+	port: PlansWorkerPort;
+	postMessage: ReturnType<typeof vi.fn>;
+} {
+	const postMessage = vi.fn();
 
-	it('removes only the requested subscriber', () => {
-		const service = new PlansPubSubService();
-		const first = vi.fn();
-		const second = vi.fn();
+	return {
+		port: {
+			onmessage: null,
+			postMessage
+		},
+		postMessage
+	};
+}
 
-		service.subscribe('test', first, 'subscriber-a');
-		service.subscribe('test', second, 'subscriber-b');
+function subscriptionsMessage(): PlansSubscriptionsMessage {
+	return {
+		id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+		subs: new Map<string, Sub>()
+	};
+}
 
-		service.unsubscribe('subscriber-a');
-		service.onMessage({ data: { id: 'test' } });
+describe(
+	'PlansPubSubService',
+	() => {
+		it(
+			'owns the worker message handler for its lifetime',
+			() => {
+				const fakeWorker =
+					worker();
 
-		expect(first).not.toHaveBeenCalled();
-		expect(second).toHaveBeenCalledTimes(1);
-	});
-});
+				const service =
+					new PlansPubSubService(
+						fakeWorker.port
+					);
+
+				expect(
+					fakeWorker.port.onmessage
+				).toBeTypeOf(
+					'function'
+				);
+
+				void service;
+			}
+		);
+
+		it(
+			'notifies subscribers with the typed subscriptions message',
+			() => {
+				const service =
+					new PlansPubSubService();
+
+				const listener =
+					vi.fn();
+
+				const message =
+					subscriptionsMessage();
+
+				service.subscribe(
+					PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+					listener,
+					'subscriber-a'
+				);
+
+				service.onMessage({
+					data: message
+				});
+
+				expect(
+					listener
+				).toHaveBeenCalledWith(
+					message
+				);
+			}
+		);
+
+		it(
+			'does not publish the worker initialization message to subscribers',
+			() => {
+				const service =
+					new PlansPubSubService();
+
+				const listener =
+					vi.fn();
+
+				service.subscribe(
+					PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+					listener,
+					'subscriber-a'
+				);
+
+				service.onMessage({
+					data: {
+						id: PLANS_WORKER_INITIALIZED
+					}
+				});
+
+				expect(
+					listener
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
+			'removes only the requested subscriber',
+			() => {
+				const service =
+					new PlansPubSubService();
+
+				const first =
+					vi.fn();
+
+				const second =
+					vi.fn();
+
+				service.subscribe(
+					PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+					first,
+					'subscriber-a'
+				);
+
+				service.subscribe(
+					PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+					second,
+					'subscriber-b'
+				);
+
+				service.unsubscribe(
+					'subscriber-a'
+				);
+
+				service.onMessage({
+					data: subscriptionsMessage()
+				});
+
+				expect(
+					first
+				).not.toHaveBeenCalled();
+
+				expect(
+					second
+				).toHaveBeenCalledTimes(
+					1
+				);
+			}
+		);
+
+		it(
+			'publishes typed commands through its owned worker',
+			() => {
+				const fakeWorker =
+					worker();
+
+				const service =
+					new PlansPubSubService(
+						fakeWorker.port
+					);
+
+				service.getAllSubs();
+
+				const expected:
+					PlansWorkerCommand = {
+						action: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+						id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS
+					};
+
+				expect(
+					fakeWorker.postMessage
+				).toHaveBeenCalledWith(
+					expected
+				);
+			}
+		);
+	}
+);

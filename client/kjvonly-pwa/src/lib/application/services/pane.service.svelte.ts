@@ -1,16 +1,18 @@
-import type { BibleMode } from '$lib/domains/bible/models/bible.model';
-import type { Modules } from '$lib/application/models/modules.model';
 import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 import {
 	restorePane,
 	serializePane
 } from '$lib/application/runtime/pane/persistence/pane-persistence';
+import type { WorkspacePaneDimensionsByID } from '$lib/application/runtime/workspace/workspace-layout';
 
 const PANE_STORAGE_KEY = 'pane';
 
+type PaneDimensionsSubscriber = (
+	paneDimensionsByID: WorkspacePaneDimensionsByID
+) => void;
+
 export class PaneService {
-	private static _instance: PaneService;
-	rootPane: Pane | any = {
+	rootPane: Pane = {
 		id: 'a',
 		split: undefined,
 		left: undefined,
@@ -18,31 +20,18 @@ export class PaneService {
 		buffer: undefined
 	};
 
-	heightWidth: any = {};
-
-	findNode(n: Pane, key: string): Pane | undefined {
-		if (n.id === key) {
-			return n;
-		}
-		let found;
-
-		if (n.left) {
-			found = this.findNode(n.left, key);
-		}
-
-		if (found) {
-			return found;
-		}
-
-		if (n.right) {
-			found = this.findNode(n.right, key);
-		}
-
-		return found;
-	}
+	/**
+	 * Latest normalized dimensions for every active Pane, keyed by Pane ID.
+	 *
+	 * This is a shared map, not the dimensions for one Pane. Each Pane
+	 * subscriber receives the full map and reads its own entry by stable Pane ID.
+	 * Values are workspace-relative fractions, so `{ height: 0.5, width: 0.5 }`
+	 * means the Pane occupies half of the workspace in each dimension.
+	 */
+	paneDimensionsByID: WorkspacePaneDimensionsByID = {};
 
 	save(): void {
-		localStorage.setItem(
+		this.storage.setItem(
 			PANE_STORAGE_KEY,
 			JSON.stringify(
 				serializePane(
@@ -54,7 +43,7 @@ export class PaneService {
 
 	restore(): boolean {
 		const serialized =
-			localStorage.getItem(
+			this.storage.getItem(
 				PANE_STORAGE_KEY
 			);
 
@@ -72,39 +61,50 @@ export class PaneService {
 		return true;
 	}
 
-	onDeletePane: (pane: Pane, paneID: string) => void = (): void => {};
-	onSplitPane: (
-		paneID: string,
-		orientation: string,
-		module: Modules,
-		data: any
-	) => void = () => {};
+	private paneDimensionSubscribers: Array<{
+		id: string;
+		fn: PaneDimensionsSubscriber;
+	}> = [];
 
-	subscribers: any = [];
-
-	subscribe(id: string, fn: Function) {
-		this.subscribers.push({ id: id, fn: fn });
+	/**
+	 * Subscribes a Pane to shared Pane-dimension publications.
+	 *
+	 * The callback receives dimensions for every active Pane. The subscriber
+	 * selects its own dimensions using the Pane ID it already owns.
+	 */
+	subscribeToPaneDimensions(
+		id: string,
+		fn: PaneDimensionsSubscriber
+	): void {
+		this.paneDimensionSubscribers.push({ id, fn });
 	}
 
-	unsubscribe(id: string) {
-		this.subscribers = this.subscribers.filter((s: any) => {
-			if (s.id !== id) {
-				return s;
+	unsubscribeFromPaneDimensions(id: string): void {
+		this.paneDimensionSubscribers =
+			this.paneDimensionSubscribers.filter(
+				(subscriber) => subscriber.id !== id
+			);
+	}
+
+	/**
+	 * Publishes the complete Pane-dimensions map to every Pane subscriber.
+	 *
+	 * We intentionally publish one shared map instead of a separate event per
+	 * Pane. Each subscriber reads `paneDimensionsByID[paneID]` for its own size.
+	 */
+	publishPaneDimensions(
+		paneDimensionsByID: WorkspacePaneDimensionsByID
+	): void {
+		this.paneDimensionSubscribers.forEach(
+			(subscriber) => {
+				subscriber.fn(
+					paneDimensionsByID
+				);
 			}
-		});
+		);
 	}
 
-	publishHw(hw: any) {
-		this.subscribers.forEach((s: any) => {
-			s.fn(hw);
-		});
-	}
-
-	private constructor() {}
-
-	public static get Instance() {
-		// Do you need arguments? Make it a regular static method instead.
-		return this._instance || (this._instance = new this());
-	}
+	constructor(
+		private readonly storage: Pick<Storage, 'getItem' | 'setItem'>
+	) {}
 }
-export let paneService = PaneService.Instance;

@@ -8,20 +8,17 @@ import {
 
 import {
 	createBibleVersionId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '$lib/domains/bible';
 
 import {
 	createStrongsId
 } from '$lib/domains/strongs/utils/strongs-identity';
 
-import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
-
 import {
+	type DecodedResourceContent,
 	createResourceInstallationId,
 	type ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 import type {
 	StrongsInstallationTransaction

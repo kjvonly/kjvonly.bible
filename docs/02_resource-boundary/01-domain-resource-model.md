@@ -113,14 +113,14 @@ Examples include:
 Bible
 Notes
 Reading Plans
-Settings
+Strong's
 ```
 
 A Domain determines:
 
 > **What does this information mean to the application?**
 
-For example, Bible annotations belong to the Bible Domain because their meaning comes from Bible content.
+For example, Bible text markup belongs to the Bible Domain because its meaning comes from Bible content.
 
 Bible Search likewise belongs to the Bible Domain.
 
@@ -138,13 +138,15 @@ Examples include:
 
 ```text
 Chapter
-Annotation
-Strong's Entry
+Text Markup
 
 Note
 
-Reading Plan
-Completed Reading
+Plan Definition
+Plan Subscription
+Plan Progress
+
+Strong's Definition
 ```
 
 Domain Objects are the representations upon which application behavior operates.
@@ -559,20 +561,7 @@ The owning Domain determines:
 * how many Domain Objects are produced,
 * and whether the content represents valid Domain information.
 
-The Resource Boundary MUST NOT require a particular implementation abstraction such as a `Domain Object Factory`.
-
-An implementation MAY use:
-
-```text
-factory
-parser
-serializer
-schema validator
-service
-repository
-```
-
-or another mechanism.
+The Resource Boundary MUST NOT prescribe the internal mechanism used to perform Domain interpretation or validation.
 
 The architectural requirement is that Resource content is interpreted according to the rules of the Domain that gives the information meaning.
 
@@ -662,12 +651,13 @@ Likewise, several Resources MAY contribute information used by the same Domain b
 For example:
 
 ```text
-Reading Plan Resource
+Reading Plan Bundle Resource
         ↓
-Reading Plan Domain information
+Reading Plans Domain information
         ↓
-Reading Plan
-Reading Plan Days
+Plan Definition A
+Plan Definition B
+Plan Definition C
 ```
 
 The Resource determines the external distribution boundary.
@@ -794,9 +784,9 @@ Do not begin with:
 ```text
 Which Nostr kind should I create?
 
-Which IndexedDB store should hold it?
+Which local persistence structure should hold it?
 
-Which parser class should handle it?
+Which parser implementation should handle it?
 
 Should it use Blossom?
 ```

@@ -1,18 +1,15 @@
 import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
+	DecodedResourceContent,
+	ResourceHandler
+} from '$lib/resource';
 
 import type {
 	ResourceInterpreter
-} from '$lib/resource/interpretation/resource-interpreter';
+} from '$lib/resource';
 
 import type {
 	ResourceValidator
-} from '$lib/resource/validation/resource-validator';
-
-import type {
-	ResourceHandler
-} from '$lib/resource/installation/resource-handler';
+} from '$lib/resource';
 
 import type {
 	BibleTextMarkupCandidate

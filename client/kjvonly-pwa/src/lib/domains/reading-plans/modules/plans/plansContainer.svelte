@@ -3,10 +3,9 @@
 	import NextReadings from './nextReadings/nextReadings.svelte';
 	import Discover from './discover/discover.svelte';
 	import { onMount } from 'svelte';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
-	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { useApplicationContext } from '$lib/application';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
+	import type { Pane } from '$lib/application';
 	import {
 		NEXT_MAX_VIEW_ID,
 		PLANS_MAX_VIEW_ID,
@@ -18,7 +17,8 @@
 		bibleBooknamesService,
 		moduleResourceSelectionResolver,
 		planSubscriptionsService,
-		planProgressService
+		planProgressService,
+		plansPubSubService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -72,6 +72,6 @@
 	{:else if plansDisplay < SUBS_MAX_VIEW_ID}
 		<SubsView bind:plansDisplay bind:pane bind:paneID></SubsView>
 	{:else if plansDisplay < NEXT_MAX_VIEW_ID}
-		<NextReadings bind:plansDisplay bind:pane></NextReadings>
+		<NextReadings bind:plansDisplay bind:pane bind:paneID></NextReadings>
 	{/if}
 {/if}

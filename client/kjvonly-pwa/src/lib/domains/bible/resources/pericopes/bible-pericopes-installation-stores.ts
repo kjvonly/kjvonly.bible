@@ -4,7 +4,7 @@ import type {
 
 import type {
 	ResourceInstallationStore
-} from '$lib/resource/installation/resource-installation-store';
+} from '$lib/resource';
 
 export interface BiblePericopesInstallationStores {
 	readonly pericopes:

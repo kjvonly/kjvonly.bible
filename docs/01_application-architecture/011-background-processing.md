@@ -319,7 +319,7 @@ The architectural decision is whether the work can execute independently and wha
 
 "Background" describes the relationship between the work and the current interaction.
 
-It does not mean the work must execute inside a Web Worker.
+It does not mean the work must execute through any particular background-execution mechanism.
 
 For example:
 
@@ -327,15 +327,13 @@ For example:
 Background Responsibility
         ↓
 Execution Choice
-        │
-        ├── Main thread
-        ├── Web Worker
-        └── Future execution mechanism
+        ↓
+Technical Infrastructure
 ```
 
-A Web Worker is a Technical Infrastructure mechanism.
+The chosen execution mechanism is a Technical Infrastructure concern.
 
-Whether one is appropriate depends on the implementation requirements of the work.
+Whether a separate execution context is appropriate depends on implementation requirements.
 
 The architectural decision to defer work comes first.
 
@@ -448,7 +446,7 @@ Choose execution mechanism
 Do not begin with:
 
 ```text
-Should this use a Web Worker?
+Which execution mechanism should run this work?
 
 Should this go in a background queue?
 

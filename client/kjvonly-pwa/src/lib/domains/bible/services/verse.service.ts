@@ -5,14 +5,14 @@ import {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import type {
 	ChapterService
 } from './chapter.service';
 
-import {
-	bibleLocationReferenceService
+import type {
+	BibleLocationReferenceService
 } from './bibleLocationReference.service';
 
 export class VerseService {
@@ -22,6 +22,12 @@ export class VerseService {
 			Pick<
 				ChapterService,
 				'get'
+			>,
+
+		private readonly bibleLocationReferenceService:
+			Pick<
+				BibleLocationReferenceService,
+				'extractVerse'
 			>
 	) {}
 
@@ -40,7 +46,7 @@ export class VerseService {
 			);
 
 		const verseNumber =
-			bibleLocationReferenceService
+			this.bibleLocationReferenceService
 				.extractVerse(
 					bibleLocationRef
 				);

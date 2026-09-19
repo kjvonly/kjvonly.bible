@@ -5,22 +5,13 @@ import {
 	it
 } from 'vitest';
 
-import type {
-	PublishedResourceReference,
-	ResourceRepresentation
-} from '$lib/resource/models/resource.model';
-
-import type {
-	ResourceDescriptor
-} from '$lib/resource/descriptors/resource-descriptor';
-
-import type {
-	ResourceResolutionStrategy
-} from '$lib/resource/resolution/resource-resolution-strategy';
-
 import {
-	createBrowserResourceWorkerClient
-} from '$lib/resource/worker/resource-worker-client';
+	createBrowserResourceWorkerClient,
+	type PublishedResourceReference,
+	type ResourceRepresentation,
+	type ResourceDescriptor,
+	type ResourceResolutionStrategy
+} from '$lib/resource';
 
 import {
 	PLAN_DEFINITION_OBJECT_TYPE

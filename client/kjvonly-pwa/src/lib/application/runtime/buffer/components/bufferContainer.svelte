@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { settingsService } from '$lib/application/services/settings.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import uuid4 from 'uuid4';
 	import type { Settings } from '$lib/application/models/settings.model';
+
+	const { settingsService } = useApplicationContext();
 
 	let { clientHeight = $bindable<number>(), children } = $props();
 

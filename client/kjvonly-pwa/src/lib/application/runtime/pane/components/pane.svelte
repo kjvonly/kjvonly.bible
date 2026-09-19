@@ -1,143 +1,130 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { componentMapping } from '$lib/application/services/componentMappingService';
-	import { settingsService } from '$lib/application/services/settings.service';
+	import { onMount } from 'svelte';
+	import { resolveModuleComponent } from '$lib/application/runtime/rendering/module-component-resolver';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
-	import type { Modules } from '$lib/application/models/modules.model';
+	import {
+		WorkspaceChangeType,
+		type WorkspaceChange
+	} from '$lib/application/runtime/workspace/workspace-runtime';
+	import type { WorkspacePaneDimensionsByID } from '$lib/application/runtime/workspace/workspace-layout';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+
+	const { workspaceRuntime } =
+		useApplicationContext();
 
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');
 
-	const { moduleBufferFactory } =
-		useApplicationContext();
-
 	let { paneID = $bindable<string>() } = $props();
 
-	let pane: Pane | any = $state();
+	let pane: Pane | undefined = $state();
 
-	function updateHeightWidth(hw: any) {
-		/** This is so important. What was happening in split pane was we'd
-		 * assign the pane vars to an new pane object and remove the pane.id
-		 * by setting it to undefined. i suppose we dont need unset pane id but
-		 * the idea is that the existing pane becomes a branch pane so we would
-		 * assign the pane vars to a new object and unset the pane id var.
-		 * eventually, svelte would update and the pane.id, which would be
-		 * undefined. The paneID was still correct. I'm thinking
-		 * on update this would be the place to reassign the pane.
+	function updatePaneDimensions(
+		paneDimensionsByID: WorkspacePaneDimensionsByID
+	) {
+		/**
+		 * Learned lesson: paneID is the stable identity of this rendered Pane.
+		 * The Pane object itself is not stable across workspace mutations. A split can
+		 * turn the current leaf into a branch and move the rendered leaf state into a
+		 * new child object while keeping the same paneID. Holding the old object caused
+		 * subtle stale-state bugs because Svelte did not necessarily refresh this local
+		 * reference at the same moment the tree structure changed.
 		 *
-		 * So what made this a very difficult bug to detect was when we assign
-		 * the pane to $state, its a new object, setting id = undefined did not
-		 * automatically trigger a state refresh. Eventually, when the object would
-		 * react to the change the pane.id would be undefined causing the code to flow
-		 * to the else block and not updating the height and width of the container.
-		 *
-		 * looking at the split code in +page.svelte it's obvious that we are creating
-		 * an new object and the references of the original pane object would not change.
-		 *
-		 * If paneID was bound with pane.id then when the pane.id was reset to undefined
-		 * then every child paneID bound with pane.id would be undefined causing w/e
-		 * issue.
-		 *
-		 * I don't think a paneID ever changes. So we should make it a convention
-		 * to use paneID instead of pane.id. There's a few moments when id is unset
-		 * and the paneID would be undefined.
-		 *
-		 * Also the vars except id are objects so those would have the same reference if bound
-		 * to a child component.
+		 * Re-resolve the Pane from WorkspaceRuntime whenever layout dimensions are
+		 * published. Runtime/UI code should use paneID for identity rather than pane.id.
 		 */
-		pane = paneService.findNode(paneService.rootPane, paneID);
-		if (hw[paneID]) {
-			containerHeight = `height: ${hw[paneID].height * 100}vh;`;
-			containerWidth = `width: ${hw[paneID].width * 100}vw;`;
+		pane = workspaceRuntime.findPane(
+			paneID
+		);
+
+		if (paneDimensionsByID[paneID]) {
+			containerHeight = `height: ${paneDimensionsByID[paneID].height * 100}vh;`;
+			containerWidth = `width: ${paneDimensionsByID[paneID].width * 100}vw;`;
 		} else {
 			console.log('error should have update height and width');
 		}
 	}
 
-	onMount(() => {
-		settingsService.applySettings();
-		let p = paneService.findNode(paneService.rootPane, paneID);
-
-		/**
-		 * Pane buffer history:
-		 *
-		 * Just used for modules to update the component. without rerendering the panes
-		 * could be useful tho for components to navigate back and forth without needing
-		 * create a new pane. See a history of buffers in a pane and then being able to
-		 * navigate back through the buffer list prior to closing the pane.
-		 */
-		if (p) {
-			p.toggle = false;
-			p.updateBuffer = (module: Modules) => {
-				const targetPane =
-					paneService.findNode(
-						paneService.rootPane,
-						paneID
-					);
-
-				if (!targetPane) {
-					return;
-				}
-
-				const currentBuffer =
-					targetPane.buffer;
-
-				if (!currentBuffer) {
-					targetPane.buffer =
-						moduleBufferFactory.independent(
-							module
-						);
-				} else {
-					targetPane.buffer =
-						moduleBufferFactory.related(
-							module,
-							currentBuffer,
-							currentBuffer.bag
-						);
-				}
-
-				targetPane.toggle =
-					!targetPane.toggle;
-
-				pane =
-					targetPane;
-
-				paneService.save();
-			};
+	function onWorkspaceChange(
+		change: WorkspaceChange
+	): void {
+		if (
+			change.type !==
+				WorkspaceChangeType.PANE_BUFFER_REPLACED ||
+			change.paneID !== paneID
+		) {
+			return;
 		}
 
-		pane = p;
-		paneService.subscribe(paneID, updateHeightWidth);
-		updateHeightWidth(paneService.heightWidth);
-	});
+		pane = workspaceRuntime.findPane(
+			paneID
+		);
+	}
 
-	onDestroy(() => {
-		//unsubscribe from paneService
+	onMount(() => {
+		pane = workspaceRuntime.findPane(
+			paneID
+		);
+
+		if (pane) {
+			/**
+			 * toggle is intentionally transient render state. We have seen Svelte retain
+			 * stale module UI after Buffer navigation (notably annotations between Bible
+			 * chapters) when only the underlying Buffer changed. WorkspaceRuntime flips
+			 * this flag on Buffer replacement so the module component is recreated.
+			 */
+			pane.toggle = false;
+		}
+
+		const unsubscribeWorkspace =
+			workspaceRuntime.subscribe(
+				onWorkspaceChange
+			);
+
+		const unsubscribePaneDimensions =
+			workspaceRuntime.subscribeToPaneDimensions(
+				paneID,
+				updatePaneDimensions
+			);
+		updatePaneDimensions(
+			workspaceRuntime.getPaneDimensions()
+		);
+
+		return () => {
+			// Pane components can be created/destroyed repeatedly as the workspace changes.
+			// Always remove both subscriptions so stale Pane callbacks cannot accumulate.
+			unsubscribeWorkspace();
+			unsubscribePaneDimensions();
+		};
 	});
 </script>
 
 <div style="{containerWidth} {containerHeight}">
 	<!--
-		Since component is a @const we need a way to rerender this when the 
-		component changes. We accomplish this with the toggle. 
-	 -->
+		Learned lesson: changing Buffer data alone has not always caused Svelte to
+		recreate the module component, which can leave module-local UI stale. Toggling
+		between these branches deliberately recreates it after Buffer replacement.
+		Keep this mechanism until the underlying reactivity issue is understood.
+	-->
 	{#if pane?.toggle}
 		{#if pane?.buffer?.componentName}
-			{@const Component = componentMapping.getComponent(
-				pane?.buffer?.componentName
+			{@const Component = resolveModuleComponent(
+				pane.buffer.componentName
 			)}
-			<Component bind:pane {paneID}></Component>
+			{#if Component}
+				<Component bind:pane {paneID}></Component>
+			{/if}
 		{/if}
 	{/if}
 
 	{#if pane && !pane.toggle}
 		{#if pane?.buffer?.componentName}
-			{@const Component = componentMapping.getComponent(
-				pane?.buffer?.componentName
+			{@const Component = resolveModuleComponent(
+				pane.buffer.componentName
 			)}
-			<Component bind:pane {paneID}></Component>
+			{#if Component}
+				<Component bind:pane {paneID}></Component>
+			{/if}
 		{/if}
 	{/if}
 </div>

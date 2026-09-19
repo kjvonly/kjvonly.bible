@@ -4,7 +4,7 @@ import {
 
 import type {
 	ResourceValidator
-} from '$lib/resource/validation/resource-validator';
+} from '$lib/resource';
 
 import type {
 	BibleChapterCandidate

@@ -27,7 +27,7 @@ import {
 import {
 	createResourceInstallationId,
 	type ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 const STRONGS_ID =
 	'publisher/kjvs/G1';

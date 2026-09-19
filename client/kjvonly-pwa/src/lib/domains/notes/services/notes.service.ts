@@ -24,7 +24,7 @@ import type {
 
 import type {
 	OutboxWakeup
-} from '$lib/application/outbox/outbox-wakeup';
+} from '$lib/application';
 
 interface NotesSearchRuntimePort {
 	setResultHandler(

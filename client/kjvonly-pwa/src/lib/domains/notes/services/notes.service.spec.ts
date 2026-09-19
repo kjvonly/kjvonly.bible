@@ -28,7 +28,7 @@ import type {
 
 import type {
 	ResourcePublicationIntent
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 function createNote(
 	id: string =

@@ -13,9 +13,9 @@
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// SERVICES
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { onMount } from 'svelte';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	const { workspaceRuntime } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 	let {
@@ -36,9 +36,7 @@
 		settings: Modules.SETTINGS
 	});
 
-	const {
-		authenticationService
-	} = useApplicationContext();
+	const { authenticationService } = useApplicationContext();
 
 	let headerHeight = $state(0);
 	let clientHeight = $state(0);
@@ -46,19 +44,13 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		return authenticationService.subscribe(
-			(state) => {
-				addDynamicModules(
-					state.status !== 'signed-out'
-				);
-			}
-		);
+		return authenticationService.subscribe((state) => {
+			addDynamicModules(state.status !== 'signed-out');
+		});
 	});
 
 	// ================================ FUNCS ==================================
-	function addDynamicModules(
-		isAuthenticated: boolean
-	) {
+	function addDynamicModules(isAuthenticated: boolean) {
 		delete components['profile'];
 		delete components['login'];
 
@@ -71,7 +63,7 @@
 
 	// ============================== CLICK FUNCS ==============================
 	function onClose(): void {
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		workspaceRuntime.closePane(paneID);
 	}
 </script>
 
@@ -91,7 +83,7 @@
 	{#each Object.keys(components) as c}
 		<div class="w-full">
 			<button
-				onclick={(event) => pane.updateBuffer(components[c])}
+				onclick={() => workspaceRuntime.replaceBuffer(paneID, components[c])}
 				class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-neutral-100"
 				>{c}</button
 			>
@@ -104,7 +96,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>
