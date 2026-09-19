@@ -687,6 +687,9 @@ export class Application {
                     ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.PROFILE
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.ARCHIVE
                     )
                 ]
             );

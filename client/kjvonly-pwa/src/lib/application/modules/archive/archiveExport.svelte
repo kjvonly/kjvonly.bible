@@ -6,11 +6,14 @@
 		parseKJVOnlyArchiveExportPatterns,
 		type KJVOnlyArchiveExportSelection
 	} from '$lib/application/archive/kjvonly-archive-export-selection';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
-	// SERVICES
-	import {
-		useApplicationContext
-	} from '$lib/application/runtime/application-context';
+	// COMPONENTS
+	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
+	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
+	import Close from '$lib/components/svgs/close.svelte';
 
 	// ================================= TYPES =================================
 
@@ -22,14 +25,25 @@
 		placeholder: string;
 	};
 
-	const {
-		archiveService,
-		toastService
-	} = useApplicationContext();
+	// =============================== BINDINGS ================================
+
+	let {
+		paneID,
+		clientHeight = $bindable(),
+		obj = $bindable(),
+		navService = $bindable()
+	} = $props();
 
 	// ================================= VARS ==================================
 
+	let headerHeight: number = $state(0);
 	let exporting = $state(false);
+
+	const {
+		archiveService,
+		toastService,
+		workspaceRuntime
+	} = useApplicationContext();
 
 	let options = $state<ArchiveExportOption[]>([
 		{
@@ -113,6 +127,60 @@
 
 	// ================================ FUNCS ==================================
 
+	function downloadArchive(
+		bytes: Uint8Array
+	): void {
+		const blob =
+			new Blob(
+				[new Uint8Array(bytes)],
+				{
+					type:
+						'application/gzip'
+				}
+			);
+
+		const url =
+			URL.createObjectURL(
+				blob
+			);
+
+		const anchor =
+			document.createElement(
+				'a'
+			);
+
+		anchor.href = url;
+		anchor.download =
+			`kjvonly-${new Date().toISOString().slice(0, 10)}.kjva`;
+		anchor.style.display = 'none';
+
+		document.body.appendChild(
+			anchor
+		);
+
+		anchor.click();
+		anchor.remove();
+
+		URL.revokeObjectURL(
+			url
+		);
+	}
+
+	// ============================== CLICK FUNCS ==============================
+
+	function onBack(): void {
+		navService.pop();
+	}
+
+	function onClose(
+		event: Event
+	): void {
+		event.stopPropagation();
+		workspaceRuntime.closePane(
+			paneID
+		);
+	}
+
 	async function onExport(): Promise<void> {
 		if (exporting) {
 			return;
@@ -139,7 +207,7 @@
 								: {}
 						)
 					};
-			}
+				}
 			);
 
 		if (types.length === 0) {
@@ -185,89 +253,77 @@
 			exporting = false;
 		}
 	}
-
-	function downloadArchive(
-		bytes: Uint8Array
-	): void {
-		const blob =
-			new Blob(
-				[new Uint8Array(bytes)],
-				{
-					type:
-						'application/gzip'
-				}
-			);
-
-		const url =
-			URL.createObjectURL(
-				blob
-			);
-
-		const anchor =
-			document.createElement(
-				'a'
-			);
-
-		anchor.href = url;
-		anchor.download =
-			`kjvonly-${new Date().toISOString().slice(0, 10)}.kjva`;
-		anchor.style.display = 'none';
-
-		document.body.appendChild(
-			anchor
-		);
-
-		anchor.click();
-		anchor.remove();
-
-		URL.revokeObjectURL(
-			url
-		);
-	}
 </script>
 
-<!-- ============================== CONTAINER ============================== -->
+<!-- ================================ HEADER =============================== -->
 
-<div class="flex w-full flex-col gap-3 p-4">
-	<div>
-		<div class="font-semibold">Export Archive</div>
+{#snippet header()}
+	<span class="flex flex-1 justify-start">
+		<KJVButton classes="" onClick={onBack}>
+			<ArrowBack classes=""></ArrowBack>
+		</KJVButton>
+	</span>
+
+	<span class="text-center">Export</span>
+
+	<span class="flex flex-1 justify-end">
+		<KJVButton classes="" onClick={onClose}>
+			<Close classes=""></Close>
+		</KJVButton>
+	</span>
+{/snippet}
+
+<!-- ================================= BODY ================================ -->
+
+{#snippet body()}
+	<div class="flex w-full flex-col gap-3 p-4">
 		<div class="text-sm text-neutral-500">
 			Leave a filter blank to export all records of that type. Separate filters with commas; * is a wildcard.
 		</div>
+
+		<div class="flex flex-col gap-2">
+			{#each options as option}
+				<div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-sm bg-neutral-50 p-3 sm:grid-cols-[auto_minmax(10rem,1fr)_minmax(10rem,1fr)]">
+					<input
+						bind:checked={option.selected}
+						type="checkbox"
+						class="accent-support-a-300 size-4 rounded-sm border-neutral-200"
+						aria-label={`Export ${option.label}`}
+					/>
+
+					<span class="text-sm font-medium">
+						{option.label}
+					</span>
+
+					<input
+						bind:value={option.filter}
+						disabled={!option.selected}
+						type="text"
+						placeholder={option.placeholder}
+						aria-label={`${option.label} filter`}
+						class="col-span-2 h-9 rounded-sm border border-neutral-200 bg-white px-2 text-sm outline-hidden disabled:bg-neutral-100 disabled:text-neutral-400 sm:col-span-1"
+					/>
+				</div>
+			{/each}
+		</div>
+
+		<button
+			type="button"
+			disabled={exporting}
+			onclick={onExport}
+			class="w-full bg-neutral-100 p-3 text-center font-medium hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+		>
+			{exporting ? 'Exporting…' : 'Export .kjva'}
+		</button>
 	</div>
+{/snippet}
 
-	<div class="flex flex-col gap-2">
-		{#each options as option}
-			<div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-sm bg-neutral-50 p-3 sm:grid-cols-[auto_minmax(10rem,1fr)_minmax(10rem,1fr)]">
-				<input
-					bind:checked={option.selected}
-					type="checkbox"
-					class="accent-support-a-300 size-4 rounded-sm border-neutral-200"
-					aria-label={`Export ${option.label}`}
-				/>
+<!-- ============================== CONTAINER ============================== -->
 
-				<span class="text-sm font-medium">
-					{option.label}
-				</span>
+<BufferHeader bind:headerHeight>
+	{@render header()}
+</BufferHeader>
 
-				<input
-					bind:value={option.filter}
-					disabled={!option.selected}
-					type="text"
-					placeholder={option.placeholder}
-					aria-label={`${option.label} filter`}
-					class="col-span-2 h-9 rounded-sm border border-neutral-200 bg-white px-2 text-sm outline-hidden disabled:bg-neutral-100 disabled:text-neutral-400 sm:col-span-1"
-				/>
-			</div>
-		{/each}
-	</div>
-
-	<button
-		type="button"
-		disabled={exporting}
-		onclick={onExport}
-		class="w-full bg-neutral-100 p-3 text-center font-medium hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-	>
-		{exporting ? 'Exporting…' : 'Export .kjva'}
-	</button>
-</div>
+<BufferBody bind:clientHeight bind:headerHeight classes="">
+	{@render body()}
+</BufferBody>

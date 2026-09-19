@@ -50,6 +50,10 @@ vi.mock(
 	'$lib/application/modules/profile/profileContainer.svelte',
 	() => ({ default: { component: 'ProfileContainer' } })
 );
+vi.mock(
+	'$lib/application/modules/archive/archiveContainer.svelte',
+	() => ({ default: { component: 'ArchiveContainer' } })
+);
 
 import {
 	resolveModuleComponent
@@ -67,7 +71,8 @@ describe(
 			[Modules.PLANS, 'PlansContainer'],
 			[Modules.LOGIN, 'LoginContainer'],
 			[Modules.SETTINGS, 'SettingsContainer'],
-			[Modules.PROFILE, 'ProfileContainer']
+			[Modules.PROFILE, 'ProfileContainer'],
+			[Modules.ARCHIVE, 'ArchiveContainer']
 		] as const)(
 			'resolves module %s to %s',
 			(module, expectedComponent) => {

@@ -33,6 +33,7 @@
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
 		plans: Modules.PLANS,
+		archive: Modules.ARCHIVE,
 		settings: Modules.SETTINGS
 	});
 

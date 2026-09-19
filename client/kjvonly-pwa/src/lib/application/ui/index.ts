@@ -7,8 +7,6 @@
  * Svelte/browser-only modules.
  */
 
-import ArchiveExport from '../modules/archive/archiveExport.svelte';
-
 export {
 	default as PaneContainer
 } from '../runtime/pane/components/pane.svelte';
@@ -28,11 +26,6 @@ export {
 export {
 	default as Settings
 } from '../modules/settings/settings.svelte';
-
-
-export {
-	ArchiveExport
-};
 
 export {
 	attachEvents,

@@ -11,6 +11,7 @@ import { NotesContainer } from '$lib/domains/notes/ui';
 import { PlansContainer } from '$lib/domains/reading-plans/ui';
 import SettingsContainer from '$lib/application/modules/settings/settingsContainer.svelte';
 import ProfileContainer from '$lib/application/modules/profile/profileContainer.svelte';
+import ArchiveContainer from '$lib/application/modules/archive/archiveContainer.svelte';
 
 /**
  * Resolve a renderable application Module to its Svelte component.
@@ -43,6 +44,8 @@ export function resolveModuleComponent(
 			return PlansContainer;
 		case Modules.PROFILE:
 			return ProfileContainer;
+		case Modules.ARCHIVE:
+			return ArchiveContainer;
 		case Modules.NULL:
 			return undefined;
 		default:
