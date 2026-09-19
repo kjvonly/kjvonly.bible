@@ -1,6 +1,6 @@
 import type {
 	KJVOnlyArchiveExportSelection
-} from '../kjvonly-archive-exporter';
+} from '../kjvonly-archive-export-selection';
 
 import type {
 	KJVOnlyArchiveImportResult

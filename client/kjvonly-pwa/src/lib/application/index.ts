@@ -144,3 +144,7 @@ export {
 	type KJVOnlyArchiveImportResult,
 	type KJVOnlyArchiveImportStatus
 } from './archive/kjvonly-archive-importer';
+
+export {
+	KJVOnlyArchiveService
+} from './archive/kjvonly-archive.service';

@@ -49,6 +49,14 @@ import {
 
 
 import {
+    KJVOnlyArchiveService
+} from '$lib/application/archive/kjvonly-archive.service';
+
+import {
+    createBrowserKJVOnlyArchiveWorkerClient
+} from '$lib/application/archive/worker/kjvonly-archive-worker-client';
+
+import {
     ResourceSelectionService
 } from '$lib/application/resources/resource-selection.service';
 
@@ -708,6 +716,11 @@ export class Application {
         const navigationServiceFactory =
             new NavigationServiceFactory();
 
+        const archiveService =
+            new KJVOnlyArchiveService(
+                createBrowserKJVOnlyArchiveWorkerClient()
+            );
+
         const moduleResourceSelectionResolver =
             createModuleResourceSelectionResolver(
                 workspaceRuntime
@@ -1010,6 +1023,7 @@ export class Application {
             toastService,
             settingsService,
             navigationServiceFactory,
+            archiveService,
 
             workspaceRuntime,
             moduleResourceSelectionResolver,

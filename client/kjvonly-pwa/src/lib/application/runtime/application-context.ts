@@ -30,6 +30,10 @@ import type {
 import type {
     NavigationServiceFactory
 } from '$lib/application/services/navigation-service-factory';
+
+import type {
+    KJVOnlyArchiveService
+} from '$lib/application/archive/kjvonly-archive.service';
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
 
@@ -91,6 +95,9 @@ export interface ApplicationContext {
 
     readonly navigationServiceFactory:
     NavigationServiceFactory;
+
+    readonly archiveService:
+    KJVOnlyArchiveService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Workspace Runtime
