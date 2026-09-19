@@ -251,6 +251,26 @@ import {
 	PlanDefinitionResourceHandler
 } from '$lib/domains/reading-plans/resources/definitions/plan-definition-resource-handler';
 
+import {
+	IndexedDBPlanSubscriptionInstallationTransaction
+} from '$lib/domains/reading-plans/persistence/plan-subscription-installation-transaction';
+
+import {
+	PlanSubscriptionInstaller
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-installer';
+
+import {
+	PlanSubscriptionInterpreter
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-interpreter';
+
+import {
+	PlanSubscriptionValidator
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-validator';
+
+import {
+	PlanSubscriptionResourceHandler
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-handler';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
@@ -566,6 +586,23 @@ function createResourceHandlers():
 			planDefinitionInstaller
 		);
 
+	const planSubscriptionInstallationTransaction =
+		new IndexedDBPlanSubscriptionInstallationTransaction(
+			getApplicationDB
+		);
+
+	const planSubscriptionInstaller =
+		new PlanSubscriptionInstaller(
+			planSubscriptionInstallationTransaction
+		);
+
+	const planSubscriptionResourceHandler =
+		new PlanSubscriptionResourceHandler(
+			new PlanSubscriptionInterpreter(),
+			new PlanSubscriptionValidator(),
+			planSubscriptionInstaller
+		);
+
 	const strongsInstallationTransaction =
 		new IndexedDBStrongsInstallationTransaction(
 			getApplicationDB
@@ -592,6 +629,7 @@ function createResourceHandlers():
 		bibleSearchIndexResourceHandler,
 		noteResourceHandler,
 		planDefinitionResourceHandler,
+		planSubscriptionResourceHandler,
 		strongsResourceHandler
 	];
 }
