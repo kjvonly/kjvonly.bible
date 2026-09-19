@@ -11,7 +11,10 @@ import {
 interface KJVOnlyArchiveWorkerPort {
 	postMessage(
 		message:
-			KJVOnlyArchiveWorkerMessage
+			KJVOnlyArchiveWorkerMessage,
+
+		transfer?:
+			Transferable[]
 	): void;
 
 	addEventListener(
@@ -65,14 +68,22 @@ async function handleRequest(
 			return;
 		}
 
-		workerPort.postMessage({
-			type:
-				'export-result',
-			value:
-				await operations.export(
-					request.selection
-				)
-		});
+		const value =
+			await operations.export(
+				request.selection
+			);
+
+		workerPort.postMessage(
+			{
+				type:
+					'export-result',
+				value
+			},
+			[
+				value.buffer as
+					ArrayBuffer
+			]
+		);
 	} catch (error) {
 		workerPort.postMessage({
 			type:

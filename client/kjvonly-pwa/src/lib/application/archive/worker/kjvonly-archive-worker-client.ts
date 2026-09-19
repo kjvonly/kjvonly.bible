@@ -15,7 +15,10 @@ import {
 export interface KJVOnlyArchiveWorkerPort {
 	postMessage(
 		message:
-			KJVOnlyArchiveWorkerRequest
+			KJVOnlyArchiveWorkerRequest,
+
+		transfer?:
+			Transferable[]
 	): void;
 
 	addEventListener(
@@ -68,11 +71,18 @@ export class KJVOnlyArchiveWorkerClient {
 	import(
 		value: Uint8Array
 	): Promise<KJVOnlyArchiveImportResult> {
-		return this.run({
-			type:
-				'import',
-			value
-		}).then(
+		return this.run(
+			{
+				type:
+					'import',
+				value
+			},
+			[
+				getTransferableBuffer(
+					value
+				)
+			]
+		).then(
 			(message) => {
 				if (
 					message.type !==
@@ -114,7 +124,10 @@ export class KJVOnlyArchiveWorkerClient {
 
 	private run(
 		request:
-			KJVOnlyArchiveWorkerRequest
+			KJVOnlyArchiveWorkerRequest,
+
+		transfer:
+			Transferable[] = []
 	): Promise<KJVOnlyArchiveWorkerMessage> {
 		const worker =
 			this.createWorker();
@@ -208,7 +221,8 @@ export class KJVOnlyArchiveWorkerClient {
 				);
 
 				worker.postMessage(
-					request
+					request,
+					transfer
 				);
 			}
 		);
@@ -230,4 +244,19 @@ export function createBrowserKJVOnlyArchiveWorkerClient():
 				}
 			)
 	);
+}
+
+function getTransferableBuffer(
+	value: Uint8Array
+): ArrayBuffer {
+	if (
+		value.buffer instanceof
+			ArrayBuffer
+	) {
+		return value.buffer;
+	}
+
+	return new Uint8Array(
+		value
+	).buffer;
 }

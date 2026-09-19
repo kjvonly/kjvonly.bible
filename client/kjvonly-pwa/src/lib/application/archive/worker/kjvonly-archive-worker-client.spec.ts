@@ -69,6 +69,12 @@ describe(
 					}
 				]);
 
+				expect(
+					worker.transfers
+				).toEqual([
+					[]
+				]);
+
 				worker.emitMessage({
 					type:
 						'export-result',
@@ -126,12 +132,23 @@ describe(
 				const firstWorker =
 					workers[0];
 
+				const importBytes =
+					new Uint8Array([
+						7
+					]);
+
 				const importPromise =
 					client.import(
-						new Uint8Array([
-							7
-						])
+						importBytes
 					);
+
+				expect(
+					firstWorker.transfers
+				).toEqual([
+					[
+						importBytes.buffer
+					]
+				]);
 
 				firstWorker.emitMessage({
 					type:
@@ -234,6 +251,10 @@ class FakeArchiveWorker
 		KJVOnlyArchiveWorkerRequest[] =
 			[];
 
+	readonly transfers:
+		Transferable[][] =
+			[];
+
 	readonly terminate =
 		vi.fn();
 
@@ -248,10 +269,17 @@ class FakeArchiveWorker
 
 	postMessage(
 		message:
-			KJVOnlyArchiveWorkerRequest
+			KJVOnlyArchiveWorkerRequest,
+
+		transfer:
+			Transferable[] = []
 	): void {
 		this.messages.push(
 			message
+		);
+
+		this.transfers.push(
+			transfer
 		);
 	}
 
