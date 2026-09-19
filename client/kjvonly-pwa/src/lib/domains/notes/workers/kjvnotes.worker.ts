@@ -17,12 +17,25 @@ import {
 	NOTES_COLLECTION_CHANGED
 } from '$lib/domains/notes/events/notes-events';
 
+import {
+	IndexedDBNotesStore
+} from '$lib/domains/notes/persistence/indexeddb-notes-store';
+
+import {
+	getApplicationDB
+} from '$lib/infrastructure/persistence/application.db';
+
 type IndexedNote = Note & {
 	bookChapter?: string;
 };
 
 const bibleLocationReferenceService =
 	new BibleLocationReferenceService();
+
+const notesStore =
+	new IndexedDBNotesStore(
+		getApplicationDB
+	);
 
 function createNotesDocument() {
 	return new FlexSearch.Document({
@@ -73,6 +86,15 @@ async function initialize(
 
 	getAllNotes(
 		NOTES_COLLECTION_CHANGED
+	);
+}
+
+async function refresh(): Promise<void> {
+	const acceptedNotes =
+		await notesStore.getAll();
+
+	await initialize(
+		[...acceptedNotes]
 	);
 }
 
@@ -226,6 +248,10 @@ onmessage = async (
 			getAllNotes(
 				e.data.id
 			);
+			break;
+
+		case 'refresh':
+			await refresh();
 			break;
 	}
 };

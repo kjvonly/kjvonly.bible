@@ -71,6 +71,8 @@ describe(
 					note.id
 				);
 
+				runtime.refresh();
+
 				expect(
 					worker.postMessage
 				).toHaveBeenNthCalledWith(
@@ -98,6 +100,15 @@ describe(
 					{
 						action: 'remove',
 						noteId: note.id
+					}
+				);
+
+				expect(
+					worker.postMessage
+				).toHaveBeenNthCalledWith(
+					4,
+					{
+						action: 'refresh'
 					}
 				);
 			}

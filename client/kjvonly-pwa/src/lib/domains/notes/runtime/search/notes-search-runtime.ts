@@ -93,6 +93,12 @@ export class NotesSearchRuntime {
 			id
 		});
 	}
+
+	refresh(): void {
+		this.worker.postMessage({
+			action: 'refresh'
+		});
+	}
 }
 
 function createNotesSearchWorker():

@@ -275,6 +275,7 @@ import {
 } from '$lib/domains/notes/resources/notes-resource-publication';
 
 import {
+    NOTES_RESOURCE_TYPE,
     NotesService
 } from '$lib/domains/notes';
 
@@ -924,6 +925,20 @@ export class Application {
                 notesResourcePublication,
                 outboxProcessor
             );
+
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        NOTES_RESOURCE_TYPE
+                    )
+                ) {
+                    notesService.refresh();
+                }
+            }
+        );
 
         ///////////////////////////////////////////////////////////////////////
         // Reading Plans
