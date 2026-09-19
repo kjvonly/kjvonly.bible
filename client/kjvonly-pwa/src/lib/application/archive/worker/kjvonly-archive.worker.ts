@@ -1,0 +1,86 @@
+import {
+	createKJVOnlyArchiveWorkerOperations
+} from './kjvonly-archive-worker-composition';
+
+import {
+	serializeKJVOnlyArchiveWorkerError,
+	type KJVOnlyArchiveWorkerMessage,
+	type KJVOnlyArchiveWorkerRequest
+} from './kjvonly-archive-worker-message';
+
+interface KJVOnlyArchiveWorkerPort {
+	postMessage(
+		message:
+			KJVOnlyArchiveWorkerMessage
+	): void;
+
+	addEventListener(
+		type:
+			'message',
+
+		listener:
+			(
+				event:
+					MessageEvent<
+						KJVOnlyArchiveWorkerRequest
+					>
+			) => void
+	): void;
+}
+
+const workerPort =
+	self as unknown as
+		KJVOnlyArchiveWorkerPort;
+
+const operations =
+	createKJVOnlyArchiveWorkerOperations();
+
+workerPort.addEventListener(
+	'message',
+	(event) => {
+		void handleRequest(
+			event.data
+		);
+	}
+);
+
+async function handleRequest(
+	request:
+		KJVOnlyArchiveWorkerRequest
+): Promise<void> {
+	try {
+		if (
+			request.type ===
+				'import'
+		) {
+			workerPort.postMessage({
+				type:
+					'import-result',
+				result:
+					await operations.import(
+						request.value
+					)
+			});
+
+			return;
+		}
+
+		workerPort.postMessage({
+			type:
+				'export-result',
+			value:
+				await operations.export(
+					request.objectTypes
+				)
+		});
+	} catch (error) {
+		workerPort.postMessage({
+			type:
+				'error',
+			error:
+				serializeKJVOnlyArchiveWorkerError(
+					error
+				)
+		});
+	}
+}
