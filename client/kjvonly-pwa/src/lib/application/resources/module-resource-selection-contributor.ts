@@ -12,6 +12,8 @@ export interface ModuleResourceSelectionBuildContext {
 
 	currentSelections:
 		ResourceSelections;
+
+	restoring?: boolean;
 }
 
 export interface ModuleResourceSelectionContributor {

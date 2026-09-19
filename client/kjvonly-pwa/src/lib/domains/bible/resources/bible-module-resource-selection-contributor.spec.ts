@@ -279,6 +279,71 @@ describe(
 		);
 
 		it(
+			'replaces a restored Text Markup selection with the current user default',
+			() => {
+				const selections =
+					createContributor(
+						'current-user'
+					).build({
+						originatingSelections: {
+							[BIBLE_CHAPTER_RESOURCE_TYPE]:
+								createReference(
+									'bible-publisher',
+									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+								),
+							[BIBLE_TEXT_MARKUP_RESOURCE_TYPE]:
+								createReference(
+									'previous-user',
+									`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/kjv`
+								)
+						},
+						currentSelections: {},
+						restoring: true
+					});
+
+				expect(
+					selections[
+						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					]
+				).toEqual({
+					publisher:
+						'current-user',
+					resourceId:
+						`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/kjvs`
+				});
+			}
+		);
+
+		it(
+			'clears a restored Text Markup selection when signed out',
+			() => {
+				const selections =
+					createContributor().build({
+						originatingSelections: {
+							[BIBLE_CHAPTER_RESOURCE_TYPE]:
+								createReference(
+									'bible-publisher',
+									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+								),
+							[BIBLE_TEXT_MARKUP_RESOURCE_TYPE]:
+								createReference(
+									'previous-user',
+									`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/kjvs`
+								)
+						},
+						currentSelections: {},
+						restoring: true
+					});
+
+				expect(
+					selections[
+						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+					]
+				).toBeUndefined();
+			}
+		);
+
+		it(
 			'leaves Text Markup missing when the selected Chapter source is missing',
 			() => {
 				const selections =

@@ -59,10 +59,23 @@ export class ModuleResourceSelectionBuilder {
 		);
 	}
 
+	reconcileRestored(
+		module: Modules,
+		restoredSelections:
+			ResourceSelections
+	): ResourceSelections {
+		return this.build(
+			module,
+			restoredSelections,
+			true
+		);
+	}
+
 	private build(
 		module: Modules,
 		originatingSelections:
-			ResourceSelections
+			ResourceSelections,
+		restoring = false
 	): ResourceSelections {
 		const contributor =
 			this.contributors.get(
@@ -79,7 +92,12 @@ export class ModuleResourceSelectionBuilder {
 			originatingSelections,
 			currentSelections:
 				this.selections
-					.snapshot()
+					.snapshot(),
+			...(
+				restoring
+					? { restoring: true }
+					: {}
+			)
 		});
 	}
 }

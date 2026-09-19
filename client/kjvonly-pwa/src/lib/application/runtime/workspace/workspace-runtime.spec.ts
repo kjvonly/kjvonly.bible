@@ -41,6 +41,8 @@ describe(
 					independent:
 						vi.fn(),
 					related:
+						vi.fn(),
+					reconcileRestored:
 						vi.fn()
 				};
 				const runtime =
@@ -60,6 +62,12 @@ describe(
 				expect(
 					buffers.independent
 				).not.toHaveBeenCalled();
+
+				expect(
+					buffers.reconcileRestored
+				).toHaveBeenCalledWith(
+					panes.rootPane.buffer
+				);
 			}
 		);
 
@@ -86,6 +94,8 @@ describe(
 						{
 							independent,
 							related:
+								vi.fn(),
+							reconcileRestored:
 								vi.fn()
 						}
 					);
@@ -230,6 +240,8 @@ describe(
 							independent:
 								vi.fn(),
 							related:
+								vi.fn(),
+							reconcileRestored:
 								vi.fn()
 						}
 					);
@@ -272,7 +284,9 @@ describe(
 						{
 							independent:
 								vi.fn(),
-							related
+							related,
+							reconcileRestored:
+								vi.fn()
 						}
 					);
 				const onChange =
@@ -369,7 +383,9 @@ describe(
 						{
 							independent:
 								vi.fn(),
-							related
+							related,
+							reconcileRestored:
+								vi.fn()
 						}
 					);
 				const onChange =
@@ -435,6 +451,8 @@ describe(
 						{
 							independent,
 							related:
+								vi.fn(),
+							reconcileRestored:
 								vi.fn()
 						}
 					);
@@ -627,7 +645,9 @@ describe(
 						{
 							independent:
 								vi.fn(),
-							related
+							related,
+							reconcileRestored:
+								vi.fn()
 						}
 					);
 				const onChange =
@@ -772,7 +792,9 @@ function factory() {
 			() =>
 				buffer(
 					Modules.BIBLE
-				)
+				),
+		reconcileRestored:
+			vi.fn()
 	};
 }
 
