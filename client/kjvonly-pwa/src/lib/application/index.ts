@@ -127,9 +127,16 @@ export {
 } from './archive/kjvonly-archive-codec';
 
 export {
-	KJVOnlyArchiveExporter,
-	type KJVOnlyArchiveExportSelection
+	KJVOnlyArchiveExporter
 } from './archive/kjvonly-archive-exporter';
+
+export {
+	matchesKJVOnlyArchiveExportSelection,
+	matchesObjectIdPatterns,
+	parseKJVOnlyArchiveExportPatterns,
+	type KJVOnlyArchiveExportSelection,
+	type KJVOnlyArchiveExportTypeSelection
+} from './archive/kjvonly-archive-export-selection';
 
 export {
 	KJVOnlyArchiveImporter,

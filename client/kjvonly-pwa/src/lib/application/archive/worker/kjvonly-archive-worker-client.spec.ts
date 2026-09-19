@@ -36,10 +36,16 @@ describe(
 
 				const resultPromise =
 					client.export({
-						objectTypes:
-							new Set([
-								'notes/note'
-							])
+						types: [
+							{
+								objectType:
+									'notes/note',
+								patterns: [
+									'*sermon*',
+									'default*'
+								]
+							}
+						]
 					});
 
 				expect(
@@ -48,9 +54,18 @@ describe(
 					{
 						type:
 							'export',
-						objectTypes: [
-							'notes/note'
-						]
+						selection: {
+							types: [
+								{
+									objectType:
+										'notes/note',
+									patterns: [
+										'*sermon*',
+										'default*'
+									]
+								}
+							]
+						}
 					}
 				]);
 
@@ -133,10 +148,12 @@ describe(
 
 				const exportPromise =
 					client.export({
-						objectTypes:
-							new Set([
-								'notes/note'
-							])
+						types: [
+							{
+								objectType:
+									'notes/note'
+							}
+						]
 					});
 
 				secondWorker.emitMessage({

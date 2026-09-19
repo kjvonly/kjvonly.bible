@@ -95,9 +95,7 @@ export class KJVOnlyArchiveWorkerClient {
 		return this.run({
 			type:
 				'export',
-			objectTypes: [
-				...selection.objectTypes
-			]
+			selection
 		}).then(
 			(message) => {
 				if (

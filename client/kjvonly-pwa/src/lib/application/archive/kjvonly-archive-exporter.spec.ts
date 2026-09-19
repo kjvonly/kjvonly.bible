@@ -74,10 +74,12 @@ describe(
 
 				await expect(
 					exporter.export({
-						objectTypes:
-							new Set([
-								NOTE_OBJECT_TYPE
-							])
+						types: [
+							{
+								objectType:
+									NOTE_OBJECT_TYPE
+							}
+						]
 					})
 				).resolves.toEqual({
 					version:
@@ -108,6 +110,82 @@ describe(
 		);
 
 		it(
+			'filters selected object types by objectId patterns before loading Domain Objects',
+			async () => {
+				const sermonNote =
+					createDomainObject(
+						NOTE_OBJECT_TYPE,
+						'publisher/default/my-sermon-note-001'
+					);
+
+				const personalNote =
+					createDomainObject(
+						NOTE_OBJECT_TYPE,
+						'publisher/default/personal-note-001'
+					);
+
+				const sermonInstallation =
+					createInstallation(
+						sermonNote
+					);
+
+				const personalInstallation =
+					createInstallation(
+						personalNote
+					);
+
+				const get =
+					vi.fn()
+						.mockResolvedValue(
+							sermonNote
+						);
+
+				const exporter =
+					createExporter({
+						getAll:
+							vi.fn()
+								.mockResolvedValue([
+									sermonInstallation,
+									personalInstallation
+								]),
+						get
+					});
+
+				const archive =
+					await exporter.export({
+						types: [
+							{
+								objectType:
+									NOTE_OBJECT_TYPE,
+								patterns: [
+									'*sermon*'
+								]
+							}
+						]
+					});
+
+				expect(
+					Object.keys(
+						archive.domain_objects
+					)
+				).toEqual([
+					sermonNote.id
+				]);
+
+				expect(
+					get
+				).toHaveBeenCalledOnce();
+
+				expect(
+					get
+				).toHaveBeenCalledWith(
+					DOMAIN_OBJECTS,
+					sermonNote.id
+				);
+			}
+		);
+
+		it(
 			'uses Resource Installations as the export workset',
 			async () => {
 				const get =
@@ -125,10 +203,12 @@ describe(
 
 				await expect(
 					exporter.export({
-						objectTypes:
-							new Set([
-								NOTE_OBJECT_TYPE
-							])
+						types: [
+							{
+								objectType:
+									NOTE_OBJECT_TYPE
+							}
+						]
 					})
 				).resolves.toEqual({
 					version:
@@ -186,10 +266,12 @@ describe(
 
 				const archive =
 					await exporter.export({
-						objectTypes:
-							new Set([
-								NOTE_OBJECT_TYPE
-							])
+						types: [
+							{
+								objectType:
+									NOTE_OBJECT_TYPE
+							}
+						]
 					});
 
 				expect(
@@ -243,10 +325,12 @@ describe(
 
 				await expect(
 					exporter.export({
-						objectTypes:
-							new Set([
-								NOTE_OBJECT_TYPE
-							])
+						types: [
+							{
+								objectType:
+									NOTE_OBJECT_TYPE
+							}
+						]
 					})
 				).rejects.toThrow(
 					`Cannot export Resource-backed Domain Object ${note.id}: matching Domain Object is missing.`

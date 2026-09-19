@@ -70,7 +70,7 @@ async function handleRequest(
 				'export-result',
 			value:
 				await operations.export(
-					request.objectTypes
+					request.selection
 				)
 		});
 	} catch (error) {

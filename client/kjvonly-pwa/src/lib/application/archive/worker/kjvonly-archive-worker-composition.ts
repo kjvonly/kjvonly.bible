@@ -146,6 +146,10 @@ import {
 	KJVOnlyArchiveCodec
 } from '../kjvonly-archive-codec';
 
+import type {
+	KJVOnlyArchiveExportSelection
+} from '../kjvonly-archive-export-selection';
+
 import {
 	KJVOnlyArchiveExporter
 } from '../kjvonly-archive-exporter';
@@ -161,8 +165,8 @@ export interface KJVOnlyArchiveWorkerOperations {
 	): Promise<KJVOnlyArchiveImportResult>;
 
 	export(
-		objectTypes:
-			readonly string[]
+		selection:
+			KJVOnlyArchiveExportSelection
 	): Promise<Uint8Array>;
 }
 
@@ -193,15 +197,12 @@ export function createKJVOnlyArchiveWorkerOperations():
 
 		export:
 			async (
-				objectTypes
+				selection
 			) => {
 				const archive =
-					await exporter.export({
-						objectTypes:
-							new Set(
-								objectTypes
-							)
-					});
+					await exporter.export(
+						selection
+					);
 
 				return codec.encode(
 					archive

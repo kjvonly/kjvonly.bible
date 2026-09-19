@@ -1,4 +1,8 @@
 import type {
+	KJVOnlyArchiveExportSelection
+} from '../kjvonly-archive-export-selection';
+
+import type {
 	KJVOnlyArchiveImportResult
 } from '../kjvonly-archive-importer';
 
@@ -18,8 +22,8 @@ export interface KJVOnlyArchiveWorkerExportRequest {
 	readonly type:
 		'export';
 
-	readonly objectTypes:
-		readonly string[];
+	readonly selection:
+		KJVOnlyArchiveExportSelection;
 }
 
 export type KJVOnlyArchiveWorkerMessage =

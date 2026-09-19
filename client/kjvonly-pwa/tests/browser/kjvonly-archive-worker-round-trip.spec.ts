@@ -245,11 +245,16 @@ describe(
 
 				const archiveBytes =
 					await client.export({
-						objectTypes:
-							new Set([
-								BIBLE_CHAPTER_OBJECT_TYPE,
-								STRONGS_DEFINITION_OBJECT_TYPE
-							])
+						types: [
+							{
+								objectType:
+									BIBLE_CHAPTER_OBJECT_TYPE
+							},
+							{
+								objectType:
+									STRONGS_DEFINITION_OBJECT_TYPE
+							}
+						]
 					});
 
 				const archive =

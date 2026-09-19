@@ -9,6 +9,11 @@ import type {
 } from '$lib/resource';
 
 import {
+	matchesKJVOnlyArchiveExportSelection,
+	type KJVOnlyArchiveExportSelection
+} from './kjvonly-archive-export-selection';
+
+import {
 	KJVONLY_ARCHIVE_VERSION,
 	type ArchivedDomainObject,
 	type KJVOnlyArchiveV1
@@ -17,11 +22,6 @@ import {
 import {
 	KJVOnlyArchiveValidator
 } from './kjvonly-archive-validator';
-
-export interface KJVOnlyArchiveExportSelection {
-	readonly objectTypes:
-		ReadonlySet<string>;
-}
 
 export class KJVOnlyArchiveExporter {
 	constructor(
@@ -48,8 +48,9 @@ export class KJVOnlyArchiveExporter {
 		const selected =
 			installations.filter(
 				(installation) =>
-					selection.objectTypes.has(
-						installation.objectType
+					matchesKJVOnlyArchiveExportSelection(
+						installation,
+						selection
 					)
 			);
 
