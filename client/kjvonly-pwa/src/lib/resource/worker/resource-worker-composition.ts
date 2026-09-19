@@ -271,6 +271,26 @@ import {
 	PlanSubscriptionResourceHandler
 } from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-handler';
 
+import {
+	IndexedDBPlanProgressInstallationTransaction
+} from '$lib/domains/reading-plans/persistence/plan-progress-installation-transaction';
+
+import {
+	PlanProgressInstaller
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-installer';
+
+import {
+	PlanProgressInterpreter
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-interpreter';
+
+import {
+	PlanProgressValidator
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-validator';
+
+import {
+	PlanProgressResourceHandler
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-handler';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
@@ -603,6 +623,23 @@ function createResourceHandlers():
 			planSubscriptionInstaller
 		);
 
+	const planProgressInstallationTransaction =
+		new IndexedDBPlanProgressInstallationTransaction(
+			getApplicationDB
+		);
+
+	const planProgressInstaller =
+		new PlanProgressInstaller(
+			planProgressInstallationTransaction
+		);
+
+	const planProgressResourceHandler =
+		new PlanProgressResourceHandler(
+			new PlanProgressInterpreter(),
+			new PlanProgressValidator(),
+			planProgressInstaller
+		);
+
 	const strongsInstallationTransaction =
 		new IndexedDBStrongsInstallationTransaction(
 			getApplicationDB
@@ -630,6 +667,7 @@ function createResourceHandlers():
 		noteResourceHandler,
 		planDefinitionResourceHandler,
 		planSubscriptionResourceHandler,
+		planProgressResourceHandler,
 		strongsResourceHandler
 	];
 }
