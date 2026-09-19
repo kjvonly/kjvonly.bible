@@ -16,7 +16,7 @@ import {
 } from '$lib/application/runtime/buffer/models/buffer.model';
 
 import {
-	paneService
+	PaneService
 } from './pane.service.svelte';
 
 const CHAPTER_RESOURCE_TYPE =
@@ -27,6 +27,9 @@ describe(
 	() => {
 		let values:
 			Map<string, string>;
+
+		let paneService:
+			PaneService;
 
 		beforeEach(
 			() => {
@@ -46,6 +49,11 @@ describe(
 							}
 					}
 				);
+
+				paneService =
+					new PaneService(
+						localStorage
+					);
 
 				paneService.rootPane = {
 					id:
@@ -83,8 +91,6 @@ describe(
 
 				buffer.key =
 					'buffer-a';
-				buffer.name =
-					'Bible';
 				buffer.componentName =
 					Modules.BIBLE;
 
@@ -98,8 +104,6 @@ describe(
 						undefined,
 					right:
 						undefined,
-					updateBuffer:
-						() => {},
 					toggle:
 						true
 				};
@@ -116,12 +120,8 @@ describe(
 					buffer: {
 						key:
 							'buffer-a',
-						name:
-							'Bible',
 						componentName:
 							Modules.BIBLE,
-						selected:
-							false,
 						bag: {},
 						resourceSelections: {
 							[CHAPTER_RESOURCE_TYPE]: {
@@ -160,8 +160,6 @@ describe(
 								'Bible',
 							componentName:
 								Modules.BIBLE,
-							selected:
-								false,
 							bag: {
 								bibleLocationRef:
 									'10_1'
@@ -196,6 +194,48 @@ describe(
 							`${CHAPTER_RESOURCE_TYPE}/kjvs`
 					}
 				});
+			}
+		);
+	}
+);
+
+describe(
+	'Pane dimensions',
+	() => {
+		it(
+			'publishes the full Pane-dimensions map to subscribers',
+			() => {
+				const paneService =
+					new PaneService({
+						getItem: () => null,
+						setItem: () => undefined
+					});
+				const subscriber = vi.fn();
+				const paneDimensionsByID = {
+					a: {
+						height: 1,
+						width: 0.5
+					},
+					b: {
+						height: 1,
+						width: 0.5
+					}
+				};
+
+				paneService.subscribeToPaneDimensions(
+					'a',
+					subscriber
+				);
+
+				paneService.publishPaneDimensions(
+					paneDimensionsByID
+				);
+
+				expect(
+					subscriber
+				).toHaveBeenCalledWith(
+					paneDimensionsByID
+				);
 			}
 		);
 	}

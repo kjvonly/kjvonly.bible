@@ -18,6 +18,10 @@ import {
     createBrowserNostrClient
 } from '$lib/infrastructure/nostr/client/create-nostr-client';
 
+import type {
+    NostrClient
+} from '$lib/infrastructure/nostr/client/nostr-client';
+
 import {
     ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
@@ -30,17 +34,19 @@ import {
 // Resource
 
 import {
-    createBrowserResourceWorkerClient,
-    type ResourceWorkerClient
-} from '$lib/resource/worker/resource-worker-client';
+	ResourceLoader,
+	appendResourceReferenceBuilder,
+	createBrowserResourceWorkerClient,
+	ResourceContentDecoratorBuilder,
+	JsonResourceContentDecorator,
+	GzipResourceContentDecorator,
+	HexResourceContentDecorator,
+	ResourceContentEncoder,
+	type PublishedResourceReference,
+	type ResourceInstallResult,
+	type ResourceWorkerClient
+} from '$lib/resource';
 
-import {
-    ResourceLoader
-} from '$lib/resource/loading/resource-loader';
-
-import {
-    appendResourceReferenceBuilder
-} from '$lib/resource/loading/resource-reference-builder';
 
 import {
     ResourceSelectionService
@@ -60,7 +66,7 @@ import {
 
 import {
     StrongsModuleResourceSelectionContributor
-} from '$lib/domains/strongs/resources/strongs-module-resource-selection-contributor';
+} from '$lib/domains/strongs';
 
 import {
     NotesModuleResourceSelectionContributor
@@ -87,16 +93,13 @@ import {
 } from '$lib/application/resources/module-resource-selection-resolver';
 
 import {
-    paneService
+    PaneService
 } from '$lib/application/services/pane.service.svelte';
 
-import type {
-    PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+import {
+    WorkspaceRuntime
+} from '$lib/application/runtime/workspace/workspace-runtime';
 
-import type {
-    ResourceInstallResult
-} from '$lib/resource/services/resource-install-result';
 
 import {
     AuthenticationService
@@ -107,12 +110,20 @@ import {
 } from '$lib/application/services/account/account.service';
 
 import {
-    NostrAccountStrategy
-} from '$lib/infrastructure/nostr/account/nostr-account-strategy';
+    ToastService
+} from '$lib/application/services/toast.service';
 
 import {
-    NostrAccountRelayProvider
-} from '$lib/infrastructure/nostr/account/nostr-account-relay-provider';
+    SettingsService
+} from '$lib/application/services/settings.service';
+
+import {
+    NavigationServiceFactory
+} from '$lib/application/services/navigation-service-factory';
+
+import {
+    NostrAccountStrategy
+} from '$lib/infrastructure/nostr/account/nostr-account-strategy';
 
 import {
     IndexedDBNostrEventsStore
@@ -146,44 +157,35 @@ import {
     NostrResourcePublicationStrategy
 } from '$lib/resource/nostr/nostr-resource-publication-strategy';
 
-import {
-    ResourceContentEncoder
-} from '$lib/resource/content/resource-content-encoder';
-
-import {
-    ResourceContentDecoratorBuilder
-} from '$lib/resource/content/resource-content-decorator-builder';
-
-import {
-    JsonResourceContentDecorator
-} from '$lib/resource/content/json-resource-content-decorator';
-
-import {
-    GzipResourceContentDecorator
-} from '$lib/resource/content/gzip-resource-content-decorator';
-
-import {
-    HexResourceContentDecorator
-} from '$lib/resource/content/hex-resource-content-decorator';
-
 ///////////////////////////////////////////////////////////////////////////////
 // Resource Types
 
 import {
-    BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+    BIBLE_CHAPTER_RESOURCE_TYPE,
+    BIBLE_BOOKNAMES_RESOURCE_TYPE,
+    BIBLE_PARAGRAPHS_RESOURCE_TYPE,
+    BIBLE_PERICOPES_RESOURCE_TYPE,
+    BIBLE_SEARCH_RESOURCE_TYPE,
+    ChapterService,
+    ParagraphsService,
+    PericopesService,
+    BibleTextMarkupService,
+    BibleBooknamesService,
+    createSearchService,
+    BibleVersionsService,
+    VerseService,
+    BookGroupingsService,
+    BibleLocationReferenceService,
+    BibleNavigationService,
+    createBibleVersionId,
+    type BibleVersion
+} from '$lib/domains/bible';
+
 
 import {
     STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+} from '$lib/domains/strongs';
 
-import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
-
-import { BIBLE_PARAGRAPHS_RESOURCE_TYPE } from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
-
-import { BIBLE_PERICOPES_RESOURCE_TYPE } from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
-
-import { BIBLE_SEARCH_RESOURCE_TYPE } from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
@@ -192,25 +194,16 @@ import {
     IndexedDBChapterStore
 } from '$lib/domains/bible/persistence/indexeddb-chapter-store';
 
-import {
-    ChapterService
-} from '$lib/domains/bible/services/chapter.service';
 
 import {
     IndexedDBBibleParagraphsStore
 } from '$lib/domains/bible/persistence/indexeddb-bible-paragraphs-store';
 
-import {
-    ParagraphsService
-} from '$lib/domains/bible/services/paragraphs.service';
 
 import {
     IndexedDBBiblePericopesStore
 } from '$lib/domains/bible/persistence/indexeddb-bible-pericopes-store';
 
-import {
-    PericopesService
-} from '$lib/domains/bible/services/pericopes.service';
 
 import {
     IndexedDBBibleTextMarkupStore
@@ -220,9 +213,6 @@ import {
     IndexedDBBibleTextMarkupWriteTransaction
 } from '$lib/domains/bible/persistence/bible-text-markup-write-transaction';
 
-import {
-    BibleTextMarkupService
-} from '$lib/domains/bible/services/bible-text-markup.service';
 
 import {
     BibleTextMarkupResourcePublication
@@ -232,9 +222,6 @@ import {
     IndexedDBBibleBooknamesStore
 } from '$lib/domains/bible/persistence/indexeddb-bible-booknames-store';
 
-import {
-    BibleBooknamesService
-} from '$lib/domains/bible/services/bible-booknames.service';
 
 import {
     IndexedDBBibleSearchIndexStore
@@ -244,25 +231,16 @@ import {
     BibleSearchIndexService
 } from '$lib/domains/bible/services/bible-search-index.service';
 
-import {
-    createSearchService
-} from '$lib/domains/bible/services/search.service';
 
 import {
     SearchRuntime
 } from '$lib/domains/bible/runtime/search/search-runtime';
 
-import {
-    BibleVersionsService
-} from '$lib/domains/bible/services/bibleVersions.service';
 
 import {
     IndexedDBBibleVersionCatalog
 } from '$lib/domains/bible/persistence/indexeddb-bible-version-catalog';
 
-import {
-    VerseService
-} from '$lib/domains/bible/services/verse.service';
 
 import {
     KJVONLY_PUBKEY
@@ -272,13 +250,6 @@ import {
     getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
-import type {
-    BibleVersion
-} from '$lib/domains/bible/models/bible-version.model';
-
-import {
-    createBibleVersionId
-} from '$lib/domains/bible/utils/bible-identity';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Notes
@@ -297,7 +268,7 @@ import {
 
 import {
     NotesService
-} from '$lib/domains/notes/services/notes.service';
+} from '$lib/domains/notes';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reading Plans
@@ -305,10 +276,6 @@ import {
 import {
     IndexedDBPlanDefinitionsStore
 } from '$lib/domains/reading-plans/persistence/indexeddb-plan-definitions-store';
-
-import {
-    PlanDefinitionsService
-} from '$lib/domains/reading-plans/services/plan-definitions.service';
 
 import {
     IndexedDBPlanSubscriptionsStore
@@ -323,10 +290,6 @@ import {
 } from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-publication';
 
 import {
-    PlanSubscriptionsService
-} from '$lib/domains/reading-plans/services/plan-subscriptions.service';
-
-import {
     IndexedDBPlanProgressStore
 } from '$lib/domains/reading-plans/persistence/indexeddb-plan-progress-store';
 
@@ -339,8 +302,14 @@ import {
 } from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-publication';
 
 import {
-    PlanProgressService
-} from '$lib/domains/reading-plans/services/plan-progress.service';
+    PlanDefinitionsService,
+    PlanSubscriptionsService,
+    PlanProgressService,
+    PlansPubSubService,
+    SubsEnricherService,
+    EncodedReadingsDecoderService,
+    createPlansWorker
+} from '$lib/domains/reading-plans';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
@@ -351,7 +320,7 @@ import {
 
 import {
     StrongsService
-} from '$lib/domains/strongs/services/strongs.service';
+} from '$lib/domains/strongs';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Persistence
@@ -398,8 +367,14 @@ export class Application {
     private readonly nostrSigner:
         NostrSigner;
 
+    private readonly nostrClient:
+        NostrClient;
+
     private readonly resourceWorkerClient:
         ResourceWorkerClient;
+
+    private readonly resourceSelectionService:
+        ResourceSelectionService;
 
     private readonly outboxProcessor:
         OutboxProcessor;
@@ -445,6 +420,9 @@ export class Application {
             createBrowserNostrClient(
                 nostrSigner
             );
+
+        this.nostrClient =
+            nostrClient;
 
         /*
          * Nostr Resource discovery remains on the
@@ -558,14 +536,10 @@ export class Application {
         ///////////////////////////////////////////////////////////////////////
         // Account
 
-        const nostrAccountRelayProvider =
-            new NostrAccountRelayProvider();
-
         const nostrAccountStrategy =
             new NostrAccountStrategy(
                 nostrClient,
                 nostrEventsService,
-                nostrAccountRelayProvider,
                 this.config
                     .accountBootstrapRelays,
                 KJVONLY_PUBKEY
@@ -673,6 +647,9 @@ export class Application {
                 resourceSelectionStore
             );
 
+        this.resourceSelectionService =
+            resourceSelectionService;
+
         const moduleResourceSelectionBuilder =
             new ModuleResourceSelectionBuilder(
                 resourceSelectionService,
@@ -690,9 +667,6 @@ export class Application {
                     ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.MODULES
-                    ),
-                    new NoResourceModuleResourceSelectionContributor(
-                        Modules.USER_GUIDE
                     ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.LOGIN
@@ -714,13 +688,44 @@ export class Application {
                 moduleResourceSelectionBuilder
             );
 
+        const paneService =
+            new PaneService(
+                localStorage
+            );
+
+        const workspaceRuntime =
+            new WorkspaceRuntime(
+                paneService,
+                moduleBufferFactory
+            );
+
+        const toastService =
+            new ToastService();
+
+        const settingsService =
+            new SettingsService();
+
+        const navigationServiceFactory =
+            new NavigationServiceFactory();
+
         const moduleResourceSelectionResolver =
             createModuleResourceSelectionResolver(
-                paneService
+                workspaceRuntime
             );
 
         ///////////////////////////////////////////////////////////////////////
         // Bible
+
+        const bookGroupingsService =
+            new BookGroupingsService();
+
+        const bibleLocationReferenceService =
+            new BibleLocationReferenceService();
+
+        const bibleNavigationService =
+            new BibleNavigationService(
+                bibleLocationReferenceService
+            );
 
         const chapterStore =
             new IndexedDBChapterStore(
@@ -771,7 +776,8 @@ export class Application {
         const chapterService =
             new ChapterService(
                 chapterStore,
-                chapterResourceLoader
+                chapterResourceLoader,
+                bibleLocationReferenceService
             );
 
         const paragraphsStore =
@@ -788,7 +794,8 @@ export class Application {
         const paragraphsService =
             new ParagraphsService(
                 paragraphsStore,
-                paragraphsResourceLoader
+                paragraphsResourceLoader,
+                bibleLocationReferenceService
             );
 
         const pericopesStore =
@@ -805,7 +812,8 @@ export class Application {
         const pericopesService =
             new PericopesService(
                 pericopesStore,
-                pericopesResourceLoader
+                pericopesResourceLoader,
+                bibleLocationReferenceService
             );
 
         const bibleTextMarkupStore =
@@ -833,7 +841,8 @@ export class Application {
                 bibleTextMarkupResourceLoader,
                 bibleTextMarkupWriteTransaction,
                 bibleTextMarkupResourcePublication,
-                outboxProcessor
+                outboxProcessor,
+                bibleLocationReferenceService
             );
 
         const bibleBooknamesStore =
@@ -870,7 +879,8 @@ export class Application {
 
         const verseService =
             new VerseService(
-                chapterService
+                chapterService,
+                bibleLocationReferenceService
             );
 
         ///////////////////////////////////////////////////////////////////////
@@ -952,6 +962,17 @@ export class Application {
                 outboxProcessor
             );
 
+        const plansPubSubService =
+            new PlansPubSubService(
+                createPlansWorker()
+            );
+
+        const subsEnricherService =
+            new SubsEnricherService();
+
+        const encodedReadingsDecoderService =
+            new EncodedReadingsDecoderService();
+
         ///////////////////////////////////////////////////////////////////////
         // Strong's
 
@@ -986,16 +1007,11 @@ export class Application {
         this.context = {
             authenticationService,
             accountService,
+            toastService,
+            settingsService,
+            navigationServiceFactory,
 
-            nostrClient,
-            nostrAccountStrategy,
-            resourceDiscovery,
-
-            resourceService:
-                resourceWorkerClient,
-
-            resourceSelectionService,
-            moduleBufferFactory,
+            workspaceRuntime,
             moduleResourceSelectionResolver,
 
             chapterService,
@@ -1006,12 +1022,18 @@ export class Application {
             searchService,
             verseService,
             bibleVersionsService,
+            bookGroupingsService,
+            bibleLocationReferenceService,
+            bibleNavigationService,
 
             notesService,
 
             planDefinitionsService,
             planSubscriptionsService,
             planProgressService,
+            plansPubSubService,
+            subsEnricherService,
+            encodedReadingsDecoderService,
 
             strongsService
         };
@@ -1079,8 +1101,7 @@ export class Application {
         this.resourceWorkerClient
             .dispose();
 
-        this.context
-            .nostrClient
+        this.nostrClient
             .dispose();
 
         await this.nostrSigner
@@ -1097,11 +1118,19 @@ export class Application {
 
         try {
             this.context
-                .resourceSelectionService
+                .settingsService
+                .applySettings();
+
+            this.resourceSelectionService
                 .restore();
 
             this.context
-                .nostrClient
+                .workspaceRuntime
+                .initialize(
+                    Modules.BIBLE
+                );
+
+            this.nostrClient
                 .setDefaultRelays(
                     this.config
                         .resourceRelays
@@ -1358,8 +1387,7 @@ export class Application {
             );
         }
 
-        this.context
-            .resourceSelectionService
+        this.resourceSelectionService
             .initializeMissing(
                 [
                     ...selections.values()

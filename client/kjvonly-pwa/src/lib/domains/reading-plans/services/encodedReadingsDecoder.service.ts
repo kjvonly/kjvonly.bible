@@ -1,4 +1,4 @@
-import type { BCV } from '$lib/domains/bible/models/bible.model';
+import type { BCV } from '$lib/domains/bible';
 import type { Readings } from '$lib/domains/reading-plans/models/plans.model';
 
 /**
@@ -195,8 +195,3 @@ export class EncodedReadingsDecoderService {
 	}
 }
 
-/**
- * Service for decoding the encoded plans readings. {@link EncodedReadingsDecoderService}
- */
-export const encodedReadingsDecoderService =
-	new EncodedReadingsDecoderService();

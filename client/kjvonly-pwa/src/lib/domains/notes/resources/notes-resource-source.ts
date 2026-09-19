@@ -1,10 +1,10 @@
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
 	parseResourceIdentifier
-} from '$lib/resource/utils/resource-identifier';
+} from '$lib/resource';
 
 import {
 	createNoteId

@@ -27,13 +27,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
 	import {
 		NOTES_COLLECTION_CHANGED
-	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+	} from '$lib/domains/notes/events/notes-events';
 	import NotesList from './notesList/notesList.svelte';
 
 	// APPLICATION
-	import {
-		useApplicationContext
-	} from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application';
 
 	const {
 		notesService

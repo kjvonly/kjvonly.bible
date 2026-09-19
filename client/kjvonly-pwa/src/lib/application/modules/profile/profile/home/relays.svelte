@@ -1,24 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import type { NostrAccountRelay } from '$lib/infrastructure/nostr/account/nostr-account-relay-provider';
+	import type { AccountRelay } from '$lib/application/services/account/account-state';
 
-	const {
-		nostrAccountStrategy
-	} = useApplicationContext();
+	const { accountService } = useApplicationContext();
 
-	let relays = $state<readonly NostrAccountRelay[]>([]);
+	let relays = $state<readonly AccountRelay[]>([]);
 
 	onMount(() => {
-		return nostrAccountStrategy.subscribeRelays(
-			(value) => {
-				relays = value;
-			}
-		);
+		return accountService.subscribe((state) => {
+			relays = state.relays ?? [];
+		});
 	});
 </script>
 
-{#snippet read(relay: NostrAccountRelay)}
+{#snippet read(relay: AccountRelay)}
 	{#if relay.read}
 		<span class="px-2">read</span>
 	{:else}
@@ -26,7 +22,7 @@
 	{/if}
 {/snippet}
 
-{#snippet write(relay: NostrAccountRelay)}
+{#snippet write(relay: AccountRelay)}
 	{#if relay.write}
 		<span class="px-2">write</span>
 	{:else}

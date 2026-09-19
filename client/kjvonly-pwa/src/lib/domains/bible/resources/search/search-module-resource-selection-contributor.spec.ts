@@ -6,7 +6,7 @@ import {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
@@ -22,7 +22,7 @@ import {
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+} from '$lib/domains/strongs';
 
 import {
 	SearchModuleResourceSelectionContributor

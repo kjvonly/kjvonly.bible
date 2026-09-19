@@ -42,7 +42,6 @@ It does not define:
 
 * rendering technology,
 * recursive component rendering,
-* CSS Grid,
 * component lifecycle,
 * Domain behavior,
 * Domain Objects,
@@ -160,9 +159,9 @@ The Workspace therefore provides the root of the Runtime Object graph.
 
 ---
 
-# Current Workspace Model
+# Workspace Structure
 
-The current application maintains one active Workspace.
+The architecture assumes one active Workspace at a time unless a future capability explicitly introduces multiple active Workspaces.
 
 The Workspace concept is currently represented primarily by:
 
@@ -240,7 +239,7 @@ Branch Pane
     Child Pane
 ```
 
-The current implementation records a split direction that determines how the child regions will eventually be presented.
+A Branch Pane records the structural relationship required to determine how its child regions are presented.
 
 That rendering behavior belongs to Runtime Rendering.
 
@@ -290,7 +289,7 @@ The Pane tree is the logical Workspace structure.
 
 Rendering derives presentation from that structure.
 
-The Pane tree itself does not depend on CSS Grid, Svelte components, or another rendering mechanism.
+The Pane tree itself does not depend on any particular layout or rendering mechanism.
 
 ---
 
@@ -336,37 +335,22 @@ A Pane may move or change size while remaining the same Runtime Object.
 
 ---
 
-# Current Pane Representation
+# Pane Model
 
-The current implementation uses a recursive interface similar to:
-
-```typescript
-export interface Pane {
-  id: string | any;
-  left: Pane | any;
-  right: Pane | any;
-  split: string | any;
-  buffer: any;
-  updateBuffer: Function | any;
-  toggle: boolean | any;
-}
-```
-
-The same representation currently supports both Branch and Leaf Panes.
+The enduring Pane model distinguishes Branch and Leaf responsibilities.
 
 Conceptually:
 
 | Property | Branch Pane | Leaf Pane |
 | -------- | ----------: | --------: |
-| `id`     |          No |       Yes |
-| `left`   |         Yes |        No |
-| `right`  |         Yes |        No |
-| `split`  |         Yes |        No |
-| `buffer` |          No |       Yes |
+| stable identity for visible interaction | optional | required |
+| child Panes | required | none |
+| split relationship | required | none |
+| hosted Buffer | none | required |
 
-Some properties exist because of the current implementation rather than the enduring Pane model.
+The exact in-memory representation is an implementation concern.
 
-Future refactoring may introduce more precise Pane types without changing the Runtime responsibility.
+The architectural requirement is that Branch Panes describe Workspace structure while Leaf Panes terminate that structure with one hosted Buffer.
 
 ---
 
@@ -398,16 +382,11 @@ The Buffer represents the active interaction occupying that structure.
 
 A Buffer owns the Runtime context associated with one Module Instance.
 
-This may include:
+A Buffer preserves the context required to identify and continue one Module Instance.
 
-* stable Buffer identity,
-* Module type,
-* initialization context,
-* Navigation Context,
-* focus state,
-* selection state,
-* keyboard interaction state,
-* and other transient state required to preserve the interaction.
+That context includes stable Buffer identity, Module identity, Navigation Context, and any selected Resource context required by that interaction.
+
+Additional interaction state should be introduced only when required by concrete Runtime behavior. Focus and selection coordination remain Workspace Runtime responsibilities.
 
 The Buffer does not own Domain behavior.
 
@@ -439,26 +418,20 @@ They are different active interactions.
 
 ---
 
-# Current Buffer Representation
+# Buffer Model
 
-The current implementation uses a class similar to:
+The Buffer representation is intentionally subordinate to the Runtime model.
 
-```typescript
-export class Buffer {
-  key: string = uuid4();
-  name: string = '';
-  component: any;
-  componentName: Modules = Modules.NULL;
-  keyboardBindings: Map<string, Function> = new Map<string, Function>();
-  selected: boolean = false;
-  bag: any = {};
-  onFocus: Function = () => {};
-}
-```
+It must preserve:
 
-Some properties reflect the current rendering implementation.
+* stable Buffer identity,
+* the Module Instance being hosted,
+* Navigation Context required to continue that interaction,
+* and Resource-selection context when the Module depends on externally distributed Domain data.
 
-The enduring Buffer responsibility is:
+The Buffer does not contain presentation implementation.
+
+Its enduring responsibility is:
 
 > **A Buffer identifies and preserves one active Module Instance and its Runtime context.**
 
@@ -603,9 +576,7 @@ The Domain does not need to understand the Pane tree.
 
 A Buffer may carry context needed to initialize or continue a Module Instance.
 
-The current implementation stores this context in the Buffer's `bag`.
-
-Examples include:
+Examples of Navigation Context include:
 
 * a Bible location reference,
 * a Bible version,
@@ -615,14 +586,7 @@ Examples include:
 * Note context,
 * or other initialization information.
 
-For example:
-
-```typescript
-{
-  bibleLocationRef: '1_1',
-  bibleVersion: 'kjv'
-}
-```
+For example, a Bible interaction may carry a Bible location and selected edition, while a Reading Plan interaction may carry plan-specific navigation context.
 
 The Runtime carries this context.
 
@@ -862,26 +826,22 @@ This preserves the ownership boundary around Runtime behavior.
 
 ---
 
-# Current Runtime Services
+# Workspace Runtime Public API
 
-The current implementation may expose Runtime capabilities through services such as the Pane service.
+The Workspace Runtime exposes a deliberate Public API for Workspace operations.
 
-Those services are implementation mechanisms.
+Presentation and Module behavior may use that boundary to request operations such as:
 
-They do not own Pane behavior.
+* finding Panes,
+* splitting or deleting Panes,
+* replacing Buffers,
+* persisting Workspace state,
+* deriving presentation information,
+* and observing meaningful Workspace changes.
 
-Conceptually:
+Internal helpers remain implementation details beneath that Public API.
 
-```text
-Workspace Runtime
-    │
-    └── Public API
-            │
-            └── Current implementation
-                    Pane Service
-```
-
-If the service implementation changes, Runtime ownership remains the same.
+Changing those helpers does not change Runtime ownership.
 
 ---
 
@@ -989,7 +949,7 @@ Domain state answers questions such as:
 
 > **What Reading Plan progress exists?**
 
-> **What Bible annotations exist?**
+> **What Bible text markup exists?**
 
 A restored Module Instance may request Domain Objects again after the Workspace is reconstructed.
 
@@ -1014,40 +974,18 @@ The Runtime should persist only the state it owns or requires to reconstruct its
 
 ---
 
-# Current Implementation
-
-The current implementation primarily realizes Workspace Runtime behavior through:
-
-* `+page.svelte`,
-* Pane-related services,
-* Buffer implementation code,
-* event handlers,
-* local persistence,
-* and supporting Runtime components.
-
-This physical organization reflects implementation history.
-
-It does not redefine ownership.
-
-Future refactoring should move implementation toward the Runtime architecture rather than redefining the Runtime according to existing file locations.
-
----
-
 # Future Evolution
 
-Expected evolution may include:
+The Runtime model may evolve to support additional application capabilities such as:
 
-* extracting Runtime coordination from `+page.svelte`,
-* introducing a concrete Workspace object,
-* introducing stronger Branch and Leaf Pane types,
-* formalizing the Runtime Public API,
-* supporting named Workspaces,
-* supporting multiple active or saved Workspaces,
-* refining Buffer types,
-* refining Navigation Context,
-* and moving technical implementation beneath its architectural owner.
+* named Workspaces,
+* multiple active or saved Workspaces,
+* detached or reusable interactions,
+* explicit focus and selection coordination,
+* richer Navigation Context,
+* and additional Runtime state required by future Module behavior.
 
-These changes should refine implementation without changing the Runtime model.
+These changes should extend the Runtime model without transferring Domain behavior into the Runtime or presentation behavior into Domain ownership.
 
 ---
 

@@ -268,5 +268,3 @@ export class BookGroupingsService {
 		}
 	};
 }
-
-export const bookGroupingsService = new BookGroupingsService();

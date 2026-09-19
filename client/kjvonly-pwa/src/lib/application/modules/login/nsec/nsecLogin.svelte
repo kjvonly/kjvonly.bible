@@ -3,9 +3,9 @@
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import { Modules } from '$lib/application/models/modules.model';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import NsecLoginHeader from './nsecLoginHeader.svelte';
+	const { workspaceRuntime } = useApplicationContext();
 
 	let {
 		paneID,
@@ -31,10 +31,10 @@
 			name
 		);
 
-		let pane = paneService.findNode(paneService.rootPane, paneID);
-		if (pane) {
-			pane?.updateBuffer(Modules.PROFILE);
-		}
+		workspaceRuntime.replaceBuffer(
+			paneID,
+			Modules.PROFILE
+		);
 	}
 </script>
 

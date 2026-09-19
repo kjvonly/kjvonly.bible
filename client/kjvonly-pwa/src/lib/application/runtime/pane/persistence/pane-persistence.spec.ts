@@ -17,6 +17,10 @@ import type {
 } from '$lib/application/runtime/pane/models/pane.model';
 
 import {
+	PaneSplit
+} from '$lib/application/runtime/pane/models/pane-split';
+
+import {
 	restorePane,
 	serializePane
 } from './pane-persistence';
@@ -47,14 +51,11 @@ describe(
 						}
 					);
 
-				leftBuffer.component =
-					{ runtime: true };
-
 				const root: Pane = {
 					id:
 						undefined,
 					split:
-						'h',
+						PaneSplit.HORIZONTAL,
 					left: {
 						id:
 							'a',
@@ -66,8 +67,6 @@ describe(
 							undefined,
 						split:
 							undefined,
-						updateBuffer:
-							() => {},
 						toggle:
 							true
 					},
@@ -86,15 +85,11 @@ describe(
 							undefined,
 						split:
 							undefined,
-						updateBuffer:
-							undefined,
 						toggle:
 							false
 					},
 					buffer:
 						leftBuffer,
-					updateBuffer:
-						() => {},
 					toggle:
 						true
 				};
@@ -110,12 +105,8 @@ describe(
 						buffer: {
 							key:
 								'buffer-a',
-							name:
-								`${Modules.BIBLE}`,
 							componentName:
 								Modules.BIBLE,
-							selected:
-								false,
 							bag: {},
 							resourceSelections: {
 								[CHAPTER_RESOURCE_TYPE]: {
@@ -133,12 +124,8 @@ describe(
 						buffer: {
 							key:
 								'buffer-b',
-							name:
-								`${Modules.SEARCH}`,
 							componentName:
 								Modules.SEARCH,
-							selected:
-								false,
 							bag: {},
 							resourceSelections: {}
 						}
@@ -164,8 +151,6 @@ describe(
 									'Bible',
 								componentName:
 									Modules.BIBLE,
-								selected:
-									false,
 								bag: {
 									bibleLocationRef:
 										'10_1'
@@ -196,15 +181,13 @@ describe(
 									'Search',
 								componentName:
 									Modules.SEARCH,
-								selected:
-									false,
 								bag: {},
 								resourceSelections: {}
 							}
 						}
 					});
 
-				expect(root.split).toBe('v');
+				expect(root.split).toBe(PaneSplit.VERTICAL);
 				expect(root.id).toBeUndefined();
 				expect(root.buffer).toBeUndefined();
 
@@ -229,13 +212,13 @@ describe(
 					}
 				});
 
-				expect(root.left.updateBuffer).toBeUndefined();
 				expect(root.left.toggle).toBeUndefined();
+
 			}
 		);
 
 		it(
-			'accepts legacy leaf Buffers without Resource selections',
+			'accepts legacy leaf Buffer fields without Resource selections',
 			() => {
 				const pane =
 					restorePane({
@@ -277,8 +260,6 @@ describe(
 									'Bible',
 								componentName:
 									Modules.BIBLE,
-								selected:
-									false,
 								bag: {},
 								resourceSelections: {}
 							}
@@ -321,9 +302,6 @@ function createBuffer(
 
 	buffer.key =
 		key;
-
-	buffer.name =
-		`${module}`;
 
 	buffer.componentName =
 		module;

@@ -1,6 +1,8 @@
-import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+import {
+	type PublishedResourceReference,
+	type ResourceLoader,
+	parseResourceIdentifier
+} from '$lib/resource';
 
 import type {
 	Chapter
@@ -10,13 +12,6 @@ import type {
 	ChapterStore
 } from '$lib/domains/bible/persistence/chapter-store';
 
-import type {
-	ResourceLoader
-} from '$lib/resource/loading/resource-loader';
-
-import {
-	parseResourceIdentifier
-} from '$lib/resource/utils/resource-identifier';
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
@@ -27,8 +22,8 @@ import {
 	createChapterId
 } from '$lib/domains/bible/utils/bible-identity';
 
-import {
-	bibleLocationReferenceService
+import type {
+	BibleLocationReferenceService
 } from './bibleLocationReference.service';
 
 export class ChapterService {
@@ -44,6 +39,12 @@ export class ChapterService {
 			Pick<
 				ResourceLoader<string>,
 				'load'
+			>,
+
+		private readonly bibleLocationReferenceService:
+			Pick<
+				BibleLocationReferenceService,
+				'extractBookIDChapter'
 			>
 	) {}
 
@@ -63,7 +64,7 @@ export class ChapterService {
 			);
 
 		const chapterRef =
-			bibleLocationReferenceService
+			this.bibleLocationReferenceService
 				.extractBookIDChapter(
 					bibleLocationRef
 				);

@@ -2,787 +2,1316 @@
 
 **Status**
 
-Pending Review
+Current
 
 ---
 
 # Purpose
 
-This document describes the implementation model for reliably publishing locally accepted application changes through the Resource Boundary.
+This document describes the current application Outbox implementation used to durably publish accepted local state after the local write has already succeeded.
 
-The architectural requirements are defined by **ADR 09 — Outbox and Publishing**.
+The Outbox is an application-level publication mechanism. It is not Resource-specific and it is not a synchronization engine.
 
-The key architectural relationship is:
-
-```text
-Accepted Local State
-        ↓
-Durable Publication Intent
-        ↓
-Resource Representation
-        ↓
-Signed Nostr Event
-        ↓
-Nostr Relays
-```
-
-This implementation uses a persistent Outbox, Resource serialization, background publication, retry handling, and publication-state tracking to satisfy that contract.
-
----
-
-# Responsibilities
-
-The implementation separates three concerns:
-
-```text
-Application / Domain
-    owns accepted local state
-
-Publication Preparation
-    converts publication intent into
-    a Resource Representation and Nostr event
-
-Outbox
-    owns durable asynchronous publication
-```
-
-The Outbox does not own Domain meaning or synchronization policy.
-
-It is responsible for reliably completing publication work that has already been requested.
-
----
-
-# Local-First Write Flow
-
-A local application change becomes usable before Nostr publication succeeds.
-
-For publishable Domain information, the implementation must durably preserve:
+The current high-level flow is:
 
 ```text
 Accepted Local Change
+        ↓
+Persist Local State
         +
-Pending Publication Intent
+Persist Final Publication Intent
+        ↓
+Commit Transaction
+        ↓
+Wake Outbox
+        ↓
+OutboxProcessor
+        ↓
+Publication Strategy
+        ↓
+Transport
 ```
 
-A typical local write therefore behaves conceptually as:
+For Resource-backed Domain writes this becomes:
 
 ```text
-User Action
-    ↓
 Domain Operation
     ↓
-Accepted Local State
+Domain Object
     ↓
-Persist Local State
-    +
-Persist Outbox Entry
+Domain-owned Resource publication mapping
     ↓
-Local Operation Complete
+ResourcePublication / ResourceDeletionPublication
+    ↓
+Domain Object + Outbox entry committed atomically
+    ↓
+OutboxProcessor
+    ↓
+NostrResourcePublicationStrategy
+    ↓
+Resource encoding
+    ↓
+NostrClient
 ```
 
-Relay publication occurs independently afterward.
-
-Where local persistence and Outbox persistence share a transactional storage mechanism, they should be committed atomically.
-
-The implementation must prevent this state:
+For application-owned native Nostr events it becomes:
 
 ```text
-Local change persisted
-        +
-required publication forgotten
+Application Operation
+    ↓
+NostrEvent
+    ↓
+NostrEventPublicationIntent
+    ↓
+Nostr event + Outbox entry committed atomically
+    ↓
+OutboxProcessor
+    ↓
+NostrEventPublicationStrategy
+    ↓
+NostrClient
 ```
 
-The exact persistence mechanism is implementation-specific.
+The important implementation principle is:
+
+> The Outbox stores the final durable publication intent. It does not later reconstruct publication meaning by reading Domain state.
 
 ---
 
-# Publication Preparation
+# Scope
 
-The old implementation describes a Resource Serializer between Domain Objects and the Outbox.
+This document covers:
 
-That remains a useful implementation mechanism even though it is not an architectural layer.
+- Outbox ownership,
+- Outbox entry shape,
+- durable persistence,
+- atomic local-write + Outbox transactions,
+- last-write-wins replacement,
+- publication strategy dispatch,
+- Resource publication,
+- native Nostr-event publication,
+- wake and processing behavior,
+- successful-entry deletion,
+- stale-completion protection,
+- retry behavior,
+- startup behavior,
+- Resource deletion publication,
+- concurrency behavior,
+- public boundaries,
+- and current implementation limitations.
+
+It does not define:
+
+- inbound Resource resolution,
+- Domain Resource installation,
+- synchronization policy,
+- conflict resolution with remote state,
+- Resource selection,
+- or Domain-specific publication mapping rules.
+
+Those responsibilities live elsewhere.
+
+---
+
+# Core Responsibilities
+
+The current implementation separates four concerns:
+
+```text
+Domain / Application Service
+    owns accepted local behavior
+
+Write Transaction
+    atomically persists local state
+    and the publication intent
+
+Outbox
+    durably queues application publication work
+
+Publication Strategy
+    converts one publication-intent type
+    into transport-specific work
+```
+
+The Outbox does not own Domain meaning.
+
+It also does not decide whether a Resource should exist, which Resource ID should be used, or which Nostr event kind represents an application-level account operation.
+
+Those decisions occur before the publication intent reaches the Outbox.
+
+---
+
+# Application-Wide Outbox
+
+The Outbox is shared by multiple publication types.
+
+Current registered publication types include:
+
+```text
+resource
+nostr-event
+```
+
+The processor itself does not switch on concrete payload shapes.
+
+Instead it resolves an `OutboxPublicationStrategy` by the intent's `type` value.
 
 Conceptually:
 
 ```text
-Accepted Domain Information
+OutboxEntry.publication.type
         ↓
-Resource Serializer
+registered strategy map
         ↓
-Resource Representation
-        ↓
-Nostr Event Construction
-        ↓
-Signing
-        ↓
-Publication
+OutboxPublicationStrategy.publish(...)
 ```
 
-The serializer is responsible for implementation concerns such as:
+This keeps the processor open to additional publication types without embedding Resource or Nostr-event behavior directly in `OutboxProcessor`.
 
-* selecting the Resource schema,
-* reading the required Domain state,
-* serializing that state,
-* preserving the intended Resource Identifier,
-* selecting the Resource Representation,
-* and producing the representation payload.
+---
 
-It does not publish to relays.
+# Publication Intent Contract
 
-The implementation may serialize when the Outbox entry is created or defer serialization until publication processing.
+The generic application contract is:
 
-The architectural requirement is only that the durable Outbox entry contains enough information to recreate the intended publication.
+```ts
+export interface OutboxPublicationIntent {
+    readonly type: string;
+    readonly [key: string]: unknown;
+}
+```
+
+The `type` field is the dispatch key.
+
+Concrete publication contracts extend this base shape.
+
+The Outbox treats the remainder of the publication as opaque application data.
+
+---
+
+# Resource Publication Intent
+
+Resource publication has two current forms.
+
+A normal publication contains:
+
+```text
+type = resource
+publisher
+resourceType
+resourceId
+representation
+mediaType
+value
+```
+
+The value is the Domain-produced Resource value before transport encoding.
+
+A Resource deletion contains:
+
+```text
+type = resource
+operation = delete
+publisher
+resourceType
+resourceId
+```
+
+The Resource publication strategy distinguishes the two forms with `isResourceDeletionPublication(...)`.
+
+The Outbox itself does not know the difference.
+
+---
+
+# Native Nostr Event Publication Intent
+
+Application-owned Nostr events use a separate intent:
+
+```text
+type = nostr-event
+publisher
+
+event:
+    kind
+    content
+    tags
+```
+
+This is used for application-owned Nostr event state such as account/profile-related events that are not published as KJVOnly Resources.
+
+The Outbox therefore provides one durable publication mechanism while preserving separate publication semantics.
 
 ---
 
 # Outbox Entry
 
-An Outbox entry represents one durable publication intent.
-
-A practical entry may contain:
-
-```text
-Published Resource Identity
-
-publication payload or information
-required to construct it
-
-target relay information
-
-publication status
-
-retry metadata
-
-last failure
-
-timestamps
-```
-
-A concrete implementation might resemble:
+The current entry shape is intentionally small:
 
 ```ts
-type OutboxEntry = {
-  id: string
-
-  kind: number
-  publisher: string
-  resourceId: string
-
-  payload: unknown
-
-  relays: string[]
-
-  status:
-    | 'pending'
-    | 'publishing'
-    | 'published'
-    | 'failed'
-
-  attempts: number
-  nextAttemptAt?: number
-  lastAttemptAt?: number
-  lastError?: unknown
-
-  createdAt: number
-  updatedAt: number
+export interface OutboxEntry {
+    readonly id: string;
+    readonly publication: OutboxPublicationIntent;
+    readonly status: OutboxStatus;
+    readonly attempts: number;
 }
 ```
 
-This shape is illustrative rather than architectural.
+New entries are created with:
 
-The Outbox persistence format may change without changing the Resource Boundary contract.
+```text
+status = pending
+attempts = 0
+```
+
+using `createPendingPublication(...)`.
+
+The durable publication intent is stored directly in `publication`.
+
+There is no wrapper that requires a later Domain-store lookup to recover the intended outbound state.
 
 ---
 
-# Published Resource Identity
+# Current Status Semantics
 
-Addressable Resource publications are grouped using:
-
-```text
-kind + publisher public key + d tag
-```
-
-The Outbox should retain this identity explicitly because it is useful for:
-
-* operation coalescing,
-* diagnostics,
-* publication-state lookup,
-* and identifying superseded pending work.
-
-The Nostr event `id` is not known until a concrete event has been constructed and signed.
-
-It identifies one publication rather than the durable Resource identity.
-
----
-
-# Outbox Lifecycle
-
-Each publication intent follows a simple local lifecycle:
-
-```mermaid
-stateDiagram-v2
-    [*] --> Pending
-
-    Pending --> Publishing
-
-    Publishing --> Published : publication requirement satisfied
-    Publishing --> Pending : retryable failure
-    Publishing --> Failed : suspended / non-retryable failure
-
-    Failed --> Pending : retry requested
-```
-
-The important states are:
-
-**Pending**
-
-The publication intent is durable and waiting to be attempted.
-
-**Publishing**
-
-A publisher is currently attempting to materialize and send the publication.
-
-**Published**
-
-The configured publication success requirement has been satisfied.
-
-**Failed**
-
-Automatic publication has stopped and intervention or another retry trigger is required.
-
-Pending and failed entries remain durable across application restart.
-
-Published entries may eventually be removed according to retention policy.
-
----
-
-# Background Publisher
-
-Outbox processing runs independently of the user interface.
-
-Conceptually:
+`OutboxStatus` currently defines:
 
 ```text
-Persistent Outbox
-        ↓
-Pending Entries
-        ↓
-Background Publisher
-        ↓
-Prepare Resource Publication
-        ↓
-Construct + Sign Nostr Event
-        ↓
-Configured Relays
-        ↓
-Update Outbox Status
-```
-
-Publication processing may be triggered:
-
-* immediately after a local write,
-* when network connectivity returns,
-* during application startup,
-* from periodic background work,
-* or through an explicit retry action.
-
-These triggers do not change ownership.
-
-The Outbox remains responsible for durable publication regardless of when its processor runs.
-
----
-
-# Event Construction and Signing
-
-Before relay publication, the pending intent must become a concrete Nostr event.
-
-Conceptually:
-
-```text
-Outbox Entry
-    ↓
-Resource Representation
-    ↓
-Nostr Event
-    ↓
-Publisher Signing
-    ↓
-Signed Nostr Event
-    ↓
-Relay Publish
-```
-
-The constructed event must preserve:
-
-```text
-kind
-publisher pubkey
-d tag
-```
-
-for the intended Published Resource Identity.
-
-Signing produces the final immutable Nostr publication, including its event `id`.
-
-Signing should occur as part of publication preparation rather than Domain behavior.
-
----
-
-# Relay Publication
-
-A Resource event may be published to multiple configured relays.
-
-The current publication policy considers the operation successful when:
-
-> **At least one configured relay accepts the event.**
-
-Additional relay publication provides replication but does not need to block the publication from becoming successful locally.
-
-Conceptually:
-
-```text
-Signed Event
-    ├── Relay A
-    ├── Relay B
-    └── Relay C
-
-at least one accepted
-        ↓
-Published
-```
-
-Per-relay state may still be retained for:
-
-* diagnostics,
-* retrying replication,
-* relay health information,
-* or future replication policies.
-
-Relay location is not part of Resource Identity.
-
----
-
-# Retry Behavior
-
-Retryable publication failures remain pending.
-
-Examples include:
-
-* relay unavailable,
-* connection failure,
-* timeout,
-* temporary relay rejection,
-* or loss of network connectivity.
-
-Automatic retries should use increasing delays rather than repeatedly attempting publication at high frequency.
-
-A typical implementation may use exponential backoff.
-
-For example:
-
-```text
-Failure
-    ↓
-Schedule Retry
-    ↓
-Increasing Delay
-    ↓
-Retry
-```
-
-A circuit breaker or relay-health mechanism may additionally suspend attempts against persistently failing relays.
-
-Those are implementation optimizations rather than architectural requirements.
-
-Pending publication intent must never be silently discarded because retry limits were reached.
-
----
-
-# Application Restart
-
-The Outbox is persistent.
-
-Therefore:
-
-```text
-Pending Publication
-        ↓
-Application Shutdown
-        ↓
-Application Restart
-        ↓
-Load Outbox
-        ↓
-Resume Publication
-```
-
-The user does not need to recreate the Domain change.
-
-Startup may schedule Outbox processing, but application readiness does not need to wait for pending publications to succeed.
-
----
-
-# Operation Coalescing
-
-Addressable Resource semantics allow some pending operations to be safely coalesced.
-
-Suppose the Outbox contains:
-
-```text
-Resource X — State A
-Resource X — State B
-Resource X — State C
-```
-
-where each entry targets the same:
-
-```text
-kind + publisher + d
-```
-
-and none has yet been published.
-
-If Resource semantics only require the newest state to be published, the implementation may reduce these to:
-
-```text
-Resource X — State C
-```
-
-This avoids publishing obsolete intermediate states.
-
-Coalescing is valid only when replacing the earlier operation preserves protocol meaning.
-
-It must not be applied blindly.
-
-Append-only or independently meaningful events require separate Outbox entries.
-
----
-
-# Coalescing Boundary
-
-The Outbox may identify mechanically replaceable pending publications using Published Resource Identity.
-
-It should not determine semantic authority between competing Domain states.
-
-For example:
-
-```text
-same Published Resource
-+
-multiple local pending writes
-```
-
-may permit straightforward coalescing.
-
-By contrast:
-
-```text
-local pending publication
-+
-new remote synchronized state
-```
-
-requires Synchronization policy to determine what should happen.
-
-The Outbox does not make that decision itself.
-
----
-
-# Stale Publications
-
-An Outbox entry may become stale before it is published.
-
-Possible causes include:
-
-* a newer local edit,
-* synchronization from another device,
-* conflict reconciliation,
-* or another operation superseding the publication.
-
-The Outbox does not determine whether its queued Domain state remains authoritative.
-
-It must not independently:
-
-* query remote state to make that decision,
-* compare local and remote Domain versions,
-* merge Domain Objects,
-* overwrite accepted local state,
-* or resolve multi-device conflicts.
-
-Synchronization may mark an Outbox operation as:
-
-* superseded,
-* replaced,
-* cancelled,
-* or regenerated.
-
-Once a publication remains eligible for execution, the Outbox handles its transport reliably.
-
----
-
-# Publication Status
-
-Publication status is separate from local Domain availability.
-
-Useful states include:
-
-```text
-saved locally
-
-pending publication
-
+pending
 publishing
-
 published
-
-failed publication
+failed
 ```
 
-For example:
+However, the current processor behavior is simpler than that type suggests.
+
+Normal writes create `pending` entries.
+
+`OutboxProcessor` currently:
 
 ```text
-Accepted Local Note
-        +
-Pending Publication
+lists pending entries
+publishes them
+then deletes the still-current entry on success
 ```
 
-is still a valid, usable Note.
-
-A relay failure changes publication status.
-
-It does not make the local Domain Object unavailable.
-
-The UI may expose publication status where useful without coupling ordinary Domain interaction to publication success.
-
----
-
-# Delete Publications
-
-The implementation should not assume that every local deletion maps directly to a generic Nostr deletion event.
-
-Where a Resource Type defines explicit outbound deletion semantics, the resulting publication uses the normal Outbox pipeline:
+It does not currently persist transitions through:
 
 ```text
-Local Domain Change
-        ↓
-Durable Publication Intent
-        ↓
-Deletion Resource / Nostr Representation
-        ↓
-Outbox
-        ↓
-Relay Publication
+publishing
+published
+failed
 ```
 
-The Outbox treats such a publication as transport work.
+and it does not currently increment `attempts`.
 
-The Resource Type or Domain determines what deletion means.
+Those fields/types should therefore not be interpreted as an implemented retry-state machine.
 
----
-
-# Error Handling
-
-Publication failures should retain enough information for diagnostics and retry decisions.
-
-Useful information includes:
+The current durable model is effectively:
 
 ```text
-Outbox entry identity
-Published Resource Identity
-relay
-attempt count
-last attempt time
-failure category
-underlying error
+pending
+    ↓ successful publication
+removed
 ```
 
-Errors should distinguish at least between:
+or:
 
-* retryable transport failure,
-* event construction failure,
-* signing failure,
-* relay rejection,
-* and publication intentionally suspended.
-
-The exact error hierarchy is implementation-defined.
+```text
+pending
+    ↓ publication failure
+still pending
+```
 
 ---
 
 # Persistence
 
-Outbox entries must survive:
+Outbox entries live in the application IndexedDB database.
 
-* normal application shutdown,
-* unexpected termination,
-* browser reload,
-* temporary network loss,
-* and failed publication attempts.
+Current store:
 
-The implementation may use the application's local persistence mechanism.
+```text
+outbox
+```
 
-The Outbox should be treated as durable application work, not an in-memory task queue.
+Key path:
+
+```text
+id
+```
+
+Index:
+
+```text
+status
+```
+
+The concrete store implementation is:
+
+```text
+IndexedDBOutboxStore
+```
+
+It supports:
+
+```text
+get(id)
+put(entry)
+listByStatus(status)
+deleteIfCurrent(entry)
+```
+
+The Outbox is durable application work, not an in-memory task queue.
+
+Pending entries survive page/application restart because IndexedDB owns the queue state.
 
 ---
 
-# Concurrency
+# Atomic Local Write + Publication Intent
 
-Only one logical publication operation for an Outbox entry should be active at a time.
+Publishable local state is written transactionally with its Outbox entry whenever the two records share the application database.
 
-If multiple background execution paths can process the Outbox, the implementation must prevent duplicate concurrent processing from corrupting publication state.
+This prevents the invalid state:
 
-Duplicate relay publication of the same signed Nostr event is generally harmless, but local Outbox state should remain deterministic.
+```text
+local state committed
+publication intent lost
+```
 
-Implementation techniques may include:
+The current pattern is:
 
-* claiming an entry before publication,
-* transactional status transitions,
-* worker-level locking,
-* or another single-consumer mechanism.
+```text
+open read/write transaction
+    over Domain/application store + OUTBOX
+
+write accepted local state
+write final Outbox publication intent
+commit once
+```
+
+If the transaction fails, neither side should become authoritative independently.
 
 ---
 
-# Separation from Synchronization
+# Bible Text Markup Example
+
+Bible text markup uses a transaction over:
+
+```text
+domain_objects
+outbox
+```
+
+The transaction exposes narrow stores to Domain behavior:
+
+```text
+textMarkup.put(...)
+outbox.put(...)
+```
+
+The Outbox key is derived from the stored Domain Object identity.
+
+The Resource publication is already fully mapped before it is placed into the Outbox.
+
+---
+
+# Notes Example
+
+Notes follow the same pattern.
+
+The Notes transaction can:
+
+```text
+put Note Domain Object
+or
+delete Note Domain Object
+
+and
+
+put corresponding publication intent
+```
+
+inside one IndexedDB transaction.
+
+A local Note deletion does not by itself imply a remote Resource deletion.
+
+The Domain publication behavior must explicitly provide the publication intent required for that operation.
+
+---
+
+# Reading Plans Example
+
+Reading Plan subscription/progress writes use the same transaction boundary:
+
+```text
+accepted local plan state
+        +
+final Resource publication intent
+```
+
+committed atomically.
+
+The Outbox does not know Reading Plans semantics.
+
+---
+
+# Native Nostr Event Example
+
+Native application-owned Nostr events use:
+
+```text
+nostr_events
+outbox
+```
+
+in the same transaction.
+
+The write transaction persists:
+
+```text
+NostrEvent
+        +
+NostrEventPublicationIntent
+```
+
+This is an important architectural point:
+
+> The Outbox is an application publication mechanism, not a Resource repository feature.
+
+---
+
+# Outbox Identity
+
+The Outbox key is chosen by the caller according to the logical local publication identity.
+
+For Domain Resource writes, the current pattern uses the same stored Domain Object identity as the Outbox key.
+
+For example:
+
+```text
+bible/text-markup:<object-id>
+```
+
+or another stable stored-object identifier appropriate to the Domain.
+
+Native Nostr events use their own stable application key.
+
+The Outbox does not derive this key itself.
+
+---
+
+# Last-Write-Wins Coalescing
+
+The Outbox object store uses `id` as its key.
+
+Writing another entry with the same ID replaces the older pending entry.
+
+That gives current mutable application state a simple last-write-wins publication behavior:
+
+```text
+write state A
+    → Outbox[id] = publication A
+
+write state B before A completes
+    → Outbox[id] = publication B
+```
+
+The queue does not accumulate every intermediate version of mutable replaceable state.
+
+This behavior is intentional for the current Domain writes that reuse stable local object identity.
+
+It is not a generic statement that every possible future publication should share one ID.
+
+Append-only or independently meaningful publication types must choose distinct Outbox identities.
+
+---
+
+# Why Final Publication Intents Are Stored
+
+An earlier design considered storing incomplete work and asking an Outbox handler to reread Domain state later.
+
+The current implementation deliberately does not do that.
+
+The write path already knows the intended outbound representation.
+
+So the durable entry stores that publication intent directly.
+
+This has several useful properties:
+
+```text
+Outbox processing does not depend on Domain stores
+Outbox processing does not reconstruct Domain meaning
+publication intent survives independently of UI/runtime objects
+same-ID replacement is explicit
+strategy dispatch stays generic
+```
+
+The publication strategy may still perform transport encoding at execution time, but the semantic publication intent is already complete.
+
+---
+
+# Outbox Processor
+
+`OutboxProcessor` owns queue execution.
+
+Its dependencies are:
+
+```text
+OutboxStore
+readonly OutboxPublicationStrategy[]
+```
+
+At construction time it builds a strategy map keyed by:
+
+```text
+strategy.type
+```
+
+Duplicate strategy registrations are rejected.
+
+That catches ambiguous publication ownership during composition.
+
+---
+
+# Processing One Pass
+
+`processPending()` performs one current-state pass:
+
+```text
+list all pending entries
+        ↓
+for each entry
+        ↓
+resolve strategy by publication.type
+        ↓
+publish publication
+        ↓
+deleteIfCurrent(original entry)
+```
+
+If no matching strategy exists, publication fails and the pending entry remains durable.
+
+If the strategy throws, the pending entry remains durable.
+
+The processor intentionally does not delete failed work.
+
+---
+
+# Strategy Dispatch
+
+The current strategy contract is:
+
+```ts
+export interface OutboxPublicationStrategy {
+    readonly type: string;
+
+    publish(
+        publication: OutboxPublicationIntent
+    ): Promise<void>;
+}
+```
+
+Current application composition registers:
+
+```text
+NostrResourcePublicationStrategy
+    type = resource
+
+NostrEventPublicationStrategy
+    type = nostr-event
+```
+
+Adding another publication type should generally mean:
+
+```text
+new publication intent
+new publication strategy
+register strategy in Application
+```
+
+rather than adding another branch inside `OutboxProcessor`.
+
+---
+
+# Resource Publication Strategy
+
+`NostrResourcePublicationStrategy` owns Nostr publication of Resource intents.
+
+It depends on:
+
+```text
+NostrClient
+ResourceContentEncoder
+```
+
+Before publication it verifies:
+
+```text
+configured signer public key
+    == publication.publisher
+```
+
+A mismatch fails publication and leaves the Outbox entry pending.
+
+---
+
+# Resource Content Encoding
+
+For a normal Resource publication, the strategy passes the publication through `ResourceContentEncoder`.
+
+The configured media type controls the decorator chain.
+
+A common current format is:
+
+```text
+application/json+gzip+hex
+```
+
+Conceptually:
+
+```text
+ResourcePublication.value
+    ↓ JSON
+    ↓ gzip
+    ↓ hex
+    ↓ event.content
+```
+
+This encoding occurs at publication execution time.
+
+The Outbox still stores the final semantic Resource publication intent rather than the final signed Nostr event.
+
+---
+
+# Resource Nostr Event
+
+A normal Resource publication produces a Resource event containing tags such as:
+
+```text
+d
+m
+t
+representation
+```
+
+where:
+
+```text
+d
+    Resource ID
+
+m
+    media type
+
+t
+    Resource Type
+
+representation
+    content / descriptor / descriptors
+```
+
+The Resource Nostr kind comes from the Resource transport model.
+
+The publication strategy is the place where that Resource intent becomes a Nostr transport representation.
+
+---
+
+# Resource Deletion
+
+Resource deletion is explicit.
+
+A local Domain delete does not automatically cause remote deletion.
+
+The Domain publication path must deliberately create a `ResourceDeletionPublication`.
+
+The Nostr Resource publication strategy then creates a Nostr deletion event targeting the published Resource address.
+
+Current deletion publication uses:
+
+```text
+kind 5
+```
+
+with tags identifying the Resource address/kind.
+
+The Outbox still treats this as normal `type = resource` work.
+
+---
+
+# Nostr Event Publication Strategy
+
+`NostrEventPublicationStrategy` publishes native application-owned Nostr events.
+
+It also validates:
+
+```text
+configured signer public key
+    == publication.publisher
+```
+
+It then forwards:
+
+```text
+kind
+content
+tags
+```
+
+to `NostrClient.publishEvent(...)`.
+
+This strategy does not pass through Resource encoding because these events are not KJVOnly Resources.
+
+---
+
+# Relay Acceptance
+
+Both current Nostr-backed strategies require at least one configured relay to accept the event.
+
+If:
+
+```text
+acceptedByAnyRelay == false
+```
+
+the strategy throws.
+
+The Outbox processor catches that failure and leaves the entry pending.
+
+So transport failure does not destroy durable publication intent.
+
+---
+
+# Wakeup Model
+
+Outbox execution is wake-driven.
+
+The public application capability is:
+
+```ts
+export interface OutboxWakeup {
+    wake(): void;
+}
+```
+
+Domain/application services receive this capability rather than the concrete store or processor.
+
+After a successful local write they call:
+
+```text
+outbox.wake()
+```
+
+This keeps UI/Domain code unaware of queue-processing mechanics.
+
+---
+
+# Serialized Wake Processing
+
+`OutboxProcessor` protects its wake loop with:
+
+```text
+processing
+wakeRequested
+```
+
+If `wake()` is called while processing is already active:
+
+```text
+wakeRequested = true
+return
+```
+
+The current processor then finishes its active pass and runs another pass before becoming idle.
+
+Conceptually:
+
+```text
+wake
+    ↓
+processing pass
+    ↓
+new wake arrives
+    ↓
+remember wake
+    ↓
+finish current pass
+    ↓
+run another pass
+```
+
+This prevents parallel wake loops from racing through the queue while still ensuring newly queued work is observed.
+
+---
+
+# Successful Publication and `deleteIfCurrent()`
+
+A successful publish does not blindly delete the entry by ID.
+
+That would create a race:
+
+```text
+processor reads publication A
+        ↓
+publishing A is slow
+        ↓
+local state changes
+        ↓
+Outbox[id] becomes publication B
+        ↓
+A succeeds
+        ↓
+blind delete(id)
+        ↓
+B is lost
+```
+
+The current store therefore uses:
+
+```text
+deleteIfCurrent(entry)
+```
+
+inside a read/write transaction.
+
+It reloads the current stored entry and deletes only when:
+
+```text
+current.status == pending
+AND
+current.publication == publication being completed
+```
+
+If a newer publication replaced the entry, deletion returns `false` and the newer publication remains queued.
+
+This is the key race-protection mechanism behind same-ID last-write-wins publication.
+
+---
+
+# Intent Equality
+
+`IndexedDBOutboxStore.deleteIfCurrent(...)` currently compares publication intents by JSON serialization.
+
+Conceptually:
+
+```text
+JSON.stringify(current.publication)
+    ==
+JSON.stringify(completed.publication)
+```
+
+This is sufficient for the current publication intent shapes, which are plain serializable data written through IndexedDB.
+
+If future intent shapes become order-sensitive or contain non-JSON values, this comparison mechanism would need to be revisited.
+
+---
+
+# Failure and Retry Behavior
+
+The current implementation has intentionally simple retry behavior.
+
+If publication fails:
+
+```text
+entry remains pending
+```
+
+There is currently no persisted:
+
+```text
+nextAttemptAt
+lastError
+lastAttemptAt
+backoff schedule
+retry timer
+```
+
+and `attempts` is not currently incremented by the processor.
+
+Retry occurs when the processor is woken again.
+
+Typical future wakes include:
+
+```text
+another local publishable write
+application startup
+another explicit wake
+```
+
+This means the current implementation provides durable eventual retry opportunity, but not time-based retry scheduling.
+
+Documentation and UI should not imply exponential backoff or a timed retry scheduler exists today.
+
+---
+
+# Startup Behavior
+
+Pending publication is non-blocking application work.
+
+During application startup, after authentication/signing and relay configuration are available, `Application.start()` wakes the Outbox processor.
+
+Conceptually:
+
+```text
+restore/authenticate active identity
+        ↓
+configure account / transport state
+        ↓
+wake Outbox
+        ↓
+application becomes started
+```
+
+Application readiness does not wait for all pending publications to succeed.
+
+That preserves local-first behavior.
+
+---
+
+# Application Ownership
+
+`Application` is the composition root for the main browser runtime.
+
+It constructs:
+
+```text
+IndexedDBOutboxStore
+ResourceContentEncoder
+NostrResourcePublicationStrategy
+NostrEventPublicationStrategy
+OutboxProcessor
+```
+
+and injects only the capabilities consumers need.
+
+Domain/application services that need to trigger publication receive `OutboxWakeup` rather than the concrete processor/store.
+
+Write transactions receive/use the Outbox store through their transaction-scoped persistence boundary.
+
+---
+
+# Public Application Boundary
+
+Stable application-facing Outbox contracts are exported through:
+
+```text
+$lib/application
+```
+
+The concrete composition root itself remains outside that root public barrel.
+
+Normal callers should not import concrete Outbox processor/store implementation paths merely to wake publication or create a pending entry when the public Application contract already exposes the needed symbol.
+
+Application-internal implementation files may still use direct internal imports where appropriate to avoid self-barrel cycles.
+
+---
+
+# Synchronization Is Separate
 
 The Outbox answers:
 
-> **How do we reliably publish something the application has decided should be published?**
+> What locally accepted publication work still needs to be sent?
 
-Synchronization answers:
-
-> **What state should the application accept or publish when multiple devices have changed the same information?**
-
-The Outbox therefore does not own:
-
-* Last-Write-Wins decisions,
-* remote comparison,
-* conflict resolution,
-* Domain merging,
-* or local acceptance.
-
-This separation should remain visible in the implementation.
-
----
-
-# Separation from Domain Behavior
-
-Domains should not contain relay transport logic.
-
-Domain behavior may produce accepted local changes that require publication.
-
-The publication implementation then handles:
+Synchronization answers different questions, such as:
 
 ```text
-publication intent
-    ↓
-Resource serialization
-    ↓
-Nostr event construction
-    ↓
-signing
-    ↓
-relay transport
+What remote state exists?
+Which remote state should be installed?
+What wins when local and remote state conflict?
+Should local state be superseded?
 ```
 
-This keeps relay availability and transport concerns outside Domain behavior.
+The current Outbox does not perform those decisions.
+
+It executes publication intents that were already accepted by the application.
 
 ---
 
-# Implementation Invariants
+# Domain Publication Mapping Is Separate
 
-The implementation must preserve these behaviors:
+The Outbox does not derive Resource IDs or Resource Types from arbitrary Domain Objects.
+
+That mapping belongs to the Domain Resource publication code.
+
+For example, a Domain-specific publication component decides:
 
 ```text
-Local Domain state becomes usable before relay success.
-
-Required publication intent is durable.
-
-A crash cannot silently lose required publication work.
-
-Pending publications survive restart.
-
-Relay failure does not invalidate local Domain state.
-
-Nostr events are signed before publication.
-
-At least one relay acceptance satisfies
-the current publication success policy.
-
-Addressable pending operations may be coalesced
-when replacement semantics make that safe.
-
-Retryable failures remain durable.
-
-The Outbox does not perform synchronization
-or conflict resolution.
+Domain object identity
+    ↓
+Resource Type
+Resource ID
+representation
+media type
+Resource value
 ```
+
+and produces a `ResourcePublication`.
+
+Only then is the publication queued.
+
+This keeps generic Outbox infrastructure independent from Domain semantics.
 
 ---
 
-# Current Implementation Direction
+# Current Concurrency Model
 
-A practical implementation can be organized around:
+The main browser runtime owns one `OutboxProcessor` instance.
+
+Its wake loop is serialized in-process.
+
+The IndexedDB store also protects successful deletion with a transaction and current-intent comparison.
+
+The implementation does not currently define multi-tab queue leadership or a cross-tab publication lock.
+
+If multiple application runtimes process the same persistent Outbox simultaneously in the future, that behavior would require a dedicated coordination design.
+
+---
+
+# Current Persistence Invariants
+
+The important current invariants are:
 
 ```text
-Domain Operation
-    ↓
-Local Persistence
-    +
-Outbox Persistence
-    ↓
-Outbox Repository
-    ↓
-Background Publisher
-    ↓
-Resource Serializer
-    ↓
-Nostr Event Builder
-    ↓
-Signer
-    ↓
-Relay Publisher
+1. Publishable accepted local state and its Outbox intent are written atomically when they share ApplicationDB.
+
+2. Outbox entries are durable in IndexedDB.
+
+3. The Outbox stores final semantic publication intents.
+
+4. Same ID overwrites previous pending work.
+
+5. A completed older publication cannot delete a newer replacement.
+
+6. Failed publication remains pending.
+
+7. Outbox processing does not block local application acceptance.
+
+8. OutboxProcessor does not contain publication-type-specific branches.
+
+9. Domain meaning is resolved before work enters the Outbox.
+
+10. Synchronization remains separate from publication execution.
 ```
-
-These names describe implementation responsibilities rather than architectural layers.
-
-They may be reorganized without changing the Resource Boundary contract as long as the required behavior remains intact.
 
 ---
 
-# Relationship to Architecture
+# Current Tests
 
-This implementation realizes:
+The implementation is covered at several boundaries.
 
-* **ADR 01 — Domain Resource Model**
-* **ADR 03 — Nostr Event Model**
-* **ADR 04 — Nostr Resource Identity**
-* **ADR 09 — Outbox and Publishing**
+## Outbox entry tests
 
-Multi-device reconciliation is intentionally outside this document and belongs to the synchronization implementation.
+Verify:
+
+```text
+pending Resource publication shape
+pending native Nostr-event publication shape
+```
+
+## IndexedDB Outbox store tests
+
+Verify:
+
+```text
+get
+put
+status lookup
+safe deleteIfCurrent
+newer replacement preservation
+Resource deletion replacement behavior
+```
+
+## Outbox processor tests
+
+Verify:
+
+```text
+strategy routing
+multiple publication types
+missing strategy behavior
+duplicate strategy rejection
+wake serialization
+successful deletion
+failed publication preservation
+newer replacement preservation
+```
+
+## Domain write transaction tests
+
+Verify atomic persistence of:
+
+```text
+Domain state
++
+Outbox intent
+```
+
+for Bible text markup, Notes, Reading Plans, and other publishable Domain state.
+
+## Nostr-event transaction tests
+
+Verify application-owned Nostr event state and publication intent are committed together.
+
+## Publication strategy tests
+
+Verify Resource/Nostr event construction, signer checks, relay acceptance behavior, encoding, and deletion semantics.
+
+---
+
+# Current Limitations
+
+The following are not currently implemented by the Outbox:
+
+```text
+timed retry scheduling
+exponential backoff
+persisted last-error diagnostics
+persisted retry timestamps
+attempt counter updates
+publishing/published/failed status transitions
+manual queue-management UI
+multi-tab queue leadership
+remote/local synchronization policy
+```
+
+These are possible future capabilities, not current behavior.
+
+Do not document or depend on them as though they already exist.
+
+---
+
+# Important Files
+
+Current implementation centers around:
+
+```text
+client/kjvonly-pwa/src/lib/application/outbox/
+    outbox-entry.ts
+    outbox-publication-intent.ts
+    outbox-publication-strategy.ts
+    outbox-store.ts
+    outbox-wakeup.ts
+    indexeddb-outbox-store.ts
+    outbox-processor.ts
+```
+
+Resource publication:
+
+```text
+client/kjvonly-pwa/src/lib/resource/publication/
+    resource-publication.ts
+
+client/kjvonly-pwa/src/lib/resource/nostr/
+    nostr-resource-publication-strategy.ts
+```
+
+Native Nostr-event publication:
+
+```text
+client/kjvonly-pwa/src/lib/infrastructure/nostr/events/publication/
+    nostr-event-publication.ts
+    nostr-event-publication-strategy.ts
+    nostr-event-write-stores.ts
+```
+
+Persistence:
+
+```text
+client/kjvonly-pwa/src/lib/infrastructure/persistence/
+    application.db.ts
+```
+
+Composition:
+
+```text
+client/kjvonly-pwa/src/lib/application/runtime/application.ts
+```
+
+Domain transaction examples include:
+
+```text
+client/kjvonly-pwa/src/lib/domains/bible/persistence/
+client/kjvonly-pwa/src/lib/domains/notes/persistence/
+client/kjvonly-pwa/src/lib/domains/reading-plans/persistence/
+```
+
+---
+
+# Extension Procedure
+
+To add a new durable publication type:
+
+```text
+1. Define an OutboxPublicationIntent subtype.
+
+2. Decide its stable Outbox identity/coalescing semantics.
+
+3. Persist accepted local state and the final publication intent atomically where possible.
+
+4. Implement an OutboxPublicationStrategy with a unique type.
+
+5. Register the strategy in Application composition.
+
+6. Wake the Outbox after the local transaction commits.
+
+7. Add processor/strategy/transaction tests.
+```
+
+Do not add publication-type-specific branches to `OutboxProcessor` unless the generic strategy model itself is intentionally being redesigned.
+
+---
+
+# Relationship to Resource Publication
+
+The dedicated Resource publication document describes the Domain-to-Resource mapping and Nostr Resource transport in more detail.
+
+This document focuses on the shared durable application queue that executes that work.
+
+The relationship is:
+
+```text
+Domain Resource Publication
+        ↓
+Outbox
+        ↓
+Resource Publication Strategy
+```
+
+For native Nostr events:
+
+```text
+Application Nostr Event Publication
+        ↓
+Outbox
+        ↓
+Nostr Event Publication Strategy
+```
 
 ---
 
 # Big Takeaway
 
-The Outbox is durable application work representing Resource publications that still need to reach Nostr.
-
-It allows this:
+The current Outbox is intentionally simple:
 
 ```text
-User changes application state
+accepted local state
+    +
+final durable publication intent
         ↓
-Change succeeds locally
+IndexedDB
         ↓
-Publication can fail
+wake-driven processor
         ↓
-Application continues working
+pluggable publication strategy
         ↓
-Outbox retries later
-        ↓
-Resource eventually reaches Nostr
+transport
 ```
 
-The implementation may use repositories, serializers, workers, retry schedulers, and relay adapters to accomplish that behavior.
+It is durable, local-first, and application-wide.
 
-Those mechanisms exist to preserve one fundamental property:
+It does not reconstruct Domain meaning later.
 
-> **A local change does not require the network, but required publication is never forgotten.**
+It does not currently implement a persisted retry-state machine.
+
+Same-ID replacement provides last-write-wins coalescing, and `deleteIfCurrent()` prevents a completed stale publication from deleting newer pending work.
+
+That is the current implementation contract.

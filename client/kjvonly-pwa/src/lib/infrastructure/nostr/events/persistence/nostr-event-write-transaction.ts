@@ -5,7 +5,7 @@ import type {
 
 import {
 	createPendingPublication
-} from '$lib/application/outbox/outbox-entry';
+} from '$lib/application';
 
 import {
 	NOSTR_EVENTS,

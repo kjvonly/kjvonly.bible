@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	import { Modules } from '$lib/application/models/modules.model';
+	import { Modules } from '$lib/application';
 	import { onDestroy, onMount } from 'svelte';
 
 	// COMPONENTS
@@ -16,29 +16,23 @@
 	} from '$lib/domains/bible/models/search.model';
 
 	// SERVICES
-	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// APPLICATION
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application';
+	const { workspaceRuntime } = useApplicationContext();
 	const {
 		verseService,
 		searchService,
 		bibleBooknamesService,
-		moduleResourceSelectionResolver
+		moduleResourceSelectionResolver,
+		bibleLocationReferenceService
 	} = useApplicationContext();
 
-	import {
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
-	import {
-		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
 
-	import type {
-		BibleBooknames
-	} from '$lib/domains/bible/models/bible-booknames.model';
+	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -53,9 +47,7 @@
 		onFilterBibleLocationRef: onFilterBibleLocationRefFunction;
 	} = $props();
 
-	let booknamesPromise:
-		Promise<BibleBooknames> |
-		undefined;
+	let booknamesPromise: Promise<BibleBooknames> | undefined;
 
 	// ================================== VARS =================================
 
@@ -94,26 +86,19 @@
 
 	// ================================ FUNCS ==================================
 
-	function getBooknames():
-		Promise<BibleBooknames> {
-		booknamesPromise ??=
-			loadBooknames();
+	function getBooknames(): Promise<BibleBooknames> {
+		booknamesPromise ??= loadBooknames();
 
 		return booknamesPromise;
 	}
 
-	async function loadBooknames():
-		Promise<BibleBooknames> {
-		const source =
-			moduleResourceSelectionResolver
-				.require(
-					paneID,
-					BIBLE_BOOKNAMES_RESOURCE_TYPE
-				);
-
-		return bibleBooknamesService.get(
-			source
+	async function loadBooknames(): Promise<BibleBooknames> {
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
+			BIBLE_BOOKNAMES_RESOURCE_TYPE
 		);
+
+		return bibleBooknamesService.get(source);
 	}
 
 	async function onSearchResult(srr: SearchResultResponse) {
@@ -173,14 +158,8 @@
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 
-		const [
-			verse,
-			booknames
-		] = await Promise.all([
-			verseService.get(
-				source,
-				bibleLocationRef
-			),
+		const [verse, booknames] = await Promise.all([
+			verseService.get(source, bibleLocationRef),
 			getBooknames()
 		]);
 
@@ -189,17 +168,11 @@
 		}
 
 		const bookID =
-			bibleLocationReferenceService
-				.extractBookID(
-					bibleLocationRef
-				);
+			bibleLocationReferenceService.extractBookID(bibleLocationRef);
 
 		let sr: SearchResult = {
 			key: bibleLocationRef,
-			bookName:
-				booknames.booknamesById[
-					bookID
-				] ?? '',
+			bookName: booknames.booknamesById[bookID] ?? '',
 			number: bibleLocationReferenceService.extractChapter(bibleLocationRef),
 			verseNumber: verse.number,
 			text: verse.text
@@ -211,13 +184,14 @@
 	// ============================== CLICK FUNCS ==============================
 
 	function onSearchResultClicked(sr: SearchResult) {
-		let pane = paneService.findNode(paneService.rootPane, paneID);
-		if (pane) {
-			pane.buffer.bag = {
-				bibleLocationRef: sr.key,
-			};
-			pane?.updateBuffer(Modules.BIBLE);
-		}
+		workspaceRuntime.replaceBuffer(
+			paneID,
+			Modules.BIBLE,
+			{
+				bibleLocationRef:
+					sr.key
+			}
+		);
 	}
 </script>
 
@@ -230,37 +204,41 @@
 
 <div class="{searchResults?.length > 0 ? '' : 'hidden'} bg-neutral-50 pb-6">
 	{#each searchResults as sr}
-		<div
-			tabindex="0"
-			role="button"
-			class="leading-loose"
-			onclick={() => {
-				onSearchResultClicked(sr);
-			}}
-			onkeydown={(e: KeyboardEvent) => {
-				if (e.key === 'Enter') {
+		<div class="hover:bg-neutral-100">
+			<div
+				tabindex="0"
+				role="button"
+				class="px-4 leading-loose"
+				onclick={() => {
 					onSearchResultClicked(sr);
-				}
-			}}
-		>
-			<div class="text-left whitespace-normal hover:cursor-pointer">
-				<span class="py-2 text-left"
-					>{sr.bookName} {sr.number}:{sr.verseNumber}</span
-				>
-				<span class="flex-fill flex"></span>
-				{#each sr.text.split(' ') as w, idx}
-					{#if match(w)}
-						<span>
-							{#if idx !== 0}<span>&nbsp;</span>{/if}
-							<span class="text-redtxt">{w}</span>
-						</span>
-					{:else}
-						<span>
-							{#if idx !== 0}<span>&nbsp;</span>{/if}
-							<span class="">{w}</span>
-						</span>
-					{/if}
-				{/each}
+				}}
+				onkeydown={(e: KeyboardEvent) => {
+					if (e.key === 'Enter') {
+						onSearchResultClicked(sr);
+					}
+				}}
+			>
+				<div class="text-left whitespace-normal hover:cursor-pointer">
+					<span class="py-2 text-left"
+						>{sr.bookName} {sr.number}:{sr.verseNumber}</span
+					>
+					<span class="flex-fill flex"></span>
+					{#each sr.text.split(' ') as w, idx}
+						{#if match(w)}
+							<span>
+								{#if idx !== 0}<span>&nbsp;</span>{/if}
+								<span class="text-redtxt">{w}</span>
+							</span>
+						{:else}
+							<span>
+								{#if idx !== 0}<span>&nbsp;</span>{/if}
+								<span class="">{w}</span>
+							</span>
+						{/if}
+					{/each}
+				</div>
+			</div>
+			<div>
 				<SearchResultActions {paneID} searchResult={sr}></SearchResultActions>
 			</div>
 		</div>

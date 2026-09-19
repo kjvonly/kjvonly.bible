@@ -119,7 +119,7 @@ The **Workspace Runtime** manages the application's active study environment.
 
 The **Resource Boundary** defines how Domain Objects are represented outside the application.
 
-**Infrastructure** realizes technical capabilities such as Nostr communication, Blossom integration, IndexedDB persistence, workers, networking, and serialization.
+**Infrastructure** realizes technical capabilities such as external communication, durable storage, background execution, serialization, compression, and platform integration.
 
 These responsibilities should remain distinct even when their implementations are physically close together.
 
@@ -127,11 +127,11 @@ These responsibilities should remain distinct even when their implementations ar
 
 # Application Runtime
 
-The application is implemented as a single-page application.
+The application uses a persistent Workspace Runtime as its primary composition model.
 
-Although SvelteKit provides routing capabilities, routes are not the primary composition model for the application.
+Route or page mechanisms may host that Runtime, but they do not define the application's interaction model.
 
-The root application hosts a persistent Workspace Runtime.
+The active application experience is organized around the persistent Workspace.
 
 User interaction primarily occurs by modifying that Workspace rather than navigating between independent pages.
 
@@ -259,7 +259,7 @@ Domains request them through the Runtime's Public API rather than manipulating t
 
 The Pane tree represents logical layout.
 
-The current implementation transforms that tree into a CSS Grid representation for rendering.
+Rendering derives a visible presentation from that Runtime structure.
 
 Conceptually:
 
@@ -275,9 +275,9 @@ Rendered Workspace
 
 The architectural responsibility is **layout and rendering**.
 
-CSS Grid is the current implementation.
+The layout and presentation technologies used to realize that responsibility are implementation concerns.
 
-This distinction allows rendering technology to evolve without redefining the Workspace model.
+This distinction allows rendering mechanisms to evolve without redefining the Workspace model.
 
 ---
 
@@ -367,7 +367,9 @@ Current Domains include:
 * Bible,
 * Notes,
 * Reading Plans,
-* and Settings.
+* and Strong's.
+
+Application-wide capabilities such as settings are owned by the application rather than modeled as Domains.
 
 A Domain owns the responsibilities that derive their meaning from that Domain.
 
@@ -376,9 +378,10 @@ For example, the Bible Domain owns:
 * Bible content,
 * Bible navigation,
 * Bible references,
-* Strong's information,
-* Bible annotations,
+* Bible text markup,
 * and Bible search.
+
+The Strong's Domain separately owns Strong's definitions and behavior.
 
 Bible Search is therefore not a separate Domain.
 
@@ -413,6 +416,9 @@ Notes Domain
 
 Reading Plans Domain
     Reading Plans Module
+
+Strong's Domain
+    Strong's capabilities consumed by relevant Modules
 ```
 
 The user interacts with Modules.
@@ -421,7 +427,7 @@ Those Modules collaborate with their owning Domain.
 
 For example, a Bible Reader Module presents Bible behavior owned by the Bible Domain.
 
-The Module does not become the owner of chapter retrieval, Scripture navigation, annotations, or other Bible responsibilities simply because it presents them.
+The Module does not become the owner of chapter retrieval, Scripture navigation, text markup, or other Bible responsibilities simply because it presents them.
 
 ---
 
@@ -432,20 +438,20 @@ Domain Objects are the application's representation of Domain information.
 Examples include:
 
 * Bible Chapters,
+* Bible Text Markup,
 * Notes,
-* Reading Plans,
-* Annotations,
-* Strong's information,
+* Reading Plan definitions, subscriptions, and progress,
+* Strong's definitions,
 * and other Domain-owned data.
 
 Application behavior operates on Domain Objects rather than transport- or storage-specific representations.
 
 A Domain should not need to understand:
 
-* Nostr events,
-* Blossom descriptors,
-* relay query results,
-* IndexedDB records,
+* protocol events,
+* external-content descriptors,
+* network query results,
+* persistence records,
 * or other Infrastructure representations.
 
 Those are implementation concerns.
@@ -470,9 +476,7 @@ For example:
 
 Shared use does not imply shared ownership.
 
-A service, store, repository, factory, component, or adapter may implement part of a Public API.
-
-Those are implementation roles.
+The internal mechanism used to fulfill a Public API is not part of the architectural contract.
 
 The Public API is the architectural boundary.
 
@@ -588,9 +592,11 @@ flowchart LR
 
     Resolution["Resolution"]
 
-    Validation["Validation"]
+    Interpretation["Domain Interpretation"]
 
-    Factory["Domain Object Factory"]
+    Validation["Domain Validation"]
+
+    Acceptance["Local Acceptance"]
 
     Object["Domain Object"]
 
@@ -598,11 +604,13 @@ flowchart LR
 
     Resource --> Resolution
 
-    Resolution --> Validation
+    Resolution --> Interpretation
 
-    Validation --> Factory
+    Interpretation --> Validation
 
-    Factory --> Object
+    Validation --> Acceptance
+
+    Acceptance --> Object
 
     Object --> Domain
 ```
@@ -652,14 +660,14 @@ Infrastructure provides the technical capabilities used to realize application r
 
 Examples include:
 
-* Nostr communication,
-* Blossom communication,
-* IndexedDB,
-* background workers,
+* external communication,
+* durable storage,
+* background execution,
 * networking,
 * serialization,
 * compression,
-* and browser APIs.
+* cryptography,
+* and platform integration.
 
 Infrastructure does not define application meaning.
 
@@ -668,27 +676,24 @@ For example:
 ```text
 Resource Publication
     ↓
-Current implementation
-    Nostr
+External Communication Capability
 ```
 
 ```text
 Local Persistence
     ↓
-Current implementation
-    IndexedDB
+Durable Storage Capability
 ```
 
 ```text
 Workspace Layout
     ↓
-Current implementation
-    CSS Grid
+Presentation Capability
 ```
 
 The responsibility is architectural.
 
-The technology is implementation.
+The mechanism is implementation.
 
 ---
 
@@ -707,9 +712,9 @@ Bible Chapter
 rather than:
 
 ```text
-IndexedDB record
-Relay event
-Blossom object
+Persistence record
+Protocol event
+External storage object
 ```
 
 The implementation determines how the request is satisfied.
@@ -748,43 +753,11 @@ Persistence preserves application state across runtime sessions.
 
 Different kinds of information may require different persistence strategies.
 
-The Application Architecture defines what must persist.
+The Application Architecture defines what must persist and which owner gives that persisted state meaning.
 
-Infrastructure determines how that persistence is realized.
-
-For example, the application may require durable Domain storage while IndexedDB provides the current implementation.
+Technical Infrastructure determines how that durability is realized.
 
 Persistence responsibilities should therefore remain independent of any individual storage technology.
-
----
-
-# Current Implementation
-
-The current implementation predates portions of the documented architecture.
-
-Some responsibilities remain distributed across packages organized by technical role, including services, transport code, storage code, and workers.
-
-This does not change architectural ownership.
-
-A service remains an implementation mechanism.
-
-A transport adapter remains Infrastructure.
-
-A Domain responsibility remains owned by its Domain even when its current implementation resides elsewhere.
-
-The migration strategy is therefore incremental:
-
-```text
-Identify responsibility
-    ↓
-Determine ownership
-    ↓
-Define Public API
-    ↓
-Move implementation toward its owner
-```
-
-Existing separation between typed application models and transport-specific representations provides a strong foundation for that migration.
 
 ---
 
@@ -792,23 +765,17 @@ Existing separation between typed application models and transport-specific repr
 
 The Application Architecture is intended to remain stable while implementation evolves.
 
-The Workspace Runtime may move out of the root Svelte component.
+Presentation mechanisms may change.
 
-Rendering technology may change.
+Persistence mechanisms may change.
 
-Persistence technology may change.
+External communication mechanisms may change.
 
-Nostr or Blossom implementations may change.
-
-Services may be reorganized.
-
-Workers may be replaced.
+Execution boundaries and packaging may change.
 
 None of those changes should redefine the enduring responsibilities of the application.
 
-Implementation should move toward the architecture.
-
-The architecture should not continually move toward the implementation.
+Implementation should continue to realize the architecture without turning temporary mechanisms into architectural owners.
 
 ---
 
@@ -829,11 +796,11 @@ Examples include:
 * Workspace behavior → Workspace Runtime
 * Pane behavior → Workspace Runtime
 * Bible Search → Bible Domain
-* Bible annotations → Bible Domain
+* Bible text markup → Bible Domain
 * Notes behavior → Notes Domain
 * Reading Plan behavior → Reading Plans Domain
-* relay communication → Infrastructure
-* IndexedDB implementation → Infrastructure
+* external communication mechanism → Infrastructure
+* durable storage mechanism → Infrastructure
 
 Ownership may exist at different levels of the architecture.
 
@@ -847,34 +814,13 @@ The important rule is that every responsibility has a clear owner.
 
 ---
 
-# Repository Organization
+# Architecture and Physical Organization
 
-The repository should evolve to reflect architectural ownership.
+Physical repository organization is an implementation concern.
 
-Physical organization is an implementation decision.
+Architectural ownership is determined by meaning and responsibility rather than by file location.
 
-Ownership is an architectural decision.
-
-During migration, code may temporarily live outside the package that best represents its owner.
-
-That is acceptable.
-
-What matters is that new design decisions begin with ownership rather than existing file location.
-
-Over time:
-
-* Domain behavior should move toward its Domain,
-* Runtime behavior should move toward the Runtime,
-* Infrastructure should remain beneath the responsibilities it implements,
-* and cross-owner collaboration should occur through Public APIs.
-
-Files may move.
-
-Packages may change.
-
-Technologies may change.
-
-Responsibilities should remain clear.
+The architecture therefore requires clear ownership and collaboration boundaries without prescribing a particular directory or packaging scheme.
 
 ---
 

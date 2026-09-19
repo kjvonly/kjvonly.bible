@@ -1,16 +1,14 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// MODELS
-	import { Modules } from '$lib/application/models/modules.model';
+	import { Modules } from '$lib/application';
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
-	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { toastService } from '$lib/application/services/toast.service';
+	import { PaneSplit, useApplicationContext } from '$lib/application';
 
 	// OTHER
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferContainer, BufferHeader, BufferBody } from '$lib/application/ui';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Bible from '$lib/components/svgs/bible.svelte';
@@ -21,18 +19,13 @@
 	import Close from '$lib/components/svgs/close.svelte';
 	import Filter from '$lib/components/svgs/filter.svelte';
 	import ClearFilter from '$lib/components/svgs/clearFilter.svelte';
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 
 	// APPLICATION
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	import {
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-	import {
+		BIBLE_CHAPTER_RESOURCE_TYPE,
 		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	} from '$lib/domains/bible';
 
 	import {
 		NOTES_RESOURCE_TYPE
@@ -41,6 +34,10 @@
 	import {
 		createNoteIdForSource
 	} from '$lib/domains/notes/resources/notes-resource-source';
+	const {
+		workspaceRuntime,
+		toastService
+	} = useApplicationContext();
 
 	const {
 		verseService,
@@ -92,12 +89,12 @@
 			onExport();
 		},
 		'split vertical': () => {
-			paneService.onSplitPane(mode.paneID, 'v', Modules.MODULES, {});
+			workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		},
 
 		'split horizontal': () => {
-			paneService.onSplitPane(mode.paneID, 'h', Modules.MODULES, {});
+			workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		}
 	};
@@ -249,28 +246,28 @@
 
 	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
-		paneService.onSplitPane(mode.paneID, 'h', Modules.BIBLE, {
+		workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
 			bibleLocationRef: note.bibleLocationRef
 		});
 	}
 
 	function onHorizontalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		paneService.onSplitPane(mode.paneID, 'h', Modules.NOTES, {
+		workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onVerticalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		paneService.onSplitPane(mode.paneID, 'v', Modules.NOTES, {
+		workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onClose(): void {
 		if (allNotes) {
-			paneService.onDeletePane(paneService.rootPane, mode.paneID);
+			workspaceRuntime.closePane(mode.paneID);
 		} else {
 			mode.notePopup.show = false;
 		}

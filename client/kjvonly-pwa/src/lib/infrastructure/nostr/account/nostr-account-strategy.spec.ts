@@ -13,10 +13,6 @@ import {
     NostrAccountStrategy
 } from './nostr-account-strategy';
 
-import {
-    NostrAccountRelayProvider
-} from './nostr-account-relay-provider';
-
 ///////////////////////////////////////////////////////////////////////////////
 
 function signedEvent(
@@ -98,7 +94,6 @@ function createStrategy(
     return new NostrAccountStrategy(
         client,
         events,
-        new NostrAccountRelayProvider(),
         [
             {
                 url:
@@ -185,31 +180,28 @@ describe(
                     )
                 ).resolves.toEqual({
                     name:
-                        'Cached Name'
+                        'Cached Name',
+                    relays: [
+                        {
+                            url:
+                                'wss://read-write.example',
+                            read: true,
+                            write: true
+                        },
+                        {
+                            url:
+                                'wss://read.example',
+                            read: true,
+                            write: false
+                        },
+                        {
+                            url:
+                                'wss://write.example',
+                            read: false,
+                            write: true
+                        }
+                    ]
                 });
-
-                expect(
-                    strategy.getRelays()
-                ).toEqual([
-                    {
-                        url:
-                            'wss://read-write.example',
-                        read: true,
-                        write: true
-                    },
-                    {
-                        url:
-                            'wss://read.example',
-                        read: true,
-                        write: false
-                    },
-                    {
-                        url:
-                            'wss://write.example',
-                        read: false,
-                        write: true
-                    }
-                ]);
 
                 expect(
                     getByKindAndPubkey
@@ -330,19 +322,16 @@ describe(
                     )
                 ).resolves.toEqual({
                     name:
-                        'Fresh Name'
+                        'Fresh Name',
+                    relays: [
+                        {
+                            url:
+                                'wss://account.example',
+                            read: true,
+                            write: true
+                        }
+                    ]
                 });
-
-                expect(
-                    strategy.getRelays()
-                ).toEqual([
-                    {
-                        url:
-                            'wss://account.example',
-                        read: true,
-                        write: true
-                    }
-                ]);
 
                 expect(getEvents)
                     .toHaveBeenCalledWith(
@@ -442,19 +431,16 @@ describe(
                     )
                 ).resolves.toEqual({
                     name:
-                        'Fresh Name'
+                        'Fresh Name',
+                    relays: [
+                        {
+                            url:
+                                'wss://cached.example',
+                            read: true,
+                            write: true
+                        }
+                    ]
                 });
-
-                expect(
-                    strategy.getRelays()
-                ).toEqual([
-                    {
-                        url:
-                            'wss://cached.example',
-                        read: true,
-                        write: true
-                    }
-                ]);
             }
         );
 
@@ -531,87 +517,22 @@ describe(
                     strategy.load(
                         'user-id'
                     )
-                ).resolves.toEqual({});
-
-                expect(
-                    strategy.getRelays()
-                ).toEqual([
-                    {
-                        url:
-                            'wss://read.example',
-                        read: true,
-                        write: false
-                    },
-                    {
-                        url:
-                            'wss://write.example',
-                        read: false,
-                        write: true
-                    }
-                ]);
-            }
-        );
-
-        it(
-            'publishes Nostr relay state through the relay provider contract',
-            async () => {
-                const strategy =
-                    createStrategy(
-                        createClient(),
-                        createEvents({
-                            getByKindAndPubkey:
-                                vi.fn(
-                                    async (kind: number) =>
-                                        kind === 10002
-                                            ? {
-                                                key:
-                                                    'nostr/event:10002:user-id',
-                                                pubkey:
-                                                    'user-id',
-                                                kind: 10002,
-                                                content: '',
-                                                tags: [
-                                                    [
-                                                        'r',
-                                                        'wss://account.example'
-                                                    ]
-                                                ]
-                                            }
-                                            : undefined
-                                )
-                        })
-                    );
-
-                const states:
-                    unknown[] = [];
-
-                const unsubscribe =
-                    strategy.subscribeRelays(
-                        (relays) => {
-                            states.push(
-                                relays
-                            );
+                ).resolves.toEqual({
+                    relays: [
+                        {
+                            url:
+                                'wss://read.example',
+                            read: true,
+                            write: false
+                        },
+                        {
+                            url:
+                                'wss://write.example',
+                            read: false,
+                            write: true
                         }
-                    );
-
-                await strategy.load(
-                    'user-id'
-                );
-
-                unsubscribe();
-
-                expect(states)
-                    .toEqual([
-                        [],
-                        [
-                            {
-                                url:
-                                    'wss://account.example',
-                                read: true,
-                                write: true
-                            }
-                        ]
-                    ]);
+                    ]
+                });
             }
         );
 

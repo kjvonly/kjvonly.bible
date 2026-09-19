@@ -15,7 +15,7 @@ import {
 
 import type {
 	ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 describe(
 	'ApplicationDB',

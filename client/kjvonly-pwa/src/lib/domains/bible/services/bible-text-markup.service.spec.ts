@@ -6,12 +6,9 @@ import {
 } from 'vitest';
 
 import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
-
-import type {
+	PublishedResourceReference,
 	ResourcePublication
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 import type {
 	BibleTextMarkup
@@ -32,6 +29,10 @@ import {
 import {
 	BibleTextMarkupService
 } from './bible-text-markup.service';
+
+import {
+	BibleLocationReferenceService
+} from './bibleLocationReference.service';
 
 describe(
 	'BibleTextMarkupService',
@@ -712,7 +713,8 @@ function createService(
 		new BibleTextMarkupResourcePublication(),
 		{
 			wake
-		}
+		},
+		new BibleLocationReferenceService()
 	);
 }
 

@@ -13,7 +13,7 @@
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 
 	// OTHERS
-	import { numberToLetters } from '$lib/application/services/dynamicGrid.service';
+	import { numberToAlphabeticSequence } from '$lib/shared';
 
 	// =============================== BINDINGS ================================
 
@@ -48,7 +48,7 @@
 		footnotesByID.forEach((f: any) => {
 			let key = f?.split('_')[2];
 			footnotes.push({
-				key: numberToLetters(key),
+				key: numberToAlphabeticSequence(key),
 				html: chapterFootnotes[key],
 				toggle: false
 			});

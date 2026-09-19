@@ -15,7 +15,7 @@ import {
 import {
 	createResourceInstallationId,
 	type ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 import {
 	IndexedDBBibleChapterInstallationTransaction

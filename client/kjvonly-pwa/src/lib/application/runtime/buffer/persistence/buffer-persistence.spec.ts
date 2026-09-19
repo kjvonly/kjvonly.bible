@@ -43,30 +43,13 @@ describe(
 				buffer.key =
 					'buffer-a';
 
-				buffer.name =
-					'Bible';
-
 				buffer.componentName =
 					Modules.BIBLE;
-
-				buffer.selected =
-					true;
 
 				buffer.bag = {
 					bibleLocationRef:
 						'1_1'
 				};
-
-				buffer.component =
-					{
-						runtime:
-							true
-					};
-
-				buffer.keyboardBindings.set(
-					'j',
-					() => {}
-				);
 
 				const persisted =
 					serializeBuffer(
@@ -79,14 +62,8 @@ describe(
 					key:
 						'buffer-a',
 
-					name:
-						'Bible',
-
 					componentName:
 						Modules.BIBLE,
-
-					selected:
-						true,
 
 					bag: {
 						bibleLocationRef:
@@ -119,9 +96,6 @@ describe(
 
 						componentName:
 							Modules.BIBLE,
-
-						selected:
-							false,
 
 						bag: {
 							bibleLocationRef:
@@ -195,42 +169,7 @@ describe(
 		);
 
 		it(
-			'restores runtime-only Buffer state from fresh defaults',
-			() => {
-				const buffer =
-					restoreBuffer({
-						key:
-							'buffer-a',
-						name:
-							'Bible',
-						componentName:
-							Modules.BIBLE,
-						selected:
-							false,
-						bag: {},
-						resourceSelections: {}
-					});
-
-				expect(
-					buffer.component
-				).toBeUndefined();
-
-				expect(
-					buffer.keyboardBindings.size
-				).toBe(
-					0
-				);
-
-				expect(
-					typeof buffer.onFocus
-				).toBe(
-					'function'
-				);
-			}
-		);
-
-		it(
-			'accepts a legacy Buffer without Resource selections as an empty selection map',
+			'accepts legacy Buffer fields without Resource selections as an empty selection map',
 			() => {
 				const buffer =
 					restoreBuffer({
@@ -266,8 +205,6 @@ describe(
 								'Bible',
 							componentName:
 								Modules.BIBLE,
-							selected:
-								false,
 							bag: {},
 							resourceSelections: {
 								[CHAPTER_RESOURCE_TYPE]: {
@@ -297,8 +234,6 @@ describe(
 								'Bible',
 							componentName:
 								999,
-							selected:
-								false,
 							bag: {},
 							resourceSelections: {}
 						})

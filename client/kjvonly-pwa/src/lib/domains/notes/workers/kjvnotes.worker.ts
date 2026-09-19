@@ -1,8 +1,8 @@
 import FlexSearch from 'flexsearch';
 
 import {
-	bibleLocationReferenceService
-} from '$lib/domains/bible/services/bibleLocationReference.service';
+	BibleLocationReferenceService
+} from '$lib/domains/bible';
 
 import type {
 	Note,
@@ -10,13 +10,19 @@ import type {
 } from '$lib/domains/notes/models/note.model';
 
 import {
-	NOTES_COLLECTION_CHANGED,
 	type NotesSearchWorkerRequest
 } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+
+import {
+	NOTES_COLLECTION_CHANGED
+} from '$lib/domains/notes/events/notes-events';
 
 type IndexedNote = Note & {
 	bookChapter?: string;
 };
+
+const bibleLocationReferenceService =
+	new BibleLocationReferenceService();
 
 function createNotesDocument() {
 	return new FlexSearch.Document({

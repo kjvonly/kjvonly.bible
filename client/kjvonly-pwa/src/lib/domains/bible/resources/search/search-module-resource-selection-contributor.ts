@@ -1,19 +1,13 @@
 import {
 	Modules
-} from '$lib/application/models/modules.model';
-
-import type {
-	ModuleResourceSelectionBuildContext,
-	ModuleResourceSelectionContributor
-} from '$lib/application/resources/module-resource-selection-contributor';
+} from '$lib/application';
 
 import {
-	buildRequiredResourceSelections
-} from '$lib/application/resources/module-resource-selection-contributor';
-
-import type {
-	ResourceSelections
-} from '$lib/application/resources/resource-selections';
+	buildRequiredResourceSelections,
+	type ModuleResourceSelectionBuildContext,
+	type ModuleResourceSelectionContributor,
+	type ResourceSelections
+} from '$lib/application';
 
 import {
 	BIBLE_SEARCH_RESOURCE_TYPE

@@ -4,9 +4,7 @@
 	import { onMount, untrack } from 'svelte';
 
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ReadingsComponent from '../components/readings.svelte';
 	// // SVGS
@@ -15,9 +13,9 @@
 	import Pending from '$lib/components/svgs/pending.svelte';
 
 	// MODELS
-	import type { BCV } from '$lib/domains/bible/models/bible.model';
-	import { Modules } from '$lib/application/models/modules.model';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type { BCV } from '$lib/domains/bible';
+	import { Modules } from '$lib/application';
+	import type { Pane } from '$lib/application';
 	import {
 		PLANS_VIEWS,
 		type NavReadings,
@@ -26,10 +24,10 @@
 	} from '$lib/domains/reading-plans/models/plans.model';
 
 	// SERVICES
-	import { toastService } from '$lib/application/services/toast.service';
+	import { useApplicationContext } from '$lib/application';
 
 	// OTHER
-	import { sleep } from '$lib/infrastructure/utils/sleep';
+	import { sleep } from '$lib/shared';
 	import uuid4 from 'uuid4';
 
 	// =============================== BINDINGS ================================
@@ -44,6 +42,11 @@
 		paneID: string;
 		selectedSub: Sub;
 	} = $props();
+
+	const {
+		workspaceRuntime,
+		toastService
+	} = useApplicationContext();
 
 	// ================================== VARS =================================
 
@@ -149,10 +152,16 @@
 			returnView: returnView
 		};
 
-		pane.buffer.bag.navReadings = np;
-
-		pane.buffer.bag.bibleLocationRef = readings.bcvs[0].bibleLocationRef;
-		pane.updateBuffer(Modules.BIBLE);
+		workspaceRuntime.replaceBuffer(
+			paneID,
+			Modules.BIBLE,
+			{
+				...pane.buffer?.bag,
+				navReadings: np,
+				bibleLocationRef:
+					readings.bcvs[0].bibleLocationRef
+			}
+		);
 	}
 
 	function onCloseSubDetails(): void {
@@ -207,7 +216,7 @@
 
 {#snippet subListView(sub: any)}
 	<span
-		class=" sticky top-0 border-t border-neutral-400 bg-neutral-50 pb-2 text-2xl"
+		class=" sticky top-0 border-t border-neutral-400 bg-neutral-50 p-2 text-2xl"
 		>{sub.name}</span
 	>
 
@@ -250,7 +259,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody ID={subListViewID} bind:clientHeight bind:headerHeight>
+	<BufferBody ID={subListViewID} bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

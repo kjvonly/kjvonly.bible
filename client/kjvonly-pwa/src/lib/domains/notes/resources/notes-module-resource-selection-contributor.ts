@@ -1,27 +1,18 @@
 import {
 	Modules
-} from '$lib/application/models/modules.model';
-
-import type {
-	ModuleResourceSelectionBuildContext,
-	ModuleResourceSelectionContributor
-} from '$lib/application/resources/module-resource-selection-contributor';
+} from '$lib/application';
 
 import {
-	buildRequiredResourceSelections
-} from '$lib/application/resources/module-resource-selection-contributor';
-
-import type {
-	ResourceSelections
-} from '$lib/application/resources/resource-selections';
-
-import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	buildRequiredResourceSelections,
+	type ModuleResourceSelectionBuildContext,
+	type ModuleResourceSelectionContributor,
+	type ResourceSelections
+} from '$lib/application';
 
 import {
+	BIBLE_CHAPTER_RESOURCE_TYPE,
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+} from '$lib/domains/bible';
 
 import {
 	NOTES_RESOURCE_TYPE

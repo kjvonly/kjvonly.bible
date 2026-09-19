@@ -1,14 +1,14 @@
 import type {
 	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import type {
 	ResourceInterpreter
-} from '$lib/resource/interpretation/resource-interpreter';
+} from '$lib/resource';
 
 import {
 	extractResourcePath
-} from '$lib/resource/utils/resource-identifier';
+} from '$lib/resource';
 
 import type {
 	BibleChapterCandidate

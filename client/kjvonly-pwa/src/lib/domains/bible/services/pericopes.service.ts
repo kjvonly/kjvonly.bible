@@ -1,6 +1,8 @@
-import type {
-	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+import {
+	type PublishedResourceReference,
+	type ResourceLoader,
+	parseResourceIdentifier
+} from '$lib/resource';
 
 import type {
 	BiblePericopes
@@ -14,20 +16,13 @@ import type {
 	BiblePericopesStore
 } from '$lib/domains/bible/persistence/bible-pericopes-store';
 
-import type {
-	ResourceLoader
-} from '$lib/resource/loading/resource-loader';
-
-import {
-	parseResourceIdentifier
-} from '$lib/resource/utils/resource-identifier';
 
 import {
 	BIBLE_PERICOPES_RESOURCE_TYPE
 } from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
 
-import {
-	bibleLocationReferenceService
+import type {
+	BibleLocationReferenceService
 } from './bibleLocationReference.service';
 
 export class PericopesService {
@@ -43,6 +38,12 @@ export class PericopesService {
 			Pick<
 				ResourceLoader<string>,
 				'load'
+			>,
+
+		private readonly bibleLocationReferenceService:
+			Pick<
+				BibleLocationReferenceService,
+				'extractBookIDChapter'
 			>
 	) {}
 
@@ -62,7 +63,7 @@ export class PericopesService {
 			);
 
 		const chapterRef =
-			bibleLocationReferenceService
+			this.bibleLocationReferenceService
 				.extractBookIDChapter(
 					bibleLocationRef
 				);

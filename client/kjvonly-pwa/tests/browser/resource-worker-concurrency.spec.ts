@@ -10,47 +10,39 @@ import {
 	vi
 } from 'vitest';
 
-import type {
-	PublishedResourceReference,
-	ResourceRepresentation
-} from '$lib/resource/models/resource.model';
+import {
+	createBrowserResourceWorkerClient,
+	type PublishedResourceReference,
+	type ResourceRepresentation,
+	type ResourceInstallResult
+} from '$lib/resource';
 
-import type {
-	ResourceInstallResult
-} from '$lib/resource/services/resource-install-result';
 
 import {
 	NostrSigner
 } from '$lib/infrastructure/nostr/nostr-signer';
 
 import {
-	createBrowserResourceClient
-} from '$lib/infrastructure/nostr/resource-client';
+	createBrowserNostrClient
+} from '$lib/infrastructure/nostr/client/create-nostr-client';
 
 import {
 	ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
 
 import {
-	createBrowserResourceWorkerClient
-} from '$lib/resource/worker/resource-worker-client';
-
-import {
 	KJVONLY_PUBKEY
 } from '$lib/infrastructure/nostr/nostr';
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	BIBLE_CHAPTER_RESOURCE_TYPE,
+	createBibleVersionId,
+	createChapterId
+} from '$lib/domains/bible';
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
 } from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
-
-import {
-	createBibleVersionId,
-	createChapterId
-} from '$lib/domains/bible/utils/bible-identity';
 
 import {
 	DOMAIN_OBJECTS,
@@ -113,12 +105,12 @@ describe.skip(
 						generateSecretKey()
 					);
 
-				const resourceClient =
-					createBrowserResourceClient(
+				const nostrClient =
+					createBrowserNostrClient(
 						nostrSigner
 					);
 
-				resourceClient
+				nostrClient
 					.setDefaultRelays([
 						{
 							url:
@@ -145,7 +137,7 @@ describe.skip(
 				try {
 					const fixtureDiscovery =
 						new ResourceDiscovery(
-							resourceClient
+							nostrClient
 						);
 
 					const fixtureRepresentation =
@@ -403,7 +395,7 @@ describe.skip(
 						)
 					);
 
-					resourceClient
+					nostrClient
 						.dispose();
 
 					await nostrSigner

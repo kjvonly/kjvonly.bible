@@ -6,15 +6,15 @@ import {
 
 import type {
 	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import type {
 	ResourceInterpreter
-} from '$lib/resource/interpretation/resource-interpreter';
+} from '$lib/resource';
 
 import type {
 	ResourceValidator
-} from '$lib/resource/validation/resource-validator';
+} from '$lib/resource';
 
 import type {
 	BibleParagraphsCandidate

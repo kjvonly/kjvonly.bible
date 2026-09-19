@@ -17,7 +17,6 @@ describe(
 	() => {
 		it.each([
 			Modules.MODULES,
-			Modules.USER_GUIDE,
 			Modules.LOGIN,
 			Modules.SETTINGS,
 			Modules.NULL,

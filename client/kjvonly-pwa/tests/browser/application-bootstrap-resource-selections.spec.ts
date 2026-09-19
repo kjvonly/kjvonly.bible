@@ -8,6 +8,11 @@ import {
 } from 'vitest';
 
 import {
+	SettingsService,
+	type ResourceSelections
+} from '$lib/application';
+
+import {
 	Application
 } from '$lib/application/runtime/application';
 
@@ -16,16 +21,10 @@ import {
 } from '$lib/infrastructure/nostr/nostr';
 
 import {
-	ResourceWorkerClient
-} from '$lib/resource/worker/resource-worker-client';
+	ResourceWorkerClient,
+	type ResourceInstallResult
+} from '$lib/resource';
 
-import type {
-	ResourceInstallResult
-} from '$lib/resource/services/resource-install-result';
-
-import type {
-	ResourceSelections
-} from '$lib/application/resources/resource-selections';
 
 const RESOURCE_SELECTIONS_STORAGE_KEY =
 	'resourceSelections';
@@ -77,6 +76,37 @@ describe(
 				);
 
 				vi.restoreAllMocks();
+			}
+		);
+
+		it(
+			'applies Settings during application startup',
+			async () => {
+
+				const applySettings =
+					vi.spyOn(
+						SettingsService.prototype,
+						'applySettings'
+					)
+					.mockImplementation(
+						() => { }
+					);
+
+				vi.spyOn(
+					ResourceWorkerClient.prototype,
+					'install'
+				).mockResolvedValue(
+					createBootstrapResult()
+				);
+
+				application =
+					createApplication();
+
+				await application.start();
+
+				expect(
+					applySettings
+				).toHaveBeenCalledTimes(1);
 			}
 		);
 

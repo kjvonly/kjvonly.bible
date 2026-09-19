@@ -1,5 +1,6 @@
 import {
-	generateSecretKey
+	generateSecretKey,
+	nip19
 } from 'nostr-tools';
 
 import {
@@ -11,12 +12,21 @@ import {
 } from 'vitest';
 
 import {
+	NostrSigner
+} from '$lib/infrastructure/nostr/nostr-signer';
+
+import {
+	createBrowserNostrClient
+} from '$lib/infrastructure/nostr/client/create-nostr-client';
+
+import {
 	Application
 } from '$lib/application/runtime/application';
 
 import {
-	RESOURCE_KIND
-} from '$lib/resource/models/resource.model';
+	RESOURCE_KIND,
+	createResourceInstallationId
+} from '$lib/resource';
 
 import {
 	STRONGS_DEFINITION_OBJECT_TYPE
@@ -28,11 +38,8 @@ import {
 
 import {
 	createBibleVersionId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '$lib/domains/bible';
 
-import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
 
 import {
 	DOMAIN_OBJECTS,
@@ -52,11 +59,54 @@ describe(
 		let application:
 			Application;
 
+		let fixtureSigner:
+			NostrSigner;
+
+		let fixtureNostrClient:
+			ReturnType<
+				typeof createBrowserNostrClient
+			>;
+
 		let publisher:
 			string;
 
 		beforeEach(
 			async () => {
+				const secretKey =
+					generateSecretKey();
+
+				const nsec =
+					nip19.nsecEncode(
+						secretKey
+					);
+
+				fixtureSigner =
+					new NostrSigner();
+
+				await fixtureSigner
+					.useSecretKey(
+						secretKey
+					);
+
+				fixtureNostrClient =
+					createBrowserNostrClient(
+						fixtureSigner
+					);
+
+				fixtureNostrClient
+					.setDefaultRelays([
+						{
+							url:
+								RELAY_URL,
+
+							read:
+								true,
+
+							write:
+								true
+						}
+					]);
+
 				application =
 					new Application({
 						resourceRelays: [
@@ -75,16 +125,16 @@ describe(
 
 				await application
 					.context
-					.nostrSigner
-					.useSecretKey(
-						generateSecretKey()
+					.authenticationService
+					.login(
+						nsec
 					);
 
 				publisher =
-					await application
+					application
 						.context
-						.nostrSigner
-						.getPublicKey();
+						.authenticationService
+						.getUserId();
 
 				await application.start();
 			}
@@ -93,6 +143,12 @@ describe(
 		afterEach(
 			async () => {
 				await application.stop();
+
+				fixtureNostrClient
+					.dispose();
+
+				await fixtureSigner
+					.clear();
 			}
 		);
 
@@ -102,8 +158,11 @@ describe(
 				const resourceType =
 					'kjvonly/strongs/definitions';
 
+				const resourceSourceId =
+					`${resourceType}/kjvs`;
+
 				const resourceId =
-					`${resourceType}/kjvs/G1`;
+					`${resourceSourceId}/G1`;
 
 				const content =
 					createStrongsContent(
@@ -115,9 +174,7 @@ describe(
 				 * to the local Nostr relay.
 				 */
 				const publication =
-					await application
-						.context
-						.resourceClient
+					await fixtureNostrClient
 						.publishEvent({
 							kind:
 								RESOURCE_KIND,
@@ -154,54 +211,6 @@ describe(
 					true
 				);
 
-				/*
-				 * Enter through the generic
-				 * application ResourceService.
-				 *
-				 * Nothing below this point
-				 * is faked.
-				 */
-				const result =
-					await application
-						.context
-						.resourceService
-						.install({
-							publisher,
-							resourceId
-						});
-
-				expect(
-					result.found
-				).toBe(
-					true
-				);
-
-				expect(
-					result.requested
-				).toEqual({
-					publisher,
-					resourceId
-				});
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						reference: {
-							publisher,
-							resourceId
-						},
-
-						resourceType,
-
-						status:
-							'handled'
-					}
-				]);
-
-				const db =
-					await getApplicationDB();
-
 				const bibleVersionId =
 					createBibleVersionId(
 						publisher,
@@ -213,6 +222,37 @@ describe(
 						bibleVersionId,
 						'G1'
 					);
+
+				/*
+				 * Enter through the Strong's Domain service,
+				 * exactly as application code does on a miss.
+				 *
+				 * Nothing below this point is faked.
+				 */
+				const strongs =
+					await application
+						.context
+						.strongsService
+						.get(
+							{
+								publisher,
+								resourceId:
+									resourceSourceId
+							},
+							'G1'
+						);
+
+				expect(
+					strongs
+				).toEqual({
+					id:
+						strongsId,
+
+					...content
+				});
+
+				const db =
+					await getApplicationDB();
 
 				const storedDomainObjectId =
 					createStoredDomainObjectId(

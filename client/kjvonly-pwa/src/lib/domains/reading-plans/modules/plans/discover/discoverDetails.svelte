@@ -2,9 +2,7 @@
 	// ================================ IMPORTS ================================
 	// SVELTE
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import AddCircle from '$lib/components/svgs/addCircle.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
@@ -16,12 +14,10 @@
 	} from '$lib/domains/reading-plans/models/plans.model';
 	import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
 	// SERVICES
-	import { toastService } from '$lib/application/services/toast.service';
 	import uuid4 from 'uuid4';
-	import { sleep } from '$lib/infrastructure/utils/sleep';
+	import { sleep } from '$lib/shared';
 	import { onMount } from 'svelte';
-	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application';
 	import {
 		PLAN_SUBSCRIPTION_RESOURCE_TYPE,
 		createPlanSubscriptionIdForSource
@@ -29,7 +25,9 @@
 	// =============================== BINDINGS ================================
 	const {
 		moduleResourceSelectionResolver,
-		planSubscriptionsService
+		planSubscriptionsService,
+		plansPubSubService,
+		toastService
 	} = useApplicationContext();
 
 	let {

@@ -116,7 +116,7 @@ For example:
 ```text
 Highlight Bible text
         ↓
-Meaning of annotation
+Meaning of text markup
         → Bible Domain
 
 Interaction for selecting text

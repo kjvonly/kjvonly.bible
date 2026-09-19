@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { NavReadings } from '../../../models/plans.model';
+	import type { BibleReadingNavigation } from '../../../models/bible.model';
 
 	let {
 		navReadings = $bindable(),
@@ -13,7 +13,7 @@
 
 	function rowClicked(e: any, r: any, idx: number) {
 		e.stopPropagation();
-		let nr: NavReadings = navReadings;
+		let nr: BibleReadingNavigation = navReadings;
 		nr.currentNavReadingsIndex = idx;
 		bibleLocationRef = r.bibleLocationRef;
 		showNavReadingsPopup = false;

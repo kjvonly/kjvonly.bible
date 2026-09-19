@@ -12,17 +12,11 @@ import type {
 	BibleVersion
 } from '$lib/domains/bible/models/bible-version.model';
 
-import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
-
-import type {
-	ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
-
 import {
+	type DecodedResourceContent,
+	type ResourceInstallation,
 	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 import type {
 	BibleChapterInstallationStores,

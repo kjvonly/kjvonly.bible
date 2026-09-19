@@ -7,11 +7,11 @@ import {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import type {
 	ResourceInstallResult
-} from '$lib/resource/services/resource-install-result';
+} from '$lib/resource';
 
 import type {
 	BibleBooknames

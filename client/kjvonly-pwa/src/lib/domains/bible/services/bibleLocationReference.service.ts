@@ -1,4 +1,4 @@
-class BibleLocationReferenceService {
+export class BibleLocationReferenceService {
 	/**
 	 * Reduces a reference chapter key to BookID.
 	 *
@@ -6,11 +6,10 @@ class BibleLocationReferenceService {
 	 * @returns
 	 */
 	extractBookID(ref: string): string {
-		let bcvw = ref.split('_');
-		if (bcvw.length > 0) {
-			ref = bcvw[0];
-		}
-		return ref;
+		const locationRef = this.extractLocationRef(ref);
+		const [bookID] = locationRef.split('_');
+
+		return bookID;
 	}
 
 	/**
@@ -20,11 +19,10 @@ class BibleLocationReferenceService {
 	 * @returns
 	 */
 	extractChapter(ref: string): number {
-		let bcvw = ref.split('_');
-		if (bcvw.length > 1) {
-			return parseInt(bcvw[1]);
-		}
-		return 1;
+		const locationRef = this.extractLocationRef(ref);
+		const [, chapter] = locationRef.split('_');
+
+		return chapter ? parseInt(chapter, 10) : 1;
 	}
 
 	/**
@@ -100,11 +98,12 @@ class BibleLocationReferenceService {
 	}
 
 	extractVersesOrOne(ref: string): number[] {
-		let bcv = ref.split('_');
+		const locationRef = this.extractLocationRef(ref);
+		const bcv = locationRef.split('_');
 		if (bcv.length > 2) {
-			let verses = bcv[2].split('-');
-			let s = parseInt(verses[0]);
-			let e = parseInt(verses[1]);
+			const verses = bcv[2].split('-');
+			const s = parseInt(verses[0], 10);
+			const e = parseInt(verses[1], 10);
 
 			if (!Number.isNaN(s) && !Number.isNaN(e)) {
 				return [s - 1, e];
@@ -117,7 +116,8 @@ class BibleLocationReferenceService {
 	}
 
 	extractVerse(ref: string): number {
-		let bcv = ref.split('_');
+		const locationRef = this.extractLocationRef(ref);
+		const bcv = locationRef.split('_');
 		if (bcv.length > 2) {
 			return this.extractFirstVerse(bcv[2]);
 		}
@@ -138,7 +138,8 @@ class BibleLocationReferenceService {
 		if (!defaultWordIndex) {
 			defaultWordIndex = '0';
 		}
-		let refs = bibleLocationRef.split('_');
+		const locationRef = this.extractLocationRef(bibleLocationRef);
+		const refs = locationRef.split('_');
 		if (refs.length === 4) {
 			return refs[3];
 		}
@@ -147,7 +148,7 @@ class BibleLocationReferenceService {
 	}
 
 	hasVerse(ref: string) {
-		return ref.split('_').length > 2;
+		return this.extractLocationRef(ref).split('_').length > 2;
 	}
 
 	makeBibleLocationRef(
@@ -158,6 +159,3 @@ class BibleLocationReferenceService {
 		return `${bookID}_${chapter}_${verseNumber}`;
 	}
 }
-
-export const bibleLocationReferenceService =
-	new BibleLocationReferenceService();

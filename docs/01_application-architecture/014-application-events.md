@@ -40,6 +40,10 @@ The event communicates that result.
 
 It does not perform the behavior itself.
 
+Application Events define an observation contract, not a required global event bus.
+
+An owner may expose observation through any implementation mechanism that preserves the event's meaning, ownership, and optional-consumer semantics.
+
 ---
 
 # Events and Public APIs
@@ -365,7 +369,7 @@ An Application Event communicates that something has already changed:
 ```text
 Reading Plans Domain
         ↓
-Reading Completed
+Reading Progress Updated
         ↓
 Application Event
 ```
@@ -382,7 +386,7 @@ Application Events belong to the application's internal collaboration model.
 
 They should not be confused with:
 
-* Nostr events,
+* external protocol events,
 * browser events,
 * transport messages,
 * Resource representations,
@@ -391,7 +395,7 @@ They should not be confused with:
 For example:
 
 ```text
-Nostr Event
+External Protocol Event
     ↓
 Resource Boundary
     ↓
@@ -431,7 +435,7 @@ Note Changed
 rather than an implementation-specific occurrence such as:
 
 ```text
-IndexedDB Note Record Updated
+Note Persistence Record Updated
 ```
 
 The first describes application meaning.
@@ -603,7 +607,7 @@ Bible Reader
 An event would be appropriate only for communicating a meaningful change that has already occurred, such as:
 
 ```text
-Reading Completed
+Reading Progress Updated
     ↓
 Application Event
 ```

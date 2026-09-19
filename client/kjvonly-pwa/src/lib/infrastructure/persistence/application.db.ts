@@ -4,18 +4,16 @@ import {
 	type IDBPDatabase
 } from 'idb';
 
-import type {
-	ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+import {
+	type ResourceInstallation,
+	type ResourceReceipt
+} from '$lib/resource';
 
-import type {
-	ResourceReceipt
-} from '$lib/resource/receipts/resource-receipt';
 
 import type {
 	OutboxEntry,
 	OutboxStatus
-} from '$lib/application/outbox/outbox-entry';
+} from '$lib/application';
 
 import type {
 	NostrEvent

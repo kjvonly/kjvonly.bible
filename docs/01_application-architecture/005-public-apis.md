@@ -96,16 +96,9 @@ Retrieve a Bible Chapter
 
 The public contract should express that capability.
 
-It should not expose:
+It should not expose persistence, parsing, protocol, caching, or other internal mechanisms merely because those mechanisms support the capability.
 
-```text id="1v3j6l"
-Bible IndexedDB store
-Bible parser
-relay query
-chapter cache
-```
-
-Those are possible implementations of the capability rather than the capability itself.
+Those mechanisms are implementation concerns rather than the capability itself.
 
 ---
 
@@ -264,11 +257,11 @@ openModule(module, context)
 over contracts centered around implementation details such as:
 
 ```text id="0kxb0v"
-readChapterRecordFromIndexedDB()
+readChapterPersistenceRecord()
 
-queryChapterRelayEvent()
+queryChapterProtocolRepresentation()
 
-callPaneServiceInternalMethod()
+callRuntimeInternalHelper()
 ```
 
 The first group describes capabilities owned by the application architecture.
@@ -301,11 +294,11 @@ Define the smallest enduring contract
 Keep implementation behind the boundary
 ```
 
-Do not begin by exporting an existing service or helper.
+Do not begin from an existing implementation construct.
 
 First determine what the architectural contract should be.
 
-The implementation can then be adapted to fulfill that contract.
+Implementation should then fulfill that contract.
 
 ---
 

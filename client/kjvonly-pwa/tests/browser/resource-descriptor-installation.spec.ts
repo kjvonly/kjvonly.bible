@@ -4,70 +4,29 @@ import {
 	it
 } from 'vitest';
 
-import type {
-	PublishedResourceReference,
-	ResourceRepresentation
-} from '$lib/resource/models/resource.model';
-
-import type {
-	ResourceDescriptor
-} from '$lib/resource/descriptors/resource-descriptor';
-
-import type {
-	ResourceResolutionStrategy
-} from '$lib/resource/resolution/resource-resolution-strategy';
-
 import {
-	ResourceDescriptorDocumentDecoder
-} from '$lib/resource/descriptors/resource-descriptor-document-decoder';
-
-import {
-	ResourceDescriptorValidator
-} from '$lib/resource/descriptors/resource-descriptor-validator';
-
-import {
-	DescriptorsRepresentationResolver
-} from '$lib/resource/resolution/descriptors-representation-resolver';
-
-import {
-	ContentRepresentationResolver
-} from '$lib/resource/resolution/content-representation-resolver';
-
-import {
+	type PublishedResourceReference,
+	type ResourceRepresentation,
+	type ResourceDescriptor,
+	type ResourceResolutionStrategy,
+	createResourceReceiptId,
+	createResourceInstallationId,
+	ResourceContentDecoratorBuilder,
+	JsonResourceContentDecorator,
+	ResourceContentDecoder,
+	ResourceReceiptService,
+	ResourceService,
+	ResourceProcessor,
+	ResourceDescriptorDocumentDecoder,
+	ResourceDescriptorValidator,
+	DescriptorsRepresentationResolver,
+	ContentRepresentationResolver,
 	ResourceResolver
-} from '$lib/resource/resolution/resource-resolver';
-
-import {
-	ResourceContentDecoratorBuilder
-} from '$lib/resource/content/resource-content-decorator-builder';
-
-import {
-	JsonResourceContentDecorator
-} from '$lib/resource/content/json-resource-content-decorator';
-
-import {
-	ResourceContentDecoder
-} from '$lib/resource/content/resource-content-decoder';
-
-import {
-	ResourceReceiptService
-} from '$lib/resource/receipts/resource-receipt.service';
+} from '$lib/resource';
 
 import {
 	IndexedDBResourceReceiptStore
 } from '$lib/resource/receipts/indexeddb-resource-receipt-store';
-
-import {
-	createResourceReceiptId
-} from '$lib/resource/receipts/resource-receipt';
-
-import {
-	ResourceService
-} from '$lib/resource/services/resource.service';
-
-import {
-	ResourceProcessor
-} from '$lib/resource/services/resource-processor';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
@@ -138,10 +97,6 @@ import {
 	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
-
-import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
 
 const COLLECTION_RESOURCE_ID =
 	'kjvonly/resources/collections/default';

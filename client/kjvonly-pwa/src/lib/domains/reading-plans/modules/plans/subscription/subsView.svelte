@@ -15,17 +15,20 @@
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS
 	} from '$lib/domains/reading-plans/models/plans.model';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type { Pane } from '$lib/application';
+
+	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
 
 	// SERVICES
-	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 
-	const { planProgressService } =
-		useApplicationContext();
+	const {
+		planProgressService,
+		plansPubSubService
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -65,19 +68,16 @@
 	 *
 	 * @param data
 	 */
-	async function onGetAllSubs(data: any) {
-		// TODO add type
-		if (data) {
-			subsByID = data.subs;
-			subs.length = 0;
-			subsByID
-				.values()
-				.toArray()
-				.sort((a: Sub, b: Sub) => a.dateSubscribed - b.dateSubscribed)
-				.forEach((s: any) => subs.push(s));
+	async function onGetAllSubs(data: PlansSubscriptionsMessage) {
+		subsByID = data.subs;
+		subs.length = 0;
+		subsByID
+			.values()
+			.toArray()
+			.sort((a: Sub, b: Sub) => a.dateSubscribed - b.dateSubscribed)
+			.forEach((sub: Sub) => subs.push(sub));
 
-			await processNavReadings();
-		}
+		await processNavReadings();
 	}
 
 	/**

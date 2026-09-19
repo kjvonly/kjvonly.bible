@@ -6,7 +6,7 @@ import {
 
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import type {
 	Chapter
@@ -20,6 +20,10 @@ import {
 import {
 	ChapterService
 } from './chapter.service';
+
+import {
+	BibleLocationReferenceService
+} from './bibleLocationReference.service';
 
 describe(
 	'ChapterService',
@@ -53,7 +57,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						loader
 					);
@@ -121,7 +125,7 @@ describe(
 					);
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						loader
 					);
@@ -183,7 +187,7 @@ describe(
 					);
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						loader
 					);
@@ -220,7 +224,7 @@ describe(
 					createSource();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						new FakeChapterStore(),
 						new FakeResourceLoader(
 							async () =>
@@ -249,7 +253,7 @@ describe(
 					new FakeChapterStore();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						new FakeResourceLoader(
 							async () =>
@@ -282,7 +286,7 @@ describe(
 					new FakeChapterStore();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						new FakeResourceLoader(
 							async () =>
@@ -315,7 +319,7 @@ describe(
 					createSource();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						new FakeChapterStore(),
 						new FakeResourceLoader(
 							async () => {
@@ -347,7 +351,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						loader
 					);
@@ -384,7 +388,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						loader
 					);
@@ -421,7 +425,7 @@ describe(
 					new FakeResourceLoader();
 
 				const service =
-					new ChapterService(
+					createChapterService(
 						chapters,
 						loader
 					);
@@ -449,6 +453,17 @@ describe(
 		);
 	}
 );
+
+function createChapterService(
+	store: FakeChapterStore,
+	loader: FakeResourceLoader
+): ChapterService {
+	return new ChapterService(
+		store,
+		loader,
+		new BibleLocationReferenceService()
+	);
+}
 
 class FakeChapterStore {
 

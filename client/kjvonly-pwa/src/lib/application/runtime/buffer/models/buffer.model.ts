@@ -6,15 +6,10 @@ import type {
 } from '$lib/application/resources/resource-selections';
 
 export class Buffer {
+	// Buffer identity is independent from Pane identity and survives Workspace persistence.
 	key: string = uuid4();
-	name: string = '';
-	component: any;
 	componentName: Modules = Modules.NULL;
-	keyboardBindings: Map<string, Function> = new Map<string, Function>();
-	selected: boolean = false;
 	bag: any = {}; // for persistence
-	onFocus: Function = () => { };
-
 
 	resourceSelections:
 		ResourceSelections;
@@ -27,23 +22,4 @@ export class Buffer {
 		this.resourceSelections =
 			resourceSelections;
 	}
-
 }
-
-export class NullBuffer extends Buffer {
-	componentName: Modules = Modules.NULL;
-}
-
-class AddBufferError extends Error { }
-
-class bufferService {
-	currentBuffer: Buffer = new NullBuffer();
-
-	constructor() { }
-
-	updateComponent(component: any) {
-		this.currentBuffer.component = component;
-	}
-}
-
-export let BufferService = new bufferService();

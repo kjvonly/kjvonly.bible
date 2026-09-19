@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	// ================================ IMPORTS ================================
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	const { workspaceRuntime } = useApplicationContext();
 
 	// SERVICES
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 
 	// =============================== BINDINGS ================================
 
@@ -15,7 +16,7 @@
 
 	function onClose(e: Event): void {
 		e.stopPropagation();
-		paneService.onDeletePane(paneService.rootPane, paneID);
+		workspaceRuntime.closePane(paneID);
 	}
 </script>
 

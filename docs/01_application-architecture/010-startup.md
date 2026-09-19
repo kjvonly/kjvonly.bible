@@ -53,7 +53,7 @@ For example:
 ```text
 Startup
 
-    Settings Domain
+    Application Settings
         restore required preferences
 
     Workspace Runtime
@@ -71,7 +71,7 @@ Startup
 
 Startup does not absorb these responsibilities.
 
-The Settings Domain still owns settings. The Workspace Runtime still owns the Workspace. Domains still own Domain behavior and Domain Objects.
+The application still owns settings. The Workspace Runtime still owns the Workspace. Domains still own Domain behavior and Domain Objects.
 
 Startup only coordinates what must happen before the application can proceed.
 
@@ -192,7 +192,7 @@ Settings required to present the initial application correctly must be available
 
 For example, appearance settings should be applied early enough that the application does not first present one configuration and then unnecessarily switch to another.
 
-The Settings Domain owns those preferences.
+The application owns those preferences through its settings responsibility.
 
 Startup only coordinates restoring the settings required for readiness.
 
@@ -226,7 +226,7 @@ Startup should not preemptively become a separate data-retrieval system.
 
 Remote capabilities should not normally determine whether the application can start.
 
-Resource discovery, remote synchronization, publication, relay availability, and similar work may be important to the running application, but they are not prerequisites for presenting locally available state.
+Resource discovery, remote synchronization, publication, external-service availability, and similar work may be important to the running application, but they are not prerequisites for presenting locally available state.
 
 Conceptually:
 
@@ -244,7 +244,7 @@ Resource Boundary / Background Work
 
 The application may initialize technical capabilities needed for later remote work, but network success should not become a readiness requirement unless a future capability genuinely cannot operate locally.
 
-Nostr, Blossom, relay connections, and authentication protocols are implementation concerns beneath the appropriate architectural responsibilities rather than Startup concepts.
+Transport protocols, external storage providers, network connections, and authentication mechanisms are implementation concerns beneath the appropriate architectural responsibilities rather than Startup concepts.
 
 ---
 
@@ -323,7 +323,7 @@ Startup should distinguish between failures that prevent meaningful interaction 
 
 For example, inability to reconstruct any usable Workspace may be a startup failure.
 
-By contrast, failure to reach a relay should not prevent locally available Bible content, Notes, Reading Plans, or Workspace state from remaining usable.
+By contrast, failure to reach an external service should not prevent locally available Bible content, Notes, Reading Plans, or Workspace state from remaining usable.
 
 Conceptually:
 
@@ -410,11 +410,11 @@ Choose implementation
 The first question should not be:
 
 ```text
-Should this go in onMount()?
+Which UI lifecycle hook should run this?
 
-Should this run from +page.svelte?
+Which root component should run this?
 
-Should Startup connect to the relay?
+Should Startup open a network connection?
 ```
 
 Those are implementation questions.

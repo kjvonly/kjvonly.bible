@@ -1,23 +1,20 @@
 import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
-
-import type {
-	Pane
-} from '$lib/application/runtime/pane/models/pane.model';
+} from '$lib/resource';
 
 import {
 	requireResourceSelection
 } from '$lib/application/resources/resource-selections';
 
 interface WorkspacePaneLookup {
-	readonly rootPane:
-		Pane;
-
-	findNode(
-		pane: Pane,
+	findPane(
 		paneID: string
-	): Pane | undefined;
+	): {
+		buffer?: {
+			resourceSelections?:
+				Record<string, PublishedResourceReference>;
+		};
+	} | undefined;
 }
 
 export interface ModuleResourceSelectionResolver {
@@ -40,8 +37,7 @@ class DefaultModuleResourceSelectionResolver
 		resourceType: string
 	): PublishedResourceReference {
 		const pane =
-			this.panes.findNode(
-				this.panes.rootPane,
+			this.panes.findPane(
 				paneID
 			);
 

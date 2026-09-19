@@ -1,10 +1,7 @@
 <script lang="ts">
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import uuid4 from 'uuid4';
 	import Notes from './notes.svelte';
 	import { onMount, untrack } from 'svelte';
-
 	let id = uuid4();
 	let noteID: string = $state('');
 	let { paneID = $bindable<string>(), pane = $bindable() } = $props();

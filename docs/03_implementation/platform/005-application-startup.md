@@ -8,2004 +8,1896 @@ Current
 
 # Purpose
 
-This document describes the current implementation direction for application startup in KJVOnly. It is the implementation-level companion to the architectural startup document. The architectural startup contract defines **what must become available before the application is considered interactive**. This document defines **how the browser application composes long-lived dependencies, exposes them to the Svelte component tree, executes startup work in order, and disposes those dependencies when the application ends**. The central implementation is an explicit **Application Composition Root**.
+This document describes the current KJVOnly.bible browser application startup implementation.
 
-The Composition Root provides one place where the application:
+It documents how the application:
 
-* constructs long-lived services,
-* connects interfaces to concrete infrastructure,
-* establishes dependency direction,
-* creates the application context,
-* coordinates ordered startup,
-* exposes application dependencies to Svelte,
-* and performs application-level cleanup.
+* constructs the long-lived runtime object graph,
+* exposes selected capabilities to Svelte,
+* restores authentication before application startup,
+* restores local runtime state,
+* initializes the Workspace,
+* configures Nostr transport,
+* resumes durable publication work,
+* starts bootstrap Resource installation without blocking interactivity,
+* and disposes application-owned browser infrastructure.
 
-The implementation intentionally uses plain TypeScript. It does not use a dependency-injection framework, service container, runtime reflection system, or service locator. The guiding idea is simple:
+The central implementation boundary is the concrete `Application` composition root:
 
-> Construct the application in one place, start it in one place, and push dependencies downward from that root.
+```text
+src/lib/application/runtime/application.ts
+```
+
+The most important ownership rule is:
+
+> `Application` constructs and owns the running application object graph. Svelte starts and presents that graph; it does not compose it.
+
+The concrete `Application` class is deliberately not part of the public `$lib/application` barrel.
+
+The one runtime location that directly imports and constructs `Application` is:
+
+```text
+src/routes/+layout.svelte
+```
 
 ---
 
 # Scope
 
-This document describes:
+This document covers:
 
-* the Application Composition Root,
-* `Application`,
+* `Application` as the composition root,
+* `ApplicationConfig`,
 * `ApplicationContext`,
-* application configuration,
-* synchronous dependency construction,
-* asynchronous startup sequencing,
-* Svelte integration,
-* Svelte context,
-* startup readiness,
-* browser-only initialization,
-* Resource Client composition,
-* Resource lifecycle composition,
-* signer ownership,
-* verification-worker lifecycle,
-* relay configuration,
-* authentication restoration boundaries,
+* the `$lib/application` and `$lib/application/ui` public boundaries,
+* root Svelte bootstrap,
+* authentication restoration ordering,
+* synchronous dependency composition,
+* `Application.start()`,
+* Settings application,
+* Resource-selection restoration,
+* Workspace initialization,
+* Nostr relay configuration,
+* Account loading and refresh,
+* Outbox wakeup,
+* bootstrap Resource installation,
+* Resource Worker ownership,
+* main-thread Resource Discovery,
+* application readiness,
 * startup failure behavior,
-* cleanup and disposal,
-* migration away from file-level singleton construction,
-* and the future direction for Workspace Runtime initialization.
+* `Application.stop()`,
+* Worker composition-root rules,
+* and important startup invariants.
 
 This document does not redefine:
 
-* Workspace Runtime behavior,
-* Pane behavior,
-* Domain behavior,
-* Resource Discovery,
-* Resource Resolution,
+* Workspace algorithms,
+* Pane-tree behavior,
+* Buffer behavior,
+* Resource Resolution algorithms,
+* Resource descriptor semantics,
+* Domain interpretation or validation,
 * Nostr protocol mechanics,
-* Resource installation,
-* synchronization,
-* the Outbox,
-* or Background Processing algorithms.
+* Outbox publication algorithms,
+* domain persistence schemas,
+* or synchronization behavior.
 
-Those subsystems remain responsible for their own behavior. Startup constructs and coordinates them. It does not absorb their responsibilities.
+Those subsystems own their own behavior. `Application` composes and coordinates them.
 
 ---
 
-# Relationship to the Startup Architecture
+# Related Documents
 
-The architectural startup lifecycle remains:
+The most closely related implementation documents are:
 
 ```text
-Application Launch
-        ↓
-Initialize Platform
-        ↓
-Open / Restore Local State
-        ↓
-Initialize Workspace Runtime
-        ↓
-Bind Presentation
-        ↓
-Interactive Application
-        ↓
-Background Processing
+docs/03_implementation/runtime/001-root-runtime.md
+docs/03_implementation/runtime/002-pane-tree.md
+docs/03_implementation/runtime/003-grid-layout.md
+docs/03_implementation/runtime/004-rendering-engine.md
+docs/03_implementation/runtime/005-buffer-contract.md
+docs/03_implementation/runtime/006-runtime-services.md
 ```
 
-The application is considered ready when the user can interact with the restored or initial Workspace. Readiness does not require:
+The runtime documents describe presentation and Workspace behavior in more detail.
 
-* every Resource to be downloaded,
-* every Domain Object to be refreshed,
-* every search index to be rebuilt,
-* authentication to succeed,
-* every relay to be available,
-* or every background task to complete.
-
-The implementation in this document exists to realize that lifecycle without scattering initialization logic across Svelte components and file-level singleton exports.
+This document focuses specifically on composition and startup.
 
 ---
 
-# Background
+# High-Level Ownership Model
 
-Historically, the application accumulated startup behavior in several places. Examples included:
+The current runtime ownership model is:
 
-* module-level singleton exports,
-* services instantiated when files were imported,
-* Svelte root-component lifecycle code,
-* relay setup,
-* login restoration,
-* database initialization,
-* Workspace construction,
-* Pane bindings,
-* settings restoration,
-* and background-service initialization.
+```text
+Browser / Svelte
+    ↓
++layout.svelte
+    ↓
+Application
+    = composition root + lifecycle owner
+    ↓
+ApplicationContext
+    = selected Svelte-facing runtime capabilities
+    ↓
+WorkspaceRuntime + application/domain services
+    ↓
+Svelte containers/components
+```
 
-This approach works while the application is small, but it creates several problems as the architecture becomes more explicit. Importing a file may create application state. Dependency ownership becomes difficult to see. Construction order becomes implicit.
+Infrastructure remains below the Application boundary:
 
-Tests may accidentally instantiate global infrastructure. A service cannot easily receive a replacement implementation because it imports another singleton directly. Browser resources such as:
+```text
+Application
+    ↓
+Nostr infrastructure
+Resource Worker bridge
+Outbox
+IndexedDB persistence
+Domain stores
+Domain services
+```
 
-* Workers,
-* WebSockets,
-* Nostr clients,
-* remote signers,
-* and future background workers
+The Application is where concrete implementations are connected.
 
-may outlive the application object that conceptually owns them. The Composition Root addresses these problems without introducing a framework.
-
----
-
-# Composition Root
-
-The standard architectural term for the application construction boundary is:
-
-> **Composition Root**
-
-The Composition Root is the one place where concrete objects are created and connected. Conceptually:
-
-```mermaid
-flowchart TD
-
-Root["Application Composition Root"] Signer["NostrSigner"] ResourceClient["ResourceClient"] Discovery["ResourceDiscovery"] Resolver["ResourceResolver"] Decoder["ResourceContentDecoder"] Runtime["Workspace Runtime"] Services["Application / Domain Services"] Root --> Signer Root --> ResourceClient Root --> Discovery Root --> Resolver Root --> Decoder Root --> Runtime Root --> Services ``` The concrete set of services will grow as the migration continues.
-
-The important rule is that long-lived application dependencies eventually originate here.
+It is not where their internal behavior is implemented.
 
 ---
 
 # Source Organization
 
-The current startup implementation is centered under:
+The main startup files are:
 
 ```text
+src/routes/+layout.svelte
+
 src/lib/application/
-
-runtime/ application.ts application-context.ts config/ application.config.ts ``` Related infrastructure remains in its owning layer. For example:
-
-```text
-src/lib/infrastructure/
-    nostr/
-        resource-client.ts
-        nostr-signer.ts
-        verification-client.ts
-        verification.worker.ts
+    index.ts
+    ui/index.ts
+    config/application.config.ts
+    runtime/application.ts
+    runtime/application-context.ts
 ```
 
-Generic Resource dependencies remain in:
+The composition root imports concrete implementations from their owning areas, including:
 
 ```text
+src/lib/domains/
 src/lib/resource/
+src/lib/infrastructure/
+src/lib/application/outbox/
+src/lib/application/resources/
+src/lib/application/services/
 ```
 
-The Composition Root imports those implementations and connects them. It does not move their implementation into `application.ts`.
+This does not mean those implementations belong to the Application layer.
+
+It means `Application` is the place where the running implementation graph is assembled.
 
 ---
 
-# Application Class
+# Public Application Boundaries
 
-The application startup boundary is represented by an `Application` class. A class is appropriate here because startup has:
-
-* long-lived state,
-* a constructed dependency graph,
-* startup sequencing,
-* lifecycle state,
-* and cleanup responsibilities.
-
-This is different from creating a class merely because an architectural noun exists. The `Application` object represents one running browser application instance. Conceptually:
-
-```ts
-export class Application {
-    readonly context: ApplicationContext;
-
-constructor( config: ApplicationConfig ) { this.context = this.compose(config); } async start(): Promise<void> { // ordered startup work } dispose(): void { // application-owned cleanup } } ``` The exact private helpers may evolve.
-
-The important public lifecycle is:
+The Application layer has two normal public entry points:
 
 ```text
-construct
-    ↓
-context immediately available
-    ↓
-start
-    ↓
-running application
-    ↓
-dispose
+$lib/application
+$lib/application/ui
 ```
 
----
+## `$lib/application`
 
-# Why Construction and Startup Are Separate
+This is the browser-safe / Node-safe application API.
 
-Construction and startup have different responsibilities.
-
-## Construction
-
-Construction creates the stable object graph. Examples include:
-
-* `NostrSigner`,
-* `ResourceClient`,
-* `ResourceDiscovery`,
-* `ResourceResolver`,
-* Resource content decorators,
-* `ResourceContentDecoder`,
-* and future long-lived application services.
-
-Construction should remain synchronous wherever practical.
-
-## Startup
-
-Startup performs work that requires asynchronous operations or ordered initialization. Examples may include:
-
-* opening IndexedDB,
-* restoring persisted login state,
-* configuring remote signer state,
-* loading settings,
-* restoring Workspace state,
-* initializing Domain stores,
-* and beginning background processing.
-
-The split allows the application context to exist before asynchronous startup completes.
-
----
-
-# Synchronous Composition
-
-The application object is created synchronously. Conceptually:
-
-```ts
-const application =
-    new Application(config);
-```
-
-Immediately after construction:
-
-```ts
-application.context
-```
-
-is stable and may be provided to the Svelte component tree. This is a deliberate design decision. Svelte context is established during component initialization. The application should not require:
-
-```ts
-await Application.create();
-```
-
-before `setContext()` can occur.
-
----
-
-# Asynchronous Start
-
-Asynchronous initialization begins through:
-
-```ts
-await application.start();
-```
-
-This provides a sequential, main-method-style startup flow. The user-visible application may choose to wait for the startup promise before rendering the interactive Workspace. The important point is that asynchronous work is coordinated by the application object rather than scattered across unrelated Svelte components.
-
----
-
-# Main-Method Style
-
-Startup should read as an ordered list of application initialization steps. Conceptually:
-
-```ts
-async start(): Promise<void> {
-    await this.openPersistence();
-    await this.restoreSettings();
-    await this.configureRelays();
-    await this.restoreAuthentication();
-    await this.initializeDomains();
-    await this.initializeWorkspace();
-    this.beginBackgroundProcessing();
-}
-```
-
-The exact methods above are illustrative of responsibility and sequencing; some are not yet migrated into the Composition Root. The desired style is nevertheless explicit:
+It exposes stable application contracts and capabilities such as:
 
 ```text
-step 1
-await
-step 2
-await
-step 3
-await
-...
+ApplicationConfig
+ApplicationContext
+Modules
+Settings contracts/services
+Workspace runtime contracts
+Resource-selection application contracts
+Outbox contracts
+account/authentication contracts
 ```
 
-This makes ordering visible and reviewable. Startup should not become an opaque graph of automatic dependency hooks.
+It intentionally does **not** export the concrete `Application` composition root.
+
+## `$lib/application/ui`
+
+This is the browser/Svelte presentation API.
+
+It contains Svelte components and DOM/browser-facing helpers.
+
+Keeping UI exports separate prevents Node-side consumers from loading browser-only dependencies such as Svelte components or Quill through a general application barrel.
 
 ---
 
-# Why Sequential Startup Is Useful
+# The Concrete Application Import Rule
 
-A sequential startup method makes several things clear. It shows:
-
-* what must happen before what,
-* which operations are readiness-critical,
-* which operations may fail without blocking the application,
-* where background processing begins,
-* and which subsystem owns each operation.
-
-It also makes startup debugging straightforward. If the application fails during step four, the startup path can identify which subsystem failed without reconstructing a hidden initialization graph.
-
----
-
-# Application Context
-
-The Composition Root exposes long-lived dependencies through:
+The concrete `Application` class lives at:
 
 ```text
-src/lib/application/runtime/application-context.ts
+$lib/application/runtime/application
+```
+
+The only runtime bootstrap location that should import it directly is:
+
+```text
+src/routes/+layout.svelte
 ```
 
 Conceptually:
 
-```ts
-export interface ApplicationContext {
-    readonly nostrSigner:
-        NostrSigner;
+```typescript
+import {
+    createApplicationConfig,
+    provideApplicationContext
+} from '$lib/application';
 
-readonly resourceClient: ResourceClient; readonly resourceDiscovery: ResourceDiscovery; readonly resourceResolver: ResourceResolver; readonly resourceContentDecoratorBuilder: ResourceContentDecoratorBuilder;
+// Bootstrap boundary only.
+import {
+    Application
+} from '$lib/application/runtime/application';
+```
 
-readonly resourceContentDecoder: ResourceContentDecoder; } ``` The interface will grow as additional long-lived services migrate into the Composition Root.
+This rule matters for dependency direction.
+
+Lower-level domain and infrastructure code may consume application contracts through `$lib/application`.
+
+If the root barrel also exported `Application`, a lower-level runtime value import could create a path such as:
+
+```text
+Application
+    → lower-level implementation
+        → $lib/application
+            → Application
+```
+
+Keeping the concrete composition root out of the barrel avoids that cycle.
 
 ---
 
-# Purpose of ApplicationContext
+# Application Configuration
 
-`ApplicationContext` is the stable dependency surface produced by the Composition Root. It answers:
+Application configuration is created through:
 
-> Which long-lived application capabilities were composed for this running application instance?
+```typescript
+createApplicationConfig()
+```
 
-It is not intended to become a global service locator. That distinction is critical.
+The current configuration contains:
+
+```typescript
+interface ApplicationConfig {
+    readonly resourceRelays:
+        readonly NostrRelay[];
+
+    readonly accountBootstrapRelays:
+        readonly NostrRelay[];
+}
+```
+
+Both are currently derived from:
+
+```text
+VITE_NOSTR_COMMA_DELIMITED_RELAY_URLS
+```
+
+The configuration boundary owns startup policy values.
+
+It does not construct services.
+
+The direction is:
+
+```text
+environment
+    ↓
+ApplicationConfig
+    ↓
+Application
+    ↓
+concrete infrastructure configuration
+```
+
+not:
+
+```text
+environment
+    ↓
+random Svelte components
+    ↓
+infrastructure configuration
+```
+
+---
+
+# `+layout.svelte` Is the Browser Bootstrap Boundary
+
+The root layout performs the browser/Svelte lifecycle work around the Application.
+
+Its responsibilities are intentionally small:
+
+```text
+construct Application
+provide ApplicationContext
+request persistent browser storage best-effort
+restore authentication
+start Application
+expose ready/error UI state
+stop Application on teardown
+```
+
+It does not construct Domain services, Resource processors, Nostr clients, Outbox strategies, or Workspace persistence.
+
+---
+
+# Root Layout Construction
+
+During component initialization, the root layout performs:
+
+```typescript
+const application =
+    new Application(
+        createApplicationConfig()
+    );
+
+provideApplicationContext(
+    application.context
+);
+```
+
+The `ApplicationContext` object therefore exists synchronously before `onMount()` startup work completes.
+
+The context object is stable for the lifetime of the root layout.
+
+---
+
+# Why Context Exists Before Startup
+
+`ApplicationContext` answers:
+
+> Which Application-owned capabilities are available to the Svelte subtree?
+
+It is not a readiness signal.
+
+Readiness is controlled separately by the root layout:
+
+```text
+Application constructed
+    ↓
+ApplicationContext provided
+    ↓
+startup runs
+    ↓
+ready = true
+    ↓
+child application UI rendered
+```
+
+Descendants are therefore not rendered as the interactive application until startup succeeds.
+
+---
+
+# ApplicationContext
+
+`ApplicationContext` is the intentional Svelte-facing runtime capability surface.
+
+It is **not** a dump of everything `Application` constructs.
+
+The current context includes application-level services such as:
+
+```text
+authenticationService
+accountService
+toastService
+settingsService
+navigationServiceFactory
+```
+
+Workspace/runtime capabilities:
+
+```text
+workspaceRuntime
+moduleResourceSelectionResolver
+```
+
+Bible capabilities:
+
+```text
+chapterService
+paragraphsService
+pericopesService
+bibleTextMarkupService
+bibleBooknamesService
+searchService
+verseService
+bibleVersionsService
+bookGroupingsService
+bibleLocationReferenceService
+bibleNavigationService
+```
+
+Notes:
+
+```text
+notesService
+```
+
+Reading Plans:
+
+```text
+planDefinitionsService
+planSubscriptionsService
+planProgressService
+plansPubSubService
+subsEnricherService
+encodedReadingsDecoderService
+```
+
+Strong's:
+
+```text
+strongsService
+```
+
+Infrastructure-only objects are deliberately not exposed merely because they are constructed by `Application`.
+
+Examples of private Application-owned dependencies include:
+
+```text
+NostrSigner
+NostrClient
+ResourceWorkerClient
+ResourceSelectionService
+OutboxProcessor
+PaneService
+ResourceDiscovery
+concrete stores
+publication strategies
+```
 
 ---
 
 # ApplicationContext Is Not a Service Locator
 
-Arbitrary TypeScript classes should not import a global context and fetch their own dependencies. Avoid:
+Svelte may consume Application-owned runtime capabilities through:
 
-```ts
-class BibleChapterService {
-    async get(...) {
-        const client =
-            applicationContext.resourceClient;
+```typescript
+useApplicationContext()
+```
+
+Core services should not reach into Svelte context to discover their own collaborators.
+
+Avoid:
+
+```typescript
+class ExampleService {
+    run(): void {
+        const context =
+            useApplicationContext();
+
+        context.someService.doSomething();
     }
 }
 ```
 
 Prefer constructor injection:
 
-```ts
-class BibleChapterService {
+```typescript
+class ExampleService {
     constructor(
-        private readonly resourceDiscovery:
-            ResourceDiscovery
+        private readonly dependency:
+            Dependency
     ) {}
 }
 ```
 
-The Composition Root creates the service:
+`Application` creates and wires the concrete graph.
 
-```ts
-const chapterService =
-    new BibleChapterService(
-        resourceDiscovery
-    );
-```
-
-Dependencies flow downward. They are not pulled from a registry.
+Dependencies flow downward.
 
 ---
 
-# Dependency Direction
+# Synchronous Composition
 
-The target dependency direction is:
+`new Application(config)` synchronously constructs the long-lived runtime graph.
 
-```mermaid
-flowchart TD
+This includes substantial browser/runtime infrastructure.
 
-Root["Application Composition Root"] AppService["Application Service"] Domain["Domain Service"] Resource["Resource Service"] Infrastructure["Infrastructure"] Root --> AppService Root --> Domain Root --> Resource Root --> Infrastructure AppService --> Domain Domain --> Resource Resource --> Infrastructure ``` The exact relationships vary by capability, but the Composition Root is where concrete implementations meet abstractions.
-
----
-
-# No Dependency-Injection Framework
-
-The implementation intentionally avoids a DI framework. No framework is required to write:
-
-```ts
-const signer =
-    new NostrSigner();
-
-const resourceClient = createBrowserResourceClient( signer ); const resourceDiscovery = new ResourceDiscovery( resourceClient ); ``` Plain constructor arguments provide:
-
-* explicit dependencies,
-* compile-time checking,
-* easy test substitution,
-* and obvious object ownership.
-
-Adding a container would currently add indirection without solving a problem that plain TypeScript cannot solve cleanly.
-
----
-
-# No File-Level Singleton Requirement
-
-Historically the repository frequently used patterns such as:
-
-```ts
-export const chapterService =
-    new ChapterService();
-```
-
-or:
-
-```ts
-export let localStorageService =
-    new LocalStorage();
-```
-
-These objects are created as a side effect of module import. The target Composition Root moves long-lived application service construction away from this pattern. Eventually:
+The important conceptual groups are:
 
 ```text
-import module
-    ≠
-create running application service
+Nostr + authentication
+Outbox + Nostr event publication
+Account
+Resource Worker bridge
+Resource-selection runtime
+Workspace runtime
+Application services
+Bible services
+Notes services
+Reading Plans services
+Strong's services
+ApplicationContext
 ```
 
-Imports should primarily define code. The Composition Root should create the running object graph.
+Construction does not mean the application is ready.
+
+`Application.start()` performs the ordered startup transition.
 
 ---
 
-# Incremental Migration
+# Nostr and Authentication Composition
 
-The application is not being rewritten all at once. Existing global singleton services may remain while individual owners are migrated. The migration rule is:
-
-> New architecture-aware dependencies should be composed explicitly; existing services migrate when their implementation phase reaches them.
-
-This avoids a large mechanical rewrite unrelated to the current Resource work.
-
----
-
-# Current Composition Root Responsibilities
-
-The Composition Root currently owns the construction of the new Resource infrastructure developed during the Resource implementation work. This includes:
-
-* `NostrSigner`,
-* browser `ResourceClient`,
-* Resource Discovery,
-* Resource Resolution,
-* content-representation resolution,
-* the Resource content decorator builder,
-* JSON Resource content decoding,
-* and `ResourceContentDecoder`.
-
-The set will expand during later implementation phases.
-
----
-
-# Resource Composition
-
-The current Resource dependency graph resembles:
-
-```mermaid
-flowchart TD
-
-Application["Application"] Signer["NostrSigner"] Client["ResourceClient"] Discovery["ResourceDiscovery"] Resolver["ResourceResolver"] ContentResolver["ContentRepresentationResolver"] Builder["ResourceContentDecoratorBuilder"] Json["JsonResourceContentDecorator"] Decoder["ResourceContentDecoder"] Application --> Signer Application --> Client Application --> Discovery Application --> Resolver Application --> Builder Application --> Decoder Signer --> Client Client --> Discovery ContentResolver --> Resolver Json --> Builder Builder --> Decoder ```
-
-This graph is constructed once for the running application.
-
----
-
-# Nostr Signer Construction
-
-The Composition Root creates one long-lived:
+Application construction creates one long-lived:
 
 ```text
 NostrSigner
 ```
 
-The signer exists even when no authenticated user session has been restored. This is intentional. Public Resource reads should be available without requiring a Resource Client rebuild after login. Conceptually:
+That signer is injected into:
 
 ```text
-construct application
-    ↓
-create NostrSigner
-    ↓
-create ResourceClient with signer
-    ↓
-public read capability exists
-    ↓
-restore/configure login later
-    ↓
-same signer becomes able to sign
+NostrAuthenticationStrategy
+NostrClient
 ```
 
----
-
-# Signer State vs Application State
-
-The signer owns signing mechanics. The application/login layer owns persisted login choice and restoration. For example, application-level ownership includes:
-
-* which login method was selected,
-* persisted nsec/session choice when applicable,
-* NIP-07 provider acquisition,
-* persisted NIP-46 connection details,
-* persisted NIP-46 client secret,
-* and authorization-flow presentation.
-
-The signer should not become the application session store.
-
----
-
-# NIP-07 Startup Boundary
-
-For NIP-07, the browser application owns access to:
+The current main-thread composition is conceptually:
 
 ```text
-window.nostr
+NostrSigner
+    ├── NostrAuthenticationStrategy
+    │       ↓
+    │   AuthenticationService
+    │
+    └── NostrClient
 ```
 
-The application may then configure the long-lived signer with the provider. The signer itself should not reach into global application state to decide whether NIP-07 is the active login method. This keeps browser/session policy above signing infrastructure.
+`NostrClient` owns relay transport behavior.
+
+`AuthenticationService` owns application-facing authentication behavior.
+
+The raw signer and Nostr client remain private to the Application composition.
 
 ---
 
-# NIP-46 Startup Boundary
+# Authentication Restoration Happens Before `Application.start()`
 
-For NIP-46, startup may restore persisted remote-signing information. The application owns the persisted session material. The signer owns the active remote-signing mechanism. The lifecycle is conceptually:
+The current root startup ordering deliberately places saved-login restoration in `+layout.svelte`:
 
-```text
-startup reads persisted NIP-46 state
-        ↓
-application configures NostrSigner
-        ↓
-NostrSigner establishes active signing mechanism
+```typescript
+await application.context
+    .authenticationService
+    .tryLogin();
+
+await application.start();
 ```
 
-The UI remains responsible for presenting any authorization URL or user interaction required by the NIP-46 flow.
+This means `Application.start()` may inspect the restored user ID when deciding whether to load Account state.
 
----
-
-# Resource Client Construction
-
-The Composition Root creates the browser Resource Client using the long-lived signer. Conceptually:
-
-```ts
-const nostrSigner =
-    new NostrSigner();
-
-const resourceClient = createBrowserResourceClient( nostrSigner ); ``` The browser Resource Client internally creates:
-
-* the verification client,
-* the verification Worker,
-* the rx-nostr instance,
-* the configured verifier,
-* the configured signer,
-* NIP-42 automatic authentication,
-* connection strategy,
-* retry behavior,
-* and operation timeouts.
-
-Those details remain infrastructure responsibilities. The Application only owns construction and lifetime.
-
----
-
-# Verification Worker Startup
-
-The Resource Client starts its verification client during composition. The verification library provides a main-thread verification fallback while the Worker becomes active. Therefore application startup deliberately does **not** do this:
+The ordering is:
 
 ```text
-create worker
+restore authentication
     ↓
-wait until worker status = active
+Application.start()
     ↓
-allow application startup to continue
+load authenticated Account state when available
 ```
 
-Instead:
+Authentication failure behavior belongs to `AuthenticationService` / its strategy.
+
+`Application.start()` does not duplicate login interpretation.
+
+---
+
+# Nostr Resource Discovery Remains on the Main Thread
+
+The Application constructs:
 
 ```text
-create ResourceClient
+ResourceDiscovery
+```
+
+using the main-thread `NostrClient`.
+
+Its responsibility is to translate transport-specific Nostr discovery results into Resource representations.
+
+The current boundary is:
+
+```text
+Nostr transport
     ↓
-verification client starts
+ResourceDiscovery
     ↓
-application continues
+ResourceRepresentation
+    ↓
+Resource Worker
 ```
 
-Verification remains available through the library fallback. This keeps an optimization from becoming a readiness dependency.
+Everything after discovery runs through the Resource Worker boundary.
 
 ---
 
-# Relay Configuration
+# Resource Worker Composition
 
-Relay configuration belongs to startup coordination because the running application needs to establish the relay set used by Resource operations. The Resource Client exposes:
+The Application creates a browser `ResourceWorkerClient` through:
 
-```ts
-setDefaultRelays(...)
+```typescript
+createBrowserResourceWorkerClient(
+    resourceDiscovery,
+    [
+        new NostrResourceResolutionStrategy(
+            nostrClient
+        )
+    ]
+)
 ```
 
-The Application determines which configured relay values should be applied. Conceptually:
+The main Application therefore owns the worker bridge and the discovery transport used by that bridge.
 
-```ts
-resourceClient.setDefaultRelays(
-    config.relays
-);
-```
-
-The Application chooses configuration. The Resource Client owns the rx-nostr relay mechanics.
-
----
-
-# Application Configuration
-
-Static/environment startup values belong under:
+The Resource Worker owns Resource processing such as:
 
 ```text
-src/lib/application/config/
-    application.config.ts
+ResourceService
+    ↓
+Resource Resolution
+    ↓
+descriptor processing
+    ↓
+external retrieval / integrity verification
+    ↓
+Resource content decoding
+    ↓
+ResourceHandler dispatch
+    ↓
+Domain interpretation / validation
+    ↓
+Domain installation
+    ↓
+Resource receipt persistence
 ```
 
-The configuration boundary may include values such as:
+This is a major difference from the older main-thread ResourceClient architecture.
 
-* default relay definitions,
-* environment-specific endpoints,
-* application publisher configuration,
-* or other boot-time constants.
-
-Configuration should describe values. It should not construct infrastructure services itself.
+There is no current Svelte-facing `ResourceClient` capability.
 
 ---
 
-# Configuration vs Runtime State
+# Workers Are Separate Composition Roots
 
-Configuration and runtime state are different. Configuration includes values known before the application starts. Runtime state includes values discovered or restored during startup. For example:
+A Worker does not consume `ApplicationContext`.
 
-```text
-default relay URLs
-    → configuration
+Workers are separate runtime/composition boundaries and may construct their own local stateless/domain dependencies.
 
-currently authenticated pubkey → runtime state persisted login method → restored application state active Workspace → runtime state ``` Keeping them separate prevents `application.config.ts` from becoming a second service container.
-
----
-
-# Resource Discovery Construction
-
-The Composition Root connects Resource Discovery to the Resource Client. Conceptually:
-
-```ts
-const resourceDiscovery =
-    new ResourceDiscovery(
-        resourceClient
-    );
-```
-
-This dependency is explicit. `ResourceDiscovery` does not import a global Resource Client singleton.
-
----
-
-# Resource Resolution Construction
-
-The Composition Root constructs representation-specific Resource resolvers and supplies them to the generic `ResourceResolver`. Current composition resembles:
-
-```ts
-const contentRepresentationResolver =
-    new ContentRepresentationResolver();
-
-const resourceResolver = new ResourceResolver([ contentRepresentationResolver ]); ``` Future startup composition may add:
-
-```text
-DescriptorRepresentationResolver
-DescriptorsRepresentationResolver
-```
-
-without changing ResourceResolver's public role.
-
----
-
-# Resource Content Decoder Construction
-
-The Composition Root constructs the generic content decorator registry. Current registration includes:
-
-```text
-application/json
-    → JsonResourceContentDecorator
-```
+This rule is used by current implementations such as Reading Plans and Notes worker paths.
 
 Conceptually:
 
-```ts
-const resourceContentDecoratorBuilder =
-    new ResourceContentDecoratorBuilder([
-        {
-            token:
-                'application/json',
+```text
+Browser Application
+    → Application composition root
 
-decorate: (inner) => new JsonResourceContentDecorator( inner ) } ]); ``` The decoder then receives the builder:
-
-```ts
-const resourceContentDecoder =
-    new ResourceContentDecoder(
-        resourceContentDecoratorBuilder
-    );
+Worker
+    → worker-local composition root
 ```
 
-Later gzip or hex support is added by composition rather than by rewriting the decoder.
+Do not make a domain helper global merely so both roots can share the same object instance.
+
+Share types and behavior definitions; construct instances in the appropriate root.
 
 ---
 
-# Composition Is the Extension Point
+# Outbox Composition
 
-The Composition Root is where supported implementations are selected. Examples:
+Application construction creates the durable Outbox publication path.
+
+The high-level composition is:
 
 ```text
-Resource representation support
-    → register representation resolver
+IndexedDBOutboxStore
+    ↓
+OutboxProcessor
+    ├── NostrResourcePublicationStrategy
+    └── NostrEventPublicationStrategy
+```
 
-Resource encoding support → register content decorator Domain interpretation support → later register/select Resource Type interpreter ``` This keeps extension decisions visible in one place.
-
----
-
-# Svelte Integration
-
-Svelte is the presentation framework around the running application. Svelte should not itself become the dependency-construction mechanism. The preferred boundary is:
+Resource publication uses:
 
 ```text
-Svelte root layout
-    ↓
-construct Application
-    ↓
-provide ApplicationContext
-    ↓
-call Application.start()
-    ↓
-render application subtree
+ResourceContentDecoratorBuilder
+    ├── application/json
+    ├── gzip
+    └── hex
+        ↓
+ResourceContentEncoder
+        ↓
+NostrResourcePublicationStrategy
 ```
 
-This allows the core application composition to remain plain TypeScript.
+The Outbox processor is application-owned but not exposed directly through `ApplicationContext`.
+
+Domain write services receive the publication/wakeup capabilities they need through constructor injection.
 
 ---
 
-# Why the Root Layout Is Preferred
+# Nostr Event Composition
 
-The Composition Root belongs at the highest stable browser component boundary. For the SvelteKit SPA, that is preferably:
+Application also composes local persistence and publication for selected Nostr events:
 
 ```text
-+layout.svelte
+IndexedDBNostrEventsStore
+IndexedDBNostrEventWriteTransaction
+NostrEventPublication
+OutboxProcessor
+    ↓
+NostrEventsService
 ```
 
-rather than:
+`NostrAccountStrategy` consumes `NostrEventsService` rather than making the Profile UI talk directly to raw Nostr infrastructure.
+
+---
+
+# Account Composition
+
+The account path is:
 
 ```text
-+page.svelte
+NostrClient
+NostrEventsService
+ApplicationConfig.accountBootstrapRelays
+KJVOnly publisher key
+    ↓
+NostrAccountStrategy
+    ↓
+AccountService
+    ↓
+ApplicationContext
+    ↓
+Profile UI
 ```
 
-The distinction matters because `+page.svelte` already owns significant Workspace Runtime implementation behavior. Moving application composition into the root layout prevents startup infrastructure and Workspace logic from continuing to accumulate in the same component.
+Relay/account state is application state.
+
+The removed `NostrAccountRelayProvider` should not be recreated as a parallel UI state channel.
 
 ---
 
-# Svelte Context
+# Resource Selection Composition
 
-The Svelte component tree may access long-lived dependencies through Svelte context. Svelte context is:
-
-* scoped to a component subtree,
-* established by a parent component,
-* and retrieved by descendants.
-
-It is not a global application registry. Conceptually:
-
-```ts
-setContext(
-    APPLICATION_CONTEXT_KEY,
-    application.context
-);
-```
-
-Descendants may use a small helper around:
-
-```ts
-getContext(...)
-```
-
-for UI integration. Plain TypeScript services continue using constructor injection.
-
----
-
-# Svelte Context Must Be Established Synchronously
-
-A critical Svelte constraint is that `setContext()` belongs to component initialization. Therefore the application context must be available before awaiting startup. Correct conceptual ordering:
-
-```ts
-const application =
-    new Application(config);
-
-setContext( APPLICATION_CONTEXT_KEY, application.context ); onMount(() => { // asynchronous start happens here }); ``` Avoid:
-
-```ts
-onMount(async () => {
-    const application =
-        await createApplication();
-
-setContext(...); }); ``` That makes Svelte context creation depend on asynchronous mount timing and violates the intended initialization boundary.
-
----
-
-# Stable Context Before Readiness
-
-The object references inside `ApplicationContext` exist before startup is complete. That does not mean every capability is fully initialized. For example:
+The Application constructs:
 
 ```text
-ResourceClient object exists
-    before
-relay operations necessarily succeed
+LocalStorageResourceSelectionStore
+    ↓
+ResourceSelectionService
+    ↓
+ModuleResourceSelectionBuilder
+    ↓
+ModuleBufferFactory
+    ↓
+WorkspaceRuntime
 ```
 
-or:
+Module-specific Resource requirements are contributed through domain-owned contributors.
+
+Current contributors include:
 
 ```text
-NostrSigner object exists
-    before
-persisted authentication is restored
+Bible
+Bible Search
+Strong's
+Notes
+Reading Plans
+No-Resource application modules
 ```
 
-The context represents the application object graph. Readiness represents completion of required startup work. These concepts should not be conflated.
-
----
-
-# Root Layout Startup Pattern
-
-A representative Svelte startup pattern is:
-
-```svelte
-<script lang="ts">
-    import {
-        onMount,
-        setContext
-    } from 'svelte';
-
-import { Application } from '$lib/application/runtime/application'; import { APPLICATION_CONTEXT_KEY } from '$lib/application/runtime/application-context'; import { applicationConfig } from '$lib/application/config/application.config'; const application = new Application( applicationConfig );
-
-setContext( APPLICATION_CONTEXT_KEY, application.context ); let ready = $state(false); let startupError = $state<unknown>(); onMount(() => { let disposed = false; const start = async () => { try { await application.start();
-
-if (!disposed) { ready = true; } } catch (error) { if (!disposed) { startupError = error; } } }; void start(); return () => { disposed = true; application.dispose(); }; }); </script> ``` This is the preferred lifecycle shape.
-
-The exact state syntax may evolve with the Svelte version and UI needs.
-
----
-
-# Why onMount Is Not async
-
-Avoid:
-
-```ts
-onMount(async () => {
-    await application.start();
-
-return () => { application.dispose(); }; }); ``` An async function returns a Promise rather than a synchronous cleanup callback. Instead, `onMount()` should remain synchronous and invoke an inner async function. This preserves Svelte teardown semantics.
-
----
-
-# Cleanup Ownership
-
-The root component that owns the `Application` instance should dispose it when that application instance ends. Conceptually:
-
-```text
-root component created
-    ↓
-Application created
-    ↓
-Application.start()
-    ↓
-running application
-    ↓
-root teardown
-    ↓
-Application.dispose()
-```
-
-This provides one explicit lifetime boundary for application-owned infrastructure.
-
----
-
-# Application Disposal
-
-`Application.dispose()` coordinates cleanup of long-lived objects created by the Composition Root. Examples include:
-
-* Resource Client disposal,
-* verification-worker termination through Resource Client disposal,
-* active signer cleanup,
-* remote NIP-46 connection cleanup,
-* future background workers,
-* future long-lived subscriptions,
-* and other application-scoped resources.
-
-Each subsystem should still own the mechanics of its cleanup. The Application calls the appropriate disposal operations because it owns their lifetime.
-
----
-
-# Resource Client Disposal
-
-The browser Resource Client owns the verification client it creates. Disposing Resource Client therefore disposes verification infrastructure and terminates the verification Worker. The Application does not terminate the Worker directly. The lifetime chain is:
-
-```text
-Application
-    owns ResourceClient
-        owns VerificationServiceClient
-            owns Worker
-```
-
-Cleanup should follow the same ownership chain.
-
----
-
-# Signer Disposal
-
-The Application also owns the long-lived signer instance. Signer disposal may:
-
-* clear locally held secret key bytes,
-* close an active NIP-46 signer/connection,
-* and release signer-specific resources.
-
-NIP-07 requires no equivalent owned connection cleanup when the browser extension owns the provider.
-
----
-
-# Startup Readiness
-
-The architectural definition remains:
-
-> The application is ready when the user can interact with the restored or initial Workspace.
-
-Implementation readiness should therefore track the minimum blocking startup sequence rather than the completion of every possible asynchronous activity.
-
----
-
-# Blocking Startup Work
-
-Blocking startup work is work without which the application cannot correctly present its initial interactive state. Likely examples include:
-
-* opening required local persistence,
-* restoring required application settings,
-* creating/restoring the initial Workspace Runtime,
-* and establishing the minimum state needed by the initial Module.
-
-As implementation moves into the Composition Root, each step should be explicitly classified as blocking or deferred.
-
----
-
-# Non-Blocking Startup Work
-
-The following generally should not become readiness gates merely because they are asynchronous:
-
-* verification-worker optimization becoming active,
-* successful relay connection to every configured relay,
-* Resource refresh,
-* optional Resource installation,
-* search-index rebuilding,
-* Outbox publishing,
-* synchronization convergence,
-* and other maintenance tasks.
-
-These belong to infrastructure fallback or Background Processing where possible.
-
----
-
-# Authentication and Readiness
-
-Authentication failure does not automatically prevent the locally available application from becoming interactive. The architecture explicitly allows startup to degrade when authentication or remote capabilities are unavailable. This supports offline-first behavior. A user may still be able to:
-
-* read installed Bible data,
-* use local notes,
-* restore Workspace state,
-* and interact with other installed Domain Objects
-
-without successful remote authentication.
-
----
-
-# Public Resource Reads Before Login
-
-The long-lived signer / Resource Client construction was designed specifically so public Resource reads are not coupled to login reconstruction. Conceptually:
-
-```text
-Application construction
-    ↓
-ResourceClient available
-    ↓
-public Nostr reads available
-```
-
-Authentication later adds signing capability to the existing signer. The Resource Client remains the same object.
-
----
-
-# Relay Availability and Readiness
-
-Relay failure should not automatically fail application startup when locally authoritative data is available. ResourceClient already distinguishes:
-
-```text
-normal absence
-```
-
-from:
-
-```text
-transport unavailable
-```
-
-Startup and later application services can therefore degrade appropriately instead of converting all remote failures into fatal startup failures.
-
----
-
-# Offline Startup
-
-The startup implementation should preserve normal operation while offline whenever the necessary Domain Objects are already installed. Conceptually:
-
-```text
-start application
-    ↓
-open local persistence
-    ↓
-restore settings/workspace
-    ↓
-remote services unavailable
-    ↓
-continue with installed local state
-```
-
-Remote Resource discovery and synchronization can resume when connectivity returns.
-
----
-
-# Startup Error Categories
-
-Not all startup failures should be handled identically. At a minimum, implementation should distinguish conceptually between:
-
-```text
-critical local startup failure
-    vs
-optional remote capability failure
-```
-
-A critical local failure may prevent the application from constructing a valid interactive Workspace. A relay or authentication failure generally should not when local state remains usable.
-
----
-
-# Avoid Catch-and-Ignore Startup
-
-Startup should not become:
-
-```ts
-try {
-    await everything();
-} catch {
-    // ignore
+The generic selection builder must not regain module-specific branching such as:
+
+```typescript
+if (module === Modules.BIBLE) {
+    // ...
 }
 ```
 
-That hides which application capability failed. Instead, startup coordination should either:
-
-* propagate a genuinely fatal error,
-* isolate an optional subsystem failure,
-* or record/surface the degraded capability appropriately.
-
-The owning subsystem should retain useful diagnostic information.
+Module Resource semantics belong to contributors.
 
 ---
 
-# Workspace Runtime Boundary
+# Workspace Composition
 
-The Composition Root will eventually construct or obtain the long-lived Workspace Runtime services required by the application. However, Workspace Runtime behavior remains separate. Startup may say:
-
-```text
-initialize Workspace Runtime
-```
-
-but the Runtime still owns:
-
-* Pane-tree state,
-* Buffer assignment,
-* Module Instance placement,
-* layout operations,
-* selection/focus coordination,
-* and Workspace persistence semantics.
-
-The Application coordinates initialization. It does not become the Workspace Runtime.
-
----
-
-# Current +page.svelte Migration
-
-The current application historically performs significant Workspace management in:
+The Workspace path is:
 
 ```text
-+page.svelte
-```
-
-This includes event-driven operations such as:
-
-* close Pane,
-* split Pane,
-* replace Buffer,
-* reorganize the Pane tree,
-* and restore runtime state.
-
-That code is not discarded merely because the Composition Root now exists. The migration is incremental. The desired end state is:
-
-```text
-+layout.svelte
-    → application composition / lifecycle boundary
-
-+page.svelte → Workspace presentation host Workspace Runtime services → own Workspace operations ```
-
----
-
-# Composition Root Does Not Replace Workspace Runtime
-
-A common mistake would be to move all root-component logic into `Application` simply because `Application` is now the startup owner. That would recreate the same coupling in a TypeScript class. The Application should coordinate:
-
-```text
-workspaceRuntime.start(...)
-```
-
-or equivalent behavior. It should not implement:
-
-```text
-splitPane()
-deletePane()
-replaceBuffer()
-calculateGrid()
-```
-
-Those remain Runtime responsibilities.
-
----
-
-# Settings Boundary
-
-Persisted settings should be available early enough that the initial interface reflects the user's preferences. Startup may coordinate settings restoration. The settings subsystem still owns:
-
-* settings models,
-* persistence format,
-* validation,
-* and change behavior.
-
-Application startup should consume that capability rather than duplicate it.
-
----
-
-# Local Persistence Boundary
-
-Opening required persistence is a startup concern. Database implementation is not. The desired dependency is:
-
-```text
-Application.start()
+PaneService
     ↓
-Persistence capability.open()
+WorkspaceRuntime
 ```
 
-not:
+`PaneService` remains an internal implementation dependency.
+
+`WorkspaceRuntime` is the Svelte-facing Workspace coordinator and is exposed through `ApplicationContext`.
+
+The Application also creates:
 
 ```text
-Application.start()
+ModuleResourceSelectionResolver
+```
+
+against the `WorkspaceRuntime` so module UI can resolve the Resource-selection snapshot captured on each Buffer.
+
+---
+
+# Per-Container Runtime State Uses Factories
+
+Not every runtime service should be a singleton.
+
+`NavigationService` is intentionally per-container state.
+
+Application therefore constructs:
+
+```text
+NavigationServiceFactory
+```
+
+and exposes the factory through `ApplicationContext`.
+
+Login/Profile containers request their own independent navigation service.
+
+This avoids accidentally sharing one navigation stack between independent module instances.
+
+The general rule is:
+
+```text
+shared application state
+    → long-lived Application-owned service
+
+independent per-container state
+    → Application-owned factory
+```
+
+---
+
+# Domain Service Composition
+
+Application composes domain-facing services with their stores, Resource loaders, publication paths, and helper services.
+
+Examples include:
+
+```text
+Bible
+    ChapterService
+    ParagraphsService
+    PericopesService
+    BibleTextMarkupService
+    BibleBooknamesService
+    BibleVersionsService
+    SearchService
+    VerseService
+    BibleNavigationService
+
+Notes
+    NotesService
+
+Reading Plans
+    PlanDefinitionsService
+    PlanSubscriptionsService
+    PlanProgressService
+    PlansPubSubService
+    SubsEnricherService
+    EncodedReadingsDecoderService
+
+Strong's
+    StrongsService
+```
+
+The Composition Root imports concrete persistence adapters when wiring these services.
+
+That is intentional composition-root behavior and is not a domain-boundary violation.
+
+---
+
+# ResourceLoader Boundary
+
+Domain Resource-backed services use `ResourceLoader` over the generic install capability supplied by `ResourceWorkerClient`.
+
+Conceptually:
+
+```text
+Domain Service
     ↓
-raw IndexedDB transaction logic
+ResourceLoader
+    ↓
+ResourceWorkerClient.install(reference)
 ```
 
-The Composition Root connects the application to the persistence implementation. The persistence owner manages the database mechanics.
+Domain services therefore do not know about Resource Worker message mechanics or Nostr transport.
 
 ---
 
-# Background Processing Boundary
+# Current ApplicationContext Construction
 
-Background Processing begins after the application has reached its usable state, except for any narrowly required recovery step that the architecture identifies as blocking. Conceptually:
+After the object graph is composed, `Application` creates one context object containing only Svelte-facing capabilities.
+
+Conceptually:
+
+```typescript
+this.context = {
+    authenticationService,
+    accountService,
+    toastService,
+    settingsService,
+    navigationServiceFactory,
+
+    workspaceRuntime,
+    moduleResourceSelectionResolver,
+
+    // Bible services
+    // Notes services
+    // Reading Plans services
+    // Strong's services
+};
+```
+
+The context object is not replaced during startup.
+
+---
+
+# Root Startup Flow
+
+The actual root startup flow is:
 
 ```text
-await blocking startup
-        ↓
-application ready
-        ↓
-start background processing
++layout.svelte initializes
+    ↓
+createApplicationConfig()
+    ↓
+new Application(config)
+    ↓
+provideApplicationContext(application.context)
+    ↓
+onMount()
+    ↓
+request persistent browser storage (best effort, non-blocking)
+    ↓
+authenticationService.tryLogin()
+    ↓
+application.start()
+    ↓
+ready = true
+    ↓
+render child application UI
 ```
 
-Background work may include:
-
-* Resource refresh,
-* deferred installation,
-* Outbox retry,
-* synchronization,
-* derived-data maintenance,
-* and search indexing.
-
-The Application coordinates the transition into background operation. The background subsystem owns the work itself.
-
----
-
-# Startup Must Not Await Convergence
-
-Avoid:
+If startup throws:
 
 ```text
-Application.start()
-    waits for all sync
-    waits for all Resources
-    waits for all relays
-    waits for all indexes
-    waits for Outbox empty
-    then renders UI
+startupError = error
+    ↓
+render "Application startup failed."
 ```
 
-That would violate the offline-first startup architecture. The application should restore a usable local state first and converge afterward.
-
----
-
-# Browser-Only Application
-
-KJVOnly is a browser-only SPA. The startup implementation may therefore use browser capabilities such as:
-
-* IndexedDB,
-* localStorage,
-* Web Workers,
-* WebSockets,
-* browser extension APIs,
-* and DOM-integrated presentation services.
-
-There is no server-side rendering startup path to maintain. This simplifies Composition Root ownership.
-
----
-
-# Browser Infrastructure Should Still Be Isolated
-
-Browser-only does not mean every service should directly reach into browser globals. Prefer explicit boundaries such as:
+When the root layout is destroyed:
 
 ```text
-Application
-    obtains NIP-07 provider
-        ↓
-configures NostrSigner
+application.stop()
 ```
 
-rather than:
-
-```text
-NostrSigner
-    globally reads window.nostr whenever it wants
-```
-
-Similarly, infrastructure factories may own Worker creation while application code owns their lifetime.
+is invoked.
 
 ---
 
-# Construction vs Browser Side Effects
+# Persistent Browser Storage Is Best Effort
 
-Construction may create long-lived browser infrastructure where the implementation requires it, such as the Resource Client verification service. But asynchronous application state restoration remains in `start()`. The important rule is not "constructors may never create browser objects." The important rule is:
+The root layout requests persistent browser storage through the Storage API when available.
 
-> Object graph construction must remain predictable, and asynchronous application readiness work must remain explicit.
+This request is deliberately non-blocking:
+
+```typescript
+void requestPersistentStorage();
+```
+
+Failure to obtain persistent storage does not prevent the application from starting.
+
+This is browser durability policy, not an application-readiness requirement.
 
 ---
 
-# Startup Idempotence
+# `Application.start()` State Model
 
-`Application.start()` should be treated as the lifecycle transition for one Application instance. Normal application code should call it once. If later implementation requires protection against duplicate calls, the Application may track startup state explicitly. For example:
+`Application` tracks a small lifecycle state:
 
 ```text
 created
 starting
 started
-disposed
+stopped
 ```
 
-This state machine should be introduced only if duplicate-start or lifecycle race behavior becomes a real concern. Do not add lifecycle ceremony merely for stylistic completeness.
+It also retains the in-flight startup Promise.
 
----
-
-# Disposal After Failed Startup
-
-If startup fails after some infrastructure has been constructed, the Application object still owns that infrastructure. Root teardown should therefore still call:
-
-```ts
-application.dispose();
-```
-
-This ensures partially started browser resources are not leaked. The exact rollback of individual startup steps belongs to the subsystem that created mutable state.
-
----
-
-# Application Context Helpers
-
-Svelte components may use a small helper such as:
-
-```ts
-export function getApplicationContext():
-    ApplicationContext {
-
-return getContext( APPLICATION_CONTEXT_KEY ); } ``` This helper is appropriate at the Svelte presentation boundary. It should not be imported into arbitrary Domain or Resource classes as a substitute for constructor injection.
-
----
-
-# UI Dependency Access
-
-A Svelte Module component may retrieve an application capability from context because the component itself is constructed by Svelte rather than by the Composition Root. Conceptually:
+Important behavior:
 
 ```text
-Svelte component
-    ↓
-getApplicationContext()
-    ↓
-application service
+start() while started
+    → resolves immediately
+
+start() while startup already in progress
+    → returns the same Promise
+
+start() after stopped
+    → rejects
+
+startup failure
+    → state returns to created
+    → startPromise cleared
+    → a later start may retry
 ```
 
-That is different from a plain TypeScript service performing service location. The UI framework boundary is exactly where Svelte context is useful.
+This makes startup idempotent for normal repeated callers without allowing a stopped Application to restart.
 
 ---
 
-# Future Domain Composition
+# `Application.startInternal()` Ordering
 
-As Domain implementation is migrated, the Composition Root should eventually construct long-lived Domain services as well. Conceptually:
+The current ordered startup sequence is:
 
 ```text
-Application
-    ├── Bible Domain services
-    ├── Notes Domain services
-    ├── Reading Plans Domain services
-    ├── shared Application Services
-    ├── Resource services
-    └── Technical Infrastructure
+1. apply Settings to the document
+2. restore Resource selections
+3. initialize WorkspaceRuntime with the Bible module
+4. configure Nostr Resource relays
+5. inspect restored authenticated user ID
+6. load Account state when authenticated
+7. begin Account refresh in the background
+8. wake the durable Outbox
+9. mark Application started
+10. begin bootstrap Resource installation asynchronously
 ```
 
-This does not mean every small object must be application-scoped. Only dependencies whose ownership/lifetime makes sense at the application level belong in the root graph.
+Each step has a distinct ownership reason.
 
 ---
 
-# Transient Objects
+# Step 1 — Apply Settings
 
-The Composition Root should not become a factory for every short-lived object in the codebase. Examples of objects that may remain locally constructed include:
+Startup begins with:
 
-* request-local values,
-* candidate Domain Objects,
-* parser-local helpers,
-* view-local navigation objects,
-* short-lived operation contexts,
-* and immutable data values.
+```typescript
+settingsService.applySettings();
+```
 
-The Composition Root is for application composition, not universal object creation.
+This applies persisted/default visual Settings to the document before the interactive application is exposed.
+
+The Settings UI owns editing/persistence behavior.
+
+Startup owns applying the current settings at application initialization.
 
 ---
 
-# Long-Lived Objects
+# Step 2 — Restore Resource Selections
 
-Likely Composition Root candidates are objects with one or more of these properties:
+Application restores persisted Resource-selection state through:
 
-* application lifetime,
-* expensive infrastructure ownership,
-* connection lifecycle,
-* shared mutable state,
-* cross-feature coordination,
-* dependency graph significance,
-* or explicit startup/disposal behavior.
+```typescript
+resourceSelectionService.restore();
+```
+
+This occurs before Workspace initialization so newly created Buffers can capture the restored Resource-selection snapshot.
+
+The ordering is important:
+
+```text
+restore Resource selections
+    ↓
+initialize Workspace
+    ↓
+create initial Buffer
+    ↓
+capture selections
+```
+
+---
+
+# Step 3 — Initialize Workspace
+
+The Workspace starts with:
+
+```typescript
+workspaceRuntime.initialize(
+    Modules.BIBLE
+);
+```
+
+`WorkspaceRuntime` owns Workspace restoration/initialization behavior.
+
+`Application` only decides when that initialization occurs and which initial module is requested.
+
+The current initial module is Bible.
+
+---
+
+# Step 4 — Configure Resource Relays
+
+Application then configures the long-lived `NostrClient`:
+
+```typescript
+nostrClient.setDefaultRelays(
+    config.resourceRelays
+);
+```
+
+Configuration values belong to `ApplicationConfig`.
+
+Relay mechanics belong to `NostrClient`.
+
+Application coordinates the two.
+
+---
+
+# Step 5 — Resolve Restored User Identity
+
+After authentication restoration has already run in `+layout.svelte`, startup checks:
+
+```typescript
+authenticationService.tryGetUserId()
+```
+
+If no user is authenticated, Account loading is skipped.
+
+Anonymous Resource reading and local application startup are therefore not blocked on Account state.
+
+---
+
+# Step 6 — Load Account State
+
+When a user ID exists, Application awaits:
+
+```typescript
+accountService.load(userId)
+```
+
+This makes the currently known Account state available before startup completes.
+
+The Account service owns Account semantics.
+
+Application owns startup ordering.
+
+---
+
+# Step 7 — Refresh Account State in the Background
+
+After the synchronous startup Account load, Application starts:
+
+```typescript
+void accountService.refresh(userId)
+```
+
+Refresh failure is logged but does not fail Application startup.
+
+This preserves the distinction between:
+
+```text
+local/current Account state
+    = startup-relevant
+
+remote Account refresh
+    = background work
+```
+
+---
+
+# Step 8 — Wake the Durable Outbox
+
+Application then calls:
+
+```typescript
+outboxProcessor.wake();
+```
+
+The Outbox is durable.
+
+Startup does not rebuild publication intent from Domain stores.
+
+It only wakes pending publication work after signing and relay configuration are ready.
+
+---
+
+# Step 9 — Mark the Application Started
+
+At this point Application sets:
+
+```text
+state = started
+```
+
+The application is considered interactive before bootstrap Resource processing completes.
+
+This preserves the local-first startup rule.
+
+---
+
+# Step 10 — Start Bootstrap Resource Installation Asynchronously
+
+After becoming started, Application launches:
+
+```typescript
+void installBootstrapResources();
+```
+
+This work does not block `Application.start()`.
+
+The configured bootstrap Resource is currently:
+
+```text
+publisher:
+    KJVONLY_PUBKEY
+
+resourceId:
+    kjvonly/resources/collections/default
+```
+
+The Resource Worker performs installation.
+
+The bootstrap collection may recursively install multiple Resources.
+
+---
+
+# Bootstrap Resource Failure Is Non-Fatal
+
+Bootstrap installation is intentionally best-effort after readiness.
+
+Application logs conditions such as:
+
+```text
+bootstrap Resource not found
+selection initialization failure
+incomplete terminal Resources
+bootstrap installation failure
+```
+
+but does not transition the already-started application back into failure.
+
+This is deliberate.
+
+A user should be able to enter the application from available local state even if remote bootstrap acquisition fails.
+
+---
+
+# Bootstrap Resource Selections
+
+After successful bootstrap installation, Application examines the terminal installed Resources and initializes missing global Resource selections where the result is unambiguous.
+
+The logic deliberately ignores:
+
+```text
+the collection Resource itself
+results without trustworthy identity
+Resource Types that resolve to multiple distinct terminal Resources
+```
+
+For a Resource Type with exactly one terminal Resource, Application may initialize the missing selection.
+
+If multiple Resources of the same Resource Type are installed, Application leaves selection to domain/module policy instead of guessing.
+
+This preserves the distinction between:
+
+```text
+bootstrap installation
+    ≠
+forced global selection
+```
+
+---
+
+# Readiness Contract
+
+The application becomes ready when:
+
+```text
+authentication restoration attempt completed
+Application.start() completed
+```
+
+Readiness does **not** require:
+
+```text
+bootstrap Resource installation completion
+Account remote refresh completion
+all Resources downloaded
+all relays reachable
+all synchronization completed
+all background workers idle
+```
+
+This keeps startup responsive and local-first.
+
+---
+
+# Root Layout Ready/Error Rendering
+
+The root layout tracks:
+
+```text
+ready
+startupError
+```
+
+Presentation is:
+
+```text
+ready
+    → render child application UI
+
+startupError
+    → render startup failure message
+
+otherwise
+    → render loading state
+```
+
+The child Workspace route therefore does not render as interactive application UI until startup has completed successfully.
+
+---
+
+# Startup Failure Behavior
+
+If a readiness-critical operation inside `Application.startInternal()` throws:
+
+```text
+state
+    → created
+
+startPromise
+    → undefined
+
+error
+    → rethrown to +layout.svelte
+```
+
+The root layout captures the error and presents the startup failure state.
+
+Background work that is intentionally non-critical handles its own failure locally instead.
 
 Examples include:
 
-* ResourceClient,
-* NostrSigner,
-* Workspace Runtime,
-* background coordinator,
-* Domain stores/services,
-* and shared application services.
+```text
+persistent-storage request
+Account refresh
+bootstrap Resource installation
+```
 
 ---
 
-# Composition Root and Tests
+# Shutdown
 
-Explicit construction improves testing because tests can instantiate a dependency with controlled collaborators. For example:
+The root layout teardown calls:
 
-```ts
-const discovery =
-    new ResourceDiscovery(
-        fakeResourceClient
+```typescript
+void application.stop();
+```
+
+`Application.stop()` is idempotent.
+
+The current shutdown order is:
+
+```text
+1. dispose ResourceWorkerClient
+2. dispose NostrClient
+3. clear NostrSigner
+4. mark Application stopped
+```
+
+The Resource Worker bridge is disposed before the main-thread Nostr discovery transport so the worker cannot begin another discovery request during transport teardown.
+
+---
+
+# Stopped Applications Do Not Restart
+
+After `Application.stop()`:
+
+```text
+state = stopped
+```
+
+A later `start()` rejects with:
+
+```text
+Application has already been stopped.
+```
+
+A disposed Application instance is not reused.
+
+A new root lifetime creates a new Application object graph.
+
+---
+
+# Main-Thread vs Worker Ownership
+
+The current Resource split is important enough to state explicitly.
+
+Main thread:
+
+```text
+Application
+NostrClient
+ResourceDiscovery
+ResourceWorkerClient bridge
+Svelte runtime
+WorkspaceRuntime
+Domain-facing services
+Outbox publication
+```
+
+Resource Worker:
+
+```text
+ResourceService
+Resource Resolution
+Descriptor processing
+Resource decoding
+ResourceHandler dispatch
+Domain interpretation / validation
+Domain installation
+Resource receipt persistence
+```
+
+Do not move Resource processing back to a Svelte-facing main-thread Resource service merely for convenience.
+
+---
+
+# Application Owns Object Lifetime, Not Domain Behavior
+
+Application construction may be large because it is the one explicit composition root.
+
+That does not make Application responsible for implementing subsystem behavior.
+
+Examples:
+
+```text
+Application
+    chooses which Resource publication strategies exist
+
+OutboxProcessor
+    performs publication processing
+```
+
+```text
+Application
+    wires ChapterService to its store/loader/helpers
+
+ChapterService
+    owns chapter behavior
+```
+
+```text
+Application
+    initializes WorkspaceRuntime
+
+WorkspaceRuntime
+    owns Workspace behavior
+```
+
+This distinction prevents the composition root from becoming a god service.
+
+---
+
+# Concrete Imports Are Expected in the Composition Root
+
+The Application file intentionally imports concrete implementations from domains and infrastructure.
+
+Examples include:
+
+```text
+IndexedDB stores
+Nostr strategies
+Resource-selection contributors
+publication implementations
+worker factories
+```
+
+That is not a violation of public domain boundaries.
+
+A composition root must know which implementations it is composing.
+
+The public-root import rule primarily applies to ordinary external consumers, not to the composition root selecting concrete implementations.
+
+---
+
+# No Dependency-Injection Framework
+
+KJVOnly.bible uses explicit TypeScript construction rather than a DI framework.
+
+The pattern is:
+
+```typescript
+const dependency =
+    new ConcreteDependency(...);
+
+const service =
+    new Service(
+        dependency
     );
 ```
 
-No module-level global Resource Client must be replaced. Likewise, the Resource Client factory already accepts dependencies useful for testing infrastructure composition.
-
----
-
-# Startup Unit Testing
-
-Startup tests should focus on application coordination rather than retesting subsystem internals. Useful tests may eventually prove:
-
-* required startup operations occur in order,
-* optional remote failure does not prevent readiness,
-* fatal local initialization failure is propagated,
-* background work begins only after the readiness boundary,
-* and dispose delegates to owned long-lived dependencies.
-
-Do not duplicate the Resource Client's browser integration tests inside Application tests.
-
----
-
-# Browser Integration Testing
-
-Browser-specific infrastructure is tested at its own boundary. Current Resource Client browser tests already prove:
-
-* real Worker loading,
-* event verification,
-* real browser WebSockets,
-* real signing,
-* relay publication,
-* and relay retrieval.
-
-Application startup tests do not need to mock those internals merely to prove the Composition Root calls the Resource Client factory correctly.
-
----
-
-# Startup Smoke Test
-
-A useful application-level browser smoke test is simply:
+Benefits include:
 
 ```text
-construct Application
-    ↓
-provide context
-    ↓
-start Application
-    ↓
-initial application renders
-    ↓
-no startup exception
+visible ownership
+explicit dependencies
+compile-time checking
+straightforward tests
+no runtime service registry
 ```
 
-This proves the composed graph remains valid as migrations continue. The current application has already been manually exercised after the new Composition Root wiring and continues to boot.
+There is currently no need for reflection or a dependency-injection container.
 
 ---
 
-# No Hidden Startup Through Imports
+# Avoid File-Level Runtime Singletons
 
-New code should avoid patterns where importing a module performs application initialization. For example, avoid:
+A major cleanup direction has been removing patterns such as:
 
-```ts
-export const client =
-    createBrowserResourceClient(...);
+```typescript
+export const service =
+    new Service();
 ```
 
-at module scope for application-scoped infrastructure. Prefer:
+for long-lived application/domain capabilities.
 
-```ts
-export function createBrowserResourceClient(...) {
-    ...
-}
-```
+Such patterns create runtime state as a side effect of importing a module and obscure ownership.
 
-and call it from the Composition Root. This keeps startup explicit.
-
----
-
-# No Parallel Composition Roots
-
-Feature modules should not begin creating their own independent copies of application infrastructure. Avoid:
+The preferred pattern is:
 
 ```text
-Bible module
-    creates ResourceClient A
+Application
+    constructs shared runtime service
 
-Notes module creates ResourceClient B Plans module creates ResourceClient C ``` The application should normally share one long-lived Resource Client unless a concrete isolation requirement says otherwise. The Composition Root makes that ownership visible.
+Worker composition root
+    constructs worker-local service
 
----
-
-# No Generic Service Registry
-
-Avoid turning `ApplicationContext` into:
-
-```ts
-Map<string, unknown>
+Application-owned factory
+    constructs independent per-container state
 ```
 
-or:
-
-```ts
-resolve<T>(name: string): T
-```
-
-Explicit properties preserve:
-
-* TypeScript discoverability,
-* dependency visibility,
-* refactoring support,
-* and architectural ownership.
-
-A generic registry would recreate a DI container without the benefits of explicit composition.
+Not every class needs Application ownership, but active runtime ownership should be explicit.
 
 ---
 
-# No Svelte-Specific Core Services
+# Browser-Only Construction
 
-The Application Composition Root is plain TypeScript. Core Resource and Domain services should remain usable without Svelte. Svelte context is merely how the UI receives the already-composed application dependencies. This keeps framework concerns at the presentation boundary.
+`Application` is a browser runtime object.
 
----
-
-# Startup Sequence as the Migration Continues
-
-The startup sequence will grow as existing application responsibilities are moved to their final owners. A likely target flow is:
+Its construction depends on browser capabilities such as:
 
 ```text
-1. Construct application graph
-
-2. Open required local persistence 3. Restore application settings 4. Configure Resource relay defaults 5. Restore authentication/signing state
-
-6. Initialize Domain services requiring local state 7. Restore or create Workspace Runtime 8. Establish initial Pane / Buffer / Module state 9. Mark application interactive
-
-10. Begin Background Processing
+localStorage
+window callbacks for NIP-46 authorization
+Web Workers
+browser Nostr transport
+IndexedDB-backed stores
 ```
 
-The exact ordering should be determined by real dependency requirements during implementation. The sequence above is not permission to invent dependencies before they exist.
+The concrete Application class should therefore not become a general Node-safe API export.
+
+Tests that explicitly exercise Application bootstrap may import the concrete file intentionally, but normal library consumers should use stable contracts rather than constructing the root.
+
+The runtime convention remains that the actual application bootstrap import belongs in `+layout.svelte`.
 
 ---
 
-# Blocking and Deferred Classification
+# Important Types and Objects
 
-As each new startup step is migrated, document whether it is:
+## `Application`
+
+Concrete composition root and lifecycle owner.
+
+Public lifecycle:
 
 ```text
-blocking
+constructor(config)
+context
+start()
+stop()
 ```
 
-or:
+## `ApplicationConfig`
+
+Environment-derived startup policy.
+
+Current relay groups:
 
 ```text
-deferred
+resourceRelays
+accountBootstrapRelays
 ```
 
-A blocking step contributes to the readiness promise. A deferred step belongs after readiness or behind a fallback. This prevents the startup path from slowly accumulating unnecessary waits.
+## `ApplicationContext`
+
+Selected stable Svelte-facing capabilities composed for the running Application.
+
+## `ResourceWorkerClient`
+
+Main-thread bridge to Resource processing in the Resource Worker.
+
+## `ResourceDiscovery`
+
+Main-thread Nostr discovery boundary used by the worker bridge.
+
+## `WorkspaceRuntime`
+
+Application-facing Workspace coordinator.
+
+## `ResourceSelectionService`
+
+Application-owned current/default Resource-selection state and persistence boundary.
+
+## `OutboxProcessor`
+
+Application-owned durable publication processor.
+
+## `NavigationServiceFactory`
+
+Factory for independent per-container navigation state.
 
 ---
 
-# Example Readiness Classification
+# Current Startup Sequence Diagram
 
-Conceptually:
+```mermaid
+sequenceDiagram
+    participant Layout as +layout.svelte
+    participant Auth as AuthenticationService
+    participant App as Application
+    participant Settings as SettingsService
+    participant Selection as ResourceSelectionService
+    participant Workspace as WorkspaceRuntime
+    participant Nostr as NostrClient
+    participant Account as AccountService
+    participant Outbox as OutboxProcessor
+    participant Resource as ResourceWorkerClient
 
-```text
-Open required IndexedDB
-    blocking
-
-Restore Workspace snapshot blocking if required for initial presentation Load theme/settings blocking or immediate local read Verification Worker reaches active deferred / fallback exists Connect every relay deferred
-
-Refresh installed Resources deferred Rebuild optional search indexes deferred Publish pending Outbox deferred ``` The classification should follow application usability, not implementation convenience.
-
----
-
-# Startup and Resource Installation
-
-Resource installation is not automatically part of startup. Startup may initiate or resume installation work where necessary. The Resource installation subsystem owns:
-
-* candidate interpretation,
-* Domain validation,
-* installation policy,
-* and accepted-state persistence.
-
-The Application should not reimplement those steps inside `start()`.
-
----
-
-# Startup and Resource Discovery
-
-Likewise, startup may decide **when** discovery should begin. Resource Discovery owns **how** Resources are discovered. Conceptually:
-
-```text
-Application startup
-    ↓
-request discovery / background refresh
-    ↓
-ResourceDiscovery
+    Layout->>App: new Application(config)
+    App-->>Layout: stable ApplicationContext
+    Layout->>Layout: provideApplicationContext(context)
+    Layout->>Auth: tryLogin()
+    Auth-->>Layout: restored/anonymous auth state
+    Layout->>App: start()
+    App->>Settings: applySettings()
+    App->>Selection: restore()
+    App->>Workspace: initialize(Modules.BIBLE)
+    App->>Nostr: setDefaultRelays(resourceRelays)
+    App->>Auth: tryGetUserId()
+    alt authenticated
+        App->>Account: load(userId)
+        App->>Account: refresh(userId) [background]
+    end
+    App->>Outbox: wake()
+    App-->>Layout: started
+    App->>Resource: install(bootstrap collection) [background]
+    Layout->>Layout: ready = true
 ```
 
-The Application should not construct raw Nostr filters for Resource identities itself.
-
 ---
 
-# Startup and Outbox
+# Composition Diagram
 
-Future startup may resume pending Outbox publication. The desired relationship is:
+```mermaid
+flowchart TD
+    Layout["+layout.svelte"] --> App["Application"]
+    App --> Context["ApplicationContext"]
 
-```text
-Application becomes usable
-    ↓
-Background Processing resumes Outbox
+    App --> Signer["NostrSigner"]
+    App --> Nostr["NostrClient"]
+    App --> Discovery["ResourceDiscovery"]
+    App --> Worker["ResourceWorkerClient"]
+    App --> Outbox["OutboxProcessor"]
+    App --> Workspace["WorkspaceRuntime"]
+    App --> Domains["Domain Services"]
+
+    Signer --> Nostr
+    Nostr --> Discovery
+    Discovery --> Worker
+
+    Context --> Workspace
+    Context --> Domains
 ```
 
-Startup should not block until the Outbox is empty. Publication remains independently retryable.
-
 ---
 
-# Startup and Synchronization
+# Startup Invariants
 
-Synchronization should similarly converge after startup. Avoid coupling readiness to:
+The following invariants should remain true unless startup architecture is intentionally revised.
 
-```text
-remote state fully synchronized
-```
+## One Runtime Composition Root
 
-The local Domain stores remain authoritative for the running application. Remote updates are proposals processed through the normal installation/synchronization policy.
+The browser application object graph is composed by one `Application` instance.
 
----
+## One Bootstrap Import Site
 
-# Startup and Application State Restoration
+The concrete `Application` class is imported directly by `+layout.svelte` as the runtime bootstrap boundary.
 
-Application state restoration is distinct from Resource synchronization. Examples of application state include:
+## Context Is Stable
 
-* current Bible location,
-* Pane tree,
-* Buffer state,
-* theme,
-* dark mode,
-* and future named Workspace snapshots.
+`ApplicationContext` is constructed once and provided before asynchronous startup.
 
-This state should be restored from local persistence without requiring a relay round trip.
+## Context Is Selective
 
----
+Infrastructure is not exposed merely because Application owns it.
 
-# Current Workspace Persistence Context
+## Authentication Restoration Precedes Application Startup
 
-The current application already persists runtime information such as:
+`tryLogin()` runs before `Application.start()` so authenticated Account loading can participate in startup.
 
-* Pane tree,
-* last Bible location reference,
-* color theme,
-* and dark mode
+## Resource Selection Precedes Workspace Initialization
 
-through local browser storage. As Workspace Runtime implementation is migrated, restoration of this state should move behind the Runtime/application startup boundary rather than remain scattered through presentation components.
+Buffers should capture restored Resource selections, not transient defaults that are restored afterward.
 
----
+## Local Runtime Readiness Precedes Bootstrap Resource Completion
 
-# Initial Module Selection
+Bootstrap Resource installation must not become an unnecessary interaction gate.
 
-Startup must eventually choose the initial Workspace content. That may come from:
+## Outbox Work Resumes After Signing/Relay Setup
 
-* restored Workspace state,
-* last active session,
-* a configured application default,
-* or a first-run policy.
+Durable publication work is awakened after startup has restored the relevant runtime state.
 
-The Application coordinates selection policy. The Workspace Runtime owns the resulting Runtime Objects. No permanent route-based startup model is required because the application is pane-driven rather than route-driven.
+## Workers Do Not Consume Svelte Context
 
----
+Workers compose their own runtime dependencies.
 
-# SPA Routing Context
+## Shutdown Mirrors Ownership
 
-KJVOnly uses a single browser application route for normal operation. The visible application is driven by:
-
-```text
-Workspace
-    ↓
-Pane
-    ↓
-Buffer
-    ↓
-Module Instance
-```
-
-Startup therefore initializes application/runtime state rather than navigating to a sequence of pages. This should remain reflected in startup diagrams and implementation.
-
----
-
-# Startup Does Not Own Rendering
-
-The Application may expose readiness state to the root component. Rendering remains Svelte's responsibility. Conceptually:
-
-```text
-Application.start()
-    ↓
-ready
-    ↓
-Svelte presents Workspace
-```
-
-`Application` should not manipulate DOM nodes or render Modules directly.
-
----
-
-# Startup Does Not Own Domain Behavior
-
-Similarly, `Application.start()` may initialize a Domain service, but it should not execute Domain business rules itself. Avoid:
-
-```text
-Application.start()
-    calculates reading-plan progression
-    merges notes
-    validates Chapter verses
-```
-
-Those responsibilities belong to their Domains.
-
----
-
-# Startup Does Not Own Nostr Mechanics
-
-The Application configures the Resource Client and signer. It does not own:
-
-* rx-nostr requests,
-* WebSocket reconnection,
-* NIP-42 challenge handling,
-* event verification algorithms,
-* or relay acknowledgement streams.
-
-Those remain inside the Resource Client infrastructure.
-
----
-
-# Startup Does Not Own Resource Content Decoding
-
-The Application constructs:
-
-```text
-ResourceContentDecoratorBuilder
-ResourceContentDecoder
-```
-
-but does not decode content itself. This distinction between composition and behavior should remain consistent throughout the application.
-
----
-
-# Explicit Ownership Table
-
-| Concern | Owner | Startup Role | | --- | --- | --- | | Object graph | Application Composition Root | Construct | | Application context | Application | Expose | | Svelte context | Root Svelte layout | Provide to UI subtree | | Local DB mechanics | Persistence infrastructure | Initialize when coordinated | | Workspace tree | Workspace Runtime | Restore/create when coordinated | | Pane rendering | Rendering layer | Render after runtime exists | | Relay mechanics | ResourceClient / rx-nostr | Configure defaults | | Event signing | NostrSigner | Restore/configure signing mode | | Nostr verification | ResourceClient crypto infrastructure | Construct/start; do not wait for Worker optimization | | Resource discovery | ResourceDiscovery | Start/request when appropriate | | Resource resolution | ResourceResolver | Construct only | | Content decoding | ResourceContentDecoder | Construct only | | Domain behavior | Domains | Initialize services if required | | Installation | Resource/Domain installation workflow | Resume/request, do not implement inline | | Background maintenance | Background Processing | Begin after readiness |
+Application stops infrastructure it owns in an order that prevents new work from racing with teardown.
 
 ---
 
 # Anti-Patterns
 
-The following patterns should be avoided as startup implementation evolves.
+Avoid the following.
 
-## Async Application Construction Before Svelte Context
+## Exporting `Application` Through `$lib/application`
 
-```ts
-const application =
-    await createApplication();
+This weakens the composition-root boundary and can introduce circular value imports.
 
-setContext(...); ``` Prefer synchronous composition plus asynchronous `start()`.
+## Constructing Application Services in Svelte Components
 
-## onMount(async ...)
+Svelte should consume Application-owned capabilities through `ApplicationContext`, or use an Application-owned factory for per-container state.
 
-Do not make the Svelte mount callback itself async when a cleanup callback is required. Use an inner async function.
+## Exposing Raw Infrastructure Through ApplicationContext
 
-## File-Level Infrastructure Singleton
+Do not expose `NostrClient`, `ResourceWorkerClient`, `PaneService`, or similar implementation dependencies for UI convenience.
 
-```ts
-export const resourceClient =
-    createBrowserResourceClient(...);
-```
+## Making Workers Depend on ApplicationContext
 
-Application-scoped infrastructure should be created by the Composition Root.
+Workers are separate composition roots.
 
-## Service Locator
+## Blocking Readiness on Remote Bootstrap Work
 
-```ts
-getApplicationContext()
-```
+Remote installation/refresh work should remain background work unless the application truly cannot operate without it.
 
-inside plain TypeScript Domain/Resource services is a dependency smell. Use constructor injection.
+## Reintroducing Global Runtime Singletons
 
-## Waiting for Every Remote Capability
+Prefer explicit ownership and constructor injection.
 
-Do not block readiness on:
+## Moving Subsystem Behavior Into Application
 
-* every relay,
-* every Resource,
-* every sync,
-* every index,
-* or successful authentication.
-
-## Putting Workspace Operations in Application
-
-The Composition Root should not become a replacement `+page.svelte` containing Pane algorithms.
-
-## Recreating Infrastructure per Module
-
-Do not create separate Resource clients, signers, or worker infrastructure for each visible Module instance.
-
-## Hidden Construction Through Import
-
-Importing a feature should not unexpectedly open sockets or create Workers.
+Application coordinates lifecycle; it should not absorb Domain, Resource, Workspace, or Outbox algorithms.
 
 ---
 
-# Current Implementation Achievement
+# Testing Guidance
 
-The first Composition Root migration phase is complete. The application now has an explicit place to construct the new Resource infrastructure. The new Resource stack can be composed without depending on the older file-level singleton pattern. The application continues to boot with this wiring in place.
+Startup-related tests should focus on observable lifecycle and boundary behavior.
 
-This proves the Composition Root can be introduced incrementally rather than requiring a whole-application rewrite.
-
----
-
-# Current Resource Dependencies in ApplicationContext
-
-The current Resource work has established long-lived application dependencies equivalent to:
+Useful concerns include:
 
 ```text
-NostrSigner
-ResourceClient
-ResourceDiscovery
-ResourceResolver
-ResourceContentDecoratorBuilder
-ResourceContentDecoder
+Application start idempotence
+start-after-stop rejection
+startup ordering where behavior depends on order
+Workspace initialization
+Resource-selection restoration
+relay configuration
+Account load behavior for authenticated users
+Outbox wakeup
+non-blocking bootstrap installation
+stop/disposal behavior
 ```
 
-These dependencies represent the completed generic Resource implementation through decoded Resource content. Later phases will add Domain interpretation and installation services as their boundaries settle.
+Unit tests for lower-level services should construct those services directly with explicit collaborators rather than retrieving them from Svelte context.
+
+Browser tests that intentionally exercise the whole application may construct the concrete Application root when needed, but production runtime code should preserve the single `+layout.svelte` bootstrap import rule.
 
 ---
 
-# Future Composition Root Migration
+# Current vs Historical Startup Architecture
 
-The long-term direction is for all appropriate application-scoped services to be created from the Composition Root. Migration should remain incremental. A reasonable progression is:
+Older implementation documents and historical code may refer to concepts such as:
 
 ```text
-Resource infrastructure
-    ↓
-Resource lifecycle services
-    ↓
-Bible Domain services
-    ↓
-shared Application Services
-    ↓
-Workspace Runtime
-    ↓
-remaining Domain services
-    ↓
-background coordinators
+ResourceClient exposed through ApplicationContext
+main-thread ResourceService composition
+verification-worker startup owned directly by Application
+future Workspace migration into Application
+file-level service singleton migration as unfinished future work
 ```
 
-The actual order should follow implementation work and dependency pressure.
+Those descriptions are no longer current.
 
----
-
-# Migration Rule
-
-Do not move a service into the Composition Root merely to make the directory tree look complete. Move it when:
-
-* its owner is clear,
-* its dependencies are understood,
-* its public API is stable enough,
-* and the migration improves explicit composition.
-
-This preserves the architecture-first migration style used elsewhere in the project.
-
----
-
-# Future Application Composition Document Split
-
-If startup and general dependency composition become large enough to deserve separate documents later, the split should be:
+The current implementation instead uses:
 
 ```text
-Application Composition
-    → how the long-lived object graph is constructed
+NostrClient
+    + main-thread ResourceDiscovery
+    + ResourceWorkerClient
+    + worker-owned Resource processing
 
-Application Startup → how the constructed graph transitions to ready state ``` At the current implementation stage they are tightly related enough to document together because the Composition Root was introduced specifically to clean up startup and service construction.
+WorkspaceRuntime
+    already owned by Application
 
----
+selected Svelte-facing services
+    exposed through ApplicationContext
 
-# Complete Startup Flow
-
-The target implementation flow can be summarized as:
-
-```mermaid
-sequenceDiagram
-
-participant Svelte as Root Layout participant App as Application participant Context as ApplicationContext participant Local as Local Persistence participant Auth as Authentication / Signer participant Resource as Resource Infrastructure participant Runtime as Workspace Runtime participant BG as Background Processing Svelte->>App: new Application(config) App->>Resource: construct signer/client/resource services App-->>Svelte: stable ApplicationContext Svelte->>Context: setContext(context) Svelte->>App: start() App->>Local: open/restore required local state App->>Resource: configure runtime relay settings App->>Auth: restore/configure login state App->>Runtime: restore/create Workspace Runtime-->>App: initial runtime ready App-->>Svelte: startup resolved / interactive App->>BG: begin deferred work
-
-Note over Resource: Worker verification may become active independently Note over BG: synchronization/refresh do not block readiness ```
-
----
-
-# Simplified Responsibility Flow
-
-```text
-+layout.svelte
-    │
-    ├── construct Application
-    │
-    ├── setContext(application.context)
-    │
-    └── onMount
-            │
-            ├── application.start()
-            │
-            └── cleanup → application.dispose()
-
-Application │ ├── constructs long-lived graph │ ├── coordinates startup order │ └── coordinates application lifetime Subsystems │ └── own their actual behavior ```
-
----
-
-# Key Implementation Principles
-
-The startup implementation should preserve these rules.
-
-## One Composition Root
-
-Long-lived application dependencies are connected in one explicit place.
-
-## Synchronous Construction
-
-The stable `ApplicationContext` exists immediately after `new Application(...)`.
-
-## Asynchronous Startup
-
-Initialization work requiring awaits belongs in `Application.start()`.
-
-## Sequential Coordination
-
-Startup order should remain readable like a main method.
-
-## Constructor Injection
-
-Plain TypeScript services receive their collaborators explicitly.
-
-## Svelte Context Only at the UI Boundary
-
-Svelte descendants may retrieve application capabilities from context; core services do not service-locate.
-
-## Application Owns Lifetime, Not Behavior
-
-The Application constructs and coordinates subsystems without absorbing their internal responsibilities.
-
-## Local Readiness Before Remote Completeness
-
-The app should become usable from locally authoritative state whenever possible.
-
-## Background Work After Readiness
-
-Synchronization and maintenance should not become unnecessary startup gates.
-
-## Cleanup Mirrors Ownership
-
-Objects created for the Application lifetime are disposed through that same lifetime boundary.
-
----
-
-# Next Implementation Work
-
-The Composition Root itself is now established enough to support the next Resource phases. The immediate Resource implementation work can continue with:
-
-```text
-DecodedResourceContent
-    ↓
-BibleChapterInterpreter
-    ↓
-Candidate Chapter
-    ↓
-Domain Validation
-    ↓
-Installation Decision
+runtime service construction
+    substantially moved into explicit composition roots/factories
 ```
 
-As those services become long-lived application dependencies, the Composition Root should create and expose them through the appropriate application/domain boundaries. Separately, existing Workspace startup logic can continue migrating out of Svelte root files when that implementation phase begins.
+When historical documents disagree with this implementation, current source and the current runtime implementation documents take precedence.
 
 ---
 
 # Key Takeaways
 
-Application startup now has a concrete implementation boundary:
+The current startup implementation can be summarized as:
 
 ```text
-Application Composition Root
-```
++layout.svelte
+    = single browser bootstrap boundary
 
-The root constructs the running application's long-lived dependency graph. It makes that graph available synchronously through:
+Application
+    = concrete composition root + lifecycle owner
 
-```text
 ApplicationContext
+    = selected Svelte-facing capabilities
+
+$lib/application
+    = browser-safe public application API
+
+$lib/application/ui
+    = browser/Svelte presentation API
+
+ResourceDiscovery
+    = main-thread transport discovery boundary
+
+ResourceWorkerClient
+    = bridge to worker-owned Resource processing
+
+WorkspaceRuntime
+    = application-facing Workspace coordinator
 ```
 
-Svelte provides that context synchronously to the component tree. Then:
+Startup itself is intentionally ordered:
 
 ```text
-Application.start()
+restore authentication
+    ↓
+apply Settings
+    ↓
+restore Resource selections
+    ↓
+initialize Workspace
+    ↓
+configure relays
+    ↓
+load Account state when authenticated
+    ↓
+wake Outbox
+    ↓
+mark application interactive
+    ↓
+perform bootstrap Resource installation in the background
 ```
 
-performs ordered asynchronous initialization. When the application ends:
-
-```text
-Application.dispose()
-```
-
-releases application-owned infrastructure. The important separation is:
-
-```text
-Composition
-    = create and connect objects
-
-Startup = initialize the constructed application Runtime = ongoing application behavior Background Processing = deferred maintenance after readiness ``` This keeps initialization visible, dependencies explicit, Svelte focused on presentation, browser infrastructure properly owned, and the application free from a dependency-injection framework or hidden service-locator model.
-
-The implementation is intentionally incremental. The new Resource stack already uses this Composition Root successfully, while older application services can migrate into the same pattern as their own implementation boundaries are revised.
+The design keeps ownership explicit, preserves local-first readiness, keeps browser-only presentation code out of Node-safe public barrels, and avoids hidden runtime construction through file-level singletons or service-locator behavior.

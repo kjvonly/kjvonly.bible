@@ -4,7 +4,7 @@ import type {
 
 import type {
 	ResourcePublication
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 export interface PlanSubscriptionWriteStores {
 	readonly subscriptions:

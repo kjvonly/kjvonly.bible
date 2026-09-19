@@ -3,13 +3,11 @@
 	// COMPONENTS
 	import ActionItemsList from '../components/actionItemsList.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
 	// MODELS
-	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { type Pane } from '$lib/application';
 	import { PLANS_VIEWS } from '$lib/domains/reading-plans/models/plans.model';
 
 	// =============================== BINDINGS ================================
@@ -65,7 +63,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

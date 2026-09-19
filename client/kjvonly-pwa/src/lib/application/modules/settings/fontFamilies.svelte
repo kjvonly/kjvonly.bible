@@ -45,7 +45,7 @@
 <div class="grid grid-cols-3 gap-4 p-4">
 	{#each fontFamilies as ff}
 		<button
-			class="font-{ff.fontFamily} {ff.fontFamily === settings?.fontFamily
+			class="font-{ff.fontFamily} {ff.fontFamily === settings.fontFamily
 				? 'bg-primary-500 text-neutral-50'
 				: ''} border border-1 border-neutral-400 p-2"
 			onclick={() => onFontFamilySelected(ff.fontFamily)}

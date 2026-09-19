@@ -9,7 +9,7 @@ import {
 import type {
 	ResourceDeletionPublication,
 	ResourcePublication
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 import {
 	NOTES_RESOURCE_TYPE

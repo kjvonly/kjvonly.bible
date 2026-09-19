@@ -22,7 +22,7 @@ import {
 import {
 	createResourceInstallationId,
 	type ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 export class IndexedDBBiblePericopesInstallationTransaction
 	implements BiblePericopesInstallationTransaction {

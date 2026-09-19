@@ -18,7 +18,7 @@ import type {
 import type {
     AuthenticationResult,
     AuthenticationStrategy
-} from '$lib/application/services/authentication/authentication-strategy';
+} from '$lib/application';
 
 import {
     NostrSigner

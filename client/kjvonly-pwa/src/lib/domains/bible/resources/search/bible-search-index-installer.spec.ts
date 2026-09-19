@@ -13,21 +13,12 @@ import {
 	type BibleSearchIndexStore
 } from '$lib/domains/bible/persistence/bible-search-index-store';
 
-import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
-
-import type {
-	ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
-
 import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
-
-import type {
-	ResourceInstallationStore
-} from '$lib/resource/installation/resource-installation-store';
+	type DecodedResourceContent,
+	type ResourceInstallation,
+	createResourceInstallationId,
+	type ResourceInstallationStore
+} from '$lib/resource';
 
 import type {
 	BibleSearchIndexInstallationStores,

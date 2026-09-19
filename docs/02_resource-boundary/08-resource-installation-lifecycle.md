@@ -70,7 +70,7 @@ The owning Domain determines:
 * which Domain Objects it represents,
 * and whether those objects satisfy Domain invariants.
 
-The Resource Boundary does not require a specific `Domain Object Factory`, parser, service, or other implementation abstraction.
+The Resource Boundary does not prescribe the internal mechanism used to perform Domain interpretation, validation, or installation.
 
 ---
 
@@ -157,9 +157,9 @@ Accepted Local State
 Persistence
 ```
 
-A repository, Store, IndexedDB object store, or another mechanism MAY persist accepted state.
+Any suitable local persistence mechanism MAY persist accepted state.
 
-No specific persistence abstraction is required by this ADR.
+No specific persistence abstraction or storage technology is required by this ADR.
 
 ---
 

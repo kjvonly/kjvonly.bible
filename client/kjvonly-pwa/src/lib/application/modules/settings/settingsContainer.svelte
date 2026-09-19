@@ -1,12 +1,13 @@
 <script lang="ts">
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
-	import { paneService } from '$lib/application/services/pane.service.svelte';
 	import Settings from './settings.svelte';
+	const { workspaceRuntime } = useApplicationContext();
 
 	let { pane = $bindable<Pane>() } = $props();
 	function onClose() {
-		paneService.onDeletePane(paneService.rootPane, pane.id);
+		workspaceRuntime.closePane(pane.id);
 	}
 </script>
 

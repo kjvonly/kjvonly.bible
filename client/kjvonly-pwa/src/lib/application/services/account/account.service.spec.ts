@@ -84,7 +84,15 @@ describe(
                                 vi.fn()
                                     .mockResolvedValue({
                                         name:
-                                            'Fresh Name'
+                                            'Fresh Name',
+                                        relays: [
+                                            {
+                                                url:
+                                                    'wss://relay.example',
+                                                read: true,
+                                                write: false
+                                            }
+                                        ]
                                     })
                         })
                     );
@@ -112,7 +120,15 @@ describe(
                         {},
                         {
                             name:
-                                'Fresh Name'
+                                'Fresh Name',
+                            relays: [
+                                {
+                                    url:
+                                        'wss://relay.example',
+                                    read: true,
+                                    write: false
+                                }
+                            ]
                         }
                     ]);
             }

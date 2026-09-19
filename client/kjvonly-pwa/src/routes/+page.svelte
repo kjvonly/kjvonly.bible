@@ -1,272 +1,77 @@
 <script lang="ts">
 	import {
-		base26ToDecimal,
-		numberToLetters,
-		renderGridTemplateAreas
-	} from '$lib/application/services/dynamicGrid.service';
+		sortPaneIDs,
+		WorkspaceChangeType,
+		type WorkspaceChange,
+		useApplicationContext
+	} from '$lib/application';
 	import { onMount } from 'svelte';
 
-	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import PaneContainer from '$lib/application/runtime/pane/components/pane.svelte';
-	import { type Pane } from '$lib/application/runtime/pane/models/pane.model';
-	import { toastService } from '$lib/application/services/toast.service';
-	import { Modules } from '$lib/application/models/modules.model';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { PaneContainer } from '$lib/application/ui';
+	const {
+		workspaceRuntime,
+		toastService
+	} = useApplicationContext();
 
 	let template = $state();
 	let paneIds: string[] = $state([]);
 	let deletedPaneIds: any = $state({});
 
 	function onGridUpdate() {
-		let gta = renderGridTemplateAreas(paneService.rootPane);
+		const layout =
+			workspaceRuntime.deriveLayout();
 
-		let areas: any = {};
-		let grid = '';
-
-		for (let i = 0; i < gta.length; i++) {
-			let s = '';
-			for (let j = 0; j < gta[i].length; j++) {
-				s += `${gta[i][j]} `;
-				areas[gta[i][j]] = gta[i][j];
-			}
-			grid += '"' + s + '"\n';
-		}
-
-		paneIds = Object.keys(areas)
-			.concat(Object.keys(deletedPaneIds))
-			.sort((a: string, b: string) => {
-				let aval = base26ToDecimal(a);
-				let bval = base26ToDecimal(b);
-				return aval - bval;
-			});
-
-		template = `display: grid;
-		max-height: 100vh;
-		grid-template-columns: repeat(${gta.length}, ${gta[0].length});
-
-  		grid-template-areas:
-			${grid};`;
-
-		let heightWidth: any = {};
-		let gtaRows = gta.length;
-		let gtaCols = gta[0].length;
-
-		Object.keys(areas).forEach((k) => {
-			let rows = [];
-			for (let i = 0; i < gta.length; i++) {
-				let cols: any = [];
-				for (let j = 0; j < gta[i].length; j++) {
-					if (gta[i][j] === k) {
-						cols.push([gta[i][j]]);
-					}
-				}
-				if (cols.length > 0) {
-					rows.push(cols);
-				}
-			}
-
-			heightWidth[k] = {
-				height: (rows.length * 1.0) / gtaRows,
-				width: (rows[0].length * 1.0) / gtaCols
-			};
-		});
-
-		paneService.heightWidth = heightWidth;
-		paneService.publishHw(heightWidth);
-	}
-
-	function findPane(p: Pane, paneID: string): Pane | undefined {
-		if (p.id === paneID) {
-			return p;
-		}
-		let found;
-
-		if (p.left) {
-			found = findPane(p.left, paneID);
-		}
-
-		if (found) {
-			return found;
-		}
-
-		if (p.right) {
-			found = findPane(p.right, paneID);
-		}
-
-		return found;
-	}
-
-	function splitPane(
-		paneID: string,
-		split: string,
-		componentName: Modules,
-		bag: any
-	) {
-		let p = findPane(paneService.rootPane, paneID);
-
-		/** p should never be undefined */
-		if (!p) {
-			return;
-		}
-
-		let lastPaneId: string = paneIds[paneIds.length - 1];
-		let val = base26ToDecimal(lastPaneId);
-		let pid = numberToLetters(val + 1);
-
-		const originatingBuffer = p.buffer;
-
-		p.split = split;
-		p.left = {
-			id: p.id,
-			buffer: originatingBuffer,
-			updateBuffer: p.updateBuffer,
-			toggle: p.toggle
-		};
-
-		const buffer = moduleBufferFactory.related(
-			componentName,
-			originatingBuffer,
-			bag
+		paneIds = sortPaneIDs(
+			layout.activePaneIDs.concat(
+				Object.keys(
+					deletedPaneIds
+				)
+			)
 		);
 
-		buffer.name = `${componentName}`;
-
-		p.right = {
-			id: pid,
-			buffer: buffer
-		};
-		p.id = undefined;
-
-		paneService.save();
-		/**
-		 * TODO
-		 * May want to delete other variables too
-		 * need to make sure it does not effect
-		 * the left node vars we just copied.
-		 */
-
-		onGridUpdate();
+		template = layout.template;
+		workspaceRuntime.publishPaneDimensions(
+			layout.paneDimensionsByID
+		);
 	}
 
-	function deletePane(n: Pane, key: string) {
+	function onWorkspaceChange(
+		change: WorkspaceChange
+	): void {
 		if (
-			n.id === paneService.rootPane.id &&
-			n.left === undefined &&
-			n.right === undefined
+			change.type ===
+			WorkspaceChangeType.PANE_DELETED
 		) {
-			n.buffer.componentName = Modules.MODULES;
-			n.buffer.bag = {};
-			n.updateBuffer(Modules.MODULES);
-		}
-
-		if (n.id === key) {
-			return n;
-		}
-		let found;
-
-		if (n.left) {
-			found = deletePane(n.left, key);
-		}
-
-		if (found) {
-			deletedPaneIds[n.left.id] = n.left.id;
-			paneService.unsubscribe(n.left.id);
-			//do delete. this is the parent
-			if (n.right.split) {
-				n.split = n.right.split;
-				n.left = n.right.left;
-				n.right = n.right.right;
-			} else {
-				n.id = n.right.id;
-				n.updateBuffer = n.right.updateBuffer;
-				n.toggle = n.right.toggle;
-				n.buffer = n.right.buffer;
-				n.split = undefined;
-				n.left = undefined;
-				n.right = undefined;
-			}
-
-			paneService.save();
+			deletedPaneIds[
+				change.deletedPaneID
+			] = change.deletedPaneID;
 			onGridUpdate();
 			return;
 		}
 
-		if (n.right) {
-			found = deletePane(n.right, key);
-		}
-
-		if (found) {
-			deletedPaneIds[n.right.id] = n.right.id;
-			paneService.unsubscribe(n.right.id);
-			//do delete this is the parent
-			if (n.left.split) {
-				n.split = n.left.split;
-				n.right = n.left.right;
-				n.left = n.left.left;
-			} else {
-				n.id = n.left.id;
-				n.updateBuffer = n.left.updateBuffer;
-				n.toggle = n.left.toggle;
-				n.buffer = n.left.buffer;
-				n.split = undefined;
-				n.left = undefined;
-				n.right = undefined;
-			}
-
-			paneService.save();
+		if (
+			change.type ===
+			WorkspaceChangeType.PANE_SPLIT
+		) {
 			onGridUpdate();
-			return;
 		}
 	}
 
 	
 
 	let toasts: string[] = $state([]);
-	let timeoutId = {};
-	function showToast(message: string) {
+	function enqueueToast(message: string): void {
 		toasts.push(message);
-		timeoutId = setTimeout(() => {
+		setTimeout(() => {
 			toasts.shift();
 		}, 2500 * toasts.length);
 	}
 
-	function trySetDataPersistence() {
-		(async () => {
-			if (navigator.storage && navigator.storage.persist) {
-				const persisted = await navigator.storage.persisted();
-				if (!persisted) {
-					const granted = await navigator.storage.persist();
-
-					if (granted) {
-						console.log('Persistent storage granted');
-					} else {
-						console.log('Persistent storage NOT granted');
-					}
-				}
-			}
-		})();
-	}
-
-	const { moduleBufferFactory } = useApplicationContext();
-
 	onMount(() => {
-		let link = document.createElement('link');
-		link.setAttribute('rel', 'manifest');
-		link.setAttribute('href', `/manifest.json`);
-		document.getElementById('kjvonly-head')?.appendChild(link);
-
-		paneService.onDeletePane = deletePane;
-		paneService.onSplitPane = splitPane;
-
-		const restored =
-			paneService.restore();
-
-		if (!restored) {
-			paneService.rootPane.buffer =
-				moduleBufferFactory.independent(
-					Modules.BIBLE
-				);
-		}
+		const unsubscribeWorkspace =
+			workspaceRuntime.subscribe(
+				onWorkspaceChange
+			);
 
 		/**
 		 * DEV NOTE: Update the component to w/e you are working on
@@ -275,8 +80,15 @@
 
 		onGridUpdate();
 
-		trySetDataPersistence();
-		toastService.showToast = showToast;
+		const unsubscribeToasts =
+			toastService.subscribeToToasts(
+				enqueueToast
+			);
+
+		return () => {
+			unsubscribeWorkspace();
+			unsubscribeToasts();
+		};
 	});
 </script>
 

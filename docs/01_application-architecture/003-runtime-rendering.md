@@ -35,12 +35,12 @@ is projected into a visible and interactive user interface.
 This document defines:
 
 * the rendering responsibility,
-* recursive Pane rendering,
+* Pane-tree projection into visible Leaf Pane regions,
 * Module presentation resolution,
 * layout derivation,
 * Runtime identity during rendering,
 * incremental rendering,
-* and the current Svelte and CSS Grid implementation.
+* and presentation independence from any particular rendering technology.
 
 It does not define:
 
@@ -89,7 +89,7 @@ Rendering owns presentation.
 
 Its responsibilities include:
 
-* recursively presenting the Pane tree,
+* projecting the Pane tree into visible Leaf Pane regions,
 * deriving visible layout,
 * rendering Leaf Pane contents,
 * resolving Module presentation components,
@@ -165,56 +165,49 @@ Components present the active Module Instances within those regions.
 
 ---
 
-# Recursive Pane Rendering
+# Pane Tree Projection
 
 The Runtime defines the Workspace as a recursive Pane tree.
 
-Rendering mirrors that recursion.
-
-A Branch Pane produces child Pane presentations.
-
-A Leaf Pane produces one visible region containing the presentation associated with its Buffer.
+Rendering derives the visible Leaf Pane regions from that structure.
 
 Conceptually:
 
 ```text
-Pane Rendering
-
-    Branch Pane
-        Pane Rendering
-        Pane Rendering
-
-    Leaf Pane
-        Module Presentation
+Recursive Pane Tree
+        ↓
+Layout Derivation
+        ↓
+Visible Leaf Pane Regions
+        ↓
+Module Presentations
 ```
 
-No separate rendering hierarchy is required.
+The Pane tree remains the source of truth.
 
-The Runtime structure naturally drives the component hierarchy.
+Any presentation projection is derived state.
 
 ---
 
 # Branch Pane Rendering
 
-A Branch Pane does not directly present a Module Instance.
-
-Its rendering responsibility is structural.
-
-It provides presentation regions for its child Panes.
+A Branch Pane contributes structural information to layout derivation.
 
 Conceptually:
 
 ```text
 Branch Pane
     │
-    ├── Child Pane Presentation
-    │
-    └── Child Pane Presentation
+    ├── split relationship
+    ├── first subtree
+    └── second subtree
+            ↓
+    derived visible regions
 ```
 
-The logical child relationship belongs to the Workspace Runtime.
+A Branch Pane does not require an independently visible presentation merely because it exists in the Runtime model.
 
-Rendering determines how that relationship appears visually.
+Rendering uses its structure to determine the regions occupied by descendant Leaf Panes.
 
 ---
 
@@ -270,9 +263,7 @@ The architectural responsibility is:
 
 > **Resolve the presentation associated with the active Module Instance.**
 
-The current implementation uses Svelte components.
-
-That is an implementation mechanism.
+The concrete presentation mechanism is an implementation concern.
 
 ---
 
@@ -442,41 +433,31 @@ This avoids maintaining independent Runtime and layout models that must later be
 
 ---
 
-# Current Layout Implementation
+# Layout Realization
 
-The current application realizes Workspace layout using CSS Grid.
+Visible layout is derived from the Pane tree.
 
 Conceptually:
 
 ```text
 Pane Tree
     ↓
-Layout Algorithm
-    ↓
-CSS Grid
+Layout Derivation
     ↓
 Visible Workspace
 ```
 
-The Workspace Runtime does not understand:
+The Workspace Runtime does not depend on rows, columns, template primitives, or another presentation-specific layout model.
 
-* CSS Grid,
-* rows,
-* columns,
-* template areas,
-* or browser layout primitives.
-
-Those concepts belong to the rendering implementation.
+Those concepts belong to rendering implementation.
 
 ---
 
 # Layout Algorithm
 
-The current implementation analyzes nested Pane splits and derives a two-dimensional CSS Grid capable of representing them.
+Nested Pane splits must be projected into a visible arrangement that preserves the structural relationships represented by the Runtime.
 
-Nested horizontal and vertical divisions must ultimately be mapped into one grid.
-
-The exact algorithm is implementation-specific.
+The exact layout algorithm is implementation-specific.
 
 The enduring architectural requirement is:
 
@@ -619,7 +600,7 @@ For example, a Bible Reader presentation may:
 The Bible Domain remains responsible for:
 
 * Scripture behavior,
-* annotations,
+* text markup,
 * navigation rules,
 * search behavior,
 * and Bible Domain Objects.
@@ -669,62 +650,19 @@ It does not need access to the owner's internal implementation.
 
 ---
 
-# Current Rendering Implementation
+# Presentation Realization
 
-The current rendering implementation uses:
+Runtime Rendering may use presentation components, layout engines, or other UI mechanisms to realize the visible Workspace.
 
-* Svelte,
-* recursive Pane components,
-* dynamic Module component resolution,
-* CSS Grid,
-* stable Pane identities,
-* stable Buffer identities,
-* and component preservation.
+Those mechanisms must preserve the architectural rules established here:
 
-These technologies realize the rendering responsibility.
+* Runtime state remains authoritative,
+* visible layout remains derived,
+* stable Runtime identity should preserve unaffected presentation state,
+* Module presentation remains distinct from Domain behavior,
+* and presentation mechanisms remain replaceable.
 
-They do not define it.
-
----
-
-# Current Pane Components
-
-Pane components present Pane Runtime Objects.
-
-A Pane component may:
-
-* determine whether the Pane is a Branch or Leaf,
-* recursively present children,
-* apply derived layout information,
-* and render the Module presentation associated with a Leaf Pane's Buffer.
-
-The component presents Runtime state.
-
-It does not own the Runtime state.
-
----
-
-# Current Module Components
-
-A Module presentation may currently be implemented as a Svelte component.
-
-Conceptually:
-
-```text
-Domain Behavior
-        ↓
-Module Instance
-        ↓
-Presentation Component
-        ↓
-Visible Interaction
-```
-
-The component is an implementation of presentation.
-
-It is not the Domain behavior.
-
-It is not the Module concept itself.
+The concrete component model and layout technology belong to Implementation documentation.
 
 ---
 
@@ -749,15 +687,9 @@ Specific optimization techniques may change over time.
 
 Rendering technology should remain replaceable.
 
-The Workspace Runtime should not depend on whether rendering uses:
+The Workspace Runtime must not depend on a particular component framework, layout system, rendering engine, or presentation mechanism.
 
-* Svelte,
-* another component framework,
-* CSS Grid,
-* another layout system,
-* or another future presentation mechanism.
-
-Likewise, Domains should not depend upon rendering technology.
+Likewise, Domains must not depend upon rendering technology.
 
 The responsibility is architectural.
 
@@ -767,19 +699,11 @@ The technology is implementation.
 
 # Future Evolution
 
-Rendering may evolve through capabilities such as:
+Rendering may evolve to support capabilities such as virtualization, detached presentation surfaces, multiple simultaneous Workspace views, or improved incremental presentation.
 
-* alternative layout algorithms,
-* stronger Module registration,
-* virtualization,
-* detached presentation surfaces,
-* multiple simultaneous Workspace views,
-* improved incremental rendering,
-* or alternative component technologies.
+Such changes should remain beneath the same rendering responsibility.
 
-These changes should remain beneath the same rendering responsibility.
-
-They should not require the Workspace Runtime or Domains to be redesigned.
+They should not require the Workspace Runtime or Domains to be redesigned merely because presentation mechanisms change.
 
 ---
 
@@ -825,9 +749,7 @@ It does not assume ownership of those responsibilities.
 
 ## Rendering Technologies Are Implementation
 
-Svelte and CSS Grid are current implementation choices.
-
-They do not define the architecture.
+Component frameworks, layout systems, and rendering engines do not define the architecture.
 
 ---
 
@@ -889,9 +811,9 @@ Rendering does not redefine those concepts.
 
 It:
 
-* recursively presents the Pane tree,
+* derives visible Leaf Pane regions from the Pane tree,
 * derives visible layout,
-* resolves Module presentation components,
+* resolves Module presentation,
 * preserves presentation identity,
 * and reflects Runtime changes in the visible application.
 
@@ -899,8 +821,6 @@ The Pane tree defines logical structure.
 
 Rendering derives presentation from it.
 
-Svelte, CSS Grid, recursive components, and dynamic component resolution are current implementation mechanisms.
-
-They may change.
+Presentation mechanisms may change.
 
 The Runtime model should not need to.

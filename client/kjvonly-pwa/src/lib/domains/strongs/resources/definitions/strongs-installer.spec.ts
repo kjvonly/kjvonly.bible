@@ -12,14 +12,11 @@ import {
 	STRONGS_DEFINITION_OBJECT_TYPE
 } from '$lib/domains/strongs/persistence/strongs-store';
 
-import type {
-	DecodedResourceContent
-} from '$lib/resource/models/resource.model';
-
 import {
+	type DecodedResourceContent,
 	createResourceInstallationId,
 	type ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 import type {
 	StrongsInstallationStores,

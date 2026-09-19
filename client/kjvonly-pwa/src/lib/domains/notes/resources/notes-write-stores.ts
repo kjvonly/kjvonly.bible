@@ -4,7 +4,7 @@ import type {
 
 import type {
 	ResourcePublicationIntent
-} from '$lib/resource/publication/resource-publication';
+} from '$lib/resource';
 
 export interface NotesWriteStores {
 	readonly notes:

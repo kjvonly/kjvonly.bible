@@ -5,15 +5,13 @@
 
 	// COMPONENTS
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ReadingsComponent from '../components/readings.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/application/models/modules.model';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { Modules } from '$lib/application';
+	import type { Pane } from '$lib/application';
 	import {
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS,
@@ -23,23 +21,29 @@
 		type NavReadings
 	} from '../../../models/plans.model';
 
+	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
+
 	// SERVICES
-	import { plansPubSubService } from '$lib/domains/reading-plans/services/plansPubSub.service';
-	import { subsEnricherService } from '$lib/domains/reading-plans/services/subsEnricher.service';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 
-	const { planProgressService } =
-		useApplicationContext();
+	const {
+		planProgressService,
+		plansPubSubService,
+		subsEnricherService,
+		workspaceRuntime
+	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
+		paneID = $bindable<string>(),
 		pane = $bindable<Pane>(),
 		plansDisplay = $bindable<PLANS_VIEWS>()
 	}: {
+		paneID: string;
 		pane: Pane;
 		plansDisplay: PLANS_VIEWS;
 	} = $props();
@@ -77,37 +81,31 @@
 	 *
 	 * @param data
 	 */
-	async function onGetAllSubs(data: any) {
-		if (data) {
-			subsByID = data.subs;
+	async function onGetAllSubs(data: PlansSubscriptionsMessage) {
+		subsByID = data.subs;
 
-			await processNavReadings();
-			await updateNextReadings();
-		}
+		await processNavReadings();
+		await updateNextReadings();
 	}
 
 	/**
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
-		const nr: NavReadings | undefined =
-			pane.buffer.bag?.navReadings;
+		const nr: NavReadings | undefined = pane.buffer.bag?.navReadings;
 
 		if (!nr) {
 			return;
 		}
 
-		const progress =
-			await planProgressService.completeReading(
-				nr.subID,
-				nr.subNestedReadingsIndex
-			);
+		const progress = await planProgressService.completeReading(
+			nr.subID,
+			nr.subNestedReadingsIndex
+		);
 
 		delete pane.buffer.bag.navReadings;
 
-		plansPubSubService.putProgress(
-			progress
-		);
+		plansPubSubService.putProgress(progress);
 	}
 
 	function updateNextReadings() {
@@ -164,10 +162,16 @@
 			returnView: returnView
 		};
 
-		pane.buffer.bag.navReadings = nr;
-
-		pane.buffer.bag.bibleLocationRef = readings.bcvs[0].bibleLocationRef;
-		pane.updateBuffer(Modules.BIBLE);
+		workspaceRuntime.replaceBuffer(
+			paneID,
+			Modules.BIBLE,
+			{
+				...pane.buffer?.bag,
+				navReadings: nr,
+				bibleLocationRef:
+					readings.bcvs[0].bibleLocationRef
+			}
+		);
 	}
 </script>
 
@@ -232,7 +236,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody bind:clientHeight bind:headerHeight classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

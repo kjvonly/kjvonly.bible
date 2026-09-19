@@ -16,7 +16,7 @@ import {
 
 import {
 	createResourceReceiptId
-} from '$lib/resource/receipts/resource-receipt';
+} from '$lib/resource';
 
 describe(
 	'IndexedDBResourceReceiptStore',

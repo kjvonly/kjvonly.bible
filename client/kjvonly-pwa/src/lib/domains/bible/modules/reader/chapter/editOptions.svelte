@@ -9,17 +9,13 @@
 		type BibleMode
 	} from '$lib/domains/bible/models/bible.model';
 
-	import type {
-		BibleTextMarkup
-	} from '$lib/domains/bible/models/bible-text-markup.model';
+	import type { BibleTextMarkup } from '$lib/domains/bible/models/bible-text-markup.model';
 
-	import {
-		useApplicationContext
-	} from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application';
 
-	import {
-		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import Close from '$lib/components/svgs/close.svelte';
 
 	// =============================== BINDINGS ================================
 	let {
@@ -34,10 +30,8 @@
 		bibleLocationRef: string;
 	} = $props();
 
-	const {
-		bibleTextMarkupService,
-		moduleResourceSelectionResolver
-	} = useApplicationContext();
+	const { bibleTextMarkupService, moduleResourceSelectionResolver } =
+		useApplicationContext();
 
 	// ================================= VARS ==================================
 
@@ -65,34 +59,21 @@
 	}
 
 	async function onSave() {
-		await bibleTextMarkupService.put(
-			JSON.parse(
-				JSON.stringify(
-					textMarkup
-				)
-			)
-		);
+		await bibleTextMarkupService.put(JSON.parse(JSON.stringify(textMarkup)));
 	}
 
 	async function onClose() {
-		const source =
-			moduleResourceSelectionResolver.require(
-				paneID,
-				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-			);
+		const source = moduleResourceSelectionResolver.require(
+			paneID,
+			BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+		);
 
-		const installed =
-			await bibleTextMarkupService.get(
-				source,
-				bibleLocationRef
-			);
+		const installed = await bibleTextMarkupService.get(
+			source,
+			bibleLocationRef
+		);
 
-		textMarkup =
-			JSON.parse(
-				JSON.stringify(
-					installed
-				)
-			);
+		textMarkup = JSON.parse(JSON.stringify(installed));
 
 		mode.value = BIBLE_MODES.READING;
 	}
@@ -135,23 +116,9 @@
 	class="flex h-24 w-full flex-col items-center space-x-3 border bg-neutral-50 px-2 py-1"
 >
 	<div class="absolute right-1">
-		<button
-			onclick={onClose}
-			aria-label="save"
-			class="h-8 w-8 hover:cursor-pointer"
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				width="100%"
-				height="100%"
-			>
-				<path
-					class="fill-neutral-700"
-					d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10s10-4.47,10-10S17.53,2,12,2z M17,15.59L15.59,17L12,13.41L8.41,17L7,15.59 L10.59,12L7,8.41L8.41,7L12,10.59L15.59,7L17,8.41L13.41,12L17,15.59z"
-				/>
-			</svg>
-		</button>
+		<KJVButton classes="" onClick={onClose}>
+			<Close classes=""></Close>
+		</KJVButton>
 	</div>
 	<div class="space-x-3">
 		<button

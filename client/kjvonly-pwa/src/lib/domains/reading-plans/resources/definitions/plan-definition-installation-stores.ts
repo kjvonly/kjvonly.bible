@@ -1,10 +1,7 @@
 import type {
-	InstallationTransaction
-} from '$lib/resource/installation/installation-transaction';
-
-import type {
+	InstallationTransaction,
 	ResourceInstallationStore
-} from '$lib/resource/installation/resource-installation-store';
+} from '$lib/resource';
 
 import type {
 	PlanDefinitionsStore

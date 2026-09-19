@@ -17,7 +17,7 @@
 	// SERVICES
 	import {
 		useApplicationContext
-	} from '$lib/application/runtime/application-context';
+	} from '$lib/application';
 
 	import {
 		BIBLE_BOOKNAMES_RESOURCE_TYPE

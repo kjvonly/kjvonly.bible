@@ -49,16 +49,14 @@ Notes
     ↓
 Must survive application restart
     ↓
-Persistent Storage
-    ↓
-IndexedDB
+Persistent Storage Capability
 ```
 
 The Notes Domain owns the Notes and determines what their persisted state means.
 
 Persistence makes that state durable.
 
-IndexedDB is the current technical mechanism used to store it.
+The concrete storage mechanism belongs to Technical Infrastructure.
 
 ---
 
@@ -71,10 +69,10 @@ Application
 
     Domain State
         Bible data
-        annotations
+        Bible text markup
         Notes
-        Reading Plans
-        completed readings
+        Reading Plan state
+        Strong's definitions
 
     Runtime State
         Workspace structure
@@ -104,7 +102,7 @@ The meaning of each piece of persisted state remains with the responsibility tha
 
 Physical storage location does not determine architectural ownership.
 
-A Note does not become persistence-owned because it is stored in IndexedDB. Workspace state does not become persistence-owned because it is stored alongside Notes.
+A Note does not become persistence-owned because it is stored in a database. Workspace state does not become persistence-owned because it shares a storage mechanism with Notes.
 
 Instead:
 
@@ -116,7 +114,7 @@ Workspace structure
     → Workspace Runtime
 
 Application preference
-    → Settings Domain
+    → Application-owned settings
 
 Bible search index
     → derived from Bible-owned information
@@ -146,7 +144,7 @@ Persistence
 Durable Local State
 ```
 
-The same relationship applies to Bible annotations, Reading Plan progress, completed readings, and other Domain-owned information.
+The same relationship applies to Bible text markup, Reading Plan subscriptions and progress, Strong's definitions, and other Domain-owned information.
 
 Application behavior continues to operate on Domain Objects rather than persistence-specific representations.
 
@@ -174,7 +172,7 @@ A persisted Runtime representation should therefore describe Runtime state rathe
 
 # Persisting Settings
 
-Application preferences belong to the Settings Domain.
+Application preferences are application-owned settings rather than Domain state.
 
 Examples may include:
 
@@ -274,7 +272,7 @@ Outbox
 Published Resource
 ```
 
-A relay being unavailable does not prevent the application from continuing to operate on the locally accepted Note.
+An external publication destination being unavailable does not prevent the application from continuing to operate on the locally accepted Note.
 
 This separation is fundamental to offline-first behavior.
 
@@ -468,14 +466,12 @@ Persistence Requirement
     ↓
 Persistent Storage Capability
     ↓
-Technology
+Implementation
 ```
 
-The current browser implementation may use IndexedDB.
+The storage implementation may change without changing which owner defines the persisted information or what that information means.
 
-That implementation may change without changing which owner defines the persisted information or what that information means.
-
-Do not design application behavior around IndexedDB records, object stores, keys, transactions, or another storage technology unless those details are genuinely part of an implementation document.
+Application behavior should therefore not be designed around storage records, object stores, keys, transactions, or another technology-specific persistence structure.
 
 ---
 
@@ -512,9 +508,9 @@ Choose implementation
 Do not begin with:
 
 ```text
-Which IndexedDB store should this use?
+Which database store should this use?
 
-Should this go in localStorage?
+Which storage API should hold it?
 
 Should this be cached?
 ```
@@ -559,7 +555,7 @@ Resource Boundary
 Resource
 ```
 
-Only after these architectural decisions are made should the implementation choose a storage structure, IndexedDB schema, Resource representation, or synchronization mechanism.
+Only after these architectural decisions are made should the implementation choose a storage structure, persistence schema, Resource representation, or synchronization mechanism.
 
 ---
 

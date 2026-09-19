@@ -4,8 +4,8 @@
 	import { onMount } from 'svelte';
 
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
+	import { BufferBody } from '$lib/application/ui';
+	import { BufferContainer } from '$lib/application/ui';
 	import Chapter from './chapter/chapter.svelte';
 	import BibleHeader from './bibleHeader.svelte';
 	import ChapterNavButtons from './components/chapterNavButtons.svelte';
@@ -16,25 +16,23 @@
 		BIBLE_MODES,
 		newBibleMode
 	} from '$lib/domains/bible/models/bible.model';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import type { Pane } from '$lib/application';
 	import type {
 		BibleTextMarkup
 	} from '$lib/domains/bible/models/bible-text-markup.model';
 
 	// SERVICES
-	import { paneService } from '$lib/application/services/pane.service.svelte';
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 
-	import { attachEvents } from '$lib/application/ui/eventHandlers';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
-	import { bibleLocationReferenceService } from '$lib/domains/bible/services/bibleLocationReference.service';
+	import { attachEvents } from '$lib/application/ui';
+	import { BufferHeader } from '$lib/application/ui';
 
 	import type {
 	PublishedResourceReference
-} from '$lib/resource/models/resource.model';
+} from '$lib/resource';
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
@@ -46,14 +44,15 @@ import type {
 
 import {
 	parseResourceIdentifier
-} from '$lib/resource/utils/resource-identifier';
+} from '$lib/resource';
 
 import {
 	createBibleVersionId
 } from '$lib/domains/bible/utils/bible-identity';
-
 	const {
-		moduleResourceSelectionResolver
+		moduleResourceSelectionResolver,
+		workspaceRuntime,
+		bibleLocationReferenceService
 	} = useApplicationContext();
 	// =============================== BINDINGS ================================
 
@@ -209,7 +208,7 @@ import {
 			bibleLocationRef
 		);
 		
-		paneService.save();
+		workspaceRuntime.persistWorkspace();
     }
 
 	function onBibleVersionSelected(
@@ -235,7 +234,7 @@ import {
 	bibleVersion =
 		version.id;
 
-	paneService.save();
+	workspaceRuntime.persistWorkspace();
 }
 
 </script>
@@ -286,6 +285,7 @@ import {
 					bind:bibleLocationRef
 					bind:bibleVersion
 					bind:showNavButtons
+					{paneID}
 					ID={id}
 				></ChapterNavButtons>
 			{:else}

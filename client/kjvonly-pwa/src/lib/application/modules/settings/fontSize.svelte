@@ -21,11 +21,7 @@
 	// ================================ FUNCS ==================================
 
 	function updateFontSize(): void {
-		let fs = parseInt(settings?.fontSize);
-
-		if (fs) {
-			fontSize = fs;
-		}
+		fontSize = settings.fontSize;
 	}
 
 	// ============================== CLICK FUNCS ==============================

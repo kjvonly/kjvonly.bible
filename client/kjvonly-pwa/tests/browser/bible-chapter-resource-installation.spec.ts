@@ -4,24 +4,21 @@ import {
 	it
 } from 'vitest';
 
-import type {
-	PublishedResourceReference,
-	ResourceRepresentation,
-	ResourceRepresentationType,
-	VerifiedResourceContent
-} from '$lib/resource/models/resource.model';
-
 import {
-	ResourceContentDecoratorBuilder
-} from '$lib/resource/content/resource-content-decorator-builder';
-
-import {
-	JsonResourceContentDecorator
-} from '$lib/resource/content/json-resource-content-decorator';
-
-import {
-	ResourceContentDecoder
-} from '$lib/resource/content/resource-content-decoder';
+	type PublishedResourceReference,
+	type ResourceRepresentation,
+	type ResourceRepresentationType,
+	type VerifiedResourceContent,
+	createResourceInstallationId,
+	createResourceReceiptId,
+	type ResourceResolutionResult,
+	ResourceContentDecoratorBuilder,
+	JsonResourceContentDecorator,
+	ResourceContentDecoder,
+	ResourceService,
+	ResourceProcessor,
+	ResourceReceiptService
+} from '$lib/resource';
 
 import {
 	BibleChapterInterpreter
@@ -41,14 +38,6 @@ import {
 } from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
 
 import {
-	ResourceService
-} from '$lib/resource/services/resource.service';
-
-import {
-	ResourceProcessor
-} from '$lib/resource/services/resource-processor';
-
-import {
 	IndexedDBBibleChapterInstallationTransaction
 } from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
 
@@ -66,24 +55,8 @@ import {
 } from '$lib/domains/bible/utils/bible-identity';
 
 import {
-	createResourceInstallationId
-} from '$lib/resource/installation/resource-installation';
-
-import {
 	IndexedDBResourceReceiptStore
 } from '$lib/resource/receipts/indexeddb-resource-receipt-store';
-
-import {
-	ResourceReceiptService
-} from '$lib/resource/receipts/resource-receipt.service';
-
-import {
-	createResourceReceiptId
-} from '$lib/resource/receipts/resource-receipt';
-
-import type {
-	ResourceResolutionResult
-} from '$lib/resource/resolution/resource-resolution-result';
 
 const BIBLE_VERSION_OBJECT_TYPE =
 	'bible/version';

@@ -52,9 +52,3 @@ export class SubsEnricherService {
 		);
 	}
 }
-
-/**
- * enriches subs with metadata useful for end users such as next readings index
- * and percent complete.
- */
-export const subsEnricherService = new SubsEnricherService();

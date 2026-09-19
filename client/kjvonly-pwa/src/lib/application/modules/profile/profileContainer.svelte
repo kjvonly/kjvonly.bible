@@ -3,7 +3,7 @@
 	// COMPONENTS
 	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
 	import { onMount } from 'svelte';
-	import { NavigationService } from '$lib/application/services/navigation.service';
+	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import { type Writable } from 'svelte/store';
 	import { stopPropagation } from '$lib/application/ui/click';
 	import Profile from './profile/profile.svelte';
@@ -21,7 +21,8 @@
 	let clientHeight: number = $state(0);
 	let clientwidth: number = $state(0);
 	let nav: Writable<any[]> | undefined = $state();
-	let navService: NavigationService = new NavigationService();
+	const { navigationServiceFactory } = useApplicationContext();
+	let navService = navigationServiceFactory.create();
 
 	onMount(() => {
 		navService.push({ component: Profile, obj: {} });

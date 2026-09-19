@@ -17,7 +17,7 @@ import {
 import {
 	createResourceInstallationId,
 	type ResourceInstallation
-} from '$lib/resource/installation/resource-installation';
+} from '$lib/resource';
 
 import {
 	BIBLE_BOOKNAMES_OBJECT_TYPE

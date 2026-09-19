@@ -10,7 +10,7 @@
 	// SERVICES
 
 	// API
-	import type { Strongs, UsageBy } from '$lib/domains/strongs/models/strongs.model';
+	import type { Strongs, UsageBy } from '$lib/domains/strongs';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 	import KeyboardArrowDown from '$lib/components/svgs/keyboardArrowDown.svelte';
@@ -19,11 +19,11 @@
 
 	import {
 	useApplicationContext
-} from '$lib/application/runtime/application-context';
+} from '$lib/application';
 
 	import type {
 		PublishedResourceReference
-	} from '$lib/resource/models/resource.model';
+	} from '$lib/resource';
 
 	import {
 		BIBLE_BOOKNAMES_RESOURCE_TYPE
