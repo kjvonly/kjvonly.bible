@@ -81,7 +81,9 @@ This document covers:
 - UI behavior and known limitations,
 - testing and extension rules.
 
-This document does not define a completed multi-device synchronization system, conflict resolution, multi-source aggregation, or import/export redesign.
+This document does not define a completed multi-device synchronization system, conflict resolution, or multi-source aggregation.
+
+Notes participate in the shared KJVOnly Archive subsystem through their existing Domain-to-Resource conversion and normal inbound Resource handler.
 
 ---
 
@@ -630,11 +632,19 @@ A newly created Note is transient UI state until saved.
 
 Closing without saving does not publish or persist it.
 
-## Import/export
+## Archive import/export
 
-Some Notes UI still contains historical/ad-hoc export behavior.
+Notes participate in the shared application Archive subsystem.
 
-The broader import/export subsystem is intentionally parked and is not part of the current Notes architecture.
+Archive export selects persisted Note Domain Objects through their `ResourceInstallation` state. Archive import reconstructs normal Notes Resource content through `NotesResourcePublication`, then re-enters the existing Notes Resource interpreter, validator, and installer.
+
+Notes do not own a separate archive importer/exporter and Notes UI contains no ad-hoc archive implementation.
+
+See:
+
+```text
+03_implementation/archive/001-kjvonly-archive.md
+```
 
 ---
 

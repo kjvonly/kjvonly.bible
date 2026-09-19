@@ -941,3 +941,33 @@ docs/03_implementation/011-target-code-organization.md
 ```
 
 The current source remains authoritative if older historical documents disagree.
+
+
+# Ephemeral Archive Worker
+
+KJVOnly Archive import/export uses a dedicated Worker that exists only for one requested operation.
+
+```text
+import/export request
+    ↓
+create Archive Worker
+    ↓
+perform one bounded job
+    ↓
+return result
+    ↓
+terminate Worker
+```
+
+The Archive Worker composes archive codec/validation, IndexedDB archive reads, Domain-to-Resource reconstruction, and the shared `createContentResourceProcessor()` implementation.
+
+It does not route archive work through the long-lived `ResourceWorkerClient`.
+
+This keeps the normal Resource Worker protocol focused on application Resource acquisition while still reusing the same decoded-content handlers and installers.
+
+See:
+
+```text
+03_implementation/archive/001-kjvonly-archive.md
+```
+

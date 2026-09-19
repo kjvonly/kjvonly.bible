@@ -508,8 +508,8 @@ Local write/publication
 Local write/publication
     implemented
 
-Inbound Resource handler/installer
-    not currently implemented
+Inbound Resource interpreter/validator/installer
+    implemented
 ```
 
 ## Plan Progress
@@ -518,11 +518,11 @@ Inbound Resource handler/installer
 Local write/publication
     implemented
 
-Inbound Resource handler/installer
-    not currently implemented
+Inbound Resource interpreter/validator/installer
+    implemented
 ```
 
-Do not imply that subscription/progress synchronization is complete merely because outbound Resource publication exists.
+Inbound Resource handling does not by itself mean multi-device synchronization policy is complete. Synchronization remains a separate application responsibility.
 
 ---
 
@@ -759,7 +759,7 @@ EncodedReadingsDecoderService
 
 The concrete IndexedDB stores/write transactions and Resource-publication mappers remain composition details.
 
-Plan Definition inbound handler composition remains inside the Resource Worker.
+Plan Definition, Subscription, and Progress inbound handler composition remains inside the Resource Worker.
 
 ---
 
@@ -767,11 +767,9 @@ Plan Definition inbound handler composition remains inside the Resource Worker.
 
 Normal Plan reads are local accepted-state reads.
 
-Current remote coverage is incomplete for writable user state.
+Plan Subscription and Plan Progress now have explicit inbound Resource interpretation, validation, freshness-aware installation, and Resource Worker registration. The same handlers are reused by KJVOnly Archive import.
 
-Future synchronization for subscriptions/progress must remain separate from normal `list()`/`get()` methods.
-
-A future inbound synchronization implementation should introduce explicit Resource handlers/install/conflict policy rather than querying Nostr directly from Plans UI/services.
+Broader multi-device synchronization remains separate from normal `list()`/`get()` methods and from the existence of inbound handlers. Plans UI/services should not query Nostr directly for synchronization.
 
 ---
 
@@ -782,8 +780,6 @@ The current implementation intentionally does not yet provide:
 ```text
 subscription delete/unsubscribe lifecycle
 progress deletion/reset semantics beyond current writes
-inbound subscription Resource installation
-inbound progress Resource installation
 multi-device conflict resolution/synchronization
 Plan Definition authoring/publication
 ```
@@ -802,14 +798,16 @@ Plan Definition interpreter/validator/installer/handler
 Plan Definition store/service behavior
 module Resource selection
 Plan Subscription identity/source/publication
+Plan Subscription interpreter/validator/installer/handler
 subscription persistence/write transaction
 Plan Progress publication/write transaction/service behavior
+Plan Progress interpreter/validator/installer/handler
 encoded reading decoding
 Subs enrichment
 Plans worker / PlansPubSubService message behavior
 ```
 
-When inbound synchronization for subscriptions/progress is added, it should receive its own handler/installer/conflict-policy tests.
+Browser installation tests also exercise Subscription and Progress through the real Resource processing / IndexedDB path.
 
 ---
 
@@ -819,8 +817,8 @@ When inbound synchronization for subscriptions/progress is added, it should rece
 2. A Subscription is a snapshot of the Plan Definition at subscribe time.
 3. Progress is separate from the Subscription and reuses its application ID.
 4. Accepted state lives in Domain persistence; worker state is derived.
-5. Plan Definition inbound installation is implemented; Subscription/Progress inbound installation is not.
-6. Subscription/Progress writes persist Domain state + Outbox intent atomically.
+5. Plan Definition, Subscription, and Progress inbound installation are implemented through normal Resource handlers.
+6. Subscription/Progress writes persist Domain state + ResourceInstallation state + Outbox intent atomically.
 7. Worker messages are explicitly typed.
 8. The worker is a separate composition root and does not use `ApplicationContext`.
 9. Reading Plans may depend on Bible navigation types; Bible must not depend on Reading Plans.

@@ -499,7 +499,9 @@ The Resource layer must not derive Domain Object IDs from Resource paths generic
 
 # ResourceInstallation
 
-`ResourceInstallation` records which published Resource version installed a Domain Object.
+`ResourceInstallation` records the Resource revision currently associated with a Resource-backed Domain Object.
+
+The record was originally introduced for externally installed Resources. It is now also written for locally authored Resource-backed state so local state has the same object-level Resource revision metadata used by archive export and later synchronization/publication.
 
 Conceptually:
 
@@ -509,10 +511,12 @@ interface ResourceInstallation {
     readonly objectType: string;
     readonly objectId: string;
     readonly publisher: string;
-    readonly resourceId: string;
+    readonly resourceId?: string;
     readonly modifiedAt: number;
 }
 ```
+
+`resourceId` is optional because a locally authored Resource-backed Domain Object may have Resource revision state without having been installed from an external Resource.
 
 The ID is created as:
 
@@ -535,17 +539,22 @@ This keeps installation identity aligned with Domain Object identity.
 A `ResourceInstallation` answers:
 
 ```text
-For this Domain Object,
-which published Resource installed the current stored value,
-and what Resource modifiedAt was installed?
+For this Resource-backed Domain Object,
+which Resource revision does the current stored value represent,
+who is its publisher,
+and what object-level modifiedAt is authoritative?
 ```
+
+When `resourceId` is present it also preserves known Resource provenance.
 
 It supports:
 
-* provenance,
+* provenance where available,
 * object-level freshness decisions,
 * idempotent installation,
-* and replacement/update decisions.
+* replacement/update decisions,
+* local Resource revision tracking,
+* and archive export/import workset selection.
 
 It is stored separately from the Domain Object so Domain data does not need to embed Resource transport metadata.
 
@@ -802,9 +811,19 @@ The original operation error remains the meaningful failure.
 
 # Atomic Write Requirement
 
-When a Domain Object is installed from a Resource, the Domain Object and its `ResourceInstallation` provenance must be committed together.
+When a Domain Object is installed from a Resource, the Domain Object and its `ResourceInstallation` state must be committed together.
 
-The desired invariant is:
+Resource-backed local writes that queue a Resource publication also commit their Domain Object, `ResourceInstallation`, and Outbox publication intent in one transaction:
+
+```text
+DOMAIN_OBJECTS
++ RESOURCE_INSTALLATIONS
++ OUTBOX
+```
+
+The local write allocates one monotonic `modifiedAt` revision and stores the same value on the queued Resource publication intent. Nostr publication later reuses that revision as `created_at` rather than creating a newer timestamp.
+
+The desired invariant for inbound installation remains:
 
 ```text
 Domain Object write succeeds
