@@ -9,7 +9,7 @@
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
+	import ImportIcon from '$lib/components/svgs/import.svelte';
 
 	// =============================== BINDINGS ================================
 
@@ -28,8 +28,7 @@
 
 	const {
 		archiveService,
-		toastService,
-		workspaceRuntime
+		toastService
 	} = useApplicationContext();
 
 	// ============================== CLICK FUNCS ==============================
@@ -38,14 +37,6 @@
 		navService.pop();
 	}
 
-	function onClose(
-		event: Event
-	): void {
-		event.stopPropagation();
-		workspaceRuntime.closePane(
-			paneID
-		);
-	}
 
 	function onChooseFile(): void {
 		if (importing) {
@@ -145,8 +136,8 @@
 	<span class="text-center">Import</span>
 
 	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={onClose}>
-			<Close classes=""></Close>
+		<KJVButton classes="" onClick={onChooseFile} disabled={importing}>
+			<ImportIcon classes=""></ImportIcon>
 		</KJVButton>
 	</span>
 {/snippet}
@@ -159,14 +150,9 @@
 			Import a KJVOnly archive through the normal Resource validation and installation path.
 		</div>
 
-		<button
-			type="button"
-			disabled={importing}
-			onclick={onChooseFile}
-			class="w-full bg-neutral-100 p-3 text-center font-medium hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-		>
-			{importing ? 'Importing…' : 'Choose .kjva'}
-		</button>
+		<div class="text-sm text-neutral-500">
+			Use the import button in the header to choose a .kjva file.
+		</div>
 	</div>
 {/snippet}
 

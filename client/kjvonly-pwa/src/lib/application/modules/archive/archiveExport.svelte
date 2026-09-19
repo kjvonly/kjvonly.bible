@@ -13,7 +13,7 @@
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
+	import ExportIcon from '$lib/components/svgs/export.svelte';
 
 	// ================================= TYPES =================================
 
@@ -41,8 +41,7 @@
 
 	const {
 		archiveService,
-		toastService,
-		workspaceRuntime
+		toastService
 	} = useApplicationContext();
 
 	let options = $state<ArchiveExportOption[]>([
@@ -172,14 +171,6 @@
 		navService.pop();
 	}
 
-	function onClose(
-		event: Event
-	): void {
-		event.stopPropagation();
-		workspaceRuntime.closePane(
-			paneID
-		);
-	}
 
 	async function onExport(): Promise<void> {
 		if (exporting) {
@@ -267,8 +258,8 @@
 	<span class="text-center">Export</span>
 
 	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={onClose}>
-			<Close classes=""></Close>
+		<KJVButton classes="" onClick={onExport} disabled={exporting}>
+			<ExportIcon classes=""></ExportIcon>
 		</KJVButton>
 	</span>
 {/snippet}
@@ -307,14 +298,6 @@
 			{/each}
 		</div>
 
-		<button
-			type="button"
-			disabled={exporting}
-			onclick={onExport}
-			class="w-full bg-neutral-100 p-3 text-center font-medium hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-		>
-			{exporting ? 'Exporting…' : 'Export .kjva'}
-		</button>
 	</div>
 {/snippet}
 
