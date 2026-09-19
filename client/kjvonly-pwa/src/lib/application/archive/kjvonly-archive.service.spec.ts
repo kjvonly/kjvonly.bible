@@ -78,6 +78,121 @@ describe(
 			}
 		);
 
+
+		it(
+			'notifies import subscribers with the Resource Types that were actually handled',
+			async () => {
+				const result:
+					KJVOnlyArchiveImportResult = {
+						resources: [
+							{
+								id: 'note:1',
+								status: 'handled',
+								resourceType: 'kjvonly/notes/entries',
+								resourceId: 'kjvonly/notes/entries/default/1'
+							},
+							{
+								id: 'plan:1',
+								status: 'handled',
+								resourceType: 'kjvonly/plans/progress',
+								resourceId: 'kjvonly/plans/progress/default/1'
+							},
+							{
+								id: 'plan:2',
+								status: 'current',
+								resourceType: 'kjvonly/plans/subscriptions',
+								resourceId: 'kjvonly/plans/subscriptions/default/2'
+							}
+						]
+					};
+
+				const workerClient:
+					ArchiveWorkerClient = {
+						import: vi.fn(
+							async () =>
+								result
+						),
+						export: vi.fn()
+					};
+
+				const service =
+					new KJVOnlyArchiveService(
+						workerClient
+					);
+
+				const subscriber =
+					vi.fn();
+
+				service.subscribeToImports(
+					subscriber
+				);
+
+				await service.import(
+					new Uint8Array([1])
+				);
+
+				expect(
+					subscriber
+				).toHaveBeenCalledTimes(
+					1
+				);
+
+				const event =
+					subscriber.mock.calls[0][0];
+
+				expect(
+					event.result
+				).toBe(
+					result
+				);
+
+				expect(
+					event.importedResourceTypes
+				).toEqual(
+					new Set([
+						'kjvonly/notes/entries',
+						'kjvonly/plans/progress'
+					])
+				);
+			}
+		);
+
+		it(
+			'unsubscribes import subscribers',
+			async () => {
+				const result:
+					KJVOnlyArchiveImportResult = {
+						resources: []
+					};
+
+				const service =
+					new KJVOnlyArchiveService({
+						import: vi.fn(
+							async () =>
+								result
+						),
+						export: vi.fn()
+					});
+
+				const subscriber =
+					vi.fn();
+
+				const unsubscribe =
+					service.subscribeToImports(
+						subscriber
+					);
+
+				unsubscribe();
+
+				await service.import(
+					new Uint8Array([1])
+				);
+
+				expect(
+					subscriber
+				).not.toHaveBeenCalled();
+			}
+		);
 		it(
 			'delegates exports to the archive worker client',
 			async () => {

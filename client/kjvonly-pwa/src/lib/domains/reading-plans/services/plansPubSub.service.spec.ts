@@ -11,6 +11,7 @@ import {
 } from '$lib/domains/reading-plans/models/plans.model';
 import {
 	PLANS_WORKER_INITIALIZED,
+	PLANS_WORKER_REFRESH,
 	type PlansSubscriptionsMessage,
 	type PlansWorkerCommand
 } from '$lib/domains/reading-plans/models/plans-worker.model';
@@ -167,6 +168,66 @@ describe(
 			}
 		);
 
+
+		it(
+			'requests worker-side persistence refresh after initialization',
+			async () => {
+				const fakeWorker =
+					worker();
+
+				const service =
+					new PlansPubSubService(
+						fakeWorker.port
+					);
+
+				const initialization =
+					service.initialize(
+						{},
+						[],
+						[]
+					);
+
+				service.onMessage({
+					data: {
+						id: PLANS_WORKER_INITIALIZED
+					}
+				});
+
+				await initialization;
+
+				fakeWorker.postMessage
+					.mockClear();
+
+				service.refresh();
+
+				await Promise.resolve();
+
+				expect(
+					fakeWorker.postMessage
+				).toHaveBeenCalledWith({
+					action: PLANS_WORKER_REFRESH
+				});
+			}
+		);
+
+		it(
+			'does not refresh a Plans worker that has not been initialized',
+			() => {
+				const fakeWorker =
+					worker();
+
+				const service =
+					new PlansPubSubService(
+						fakeWorker.port
+					);
+
+				service.refresh();
+
+				expect(
+					fakeWorker.postMessage
+				).not.toHaveBeenCalled();
+			}
+		);
 		it(
 			'publishes typed commands through its owned worker',
 			() => {

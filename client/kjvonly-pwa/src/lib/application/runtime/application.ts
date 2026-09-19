@@ -316,7 +316,9 @@ import {
     PlansPubSubService,
     SubsEnricherService,
     EncodedReadingsDecoderService,
-    createPlansWorker
+    createPlansWorker,
+    PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+    PLAN_PROGRESS_RESOURCE_TYPE
 } from '$lib/domains/reading-plans';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -982,6 +984,23 @@ export class Application {
             new PlansPubSubService(
                 createPlansWorker()
             );
+
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        PLAN_SUBSCRIPTION_RESOURCE_TYPE
+                    ) ||
+                    importedResourceTypes.has(
+                        PLAN_PROGRESS_RESOURCE_TYPE
+                    )
+                ) {
+                    plansPubSubService.refresh();
+                }
+            }
+        );
 
         const subsEnricherService =
             new SubsEnricherService();

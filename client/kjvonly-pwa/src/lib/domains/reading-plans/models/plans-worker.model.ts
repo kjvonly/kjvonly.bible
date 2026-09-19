@@ -3,6 +3,7 @@ import type { PlanSubscription } from './plan-subscription';
 import { PLAN_PUBSUB_SUBSCRIPTIONS, type Sub } from './plans.model';
 
 export const PLANS_WORKER_INITIALIZED = 'plans-worker-initialized' as const;
+export const PLANS_WORKER_REFRESH = 'plans-worker-refresh' as const;
 
 export interface PlansSubscriptionsMessage {
 	id: PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS;
@@ -34,4 +35,7 @@ export type PlansWorkerCommand =
 	| {
 			action: PLAN_PUBSUB_SUBSCRIPTIONS.PUT_PROGRESS;
 			data: PlanProgress;
+	  }
+	| {
+			action: typeof PLANS_WORKER_REFRESH;
 	  };

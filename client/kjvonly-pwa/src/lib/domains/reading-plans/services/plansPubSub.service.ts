@@ -5,6 +5,7 @@ import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-su
 import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
 import {
   PLANS_WORKER_INITIALIZED,
+  PLANS_WORKER_REFRESH,
   type PlansSubscriptionsMessage,
   type PlansWorkerCommand,
   type PlansWorkerMessage
@@ -201,6 +202,25 @@ export class PlansPubSubService {
         PLAN_PUBSUB_SUBSCRIPTIONS.PUT_SUB,
       data: subscription
     });
+  }
+
+  refresh(): void {
+    const initialization =
+      this.initialization;
+
+    if (
+      !initialization
+    ) {
+      return;
+    }
+
+    void initialization.then(
+      () => {
+        this.requireWorker().postMessage({
+          action: PLANS_WORKER_REFRESH
+        });
+      }
+    );
   }
 
   private requireWorker():
