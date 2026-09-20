@@ -1,6 +1,10 @@
 import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 
-export interface WorkspaceGridNode {
+/**
+ * Minimal recursive shape required by grid rendering. Runtime code continues
+ * to use Pane because Pane also owns Buffer and presentation state.
+ */
+interface WorkspaceGridNode {
 	id?: string;
 	split?: PaneSplit;
 	left?: WorkspaceGridNode;
