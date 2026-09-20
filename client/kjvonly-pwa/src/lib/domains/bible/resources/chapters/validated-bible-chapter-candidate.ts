@@ -1,6 +1,6 @@
 import type {
 	ChapterContent
-} from '$lib/domains/bible/models/bible.model';
+} from '../../models/bible.model';
 
 export interface ValidatedBibleChapterCandidate {
 	readonly version:
