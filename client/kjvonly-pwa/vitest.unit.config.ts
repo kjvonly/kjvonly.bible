@@ -4,9 +4,10 @@ import fs from 'fs';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  plugins: [sveltekit()],
-  test: {
-    include: ['src/**/*.{test,spec}.{js,ts}'],
-    pool: 'forks' // or 'vmForks'
-  }
+	plugins: [sveltekit()],
+	test: {
+		name: 'unit',
+		include: ['src/**/*.{test,spec}.{js,ts}'],
+		pool: 'forks' // or 'vmForks'
+	}
 });
