@@ -174,6 +174,7 @@ import {
     BIBLE_PARAGRAPHS_RESOURCE_TYPE,
     BIBLE_PERICOPES_RESOURCE_TYPE,
     BIBLE_SEARCH_RESOURCE_TYPE,
+    BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
     ChapterService,
     ParagraphsService,
     PericopesService,
@@ -863,6 +864,20 @@ export class Application {
                 outboxProcessor,
                 bibleLocationReferenceService
             );
+
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+                    )
+                ) {
+                    void bibleTextMarkupService.refresh();
+                }
+            }
+        );
 
         const bibleBooknamesStore =
             new IndexedDBBibleBooknamesStore(
