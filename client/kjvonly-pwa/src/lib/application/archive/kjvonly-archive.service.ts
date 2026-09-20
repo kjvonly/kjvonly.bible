@@ -34,14 +34,30 @@ export class KJVOnlyArchiveService {
 			>
 	) {}
 
-	async import(
+	import(
 		value: Uint8Array
 	): Promise<KJVOnlyArchiveImportResult> {
-		const result =
-			await this.workerClient.import(
+		const importPromise =
+			this.workerClient.import(
 				value
 			);
 
+		void importPromise.then(
+			(result) => {
+				this.publishImportCompleted(
+					result
+				);
+			},
+			() => undefined
+		);
+
+		return importPromise;
+	}
+
+	private publishImportCompleted(
+		result:
+			KJVOnlyArchiveImportResult
+	): void {
 		const event:
 			KJVOnlyArchiveImportEvent = {
 				result,
@@ -68,12 +84,17 @@ export class KJVOnlyArchiveService {
 			const subscriber
 			of this.importSubscribers
 		) {
-			subscriber(
-				event
-			);
+			try {
+				subscriber(
+					event
+				);
+			} catch (error) {
+				console.error(
+					'Archive import subscriber failed.',
+					error
+				);
+			}
 		}
-
-		return result;
 	}
 
 	subscribeToImports(

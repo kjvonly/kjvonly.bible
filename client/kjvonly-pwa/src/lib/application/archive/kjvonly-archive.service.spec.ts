@@ -158,6 +158,88 @@ describe(
 		);
 
 		it(
+			'keeps import completion independent from subscriber failures',
+			async () => {
+				const result:
+					KJVOnlyArchiveImportResult = {
+						resources: []
+					};
+
+				const importPromise =
+					Promise.resolve(
+						result
+					);
+
+				const service =
+					new KJVOnlyArchiveService({
+						import: vi.fn(
+							() =>
+								importPromise
+						),
+						export: vi.fn()
+					});
+
+				const error =
+					new Error(
+						'subscriber failed'
+					);
+
+				const consoleError =
+					vi.spyOn(
+						console,
+						'error'
+					).mockImplementation(
+						() => {}
+					);
+
+				const laterSubscriber =
+					vi.fn();
+
+				service.subscribeToImports(
+					() => {
+						throw error;
+					}
+				);
+
+				service.subscribeToImports(
+					laterSubscriber
+				);
+
+				const returnedPromise =
+					service.import(
+						new Uint8Array([1])
+					);
+
+				expect(
+					returnedPromise
+				).toBe(
+					importPromise
+				);
+
+				await expect(
+					returnedPromise
+				).resolves.toBe(
+					result
+				);
+
+				expect(
+					laterSubscriber
+				).toHaveBeenCalledTimes(
+					1
+				);
+
+				expect(
+					consoleError
+				).toHaveBeenCalledWith(
+					'Archive import subscriber failed.',
+					error
+				);
+
+				consoleError.mockRestore();
+			}
+		);
+
+		it(
 			'unsubscribes import subscribers',
 			async () => {
 				const result:
