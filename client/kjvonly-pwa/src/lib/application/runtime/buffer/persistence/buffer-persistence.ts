@@ -14,7 +14,7 @@ import {
 export interface PersistedBuffer {
 	key: string;
 	componentName: Modules;
-	bag: any;
+	bag: unknown;
 	resourceSelections: ResourceSelections;
 }
 

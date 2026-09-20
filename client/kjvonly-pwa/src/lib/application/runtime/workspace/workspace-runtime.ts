@@ -37,13 +37,13 @@ interface WorkspacePaneState {
 interface WorkspaceBufferFactory {
 	independent(
 		module: Modules,
-		bag?: any
+		bag?: unknown
 	): Buffer;
 
 	related(
 		module: Modules,
 		originatingBuffer: Buffer,
-		bag?: any
+		bag?: unknown
 	): Buffer;
 
 	reconcileRestored(
@@ -208,7 +208,7 @@ export class WorkspaceRuntime {
 	replaceBuffer(
 		paneID: string,
 		module: Modules,
-		bag?: any
+		bag?: unknown
 	): boolean {
 		const pane =
 			this.findPane(
@@ -257,7 +257,7 @@ export class WorkspaceRuntime {
 		paneID: string,
 		split: PaneSplit,
 		module: Modules,
-		bag: any
+		bag: unknown
 	): WorkspaceSplitResult | undefined {
 		this.trackCurrentPaneIDs();
 
