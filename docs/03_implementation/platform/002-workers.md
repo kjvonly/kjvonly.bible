@@ -124,6 +124,8 @@ The Reading Plans worker boundary was specifically tightened during the cleanup 
 
 Workers that build search indexes or display projections normally receive already accepted Domain data from the main application rather than querying arbitrary remote state themselves.
 
+An explicit refresh operation may reload accepted durable state from IndexedDB inside the worker when another worker has changed that state and the worker owns the derived projection being rebuilt. This is still local accepted state; it is not Resource discovery or remote acquisition.
+
 Examples:
 
 ```text
@@ -132,8 +134,13 @@ NotesSearchRuntime
     → Notes worker
 
 PlansPubSubService
-    → accepted PlanSubscription[] + PlanProgress[]
+    → accepted PlanSubscription[] + PlanProgress[] on initialization
     → Reading Plans worker
+
+Archive import refresh
+    → Plans/Notes main-thread owner sends refresh command
+    → owning worker reloads accepted IndexedDB state
+    → rebuilds its derived projection
 
 SearchRuntime
     → installed BibleSearchIndex
@@ -428,6 +435,8 @@ It does not discover Resources itself and does not query application persistence
 
 The main thread explicitly provides the accepted `BibleSearchIndex` object.
 
+The worker protocol also supports resetting its initialized indexes. A completed Archive import of Bible Search Index state invalidates the main-thread `SearchRuntime` cache and resets worker indexes; the next search reloads whichever Resource source is currently selected through the normal `BibleSearchIndexService` path.
+
 ---
 
 # 5. Notes Search Worker
@@ -456,6 +465,8 @@ NotesService / Notes runtime
 ```
 
 The worker rebuilds its in-memory search document from that accepted state.
+
+The worker also supports an explicit `refresh` command for cross-worker persistence changes such as Archive import. For that operation the Notes worker reads accepted Notes from its IndexedDB store itself and rebuilds the FlexSearch projection off the main thread.
 
 ---
 
@@ -539,9 +550,12 @@ The main thread can send commands for:
 get all subscriptions
 put subscription
 put progress
+refresh
 ```
 
 The worker updates the affected in-memory projection and republishes the subscriptions projection.
+
+`refresh` is intentionally argument-free. The main thread only signals that persisted accepted state may have changed. The worker reloads current Plan Subscription and Plan Progress state from IndexedDB itself, rebuilds its derived projection, and republishes the subscriptions state.
 
 ---
 
@@ -960,6 +974,8 @@ terminate Worker
 ```
 
 The Archive Worker composes archive codec/validation, IndexedDB archive reads, Domain-to-Resource reconstruction, and the shared `createContentResourceProcessor()` implementation.
+
+Archive import/export byte buffers are transferred across the worker boundary when possible rather than copied with structured clone.
 
 It does not route archive work through the long-lived `ResourceWorkerClient`.
 

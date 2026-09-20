@@ -41,6 +41,7 @@ PLANS
 LOGIN
 SETTINGS
 PROFILE
+ARCHIVE
 NULL
 ```
 
@@ -156,7 +157,7 @@ There is intentionally no silent Bible/default fallback.
 
 ## Application-Owned Versus Domain-Owned Modules
 
-Some Modules are application-level capabilities, for example Settings, Login, Profile, and the Module chooser.
+Some Modules are application-level capabilities, for example Settings, Login, Profile, Archive, and the Module chooser.
 
 Others present Domain functionality, for example Bible, Notes, Reading Plans, Search, and Strong's/reference views.
 

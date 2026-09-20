@@ -201,6 +201,31 @@ A consumer may:
 
 The producer does not control those reactions.
 
+A Resource Archive import is a useful example of this model.
+
+Conceptually:
+
+```text
+Archive Responsibility
+    ↓
+Import completes and accepted application state changes
+    ↓
+Archive Import Completed Event
+    ├── Reading Plans may refresh a derived projection
+    ├── Notes may rebuild a search projection
+    ├── Bible Search may invalidate an in-memory index
+    ├── another owner may ignore the event
+    └── future consumers may observe it independently
+```
+
+The Archive responsibility owns the meaning that the import completed and can identify which Resource Types were actually accepted.
+
+It does not own the consumers' reactions.
+
+A Reading Plans refresh, Notes search rebuild, or Bible cache invalidation remains behavior owned by that consumer.
+
+The originating import is complete regardless of whether a particular optional observer reacts, so this remains observation rather than a hidden command dependency.
+
 ---
 
 # Events Do Not Command Consumers

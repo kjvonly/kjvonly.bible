@@ -48,8 +48,11 @@ This implementation covers:
 * reuse of existing Resource handlers and installers,
 * an ephemeral Archive Worker,
 * Application-owned archive service composition,
+* generic import-completion notifications,
+* post-import runtime refresh/invalidation for interested owners,
 * the Archive application Module,
 * browser file import and download behavior,
+* transferable worker byte buffers,
 * and browser round-trip tests.
 
 This implementation does not archive:
@@ -612,6 +615,22 @@ A new Worker is created for every import and every export operation.
 
 The Worker is also terminated on errors and message failures.
 
+Archive bytes cross the worker boundary as transferable `ArrayBuffer` ownership rather than being structured-cloned when possible:
+
+```text
+Import
+    main-thread archive bytes
+        → transfer ownership
+        → Archive Worker
+
+Export
+    Archive Worker gzip bytes
+        → transfer ownership
+        → main thread
+```
+
+This avoids copying large `.kjva` payloads such as Bible/Strong's exports merely to cross the worker boundary.
+
 There is no idle Archive Worker when no archive operation is running.
 
 ---
@@ -709,6 +728,72 @@ KJVOnlyArchiveWorkerClient
 The Worker client owns Worker creation and termination.
 
 Svelte does not construct archive Workers directly.
+
+`KJVOnlyArchiveService` also owns the application-level observation boundary for completed imports:
+
+```ts
+archiveService.subscribeToImports(subscriber)
+```
+
+An import-completion event contains:
+
+```text
+import result
+Resource Types that were actually handled
+```
+
+Only entries whose import outcome is `handled` contribute to `importedResourceTypes`.
+
+Entries reported as current, unsupported, or failed do not cause false refresh notifications.
+
+The Archive service does not know how any Domain/runtime responds to the event.
+
+---
+
+# Post-Import Runtime Reconciliation
+
+Archive import may update accepted IndexedDB state from a short-lived Worker while other long-lived main-thread services/workers already hold derived or cached state.
+
+The import-completion event lets those owners independently decide whether they need to refresh.
+
+Current consumers include:
+
+```text
+Reading Plans
+    → PlansPubSubService
+    → signal Plans Worker refresh
+    → worker reloads Subscription/Progress state from IndexedDB
+
+Notes
+    → NotesService / Notes search runtime
+    → signal Notes Worker refresh
+    → worker reloads accepted Notes from IndexedDB
+    → rebuild FlexSearch projection
+
+Bible Search
+    → SearchRuntime
+    → invalidate initialized index state
+    → reset worker indexes
+    → next search reloads the currently selected index
+
+Bible Booknames
+    → BibleBooknamesService
+    → clear in-memory Booknames cache
+    → next get() reloads accepted state
+
+Bible Text Markup
+    → BibleTextMarkupService
+    → reload currently subscribed markup IDs
+    → publish through the service's existing subscriber path
+```
+
+The Archive subsystem itself contains none of these Domain-specific refresh rules.
+
+Application composition registers the interested owners as subscribers.
+
+This is intentionally different from forcing every imported Resource into every already-open Module.
+
+For example, imported Bible Chapters, Paragraphs, and Pericopes are not forced into an already-open Bible Reader. Those Module instances retain their captured Resource selections. Newly imported sources become available for future Module creation or explicit Resource-selection changes.
 
 ---
 
@@ -828,8 +913,11 @@ Domain-to-Resource reconstruction
 import outcome mapping
 Archive Worker client lifecycle
 Worker termination on success/failure
+transferable import/export byte buffers
 archive worker composition registrations
 Application archive service delegation
+import-completion subscription / unsubscribe behavior
+handled-Resource-Type event filtering
 ```
 
 Browser coverage verifies real IndexedDB and Worker behavior.
@@ -848,6 +936,8 @@ export
 Bundle-derived Bible Chapter and Strong's state are included to verify canonical individual Resource reconstruction.
 
 Separate browser installation tests cover Notes, Plan Subscriptions, and Plan Progress through the normal Resource installation path.
+
+Post-import runtime tests also cover the refresh/invalidation behavior that crosses persistent storage and long-lived projections, including Reading Plans and Notes workers. Bible Search, Booknames, and Text Markup have focused refresh/invalidation coverage at their owning runtime/service boundaries.
 
 ---
 
