@@ -16,17 +16,15 @@ export class SubsEnricherService {
 	 * @param completedReadingIndexes completed reading indexes
 	 * @returns lowest incomplete reading index
 	 */
-	getNextReadingIndex(completedReadingIndexes: number[]): number {
-		return (
-			completedReadingIndexes
-				.sort((a, b) => a - b)
-				.map((i, idx) => ({
-					readingIndex: i,
-					arrayIndex: idx
-				}))
-				.filter((i, idx) => i.readingIndex != idx)
-				.at(0)?.arrayIndex || completedReadingIndexes.length
-		);
+	getNextReadingIndex(completedReadingIndexes: readonly number[]): number {
+		const completed = new Set(completedReadingIndexes);
+		let nextReadingIndex = 0;
+
+		while (completed.has(nextReadingIndex)) {
+			nextReadingIndex += 1;
+		}
+
+		return nextReadingIndex;
 	}
 
 	/**
