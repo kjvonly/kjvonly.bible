@@ -4,20 +4,20 @@ import type {
 
 import type {
 	BibleSearchIndex
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../../models/bible-search-index.model';
 
 import type {
 	SearchResultResponse
-} from '$lib/domains/bible/models/search.model';
+} from '../../models/search.model';
 
 import type {
 	BibleSearchIndexService
-} from '$lib/domains/bible/services/bible-search-index.service';
+} from '../../services/bible-search-index.service';
 
 import type {
 	SearchWorkerMessage,
 	SearchWorkerRequest
-} from '$lib/domains/bible/workers/search/search-worker-message';
+} from '../../workers/search/search-worker-message';
 
 interface SearchWorkerPort {
 	postMessage(

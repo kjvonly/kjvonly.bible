@@ -9,7 +9,7 @@ import FlexSearch from 'flexsearch';
 import type {
 	BibleSearchIndex,
 	BibleSearchIndexChunks
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../../models/bible-search-index.model';
 
 import {
 	SearchIndexRuntime

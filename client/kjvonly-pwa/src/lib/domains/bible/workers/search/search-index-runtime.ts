@@ -5,7 +5,7 @@ import FlexSearch, {
 import type {
 	BibleSearchIndex,
 	BibleSearchIndexChunks
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../../models/bible-search-index.model';
 
 export class SearchIndexRuntime {
 	private readonly indexes =
