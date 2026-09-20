@@ -138,6 +138,10 @@ export {
 	KJVOnlyArchiveExporter
 } from './archive/kjvonly-archive-exporter';
 
+export type {
+	KJVOnlyArchiveExportIdsSelection
+} from './archive/kjvonly-archive-export-ids-selection';
+
 export {
 	matchesKJVOnlyArchiveExportSelection,
 	matchesObjectIdPatterns,

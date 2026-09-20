@@ -69,9 +69,14 @@ async function handleRequest(
 		}
 
 		const value =
-			await operations.export(
-				request.selection
-			);
+			request.type ===
+				'export-ids'
+				? await operations.exportIds(
+					request.selection
+				)
+				: await operations.export(
+					request.selection
+				);
 
 		workerPort.postMessage(
 			{

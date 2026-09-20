@@ -1,4 +1,8 @@
 import type {
+	KJVOnlyArchiveExportIdsSelection
+} from '../kjvonly-archive-export-ids-selection';
+
+import type {
 	KJVOnlyArchiveExportSelection
 } from '../kjvonly-archive-export-selection';
 
@@ -114,6 +118,30 @@ export class KJVOnlyArchiveWorkerClient {
 				) {
 					throw new Error(
 						'KJVOnly Archive worker returned an unexpected result for an export request.'
+					);
+				}
+
+				return message.value;
+			}
+		);
+	}
+
+	exportIds(
+		selection:
+			KJVOnlyArchiveExportIdsSelection
+	): Promise<Uint8Array> {
+		return this.run({
+			type:
+				'export-ids',
+			selection
+		}).then(
+			(message) => {
+				if (
+					message.type !==
+						'export-result'
+				) {
+					throw new Error(
+						'KJVOnly Archive worker returned an unexpected result for an export ids request.'
 					);
 				}
 

@@ -8,6 +8,10 @@ import type {
 	ResourceInstallation
 } from '$lib/resource';
 
+import type {
+	KJVOnlyArchiveExportIdsSelection
+} from './kjvonly-archive-export-ids-selection';
+
 import {
 	matchesKJVOnlyArchiveExportSelection,
 	type KJVOnlyArchiveExportSelection
@@ -114,4 +118,71 @@ export class KJVOnlyArchiveExporter {
 				archivedInstallations
 		});
 	}
+
+	async exportIds(
+		selection:
+			KJVOnlyArchiveExportIdsSelection
+	): Promise<KJVOnlyArchiveV1> {
+		const db =
+			await this.getDB();
+
+		const archivedDomainObjects:
+			Record<
+				string,
+				ArchivedDomainObject
+			> = {};
+
+		const archivedInstallations:
+			Record<
+				string,
+				ResourceInstallation
+			> = {};
+
+		for (
+			const id
+			of selection.ids
+		) {
+			const domainObject =
+				await db.get(
+					DOMAIN_OBJECTS,
+					id
+				);
+
+			if (!domainObject) {
+				throw new Error(
+					`Cannot export Domain Object ${id}: Domain Object is missing.`
+				);
+			}
+
+			const installation =
+				await db.get(
+					RESOURCE_INSTALLATIONS,
+					id
+				);
+
+			if (!installation) {
+				throw new Error(
+					`Cannot export Domain Object ${id}: matching Resource Installation is missing.`
+				);
+			}
+
+			archivedDomainObjects[id] =
+				domainObject;
+
+			archivedInstallations[id] =
+				installation;
+		}
+
+		return this.validator.validate({
+			version:
+				KJVONLY_ARCHIVE_VERSION,
+
+			domain_objects:
+				archivedDomainObjects,
+
+			resource_installations:
+				archivedInstallations
+		});
+	}
+
 }
