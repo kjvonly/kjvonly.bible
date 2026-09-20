@@ -24,10 +24,10 @@
 </script>
 
 <div
-	class="sticky top-0 flex w-full max-w-lg justify-center border-t border-neutral-400 bg-neutral-50 px-4 py-2"
+	class="sticky top-0 flex w-full justify-center border-t border-neutral-400 bg-neutral-50 px-4 py-2"
 >
 	<input
-		class="border-primary-500 w-full max-w-3xl border-b bg-neutral-50 outline-none"
+		class="border-primary-500 w-full border-b bg-neutral-50 outline-none"
 		oninput={onSearchTextChanged}
 		bind:value={searchText}
 		placeholder="search"

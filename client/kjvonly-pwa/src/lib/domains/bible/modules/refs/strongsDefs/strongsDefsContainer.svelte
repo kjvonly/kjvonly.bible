@@ -211,9 +211,9 @@
 
 {#snippet thayersContainer(s: Strongs)}
 	{#if s.thayersDef}
-		<div class="max-w-lg pt-4">
+		<div class="w-full pt-4">
 			<p class="text-neutral-600">Thayers Definition:</p>
-			<p class="max-w-lg ps-2">
+			<p class="w-full ps-2">
 				{@render recursiveDef(s.thayersDef)}
 			</p>
 		</div>
@@ -222,9 +222,9 @@
 
 {#snippet brownContainer(s: Strongs)}
 	{#if s.brownDef}
-		<div class="max-w-lg pt-4">
+		<div class="w-full pt-4">
 			<p class="text-neutral-600">Brown Definition:</p>
-			<p class="max-w-lg ps-2">
+			<p class="w-full ps-2">
 				{@render recursiveDef(s.brownDef)}
 			</p>
 		</div>

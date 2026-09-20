@@ -12,7 +12,7 @@
 
 <div
 	style="height: {clientHeight}px"
-	class="absolute z-[10000] h-full w-full max-w-lg"
+	class="absolute z-[10000] h-full w-full"
 >
 	{@render children?.()}
 </div>

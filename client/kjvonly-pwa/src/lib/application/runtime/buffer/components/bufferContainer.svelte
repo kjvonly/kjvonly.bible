@@ -40,7 +40,7 @@
 		class="relative flex h-full w-full justify-center bg-neutral-50 outline outline-neutral-400"
 	>
 		<div
-			class="w-full {maxWidth ? 'max-w-lg' : ''} outline outline-neutral-400"
+			class="w-full {maxWidth ? 'max-w-lg' : 'max-w-none'} outline outline-neutral-400"
 		>
 			{@render children?.()}
 		</div>

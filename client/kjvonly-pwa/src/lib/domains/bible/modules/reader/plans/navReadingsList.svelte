@@ -24,7 +24,7 @@
 </script>
 
 <div bind:clientHeight class="flex h-full w-full justify-center bg-neutral-50">
-	<div class="w-full md:max-w-lg">
+	<div class="w-full">
 		<header
 			bind:clientHeight={headerHeight}
 			class="items-between sticky top-0 flex w-full border-b-2 bg-neutral-100 text-neutral-700"

@@ -229,7 +229,7 @@
 
 {#snippet noteActionsSnippet()}
 	<div
-		class="flex h-full w-full max-w-lg flex-col items-start justify-start border border-neutral-100"
+		class="flex h-full w-full flex-col items-start justify-start border border-neutral-100"
 	>
 		{#each Object.keys(noteActions) as na}
 			<button
@@ -245,7 +245,7 @@
 
 {#snippet noteConfirmDeleteSnippet()}
 	<div
-		class="flex h-full w-full max-w-lg flex-col items-center justify-center border border-neutral-100"
+		class="flex h-full w-full flex-col items-center justify-center border border-neutral-100"
 	>
 		<p class="p-4 capitalize">
 			confirm delete <span class="font-semibold"
@@ -331,7 +331,7 @@
 	{:else}
 		<div
 			bind:clientHeight={tagContainerHeight}
-			class="flex w-full max-w-lg flex-col items-start justify-start"
+			class="flex w-full flex-col items-start justify-start"
 		>
 			{@render noteTagInputSnippet()}
 			{#if note?.tags}
