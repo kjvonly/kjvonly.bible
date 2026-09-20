@@ -223,6 +223,26 @@ describe(
 		);
 
 		it(
+			'rejects a non-object persisted Buffer bag',
+			() => {
+				expect(
+					() =>
+						restoreBuffer({
+							key:
+								'buffer-a',
+							componentName:
+								Modules.BIBLE,
+							bag:
+								'bible-location',
+							resourceSelections: {}
+						})
+				).toThrow(
+					'Invalid persisted Buffer bag'
+				);
+			}
+		);
+
+		it(
 			'rejects an unknown persisted module',
 			() => {
 				expect(

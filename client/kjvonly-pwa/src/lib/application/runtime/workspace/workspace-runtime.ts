@@ -1,5 +1,6 @@
 import { Modules } from '$lib/application/models/modules.model';
 import type { Buffer } from '$lib/application/runtime/buffer/models/buffer.model';
+import type { BufferBag } from '$lib/application/runtime/buffer/models/buffer-bag.model';
 import type { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
@@ -37,13 +38,13 @@ interface WorkspacePaneState {
 interface WorkspaceBufferFactory {
 	independent(
 		module: Modules,
-		bag?: unknown
+		bag?: BufferBag
 	): Buffer;
 
 	related(
 		module: Modules,
 		originatingBuffer: Buffer,
-		bag?: unknown
+		bag?: BufferBag
 	): Buffer;
 
 	reconcileRestored(
@@ -208,7 +209,7 @@ export class WorkspaceRuntime {
 	replaceBuffer(
 		paneID: string,
 		module: Modules,
-		bag?: unknown
+		bag?: BufferBag
 	): boolean {
 		const pane =
 			this.findPane(
@@ -257,7 +258,7 @@ export class WorkspaceRuntime {
 		paneID: string,
 		split: PaneSplit,
 		module: Modules,
-		bag: unknown
+		bag: BufferBag
 	): WorkspaceSplitResult | undefined {
 		this.trackCurrentPaneIDs();
 

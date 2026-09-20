@@ -10,6 +10,10 @@ import type {
 	ResourceSelections
 } from '$lib/application/resources/resource-selections';
 
+import type {
+	BufferBag
+} from './models/buffer-bag.model';
+
 export interface ModuleResourceSelectionsBuilder {
 	independent(
 		module: Modules
@@ -36,7 +40,7 @@ export class ModuleBufferFactory {
 
 	independent(
 		module: Modules,
-		bag: unknown = {}
+		bag: BufferBag = {}
 	): Buffer {
 		return this.create(
 			module,
@@ -54,7 +58,7 @@ export class ModuleBufferFactory {
 				Buffer,
 				'resourceSelections'
 			>,
-		bag: unknown = {}
+		bag: BufferBag = {}
 	): Buffer {
 		return this.create(
 			module,
@@ -82,7 +86,7 @@ export class ModuleBufferFactory {
 		module: Modules,
 		resourceSelections:
 			ResourceSelections,
-		bag: unknown
+		bag: BufferBag
 	): Buffer {
 		const buffer =
 			new Buffer(
@@ -102,26 +106,8 @@ export class ModuleBufferFactory {
 }
 
 function copyNavigationContext(
-	bag: unknown
-): unknown {
-	if (
-		bag === null ||
-		typeof bag !==
-			'object'
-	) {
-		return bag;
-	}
-
-	if (
-		Array.isArray(
-			bag
-		)
-	) {
-		return [
-			...bag
-		];
-	}
-
+	bag: BufferBag
+): BufferBag {
 	return {
 		...bag
 	};

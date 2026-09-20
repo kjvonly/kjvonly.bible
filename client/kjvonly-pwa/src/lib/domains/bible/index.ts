@@ -1,6 +1,7 @@
 export type {
 	BCV,
-	BibleReadingNavigation
+	BibleReadingNavigation,
+	Word
 } from './models/bible.model';
 
 export type {

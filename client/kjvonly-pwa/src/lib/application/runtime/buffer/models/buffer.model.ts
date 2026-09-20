@@ -5,11 +5,15 @@ import type {
 	ResourceSelections
 } from '$lib/application/resources/resource-selections';
 
+import type {
+	BufferBag
+} from './buffer-bag.model';
+
 export class Buffer {
 	// Buffer identity is independent from Pane identity and survives Workspace persistence.
 	key: string = uuid4();
 	componentName: Modules = Modules.NULL;
-	bag: any = {}; // for persistence
+	bag: BufferBag = {}; // persisted navigation context
 
 	resourceSelections:
 		ResourceSelections;
