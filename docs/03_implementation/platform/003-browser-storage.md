@@ -131,7 +131,7 @@ IndexedDB owns the durable records for:
 
 ```text
 Domain Objects
-Resource installation provenance
+Resource revision/state metadata
 Resource receipts
 Outbox publication intents
 selected native Nostr events

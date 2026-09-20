@@ -403,10 +403,10 @@ identity
 validation
 freshness/duplicate policy
 Domain Object persistence
-ResourceInstallation provenance
+ResourceInstallation revision/state
 ```
 
-Domain Object state and Resource installation provenance are persisted atomically through Domain-specific installation transactions.
+Accepted Resource-backed Domain Object state and its Resource revision/state metadata are persisted atomically through Domain-specific transactions. Inbound installation uses the installation transaction path; local Resource-backed writes persist the same state alongside their Outbox publication intent.
 
 ---
 

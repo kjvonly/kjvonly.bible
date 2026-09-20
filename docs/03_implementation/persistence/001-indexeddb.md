@@ -143,7 +143,7 @@ StrongsStore
 
 # `resource_installations`
 
-`resource_installations` records object-level Resource installation provenance.
+`resource_installations` records object-level Resource revision/state metadata associated with Resource-backed Domain Objects.
 
 The key path is:
 
@@ -157,15 +157,16 @@ The stored value is:
 ResourceInstallation
 ```
 
-This store answers the Domain installation question:
+This store answers the object-level Resource-state question:
 
-> Which Resource publication produced this installed Domain Object, and is a
-> newly resolved publication newer than what is already installed?
+> Which Resource revision currently backs this Domain Object, and is an incoming
+> revision newer than the accepted state?
+
+For externally installed state, `resourceId` can also preserve the Resource provenance that produced the object. Locally authored Resource-backed state uses the same record even before external Resource provenance exists.
 
 `ResourceInstallation` is distinct from a Resource receipt.
 
-Installation provenance belongs to the Domain installation lifecycle and is
-committed atomically with Domain Object writes where required.
+Resource revision/state metadata is committed atomically with the Domain Object when accepted Resource-backed state changes. For inbound Resources this is part of Domain installation; for local Resource-backed writes it is committed with the Domain Object and Outbox publication intent.
 
 ---
 
@@ -198,7 +199,7 @@ ResourceReceipt
     = has this Resource publication been processed?
 
 ResourceInstallation
-    = which Resource publication installed this Domain Object?
+    = which Resource revision currently backs this Domain Object?
 ```
 
 ---
@@ -279,7 +280,7 @@ native Nostr application state rather than interpreted Resource content.
 | Store | Key | Indexes | Responsibility |
 |---|---|---|---|
 | `domain_objects` | `id` | `objectType` | Domain Object persistence |
-| `resource_installations` | `id` | — | object-level Resource provenance |
+| `resource_installations` | `id` | — | object-level Resource revision/state metadata |
 | `resource_receipts` | `id` | — | Resource processing receipts |
 | `outbox` | `id` | `status` | durable publication intent |
 | `nostr_events` | `key` | `kind`, `pubkey`, `[kind,pubkey]` | selected native Nostr events |

@@ -1328,7 +1328,6 @@ Future cleanup should therefore be evidence-driven rather than assuming another 
 The following are not part of ordinary ownership cleanup unless explicitly selected:
 
 ```text
-large import/export redesign
 named/detached Buffer manager
 focus/selection runtime redesign
 major Resource/Nostr architecture changes
@@ -1385,7 +1384,6 @@ This document does not define:
 * IndexedDB schema,
 * exact Svelte layout implementation,
 * future synchronization policy,
-* import/export design,
 * future detached Buffer behavior,
 * or every concrete class dependency.
 

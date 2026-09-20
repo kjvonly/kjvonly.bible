@@ -84,7 +84,7 @@ This document covers the current implementation of:
 * Domain interpretation,
 * Domain validation,
 * Domain installation,
-* Resource installation provenance,
+* Resource-backed Domain Object revision/state metadata,
 * Resource processing receipts,
 * Resource install outcomes,
 * individual-Resource to bundle fallback,
@@ -150,7 +150,7 @@ Domain validation
     ≠ Installation
 
 Resource receipt
-    ≠ ResourceInstallation provenance
+    ≠ ResourceInstallation object-level state
 ```
 
 These distinctions are important because a Resource being available on a network does not itself make that Resource authoritative local application state.
@@ -745,7 +745,7 @@ and external content retrieval is skipped.
 
 This is a Resource-processing optimization and freshness guard.
 
-It does not replace Domain installation provenance.
+It does not replace object-level `ResourceInstallation` state.
 
 ---
 
@@ -775,7 +775,7 @@ It is used by descriptor resolution to determine whether content needs to be pro
 
 ## ResourceInstallation
 
-A Resource installation record associates installed Domain Objects with the Resource that produced them.
+A `ResourceInstallation` record associates a Resource-backed Domain Object with its currently accepted Resource revision/state. For externally installed objects it can also preserve which Resource produced the object; locally authored Resource-backed state uses the same record before external provenance necessarily exists.
 
 It records concepts such as:
 
@@ -787,7 +787,7 @@ resourceId
 modifiedAt
 ```
 
-Domain installers use this provenance to decide whether an individual Domain Object should be replaced.
+Domain installers use this object-level revision state to decide whether an individual Domain Object should be replaced.
 
 Therefore:
 
@@ -796,7 +796,7 @@ ResourceReceipt
     = Resource processing freshness
 
 ResourceInstallation
-    = Domain Object installation provenance/freshness
+    = Domain Object Resource revision/state + freshness
 ```
 
 Do not collapse the two concepts.
@@ -1481,7 +1481,7 @@ status = handled
 
 The consequence is that the Resource may be processed again later because freshness bookkeeping was not persisted.
 
-The Domain installation provenance still protects Domain Objects according to the Domain installer's own freshness rules.
+The Domain Object's `ResourceInstallation` state still protects accepted objects according to the Domain installer's own freshness rules.
 
 ---
 
@@ -1959,7 +1959,7 @@ The Resource layer does not validate Domain schemas.
 
 The Resource layer does not manufacture generic Domain Object IDs.
 
-## Resource receipts do not replace installation provenance
+## Resource receipts do not replace ResourceInstallation state
 
 Receipts and `ResourceInstallation` records solve different freshness problems.
 
