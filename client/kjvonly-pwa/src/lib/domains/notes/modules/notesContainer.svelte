@@ -1,9 +1,9 @@
 <script lang="ts">
-	import uuid4 from 'uuid4';
+	import { BufferContainer } from '$lib/application/ui';
 	import Notes from './notes.svelte';
 	import { onMount } from 'svelte';
 	import type { NotesMode } from '../models/note.model';
-	let id = uuid4();
+	let clientHeight = $state(0);
 	let noteID: string = $state('');
 	let { paneID = $bindable<string>(), pane = $bindable() } = $props();
 
@@ -20,8 +20,13 @@
 	});
 </script>
 
-<div class="kjvonly-noselect h-full overflow-hidden">
-	<div {id} class="h-full">
-		<Notes allNotes={true} bind:mode noteIDToOpen={noteID}></Notes>
+<BufferContainer bind:clientHeight>
+	<div class="kjvonly-noselect h-full w-full min-h-0 min-w-0 overflow-hidden">
+		<Notes
+			allNotes={true}
+			bind:mode
+			noteIDToOpen={noteID}
+			{clientHeight}
+		></Notes>
 	</div>
-</div>
+</BufferContainer>

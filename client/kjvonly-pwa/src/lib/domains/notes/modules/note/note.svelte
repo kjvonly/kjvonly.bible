@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BufferContainer, BufferHeader } from '$lib/application/ui';
+	import { BufferHeader } from '$lib/application/ui';
 
 	// SVELTE
 	import { onMount } from 'svelte';
@@ -44,11 +44,14 @@
 
 	// =============================== BINDINGS ================================
 
-	let { mode = $bindable<NotesMode>(), note = $bindable() } = $props();
+	let {
+		clientHeight = $bindable<number>(),
+		mode = $bindable<NotesMode>(),
+		note = $bindable()
+	} = $props();
 
 	// ================================== VARS =================================
 
-	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
@@ -343,27 +346,46 @@
 	<div
 		class=" {showNoteActions || !note
 			? 'hidden'
-			: ''} flex h-full w-full flex-col"
-		style="min-height: {clientHeight -
-			headerHeight -
-			tagContainerHeight -
-			50}px; max-height: {clientHeight -
-			headerHeight -
-			tagContainerHeight -
-			50}px"
+			: ''} flex w-full min-h-0 min-w-0 flex-col overflow-hidden"
+		style="height: {Math.max(
+			0,
+			clientHeight - headerHeight - tagContainerHeight - 50
+		)}px"
 	>
-		<div id={editor}></div>
+		<div
+			id={editor}
+			class="notes-quill h-full w-full min-h-0 min-w-0 overflow-hidden"
+		></div>
 	</div>
 {/snippet}
 
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render noteHeaderSnippet()}
-	</BufferHeader>
-	<div style="height: {clientHeight - headerHeight}px">
-		{@render noteBody()}
-	</div>
-</BufferContainer>
+<BufferHeader bind:headerHeight>
+	{@render noteHeaderSnippet()}
+</BufferHeader>
+<div style="height: {clientHeight - headerHeight}px">
+	{@render noteBody()}
+</div>
 
 <style>
+	:global(.notes-quill.ql-container) {
+		box-sizing: border-box;
+		height: 100%;
+		width: 100%;
+		max-width: 100%;
+		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	:global(.notes-quill > .ql-editor) {
+		box-sizing: border-box;
+		height: 100%;
+		width: 100%;
+		max-width: 100%;
+		min-height: 0;
+		min-width: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+		overflow-wrap: anywhere;
+	}
 </style>
