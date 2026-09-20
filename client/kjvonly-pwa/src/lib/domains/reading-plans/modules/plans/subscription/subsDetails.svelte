@@ -4,7 +4,12 @@
 	import { onMount, untrack } from 'svelte';
 
 	// COMPONENTS
-	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
+	import {
+		attachEvents,
+		BufferBody,
+		BufferContainer,
+		BufferHeader
+	} from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ReadingsComponent from '../components/readings.svelte';
 	// // SVGS
@@ -26,7 +31,6 @@
 	import { useApplicationContext } from '$lib/application';
 
 	// OTHER
-	import { sleep } from '$lib/shared';
 	import uuid4 from 'uuid4';
 
 	// =============================== BINDINGS ================================
@@ -62,22 +66,12 @@
 	onMount(() => {
 		loadMoreSubReadings();
 		setHasCompletedReadings();
-		setTimeout(async () => {
-			let el = document.getElementById(`${subListViewID}-scroll-container`);
-			let retriesMax = 10;
-			let count = 0;
-			while (!el && count != retriesMax) {
-				el = document.getElementById(`${subListViewID}-scroll-container`);
-				await sleep(1000);
-				count++;
-			}
 
-			if (count === 10) {
-				return;
-			}
-
-			el?.addEventListener('scroll', handleScroll);
-		}, 1000);
+		return attachEvents(
+			`${subListViewID}-scroll-container`,
+			'scroll',
+			handleScroll
+		);
 	});
 
 	$effect(() => {

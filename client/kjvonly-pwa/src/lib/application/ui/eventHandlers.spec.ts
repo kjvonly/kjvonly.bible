@@ -7,6 +7,7 @@ import {
 } from 'vitest';
 
 import {
+	attachEvents,
 	findElement,
 	scrollTo,
 	scrollToTop
@@ -14,6 +15,8 @@ import {
 
 function createElement(): HTMLElement {
 	return {
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
 		scrollIntoView: vi.fn(),
 		scrollTo: vi.fn()
 	} as unknown as HTMLElement;
@@ -68,6 +71,66 @@ describe('application UI event handlers', () => {
 
 		await expect(result).resolves.toBeNull();
 		expect(document.getElementById).toHaveBeenCalledTimes(11);
+	});
+
+	it('attaches an event listener and returns cleanup', async () => {
+		vi.useFakeTimers();
+
+		const element = createElement();
+		const listener = vi.fn();
+		stubDocument(() => element);
+
+		const detach = attachEvents(
+			'target',
+			'scroll',
+			listener
+		);
+
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(
+			element.addEventListener
+		).toHaveBeenCalledWith(
+			'scroll',
+			listener
+		);
+
+		detach();
+
+		expect(
+			element.removeEventListener
+		).toHaveBeenCalledWith(
+			'scroll',
+			listener
+		);
+	});
+
+	it('does not attach after cleanup while waiting for the element', async () => {
+		vi.useFakeTimers();
+
+		const element = createElement();
+		let calls = 0;
+
+		stubDocument(() => {
+			calls++;
+			return calls === 2
+				? element
+				: null;
+		});
+
+		const detach = attachEvents(
+			'target',
+			'scroll',
+			vi.fn()
+		);
+
+		await vi.advanceTimersByTimeAsync(50);
+		detach();
+		await vi.advanceTimersByTimeAsync(1000);
+
+		expect(
+			element.addEventListener
+		).not.toHaveBeenCalled();
 	});
 
 	it('scrolls an element into view before invoking the callback', async () => {

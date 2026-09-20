@@ -20,11 +20,26 @@ export function attachEvents(
 	id: string,
 	event: string,
 	fn: EventListenerOrEventListenerObject
-): void {
-	setTimeout(async () => {
+): () => void {
+	let detached = false;
+	let attachedElement: HTMLElement | null = null;
+
+	const timeout = setTimeout(async () => {
 		const el = await findElement(id);
-		el?.addEventListener(event, fn);
+		if (!el || detached) {
+			return;
+		}
+
+		attachedElement = el;
+		el.addEventListener(event, fn);
 	}, 50);
+
+	return () => {
+		detached = true;
+		clearTimeout(timeout);
+		attachedElement?.removeEventListener(event, fn);
+		attachedElement = null;
+	};
 }
 
 export type ScrollToViewFunction = (el: HTMLElement) => void;
