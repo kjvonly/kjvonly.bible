@@ -40,8 +40,6 @@
 		if (paneDimensionsByID[paneID]) {
 			containerHeight = `height: ${paneDimensionsByID[paneID].height * 100}vh;`;
 			containerWidth = `width: ${paneDimensionsByID[paneID].width * 100}vw;`;
-		} else {
-			console.log('error should have update height and width');
 		}
 	}
 

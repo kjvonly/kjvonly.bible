@@ -33,13 +33,7 @@
 			return;
 		}
 
-		const granted = await navigator.storage.persist();
-		if (granted) {
-			console.log('Persistent storage granted');
-			return;
-		}
-
-		console.log('Persistent storage NOT granted');
+		await navigator.storage.persist();
 	}
 
 	onMount(() => {

@@ -86,14 +86,14 @@
 				theme: 'snow'
 			});
 
-			quill.on('text-change', (delta, oldDelta, source) => {
-				if (source == 'api') {
-					console.log('An API call triggered this change.');
-				} else if (source == 'user') {
-					note.html = quill.getSemanticHTML();
-					note.text = quill.getText();
-					note.title = note.text.split('\n')[0].substring(0, 20);
+			quill.on('text-change', (_delta, _oldDelta, source) => {
+				if (source !== 'user') {
+					return;
 				}
+
+				note.html = quill.getSemanticHTML();
+				note.text = quill.getText();
+				note.title = note.text.split('\n')[0].substring(0, 20);
 			});
 
 			let d = quill.clipboard.convert({ html: note?.html });
