@@ -746,6 +746,22 @@ Only entries whose import outcome is `handled` contribute to `importedResourceTy
 
 Entries reported as current, unsupported, or failed do not cause false refresh notifications.
 
+Import completion and observer reconciliation have separate completion boundaries.
+
+`KJVOnlyArchiveService.import()` returns the Archive Worker client's original import `Promise`. When that Promise resolves, the service publishes the import-completion event as a side effect. Subscriber work is not awaited and cannot redefine whether the Archive import itself succeeded.
+
+Subscribers are synchronous observation callbacks:
+
+```ts
+type KJVOnlyArchiveImportSubscriber = (
+    event: KJVOnlyArchiveImportEvent
+) => void;
+```
+
+Each subscriber owns any asynchronous work it starts, such as messaging a long-lived worker. A subscriber failure is isolated from the completed import and from later subscribers.
+
+A failed Archive import does not publish an import-completion event.
+
 The Archive service does not know how any Domain/runtime responds to the event.
 
 ---

@@ -226,6 +226,8 @@ A Reading Plans refresh, Notes search rebuild, or Bible cache invalidation remai
 
 The originating import is complete regardless of whether a particular optional observer reacts, so this remains observation rather than a hidden command dependency.
 
+Consumer observation does not extend the completion boundary of the originating operation. Once the producer has completed its responsibility, observer refresh/reconciliation work proceeds independently.
+
 ---
 
 # Events Do Not Command Consumers

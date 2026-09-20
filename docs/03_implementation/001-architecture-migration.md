@@ -531,7 +531,7 @@ synchronization work where separately planned
 
 Large redesigns should be treated as new architecture work rather than silently folded into cleanup.
 
-Import/export remains a separately parked legacy area and is not part of this completed migration record.
+The later Resource Archive implementation is documented separately. It is no longer a parked legacy area and should be maintained as a normal application capability.
 
 ---
 
