@@ -30,6 +30,7 @@
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
 	import { findElement } from '$lib/application/ui';
+	import { parseNoteTagInput } from './note-tag-input';
 
 	// APPLICATION
 	const {
@@ -152,36 +153,37 @@
 	}
 
 	async function onAddTag() {
-		if (tagInput && tagInput.length < 1) {
+		const tags = parseNoteTagInput(tagInput);
+
+		if (tags.length === 0) {
 			return;
 		}
 
-		tagInput.split(',').forEach((t: string) => {
-			let tagId = uuid4();
-			if (!note.tags) {
-				note.tags = [];
-			}
+		if (!note.tags) {
+			note.tags = [];
+		}
 
-			let now = Date.now();
+		tags.forEach((tag) => {
+			const now = Date.now();
+
 			note.tags.push({
-				id: tagId,
+				id: uuid4(),
 				created: now,
 				modified: now,
-				tag: t.trim()
+				tag
 			});
 		});
+
 		tagInput = '';
-		let el = await findElement(`${tagID}-tags`);
+		const el = await findElement(`${tagID}-tags`);
 		el?.focus();
 	}
 
 	function onDeleteTag(tagID: string) {
 		if (note) {
-			note.tags = note.tags.filter((t: NoteTag) => {
-				if (t.id !== tagID) {
-					return t;
-				}
-			});
+			note.tags = note.tags.filter(
+				(tag: NoteTag) => tag.id !== tagID
+			);
 		}
 	}
 
