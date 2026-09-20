@@ -4,7 +4,7 @@ import {
 
 import type {
 	BibleBooknamesContent
-} from '$lib/domains/bible/models/bible-booknames.model';
+} from '../../models/bible-booknames.model';
 
 import type {
 	ResourceValidator
