@@ -1,6 +1,6 @@
 import type {
 	NotesById
-} from '$lib/domains/notes/models/note.model';
+} from '$lib/domains/notes';
 
 export type ChapterNotesByLocation =
 	Record<

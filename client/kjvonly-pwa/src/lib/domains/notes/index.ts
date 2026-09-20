@@ -26,3 +26,7 @@ export {
 export {
 	NOTES_COLLECTION_CHANGED
 } from './events/notes-events';
+
+export type {
+	NotesSearchResult
+} from './runtime/search/notes-search-worker-message';

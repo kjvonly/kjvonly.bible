@@ -192,16 +192,3 @@ export function newCrossRef(): CrossRef {
     verseNumber: 0
   };
 }
-
-
-export type Paragraphs = {}
-
-export function newParagraphs(): Paragraphs {
-  return {}
-}
-
-export type Pericopes = {}
-
-export function newPericopes(): Pericopes {
-  return {}
-}

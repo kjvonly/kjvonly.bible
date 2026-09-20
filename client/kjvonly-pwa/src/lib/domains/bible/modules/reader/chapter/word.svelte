@@ -13,13 +13,13 @@
 	import type {
 		BibleTextMarkup,
 		BibleTextMarkupMarking
-	} from '$lib/domains/bible/models/bible-text-markup.model';
+	} from '../../../models/bible-text-markup.model';
 	import {
 		BIBLE_MODES,
 		type BibleMode,
 		type Verse,
 		type Word
-	} from '$lib/domains/bible/models/bible.model';
+	} from '../../../models/bible.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Notes from '$lib/components/svgs/notes.svelte';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';

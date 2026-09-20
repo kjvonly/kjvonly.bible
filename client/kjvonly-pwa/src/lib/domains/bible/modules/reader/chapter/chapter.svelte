@@ -9,17 +9,19 @@
 	// MODELS
 	import {
 		BIBLE_MODES,
-		newParagraphs,
-		newPericopes,
 		type BibleMode,
-		type Paragraphs,
-		type Pericopes,
 		type Verse as VerseModel
-	} from '$lib/domains/bible/models/bible.model';
-	import { type Chapter } from '$lib/domains/bible/models/bible.model';
+	} from '../../../models/bible.model';
+	import type {
+		BibleParagraphMap
+	} from '../../../models/bible-paragraphs.model';
+	import type {
+		BiblePericopeMap
+	} from '../../../models/bible-pericopes.model';
+	import { type Chapter } from '../../../models/bible.model';
 	import type {
 		BibleTextMarkup
-	} from '$lib/domains/bible/models/bible-text-markup.model';
+	} from '../../../models/bible-text-markup.model';
 
 	// SERVICES
 	// OTHER
@@ -36,26 +38,26 @@
 
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	} from '../../../resources/chapters/bible-chapter-interpreter';
 
 	import {
 		BIBLE_PARAGRAPHS_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
+	} from '../../../resources/paragraphs/bible-paragraphs-interpreter';
 
 	import {
 		BIBLE_PERICOPES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
+	} from '../../../resources/pericopes/bible-pericopes-interpreter';
 
 	import {
 		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+	} from '../../../resources/text-markup/bible-text-markup-interpreter';
 
 	import {
 		NOTES_COLLECTION_CHANGED
 	} from '$lib/domains/notes';
 	import type {
 		NotesSearchResult
-	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+	} from '$lib/domains/notes';
 	import {
 		createChapterNotesByLocation,
 		type ChapterNotesByLocation
@@ -105,8 +107,8 @@
 	let verseRangeEndIndex: number = 0;
 
 	let chapter: Chapter | undefined = $state();
-	let paragraphs: Paragraphs = $state({});
-	let pericopes: Pericopes = $state({});
+	let paragraphs: BibleParagraphMap = $state({});
+	let pericopes: BiblePericopeMap = $state({});
 	let currentSettings: AppSettings = settingsService.getSettings();
 
 	/**
@@ -185,11 +187,11 @@
 	}
 
 	function resetParagraphs() {
-		paragraphs = newParagraphs();
+		paragraphs = {};
 	}
 
 	function resetPericopes() {
-		pericopes = newPericopes();
+		pericopes = {};
 	}
 
 	function setVerseRanges() {

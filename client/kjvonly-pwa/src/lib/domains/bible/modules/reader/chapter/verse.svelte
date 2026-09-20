@@ -2,13 +2,17 @@
 	// ================================ IMPORTS ================================
 	// MODELS
 	import {
-		type Paragraphs,
 		type BibleMode,
-		type Verse,
-		type Pericopes
-	} from '$lib/domains/bible/models/bible.model';
+		type Verse
+	} from '../../../models/bible.model';
+	import type {
+		BibleParagraphMap
+	} from '../../../models/bible-paragraphs.model';
+	import type {
+		BiblePericopeMap
+	} from '../../../models/bible-pericopes.model';
 	import type { Pane } from '$lib/application';
-	import type { BibleTextMarkup } from '$lib/domains/bible/models/bible-text-markup.model';
+	import type { BibleTextMarkup } from '../../../models/bible-text-markup.model';
 	import Paragraph from './paragraph.svelte';
 	import type {
 		ChapterNotesByLocation
@@ -22,8 +26,8 @@
 
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
-		paragraphs = $bindable<Paragraphs>(),
-		pericopes = $bindable<Pericopes>(),
+		paragraphs = $bindable<BibleParagraphMap>(),
+		pericopes = $bindable<BiblePericopeMap>(),
 		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
 		notes = $bindable<ChapterNotesByLocation>(),
@@ -34,8 +38,8 @@
 		verse
 	}: {
 		textMarkup: BibleTextMarkup;
-		paragraphs: Paragraphs;
-		pericopes: Pericopes;
+		paragraphs: BibleParagraphMap;
+		pericopes: BiblePericopeMap;
 		pane: Pane;
 		mode: BibleMode;
 		notes: ChapterNotesByLocation;

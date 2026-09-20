@@ -19,7 +19,7 @@
 	import type {
 		BibleMode,
 		BibleReadingNavigation
-	} from '$lib/domains/bible/models/bible.model';
+	} from '../../../models/bible.model';
 	import type { Pane } from '$lib/application';
 
 	const {

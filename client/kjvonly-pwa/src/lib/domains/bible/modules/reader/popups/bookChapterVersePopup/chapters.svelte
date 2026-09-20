@@ -16,7 +16,7 @@
 	import { useApplicationContext } from '$lib/application';
 
 	// MODELS
-	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
+	import type { BibleBooknames } from '../../../../models/bible-booknames.model';
 
 	// SERVICES
 

@@ -5,7 +5,7 @@
 
 	//MODELS
 	import { Modules } from '$lib/application';
-	import type { Verse } from '$lib/domains/bible/models/bible.model';
+	import type { Verse } from '../../../models/bible.model';
 
 	// SERVICES
 
@@ -24,9 +24,9 @@
 	// NOSTR IMPL
 	import { useApplicationContext } from '$lib/application';
 
-	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../../resources/chapters/bible-chapter-interpreter';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
 	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
 	import { PaneSplit } from '$lib/application';
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';

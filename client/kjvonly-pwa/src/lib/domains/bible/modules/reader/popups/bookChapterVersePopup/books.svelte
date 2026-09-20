@@ -19,8 +19,8 @@
 	import type {
 		Book,
 		BookGrouping
-	} from '$lib/domains/bible/models/bible.model';
-	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
+	} from '../../../../models/bible.model';
+	import type { BibleBooknames } from '../../../../models/bible-booknames.model';
 
 	const { bookGroupingsService } = useApplicationContext();
 

@@ -26,21 +26,21 @@
 		BIBLE_MODES,
 		ToolbarItems,
 		type BibleMode
-	} from '$lib/domains/bible/models/bible.model';
+	} from '../../models/bible.model';
 	import { Modules } from '$lib/application';
 
 	// SERVICES
 	import { PaneSplit } from '$lib/application';
 	import { useApplicationContext } from '$lib/application';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
-	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '../../resources/text-markup/bible-text-markup-interpreter';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { extractBibleVersion } from '../../utils/bible-identity';
 
-	import type { BibleVersion } from '$lib/domains/bible/models/bible-version.model';
+	import type { BibleVersion } from '../../models/bible-version.model';
 	import type { Settings as AppSettings } from '$lib/application';
 	const {
 		workspaceRuntime,

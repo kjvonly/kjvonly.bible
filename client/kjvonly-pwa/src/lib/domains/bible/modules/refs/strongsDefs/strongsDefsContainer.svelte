@@ -20,7 +20,7 @@
 
 	import type { PublishedResourceReference } from '$lib/resource';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
 	import { filterBibleLocationRefsByBookID } from './strongs-search';
 
 	const {

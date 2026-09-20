@@ -7,13 +7,13 @@
 	import {
 		BIBLE_MODES,
 		type BibleMode
-	} from '$lib/domains/bible/models/bible.model';
+	} from '../../../models/bible.model';
 
-	import type { BibleTextMarkup } from '$lib/domains/bible/models/bible-text-markup.model';
+	import type { BibleTextMarkup } from '../../../models/bible-text-markup.model';
 
 	import { useApplicationContext } from '$lib/application';
 
-	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '../../../resources/text-markup/bible-text-markup-interpreter';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Close from '$lib/components/svgs/close.svelte';
 

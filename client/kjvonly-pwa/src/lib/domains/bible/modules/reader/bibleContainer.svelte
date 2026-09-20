@@ -16,11 +16,11 @@
 		BIBLE_MODES,
 		newBibleMode,
 		type BibleMode
-	} from '$lib/domains/bible/models/bible.model';
+	} from '../../models/bible.model';
 	import type { Pane } from '$lib/application';
 	import type {
 		BibleTextMarkup
-	} from '$lib/domains/bible/models/bible-text-markup.model';
+	} from '../../models/bible-text-markup.model';
 
 	// SERVICES
 	import { useApplicationContext } from '$lib/application';
@@ -37,11 +37,11 @@
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+} from '../../resources/chapters/bible-chapter-interpreter';
 
 import type {
 	BibleVersion
-} from '$lib/domains/bible/models/bible-version.model';
+} from '../../models/bible-version.model';
 
 import {
 	parseResourceIdentifier
@@ -49,7 +49,7 @@ import {
 
 import {
 	createBibleVersionId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '../../utils/bible-identity';
 	const {
 		moduleResourceSelectionResolver,
 		workspaceRuntime,

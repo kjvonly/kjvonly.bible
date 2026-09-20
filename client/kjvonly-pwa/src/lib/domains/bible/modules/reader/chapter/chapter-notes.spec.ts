@@ -6,7 +6,7 @@ import {
 
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '$lib/domains/notes';
 
 import {
 	createChapterNotesByLocation

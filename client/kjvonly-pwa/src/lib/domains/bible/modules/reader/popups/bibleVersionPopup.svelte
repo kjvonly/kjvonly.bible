@@ -5,7 +5,7 @@
 
 	import type {
 		BibleVersion
-	} from '$lib/domains/bible/models/bible-version.model';
+	} from '../../../models/bible-version.model';
 
 	import {
 		useApplicationContext
