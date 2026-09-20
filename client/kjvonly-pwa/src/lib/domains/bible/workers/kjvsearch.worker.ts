@@ -50,6 +50,10 @@ onmessage = async (
 			);
 			break;
 
+		case 'reset':
+			runtime.reset();
+			break;
+
 		case 'search':
 			await search(
 				e.data.id,

@@ -14,6 +14,11 @@ export interface SearchWorkerInitRequest {
 		BibleSearchIndex;
 }
 
+export interface SearchWorkerResetRequest {
+	readonly action:
+		'reset';
+}
+
 export interface SearchWorkerSearchRequest {
 	readonly action:
 		'search';
@@ -30,6 +35,7 @@ export interface SearchWorkerSearchRequest {
 
 export type SearchWorkerRequest =
 	| SearchWorkerInitRequest
+	| SearchWorkerResetRequest
 	| SearchWorkerSearchRequest;
 
 export interface SearchWorkerInitializedMessage {

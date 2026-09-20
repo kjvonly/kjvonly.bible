@@ -240,6 +240,56 @@ describe(
 		);
 
 		it(
+			'resets initialized Search Indexes so the same id can be replaced',
+			async () => {
+				const runtime =
+					new SearchIndexRuntime();
+
+				await runtime.initialize(
+					await createSearchIndex(
+						'publisher/kjvs',
+						[
+							[
+								'1_1_1',
+								'alpha original text'
+							]
+						]
+					)
+				);
+
+				runtime.reset();
+
+				await runtime.initialize(
+					await createSearchIndex(
+						'publisher/kjvs',
+						[
+							[
+								'2_1_1',
+								'beta replacement text'
+							]
+						]
+					)
+				);
+
+				expect(
+					await runtime.search(
+						'publisher/kjvs',
+						'alpha'
+					)
+				).toEqual([]);
+
+				expect(
+					await runtime.search(
+						'publisher/kjvs',
+						'beta'
+					)
+				).toEqual([
+					'2_1_1'
+				]);
+			}
+		);
+
+		it(
 			'fails when the requested Search Index has not been initialized',
 			async () => {
 				const runtime =

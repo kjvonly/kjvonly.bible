@@ -88,6 +88,24 @@ export class SearchRuntime {
 			handler;
 	}
 
+	async refresh(): Promise<void> {
+		await Promise.allSettled(
+			[...this.pendingInitializations.values()]
+				.map(
+					(pending) =>
+						pending.promise
+				)
+		);
+
+		this.readySources.clear();
+		this.initializedIndexes.clear();
+
+		this.worker.postMessage({
+			action:
+				'reset'
+		});
+	}
+
 	async search(
 		id: string,
 		source:

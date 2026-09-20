@@ -176,6 +176,98 @@ describe(
 		);
 
 		it(
+			'reloads the selected Search Resource after refresh',
+			async () => {
+				const replacement = {
+					...SEARCH_INDEX,
+					chunks: {
+						replacement:
+							'chunk'
+					} as BibleSearchIndex['chunks']
+				};
+
+				const searchIndexes = {
+					get:
+						vi.fn()
+							.mockResolvedValueOnce(
+								SEARCH_INDEX
+							)
+							.mockResolvedValueOnce(
+								replacement
+							)
+				};
+
+				const worker =
+					new FakeSearchWorker();
+
+				const runtime =
+					new SearchRuntime(
+						searchIndexes as any,
+						worker
+					);
+
+				const first =
+					runtime.search(
+						'search-1',
+						SOURCE,
+						'beginning'
+					);
+
+				await nextMicrotask();
+
+				worker.emit({
+					type:
+						'initialized',
+					searchIndexId:
+						SEARCH_INDEX.id
+				});
+
+				await first;
+				await runtime.refresh();
+
+				expect(
+					worker.messages.at(-1)
+				).toEqual({
+					action:
+						'reset'
+				});
+
+				const second =
+					runtime.search(
+						'search-2',
+						SOURCE,
+						'earth'
+					);
+
+				await nextMicrotask();
+
+				expect(
+					searchIndexes.get
+				).toHaveBeenCalledTimes(
+					2
+				);
+
+				expect(
+					worker.messages.at(-1)
+				).toEqual({
+					action:
+						'init',
+					searchIndex:
+						replacement
+				});
+
+				worker.emit({
+					type:
+						'initialized',
+					searchIndexId:
+						replacement.id
+				});
+
+				await second;
+			}
+		);
+
+		it(
 			'shares one initialization across concurrent first searches',
 			async () => {
 				const searchIndexes = {

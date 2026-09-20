@@ -68,6 +68,11 @@ export class SearchIndexRuntime {
 		return promise;
 	}
 
+	reset(): void {
+		this.indexes.clear();
+		this.initializing.clear();
+	}
+
 	async search(
 		searchIndexId:
 			string,

@@ -896,6 +896,20 @@ export class Application {
                 searchRuntime
             );
 
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        BIBLE_SEARCH_RESOURCE_TYPE
+                    )
+                ) {
+                    void searchRuntime.refresh();
+                }
+            }
+        );
+
         const verseService =
             new VerseService(
                 chapterService,
