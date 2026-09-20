@@ -26,7 +26,7 @@
 	let clientHeight: number = $state(0);
 	let headerHeight: number = $state(0);
 
-	let subsActionItems: any = {
+	const subsActionItems: Record<string, () => void> = {
 		plans: () => {
 			plansDisplay = PLANS_VIEWS.PLANS_LIST;
 		},

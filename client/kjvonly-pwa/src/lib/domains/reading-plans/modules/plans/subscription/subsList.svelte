@@ -39,7 +39,7 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onSubClicked(sub: any) {
+	function onSubClicked(sub: Sub): void {
 		selectedSub = sub;
 		plansDisplay = PLANS_VIEWS.SUBS_DETAILS;
 	}

@@ -13,7 +13,6 @@
 	import Pending from '$lib/components/svgs/pending.svelte';
 
 	// MODELS
-	import type { BCV } from '$lib/domains/bible';
 	import { Modules } from '$lib/application';
 	import type { Pane } from '$lib/application';
 	import {
@@ -138,11 +137,7 @@
 		subNestedReadingsIndex: number,
 		returnView: PLANS_VIEWS
 	): void {
-		let readings: Readings = selectedSub.nestedReadings[subNestedReadingsIndex];
-		readings.bcvs = readings.bcvs.map((r: any) => {
-			r.bibleLocationRef = `${r.bookID}_${r.chapter}_${r.verses}`;
-			return r as BCV;
-		});
+		const readings: Readings = selectedSub.nestedReadings[subNestedReadingsIndex];
 
 		let np: NavReadings = {
 			subID: selectedSub.id,
@@ -214,7 +209,7 @@
 	{@render subListView(selectedSub)}
 {/snippet}
 
-{#snippet subListView(sub: any)}
+{#snippet subListView(sub: Sub)}
 	<span
 		class=" sticky top-0 border-t border-neutral-400 bg-neutral-50 p-2 text-2xl"
 		>{sub.name}</span

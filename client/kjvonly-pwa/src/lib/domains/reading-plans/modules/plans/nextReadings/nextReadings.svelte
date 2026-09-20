@@ -148,11 +148,7 @@
 
 	function onSelectedNextReading(idx: number, returnView: PLANS_VIEWS) {
 		let nrs: NextReadings = nextReadings[idx];
-		let readings: Readings = nrs.readings;
-		readings.bcvs = readings.bcvs.map((r: any) => {
-			r.bibleLocationRef = `${r.bookID}_${r.chapter}_${r.verses}`;
-			return r;
-		});
+		const readings: Readings = nrs.readings;
 
 		let nr: NavReadings = {
 			subID: nrs.subID,
@@ -175,7 +171,7 @@
 	}
 </script>
 
-{#snippet nextReading(n: any, idx: any)}
+{#snippet nextReading(n: NextReadings, idx: number)}
 	<button
 		onclick={() => onSelectedNextReading(idx, PLANS_VIEWS.NEXT_LIST)}
 		class=" flex w-full flex-col px-2 py-4 text-base hover:bg-neutral-100"
