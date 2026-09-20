@@ -1,14 +1,14 @@
 <script lang="ts">
 	import uuid4 from 'uuid4';
 	import Notes from './notes.svelte';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
+	import type { NotesMode } from '$lib/domains/notes';
 	let id = uuid4();
 	let noteID: string = $state('');
 	let { paneID = $bindable<string>(), pane = $bindable() } = $props();
 
-	let mode = $state({
+	let mode: NotesMode = $state({
 		bibleLocationRef: undefined as string | undefined,
-		bibleVersion: 'kjvs',
 		notePopup: { show: false },
 		paneID: paneID
 	});

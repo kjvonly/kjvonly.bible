@@ -1,7 +1,8 @@
 export type {
 	Note,
 	NoteTag,
-	NotesById
+	NotesById,
+	NotesMode
 } from './models/note.model';
 
 export {

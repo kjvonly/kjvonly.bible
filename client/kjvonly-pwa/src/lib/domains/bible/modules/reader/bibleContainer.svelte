@@ -14,7 +14,8 @@
 	// MODELS
 	import {
 		BIBLE_MODES,
-		newBibleMode
+		newBibleMode,
+		type BibleMode
 	} from '$lib/domains/bible/models/bible.model';
 	import type { Pane } from '$lib/application';
 	import type {
@@ -94,7 +95,7 @@ import {
 	let id = $state(uuid4());
 	const LAST_BIBLE_LOCATION_REF = 'lastBibleLocationReference';
 	const DEFAULT_BIBLE_LOCATION_REF = '52_10_9';
-	let mode: any = $state(newBibleMode());
+	let mode: BibleMode = $state(newBibleMode());
 
 	// DOM related vars
 	let lastKnownScrollPosition = $state(0);

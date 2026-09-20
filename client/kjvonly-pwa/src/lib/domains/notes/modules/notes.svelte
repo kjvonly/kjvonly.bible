@@ -24,7 +24,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	// OTHER
 	import uuid4 from 'uuid4';
 	import NoteComponent from './note/note.svelte';
-	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import type {
+		Note,
+		NotesById,
+		NotesMode
+	} from '$lib/domains/notes/models/note.model';
 	import type { NotesSearchResult } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 	import type { NoteFilterParameter } from '$lib/domains/notes/ui/note-filter.model';
 	import {
@@ -41,7 +45,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	// =============================== BINDINGS ================================
 
-	let { mode = $bindable(), allNotes, noteIDToOpen = '' } = $props();
+	let {
+		mode = $bindable<NotesMode>(),
+		allNotes,
+		noteIDToOpen = ''
+	} = $props();
 
 	// ================================== VARS =================================
 

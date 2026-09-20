@@ -108,6 +108,8 @@ export interface BibleReadingNavigation {
 }
 
 export interface BibleMode {
+  paneID: string;
+
   value: BIBLE_MODES;
   navReadings: BibleReadingNavigation | undefined;
 
@@ -129,6 +131,7 @@ export interface NotePopup {
 
 export function newBibleMode(): BibleMode {
   return {
+    paneID: '',
     value: BIBLE_MODES.READING,
     navReadings: undefined,
     colorMarkup: 'bg-highlighta',

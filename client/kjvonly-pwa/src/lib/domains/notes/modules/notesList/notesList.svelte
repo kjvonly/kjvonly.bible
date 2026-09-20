@@ -2,7 +2,11 @@
 	// ================================ IMPORTS ================================
 	// MODELS
 	import { Modules } from '$lib/application';
-	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import type {
+		Note,
+		NotesById,
+		NotesMode
+	} from '$lib/domains/notes/models/note.model';
 	import { createNoteDomainObjectId } from '$lib/domains/notes';
 	import type { NoteFilterParameter } from '$lib/domains/notes/ui/note-filter.model';
 
@@ -63,7 +67,7 @@
 		onFilterInputChanged,
 		onAddNewNote
 	}: {
-		mode: any;
+		mode: NotesMode;
 		filterInput: string;
 		noteKeys: string[];
 		notes: NotesById;

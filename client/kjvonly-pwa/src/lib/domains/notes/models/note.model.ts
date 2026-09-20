@@ -25,3 +25,11 @@ export interface Note {
 }
 
 export type NotesById = Record<string, Note>;
+
+export interface NotesMode {
+	paneID: string;
+	bibleLocationRef: string | undefined;
+	notePopup: {
+		show: boolean;
+	};
+}

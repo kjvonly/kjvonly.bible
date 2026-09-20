@@ -17,7 +17,10 @@
 
 	// MODELS
 	import { Modules } from '$lib/application';
-	import type { NoteTag } from '$lib/domains/notes/models/note.model';
+	import type {
+		NoteTag,
+		NotesMode
+	} from '$lib/domains/notes/models/note.model';
 
 	// SERVICES
 	import { PaneSplit, useApplicationContext } from '$lib/application';
@@ -40,7 +43,7 @@
 
 	// =============================== BINDINGS ================================
 
-	let { mode = $bindable(), note = $bindable() } = $props();
+	let { mode = $bindable<NotesMode>(), note = $bindable() } = $props();
 
 	// ================================== VARS =================================
 
