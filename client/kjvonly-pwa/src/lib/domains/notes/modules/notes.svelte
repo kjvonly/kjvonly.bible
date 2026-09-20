@@ -25,6 +25,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import uuid4 from 'uuid4';
 	import NoteComponent from './note/note.svelte';
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import type { NotesSearchResult } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
 	import {
 		NOTES_COLLECTION_CHANGED
 	} from '$lib/domains/notes/events/notes-events';
@@ -121,8 +122,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	function onFilterInputChanged() {
 		if (filterInput.length > 0) {
-			let indexes: any = [];
-			filterParams.forEach((fp: any) => {
+			const indexes: string[] = [];
+			filterParams.forEach((fp) => {
 				if (fp.checked) {
 					return indexes.push(fp.index);
 				}
@@ -133,7 +134,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 	}
 
-	function onFilterInputResults(results: any) {
+	function onFilterInputResults(results: NotesSearchResult) {
 		if (results.id === NOTE_SEARCH_ID) {
 			noteKeys = Object.keys(results.notes).sort((a, b) => {
 				return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
