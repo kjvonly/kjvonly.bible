@@ -288,7 +288,9 @@
 		setSelectedVerses();
 	}
 
-	function onCopyVerseClicked(verseNumber: number) {
+	function onCopyVerseClicked(event: Event, verseNumber: number) {
+		event.stopPropagation();
+
 		let verseRange = [verseNumber, verseNumber];
 		let copyText = getVerseRangeText(verseRange);
 		navigator.clipboard.writeText(copyText);
@@ -398,6 +400,7 @@
 					type="checkbox"
 					class="accent-support-a-600 h-5 w-5"
 					bind:checked={checked[idx]}
+					onclick={(event) => event.stopPropagation()}
 					onchange={areAllVersesChecked}
 				/>
 			</div>
@@ -413,7 +416,10 @@
 {/snippet}
 {#snippet actions(verseNumber: number)}
 	<div class="flex flex-row justify-end space-x-4">
-		<KJVButton classes="" onClick={() => onCopyVerseClicked(verseNumber)}>
+		<KJVButton
+			classes=""
+			onClick={(event: Event) => onCopyVerseClicked(event, verseNumber)}
+		>
 			<Copy classes=""></Copy>
 		</KJVButton>
 
