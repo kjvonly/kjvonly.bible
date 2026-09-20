@@ -184,7 +184,7 @@
 		const bibleLocationRef: string | undefined =
 			mode.bibleLocationRef;
 		const keys = bibleLocationRef?.split('_');
-		let now = Date.now();
+		const now = Date.now();
 		let newNote: Note;
 		const notesSource =
 			moduleResourceSelectionResolver.require(
@@ -210,6 +210,19 @@
 				tags: []
 			};
 		} else {
+			const [
+				bookID,
+				chapterNumber,
+				verseNumber,
+				wordIndex
+			] = keys;
+
+			if (!bookID || !chapterNumber || !verseNumber) {
+				throw new Error(
+					`Invalid Bible location reference: ${bibleLocationRef}`
+				);
+			}
+
 			const chapterSource =
 				moduleResourceSelectionResolver.require(
 					mode.paneID,
@@ -235,20 +248,25 @@
 				)
 			]);
 
-			let verseTextWithoutVerseNumber = verse.text.slice(
+			const verseTextWithoutVerseNumber = verse.text.slice(
 				verse.text.indexOf(' ') + 1
 			);
 
-			let bookName =
-				booknames.shortNames[
-					keys[0]
-				] ?? '';
+			const bookName =
+				booknames.shortNames[bookID] ?? '';
 
-			let title = `${bookName} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
+			const wordSuffix =
+				wordIndex && Number(wordIndex) > 0
+					? `:${wordIndex}`
+					: '';
+
+			const title =
+				`${bookName} ${chapterNumber}:${verseNumber}${wordSuffix}`;
+
 			newNote = {
 				id: noteID,
 				bibleLocationRef,
-				bibleReferenceText: `${bookName} ${keys[1]}:${keys[2]}`,
+				bibleReferenceText: `${bookName} ${chapterNumber}:${verseNumber}`,
 				text: `${title}\n${verseTextWithoutVerseNumber}`,
 				html: `<h1>${title}</h1><p><italic>${verseTextWithoutVerseNumber}</italic></p>`,
 				title: `${title}`,

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
@@ -12,12 +13,9 @@
 		clientHeight = $bindable(),
 		obj = $bindable(),
 		navService = $bindable()
-	} = $props();
+	}: NavigationComponentProps = $props();
 
-	const {
-		authenticationService,
-		accountService
-	} = useApplicationContext();
+	const { authenticationService, accountService } = useApplicationContext();
 
 	let headerHeight: number = $state(0);
 
@@ -26,20 +24,14 @@
 	async function nsecLogin() {
 		await authenticationService.login(nsec);
 
-		await accountService.setup(
-			authenticationService.getUserId(),
-			name
-		);
+		await accountService.setup(authenticationService.getUserId(), name);
 
-		workspaceRuntime.replaceBuffer(
-			paneID,
-			Modules.PROFILE
-		);
+		workspaceRuntime.replaceBuffer(paneID, Modules.PROFILE);
 	}
 </script>
 
 {#snippet header()}
-	<NsecLoginHeader {paneID} bind:navService bind:clientHeight={headerHeight}
+	<NsecLoginHeader bind:navService bind:clientHeight={headerHeight}
 	></NsecLoginHeader>
 {/snippet}
 

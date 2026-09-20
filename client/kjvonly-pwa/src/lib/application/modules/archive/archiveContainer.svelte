@@ -6,9 +6,7 @@
 	import { type Writable } from 'svelte/store';
 
 	// APPLICATION
-	import type {
-		NavigationView
-	} from '$lib/application/services/navigation.service';
+	import type { NavigationView } from '$lib/application/services/navigation.service';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import { stopPropagation } from '$lib/application/ui/click';
 
@@ -52,7 +50,10 @@
 	{#if nav}
 		{#each $nav as n, index}
 			{@const Component = n.component}
+			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 			<div
+				role="button"
+				tabindex="0"
 				class="{$nav && index === $nav.length - 1
 					? ''
 					: 'hidden'} h-full w-full"

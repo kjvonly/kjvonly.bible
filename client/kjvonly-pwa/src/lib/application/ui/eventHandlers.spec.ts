@@ -77,7 +77,9 @@ describe('application UI event handlers', () => {
 		vi.useFakeTimers();
 
 		const element = createElement();
-		const listener = vi.fn();
+		const listener: EventListener = vi.fn(
+			(_event: Event) => {}
+		);
 		stubDocument(() => element);
 
 		const detach = attachEvents(
@@ -118,10 +120,14 @@ describe('application UI event handlers', () => {
 				: null;
 		});
 
+		const listener: EventListener = vi.fn(
+			(_event: Event) => {}
+		);
+
 		const detach = attachEvents(
 			'target',
 			'scroll',
-			vi.fn()
+			listener
 		);
 
 		await vi.advanceTimersByTimeAsync(50);

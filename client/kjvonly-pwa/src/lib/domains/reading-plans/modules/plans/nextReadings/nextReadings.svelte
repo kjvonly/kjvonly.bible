@@ -92,7 +92,12 @@
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
-		const nr: NavReadings | undefined = pane.buffer.bag?.navReadings;
+		const buffer = pane.buffer;
+		if (!buffer) {
+			return;
+		}
+
+		const nr: NavReadings | undefined = buffer.bag.navReadings;
 
 		if (!nr) {
 			return;
@@ -103,7 +108,7 @@
 			nr.subNestedReadingsIndex
 		);
 
-		delete pane.buffer.bag.navReadings;
+		delete buffer.bag.navReadings;
 
 		plansPubSubService.putProgress(progress);
 	}

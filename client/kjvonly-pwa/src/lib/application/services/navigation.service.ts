@@ -8,9 +8,19 @@ import {
 	type Writable
 } from 'svelte/store';
 
+export interface NavigationComponentProps {
+	paneID: string;
+	clientHeight: number;
+	obj: Record<string, unknown>;
+	navService: NavigationService;
+}
+
+export type NavigationComponent =
+	Component<NavigationComponentProps>;
+
 export interface NavigationView {
 	readonly component:
-		Component;
+		NavigationComponent;
 
 	obj:
 		Record<string, unknown>;

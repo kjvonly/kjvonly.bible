@@ -191,13 +191,19 @@ describe(
 				expect(root.id).toBeUndefined();
 				expect(root.buffer).toBeUndefined();
 
-				expect(root.left.buffer).toBeInstanceOf(Buffer);
-				expect(root.left.buffer.key).toBe('buffer-a');
-				expect(root.left.buffer.bag).toEqual({
+				expect(root.left?.buffer).toBeInstanceOf(Buffer);
+
+				const leftBuffer = root.left?.buffer;
+				if (!leftBuffer) {
+					throw new Error('Expected restored left Pane Buffer.');
+				}
+
+				expect(leftBuffer.key).toBe('buffer-a');
+				expect(leftBuffer.bag).toEqual({
 					bibleLocationRef:
 						'10_1'
 				});
-				expect(root.left.buffer.resourceSelections).toEqual({
+				expect(leftBuffer.resourceSelections).toEqual({
 					[CHAPTER_RESOURCE_TYPE]: {
 						publisher:
 							'publisher-a',
@@ -212,7 +218,7 @@ describe(
 					}
 				});
 
-				expect(root.left.toggle).toBeUndefined();
+				expect(root.left?.toggle).toBeUndefined();
 
 			}
 		);
@@ -238,7 +244,7 @@ describe(
 					});
 
 				expect(
-					pane.buffer.resourceSelections
+					pane.buffer?.resourceSelections
 				).toEqual({});
 			}
 		);

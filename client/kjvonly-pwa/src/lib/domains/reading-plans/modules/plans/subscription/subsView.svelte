@@ -84,8 +84,13 @@
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
+		const buffer = pane.buffer;
+		if (!buffer) {
+			return;
+		}
+
 		const nr: NavReadings | undefined =
-			pane.buffer.bag?.navReadings;
+			buffer.bag.navReadings;
 
 		if (!nr) {
 			if (selectedSub.id) {
@@ -107,7 +112,7 @@
 				nr.subNestedReadingsIndex
 			);
 
-		delete pane.buffer.bag.navReadings;
+		delete buffer.bag.navReadings;
 
 		plansPubSubService.putProgress(
 			progress

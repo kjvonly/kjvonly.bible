@@ -35,7 +35,7 @@
 		paneID = $bindable<string>(),
 		pane = $bindable<Pane>(),
 		showInput = true,
-		searchTerms,
+		searchTerms = '',
 		onClose = undefined,
 		onFilterBibleLocationRef = undefined
 	} = $props();

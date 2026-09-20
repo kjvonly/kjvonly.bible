@@ -154,7 +154,7 @@ import {
 	);
 }
 	function setBibleLocationRef() {
-		let ref = pane.buffer.bag.bibleLocationRef;
+		const ref = pane.buffer?.bag.bibleLocationRef;
 		if (ref) {
 			bibleLocationRef = ref;
 		} else {
@@ -201,7 +201,12 @@ import {
 			return;
 		}
 
-		pane.buffer.bag.bibleLocationRef =
+		const buffer = pane.buffer;
+		if (!buffer) {
+			return;
+		}
+
+		buffer.bag.bibleLocationRef =
 			bibleLocationRef;
 
 		localStorage.setItem(
@@ -226,11 +231,14 @@ import {
 				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version.version}`
 		};
 
-	pane.buffer
-		.resourceSelections[
-			BIBLE_CHAPTER_RESOURCE_TYPE
-		] =
-		source;
+	const buffer = pane.buffer;
+	if (!buffer) {
+		return;
+	}
+
+	buffer.resourceSelections[
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	] = source;
 
 	bibleVersion =
 		version.id;

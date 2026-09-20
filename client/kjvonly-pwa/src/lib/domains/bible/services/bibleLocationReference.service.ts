@@ -9,6 +9,10 @@ export class BibleLocationReferenceService {
 		const locationRef = this.extractLocationRef(ref);
 		const [bookID] = locationRef.split('_');
 
+		if (!bookID) {
+			throw new Error(`Invalid bible location ref: ${ref}`);
+		}
+
 		return bookID;
 	}
 
@@ -100,35 +104,42 @@ export class BibleLocationReferenceService {
 	extractVersesOrOne(ref: string): number[] {
 		const locationRef = this.extractLocationRef(ref);
 		const bcv = locationRef.split('_');
-		if (bcv.length > 2) {
-			const verses = bcv[2].split('-');
-			const s = parseInt(verses[0], 10);
-			const e = parseInt(verses[1], 10);
+		const verseRange = bcv[2];
 
-			if (!Number.isNaN(s) && !Number.isNaN(e)) {
-				return [s - 1, e];
-			} else {
-				return [0, 0];
-			}
+		if (!verseRange) {
+			return [0, 0];
 		}
 
-		return [0, 0];
+		const [startVerse, endVerse] = verseRange.split('-');
+		if (!startVerse || !endVerse) {
+			return [0, 0];
+		}
+
+		const start = parseInt(startVerse, 10);
+		const end = parseInt(endVerse, 10);
+
+		return !Number.isNaN(start) && !Number.isNaN(end)
+			? [start - 1, end]
+			: [0, 0];
 	}
 
 	extractVerse(ref: string): number {
 		const locationRef = this.extractLocationRef(ref);
 		const bcv = locationRef.split('_');
-		if (bcv.length > 2) {
-			return this.extractFirstVerse(bcv[2]);
-		}
-		return 1;
+		const verse = bcv[2];
+
+		return verse
+			? this.extractFirstVerse(verse)
+			: 1;
 	}
 
-	extractFirstVerse(verse: string) {
-		if (verse.includes('-')) {
-			verse = verse.split('-')[0];
-		}
-		return parseInt(verse, 10);
+	extractFirstVerse(verse: string): number {
+		const [firstVerse] = verse.split('-');
+
+		return parseInt(
+			firstVerse ?? verse,
+			10
+		);
 	}
 
 	extractWordIndexOrDefault(
@@ -141,7 +152,7 @@ export class BibleLocationReferenceService {
 		const locationRef = this.extractLocationRef(bibleLocationRef);
 		const refs = locationRef.split('_');
 		if (refs.length === 4) {
-			return refs[3];
+			return refs[3] ?? defaultWordIndex;
 		}
 
 		return defaultWordIndex;

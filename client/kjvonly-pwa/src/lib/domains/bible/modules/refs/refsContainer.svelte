@@ -159,7 +159,7 @@
 		<FootnoteContainer
 			hasCrossRef={pane?.buffer?.bag?.refs !== undefined}
 			{footnotes}
-			chapterFootnotes={pane?.buffer?.bag?.footnotes}
+			chapterFootnotes={pane?.buffer?.bag?.footnotes ?? {}}
 		></FootnoteContainer>
 	{/if}
 

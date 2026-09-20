@@ -185,7 +185,7 @@ describe(
 				).toBeInstanceOf(Buffer);
 
 				expect(
-					paneService.rootPane.buffer.resourceSelections
+					paneService.rootPane.buffer?.resourceSelections
 				).toEqual({
 					[CHAPTER_RESOURCE_TYPE]: {
 						publisher:
