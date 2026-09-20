@@ -7,24 +7,24 @@ import {
 
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 import {
 	NotesService
-} from '$lib/domains/notes/services/notes.service';
+} from './notes.service';
 
 import {
 	NotesResourcePublication
-} from '$lib/domains/notes/resources/notes-resource-publication';
+} from '../resources/notes-resource-publication';
 
 import type {
 	NotesWriteStores,
 	NotesWriteTransaction
-} from '$lib/domains/notes/resources/notes-write-stores';
+} from '../resources/notes-write-stores';
 
 import type {
 	NotesSearchResult
-} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+} from '../runtime/search/notes-search-worker-message';
 
 import type {
 	ResourcePublicationIntent

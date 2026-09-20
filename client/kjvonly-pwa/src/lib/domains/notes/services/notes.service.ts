@@ -1,26 +1,26 @@
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 import type {
 	NotesStore
-} from '$lib/domains/notes/persistence/notes-store';
+} from '../persistence/notes-store';
 
 import {
 	NotesSearchRuntime
-} from '$lib/domains/notes/runtime/search/notes-search-runtime';
+} from '../runtime/search/notes-search-runtime';
 
 import type {
 	NotesSearchResult
-} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+} from '../runtime/search/notes-search-worker-message';
 
 import type {
 	NotesWriteTransaction
-} from '$lib/domains/notes/resources/notes-write-stores';
+} from '../resources/notes-write-stores';
 
 import type {
 	NotesResourcePublication
-} from '$lib/domains/notes/resources/notes-resource-publication';
+} from '../resources/notes-resource-publication';
 
 import type {
 	OutboxWakeup
