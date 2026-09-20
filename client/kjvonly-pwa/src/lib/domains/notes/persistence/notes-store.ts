@@ -2,8 +2,9 @@ import type {
 	Note
 } from '$lib/domains/notes/models/note.model';
 
-export const NOTE_OBJECT_TYPE =
-	'notes/note';
+export {
+	NOTE_OBJECT_TYPE
+} from '$lib/domains/notes/models/note-id';
 
 export interface NotesStore {
 	get(

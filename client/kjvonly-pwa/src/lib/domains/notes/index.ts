@@ -5,6 +5,11 @@ export type {
 } from './models/note.model';
 
 export {
+	NOTE_OBJECT_TYPE,
+	createNoteDomainObjectId
+} from './models/note-id';
+
+export {
 	NotesService
 } from './services/notes.service';
 

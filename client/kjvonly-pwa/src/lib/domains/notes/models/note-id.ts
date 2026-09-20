@@ -1,3 +1,6 @@
+export const NOTE_OBJECT_TYPE =
+	'notes/note';
+
 export interface NoteIdParts {
 	readonly publisher:
 		string;
@@ -7,6 +10,12 @@ export interface NoteIdParts {
 
 	readonly noteId:
 		string;
+}
+
+export function createNoteDomainObjectId(
+	noteId: string
+): string {
+	return `${NOTE_OBJECT_TYPE}:${noteId}`;
 }
 
 export function createNoteId(

@@ -3,6 +3,7 @@
 	// MODELS
 	import { Modules } from '$lib/application';
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import { createNoteDomainObjectId } from '$lib/domains/notes';
 	import type { NoteFilterParameter } from '$lib/domains/notes/ui/note-filter.model';
 
 	// SERVICES
@@ -36,6 +37,7 @@
 		createNoteIdForSource
 	} from '$lib/domains/notes/resources/notes-resource-source';
 	const {
+		archiveService,
 		workspaceRuntime,
 		toastService
 	} = useApplicationContext();
@@ -87,7 +89,7 @@
 			showNoteListActions = false;
 		},
 		'export filtered notes': () => {
-			onExport();
+			void onExport();
 		},
 		'split vertical': () => {
 			workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
@@ -102,71 +104,76 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onExport(): void {
-		toastService.showToast('starting export data');
-
-		type NotesExportVerse = {
-			notes: {
-				words: Record<string, Record<string, Note>>;
-			};
-		};
-
-		type NotesExportChapter = {
-			id: string;
-		} & Record<string, string | NotesExportVerse>;
-
-		const data: Record<string, NotesExportChapter> = {};
-		noteKeys.forEach((k) => {
-			const n = notes[k];
-			if (!n.bibleLocationRef) {
-				return;
-			}
-
-			const keys = n.bibleLocationRef.split('_');
-			const bibleLocationRef = `${keys[0]}_${keys[1]}`;
-			const verseNumber = `${keys[2]}`;
-			const wordIdx = `${keys[3]}`;
-
-			if (!data[bibleLocationRef]) {
-				data[bibleLocationRef] = {
-					id: bibleLocationRef
-				};
-			}
-
-			const chapter = data[bibleLocationRef];
-			let verse = chapter[verseNumber];
-
-			if (typeof verse !== 'object') {
-				verse = {
-					notes: {
-						words: {}
-					}
-				};
-				chapter[verseNumber] = verse;
-			}
-
-			const wordNotes = verse.notes.words[wordIdx] ?? {};
-			wordNotes[k] = n;
-			verse.notes.words[wordIdx] = wordNotes;
-		});
-
-		const dataList: NotesExportChapter[] = Object.values(data);
-
-		const element = document.createElement('a');
-		element.setAttribute(
-			'href',
-			'data:application/json;charset=utf-8,' +
-				encodeURIComponent(JSON.stringify(dataList))
+	async function onExport(): Promise<void> {
+		toastService.showToast(
+			'Starting archive export.'
 		);
-		element.setAttribute('download', 'notes');
 
-		element.style.display = 'none';
-		document.body.appendChild(element);
+		try {
+			const bytes =
+				await archiveService.exportIds({
+					ids:
+						noteKeys.map(
+							createNoteDomainObjectId
+						)
+				});
 
-		element.click();
+			downloadArchive(
+				bytes
+			);
 
-		document.body.removeChild(element);
-		toastService.showToast('finished export data');
+			toastService.showToast(
+				'Archive export finished.'
+			);
+		} catch (error) {
+			console.error(
+				'Notes archive export failed.',
+				error
+			);
+
+			toastService.showToast(
+				'Archive export failed.'
+			);
+		}
+	}
+
+	function downloadArchive(
+		bytes: Uint8Array
+	): void {
+		const blob =
+			new Blob(
+				[new Uint8Array(bytes)],
+				{
+					type:
+						'application/gzip'
+				}
+			);
+
+		const url =
+			URL.createObjectURL(
+				blob
+			);
+
+		const anchor =
+			document.createElement(
+				'a'
+			);
+
+		anchor.href = url;
+		anchor.download =
+			`kjvonly-notes-${new Date().toISOString().slice(0, 10)}.kjva`;
+		anchor.style.display = 'none';
+
+		document.body.appendChild(
+			anchor
+		);
+
+		anchor.click();
+		anchor.remove();
+
+		URL.revokeObjectURL(
+			url
+		);
 	}
 
 	async function onAdd() {
