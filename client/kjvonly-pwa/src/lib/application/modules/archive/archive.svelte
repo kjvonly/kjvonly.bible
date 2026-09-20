@@ -3,6 +3,9 @@
 
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import type {
+		NavigationView
+	} from '$lib/application/services/navigation.service';
 
 	// COMPONENTS
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
@@ -46,7 +49,8 @@
 	}
 
 	function onSelect(
-		component: any
+		component:
+			NavigationView['component']
 	): void {
 		navService.push({
 			component,

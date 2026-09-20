@@ -6,6 +6,9 @@
 	import { type Writable } from 'svelte/store';
 
 	// APPLICATION
+	import type {
+		NavigationView
+	} from '$lib/application/services/navigation.service';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import { stopPropagation } from '$lib/application/ui/click';
 
@@ -25,7 +28,7 @@
 	// ================================= VARS ==================================
 
 	let clientHeight: number = $state(0);
-	let nav: Writable<any[]> | undefined = $state();
+	let nav: Writable<NavigationView[]> | undefined = $state();
 
 	const { navigationServiceFactory } = useApplicationContext();
 

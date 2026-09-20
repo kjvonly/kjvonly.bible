@@ -4,6 +4,10 @@ import {
 	it
 } from 'vitest';
 
+import type {
+	Component
+} from 'svelte';
+
 import {
 	get
 } from 'svelte/store';
@@ -29,7 +33,8 @@ describe(
 
 			first.push({
 				component:
-					'first'
+					(() => ({})) as unknown as Component,
+				obj: {}
 			});
 
 			expect(
