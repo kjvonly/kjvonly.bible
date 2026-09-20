@@ -28,7 +28,7 @@
 
 	// ================================== VARS =================================
 
-	let components: any = $state({
+	let components: Record<string, Modules> = $state({
 		bible: Modules.BIBLE,
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
