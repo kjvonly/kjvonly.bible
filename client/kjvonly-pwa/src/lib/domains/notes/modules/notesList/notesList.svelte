@@ -3,6 +3,7 @@
 	// MODELS
 	import { Modules } from '$lib/application';
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import type { NoteFilterParameter } from '$lib/domains/notes/ui/note-filter.model';
 
 	// SERVICES
 	import { PaneSplit, useApplicationContext } from '$lib/application';
@@ -66,9 +67,9 @@
 		notes: NotesById;
 		note: Note | undefined;
 		allNotes: boolean;
-		filterParams: any;
+		filterParams: NoteFilterParameter[];
 		noteIDToOpen: string;
-		onFilterInputChanged: any;
+		onFilterInputChanged: () => void;
 		onAddNewNote: (note: Note) => void;
 	} = $props();
 
@@ -80,7 +81,7 @@
 	let showNoteListActions = $state(false);
 	let showNoteListFilter = $state(false);
 
-	let noteListActions: any = {
+	const noteListActions: Record<string, () => void> = {
 		filter: () => {
 			showNoteListFilter = !showNoteListFilter;
 			showNoteListActions = false;
@@ -101,20 +102,30 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	async function onExport() {
+	function onExport(): void {
 		toastService.showToast('starting export data');
 
-		let data: any = {};
+		type NotesExportVerse = {
+			notes: {
+				words: Record<string, Record<string, Note>>;
+			};
+		};
+
+		type NotesExportChapter = {
+			id: string;
+		} & Record<string, string | NotesExportVerse>;
+
+		const data: Record<string, NotesExportChapter> = {};
 		noteKeys.forEach((k) => {
-			let n = notes[k];
+			const n = notes[k];
 			if (!n.bibleLocationRef) {
 				return;
 			}
 
-			let keys = n.bibleLocationRef.split('_');
-			let bibleLocationRef = `${keys[0]}_${keys[1]}`;
-			let verseNumber = `${keys[2]}`;
-			let wordIdx = `${keys[3]}`;
+			const keys = n.bibleLocationRef.split('_');
+			const bibleLocationRef = `${keys[0]}_${keys[1]}`;
+			const verseNumber = `${keys[2]}`;
+			const wordIdx = `${keys[3]}`;
 
 			if (!data[bibleLocationRef]) {
 				data[bibleLocationRef] = {
@@ -122,27 +133,26 @@
 				};
 			}
 
-			if (!data[bibleLocationRef][verseNumber]) {
-				data[bibleLocationRef][verseNumber] = {
+			const chapter = data[bibleLocationRef];
+			let verse = chapter[verseNumber];
+
+			if (typeof verse !== 'object') {
+				verse = {
 					notes: {
 						words: {}
 					}
 				};
+				chapter[verseNumber] = verse;
 			}
 
-			if (!data[bibleLocationRef][verseNumber].notes.words[wordIdx]) {
-				data[bibleLocationRef][verseNumber].notes.words[wordIdx] = {};
-			}
-
-			data[bibleLocationRef][verseNumber].notes.words[wordIdx][k] = n;
+			const wordNotes = verse.notes.words[wordIdx] ?? {};
+			wordNotes[k] = n;
+			verse.notes.words[wordIdx] = wordNotes;
 		});
 
-		let dataList: any[] = [];
-		Object.keys(data).forEach((k) => {
-			dataList.push(data[k]);
-		});
+		const dataList: NotesExportChapter[] = Object.values(data);
 
-		var element = document.createElement('a');
+		const element = document.createElement('a');
 		element.setAttribute(
 			'href',
 			'data:application/json;charset=utf-8,' +

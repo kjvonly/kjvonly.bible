@@ -59,7 +59,7 @@
 	let editor = uuid4().replaceAll('-', '');
 	let quill: Quill;
 
-	let noteActions: any = {
+	const noteActions: Record<string, () => void> = {
 		delete: () => {
 			showConfirmDelete = true;
 		},

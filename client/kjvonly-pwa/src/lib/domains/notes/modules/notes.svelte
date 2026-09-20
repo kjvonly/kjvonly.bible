@@ -26,6 +26,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import NoteComponent from './note/note.svelte';
 	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
 	import type { NotesSearchResult } from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+	import type { NoteFilterParameter } from '$lib/domains/notes/ui/note-filter.model';
 	import {
 		NOTES_COLLECTION_CHANGED
 	} from '$lib/domains/notes/events/notes-events';
@@ -54,7 +55,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	let filterInput: string = $state('');
 
-	let filterParams = $state([
+	let filterParams: NoteFilterParameter[] = $state([
 		{
 			option: 'title',
 			index: 'title',
