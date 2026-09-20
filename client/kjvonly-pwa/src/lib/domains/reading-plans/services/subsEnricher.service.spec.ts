@@ -80,6 +80,14 @@ describe('path util functions', () => {
 });
 
 describe('set percent complete', () => {
+	it('sets an empty subscription to zero percent complete', () => {
+		const sub = NullSub();
+
+		subsEnricherService.setPercentComplete(sub);
+
+		expect(sub.percentCompleted).toBe(0);
+	});
+
 	it('should set percent complete', () => {
 		interface tt {
 			readingsCount: number;

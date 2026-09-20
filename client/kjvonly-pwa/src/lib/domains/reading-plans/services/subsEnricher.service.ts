@@ -34,7 +34,7 @@ export class SubsEnricherService {
 	 * @param sub subscription
 	 *
 	 */
-	setNextReadingIndex(sub: Sub) {
+	setNextReadingIndex(sub: Sub): void {
 		sub.nextReadingsIndex = this.getNextReadingIndex(
 			[...sub.completedReadingIndexes]
 		);
@@ -44,7 +44,12 @@ export class SubsEnricherService {
 		return sub.nextReadingsIndex < sub.nestedReadings.length;
 	}
 
-	setPercentComplete(sub: Sub) {
+	setPercentComplete(sub: Sub): void {
+		if (sub.nestedReadings.length === 0) {
+			sub.percentCompleted = 0;
+			return;
+		}
+
 		sub.percentCompleted = Math.ceil(
 			(sub.completedReadingIndexes.size / sub.nestedReadings.length) * 100
 		);
