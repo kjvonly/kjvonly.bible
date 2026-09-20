@@ -1,6 +1,6 @@
 import type {
 	BibleParagraphs
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../models/bible-paragraphs.model';
 
 import {
 	BIBLE_PARAGRAPHS_OBJECT_TYPE,

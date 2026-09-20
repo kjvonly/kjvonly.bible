@@ -1,6 +1,6 @@
 import type {
 	BibleParagraphs
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../models/bible-paragraphs.model';
 
 import {
 	BIBLE_PARAGRAPHS_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	BibleParagraphsInstallationStores,
 	BibleParagraphsInstallationTransaction
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-installation-stores';
+} from '../resources/paragraphs/bible-paragraphs-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

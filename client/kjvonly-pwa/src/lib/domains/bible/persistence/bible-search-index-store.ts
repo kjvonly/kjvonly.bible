@@ -1,6 +1,6 @@
 import type {
 	BibleSearchIndex
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../models/bible-search-index.model';
 
 export const BIBLE_SEARCH_INDEX_OBJECT_TYPE =
 	'bible/search-index';
