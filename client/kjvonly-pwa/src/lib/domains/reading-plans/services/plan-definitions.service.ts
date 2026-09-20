@@ -1,10 +1,10 @@
 import type {
 	PlanDefinition
-} from '$lib/domains/reading-plans/models/plan-definition';
+} from '../models/plan-definition';
 
 import type {
 	PlanDefinitionsStore
-} from '$lib/domains/reading-plans/persistence/plan-definitions-store';
+} from '../persistence/plan-definitions-store';
 
 export class PlanDefinitionsService {
 

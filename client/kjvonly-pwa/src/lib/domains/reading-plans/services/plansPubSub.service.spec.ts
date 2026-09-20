@@ -8,13 +8,13 @@ import {
 import {
 	PLAN_PUBSUB_SUBSCRIPTIONS,
 	type Sub
-} from '$lib/domains/reading-plans/models/plans.model';
+} from '../models/plans.model';
 import {
 	PLANS_WORKER_INITIALIZED,
 	PLANS_WORKER_REFRESH,
 	type PlansSubscriptionsMessage,
 	type PlansWorkerCommand
-} from '$lib/domains/reading-plans/models/plans-worker.model';
+} from '../models/plans-worker.model';
 
 import {
 	PlansPubSubService,

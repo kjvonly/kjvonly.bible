@@ -12,7 +12,7 @@
 		NullPlanDefinitionView,
 		PLANS_VIEWS,
 		type PlanDefinitionView
-	} from '$lib/domains/reading-plans/models/plans.model';
+	} from '../../../models/plans.model';
 
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application';

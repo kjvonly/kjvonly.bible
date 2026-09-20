@@ -25,7 +25,7 @@
 		type NavReadings,
 		type Readings,
 		type Sub
-	} from '$lib/domains/reading-plans/models/plans.model';
+	} from '../../../models/plans.model';
 
 	// SERVICES
 	import { useApplicationContext } from '$lib/application';

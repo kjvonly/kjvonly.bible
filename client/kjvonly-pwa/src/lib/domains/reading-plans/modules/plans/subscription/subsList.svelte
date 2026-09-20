@@ -13,7 +13,7 @@
 	import {
 		PLANS_VIEWS,
 		type Sub
-	} from '$lib/domains/reading-plans/models/plans.model';
+	} from '../../../models/plans.model';
 	const { workspaceRuntime } = useApplicationContext();
 
 	// SERVICES

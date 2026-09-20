@@ -8,7 +8,7 @@ import {
 
 import {
 	createPlanSubscriptionId
-} from '$lib/domains/reading-plans/models/plan-subscription-id';
+} from '../../models/plan-subscription-id';
 
 export const PLAN_SUBSCRIPTION_RESOURCE_TYPE =
 	'kjvonly/plans/subscriptions';

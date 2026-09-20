@@ -1,6 +1,6 @@
 import { describe, it, assert, expect } from 'vitest';
 import { EncodedReadingsDecoderService } from './encodedReadingsDecoder.service';
-import type { Readings } from '$lib/domains/reading-plans/models/plans.model';
+import type { Readings } from '../models/plans.model';
 
 const encodedReadingsDecoderService =
 	new EncodedReadingsDecoderService();

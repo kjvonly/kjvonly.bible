@@ -14,7 +14,7 @@
 		type NavReadings,
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS
-	} from '$lib/domains/reading-plans/models/plans.model';
+	} from '../../../models/plans.model';
 	import type { Pane } from '$lib/application';
 
 	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';

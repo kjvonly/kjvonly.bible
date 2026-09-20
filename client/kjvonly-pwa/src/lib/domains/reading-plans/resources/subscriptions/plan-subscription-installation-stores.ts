@@ -1,6 +1,6 @@
 import type {
 	PlanSubscriptionsStore
-} from '$lib/domains/reading-plans/persistence/plan-subscriptions-store';
+} from '../../persistence/plan-subscriptions-store';
 
 import type {
 	ResourceInstallation

@@ -1,5 +1,5 @@
 import type { BCV } from '$lib/domains/bible';
-import type { Readings } from '$lib/domains/reading-plans/models/plans.model';
+import type { Readings } from '../models/plans.model';
 
 /**
  * Plan Definition readings are stored encoded. This service decodes the

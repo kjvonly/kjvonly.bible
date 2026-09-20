@@ -1,6 +1,6 @@
 import type {
 	PlanDefinition
-} from '$lib/domains/reading-plans/models/plan-definition';
+} from '../models/plan-definition';
 
 import {
 	PLAN_DEFINITION_OBJECT_TYPE,

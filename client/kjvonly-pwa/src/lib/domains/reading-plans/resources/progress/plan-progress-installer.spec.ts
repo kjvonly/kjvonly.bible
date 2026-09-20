@@ -6,11 +6,11 @@ import {
 
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../../models/plan-progress';
 
 import {
 	PLAN_PROGRESS_OBJECT_TYPE
-} from '$lib/domains/reading-plans/persistence/plan-progress-store';
+} from '../../persistence/plan-progress-store';
 
 import {
 	createResourceInstallationId,

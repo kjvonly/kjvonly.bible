@@ -16,8 +16,8 @@
 	import {
 		PLANS_VIEWS,
 		type PlanDefinitionView
-	} from '$lib/domains/reading-plans/models/plans.model';
-	import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
+	} from '../../../models/plans.model';
+	import type { PlanSubscription } from '../../../models/plan-subscription';
 	// SERVICES
 	import uuid4 from 'uuid4';
 	import { onMount } from 'svelte';
@@ -25,7 +25,7 @@
 	import {
 		PLAN_SUBSCRIPTION_RESOURCE_TYPE,
 		createPlanSubscriptionIdForSource
-	} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-source';
+	} from '../../../resources/subscriptions/plan-subscription-resource-source';
 	// =============================== BINDINGS ================================
 	const {
 		moduleResourceSelectionResolver,

@@ -4,7 +4,7 @@ import {
 	type Sub,
 	NullSub,
 	NullReadings
-} from '$lib/domains/reading-plans/models/plans.model';
+} from '../models/plans.model';
 
 const subsEnricherService = new SubsEnricherService();
 

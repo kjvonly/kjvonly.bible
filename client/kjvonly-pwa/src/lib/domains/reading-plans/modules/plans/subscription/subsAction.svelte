@@ -8,7 +8,7 @@
 
 	// MODELS
 	import { type Pane } from '$lib/application';
-	import { PLANS_VIEWS } from '$lib/domains/reading-plans/models/plans.model';
+	import { PLANS_VIEWS } from '../../../models/plans.model';
 
 	// =============================== BINDINGS ================================
 

@@ -1,6 +1,6 @@
 import type {
 	PlanDefinition
-} from '$lib/domains/reading-plans/models/plan-definition';
+} from '../models/plan-definition';
 
 import {
 	PLAN_DEFINITION_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	PlanDefinitionInstallationStores,
 	PlanDefinitionInstallationTransaction
-} from '$lib/domains/reading-plans/resources/definitions/plan-definition-installation-stores';
+} from '../resources/definitions/plan-definition-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

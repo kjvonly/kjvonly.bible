@@ -6,7 +6,7 @@ import {
 
 import type {
 	PlanSubscription
-} from '$lib/domains/reading-plans/models/plan-subscription';
+} from '../models/plan-subscription';
 
 import {
 	DOMAIN_OBJECTS,

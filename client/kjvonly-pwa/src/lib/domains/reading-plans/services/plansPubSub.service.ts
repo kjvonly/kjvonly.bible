@@ -1,15 +1,15 @@
 import {
   PLAN_PUBSUB_SUBSCRIPTIONS
-} from '$lib/domains/reading-plans/models/plans.model';
-import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
-import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
+} from '../models/plans.model';
+import type { PlanSubscription } from '../models/plan-subscription';
+import type { PlanProgress } from '../models/plan-progress';
 import {
   PLANS_WORKER_INITIALIZED,
   PLANS_WORKER_REFRESH,
   type PlansSubscriptionsMessage,
   type PlansWorkerCommand,
   type PlansWorkerMessage
-} from '$lib/domains/reading-plans/models/plans-worker.model';
+} from '../models/plans-worker.model';
 
 export interface PlansWorkerPort {
   onmessage:

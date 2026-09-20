@@ -1,6 +1,6 @@
 import type {
 	PlanProgressStore
-} from '$lib/domains/reading-plans/persistence/plan-progress-store';
+} from '../../persistence/plan-progress-store';
 
 import type {
 	ResourceInstallation
