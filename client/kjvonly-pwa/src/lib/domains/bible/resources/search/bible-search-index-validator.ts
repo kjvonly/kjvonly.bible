@@ -1,6 +1,6 @@
 import type {
 	BibleSearchIndexChunks
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../../models/bible-search-index.model';
 
 import type {
 	ResourceValidator

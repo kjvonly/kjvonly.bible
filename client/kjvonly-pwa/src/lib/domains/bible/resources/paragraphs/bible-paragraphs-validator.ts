@@ -4,7 +4,7 @@ import {
 
 import type {
 	BibleParagraphMap
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../../models/bible-paragraphs.model';
 
 import type {
 	ResourceValidator

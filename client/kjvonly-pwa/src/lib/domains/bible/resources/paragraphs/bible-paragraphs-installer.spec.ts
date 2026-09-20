@@ -6,15 +6,15 @@ import {
 
 import type {
 	BibleParagraphs
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../../models/bible-paragraphs.model';
 
 import {
 	createBibleParagraphsId
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../../models/bible-paragraphs.model';
 
 import {
 	BIBLE_PARAGRAPHS_OBJECT_TYPE
-} from '$lib/domains/bible/persistence/bible-paragraphs-store';
+} from '../../persistence/bible-paragraphs-store';
 
 import type {
 	DecodedResourceContent,

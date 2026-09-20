@@ -6,7 +6,7 @@ import {
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+} from '../chapters/bible-chapter-interpreter';
 
 import {
 	BIBLE_TEXT_MARKUP_RESOURCE_TYPE

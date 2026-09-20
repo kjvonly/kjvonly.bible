@@ -1,7 +1,7 @@
 import type {
 	Note,
 	NotesById
-} from '$lib/domains/notes/models/note.model';
+} from '../../models/note.model';
 
 export type NotesSearchWorkerRequest =
 	| {

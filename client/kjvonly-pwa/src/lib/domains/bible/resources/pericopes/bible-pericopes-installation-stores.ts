@@ -1,6 +1,6 @@
 import type {
 	BiblePericopesStore
-} from '$lib/domains/bible/persistence/bible-pericopes-store';
+} from '../../persistence/bible-pericopes-store';
 
 import type {
 	ResourceInstallationStore

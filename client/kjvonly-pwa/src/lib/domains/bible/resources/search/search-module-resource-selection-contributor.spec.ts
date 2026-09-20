@@ -10,15 +10,15 @@ import type {
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+} from '../chapters/bible-chapter-interpreter';
 
 import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+} from '../booknames/bible-booknames-interpreter';
 
 import {
 	BIBLE_SEARCH_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
+} from './bible-search-index-interpreter';
 
 import {
 	STRONGS_RESOURCE_TYPE

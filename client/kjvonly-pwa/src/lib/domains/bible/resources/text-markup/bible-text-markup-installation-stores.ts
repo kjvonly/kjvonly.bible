@@ -1,6 +1,6 @@
 import type {
 	BibleTextMarkupStore
-} from '$lib/domains/bible/persistence/bible-text-markup-store';
+} from '../../persistence/bible-text-markup-store';
 
 import type {
 	ResourceInstallationStore

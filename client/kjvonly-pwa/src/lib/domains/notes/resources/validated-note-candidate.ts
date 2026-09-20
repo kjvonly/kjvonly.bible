@@ -1,6 +1,6 @@
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 export interface ValidatedNoteCandidate {
 	readonly name:

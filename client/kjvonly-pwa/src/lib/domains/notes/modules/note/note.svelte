@@ -20,7 +20,7 @@
 	import type {
 		NoteTag,
 		NotesMode
-	} from '$lib/domains/notes/models/note.model';
+	} from '../../models/note.model';
 
 	// SERVICES
 	import { PaneSplit, useApplicationContext } from '$lib/application';

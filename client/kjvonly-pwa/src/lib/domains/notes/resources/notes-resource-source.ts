@@ -8,7 +8,7 @@ import {
 
 import {
 	createNoteId
-} from '$lib/domains/notes/models/note-id';
+} from '../models/note-id';
 
 import {
 	NOTES_RESOURCE_TYPE

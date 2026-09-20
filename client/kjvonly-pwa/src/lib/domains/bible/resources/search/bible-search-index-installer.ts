@@ -1,14 +1,14 @@
 import type {
 	BibleSearchIndex
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../../models/bible-search-index.model';
 
 import {
 	createBibleSearchIndexId
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../../models/bible-search-index.model';
 
 import {
 	BIBLE_SEARCH_INDEX_OBJECT_TYPE
-} from '$lib/domains/bible/persistence/bible-search-index-store';
+} from '../../persistence/bible-search-index-store';
 
 import {
 	createResourceInstallationId,

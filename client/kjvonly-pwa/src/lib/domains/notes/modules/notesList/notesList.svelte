@@ -6,9 +6,9 @@
 		Note,
 		NotesById,
 		NotesMode
-	} from '$lib/domains/notes/models/note.model';
-	import { createNoteDomainObjectId } from '$lib/domains/notes';
-	import type { NoteFilterParameter } from '$lib/domains/notes/ui/note-filter.model';
+	} from '../../models/note.model';
+	import { createNoteDomainObjectId } from '../../models/note-id';
+	import type { NoteFilterParameter } from '../../ui/note-filter.model';
 
 	// SERVICES
 	import { PaneSplit, useApplicationContext } from '$lib/application';
@@ -35,11 +35,11 @@
 
 	import {
 		NOTES_RESOURCE_TYPE
-	} from '$lib/domains/notes/resources/note-interpreter';
+	} from '../../resources/note-interpreter';
 
 	import {
 		createNoteIdForSource
-	} from '$lib/domains/notes/resources/notes-resource-source';
+	} from '../../resources/notes-resource-source';
 	const {
 		archiveService,
 		workspaceRuntime,

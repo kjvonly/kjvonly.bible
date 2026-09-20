@@ -1,6 +1,6 @@
 import type {
 	NotesStore
-} from '$lib/domains/notes/persistence/notes-store';
+} from '../persistence/notes-store';
 
 import type {
 	ResourcePublicationIntent
