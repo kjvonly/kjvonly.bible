@@ -88,6 +88,10 @@
 
 	onMount(() => {
 		setVerseHasReferences();
+
+		return () => {
+			clearPendingLongPress();
+		};
 	});
 
 	// ================================ FUNCS ==================================
@@ -95,7 +99,7 @@
 	function setVerseHasReferences() {
 		if (isWordAVerseNumber()) {
 			for (let w of verse.words) {
-				for (var h of w.href || []) {
+				for (const h of w.href || []) {
 					if (h.includes('/')) {
 						verseHasReferences = true;
 						return;
@@ -369,12 +373,17 @@
 		}
 
 		const differenceInMilliseconds = Date.now() - longPress.startTime;
-		if (
-			differenceInMilliseconds < pressThresholdInMilliseconds &&
-			longPress.timeoutID !== undefined
-		) {
+		if (differenceInMilliseconds < pressThresholdInMilliseconds) {
+			clearPendingLongPress();
+		}
+	}
+
+	function clearPendingLongPress() {
+		if (longPress?.timeoutID !== undefined) {
 			clearTimeout(longPress.timeoutID);
 		}
+
+		longPress = undefined;
 	}
 </script>
 
@@ -393,6 +402,7 @@
 			onclick={onWordClicked}
 			ontouchstart={onMouseDownTouchStart}
 			ontouchend={onMouseUpTouchEnd}
+			ontouchcancel={clearPendingLongPress}
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
 			class="{word.class?.join(' ')} {verseHasReferences
@@ -408,6 +418,7 @@
 			onkeydown={() => {}}
 			ontouchstart={onMouseDownTouchStart}
 			ontouchend={onMouseUpTouchEnd}
+			ontouchcancel={clearPendingLongPress}
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
 			onclick={onEditClick}
@@ -423,6 +434,7 @@
 			onkeydown={() => {}}
 			ontouchstart={onMouseDownTouchStart}
 			ontouchend={onMouseUpTouchEnd}
+			ontouchcancel={clearPendingLongPress}
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
 			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"
