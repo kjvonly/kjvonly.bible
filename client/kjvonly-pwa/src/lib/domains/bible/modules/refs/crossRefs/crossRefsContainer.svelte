@@ -205,7 +205,7 @@
 			bibleLocationRef
 		);
 		let crossRefs = [crossRef.crossRef];
-		verse?.words.forEach((w: any) => {
+		verse?.words.forEach((w) => {
 			const refs = tokenizeReferences(w.href ?? []);
 
 			refs.forEach((ref: string) => {
