@@ -6,21 +6,21 @@ import {
 
 import type {
 	Chapter
-} from '$lib/domains/bible/models/bible.model';
+} from '../models/bible.model';
 
 import type {
 	ChapterStore
-} from '$lib/domains/bible/persistence/chapter-store';
+} from '../persistence/chapter-store';
 
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+} from '../resources/chapters/bible-chapter-interpreter';
 
 import {
 	createBibleVersionId,
 	createChapterId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '../utils/bible-identity';
 
 import type {
 	BibleLocationReferenceService

@@ -12,19 +12,19 @@ import {
 
 import type {
 	BibleSearchIndex
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../models/bible-search-index.model';
 
 import {
 	createBibleSearchIndexId
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../models/bible-search-index.model';
 
 import type {
 	BibleSearchIndexStore
-} from '$lib/domains/bible/persistence/bible-search-index-store';
+} from '../persistence/bible-search-index-store';
 
 import {
 	BIBLE_SEARCH_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
+} from '../resources/search/bible-search-index-interpreter';
 
 interface ResourceInstaller {
 	install(

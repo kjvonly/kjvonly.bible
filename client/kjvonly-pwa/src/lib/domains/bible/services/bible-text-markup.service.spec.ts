@@ -12,19 +12,19 @@ import type {
 
 import type {
 	BibleTextMarkup
-} from '$lib/domains/bible/models/bible-text-markup.model';
+} from '../models/bible-text-markup.model';
 
 import {
 	BibleTextMarkupResourcePublication
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-publication';
+} from '../resources/text-markup/bible-text-markup-resource-publication';
 
 import type {
 	BibleTextMarkupWriteStores
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-write-stores';
+} from '../resources/text-markup/bible-text-markup-write-stores';
 
 import {
 	createBibleTextMarkupId
-} from '$lib/domains/bible/models/bible-text-markup.model';
+} from '../models/bible-text-markup.model';
 
 import {
 	BibleTextMarkupService

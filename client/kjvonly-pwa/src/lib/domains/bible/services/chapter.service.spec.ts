@@ -10,12 +10,12 @@ import type {
 
 import type {
 	Chapter
-} from '$lib/domains/bible/models/bible.model';
+} from '../models/bible.model';
 
 import {
 	createBibleVersionId,
 	createChapterId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '../utils/bible-identity';
 
 import {
 	ChapterService

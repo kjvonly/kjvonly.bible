@@ -6,20 +6,20 @@ import {
 
 import type {
 	BiblePericopes
-} from '$lib/domains/bible/models/bible-pericopes.model';
+} from '../models/bible-pericopes.model';
 
 import {
 	createBiblePericopesId
-} from '$lib/domains/bible/models/bible-pericopes.model';
+} from '../models/bible-pericopes.model';
 
 import type {
 	BiblePericopesStore
-} from '$lib/domains/bible/persistence/bible-pericopes-store';
+} from '../persistence/bible-pericopes-store';
 
 
 import {
 	BIBLE_PERICOPES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
+} from '../resources/pericopes/bible-pericopes-interpreter';
 
 import type {
 	BibleLocationReferenceService

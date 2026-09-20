@@ -5,24 +5,24 @@ import {
 
 import type {
 	BibleTextMarkup
-} from '$lib/domains/bible/models/bible-text-markup.model';
+} from '../models/bible-text-markup.model';
 
 import {
 	createBibleTextMarkupId
-} from '$lib/domains/bible/models/bible-text-markup.model';
+} from '../models/bible-text-markup.model';
 
 import type {
 	BibleTextMarkupStore
-} from '$lib/domains/bible/persistence/bible-text-markup-store';
+} from '../persistence/bible-text-markup-store';
 
 
 import type {
 	BibleTextMarkupWriteTransaction
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-write-stores';
+} from '../resources/text-markup/bible-text-markup-write-stores';
 
 import type {
 	BibleTextMarkupResourcePublication
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-publication';
+} from '../resources/text-markup/bible-text-markup-resource-publication';
 
 import type {
 	OutboxWakeup
@@ -30,7 +30,7 @@ import type {
 
 import {
 	parseBibleTextMarkupResourceSource
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-source';
+} from '../resources/text-markup/bible-text-markup-resource-source';
 
 import type {
 	BibleLocationReferenceService

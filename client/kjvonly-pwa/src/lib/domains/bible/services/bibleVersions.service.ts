@@ -1,14 +1,14 @@
 import type {
 	BibleVersion
-} from '$lib/domains/bible/models/bible-version.model';
+} from '../models/bible-version.model';
 
 import type {
 	BibleVersionCatalog
-} from '$lib/domains/bible/persistence/bible-version-catalog';
+} from '../persistence/bible-version-catalog';
 
 import {
 	parseBibleVersionId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '../utils/bible-identity';
 
 export class BibleVersionsService {
 

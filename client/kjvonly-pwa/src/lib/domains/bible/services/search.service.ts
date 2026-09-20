@@ -4,11 +4,11 @@ import type {
 
 import type {
 	SearchResultResponse
-} from '$lib/domains/bible/models/search.model';
+} from '../models/search.model';
 
 import type {
 	SearchRuntime
-} from '$lib/domains/bible/runtime/search/search-runtime';
+} from '../runtime/search/search-runtime';
 
 export interface SearchService {
 	subscribe(
