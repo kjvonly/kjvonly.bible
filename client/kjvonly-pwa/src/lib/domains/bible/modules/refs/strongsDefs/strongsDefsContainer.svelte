@@ -4,30 +4,24 @@
 	import { onMount } from 'svelte';
 
 	// COMPONENTS
-	import ChevronDown from '$lib/components/chevronDown.svelte';
 
 	// MODELS
 	// SERVICES
 
 	// API
-	import type { Strongs, UsageBy } from '$lib/domains/strongs';
+	import type { Strongs, StrongsPopups, UsageBy } from '$lib/domains/strongs';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 	import KeyboardArrowDown from '$lib/components/svgs/keyboardArrowDown.svelte';
 	import Dictionary from '$lib/components/svgs/dictionary.svelte';
 	import ShortText from '$lib/components/svgs/shortText.svelte';
 
-	import {
-	useApplicationContext
-} from '$lib/application';
+	import { useApplicationContext } from '$lib/application';
 
-	import type {
-		PublishedResourceReference
-	} from '$lib/resource';
+	import type { PublishedResourceReference } from '$lib/resource';
 
-	import {
-		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { filterBibleLocationRefsByBookID } from './strongs-search';
 
 	const {
 		strongsService,
@@ -37,27 +31,36 @@
 
 	// =============================== BINDINGS ================================
 	let {
-		clientHeight = $bindable<number>(),
-		popups = $bindable<any>(),
-		bibleVersion,
+		popups = $bindable<StrongsPopups>(),
 		hasCrossRef,
- 		strongsSource,
+		strongsSource,
 		strongsRefs,
 		strongsWords,
 		text,
 		paneID
+	}: {
+		popups: StrongsPopups;
+		hasCrossRef: boolean;
+		strongsSource: PublishedResourceReference;
+		strongsRefs: string[];
+		strongsWords: string[] | undefined;
+		text: string;
+		paneID: string;
 	} = $props();
 
 	// ================================== VARS =================================
 
 	let toggleStrongs = $state(false);
 	let searchTerms = $state('');
-	let startsWithBookId = '';
 	let strongsWithToggle: StrongsWithToggle[] = $state([]);
 
 	interface StrongsWithToggle extends Strongs {
 		toggle: boolean;
 	}
+
+	type StrongsDefinition = NonNullable<
+		Strongs['brownDef'] | Strongs['thayersDef']
+	>;
 
 	// =============================== LIFECYCLE ===============================
 	onMount(async () => {
@@ -95,18 +98,9 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onFilterBibleLocationRefByBookID(refs: string[]): string[] {
-		return refs.filter((ref) => {
-			if (ref.startsWith(startsWithBookId)) {
-				return ref;
-			}
-		});
-	}
-
 	async function onByBook(
 		s: Strongs,
-		b: any,
-		idx: number
+		b: UsageBy
 	): Promise<void> {
 		const source =
 			moduleResourceSelectionResolver
@@ -141,24 +135,26 @@
 		searchTerms = sanitize(searchText.substring(0, lastIndexOfOr));
 
 		popups.searchPopup = {
-			paneID: paneID,
-			searchTerms: searchTerms,
-			onFilterBibleLocationRefByBookID: onFilterBibleLocationRefByBookID,
-			bibleVersion: bibleVersion
+			paneID,
+			searchTerms,
+			onFilterBibleLocationRefByBookID: (refs) =>
+				filterBibleLocationRefsByBookID(
+					refs,
+					bookID
+				)
 		};
 	}
 
-	function onByWord(b: any, idx: number): void {
+	function onByWord(b: UsageBy): void {
 		searchTerms = sanitize(b.text);
 
 		popups.searchPopup = {
-			paneID: paneID,
-			searchTerms: searchTerms,
-			bibleVersion: bibleVersion
+			paneID,
+			searchTerms
 		};
 	}
 
-	function onStrongsWordClicked(e: Event, s: StrongsWithToggle): void {
+	function onStrongsWordClicked(s: StrongsWithToggle): void {
 		s.toggle = !s.toggle;
 	}
 
@@ -168,7 +164,7 @@
 </script>
 
 <!-- ================================= BODY ================================ -->
-{#snippet strongsHtml(s: any, idx: number)}
+{#snippet strongsHtml(s: StrongsWithToggle)}
 	<div class="ps-8">
 		{#if s['strongsDef']}
 			<div class="">
@@ -208,12 +204,12 @@
 
 		{@render thayersContainer(s)}
 		{@render brownContainer(s)}
-		{@render byBook(s, idx)}
-		{@render byWord(s, idx)}
+		{@render byBook(s)}
+		{@render byWord(s)}
 	</div>
 {/snippet}
 
-{#snippet thayersContainer(s: any)}
+{#snippet thayersContainer(s: Strongs)}
 	{#if s.thayersDef}
 		<div class="max-w-lg pt-4">
 			<p class="text-neutral-600">Thayers Definition:</p>
@@ -224,7 +220,7 @@
 	{/if}
 {/snippet}
 
-{#snippet brownContainer(s: any)}
+{#snippet brownContainer(s: Strongs)}
 	{#if s.brownDef}
 		<div class="max-w-lg pt-4">
 			<p class="text-neutral-600">Brown Definition:</p>
@@ -235,7 +231,7 @@
 	{/if}
 {/snippet}
 
-{#snippet recursiveDef(def: any)}
+{#snippet recursiveDef(def: StrongsDefinition)}
 	{#if def.text}
 		<li>
 			{def.text}
@@ -251,7 +247,7 @@
 	{/if}
 {/snippet}
 
-{#snippet byBook(s: any, idx: number)}
+{#snippet byBook(s: Strongs)}
 	{#if s['usageByBook']}
 		<div class="flex flex-row items-center pt-4">
 			<p class="pe-4 text-neutral-600 capitalize">By Book:</p>
@@ -264,7 +260,7 @@
 					tabindex="-1"
 					onkeydown={() => {}}
 					onclick={() => {
-						onByBook(s, b, idx);
+						onByBook(s, b);
 					}}
 					class="inline-block hover:cursor-pointer hover:text-neutral-400"
 					>{b.text}</span
@@ -274,7 +270,7 @@
 	{/if}
 {/snippet}
 
-{#snippet byWord(s: any, idx: number)}
+{#snippet byWord(s: Strongs)}
 	{#if s['usageByWord']}
 		<h1 class="pt-4 text-neutral-600">By Word:</h1>
 
@@ -285,7 +281,7 @@
 					tabindex="-1"
 					onkeydown={() => {}}
 					onclick={() => {
-						onByWord(w, idx);
+						onByWord(w);
 					}}
 					class="inline-block hover:cursor-pointer hover:text-neutral-400"
 					>{w.text}</span
@@ -314,7 +310,7 @@
 		{#each strongsWithToggle as s, idx}
 			{@render strongsWordToggle(s, idx)}
 			{#if s.toggle}
-				{@render strongsHtml(s, idx)}
+				{@render strongsHtml(s)}
 			{/if}
 		{/each}
 	{/if}
@@ -325,8 +321,8 @@
 		{#if strongsWords && strongsWords.length > 0}
 			<KJVButton
 				classes=""
-				onClick={(e: Event) => {
-					onStrongsWordClicked(e, s);
+				onClick={() => {
+					onStrongsWordClicked(s);
 				}}
 			>
 				{#if !s.toggle}
@@ -348,8 +344,8 @@
 			{#if hasCrossRef || strongsWithToggle?.length > 1}
 				<KJVButton
 					classes=""
-					onClick={(e: Event) => {
-						onStrongsWordClicked(e, s);
+					onClick={() => {
+						onStrongsWordClicked(s);
 					}}
 				>
 					{#if !s.toggle}
@@ -371,7 +367,7 @@
 	{@render strongsList()}
 {:else if strongsWithToggle.length === 1}
 	{@render strongsWordToggle(strongsWithToggle[0], 0)}
-	{@render strongsHtml(strongsWithToggle[0], 0)}
+	{@render strongsHtml(strongsWithToggle[0])}
 {/if}
 
 <style>

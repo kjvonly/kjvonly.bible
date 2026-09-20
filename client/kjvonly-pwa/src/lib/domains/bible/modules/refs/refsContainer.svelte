@@ -60,12 +60,12 @@ import {
 	let strongsRefs: string[] = $state([]);
 	let text = $state('');
 	let crossRefs: string[] = $state([]);
-	let bibleVersion: string = $state('');
 
-	const strongsSource =
-	moduleResourceSelectionResolver.require(
-		paneID,
-		STRONGS_RESOURCE_TYPE
+	let strongsSource = $derived(
+		moduleResourceSelectionResolver.require(
+			paneID,
+			STRONGS_RESOURCE_TYPE
+		)
 	);
 
 
@@ -173,7 +173,6 @@ import {
 	{#if strongsRefs.length > 0}
 		<div class=" pt-4"></div>
 		<StrongsDefsContainer
-			bind:clientHeight
 			bind:popups
 			{text}
 			{strongsSource}
@@ -181,7 +180,6 @@ import {
 			{paneID}
 			hasCrossRef={crossRefs.length > 0}
 			strongsWords={pane?.buffer?.bag?.strongsWords}
-			{bibleVersion}
 		></StrongsDefsContainer>
 	{/if}
 
