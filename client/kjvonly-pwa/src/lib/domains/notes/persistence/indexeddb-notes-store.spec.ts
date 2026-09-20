@@ -7,7 +7,7 @@ import {
 
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 import {
 	DOMAIN_OBJECTS,

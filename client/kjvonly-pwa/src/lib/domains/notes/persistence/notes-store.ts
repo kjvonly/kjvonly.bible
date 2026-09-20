@@ -1,10 +1,10 @@
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 export {
 	NOTE_OBJECT_TYPE
-} from '$lib/domains/notes/models/note-id';
+} from '../models/note-id';
 
 export interface NotesStore {
 	get(
