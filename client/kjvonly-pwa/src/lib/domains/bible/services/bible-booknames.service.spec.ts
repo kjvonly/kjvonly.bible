@@ -122,6 +122,62 @@ describe(
 		);
 
 		it(
+			'reloads Booknames from the store after refresh clears the cache',
+			async () => {
+				const updated = {
+					...BOOKNAMES,
+
+					booknamesById: {
+						'1':
+							'Genesis Updated'
+					}
+				};
+
+				const get =
+					vi.fn()
+						.mockResolvedValueOnce(
+							BOOKNAMES
+						)
+						.mockResolvedValueOnce(
+							updated
+						);
+
+				const service =
+					new BibleBooknamesService(
+						{ get },
+						{
+							install:
+								vi.fn()
+						}
+					);
+
+				await expect(
+					service.get(
+						SOURCE
+					)
+				).resolves.toBe(
+					BOOKNAMES
+				);
+
+				service.refresh();
+
+				await expect(
+					service.get(
+						SOURCE
+					)
+				).resolves.toBe(
+					updated
+				);
+
+				expect(
+					get
+				).toHaveBeenCalledTimes(
+					2
+				);
+			}
+		);
+
+		it(
 			'installs the exact selected Resource on a local miss and rereads the store',
 			async () => {
 				const get =

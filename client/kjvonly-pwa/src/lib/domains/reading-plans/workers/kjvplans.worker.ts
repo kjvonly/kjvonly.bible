@@ -12,10 +12,31 @@ import {
 import { SubsEnricherService } from '$lib/domains/reading-plans';
 import {
   PLANS_WORKER_INITIALIZED,
+  PLANS_WORKER_REFRESH,
   type PlansSubscriptionsMessage,
   type PlansWorkerCommand,
   type PlansWorkerInitializedMessage
 } from '$lib/domains/reading-plans/models/plans-worker.model';
+
+import {
+  IndexedDBPlanSubscriptionsStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-subscriptions-store';
+import {
+  IndexedDBPlanProgressStore
+} from '$lib/domains/reading-plans/persistence/indexeddb-plan-progress-store';
+import {
+  getApplicationDB
+} from '$lib/infrastructure/persistence/application.db';
+
+const planSubscriptionsStore =
+  new IndexedDBPlanSubscriptionsStore(
+    getApplicationDB
+  );
+
+const planProgressStore =
+  new IndexedDBPlanProgressStore(
+    getApplicationDB
+  );
 
 const encodedReadingsDecoderService =
   new EncodedReadingsDecoderService();
@@ -151,6 +172,25 @@ async function putProgress(progress: PlanProgress) {
   }
 }
 
+async function refresh() {
+  const [
+    subscriptions,
+    progress
+  ] = await Promise.all([
+    planSubscriptionsStore.getAll(),
+    planProgressStore.getAll()
+  ]);
+
+  subs.clear();
+  progressBySubscriptionId.clear();
+
+  initializeProgress(progress);
+  initializeSubs(subscriptions);
+
+  await enrichSubs();
+  publishSubs();
+}
+
 function requireBookNameLookup(): BookNameLookup {
   if (!bookNameLookup) {
     throw new Error('Plans worker Booknames have not been initialized');
@@ -178,6 +218,9 @@ onmessage = async (e: MessageEvent<PlansWorkerCommand>) => {
       break;
     case PLAN_PUBSUB_SUBSCRIPTIONS.PUT_PROGRESS:
       putProgress(e.data.data);
+      break;
+    case PLANS_WORKER_REFRESH:
+      await refresh();
       break;
   }
 };

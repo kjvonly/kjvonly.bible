@@ -6,6 +6,9 @@
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import LoginOptions from './loginOptions/loginOptions.svelte';
 	import { type Writable } from 'svelte/store';
+	import type {
+		NavigationView
+	} from '$lib/application/services/navigation.service';
 	import { stopPropagation } from '$lib/application/ui/click';
 
 	// =============================== BINDINGS ================================
@@ -19,7 +22,7 @@
 	// ================================== VARS =================================
 	let clientHeight: number = $state(0);
 
-	let nav: Writable<any[]> | undefined = $state();
+	let nav: Writable<NavigationView[]> | undefined = $state();
 	const { navigationServiceFactory } = useApplicationContext();
 	let navService = navigationServiceFactory.create();
 

@@ -190,6 +190,8 @@ resourceId = kjvonly/overlays/text-markup/<chapter-source-name>
 
 This means Text Markup defaults follow the Bible text source name while remaining owned by the current user.
 
+A default Text Markup selection is created only when a current user publisher exists. Signed-out Bible reading intentionally has no user-owned Text Markup selection.
+
 The relationship is intentional:
 
 ```text
@@ -204,7 +206,7 @@ Text Markup source
 
 # Module Resource Selection
 
-The Bible module captures Text Markup as one of its required Resource selections.
+The Bible module includes Text Markup in its Resource-selection model, but the user-owned selection is optional when there is no authenticated user.
 
 Selection is stored in:
 
@@ -212,13 +214,11 @@ Selection is stored in:
 Buffer.resourceSelections
 ```
 
-Reader UI resolves it through:
+Reader code that only reads Bible text uses a non-throwing lookup for Text Markup. Signed-out reading therefore renders normally with empty markup instead of treating the missing user-owned selection as a Resource error.
 
-```text
-ModuleResourceSelectionResolver
-```
+When restoring a persisted Buffer, authentication-dependent selections are reconciled for the current session. A persisted Text Markup selection is discarded first; if a current user exists, the default Text Markup selection is rebuilt for that user and the selected Bible version/source. If no user exists, Text Markup remains absent.
 
-`BibleTextMarkupService` receives only the resulting `PublishedResourceReference`.
+`BibleTextMarkupService` receives only a resolved `PublishedResourceReference` when one exists.
 
 The service does not know about Pane/Buffer mechanics.
 
@@ -324,13 +324,21 @@ ResourceInstallation provenance
 
 atomically through the Text Markup installation transaction.
 
-## Current existing-local policy
+## Freshness policy
 
-If Text Markup for the same application ID already exists locally, inbound installation skips it.
+The installer reads the current `ResourceInstallation` for the Text Markup application ID.
 
-The installer does not overwrite current accepted local markup.
+If:
 
-This is intentional until synchronization/conflict policy is implemented.
+```text
+incoming modifiedAt <= current ResourceInstallation.modifiedAt
+```
+
+the candidate is skipped.
+
+A newer Resource replaces the accepted Text Markup and writes the new `ResourceInstallation` atomically.
+
+This object-level freshness behavior is used by normal Resource installation and Archive import. Broader synchronization/conflict policy remains a separate concern.
 
 ---
 
@@ -355,14 +363,17 @@ The concrete store is:
 IndexedDBBibleTextMarkupStore
 ```
 
-Inbound installation also records `ResourceInstallation` provenance.
+Inbound installation also records `ResourceInstallation` revision/provenance state.
 
 Local writes use a separate write transaction that spans:
 
 ```text
 domain_objects
+resource_installations
 outbox
 ```
+
+The write transaction allocates a monotonic local `modifiedAt`, stores it in `ResourceInstallation`, and attaches the same revision to the queued Resource publication intent.
 
 ---
 
@@ -440,6 +451,7 @@ BibleTextMarkupResourcePublication.create()
     ↓
 ONE IndexedDB transaction
     ├── store Text Markup Domain Object
+    ├── create/update ResourceInstallation revision state
     └── store Outbox publication intent
     ↓ transaction commit
 notify same-markup subscribers
@@ -498,6 +510,8 @@ Re-subscribing the same subscriber ID replaces the previous subscription.
 
 After a successful local `put()`, only subscribers for the same Text Markup ID are notified.
 
+`refresh()` supports cross-worker persistence reconciliation. It reloads only Text Markup IDs that currently have live subscribers and republishes accepted values through the same `notify(...)` path. Application composition calls this after Archive import handles Text Markup Resources.
+
 This is local UI propagation.
 
 It is not remote Resource synchronization.
@@ -535,6 +549,14 @@ Subscriber callbacks replace the local UI copy with the accepted updated markup.
 ---
 
 # Editing
+
+The Edit action remains visible when signed out for UI consistency. Attempting to enter Text Markup editing without a current Text Markup selection shows:
+
+```text
+Login first
+```
+
+No anonymous publisher or synthetic Text Markup source is created.
 
 The Reader edit controls modify the UI copy of the Text Markup map.
 
@@ -611,7 +633,7 @@ It does not implement a complete remote synchronization/conflict policy.
 
 Normal reads do not continuously enumerate remote publishers.
 
-A future synchronization design must decide how remote changes interact with accepted local markup before changing the installer overwrite rule.
+A future synchronization design may add broader discovery/conflict behavior, but it should build on the existing `ResourceInstallation.modifiedAt` freshness rule rather than restoring the old unconditional-skip behavior.
 
 ---
 
@@ -640,6 +662,8 @@ BibleTextMarkupService
 ```
 
 `BibleTextMarkupService` is exposed through `ApplicationContext`.
+
+Application composition also registers it as a consumer of generic Archive import-completion events. When Text Markup Resources were actually handled, `refresh()` reloads currently subscribed Text Markup IDs and notifies live readers.
 
 Svelte components consume that application-owned instance.
 
@@ -678,11 +702,13 @@ Reader/browser behavior should additionally verify that chapter changes do not r
 5. Text Markup is chapter-scoped.
 6. Reads are local-first and may explicitly load the selected Resource on miss.
 7. Missing published markup is a normal empty state.
-8. Inbound installation does not overwrite existing accepted local markup.
-9. Local writes persist Domain state + Outbox intent atomically.
+8. Inbound installation is freshness-aware through `ResourceInstallation.modifiedAt`.
+9. Local writes persist Domain state + ResourceInstallation revision state + Outbox intent atomically.
 10. Local subscribers are notified after durable commit.
-11. Resource selection lives on the Buffer; the service receives only `PublishedResourceReference`.
-12. Legacy annotation runtime must not be recreated.
+11. Archive/import reconciliation may refresh only currently subscribed Text Markup IDs.
+12. User-owned Text Markup selection is absent when signed out and rebuilt against the current user during workspace restore.
+13. Resource selection lives on the Buffer; the service receives only `PublishedResourceReference` when one exists.
+14. Legacy annotation runtime must not be recreated.
 
 ---
 
@@ -712,7 +738,7 @@ local-first accepted Text Markup
     ↓
 Reader editing
     ↓
-atomic Domain Object + Outbox write
+atomic Domain Object + ResourceInstallation + Outbox write
     ↓
 local subscriber refresh
     +

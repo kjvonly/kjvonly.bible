@@ -412,11 +412,11 @@ unconditional local authority
 
 # Resource Archives
 
-Resource Archives contain Resources.
+Resource Archives contain selected accepted Resource-backed Domain state together with the Resource association and revision information needed to reconstruct normal inbound Resource candidates.
 
 Do not automatically turn an archive specification into a complete application backup format.
 
-Runtime state, arbitrary UI settings, caches, installation bookkeeping, and other local-only information do not belong in a Resource Archive unless they deliberately have a Resource representation.
+Runtime state, arbitrary UI settings, caches, pending publication work, and unrelated local-only bookkeeping do not belong in a Resource Archive.
 
 ---
 

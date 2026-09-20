@@ -28,11 +28,12 @@
 
 	// ================================== VARS =================================
 
-	let components: any = $state({
+	let components: Record<string, Modules> = $state({
 		bible: Modules.BIBLE,
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
 		plans: Modules.PLANS,
+		archive: Modules.ARCHIVE,
 		settings: Modules.SETTINGS
 	});
 

@@ -34,6 +34,7 @@
 	import { useApplicationContext } from '$lib/application';
 
 	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
 
 	// OTHER
 	import uuid4 from 'uuid4';
@@ -46,7 +47,8 @@
 		bibleBooknamesService,
 		moduleResourceSelectionResolver,
 		settingsService,
-		bibleLocationReferenceService
+		bibleLocationReferenceService,
+		toastService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -182,10 +184,23 @@
 		showMenuPopup = !showMenuPopup;
 	}
 
+	function hasTextMarkupSelection(): boolean {
+		return moduleResourceSelectionResolver.find(
+			paneID,
+			BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+		) !== undefined;
+	}
+
 	function onEditClick(e: Event): void {
 		e.stopPropagation();
+
 		if (mode.value === BIBLE_MODES.EDIT) {
 			mode.value = BIBLE_MODES.READING;
+			return;
+		}
+
+		if (!hasTextMarkupSelection()) {
+			toastService.showToast('Login first');
 			return;
 		}
 		let bookIDChapter =

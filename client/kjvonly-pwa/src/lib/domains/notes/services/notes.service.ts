@@ -46,6 +46,8 @@ interface NotesSearchRuntimePort {
 		id: string
 	): void;
 
+	refresh(): void;
+
 	put(
 		note: Note
 	): void;
@@ -68,9 +70,11 @@ interface NotesSubscriber {
  * Accepted Notes are loaded from the shared Domain Object store through the
  * NotesStore abstraction, then handed to the pure local search runtime.
  *
- * Initial accepted Notes are loaded once from the Domain store. Normal Note
- * changes are applied incrementally to the search runtime. Resource discovery
- * and synchronization are intentionally outside this service.
+ * Initial accepted Notes are loaded from the Domain store. Normal Note changes
+ * are applied incrementally to the search runtime. External persistence changes
+ * can signal refresh(), which asks the worker to reload accepted Notes directly
+ * from IndexedDB and rebuild its search projection. Resource discovery and
+ * synchronization are intentionally outside this service.
  */
 export class NotesService {
 	private subscribers:
@@ -164,6 +168,14 @@ export class NotesService {
 				this.runtime.getAll(
 					id
 				);
+			}
+		);
+	}
+
+	refresh(): void {
+		void this.ready.then(
+			() => {
+				this.runtime.refresh();
 			}
 		);
 	}

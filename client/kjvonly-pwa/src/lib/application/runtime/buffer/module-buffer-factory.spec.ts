@@ -254,12 +254,18 @@ function createBuilder(
 
 		related?:
 			ResourceSelections;
+
+		reconcileRestored?:
+			ResourceSelections;
 	} = {}
 ): ModuleResourceSelectionsBuilder & {
 	independent:
 		ReturnType<typeof vi.fn>;
 
 	related:
+		ReturnType<typeof vi.fn>;
+
+	reconcileRestored:
 		ReturnType<typeof vi.fn>;
 } {
 	return {
@@ -274,6 +280,13 @@ function createBuilder(
 			vi.fn(
 				() =>
 					results.related ??
+					{}
+			),
+
+		reconcileRestored:
+			vi.fn(
+				() =>
+					results.reconcileRestored ??
 					{}
 			)
 	};

@@ -110,3 +110,41 @@ export type {
 export type {
 	OutboxWakeup
 } from './outbox/outbox-wakeup';
+
+// ARCHIVE
+export {
+	KJVONLY_ARCHIVE_VERSION,
+	type ArchivedDomainObject,
+	type KJVOnlyArchiveV1
+} from './archive/kjvonly-archive';
+
+export {
+	KJVOnlyArchiveValidator
+} from './archive/kjvonly-archive-validator';
+
+export {
+	KJVOnlyArchiveCodec
+} from './archive/kjvonly-archive-codec';
+
+export {
+	KJVOnlyArchiveExporter
+} from './archive/kjvonly-archive-exporter';
+
+export {
+	matchesKJVOnlyArchiveExportSelection,
+	matchesObjectIdPatterns,
+	parseKJVOnlyArchiveExportPatterns,
+	type KJVOnlyArchiveExportSelection,
+	type KJVOnlyArchiveExportTypeSelection
+} from './archive/kjvonly-archive-export-selection';
+
+export {
+	KJVOnlyArchiveImporter,
+	type KJVOnlyArchiveImportOutcome,
+	type KJVOnlyArchiveImportResult,
+	type KJVOnlyArchiveImportStatus
+} from './archive/kjvonly-archive-importer';
+
+export {
+	KJVOnlyArchiveService
+} from './archive/kjvonly-archive.service';

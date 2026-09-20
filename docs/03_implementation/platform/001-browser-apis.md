@@ -213,20 +213,19 @@ Domain services should provide the data/formatting behavior they own; the browse
 
 ## File Import / Download APIs
 
-The legacy import/export area currently uses browser APIs including:
+KJVOnly Archive import/export keeps browser file side effects at the application UI edge.
+
+The Archive Import view selects a `.kjva` file and converts the selected browser `File` into bytes before calling the Application-owned Archive service.
+
+The Archive Export view receives encoded archive bytes from the Archive service and performs the browser download.
+
+The archive codec, Worker, importer, exporter, Resource reconstruction, and Domain installation code do not create DOM `<input>` or `<a>` elements.
+
+See:
 
 ```text
-FileReader
-dynamic <input type="file">
-dynamic <a> download links
-Blob/object/file download behavior
+03_implementation/archive/001-kjvonly-archive.md
 ```
-
-Import/export is a known legacy/parked area.
-
-Do not treat its current implementation as the model for new application boundaries.
-
-A future import/export redesign should preserve browser side effects at the application/UI edge and keep Domain interpretation/persistence behind Domain APIs.
 
 ## `window` Navigation
 

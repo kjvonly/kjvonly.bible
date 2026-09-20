@@ -426,9 +426,9 @@ LWW does not make a newer relay publication automatically authoritative local st
 
 # Resource Archive
 
-A portable collection of serialized Resources.
+A portable collection of selected accepted Resource-backed Domain state.
 
-Resource Archives use the `.kjva` format and preserve Resource boundaries and applicable identity/provenance.
+Resource Archives use the `.kjva` format and preserve the Resource metadata and revision information needed to reconstruct normal inbound Resource candidates. Original transport packaging does not need to be preserved.
 
 An archive is not automatically a complete backup of arbitrary local application state.
 

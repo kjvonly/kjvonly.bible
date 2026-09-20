@@ -562,6 +562,72 @@ describe(
 		);
 
 		it(
+			'reloads subscribed Text Markup from the store on refresh',
+			async () => {
+				const textMarkupId =
+					'publisher/kjvs/1_1';
+
+				const store =
+					new FakeTextMarkupStore([
+						createTextMarkup(
+							textMarkupId
+						)
+					]);
+
+				const onChange =
+					vi.fn();
+
+				const service =
+					createService(
+						store,
+						new FakeResourceLoader()
+					);
+
+				service.subscribe(
+					'reader-a',
+					textMarkupId,
+					onChange
+				);
+
+				const imported =
+					{
+						...createTextMarkup(
+							textMarkupId
+						),
+
+						markings: {
+							'2': {
+								'1': {
+									class: [
+										'bg-highlightb'
+									]
+								}
+							}
+						}
+					};
+
+				store.values.set(
+					textMarkupId,
+					imported
+				);
+
+				await service.refresh();
+
+				expect(
+					onChange
+				).toHaveBeenCalledWith(
+					imported
+				);
+
+				expect(
+					store.ids
+				).toEqual([
+					textMarkupId
+				]);
+			}
+		);
+
+		it(
 			'unsubscribes a local Text Markup subscriber',
 			async () => {
 				const onChange =

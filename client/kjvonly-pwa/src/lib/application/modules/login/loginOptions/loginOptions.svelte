@@ -1,6 +1,5 @@
 <script lang="ts">
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
-	import { onMount } from 'svelte';
 	import NsecLogin from '../nsec/nsecLogin.svelte';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
@@ -15,13 +14,6 @@
 
 	let headerHeight: number = $state(0);
 
-	onMount(() => {
-		obj.onNavBack = onNavBack;
-	});
-
-	function onNavBack() {
-		console.log(obj.bag);
-	}
 	function createAccount() {}
 	function nsecLogin() {
 		navService.push({ component: NsecLogin, obj: {} });

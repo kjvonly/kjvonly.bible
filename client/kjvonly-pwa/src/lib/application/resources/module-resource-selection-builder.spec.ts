@@ -79,6 +79,50 @@ describe(
 		);
 
 		it(
+			'marks restored selection reconciliation for the contributor',
+			() => {
+				let received:
+					ModuleResourceSelectionBuildContext |
+					undefined;
+
+				const restoredSelections = {
+					'origin/resource': {
+						publisher: 'origin',
+						resourceId: 'origin/resource/default'
+					}
+				};
+
+				const builder =
+					new ModuleResourceSelectionBuilder(
+						createSnapshotProvider({}),
+						[
+							createContributor(
+								Modules.BIBLE,
+								context => {
+									received = context;
+									return {};
+								}
+							)
+						]
+					);
+
+				builder.reconcileRestored(
+					Modules.BIBLE,
+					restoredSelections
+				);
+
+				expect(
+					received
+				).toEqual({
+					originatingSelections:
+						restoredSelections,
+					currentSelections: {},
+					restoring: true
+				});
+			}
+		);
+
+		it(
 			'passes originating Buffer selections to the contributor for related module construction',
 			() => {
 				let received:

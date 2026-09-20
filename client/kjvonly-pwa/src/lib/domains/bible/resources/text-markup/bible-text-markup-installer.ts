@@ -75,14 +75,19 @@ export class BibleTextMarkupInstaller {
 							candidate.chapterRef
 						);
 
-					const existing =
+					const currentInstallation =
 						await stores
-							.textMarkup
+							.resourceInstallations
 							.get(
+								BIBLE_TEXT_MARKUP_OBJECT_TYPE,
 								textMarkupId
 							);
 
-					if (existing) {
+					if (
+						currentInstallation &&
+						resource.modifiedAt <=
+							currentInstallation.modifiedAt
+					) {
 						continue;
 					}
 

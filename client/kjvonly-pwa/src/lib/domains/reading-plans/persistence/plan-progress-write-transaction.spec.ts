@@ -10,6 +10,7 @@ import type {
 
 import {
 	DOMAIN_OBJECTS,
+	RESOURCE_INSTALLATIONS,
 	OUTBOX,
 	createStoredDomainObjectId,
 	type ApplicationDB
@@ -31,7 +32,7 @@ describe(
 	'IndexedDBPlanProgressWriteTransaction',
 	() => {
 		it(
-			'opens one readwrite transaction over Domain Objects and Outbox',
+			'opens one readwrite transaction over Domain Objects, Resource Installations, and Outbox',
 			async () => {
 				const db =
 					new FakeApplicationDB();
@@ -50,6 +51,7 @@ describe(
 					db.storeNames
 				).toEqual([
 					DOMAIN_OBJECTS,
+					RESOURCE_INSTALLATIONS,
 					OUTBOX
 				]);
 
@@ -83,7 +85,8 @@ describe(
 				const transaction =
 					new IndexedDBPlanProgressWriteTransaction(
 						async () =>
-							db.asApplicationDB()
+							db.asApplicationDB(),
+						() => 100
 					);
 
 				const updated:
@@ -146,13 +149,35 @@ describe(
 
 				expect(
 					db.getStoredValue(
+						RESOURCE_INSTALLATIONS,
+						storedId
+					)
+				).toEqual({
+					id:
+						storedId,
+					objectType:
+						PLAN_PROGRESS_OBJECT_TYPE,
+					objectId:
+						updated.id,
+					publisher:
+						'publisher',
+					modifiedAt:
+						100
+				});
+
+				expect(
+					db.getStoredValue(
 						OUTBOX,
 						storedId
 					)
 				).toEqual({
 					id:
 						storedId,
-					publication,
+					publication: {
+						...publication,
+						modifiedAt:
+							100
+					},
 					status:
 						'pending',
 					attempts:

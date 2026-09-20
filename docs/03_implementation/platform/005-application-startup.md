@@ -394,6 +394,7 @@ accountService
 toastService
 settingsService
 navigationServiceFactory
+archiveService
 ```
 
 Workspace/runtime capabilities:
@@ -889,6 +890,9 @@ Reading Plans
     SubsEnricherService
     EncodedReadingsDecoderService
 
+Application archive
+    KJVOnlyArchiveService
+
 Strong's
     StrongsService
 ```
@@ -896,6 +900,22 @@ Strong's
 The Composition Root imports concrete persistence adapters when wiring these services.
 
 That is intentional composition-root behavior and is not a domain-boundary violation.
+
+Application composition also registers independent owners that observe completed Archive imports when they maintain derived or cached runtime state.
+
+Conceptually:
+
+```text
+KJVOnlyArchiveService
+    → Import Completed observation
+        ├── PlansPubSubService
+        ├── NotesService
+        ├── SearchRuntime
+        ├── BibleBooknamesService
+        └── BibleTextMarkupService
+```
+
+The Archive service only reports the completed import and handled Resource Types. Each subscriber owns any refresh/invalidation behavior it chooses to perform.
 
 ---
 

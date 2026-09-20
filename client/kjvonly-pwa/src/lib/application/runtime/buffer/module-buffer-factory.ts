@@ -20,6 +20,12 @@ export interface ModuleResourceSelectionsBuilder {
 		originatingSelections:
 			ResourceSelections
 	): ResourceSelections;
+
+	reconcileRestored(
+		module: Modules,
+		restoredSelections:
+			ResourceSelections
+	): ResourceSelections;
 }
 
 export class ModuleBufferFactory {
@@ -59,6 +65,17 @@ export class ModuleBufferFactory {
 			),
 			bag
 		);
+	}
+
+	reconcileRestored(
+		buffer: Buffer
+	): void {
+		buffer.resourceSelections =
+			this.selections
+				.reconcileRestored(
+					buffer.componentName,
+					buffer.resourceSelections
+				);
 	}
 
 	private create(

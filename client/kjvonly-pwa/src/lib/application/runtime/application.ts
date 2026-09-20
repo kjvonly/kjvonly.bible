@@ -49,6 +49,14 @@ import {
 
 
 import {
+    KJVOnlyArchiveService
+} from '$lib/application/archive/kjvonly-archive.service';
+
+import {
+    createBrowserKJVOnlyArchiveWorkerClient
+} from '$lib/application/archive/worker/kjvonly-archive-worker-client';
+
+import {
     ResourceSelectionService
 } from '$lib/application/resources/resource-selection.service';
 
@@ -166,6 +174,7 @@ import {
     BIBLE_PARAGRAPHS_RESOURCE_TYPE,
     BIBLE_PERICOPES_RESOURCE_TYPE,
     BIBLE_SEARCH_RESOURCE_TYPE,
+    BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
     ChapterService,
     ParagraphsService,
     PericopesService,
@@ -267,6 +276,7 @@ import {
 } from '$lib/domains/notes/resources/notes-resource-publication';
 
 import {
+    NOTES_RESOURCE_TYPE,
     NotesService
 } from '$lib/domains/notes';
 
@@ -308,7 +318,9 @@ import {
     PlansPubSubService,
     SubsEnricherService,
     EncodedReadingsDecoderService,
-    createPlansWorker
+    createPlansWorker,
+    PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+    PLAN_PROGRESS_RESOURCE_TYPE
 } from '$lib/domains/reading-plans';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -679,6 +691,9 @@ export class Application {
                     ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.PROFILE
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.ARCHIVE
                     )
                 ]
             );
@@ -707,6 +722,11 @@ export class Application {
 
         const navigationServiceFactory =
             new NavigationServiceFactory();
+
+        const archiveService =
+            new KJVOnlyArchiveService(
+                createBrowserKJVOnlyArchiveWorkerClient()
+            );
 
         const moduleResourceSelectionResolver =
             createModuleResourceSelectionResolver(
@@ -845,6 +865,20 @@ export class Application {
                 bibleLocationReferenceService
             );
 
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+                    )
+                ) {
+                    void bibleTextMarkupService.refresh();
+                }
+            }
+        );
+
         const bibleBooknamesStore =
             new IndexedDBBibleBooknamesStore(
                 getApplicationDB
@@ -855,6 +889,20 @@ export class Application {
                 bibleBooknamesStore,
                 resourceWorkerClient
             );
+
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        BIBLE_BOOKNAMES_RESOURCE_TYPE
+                    )
+                ) {
+                    bibleBooknamesService.refresh();
+                }
+            }
+        );
 
         const bibleSearchIndexStore =
             new IndexedDBBibleSearchIndexStore(
@@ -876,6 +924,20 @@ export class Application {
             createSearchService(
                 searchRuntime
             );
+
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        BIBLE_SEARCH_RESOURCE_TYPE
+                    )
+                ) {
+                    void searchRuntime.refresh();
+                }
+            }
+        );
 
         const verseService =
             new VerseService(
@@ -906,6 +968,20 @@ export class Application {
                 notesResourcePublication,
                 outboxProcessor
             );
+
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        NOTES_RESOURCE_TYPE
+                    )
+                ) {
+                    notesService.refresh();
+                }
+            }
+        );
 
         ///////////////////////////////////////////////////////////////////////
         // Reading Plans
@@ -967,6 +1043,23 @@ export class Application {
                 createPlansWorker()
             );
 
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        PLAN_SUBSCRIPTION_RESOURCE_TYPE
+                    ) ||
+                    importedResourceTypes.has(
+                        PLAN_PROGRESS_RESOURCE_TYPE
+                    )
+                ) {
+                    plansPubSubService.refresh();
+                }
+            }
+        );
+
         const subsEnricherService =
             new SubsEnricherService();
 
@@ -1010,6 +1103,7 @@ export class Application {
             toastService,
             settingsService,
             navigationServiceFactory,
+            archiveService,
 
             workspaceRuntime,
             moduleResourceSelectionResolver,

@@ -52,6 +52,10 @@ export class BibleBooknamesService {
 			ResourceInstaller
 	) {}
 
+	refresh(): void {
+		this.cache.clear();
+	}
+
 	async get(
 		source:
 			PublishedResourceReference

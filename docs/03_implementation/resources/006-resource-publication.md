@@ -26,7 +26,9 @@ Domain-owned Resource publication mapping
 ResourcePublication / ResourceDeletionPublication
     ↓
 atomic local write
-    Domain state + pending Outbox entry
+    Domain state
+    + ResourceInstallation revision state
+    + pending Outbox entry
     ↓
 Outbox wakeup
     ↓
@@ -57,7 +59,7 @@ This document covers:
 * Domain-specific Resource publication mappers,
 * Domain identity versus Resource identity,
 * local write transactions,
-* atomic Domain state + Outbox persistence,
+* atomic Domain state + ResourceInstallation + Outbox persistence,
 * the application-wide Outbox,
 * Outbox identity and last-write-wins behavior,
 * `OutboxEntry`,
@@ -210,20 +212,22 @@ The application first commits:
 ```text
 accepted local state
 +
+ResourceInstallation revision state
++
 pending publication intent
 ```
 
 Publication occurs afterward.
 
-## 2. Atomic local state and publication intent
+## 2. Atomic local state, Resource revision state, and publication intent
 
-When a Domain write must be externally published, the Domain write and corresponding Outbox entry are committed in one IndexedDB transaction.
+When a Resource-backed Domain write must be externally published, the Domain write, corresponding `ResourceInstallation`, and Outbox entry are committed in one IndexedDB transaction.
 
 The application must not reach this state:
 
 ```text
 local state committed
-publication intent lost
+Resource revision state/publication intent lost
 ```
 
 ## 3. The Outbox stores the final publication intent
@@ -308,11 +312,12 @@ flowchart TD
     NC --> RELAY
 ```
 
-The critical transaction boundary is:
+The critical transaction boundary for Resource-backed local writes is:
 
 ```text
 Domain write transaction
     ├── Domain Object mutation
+    ├── ResourceInstallation mutation
     └── Outbox mutation
 ```
 
@@ -337,6 +342,7 @@ interface ResourcePublication
     readonly publisher: string;
     readonly resourceType: string;
     readonly resourceId: string;
+    readonly modifiedAt?: number;
     readonly representation: ResourceRepresentationType;
     readonly mediaType: string;
     readonly value: unknown;
@@ -344,6 +350,8 @@ interface ResourcePublication
 ```
 
 A Resource publication contains Resource-side information only.
+
+For locally authored Resource-backed writes, the durable write transaction stamps `modifiedAt` once and stores that same revision on both the `ResourceInstallation` and queued `ResourcePublication`. `NostrResourcePublicationStrategy` reuses it as the Nostr event `created_at` value rather than inventing a newer revision at transport time.
 
 It does not contain:
 
@@ -816,6 +824,7 @@ Resource-backed write transactions open a single IndexedDB transaction covering:
 
 ```text
 domain_objects
+resource_installations
 outbox
 ```
 
@@ -835,7 +844,9 @@ transaction.begin
     ↓
 Domain state write
     ↓
-Outbox pending intent write
+ResourceInstallation revision write
+    ↓
+Outbox pending intent write with same modifiedAt
     ↓
 transaction.commit
 ```
@@ -857,14 +868,21 @@ Outbox entry was never persisted
 
 That would violate local-first durability because there would be no reliable mechanism to publish the accepted change later.
 
-The reverse partial state is also undesirable:
+Other partial states are also undesirable:
 
 ```text
 Outbox intent persisted
 Domain write failed
 ```
 
-Using one IndexedDB transaction prevents both partial outcomes for the covered writes.
+or:
+
+```text
+Domain state + Outbox persisted
+ResourceInstallation revision missing/stale
+```
+
+Using one IndexedDB transaction prevents these partial outcomes for the covered Resource-backed writes.
 
 ---
 
@@ -896,6 +914,8 @@ progress.get()
 progress.put()
 outbox.put()
 ```
+
+The transaction adapter hides the `ResourceInstallation` bookkeeping behind these narrow contracts. When `outbox.put()` receives a Resource publication intent, the adapter allocates a monotonic local `modifiedAt`, updates/removes the matching `ResourceInstallation` as appropriate, and persists the stamped publication.
 
 This keeps Domain service behavior testable and prevents persistence details from leaking upward.
 
@@ -938,7 +958,8 @@ ResourcePublication
     ↓
 IndexedDBBibleTextMarkupWriteTransaction
     ├── domain_objects.put(text markup)
-    └── outbox.put(pending publication)
+    ├── resource_installations.put(local revision state)
+    └── outbox.put(pending publication with same modifiedAt)
     ↓
 notify local subscribers
     ↓
@@ -970,7 +991,8 @@ ResourcePublication
     ↓
 IndexedDBNotesWriteTransaction
     ├── domain_objects.put(note)
-    └── outbox.put(pending publication)
+    ├── resource_installations.put(local revision state)
+    └── outbox.put(pending publication with same modifiedAt)
     ↓
 update Notes search runtime
     ↓
@@ -1008,6 +1030,7 @@ ResourceDeletionPublication
     ↓
 IndexedDBNotesWriteTransaction
     ├── delete local Domain Object
+    ├── delete ResourceInstallation revision state
     └── replace same Outbox key with deletion intent
     ↓
 remove from local Notes search runtime
@@ -1042,7 +1065,8 @@ ResourcePublication
     ↓
 IndexedDBPlanSubscriptionWriteTransaction
     ├── persist subscription
-    └── persist Outbox entry
+    ├── persist ResourceInstallation revision state
+    └── persist Outbox entry with same modifiedAt
     ↓
 OutboxProcessor.wake()
 ```
@@ -1074,7 +1098,8 @@ PlanProgressResourcePublication.create()
     ↓
 transaction
     ├── persist progress
-    └── persist Outbox entry
+    ├── persist ResourceInstallation revision state
+    └── persist Outbox entry with same modifiedAt
     ↓
 OutboxProcessor.wake()
 ```
@@ -2263,7 +2288,7 @@ This matters for future data where local uninstallation or local hiding must not
 
 ---
 
-# Resource Installation vs Local Authoring
+# Resource Installation State vs Local Authoring
 
 A remotely installed Resource does not automatically enter the Outbox.
 
@@ -2271,6 +2296,8 @@ Inbound installation means:
 
 ```text
 accept external Resource as local Domain state
++
+record its ResourceInstallation revision/provenance state
 ```
 
 It does not mean:
@@ -2279,9 +2306,11 @@ It does not mean:
 republish the same Resource as the current user
 ```
 
+Explicit local authoring/application write paths also create/update `ResourceInstallation` state, but for a different reason: the record tracks the Resource revision currently backing the locally authored Domain Object and gives Archive export/future synchronization a stable `modifiedAt`.
+
 Only explicit local authoring/application write paths enqueue outbound publication intent.
 
-This prevents publication loops.
+This prevents publication loops while keeping local and externally installed Resource-backed objects on one object-level revision model.
 
 ---
 
@@ -2313,13 +2342,13 @@ Likewise:
 ResourceInstallation
 ```
 
-records which Resource publication installed a Domain Object.
+records the Resource revision/state currently associated with a Resource-backed Domain Object. For externally installed objects it can preserve Resource provenance; for locally authored objects `resourceId` may be absent while publisher + `modifiedAt` still track the current Resource revision.
 
-It is provenance/freshness information for inbound installation.
+It is not pending-publication state.
 
 The Outbox does not inspect `ResourceInstallation` to decide what to publish.
 
-A Domain write explicitly creates the outbound Resource publication instead.
+A Domain write explicitly creates the outbound Resource publication. The write transaction only keeps the accepted Domain state, Resource revision state, and queued publication revision atomic.
 
 ---
 

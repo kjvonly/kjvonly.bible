@@ -15,7 +15,7 @@
 
 	let template = $state();
 	let paneIds: string[] = $state([]);
-	let deletedPaneIds: any = $state({});
+	let deletedPaneIds: Record<string, true> = $state({});
 
 	function onGridUpdate() {
 		const layout =
@@ -44,7 +44,7 @@
 		) {
 			deletedPaneIds[
 				change.deletedPaneID
-			] = change.deletedPaneID;
+			] = true;
 			onGridUpdate();
 			return;
 		}

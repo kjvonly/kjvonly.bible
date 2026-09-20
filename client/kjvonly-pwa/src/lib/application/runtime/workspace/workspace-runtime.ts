@@ -45,6 +45,10 @@ interface WorkspaceBufferFactory {
 		originatingBuffer: Buffer,
 		bag?: any
 	): Buffer;
+
+	reconcileRestored(
+		buffer: Buffer
+	): void;
 }
 
 export interface WorkspaceSplitResult {
@@ -96,6 +100,10 @@ export class WorkspaceRuntime {
 			this.panes.restore();
 
 		if (restored) {
+			this.reconcileRestoredBuffers(
+				this.panes.rootPane
+			);
+
 			return true;
 		}
 
@@ -105,6 +113,29 @@ export class WorkspaceRuntime {
 			);
 
 		return false;
+	}
+
+	private reconcileRestoredBuffers(
+		pane: Pane
+	): void {
+		if (pane.buffer) {
+			this.buffers
+				.reconcileRestored(
+					pane.buffer
+				);
+		}
+
+		if (pane.left) {
+			this.reconcileRestoredBuffers(
+				pane.left
+			);
+		}
+
+		if (pane.right) {
+			this.reconcileRestoredBuffers(
+				pane.right
+			);
+		}
 	}
 
 	subscribe(

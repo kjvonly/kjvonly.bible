@@ -47,6 +47,11 @@ export {
 	type ResourcePublicationIntent
 } from './publication/resource-publication';
 
+export {
+	ResourcePublicationResolver,
+	type ResourcePublicationRegistration
+} from './publication/resource-publication-resolver';
+
 export type {
 	ResourceInstallOutcome,
 	ResourceInstallResult

@@ -117,6 +117,33 @@ describe(
 		);
 
 		it(
+			'returns undefined when an optional Resource selection is missing',
+			() => {
+				const pane =
+					createPane(
+						'module-pane',
+						{
+							resourceSelections:
+								{}
+						}
+					);
+
+				const resolver =
+					createModuleResourceSelectionResolver({
+						findPane:
+							() => pane
+					});
+
+				expect(
+					resolver.find(
+						'module-pane',
+						RESOURCE_TYPE
+					)
+				).toBeUndefined();
+			}
+		);
+
+		it(
 			'uses the Buffer Resource selection requirement',
 			() => {
 				const pane =

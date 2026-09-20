@@ -20,6 +20,14 @@ export interface ResourcePublication
 	readonly resourceId:
 		string;
 
+	/**
+	 * Resource revision timestamp assigned when a local Resource-backed write
+	 * becomes durable. Transport publication reuses this value as its event
+	 * timestamp instead of inventing a newer revision.
+	 */
+	readonly modifiedAt?:
+		number;
+
 	readonly representation:
 		ResourceRepresentationType;
 
@@ -52,6 +60,9 @@ export interface ResourceDeletionPublication
 
 	readonly resourceId:
 		string;
+
+	readonly modifiedAt?:
+		number;
 }
 
 export type ResourcePublicationIntent =

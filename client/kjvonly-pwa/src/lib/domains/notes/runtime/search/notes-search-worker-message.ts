@@ -25,6 +25,9 @@ export type NotesSearchWorkerRequest =
 	| {
 		action: 'get-all';
 		id: string;
+	}
+	| {
+		action: 'refresh';
 	};
 
 export interface NotesSearchResult {

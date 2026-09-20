@@ -36,6 +36,7 @@ NotesResourcePublication
     ↓
 ONE IndexedDB transaction
     ├── domain_objects
+    ├── resource_installations
     └── outbox
     ↓
 search runtime update
@@ -81,7 +82,9 @@ This document covers:
 - UI behavior and known limitations,
 - testing and extension rules.
 
-This document does not define a completed multi-device synchronization system, conflict resolution, multi-source aggregation, or import/export redesign.
+This document does not define a completed multi-device synchronization system, conflict resolution, or multi-source aggregation.
+
+Notes participate in the shared KJVOnly Archive subsystem through their existing Domain-to-Resource conversion and normal inbound Resource handler.
 
 ---
 
@@ -312,11 +315,14 @@ put
 remove
 search
 get-all
+refresh
 ```
 
 The worker owns the in-memory FlexSearch index.
 
-The index is rebuilt from accepted Note Domain Objects on initialization and then maintained incrementally after successful local writes/deletes.
+Normal startup seeds the worker from accepted Notes loaded by `NotesService`. After initialization, local Note writes/deletes maintain the projection incrementally.
+
+`refresh` is different: it is an explicit cross-worker reconciliation command. The Notes worker reloads accepted Notes from `IndexedDBNotesStore` itself, rebuilds the FlexSearch document, and republishes the current collection. This is used after persistence changes performed outside `NotesService`, such as KJVOnly Archive import.
 
 Search results are routed back through `NotesService` by request/result ID.
 
@@ -373,6 +379,7 @@ NotesResourcePublication.create(note)
     ↓
 IndexedDBNotesWriteTransaction
     ├── write Note Domain Object
+    ├── create/update ResourceInstallation revision state
     └── write Outbox publication intent
     ↓ transaction commit
 NotesSearchRuntime.put(note)
@@ -431,6 +438,7 @@ create ResourceDeletionPublication
     ↓
 ONE IndexedDB transaction
     ├── delete Note Domain Object
+    ├── remove ResourceInstallation revision state
     └── write deletion intent to Outbox
     ↓ transaction commit
 NotesSearchRuntime.remove(noteId)
@@ -512,15 +520,21 @@ ResourceInstallation provenance
 
 in one installation transaction.
 
-## Current existing-local policy
+## Freshness policy
 
-If the Note application ID already exists locally, the installer skips it.
+The installer reads the current `ResourceInstallation` for the Note application ID.
 
-It does not overwrite the accepted local Note from inbound Resource installation.
+If:
 
-This protects local accepted state until a real synchronization/conflict policy is implemented.
+```text
+incoming modifiedAt <= current ResourceInstallation.modifiedAt
+```
 
-This differs from some immutable/reference Domain installers such as Plan Definitions, which can use Resource modification time for freshness.
+the candidate is skipped.
+
+If the incoming Resource is newer, the installer replaces the accepted Note and writes the new `ResourceInstallation` in the same installation transaction.
+
+This gives Notes the same object-level Resource freshness model used by Archive import and other freshness-aware Resource installers. Broader multi-device synchronization/conflict policy remains separate from this basic revision ordering.
 
 ---
 
@@ -630,11 +644,21 @@ A newly created Note is transient UI state until saved.
 
 Closing without saving does not publish or persist it.
 
-## Import/export
+## Archive import/export
 
-Some Notes UI still contains historical/ad-hoc export behavior.
+Notes participate in the shared application Archive subsystem.
 
-The broader import/export subsystem is intentionally parked and is not part of the current Notes architecture.
+Archive export selects persisted Note Domain Objects through their `ResourceInstallation` state. Archive import reconstructs normal Notes Resource content through `NotesResourcePublication`, then re-enters the existing Notes Resource interpreter, validator, and installer.
+
+After Archive import successfully handles Notes Resources, the application-level Archive import event calls `NotesService.refresh()`. The main thread sends only a refresh command; the Notes worker reloads accepted Notes from IndexedDB and rebuilds its derived search projection off the main thread.
+
+Notes do not own a separate archive importer/exporter and Notes UI contains no ad-hoc archive implementation.
+
+See:
+
+```text
+03_implementation/archive/001-kjvonly-archive.md
+```
 
 ---
 
@@ -674,6 +698,8 @@ NotesService
 ```
 
 `NotesService` is exposed through `ApplicationContext`.
+
+Application composition also registers `NotesService` as a consumer of generic Archive import-completion events. The service refreshes only when handled imported Resource Types include the Notes Resource Type.
 
 Svelte Notes/Bible consumers use that application-owned instance rather than constructing Notes services themselves.
 
@@ -727,9 +753,11 @@ When adding synchronization later, add synchronization-specific tests rather tha
 3. The selected Notes Resource source determines publisher/name identity for new Notes.
 4. Notes are persisted in the shared `domain_objects` store.
 5. Search state is derived worker state, not an independent source of truth.
-6. Create/update/delete persist Domain state and Outbox intent atomically.
-7. Search runtime changes happen after durable commit.
-8. Inbound installation does not overwrite an existing local Note.
+6. Create/update writes persist Domain state + ResourceInstallation revision state + Outbox intent atomically.
+7. Delete removes Domain state + ResourceInstallation revision state while persisting the deletion intent atomically.
+8. Search runtime changes happen after durable commit.
+9. Inbound installation is freshness-aware through `ResourceInstallation.modifiedAt`.
+10. Cross-worker persistence changes can rebuild the Notes worker projection through `NotesService.refresh()`.
 9. Resource discovery/synchronization stays outside `NotesService`.
 10. Notes are distinct from Bible Text Markup.
 

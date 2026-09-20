@@ -251,6 +251,46 @@ import {
 	PlanDefinitionResourceHandler
 } from '$lib/domains/reading-plans/resources/definitions/plan-definition-resource-handler';
 
+import {
+	IndexedDBPlanSubscriptionInstallationTransaction
+} from '$lib/domains/reading-plans/persistence/plan-subscription-installation-transaction';
+
+import {
+	PlanSubscriptionInstaller
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-installer';
+
+import {
+	PlanSubscriptionInterpreter
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-interpreter';
+
+import {
+	PlanSubscriptionValidator
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-validator';
+
+import {
+	PlanSubscriptionResourceHandler
+} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-handler';
+
+import {
+	IndexedDBPlanProgressInstallationTransaction
+} from '$lib/domains/reading-plans/persistence/plan-progress-installation-transaction';
+
+import {
+	PlanProgressInstaller
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-installer';
+
+import {
+	PlanProgressInterpreter
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-interpreter';
+
+import {
+	PlanProgressValidator
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-validator';
+
+import {
+	PlanProgressResourceHandler
+} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-handler';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
@@ -566,6 +606,40 @@ function createResourceHandlers():
 			planDefinitionInstaller
 		);
 
+	const planSubscriptionInstallationTransaction =
+		new IndexedDBPlanSubscriptionInstallationTransaction(
+			getApplicationDB
+		);
+
+	const planSubscriptionInstaller =
+		new PlanSubscriptionInstaller(
+			planSubscriptionInstallationTransaction
+		);
+
+	const planSubscriptionResourceHandler =
+		new PlanSubscriptionResourceHandler(
+			new PlanSubscriptionInterpreter(),
+			new PlanSubscriptionValidator(),
+			planSubscriptionInstaller
+		);
+
+	const planProgressInstallationTransaction =
+		new IndexedDBPlanProgressInstallationTransaction(
+			getApplicationDB
+		);
+
+	const planProgressInstaller =
+		new PlanProgressInstaller(
+			planProgressInstallationTransaction
+		);
+
+	const planProgressResourceHandler =
+		new PlanProgressResourceHandler(
+			new PlanProgressInterpreter(),
+			new PlanProgressValidator(),
+			planProgressInstaller
+		);
+
 	const strongsInstallationTransaction =
 		new IndexedDBStrongsInstallationTransaction(
 			getApplicationDB
@@ -592,6 +666,8 @@ function createResourceHandlers():
 		bibleSearchIndexResourceHandler,
 		noteResourceHandler,
 		planDefinitionResourceHandler,
+		planSubscriptionResourceHandler,
+		planProgressResourceHandler,
 		strongsResourceHandler
 	];
 }

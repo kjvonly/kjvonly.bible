@@ -20,7 +20,8 @@ describe(
 			Modules.LOGIN,
 			Modules.SETTINGS,
 			Modules.NULL,
-			Modules.PROFILE
+			Modules.PROFILE,
+			Modules.ARCHIVE
 		])(
 			'resource-free module %s explicitly builds an empty selection',
 			module => {

@@ -101,7 +101,7 @@ This prevents a Bible ↔ Reading Plans type cycle.
 
 ## Container-Local NavigationService
 
-Login/Profile use a separate `NavigationService` concept for container-local view stacks.
+Login/Profile/Archive use a separate `NavigationService` concept for container-local view stacks.
 
 That service is **not** the generic Buffer navigation model.
 
@@ -113,11 +113,13 @@ Conceptually:
 Application
     → NavigationServiceFactory
         ↓
-Login/Profile container
+Login/Profile/Archive container
     → independent NavigationService instance
 ```
 
 Do not replace that with one global NavigationService singleton.
+
+Archive is a useful example because its container owns one local stack with a landing view and separate Import/Export child views. The `NavigationService` instance is created once by the container and passed to child views as a normal prop; child views do not replace the service instance.
 
 ## Persistence
 

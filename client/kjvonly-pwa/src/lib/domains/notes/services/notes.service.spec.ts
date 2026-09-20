@@ -72,6 +72,9 @@ class FakeRuntime {
 
 	remove =
 		vi.fn<(noteId: string) => void>();
+
+	refresh =
+		vi.fn<() => void>();
 }
 
 class FakeWriteTransaction
@@ -245,6 +248,54 @@ describe(
 					runtime.getAll
 				).toHaveBeenCalledWith(
 					'subscriber'
+				);
+			}
+		);
+
+
+		it(
+			'refreshes the worker projection after the initial accepted Notes load completes',
+			async () => {
+				let resolveNotes:
+					((notes: readonly Note[]) => void) |
+					undefined;
+
+				const store =
+					new FakeNotesStore();
+
+				store.getAll.mockReturnValue(
+					new Promise(
+						(resolve) => {
+							resolveNotes =
+								resolve;
+						}
+					)
+				);
+
+				const runtime =
+					new FakeRuntime();
+
+				const service =
+					createService(
+						store,
+						runtime
+					);
+
+				service.refresh();
+
+				expect(
+					runtime.refresh
+				).not.toHaveBeenCalled();
+
+				resolveNotes?.([]);
+
+				await Promise.resolve();
+				await Promise.resolve();
+
+				expect(
+					runtime.refresh
+				).toHaveBeenCalledTimes(
+					1
 				);
 			}
 		);

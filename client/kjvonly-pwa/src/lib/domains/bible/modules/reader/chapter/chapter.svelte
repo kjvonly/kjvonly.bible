@@ -239,10 +239,15 @@
 
 	async function loadTextMarkup() {
 		const source =
-			moduleResourceSelectionResolver.require(
+			moduleResourceSelectionResolver.find(
 				pane.id,
 				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 			);
+
+		if (!source) {
+			resetTextMarkup();
+			return;
+		}
 
 		const installed =
 			await bibleTextMarkupService.get(

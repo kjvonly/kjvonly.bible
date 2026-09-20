@@ -20,26 +20,6 @@ const runtime =
 	new SearchIndexRuntime();
 
 
-/**
- * Development helper for exporting an initialized FlexSearch index.
- *
- * The worker intentionally does not read application persistence.
- * Pass the Domain Search Index id for the in-memory index to export.
- */
-export async function exportIndexToConsole(
-	searchIndexId: string
-): Promise<void> {
-	const chunks =
-		await runtime.export(
-			searchIndexId
-		);
-
-	console.log(
-		'export Index',
-		chunks
-	);
-}
-
 onmessage = async (
 	e: MessageEvent<SearchWorkerRequest>
 ) => {
@@ -48,6 +28,10 @@ onmessage = async (
 			await initialize(
 				e.data.searchIndex
 			);
+			break;
+
+		case 'reset':
+			runtime.reset();
 			break;
 
 		case 'search':

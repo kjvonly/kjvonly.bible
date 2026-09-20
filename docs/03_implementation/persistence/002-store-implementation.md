@@ -264,12 +264,14 @@ Examples:
 
 ```text
 install Domain Object
-    + installation provenance
+    + ResourceInstallation state
 
 write user Note
+    + ResourceInstallation state
     + Outbox publication intent
 
 write Reading Plan progress
+    + ResourceInstallation state
     + Outbox publication intent
 ```
 

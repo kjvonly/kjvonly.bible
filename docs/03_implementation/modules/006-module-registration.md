@@ -73,6 +73,18 @@ The builder must stay generic; it must not grow Domain-specific branches.
 
 A missing contributor is a configuration error and fails explicitly.
 
+A Module that intentionally requires no Resource selections still participates explicitly through a no-Resource contributor rather than bypassing the selection-builder contract.
+
+Archive is the current example:
+
+```text
+Modules.ARCHIVE
+    → NoResourceModuleResourceSelectionContributor
+    → empty ResourceSelections
+```
+
+This keeps generic Buffer creation uniform without pretending every Module has Domain Resource requirements.
+
 ## 4. Module Chooser / Availability
 
 The application Module chooser exposes a user-facing subset of Modules.
@@ -152,7 +164,7 @@ Failing at these boundaries is preferable to silently rendering or loading the w
 [ ] stable Modules value
 [ ] explicit component resolver mapping
 [ ] resolver test
-[ ] Resource-selection contributor
+[ ] Resource-selection contributor (including an explicit no-Resource contributor when appropriate)
 [ ] contributor registered by Application
 [ ] contributor test
 [ ] public /ui export if component crosses owner boundary

@@ -316,12 +316,12 @@ Resources may also be transported without live Nostr or external-storage access 
 
 A Resource Archive:
 
-* preserves Resource boundaries,
-* contains serialized Resource content,
-* preserves applicable identity and provenance,
-* and imports Resources through the normal validation and Installation lifecycle.
+* preserves selected accepted Resource-backed Domain state,
+* preserves the Resource revision needed for normal freshness decisions,
+* reconstructs decoded Resource input without preserving original transport packaging,
+* and imports that information through the normal validation and Installation lifecycle.
 
-Resource Archives are portable Resource containers.
+Resource Archives are portable Resource-state containers.
 
 They are not automatically whole-application backups containing arbitrary Runtime state, settings, caches, or other local-only information.
 

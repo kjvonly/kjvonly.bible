@@ -1,4 +1,5 @@
 import type {
+	DecodedResourceContent,
 	PublishedResourceReference,
 	ResourceRepresentation,
 	VerifiedResourceContent
@@ -203,9 +204,9 @@ export class ResourceProcessor {
 		};
 	}
 
-	private async processContent(
+	async processDecoded(
 		content:
-			VerifiedResourceContent
+			DecodedResourceContent
 	): Promise<ResourceInstallOutcome> {
 		const reference:
 			PublishedResourceReference = {
@@ -234,13 +235,8 @@ export class ResourceProcessor {
 		}
 
 		try {
-			const decoded =
-				await this.decoder.decode(
-					content
-				);
-
 			await handler.handle(
-				decoded
+				content
 			);
 		} catch (error) {
 			return {
@@ -284,5 +280,64 @@ export class ResourceProcessor {
 			status:
 				'handled'
 		};
+	}
+
+	private async processContent(
+		content:
+			VerifiedResourceContent
+	): Promise<ResourceInstallOutcome> {
+		if (
+			!this.handlers.has(
+				content.resourceType
+			)
+		) {
+			return {
+				reference: {
+					publisher:
+						content.publisher,
+
+					resourceId:
+						content.resourceId
+				},
+
+				resourceType:
+					content.resourceType,
+
+				status:
+					'unsupported'
+			};
+		}
+
+		let decoded:
+			DecodedResourceContent;
+
+		try {
+			decoded =
+				await this.decoder.decode(
+					content
+				);
+		} catch (error) {
+			return {
+				reference: {
+				publisher:
+					content.publisher,
+
+				resourceId:
+					content.resourceId
+			},
+
+				resourceType:
+					content.resourceType,
+
+				status:
+					'failed',
+
+				error
+			};
+		}
+
+		return this.processDecoded(
+			decoded
+		);
 	}
 }

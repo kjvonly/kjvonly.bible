@@ -154,6 +154,7 @@ account/authentication coordination
 Toast behavior
 per-container NavigationService creation
 Outbox publication coordination
+Archive import/export coordination
 application configuration
 ```
 
@@ -219,6 +220,7 @@ SettingsService
 NavigationServiceFactory
 WorkspaceRuntime
 ModuleResourceSelectionResolver
+KJVOnlyArchiveService
 ```
 
 and Domain-facing services required directly by Svelte presentation, including current Bible, Notes, Reading Plans, and Strong's services.
@@ -241,7 +243,7 @@ Not every Svelte-facing service should be a singleton.
 
 `NavigationService` is the current example.
 
-Login/Profile containers need independent navigation stacks.
+Login/Profile/Archive containers need independent navigation stacks.
 
 Therefore ownership is:
 
@@ -1326,7 +1328,6 @@ Future cleanup should therefore be evidence-driven rather than assuming another 
 The following are not part of ordinary ownership cleanup unless explicitly selected:
 
 ```text
-large import/export redesign
 named/detached Buffer manager
 focus/selection runtime redesign
 major Resource/Nostr architecture changes
@@ -1383,7 +1384,6 @@ This document does not define:
 * IndexedDB schema,
 * exact Svelte layout implementation,
 * future synchronization policy,
-* import/export design,
 * future detached Buffer behavior,
 * or every concrete class dependency.
 

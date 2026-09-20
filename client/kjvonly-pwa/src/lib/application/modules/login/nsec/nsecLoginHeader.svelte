@@ -5,6 +5,9 @@
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
 	// SERVICES
+	import type {
+		NavigationService
+	} from '$lib/application/services/navigation.service';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// =============================== BINDINGS ================================
@@ -13,7 +16,7 @@
 		navService = $bindable(),
 		clientHeight = $bindable<number>()
 	}: {
-		navService: any;
+		navService: NavigationService;
 		clientHeight: number;
 	} = $props();
 

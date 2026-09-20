@@ -14,6 +14,7 @@ import {
 
 import {
 	DOMAIN_OBJECTS,
+	RESOURCE_INSTALLATIONS,
 	OUTBOX,
 	type ApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
@@ -31,7 +32,7 @@ describe(
 	'IndexedDBNotesWriteTransaction',
 	() => {
 		it(
-			'opens one readwrite transaction over Domain Objects and Outbox',
+			'opens one readwrite transaction over Domain Objects, Resource Installations, and Outbox',
 			async () => {
 				const db =
 					new FakeApplicationDB();
@@ -50,6 +51,7 @@ describe(
 					db.storeNames
 				).toEqual([
 					DOMAIN_OBJECTS,
+					RESOURCE_INSTALLATIONS,
 					OUTBOX
 				]);
 
@@ -70,7 +72,8 @@ describe(
 				const transaction =
 					new IndexedDBNotesWriteTransaction(
 						async () =>
-							db.asApplicationDB()
+							db.asApplicationDB(),
+						() => 100
 					);
 
 				const note =
@@ -115,13 +118,35 @@ describe(
 
 				expect(
 					db.getStoredValue(
+						RESOURCE_INSTALLATIONS,
+						storedId
+					)
+				).toEqual({
+					id:
+						storedId,
+					objectType:
+						NOTE_OBJECT_TYPE,
+					objectId:
+						note.id,
+					publisher:
+						'publisher',
+					modifiedAt:
+						100
+				});
+
+				expect(
+					db.getStoredValue(
 						OUTBOX,
 						storedId
 					)
 				).toEqual({
 					id:
 						storedId,
-					publication,
+					publication: {
+						...publication,
+						modifiedAt:
+							100
+					},
 					status:
 						'pending',
 					attempts:
@@ -139,7 +164,8 @@ describe(
 				const transaction =
 					new IndexedDBNotesWriteTransaction(
 						async () =>
-							db.asApplicationDB()
+							db.asApplicationDB(),
+						() => 100
 					);
 
 				const note =
@@ -149,6 +175,11 @@ describe(
 					async (stores) => {
 						await stores.notes.put(
 							note
+						);
+
+						await stores.outbox.put(
+							note.id,
+							createPublication()
 						);
 					}
 				);
@@ -181,14 +212,23 @@ describe(
 
 				expect(
 					db.getStoredValue(
+						RESOURCE_INSTALLATIONS,
+						storedId
+					)
+				).toBeUndefined();
+				expect(
+					db.getStoredValue(
 						OUTBOX,
 						storedId
 					)
 				).toEqual({
 					id:
 						storedId,
-					publication:
-						deletion,
+					publication: {
+						...deletion,
+						modifiedAt:
+							101
+					},
 					status:
 						'pending',
 					attempts:
@@ -435,6 +475,14 @@ class FakeApplicationDB {
 		}
 
 		return {
+			get:
+				async (
+					id: string
+				) =>
+					store?.get(
+						id
+					),
+
 			put:
 				async (
 					value: {

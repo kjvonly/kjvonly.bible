@@ -17,5 +17,6 @@ export enum Modules {
 	// Buffer sentinel: intentionally has no renderable component.
 	NULL = 9,
 
-	PROFILE = 10
+	PROFILE = 10,
+	ARCHIVE = 11
 }

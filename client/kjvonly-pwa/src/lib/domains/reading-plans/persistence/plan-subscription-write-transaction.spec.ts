@@ -10,6 +10,7 @@ import type {
 
 import {
 	DOMAIN_OBJECTS,
+	RESOURCE_INSTALLATIONS,
 	OUTBOX,
 	createStoredDomainObjectId,
 	type ApplicationDB
@@ -31,7 +32,7 @@ describe(
 	'IndexedDBPlanSubscriptionWriteTransaction',
 	() => {
 		it(
-			'opens one readwrite transaction over Domain Objects and Outbox',
+			'opens one readwrite transaction over Domain Objects, Resource Installations, and Outbox',
 			async () => {
 				const db =
 					new FakeApplicationDB();
@@ -50,6 +51,7 @@ describe(
 					db.storeNames
 				).toEqual([
 					DOMAIN_OBJECTS,
+					RESOURCE_INSTALLATIONS,
 					OUTBOX
 				]);
 
@@ -70,7 +72,8 @@ describe(
 				const transaction =
 					new IndexedDBPlanSubscriptionWriteTransaction(
 						async () =>
-							db.asApplicationDB()
+							db.asApplicationDB(),
+						() => 100
 					);
 
 				const subscription =
@@ -122,13 +125,35 @@ describe(
 
 				expect(
 					db.getStoredValue(
+						RESOURCE_INSTALLATIONS,
+						storedId
+					)
+				).toEqual({
+					id:
+						storedId,
+					objectType:
+						PLAN_SUBSCRIPTION_OBJECT_TYPE,
+					objectId:
+						subscription.id,
+					publisher:
+						'publisher',
+					modifiedAt:
+						100
+				});
+
+				expect(
+					db.getStoredValue(
 						OUTBOX,
 						storedId
 					)
 				).toEqual({
 					id:
 						storedId,
-					publication,
+					publication: {
+						...publication,
+						modifiedAt:
+							100
+					},
 					status:
 						'pending',
 					attempts:
@@ -348,6 +373,14 @@ class FakeApplicationDB {
 		}
 
 		return {
+			get:
+				async (
+					id: string
+				) =>
+					store?.get(
+						id
+					),
+
 			put:
 				async (
 					value: {

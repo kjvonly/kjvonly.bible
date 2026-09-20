@@ -16,9 +16,10 @@ import {
 	BIBLE_TEXT_MARKUP_OBJECT_TYPE
 } from '$lib/domains/bible/persistence/bible-text-markup-store';
 
-import type {
-	DecodedResourceContent,
-	ResourceInstallation
+import {
+	createResourceInstallationId,
+	type DecodedResourceContent,
+	type ResourceInstallation
 } from '$lib/resource';
 
 import type {
@@ -108,7 +109,7 @@ describe(
 		);
 
 		it(
-			'does not replace already accepted local Text Markup',
+			'does not replace Text Markup when the accepted Resource revision is current',
 			async () => {
 				const transaction =
 					new FakeInstallationTransaction();
@@ -128,28 +129,38 @@ describe(
 
 				transaction.textMarkup.set(
 					id,
+					createLocalTextMarkup(
+						id
+					)
+				);
+
+				transaction.currentInstallations.set(
+					createResourceInstallationId(
+						BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+						id
+					),
 					{
-						id,
-						chapterRef:
-							'1_3',
-						markings: {
-							'2': {
-								'1': {
-									class: [
-										'text-blue'
-									]
-								}
-							}
-						}
+						id:
+							createResourceInstallationId(
+								BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+								id
+							),
+						objectType:
+							BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+						objectId:
+							id,
+						publisher:
+							resource.publisher,
+						resourceId:
+							resource.resourceId,
+						modifiedAt:
+							200
 					}
 				);
 
-				const installer =
-					new BibleTextMarkupInstaller(
-						transaction
-					);
-
-				await installer.install(
+				await new BibleTextMarkupInstaller(
+					transaction
+				).install(
 					resource,
 					[
 						createCandidate()
@@ -173,6 +184,86 @@ describe(
 				expect(
 					transaction.installations
 				).toEqual([]);
+			}
+		);
+
+		it(
+			'replaces Text Markup when the incoming Resource revision is newer',
+			async () => {
+				const transaction =
+					new FakeInstallationTransaction();
+
+				const resource =
+					createResource({
+						modifiedAt:
+							201
+					});
+
+				const id =
+					createBibleTextMarkupId(
+						resource.publisher,
+						'kjvs',
+						'1_3'
+					);
+
+				transaction.textMarkup.set(
+					id,
+					createLocalTextMarkup(
+						id
+					)
+				);
+
+				transaction.currentInstallations.set(
+					createResourceInstallationId(
+						BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+						id
+					),
+					{
+						id:
+							createResourceInstallationId(
+								BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+								id
+							),
+						objectType:
+							BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+						objectId:
+							id,
+						publisher:
+							resource.publisher,
+						resourceId:
+							resource.resourceId,
+						modifiedAt:
+							200
+					}
+				);
+
+				await new BibleTextMarkupInstaller(
+					transaction
+				).install(
+					resource,
+					[
+						createCandidate()
+					]
+				);
+
+				expect(
+					transaction.textMarkup.get(
+						id
+					)?.markings
+				).toEqual(
+					createCandidate().markings
+				);
+
+				expect(
+					transaction.installations
+				).toEqual([
+					expect.objectContaining({
+						objectId:
+							id,
+						modifiedAt:
+							201
+					})
+				]);
 			}
 		);
 
@@ -218,6 +309,12 @@ class FakeInstallationTransaction
 		ResourceInstallation[] =
 		[];
 
+	readonly currentInstallations =
+		new Map<
+			string,
+			ResourceInstallation
+		>();
+
 	async run<TResult>(
 		operation:
 			(
@@ -250,13 +347,26 @@ class FakeInstallationTransaction
 
 			resourceInstallations: {
 				get:
-					async () =>
-						undefined,
+					async (
+						objectType,
+						objectId
+					) =>
+						this.currentInstallations.get(
+							createResourceInstallationId(
+								objectType,
+								objectId
+							)
+						),
 
 				put:
 					async (
 						installation
 					) => {
+						this.currentInstallations.set(
+							installation.id,
+							installation
+						);
+
 						this.installations.push(
 							installation
 						);
@@ -264,6 +374,25 @@ class FakeInstallationTransaction
 			}
 		});
 	}
+}
+
+function createLocalTextMarkup(
+	id: string
+): BibleTextMarkup {
+	return {
+		id,
+		chapterRef:
+			'1_3',
+		markings: {
+			'2': {
+				'1': {
+					class: [
+						'text-blue'
+					]
+				}
+			}
+		}
+	};
 }
 
 function createCandidate(

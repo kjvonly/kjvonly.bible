@@ -155,6 +155,37 @@ export class BibleTextMarkupService {
 			);
 	}
 
+	async refresh(): Promise<void> {
+		const textMarkupIds =
+			new Set(
+				this.subscribers.map(
+					(subscriber) =>
+						subscriber.textMarkupId
+				)
+			);
+
+		for (
+			const textMarkupId of
+			textMarkupIds
+		) {
+			const textMarkup =
+				await this.textMarkup.get(
+					textMarkupId
+				);
+
+			if (
+				textMarkup ===
+				undefined
+			) {
+				continue;
+			}
+
+			this.notify(
+				textMarkup
+			);
+		}
+	}
+
 	async get(
 		source:
 			PublishedResourceReference,
