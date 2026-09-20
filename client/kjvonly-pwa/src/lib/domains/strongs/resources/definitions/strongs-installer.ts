@@ -1,10 +1,10 @@
 import type {
 	Strongs
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../../models/strongs.model';
 
 import {
 	STRONGS_DEFINITION_OBJECT_TYPE
-} from '$lib/domains/strongs/persistence/strongs-store';
+} from '../../persistence/strongs-store';
 
 import {
 	createBibleVersionId
@@ -12,7 +12,7 @@ import {
 
 import {
 	createStrongsId
-} from '$lib/domains/strongs/utils/strongs-identity';
+} from '../../utils/strongs-identity';
 
 import {
 	type DecodedResourceContent,

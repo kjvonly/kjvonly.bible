@@ -1,6 +1,6 @@
 import type {
 	Strongs
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../models/strongs.model';
 
 import {
     STRONGS_DEFINITION_OBJECT_TYPE,

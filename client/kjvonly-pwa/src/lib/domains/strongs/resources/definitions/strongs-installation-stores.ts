@@ -5,7 +5,7 @@ import type {
 
 import type {
 	StrongsStore
-} from '$lib/domains/strongs/persistence/strongs-store';
+} from '../../persistence/strongs-store';
 
 export interface StrongsInstallationStores {
 	readonly strongs:

@@ -17,7 +17,7 @@ import {
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+} from './definitions/strongs-interpreter';
 
 const RESOURCE_TYPES = [
 	STRONGS_RESOURCE_TYPE,

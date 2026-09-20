@@ -1,6 +1,6 @@
 import type {
 	StrongsContent
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../../models/strongs.model';
 
 export interface ValidatedStrongsCandidate {
 	readonly version:
