@@ -369,6 +369,7 @@
 <style>
 	:global(.notes-quill.ql-container) {
 		box-sizing: border-box;
+		font-size: inherit;
 		height: 100%;
 		width: 100%;
 		max-width: 100%;
@@ -379,6 +380,7 @@
 
 	:global(.notes-quill > .ql-editor) {
 		box-sizing: border-box;
+		font-size: inherit;
 		height: 100%;
 		width: 100%;
 		max-width: 100%;
