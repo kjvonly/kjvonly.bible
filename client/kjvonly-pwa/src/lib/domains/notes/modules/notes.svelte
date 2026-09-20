@@ -97,6 +97,12 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		notesService.getAllNotes(
 			NOTES_COLLECTION_CHANGED
 		);
+
+		return () => {
+			notesService.unsubscribe(
+				NOTE_SUBSCRIPTION_ID
+			);
+		};
 	});
 
 	// ================================ FUNCS ==================================
