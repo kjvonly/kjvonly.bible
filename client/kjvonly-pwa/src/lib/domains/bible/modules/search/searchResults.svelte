@@ -2,7 +2,7 @@
 	// ================================ IMPORTS ================================
 	// SVELTE
 	import { Modules } from '$lib/application';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// COMPONENTS
 	import SearchResultActions from './searchResultActions.svelte';
@@ -68,12 +68,14 @@
 
 	onMount(() => {
 		searchService.subscribe(searchID, onSearchResult);
-		let el = document.getElementById(`${searchID}-scroll-container`);
-		el?.addEventListener('scroll', handleScroll);
-	});
 
-	onDestroy(() => {
-		searchService.unsubscribe(searchID);
+		const el = document.getElementById(`${searchID}-scroll-container`);
+		el?.addEventListener('scroll', handleScroll);
+
+		return () => {
+			el?.removeEventListener('scroll', handleScroll);
+			searchService.unsubscribe(searchID);
+		};
 	});
 
 	function match(word: string) {
