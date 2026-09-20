@@ -23,6 +23,9 @@
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Notes from '$lib/components/svgs/notes.svelte';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';
+	import type {
+		ChapterNotesByLocation
+	} from './chapter-notes';
 	const {
 		workspaceRuntime,
 		bibleLocationReferenceService
@@ -34,7 +37,7 @@
 		textMarkup = $bindable<BibleTextMarkup>(),
 		pane = $bindable(),
 		mode = $bindable<BibleMode>(),
-		notes = $bindable(),
+		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
 		footnotes,
@@ -46,7 +49,7 @@
 		textMarkup: BibleTextMarkup;
 		pane: Pane;
 		mode: BibleMode;
-		notes: any;
+		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
 		footnotes: { [key: string]: string };
@@ -112,13 +115,16 @@
 		}
 	}
 
-	function setWordHasNotes() {
-		if (notes) {
-			let bookIDChapter =
-				bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-			let wordKey = `${bookIDChapter}_${verse.number}_${wordIdx}`;
-			wordHasNotes = wordKey in notes;
-		}
+	function setWordHasNotes(): void {
+		const bookIDChapter =
+			bibleLocationReferenceService.extractBookIDChapter(
+				bibleLocationRef
+			);
+		const wordKey =
+			`${bookIDChapter}_${verse.number}_${wordIdx}`;
+
+		wordHasNotes =
+			wordKey in notes;
 	}
 
 	function updateMode(updMode: BIBLE_MODES) {

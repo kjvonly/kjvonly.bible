@@ -10,6 +10,9 @@
 	import type { Pane } from '$lib/application';
 	import type { BibleTextMarkup } from '$lib/domains/bible/models/bible-text-markup.model';
 	import Paragraph from './paragraph.svelte';
+	import type {
+		ChapterNotesByLocation
+	} from './chapter-notes';
 	import Pericope from './pericope.svelte';
 
 	// Components
@@ -23,7 +26,7 @@
 		pericopes = $bindable<Pericopes>(),
 		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
-		notes = $bindable<any>(),
+		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
 		footnotes,
@@ -35,7 +38,7 @@
 		pericopes: Pericopes;
 		pane: Pane;
 		mode: BibleMode;
-		notes: any;
+		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
 		footnotes: { [key: string]: string };

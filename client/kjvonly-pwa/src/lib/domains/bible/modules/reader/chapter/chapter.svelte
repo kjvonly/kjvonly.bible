@@ -53,6 +53,13 @@
 	import {
 		NOTES_COLLECTION_CHANGED
 	} from '$lib/domains/notes';
+	import type {
+		NotesSearchResult
+	} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+	import {
+		createChapterNotesByLocation,
+		type ChapterNotesByLocation
+	} from './chapter-notes';
 
 	const {
 		chapterService,
@@ -92,7 +99,7 @@
 	let footnotes: { [key: string]: string } = $state({});
 	let hasVerseRange: boolean = $state(false);
 
-	let notes: any = $state();
+	let notes: ChapterNotesByLocation = $state({});
 
 	let verseRangeStartIndex: number = 0;
 	let verseRangeEndIndex: number = 0;
@@ -322,7 +329,7 @@
 	}
 
 	function subscribeToNotes() {
-		notesService.subscribe(id, notesID, onSearchResults);
+		notesService.subscribe(id, notesID, onChapterNotesSearchResults);
 		notesService.subscribe(
 			id,
 			NOTES_COLLECTION_CHANGED,
@@ -383,14 +390,13 @@
 		}
 	}
 
-	function onSearchResults(data: any) {
-		if (data) {
-			let tempNotes: any = {};
-			Object.keys(data.notes).forEach(
-				(id) => (tempNotes[data.notes[id].bibleLocationRef] = true)
+	function onChapterNotesSearchResults(
+		data: NotesSearchResult
+	): void {
+		notes =
+			createChapterNotesByLocation(
+				data.notes
 			);
-			notes = tempNotes;
-		}
 	}
 </script>
 
