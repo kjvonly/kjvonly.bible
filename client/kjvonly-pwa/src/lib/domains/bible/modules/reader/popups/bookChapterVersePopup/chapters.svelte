@@ -68,11 +68,11 @@
 		).sort((a, b) => Number(a) - Number(b));
 	}
 
-	function chapterSelected(ch: any): void {
+	function chapterSelected(chapter: string): void {
 		if (goToVerses) {
-			selectedChapter = ch;
+			selectedChapter = chapter;
 		} else {
-			bibleLocationRef = `${selectedBookID}_${ch}`;
+			bibleLocationRef = `${selectedBookID}_${chapter}`;
 			showBookChapterPopup = false;
 		}
 	}
@@ -86,7 +86,7 @@
 
 	function onToggleGoToVerses(e: Event): void {
 		e.stopPropagation();
-		let message = goToVerses ? 'Go to verses enabled' : 'Go to verses disabled';
+		const message = goToVerses ? 'Go to verses enabled' : 'Go to verses disabled';
 		toastService.showToast(message);
 	}
 </script>

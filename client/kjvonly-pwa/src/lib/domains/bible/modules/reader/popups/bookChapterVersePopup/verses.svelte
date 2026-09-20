@@ -36,7 +36,7 @@
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
-	let verses: any[] = $state([]);
+	let verses: number[] = $state([]);
 	let bookName = $state('');
 
 	// =============================== LIFECYCLE ===============================
@@ -56,7 +56,12 @@
 		const verseCount =
 			booknames.bookchapterversecountById[selectedBookID]?.[selectedChapter];
 
-		verses = verseCount ? Array(verseCount) : [];
+		verses = verseCount
+			? Array.from(
+				{ length: verseCount },
+				(_, index) => index + 1
+			)
+			: [];
 	}
 
 	// ============================== CLICK FUNCS ==============================
@@ -66,7 +71,7 @@
 		selectedChapter = '';
 	}
 
-	function onVerseSelected(e: Event, verse: number) {
+	function onVerseSelected(verse: number): void {
 		bibleLocationRef = `${selectedBookID}_${selectedChapter}_${verse}`;
 		showBookChapterPopup = false;
 	}
@@ -94,14 +99,14 @@
 
 {#snippet body()}
 	<div class="grid w-[100%] grid-cols-5">
-		{#each verses as _, idx}
+		{#each verses as verse}
 			<button
 				class="row-span-1 bg-neutral-50 p-4 hover:bg-neutral-100"
-				onclick={(e: Event) => {
-					onVerseSelected(e, idx + 1);
+				onclick={() => {
+					onVerseSelected(verse);
 				}}
 			>
-				{idx + 1}
+				{verse}
 			</button>
 		{/each}
 	</div>
