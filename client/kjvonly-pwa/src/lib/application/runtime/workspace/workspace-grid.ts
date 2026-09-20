@@ -1,5 +1,11 @@
-import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 import { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
+
+export interface WorkspaceGridNode {
+	id?: string;
+	split?: PaneSplit;
+	left?: WorkspaceGridNode;
+	right?: WorkspaceGridNode;
+}
 
 export function renderGridTemplateColumns(gridTemplateAreas: string[][]): string {
 	return `repeat(${gridTemplateAreas[0].length}, 1fr)`;
@@ -152,18 +158,40 @@ function joinGridTemplateAreas(lrgta: string[][], rrgta: string[][], split: Pane
 	return gta;
 }
 
-export function renderGridTemplateAreas(n: Pane | any) {
+export function renderGridTemplateAreas(
+	n: WorkspaceGridNode
+): string[][] {
 	if (n.split === undefined) {
+		if (n.id === undefined) {
+			throw new Error(
+				'Workspace grid leaf requires an id.'
+			);
+		}
+
 		return [[n.id]];
-	} else {
-		let leftRenderedGridTemplateAreas = renderGridTemplateAreas(n.left);
-		let rightRenderedGridTemplateAreas = renderGridTemplateAreas(n.right);
-		let renderedGridTemplateAreas = joinGridTemplateAreas(
-			leftRenderedGridTemplateAreas,
-			rightRenderedGridTemplateAreas,
-			n.split
+	}
+
+	if (
+		n.left === undefined ||
+		n.right === undefined
+	) {
+		throw new Error(
+			'Workspace grid split requires left and right children.'
+		);
+	}
+
+	const leftRenderedGridTemplateAreas =
+		renderGridTemplateAreas(
+			n.left
+		);
+	const rightRenderedGridTemplateAreas =
+		renderGridTemplateAreas(
+			n.right
 		);
 
-		return renderedGridTemplateAreas;
-	}
+	return joinGridTemplateAreas(
+		leftRenderedGridTemplateAreas,
+		rightRenderedGridTemplateAreas,
+		n.split
+	);
 }

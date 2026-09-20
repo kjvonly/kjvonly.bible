@@ -167,6 +167,33 @@ describe(
 			}
 		);
 
+		it(
+			'rejects a leaf without an id',
+			() => {
+				expect(() =>
+					renderGridTemplateAreas({})
+				).toThrow(
+					'Workspace grid leaf requires an id.'
+				);
+			}
+		);
+
+		it(
+			'rejects a split without both children',
+			() => {
+				expect(() =>
+					renderGridTemplateAreas({
+						split:
+							PaneSplit.VERTICAL,
+						left:
+							leaf('a')
+					})
+				).toThrow(
+					'Workspace grid split requires left and right children.'
+				);
+			}
+		);
+
 	}
 );
 
