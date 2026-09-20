@@ -39,12 +39,14 @@ Plan Subscriptions
     local user action
         ↓
     accepted PlanSubscription Domain Objects
+        + ResourceInstallation revision state
         + Outbox publication
 
 Plan Progress
     local completion action
         ↓
     accepted PlanProgress Domain Objects
+        + ResourceInstallation revision state
         + Outbox publication
 
 accepted subscriptions + progress
@@ -413,7 +415,7 @@ Then:
 ```text
 PlanSubscriptionsService.put(subscription)
     ↓
-atomic Domain Object + Outbox write
+atomic Domain Object + ResourceInstallation + Outbox write
     ↓
 Outbox wake
     ↓
@@ -481,7 +483,7 @@ Behavior:
 3. return unchanged if the reading is already completed,
 4. otherwise append/sort the new index,
 5. build the Resource publication,
-6. persist Progress + Outbox atomically,
+6. persist Progress + ResourceInstallation revision state + Outbox atomically,
 7. wake Outbox only when state changed.
 
 This makes completion idempotent for an already-completed reading.
@@ -587,6 +589,7 @@ init
 GET_ALL_SUBS
 PUT_SUB
 PUT_PROGRESS
+refresh
 ```
 
 Worker messages include:
@@ -613,9 +616,12 @@ worker lifetime
 initialization handshake
 main-thread subscriber routing
 worker command publication
+explicit worker refresh signaling
 ```
 
 Initialization is idempotent for the service lifetime.
+
+`refresh()` is intentionally argument-free. If the worker has never been initialized, refresh is a no-op because a later normal initialization will read current accepted state. If initialization is in progress, the service waits for it before sending the refresh command.
 
 The first call sends:
 
@@ -642,9 +648,11 @@ PlanProgressService.list()
 
 and obtains Booknames before initializing `PlansPubSubService`.
 
-This keeps worker initialization based on accepted local Domain state.
+This keeps normal worker initialization based on accepted local Domain state supplied by the main thread.
 
-The worker does not query persistence directly.
+The worker does not query persistence during normal initialization or incremental `putSub` / `putProgress` commands.
+
+An explicit `refresh` command is the exception. On refresh, the worker reloads accepted `PlanSubscription` and `PlanProgress` state from IndexedDB itself, rebuilds the derived `Sub` projection, and republishes subscriptions. This keeps cross-worker reconciliation work off the main thread.
 
 ---
 
@@ -757,6 +765,8 @@ SubsEnricherService
 EncodedReadingsDecoderService
 ```
 
+Application composition also registers `PlansPubSubService` as a consumer of generic Archive import-completion events. When handled imported Resource Types include Plan Subscription or Plan Progress, it signals `refresh()` to the Plans worker.
+
 The concrete IndexedDB stores/write transactions and Resource-publication mappers remain composition details.
 
 Plan Definition, Subscription, and Progress inbound handler composition remains inside the Resource Worker.
@@ -768,6 +778,8 @@ Plan Definition, Subscription, and Progress inbound handler composition remains 
 Normal Plan reads are local accepted-state reads.
 
 Plan Subscription and Plan Progress now have explicit inbound Resource interpretation, validation, freshness-aware installation, and Resource Worker registration. The same handlers are reused by KJVOnly Archive import.
+
+Archive import can update accepted Plan state from a separate worker. The generic Archive import event therefore signals the already-running Plans worker to refresh its derived projection from IndexedDB when Subscription/Progress Resources were actually handled.
 
 Broader multi-device synchronization remains separate from normal `list()`/`get()` methods and from the existence of inbound handlers. Plans UI/services should not query Nostr directly for synchronization.
 
@@ -805,6 +817,7 @@ Plan Progress interpreter/validator/installer/handler
 encoded reading decoding
 Subs enrichment
 Plans worker / PlansPubSubService message behavior
+Plans worker refresh from IndexedDB
 ```
 
 Browser installation tests also exercise Subscription and Progress through the real Resource processing / IndexedDB path.
@@ -821,8 +834,9 @@ Browser installation tests also exercise Subscription and Progress through the r
 6. Subscription/Progress writes persist Domain state + ResourceInstallation state + Outbox intent atomically.
 7. Worker messages are explicitly typed.
 8. The worker is a separate composition root and does not use `ApplicationContext`.
-9. Reading Plans may depend on Bible navigation types; Bible must not depend on Reading Plans.
-10. Normal Plans reads are local; synchronization is separate.
+9. Normal worker initialization is seeded by the main thread; explicit refresh reloads Subscription/Progress state from IndexedDB inside the worker.
+10. Reading Plans may depend on Bible navigation types; Bible must not depend on Reading Plans.
+11. Normal Plans reads are local; synchronization is separate.
 
 ---
 

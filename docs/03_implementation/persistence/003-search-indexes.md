@@ -123,6 +123,7 @@ Application
 Worker
     owns CPU-heavy/in-memory FlexSearch state
     does not use ApplicationContext
+    may reload accepted Domain state during an explicit refresh operation
 
 Persistence
     stores authoritative Domain state
@@ -132,7 +133,10 @@ Persistence
 A worker is a separate composition root.
 
 Search workers receive explicit messages/data. They do not reach through
-`ApplicationContext` to obtain services.
+`ApplicationContext` to obtain services. Normal search commands operate on
+already-initialized worker state; explicit refresh/reconciliation commands may
+read the worker's Domain persistence adapter directly when rebuilding a derived
+projection after cross-worker changes.
 
 ---
 
@@ -444,6 +448,7 @@ coalesce duplicate initialization work
 route search requests to worker
 receive typed worker messages
 forward SearchResultResponse to SearchService
+invalidate cached readiness/index state when persisted search data changes
 ```
 
 The runtime tracks readiness at two levels.
@@ -478,11 +483,12 @@ chunks into the worker.
 
 # Bible Search Worker Contract
 
-The current worker request contract has two operations:
+The current worker request contract has three operations:
 
 ```text
 init
 search
+reset
 ```
 
 Conceptually:
@@ -491,6 +497,8 @@ Conceptually:
 { action: 'init', searchIndex }
 
 { action: 'search', id, searchIndexId, text }
+
+{ action: 'reset' }
 ```
 
 Initialization produces either:
@@ -520,6 +528,10 @@ On initialization it creates a new `FlexSearch.Index` and imports each persisted
 FlexSearch chunk.
 
 The active FlexSearch object is not persisted back into IndexedDB.
+
+`reset` drops the worker's in-memory indexes. `SearchRuntime.refresh()` first waits for pending initialization work, clears its selected-source/index readiness caches, and then sends `reset`. The next search reloads whichever Bible Search Resource is currently selected on the Buffer through the normal `BibleSearchIndexService` path.
+
+Archive import uses this invalidation when a Bible Search Resource was actually handled. Archive does not choose a search index or enumerate available indexes.
 
 The current search behavior:
 
@@ -597,12 +609,12 @@ Notes are user-created local Domain Objects whose content changes incrementally.
 A separately published/prebuilt Notes search index would therefore be the wrong
 source of truth.
 
-The current lifecycle is:
+The normal startup lifecycle is:
 
 ```text
 IndexedDB Note Domain Objects
     ↓
-NotesService.getAll()
+NotesService initial getAll()
     ↓
 NotesSearchRuntime.initialize(notes)
     ↓
@@ -611,8 +623,23 @@ Notes Search Worker
 in-memory FlexSearch.Document
 ```
 
-After initialization, successful Note writes update the in-memory worker index
-incrementally.
+After initialization, successful local Note writes update the in-memory worker
+index incrementally.
+
+A separate explicit refresh path handles persistence changes performed outside
+`NotesService`, such as Archive import:
+
+```text
+NotesService.refresh()
+    ↓
+NotesSearchRuntime.refresh()
+    ↓
+Notes worker
+    ↓
+IndexedDBNotesStore.getAll()
+    ↓
+rebuild FlexSearch.Document + Note map
+```
 
 ---
 
@@ -747,6 +774,7 @@ put
 remove
 search
 get-all
+refresh
 ```
 
 The protocol is typed.
@@ -759,6 +787,7 @@ Conceptually:
 { action: 'remove', noteId }
 { action: 'search', id, text, indexes }
 { action: 'get-all', id }
+{ action: 'refresh' }
 ```
 
 Search results contain:
@@ -809,6 +838,7 @@ Notes collection-change identifier when:
 initialization completes
 Note is added/updated
 Note is removed
+explicit refresh rebuilds accepted state
 ```
 
 This supports Notes UI views that need the current collection as well as views
@@ -857,15 +887,21 @@ maintain live in-memory search structures
 execute full-text search
 ```
 
-Search workers should not directly become general persistence adapters.
+Search workers should not become general persistence adapters.
 
-For Bible search, the main-thread Domain service loads the persisted
-`BibleSearchIndex` and passes it into the worker.
+For Bible search, the main-thread Domain service loads the selected persisted
+`BibleSearchIndex` and passes it into the worker. Imported Bible Search data
+invalidates the runtime/worker cache; the next search reloads the currently
+selected index through that same path.
 
-For Notes search, `NotesService` loads persisted Notes and passes them into the
-worker.
+For Notes search, `NotesService` performs the normal initial accepted-Note load
+and sends Notes into the worker. On explicit refresh, however, the Notes worker
+uses its own `IndexedDBNotesStore` adapter to reload accepted Notes and rebuild
+the derived FlexSearch projection off the main thread.
 
-This keeps persistence ownership explicit and makes worker protocols testable.
+This keeps normal persistence ownership explicit while allowing bounded
+cross-worker reconciliation without shuttling full Domain collections through
+the main thread.
 
 ---
 
@@ -960,6 +996,7 @@ local-first index retrieval
 Resource installation fallback
 one-time worker initialization
 concurrent initialization coalescing
+worker reset/cache invalidation
 search result routing by search ID
 subscriber removal
 canonical Bible-location result ordering
@@ -968,7 +1005,11 @@ canonical Bible-location result ordering
 ## Notes search tests
 
 Tests cover the Notes search runtime and Notes service behavior around accepted
-local state and worker messages.
+local state and worker messages, including explicit refresh.
+
+Browser coverage also verifies that the Notes worker can reload accepted Notes
+from IndexedDB and rebuild its search projection after persistence was changed
+outside the normal `NotesService.put/delete` path.
 
 When search behavior changes, prefer testing the narrow owner of that behavior
 instead of requiring every case to become a browser test.
