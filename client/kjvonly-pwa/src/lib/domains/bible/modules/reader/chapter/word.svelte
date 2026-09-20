@@ -61,11 +61,18 @@
 
 	// ================================= VARS ==================================
 
-	let track: any = {};
-	let wordMarkup: any = $state();
+	interface LongPressState {
+		startTime: number;
+		lastKnownScrollPosition: number;
+		finished: boolean;
+		timeoutID?: ReturnType<typeof setTimeout>;
+	}
+
+	let longPress: LongPressState | undefined;
+	let wordMarkup: BibleTextMarkupMarking | undefined = $state();
 	let wordHasNotes: boolean = $state(false);
 	let verseHasReferences = $state(false);
-	let pressThresholdInMilliseconds = 1000;
+	const pressThresholdInMilliseconds = 1000;
 
 	// =============================== LIFECYCLE ===============================
 
@@ -150,12 +157,12 @@
 			return;
 		}
 
-		if (track[wordIdx] && track[wordIdx].finished) {
+		if (longPress?.finished) {
 			return;
 		}
 
-		if (track[wordIdx]) {
-			track[wordIdx].finished = true;
+		if (longPress) {
+			longPress.finished = true;
 		}
 
 		if (isWordAVerseNumber()) {
@@ -334,34 +341,39 @@
 	}
 
 	function onMouseDownTouchStart() {
-		track[wordIdx] = {
+		longPress = {
 			startTime: Date.now(),
-			lastKnownScrollPosition: lastKnownScrollPosition,
+			lastKnownScrollPosition,
 			finished: false
 		};
 
-		track[wordIdx].timeoutID = setTimeout(() => {
-			if (track[wordIdx].finished) {
+		longPress.timeoutID = setTimeout(() => {
+			if (!longPress || longPress.finished) {
 				return;
 			}
 
-			if (track[wordIdx].lastKnownScrollPosition != lastKnownScrollPosition) {
-				delete track[wordIdx];
+			if (longPress.lastKnownScrollPosition !== lastKnownScrollPosition) {
+				longPress = undefined;
 				return;
 			}
 
 			updateMode(BIBLE_MODES.EDIT);
 
-			track[wordIdx].finished = true;
+			longPress.finished = true;
 		}, pressThresholdInMilliseconds);
 	}
 
 	function onMouseUpTouchEnd() {
-		if (track[wordIdx]) {
-			const differenceInMilliseconds = Date.now() - track[wordIdx].startTime;
-			if (differenceInMilliseconds < pressThresholdInMilliseconds) {
-				clearTimeout(track[wordIdx].timeoutID);
-			}
+		if (!longPress) {
+			return;
+		}
+
+		const differenceInMilliseconds = Date.now() - longPress.startTime;
+		if (
+			differenceInMilliseconds < pressThresholdInMilliseconds &&
+			longPress.timeoutID !== undefined
+		) {
+			clearTimeout(longPress.timeoutID);
 		}
 	}
 </script>
