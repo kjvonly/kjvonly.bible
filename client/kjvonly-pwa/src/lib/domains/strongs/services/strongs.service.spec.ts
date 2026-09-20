@@ -10,7 +10,7 @@ import type {
 
 import type {
 	Strongs
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../models/strongs.model';
 
 import {
 	StrongsService
