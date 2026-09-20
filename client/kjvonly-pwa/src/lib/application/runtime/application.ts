@@ -875,6 +875,20 @@ export class Application {
                 resourceWorkerClient
             );
 
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        BIBLE_BOOKNAMES_RESOURCE_TYPE
+                    )
+                ) {
+                    bibleBooknamesService.refresh();
+                }
+            }
+        );
+
         const bibleSearchIndexStore =
             new IndexedDBBibleSearchIndexStore(
                 getApplicationDB
