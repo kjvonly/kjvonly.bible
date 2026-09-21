@@ -157,9 +157,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	function onFilterInputResults(results: NotesSearchResult) {
 		if (results.id === NOTE_SEARCH_ID) {
-			noteKeys = Object.keys(results.notes).sort((a, b) => {
-				return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
-			});
+			noteKeys = Object.keys(results.notes)
+				.filter((noteID) => notes[noteID] !== undefined)
+				.sort((a, b) => {
+					return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
+				});
 		}
 	}
 
