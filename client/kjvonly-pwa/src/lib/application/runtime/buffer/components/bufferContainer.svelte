@@ -37,10 +37,12 @@
 {#if maxWidth !== undefined}
 	<div
 		bind:clientHeight
-		class="relative flex h-full w-full justify-center bg-neutral-50 outline outline-neutral-400"
+		class="relative flex h-full w-full min-h-0 min-w-0 justify-center bg-neutral-50 outline outline-neutral-400"
 	>
 		<div
-			class="w-full {maxWidth ? 'max-w-lg' : 'max-w-none'} outline outline-neutral-400"
+			class="w-full min-h-0 min-w-0 {maxWidth
+				? 'max-w-lg outline outline-neutral-400'
+				: 'max-w-none'}"
 		>
 			{@render children?.()}
 		</div>
