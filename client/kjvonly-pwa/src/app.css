@@ -1107,6 +1107,188 @@
 		--color-highlighte: hsl(280deg 12% 22%);
 	}
 
+
+	/*
+	 * Color-vision-aware Night palette.
+	 *
+	 * This keeps the same low-luminance warm neutral reading surface as Night,
+	 * while separating accents and highlights by both hue and lightness.
+	 * The accent families are amber, teal, terracotta, blue, and rose so their
+	 * identity does not depend on red/green or amber/ochre distinctions alone.
+	 */
+	[data-theme='color-theme-night-colorblind'] {
+		--color-primary-surface: hsl(38deg 10% 84%);
+
+		/* muted warm amber */
+		--color-primary-900: hsl(28deg 35% 14%);
+		--color-primary-800: hsl(30deg 34% 20%);
+		--color-primary-700: hsl(32deg 33% 27%);
+		--color-primary-600: hsl(34deg 31% 34%);
+		--color-primary-500: hsl(36deg 29% 42%);
+		--color-primary-400: hsl(38deg 28% 50%);
+		--color-primary-300: hsl(40deg 29% 58%);
+		--color-primary-200: hsl(42deg 31% 67%);
+		--color-primary-100: hsl(44deg 34% 76%);
+		--color-primary-50: hsl(46deg 38% 86%);
+
+		/* warm grey */
+		--color-neutral-900: hsl(30deg 6% 6%);
+		--color-neutral-800: hsl(30deg 6% 10%);
+		--color-neutral-700: hsl(32deg 6% 15%);
+		--color-neutral-600: hsl(33deg 6% 22%);
+		--color-neutral-500: hsl(34deg 6% 38%);
+		--color-neutral-400: hsl(35deg 7% 49%);
+		--color-neutral-300: hsl(35deg 7% 56%);
+		--color-neutral-200: hsl(35deg 7% 64%);
+		--color-neutral-100: hsl(36deg 8% 74%);
+		--color-neutral-50: hsl(38deg 10% 84%);
+
+		/* muted teal */
+		--color-support-a-900: hsl(175deg 30% 12%);
+		--color-support-a-800: hsl(175deg 29% 18%);
+		--color-support-a-700: hsl(175deg 27% 25%);
+		--color-support-a-600: hsl(175deg 26% 32%);
+		--color-support-a-500: hsl(175deg 24% 38%);
+		--color-support-a-400: hsl(175deg 24% 44%);
+		--color-support-a-300: hsl(175deg 24% 52%);
+		--color-support-a-200: hsl(175deg 24% 61%);
+		--color-support-a-100: hsl(175deg 25% 71%);
+		--color-support-a-50: hsl(175deg 27% 82%);
+
+		/* muted terracotta */
+		--color-support-b-900: hsl(15deg 38% 15%);
+		--color-support-b-800: hsl(15deg 37% 22%);
+		--color-support-b-700: hsl(15deg 36% 30%);
+		--color-support-b-600: hsl(15deg 35% 39%);
+		--color-support-b-500: hsl(15deg 34% 48%);
+		--color-support-b-400: hsl(15deg 34% 58%);
+		--color-support-b-300: hsl(15deg 33% 66%);
+		--color-support-b-200: hsl(15deg 32% 74%);
+		--color-support-b-100: hsl(15deg 32% 82%);
+		--color-support-b-50: hsl(15deg 34% 89%);
+
+		/* muted blue */
+		--color-vivid-a-900: hsl(215deg 30% 13%);
+		--color-vivid-a-800: hsl(215deg 29% 20%);
+		--color-vivid-a-700: hsl(215deg 29% 28%);
+		--color-vivid-a-600: hsl(215deg 28% 36%);
+		--color-vivid-a-500: hsl(215deg 28% 45%);
+		--color-vivid-a-400: hsl(215deg 28% 54%);
+		--color-vivid-a-300: hsl(215deg 27% 62%);
+		--color-vivid-a-200: hsl(215deg 26% 70%);
+		--color-vivid-a-100: hsl(215deg 25% 78%);
+		--color-vivid-a-50: hsl(215deg 26% 86%);
+
+		/* muted rose */
+		--color-vivid-b-900: hsl(320deg 24% 14%);
+		--color-vivid-b-800: hsl(320deg 23% 21%);
+		--color-vivid-b-700: hsl(320deg 22% 29%);
+		--color-vivid-b-600: hsl(320deg 22% 38%);
+		--color-vivid-b-500: hsl(320deg 22% 48%);
+		--color-vivid-b-400: hsl(320deg 22% 60%);
+		--color-vivid-b-300: hsl(320deg 21% 68%);
+		--color-vivid-b-200: hsl(320deg 20% 75%);
+		--color-vivid-b-100: hsl(320deg 20% 82%);
+		--color-vivid-b-50: hsl(320deg 21% 88%);
+
+		--color-redtxt: hsl(8deg 40% 38%);
+
+		/* highlights vary by both hue and luminance */
+		--color-highlighta: hsl(40deg 29% 68%);
+		--color-highlightb: hsl(175deg 23% 60%);
+		--color-highlightc: hsl(15deg 32% 74%);
+		--color-highlightd: hsl(215deg 26% 64%);
+		--color-highlighte: hsl(320deg 20% 72%);
+	}
+
+	[data-theme='color-theme-dark-night-colorblind'] {
+		--color-primary-surface: hsl(30deg 6% 6%);
+
+		/* muted warm amber */
+		--color-primary-50: hsl(28deg 35% 14%);
+		--color-primary-100: hsl(30deg 34% 20%);
+		--color-primary-200: hsl(32deg 33% 27%);
+		--color-primary-300: hsl(34deg 31% 34%);
+		--color-primary-400: hsl(36deg 29% 42%);
+		--color-primary-500: hsl(38deg 28% 50%);
+		--color-primary-600: hsl(40deg 29% 58%);
+		--color-primary-700: hsl(42deg 31% 67%);
+		--color-primary-800: hsl(44deg 34% 76%);
+		--color-primary-900: hsl(46deg 38% 86%);
+
+		/* warm grey */
+		--color-neutral-50: hsl(30deg 6% 6%);
+		--color-neutral-100: hsl(30deg 6% 10%);
+		--color-neutral-200: hsl(32deg 6% 15%);
+		--color-neutral-300: hsl(33deg 6% 22%);
+		--color-neutral-400: hsl(34deg 6% 38%);
+		--color-neutral-500: hsl(35deg 7% 49%);
+		--color-neutral-600: hsl(35deg 7% 56%);
+		--color-neutral-700: hsl(35deg 7% 64%);
+		--color-neutral-800: hsl(36deg 8% 74%);
+		--color-neutral-900: hsl(38deg 10% 84%);
+
+		/* muted teal */
+		--color-support-a-50: hsl(175deg 30% 12%);
+		--color-support-a-100: hsl(175deg 29% 18%);
+		--color-support-a-200: hsl(175deg 27% 25%);
+		--color-support-a-300: hsl(175deg 26% 32%);
+		--color-support-a-400: hsl(175deg 24% 38%);
+		--color-support-a-500: hsl(175deg 24% 44%);
+		--color-support-a-600: hsl(175deg 24% 52%);
+		--color-support-a-700: hsl(175deg 24% 61%);
+		--color-support-a-800: hsl(175deg 25% 71%);
+		--color-support-a-900: hsl(175deg 27% 82%);
+
+		/* muted terracotta */
+		--color-support-b-50: hsl(15deg 38% 15%);
+		--color-support-b-100: hsl(15deg 37% 22%);
+		--color-support-b-200: hsl(15deg 36% 30%);
+		--color-support-b-300: hsl(15deg 35% 39%);
+		--color-support-b-400: hsl(15deg 34% 48%);
+		--color-support-b-500: hsl(15deg 34% 58%);
+		--color-support-b-600: hsl(15deg 33% 66%);
+		--color-support-b-700: hsl(15deg 32% 74%);
+		--color-support-b-800: hsl(15deg 32% 82%);
+		--color-support-b-900: hsl(15deg 34% 89%);
+
+		/* muted blue */
+		--color-vivid-a-50: hsl(215deg 30% 13%);
+		--color-vivid-a-100: hsl(215deg 29% 20%);
+		--color-vivid-a-200: hsl(215deg 29% 28%);
+		--color-vivid-a-300: hsl(215deg 28% 36%);
+		--color-vivid-a-400: hsl(215deg 28% 45%);
+		--color-vivid-a-500: hsl(215deg 28% 54%);
+		--color-vivid-a-600: hsl(215deg 27% 62%);
+		--color-vivid-a-700: hsl(215deg 26% 70%);
+		--color-vivid-a-800: hsl(215deg 25% 78%);
+		--color-vivid-a-900: hsl(215deg 26% 86%);
+
+		/* muted rose */
+		--color-vivid-b-50: hsl(320deg 24% 14%);
+		--color-vivid-b-100: hsl(320deg 23% 21%);
+		--color-vivid-b-200: hsl(320deg 22% 29%);
+		--color-vivid-b-300: hsl(320deg 22% 38%);
+		--color-vivid-b-400: hsl(320deg 22% 48%);
+		--color-vivid-b-500: hsl(320deg 22% 60%);
+		--color-vivid-b-600: hsl(320deg 21% 68%);
+		--color-vivid-b-700: hsl(320deg 20% 75%);
+		--color-vivid-b-800: hsl(320deg 20% 82%);
+		--color-vivid-b-900: hsl(320deg 21% 88%);
+
+		--color-redtxt: hsl(8deg 40% 60%);
+
+		/*
+		 * Dark highlight surfaces vary in luminance so their categories do not
+		 * depend on hue alone while preserving readable neutral text.
+		 */
+		--color-highlighta: hsl(40deg 24% 21%);
+		--color-highlightb: hsl(175deg 20% 20%);
+		--color-highlightc: hsl(15deg 28% 19%);
+		--color-highlightd: hsl(215deg 20% 18%);
+		--color-highlighte: hsl(320deg 18% 14%);
+	}
+
 }
 
 /* if you want a scroll bar in chrome */

@@ -17,6 +17,7 @@
 		<option value="cyan">CYAN</option>
 		<option value="pink">PINK</option>
 		<option value="night">NIGHT</option>
+		<option value="night-colorblind">NIGHT COLORBLIND</option>
 	</select>
 	<div class="felx w-full pt-2">
 		<div class="flex justify-center space-x-4">
