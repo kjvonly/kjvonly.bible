@@ -181,8 +181,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	function onAddNewNote(newNote: Note) {
-		notes[newNote.id] = newNote;
-		noteKeys = [newNote.id, ...noteKeys];
+		// New notes remain editor-local drafts until Save persists them.
 		note = newNote;
 	}
 </script>
