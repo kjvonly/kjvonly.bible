@@ -57,6 +57,7 @@
 
 	let {
 		clientHeight,
+		paneID,
 		mode = $bindable(),
 		filterInput = $bindable(),
 		noteKeys = $bindable(),
@@ -69,6 +70,7 @@
 		onAddNewNote
 	}: {
 		clientHeight: number;
+		paneID: string;
 		mode: NotesMode;
 		filterInput: string;
 		noteKeys: string[];
@@ -97,12 +99,12 @@
 			void onExport();
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		}
 	};
@@ -189,7 +191,7 @@
 		let newNote: Note;
 		const notesSource =
 			moduleResourceSelectionResolver.require(
-				mode.paneID,
+				paneID,
 				NOTES_RESOURCE_TYPE
 			);
 
@@ -226,13 +228,13 @@
 
 			const chapterSource =
 				moduleResourceSelectionResolver.require(
-					mode.paneID,
+					paneID,
 					BIBLE_CHAPTER_RESOURCE_TYPE
 				);
 
 			const booknamesSource =
 				moduleResourceSelectionResolver.require(
-					mode.paneID,
+					paneID,
 					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				);
 
@@ -286,28 +288,28 @@
 
 	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
 			bibleLocationRef: note.bibleLocationRef
 		});
 	}
 
 	function onHorizontalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.NOTES, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onVerticalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.NOTES, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onClose(): void {
 		if (allNotes) {
-			workspaceRuntime.closePane(mode.paneID);
+			workspaceRuntime.closePane(paneID);
 		} else {
 			mode.notePopup.show = false;
 		}

@@ -18,6 +18,7 @@
 	// MODELS
 	import { Modules } from '$lib/application';
 	import type {
+		Note,
 		NoteTag,
 		NotesMode
 	} from '../../models/note.model';
@@ -46,8 +47,14 @@
 
 	let {
 		clientHeight = $bindable<number>(),
+		paneID,
 		mode = $bindable<NotesMode>(),
-		note = $bindable()
+		note = $bindable<Note>()
+	}: {
+		clientHeight: number;
+		paneID: string;
+		mode: NotesMode;
+		note: Note;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -71,12 +78,12 @@
 			showConfirmDelete = true;
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteActions = false;
 		}
 	};

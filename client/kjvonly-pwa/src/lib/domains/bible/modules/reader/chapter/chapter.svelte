@@ -27,7 +27,6 @@
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { scrollTo, scrollToTop } from '$lib/application/ui';
-	import type { Pane } from '$lib/application';
 	import type { Settings as AppSettings } from '$lib/application';
 
 
@@ -80,16 +79,16 @@
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		id = $bindable<string>(),
-		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
+		paneID,
 		textMarkup = $bindable<BibleTextMarkup>(),
 		lastKnownScrollPosition
 	}: {
 		bibleLocationRef: string;
 		bibleVersion: string;
 		id: string;
-		pane: Pane;
 		mode: BibleMode;
+		paneID: string;
 		textMarkup: BibleTextMarkup;
 		lastKnownScrollPosition: number;
 	} = $props();
@@ -249,7 +248,7 @@
 	async function loadTextMarkup() {
 		const source =
 			moduleResourceSelectionResolver.find(
-				pane.id,
+				paneID,
 				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 			);
 
@@ -284,7 +283,7 @@
 
 		const locationRef = bibleLocationRef;
 		const source = moduleResourceSelectionResolver.require(
-			pane.id,
+			paneID,
 			BIBLE_PARAGRAPHS_RESOURCE_TYPE
 		);
 
@@ -311,7 +310,7 @@
 
 		const locationRef = bibleLocationRef;
 		const source = moduleResourceSelectionResolver.require(
-			pane.id,
+			paneID,
 			BIBLE_PERICOPES_RESOURCE_TYPE
 		);
 
@@ -367,7 +366,7 @@
 
 	async function loadChapter() {
 		const source = moduleResourceSelectionResolver.require(
-			pane.id,
+			paneID,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 
@@ -406,7 +405,7 @@
 	{#each versesNumbersToShow as k, idx}
 		<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
 			<Verse
-				bind:pane
+				{paneID}
 				bind:textMarkup
 				bind:paragraphs
 				bind:pericopes

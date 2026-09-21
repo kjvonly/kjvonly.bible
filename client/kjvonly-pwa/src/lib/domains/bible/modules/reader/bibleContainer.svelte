@@ -104,7 +104,6 @@ import {
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		setModePaneID();
 		setNavReadings();
 		setBibleLocationRef();
 		attachScrolls();
@@ -117,10 +116,6 @@ import {
 	});
 
 	// ================================ FUNCS ==================================
-
-	function setModePaneID() {
-		mode.paneID = paneID;
-	}
 
 	function setNavReadings() {
 		if (pane?.buffer?.bag?.navReadings) {
@@ -272,8 +267,8 @@ import {
 					bind:bibleLocationRef
 					bind:bibleVersion
 					bind:id
-					bind:pane
 					bind:mode
+					{paneID}
 					bind:textMarkup
 					{lastKnownScrollPosition}
 				></Chapter>
@@ -290,7 +285,6 @@ import {
 			{#if mode.value === BIBLE_MODES.READING}
 				<ChapterNavButtons
 					bind:mode
-					bind:pane
 					bind:bibleLocationRef
 					bind:bibleVersion
 					bind:showNavButtons

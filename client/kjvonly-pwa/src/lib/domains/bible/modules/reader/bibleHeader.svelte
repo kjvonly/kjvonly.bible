@@ -374,7 +374,7 @@
 {#snippet notePopup()}
 	{#if mode.notePopup.show}
 		<PopupContainer bind:clientHeight>
-			<Notes bind:mode allNotes={false}></Notes>
+			<Notes {paneID} {clientHeight} bind:mode allNotes={false}></Notes>
 		</PopupContainer>
 	{/if}
 {/snippet}

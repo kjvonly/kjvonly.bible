@@ -11,7 +11,6 @@
 	import type {
 		BiblePericopeMap
 	} from '../../../models/bible-pericopes.model';
-	import type { Pane } from '$lib/application';
 	import type { BibleTextMarkup } from '../../../models/bible-text-markup.model';
 	import Paragraph from './paragraph.svelte';
 	import type {
@@ -28,8 +27,8 @@
 		textMarkup = $bindable<BibleTextMarkup>(),
 		paragraphs = $bindable<BibleParagraphMap>(),
 		pericopes = $bindable<BiblePericopeMap>(),
-		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
+		paneID,
 		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
@@ -40,8 +39,8 @@
 		textMarkup: BibleTextMarkup;
 		paragraphs: BibleParagraphMap;
 		pericopes: BiblePericopeMap;
-		pane: Pane;
 		mode: BibleMode;
+		paneID: string;
 		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
@@ -65,7 +64,7 @@
 	 	 end of a line -->
 	<span class="inline-block">
 		{#each verse.words.slice(0, 2) as word, idx}<Word
-				bind:pane
+				{paneID}
 				bind:textMarkup
 				bind:notes
 				bind:mode
@@ -80,7 +79,7 @@
 		{/each}
 	</span>{#each verse.words.slice(2) as word, idx}
 		<Word
-			bind:pane
+			{paneID}
 			bind:textMarkup
 			bind:notes
 			bind:mode

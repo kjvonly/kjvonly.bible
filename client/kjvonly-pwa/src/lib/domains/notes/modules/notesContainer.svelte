@@ -9,8 +9,7 @@
 
 	let mode: NotesMode = $state({
 		bibleLocationRef: undefined as string | undefined,
-		notePopup: { show: false },
-		paneID: paneID
+		notePopup: { show: false }
 	});
 
 	onMount(() => {
@@ -24,6 +23,7 @@
 	<div class="kjvonly-noselect h-full w-full min-h-0 min-w-0 overflow-hidden">
 		<Notes
 			allNotes={true}
+			{paneID}
 			bind:mode
 			noteIDToOpen={noteID}
 			{clientHeight}

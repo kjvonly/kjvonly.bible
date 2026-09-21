@@ -9,7 +9,6 @@
 
 	// SERVICES
 	import { PaneSplit } from '$lib/application';
-	import type { Pane } from '$lib/application';
 	import type {
 		BibleTextMarkup,
 		BibleTextMarkupMarking
@@ -35,8 +34,8 @@
 
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
-		pane = $bindable(),
 		mode = $bindable<BibleMode>(),
+		paneID,
 		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
@@ -47,8 +46,8 @@
 		wordIdx
 	}: {
 		textMarkup: BibleTextMarkup;
-		pane: Pane;
 		mode: BibleMode;
+		paneID: string;
 		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
@@ -192,7 +191,7 @@
 		let refs = extractAllVerseRefs();
 		let strongsWords = extractStrongsWords();
 
-		workspaceRuntime.splitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
 			refs: refs,
@@ -201,7 +200,7 @@
 	}
 
 	function nonVerseNumberClicked() {
-		workspaceRuntime.splitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			word: word,
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
