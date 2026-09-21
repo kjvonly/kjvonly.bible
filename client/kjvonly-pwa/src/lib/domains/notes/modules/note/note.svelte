@@ -139,10 +139,8 @@
 		note.dateUpdated = Date.now();
 
 		await notesService.put(
-			JSON.parse(
-				JSON.stringify(
-					note
-				)
+			$state.snapshot(
+				note
 			)
 		);
 
