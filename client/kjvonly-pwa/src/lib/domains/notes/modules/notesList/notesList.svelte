@@ -477,6 +477,10 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
+<!--
+	Own BufferContainer here because NotesList can be reached through
+	NotesContainer or through the Bible popup, which renders Notes directly.
+-->
 <BufferContainer bind:clientHeight>
 	<BufferHeader bind:headerHeight>
 		{@render noteListHeader()}

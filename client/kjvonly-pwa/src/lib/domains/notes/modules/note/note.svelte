@@ -365,6 +365,10 @@
 	</div>
 {/snippet}
 
+<!--
+	Own BufferContainer here because Note can be reached through NotesContainer
+	or through the Bible popup, which renders Notes directly.
+-->
 <BufferContainer bind:clientHeight>
 	<BufferHeader bind:headerHeight>
 		{@render noteHeaderSnippet()}

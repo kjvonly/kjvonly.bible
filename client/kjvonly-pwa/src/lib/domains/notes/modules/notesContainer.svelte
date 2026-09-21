@@ -17,6 +17,13 @@
 	});
 </script>
 
+<!--
+	Notes is also embedded directly by the Bible popup, which bypasses this
+	module container. Keep BufferContainer ownership in Note/NotesList so both
+	entry paths receive the same buffer presentation shell. Unlike most module
+	containers, this wrapper must also remain unclipped so the child
+	BufferContainer outline can render normally.
+-->
 <div class="kjvonly-noselect h-full w-full min-h-0 min-w-0">
 	<Notes
 		allNotes={true}
