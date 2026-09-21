@@ -10,12 +10,7 @@
 	import { stopPropagation } from '$lib/application/ui/click';
 
 	// =============================== BINDINGS ================================
-	let {
-		paneID,
-		pane = $bindable(),
-		containerHeight = $bindable(),
-		containerWidth = $bindable()
-	} = $props();
+	let { paneID, pane = $bindable() } = $props();
 
 	// ================================== VARS =================================
 	let clientHeight: number = $state(0);

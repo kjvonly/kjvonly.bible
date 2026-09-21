@@ -16,12 +16,7 @@
 
 	// =============================== BINDINGS ================================
 
-	let {
-		paneID,
-		pane = $bindable(),
-		containerHeight = $bindable(),
-		containerWidth = $bindable()
-	} = $props();
+	let { paneID, pane = $bindable() } = $props();
 
 	// ================================= VARS ==================================
 
