@@ -166,7 +166,14 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	function onSelectedNote(noteId: string) {
-		note = notes[noteId];
+		const selectedNote = notes[noteId];
+
+		if (!selectedNote) {
+			return;
+		}
+
+		// Edit a working copy so unsaved changes do not mutate list state.
+		note = structuredClone(selectedNote);
 	}
 
 	function onCloseNote() {
