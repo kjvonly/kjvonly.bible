@@ -80,6 +80,7 @@
 
 	let showNoteListActions = $state(false);
 	let showNoteListFilter = $state(false);
+	const noteListControlID = uuid4();
 
 	const noteListActions: Record<string, () => void> = {
 		filter: () => {
@@ -341,13 +342,13 @@
 {#snippet noteListFilter()}
 	<div class="flex flex-col justify-start px-2">
 		<label
-			for="tags"
+			for={`${noteListControlID}-search`}
 			class="focus-within:border-support-a-600 relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3"
 		>
 			<div class="flex items-center">
 				<input
-					type="tags"
-					id="tags"
+					type="text"
+					id={`${noteListControlID}-search`}
 					placeholder="Search Notes..."
 					bind:value={filterInput}
 					oninput={onFilterInputChanged}
@@ -360,7 +361,7 @@
 				{#each filterParams as fp}
 					<div class="space-y-2">
 						<label
-							for={`note-filter-${fp.option}`}
+							for={`${noteListControlID}-filter-${fp.option}`}
 							class="flex cursor-pointer items-start gap-4"
 						>
 							<div class="flex items-center">
@@ -369,7 +370,7 @@
 									bind:checked={fp.checked}
 									type="checkbox"
 									class="accent-support-a-300 size-4 rounded-sm border-neutral-200"
-									id={`note-filter-${fp.option}`}
+									id={`${noteListControlID}-filter-${fp.option}`}
 									onchange={onFilterInputChanged}
 								/>
 							</div>

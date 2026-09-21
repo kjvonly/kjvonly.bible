@@ -277,13 +277,13 @@
 	{#if showTags}
 		<div class="flex-fill flex w-full px-2">
 			<label
-				for="tags"
+				for={`${tagID}-tags`}
 				class="focus-within:border-support-a-600 relative block w-full overflow-hidden border-b border-neutral-200 bg-transparent pt-3"
 			>
 				<div class="flex items-center">
 					<input
-						type="tags"
-						id="{tagID}-tags"
+						type="text"
+						id={`${tagID}-tags`}
 						placeholder="tag 1, tag 2, tag 3, ..."
 						bind:value={tagInput}
 						class="focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent focus:outline-hidden"
