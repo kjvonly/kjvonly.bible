@@ -1,12 +1,19 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import uuid4 from 'uuid4';
 
 	let {
 		ID = uuid4(),
-		clientHeight = $bindable<number>(),
-		headerHeight = $bindable<number>(),
+		clientHeight,
+		headerHeight,
 		classes = 'px-4',
 		children
+	}: {
+		ID?: string;
+		clientHeight: number;
+		headerHeight: number;
+		classes?: string;
+		children: Snippet;
 	} = $props();
 </script>
 

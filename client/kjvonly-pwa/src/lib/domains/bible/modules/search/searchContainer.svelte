@@ -111,7 +111,7 @@
 		{@render header()}
 	</BufferHeader>
 
-	<BufferBody ID={searchID} bind:headerHeight bind:clientHeight classes="">
+	<BufferBody ID={searchID} {headerHeight} {clientHeight} classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

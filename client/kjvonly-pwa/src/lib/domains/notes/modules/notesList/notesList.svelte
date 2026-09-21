@@ -485,7 +485,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render noteListHeader()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody {clientHeight} {headerHeight}>
 		{@render noteListBody()}
 	</BufferBody>
 </BufferContainer>

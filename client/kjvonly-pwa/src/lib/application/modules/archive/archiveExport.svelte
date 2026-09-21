@@ -308,6 +308,6 @@
 	{@render header()}
 </BufferHeader>
 
-<BufferBody bind:clientHeight bind:headerHeight classes="">
+<BufferBody {clientHeight} {headerHeight} classes="">
 	{@render body()}
 </BufferBody>

@@ -87,8 +87,8 @@ function onVersionClicked(
 	</BufferHeader>
 
 	<BufferBody
-		bind:clientHeight
-		bind:headerHeight
+		{clientHeight}
+		{headerHeight}
 		classes={'remove-default-class'}
 	>
 		{#each bibleVersions as version}

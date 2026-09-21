@@ -117,8 +117,8 @@
 	</BufferHeader>
 
 	<BufferBody
-		bind:clientHeight
-		bind:headerHeight
+		{clientHeight}
+		{headerHeight}
 		classes={'remove-default-class'}
 	>
 		{#each Object.keys(actions) as action}

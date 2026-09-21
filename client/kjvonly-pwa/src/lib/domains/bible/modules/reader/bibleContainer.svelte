@@ -323,8 +323,8 @@ import {
 	</BufferHeader>
 	<BufferBody
 		ID={id}
-		bind:clientHeight
-		bind:headerHeight
+		{clientHeight}
+		{headerHeight}
 		classes="clear-default-classes"
 	>
 		{#if bibleLocationRef}
