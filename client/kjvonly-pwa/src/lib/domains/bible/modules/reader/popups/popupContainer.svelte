@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 
 	let {
-		clientHeight = $bindable<number>(),
+		clientHeight,
 		children
 	}: {
 		clientHeight: number;

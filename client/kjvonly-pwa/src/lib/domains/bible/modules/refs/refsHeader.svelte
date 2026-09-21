@@ -15,7 +15,7 @@
 
 	let {
 		paneID,
-		clientHeight = $bindable<number>(),
+		clientHeight,
 		popups = $bindable<StrongsPopups>()
 	}: {
 		paneID: string;
@@ -50,7 +50,7 @@
 
 {#snippet searchPopup()}
 	{#if popups.searchPopup}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<SearchPopup bind:popups></SearchPopup>
 		</PopupContainer>
 	{/if}

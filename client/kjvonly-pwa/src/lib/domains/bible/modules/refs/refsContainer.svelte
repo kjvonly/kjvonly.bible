@@ -149,7 +149,7 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<RefsHeader bind:popups bind:clientHeight {paneID}></RefsHeader>
+	<RefsHeader bind:popups {clientHeight} {paneID}></RefsHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

@@ -250,8 +250,7 @@ import {
 		bind:mode
 		bind:bibleLocationRef
 		bind:bibleVersion
-		bind:clientHeight
-		bind:headerHeight
+		{clientHeight}
 		{onBibleVersionSelected}
 		{paneID}
 	></BibleHeader>

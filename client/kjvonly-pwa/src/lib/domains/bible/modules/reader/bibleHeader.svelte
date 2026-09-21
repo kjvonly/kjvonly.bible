@@ -57,8 +57,7 @@
 		mode = $bindable(),
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
-		clientHeight = $bindable<number>(),
-		headerHeight = $bindable<number>(),
+		clientHeight,
 		onBibleVersionSelected,
 		paneID
 	}: {
@@ -66,7 +65,6 @@
 		bibleLocationRef: string;
 		bibleVersion: string;
 		clientHeight: number;
-		headerHeight: number;
 		onBibleVersionSelected: (version: BibleVersion) => void;
 		paneID: string;
 	} = $props();
@@ -318,7 +316,7 @@
 
 {#snippet bookChapterPopup()}
 	{#if showBookChapterPopup}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<BookChapterPopup {paneID} bind:showBookChapterPopup bind:bibleLocationRef
 			></BookChapterPopup>
 		</PopupContainer>
@@ -327,7 +325,7 @@
 
 {#snippet navReadingsPopup()}
 	{#if showNavReadingsPopup}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<NavReadingsList
 				bind:showNavReadingsPopup
 				bind:navReadings={mode.navReadings}
@@ -339,7 +337,7 @@
 
 {#snippet settingsPopup()}
 	{#if showSettingsPopup}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<Settings
 				onClose={() => {
 					showSettingsPopup = false;
@@ -351,7 +349,7 @@
 
 {#snippet actionsPopup()}
 	{#if showMenuPopup}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<BibleMenuPopup
 				{paneID}
 				bind:showCopyVersesPopup
@@ -364,7 +362,7 @@
 
 {#snippet bibleVersionPopup()}
 	{#if showBibleVersionPopup}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<BibleVersionPopup {onBibleVersionSelected} bind:showBibleVersionPopup
 			></BibleVersionPopup>
 		</PopupContainer>
@@ -373,7 +371,7 @@
 
 {#snippet notePopup()}
 	{#if mode.notePopup.show}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<Notes {paneID} bind:mode allNotes={false}></Notes>
 		</PopupContainer>
 	{/if}
@@ -381,7 +379,7 @@
 
 {#snippet copyVersePopup()}
 	{#if showCopyVersesPopup}
-		<PopupContainer bind:clientHeight>
+		<PopupContainer {clientHeight}>
 			<CopyVersePopup
 				{paneID}
 				bind:showCopyVersePopup={showCopyVersesPopup}
