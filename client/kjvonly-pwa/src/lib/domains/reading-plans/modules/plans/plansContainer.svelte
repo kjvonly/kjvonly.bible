@@ -68,7 +68,7 @@
 
 {#if workerReady}
 	{#if plansDisplay < PLANS_MAX_VIEW_ID}
-		<Discover bind:plansDisplay bind:pane bind:paneID></Discover>
+		<Discover bind:plansDisplay {paneID}></Discover>
 	{:else if plansDisplay < SUBS_MAX_VIEW_ID}
 		<SubsView bind:plansDisplay bind:pane bind:paneID></SubsView>
 	{:else if plansDisplay < NEXT_MAX_VIEW_ID}

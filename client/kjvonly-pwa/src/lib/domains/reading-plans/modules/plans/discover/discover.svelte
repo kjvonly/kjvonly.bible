@@ -28,9 +28,10 @@
 	// =============================== BINDINGS ================================
 	let {
 		plansDisplay = $bindable(),
-		clientHeight = $bindable(),
-		paneID = $bindable(),
-		pane = $bindable()
+		paneID
+	}: {
+		plansDisplay: PLANS_VIEWS;
+		paneID: string;
 	} = $props();
 
 	// ================================== VARS =================================
