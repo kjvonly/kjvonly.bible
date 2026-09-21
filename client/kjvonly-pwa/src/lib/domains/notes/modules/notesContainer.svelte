@@ -1,12 +1,19 @@
 <script lang="ts">
 	import Notes from './notes.svelte';
 	import { onMount } from 'svelte';
+	import type { Pane } from '$lib/application';
 	import type { NotesMode } from '../models/note.model';
 	let noteID: string = $state('');
-	let { paneID = $bindable<string>(), pane = $bindable() } = $props();
+	let {
+		paneID,
+		pane = $bindable<Pane>()
+	}: {
+		paneID: string;
+		pane: Pane;
+	} = $props();
 
 	let mode: NotesMode = $state({
-		bibleLocationRef: undefined as string | undefined,
+		bibleLocationRef: undefined,
 		notePopup: { show: false }
 	});
 
