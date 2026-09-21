@@ -359,14 +359,18 @@
 			<fieldset>
 				{#each filterParams as fp}
 					<div class="space-y-2">
-						<label for="Option1" class="flex cursor-pointer items-start gap-4">
+						<label
+							for={`note-filter-${fp.option}`}
+							class="flex cursor-pointer items-start gap-4"
+						>
 							<div class="flex items-center">
 								&#8203;
 								<input
 									bind:checked={fp.checked}
 									type="checkbox"
 									class="accent-support-a-300 size-4 rounded-sm border-neutral-200"
-									id="Option1"
+									id={`note-filter-${fp.option}`}
+									onchange={onFilterInputChanged}
 								/>
 							</div>
 
