@@ -19,8 +19,8 @@
 
 <div
 	id="{ID}-scroll-container"
-	style="height: {clientHeight - headerHeight}px"
-	class="flex w-full flex-col overflow-y-scroll {classes}"
+	style="height: {Math.max(0, clientHeight - headerHeight)}px"
+	class="flex w-full min-h-0 min-w-0 flex-col overflow-y-scroll {classes}"
 >
 	{@render children?.()}
 </div>
