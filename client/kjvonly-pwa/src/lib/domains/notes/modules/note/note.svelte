@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BufferContainer, BufferHeader } from '$lib/application/ui';
+	import { BufferContainer, BufferHeader, findElement } from '$lib/application/ui';
 
 	// SVELTE
 	import { onMount } from 'svelte';
@@ -16,30 +16,22 @@
 	import Tag from '$lib/components/svgs/tag.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/application';
+	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
 	import type {
 		Note,
-		NoteTag,
-		NotesMode
+		NoteTag
 	} from '../../models/note.model';
-
-	// SERVICES
-	import { PaneSplit, useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import Quill from 'quill';
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
-	import { findElement } from '$lib/application/ui';
 	import { parseNoteTagInput } from './note-tag-input';
 
 	// APPLICATION
 	const {
 		workspaceRuntime,
-		toastService
-	} = useApplicationContext();
-
-	const {
+		toastService,
 		notesService
 	} = useApplicationContext();
 
@@ -47,29 +39,30 @@
 
 	let {
 		paneID,
-		mode = $bindable<NotesMode>(),
-		note = $bindable<Note>()
+		note,
+		persisted,
+		onCloseNote
 	}: {
 		paneID: string;
-		mode: NotesMode;
 		note: Note;
+		persisted: boolean;
+		onCloseNote: () => void;
 	} = $props();
 
 	// ================================== VARS =================================
 
 	let clientHeight = $state(0);
+	let isPersisted = $state(persisted);
 	let headerHeight = $state(0);
-	let noteID: string = '';
 	let showConfirmDelete = $state(false);
 	let showNoteActions = $state(false);
-	let showNoteListActions = $state(false);
 	let showTags: boolean = $state(false);
 	let tagContainerHeight = $state(0);
 	let tagInput: string = $state('');
-	let tagID: string = uuid4();
+	const tagID: string = uuid4();
 
 	/** editor*/
-	let editor = uuid4().replaceAll('-', '');
+	const editor = uuid4().replaceAll('-', '');
 	let quill: Quill;
 
 	const noteActions: Record<string, () => void> = {
@@ -90,7 +83,6 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		noteID = note.id;
 		let element = document.getElementById(editor);
 
 		/* editor */
@@ -128,34 +120,32 @@
 			return true;
 		}
 
-		if (showNoteListActions) {
-			showNoteListActions = false;
-			return true;
-		}
-
 		return false;
 	}
 
 	// ============================== CLICK FUNCS ==============================
 
 	async function onConfirmDelete() {
-		await notesService.delete(
-			note.id
-		);
+		if (isPersisted) {
+			await notesService.delete(
+				note.id
+			);
+		}
 
-		note = undefined;
+		onCloseNote();
 	}
 
 	async function onSave(toastMessage: string) {
+		note.dateUpdated = Date.now();
+
 		await notesService.put(
-			JSON.parse(
-				JSON.stringify(
-					note
-				)
+			$state.snapshot(
+				note
 			)
 		);
 
-		noteID = note.id;
+		isPersisted = true;
+
 		toastService.showToast(
 			toastMessage
 		);
@@ -196,12 +186,11 @@
 		}
 	}
 
-	function onCloseNote() {
+	function onClose() {
 		if (!isShowingOptions()) {
 			showNoteActions = false;
 			showConfirmDelete = false;
-			note = undefined;
-			noteID = '';
+			onCloseNote();
 		}
 	}
 </script>
@@ -229,7 +218,7 @@
 			<Menu></Menu>
 		</KJVButton>
 
-		<KJVButton classes="" onClick={onCloseNote}>
+		<KJVButton classes="" onClick={onClose}>
 			<Close></Close>
 		</KJVButton>
 	</div>
@@ -286,13 +275,13 @@
 	{#if showTags}
 		<div class="flex-fill flex w-full px-2">
 			<label
-				for="tags"
+				for={`${tagID}-tags`}
 				class="focus-within:border-support-a-600 relative block w-full overflow-hidden border-b border-neutral-200 bg-transparent pt-3"
 			>
 				<div class="flex items-center">
 					<input
-						type="tags"
-						id="{tagID}-tags"
+						type="text"
+						id={`${tagID}-tags`}
 						placeholder="tag 1, tag 2, tag 3, ..."
 						bind:value={tagInput}
 						class="focus:ring-none peer h-8 w-full border-none bg-transparent p-0 outline-none focus:border-transparent focus:outline-hidden"
@@ -373,7 +362,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render noteHeaderSnippet()}
 	</BufferHeader>
-	<div style="height: {clientHeight - headerHeight}px">
+	<div style="height: {Math.max(0, clientHeight - headerHeight)}px">
 		{@render noteBody()}
 	</div>
 </BufferContainer>

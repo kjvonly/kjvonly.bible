@@ -12,12 +12,8 @@
 
 	// =============================== BINDINGS ================================
 
-	let {
-		navService = $bindable(),
-		clientHeight = $bindable<number>()
-	}: {
+	let { navService = $bindable() }: {
 		navService: NavigationService;
-		clientHeight: number;
 	} = $props();
 
 	// ============================== CLICK FUNCS ==============================
@@ -31,8 +27,7 @@
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<div
-		bind:clientHeight
-		class="grid w-full grid-cols-3 bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
+		class="grid w-full grid-cols-3 bg-neutral-100 py-2 leading-tight"
 	>
 		<KJVButton onClick={onBack} classes="ps-4">
 			<ArrowBack></ArrowBack>

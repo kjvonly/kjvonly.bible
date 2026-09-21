@@ -16,12 +16,7 @@
 
 	// =============================== BINDINGS ================================
 
-	let {
-		paneID,
-		pane = $bindable(),
-		containerHeight = $bindable(),
-		containerWidth = $bindable()
-	} = $props();
+	let { paneID, pane = $bindable() } = $props();
 
 	// ================================= VARS ==================================
 
@@ -59,7 +54,7 @@
 					: 'hidden'} h-full w-full"
 				onclick={stopPropagation}
 			>
-				<Component {paneID} bind:clientHeight bind:obj={n.obj} {navService}
+				<Component {paneID} {clientHeight} bind:obj={n.obj} {navService}
 				></Component>
 			</div>
 		{/each}

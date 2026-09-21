@@ -59,13 +59,14 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	// ================================== VARS =================================
 
-	let noteID: string = '';
-	let NOTE_SUBSCRIPTION_ID = uuid4();
+	const NOTE_SUBSCRIPTION_ID = uuid4();
 	let note: Note | undefined = $state();
+	let notePersisted = $state(false);
 	let notes: NotesById = $state({});
 	let noteKeys: string[] = $state([]);
+	let openedNoteID: string | undefined = $state();
 
-	let NOTE_SEARCH_ID = uuid4();
+	const NOTE_SEARCH_ID = uuid4();
 
 	let filterInput: string = $state('');
 
@@ -135,9 +136,12 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			onFilterInputChanged();
 		}
 
-		if (noteIDToOpen.length > 0) {
-			onSelectedNote(noteIDToOpen);
-			noteIDToOpen = '';
+		if (
+			noteIDToOpen.length > 0 &&
+			noteIDToOpen !== openedNoteID &&
+			onSelectedNote(noteIDToOpen)
+		) {
+			openedNoteID = noteIDToOpen;
 		}
 	}
 
@@ -157,37 +161,51 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	function onFilterInputResults(results: NotesSearchResult) {
 		if (results.id === NOTE_SEARCH_ID) {
-			noteKeys = Object.keys(results.notes).sort((a, b) => {
-				return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
-			});
+			noteKeys = Object.keys(results.notes)
+				.filter((noteID) => notes[noteID] !== undefined)
+				.sort((a, b) => {
+					return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
+				});
 		}
 	}
 
-	async function onSelectedNote(noteId: string) {
-		noteID = noteId;
-		note = notes[noteId];
+	function onSelectedNote(noteId: string): boolean {
+		const selectedNote = notes[noteId];
+
+		if (!selectedNote) {
+			return false;
+		}
+
+		// Edit a working copy so unsaved changes do not mutate list state.
+		note = $state.snapshot(selectedNote);
+		notePersisted = true;
+		return true;
+	}
+
+	function onCloseNote() {
+		note = undefined;
+		notePersisted = false;
 	}
 
 	function onAddNewNote(newNote: Note) {
-		notes[newNote.id] = newNote;
-		noteKeys = [newNote.id, ...noteKeys];
+		// New notes remain editor-local drafts until Save persists them.
 		note = newNote;
+		notePersisted = false;
 	}
 </script>
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<NoteComponent {paneID} bind:mode bind:note></NoteComponent>
+	<NoteComponent {paneID} {note} persisted={notePersisted} {onCloseNote}></NoteComponent>
 {:else}
 	<NotesList
 		{paneID}
 		bind:mode
 		bind:filterInput
-		bind:noteKeys
-		bind:notes
-		bind:note
+		{noteKeys}
+		{notes}
+		{onSelectedNote}
 		{allNotes}
-		{noteIDToOpen}
 		{filterParams}
 		{onFilterInputChanged}
 		{onAddNewNote}

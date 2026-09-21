@@ -149,7 +149,7 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<RefsHeader bind:popups bind:clientHeight {paneID}></RefsHeader>
+	<RefsHeader bind:popups {clientHeight} {paneID}></RefsHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
@@ -179,7 +179,7 @@
 	{#if crossRefs.length > 0}
 		<div class=" pt-4"></div>
 		<CrossRefsContainer
-			paneID={pane?.id}
+			{paneID}
 			boundCrossRefs={crossRefs}
 		></CrossRefsContainer>
 	{/if}
@@ -194,7 +194,7 @@
 	>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody {clientHeight} {headerHeight}>
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

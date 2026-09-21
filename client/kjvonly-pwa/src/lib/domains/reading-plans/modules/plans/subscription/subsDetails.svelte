@@ -248,7 +248,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody ID={subListViewID} bind:clientHeight bind:headerHeight classes="">
+	<BufferBody ID={subListViewID} {clientHeight} {headerHeight} classes="">
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

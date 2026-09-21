@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// MODELS
-	import { Modules } from '$lib/application';
+	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
 	import type {
 		Note,
 		NotesById,
@@ -9,9 +9,6 @@
 	} from '../../models/note.model';
 	import { createNoteDomainObjectId } from '../../models/note-id';
 	import type { NoteFilterParameter } from '../../ui/note-filter.model';
-
-	// SERVICES
-	import { PaneSplit, useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import { BufferContainer, BufferHeader, BufferBody } from '$lib/application/ui';
@@ -43,10 +40,7 @@
 	const {
 		archiveService,
 		workspaceRuntime,
-		toastService
-	} = useApplicationContext();
-
-	const {
+		toastService,
 		verseService,
 		bibleBooknamesService,
 		moduleResourceSelectionResolver
@@ -59,12 +53,11 @@
 		paneID,
 		mode = $bindable(),
 		filterInput = $bindable(),
-		noteKeys = $bindable(),
-		notes = $bindable(),
-		note = $bindable(),
+		noteKeys,
+		notes,
+		onSelectedNote,
 		allNotes,
 		filterParams,
-		noteIDToOpen = '',
 		onFilterInputChanged,
 		onAddNewNote
 	}: {
@@ -73,10 +66,9 @@
 		filterInput: string;
 		noteKeys: string[];
 		notes: NotesById;
-		note: Note | undefined;
+		onSelectedNote: (noteId: string) => void;
 		allNotes: boolean;
 		filterParams: NoteFilterParameter[];
-		noteIDToOpen: string;
 		onFilterInputChanged: () => void;
 		onAddNewNote: (note: Note) => void;
 	} = $props();
@@ -88,6 +80,7 @@
 
 	let showNoteListActions = $state(false);
 	let showNoteListFilter = $state(false);
+	const noteListControlID = uuid4();
 
 	const noteListActions: Record<string, () => void> = {
 		filter: () => {
@@ -281,10 +274,6 @@
 		onAddNewNote(newNote);
 	}
 
-	async function onSelectedNote(noteId: string) {
-		note = notes[noteId];
-	}
-
 	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
 		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
@@ -353,13 +342,13 @@
 {#snippet noteListFilter()}
 	<div class="flex flex-col justify-start px-2">
 		<label
-			for="tags"
+			for={`${noteListControlID}-search`}
 			class="focus-within:border-support-a-600 relative block overflow-hidden border-b border-neutral-200 bg-transparent pt-3"
 		>
 			<div class="flex items-center">
 				<input
-					type="tags"
-					id="tags"
+					type="text"
+					id={`${noteListControlID}-search`}
 					placeholder="Search Notes..."
 					bind:value={filterInput}
 					oninput={onFilterInputChanged}
@@ -371,14 +360,18 @@
 			<fieldset>
 				{#each filterParams as fp}
 					<div class="space-y-2">
-						<label for="Option1" class="flex cursor-pointer items-start gap-4">
+						<label
+							for={`${noteListControlID}-filter-${fp.option}`}
+							class="flex cursor-pointer items-start gap-4"
+						>
 							<div class="flex items-center">
 								&#8203;
 								<input
 									bind:checked={fp.checked}
 									type="checkbox"
 									class="accent-support-a-300 size-4 rounded-sm border-neutral-200"
-									id="Option1"
+									id={`${noteListControlID}-filter-${fp.option}`}
+									onchange={onFilterInputChanged}
 								/>
 							</div>
 
@@ -485,7 +478,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render noteListHeader()}
 	</BufferHeader>
-	<BufferBody bind:clientHeight bind:headerHeight>
+	<BufferBody {clientHeight} {headerHeight}>
 		{@render noteListBody()}
 	</BufferBody>
 </BufferContainer>

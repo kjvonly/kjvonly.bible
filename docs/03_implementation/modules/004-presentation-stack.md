@@ -18,17 +18,19 @@ deriveWorkspaceLayout()
     ↓
 normalized rectangular grid
     ↓
-CSS grid areas
+CSS grid areas / pane grid cell
     ↓
 leaf Pane / PaneContainer
-    ↓
-BufferContainer
     ↓
 Buffer
     ↓
 resolveModuleComponent(Buffer.componentName)
     ↓
 Module container/component
+    ↓
+BufferContainer
+    ↓
+BufferHeader / BufferBody / module content
 ```
 
 The Workspace tree is recursive, but rendering is not an entirely recursive Svelte Pane-component tree. Layout is derived into a normalized grid first.
@@ -98,6 +100,70 @@ BufferBody
 These are presentation helpers for Module containers. They do not own Domain behavior.
 
 Modules may compose these components to get consistent sizing/header/body behavior while retaining their own content and actions.
+
+## Presentation Ownership
+
+The presentation layers have distinct responsibilities:
+
+```text
++page.svelte / Workspace grid
+    = pane geometry and grid-cell boundary
+
+PaneContainer
+    = stable pane identity, pane dimensions, Buffer lookup, Module resolution,
+      and deliberate Module recreation after Buffer replacement
+
+BufferContainer
+    = common Buffer presentation shell, measured client height, background,
+      global maximum-width policy, and Buffer shell outline
+
+BufferHeader
+    = common header presentation and measured header height
+
+BufferBody
+    = body height derived from container/header measurements and vertical scrolling
+
+Module content
+    = internal layout only
+```
+
+Do not move width, height, overflow, outline, or maximum-width responsibilities between these layers merely to fix one Module locally. Trace which layer owns the behavior first.
+
+The Workspace grid-cell outline and the `BufferContainer` outline are not automatically duplicates. The former marks the Pane/grid boundary. `BufferContainer` is also used by full-buffer UI outside a normal Module root, including Bible popups, so its shell presentation cannot depend on the Workspace grid.
+
+The global content-width policy belongs only to `BufferContainer`. Child Module content should not add another `max-w-lg`-style cap unless that content has an independent narrow-layout requirement.
+
+## BufferContainer Ownership
+
+Most Modules can place a single `BufferContainer` at their Module presentation root. That is the preferred simple shape, but it is not a universal rule.
+
+A reusable full-buffer view may have more than one host. In that case, the lowest shared presentation component that is present in every host must own the `BufferContainer`.
+
+Notes is the important current example:
+
+```text
+standalone Notes Module
+    NotesContainer
+        ↓
+    Notes
+        ↓
+    Note / NotesList
+        ↓
+    BufferContainer
+
+Bible Notes popup
+    Bible popup host
+        ↓
+    Notes
+        ↓
+    Note / NotesList
+        ↓
+    BufferContainer
+```
+
+`NotesContainer` therefore intentionally does not own the Notes `BufferContainer`: the Bible popup renders `Notes` directly and bypasses `NotesContainer`.
+
+Wrappers outside a child-owned `BufferContainer` must not accidentally clip its shell. In particular, avoid `overflow-hidden` on an outer host merely as a generic containment rule when it would clip the `BufferContainer` outline. Put overflow control at the layer that actually owns scrolling or internal content containment.
 
 ## Pane Operations
 

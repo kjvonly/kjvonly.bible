@@ -16,7 +16,7 @@
 
 	let {
 		paneID,
-		clientHeight = $bindable(),
+		clientHeight,
 		obj = $bindable(),
 		navService = $bindable()
 	}: NavigationComponentProps = $props();
@@ -163,6 +163,6 @@
 	{@render header()}
 </BufferHeader>
 
-<BufferBody bind:clientHeight bind:headerHeight classes="">
+<BufferBody {clientHeight} {headerHeight} classes="">
 	{@render body()}
 </BufferBody>

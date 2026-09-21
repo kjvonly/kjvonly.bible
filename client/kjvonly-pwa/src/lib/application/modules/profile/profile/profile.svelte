@@ -10,7 +10,7 @@
 	let {
 		paneID,
 		obj = $bindable(),
-		clientHeight = $bindable(),
+		clientHeight,
 		navService = $bindable()
 	}: NavigationComponentProps = $props();
 
@@ -18,8 +18,7 @@
 </script>
 
 {#snippet header()}
-	<ProfileHeader {paneID} bind:navService bind:clientHeight={headerHeight}
-	></ProfileHeader>
+	<ProfileHeader {paneID} bind:navService></ProfileHeader>
 {/snippet}
 
 {#snippet body()}
@@ -33,6 +32,6 @@
 <BufferHeader bind:headerHeight>
 	{@render header()}
 </BufferHeader>
-<BufferBody bind:clientHeight bind:headerHeight>
+<BufferBody {clientHeight} {headerHeight}>
 	{@render body()}
 </BufferBody>

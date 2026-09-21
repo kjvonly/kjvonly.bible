@@ -355,3 +355,12 @@ app-data-sync-verbose: up
 				| node scripts/format-verbose-log.mjs \
 				| tee "$(APP_DATA_LOG_DIR)/$$TIMESTAMP.log" \
 		'
+
+###############################################################################
+# GIT
+
+.PHONY: \
+	push
+
+push:
+	git push origin HEAD && git push bitbucket HEAD   

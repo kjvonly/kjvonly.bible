@@ -178,7 +178,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody ID={discoverDetailID} bind:clientHeight bind:headerHeight>
+	<BufferBody ID={discoverDetailID} {clientHeight} {headerHeight}>
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

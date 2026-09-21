@@ -11,11 +11,7 @@
 
 	// =============================== BINDINGS ================================
 
-	let {
-		paneID,
-		navService = $bindable(),
-		clientHeight = $bindable<number>()
-	} = $props();
+	let { paneID, navService = $bindable() } = $props();
 
 	// ============================== CLICK FUNCS ==============================
 

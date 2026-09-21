@@ -93,7 +93,7 @@
 		{@render header()}
 	</BufferHeader>
 
-	<BufferBody bind:headerHeight bind:clientHeight>
+	<BufferBody {headerHeight} {clientHeight}>
 		{@render body()}
 	</BufferBody>
 </BufferContainer>

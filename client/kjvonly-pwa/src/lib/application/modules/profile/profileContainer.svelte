@@ -10,17 +10,11 @@
 	import Profile from './profile/profile.svelte';
 
 	// =============================== BINDINGS ================================
-	let {
-		paneID,
-		pane = $bindable(),
-		containerHeight = $bindable(),
-		containerWidth = $bindable()
-	} = $props();
+	let { paneID, pane = $bindable() } = $props();
 
 	// ================================== VARS =================================
 
 	let clientHeight: number = $state(0);
-	let clientwidth: number = $state(0);
 	let nav: Writable<NavigationView[]> | undefined = $state();
 	const { navigationServiceFactory } = useApplicationContext();
 	let navService = navigationServiceFactory.create();
@@ -45,7 +39,7 @@
 					: 'hidden'} h-full w-full"
 				onclick={stopPropagation}
 			>
-				<Component {paneID} bind:clientHeight bind:obj={n.obj} {navService}
+				<Component {paneID} {clientHeight} bind:obj={n.obj} {navService}
 				></Component>
 			</div>
 		{/each}
