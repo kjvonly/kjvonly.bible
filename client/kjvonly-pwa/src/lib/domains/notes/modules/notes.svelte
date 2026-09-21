@@ -177,7 +177,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<NoteComponent {paneID} bind:mode bind:note></NoteComponent>
+	<NoteComponent {paneID} bind:note></NoteComponent>
 {:else}
 	<NotesList
 		{paneID}
@@ -187,7 +187,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		bind:notes
 		bind:note
 		{allNotes}
-		{noteIDToOpen}
 		{filterParams}
 		{onFilterInputChanged}
 		{onAddNewNote}

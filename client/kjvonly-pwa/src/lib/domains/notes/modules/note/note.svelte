@@ -19,8 +19,7 @@
 	import { Modules } from '$lib/application';
 	import type {
 		Note,
-		NoteTag,
-		NotesMode
+		NoteTag
 	} from '../../models/note.model';
 
 	// SERVICES
@@ -47,11 +46,9 @@
 
 	let {
 		paneID,
-		mode = $bindable<NotesMode>(),
 		note = $bindable<Note>()
 	}: {
 		paneID: string;
-		mode: NotesMode;
 		note: Note;
 	} = $props();
 
@@ -59,10 +56,8 @@
 
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
-	let noteID: string = '';
 	let showConfirmDelete = $state(false);
 	let showNoteActions = $state(false);
-	let showNoteListActions = $state(false);
 	let showTags: boolean = $state(false);
 	let tagContainerHeight = $state(0);
 	let tagInput: string = $state('');
@@ -90,7 +85,6 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		noteID = note.id;
 		let element = document.getElementById(editor);
 
 		/* editor */
@@ -128,11 +122,6 @@
 			return true;
 		}
 
-		if (showNoteListActions) {
-			showNoteListActions = false;
-			return true;
-		}
-
 		return false;
 	}
 
@@ -155,7 +144,6 @@
 			)
 		);
 
-		noteID = note.id;
 		toastService.showToast(
 			toastMessage
 		);
@@ -201,7 +189,6 @@
 			showNoteActions = false;
 			showConfirmDelete = false;
 			note = undefined;
-			noteID = '';
 		}
 	}
 </script>

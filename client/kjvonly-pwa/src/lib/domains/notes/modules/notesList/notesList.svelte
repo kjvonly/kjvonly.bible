@@ -64,7 +64,6 @@
 		note = $bindable(),
 		allNotes,
 		filterParams,
-		noteIDToOpen = '',
 		onFilterInputChanged,
 		onAddNewNote
 	}: {
@@ -76,7 +75,6 @@
 		note: Note | undefined;
 		allNotes: boolean;
 		filterParams: NoteFilterParameter[];
-		noteIDToOpen: string;
 		onFilterInputChanged: () => void;
 		onAddNewNote: (note: Note) => void;
 	} = $props();
