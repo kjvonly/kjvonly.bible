@@ -46,13 +46,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	// =============================== BINDINGS ================================
 
 	let {
-		clientHeight,
 		paneID,
 		mode = $bindable<NotesMode>(),
 		allNotes,
 		noteIDToOpen = ''
 	}: {
-		clientHeight: number;
 		paneID: string;
 		mode: NotesMode;
 		allNotes: boolean;
@@ -179,10 +177,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<NoteComponent {clientHeight} {paneID} bind:mode bind:note></NoteComponent>
+	<NoteComponent {paneID} bind:mode bind:note></NoteComponent>
 {:else}
 	<NotesList
-		{clientHeight}
 		{paneID}
 		bind:mode
 		bind:filterInput

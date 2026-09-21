@@ -14,7 +14,7 @@
 	import { PaneSplit, useApplicationContext } from '$lib/application';
 
 	// OTHER
-	import { BufferHeader, BufferBody } from '$lib/application/ui';
+	import { BufferContainer, BufferHeader, BufferBody } from '$lib/application/ui';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Bible from '$lib/components/svgs/bible.svelte';
@@ -56,7 +56,6 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		clientHeight,
 		paneID,
 		mode = $bindable(),
 		filterInput = $bindable(),
@@ -69,7 +68,6 @@
 		onFilterInputChanged,
 		onAddNewNote
 	}: {
-		clientHeight: number;
 		paneID: string;
 		mode: NotesMode;
 		filterInput: string;
@@ -85,6 +83,7 @@
 
 	// ================================== VARS =================================
 
+	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
 	let showNoteListActions = $state(false);
@@ -478,9 +477,11 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferHeader bind:headerHeight>
-	{@render noteListHeader()}
-</BufferHeader>
-<BufferBody bind:clientHeight bind:headerHeight>
-	{@render noteListBody()}
-</BufferBody>
+<BufferContainer bind:clientHeight>
+	<BufferHeader bind:headerHeight>
+		{@render noteListHeader()}
+	</BufferHeader>
+	<BufferBody bind:clientHeight bind:headerHeight>
+		{@render noteListBody()}
+	</BufferBody>
+</BufferContainer>

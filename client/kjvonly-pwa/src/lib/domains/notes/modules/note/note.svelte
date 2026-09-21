@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BufferHeader } from '$lib/application/ui';
+	import { BufferContainer, BufferHeader } from '$lib/application/ui';
 
 	// SVELTE
 	import { onMount } from 'svelte';
@@ -46,12 +46,10 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		clientHeight = $bindable<number>(),
 		paneID,
 		mode = $bindable<NotesMode>(),
 		note = $bindable<Note>()
 	}: {
-		clientHeight: number;
 		paneID: string;
 		mode: NotesMode;
 		note: Note;
@@ -59,6 +57,7 @@
 
 	// ================================== VARS =================================
 
+	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	let noteID: string = '';
 	let showConfirmDelete = $state(false);
@@ -366,12 +365,14 @@
 	</div>
 {/snippet}
 
-<BufferHeader bind:headerHeight>
-	{@render noteHeaderSnippet()}
-</BufferHeader>
-<div style="height: {clientHeight - headerHeight}px">
-	{@render noteBody()}
-</div>
+<BufferContainer bind:clientHeight>
+	<BufferHeader bind:headerHeight>
+		{@render noteHeaderSnippet()}
+	</BufferHeader>
+	<div style="height: {clientHeight - headerHeight}px">
+		{@render noteBody()}
+	</div>
+</BufferContainer>
 
 <style>
 	:global(.notes-quill.ql-container) {
