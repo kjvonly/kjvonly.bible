@@ -40,16 +40,19 @@
 	let {
 		paneID,
 		note,
+		persisted,
 		onCloseNote
 	}: {
 		paneID: string;
 		note: Note;
+		persisted: boolean;
 		onCloseNote: () => void;
 	} = $props();
 
 	// ================================== VARS =================================
 
 	let clientHeight = $state(0);
+	let isPersisted = $state(persisted);
 	let headerHeight = $state(0);
 	let showConfirmDelete = $state(false);
 	let showNoteActions = $state(false);
@@ -123,9 +126,11 @@
 	// ============================== CLICK FUNCS ==============================
 
 	async function onConfirmDelete() {
-		await notesService.delete(
-			note.id
-		);
+		if (isPersisted) {
+			await notesService.delete(
+				note.id
+			);
+		}
 
 		onCloseNote();
 	}
@@ -140,6 +145,8 @@
 				)
 			)
 		);
+
+		isPersisted = true;
 
 		toastService.showToast(
 			toastMessage

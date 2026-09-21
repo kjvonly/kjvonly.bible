@@ -61,6 +61,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	const NOTE_SUBSCRIPTION_ID = uuid4();
 	let note: Note | undefined = $state();
+	let notePersisted = $state(false);
 	let notes: NotesById = $state({});
 	let noteKeys: string[] = $state([]);
 	let openedNoteID: string | undefined = $state();
@@ -174,21 +175,24 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 		// Edit a working copy so unsaved changes do not mutate list state.
 		note = structuredClone(selectedNote);
+		notePersisted = true;
 	}
 
 	function onCloseNote() {
 		note = undefined;
+		notePersisted = false;
 	}
 
 	function onAddNewNote(newNote: Note) {
 		// New notes remain editor-local drafts until Save persists them.
 		note = newNote;
+		notePersisted = false;
 	}
 </script>
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<NoteComponent {paneID} {note} {onCloseNote}></NoteComponent>
+	<NoteComponent {paneID} {note} persisted={notePersisted} {onCloseNote}></NoteComponent>
 {:else}
 	<NotesList
 		{paneID}
