@@ -15,7 +15,7 @@
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');
 
-	let { paneID = $bindable<string>() } = $props();
+	let { paneID }: { paneID: string } = $props();
 
 	let pane: Pane | undefined = $state();
 
