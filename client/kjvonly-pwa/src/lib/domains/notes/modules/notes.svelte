@@ -182,8 +182,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		{paneID}
 		bind:mode
 		bind:filterInput
-		bind:noteKeys
-		bind:notes
+		{noteKeys}
+		{notes}
 		bind:note
 		{allNotes}
 		{filterParams}
