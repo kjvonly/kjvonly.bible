@@ -1,9 +1,7 @@
 <script lang="ts">
 	import Notes from './notes.svelte';
-	import { onMount } from 'svelte';
 	import type { Pane } from '$lib/application';
 	import type { NotesMode } from '../models/note.model';
-	let noteID: string = $state('');
 	let {
 		paneID,
 		pane = $bindable<Pane>()
@@ -17,11 +15,8 @@
 		notePopup: { show: false }
 	});
 
-	onMount(() => {
-		if (pane.buffer && pane.buffer.bag) {
-			noteID = pane.buffer.bag.noteID;
-		}
-	});
+	// The Buffer bag is startup context for this Notes instance, not live state.
+	const noteID = pane.buffer?.bag.noteID ?? '';
 </script>
 
 <!--
