@@ -177,7 +177,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 
 		// Edit a working copy so unsaved changes do not mutate list state.
-		note = structuredClone(selectedNote);
+		note = $state.snapshot(selectedNote);
 		notePersisted = true;
 		return true;
 	}
