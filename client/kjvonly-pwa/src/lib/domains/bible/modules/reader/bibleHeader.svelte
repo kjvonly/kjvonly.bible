@@ -279,7 +279,7 @@
 
 {#snippet header()}
 	<div
-		class="w-full bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
+		class="w-full bg-neutral-100 py-2 leading-tight"
 	>
 		<span
 			class="grid {'grid-cols-' +

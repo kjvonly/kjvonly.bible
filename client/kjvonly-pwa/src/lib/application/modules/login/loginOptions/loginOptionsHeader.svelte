@@ -23,7 +23,7 @@
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<div
-		class="flex w-full flex-row bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
+		class="flex w-full flex-row bg-neutral-100 py-2 leading-tight"
 	>
 		<span class="flex-1"></span>
 		<span class="text-center">Login</span>

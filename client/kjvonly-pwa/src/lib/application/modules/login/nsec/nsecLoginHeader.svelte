@@ -27,7 +27,7 @@
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<div
-		class="grid w-full grid-cols-3 bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
+		class="grid w-full grid-cols-3 bg-neutral-100 py-2 leading-tight"
 	>
 		<KJVButton onClick={onBack} classes="ps-4">
 			<ArrowBack></ArrowBack>
