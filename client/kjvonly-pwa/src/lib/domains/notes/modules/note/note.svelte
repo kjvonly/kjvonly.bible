@@ -35,10 +35,7 @@
 	// APPLICATION
 	const {
 		workspaceRuntime,
-		toastService
-	} = useApplicationContext();
-
-	const {
+		toastService,
 		notesService
 	} = useApplicationContext();
 

@@ -43,10 +43,7 @@
 	const {
 		archiveService,
 		workspaceRuntime,
-		toastService
-	} = useApplicationContext();
-
-	const {
+		toastService,
 		verseService,
 		bibleBooknamesService,
 		moduleResourceSelectionResolver

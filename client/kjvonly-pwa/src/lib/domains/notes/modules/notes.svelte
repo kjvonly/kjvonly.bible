@@ -59,7 +59,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	// ================================== VARS =================================
 
-	let noteID: string = '';
 	let NOTE_SUBSCRIPTION_ID = uuid4();
 	let note: Note | undefined = $state();
 	let notes: NotesById = $state({});
@@ -164,7 +163,6 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	async function onSelectedNote(noteId: string) {
-		noteID = noteId;
 		note = notes[noteId];
 	}
 
