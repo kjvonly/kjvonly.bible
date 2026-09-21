@@ -17,7 +17,7 @@
 	});
 </script>
 
-<div class="kjvonly-noselect h-full w-full min-h-0 min-w-0 overflow-hidden">
+<div class="kjvonly-noselect h-full w-full min-h-0 min-w-0">
 	<Notes
 		allNotes={true}
 		{paneID}
