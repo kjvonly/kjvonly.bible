@@ -169,6 +169,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		note = notes[noteId];
 	}
 
+	function onCloseNote() {
+		note = undefined;
+	}
+
 	function onAddNewNote(newNote: Note) {
 		notes[newNote.id] = newNote;
 		noteKeys = [newNote.id, ...noteKeys];
@@ -178,7 +182,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<NoteComponent {paneID} bind:note></NoteComponent>
+	<NoteComponent {paneID} {note} {onCloseNote}></NoteComponent>
 {:else}
 	<NotesList
 		{paneID}
@@ -186,7 +190,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		bind:filterInput
 		{noteKeys}
 		{notes}
-		bind:note
+		{onSelectedNote}
 		{allNotes}
 		{filterParams}
 		{onFilterInputChanged}

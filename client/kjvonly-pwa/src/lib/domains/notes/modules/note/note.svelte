@@ -39,10 +39,12 @@
 
 	let {
 		paneID,
-		note = $bindable<Note>()
+		note,
+		onCloseNote
 	}: {
 		paneID: string;
 		note: Note;
+		onCloseNote: () => void;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -125,7 +127,7 @@
 			note.id
 		);
 
-		note = undefined;
+		onCloseNote();
 	}
 
 	async function onSave(toastMessage: string) {
@@ -177,11 +179,11 @@
 		}
 	}
 
-	function onCloseNote() {
+	function onClose() {
 		if (!isShowingOptions()) {
 			showNoteActions = false;
 			showConfirmDelete = false;
-			note = undefined;
+			onCloseNote();
 		}
 	}
 </script>
@@ -209,7 +211,7 @@
 			<Menu></Menu>
 		</KJVButton>
 
-		<KJVButton classes="" onClick={onCloseNote}>
+		<KJVButton classes="" onClick={onClose}>
 			<Close></Close>
 		</KJVButton>
 	</div>

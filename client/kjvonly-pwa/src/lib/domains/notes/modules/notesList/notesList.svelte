@@ -55,7 +55,7 @@
 		filterInput = $bindable(),
 		noteKeys,
 		notes,
-		note = $bindable(),
+		onSelectedNote,
 		allNotes,
 		filterParams,
 		onFilterInputChanged,
@@ -66,7 +66,7 @@
 		filterInput: string;
 		noteKeys: string[];
 		notes: NotesById;
-		note: Note | undefined;
+		onSelectedNote: (noteId: string) => void;
 		allNotes: boolean;
 		filterParams: NoteFilterParameter[];
 		onFilterInputChanged: () => void;
@@ -271,10 +271,6 @@
 		}
 
 		onAddNewNote(newNote);
-	}
-
-	function onSelectedNote(noteId: string) {
-		note = notes[noteId];
 	}
 
 	function onBibleClicked(e: Event, note: Note): void {
