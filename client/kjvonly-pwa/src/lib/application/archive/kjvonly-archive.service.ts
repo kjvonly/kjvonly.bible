@@ -1,4 +1,8 @@
 import type {
+	KJVOnlyArchiveExportIdsSelection
+} from './kjvonly-archive-export-ids-selection';
+
+import type {
 	KJVOnlyArchiveExportSelection
 } from './kjvonly-archive-export-selection';
 
@@ -30,7 +34,7 @@ export class KJVOnlyArchiveService {
 		private readonly workerClient:
 			Pick<
 				KJVOnlyArchiveWorkerClient,
-				'import' | 'export'
+				'import' | 'export' | 'exportIds'
 			>
 	) {}
 
@@ -117,6 +121,15 @@ export class KJVOnlyArchiveService {
 			KJVOnlyArchiveExportSelection
 	): Promise<Uint8Array> {
 		return this.workerClient.export(
+			selection
+		);
+	}
+
+	exportIds(
+		selection:
+			KJVOnlyArchiveExportIdsSelection
+	): Promise<Uint8Array> {
+		return this.workerClient.exportIds(
 			selection
 		);
 	}

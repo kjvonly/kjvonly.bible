@@ -6,6 +6,10 @@ import {
 	Modules
 } from '$lib/application/models/modules.model';
 
+import type {
+	BufferBag
+} from '$lib/application/runtime/buffer/models/buffer-bag.model';
+
 import {
 	parseResourceSelections,
 	type ResourceSelections
@@ -14,7 +18,7 @@ import {
 export interface PersistedBuffer {
 	key: string;
 	componentName: Modules;
-	bag: any;
+	bag: BufferBag;
 	resourceSelections: ResourceSelections;
 }
 
@@ -117,7 +121,9 @@ function parsePersistedBuffer(
 			persisted.componentName,
 
 		bag:
-			persisted.bag ?? {},
+			parseBufferBag(
+				persisted.bag
+			),
 
 		resourceSelections:
 			parseResourceSelections(
@@ -125,6 +131,27 @@ function parsePersistedBuffer(
 				{}
 			)
 	};
+}
+
+
+function parseBufferBag(
+	value: unknown
+): BufferBag {
+	if (value === undefined) {
+		return {};
+	}
+
+	if (
+		typeof value !== 'object' ||
+		value === null ||
+		Array.isArray(value)
+	) {
+		throw new Error(
+			'Invalid persisted Buffer bag'
+		);
+	}
+
+	return value as BufferBag;
 }
 
 function isModule(

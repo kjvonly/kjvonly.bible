@@ -1,6 +1,6 @@
 import type {
 	BibleTextMarkup
-} from '$lib/domains/bible/models/bible-text-markup.model';
+} from '../models/bible-text-markup.model';
 
 import {
 	BIBLE_TEXT_MARKUP_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	BibleTextMarkupWriteStores,
 	BibleTextMarkupWriteTransaction
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-write-stores';
+} from '../resources/text-markup/bible-text-markup-write-stores';
 
 import {
 	createPendingPublication

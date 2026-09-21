@@ -1,14 +1,14 @@
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../../models/plan-progress';
 
 import {
 	createPlanSubscriptionId
-} from '$lib/domains/reading-plans/models/plan-subscription-id';
+} from '../../models/plan-subscription-id';
 
 import {
 	PLAN_PROGRESS_OBJECT_TYPE
-} from '$lib/domains/reading-plans/persistence/plan-progress-store';
+} from '../../persistence/plan-progress-store';
 
 import {
 	createResourceInstallationId,

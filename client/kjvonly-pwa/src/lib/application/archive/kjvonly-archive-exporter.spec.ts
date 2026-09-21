@@ -294,6 +294,106 @@ describe(
 			}
 		);
 
+
+		it(
+			'exports exact Domain Object ids without scanning Resource Installations',
+			async () => {
+				const note =
+					createDomainObject(
+						NOTE_OBJECT_TYPE,
+						'publisher/default/note-1'
+					);
+
+				const installation =
+					createInstallation(
+						note
+					);
+
+				const get =
+					vi.fn(
+						async (
+							store: string
+						) =>
+							store === DOMAIN_OBJECTS
+								? note
+								: installation
+					);
+
+				const getAll =
+					vi.fn();
+
+				const exporter =
+					createExporter({
+						get,
+						getAll
+					});
+
+				await expect(
+					exporter.exportIds({
+						ids: [
+							note.id
+						]
+					})
+				).resolves.toEqual({
+					version:
+						1,
+					domain_objects: {
+						[note.id]:
+							note
+					},
+					resource_installations: {
+						[note.id]:
+							installation
+					}
+				});
+
+				expect(
+					getAll
+				).not.toHaveBeenCalled();
+
+				expect(
+					get.mock.calls
+				).toEqual([
+					[DOMAIN_OBJECTS, note.id],
+					[RESOURCE_INSTALLATIONS, note.id]
+				]);
+			}
+		);
+
+		it(
+			'fails exact-id export when the matching Resource Installation is missing',
+			async () => {
+				const note =
+					createDomainObject(
+						NOTE_OBJECT_TYPE,
+						'publisher/default/note-1'
+					);
+
+				const exporter =
+					createExporter({
+						get:
+							vi.fn(
+								async (
+									store: string
+								) =>
+									store === DOMAIN_OBJECTS
+										? note
+										: undefined
+							)
+					});
+
+				await expect(
+					exporter.exportIds({
+						ids: [
+							note.id
+						]
+					})
+				).rejects.toThrow(
+					`Cannot export Domain Object ${note.id}: matching Resource Installation is missing.`
+				);
+			}
+		);
+
 		it(
 			'fails export when a selected Resource Installation has no matching Domain Object',
 			async () => {

@@ -62,6 +62,14 @@ export type {
 	Pane
 } from './runtime/pane/models/pane.model';
 
+export type {
+	BibleBufferBag,
+	NotesBufferBag,
+	ReferencesBufferBag,
+	ReadingPlansBufferBag,
+	BufferBag
+} from './runtime/buffer/models/buffer-bag.model';
+
 export {
 	WorkspaceChangeType,
 	WorkspaceRuntime,
@@ -129,6 +137,10 @@ export {
 export {
 	KJVOnlyArchiveExporter
 } from './archive/kjvonly-archive-exporter';
+
+export type {
+	KJVOnlyArchiveExportIdsSelection
+} from './archive/kjvonly-archive-export-ids-selection';
 
 export {
 	matchesKJVOnlyArchiveExportSelection,

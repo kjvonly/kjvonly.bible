@@ -2,7 +2,7 @@
 	// ================================ IMPORTS ================================
 	// SVELTE
 	import { Modules } from '$lib/application';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// COMPONENTS
 	import SearchResultActions from './searchResultActions.svelte';
@@ -13,7 +13,7 @@
 		type onFilterBibleLocationRefFunction,
 		type SearchResult,
 		type SearchResultResponse
-	} from '$lib/domains/bible/models/search.model';
+	} from '../../models/search.model';
 
 	// SERVICES
 
@@ -28,11 +28,11 @@
 		bibleLocationReferenceService
 	} = useApplicationContext();
 
-	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../resources/chapters/bible-chapter-interpreter';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../resources/booknames/bible-booknames-interpreter';
 
-	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
+	import type { BibleBooknames } from '../../models/bible-booknames.model';
 	// =============================== BINDINGS ================================
 
 	let {
@@ -68,12 +68,14 @@
 
 	onMount(() => {
 		searchService.subscribe(searchID, onSearchResult);
-		let el = document.getElementById(`${searchID}-scroll-container`);
-		el?.addEventListener('scroll', handleScroll);
-	});
 
-	onDestroy(() => {
-		searchService.unsubscribe(searchID);
+		const el = document.getElementById(`${searchID}-scroll-container`);
+		el?.addEventListener('scroll', handleScroll);
+
+		return () => {
+			el?.removeEventListener('scroll', handleScroll);
+			searchService.unsubscribe(searchID);
+		};
 	});
 
 	function match(word: string) {

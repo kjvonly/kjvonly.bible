@@ -5,7 +5,7 @@
 
 	//MODELS
 	import { Modules } from '$lib/application';
-	import type { Verse } from '$lib/domains/bible/models/bible.model';
+	import type { Verse } from '../../../models/bible.model';
 
 	// SERVICES
 
@@ -24,9 +24,9 @@
 	// NOSTR IMPL
 	import { useApplicationContext } from '$lib/application';
 
-	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../../resources/chapters/bible-chapter-interpreter';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
 	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
 	import { PaneSplit } from '$lib/application';
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
@@ -288,7 +288,9 @@
 		setSelectedVerses();
 	}
 
-	function onCopyVerseClicked(verseNumber: number) {
+	function onCopyVerseClicked(event: Event, verseNumber: number) {
+		event.stopPropagation();
+
 		let verseRange = [verseNumber, verseNumber];
 		let copyText = getVerseRangeText(verseRange);
 		navigator.clipboard.writeText(copyText);
@@ -398,6 +400,7 @@
 					type="checkbox"
 					class="accent-support-a-600 h-5 w-5"
 					bind:checked={checked[idx]}
+					onclick={(event) => event.stopPropagation()}
 					onchange={areAllVersesChecked}
 				/>
 			</div>
@@ -413,7 +416,10 @@
 {/snippet}
 {#snippet actions(verseNumber: number)}
 	<div class="flex flex-row justify-end space-x-4">
-		<KJVButton classes="" onClick={() => onCopyVerseClicked(verseNumber)}>
+		<KJVButton
+			classes=""
+			onClick={(event: Event) => onCopyVerseClicked(event, verseNumber)}
+		>
 			<Copy classes=""></Copy>
 		</KJVButton>
 

@@ -6,7 +6,7 @@ import {
 
 import type {
 	BibleSearchIndex
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../models/bible-search-index.model';
 
 import {
 	DOMAIN_OBJECTS,

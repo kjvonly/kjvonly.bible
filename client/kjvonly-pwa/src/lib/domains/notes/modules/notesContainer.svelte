@@ -1,16 +1,13 @@
 <script lang="ts">
-	import uuid4 from 'uuid4';
 	import Notes from './notes.svelte';
-	import { onMount, untrack } from 'svelte';
-	let id = uuid4();
+	import { onMount } from 'svelte';
+	import type { NotesMode } from '../models/note.model';
 	let noteID: string = $state('');
 	let { paneID = $bindable<string>(), pane = $bindable() } = $props();
 
-	let mode = $state({
+	let mode: NotesMode = $state({
 		bibleLocationRef: undefined as string | undefined,
-		bibleVersion: 'kjvs',
-		notePopup: { show: false },
-		paneID: paneID
+		notePopup: { show: false }
 	});
 
 	onMount(() => {
@@ -20,8 +17,18 @@
 	});
 </script>
 
-<div class="kjvonly-noselect h-full overflow-hidden">
-	<div {id} class="h-full">
-		<Notes allNotes={true} bind:mode noteIDToOpen={noteID}></Notes>
-	</div>
+<!--
+	Notes is also embedded directly by the Bible popup, which bypasses this
+	module container. Keep BufferContainer ownership in Note/NotesList so both
+	entry paths receive the same buffer presentation shell. Unlike most module
+	containers, this wrapper must also remain unclipped so the child
+	BufferContainer outline can render normally.
+-->
+<div class="kjvonly-noselect h-full w-full min-h-0 min-w-0">
+	<Notes
+		allNotes={true}
+		{paneID}
+		bind:mode
+		noteIDToOpen={noteID}
+	></Notes>
 </div>

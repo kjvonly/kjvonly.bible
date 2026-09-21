@@ -1,6 +1,6 @@
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../models/plan-progress';
 
 export const PLAN_PROGRESS_OBJECT_TYPE =
 	'reading-plans/plan-progress';

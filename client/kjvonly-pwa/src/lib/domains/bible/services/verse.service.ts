@@ -1,7 +1,7 @@
 import {
 	newVerse,
 	type Verse
-} from '$lib/domains/bible/models/bible.model';
+} from '../models/bible.model';
 
 import type {
 	PublishedResourceReference

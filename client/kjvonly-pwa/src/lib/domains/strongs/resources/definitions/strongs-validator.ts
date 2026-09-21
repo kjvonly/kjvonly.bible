@@ -4,7 +4,7 @@ import {
 
 import type {
 	StrongsContent
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../../models/strongs.model';
 
 import type {
 	ResourceValidator

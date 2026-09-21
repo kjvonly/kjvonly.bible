@@ -1,6 +1,6 @@
 import type {
 	BibleParagraphsStore
-} from '$lib/domains/bible/persistence/bible-paragraphs-store';
+} from '../../persistence/bible-paragraphs-store';
 
 import type {
 	ResourceInstallationStore

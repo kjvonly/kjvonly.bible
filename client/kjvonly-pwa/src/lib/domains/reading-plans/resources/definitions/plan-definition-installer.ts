@@ -1,14 +1,14 @@
 import type {
 	PlanDefinition
-} from '$lib/domains/reading-plans/models/plan-definition';
+} from '../../models/plan-definition';
 
 import {
 	createPlanDefinitionId
-} from '$lib/domains/reading-plans/models/plan-definition-id';
+} from '../../models/plan-definition-id';
 
 import {
 	PLAN_DEFINITION_OBJECT_TYPE
-} from '$lib/domains/reading-plans/persistence/plan-definitions-store';
+} from '../../persistence/plan-definitions-store';
 
 import {
 	type DecodedResourceContent,

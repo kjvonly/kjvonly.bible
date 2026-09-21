@@ -17,7 +17,7 @@
 	// SERVICES
 	import { useApplicationContext } from '$lib/application';
 
-	import { BIBLE_SEARCH_RESOURCE_TYPE } from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
+	import { BIBLE_SEARCH_RESOURCE_TYPE } from '../../resources/search/bible-search-index-interpreter';
 
 	import type { PublishedResourceReference } from '$lib/resource';
 
@@ -35,7 +35,7 @@
 		paneID = $bindable<string>(),
 		pane = $bindable<Pane>(),
 		showInput = true,
-		searchTerms,
+		searchTerms = '',
 		onClose = undefined,
 		onFilterBibleLocationRef = undefined
 	} = $props();

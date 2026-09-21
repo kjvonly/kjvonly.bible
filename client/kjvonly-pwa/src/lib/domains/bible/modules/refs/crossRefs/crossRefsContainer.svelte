@@ -19,8 +19,8 @@
 	import {
 		newCrossRef,
 		type CrossRef
-	} from '$lib/domains/bible/models/bible.model';
-	import type { BibleBooknames } from '$lib/domains/bible/models/bible-booknames.model';
+	} from '../../../models/bible.model';
+	import type { BibleBooknames } from '../../../models/bible-booknames.model';
 
 	// SERVICES
 	import { PaneSplit } from '$lib/application';
@@ -43,9 +43,9 @@
 		bibleLocationReferenceService
 	} = useApplicationContext();
 
-	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../../resources/chapters/bible-chapter-interpreter';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
 
 	import {
 		isCrossReference,
@@ -205,7 +205,7 @@
 			bibleLocationRef
 		);
 		let crossRefs = [crossRef.crossRef];
-		verse?.words.forEach((w: any) => {
+		verse?.words.forEach((w) => {
 			const refs = tokenizeReferences(w.href ?? []);
 
 			refs.forEach((ref: string) => {

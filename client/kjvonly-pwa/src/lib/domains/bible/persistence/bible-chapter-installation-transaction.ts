@@ -1,15 +1,15 @@
 import type {
 	BibleVersion
-} from '$lib/domains/bible/models/bible-version.model';
+} from '../models/bible-version.model';
 
 import type {
 	Chapter
-} from '$lib/domains/bible/models/bible.model';
+} from '../models/bible.model';
 
 import type {
 	BibleChapterInstallationStores,
 	BibleChapterInstallationTransaction
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installation-stores';
+} from '../resources/chapters/bible-chapter-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

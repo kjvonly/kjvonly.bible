@@ -1,6 +1,6 @@
 import type {
 	BiblePericopes
-} from '$lib/domains/bible/models/bible-pericopes.model';
+} from '../../models/bible-pericopes.model';
 
 import type {
 	ResourcePublication

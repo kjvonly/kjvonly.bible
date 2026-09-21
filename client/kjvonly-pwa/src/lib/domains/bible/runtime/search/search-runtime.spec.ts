@@ -11,12 +11,12 @@ import type {
 
 import type {
 	BibleSearchIndex
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../../models/bible-search-index.model';
 
 import type {
 	SearchWorkerMessage,
 	SearchWorkerRequest
-} from '$lib/domains/bible/workers/search/search-worker-message';
+} from '../../workers/search/search-worker-message';
 
 import {
 	SearchRuntime

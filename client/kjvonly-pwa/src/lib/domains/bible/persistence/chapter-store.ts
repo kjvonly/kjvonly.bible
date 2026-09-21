@@ -1,6 +1,6 @@
 import type {
 	Chapter
-} from '$lib/domains/bible/models/bible.model';
+} from '../models/bible.model';
 
 export interface ChapterStore {
 	get(

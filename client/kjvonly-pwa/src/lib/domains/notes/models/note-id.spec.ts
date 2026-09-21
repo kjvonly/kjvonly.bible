@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+	createNoteDomainObjectId,
 	createNoteId,
 	parseNoteId
 } from './note-id';
@@ -42,6 +43,19 @@ describe(
 					noteId:
 						'note-1'
 				});
+			}
+		);
+
+		it(
+			'creates the persisted Domain Object identity',
+			() => {
+				expect(
+					createNoteDomainObjectId(
+						'publisher/default/note-1'
+					)
+				).toBe(
+					'notes/note:publisher/default/note-1'
+				);
 			}
 		);
 

@@ -1,18 +1,18 @@
 import type {
 	PlanSubscription
-} from '$lib/domains/reading-plans/models/plan-subscription';
+} from '../models/plan-subscription';
 
 import type {
 	PlanSubscriptionsStore
-} from '$lib/domains/reading-plans/persistence/plan-subscriptions-store';
+} from '../persistence/plan-subscriptions-store';
 
 import type {
 	PlanSubscriptionWriteTransaction
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-write-stores';
+} from '../resources/subscriptions/plan-subscription-write-stores';
 
 import type {
 	PlanSubscriptionResourcePublication
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-publication';
+} from '../resources/subscriptions/plan-subscription-resource-publication';
 
 import type {
 	OutboxWakeup

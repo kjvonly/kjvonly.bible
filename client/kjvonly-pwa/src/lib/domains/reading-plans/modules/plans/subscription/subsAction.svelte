@@ -8,7 +8,7 @@
 
 	// MODELS
 	import { type Pane } from '$lib/application';
-	import { PLANS_VIEWS } from '$lib/domains/reading-plans/models/plans.model';
+	import { PLANS_VIEWS } from '../../../models/plans.model';
 
 	// =============================== BINDINGS ================================
 
@@ -26,7 +26,7 @@
 	let clientHeight: number = $state(0);
 	let headerHeight: number = $state(0);
 
-	let subsActionItems: any = {
+	const subsActionItems: Record<string, () => void> = {
 		plans: () => {
 			plansDisplay = PLANS_VIEWS.PLANS_LIST;
 		},

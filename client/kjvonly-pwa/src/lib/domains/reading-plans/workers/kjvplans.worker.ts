@@ -2,28 +2,28 @@ import {
   planSubscriptionToSub,
   PLAN_PUBSUB_SUBSCRIPTIONS,
   type Sub
-} from '$lib/domains/reading-plans/models/plans.model';
-import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
-import type { PlanProgress } from '$lib/domains/reading-plans/models/plan-progress';
+} from '../models/plans.model';
+import type { PlanSubscription } from '../models/plan-subscription';
+import type { PlanProgress } from '../models/plan-progress';
 import {
   EncodedReadingsDecoderService,
   type BookNameLookup
-} from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
-import { SubsEnricherService } from '$lib/domains/reading-plans';
+} from '../services/encodedReadingsDecoder.service';
+import { SubsEnricherService } from '../services/subsEnricher.service';
 import {
   PLANS_WORKER_INITIALIZED,
   PLANS_WORKER_REFRESH,
   type PlansSubscriptionsMessage,
   type PlansWorkerCommand,
   type PlansWorkerInitializedMessage
-} from '$lib/domains/reading-plans/models/plans-worker.model';
+} from '../models/plans-worker.model';
 
 import {
   IndexedDBPlanSubscriptionsStore
-} from '$lib/domains/reading-plans/persistence/indexeddb-plan-subscriptions-store';
+} from '../persistence/indexeddb-plan-subscriptions-store';
 import {
   IndexedDBPlanProgressStore
-} from '$lib/domains/reading-plans/persistence/indexeddb-plan-progress-store';
+} from '../persistence/indexeddb-plan-progress-store';
 import {
   getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';

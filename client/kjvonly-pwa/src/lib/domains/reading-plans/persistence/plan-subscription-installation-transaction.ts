@@ -1,6 +1,6 @@
 import type {
 	PlanSubscription
-} from '$lib/domains/reading-plans/models/plan-subscription';
+} from '../models/plan-subscription';
 
 import {
 	PLAN_SUBSCRIPTION_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	PlanSubscriptionInstallationStores,
 	PlanSubscriptionInstallationTransaction
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-installation-stores';
+} from '../resources/subscriptions/plan-subscription-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

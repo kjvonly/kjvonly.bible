@@ -110,6 +110,66 @@ describe(
 			}
 		);
 
+
+		it(
+			'creates an exact-id export worker request',
+			async () => {
+				const worker =
+					new FakeArchiveWorker();
+
+				const client =
+					new KJVOnlyArchiveWorkerClient(
+						() => worker
+					);
+
+				const selection = {
+					ids: [
+						'notes/note:publisher/default/note-1'
+					]
+				};
+
+				const resultPromise =
+					client.exportIds(
+						selection
+					);
+
+				expect(
+					worker.messages
+				).toEqual([
+					{
+						type:
+							'export-ids',
+						selection
+					}
+				]);
+
+				worker.emitMessage({
+					type:
+						'export-result',
+					value:
+						new Uint8Array([
+							7,
+							8
+						])
+				});
+
+				await expect(
+					resultPromise
+				).resolves.toEqual(
+					new Uint8Array([
+						7,
+						8
+					])
+				);
+
+				expect(
+					worker.terminate
+				).toHaveBeenCalledTimes(
+					1
+				);
+			}
+		);
+
 		it(
 			'creates and terminates a separate worker for each operation',
 			async () => {

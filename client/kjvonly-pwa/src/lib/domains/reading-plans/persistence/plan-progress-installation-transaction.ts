@@ -1,6 +1,6 @@
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../models/plan-progress';
 
 import {
 	PLAN_PROGRESS_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	PlanProgressInstallationStores,
 	PlanProgressInstallationTransaction
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-installation-stores';
+} from '../resources/progress/plan-progress-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

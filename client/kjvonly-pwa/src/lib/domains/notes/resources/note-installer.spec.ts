@@ -6,15 +6,15 @@ import {
 
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 import {
 	createNoteId
-} from '$lib/domains/notes/models/note-id';
+} from '../models/note-id';
 
 import {
 	NOTE_OBJECT_TYPE
-} from '$lib/domains/notes/persistence/notes-store';
+} from '../persistence/notes-store';
 
 import {
 	createResourceInstallationId,

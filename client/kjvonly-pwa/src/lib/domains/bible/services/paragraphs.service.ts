@@ -6,20 +6,20 @@ import {
 
 import type {
 	BibleParagraphs
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../models/bible-paragraphs.model';
 
 import {
 	createBibleParagraphsId
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../models/bible-paragraphs.model';
 
 import type {
 	BibleParagraphsStore
-} from '$lib/domains/bible/persistence/bible-paragraphs-store';
+} from '../persistence/bible-paragraphs-store';
 
 
 import {
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
+} from '../resources/paragraphs/bible-paragraphs-interpreter';
 
 import type {
 	BibleLocationReferenceService

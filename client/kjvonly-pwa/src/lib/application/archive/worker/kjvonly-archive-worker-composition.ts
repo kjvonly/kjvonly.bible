@@ -147,6 +147,10 @@ import {
 } from '../kjvonly-archive-codec';
 
 import type {
+	KJVOnlyArchiveExportIdsSelection
+} from '../kjvonly-archive-export-ids-selection';
+
+import type {
 	KJVOnlyArchiveExportSelection
 } from '../kjvonly-archive-export-selection';
 
@@ -167,6 +171,11 @@ export interface KJVOnlyArchiveWorkerOperations {
 	export(
 		selection:
 			KJVOnlyArchiveExportSelection
+	): Promise<Uint8Array>;
+
+	exportIds(
+		selection:
+			KJVOnlyArchiveExportIdsSelection
 	): Promise<Uint8Array>;
 }
 
@@ -201,6 +210,20 @@ export function createKJVOnlyArchiveWorkerOperations():
 			) => {
 				const archive =
 					await exporter.export(
+						selection
+					);
+
+				return codec.encode(
+					archive
+				);
+			},
+
+		exportIds:
+			async (
+				selection
+			) => {
+				const archive =
+					await exporter.exportIds(
 						selection
 					);
 

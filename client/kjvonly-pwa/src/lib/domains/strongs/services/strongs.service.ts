@@ -6,20 +6,20 @@ import {
 
 import type {
 	Strongs
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../models/strongs.model';
 
 import type {
 	StrongsStore
-} from '$lib/domains/strongs/persistence/strongs-store';
+} from '../persistence/strongs-store';
 
 
 import {
 	createStrongsId
-} from '$lib/domains/strongs/utils/strongs-identity';
+} from '../utils/strongs-identity';
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+} from '../resources/definitions/strongs-interpreter';
 
 export class StrongsService {
 

@@ -11,7 +11,7 @@ import type {
 import type {
 	Chapter,
 	Verse
-} from '$lib/domains/bible/models/bible.model';
+} from '../models/bible.model';
 
 import {
 	VerseService

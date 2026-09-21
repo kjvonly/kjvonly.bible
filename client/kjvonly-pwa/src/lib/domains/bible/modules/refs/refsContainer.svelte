@@ -13,28 +13,20 @@
 	import CrossRefsContainer from './crossRefs/crossRefsContainer.svelte';
 
 	// MODELS
+	import type { Pane } from '$lib/application';
+	import { useApplicationContext } from '$lib/application';
 	import {
 		newStrongsPopups,
+		STRONGS_RESOURCE_TYPE,
 		type StrongsPopups
 	} from '$lib/domains/strongs';
-	import type { Pane } from '$lib/application';
-
-
 
 	import {
-		STRONGS_RESOURCE_TYPE
-	} from '$lib/domains/strongs';
-
-import {
-	useApplicationContext
-} from '$lib/application';
-
-import {
-	isCrossReference,
-	isFootnoteReference,
-	isStrongsReference,
-	tokenizeReferences
-} from '../../services/reference-tokenizer.service';
+		isCrossReference,
+		isFootnoteReference,
+		isStrongsReference,
+		tokenizeReferences
+	} from '../../services/reference-tokenizer.service';
 
 	const {
 		moduleResourceSelectionResolver
@@ -60,12 +52,12 @@ import {
 	let strongsRefs: string[] = $state([]);
 	let text = $state('');
 	let crossRefs: string[] = $state([]);
-	let bibleVersion: string = $state('');
 
-	const strongsSource =
-	moduleResourceSelectionResolver.require(
-		paneID,
-		STRONGS_RESOURCE_TYPE
+	let strongsSource = $derived(
+		moduleResourceSelectionResolver.require(
+			paneID,
+			STRONGS_RESOURCE_TYPE
+		)
 	);
 
 
@@ -84,7 +76,7 @@ import {
 			getRefs()
 		);
 
-		refs.forEach((ref: string) => {
+		refs.forEach((ref) => {
 			matchStrongsRef(ref);
 			matchFootnote(ref);
 			matchCrossRef(ref);
@@ -95,16 +87,13 @@ import {
 	 * Refs are passed to component via buffer bag
 	 */
 	function getRefs(): string[] {
-		let refs: string[] = [];
-		// TODO ADD TYPE
-		if (pane?.buffer?.bag?.refs) {
-			// if verse number is clicked TODO make this implicit
-			refs = pane?.buffer?.bag?.refs;
-		} else if (pane?.buffer?.bag?.word?.href) {
-			// if a non verse number is clicked TODO make this implicit
-			refs = pane?.buffer?.bag?.word?.href;
+		const bag = pane.buffer?.bag;
+
+		if (bag?.refs) {
+			return bag.refs;
 		}
-		return refs;
+
+		return bag?.word?.href ?? [];
 	}
 
 	function matchStrongsRef(ref: string): void {
@@ -131,10 +120,10 @@ import {
 	 * has visual queue for the verse that was clicked.
 	 */
 	function setCurrentVerseRef(): void {
-		if (hasCrossRefs()) {
-			if (pane?.buffer?.bag?.currentVerseRef) {
-				crossRefs = [pane?.buffer?.bag?.currentVerseRef, ...crossRefs];
-			}
+		const currentVerseRef = pane.buffer?.bag.currentVerseRef;
+
+		if (hasCrossRefs() && currentVerseRef) {
+			crossRefs = [currentVerseRef, ...crossRefs];
 		}
 	}
 
@@ -143,12 +132,16 @@ import {
 	}
 
 	function setWordText(): void {
-		if (pane?.buffer?.bag?.word?.text) {
-			text = pane.buffer.bag.word.text.replace(
-				/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g,
-				''
-			);
+		const wordText = pane.buffer?.bag.word?.text;
+
+		if (!wordText) {
+			return;
 		}
+
+		text = wordText.replace(
+			/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g,
+			''
+		);
 	}
 
 	// ============================== CLICK FUNCS ==============================
@@ -166,14 +159,13 @@ import {
 		<FootnoteContainer
 			hasCrossRef={pane?.buffer?.bag?.refs !== undefined}
 			{footnotes}
-			chapterFootnotes={pane?.buffer?.bag?.footnotes}
+			chapterFootnotes={pane?.buffer?.bag?.footnotes ?? {}}
 		></FootnoteContainer>
 	{/if}
 
 	{#if strongsRefs.length > 0}
 		<div class=" pt-4"></div>
 		<StrongsDefsContainer
-			bind:clientHeight
 			bind:popups
 			{text}
 			{strongsSource}
@@ -181,7 +173,6 @@ import {
 			{paneID}
 			hasCrossRef={crossRefs.length > 0}
 			strongsWords={pane?.buffer?.bag?.strongsWords}
-			{bibleVersion}
 		></StrongsDefsContainer>
 	{/if}
 

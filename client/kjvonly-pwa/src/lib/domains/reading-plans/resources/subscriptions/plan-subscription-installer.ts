@@ -1,14 +1,14 @@
 import type {
 	PlanSubscription
-} from '$lib/domains/reading-plans/models/plan-subscription';
+} from '../../models/plan-subscription';
 
 import {
 	createPlanSubscriptionId
-} from '$lib/domains/reading-plans/models/plan-subscription-id';
+} from '../../models/plan-subscription-id';
 
 import {
 	PLAN_SUBSCRIPTION_OBJECT_TYPE
-} from '$lib/domains/reading-plans/persistence/plan-subscriptions-store';
+} from '../../persistence/plan-subscriptions-store';
 
 import {
 	createResourceInstallationId,

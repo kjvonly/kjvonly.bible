@@ -4,7 +4,7 @@ import {
 	type Sub,
 	NullSub,
 	NullReadings
-} from '$lib/domains/reading-plans/models/plans.model';
+} from '../models/plans.model';
 
 const subsEnricherService = new SubsEnricherService();
 
@@ -30,6 +30,18 @@ describe('path util functions', () => {
 		{
 			completedReadings: [0, 1, 3],
 			expectedResult: 2
+		},
+		{
+			completedReadings: [1],
+			expectedResult: 0
+		},
+		{
+			completedReadings: [0, 0, 1],
+			expectedResult: 2
+		},
+		{
+			completedReadings: [],
+			expectedResult: 0
 		}
 	];
 
@@ -43,6 +55,14 @@ describe('path util functions', () => {
 			);
 		});
 	}
+
+	it('does not mutate completed reading indexes', () => {
+		const completedReadings = [2, 0, 1];
+
+		subsEnricherService.getNextReadingIndex(completedReadings);
+
+		expect(completedReadings).toEqual([2, 0, 1]);
+	});
 
 	for (const t of testTable) {
 		it('should set the next reading index', () => {
@@ -60,6 +80,14 @@ describe('path util functions', () => {
 });
 
 describe('set percent complete', () => {
+	it('sets an empty subscription to zero percent complete', () => {
+		const sub = NullSub();
+
+		subsEnricherService.setPercentComplete(sub);
+
+		expect(sub.percentCompleted).toBe(0);
+	});
+
 	it('should set percent complete', () => {
 		interface tt {
 			readingsCount: number;

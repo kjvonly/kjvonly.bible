@@ -1,10 +1,10 @@
 import type {
 	PlanDefinition
-} from '$lib/domains/reading-plans/models/plan-definition';
+} from '../../models/plan-definition';
 
 import {
 	parsePlanDefinitionId
-} from '$lib/domains/reading-plans/models/plan-definition-id';
+} from '../../models/plan-definition-id';
 
 import type {
 	ResourcePublication

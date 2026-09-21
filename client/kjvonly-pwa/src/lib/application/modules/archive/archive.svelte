@@ -4,6 +4,7 @@
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import type {
+		NavigationComponentProps,
 		NavigationView
 	} from '$lib/application/services/navigation.service';
 
@@ -22,7 +23,7 @@
 		clientHeight = $bindable(),
 		obj = $bindable(),
 		navService = $bindable()
-	} = $props();
+	}: NavigationComponentProps = $props();
 
 	// ================================= VARS ==================================
 

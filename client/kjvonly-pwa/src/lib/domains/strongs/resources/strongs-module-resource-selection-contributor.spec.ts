@@ -16,7 +16,7 @@ import {
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+} from './definitions/strongs-interpreter';
 
 import {
 	StrongsModuleResourceSelectionContributor

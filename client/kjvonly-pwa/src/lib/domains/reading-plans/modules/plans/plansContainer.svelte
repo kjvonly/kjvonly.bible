@@ -11,7 +11,7 @@
 		PLANS_MAX_VIEW_ID,
 		PLANS_VIEWS,
 		SUBS_MAX_VIEW_ID
-	} from '$lib/domains/reading-plans/models/plans.model';
+	} from '../../models/plans.model';
 
 	const {
 		bibleBooknamesService,

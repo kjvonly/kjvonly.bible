@@ -10,11 +10,11 @@ import type {
 
 import type {
 	BibleParagraphs
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../models/bible-paragraphs.model';
 
 import {
 	createBibleParagraphsId
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../models/bible-paragraphs.model';
 
 import {
 	ParagraphsService

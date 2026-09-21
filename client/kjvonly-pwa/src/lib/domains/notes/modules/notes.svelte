@@ -24,10 +24,16 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	// OTHER
 	import uuid4 from 'uuid4';
 	import NoteComponent from './note/note.svelte';
-	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import type {
+		Note,
+		NotesById,
+		NotesMode
+	} from '../models/note.model';
+	import type { NotesSearchResult } from '../runtime/search/notes-search-worker-message';
+	import type { NoteFilterParameter } from '../ui/note-filter.model';
 	import {
 		NOTES_COLLECTION_CHANGED
-	} from '$lib/domains/notes/events/notes-events';
+	} from '../events/notes-events';
 	import NotesList from './notesList/notesList.svelte';
 
 	// APPLICATION
@@ -39,7 +45,17 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	// =============================== BINDINGS ================================
 
-	let { mode = $bindable(), allNotes, noteIDToOpen = '' } = $props();
+	let {
+		paneID,
+		mode = $bindable<NotesMode>(),
+		allNotes,
+		noteIDToOpen = ''
+	}: {
+		paneID: string;
+		mode: NotesMode;
+		allNotes: boolean;
+		noteIDToOpen: string;
+	} = $props();
 
 	// ================================== VARS =================================
 
@@ -53,7 +69,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	let filterInput: string = $state('');
 
-	let filterParams = $state([
+	let filterParams: NoteFilterParameter[] = $state([
 		{
 			option: 'title',
 			index: 'title',
@@ -87,6 +103,12 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		notesService.getAllNotes(
 			NOTES_COLLECTION_CHANGED
 		);
+
+		return () => {
+			notesService.unsubscribe(
+				NOTE_SUBSCRIPTION_ID
+			);
+		};
 	});
 
 	// ================================ FUNCS ==================================
@@ -121,8 +143,8 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 	function onFilterInputChanged() {
 		if (filterInput.length > 0) {
-			let indexes: any = [];
-			filterParams.forEach((fp: any) => {
+			const indexes: string[] = [];
+			filterParams.forEach((fp) => {
 				if (fp.checked) {
 					return indexes.push(fp.index);
 				}
@@ -133,7 +155,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 	}
 
-	function onFilterInputResults(results: any) {
+	function onFilterInputResults(results: NotesSearchResult) {
 		if (results.id === NOTE_SEARCH_ID) {
 			noteKeys = Object.keys(results.notes).sort((a, b) => {
 				return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
@@ -155,9 +177,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<NoteComponent bind:mode bind:note></NoteComponent>
+	<NoteComponent {paneID} bind:mode bind:note></NoteComponent>
 {:else}
 	<NotesList
+		{paneID}
 		bind:mode
 		bind:filterInput
 		bind:noteKeys

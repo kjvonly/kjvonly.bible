@@ -13,7 +13,7 @@
 	import {
 		PLANS_VIEWS,
 		type Sub
-	} from '$lib/domains/reading-plans/models/plans.model';
+	} from '../../../models/plans.model';
 	const { workspaceRuntime } = useApplicationContext();
 
 	// SERVICES
@@ -39,7 +39,7 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onSubClicked(sub: any) {
+	function onSubClicked(sub: Sub): void {
 		selectedSub = sub;
 		plansDisplay = PLANS_VIEWS.SUBS_DETAILS;
 	}

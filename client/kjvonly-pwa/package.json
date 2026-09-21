@@ -13,8 +13,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run",
+		"test": "vitest --config vitest.config.ts --run",
+		"test:watch": "vitest --config vitest.config.ts",
+		"test:unit": "vitest --config vitest.unit.config.ts",
 		"test:browser": "vitest --config vitest.browser.config.ts --run",
 		"test:browser:watch": "vitest --config vitest.browser.config.ts --browser.headless=false"
 	},

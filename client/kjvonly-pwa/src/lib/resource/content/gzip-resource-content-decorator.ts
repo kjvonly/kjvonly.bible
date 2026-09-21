@@ -100,16 +100,21 @@ async function compressGzip(
 		stream.writable
 			.getWriter();
 
-	await writer.write(
-		toArrayBuffer(
-			value
-		)
-	);
+	const writePromise =
+		writer.write(
+			toArrayBuffer(
+				value
+			)
+		).then(
+			() => writer.close()
+		);
 
-	await writer.close();
-
-	const buffer =
-		await resultPromise;
+	const [
+		buffer
+	] = await Promise.all([
+		resultPromise,
+		writePromise
+	]);
 
 	return new Uint8Array(
 		buffer
@@ -138,16 +143,21 @@ async function decompressGzip(
 		stream.writable
 			.getWriter();
 
-	await writer.write(
-		toArrayBuffer(
-			value
-		)
-	);
+	const writePromise =
+		writer.write(
+			toArrayBuffer(
+				value
+			)
+		).then(
+			() => writer.close()
+		);
 
-	await writer.close();
-
-	const buffer =
-		await resultPromise;
+	const [
+		buffer
+	] = await Promise.all([
+		resultPromise,
+		writePromise
+	]);
 
 	return new Uint8Array(
 		buffer

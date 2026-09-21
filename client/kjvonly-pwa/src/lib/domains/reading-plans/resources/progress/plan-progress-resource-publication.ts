@@ -1,10 +1,10 @@
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../../models/plan-progress';
 
 import {
 	parsePlanSubscriptionId
-} from '$lib/domains/reading-plans/models/plan-subscription-id';
+} from '../../models/plan-subscription-id';
 
 import type {
 	ResourcePublication

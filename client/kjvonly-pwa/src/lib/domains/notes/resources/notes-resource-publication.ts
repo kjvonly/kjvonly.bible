@@ -1,10 +1,10 @@
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 import {
 	parseNoteId
-} from '$lib/domains/notes/models/note-id';
+} from '../models/note-id';
 
 import type {
 	ResourceDeletionPublication,

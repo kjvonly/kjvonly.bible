@@ -92,7 +92,12 @@
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
-		const nr: NavReadings | undefined = pane.buffer.bag?.navReadings;
+		const buffer = pane.buffer;
+		if (!buffer) {
+			return;
+		}
+
+		const nr: NavReadings | undefined = buffer.bag.navReadings;
 
 		if (!nr) {
 			return;
@@ -103,7 +108,7 @@
 			nr.subNestedReadingsIndex
 		);
 
-		delete pane.buffer.bag.navReadings;
+		delete buffer.bag.navReadings;
 
 		plansPubSubService.putProgress(progress);
 	}
@@ -148,11 +153,7 @@
 
 	function onSelectedNextReading(idx: number, returnView: PLANS_VIEWS) {
 		let nrs: NextReadings = nextReadings[idx];
-		let readings: Readings = nrs.readings;
-		readings.bcvs = readings.bcvs.map((r: any) => {
-			r.bibleLocationRef = `${r.bookID}_${r.chapter}_${r.verses}`;
-			return r;
-		});
+		const readings: Readings = nrs.readings;
 
 		let nr: NavReadings = {
 			subID: nrs.subID,
@@ -175,7 +176,7 @@
 	}
 </script>
 
-{#snippet nextReading(n: any, idx: any)}
+{#snippet nextReading(n: NextReadings, idx: number)}
 	<button
 		onclick={() => onSelectedNextReading(idx, PLANS_VIEWS.NEXT_LIST)}
 		class=" flex w-full flex-col px-2 py-4 text-base hover:bg-neutral-100"

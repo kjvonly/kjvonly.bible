@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useApplicationContext } from '$lib/application';
+	import type { StrongsPopups } from '$lib/domains/strongs';
 	// ================================ IMPORTS ================================
 	// COMPONENTS
 	import Close from '$lib/components/svgs/close.svelte';
@@ -15,7 +16,11 @@
 	let {
 		paneID,
 		clientHeight = $bindable<number>(),
-		popups = $bindable()
+		popups = $bindable<StrongsPopups>()
+	}: {
+		paneID: string;
+		clientHeight: number;
+		popups: StrongsPopups;
 	} = $props();
 
 	// ============================== CLICK FUNCS ==============================
@@ -29,7 +34,7 @@
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<div
-		class="flex w-full max-w-lg flex-row bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
+		class="flex w-full flex-row bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
 	>
 		<span class="flex-1"></span>
 		<span class="text-center">Strongs / Refs</span>

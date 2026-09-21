@@ -5,21 +5,24 @@ import {
 } from '$lib/domains/bible';
 
 import type {
-	Note,
-	NotesById
-} from '$lib/domains/notes/models/note.model';
+	Note
+} from '../models/note.model';
 
 import {
 	type NotesSearchWorkerRequest
-} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+} from '../runtime/search/notes-search-worker-message';
+
+import {
+	createNotesSearchResult
+} from '../runtime/search/notes-search-result';
 
 import {
 	NOTES_COLLECTION_CHANGED
-} from '$lib/domains/notes/events/notes-events';
+} from '../events/notes-events';
 
 import {
 	IndexedDBNotesStore
-} from '$lib/domains/notes/persistence/indexeddb-notes-store';
+} from '../persistence/indexeddb-notes-store';
 
 import {
 	getApplicationDB
@@ -173,36 +176,13 @@ async function searchNotes(
 			}
 		);
 
-	const filteredNotes:
-		NotesById =
-		{};
-
-	results.forEach(
-		(result) => {
-			result.result.forEach(
-				(noteId) => {
-					const note =
-						notes[String(noteId)];
-
-					if (note) {
-						filteredNotes[String(noteId)] =
-							note;
-					}
-				}
-			);
-		}
-	);
-
-	if (
-		Object.keys(
-			filteredNotes
-		).length > 0
-	) {
-		postMessage({
+	postMessage(
+		createNotesSearchResult(
 			id,
-			notes: filteredNotes
-		});
-	}
+			results,
+			notes
+		)
+	);
 }
 
 function getAllNotes(

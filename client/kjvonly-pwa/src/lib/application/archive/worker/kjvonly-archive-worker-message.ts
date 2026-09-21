@@ -1,4 +1,8 @@
 import type {
+	KJVOnlyArchiveExportIdsSelection
+} from '../kjvonly-archive-export-ids-selection';
+
+import type {
 	KJVOnlyArchiveExportSelection
 } from '../kjvonly-archive-export-selection';
 
@@ -8,7 +12,8 @@ import type {
 
 export type KJVOnlyArchiveWorkerRequest =
 	| KJVOnlyArchiveWorkerImportRequest
-	| KJVOnlyArchiveWorkerExportRequest;
+	| KJVOnlyArchiveWorkerExportRequest
+	| KJVOnlyArchiveWorkerExportIdsRequest;
 
 export interface KJVOnlyArchiveWorkerImportRequest {
 	readonly type:
@@ -24,6 +29,14 @@ export interface KJVOnlyArchiveWorkerExportRequest {
 
 	readonly selection:
 		KJVOnlyArchiveExportSelection;
+}
+
+export interface KJVOnlyArchiveWorkerExportIdsRequest {
+	readonly type:
+		'export-ids';
+
+	readonly selection:
+		KJVOnlyArchiveExportIdsSelection;
 }
 
 export type KJVOnlyArchiveWorkerMessage =

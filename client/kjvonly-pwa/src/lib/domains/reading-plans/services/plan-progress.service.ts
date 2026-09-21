@@ -1,18 +1,18 @@
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../models/plan-progress';
 
 import type {
 	PlanProgressStore
-} from '$lib/domains/reading-plans/persistence/plan-progress-store';
+} from '../persistence/plan-progress-store';
 
 import type {
 	PlanProgressWriteTransaction
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-write-stores';
+} from '../resources/progress/plan-progress-write-stores';
 
 import type {
 	PlanProgressResourcePublication
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-publication';
+} from '../resources/progress/plan-progress-resource-publication';
 
 import type {
 	OutboxWakeup

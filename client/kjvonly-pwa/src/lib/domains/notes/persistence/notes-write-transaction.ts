@@ -1,6 +1,6 @@
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 import {
 	NOTE_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	NotesWriteStores,
 	NotesWriteTransaction
-} from '$lib/domains/notes/resources/notes-write-stores';
+} from '../resources/notes-write-stores';
 
 import {
 	createPendingPublication

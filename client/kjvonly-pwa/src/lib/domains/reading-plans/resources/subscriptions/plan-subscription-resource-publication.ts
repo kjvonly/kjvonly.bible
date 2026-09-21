@@ -1,10 +1,10 @@
 import type {
 	PlanSubscription
-} from '$lib/domains/reading-plans/models/plan-subscription';
+} from '../../models/plan-subscription';
 
 import {
 	parsePlanSubscriptionId
-} from '$lib/domains/reading-plans/models/plan-subscription-id';
+} from '../../models/plan-subscription-id';
 
 import type {
 	ResourcePublication

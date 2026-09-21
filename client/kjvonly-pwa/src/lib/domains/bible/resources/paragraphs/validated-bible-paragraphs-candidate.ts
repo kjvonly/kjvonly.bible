@@ -1,6 +1,6 @@
 import type {
 	BibleParagraphMap
-} from '$lib/domains/bible/models/bible-paragraphs.model';
+} from '../../models/bible-paragraphs.model';
 
 export interface ValidatedBibleParagraphsCandidate {
 	readonly source:

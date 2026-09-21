@@ -5,7 +5,7 @@ import type {
 
 import type {
 	PlanDefinitionsStore
-} from '$lib/domains/reading-plans/persistence/plan-definitions-store';
+} from '../../persistence/plan-definitions-store';
 
 export interface PlanDefinitionInstallationStores {
 	readonly planDefinitions:

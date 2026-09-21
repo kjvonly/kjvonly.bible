@@ -7,16 +7,16 @@ import {
 
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../../models/note.model';
 
 import {
 	NotesSearchRuntime
-} from '$lib/domains/notes/runtime/search/notes-search-runtime';
+} from './notes-search-runtime';
 
 import type {
 	NotesSearchWorkerMessage,
 	NotesSearchWorkerRequest
-} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+} from './notes-search-worker-message';
 
 class FakeWorker {
 	readonly postMessage =

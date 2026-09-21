@@ -7,7 +7,7 @@ import {
 
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../models/plan-progress';
 
 import {
 	DOMAIN_OBJECTS,

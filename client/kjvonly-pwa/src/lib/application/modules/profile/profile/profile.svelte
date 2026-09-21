@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import ProfileHeader from './profileHeader.svelte';
@@ -11,7 +12,7 @@
 		obj = $bindable(),
 		clientHeight = $bindable(),
 		navService = $bindable()
-	} = $props();
+	}: NavigationComponentProps = $props();
 
 	let headerHeight: number = $state(0);
 </script>

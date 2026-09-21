@@ -1,6 +1,6 @@
 import type {
 	Strongs
-} from '$lib/domains/strongs/models/strongs.model';
+} from '../models/strongs.model';
 
 import {
 	STRONGS_DEFINITION_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	StrongsInstallationStores,
 	StrongsInstallationTransaction
-} from '$lib/domains/strongs/resources/definitions/strongs-installation-stores';
+} from '../resources/definitions/strongs-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

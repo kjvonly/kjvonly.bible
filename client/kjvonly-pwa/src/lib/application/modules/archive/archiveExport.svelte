@@ -2,6 +2,7 @@
 	// ================================ IMPORTS ================================
 
 	// APPLICATION
+	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import {
 		parseKJVOnlyArchiveExportPatterns,
 		type KJVOnlyArchiveExportSelection
@@ -32,7 +33,7 @@
 		clientHeight = $bindable(),
 		obj = $bindable(),
 		navService = $bindable()
-	} = $props();
+	}: NavigationComponentProps = $props();
 
 	// ================================= VARS ==================================
 

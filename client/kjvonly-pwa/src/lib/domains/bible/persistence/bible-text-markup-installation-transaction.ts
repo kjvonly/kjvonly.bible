@@ -1,6 +1,6 @@
 import type {
 	BibleTextMarkup
-} from '$lib/domains/bible/models/bible-text-markup.model';
+} from '../models/bible-text-markup.model';
 
 import {
 	BIBLE_TEXT_MARKUP_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	BibleTextMarkupInstallationStores,
 	BibleTextMarkupInstallationTransaction
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-installation-stores';
+} from '../resources/text-markup/bible-text-markup-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

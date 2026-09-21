@@ -19,8 +19,7 @@
 	import type {
 		BibleMode,
 		BibleReadingNavigation
-	} from '$lib/domains/bible/models/bible.model';
-	import type { Pane } from '$lib/application';
+	} from '../../../models/bible.model';
 
 	const {
 		workspaceRuntime,
@@ -31,7 +30,6 @@
 
 	let {
 		mode = $bindable<BibleMode>(),
-		pane = $bindable<Pane>(),
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		showNavButtons = $bindable<boolean>(),
@@ -39,7 +37,6 @@
 		ID
 	}: {
 		mode: BibleMode;
-		pane: Pane;
 		bibleLocationRef: string;
 		bibleVersion: string;
 		showNavButtons: boolean;

@@ -5,7 +5,7 @@ import {
 import type {
 	PlanSubscriptionWriteStores,
 	PlanSubscriptionWriteTransaction
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-write-stores';
+} from '../resources/subscriptions/plan-subscription-write-stores';
 
 import {
 	createPendingPublication

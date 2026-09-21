@@ -2,7 +2,12 @@
 	// ================================ IMPORTS ================================
 	// SVELTE
 	// COMPONENTS
-	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
+	import {
+		attachEvents,
+		BufferBody,
+		BufferContainer,
+		BufferHeader
+	} from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import AddCircle from '$lib/components/svgs/addCircle.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
@@ -11,17 +16,16 @@
 	import {
 		PLANS_VIEWS,
 		type PlanDefinitionView
-	} from '$lib/domains/reading-plans/models/plans.model';
-	import type { PlanSubscription } from '$lib/domains/reading-plans/models/plan-subscription';
+	} from '../../../models/plans.model';
+	import type { PlanSubscription } from '../../../models/plan-subscription';
 	// SERVICES
 	import uuid4 from 'uuid4';
-	import { sleep } from '$lib/shared';
 	import { onMount } from 'svelte';
 	import { useApplicationContext } from '$lib/application';
 	import {
 		PLAN_SUBSCRIPTION_RESOURCE_TYPE,
 		createPlanSubscriptionIdForSource
-	} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-source';
+	} from '../../../resources/subscriptions/plan-subscription-resource-source';
 	// =============================== BINDINGS ================================
 	const {
 		moduleResourceSelectionResolver,
@@ -50,22 +54,12 @@
 	// =============================== LIFECYCLE ===============================
 	onMount(() => {
 		loadMoreReadings();
-		setTimeout(async () => {
-			let el = document.getElementById(`${discoverDetailID}-scroll-container`);
-			let retriesMax = 10;
-			let count = 0;
-			while (!el && count != retriesMax) {
-				el = document.getElementById(`${discoverDetailID}-scroll-container`);
-				await sleep(1000);
-				count++;
-			}
 
-			if (count === 10) {
-				return;
-			}
-
-			el?.addEventListener('scroll', handleScroll);
-		}, 1000);
+		return attachEvents(
+			`${discoverDetailID}-scroll-container`,
+			'scroll',
+			handleScroll
+		);
 	});
 	// ================================ FUNCS ==================================
 

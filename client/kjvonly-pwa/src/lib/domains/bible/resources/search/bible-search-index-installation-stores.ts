@@ -1,6 +1,6 @@
 import type {
 	BibleSearchIndexStore
-} from '$lib/domains/bible/persistence/bible-search-index-store';
+} from '../../persistence/bible-search-index-store';
 
 import type {
 	ResourceInstallationStore,

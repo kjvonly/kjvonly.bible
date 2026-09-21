@@ -1,6 +1,6 @@
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../models/note.model';
 
 import {
 	NOTE_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	NotesInstallationStores,
 	NotesInstallationTransaction
-} from '$lib/domains/notes/resources/notes-installation-stores';
+} from '../resources/notes-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

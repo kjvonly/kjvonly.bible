@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import NsecLogin from '../nsec/nsecLogin.svelte';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
@@ -10,7 +11,7 @@
 		clientHeight = $bindable(),
 		obj = $bindable(),
 		navService = $bindable()
-	} = $props();
+	}: NavigationComponentProps = $props();
 
 	let headerHeight: number = $state(0);
 

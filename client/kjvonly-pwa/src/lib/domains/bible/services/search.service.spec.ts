@@ -10,7 +10,7 @@ import type {
 
 import type {
 	SearchResultResponse
-} from '$lib/domains/bible/models/search.model';
+} from '../models/search.model';
 
 import {
 	createSearchService

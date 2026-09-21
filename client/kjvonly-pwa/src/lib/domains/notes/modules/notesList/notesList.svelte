@@ -2,7 +2,13 @@
 	// ================================ IMPORTS ================================
 	// MODELS
 	import { Modules } from '$lib/application';
-	import type { Note, NotesById } from '$lib/domains/notes/models/note.model';
+	import type {
+		Note,
+		NotesById,
+		NotesMode
+	} from '../../models/note.model';
+	import { createNoteDomainObjectId } from '../../models/note-id';
+	import type { NoteFilterParameter } from '../../ui/note-filter.model';
 
 	// SERVICES
 	import { PaneSplit, useApplicationContext } from '$lib/application';
@@ -29,12 +35,13 @@
 
 	import {
 		NOTES_RESOURCE_TYPE
-	} from '$lib/domains/notes/resources/note-interpreter';
+	} from '../../resources/note-interpreter';
 
 	import {
 		createNoteIdForSource
-	} from '$lib/domains/notes/resources/notes-resource-source';
+	} from '../../resources/notes-resource-source';
 	const {
+		archiveService,
 		workspaceRuntime,
 		toastService
 	} = useApplicationContext();
@@ -49,6 +56,7 @@
 	// =============================== BINDINGS ================================
 
 	let {
+		paneID,
 		mode = $bindable(),
 		filterInput = $bindable(),
 		noteKeys = $bindable(),
@@ -60,15 +68,16 @@
 		onFilterInputChanged,
 		onAddNewNote
 	}: {
-		mode: any;
+		paneID: string;
+		mode: NotesMode;
 		filterInput: string;
 		noteKeys: string[];
 		notes: NotesById;
 		note: Note | undefined;
 		allNotes: boolean;
-		filterParams: any;
+		filterParams: NoteFilterParameter[];
 		noteIDToOpen: string;
-		onFilterInputChanged: any;
+		onFilterInputChanged: () => void;
 		onAddNewNote: (note: Note) => void;
 	} = $props();
 
@@ -80,94 +89,108 @@
 	let showNoteListActions = $state(false);
 	let showNoteListFilter = $state(false);
 
-	let noteListActions: any = {
+	const noteListActions: Record<string, () => void> = {
 		filter: () => {
 			showNoteListFilter = !showNoteListFilter;
 			showNoteListActions = false;
 		},
 		'export filtered notes': () => {
-			onExport();
+			void onExport();
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteListActions = false;
 		}
 	};
 
 	// ============================== CLICK FUNCS ==============================
 
-	async function onExport() {
-		toastService.showToast('starting export data');
-
-		let data: any = {};
-		noteKeys.forEach((k) => {
-			let n = notes[k];
-			if (!n.bibleLocationRef) {
-				return;
-			}
-
-			let keys = n.bibleLocationRef.split('_');
-			let bibleLocationRef = `${keys[0]}_${keys[1]}`;
-			let verseNumber = `${keys[2]}`;
-			let wordIdx = `${keys[3]}`;
-
-			if (!data[bibleLocationRef]) {
-				data[bibleLocationRef] = {
-					id: bibleLocationRef
-				};
-			}
-
-			if (!data[bibleLocationRef][verseNumber]) {
-				data[bibleLocationRef][verseNumber] = {
-					notes: {
-						words: {}
-					}
-				};
-			}
-
-			if (!data[bibleLocationRef][verseNumber].notes.words[wordIdx]) {
-				data[bibleLocationRef][verseNumber].notes.words[wordIdx] = {};
-			}
-
-			data[bibleLocationRef][verseNumber].notes.words[wordIdx][k] = n;
-		});
-
-		let dataList: any[] = [];
-		Object.keys(data).forEach((k) => {
-			dataList.push(data[k]);
-		});
-
-		var element = document.createElement('a');
-		element.setAttribute(
-			'href',
-			'data:application/json;charset=utf-8,' +
-				encodeURIComponent(JSON.stringify(dataList))
+	async function onExport(): Promise<void> {
+		toastService.showToast(
+			'Starting archive export.'
 		);
-		element.setAttribute('download', 'notes');
 
-		element.style.display = 'none';
-		document.body.appendChild(element);
+		try {
+			const bytes =
+				await archiveService.exportIds({
+					ids:
+						noteKeys.map(
+							createNoteDomainObjectId
+						)
+				});
 
-		element.click();
+			downloadArchive(
+				bytes
+			);
 
-		document.body.removeChild(element);
-		toastService.showToast('finished export data');
+			toastService.showToast(
+				'Archive export finished.'
+			);
+		} catch (error) {
+			console.error(
+				'Notes archive export failed.',
+				error
+			);
+
+			toastService.showToast(
+				'Archive export failed.'
+			);
+		}
+	}
+
+	function downloadArchive(
+		bytes: Uint8Array
+	): void {
+		const blob =
+			new Blob(
+				[new Uint8Array(bytes)],
+				{
+					type:
+						'application/gzip'
+				}
+			);
+
+		const url =
+			URL.createObjectURL(
+				blob
+			);
+
+		const anchor =
+			document.createElement(
+				'a'
+			);
+
+		anchor.href = url;
+		anchor.download =
+			`kjvonly-notes-${new Date().toISOString().slice(0, 10)}.kjva`;
+		anchor.style.display = 'none';
+
+		document.body.appendChild(
+			anchor
+		);
+
+		anchor.click();
+		anchor.remove();
+
+		URL.revokeObjectURL(
+			url
+		);
 	}
 
 	async function onAdd() {
 		const bibleLocationRef: string | undefined =
 			mode.bibleLocationRef;
 		const keys = bibleLocationRef?.split('_');
-		let now = Date.now();
+		const now = Date.now();
 		let newNote: Note;
 		const notesSource =
 			moduleResourceSelectionResolver.require(
-				mode.paneID,
+				paneID,
 				NOTES_RESOURCE_TYPE
 			);
 
@@ -189,15 +212,28 @@
 				tags: []
 			};
 		} else {
+			const [
+				bookID,
+				chapterNumber,
+				verseNumber,
+				wordIndex
+			] = keys;
+
+			if (!bookID || !chapterNumber || !verseNumber) {
+				throw new Error(
+					`Invalid Bible location reference: ${bibleLocationRef}`
+				);
+			}
+
 			const chapterSource =
 				moduleResourceSelectionResolver.require(
-					mode.paneID,
+					paneID,
 					BIBLE_CHAPTER_RESOURCE_TYPE
 				);
 
 			const booknamesSource =
 				moduleResourceSelectionResolver.require(
-					mode.paneID,
+					paneID,
 					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				);
 
@@ -214,20 +250,25 @@
 				)
 			]);
 
-			let verseTextWithoutVerseNumber = verse.text.slice(
+			const verseTextWithoutVerseNumber = verse.text.slice(
 				verse.text.indexOf(' ') + 1
 			);
 
-			let bookName =
-				booknames.shortNames[
-					keys[0]
-				] ?? '';
+			const bookName =
+				booknames.shortNames[bookID] ?? '';
 
-			let title = `${bookName} ${keys[1]}:${keys[2]}${keys[3] > 0 ? ':' + keys[3] : ''}`;
+			const wordSuffix =
+				wordIndex && Number(wordIndex) > 0
+					? `:${wordIndex}`
+					: '';
+
+			const title =
+				`${bookName} ${chapterNumber}:${verseNumber}${wordSuffix}`;
+
 			newNote = {
 				id: noteID,
 				bibleLocationRef,
-				bibleReferenceText: `${bookName} ${keys[1]}:${keys[2]}`,
+				bibleReferenceText: `${bookName} ${chapterNumber}:${verseNumber}`,
 				text: `${title}\n${verseTextWithoutVerseNumber}`,
 				html: `<h1>${title}</h1><p><italic>${verseTextWithoutVerseNumber}</italic></p>`,
 				title: `${title}`,
@@ -246,28 +287,28 @@
 
 	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
 			bibleLocationRef: note.bibleLocationRef
 		});
 	}
 
 	function onHorizontalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.NOTES, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onVerticalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.NOTES, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.NOTES, {
 			noteID: noteID
 		});
 	}
 
 	function onClose(): void {
 		if (allNotes) {
-			workspaceRuntime.closePane(mode.paneID);
+			workspaceRuntime.closePane(paneID);
 		} else {
 			mode.notePopup.show = false;
 		}
@@ -436,6 +477,10 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
+<!--
+	Own BufferContainer here because NotesList can be reached through
+	NotesContainer or through the Bible popup, which renders Notes directly.
+-->
 <BufferContainer bind:clientHeight>
 	<BufferHeader bind:headerHeight>
 		{@render noteListHeader()}

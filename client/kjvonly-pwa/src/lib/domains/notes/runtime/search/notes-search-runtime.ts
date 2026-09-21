@@ -1,12 +1,12 @@
 import type {
 	Note
-} from '$lib/domains/notes/models/note.model';
+} from '../../models/note.model';
 
 import type {
 	NotesSearchResult,
 	NotesSearchWorkerMessage,
 	NotesSearchWorkerRequest
-} from '$lib/domains/notes/runtime/search/notes-search-worker-message';
+} from './notes-search-worker-message';
 
 interface NotesSearchWorkerPort {
 	postMessage(

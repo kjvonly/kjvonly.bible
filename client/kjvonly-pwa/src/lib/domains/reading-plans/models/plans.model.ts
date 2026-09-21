@@ -1,7 +1,7 @@
 import type {
   BookNameLookup,
   EncodedReadingsDecoderService
-} from '$lib/domains/reading-plans/services/encodedReadingsDecoder.service';
+} from '../services/encodedReadingsDecoder.service';
 import type {
   BCV,
   BibleReadingNavigation

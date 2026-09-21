@@ -12,19 +12,19 @@ import {
 
 import type {
 	BibleBooknames
-} from '$lib/domains/bible/models/bible-booknames.model';
+} from '../models/bible-booknames.model';
 
 import {
 	createBibleBooknamesId
-} from '$lib/domains/bible/models/bible-booknames.model';
+} from '../models/bible-booknames.model';
 
 import type {
 	BibleBooknamesStore
-} from '$lib/domains/bible/persistence/bible-booknames-store';
+} from '../persistence/bible-booknames-store';
 
 import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+} from '../resources/booknames/bible-booknames-interpreter';
 
 interface ResourceInstaller {
 	install(

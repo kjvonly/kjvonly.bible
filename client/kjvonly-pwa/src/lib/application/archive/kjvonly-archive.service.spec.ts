@@ -6,6 +6,10 @@ import {
 } from 'vitest';
 
 import type {
+	KJVOnlyArchiveExportIdsSelection
+} from './kjvonly-archive-export-ids-selection';
+
+import type {
 	KJVOnlyArchiveExportSelection
 } from './kjvonly-archive-export-selection';
 
@@ -25,6 +29,11 @@ interface ArchiveWorkerClient {
 	export(
 		selection:
 			KJVOnlyArchiveExportSelection
+	): Promise<Uint8Array>;
+
+	exportIds(
+		selection:
+			KJVOnlyArchiveExportIdsSelection
 	): Promise<Uint8Array>;
 }
 
@@ -54,6 +63,8 @@ describe(
 								result
 						),
 					export:
+						vi.fn(),
+					exportIds:
 						vi.fn()
 				};
 
@@ -112,7 +123,8 @@ describe(
 							async () =>
 								result
 						),
-						export: vi.fn()
+						export: vi.fn(),
+						exportIds: vi.fn()
 					};
 
 				const service =
@@ -176,7 +188,8 @@ describe(
 							() =>
 								importPromise
 						),
-						export: vi.fn()
+						export: vi.fn(),
+						exportIds: vi.fn()
 					});
 
 				const error =
@@ -253,7 +266,8 @@ describe(
 							async () =>
 								result
 						),
-						export: vi.fn()
+						export: vi.fn(),
+						exportIds: vi.fn()
 					});
 
 				const subscriber =
@@ -306,7 +320,9 @@ describe(
 						vi.fn(
 							async () =>
 								value
-						)
+						),
+					exportIds:
+						vi.fn()
 				};
 
 				const service =
@@ -329,5 +345,58 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'delegates exact Domain Object id exports to the archive worker client',
+			async () => {
+				const selection:
+					KJVOnlyArchiveExportIdsSelection = {
+					ids: [
+						'notes/note:publisher/default/note-1',
+						'notes/note:publisher/default/note-2'
+					]
+				};
+
+				const value =
+					new Uint8Array([
+						7,
+						8,
+						9
+					]);
+
+				const workerClient:
+					ArchiveWorkerClient = {
+					import:
+						vi.fn(),
+					export:
+						vi.fn(),
+					exportIds:
+						vi.fn(
+							async () =>
+								value
+						)
+				};
+
+				const service =
+					new KJVOnlyArchiveService(
+						workerClient
+					);
+
+				await expect(
+					service.exportIds(
+						selection
+					)
+				).resolves.toBe(
+					value
+				);
+
+				expect(
+					workerClient.exportIds
+				).toHaveBeenCalledWith(
+					selection
+				);
+			}
+		);
+
 	}
 );

@@ -14,27 +14,27 @@ import type {
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+} from './chapters/bible-chapter-interpreter';
 
 import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
+} from './booknames/bible-booknames-interpreter';
 
 import {
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
+} from './paragraphs/bible-paragraphs-interpreter';
 
 import {
 	BIBLE_PERICOPES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
+} from './pericopes/bible-pericopes-interpreter';
 
 import {
 	BIBLE_SEARCH_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
+} from './search/bible-search-index-interpreter';
 
 import {
 	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+} from './text-markup/bible-text-markup-interpreter';
 
 import {
 	STRONGS_RESOURCE_TYPE

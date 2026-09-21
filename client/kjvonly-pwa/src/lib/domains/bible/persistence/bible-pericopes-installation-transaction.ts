@@ -1,6 +1,6 @@
 import type {
 	BiblePericopes
-} from '$lib/domains/bible/models/bible-pericopes.model';
+} from '../models/bible-pericopes.model';
 
 import {
 	BIBLE_PERICOPES_OBJECT_TYPE
@@ -9,7 +9,7 @@ import {
 import type {
 	BiblePericopesInstallationStores,
 	BiblePericopesInstallationTransaction
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-installation-stores';
+} from '../resources/pericopes/bible-pericopes-installation-stores';
 
 import {
 	DOMAIN_OBJECTS,

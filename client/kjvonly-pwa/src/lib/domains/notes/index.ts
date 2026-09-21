@@ -1,8 +1,14 @@
 export type {
 	Note,
 	NoteTag,
-	NotesById
+	NotesById,
+	NotesMode
 } from './models/note.model';
+
+export {
+	NOTE_OBJECT_TYPE,
+	createNoteDomainObjectId
+} from './models/note-id';
 
 export {
 	NotesService
@@ -20,3 +26,7 @@ export {
 export {
 	NOTES_COLLECTION_CHANGED
 } from './events/notes-events';
+
+export type {
+	NotesSearchResult
+} from './runtime/search/notes-search-worker-message';

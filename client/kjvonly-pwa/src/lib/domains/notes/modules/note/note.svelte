@@ -17,7 +17,11 @@
 
 	// MODELS
 	import { Modules } from '$lib/application';
-	import type { NoteTag } from '$lib/domains/notes/models/note.model';
+	import type {
+		Note,
+		NoteTag,
+		NotesMode
+	} from '../../models/note.model';
 
 	// SERVICES
 	import { PaneSplit, useApplicationContext } from '$lib/application';
@@ -27,6 +31,7 @@
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
 	import { findElement } from '$lib/application/ui';
+	import { parseNoteTagInput } from './note-tag-input';
 
 	// APPLICATION
 	const {
@@ -40,7 +45,15 @@
 
 	// =============================== BINDINGS ================================
 
-	let { mode = $bindable(), note = $bindable() } = $props();
+	let {
+		paneID,
+		mode = $bindable<NotesMode>(),
+		note = $bindable<Note>()
+	}: {
+		paneID: string;
+		mode: NotesMode;
+		note: Note;
+	} = $props();
 
 	// ================================== VARS =================================
 
@@ -59,17 +72,17 @@
 	let editor = uuid4().replaceAll('-', '');
 	let quill: Quill;
 
-	let noteActions: any = {
+	const noteActions: Record<string, () => void> = {
 		delete: () => {
 			showConfirmDelete = true;
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
 			showNoteActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(mode.paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
 			showNoteActions = false;
 		}
 	};
@@ -149,36 +162,37 @@
 	}
 
 	async function onAddTag() {
-		if (tagInput && tagInput.length < 1) {
+		const tags = parseNoteTagInput(tagInput);
+
+		if (tags.length === 0) {
 			return;
 		}
 
-		tagInput.split(',').forEach((t: string) => {
-			let tagId = uuid4();
-			if (!note.tags) {
-				note.tags = [];
-			}
+		if (!note.tags) {
+			note.tags = [];
+		}
 
-			let now = Date.now();
+		tags.forEach((tag) => {
+			const now = Date.now();
+
 			note.tags.push({
-				id: tagId,
+				id: uuid4(),
 				created: now,
 				modified: now,
-				tag: t.trim()
+				tag
 			});
 		});
+
 		tagInput = '';
-		let el = await findElement(`${tagID}-tags`);
+		const el = await findElement(`${tagID}-tags`);
 		el?.focus();
 	}
 
 	function onDeleteTag(tagID: string) {
 		if (note) {
-			note.tags = note.tags.filter((t: NoteTag) => {
-				if (t.id !== tagID) {
-					return t;
-				}
-			});
+			note.tags = note.tags.filter(
+				(tag: NoteTag) => tag.id !== tagID
+			);
 		}
 	}
 
@@ -224,7 +238,7 @@
 
 {#snippet noteActionsSnippet()}
 	<div
-		class="flex h-full w-full max-w-lg flex-col items-start justify-start border border-neutral-100"
+		class="flex h-full w-full flex-col items-start justify-start border border-neutral-100"
 	>
 		{#each Object.keys(noteActions) as na}
 			<button
@@ -240,7 +254,7 @@
 
 {#snippet noteConfirmDeleteSnippet()}
 	<div
-		class="flex h-full w-full max-w-lg flex-col items-center justify-center border border-neutral-100"
+		class="flex h-full w-full flex-col items-center justify-center border border-neutral-100"
 	>
 		<p class="p-4 capitalize">
 			confirm delete <span class="font-semibold"
@@ -326,7 +340,7 @@
 	{:else}
 		<div
 			bind:clientHeight={tagContainerHeight}
-			class="flex w-full max-w-lg flex-col items-start justify-start"
+			class="flex w-full flex-col items-start justify-start"
 		>
 			{@render noteTagInputSnippet()}
 			{#if note?.tags}
@@ -338,19 +352,23 @@
 	<div
 		class=" {showNoteActions || !note
 			? 'hidden'
-			: ''} flex h-full w-full flex-col"
-		style="min-height: {clientHeight -
-			headerHeight -
-			tagContainerHeight -
-			50}px; max-height: {clientHeight -
-			headerHeight -
-			tagContainerHeight -
-			50}px"
+			: ''} flex w-full min-h-0 min-w-0 flex-col overflow-hidden"
+		style="height: {Math.max(
+			0,
+			clientHeight - headerHeight - tagContainerHeight - 50
+		)}px"
 	>
-		<div id={editor}></div>
+		<div
+			id={editor}
+			class="notes-quill h-full w-full min-h-0 min-w-0 overflow-hidden"
+		></div>
 	</div>
 {/snippet}
 
+<!--
+	Own BufferContainer here because Note can be reached through NotesContainer
+	or through the Bible popup, which renders Notes directly.
+-->
 <BufferContainer bind:clientHeight>
 	<BufferHeader bind:headerHeight>
 		{@render noteHeaderSnippet()}
@@ -361,4 +379,27 @@
 </BufferContainer>
 
 <style>
+	:global(.notes-quill.ql-container) {
+		box-sizing: border-box;
+		font-size: inherit;
+		height: 100%;
+		width: 100%;
+		max-width: 100%;
+		min-height: 0;
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	:global(.notes-quill > .ql-editor) {
+		box-sizing: border-box;
+		font-size: inherit;
+		height: 100%;
+		width: 100%;
+		max-width: 100%;
+		min-height: 0;
+		min-width: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+		overflow-wrap: anywhere;
+	}
 </style>

@@ -45,10 +45,16 @@
 
 	// ================================ FUNCS ==================================
 	function setFootnotes(): void {
-		footnotesByID.forEach((f: any) => {
-			let key = f?.split('_')[2];
+		footnotesByID.forEach((footnoteRef) => {
+			const key = footnoteRef.split('_')[2];
+			const footnoteNumber = Number(key);
+
+			if (!Number.isInteger(footnoteNumber) || footnoteNumber < 1) {
+				return;
+			}
+
 			footnotes.push({
-				key: numberToAlphabeticSequence(key),
+				key: numberToAlphabeticSequence(footnoteNumber),
 				html: chapterFootnotes[key],
 				toggle: false
 			});

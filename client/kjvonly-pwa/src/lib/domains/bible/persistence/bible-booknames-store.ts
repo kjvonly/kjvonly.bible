@@ -1,6 +1,6 @@
 import type {
 	BibleBooknames
-} from '$lib/domains/bible/models/bible-booknames.model';
+} from '../models/bible-booknames.model';
 
 export const BIBLE_BOOKNAMES_OBJECT_TYPE =
 	'bible/booknames';

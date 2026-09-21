@@ -9,20 +9,22 @@
 
 	// SERVICES
 	import { PaneSplit } from '$lib/application';
-	import type { Pane } from '$lib/application';
 	import type {
 		BibleTextMarkup,
 		BibleTextMarkupMarking
-	} from '$lib/domains/bible/models/bible-text-markup.model';
+	} from '../../../models/bible-text-markup.model';
 	import {
 		BIBLE_MODES,
 		type BibleMode,
 		type Verse,
 		type Word
-	} from '$lib/domains/bible/models/bible.model';
+	} from '../../../models/bible.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Notes from '$lib/components/svgs/notes.svelte';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';
+	import type {
+		ChapterNotesByLocation
+	} from './chapter-notes';
 	const {
 		workspaceRuntime,
 		bibleLocationReferenceService
@@ -32,9 +34,9 @@
 
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
-		pane = $bindable(),
 		mode = $bindable<BibleMode>(),
-		notes = $bindable(),
+		paneID,
+		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
 		footnotes,
@@ -44,9 +46,9 @@
 		wordIdx
 	}: {
 		textMarkup: BibleTextMarkup;
-		pane: Pane;
 		mode: BibleMode;
-		notes: any;
+		paneID: string;
+		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
 		footnotes: { [key: string]: string };
@@ -58,11 +60,18 @@
 
 	// ================================= VARS ==================================
 
-	let track: any = {};
-	let wordMarkup: any = $state();
+	interface LongPressState {
+		startTime: number;
+		lastKnownScrollPosition: number;
+		finished: boolean;
+		timeoutID?: ReturnType<typeof setTimeout>;
+	}
+
+	let longPress: LongPressState | undefined;
+	let wordMarkup: BibleTextMarkupMarking | undefined = $state();
 	let wordHasNotes: boolean = $state(false);
 	let verseHasReferences = $state(false);
-	let pressThresholdInMilliseconds = 1000;
+	const pressThresholdInMilliseconds = 1000;
 
 	// =============================== LIFECYCLE ===============================
 
@@ -78,6 +87,10 @@
 
 	onMount(() => {
 		setVerseHasReferences();
+
+		return () => {
+			clearPendingLongPress();
+		};
 	});
 
 	// ================================ FUNCS ==================================
@@ -85,7 +98,7 @@
 	function setVerseHasReferences() {
 		if (isWordAVerseNumber()) {
 			for (let w of verse.words) {
-				for (var h of w.href || []) {
+				for (const h of w.href || []) {
 					if (h.includes('/')) {
 						verseHasReferences = true;
 						return;
@@ -112,13 +125,16 @@
 		}
 	}
 
-	function setWordHasNotes() {
-		if (notes) {
-			let bookIDChapter =
-				bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-			let wordKey = `${bookIDChapter}_${verse.number}_${wordIdx}`;
-			wordHasNotes = wordKey in notes;
-		}
+	function setWordHasNotes(): void {
+		const bookIDChapter =
+			bibleLocationReferenceService.extractBookIDChapter(
+				bibleLocationRef
+			);
+		const wordKey =
+			`${bookIDChapter}_${verse.number}_${wordIdx}`;
+
+		wordHasNotes =
+			wordKey in notes;
 	}
 
 	function updateMode(updMode: BIBLE_MODES) {
@@ -144,12 +160,12 @@
 			return;
 		}
 
-		if (track[wordIdx] && track[wordIdx].finished) {
+		if (longPress?.finished) {
 			return;
 		}
 
-		if (track[wordIdx]) {
-			track[wordIdx].finished = true;
+		if (longPress) {
+			longPress.finished = true;
 		}
 
 		if (isWordAVerseNumber()) {
@@ -175,7 +191,7 @@
 		let refs = extractAllVerseRefs();
 		let strongsWords = extractStrongsWords();
 
-		workspaceRuntime.splitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
 			refs: refs,
@@ -184,7 +200,7 @@
 	}
 
 	function nonVerseNumberClicked() {
-		workspaceRuntime.splitPane(pane.id, PaneSplit.HORIZONTAL, Modules.STRONGS, {
+		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.STRONGS, {
 			word: word,
 			footnotes: footnotes,
 			currentVerseRef: getBibleCrossReference(),
@@ -328,35 +344,45 @@
 	}
 
 	function onMouseDownTouchStart() {
-		track[wordIdx] = {
+		longPress = {
 			startTime: Date.now(),
-			lastKnownScrollPosition: lastKnownScrollPosition,
+			lastKnownScrollPosition,
 			finished: false
 		};
 
-		track[wordIdx].timeoutID = setTimeout(() => {
-			if (track[wordIdx].finished) {
+		longPress.timeoutID = setTimeout(() => {
+			if (!longPress || longPress.finished) {
 				return;
 			}
 
-			if (track[wordIdx].lastKnownScrollPosition != lastKnownScrollPosition) {
-				delete track[wordIdx];
+			if (longPress.lastKnownScrollPosition !== lastKnownScrollPosition) {
+				longPress = undefined;
 				return;
 			}
 
 			updateMode(BIBLE_MODES.EDIT);
 
-			track[wordIdx].finished = true;
+			longPress.finished = true;
 		}, pressThresholdInMilliseconds);
 	}
 
 	function onMouseUpTouchEnd() {
-		if (track[wordIdx]) {
-			const differenceInMilliseconds = Date.now() - track[wordIdx].startTime;
-			if (differenceInMilliseconds < pressThresholdInMilliseconds) {
-				clearTimeout(track[wordIdx].timeoutID);
-			}
+		if (!longPress) {
+			return;
 		}
+
+		const differenceInMilliseconds = Date.now() - longPress.startTime;
+		if (differenceInMilliseconds < pressThresholdInMilliseconds) {
+			clearPendingLongPress();
+		}
+	}
+
+	function clearPendingLongPress() {
+		if (longPress?.timeoutID !== undefined) {
+			clearTimeout(longPress.timeoutID);
+		}
+
+		longPress = undefined;
 	}
 </script>
 
@@ -375,6 +401,7 @@
 			onclick={onWordClicked}
 			ontouchstart={onMouseDownTouchStart}
 			ontouchend={onMouseUpTouchEnd}
+			ontouchcancel={clearPendingLongPress}
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
 			class="{word.class?.join(' ')} {verseHasReferences
@@ -390,6 +417,7 @@
 			onkeydown={() => {}}
 			ontouchstart={onMouseDownTouchStart}
 			ontouchend={onMouseUpTouchEnd}
+			ontouchcancel={clearPendingLongPress}
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
 			onclick={onEditClick}
@@ -405,6 +433,7 @@
 			onkeydown={() => {}}
 			ontouchstart={onMouseDownTouchStart}
 			ontouchend={onMouseUpTouchEnd}
+			ontouchcancel={clearPendingLongPress}
 			onmousedown={onMouseDownTouchStart}
 			onmouseup={onMouseUpTouchEnd}
 			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"

@@ -14,12 +14,13 @@
 	// MODELS
 	import {
 		BIBLE_MODES,
-		newBibleMode
-	} from '$lib/domains/bible/models/bible.model';
+		newBibleMode,
+		type BibleMode
+	} from '../../models/bible.model';
 	import type { Pane } from '$lib/application';
 	import type {
 		BibleTextMarkup
-	} from '$lib/domains/bible/models/bible-text-markup.model';
+	} from '../../models/bible-text-markup.model';
 
 	// SERVICES
 	import { useApplicationContext } from '$lib/application';
@@ -36,11 +37,11 @@
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+} from '../../resources/chapters/bible-chapter-interpreter';
 
 import type {
 	BibleVersion
-} from '$lib/domains/bible/models/bible-version.model';
+} from '../../models/bible-version.model';
 
 import {
 	parseResourceIdentifier
@@ -48,7 +49,7 @@ import {
 
 import {
 	createBibleVersionId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '../../utils/bible-identity';
 	const {
 		moduleResourceSelectionResolver,
 		workspaceRuntime,
@@ -94,7 +95,7 @@ import {
 	let id = $state(uuid4());
 	const LAST_BIBLE_LOCATION_REF = 'lastBibleLocationReference';
 	const DEFAULT_BIBLE_LOCATION_REF = '52_10_9';
-	let mode: any = $state(newBibleMode());
+	let mode: BibleMode = $state(newBibleMode());
 
 	// DOM related vars
 	let lastKnownScrollPosition = $state(0);
@@ -103,7 +104,6 @@ import {
 	// =============================== LIFECYCLE ===============================
 
 	onMount(async () => {
-		setModePaneID();
 		setNavReadings();
 		setBibleLocationRef();
 		attachScrolls();
@@ -116,10 +116,6 @@ import {
 	});
 
 	// ================================ FUNCS ==================================
-
-	function setModePaneID() {
-		mode.paneID = paneID;
-	}
 
 	function setNavReadings() {
 		if (pane?.buffer?.bag?.navReadings) {
@@ -153,7 +149,7 @@ import {
 	);
 }
 	function setBibleLocationRef() {
-		let ref = pane.buffer.bag.bibleLocationRef;
+		const ref = pane.buffer?.bag.bibleLocationRef;
 		if (ref) {
 			bibleLocationRef = ref;
 		} else {
@@ -200,7 +196,12 @@ import {
 			return;
 		}
 
-		pane.buffer.bag.bibleLocationRef =
+		const buffer = pane.buffer;
+		if (!buffer) {
+			return;
+		}
+
+		buffer.bag.bibleLocationRef =
 			bibleLocationRef;
 
 		localStorage.setItem(
@@ -225,11 +226,14 @@ import {
 				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version.version}`
 		};
 
-	pane.buffer
-		.resourceSelections[
-			BIBLE_CHAPTER_RESOURCE_TYPE
-		] =
-		source;
+	const buffer = pane.buffer;
+	if (!buffer) {
+		return;
+	}
+
+	buffer.resourceSelections[
+		BIBLE_CHAPTER_RESOURCE_TYPE
+	] = source;
 
 	bibleVersion =
 		version.id;
@@ -263,8 +267,8 @@ import {
 					bind:bibleLocationRef
 					bind:bibleVersion
 					bind:id
-					bind:pane
 					bind:mode
+					{paneID}
 					bind:textMarkup
 					{lastKnownScrollPosition}
 				></Chapter>
@@ -281,7 +285,6 @@ import {
 			{#if mode.value === BIBLE_MODES.READING}
 				<ChapterNavButtons
 					bind:mode
-					bind:pane
 					bind:bibleLocationRef
 					bind:bibleVersion
 					bind:showNavButtons

@@ -1,10 +1,10 @@
 import type {
 	BibleSearchIndex
-} from '$lib/domains/bible/models/bible-search-index.model';
+} from '../models/bible-search-index.model';
 
 import type {
 	SearchResultResponse
-} from '$lib/domains/bible/models/search.model';
+} from '../models/search.model';
 
 import {
 	SearchIndexRuntime

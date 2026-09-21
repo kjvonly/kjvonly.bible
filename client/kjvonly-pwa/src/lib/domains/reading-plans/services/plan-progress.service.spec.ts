@@ -7,12 +7,12 @@ import {
 
 import type {
 	PlanProgress
-} from '$lib/domains/reading-plans/models/plan-progress';
+} from '../models/plan-progress';
 
 import type {
 	PlanProgressWriteStores,
 	PlanProgressWriteTransaction
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-write-stores';
+} from '../resources/progress/plan-progress-write-stores';
 
 import type {
 	ResourcePublication

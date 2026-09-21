@@ -2,6 +2,7 @@ export type {
 	Strongs,
 	StrongsContent,
 	StrongsPopups,
+	StrongsSearchPopup,
 	UsageBy
 } from './models/strongs.model';
 

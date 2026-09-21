@@ -1,10 +1,10 @@
 import type {
 	ChapterStore
-} from '$lib/domains/bible/persistence/chapter-store';
+} from '../../persistence/chapter-store';
 
 import type {
 	BibleVersionStore
-} from '$lib/domains/bible/persistence/bible-version-store';
+} from '../../persistence/bible-version-store';
 
 import type {
 	ResourceInstallationStore,

@@ -20,19 +20,6 @@ export interface BCV {
   bibleLocationRef: string;
 }
 
-export function jsonToChapter(data: any): Chapter {
-  let result: Chapter = {
-    id: data.id,
-    number: data.number,
-    bookName: data.bookName,
-    verses: data.verses,
-    verseMap: data.verseMap,
-    footnotes: data.footnotes
-  };
-
-  return result;
-}
-
 export interface Chapter {
   id: string;
   number: number;
@@ -40,17 +27,6 @@ export interface Chapter {
   verses: { [verseNumber: string]: Verse };
   verseMap: { [verseNumber: string]: string };
   footnotes: { [key: string]: string };
-}
-
-export function newChapter(): Chapter {
-  return {
-    id: '',
-    number: 0,
-    bookName: '',
-    verses: {},
-    verseMap: {},
-    footnotes: {}
-  };
 }
 
 export type ChapterContent =
@@ -78,26 +54,6 @@ export interface Word {
   class: string[] | null;
   href: string[] | null;
   emphasis: boolean;
-}
-
-export interface WordAnnots {
-  class: string[];
-}
-
-export interface Annotations {
-  id: string;
-  version: number;
-  annots: Annots;
-}
-
-export type Annots = { [verse: number]: { [wordIdx: number]: WordAnnots } };
-
-export function newAnnotation(): Annotations {
-  return {
-    id: '',
-    version: 0,
-    annots: {}
-  };
 }
 
 export interface BibleReadingNavigation {
@@ -188,17 +144,4 @@ export function newCrossRef(): CrossRef {
     text: '',
     verseNumber: 0
   };
-}
-
-
-export type Paragraphs = {}
-
-export function newParagraphs(): Paragraphs {
-  return {}
-}
-
-export type Pericopes = {}
-
-export function newPericopes(): Pericopes {
-  return {}
 }

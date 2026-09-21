@@ -2,14 +2,20 @@
 	// ================================ IMPORTS ================================
 	// MODELS
 	import {
-		type Paragraphs,
 		type BibleMode,
-		type Verse,
-		type Pericopes
-	} from '$lib/domains/bible/models/bible.model';
-	import type { Pane } from '$lib/application';
-	import type { BibleTextMarkup } from '$lib/domains/bible/models/bible-text-markup.model';
+		type Verse
+	} from '../../../models/bible.model';
+	import type {
+		BibleParagraphMap
+	} from '../../../models/bible-paragraphs.model';
+	import type {
+		BiblePericopeMap
+	} from '../../../models/bible-pericopes.model';
+	import type { BibleTextMarkup } from '../../../models/bible-text-markup.model';
 	import Paragraph from './paragraph.svelte';
+	import type {
+		ChapterNotesByLocation
+	} from './chapter-notes';
 	import Pericope from './pericope.svelte';
 
 	// Components
@@ -19,11 +25,11 @@
 
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
-		paragraphs = $bindable<Paragraphs>(),
-		pericopes = $bindable<Pericopes>(),
-		pane = $bindable<Pane>(),
+		paragraphs = $bindable<BibleParagraphMap>(),
+		pericopes = $bindable<BiblePericopeMap>(),
 		mode = $bindable<BibleMode>(),
-		notes = $bindable<any>(),
+		paneID,
+		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
 		footnotes,
@@ -31,11 +37,11 @@
 		verse
 	}: {
 		textMarkup: BibleTextMarkup;
-		paragraphs: Paragraphs;
-		pericopes: Pericopes;
-		pane: Pane;
+		paragraphs: BibleParagraphMap;
+		pericopes: BiblePericopeMap;
 		mode: BibleMode;
-		notes: any;
+		paneID: string;
+		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
 		footnotes: { [key: string]: string };
@@ -58,7 +64,7 @@
 	 	 end of a line -->
 	<span class="inline-block">
 		{#each verse.words.slice(0, 2) as word, idx}<Word
-				bind:pane
+				{paneID}
 				bind:textMarkup
 				bind:notes
 				bind:mode
@@ -73,7 +79,7 @@
 		{/each}
 	</span>{#each verse.words.slice(2) as word, idx}
 		<Word
-			bind:pane
+			{paneID}
 			bind:textMarkup
 			bind:notes
 			bind:mode

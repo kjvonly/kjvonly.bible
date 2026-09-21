@@ -1,27 +1,30 @@
 <script lang="ts">
-	import type { BibleReadingNavigation } from '../../../models/bible.model';
+	import type { BCV, BibleReadingNavigation } from '../../../models/bible.model';
 
 	let {
-		navReadings = $bindable(),
-		showNavReadingsPopup = $bindable(),
-		bibleLocationRef = $bindable()
+		navReadings = $bindable<BibleReadingNavigation>(),
+		showNavReadingsPopup = $bindable<boolean>(),
+		bibleLocationRef = $bindable<string>()
+	}: {
+		navReadings: BibleReadingNavigation;
+		showNavReadingsPopup: boolean;
+		bibleLocationRef: string;
 	} = $props();
 
 	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 	let clientWidth = $state(0);
 
-	function rowClicked(e: any, r: any, idx: number) {
-		e.stopPropagation();
-		let nr: BibleReadingNavigation = navReadings;
-		nr.currentNavReadingsIndex = idx;
-		bibleLocationRef = r.bibleLocationRef;
+	function rowClicked(event: Event, reading: BCV, index: number): void {
+		event.stopPropagation();
+		navReadings.currentNavReadingsIndex = index;
+		bibleLocationRef = reading.bibleLocationRef;
 		showNavReadingsPopup = false;
 	}
 </script>
 
 <div bind:clientHeight class="flex h-full w-full justify-center bg-neutral-50">
-	<div class="w-full md:max-w-lg">
+	<div class="w-full">
 		<header
 			bind:clientHeight={headerHeight}
 			class="items-between sticky top-0 flex w-full border-b-2 bg-neutral-100 text-neutral-700"

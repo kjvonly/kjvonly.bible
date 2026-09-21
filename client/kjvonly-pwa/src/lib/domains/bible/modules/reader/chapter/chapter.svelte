@@ -9,23 +9,24 @@
 	// MODELS
 	import {
 		BIBLE_MODES,
-		newParagraphs,
-		newPericopes,
 		type BibleMode,
-		type Paragraphs,
-		type Pericopes,
 		type Verse as VerseModel
-	} from '$lib/domains/bible/models/bible.model';
-	import { type Chapter } from '$lib/domains/bible/models/bible.model';
+	} from '../../../models/bible.model';
+	import type {
+		BibleParagraphMap
+	} from '../../../models/bible-paragraphs.model';
+	import type {
+		BiblePericopeMap
+	} from '../../../models/bible-pericopes.model';
+	import { type Chapter } from '../../../models/bible.model';
 	import type {
 		BibleTextMarkup
-	} from '$lib/domains/bible/models/bible-text-markup.model';
+	} from '../../../models/bible-text-markup.model';
 
 	// SERVICES
 	// OTHER
 	import uuid4 from 'uuid4';
 	import { scrollTo, scrollToTop } from '$lib/application/ui';
-	import type { Pane } from '$lib/application';
 	import type { Settings as AppSettings } from '$lib/application';
 
 
@@ -36,23 +37,30 @@
 
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
+	} from '../../../resources/chapters/bible-chapter-interpreter';
 
 	import {
 		BIBLE_PARAGRAPHS_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
+	} from '../../../resources/paragraphs/bible-paragraphs-interpreter';
 
 	import {
 		BIBLE_PERICOPES_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
+	} from '../../../resources/pericopes/bible-pericopes-interpreter';
 
 	import {
 		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-	} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
+	} from '../../../resources/text-markup/bible-text-markup-interpreter';
 
 	import {
 		NOTES_COLLECTION_CHANGED
 	} from '$lib/domains/notes';
+	import type {
+		NotesSearchResult
+	} from '$lib/domains/notes';
+	import {
+		createChapterNotesByLocation,
+		type ChapterNotesByLocation
+	} from './chapter-notes';
 
 	const {
 		chapterService,
@@ -71,16 +79,16 @@
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		id = $bindable<string>(),
-		pane = $bindable<Pane>(),
 		mode = $bindable<BibleMode>(),
+		paneID,
 		textMarkup = $bindable<BibleTextMarkup>(),
 		lastKnownScrollPosition
 	}: {
 		bibleLocationRef: string;
 		bibleVersion: string;
 		id: string;
-		pane: Pane;
 		mode: BibleMode;
+		paneID: string;
 		textMarkup: BibleTextMarkup;
 		lastKnownScrollPosition: number;
 	} = $props();
@@ -92,14 +100,14 @@
 	let footnotes: { [key: string]: string } = $state({});
 	let hasVerseRange: boolean = $state(false);
 
-	let notes: any = $state();
+	let notes: ChapterNotesByLocation = $state({});
 
 	let verseRangeStartIndex: number = 0;
 	let verseRangeEndIndex: number = 0;
 
 	let chapter: Chapter | undefined = $state();
-	let paragraphs: Paragraphs = $state({});
-	let pericopes: Pericopes = $state({});
+	let paragraphs: BibleParagraphMap = $state({});
+	let pericopes: BiblePericopeMap = $state({});
 	let currentSettings: AppSettings = settingsService.getSettings();
 
 	/**
@@ -178,11 +186,11 @@
 	}
 
 	function resetParagraphs() {
-		paragraphs = newParagraphs();
+		paragraphs = {};
 	}
 
 	function resetPericopes() {
-		pericopes = newPericopes();
+		pericopes = {};
 	}
 
 	function setVerseRanges() {
@@ -240,7 +248,7 @@
 	async function loadTextMarkup() {
 		const source =
 			moduleResourceSelectionResolver.find(
-				pane.id,
+				paneID,
 				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 			);
 
@@ -275,7 +283,7 @@
 
 		const locationRef = bibleLocationRef;
 		const source = moduleResourceSelectionResolver.require(
-			pane.id,
+			paneID,
 			BIBLE_PARAGRAPHS_RESOURCE_TYPE
 		);
 
@@ -302,7 +310,7 @@
 
 		const locationRef = bibleLocationRef;
 		const source = moduleResourceSelectionResolver.require(
-			pane.id,
+			paneID,
 			BIBLE_PERICOPES_RESOURCE_TYPE
 		);
 
@@ -322,7 +330,7 @@
 	}
 
 	function subscribeToNotes() {
-		notesService.subscribe(id, notesID, onSearchResults);
+		notesService.subscribe(id, notesID, onChapterNotesSearchResults);
 		notesService.subscribe(
 			id,
 			NOTES_COLLECTION_CHANGED,
@@ -358,7 +366,7 @@
 
 	async function loadChapter() {
 		const source = moduleResourceSelectionResolver.require(
-			pane.id,
+			paneID,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 
@@ -383,14 +391,13 @@
 		}
 	}
 
-	function onSearchResults(data: any) {
-		if (data) {
-			let tempNotes: any = {};
-			Object.keys(data.notes).forEach(
-				(id) => (tempNotes[data.notes[id].bibleLocationRef] = true)
+	function onChapterNotesSearchResults(
+		data: NotesSearchResult
+	): void {
+		notes =
+			createChapterNotesByLocation(
+				data.notes
 			);
-			notes = tempNotes;
-		}
 	}
 </script>
 
@@ -398,7 +405,7 @@
 	{#each versesNumbersToShow as k, idx}
 		<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
 			<Verse
-				bind:pane
+				{paneID}
 				bind:textMarkup
 				bind:paragraphs
 				bind:pericopes
