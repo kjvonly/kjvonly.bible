@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BufferContainer, BufferHeader } from '$lib/application/ui';
+	import { BufferContainer, BufferHeader, findElement } from '$lib/application/ui';
 
 	// SVELTE
 	import { onMount } from 'svelte';
@@ -16,20 +16,16 @@
 	import Tag from '$lib/components/svgs/tag.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/application';
+	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
 	import type {
 		Note,
 		NoteTag
 	} from '../../models/note.model';
 
-	// SERVICES
-	import { PaneSplit, useApplicationContext } from '$lib/application';
-
 	// OTHER
 	import Quill from 'quill';
 	import uuid4 from 'uuid4';
 	import NewTag from '$lib/components/svgs/newTag.svelte';
-	import { findElement } from '$lib/application/ui';
 	import { parseNoteTagInput } from './note-tag-input';
 
 	// APPLICATION
@@ -58,10 +54,10 @@
 	let showTags: boolean = $state(false);
 	let tagContainerHeight = $state(0);
 	let tagInput: string = $state('');
-	let tagID: string = uuid4();
+	const tagID: string = uuid4();
 
 	/** editor*/
-	let editor = uuid4().replaceAll('-', '');
+	const editor = uuid4().replaceAll('-', '');
 	let quill: Quill;
 
 	const noteActions: Record<string, () => void> = {

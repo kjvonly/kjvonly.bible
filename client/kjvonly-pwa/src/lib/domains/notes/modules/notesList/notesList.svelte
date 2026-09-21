@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// MODELS
-	import { Modules } from '$lib/application';
+	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
 	import type {
 		Note,
 		NotesById,
@@ -9,9 +9,6 @@
 	} from '../../models/note.model';
 	import { createNoteDomainObjectId } from '../../models/note-id';
 	import type { NoteFilterParameter } from '../../ui/note-filter.model';
-
-	// SERVICES
-	import { PaneSplit, useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import { BufferContainer, BufferHeader, BufferBody } from '$lib/application/ui';
@@ -276,7 +273,7 @@
 		onAddNewNote(newNote);
 	}
 
-	async function onSelectedNote(noteId: string) {
+	function onSelectedNote(noteId: string) {
 		note = notes[noteId];
 	}
 
