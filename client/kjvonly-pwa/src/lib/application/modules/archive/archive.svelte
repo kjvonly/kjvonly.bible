@@ -20,7 +20,7 @@
 
 	let {
 		paneID,
-		clientHeight = $bindable(),
+		clientHeight,
 		obj = $bindable(),
 		navService = $bindable()
 	}: NavigationComponentProps = $props();

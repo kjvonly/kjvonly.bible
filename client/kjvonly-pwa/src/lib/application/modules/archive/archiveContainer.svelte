@@ -54,7 +54,7 @@
 					: 'hidden'} h-full w-full"
 				onclick={stopPropagation}
 			>
-				<Component {paneID} bind:clientHeight bind:obj={n.obj} {navService}
+				<Component {paneID} {clientHeight} bind:obj={n.obj} {navService}
 				></Component>
 			</div>
 		{/each}
