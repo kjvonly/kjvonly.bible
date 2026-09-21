@@ -373,7 +373,7 @@
 	<BufferHeader bind:headerHeight>
 		{@render noteHeaderSnippet()}
 	</BufferHeader>
-	<div style="height: {clientHeight - headerHeight}px">
+	<div style="height: {Math.max(0, clientHeight - headerHeight)}px">
 		{@render noteBody()}
 	</div>
 </BufferContainer>
