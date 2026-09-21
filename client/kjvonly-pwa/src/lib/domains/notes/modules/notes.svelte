@@ -136,8 +136,11 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			onFilterInputChanged();
 		}
 
-		if (noteIDToOpen.length > 0 && noteIDToOpen !== openedNoteID) {
-			onSelectedNote(noteIDToOpen);
+		if (
+			noteIDToOpen.length > 0 &&
+			noteIDToOpen !== openedNoteID &&
+			onSelectedNote(noteIDToOpen)
+		) {
 			openedNoteID = noteIDToOpen;
 		}
 	}
@@ -166,16 +169,17 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 	}
 
-	function onSelectedNote(noteId: string) {
+	function onSelectedNote(noteId: string): boolean {
 		const selectedNote = notes[noteId];
 
 		if (!selectedNote) {
-			return;
+			return false;
 		}
 
 		// Edit a working copy so unsaved changes do not mutate list state.
 		note = structuredClone(selectedNote);
 		notePersisted = true;
+		return true;
 	}
 
 	function onCloseNote() {
