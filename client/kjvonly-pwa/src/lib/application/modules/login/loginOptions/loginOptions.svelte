@@ -22,8 +22,7 @@
 </script>
 
 {#snippet header()}
-	<LoginOptionsHeader {paneID} bind:clientHeight={headerHeight}
-	></LoginOptionsHeader>
+	<LoginOptionsHeader {paneID}></LoginOptionsHeader>
 {/snippet}
 
 {#snippet body()}

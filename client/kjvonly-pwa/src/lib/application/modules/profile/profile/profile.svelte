@@ -18,8 +18,7 @@
 </script>
 
 {#snippet header()}
-	<ProfileHeader {paneID} bind:navService bind:clientHeight={headerHeight}
-	></ProfileHeader>
+	<ProfileHeader {paneID} bind:navService></ProfileHeader>
 {/snippet}
 
 {#snippet body()}

@@ -10,7 +10,7 @@
 
 	// =============================== BINDINGS ================================
 
-	let { paneID, clientHeight = $bindable<number>() } = $props();
+	let { paneID } = $props();
 
 	// ============================== CLICK FUNCS ==============================
 
@@ -23,7 +23,6 @@
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<div
-		bind:clientHeight
 		class="flex w-full flex-row bg-neutral-100 py-2 leading-tight outline outline-neutral-400"
 	>
 		<span class="flex-1"></span>

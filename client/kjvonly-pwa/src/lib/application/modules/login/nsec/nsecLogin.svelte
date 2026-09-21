@@ -31,8 +31,7 @@
 </script>
 
 {#snippet header()}
-	<NsecLoginHeader bind:navService bind:clientHeight={headerHeight}
-	></NsecLoginHeader>
+	<NsecLoginHeader bind:navService></NsecLoginHeader>
 {/snippet}
 
 {#snippet body()}
