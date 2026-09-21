@@ -140,8 +140,20 @@ function indexNote(
 			note
 		);
 
+	const alreadyIndexed =
+		notes[note.id] !==
+			undefined;
+
 	notes[note.id] =
 		indexedNote;
+
+	if (alreadyIndexed) {
+		notesDocument.update(
+			note.id,
+			indexedNote
+		);
+		return;
+	}
 
 	notesDocument.add(
 		note.id,
