@@ -63,6 +63,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	let note: Note | undefined = $state();
 	let notes: NotesById = $state({});
 	let noteKeys: string[] = $state([]);
+	let openedNoteID: string | undefined = $state();
 
 	let NOTE_SEARCH_ID = uuid4();
 
@@ -134,9 +135,9 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			onFilterInputChanged();
 		}
 
-		if (noteIDToOpen.length > 0) {
+		if (noteIDToOpen.length > 0 && noteIDToOpen !== openedNoteID) {
 			onSelectedNote(noteIDToOpen);
-			noteIDToOpen = '';
+			openedNoteID = noteIDToOpen;
 		}
 	}
 
