@@ -5,9 +5,9 @@
 	import Settings from './settings.svelte';
 	const { workspaceRuntime } = useApplicationContext();
 
-	let { pane = $bindable<Pane>() } = $props();
+	let { paneID, pane = $bindable<Pane>() } = $props();
 	function onClose() {
-		workspaceRuntime.closePane(pane.id);
+		workspaceRuntime.closePane(paneID);
 	}
 </script>
 

@@ -179,7 +179,7 @@
 	{#if crossRefs.length > 0}
 		<div class=" pt-4"></div>
 		<CrossRefsContainer
-			paneID={pane?.id}
+			{paneID}
 			boundCrossRefs={crossRefs}
 		></CrossRefsContainer>
 	{/if}
