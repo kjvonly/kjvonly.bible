@@ -6,6 +6,7 @@ import type {
     AccountRelay,
     AccountSetup,
     AccountState,
+    AccountUpdate,
     AccountStrategy
 } from '$lib/application';
 
@@ -185,12 +186,37 @@ export class NostrAccountStrategy
         );
 
         await this.putRelayList(
-            account.userId
+            account.userId,
+            this.bootstrapRelays
         );
 
         await this.putContacts(
             account.userId,
             existingContacts
+        );
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    async update(
+        account: AccountUpdate
+    ): Promise<void> {
+
+        await this.assertSignerIdentity(
+            account.userId
+        );
+
+        this.assertAccountUpdate(
+            account
+        );
+
+        await this.putMetadata(
+            account
+        );
+
+        await this.putRelayList(
+            account.userId,
+            account.relays
         );
     }
 
@@ -216,15 +242,87 @@ export class NostrAccountStrategy
 
     ///////////////////////////////////////////////////////////////////////////
 
+    private assertAccountUpdate(
+        account: AccountUpdate
+    ): void {
+
+        if (
+            account.name.trim() ===
+            ''
+        ) {
+            throw new Error(
+                'Account name is required.'
+            );
+        }
+
+        const urls =
+            new Set<string>();
+
+        for (
+            const relay
+            of account.relays
+        ) {
+            if (
+                !this.isRelayUrl(
+                    relay.url
+                )
+            ) {
+                throw new Error(
+                    `Invalid account relay: ${relay.url}`
+                );
+            }
+
+            if (
+                !relay.read &&
+                !relay.write
+            ) {
+                throw new Error(
+                    `Account relay must be readable or writable: ${relay.url}`
+                );
+            }
+
+            if (
+                urls.has(
+                    relay.url
+                )
+            ) {
+                throw new Error(
+                    `Duplicate account relay: ${relay.url}`
+                );
+            }
+
+            urls.add(
+                relay.url
+            );
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
     private async putMetadata(
-        account: AccountSetup
+        account:
+            AccountSetup |
+            AccountUpdate
     ): Promise<void> {
+
+        const existing =
+            await this.events
+                .getByKindAndPubkey(
+                    0,
+                    account.userId
+                );
+
+        const profile =
+            this.readProfile(
+                existing
+            );
 
         await this.events.put(
             this.createEvent(
                 account.userId,
                 0,
                 JSON.stringify({
+                    ...profile,
                     name:
                         account.name,
                     display_name:
@@ -238,7 +336,9 @@ export class NostrAccountStrategy
     ///////////////////////////////////////////////////////////////////////////
 
     private async putRelayList(
-        userId: string
+        userId: string,
+        relays:
+            readonly AccountRelay[]
     ): Promise<void> {
 
         await this.events.put(
@@ -246,7 +346,7 @@ export class NostrAccountStrategy
                 userId,
                 10002,
                 '',
-                this.bootstrapRelays
+                relays
                     .map(
                         ({
                             url,
@@ -398,6 +498,49 @@ export class NostrAccountStrategy
 
     ///////////////////////////////////////////////////////////////////////////
 
+    private readProfile(
+        metadata:
+            Pick<
+                NostrEvent,
+                'content'
+            > |
+            SignedNostrEvent |
+            undefined
+    ): Record<string, unknown> {
+
+        if (
+            metadata ===
+            undefined
+        ) {
+            return {};
+        }
+
+        try {
+            const profile =
+                JSON.parse(
+                    metadata.content
+                ) as unknown;
+
+            if (
+                profile === null ||
+                typeof profile !==
+                    'object' ||
+                Array.isArray(
+                    profile
+                )
+            ) {
+                return {};
+            }
+
+            return profile as
+                Record<string, unknown>;
+        } catch {
+            return {};
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
     private readName(
         metadata:
             Pick<
@@ -408,32 +551,18 @@ export class NostrAccountStrategy
             undefined
     ): string | undefined {
 
-        if (
-            metadata ===
-            undefined
-        ) {
-            return undefined;
-        }
+        const profile =
+            this.readProfile(
+                metadata
+            );
 
-        try {
-            const profile =
-                JSON.parse(
-                    metadata.content
-                ) as {
-                    name?: unknown;
-                    display_name?: unknown;
-                };
-
-            return typeof profile.name ===
+        return typeof profile.name ===
+            'string'
+            ? profile.name
+            : typeof profile.display_name ===
                 'string'
-                ? profile.name
-                : typeof profile.display_name ===
-                    'string'
-                    ? profile.display_name
-                    : undefined;
-        } catch {
-            return undefined;
-        }
+                ? profile.display_name
+                : undefined;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -457,8 +586,7 @@ export class NostrAccountStrategy
         undefined {
 
         if (
-            relayList !== undefined &&
-            relayList.tags.length > 0
+            relayList !== undefined
         ) {
             return this.readRelayTags(
                 relayList.tags

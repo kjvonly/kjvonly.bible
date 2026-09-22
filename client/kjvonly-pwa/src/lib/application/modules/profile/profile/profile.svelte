@@ -6,6 +6,7 @@
 	import Pubkey from './home/pubkey.svelte';
 	import Relays from './home/relays.svelte';
 	import Name from './home/name.svelte';
+	import Nsec from './home/nsec.svelte';
 
 	let {
 		paneID,
@@ -25,6 +26,7 @@
 	<div class="flex h-full flex-col items-start justify-start space-y-2 py-4">
 		<Name></Name>
 		<Pubkey></Pubkey>
+		<Nsec></Nsec>
 		<Relays></Relays>
 	</div>
 {/snippet}

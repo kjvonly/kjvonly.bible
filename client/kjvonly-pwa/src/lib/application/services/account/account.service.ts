@@ -1,4 +1,5 @@
 import type {
+    AccountRelay,
     AccountState,
     AccountStateSubscriber
 } from './account-state';
@@ -95,6 +96,30 @@ export class AccountService {
             .setup({
                 userId,
                 name
+            });
+
+        this.setState(
+            await this.accountStrategy
+                .load(
+                    userId
+                )
+        );
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    async update(
+        userId: string,
+        name: string,
+        relays:
+            readonly AccountRelay[]
+    ): Promise<void> {
+
+        await this.accountStrategy
+            .update({
+                userId,
+                name,
+                relays
             });
 
         this.setState(

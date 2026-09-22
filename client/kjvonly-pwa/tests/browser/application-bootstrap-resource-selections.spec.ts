@@ -111,6 +111,64 @@ describe(
 		);
 
 		it(
+			'does not install bootstrap Resources while signed out',
+			async () => {
+
+				const install =
+					vi.spyOn(
+						ResourceWorkerClient.prototype,
+						'install'
+					)
+					.mockResolvedValue(
+						createBootstrapResult()
+					);
+
+				application =
+					createApplication();
+
+				await application.start();
+
+				expect(
+					install
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
+			'starts bootstrap Resource installation after authentication',
+			async () => {
+
+				const install =
+					vi.spyOn(
+						ResourceWorkerClient.prototype,
+						'install'
+					)
+					.mockResolvedValue(
+						createBootstrapResult()
+					);
+
+				application =
+					createApplication();
+
+				await application.start();
+
+				await authenticate(
+					application
+				);
+
+				await vi.waitFor(
+					() => {
+						expect(
+							install
+						).toHaveBeenCalledTimes(
+							1
+						);
+					}
+				);
+			}
+		);
+
+		it(
 			'initializes missing Resource selections from the bootstrap result',
 			async () => {
 
@@ -123,6 +181,10 @@ describe(
 
 				application =
 					createApplication();
+
+				await authenticate(
+					application
+				);
 
 				await application.start();
 
@@ -190,6 +252,10 @@ describe(
 				application =
 					createApplication();
 
+				await authenticate(
+					application
+				);
+
 				await application.start();
 
 				await vi.waitFor(
@@ -239,6 +305,10 @@ describe(
 
 				application =
 					createApplication();
+
+				await authenticate(
+					application
+				);
 
 				await application.start();
 
@@ -303,6 +373,10 @@ describe(
 				application =
 					createApplication();
 
+				await authenticate(
+					application
+				);
+
 				await application.start();
 
 				await vi.waitFor(
@@ -345,6 +419,10 @@ describe(
 				application =
 					createApplication();
 
+				await authenticate(
+					application
+				);
+
 				await application.start();
 
 				await vi.waitFor(
@@ -375,6 +453,19 @@ describe(
 		);
 	}
 );
+
+async function authenticate(
+	application:
+		Application
+): Promise<void> {
+
+	await application
+		.context
+		.authenticationService
+		.createIdentity();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 function createApplication():
 	Application {

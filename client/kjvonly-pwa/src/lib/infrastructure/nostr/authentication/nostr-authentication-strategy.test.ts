@@ -86,6 +86,70 @@ describe(
         );
 
         it(
+            'creates a new nsec identity, configures the shared signer, and saves the login',
+            async () => {
+                const signer =
+                    new NostrSigner();
+
+                const storage =
+                    createStorage();
+
+                const setItem =
+                    vi.spyOn(
+                        storage,
+                        'setItem'
+                    );
+
+                const authentication =
+                    new NostrAuthenticationStrategy(
+                        storage,
+                        signer
+                    );
+
+                const created =
+                    await authentication
+                        .createIdentity();
+
+                expect(
+                    created.status
+                ).toBe(
+                    'authenticated'
+                );
+
+                expect(
+                    await signer
+                        .getPublicKey()
+                ).toBe(
+                    created.userId
+                );
+
+                expect(
+                    setItem
+                ).toHaveBeenCalledOnce();
+
+                const [
+                    storageKey,
+                    savedNsec
+                ] =
+                    setItem.mock.calls[0];
+
+                expect(
+                    storageKey
+                ).toBe(
+                    NOSTR_LOGIN_STORAGE_KEY
+                );
+
+                expect(
+                    nip19.decode(
+                        savedNsec
+                    ).type
+                ).toBe(
+                    'nsec'
+                );
+            }
+        );
+
+        it(
             'logs in with an nsec, configures the shared signer, and saves the login',
             async () => {
                 const secretKey =
@@ -142,6 +206,58 @@ describe(
                     await signer
                         .getPublicKey()
                 ).toBe(pubkey);
+            }
+        );
+
+        it(
+            'exposes the saved nsec as an exportable authentication secret',
+            async () => {
+                const secretKey =
+                    generateSecretKey();
+
+                const nsec =
+                    nip19.nsecEncode(
+                        secretKey
+                    );
+
+                const authentication =
+                    new NostrAuthenticationStrategy(
+                        createStorage(),
+                        new NostrSigner()
+                    );
+
+                await authentication.login(
+                    nsec
+                );
+
+                expect(
+                    authentication
+                        .tryGetExportableSecret()
+                ).toEqual({
+                    type:
+                        'nsec',
+                    value:
+                        nsec
+                });
+            }
+        );
+
+        it(
+            'does not expose non-nsec saved authentication as an exportable secret',
+            () => {
+                const authentication =
+                    new NostrAuthenticationStrategy(
+                        createStorage({
+                            [NOSTR_LOGIN_STORAGE_KEY]:
+                                NIP07_LOGIN_VALUE
+                        }),
+                        new NostrSigner()
+                    );
+
+                expect(
+                    authentication
+                        .tryGetExportableSecret()
+                ).toBeUndefined();
             }
         );
 

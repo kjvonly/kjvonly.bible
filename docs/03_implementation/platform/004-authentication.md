@@ -134,6 +134,9 @@ The application-facing strategy contract is intentionally small:
 
 ```ts
 interface AuthenticationStrategy {
+    createIdentity():
+        Promise<AuthenticationResult>;
+
     tryLogin():
         Promise<AuthenticationResult | null>;
 
@@ -142,6 +145,8 @@ interface AuthenticationStrategy {
     ): Promise<AuthenticationResult>;
 }
 ```
+
+`createIdentity()` creates a fresh signing identity through the configured authentication strategy. For Nostr, this generates a new nsec internally, configures the shared signer, and persists the resulting saved login without exposing key-generation details to application UI code.
 
 `AuthenticationService` depends on this contract, not directly on Nostr infrastructure.
 
@@ -158,6 +163,7 @@ It owns:
 ```text
 current AuthenticationState
 current user id
+fresh identity creation orchestration
 saved-login restoration orchestration
 explicit login orchestration
 state subscribers
@@ -217,11 +223,17 @@ strategy throws
 
 The service therefore converts infrastructure restoration behavior into a stable application state transition.
 
+## Fresh identity creation
+
+`createIdentity()` delegates fresh identity creation to the strategy and publishes the resulting authentication state.
+
+The Create Account flow uses this before account/profile setup.
+
 ## Explicit login
 
 `login(credentials)` delegates to the strategy and publishes the resulting authentication state.
 
-The current UI uses this for nsec login.
+The NSEC Login flow uses this only to authenticate an existing identity. It does not run fresh account setup.
 
 ---
 
@@ -296,10 +308,10 @@ initializes WorkspaceRuntime
 configures default Nostr relays
 loads cached account state for the restored user
 starts a non-blocking account refresh
-continues Resource/bootstrap startup
+starts bootstrap Resource installation only when signing authentication is available
 ```
 
-Authentication restoration is therefore a bootstrap prerequisite, while account network refresh is not.
+Authentication restoration is therefore a bootstrap prerequisite, while account network refresh is not. A `signed-out` or `read-only` state does not start relay-backed bootstrap Resource installation. If the user later becomes `authenticated`, Application starts the bootstrap work from that authentication-state transition.
 
 ---
 
@@ -310,6 +322,7 @@ Authentication restoration is therefore a bootstrap prerequisite, while account 
 It owns:
 
 ```text
+fresh Nostr identity generation
 saved login format interpretation
 nsec decoding
 npub decoding
@@ -380,9 +393,25 @@ Read-only authentication therefore cannot accidentally inherit a previous signin
 
 ---
 
+# Fresh Nostr Identity Creation
+
+`NostrAuthenticationStrategy.createIdentity()` generates a new Nostr secret key, encodes it as an nsec, and passes it through the same login path used for explicit nsec authentication.
+
+This ensures the new identity:
+
+```text
+configures the shared signer
+persists the nsec saved-login value
+returns authenticated application state
+```
+
+Key generation remains inside Nostr infrastructure rather than application UI code.
+
+---
+
 # nsec Authentication
 
-Fresh UI login currently accepts nsec credentials.
+NSEC Login accepts only existing nsec credentials.
 
 `NostrAuthenticationStrategy.login(credentials)`:
 
@@ -396,6 +425,16 @@ Fresh UI login currently accepts nsec credentials.
 The application state contains only the resulting public user ID.
 
 The raw nsec does not become `AuthenticationState`.
+
+For explicit user-controlled backup/reveal UI, `AuthenticationStrategy.tryGetExportableSecret()` may expose an exportable secret separately from authentication state. `AuthenticationService` only delegates that capability while the current state is `authenticated`.
+
+The Nostr strategy returns an exportable secret only when the saved authentication mode is nsec:
+
+```text
+{ type: "nsec", value: "nsec1..." }
+```
+
+NIP-07, NIP-46, npub/read-only, and signed-out sessions do not expose an nsec. The Profile UI masks the nsec by default and requires an explicit visibility toggle to reveal it.
 
 ---
 
@@ -537,10 +576,28 @@ AccountService
 
 After restored authentication, `Application.start()` attempts to load cached account state and starts a non-blocking refresh.
 
-For a fresh nsec login, the current login UI performs:
+The two login-module flows deliberately separate existing-account login from fresh account creation.
+
+For NSEC Login:
 
 ```text
 authenticationService.login(nsec)
+    ↓
+accountService.load(userId)
+    ↓
+start non-blocking accountService.refresh(userId)
+    ↓
+replace current Buffer with Profile
+```
+
+NSEC Login does not ask for a name and does not run account setup.
+
+For Create Account:
+
+```text
+ask for name
+    ↓
+authenticationService.createIdentity()
     ↓
 accountService.setup(userId, name)
     ↓
@@ -661,6 +718,7 @@ successful restoration
 missing saved login
 restoration failure
 explicit login
+exportable-secret gating
 user-id access
 ```
 

@@ -19,7 +19,7 @@ It documents how the application:
 * initializes the Workspace,
 * configures Nostr transport,
 * resumes durable publication work,
-* starts bootstrap Resource installation without blocking interactivity,
+* starts bootstrap Resource installation after signing authentication is available without blocking interactivity,
 * and disposes application-owned browser infrastructure.
 
 The central implementation boundary is the concrete `Application` composition root:
@@ -1067,14 +1067,14 @@ The current ordered startup sequence is:
 ```text
 1. apply Settings to the document
 2. restore Resource selections
-3. initialize WorkspaceRuntime with the Bible module
-4. configure Nostr Resource relays
-5. inspect restored authenticated user ID
-6. load Account state when authenticated
+3. inspect restored user identity
+4. initialize WorkspaceRuntime with the authentication-aware default module
+5. configure Nostr Resource relays
+6. load Account state when a user identity exists
 7. begin Account refresh in the background
 8. wake the durable Outbox
 9. mark Application started
-10. begin bootstrap Resource installation asynchronously
+10. observe authentication state and start bootstrap Resource installation when authenticated
 ```
 
 Each step has a distinct ownership reason.
@@ -1121,25 +1121,37 @@ capture selections
 
 ---
 
-# Step 3 — Initialize Workspace
+# Step 3 — Resolve Restored User Identity
 
-The Workspace starts with:
+After authentication restoration has already run in `+layout.svelte`, startup checks:
+
+```typescript
+const userId = authenticationService.tryGetUserId();
+```
+
+The resolved identity is reused for both fresh Workspace policy and Account loading.
+
+---
+
+# Step 4 — Initialize Workspace
+
+The Workspace starts with an authentication-aware default module:
 
 ```typescript
 workspaceRuntime.initialize(
-    Modules.BIBLE
+    userId === undefined
+        ? Modules.LOGIN
+        : Modules.BIBLE
 );
 ```
 
 `WorkspaceRuntime` owns Workspace restoration/initialization behavior.
 
-`Application` only decides when that initialization occurs and which initial module is requested.
-
-The current initial module is Bible.
+`Application` only decides when that initialization occurs and which initial module is requested. A fresh signed-out Workspace opens Login; a fresh authenticated or read-only Workspace opens Bible. Persisted Workspace state still wins over this default.
 
 ---
 
-# Step 4 — Configure Resource Relays
+# Step 5 — Configure Resource Relays
 
 Application then configures the long-lived `NostrClient`:
 
@@ -1157,19 +1169,6 @@ Application coordinates the two.
 
 ---
 
-# Step 5 — Resolve Restored User Identity
-
-After authentication restoration has already run in `+layout.svelte`, startup checks:
-
-```typescript
-authenticationService.tryGetUserId()
-```
-
-If no user is authenticated, Account loading is skipped.
-
-Anonymous Resource reading and local application startup are therefore not blocked on Account state.
-
----
 
 # Step 6 — Load Account State
 
@@ -1239,15 +1238,19 @@ This preserves the local-first startup rule.
 
 ---
 
-# Step 10 — Start Bootstrap Resource Installation Asynchronously
+# Step 10 — Start Bootstrap Resources When Authenticated
 
-After becoming started, Application launches:
+After becoming started, Application subscribes to `AuthenticationService`. The subscription immediately publishes the current state. Application starts bootstrap Resource installation only for:
 
-```typescript
-void installBootstrapResources();
+```text
+status = authenticated
 ```
 
-This work does not block `Application.start()`.
+`authenticated` means a signing identity is available to answer relay AUTH challenges. `signed-out` and `read-only` states skip bootstrap installation.
+
+If startup restored an authenticated login, the initial subscription callback starts bootstrap immediately. If startup is signed out, a later successful NSEC, NIP-07, NIP-46, or newly created identity transition starts the same bootstrap installation.
+
+The install remains asynchronous and does not block `Application.start()` or the login flow.
 
 The configured bootstrap Resource is currently:
 
@@ -1683,20 +1686,26 @@ sequenceDiagram
     App-->>Layout: stable ApplicationContext
     Layout->>Layout: provideApplicationContext(context)
     Layout->>Auth: tryLogin()
-    Auth-->>Layout: restored/anonymous auth state
+    Auth-->>Layout: restored/signed-out auth state
     Layout->>App: start()
     App->>Settings: applySettings()
     App->>Selection: restore()
-    App->>Workspace: initialize(Modules.BIBLE)
-    App->>Nostr: setDefaultRelays(resourceRelays)
     App->>Auth: tryGetUserId()
+    App->>Workspace: initialize(LOGIN or BIBLE)
+    App->>Nostr: setDefaultRelays(resourceRelays)
     alt authenticated
         App->>Account: load(userId)
         App->>Account: refresh(userId) [background]
     end
     App->>Outbox: wake()
+    App->>Auth: subscribe(authentication state)
+    Auth-->>App: current state
+    alt authenticated
+        App->>Resource: install(bootstrap collection) [background]
+    else signed-out or read-only
+        Note over App,Resource: bootstrap deferred until authenticated
+    end
     App-->>Layout: started
-    App->>Resource: install(bootstrap collection) [background]
     Layout->>Layout: ready = true
 ```
 
@@ -1917,7 +1926,9 @@ wake Outbox
     ↓
 mark application interactive
     ↓
-perform bootstrap Resource installation in the background
+observe authentication state
+    ↓
+when authenticated, perform bootstrap Resource installation in the background
 ```
 
 The design keeps ownership explicit, preserves local-first readiness, keeps browser-only presentation code out of Node-safe public barrels, and avoids hidden runtime construction through file-level singletons or service-locator behavior.

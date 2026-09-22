@@ -23,6 +23,23 @@ function createAuthenticationStrategy(
 ): AuthenticationStrategy {
 
     return {
+        tryGetExportableSecret:
+            vi.fn(
+                () =>
+                    undefined
+            ),
+
+        createIdentity:
+            vi.fn(
+                async () =>
+                    result ?? {
+                        status:
+                            'authenticated',
+                        userId:
+                            'a'.repeat(64)
+                    }
+            ),
+
         tryLogin:
             vi.fn(
                 async () =>
@@ -255,6 +272,114 @@ describe(
                 ).toThrow(
                     'Saved login could not be restored.'
                 );
+            }
+        );
+
+        it(
+            'does not expose an exportable secret while signed out',
+            () => {
+                const strategy =
+                    createAuthenticationStrategy(
+                        null
+                    );
+
+                vi.mocked(
+                    strategy.tryGetExportableSecret
+                ).mockReturnValue({
+                    type:
+                        'nsec',
+                    value:
+                        'nsec1secret'
+                });
+
+                const service =
+                    new AuthenticationService(
+                        strategy
+                    );
+
+                expect(
+                    service.tryGetExportableSecret()
+                ).toBeUndefined();
+
+                expect(
+                    strategy.tryGetExportableSecret
+                ).not.toHaveBeenCalled();
+            }
+        );
+
+        it(
+            'exposes the authenticated strategy exportable secret',
+            async () => {
+                const userId =
+                    '9'.repeat(64);
+
+                const strategy =
+                    createAuthenticationStrategy({
+                        status:
+                            'authenticated',
+                        userId
+                    });
+
+                const secret = {
+                    type:
+                        'nsec',
+                    value:
+                        'nsec1secret'
+                };
+
+                vi.mocked(
+                    strategy.tryGetExportableSecret
+                ).mockReturnValue(
+                    secret
+                );
+
+                const service =
+                    new AuthenticationService(
+                        strategy
+                    );
+
+                await service.tryLogin();
+
+                expect(
+                    service.tryGetExportableSecret()
+                ).toEqual(
+                    secret
+                );
+            }
+        );
+
+        it(
+            'creates an identity and publishes authenticated state',
+            async () => {
+                const userId =
+                    'f'.repeat(64);
+
+                const strategy =
+                    createAuthenticationStrategy({
+                        status:
+                            'authenticated',
+                        userId
+                    });
+
+                const service =
+                    new AuthenticationService(
+                        strategy
+                    );
+
+                await service
+                    .createIdentity();
+
+                expect(
+                    strategy.createIdentity
+                ).toHaveBeenCalledOnce();
+
+                expect(
+                    service.getState()
+                ).toEqual({
+                    status:
+                        'authenticated',
+                    userId
+                });
             }
         );
 

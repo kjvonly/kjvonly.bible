@@ -17,7 +17,8 @@ import type {
 
 import type {
     AuthenticationResult,
-    AuthenticationStrategy
+    AuthenticationStrategy,
+    ExportableAuthenticationSecret
 } from '$lib/application';
 
 import {
@@ -127,6 +128,56 @@ export class NostrAuthenticationStrategy
         this.onNip46Auth =
             options.onNip46Auth ??
             (() => { });
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    tryGetExportableSecret():
+        ExportableAuthenticationSecret |
+        undefined {
+
+        const savedLogin =
+            this.storage.getItem(
+                NOSTR_LOGIN_STORAGE_KEY
+            );
+
+        if (
+            savedLogin ===
+            null ||
+            !savedLogin.startsWith(
+                'nsec'
+            )
+        ) {
+            return undefined;
+        }
+
+        return {
+            type:
+                'nsec',
+            value:
+                savedLogin
+        };
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    async createIdentity():
+        Promise<
+            AuthenticationResult
+        > {
+
+        const secretKey =
+            generateSecretKey();
+
+        try {
+            return await this.login(
+                nip19.nsecEncode(
+                    secretKey
+                )
+            );
+        } finally {
+            secretKey.fill(0);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////

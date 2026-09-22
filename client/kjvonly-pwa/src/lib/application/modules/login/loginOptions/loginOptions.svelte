@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
+	import CreateAccount from '../createAccount/createAccount.svelte';
 	import NsecLogin from '../nsec/nsecLogin.svelte';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
@@ -15,7 +16,9 @@
 
 	let headerHeight: number = $state(0);
 
-	function createAccount() {}
+	function createAccount() {
+		navService.push({ component: CreateAccount, obj: {} });
+	}
 	function nsecLogin() {
 		navService.push({ component: NsecLogin, obj: {} });
 	}
@@ -27,7 +30,6 @@
 
 {#snippet body()}
 	<div class="flex h-full flex-col items-center justify-center">
-		<p class="p-2">All you need is a name.</p>
 		<div class="flex max-w-72 flex-col space-y-2">
 			<KJVButtonRounded onClick={createAccount}>Create Account</KJVButtonRounded
 			>

@@ -4,6 +4,10 @@ import type {
 } from './authentication/authentication-strategy';
 
 import type {
+    ExportableAuthenticationSecret
+} from './authentication/exportable-authentication-secret';
+
+import type {
     AuthenticationState,
     AuthenticationStateSubscriber
 } from './authentication/authentication-state';
@@ -63,6 +67,37 @@ export class AuthenticationService {
                 subscriber
             );
         };
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    tryGetExportableSecret():
+        ExportableAuthenticationSecret |
+        undefined {
+
+        if (
+            this.state.status !==
+            'authenticated'
+        ) {
+            return undefined;
+        }
+
+        return this.authenticationStrategy
+            .tryGetExportableSecret();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    async createIdentity():
+        Promise<void> {
+
+        const result =
+            await this.authenticationStrategy
+                .createIdentity();
+
+        this.setAuthentication(
+            result
+        );
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -71,7 +71,7 @@ This document covers:
 * Nostr relay startup configuration,
 * account loading and refresh,
 * Outbox wakeup,
-* asynchronous bootstrap Resource installation,
+* authentication-gated asynchronous bootstrap Resource installation,
 * the root Workspace page,
 * Workspace change subscriptions,
 * layout refresh,
@@ -209,7 +209,10 @@ wake durable Outbox
     ↓
 mark Application started
     ↓
-start bootstrap Resource installation asynchronously
+observe authentication state
+    ↓
+if authenticated: start bootstrap Resource installation asynchronously
+if signed-out/read-only: defer bootstrap until authenticated
     ↓
 +layout.svelte sets ready = true
     ↓
@@ -631,15 +634,21 @@ not the reverse.
 
 ---
 
-# Startup Step 2: Initialize the Workspace
+# Startup Step 2: Resolve Authentication and Initialize the Workspace
 
-Application startup calls:
+Authentication restoration has already completed in the root layout. Application startup reads the restored user identity and chooses the fresh Workspace default:
 
 ```typescript
+const userId = this.context
+    .authenticationService
+    .tryGetUserId();
+
 this.context
     .workspaceRuntime
     .initialize(
-        Modules.BIBLE
+        userId === undefined
+            ? Modules.LOGIN
+            : Modules.BIBLE
     );
 ```
 
@@ -659,10 +668,11 @@ restored?
               and assign it to root Pane
 ```
 
-The default root module is currently:
+The fresh root module depends on restored authentication state:
 
 ```text
-Modules.BIBLE
+signed-out             → Modules.LOGIN
+authenticated/read-only → Modules.BIBLE
 ```
 
 ---
@@ -765,7 +775,7 @@ and does not create a new default Buffer.
 This is important because restored Buffer identities, module state, and Resource
 selection snapshots should be preserved.
 
-The restored Workspace takes precedence over the default Bible module.
+The restored Workspace takes precedence over the authentication-aware default module.
 
 ---
 
@@ -920,30 +930,51 @@ the entire UI behind the loading screen.
 
 ---
 
-# Startup Step 7: Bootstrap Resources Run Asynchronously
+# Startup Step 7: Bootstrap Resources Require Authentication
 
-After entering the started state, Application launches:
+After entering the started state, Application observes `AuthenticationService`.
+The current authentication state is delivered immediately.
 
-```typescript
-void this.installBootstrapResources();
+Application starts bootstrap Resource installation only when:
+
+```text
+AuthenticationState.status = authenticated
 ```
 
-The call is intentionally not awaited by `startInternal()`.
+A signing identity is required because the configured Nostr relay may require
+AUTH before Resource discovery. `signed-out` and `read-only` states therefore do
+not start bootstrap work.
 
-The sequence is:
+The sequence for restored authentication is:
 
 ```text
 required startup complete
     ↓
 Application state = started
     ↓
-start bootstrap Resource install
+authentication state = authenticated
+    ↓
+start bootstrap Resource install asynchronously
     ↓
 return from Application.start()
 ```
 
-This keeps startup responsive while the Resource worker continues background
-installation.
+For a fresh signed-out session:
+
+```text
+Application state = started
+    ↓
+bootstrap deferred
+    ↓
+user successfully authenticates
+    ↓
+AuthenticationService publishes authenticated state
+    ↓
+start bootstrap Resource install asynchronously
+```
+
+The install is intentionally not awaited. This keeps startup and login responsive
+while the Resource worker continues background installation.
 
 ---
 
@@ -1870,14 +1901,21 @@ sequenceDiagram
     Auth-->>Layout: restored/signed-out state
     Layout->>App: start()
     App->>Select: restore()
-    App->>Workspace: initialize(Modules.BIBLE)
+    App->>Auth: tryGetUserId()
+    App->>Workspace: initialize(LOGIN or BIBLE)
     Workspace-->>App: restored? boolean
     App->>App: configure private NostrClient relays
     App->>Account: load(userId) when authenticated
     App->>Account: refresh(userId) in background
     App->>Outbox: wake()
     App->>App: state = started
-    App->>Worker: install bootstrap Resource (background)
+    App->>Auth: subscribe()
+    Auth-->>App: current state
+    alt authenticated
+        App->>Worker: install bootstrap Resource (background)
+    else signed-out or read-only
+        Note over App,Worker: bootstrap deferred until authenticated
+    end
     App-->>Layout: startup complete
     Layout->>Page: render child route
     Page->>Workspace: subscribe()
@@ -1900,10 +1938,10 @@ sequenceDiagram
     participant Panes as PaneService
     participant Factory as ModuleBufferFactory
 
-    App->>Workspace: initialize(Modules.BIBLE)
+    App->>Workspace: initialize(defaultModule)
     Workspace->>Panes: restore()
     Panes-->>Workspace: false
-    Workspace->>Factory: independent(Modules.BIBLE)
+    Workspace->>Factory: independent(defaultModule)
     Factory-->>Workspace: Buffer
     Workspace->>Panes: rootPane.buffer = Buffer
     Workspace-->>App: false
@@ -1923,7 +1961,7 @@ sequenceDiagram
     participant Workspace as WorkspaceRuntime
     participant Panes as PaneService
 
-    App->>Workspace: initialize(Modules.BIBLE)
+    App->>Workspace: initialize(defaultModule)
     Workspace->>Panes: restore()
     Panes->>Panes: restore serialized Pane tree
     Panes-->>Workspace: true
@@ -1999,7 +2037,7 @@ Pane persistence directly.
 
 ## Restored Workspace state wins over the default module
 
-The default Bible Buffer is only created when no persisted Workspace exists.
+The authentication-aware default Buffer is only created when no persisted Workspace exists. Signed-out fresh state opens Login; authenticated/read-only fresh state opens Bible.
 
 ## Fresh default Workspace creation does not currently force an immediate save
 
@@ -2018,7 +2056,7 @@ Buffer replacement alone does not require grid geometry changes.
 
 ## Bootstrap Resources do not block interactivity
 
-Required startup completes before background bootstrap Resource installation.
+Required startup completes independently of bootstrap Resource installation. When signing authentication is already restored, bootstrap starts in the background; otherwise it is deferred until a later authenticated state.
 
 ## Nostr transport and Resource worker details remain private to Application
 
@@ -2163,7 +2201,8 @@ The current default Workspace policy is:
 ```text
 no persisted Workspace
     → one root Pane
-    → independent Modules.BIBLE Buffer
+    → signed-out: independent Modules.LOGIN Buffer
+    → authenticated/read-only: independent Modules.BIBLE Buffer
 ```
 
 If this policy changes, keep the decision in Application/Workspace startup
@@ -2287,7 +2326,7 @@ The initial Buffer should contain the correct captured context.
 
 # Debugging Restored Workspace State
 
-If the application unexpectedly opens the default Bible module rather than the
+If the application unexpectedly opens the fresh default module rather than the
 saved Workspace, inspect:
 
 ```text
@@ -2302,7 +2341,7 @@ WorkspaceRuntime.initialize() return value
 
 If restore returns `false`, the default Buffer path is expected.
 
-If restore returns `true`, `ModuleBufferFactory.independent(Modules.BIBLE)`
+If restore returns `true`, `ModuleBufferFactory.independent(defaultModule)`
 should not run.
 
 ---

@@ -5,7 +5,7 @@
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import { Modules } from '$lib/application/models/modules.model';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import NsecLoginHeader from './nsecLoginHeader.svelte';
+	import CreateAccountHeader from './createAccountHeader.svelte';
 
 	let {
 		paneID,
@@ -21,44 +21,36 @@
 	} = useApplicationContext();
 
 	let headerHeight: number = $state(0);
-	let nsec = $state('');
+	let name = $state('');
 
-	async function nsecLogin() {
-		await authenticationService.login(nsec);
+	async function createAccount() {
+		await authenticationService.createIdentity();
 
-		const userId =
-			authenticationService.getUserId();
-
-		await accountService.load(userId);
-
-		void accountService
-			.refresh(userId)
-			.catch((error) => {
-				console.warn(
-					'[Account refresh failed]',
-					error
-				);
-			});
+		await accountService.setup(
+			authenticationService.getUserId(),
+			name
+		);
 
 		workspaceRuntime.replaceBuffer(paneID, Modules.PROFILE);
 	}
 </script>
 
 {#snippet header()}
-	<NsecLoginHeader bind:navService></NsecLoginHeader>
+	<CreateAccountHeader bind:navService></CreateAccountHeader>
 {/snippet}
 
 {#snippet body()}
 	<div class="flex h-full flex-col items-center justify-center">
+		<p class="p-2">All you need is a name.</p>
 		<div class="flex max-w-72 flex-col space-y-6">
 			<input
-				bind:value={nsec}
+				bind:value={name}
 				type="text"
-				id="nsecText"
-				placeholder="nsec1..."
+				id="name"
+				placeholder="Name"
 				class=" border-primary-500 w-full border-b-1 outline-none"
 			/>
-			<KJVButtonRounded onClick={nsecLogin}>NSEC Login</KJVButtonRounded>
+			<KJVButtonRounded onClick={createAccount}>Create Account</KJVButtonRounded>
 		</div>
 	</div>
 {/snippet}

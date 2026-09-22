@@ -26,6 +26,7 @@ export {
 
 export type {
 	AccountSetup,
+	AccountUpdate,
 	AccountStrategy
 } from './services/account/account-strategy';
 
@@ -39,6 +40,10 @@ export type {
 	AuthenticationResult,
 	AuthenticationStrategy
 } from './services/authentication/authentication-strategy';
+
+export type {
+	ExportableAuthenticationSecret
+} from './services/authentication/exportable-authentication-secret';
 
 // MODELS
 export { Modules } from './models/modules.model';

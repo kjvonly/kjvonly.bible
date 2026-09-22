@@ -30,6 +30,11 @@ function createStrategy(
                 .mockResolvedValue(
                     undefined
                 ),
+        update:
+            vi.fn()
+                .mockResolvedValue(
+                    undefined
+                ),
         ...overrides
     };
 }
@@ -162,6 +167,89 @@ describe(
                         name:
                             'Stephen'
                     });
+            }
+        );
+
+        it(
+            'updates editable account state through the configured strategy',
+            async () => {
+                const update =
+                    vi.fn()
+                        .mockResolvedValue(
+                            undefined
+                        );
+
+                const load =
+                    vi.fn()
+                        .mockResolvedValue({
+                            name:
+                                'Updated Name',
+                            relays: [
+                                {
+                                    url:
+                                        'wss://relay.example',
+                                    read: true,
+                                    write: false
+                                }
+                            ]
+                        });
+
+                const service =
+                    new AccountService(
+                        createStrategy({
+                            update,
+                            load
+                        })
+                    );
+
+                await service.update(
+                    'user-id',
+                    'Updated Name',
+                    [
+                        {
+                            url:
+                                'wss://relay.example',
+                            read: true,
+                            write: false
+                        }
+                    ]
+                );
+
+                expect(update)
+                    .toHaveBeenCalledWith({
+                        userId:
+                            'user-id',
+                        name:
+                            'Updated Name',
+                        relays: [
+                            {
+                                url:
+                                    'wss://relay.example',
+                                read: true,
+                                write: false
+                            }
+                        ]
+                    });
+
+                expect(load)
+                    .toHaveBeenCalledWith(
+                        'user-id'
+                    );
+
+                expect(
+                    service.getState()
+                ).toEqual({
+                    name:
+                        'Updated Name',
+                    relays: [
+                        {
+                            url:
+                                'wss://relay.example',
+                            read: true,
+                            write: false
+                        }
+                    ]
+                });
             }
         );
 
