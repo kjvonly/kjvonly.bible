@@ -155,9 +155,3 @@ export {
 export {
 	ResourceResolver
 } from './resolution/resource-resolver';
-
-export {
-	createBrowserResourceWorkerClient,
-	ResourceWorkerClient,
-	type ResourceWorkerPort
-} from './worker/resource-worker-client';

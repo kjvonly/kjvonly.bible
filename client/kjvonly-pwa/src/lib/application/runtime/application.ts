@@ -36,16 +36,19 @@ import {
 import {
 	ResourceLoader,
 	appendResourceReferenceBuilder,
-	createBrowserResourceWorkerClient,
 	ResourceContentDecoratorBuilder,
 	JsonResourceContentDecorator,
 	GzipResourceContentDecorator,
 	HexResourceContentDecorator,
 	ResourceContentEncoder,
 	type PublishedResourceReference,
-	type ResourceInstallResult,
-	type ResourceWorkerClient
+	type ResourceInstallResult
 } from '$lib/resource';
+
+import {
+	createBrowserResourceWorkerClient,
+	type ResourceWorkerClient
+} from '$lib/resource/worker';
 
 
 import {

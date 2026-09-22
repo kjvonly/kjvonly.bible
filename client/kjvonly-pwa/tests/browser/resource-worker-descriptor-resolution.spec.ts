@@ -5,13 +5,16 @@ import {
 	it
 } from 'vitest';
 
-import {
-	createBrowserResourceWorkerClient,
-	type PublishedResourceReference,
-	type ResourceRepresentation,
-	type ResourceDescriptor,
-	type ResourceResolutionStrategy
+import type {
+	PublishedResourceReference,
+	ResourceRepresentation,
+	ResourceDescriptor,
+	ResourceResolutionStrategy
 } from '$lib/resource';
+
+import {
+	createBrowserResourceWorkerClient
+} from '$lib/resource/worker';
 
 import {
 	PLAN_DEFINITION_OBJECT_TYPE

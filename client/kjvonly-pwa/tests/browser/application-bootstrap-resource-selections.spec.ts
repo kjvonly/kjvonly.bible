@@ -20,10 +20,13 @@ import {
 	KJVONLY_PUBKEY
 } from '$lib/infrastructure/nostr/nostr';
 
-import {
-	ResourceWorkerClient,
-	type ResourceInstallResult
+import type {
+	ResourceInstallResult
 } from '$lib/resource';
+
+import {
+	ResourceWorkerClient
+} from '$lib/resource/worker';
 
 
 const RESOURCE_SELECTIONS_STORAGE_KEY =

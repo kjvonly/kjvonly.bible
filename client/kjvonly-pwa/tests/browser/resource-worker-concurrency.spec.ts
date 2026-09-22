@@ -10,12 +10,15 @@ import {
 	vi
 } from 'vitest';
 
-import {
-	createBrowserResourceWorkerClient,
-	type PublishedResourceReference,
-	type ResourceRepresentation,
-	type ResourceInstallResult
+import type {
+	PublishedResourceReference,
+	ResourceRepresentation,
+	ResourceInstallResult
 } from '$lib/resource';
+
+import {
+	createBrowserResourceWorkerClient
+} from '$lib/resource/worker';
 
 
 import {
