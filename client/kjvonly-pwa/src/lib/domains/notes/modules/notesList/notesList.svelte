@@ -8,7 +8,10 @@
 		NotesMode
 	} from '../../models/note.model';
 	import { createNoteDomainObjectId } from '../../models/note-id';
-	import type { NoteFilterParameter } from '../../ui/note-filter.model';
+	import type {
+		NoteFilterIndex,
+		NoteFilterParameter
+	} from '../../ui/note-filter.model';
 
 	// OTHER
 	import { BufferContainer, BufferHeader, BufferBody } from '$lib/application/ui';
@@ -58,6 +61,7 @@
 		onSelectedNote,
 		allNotes,
 		filterParams,
+		onFilterParamChanged,
 		onFilterInputChanged,
 		onAddNewNote
 	}: {
@@ -69,6 +73,7 @@
 		onSelectedNote: (noteId: string) => void;
 		allNotes: boolean;
 		filterParams: NoteFilterParameter[];
+		onFilterParamChanged: (index: NoteFilterIndex, checked: boolean) => void;
 		onFilterInputChanged: () => void;
 		onAddNewNote: (note: Note) => void;
 	} = $props();
@@ -303,6 +308,11 @@
 		}
 	}
 
+	function onFilterChanged(event: Event, index: NoteFilterIndex): void {
+		const input = event.currentTarget as HTMLInputElement;
+		onFilterParamChanged(index, input.checked);
+	}
+
 	function onToggleFilter(): void {
 		if (showNoteListFilter) {
 			filterInput = '';
@@ -367,11 +377,11 @@
 							<div class="flex items-center">
 								&#8203;
 								<input
-									bind:checked={fp.checked}
+									checked={fp.checked}
 									type="checkbox"
 									class="accent-support-a-300 size-4 rounded-sm border-neutral-200"
 									id={`${noteListControlID}-filter-${fp.option}`}
-									onchange={onFilterInputChanged}
+									onchange={(event) => onFilterChanged(event, fp.index)}
 								/>
 							</div>
 

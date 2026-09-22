@@ -30,7 +30,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		NotesMode
 	} from '../models/note.model';
 	import type { NotesSearchResult } from '../runtime/search/notes-search-worker-message';
-	import type { NoteFilterParameter } from '../ui/note-filter.model';
+	import type {
+		NoteFilterIndex,
+		NoteFilterParameter
+	} from '../ui/note-filter.model';
 	import {
 		NOTES_COLLECTION_CHANGED
 	} from '../events/notes-events';
@@ -159,6 +162,17 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		}
 	}
 
+	function onFilterParamChanged(index: NoteFilterIndex, checked: boolean) {
+		const filterParam = filterParams.find((fp) => fp.index === index);
+
+		if (!filterParam) {
+			return;
+		}
+
+		filterParam.checked = checked;
+		onFilterInputChanged();
+	}
+
 	function onFilterInputResults(results: NotesSearchResult) {
 		if (results.id === NOTE_SEARCH_ID) {
 			noteKeys = Object.keys(results.notes)
@@ -207,6 +221,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 		{onSelectedNote}
 		{allNotes}
 		{filterParams}
+		{onFilterParamChanged}
 		{onFilterInputChanged}
 		{onAddNewNote}
 	></NotesList>
