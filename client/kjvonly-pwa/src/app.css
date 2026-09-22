@@ -61,6 +61,17 @@
 	--color-vivid-a-100: hsl(48deg 100% 88%);
 	--color-vivid-a-50: hsl(49deg 100% 96%);
 
+	--color-vivid-b-900: hsl(204deg 96% 27%);
+	--color-vivid-b-800: hsl(203deg 87% 34%);
+	--color-vivid-b-700: hsl(202deg 83% 41%);
+	--color-vivid-b-600: hsl(201deg 79% 46%);
+	--color-vivid-b-500: hsl(199deg 84% 55%);
+	--color-vivid-b-400: hsl(197deg 92% 61%);
+	--color-vivid-b-300: hsl(196deg 94% 67%);
+	--color-vivid-b-200: hsl(195deg 97% 75%);
+	--color-vivid-b-100: hsl(195deg 100% 85%);
+	--color-vivid-b-50: hsl(195deg 100% 95%);
+
 	--color-neutral-900: hsl(42deg 15% 13%);
 	--color-neutral-800: hsl(40deg 13% 23%);
 	--color-neutral-700: hsl(37deg 11% 28%);
@@ -188,6 +199,17 @@
 		--color-vivid-a-100: hsl(48deg 100% 88%);
 		--color-vivid-a-50: hsl(49deg 100% 96%);
 
+		--color-vivid-b-900: hsl(204deg 96% 27%);
+		--color-vivid-b-800: hsl(203deg 87% 34%);
+		--color-vivid-b-700: hsl(202deg 83% 41%);
+		--color-vivid-b-600: hsl(201deg 79% 46%);
+		--color-vivid-b-500: hsl(199deg 84% 55%);
+		--color-vivid-b-400: hsl(197deg 92% 61%);
+		--color-vivid-b-300: hsl(196deg 94% 67%);
+		--color-vivid-b-200: hsl(195deg 97% 75%);
+		--color-vivid-b-100: hsl(195deg 100% 85%);
+		--color-vivid-b-50: hsl(195deg 100% 95%);
+
 		--color-neutral-900: hsl(42deg 15% 13%);
 		--color-neutral-800: hsl(40deg 13% 23%);
 		--color-neutral-700: hsl(37deg 11% 28%);
@@ -255,6 +277,17 @@
 		--color-vivid-a-700: hsl(48deg 95% 76%);
 		--color-vivid-a-800: hsl(48deg 100% 88%);
 		--color-vivid-a-900: hsl(49deg 100% 96%);
+
+		--color-vivid-b-50: hsl(204deg 96% 27%);
+		--color-vivid-b-100: hsl(203deg 87% 34%);
+		--color-vivid-b-200: hsl(202deg 83% 41%);
+		--color-vivid-b-300: hsl(201deg 79% 46%);
+		--color-vivid-b-400: hsl(199deg 84% 55%);
+		--color-vivid-b-500: hsl(197deg 92% 61%);
+		--color-vivid-b-600: hsl(196deg 94% 67%);
+		--color-vivid-b-700: hsl(195deg 97% 75%);
+		--color-vivid-b-800: hsl(195deg 100% 85%);
+		--color-vivid-b-900: hsl(195deg 100% 95%);
 
 		--color-neutral-50: hsl(42deg 15% 13%);
 		--color-neutral-100: hsl(40deg 13% 23%);
