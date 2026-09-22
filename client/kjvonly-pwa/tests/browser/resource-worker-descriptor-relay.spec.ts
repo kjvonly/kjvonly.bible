@@ -56,10 +56,13 @@ import {
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
-	createBrowserResourceWorkerClient,
 	createResourceInstallationId,
 	createResourceReceiptId
 } from '$lib/resource';
+
+import {
+	createBrowserResourceWorkerClient
+} from '$lib/resource/worker';
 
 
 ///////////////////////////////////////////////////////////////////////////////

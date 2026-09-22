@@ -9,10 +9,13 @@ import {
 	type PublishedResourceReference,
 	type ResourceRepresentation,
 	createResourceInstallationId,
-	createResourceReceiptId,
+	createResourceReceiptId
+} from '$lib/resource';
+
+import {
 	createBrowserResourceWorkerClient,
 	ResourceWorkerClient
-} from '$lib/resource';
+} from '$lib/resource/worker';
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
