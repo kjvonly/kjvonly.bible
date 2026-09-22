@@ -363,4 +363,25 @@ app-data-sync-verbose: up
 	push
 
 push:
-	git push origin HEAD && git push bitbucket HEAD   
+	git push devbox HEAD
+
+.PHONY: worktree worktree-sync worktree-remove
+
+worktree:
+	@test -n "$(BRANCH)" || (echo "Usage: make worktree BRANCH=feature/server-deployment" && exit 1)
+	@mkdir -p worktrees
+	git worktree add "worktrees/$$(basename "$(BRANCH)")" -b "$(BRANCH)" master
+
+worktree-sync:
+	@test -n "$(BRANCH)" || (echo "Usage: make worktree-sync BRANCH=feature/server-deployment" && exit 1)
+	@WORKTREE="worktrees/$$(basename "$(BRANCH)")"; \
+	test -d "$$WORKTREE" || (echo "Worktree does not exist: $$WORKTREE" && exit 1); \
+	mkdir -p "$$WORKTREE/client/node_modules"; \
+	rsync -av --delete client/node_modules/ "$$WORKTREE/client/kjvonly-pwa/node_modules/" \
+	rsync -a client/kjvonly-pwa/.certs/ "$$WORKTREE/client/kjvonly-pwa/.certs/"
+
+worktree-remove:
+	@test -n "$(BRANCH)" || (echo "Usage: make worktree-remove BRANCH=feature/server-deployment" && exit 1)
+	@WORKTREE="worktrees/$$(basename "$(BRANCH)")"; \
+	git -C "$$WORKTREE" submodule deinit -f --all; \
+	git worktree remove "$$WORKTREE"
