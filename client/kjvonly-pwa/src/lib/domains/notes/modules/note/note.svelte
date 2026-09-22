@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { BufferContainer, BufferHeader, findElement } from '$lib/application/ui';
+	import {
+		BufferContainer,
+		BufferHeader,
+		findElement
+	} from '$lib/application/ui';
 
 	// SVELTE
 	import { onMount } from 'svelte';
@@ -17,10 +21,7 @@
 
 	// MODELS
 	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
-	import type {
-		Note,
-		NoteTag
-	} from '../../models/note.model';
+	import type { Note, NoteTag } from '../../models/note.model';
 
 	// OTHER
 	import Quill from 'quill';
@@ -29,11 +30,8 @@
 	import { parseNoteTagInput } from './note-tag-input';
 
 	// APPLICATION
-	const {
-		workspaceRuntime,
-		toastService,
-		notesService
-	} = useApplicationContext();
+	const { workspaceRuntime, toastService, notesService } =
+		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -48,6 +46,15 @@
 		persisted: boolean;
 		onCloseNote: () => void;
 	} = $props();
+
+	// Intentionally capture the incoming Note once when the editor opens. The draft
+	// must remain isolated from later parent refreshes so in-progress edits are not
+	// overwritten; using $derived here would break that draft ownership boundary.
+	// svelte-ignore state_referenced_locally
+	let draft = $state<Note>({
+		...note,
+		tags: note.tags?.map((tag) => ({ ...tag })) ?? []
+	});
 
 	// ================================== VARS =================================
 
@@ -70,12 +77,22 @@
 			showConfirmDelete = true;
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(
+				paneID,
+				PaneSplit.VERTICAL,
+				Modules.MODULES,
+				{}
+			);
 			showNoteActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
+			workspaceRuntime.splitPane(
+				paneID,
+				PaneSplit.HORIZONTAL,
+				Modules.MODULES,
+				{}
+			);
 			showNoteActions = false;
 		}
 	};
@@ -96,12 +113,12 @@
 					return;
 				}
 
-				note.html = quill.getSemanticHTML();
-				note.text = quill.getText();
-				note.title = note.text.split('\n')[0].substring(0, 20);
+				draft.html = quill.getSemanticHTML();
+				draft.text = quill.getText();
+				draft.title = draft.text.split('\n')[0].substring(0, 20);
 			});
 
-			let d = quill.clipboard.convert({ html: note?.html });
+			let d = quill.clipboard.convert({ html: draft.html });
 			quill.setContents(d, 'silent');
 		}
 	});
@@ -127,28 +144,20 @@
 
 	async function onConfirmDelete() {
 		if (isPersisted) {
-			await notesService.delete(
-				note.id
-			);
+			await notesService.delete(draft.id);
 		}
 
 		onCloseNote();
 	}
 
 	async function onSave(toastMessage: string) {
-		note.dateUpdated = Date.now();
+		draft.dateUpdated = Date.now();
 
-		await notesService.put(
-			$state.snapshot(
-				note
-			)
-		);
+		await notesService.put($state.snapshot(draft));
 
 		isPersisted = true;
 
-		toastService.showToast(
-			toastMessage
-		);
+		toastService.showToast(toastMessage);
 	}
 
 	async function onAddTag() {
@@ -158,14 +167,10 @@
 			return;
 		}
 
-		if (!note.tags) {
-			note.tags = [];
-		}
-
 		tags.forEach((tag) => {
 			const now = Date.now();
 
-			note.tags.push({
+			draft.tags.push({
 				id: uuid4(),
 				created: now,
 				modified: now,
@@ -179,11 +184,7 @@
 	}
 
 	function onDeleteTag(tagID: string) {
-		if (note) {
-			note.tags = note.tags.filter(
-				(tag: NoteTag) => tag.id !== tagID
-			);
-		}
+		draft.tags = draft.tags.filter((tag: NoteTag) => tag.id !== tagID);
 	}
 
 	function onClose() {
@@ -200,7 +201,7 @@
 <!-- START NOTE SNIPPETS -->
 {#snippet noteHeaderSnippet()}
 	<div class="grid w-full grid-cols-5 place-items-center">
-		<KJVButton classes="" onClick={() => onSave(`Saved Note: ${note.title}`)}>
+		<KJVButton classes="" onClick={() => onSave(`Saved Note: ${draft.title}`)}>
 			<Save></Save>
 		</KJVButton>
 
@@ -212,7 +213,7 @@
 			{/if}
 		</KJVButton>
 		<span class="text-center"
-			>{note.title}{note.title?.length === 20 ? '...' : ''}</span
+			>{draft.title}{draft.title?.length === 20 ? '...' : ''}</span
 		>
 		<KJVButton classes="" onClick={() => (showNoteActions = !showNoteActions)}>
 			<Menu></Menu>
@@ -247,7 +248,7 @@
 	>
 		<p class="p-4 capitalize">
 			confirm delete <span class="font-semibold"
-				>{note.title} {note.title?.length === 20 ? '...' : ''}</span
+				>{draft.title} {draft.title?.length === 20 ? '...' : ''}</span
 			>
 		</p>
 		<div class="flex flex-row space-x-5">
@@ -300,7 +301,7 @@
 	{#if showTags}
 		<div class="overflow-hidden">
 			<div class="flex flex-wrap items-end space-x-2 p-2">
-				{#each [...note.tags].reverse() as t}
+				{#each [...draft.tags].reverse() as t}
 					<span class="py-2">
 						<span
 							class="border-support-a-500 text-support-a-700 inline-flex items-center justify-center rounded-full border p-1 px-2.5"
@@ -332,16 +333,16 @@
 			class="flex w-full flex-col items-start justify-start"
 		>
 			{@render noteTagInputSnippet()}
-			{#if note?.tags}
+			{#if draft.tags}
 				{@render noteTagsSnippet()}
 			{/if}
 		</div>
 	{/if}
 	<!-- keep the editor in the dom the while notes container is open. toggle the hidden params. Otherwise we'd need to keep creating this. -->
 	<div
-		class=" {showNoteActions || !note
+		class=" {showNoteActions
 			? 'hidden'
-			: ''} flex w-full min-h-0 min-w-0 flex-col overflow-hidden"
+			: ''} flex min-h-0 w-full min-w-0 flex-col overflow-hidden"
 		style="height: {Math.max(
 			0,
 			clientHeight - headerHeight - tagContainerHeight - 50
@@ -349,7 +350,7 @@
 	>
 		<div
 			id={editor}
-			class="notes-quill h-full w-full min-h-0 min-w-0 overflow-hidden"
+			class="notes-quill h-full min-h-0 w-full min-w-0 overflow-hidden"
 		></div>
 	</div>
 {/snippet}
