@@ -63,7 +63,7 @@
 	let headerHeight = $state(0);
 	let showConfirmDelete = $state(false);
 	let showNoteActions = $state(false);
-	let showTags: boolean = $state(false);
+	let showTags = $state(false);
 	let tagContainerHeight = $state(0);
 	let tagInput: string = $state('');
 	const tagID: string = uuid4();
@@ -99,8 +99,8 @@
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(async () => {
-		let element = document.getElementById(editor);
+	onMount(() => {
+		const element = document.getElementById(editor);
 
 		/* editor */
 		if (element) {
@@ -118,8 +118,8 @@
 				draft.title = draft.text.split('\n')[0].substring(0, 20);
 			});
 
-			let d = quill.clipboard.convert({ html: draft.html });
-			quill.setContents(d, 'silent');
+			const contents = quill.clipboard.convert({ html: draft.html });
+			quill.setContents(contents, 'silent');
 		}
 	});
 
@@ -188,11 +188,11 @@
 	}
 
 	function onClose() {
-		if (!isShowingOptions()) {
-			showNoteActions = false;
-			showConfirmDelete = false;
-			onCloseNote();
+		if (isShowingOptions()) {
+			return;
 		}
+
+		onCloseNote();
 	}
 </script>
 
@@ -333,9 +333,7 @@
 			class="flex w-full flex-col items-start justify-start"
 		>
 			{@render noteTagInputSnippet()}
-			{#if draft.tags}
-				{@render noteTagsSnippet()}
-			{/if}
+			{@render noteTagsSnippet()}
 		</div>
 	{/if}
 	<!-- keep the editor in the dom the while notes container is open. toggle the hidden params. Otherwise we'd need to keep creating this. -->
