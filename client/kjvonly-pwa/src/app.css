@@ -122,8 +122,8 @@
 		position: -webkit-sticky; /* For Safari */
 		position: sticky;
 		top: 0;
-		background-color: rgb(255 255 255 / var(--tw-bg-opacity));
-		border-bottom: 1px solid #ccc;
+		background-color: var(--color-neutral-50);
+		border-bottom: 1px solid var(--color-neutral-200);
 		height: 50px;
 		min-height: 50px;
 		max-height: 50px;
@@ -233,6 +233,7 @@
 	}
 
 	[data-theme='color-theme-dark-red'] {
+		--color-primary-surface: hsl(42deg 15% 13%);
 		--color-primary-50: hsl(360deg 62% 20%);
 		--color-primary-100: hsl(360deg 85% 25%);
 		--color-primary-200: hsl(360deg 79% 32%);
@@ -299,6 +300,7 @@
 	}
 
 	[data-theme='color-theme-light-blue'] {
+		--color-primary-surface: hsl(0 0% 100%);
 		--color-primary-900: hsl(204deg 96% 27%);
 		--color-primary-800: hsl(203deg 87% 34%);
 		--color-primary-700: hsl(202deg 83% 41%);
@@ -377,6 +379,7 @@
 	}
 
 	[data-theme='color-theme-dark-light-blue'] {
+		--color-primary-surface: hsl(210deg 24% 16%);
 		--color-primary-50: hsl(204deg 96% 27%);
 		--color-primary-100: hsl(203deg 87% 34%);
 		--color-primary-200: hsl(202deg 83% 41%);
@@ -454,6 +457,7 @@
 	}
 
 	[data-theme='color-theme-purple'] {
+		--color-primary-surface: hsl(0 0% 100%);
 		--color-primary-900: hsl(263deg 85% 18%);
 		--color-primary-800: hsl(262deg 72% 25%);
 		--color-primary-700: hsl(262deg 69% 31%);
@@ -530,6 +534,7 @@
 	}
 
 	[data-theme='color-theme-dark-purple'] {
+		--color-primary-surface: hsl(42deg 15% 13%);
 		--color-primary-50: hsl(263deg 85% 18%);
 		--color-primary-100: hsl(262deg 72% 25%);
 		--color-primary-200: hsl(262deg 69% 31%);
@@ -606,6 +611,7 @@
 	}
 
 	[data-theme='color-theme-cyan'] {
+		--color-primary-surface: hsl(0 0% 100%);
 		/*cyan primary*/
 		--color-primary-900: hsl(184deg 91% 17%);
 		--color-primary-800: hsl(185deg 84% 25%);
@@ -688,6 +694,7 @@
 	}
 
 	[data-theme='color-theme-dark-cyan'] {
+		--color-primary-surface: hsl(42deg 15% 13%);
 		/*cyan primary*/
 		--color-primary-50: hsl(184deg 91% 17%);
 		--color-primary-100: hsl(185deg 84% 25%);
@@ -770,6 +777,7 @@
 	}
 
 	[data-theme='color-theme-pink'] {
+		--color-primary-surface: hsl(0 0% 100%);
 		/*pink*/
 		--color-primary-900: hsl(320deg 100% 19%);
 		--color-primary-800: hsl(322deg 93% 27%);
@@ -851,6 +859,7 @@
 	}
 
 	[data-theme='color-theme-dark-pink'] {
+		--color-primary-surface: hsl(210deg 24% 16%);
 		/*pink*/
 		--color-primary-50: hsl(320deg 100% 19%);
 		--color-primary-100: hsl(322deg 93% 27%);
