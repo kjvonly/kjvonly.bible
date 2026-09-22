@@ -693,6 +693,15 @@ relays?
 AccountStrategy
 ```
 
+The current application-facing account operations are:
+
+```text
+load
+refresh
+setup
+update
+```
+
 with the current implementation:
 
 ```text
@@ -802,11 +811,37 @@ Each authored event is persisted and queued through `NostrEventsService.put()`.
 
 ---
 
-# 28. Relay Preference Reading
+# 28. Account Update
 
-Account relay preferences prefer kind `10002` relay tags when available.
+Profile editing uses `AccountService.update()` rather than reusing account setup.
 
-If no usable relay-list event is available, current code can fall back to legacy relay JSON found in kind `3` content.
+The current editable fields are:
+
+```text
+name
+relay preferences
+```
+
+`NostrAccountStrategy.update()` first verifies that the active signer matches the account user id. It then authors only:
+
+```text
+kind 0      profile metadata
+kind 10002  relay list
+```
+
+It does not rewrite kind `3` contacts/follows. Those remain account-setup behavior.
+
+When updating kind `0`, existing metadata fields are preserved and only `name` and `display_name` are replaced. This prevents a name edit from discarding unrelated profile metadata such as `about` or `picture`.
+
+The Profile UI uses its container-local `NavigationService` to push an Edit Profile view. That view edits a local draft of the current name and relay preferences. Its header owns the Back and Save controls, and Save persists the draft through `AccountService.update()`. Name and relay changes therefore do not mutate `AccountState` until Save succeeds.
+
+---
+
+# 29. Relay Preference Reading
+
+Account relay preferences prefer kind `10002` relay tags when available. An existing kind `10002` event is authoritative even when it contains zero relay tags, allowing the user to explicitly save an empty relay list.
+
+Only when no kind `10002` event exists can current code fall back to legacy relay JSON found in kind `3` content.
 
 This legacy read compatibility belongs inside `NostrAccountStrategy`.
 
@@ -814,7 +849,7 @@ It should not leak into `AccountState` consumers.
 
 ---
 
-# 29. Local State Is Authoritative During Pending Publication
+# 30. Local State Is Authoritative During Pending Publication
 
 A critical current behavior is:
 
@@ -832,7 +867,7 @@ The unsigned-cache replacement rule exists specifically to preserve this local-f
 
 ---
 
-# 30. Resource Publication Uses the Same Transport Differently
+# 31. Resource Publication Uses the Same Transport Differently
 
 `NostrResourcePublicationStrategy` also uses `NostrClient`, but its semantics are Resource-specific.
 
@@ -860,7 +895,7 @@ They should not be moved into generic native-event infrastructure.
 
 ---
 
-# 31. Validation Layers
+# 32. Validation Layers
 
 The durable idea from the earlier Nostr-event design remains useful: validation is layered by responsibility.
 
@@ -896,7 +931,7 @@ A generic Nostr transport layer should not perform Domain validation.
 
 ---
 
-# 32. Protocol Infrastructure Must Stay Protocol-Focused
+# 33. Protocol Infrastructure Must Stay Protocol-Focused
 
 The earlier captured implementation design proposed event-handler registries for multiple event structures.
 
@@ -915,7 +950,7 @@ Do not introduce a generic event-handler framework unless actual multiple event 
 
 ---
 
-# 33. Application Boundaries
+# 34. Application Boundaries
 
 Normal Svelte code should not import:
 
@@ -943,7 +978,7 @@ through the intentional Application/ApplicationContext boundaries.
 
 ---
 
-# 34. Worker Boundary
+# 35. Worker Boundary
 
 The verification worker is different from application feature workers such as:
 
@@ -960,7 +995,7 @@ It does not own Nostr account state, Resource resolution, or publication schedul
 
 ---
 
-# 35. Error Boundaries
+# 36. Error Boundaries
 
 Transport failure is surfaced through `NostrClientError` for read/subscribe/publish transport failures.
 
@@ -982,7 +1017,7 @@ Protocol transport errors and malformed optional profile data are therefore inte
 
 ---
 
-# 36. Disposal
+# 37. Disposal
 
 `NostrClient.dispose()` owns disposal of the underlying rx-nostr transport and verification client.
 
@@ -992,7 +1027,7 @@ Do not leave verification workers or Nostr transport instances as unmanaged comp
 
 ---
 
-# 37. Testing
+# 38. Testing
 
 Current tests cover the layers separately.
 
@@ -1042,11 +1077,11 @@ all-relay rejection
 
 ## Account strategy tests
 
-Cover account event parsing, refresh, setup, relay behavior, and local caching policy.
+Cover account event parsing, refresh, setup, profile update, relay behavior, metadata preservation, and local caching policy.
 
 ---
 
-# 38. Extension Rules
+# 39. Extension Rules
 
 When adding a new application-owned native Nostr event type:
 
@@ -1061,7 +1096,7 @@ When adding a new application-owned native Nostr event type:
 
 ---
 
-# 39. Current Invariants
+# 40. Current Invariants
 
 The current implementation relies on these invariants:
 
@@ -1078,7 +1113,7 @@ The current implementation relies on these invariants:
 
 ---
 
-# 40. Summary
+# 41. Summary
 
 The Nostr implementation is intentionally split by responsibility:
 

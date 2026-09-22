@@ -391,6 +391,10 @@ export class Application {
     private readonly outboxProcessor:
         OutboxProcessor;
 
+    private authenticationBootstrapUnsubscribe:
+        (() => void) |
+        undefined;
+
     constructor(
         private readonly config:
             ApplicationConfig
@@ -1184,6 +1188,10 @@ export class Application {
             return;
         }
 
+        this.authenticationBootstrapUnsubscribe?.();
+        this.authenticationBootstrapUnsubscribe =
+            undefined;
+
         /*
          * Stop Resource processing before disposing
          * main-thread discovery transport.
@@ -1218,10 +1226,17 @@ export class Application {
             this.resourceSelectionService
                 .restore();
 
+            const userId =
+                this.context
+                    .authenticationService
+                    .tryGetUserId();
+
             this.context
                 .workspaceRuntime
                 .initialize(
-                    Modules.BIBLE
+                    userId === undefined
+                        ? Modules.LOGIN
+                        : Modules.BIBLE
                 );
 
             this.nostrClient
@@ -1229,11 +1244,6 @@ export class Application {
                     this.config
                         .resourceRelays
                 );
-
-            const userId =
-                this.context
-                    .authenticationService
-                    .tryGetUserId();
 
             if (
                 userId !==
@@ -1276,20 +1286,19 @@ export class Application {
                 'started';
 
             /*
-             * Bootstrap Resource installation is
-             * application policy.
+             * Bootstrap Resource installation requires an
+             * authenticated signer because the configured
+             * Nostr relay may require AUTH before discovery.
              *
-             * It intentionally does not block
-             * Application.start().
+             * Authentication restoration runs before
+             * Application.start(). A signed-out or read-only
+             * startup therefore skips bootstrap until a later
+             * successful authentication transition.
              *
-             * Resource processing executes in the
-             * Resource Worker.
-             *
-             * Nostr discovery remains on the main thread
-             * and returns ResourceRepresentation across
-             * the worker bridge.
+             * Resource processing remains asynchronous and
+             * does not block Application.start().
              */
-            void this.installBootstrapResources();
+            this.observeAuthenticatedBootstrap();
         } catch (cause) {
             this.state =
                 'created';
@@ -1299,6 +1308,32 @@ export class Application {
 
             throw cause;
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    private observeAuthenticatedBootstrap():
+        void {
+
+        this.authenticationBootstrapUnsubscribe?.();
+
+        this.authenticationBootstrapUnsubscribe =
+            this.context
+                .authenticationService
+                .subscribe(
+                    (state) => {
+                        if (
+                            this.state !==
+                                'started' ||
+                            state.status !==
+                                'authenticated'
+                        ) {
+                            return;
+                        }
+
+                        void this.installBootstrapResources();
+                    }
+                );
     }
 
     ///////////////////////////////////////////////////////////////////////////

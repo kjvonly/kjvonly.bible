@@ -479,6 +479,62 @@ describe(
         );
 
         it(
+            'treats an empty cached kind 10002 event as an explicit empty relay list',
+            async () => {
+                const strategy =
+                    createStrategy(
+                        createClient(),
+                        createEvents({
+                            getByKindAndPubkey:
+                                vi.fn(
+                                    async (kind: number) => {
+                                        if (kind === 10002) {
+                                            return {
+                                                key:
+                                                    'nostr/event:10002:user-id',
+                                                pubkey:
+                                                    'user-id',
+                                                kind: 10002,
+                                                content: '',
+                                                tags: []
+                                            };
+                                        }
+
+                                        if (kind === 3) {
+                                            return {
+                                                key:
+                                                    'nostr/event:3:user-id',
+                                                pubkey:
+                                                    'user-id',
+                                                kind: 3,
+                                                content:
+                                                    JSON.stringify({
+                                                        'wss://legacy.example': {
+                                                            read: true,
+                                                            write: true
+                                                        }
+                                                    }),
+                                                tags: []
+                                            };
+                                        }
+
+                                        return undefined;
+                                    }
+                                )
+                        })
+                    );
+
+                await expect(
+                    strategy.load(
+                        'user-id'
+                    )
+                ).resolves.toEqual({
+                    relays: []
+                });
+            }
+        );
+
+        it(
             'falls back to the cached kind 3 relay map when no kind 10002 relay list exists',
             async () => {
                 const strategy =
@@ -653,6 +709,183 @@ describe(
                             ]
                         }
                     );
+            }
+        );
+
+        it(
+            'updates profile metadata and relay preferences without rewriting contacts',
+            async () => {
+                const getByKindAndPubkey =
+                    vi.fn(
+                        async (kind: number) =>
+                            kind === 0
+                                ? {
+                                    key:
+                                        'nostr/event:0:user-id',
+                                    pubkey:
+                                        'user-id',
+                                    kind: 0,
+                                    content:
+                                        JSON.stringify({
+                                            name:
+                                                'Old Name',
+                                            display_name:
+                                                'Old Name',
+                                            about:
+                                                'Existing about',
+                                            picture:
+                                                'https://example.test/picture.png'
+                                        }),
+                                    tags: []
+                                }
+                                : undefined
+                    );
+
+                const put =
+                    vi.fn()
+                        .mockResolvedValue(
+                            undefined
+                        );
+
+                const getEvent =
+                    vi.fn();
+
+                const strategy =
+                    createStrategy(
+                        createClient({
+                            getEvent
+                        }),
+                        createEvents({
+                            getByKindAndPubkey,
+                            put
+                        })
+                    );
+
+                await strategy.update({
+                    userId:
+                        'user-id',
+                    name:
+                        'Updated Name',
+                    relays: [
+                        {
+                            url:
+                                'wss://read.example',
+                            read: true,
+                            write: false
+                        },
+                        {
+                            url:
+                                'wss://write.example',
+                            read: false,
+                            write: true
+                        },
+                        {
+                            url:
+                                'wss://both.example',
+                            read: true,
+                            write: true
+                        }
+                    ]
+                });
+
+                expect(getEvent)
+                    .not.toHaveBeenCalled();
+
+                expect(put)
+                    .toHaveBeenCalledTimes(2);
+
+                expect(put)
+                    .toHaveBeenNthCalledWith(
+                        1,
+                        {
+                            key:
+                                'nostr/event:0:user-id',
+                            pubkey:
+                                'user-id',
+                            kind: 0,
+                            content:
+                                JSON.stringify({
+                                    name:
+                                        'Updated Name',
+                                    display_name:
+                                        'Updated Name',
+                                    about:
+                                        'Existing about',
+                                    picture:
+                                        'https://example.test/picture.png'
+                                }),
+                            tags: []
+                        }
+                    );
+
+                expect(put)
+                    .toHaveBeenNthCalledWith(
+                        2,
+                        {
+                            key:
+                                'nostr/event:10002:user-id',
+                            pubkey:
+                                'user-id',
+                            kind:
+                                10002,
+                            content:
+                                '',
+                            tags: [
+                                [
+                                    'r',
+                                    'wss://read.example',
+                                    'read'
+                                ],
+                                [
+                                    'r',
+                                    'wss://write.example',
+                                    'write'
+                                ],
+                                [
+                                    'r',
+                                    'wss://both.example'
+                                ]
+                            ]
+                        }
+                    );
+            }
+        );
+
+        it(
+            'rejects invalid relay preferences before writing an account update',
+            async () => {
+                const put =
+                    vi.fn();
+
+                const strategy =
+                    createStrategy(
+                        createClient(),
+                        createEvents({
+                            put
+                        })
+                    );
+
+                await expect(
+                    strategy.update({
+                        userId:
+                            'user-id',
+                        name:
+                            'Stephen',
+                        relays: [
+                            {
+                                url:
+                                    'https://not-a-nostr-relay.example',
+                                read: true,
+                                write: true
+                            }
+                        ]
+                    })
+                ).rejects.toThrow(
+                    'Invalid account relay'
+                );
+
+                expect(put)
+                    .not.toHaveBeenCalled();
             }
         );
 
