@@ -369,7 +369,12 @@ app-data-sync-verbose: up
 push:
 	git push devbox HEAD
 
-.PHONY: worktree worktree-sync worktree-remove
+.PHONY: worktree worktree-sync worktree-new worktree-remove-all worktree-watch worktree-watch-stop
+
+worktree-new:
+	@test -n "$(BRANCH)" || (echo "Usage: make worktree-new BRANCH=feature/server-deployment" && exit 1)
+	@$(MAKE) worktree BRANCH="$(BRANCH)"
+	@$(MAKE) worktree-sync BRANCH="$(BRANCH)"
 
 worktree:
 	@test -n "$(BRANCH)" || (echo "Usage: make worktree BRANCH=feature/server-deployment" && exit 1)
@@ -380,8 +385,7 @@ worktree-sync:
 	@test -n "$(BRANCH)" || (echo "Usage: make worktree-sync BRANCH=feature/server-deployment" && exit 1)
 	@WORKTREE="worktrees/$$(basename "$(BRANCH)")"; \
 	test -d "$$WORKTREE" || (echo "Worktree does not exist: $$WORKTREE" && exit 1); \
-	mkdir -p "$$WORKTREE/client/node_modules"; \
-	rsync -av --delete client/node_modules/ "$$WORKTREE/client/kjvonly-pwa/node_modules/" \
+	rsync -av --delete client/node_modules/ "$$WORKTREE/client/kjvonly-pwa/node_modules/"; \
 	rsync -a client/kjvonly-pwa/.certs/ "$$WORKTREE/client/kjvonly-pwa/.certs/"
 
 worktree-remove:
@@ -389,3 +393,52 @@ worktree-remove:
 	@WORKTREE="worktrees/$$(basename "$(BRANCH)")"; \
 	git -C "$$WORKTREE" submodule deinit -f --all; \
 	git worktree remove "$$WORKTREE"
+
+# make worktree-remove-all SKIP=ops,bug
+worktree-remove-all:
+	@WORKTREES="$$(git worktree list --porcelain | \
+		awk '/^worktree / { print substr($$0, 10) }' | \
+		grep '/worktrees/')"; \
+	for SKIP in $$(printf '%s' "$(SKIP)" | tr ',' ' '); do \
+		WORKTREES="$$(printf '%s\n' "$$WORKTREES" | grep -vF "/worktrees/$$SKIP")"; \
+	done; \
+	printf '%s\n' "$$WORKTREES" | \
+	while IFS= read -r WORKTREE; do \
+		[ -n "$$WORKTREE" ] || continue; \
+		echo "Removing $$WORKTREE"; \
+		git worktree remove "$$WORKTREE"; \
+	done
+	@git worktree prune
+
+worktree-watch:
+	@test -n "$(BRANCH)" || (echo "Usage: make worktree-watch BRANCH=feature/ui-bugs" && exit 1)
+	@WORKTREE="$(CURDIR)/worktrees/$$(basename "$(BRANCH)")"; \
+	NAME="$$(basename "$(BRANCH)")"; \
+	LOG="$$WORKTREE/.watch-copy.log"; \
+	PIDFILE="$$WORKTREE/.watch-copy.pid"; \
+	nohup watch-copy \
+		"$(HOME)/Downloads" \
+		"$$WORKTREE/" \
+		"*$$NAME*" \
+		> "$$LOG" 2>&1 & \
+	echo $$! > "$$PIDFILE"; \
+	echo "Watcher started for $$NAME"
+
+.PHONY: new-chat-files new-chat-prompt
+
+new-chat-files:
+	@DATE=$$(date +%Y%m%d); \
+	ZIP="kjvonly-new-chat-files-$$DATE.zip"; \
+	echo "Creating $$ZIP"; \
+	zip -r "$$ZIP" \
+		client/kjvonly-pwa/src \
+		client/kjvonly-pwa/package.json \
+		client/kjvonly-pwa/package-lock.json \
+		-x '*/node_modules/*' \
+		   '*/.svelte-kit/*' \
+		   '*/build/*' \
+		   '*/.DS_Store'
+
+new-chat-prompt:
+	@pbcopy < ../kjvonly.bible.prompts/NEW_CHAT_PROMPT.md
+	@echo "Copied NEW_CHAT_PROMPT.md to clipboard"

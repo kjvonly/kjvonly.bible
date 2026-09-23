@@ -8,6 +8,11 @@ worktrees
 # Mac
 .DS_Store
 logs
+
+# Worktree file watcher
+/.watch-copy.log
+/.watch-copy.pid
+
 # Backup files
 *~*
 
