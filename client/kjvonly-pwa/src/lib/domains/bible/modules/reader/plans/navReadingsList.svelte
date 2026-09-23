@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
+	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import Close from '$lib/components/svgs/close.svelte';
 	import type { BCV, BibleReadingNavigation } from '../../../models/bible.model';
 
 	let {
@@ -24,33 +26,20 @@
 </script>
 
 <BufferContainer bind:clientHeight>
-	<BufferHeader
-		bind:headerHeight
-		classes="items-between flex w-full border-b-2 text-neutral-700"
-	>
-		<span class="flex w-full"></span>
-		<div class="flex w-full items-center justify-center">Readings</div>
-		<div class="flex w-full justify-end">
-			<button
-				aria-label="close"
-				onclick={() => {
-					showNavReadingsPopup = false;
-				}}
-				class="h-12 w-12 px-2 text-neutral-700"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					width="100%"
-					height="100%"
-				>
-					<path
-						class="fill-neutral-700"
-						d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10s10-4.47,10-10S17.53,2,12,2z M17,15.59L15.59,17L12,13.41L8.41,17L7,15.59 L10.59,12L7,8.41L8.41,7L12,10.59L15.59,7L17,8.41L13.41,12L17,15.59z"
-					/>
-				</svg>
-			</button>
-		</div>
+	<BufferHeader bind:headerHeight>
+		<span class="flex-1"></span>
+		<span></span>
+
+		<span class="text-center">Readings</span>
+
+		<KJVButton
+			classes="flex-1 flex justify-end"
+			onClick={() => {
+				showNavReadingsPopup = false;
+			}}
+		>
+			<Close classes=""></Close>
+		</KJVButton>
 	</BufferHeader>
 
 	<BufferBody {clientHeight} {headerHeight} classes="border">

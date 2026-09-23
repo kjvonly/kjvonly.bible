@@ -10,6 +10,7 @@
 	import { Notes } from '$lib/domains/notes/ui';
 	import { Settings } from '$lib/application/ui';
 	import Edit from '$lib/components/svgs/edit.svelte';
+	import EditOff from '$lib/components/svgs/editOff.svelte';
 	import BibleVersionPopup from './popups/bibleVersionPopup.svelte';
 
 	// // TOOLBAR
@@ -59,6 +60,7 @@
 		bibleVersion = $bindable<string>(),
 		clientHeight,
 		onBibleVersionSelected,
+		onExitEdit,
 		paneID
 	}: {
 		mode: BibleMode;
@@ -66,6 +68,7 @@
 		bibleVersion: string;
 		clientHeight: number;
 		onBibleVersionSelected: (version: BibleVersion) => void;
+		onExitEdit: () => Promise<void>;
 		paneID: string;
 	} = $props();
 
@@ -193,7 +196,7 @@
 		e.stopPropagation();
 
 		if (mode.value === BIBLE_MODES.EDIT) {
-			mode.value = BIBLE_MODES.READING;
+			void onExitEdit();
 			return;
 		}
 
@@ -255,7 +258,11 @@
 
 {#snippet editButton()}
 	<KJVButton onClick={onEditClick} classes="">
-		<Edit classes=""></Edit>
+		{#if mode.value === BIBLE_MODES.EDIT}
+			<EditOff classes=""></EditOff>
+		{:else}
+			<Edit classes=""></Edit>
+		{/if}
 	</KJVButton>
 {/snippet}
 

@@ -53,7 +53,8 @@ import {
 	const {
 		moduleResourceSelectionResolver,
 		workspaceRuntime,
-		bibleLocationReferenceService
+		bibleLocationReferenceService,
+		bibleTextMarkupService
 	} = useApplicationContext();
 	// =============================== BINDINGS ================================
 
@@ -212,6 +213,14 @@ import {
 		workspaceRuntime.persistWorkspace();
     }
 
+	async function onExitEdit(): Promise<void> {
+		await bibleTextMarkupService.put(
+			JSON.parse(JSON.stringify(textMarkup))
+		);
+
+		mode.value = BIBLE_MODES.READING;
+	}
+
 	function onBibleVersionSelected(
 	version:
 		BibleVersion
@@ -252,6 +261,7 @@ import {
 		bind:bibleVersion
 		{clientHeight}
 		{onBibleVersionSelected}
+		{onExitEdit}
 		{paneID}
 	></BibleHeader>
 {/snippet}
@@ -298,9 +308,7 @@ import {
 					<div class="absolute bottom-0 w-full">
 						<EditOptions
 							bind:mode
-							bind:textMarkup
-							{paneID}
-							{bibleLocationRef}
+							{onExitEdit}
 						></EditOptions>
 					</div>
 				</div>
