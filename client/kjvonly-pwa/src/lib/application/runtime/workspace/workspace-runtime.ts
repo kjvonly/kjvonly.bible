@@ -320,16 +320,23 @@ export class WorkspaceRuntime {
 		}
 
 		if (
-			pane ===
-			this.panes.rootPane &&
-			pane.left === undefined &&
-			pane.right === undefined
+			pane.buffer?.componentName !==
+			Modules.MODULES
 		) {
 			return this.replaceBuffer(
 				paneID,
 				Modules.MODULES,
 				{}
 			);
+		}
+
+		if (
+			pane ===
+			this.panes.rootPane &&
+			pane.left === undefined &&
+			pane.right === undefined
+		) {
+			return true;
 		}
 
 		return (
