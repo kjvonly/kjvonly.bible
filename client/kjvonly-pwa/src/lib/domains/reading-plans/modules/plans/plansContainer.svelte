@@ -59,7 +59,9 @@
 		if (plan) {
 			plansDisplay = plan.returnView;
 		} else {
-			plansDisplay = PLANS_VIEWS.SUBS_LIST;
+			plansDisplay = subscriptions.length === 0
+				? PLANS_VIEWS.PLANS_LIST
+				: PLANS_VIEWS.SUBS_LIST;
 		}
 
 		workerReady = true;

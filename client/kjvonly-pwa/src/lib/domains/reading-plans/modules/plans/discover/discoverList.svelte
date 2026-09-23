@@ -2,9 +2,12 @@
 	// ================================ IMPORTS ================================
 	// SVELTE
 	// COMPONENTS
-	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
+	import {
+		BufferBody,
+		BufferContainer,
+		BufferHeader
+	} from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import AddCircle from '$lib/components/svgs/addCircle.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// MODELS
@@ -51,11 +54,7 @@
 	</span>
 
 	<span class="text-cetner">Discover Plans</span>
-	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={() => {}}>
-			<AddCircle></AddCircle>
-		</KJVButton>
-	</span>
+	<span class="flex-1"></span>
 {/snippet}
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
@@ -63,22 +62,33 @@
 {/snippet}
 
 {#snippet plansListView()}
-	{#each planList as plan}
-		<button
-			onclick={(e: Event) => {
-				onPlanClicked(e, plan);
-			}}
-			class="col-2 flex w-full flex-col p-2 text-base hover:bg-neutral-100"
-		>
-			<div class="flex w-full">
-				<span class="pb-2 text-2xl">{plan.name}</span>
+	<div class="{planList.length > 0 ? '' : 'hidden'} bg-neutral-50 pb-6">
+		{#each planList as plan}
+			<div class="py-2 hover:bg-neutral-100">
+				<div
+					tabindex="0"
+					role="button"
+					class="px-4 leading-loose"
+					onclick={(e: Event) => {
+						onPlanClicked(e, plan);
+					}}
+					onkeydown={(e: KeyboardEvent) => {
+						if (e.key === 'Enter') {
+							onPlanClicked(e, plan);
+						}
+					}}
+				>
+					<div class="text-left whitespace-normal hover:cursor-pointer">
+						<span class="text-support-b-700 py-2 text-left font-semibold"
+							>{plan.name}</span
+						>
+						<span class="flex-fill flex"></span>
+						<span class="min-h-[2.75rem] line-clamp-2 leading-snug">{plan.description}</span>
+					</div>
+				</div>
 			</div>
-
-			<div class="text-md text-start">
-				<p class="line-clamp-3 text-start">{plan.description}</p>
-			</div>
-		</button>
-	{/each}
+		{/each}
+	</div>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->
