@@ -159,17 +159,19 @@
 {/snippet}
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
-	<div class="pb-3 text-2xl">{selectedPlan?.name}</div>
+	<div class="pt-2 pb-3 text-2xl text-support-b-700">{selectedPlan?.name}</div>
 	<div>{selectedPlan?.description}</div>
 
 	{#each Array(readingsToShow) as _, idx}
-		<div class="flex w-full min-w-50 p-4">
-			<div class="flex flex-1 items-center">
-				<span class="">Reading {idx + 1}</span>
+		<div class="flex w-full min-w-0 items-start px-4 py-3">
+			<div class="w-28 shrink-0 self-stretch border-r border-neutral-300 pr-4 text-left whitespace-nowrap">
+				<span>Reading {idx + 1}</span>
 			</div>
-			<span class="flex"></span>
-			<ReadingsComponent bind:readings={selectedPlan.nestedReadings[idx].bcvs}
-			></ReadingsComponent>
+			<div class="min-w-0 pl-4 text-left">
+				<ReadingsComponent
+					bind:readings={selectedPlan.nestedReadings[idx].bcvs}
+				></ReadingsComponent>
+			</div>
 		</div>
 	{/each}
 {/snippet}
@@ -178,7 +180,12 @@
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
-	<BufferBody ID={discoverDetailID} {clientHeight} {headerHeight}>
+	<BufferBody
+		ID={discoverDetailID}
+		{clientHeight}
+		{headerHeight}
+		classes="overflow-x-hidden px-4"
+	>
 		{@render body()}
 	</BufferBody>
 </BufferContainer>
