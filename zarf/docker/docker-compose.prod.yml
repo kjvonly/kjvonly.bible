@@ -83,6 +83,22 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  web:
+    build:
+      context: ../../client
+      dockerfile: kjvonly-pwa/Dockerfile
+      args:
+        BASE_PATH: ${BASE_PATH:-}
+      secrets:
+        - build_env
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   minio_data:
+
+secrets:
+  build_env:
+    file: ./web.env

@@ -4,6 +4,7 @@ database-data/
 coverage
 .kjvonly*
 worktrees
+*.patch
 # Mac
 .DS_Store
 logs

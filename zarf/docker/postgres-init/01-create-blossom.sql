@@ -1,1 +1,2 @@
 CREATE DATABASE blossom;
+CREATE DATABASE kjvonly;
