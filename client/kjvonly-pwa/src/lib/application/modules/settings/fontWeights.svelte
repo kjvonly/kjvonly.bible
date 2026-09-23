@@ -17,13 +17,13 @@
 </script>
 
 <div class="ps-4">Font Weights</div>
-<div class="grid grid-cols-3 gap-4 p-4">
+<div class="flex flex-wrap gap-2 p-4">
 	{#each fontWeights as fw}
 		<button
 			style="font-weight: {fw}"
 			class="{fw === settings.fontWeight
 				? 'bg-primary-500 text-neutral-50'
-				: ''} border border-1 border-neutral-400 p-2 hover:cursor-pointer"
+				: ''} border border-1 border-neutral-400 px-3 py-2 hover:cursor-pointer"
 			onclick={() => onFontWeightSelected(fw)}
 		>
 			{fw}

@@ -4,21 +4,13 @@
 	let { settings = $bindable<Settings>() } = $props();
 </script>
 
-<div class="my-auto flex flex-row p-2">
-	<label
-		for="showParagraphs"
-		class="has-checked:bg-primary-500 relative block h-8 max-w-14 min-w-14 rounded-full bg-neutral-300 transition-colors [-webkit-tap-highlight-color:_transparent] hover:cursor-pointer"
-	>
-		<input
-			bind:checked={settings.showParagraphs}
-			type="checkbox"
-			id="showParagraphs"
-			class="peer sr-only"
-		/>
-
-		<span
-			class="absolute inset-y-0 start-0 m-1 size-6 rounded-full bg-neutral-100 transition-[inset-inline-start] peer-checked:start-6"
-		></span>
-	</label>
-	<span class="my-auto ms-2 text-center">show paragraphs </span>
-</div>
+<button
+	type="button"
+	aria-pressed={settings.showParagraphs}
+	class="{settings.showParagraphs
+		? 'bg-primary-500 text-neutral-50'
+		: ''} border border-1 border-neutral-400 px-3 py-2"
+	onclick={() => (settings.showParagraphs = !settings.showParagraphs)}
+>
+	Show Paragraphs
+</button>
