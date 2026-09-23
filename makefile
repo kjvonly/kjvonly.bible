@@ -335,12 +335,14 @@ app-data-build:
 app-data-publish:
 	cd $(CLI_DIR) && \
 		npm run build && \
+		NODE_USE_SYSTEM_CA=1 \
 		node dist/main.js publish $(APP_DATA_MANIFEST)
 
 app-data-sync: up
 	cd $(CLI_DIR) && \
 		npm run build && \
 		node dist/main.js sync $(APP_DATA_MANIFEST)
+
 
 APP_DATA_LOG_DIR := $(CURDIR)/logs/app-data
 
@@ -350,6 +352,7 @@ app-data-sync-verbose: up
 		npm run build && \
 		bash -o pipefail -c '\
 			TIMESTAMP=$$(date +%Y%m%d-%H%M%S); \
+			NODE_USE_SYSTEM_CA=1 \
 			node dist/main.js sync -v $(APP_DATA_MANIFEST) 2>&1 \
 				| tee "$(APP_DATA_LOG_DIR)/$$TIMESTAMP.raw.log" \
 				| node scripts/format-verbose-log.mjs \
