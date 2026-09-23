@@ -6,15 +6,12 @@
 	import MaxWidth from './maxWidth.svelte';
 
 	let { settings = $bindable<Settings>() } = $props();
-
 </script>
 
 <div class="ps-4">Bible Settings</div>
-
-<Paragraphs bind:settings></Paragraphs>
-
-<Pericopes bind:settings></Pericopes>
-
-<BibleVersion bind:settings></BibleVersion>
-
-<MaxWidth bind:settings></MaxWidth>
+<div class="flex flex-wrap gap-2 p-4">
+	<Paragraphs bind:settings></Paragraphs>
+	<Pericopes bind:settings></Pericopes>
+	<BibleVersion bind:settings></BibleVersion>
+	<MaxWidth bind:settings></MaxWidth>
+</div>

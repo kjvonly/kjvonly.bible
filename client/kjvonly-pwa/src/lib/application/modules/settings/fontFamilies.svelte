@@ -42,12 +42,12 @@
 </script>
 
 <div class="ps-4">Font Families</div>
-<div class="grid grid-cols-3 gap-4 p-4">
+<div class="flex flex-wrap gap-2 p-4">
 	{#each fontFamilies as ff}
 		<button
 			class="font-{ff.fontFamily} {ff.fontFamily === settings.fontFamily
 				? 'bg-primary-500 text-neutral-50'
-				: ''} border border-1 border-neutral-400 p-2"
+				: ''} border border-1 border-neutral-400 px-3 py-2"
 			onclick={() => onFontFamilySelected(ff.fontFamily)}
 		>
 			{ff.name}
