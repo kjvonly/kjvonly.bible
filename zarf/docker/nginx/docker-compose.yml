@@ -1,0 +1,20 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: kjvonly-nginx
+    ports:
+      - "443:443"
+      - "3334:3334"
+      - "3335:3335"
+    environment:
+      HOST_IP: ${HOST_IP:?HOST_IP is required}
+      SERVER_NAME: ${SERVER_NAME:-kjvonly.home}
+      CERT_NAME: ${CERT_NAME:-kjvonly.home}
+      WEB_PORT: ${WEB_PORT:-8080}
+      RELAY_PORT: ${RELAY_PORT:-3334}
+      BLOSSOM_PORT: ${BLOSSOM_PORT:-3335}
+      NGINX_ENVSUBST_FILTER: "^(HOST_IP|SERVER_NAME|CERT_NAME|WEB_PORT|RELAY_PORT|BLOSSOM_PORT)$"
+    volumes:
+      - ./default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./certs:/etc/nginx/certs:ro
+    restart: unless-stopped

@@ -58,6 +58,7 @@ seed-bootstrap:
 
 DOCKER_COMPOSE = docker compose \
 	-p kjvonly \
+	--env-file zarf/docker/.env.development \
 	-f zarf/docker/docker-compose.yml
 
 DOCKER_COMPOSE_TEST = docker compose \

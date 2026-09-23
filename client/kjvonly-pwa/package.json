@@ -8,6 +8,7 @@
 		"dev": "BASE_PATH= vite dev",
 		"build": "BASE_PATH=$BASE_PATH vite build --base=$BASE_PATH/",
 		"build-local": "vite build",
+		"prepare": "svelte-kit sync",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -60,5 +61,15 @@
 		"rxjs": "^7.8.2",
 		"uuid4": "^2.0.3",
 		"zod": "^4.3.6"
+	},
+	"optionalDependencies": {
+		"@esbuild/linux-arm64": "0.25.12",
+		"@esbuild/linux-x64": "0.25.12",
+		"@rollup/rollup-linux-arm64-gnu": "4.62.0",
+		"@rollup/rollup-linux-x64-gnu": "4.62.0",
+		"@tailwindcss/oxide-linux-arm64-gnu": "4.3.1",
+		"@tailwindcss/oxide-linux-x64-gnu": "4.3.1",
+		"lightningcss-linux-arm64-gnu": "1.32.0",
+		"lightningcss-linux-x64-gnu": "1.32.0"
 	}
 }
