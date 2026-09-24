@@ -8,7 +8,7 @@
 	import CopyVersePopup from './popups/copyVersePopup.svelte';
 	import NavReadingsList from './plans/navReadingsList.svelte';
 	import { Notes } from '$lib/domains/notes/ui';
-	import { Settings } from '$lib/application/ui';
+	import { SettingsContainer } from '$lib/application/ui';
 	import Edit from '$lib/components/svgs/edit.svelte';
 	import EditOff from '$lib/components/svgs/editOff.svelte';
 	import BibleVersionPopup from './popups/bibleVersionPopup.svelte';
@@ -345,11 +345,12 @@
 {#snippet settingsPopup()}
 	{#if showSettingsPopup}
 		<PopupContainer {clientHeight}>
-			<Settings
+			<SettingsContainer
+				{paneID}
 				onClose={() => {
 					showSettingsPopup = false;
 				}}
-			></Settings>
+			></SettingsContainer>
 		</PopupContainer>
 	{/if}
 {/snippet}

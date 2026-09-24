@@ -1,33 +1,29 @@
 <script lang="ts">
+	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Save from '$lib/components/svgs/save.svelte';
-	import type { Settings } from '$lib/application/models/settings.model';
 
-	// =============================== BINDINGS ================================
+	// RUNTIME
+	import { useSettingsContext } from './runtime/settings-context';
 
-	let { settings = $bindable<Settings>() } = $props();
+	// ================================= VARS ==================================
 
-	// ================================== VARS =================================
-
+	let settingsContext = useSettingsContext();
 	let fontSize = $state(12);
 
 	// =============================== LIFECYCLE ===============================
 
 	$effect(() => {
-		settings;
-		updateFontSize();
+		fontSize = settingsContext.settings.fontSize;
 	});
-
-	// ================================ FUNCS ==================================
-
-	function updateFontSize(): void {
-		fontSize = settings.fontSize;
-	}
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onSizeSelected() {
-		settings.fontSize = fontSize;
+	function onSizeSelected(): void {
+		settingsContext.update(
+			'fontSize',
+			fontSize
+		);
 	}
 </script>
 

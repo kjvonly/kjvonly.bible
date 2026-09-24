@@ -2,7 +2,7 @@
 **Status:** Current  
 **Area:** `client/kjvonly-pwa`  
 **Primary implementation:** `client/kjvonly-pwa/src/app.css`  
-**Settings UI:** `client/kjvonly-pwa/src/lib/application/modules/settings/colorTheme.svelte`
+**Settings UI definition:** `client/kjvonly-pwa/src/lib/application/modules/settings/definitions/settings.definition.ts`
 ---
 # Purpose
 KJVOnly.bible uses semantic color tokens rather than hard-coded component palettes.
@@ -62,9 +62,9 @@ The concrete palette values live in:
 ```text
 client/kjvonly-pwa/src/app.css
 ```
-The selectable theme names live in:
+The selectable theme values live in the Settings definition:
 ```text
-client/kjvonly-pwa/src/lib/application/modules/settings/colorTheme.svelte
+client/kjvonly-pwa/src/lib/application/modules/settings/definitions/settings.definition.ts
 ```
 The global theme attribute is applied by:
 ```text
@@ -676,14 +676,14 @@ support colors
 The Night Colorblind theme may use somewhat greater separation than Night, but should still remain visually subdued.
 ---
 # Theme Selection UI
-`colorTheme.svelte` exposes the palette values.
+The Settings definition exposes color themes through the `color-theme` select row.
 
-The relevant options include:
-```html
-<option value="night">NIGHT</option>
-<option value="night-colorblind">NIGHT COLORBLIND</option>
+The relevant stable options include:
+```ts
+{ id: 'night', label: 'Night', value: 'night' }
+{ id: 'night-colorblind', label: 'Night Colorblind', value: 'night-colorblind' }
 ```
-The UI should store only the stable theme value.
+The generic Settings choice page renders these options. The UI should store only the stable theme value.
 
 It should not directly set CSS variables.
 

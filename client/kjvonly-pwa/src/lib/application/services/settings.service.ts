@@ -6,6 +6,10 @@ import {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Receives the complete normalized Settings value whenever application
+ * settings are applied.
+ */
 export type SettingsSubscriber =
     (settings: Settings) => void;
 
@@ -30,6 +34,12 @@ export class SettingsService {
 
     ///////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Register an application-wide settings subscriber.
+     *
+     * Subscriber IDs must be unique per mounted consumer. Registering the same
+     * ID again replaces the previous subscriber.
+     */
     subscribe(
         subscriberID: string,
         subscriber: SettingsSubscriber
@@ -43,6 +53,9 @@ export class SettingsService {
 
     ///////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Remove a previously registered settings subscriber.
+     */
     unsubscribe(
         subscriberID: string
     ): void {
@@ -50,6 +63,24 @@ export class SettingsService {
         this.subscribers.delete(
             subscriberID
         );
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Persist one Settings value using the latest application Settings as the
+     * merge base. This avoids rebuilding a complete Settings object from a
+     * module-local reactive copy that may be older than the persisted state.
+     */
+    updateSetting<K extends keyof Settings>(
+        setting: K,
+        value: Settings[K]
+    ): void {
+
+        this.updateSettings({
+            ...this.getSettings(),
+            [setting]: value
+        });
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -1,99 +1,80 @@
 <script lang="ts">
-	// SVELTE
-	import { onMount } from 'svelte';
-
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import ColorTheme from './colorTheme.svelte';
-	import FontFamilies from './fontFamilies.svelte';
-	import FontSize from './fontSize.svelte';
-	import FontWeights from './fontWeights.svelte';
-	import LightDarkMode from './lightDarkMode.svelte';
+	import SettingsPage from './components/settingsPage.svelte';
+	import SettingsSearch from './components/settingsSearch.svelte';
+	import SettingsScreen from './components/settingsScreen.svelte';
+
+	// DEFINITIONS
+	import { settingsDefinition } from './definitions/settings.definition';
+
+	// RESOLVERS
+	import { requireSettingsPage } from './resolvers/settings-definition-resolver';
 
 	// MODELS
-	import { newSettings, type Settings } from '$lib/application/models/settings.model';
+	import type { NavigationComponentProps } from '../../services/navigation.service';
+	import type { SettingsSearchEntry } from './search/settings-search.model';
 
-	// SERVICES
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import Close from '$lib/components/svgs/close.svelte';
-	import BibleSettings from './bible/bibleSettings.svelte';
+	// RUNTIME
+	import { useSettingsNavigationContext } from './runtime/settings-navigation-context';
 
-	const { settingsService } = useApplicationContext();
+	// SEARCH
+	import {
+		createSettingsSearchEntries,
+		searchSettings
+	} from './search/settings-search';
+
 	// =============================== BINDINGS ================================
 
-	let { onClose } = $props();
+	let {
+		clientHeight,
+		obj = $bindable(),
+		navService = $bindable()
+	}: NavigationComponentProps = $props();
 
-	// ================================== VARS =================================
+	// ================================= VARS ==================================
 
-	let headerHeight = $state(0);
-	let clientHeight = $state(0);
-	let settings: Settings = $state(newSettings());
-	let settingsLoaded = $state(false);
-
-	// =============================== LIFECYCLE ===============================
-
-	onMount(() => {
-		setSettings();
-		settingsLoaded = true;
-	});
-
-	$effect(() => {
-		if (!settingsLoaded) {
-			return;
-		}
-
-		settings;
-
-		settingsService.updateSettings(settings);
-	});
+	const settingsNavigation = useSettingsNavigationContext();
+	const rootPage = requireSettingsPage(settingsDefinition.rootPageID);
+	const searchEntries = createSettingsSearchEntries(settingsDefinition);
+	let searchQuery = $state('');
+	let searchResults = $derived(
+		searchSettings(searchEntries, searchQuery)
+	);
+	let isSearching = $derived(searchQuery.trim().length > 0);
 
 	// ================================ FUNCS ==================================
 
-	function setSettings(): void {
-		settings = settingsService.getSettings();
+	function onClose(event: Event): void {
+		event.stopPropagation();
+		const close = obj.onClose;
+
+		if (typeof close !== 'function') {
+			throw new Error('Settings navigation requires an onClose callback.');
+		}
+
+		close();
+	}
+
+	function onSearchResultSelect(result: SettingsSearchEntry): void {
+		settingsNavigation.navigateToSearchResult(result);
 	}
 </script>
 
-<!-- ================================ HEADER =============================== -->
-
-{#snippet header()}
-	<span class="flex-1"></span>
-	<span></span>
-
-	<span class="text-center">Settings</span>
-
-	<KJVButton classes="flex-1 flex justify-end" onClick={onClose}>
-		<Close classes=""></Close>
-	</KJVButton>
-{/snippet}
-
-<!-- ================================= BODY =============================+== -->
-
-{#snippet body()}
-	<LightDarkMode bind:settings></LightDarkMode>
-
-	<ColorTheme bind:settings></ColorTheme>
-
-	<FontSize bind:settings></FontSize>
-
-	<FontFamilies bind:settings></FontFamilies>
-
-	<FontWeights bind:settings></FontWeights>
-
-	<BibleSettings bind:settings></BibleSettings>
-{/snippet}
-
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
+<SettingsScreen
+	title="Settings"
+	{clientHeight}
+	{onClose}
+	bodyClasses=""
+>
+	<SettingsSearch
+		bind:query={searchQuery}
+		results={searchResults}
+		onResultSelect={onSearchResultSelect}
+	></SettingsSearch>
 
-	<BufferBody {headerHeight} {clientHeight}>
-		{@render body()}
-	</BufferBody>
-</BufferContainer>
+	{#if !isSearching}
+		<SettingsPage page={rootPage}></SettingsPage>
+	{/if}
+</SettingsScreen>
