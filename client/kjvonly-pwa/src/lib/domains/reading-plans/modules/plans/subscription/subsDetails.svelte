@@ -7,7 +7,6 @@
 	import {
 		attachEvents,
 		BufferBody,
-		BufferContainer,
 		BufferHeader
 	} from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
@@ -19,7 +18,7 @@
 
 	// MODELS
 	import { Modules } from '$lib/application';
-	import type { Pane } from '$lib/application';
+	import type { NavigationComponentProps } from '$lib/application';
 	import {
 		PLANS_VIEWS,
 		type NavReadings,
@@ -35,16 +34,15 @@
 
 	// =============================== BINDINGS ================================
 	let {
-		plansDisplay = $bindable<PLANS_VIEWS>(),
-		pane = $bindable<Pane>(),
-		paneID = $bindable<string>(),
-		selectedSub = $bindable<Sub>()
-	}: {
-		plansDisplay: PLANS_VIEWS;
-		pane: Pane;
-		paneID: string;
-		selectedSub: Sub;
-	} = $props();
+		paneID,
+		clientHeight,
+		obj,
+		navService
+	}: NavigationComponentProps = $props();
+
+	let selectedSub: Sub = $derived(
+		obj.selectedSub as Sub
+	);
 
 	const {
 		workspaceRuntime,
@@ -53,7 +51,6 @@
 
 	// ================================== VARS =================================
 
-	let clientHeight: number = $state(0);
 	let headerHeight = $state(0);
 
 	let hasCompletedReading = $state(false);
@@ -141,11 +138,13 @@
 			returnView: returnView
 		};
 
+		const pane = workspaceRuntime.findPane(paneID);
+
 		workspaceRuntime.replaceBuffer(
 			paneID,
 			Modules.BIBLE,
 			{
-				...pane.buffer?.bag,
+				...pane?.buffer?.bag,
 				navReadings: np,
 				bibleLocationRef:
 					readings.bcvs[0].bibleLocationRef
@@ -154,7 +153,7 @@
 	}
 
 	function onCloseSubDetails(): void {
-		plansDisplay = PLANS_VIEWS.SUBS_LIST;
+		navService.pop();
 	}
 
 	function onToggleCompletedReadings(): void {
@@ -244,11 +243,9 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody ID={subListViewID} {clientHeight} {headerHeight} classes="">
-		{@render body()}
-	</BufferBody>
-</BufferContainer>
+<BufferHeader bind:headerHeight>
+	{@render header()}
+</BufferHeader>
+<BufferBody ID={subListViewID} {clientHeight} {headerHeight} classes="">
+	{@render body()}
+</BufferBody>

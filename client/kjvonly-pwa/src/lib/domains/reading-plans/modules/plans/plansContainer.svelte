@@ -1,21 +1,27 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { type Writable } from 'svelte/store';
+
+	import {
+		PLANS_VIEWS,
+		type NavReadings
+	} from '../../models/plans.model';
+	import {
+		type NavigationView,
+		type Pane,
+		useApplicationContext
+	} from '$lib/application';
+	import { BufferContainer } from '$lib/application/ui';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
+
 	import SubsView from './subscription/subsView.svelte';
 	import NextReadings from './nextReadings/nextReadings.svelte';
 	import Discover from './discover/discover.svelte';
-	import { onMount } from 'svelte';
-	import { useApplicationContext } from '$lib/application';
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
-	import type { Pane } from '$lib/application';
-	import {
-		NEXT_MAX_VIEW_ID,
-		PLANS_MAX_VIEW_ID,
-		PLANS_VIEWS,
-		SUBS_MAX_VIEW_ID
-	} from '../../models/plans.model';
 
 	const {
 		bibleBooknamesService,
 		moduleResourceSelectionResolver,
+		navigationServiceFactory,
 		planSubscriptionsService,
 		planProgressService,
 		plansPubSubService
@@ -26,8 +32,9 @@
 
 	// ================================== VARS =================================
 
-	let plansDisplay: PLANS_VIEWS = $state(PLANS_VIEWS.SUBS_LIST);
-	let workerReady: boolean = $state(false);
+	let clientHeight: number = $state(0);
+	let nav: Writable<NavigationView[]> | undefined = $state();
+	let navService = navigationServiceFactory.create();
 
 	// =============================== LIFECYCLE ===============================
 
@@ -55,25 +62,45 @@
 			progress
 		);
 
-		let plan = pane?.buffer?.bag?.navReadings;
-		if (plan) {
-			plansDisplay = plan.returnView;
-		} else {
-			plansDisplay = subscriptions.length === 0
-				? PLANS_VIEWS.PLANS_LIST
-				: PLANS_VIEWS.SUBS_LIST;
+		navService.push({
+			component: SubsView,
+			obj: {}
+		});
+
+		const navReadings: NavReadings | undefined =
+			pane?.buffer?.bag?.navReadings;
+
+		if (navReadings?.returnView === PLANS_VIEWS.NEXT_LIST) {
+			navService.push({
+				component: NextReadings,
+				obj: {}
+			});
+		} else if (!navReadings && subscriptions.length === 0) {
+			navService.push({
+				component: Discover,
+				obj: {}
+			});
 		}
 
-		workerReady = true;
+		nav = navService.views;
 	});
 </script>
 
-{#if workerReady}
-	{#if plansDisplay < PLANS_MAX_VIEW_ID}
-		<Discover bind:plansDisplay {paneID}></Discover>
-	{:else if plansDisplay < SUBS_MAX_VIEW_ID}
-		<SubsView bind:plansDisplay bind:pane bind:paneID></SubsView>
-	{:else if plansDisplay < NEXT_MAX_VIEW_ID}
-		<NextReadings bind:plansDisplay bind:pane bind:paneID></NextReadings>
+<!-- ============================== CONTAINER ============================== -->
+
+<BufferContainer bind:clientHeight>
+	{#if nav}
+		{#each $nav as n, index}
+			{@const Component = n.component}
+			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+			<div
+				tabindex="0"
+				role="button"
+				class="{$nav && index === $nav.length - 1 ? '' : 'hidden'} h-full w-full"
+				onclick={(event) => event.stopPropagation()}
+			>
+				<Component {paneID} {clientHeight} obj={n.obj} {navService}></Component>
+			</div>
+		{/each}
 	{/if}
-{/if}
+</BufferContainer>

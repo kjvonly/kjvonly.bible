@@ -8,7 +8,7 @@ export default defineConfig(({ command }) => ({
 		command === 'serve'
 			? {
 					host: '0.0.0.0',
-					strictPort: true,
+					//strictPort: true,
 					https: {
 						key: fs.readFileSync('./.certs/app.local.key'),
 						cert: fs.readFileSync('./.certs/app.local.crt')
