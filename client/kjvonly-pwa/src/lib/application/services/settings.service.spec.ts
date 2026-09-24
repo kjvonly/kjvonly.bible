@@ -188,6 +188,35 @@ describe(
 		);
 
 		it(
+			'updates one setting against the latest persisted Settings',
+			() => {
+				values.set(
+					'settings',
+					JSON.stringify({
+						...settingsService.getSettings(),
+						fontFamily: 'serif',
+						showParagraphs: true
+					})
+				);
+
+				settingsService.updateSetting(
+					'fontSize',
+					20
+				);
+
+				expect(
+					settingsService.getSettings()
+				).toEqual(
+					expect.objectContaining({
+						fontSize: 20,
+						fontFamily: 'serif',
+						showParagraphs: true
+					})
+				);
+			}
+		);
+
+		it(
 			'normalizes Settings before persisting an update',
 			() => {
 				settingsService.updateSettings(
@@ -224,6 +253,75 @@ describe(
 						enableMaxWidth:
 							true
 					}
+				);
+			}
+		);
+
+		it(
+			'publishes updates to multiple subscribers and respects unsubscribe',
+			() => {
+				const firstSubscriber =
+					vi.fn();
+				const secondSubscriber =
+					vi.fn();
+
+				settingsService.subscribe(
+					'first',
+					firstSubscriber
+				);
+
+				settingsService.subscribe(
+					'second',
+					secondSubscriber
+				);
+
+				settingsService.updateSettings(
+					{
+						...settingsService.getSettings(),
+						fontSize: 20
+					}
+				);
+
+				expect(
+					firstSubscriber
+				).toHaveBeenCalledWith(
+					expect.objectContaining({
+						fontSize: 20
+					})
+				);
+
+				expect(
+					secondSubscriber
+				).toHaveBeenCalledWith(
+					expect.objectContaining({
+						fontSize: 20
+					})
+				);
+
+				firstSubscriber.mockClear();
+				secondSubscriber.mockClear();
+
+				settingsService.unsubscribe(
+					'first'
+				);
+
+				settingsService.updateSettings(
+					{
+						...settingsService.getSettings(),
+						fontSize: 22
+					}
+				);
+
+				expect(
+					firstSubscriber
+				).not.toHaveBeenCalled();
+
+				expect(
+					secondSubscriber
+				).toHaveBeenCalledWith(
+					expect.objectContaining({
+						fontSize: 22
+					})
 				);
 			}
 		);

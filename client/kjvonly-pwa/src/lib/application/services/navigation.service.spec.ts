@@ -55,12 +55,15 @@ describe(
 					second
 				);
 
-				expect(
-					get(service.views)
-				).toEqual([
+				const views =
+					get(service.views);
+
+				expect(views).toEqual([
 					first,
 					second
 				]);
+				expect(views[0]).toBe(first);
+				expect(views[1]).toBe(second);
 			}
 		);
 
@@ -88,11 +91,13 @@ describe(
 
 				service.pop();
 
-				expect(
-					get(service.views)
-				).toEqual([
+				const views =
+					get(service.views);
+
+				expect(views).toEqual([
 					first
 				]);
+				expect(views[0]).toBe(first);
 			}
 		);
 

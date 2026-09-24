@@ -28,6 +28,10 @@ export {
 } from '../modules/settings/settings.svelte';
 
 export {
+	default as SettingsContainer
+} from '../modules/settings/settingsContainer.svelte';
+
+export {
 	attachEvents,
 	findElement,
 	scrollTo,
