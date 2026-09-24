@@ -1,54 +1,52 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
-	// SVELTE
-	// COMPONENTS
+	// APPLICATION
+	import type { NavigationService } from '$lib/application';
 	import {
 		BufferBody,
-		BufferContainer,
 		BufferHeader
 	} from '$lib/application/ui';
+
+	// COMPONENTS
+	import DiscoverDetails from './discoverDetails.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+
+	// SVGS
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// MODELS
-	import {
-		PLANS_VIEWS,
-		type PlanDefinitionView
-	} from '../../../models/plans.model';
+	import type { PlanDefinitionView } from '../../../models/plans.model';
 
-	// SERVICES
 	// =============================== BINDINGS ================================
 	let {
-		planList = $bindable(),
-		plansDisplay = $bindable(),
-		selectedPlan = $bindable<PlanDefinitionView | undefined>(),
-		paneID
+		clientHeight,
+		planList,
+		navService
 	}: {
+		clientHeight: number;
 		planList: PlanDefinitionView[];
-		plansDisplay: PLANS_VIEWS;
-		selectedPlan: PlanDefinitionView | undefined;
-		paneID: string;
+		navService: NavigationService;
 	} = $props();
-	// ================================== VARS =================================
-	let clientHeight: number = $state(0);
-	let headerHeight: number = $state(0);
-	// =============================== LIFECYCLE ===============================
-	// ================================ FUNCS ==================================
-	// ============================== CLICK FUNCS ==============================
-	function onBackClicked() {
-		plansDisplay = PLANS_VIEWS.SUBS_LIST;
-	}
 
+	// ================================== VARS =================================
+	let headerHeight: number = $state(0);
+
+	// ============================== CLICK FUNCS ==============================
 	function onPlanClicked(e: Event, plan: PlanDefinitionView) {
-		selectedPlan = plan;
-		plansDisplay = PLANS_VIEWS.PLANS_DETAILS;
+		e.stopPropagation();
+		navService.push({
+			component: DiscoverDetails,
+			obj: {
+				selectedPlan: plan
+			}
+		});
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<span class="flex-1">
-		<KJVButton classes="" onClick={onBackClicked}>
+		<KJVButton classes="" onClick={() => navService.pop()}>
 			<ArrowBack></ArrowBack>
 		</KJVButton>
 	</span>
@@ -56,6 +54,7 @@
 	<span class="text-cetner">Discover Plans</span>
 	<span class="flex-1"></span>
 {/snippet}
+
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
 	{@render plansListView()}
@@ -92,11 +91,9 @@
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody {clientHeight} {headerHeight} classes="">
-		{@render body()}
-	</BufferBody>
-</BufferContainer>
+<BufferHeader bind:headerHeight>
+	{@render header()}
+</BufferHeader>
+<BufferBody {clientHeight} {headerHeight} classes="">
+	{@render body()}
+</BufferBody>

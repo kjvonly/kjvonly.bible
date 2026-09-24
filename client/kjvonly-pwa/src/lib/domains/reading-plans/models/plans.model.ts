@@ -140,10 +140,6 @@ export interface NavReadings extends BibleReadingNavigation {
   returnView: PLANS_VIEWS;
 }
 
-export const PLANS_MAX_VIEW_ID = 19;
-export const SUBS_MAX_VIEW_ID = 39;
-export const NEXT_MAX_VIEW_ID = 59;
-
 export enum PLANS_VIEWS {
   // PLAN
 

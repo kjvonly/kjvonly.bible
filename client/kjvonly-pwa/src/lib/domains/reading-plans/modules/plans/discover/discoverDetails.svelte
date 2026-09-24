@@ -1,32 +1,40 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	// COMPONENTS
+	import { onMount } from 'svelte';
+
+	// APPLICATION
+	import {
+		type NavigationComponentProps,
+		useApplicationContext
+	} from '$lib/application';
 	import {
 		attachEvents,
 		BufferBody,
-		BufferContainer,
 		BufferHeader
 	} from '$lib/application/ui';
+
+	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import ReadingsComponent from '../components/readings.svelte';
+
+	// SVGS
 	import AddCircle from '$lib/components/svgs/addCircle.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import ReadingsComponent from '../components/readings.svelte';
+
 	// MODELS
-	import {
-		PLANS_VIEWS,
-		type PlanDefinitionView
-	} from '../../../models/plans.model';
+	import type { PlanDefinitionView } from '../../../models/plans.model';
 	import type { PlanSubscription } from '../../../models/plan-subscription';
+
 	// SERVICES
-	import uuid4 from 'uuid4';
-	import { onMount } from 'svelte';
-	import { useApplicationContext } from '$lib/application';
 	import {
 		PLAN_SUBSCRIPTION_RESOURCE_TYPE,
 		createPlanSubscriptionIdForSource
 	} from '../../../resources/subscriptions/plan-subscription-resource-source';
-	// =============================== BINDINGS ================================
+
+	// OTHER
+	import uuid4 from 'uuid4';
+
 	const {
 		moduleResourceSelectionResolver,
 		planSubscriptionsService,
@@ -34,19 +42,17 @@
 		toastService
 	} = useApplicationContext();
 
+	// =============================== BINDINGS ================================
 	let {
-		plansDisplay = $bindable<PLANS_VIEWS>(),
-		selectedPlan = $bindable<PlanDefinitionView>(),
-		paneID
-	}: {
-		plansDisplay: PLANS_VIEWS;
+		paneID,
+		clientHeight,
+		obj,
+		navService
+	}: NavigationComponentProps = $props();
 
-		selectedPlan: PlanDefinitionView;
+	const selectedPlan = obj.selectedPlan as PlanDefinitionView;
 
-		paneID: string;
-	} = $props();
 	// ================================== VARS =================================
-	let clientHeight: number = $state(0);
 	let headerHeight: number = $state(0);
 	let readingsToShow: number = $state(0);
 	let discoverDetailID = uuid4();
@@ -61,6 +67,7 @@
 			handleScroll
 		);
 	});
+
 	// ================================ FUNCS ==================================
 
 	function loadMoreReadings() {
@@ -85,7 +92,7 @@
 			return;
 		}
 
-		const threshold = 20; // Adjust this value as needed
+		const threshold = 20;
 		const isReachBottom =
 			el.scrollHeight - el.clientHeight - el.scrollTop <= threshold;
 
@@ -95,10 +102,6 @@
 	}
 
 	// ============================== CLICK FUNCS ==============================
-	function onBackClicked() {
-		plansDisplay = PLANS_VIEWS.PLANS_LIST;
-	}
-
 	async function onAddPlanClicked() {
 		const subscriptionSource =
 			moduleResourceSelectionResolver.require(
@@ -137,15 +140,15 @@
 			'Plan added to My Plans'
 		);
 
-		plansDisplay =
-			PLANS_VIEWS.SUBS_LIST;
+		navService.pop();
+		navService.pop();
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<span class="flex-1">
-		<KJVButton classes="" onClick={onBackClicked}>
+		<KJVButton classes="" onClick={() => navService.pop()}>
 			<ArrowBack></ArrowBack>
 		</KJVButton>
 	</span>
@@ -157,10 +160,11 @@
 		</KJVButton>
 	</span>
 {/snippet}
+
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
-	<div class="pt-2 pb-3 text-2xl text-support-b-700">{selectedPlan?.name}</div>
-	<div>{selectedPlan?.description}</div>
+	<div class="pt-2 pb-3 text-2xl text-support-b-700">{selectedPlan.name}</div>
+	<div>{selectedPlan.description}</div>
 
 	{#each Array(readingsToShow) as _, idx}
 		<div class="flex w-full min-w-0 items-start px-4 py-3">
@@ -175,17 +179,16 @@
 		</div>
 	{/each}
 {/snippet}
+
 <!-- ============================== CONTAINER ============================== -->
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody
-		ID={discoverDetailID}
-		{clientHeight}
-		{headerHeight}
-		classes="overflow-x-hidden px-4"
-	>
-		{@render body()}
-	</BufferBody>
-</BufferContainer>
+<BufferHeader bind:headerHeight>
+	{@render header()}
+</BufferHeader>
+<BufferBody
+	ID={discoverDetailID}
+	{clientHeight}
+	{headerHeight}
+	classes="overflow-x-hidden px-4"
+>
+	{@render body()}
+</BufferBody>

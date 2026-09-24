@@ -2,8 +2,8 @@
 	// ================================ IMPORTS ================================
 	// SVELTE
 	import { onDestroy, onMount } from 'svelte';
+
 	// COMPONENTS
-	import SubsAction from './subsAction.svelte';
 	import SubsDetails from './subsDetails.svelte';
 	import SubsList from './subsList.svelte';
 
@@ -15,8 +15,7 @@
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS
 	} from '../../../models/plans.model';
-	import type { Pane } from '$lib/application';
-
+	import type { NavigationComponentProps } from '$lib/application';
 	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
 
 	// SERVICES
@@ -27,20 +26,28 @@
 
 	const {
 		planProgressService,
-		plansPubSubService
+		plansPubSubService,
+		workspaceRuntime
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
-		plansDisplay = $bindable<string>(),
-		pane = $bindable<Pane>(),
-		paneID = $bindable<string>()
-	} = $props();
+		paneID,
+		clientHeight,
+		navService
+	}: NavigationComponentProps = $props();
 
 	// ================================== VARS =================================
 
-	let selectedSub: Sub = $state(NullSub());
+	type SelectedSubNavigationState = {
+		selectedSub: Sub;
+	} & Record<string, unknown>;
+
+	let selectedSubView: SelectedSubNavigationState = $state({
+		selectedSub: NullSub()
+	});
+	let processingNavReadings: boolean = $state(false);
 	let SUBSCRIBER_ID: string = uuid4();
 	let subsByID: Map<string, Sub> = new Map<string, Sub>();
 	let subs: Sub[] = $state([]);
@@ -77,14 +84,30 @@
 			.sort((a: Sub, b: Sub) => a.dateSubscribed - b.dateSubscribed)
 			.forEach((sub: Sub) => subs.push(sub));
 
+		if (selectedSubView.selectedSub.id) {
+			selectedSubView.selectedSub =
+				subsByID.get(selectedSubView.selectedSub.id) ??
+				selectedSubView.selectedSub;
+		}
+
 		await processNavReadings();
 	}
 
 	/**
-	 * Necessary steps after a user completes a {@link Readings}.
+	 * Necessary steps after a user completes a {@link Readings} from a
+	 * subscription details view.
 	 */
+	function onSubSelected(sub: Sub): void {
+		selectedSubView.selectedSub = sub;
+
+		navService.push({
+			component: SubsDetails,
+			obj: selectedSubView
+		});
+	}
+
 	async function processNavReadings() {
-		const buffer = pane.buffer;
+		const buffer = workspaceRuntime.findPane(paneID)?.buffer;
 		if (!buffer) {
 			return;
 		}
@@ -92,47 +115,43 @@
 		const nr: NavReadings | undefined =
 			buffer.bag.navReadings;
 
-		if (!nr) {
-			if (selectedSub.id) {
-				selectedSub =
-					subsByID.get(selectedSub.id) ??
-					selectedSub;
-			}
-
+		if (
+			!nr ||
+			nr.returnView !== PLANS_VIEWS.SUBS_DETAILS ||
+			processingNavReadings
+		) {
 			return;
 		}
 
-		selectedSub =
+		processingNavReadings = true;
+		selectedSubView.selectedSub =
 			subsByID.get(nr.subID) ??
-			selectedSub;
+			selectedSubView.selectedSub;
 
-		const progress =
-			await planProgressService.completeReading(
-				nr.subID,
-				nr.subNestedReadingsIndex
+		try {
+			const progress =
+				await planProgressService.completeReading(
+					nr.subID,
+					nr.subNestedReadingsIndex
+				);
+
+			delete buffer.bag.navReadings;
+
+			plansPubSubService.putProgress(
+				progress
 			);
 
-		delete buffer.bag.navReadings;
-
-		plansPubSubService.putProgress(
-			progress
-		);
+			navService.push({
+				component: SubsDetails,
+				obj: selectedSubView
+			});
+		} finally {
+			processingNavReadings = false;
+		}
 	}
+
 </script>
 
 <!-- ============================== CONTAINER ============================== -->
 
-{#if plansDisplay === PLANS_VIEWS.SUBS_LIST}
-	<SubsList
-		bind:paneID
-		bind:pane
-		bind:plansDisplay
-		bind:selectedSub
-		bind:subsList={subs}
-	></SubsList>
-{:else if plansDisplay === PLANS_VIEWS.SUBS_ACTIONS}
-	<SubsAction bind:plansDisplay bind:pane {paneID}></SubsAction>
-{:else if plansDisplay === PLANS_VIEWS.SUBS_DETAILS}
-	<SubsDetails {paneID} bind:pane bind:plansDisplay bind:selectedSub
-	></SubsDetails>
-{/if}
+<SubsList {paneID} {clientHeight} {navService} subsList={subs} {onSubSelected}></SubsList>

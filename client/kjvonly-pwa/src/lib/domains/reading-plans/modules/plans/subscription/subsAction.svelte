@@ -1,37 +1,42 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	// APPLICATION
+	import type { NavigationComponentProps } from '$lib/application';
+	import { BufferBody, BufferHeader } from '$lib/application/ui';
+
 	// COMPONENTS
 	import ActionItemsList from '../components/actionItemsList.svelte';
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
+	import Discover from '../discover/discover.svelte';
+	import NextReadings from '../nextReadings/nextReadings.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
-	// MODELS
-	import { type Pane } from '$lib/application';
-	import { PLANS_VIEWS } from '../../../models/plans.model';
+	// SVGS
+	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// =============================== BINDINGS ================================
 
 	let {
-		plansDisplay = $bindable<PLANS_VIEWS>(),
-		pane = $bindable<Pane>(),
-		paneID = $bindable<string>()
-	}: {
-		plansDisplay: PLANS_VIEWS;
-		pane: Pane;
-		paneID: string;
-	} = $props();
+		clientHeight,
+		navService
+	}: NavigationComponentProps = $props();
 
 	// ================================== VARS =================================
-	let clientHeight: number = $state(0);
 	let headerHeight: number = $state(0);
 
 	const subsActionItems: Record<string, () => void> = {
 		plans: () => {
-			plansDisplay = PLANS_VIEWS.PLANS_LIST;
+			navService.pop();
+			navService.push({
+				component: Discover,
+				obj: {}
+			});
 		},
 		'next readings': () => {
-			plansDisplay = PLANS_VIEWS.NEXT_LIST;
+			navService.pop();
+			navService.push({
+				component: NextReadings,
+				obj: {}
+			});
 		}
 	};
 </script>
@@ -40,12 +45,7 @@
 {#snippet header()}
 	<div class="grid w-full grid-cols-5 place-items-center">
 		<span class="flex w-full">
-			<KJVButton
-				classes=""
-				onClick={() => {
-					plansDisplay = PLANS_VIEWS.SUBS_LIST;
-				}}
-			>
+			<KJVButton classes="" onClick={() => navService.pop()}>
 				<ArrowBack></ArrowBack>
 			</KJVButton>
 			<span class="flex-1"></span>
@@ -59,11 +59,9 @@
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody {clientHeight} {headerHeight} classes="">
-		{@render body()}
-	</BufferBody>
-</BufferContainer>
+<BufferHeader bind:headerHeight>
+	{@render header()}
+</BufferHeader>
+<BufferBody {clientHeight} {headerHeight} classes="">
+	{@render body()}
+</BufferBody>

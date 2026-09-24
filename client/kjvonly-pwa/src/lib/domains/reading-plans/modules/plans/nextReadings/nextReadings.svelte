@@ -5,13 +5,13 @@
 
 	// COMPONENTS
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
+	import { BufferBody, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ReadingsComponent from '../components/readings.svelte';
 
 	// MODELS
 	import { Modules } from '$lib/application';
-	import type { Pane } from '$lib/application';
+	import type { NavigationComponentProps } from '$lib/application';
 	import {
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS,
@@ -39,20 +39,16 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID = $bindable<string>(),
-		pane = $bindable<Pane>(),
-		plansDisplay = $bindable<PLANS_VIEWS>()
-	}: {
-		paneID: string;
-		pane: Pane;
-		plansDisplay: PLANS_VIEWS;
-	} = $props();
+		paneID,
+		clientHeight,
+		navService
+	}: NavigationComponentProps = $props();
 
 	// ================================== VARS =================================
 
-	let clientHeight: number = $state(0);
 	let headerHeight: number = $state(0);
 
+	let processingNavReadings: boolean = $state(false);
 	let SUBSCRIBER_ID: string = uuid4();
 
 	let subsByID: Map<string, Sub> = new Map<string, Sub>();
@@ -85,32 +81,42 @@
 		subsByID = data.subs;
 
 		await processNavReadings();
-		await updateNextReadings();
+		updateNextReadings();
 	}
 
 	/**
 	 * Necessary steps after a user completes a {@link Readings}.
 	 */
 	async function processNavReadings() {
-		const buffer = pane.buffer;
+		const buffer = workspaceRuntime.findPane(paneID)?.buffer;
 		if (!buffer) {
 			return;
 		}
 
 		const nr: NavReadings | undefined = buffer.bag.navReadings;
 
-		if (!nr) {
+		if (
+			!nr ||
+			nr.returnView !== PLANS_VIEWS.NEXT_LIST ||
+			processingNavReadings
+		) {
 			return;
 		}
 
-		const progress = await planProgressService.completeReading(
-			nr.subID,
-			nr.subNestedReadingsIndex
-		);
+		processingNavReadings = true;
 
-		delete buffer.bag.navReadings;
+		try {
+			const progress = await planProgressService.completeReading(
+				nr.subID,
+				nr.subNestedReadingsIndex
+			);
 
-		plansPubSubService.putProgress(progress);
+			delete buffer.bag.navReadings;
+
+			plansPubSubService.putProgress(progress);
+		} finally {
+			processingNavReadings = false;
+		}
 	}
 
 	function updateNextReadings() {
@@ -148,7 +154,7 @@
 	// ============================== CLICK FUNCS ==============================
 
 	function onCloseNextReadings() {
-		plansDisplay = PLANS_VIEWS.SUBS_LIST;
+		navService.pop();
 	}
 
 	function onSelectedNextReading(idx: number, returnView: PLANS_VIEWS) {
@@ -163,11 +169,13 @@
 			returnView: returnView
 		};
 
+		const pane = workspaceRuntime.findPane(paneID);
+
 		workspaceRuntime.replaceBuffer(
 			paneID,
 			Modules.BIBLE,
 			{
-				...pane.buffer?.bag,
+				...pane?.buffer?.bag,
 				navReadings: nr,
 				bibleLocationRef:
 					readings.bcvs[0].bibleLocationRef
@@ -233,11 +241,9 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody {clientHeight} {headerHeight} classes="">
-		{@render body()}
-	</BufferBody>
-</BufferContainer>
+<BufferHeader bind:headerHeight>
+	{@render header()}
+</BufferHeader>
+<BufferBody {clientHeight} {headerHeight} classes="">
+	{@render body()}
+</BufferBody>

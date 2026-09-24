@@ -1,47 +1,47 @@
 <script lang="ts">
-	import { useApplicationContext } from '$lib/application';
 	// ================================ IMPORTS ================================
+	// APPLICATION
+	import {
+		type NavigationService,
+		useApplicationContext
+	} from '$lib/application';
+	import { BufferBody, BufferHeader } from '$lib/application/ui';
+
 	// COMPONENTS
-	import { BufferBody, BufferContainer, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	// // SVGS
+	import SubsAction from './subsAction.svelte';
+
+	// SVGS
 	import Close from '$lib/components/svgs/close.svelte';
 	import Menu from '$lib/components/svgs/menu.svelte';
-	import type { Pane } from '$lib/application';
 
 	// MODELS
-	import {
-		PLANS_VIEWS,
-		type Sub
-	} from '../../../models/plans.model';
-	const { workspaceRuntime } = useApplicationContext();
+	import type { Sub } from '../../../models/plans.model';
 
-	// SERVICES
+	const { workspaceRuntime } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 	let {
-		plansDisplay = $bindable<PLANS_VIEWS>(),
-		pane = $bindable<Pane>(),
-		paneID = $bindable<string>(),
-		selectedSub = $bindable<Sub>(),
-		subsList = $bindable<Sub[]>()
+		paneID,
+		clientHeight,
+		navService,
+		subsList,
+		onSubSelected
 	}: {
-		plansDisplay: PLANS_VIEWS;
-		pane: Pane;
 		paneID: string;
-		selectedSub: Sub;
+		clientHeight: number;
+		navService: NavigationService;
 		subsList: Sub[];
+		onSubSelected: (sub: Sub) => void;
 	} = $props();
 
 	// ================================== VARS =================================
-	let clientHeight: number = $state(0);
 	let headerHeight = $state(0);
 
 	// ============================== CLICK FUNCS ==============================
 
 	function onSubClicked(sub: Sub): void {
-		selectedSub = sub;
-		plansDisplay = PLANS_VIEWS.SUBS_DETAILS;
+		onSubSelected(sub);
 	}
 
 	function onClosePlansList(): void {
@@ -49,7 +49,10 @@
 	}
 
 	function onMenuClicked(): void {
-		plansDisplay = PLANS_VIEWS.SUBS_ACTIONS;
+		navService.push({
+			component: SubsAction,
+			obj: {}
+		});
 	}
 </script>
 
@@ -99,11 +102,9 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody {clientHeight} {headerHeight} classes="">
-		{@render subsListView()}
-	</BufferBody>
-</BufferContainer>
+<BufferHeader bind:headerHeight>
+	{@render header()}
+</BufferHeader>
+<BufferBody {clientHeight} {headerHeight} classes="">
+	{@render subsListView()}
+</BufferBody>

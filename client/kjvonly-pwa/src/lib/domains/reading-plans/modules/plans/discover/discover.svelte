@@ -5,14 +5,10 @@
 
 	// COMPONENTS
 	import DiscoverList from './discoverList.svelte';
-	import DiscoverDetails from './discoverDetails.svelte';
 
 	// MODELS
-	import {
-		NullPlanDefinitionView,
-		PLANS_VIEWS,
-		type PlanDefinitionView
-	} from '../../../models/plans.model';
+	import type { PlanDefinitionView } from '../../../models/plans.model';
+	import type { NavigationComponentProps } from '$lib/application';
 
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application';
@@ -27,16 +23,13 @@
 
 	// =============================== BINDINGS ================================
 	let {
-		plansDisplay = $bindable(),
-		paneID
-	}: {
-		plansDisplay: PLANS_VIEWS;
-		paneID: string;
-	} = $props();
+		paneID,
+		clientHeight,
+		navService
+	}: NavigationComponentProps = $props();
 
 	// ================================== VARS =================================
 	let planList: PlanDefinitionView[] = $state([]);
-	let selectedPlan: PlanDefinitionView = $state(NullPlanDefinitionView());
 
 	// =============================== LIFECYCLE ===============================
 
@@ -72,9 +65,4 @@
 	});
 </script>
 
-{#if plansDisplay === PLANS_VIEWS.PLANS_LIST}
-	<DiscoverList bind:selectedPlan bind:planList bind:plansDisplay {paneID}
-	></DiscoverList>
-{:else if plansDisplay === PLANS_VIEWS.PLANS_DETAILS}
-	<DiscoverDetails bind:plansDisplay bind:selectedPlan {paneID}></DiscoverDetails>
-{/if}
+<DiscoverList {clientHeight} {planList} {navService}></DiscoverList>

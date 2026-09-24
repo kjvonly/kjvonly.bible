@@ -24,6 +24,12 @@ export {
 	type SettingsSubscriber
 } from './services/settings.service';
 
+export {
+	NavigationService,
+	type NavigationComponentProps,
+	type NavigationView
+} from './services/navigation.service';
+
 export type {
 	AccountSetup,
 	AccountUpdate,
