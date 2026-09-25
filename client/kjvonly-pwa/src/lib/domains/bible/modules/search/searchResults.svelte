@@ -2,17 +2,15 @@
 	// ================================ IMPORTS ================================
 	// SVELTE
 	import { Modules } from '$lib/application';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
 	// COMPONENTS
 	import SearchResultActions from './searchResultActions.svelte';
 
 	// MODELS
-	import {
-		newSearchResultResponse,
-		type onFilterBibleLocationRefFunction,
-		type SearchResult,
-		type SearchResultResponse
+	import type {
+		SearchResult,
+		SearchResultResponse
 	} from '../../models/search.model';
 
 	// SERVICES
@@ -22,7 +20,6 @@
 	const { workspaceRuntime } = useApplicationContext();
 	const {
 		verseService,
-		searchService,
 		bibleBooknamesService,
 		moduleResourceSelectionResolver,
 		bibleLocationReferenceService
@@ -36,15 +33,23 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		searchText = $bindable<string>(),
+		searchText,
 		paneID,
-		searchID,
-		onFilterBibleLocationRef
+		scrollContainerID,
+		searchResponse,
+		showResults,
+		onRenderedCountChanged
 	}: {
 		searchText: string;
 		paneID: string;
-		searchID: string;
-		onFilterBibleLocationRef: onFilterBibleLocationRefFunction;
+		scrollContainerID: string;
+		searchResponse?: SearchResultResponse;
+		showResults: boolean;
+		onRenderedCountChanged: (
+			query: string,
+			rendered: number,
+			total: number
+		) => void;
 	} = $props();
 
 	let booknamesPromise: Promise<BibleBooknames> | undefined;
@@ -52,10 +57,9 @@
 	// ================================== VARS =================================
 
 	let searchResults: SearchResult[] = $state([]);
-	let searchResultsResponse: SearchResultResponse = $state(
-		newSearchResultResponse()
-	);
+	let activeSearchResponse: SearchResultResponse | undefined = $state();
 	let renderedSearchResultsCount: number = $state(0);
+	let loadingResponse: SearchResultResponse | undefined;
 
 	/**
 	 * Position from bottom of scroll container before we load more
@@ -67,15 +71,26 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		searchService.subscribe(searchID, onSearchResult);
-
-		const el = document.getElementById(`${searchID}-scroll-container`);
+		const el = document.getElementById(`${scrollContainerID}-scroll-container`);
 		el?.addEventListener('scroll', handleScroll);
 
 		return () => {
 			el?.removeEventListener('scroll', handleScroll);
-			searchService.unsubscribe(searchID);
 		};
+	});
+
+	$effect(() => {
+		const response = searchResponse;
+
+		untrack(() => {
+			activeSearchResponse = response;
+			renderedSearchResultsCount = 0;
+			searchResults = [];
+
+			if (response) {
+				void renderToScreenMoreSearchResults();
+			}
+		});
 	});
 
 	function match(word: string) {
@@ -103,18 +118,8 @@
 		return bibleBooknamesService.get(source);
 	}
 
-	async function onSearchResult(srr: SearchResultResponse) {
-		if (onFilterBibleLocationRef) {
-			srr.bibleLocationRefs = onFilterBibleLocationRef(srr.bibleLocationRefs);
-		}
-		searchResultsResponse = srr;
-		renderedSearchResultsCount = 0;
-		searchResults = [];
-		await renderToScreenMoreSearchResults();
-	}
-
 	function handleScroll() {
-		let el = document.getElementById(`${searchID}-scroll-container`);
+		let el = document.getElementById(`${scrollContainerID}-scroll-container`);
 		if (el === null) {
 			return;
 		}
@@ -124,31 +129,58 @@
 			pixelsFromBottomBeforeLoadingMoreSearchResults;
 
 		if (isReachBottom) {
-			renderToScreenMoreSearchResults();
+			void renderToScreenMoreSearchResults();
 		}
 	}
 
 	async function renderToScreenMoreSearchResults() {
-		for (
-			let i = 0;
-			shouldContinueLoadingSearchResults(i);
-			i++, renderedSearchResultsCount++
-		) {
-			let sr = await searchResultIndexToSearchResult(
-				searchResultsResponse.bibleLocationRefs[renderedSearchResultsCount]
-			);
-			if (!sr) {
-				continue;
+		const response = activeSearchResponse;
+
+		if (!response || loadingResponse === response) {
+			return;
+		}
+
+		loadingResponse = response;
+
+		try {
+			for (
+				let i = 0;
+				shouldContinueLoadingSearchResults(i, response);
+				i++, renderedSearchResultsCount++
+			) {
+				let sr = await searchResultIndexToSearchResult(
+					response.bibleLocationRefs[renderedSearchResultsCount]
+				);
+
+				if (response !== activeSearchResponse) {
+					return;
+				}
+
+				if (!sr) {
+					continue;
+				}
+				searchResults.push(sr);
 			}
-			searchResults.push(sr);
+
+			onRenderedCountChanged(
+				response.text,
+				renderedSearchResultsCount,
+				response.bibleLocationRefs.length
+			);
+		} finally {
+			if (loadingResponse === response) {
+				loadingResponse = undefined;
+			}
 		}
 	}
 
-	function shouldContinueLoadingSearchResults(i: number): boolean {
+	function shouldContinueLoadingSearchResults(
+		i: number,
+		response: SearchResultResponse
+	): boolean {
 		return (
 			i < numberOfSearchResultsToLoadAtOnce &&
-			renderedSearchResultsCount !==
-				searchResultsResponse.bibleLocationRefs?.length
+			renderedSearchResultsCount !== response.bibleLocationRefs.length
 		);
 	}
 
@@ -197,52 +229,41 @@
 	}
 </script>
 
-{#if searchResultsResponse?.bibleLocationRefs && searchResultsResponse?.bibleLocationRefs.length > 0}
-	<div class="sticky top-10 bg-neutral-50 text-center">
-		Showing {renderedSearchResultsCount} of {searchResultsResponse
-			?.bibleLocationRefs.length}
-	</div>
-{/if}
-
-<div class="{searchResults?.length > 0 ? '' : 'hidden'} bg-neutral-50 pb-6">
-	{#each searchResults as sr}
-		<div class="hover:bg-neutral-100">
+{#if showResults}
+	<div class="bg-neutral-50 pb-6">
+		{#each searchResults as sr}
 			<div
-				tabindex="0"
-				role="button"
-				class="px-4 leading-loose"
-				onclick={() => {
-					onSearchResultClicked(sr);
-				}}
-				onkeydown={(e: KeyboardEvent) => {
-					if (e.key === 'Enter') {
-						onSearchResultClicked(sr);
-					}
-				}}
+				class="px-4 py-4 transition-colors duration-150 hover:bg-neutral-100 focus-within:bg-neutral-100"
 			>
-				<div class="text-left whitespace-normal hover:cursor-pointer">
-					<span class="py-2 text-left"
-						>{sr.bookName} {sr.number}:{sr.verseNumber}</span
-					>
-					<span class="flex-fill flex"></span>
-					{#each sr.text.split(' ') as w, idx}
-						{#if match(w)}
-							<span>
-								{#if idx !== 0}<span>&nbsp;</span>{/if}
-								<span class="text-redtxt">{w}</span>
-							</span>
-						{:else}
-							<span>
-								{#if idx !== 0}<span>&nbsp;</span>{/if}
-								<span class="">{w}</span>
-							</span>
-						{/if}
-					{/each}
-				</div>
-			</div>
-			<div>
+				<button
+					type="button"
+					class="w-full min-w-0 text-left active:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-primary-500"
+					onclick={() => onSearchResultClicked(sr)}
+				>
+					<div class="flex flex-col gap-2 whitespace-normal">
+						<div class="text-sm text-neutral-600">
+							{sr.bookName} {sr.number}:{sr.verseNumber}
+						</div>
+						<div class="text-base leading-relaxed text-neutral-700">
+							{#each sr.text.split(' ') as w, idx}
+								{#if match(w)}
+									<span>
+										{#if idx !== 0}<span>&nbsp;</span>{/if}
+										<span class="text-primary-500">{w}</span>
+									</span>
+								{:else}
+									<span>
+										{#if idx !== 0}<span>&nbsp;</span>{/if}
+										<span>{w}</span>
+									</span>
+								{/if}
+							{/each}
+						</div>
+					</div>
+				</button>
+
 				<SearchResultActions {paneID} searchResult={sr}></SearchResultActions>
 			</div>
-		</div>
-	{/each}
-</div>
+		{/each}
+	</div>
+{/if}

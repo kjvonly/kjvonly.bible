@@ -209,6 +209,8 @@ function createResponse(
 ): SearchResultResponse {
 	return {
 		id,
+		text:
+			'grace',
 		bibleLocationRefs:
 			['1_1_1'],
 		stats: {

@@ -3,7 +3,7 @@
 
 	let {
 		headerHeight = $bindable<number>(),
-		classes = 'flex w-full justify-between outline outline-neutral-400 py-2 px-4 text-neutral-700',
+		classes = 'flex w-full justify-between outline outline-neutral-400 text-neutral-700',
 		children
 	}: {
 		headerHeight: number;

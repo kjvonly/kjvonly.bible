@@ -69,8 +69,9 @@
 	bodyClasses=""
 >
 	<SettingsSearch
-		bind:query={searchQuery}
+		query={searchQuery}
 		results={searchResults}
+		onQueryChange={(query) => (searchQuery = query)}
 		onResultSelect={onSearchResultSelect}
 	></SettingsSearch>
 

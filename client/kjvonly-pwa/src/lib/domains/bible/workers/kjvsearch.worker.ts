@@ -100,6 +100,7 @@ async function search(
 	const response:
 		SearchResultResponse = {
 		id,
+		text,
 		bibleLocationRefs,
 		stats: {
 			count:

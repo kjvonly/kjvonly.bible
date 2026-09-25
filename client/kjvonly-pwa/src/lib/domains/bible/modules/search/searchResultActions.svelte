@@ -5,15 +5,12 @@
 	import { Modules } from '$lib/application';
 
 	// SERVICES
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import KJVIconButton from '$lib/components/buttons/KJVIconButton.svelte';
 	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
 	import Copy from '$lib/components/svgs/copy.svelte';
 	import { PaneSplit } from '$lib/application';
-	const {
-		workspaceRuntime,
-		toastService
-	} = useApplicationContext();
+	const { workspaceRuntime, toastService } = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
@@ -44,21 +41,27 @@
 	}
 </script>
 
-<div class="flex flex-row justify-end space-x-4 p-4 hover:cursor-default">
-	<KJVButton classes="" onClick={() => onCopyToClipboard()}>
+<div class="flex justify-end gap-2 pt-2 hover:cursor-default">
+	<KJVIconButton
+		label="Copy verse"
+		variant="quiet"
+		onClick={() => onCopyToClipboard()}
+	>
 		<Copy classes=""></Copy>
-	</KJVButton>
+	</KJVIconButton>
 
-	<KJVButton
-		classes=""
+	<KJVIconButton
+		label="Split pane horizontally"
+		variant="quiet"
 		onClick={(e: Event) => onSplitScreenHorizontal(e, searchResult.key)}
 	>
 		<SplitScreenBottom></SplitScreenBottom>
-	</KJVButton>
-	<KJVButton
-		classes=""
+	</KJVIconButton>
+	<KJVIconButton
+		label="Split pane vertically"
+		variant="quiet"
 		onClick={(e: Event) => onSplitScreenVertical(e, searchResult.key)}
 	>
 		<SplitScreenRight></SplitScreenRight>
-	</KJVButton>
+	</KJVIconButton>
 </div>
