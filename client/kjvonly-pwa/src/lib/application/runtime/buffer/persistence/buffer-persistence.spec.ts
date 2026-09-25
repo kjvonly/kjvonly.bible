@@ -51,6 +51,12 @@ describe(
 						'1_1'
 				};
 
+				buffer.state = {
+					navigation: {
+						views: ['subs']
+					}
+				};
+
 				const persisted =
 					serializeBuffer(
 						buffer
@@ -68,6 +74,12 @@ describe(
 					bag: {
 						bibleLocationRef:
 							'1_1'
+					},
+
+					state: {
+						navigation: {
+							views: ['subs']
+						}
 					},
 
 					resourceSelections: {
@@ -100,6 +112,12 @@ describe(
 						bag: {
 							bibleLocationRef:
 								'10_1'
+						},
+
+						state: {
+							navigation: {
+								views: ['subs', 'details']
+							}
 						},
 
 						resourceSelections: {
@@ -147,6 +165,14 @@ describe(
 				});
 
 				expect(
+					buffer.state
+				).toEqual({
+					navigation: {
+						views: ['subs', 'details']
+					}
+				});
+
+				expect(
 					buffer.resourceSelections
 				).toEqual({
 					[CHAPTER_RESOURCE_TYPE]: {
@@ -189,6 +215,10 @@ describe(
 
 				expect(
 					buffer.resourceSelections
+				).toEqual({});
+
+				expect(
+					buffer.state
 				).toEqual({});
 			}
 		);
@@ -238,6 +268,27 @@ describe(
 						})
 				).toThrow(
 					'Invalid persisted Buffer bag'
+				);
+			}
+		);
+
+		it(
+			'rejects a non-object persisted Buffer state',
+			() => {
+				expect(
+					() =>
+						restoreBuffer({
+							key:
+								'buffer-a',
+							componentName:
+								Modules.BIBLE,
+							bag: {},
+							state:
+								'navigation',
+							resourceSelections: {}
+						})
+				).toThrow(
+					'Invalid persisted Buffer state'
 				);
 			}
 		);

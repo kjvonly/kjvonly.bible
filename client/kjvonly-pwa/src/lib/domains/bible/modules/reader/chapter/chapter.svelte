@@ -32,7 +32,8 @@
 
 	// APPLICATION CONTEXT
 	import {
-		useApplicationContext
+		useApplicationContext,
+		useNavigationEntryContext
 	} from '$lib/application';
 
 	import {
@@ -72,6 +73,10 @@
 		settingsService,
 		bibleLocationReferenceService
 	} = useApplicationContext();
+
+	const {
+		navigationState
+	} = useNavigationEntryContext();
 
 	// =============================== BINDINGS ================================
 
@@ -247,8 +252,8 @@
 
 	async function loadTextMarkup() {
 		const source =
-			moduleResourceSelectionResolver.find(
-				paneID,
+			moduleResourceSelectionResolver.findWithNavigationState(
+				navigationState,
 				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 			);
 
@@ -282,8 +287,8 @@
 		}
 
 		const locationRef = bibleLocationRef;
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
+		const source = moduleResourceSelectionResolver.requireWithNavigationState(
+			navigationState,
 			BIBLE_PARAGRAPHS_RESOURCE_TYPE
 		);
 
@@ -309,8 +314,8 @@
 		}
 
 		const locationRef = bibleLocationRef;
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
+		const source = moduleResourceSelectionResolver.requireWithNavigationState(
+			navigationState,
 			BIBLE_PERICOPES_RESOURCE_TYPE
 		);
 
@@ -365,8 +370,8 @@
 	}
 
 	async function loadChapter() {
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
+		const source = moduleResourceSelectionResolver.requireWithNavigationState(
+			navigationState,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 

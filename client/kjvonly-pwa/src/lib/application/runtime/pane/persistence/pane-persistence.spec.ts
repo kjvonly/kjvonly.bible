@@ -108,6 +108,7 @@ describe(
 							componentName:
 								Modules.BIBLE,
 							bag: {},
+							state: {},
 							resourceSelections: {
 								[CHAPTER_RESOURCE_TYPE]: {
 									publisher:
@@ -127,6 +128,7 @@ describe(
 							componentName:
 								Modules.SEARCH,
 							bag: {},
+							state: {},
 							resourceSelections: {}
 						}
 					}

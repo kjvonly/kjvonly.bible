@@ -1,4 +1,8 @@
 import type {
+	PublishedResourceReference
+} from '$lib/resource';
+
+import type {
 	ResourceSelections
 } from './resource-selections';
 
@@ -56,6 +60,31 @@ export class ModuleResourceSelectionBuilder {
 		return this.build(
 			module,
 			originatingSelections
+		);
+	}
+
+	/**
+	 * Rebuilds a Module's Resource selections after one selection changes.
+	 *
+	 * The supplied selections are treated as the candidate originating state.
+	 * The requested selection is replaced on a copy and the normal Module
+	 * contributor is then allowed to preserve, discard, replace, or default
+	 * selections according to the same policy used for related interactions.
+	 */
+	update(
+		module: Modules,
+		selections: ResourceSelections,
+		resourceType: string,
+		value: PublishedResourceReference
+	): ResourceSelections {
+		return this.build(
+			module,
+			{
+				...selections,
+				[resourceType]: {
+					...value
+				}
+			}
 		);
 	}
 

@@ -1,14 +1,12 @@
 import { Modules } from '$lib/application/models/modules.model';
 
 import {
-	BibleContainer,
 	RefsContainer,
 	SearchContainer
 } from '$lib/domains/bible/ui';
 import LoginContainer from '$lib/application/modules/login/loginContainer.svelte';
 import ModulesContainer from '$lib/application/modules/modules/modules.svelte';
 import { NotesContainer } from '$lib/domains/notes/ui';
-import { PlansContainer } from '$lib/domains/reading-plans/ui';
 import SettingsContainer from '$lib/application/modules/settings/settingsContainer.svelte';
 import ProfileContainer from '$lib/application/modules/profile/profileContainer.svelte';
 import ArchiveContainer from '$lib/application/modules/archive/archiveContainer.svelte';
@@ -26,8 +24,6 @@ export function resolveModuleComponent(
 	module: Modules
 ) {
 	switch (module) {
-		case Modules.BIBLE:
-			return BibleContainer;
 		case Modules.STRONGS:
 			return RefsContainer;
 		case Modules.SEARCH:
@@ -40,8 +36,6 @@ export function resolveModuleComponent(
 			return LoginContainer;
 		case Modules.SETTINGS:
 			return SettingsContainer;
-		case Modules.PLANS:
-			return PlansContainer;
 		case Modules.PROFILE:
 			return ProfileContainer;
 		case Modules.ARCHIVE:

@@ -21,7 +21,6 @@ import {
 vi.mock(
 	'$lib/domains/bible/ui',
 	() => ({
-		BibleContainer: { component: 'BibleContainer' },
 		RefsContainer: { component: 'RefsContainer' },
 		SearchContainer: { component: 'SearchContainer' }
 	})
@@ -37,10 +36,6 @@ vi.mock(
 vi.mock(
 	'$lib/domains/notes/ui',
 	() => ({ NotesContainer: { component: 'NotesContainer' } })
-);
-vi.mock(
-	'$lib/domains/reading-plans/ui',
-	() => ({ PlansContainer: { component: 'PlansContainer' } })
 );
 vi.mock(
 	'$lib/application/modules/settings/settingsContainer.svelte',
@@ -64,11 +59,9 @@ describe(
 	() => {
 		it.each([
 			[Modules.MODULES, 'ModulesContainer'],
-			[Modules.BIBLE, 'BibleContainer'],
 			[Modules.STRONGS, 'RefsContainer'],
 			[Modules.SEARCH, 'SearchContainer'],
 			[Modules.NOTES, 'NotesContainer'],
-			[Modules.PLANS, 'PlansContainer'],
 			[Modules.LOGIN, 'LoginContainer'],
 			[Modules.SETTINGS, 'SettingsContainer'],
 			[Modules.PROFILE, 'ProfileContainer'],
@@ -96,6 +89,24 @@ describe(
 				).toBeUndefined();
 			}
 		);
+
+		it.each([
+			Modules.BIBLE,
+			Modules.PLANS
+		])(
+			'does not resolve migrated module %s through the legacy Module renderer',
+			(module) => {
+				expect(
+					() =>
+						resolveModuleComponent(
+							module
+						)
+				).toThrow(
+					`Unsupported module: ${module}`
+				);
+			}
+		);
+
 
 		it(
 			'throws for an unknown persisted module value',

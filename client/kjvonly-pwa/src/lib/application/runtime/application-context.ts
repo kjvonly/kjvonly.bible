@@ -32,6 +32,14 @@ import type {
 } from '$lib/application/services/navigation-service-factory';
 
 import type {
+    NavigationViewResolver
+} from '$lib/application/runtime/rendering/navigation-view-resolver';
+
+import type {
+    NavigationRuntimeFactory
+} from '$lib/application/runtime/navigation/navigation-runtime-factory';
+
+import type {
     KJVOnlyArchiveService
 } from '$lib/application/archive/kjvonly-archive.service';
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,6 +103,12 @@ export interface ApplicationContext {
 
     readonly navigationServiceFactory:
     NavigationServiceFactory;
+
+    readonly navigationViewResolver:
+    NavigationViewResolver;
+
+    readonly navigationRuntimeFactory:
+    NavigationRuntimeFactory;
 
     readonly archiveService:
     KJVOnlyArchiveService;

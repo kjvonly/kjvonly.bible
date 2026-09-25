@@ -9,3 +9,7 @@ export {
 export {
 	default as SearchContainer
 } from '../modules/search/searchContainer.svelte';
+
+export {
+	bibleNavigationViewRegistrations
+} from '../modules/reader/runtime/bible-navigation-view-registrations';

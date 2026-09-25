@@ -8,14 +8,30 @@
 	} from '$lib/application/runtime/workspace/workspace-runtime';
 	import type { WorkspacePaneDimensionsByID } from '$lib/application/runtime/workspace/workspace-layout';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { provideNavigationRuntimeContext } from '$lib/application/runtime/navigation/navigation-runtime-context';
+	import PaneNavigationContainer from '../../navigation/components/paneNavigationContainer.svelte';
 
-	const { workspaceRuntime } =
-		useApplicationContext();
+	let { paneID }: { paneID: string } = $props();
+
+	const {
+		workspaceRuntime,
+		navigationRuntimeFactory
+	} = useApplicationContext();
+
+	const navigationRuntime =
+		navigationRuntimeFactory.create(
+			paneID
+		);
+
+	provideNavigationRuntimeContext(
+		navigationRuntime
+	);
+
+	const navigationViews =
+		navigationRuntime.navigation.views;
 
 	let containerHeight: string = $state('');
 	let containerWidth: string = $state('');
-
-	let { paneID }: { paneID: string } = $props();
 
 	let pane: Pane | undefined = $state();
 
@@ -98,30 +114,41 @@
 </script>
 
 <div style="{containerWidth} {containerHeight}">
-	<!--
-		Learned lesson: changing Buffer data alone has not always caused Svelte to
-		recreate the module component, which can leave module-local UI stale. Toggling
-		between these branches deliberately recreates it after Buffer replacement.
-		Keep this mechanism until the underlying reactivity issue is understood.
-	-->
-	{#if pane?.toggle}
-		{#if pane?.buffer?.componentName}
-			{@const Component = resolveModuleComponent(
-				pane.buffer.componentName
-			)}
-			{#if Component}
-				<Component bind:pane {paneID}></Component>
+	{#if $navigationViews.length > 0}
+		<PaneNavigationContainer
+			navigation={navigationRuntime.navigation}
+		></PaneNavigationContainer>
+	{:else}
+		<!--
+			Legacy Module renderer used by Modules that have not migrated to the Pane
+			navigation stack yet. Once a Pane owns NavigationState entries, the Pane
+			navigation renderer above becomes authoritative for that Pane.
+		-->
+		<!--
+			Learned lesson: changing Buffer data alone has not always caused Svelte to
+			recreate the module component, which can leave module-local UI stale. Toggling
+			between these branches deliberately recreates it after Buffer replacement.
+			Keep this mechanism until the underlying reactivity issue is understood.
+		-->
+		{#if pane?.toggle}
+			{#if pane?.buffer?.componentName}
+				{@const Component = resolveModuleComponent(
+					pane.buffer.componentName
+				)}
+				{#if Component}
+					<Component bind:pane {paneID}></Component>
+				{/if}
 			{/if}
 		{/if}
-	{/if}
 
-	{#if pane && !pane.toggle}
-		{#if pane?.buffer?.componentName}
-			{@const Component = resolveModuleComponent(
-				pane.buffer.componentName
-			)}
-			{#if Component}
-				<Component bind:pane {paneID}></Component>
+		{#if pane && !pane.toggle}
+			{#if pane?.buffer?.componentName}
+				{@const Component = resolveModuleComponent(
+					pane.buffer.componentName
+				)}
+				{#if Component}
+					<Component bind:pane {paneID}></Component>
+				{/if}
 			{/if}
 		{/if}
 	{/if}

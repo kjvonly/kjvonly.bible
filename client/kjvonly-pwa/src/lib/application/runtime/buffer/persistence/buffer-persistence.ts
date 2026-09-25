@@ -10,6 +10,10 @@ import type {
 	BufferBag
 } from '$lib/application/runtime/buffer/models/buffer-bag.model';
 
+import type {
+	BufferState
+} from '$lib/application/runtime/buffer/models/buffer-state.model';
+
 import {
 	parseResourceSelections,
 	type ResourceSelections
@@ -19,6 +23,7 @@ export interface PersistedBuffer {
 	key: string;
 	componentName: Modules;
 	bag: BufferBag;
+	state: BufferState;
 	resourceSelections: ResourceSelections;
 }
 
@@ -29,6 +34,7 @@ export function serializeBuffer(
 			| 'key'
 			| 'componentName'
 			| 'bag'
+			| 'state'
 			| 'resourceSelections'
 		>
 ): PersistedBuffer {
@@ -41,6 +47,9 @@ export function serializeBuffer(
 
 		bag:
 			buffer.bag,
+
+		state:
+			buffer.state,
 
 		resourceSelections:
 			copyResourceSelections(
@@ -70,6 +79,9 @@ export function restoreBuffer(
 
 	buffer.bag =
 		persisted.bag;
+
+	buffer.state =
+		persisted.state;
 
 	return buffer;
 }
@@ -125,6 +137,11 @@ function parsePersistedBuffer(
 				persisted.bag
 			),
 
+		state:
+			parseBufferState(
+				persisted.state
+			),
+
 		resourceSelections:
 			parseResourceSelections(
 				persisted.resourceSelections ??
@@ -152,6 +169,26 @@ function parseBufferBag(
 	}
 
 	return value as BufferBag;
+}
+
+function parseBufferState(
+	value: unknown
+): BufferState {
+	if (value === undefined) {
+		return {};
+	}
+
+	if (
+		typeof value !== 'object' ||
+		value === null ||
+		Array.isArray(value)
+	) {
+		throw new Error(
+			'Invalid persisted Buffer state'
+		);
+	}
+
+	return value as BufferState;
 }
 
 function isModule(

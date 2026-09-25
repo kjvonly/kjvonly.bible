@@ -1,36 +1,33 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// APPLICATION
-	import {
-		type NavigationService,
-		useApplicationContext
-	} from '$lib/application';
+	import { useNavigationRuntimeContext } from '$lib/application';
 	import { BufferBody, BufferHeader } from '$lib/application/ui';
 
 	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import SubsAction from './subsAction.svelte';
 
 	// SVGS
 	import Close from '$lib/components/svgs/close.svelte';
 	import Menu from '$lib/components/svgs/menu.svelte';
 
 	// MODELS
-	import type { Sub } from '../../../models/plans.model';
+	import {
+		PLANS_VIEWS,
+		type Sub
+	} from '../../../models/plans.model';
 
-	const { workspaceRuntime } = useApplicationContext();
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 	let {
-		paneID,
 		clientHeight,
-		navService,
 		subsList,
 		onSubSelected
 	}: {
-		paneID: string;
 		clientHeight: number;
-		navService: NavigationService;
 		subsList: Sub[];
 		onSubSelected: (sub: Sub) => void;
 	} = $props();
@@ -45,19 +42,18 @@
 	}
 
 	function onClosePlansList(): void {
-		workspaceRuntime.closePane(paneID);
+		navigation.clear();
 	}
 
 	function onMenuClicked(): void {
-		navService.push({
-			component: SubsAction,
-			obj: {}
-		});
+		navigation.pushView(
+			PLANS_VIEWS.SUBS_ACTIONS,
+			{}
+		);
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
-
 {#snippet header()}
 	<div class="grid w-full grid-cols-5 place-items-center">
 		<snap></snap>
@@ -75,7 +71,6 @@
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
-
 {#snippet subsListView()}
 	{#each subsList as s}
 		<button

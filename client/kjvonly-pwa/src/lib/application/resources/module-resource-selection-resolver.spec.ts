@@ -5,13 +5,25 @@ import {
 	vi
 } from 'vitest';
 
+import {
+	Modules
+} from '$lib/application/models/modules.model';
+
 import type {
 	Pane
 } from '$lib/application/runtime/pane/models/pane.model';
 
 import type {
+	NavigationState
+} from '$lib/application/services/navigation.service';
+
+import type {
 	PublishedResourceReference
 } from '$lib/resource';
+
+import type {
+	ResourceSelections
+} from './resource-selections';
 
 import {
 	createModuleResourceSelectionResolver
@@ -52,7 +64,7 @@ describe(
 					);
 
 				const resolver =
-					createModuleResourceSelectionResolver({
+					createResolver({
 						findPane
 					});
 
@@ -77,7 +89,7 @@ describe(
 			'throws when the module Pane does not exist',
 			() => {
 				const resolver =
-					createModuleResourceSelectionResolver({
+					createResolver({
 						findPane:
 							() => undefined
 					});
@@ -100,7 +112,7 @@ describe(
 					createPane('module-pane');
 
 				const resolver =
-					createModuleResourceSelectionResolver({
+					createResolver({
 						findPane:
 							() => pane
 					});
@@ -129,7 +141,7 @@ describe(
 					);
 
 				const resolver =
-					createModuleResourceSelectionResolver({
+					createResolver({
 						findPane:
 							() => pane
 					});
@@ -156,7 +168,7 @@ describe(
 					);
 
 				const resolver =
-					createModuleResourceSelectionResolver({
+					createResolver({
 						findPane:
 							() => pane
 					});
@@ -171,8 +183,128 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'resolves a Resource from navigation-owned selections without Pane lookup',
+			() => {
+				const findPane =
+					vi.fn();
+
+				const navigationState:
+					NavigationState = {
+					module: Modules.PLANS,
+					view: 'plans',
+					state: {
+						resourceSelections: {
+							[RESOURCE_TYPE]: SOURCE
+						}
+					}
+				};
+
+				const related =
+					vi.fn(
+						(
+							_module: Modules,
+							selections: ResourceSelections
+						) => selections
+					);
+
+				const resolver =
+					createResolver(
+						{ findPane },
+						{ related }
+					);
+
+				expect(
+					resolver.requireWithNavigationState(
+						navigationState,
+						RESOURCE_TYPE
+					)
+				).toEqual(SOURCE);
+
+				expect(findPane).not.toHaveBeenCalled();
+				expect(related).toHaveBeenCalledWith(
+					Modules.PLANS,
+					navigationState.state.resourceSelections
+				);
+			}
+		);
+
+		it(
+			'uses module defaults when navigation state has no Resource selections',
+			() => {
+				const navigationState:
+					NavigationState = {
+					module: Modules.PLANS,
+					view: 'plans',
+					state: {}
+				};
+
+				const independent =
+					vi.fn(
+						() => ({
+							[RESOURCE_TYPE]: SOURCE
+						})
+					);
+
+				const resolver =
+					createResolver(
+						{
+							findPane:
+								() => undefined
+						},
+						{ independent }
+					);
+
+				expect(
+					resolver.requireWithNavigationState(
+						navigationState,
+						RESOURCE_TYPE
+					)
+				).toEqual(SOURCE);
+
+				expect(independent).toHaveBeenCalledWith(
+					Modules.PLANS
+				);
+
+				expect(
+					navigationState.state.resourceSelections
+				).toEqual({
+					[RESOURCE_TYPE]: SOURCE
+				});
+			}
+		);
 	}
 );
+
+function createResolver(
+	panes: {
+		findPane(
+			paneID: string
+		): Pane | undefined;
+	},
+	overrides: {
+		independent?: (
+			module: Modules
+		) => ResourceSelections;
+		related?: (
+			module: Modules,
+			selections: ResourceSelections
+		) => ResourceSelections;
+	} = {}
+) {
+	return createModuleResourceSelectionResolver(
+		panes,
+		{
+			independent:
+				overrides.independent ??
+				(() => ({})),
+			related:
+				overrides.related ??
+				((_module, selections) => selections)
+		}
+	);
+}
 
 function createPane(
 	id: string,

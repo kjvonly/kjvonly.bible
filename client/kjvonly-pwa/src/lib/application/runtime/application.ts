@@ -88,6 +88,14 @@ import {
 } from '$lib/domains/reading-plans/resources/plans-module-resource-selection-contributor';
 
 import {
+    plansNavigationViewRegistrations
+} from '$lib/domains/reading-plans/ui';
+
+import {
+    bibleNavigationViewRegistrations
+} from '$lib/domains/bible/ui';
+
+import {
     NoResourceModuleResourceSelectionContributor
 } from '$lib/application/resources/no-resource-module-resource-selection-contributor';
 
@@ -131,6 +139,22 @@ import {
 import {
     NavigationServiceFactory
 } from '$lib/application/services/navigation-service-factory';
+
+import {
+    NavigationStateBuilder
+} from '$lib/application/services/navigation-state-builder';
+
+import {
+    NavigationRuntimeFactory
+} from '$lib/application/runtime/navigation/navigation-runtime-factory';
+
+import {
+    NavigationViewRegistry
+} from '$lib/application/runtime/rendering/navigation-view-registry';
+
+import {
+    NavigationViewResolver
+} from '$lib/application/runtime/rendering/navigation-view-resolver';
 
 import {
     NostrAccountStrategy
@@ -730,6 +754,36 @@ export class Application {
         const navigationServiceFactory =
             new NavigationServiceFactory();
 
+        const navigationViewRegistry =
+            new NavigationViewRegistry();
+
+        navigationViewRegistry.registerAll(
+            plansNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            bibleNavigationViewRegistrations
+        );
+
+        const navigationViewResolver =
+            new NavigationViewResolver(
+                navigationViewRegistry
+            );
+
+        const navigationStateBuilder =
+            new NavigationStateBuilder(
+                moduleResourceSelectionBuilder
+            );
+
+        const navigationRuntimeFactory =
+            new NavigationRuntimeFactory(
+                navigationServiceFactory,
+                navigationStateBuilder,
+                navigationViewResolver,
+                moduleResourceSelectionBuilder,
+                workspaceRuntime
+            );
+
         const archiveService =
             new KJVOnlyArchiveService(
                 createBrowserKJVOnlyArchiveWorkerClient()
@@ -737,7 +791,8 @@ export class Application {
 
         const moduleResourceSelectionResolver =
             createModuleResourceSelectionResolver(
-                workspaceRuntime
+                workspaceRuntime,
+                moduleResourceSelectionBuilder
             );
 
         ///////////////////////////////////////////////////////////////////////
@@ -1110,6 +1165,8 @@ export class Application {
             toastService,
             settingsService,
             navigationServiceFactory,
+            navigationViewResolver,
+            navigationRuntimeFactory,
             archiveService,
 
             workspaceRuntime,
@@ -1239,7 +1296,7 @@ export class Application {
                 .initialize(
                     userId === undefined
                         ? Modules.LOGIN
-                        : Modules.BIBLE
+                        : Modules.MODULES
                 );
 
             this.nostrClient

@@ -16,7 +16,8 @@
 
 	// SERVICES
 	import {
-		useApplicationContext
+		useApplicationContext,
+		useNavigationEntryContext
 	} from '$lib/application';
 
 	import {
@@ -28,14 +29,16 @@
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
 		bibleLocationRef = $bindable(),
 		showBookChapterPopup = $bindable()
 	}: {
-		paneID: string;
 		bibleLocationRef: string;
 		showBookChapterPopup: boolean;
 	} = $props();
@@ -62,8 +65,8 @@
 		Promise<void> {
 		const source =
 			moduleResourceSelectionResolver
-				.require(
-					paneID,
+				.requireWithNavigationState(
+					navigationState,
 					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				);
 

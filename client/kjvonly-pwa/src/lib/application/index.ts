@@ -27,8 +27,35 @@ export {
 export {
 	NavigationService,
 	type NavigationComponentProps,
+	type NavigationState,
+	type NavigationStateValue,
+	type NavigationViewState,
 	type NavigationView
 } from './services/navigation.service';
+
+export {
+	NavigationStateBuilder
+} from './services/navigation-state-builder';
+
+export {
+	PaneNavigationService
+} from './services/pane-navigation.service';
+
+export {
+	provideNavigationRuntimeContext,
+	useNavigationRuntimeContext,
+	type NavigationRuntimeContext
+} from './runtime/navigation/navigation-runtime-context';
+
+export {
+	provideNavigationEntryContext,
+	useNavigationEntryContext,
+	type NavigationEntryContext
+} from './runtime/navigation/navigation-entry-context';
+
+export type {
+	NavigationViewRegistration
+} from './runtime/rendering/navigation-view-registry';
 
 export type {
 	AccountSetup,
@@ -80,6 +107,10 @@ export type {
 	ReadingPlansBufferBag,
 	BufferBag
 } from './runtime/buffer/models/buffer-bag.model';
+
+export type {
+	BufferState
+} from './runtime/buffer/models/buffer-state.model';
 
 export {
 	WorkspaceChangeType,

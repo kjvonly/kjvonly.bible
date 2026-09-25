@@ -140,19 +140,23 @@ export interface NavReadings extends BibleReadingNavigation {
   returnView: PLANS_VIEWS;
 }
 
+export const PLAN_NAVIGATION_RESULTS = {
+  READING_COMPLETED: 'plans.reading-completed'
+} as const;
+
 export enum PLANS_VIEWS {
   // PLAN
 
-  PLANS_LIST = 1,
-  PLANS_DETAILS = 3,
+  PLANS_LIST = 'plans.list',
+  PLANS_DETAILS = 'plans.details',
 
   // SUB
-  SUBS_LIST = 20,
-  SUBS_ACTIONS = 21,
-  SUBS_DETAILS = 22,
+  SUBS_LIST = 'plans.subscriptions',
+  SUBS_ACTIONS = 'plans.subscription-actions',
+  SUBS_DETAILS = 'plans.subscription-details',
 
   // NEXT READINGS
-  NEXT_LIST = 40
+  NEXT_LIST = 'plans.next-readings'
 }
 
 export enum PLAN_PUBSUB_SUBSCRIPTIONS {

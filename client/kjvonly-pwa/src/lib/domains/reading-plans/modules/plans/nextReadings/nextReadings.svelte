@@ -3,53 +3,67 @@
 	// SVELTE
 	import { onDestroy, onMount } from 'svelte';
 
+	// APPLICATION
+	import {
+		Modules,
+		type NavigationState,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
+	import { BufferBody, BufferHeader } from '$lib/application/ui';
+
 	// COMPONENTS
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import { BufferBody, BufferHeader } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ReadingsComponent from '../components/readings.svelte';
+	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
 
 	// MODELS
-	import { Modules } from '$lib/application';
-	import type { NavigationComponentProps } from '$lib/application';
 	import {
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS,
 		type Sub,
-		type NextReadings,
-		type Readings,
-		type NavReadings
+		type NextReadings
 	} from '../../../models/plans.model';
-
 	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
-
-	// SERVICES
-	import { useApplicationContext } from '$lib/application';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 
+	const application =
+		useApplicationContext();
+
 	const {
-		planProgressService,
 		plansPubSubService,
-		subsEnricherService,
-		workspaceRuntime
-	} = useApplicationContext();
+		subsEnricherService
+	} = application;
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
 		clientHeight,
-		navService
-	}: NavigationComponentProps = $props();
+		obj = $bindable()
+	}: {
+		clientHeight: number;
+		obj: Record<string, unknown>;
+	} = $props();
+
+	const navigationState =
+		obj.navigationState;
+
+	validateNavState(
+		navigationState
+	);
 
 	// ================================== VARS =================================
 
 	let headerHeight: number = $state(0);
-
-	let processingNavReadings: boolean = $state(false);
-	let SUBSCRIBER_ID: string = uuid4();
+	const SUBSCRIBER_ID: string = uuid4();
+	let mounted = true;
 
 	let subsByID: Map<string, Sub> = new Map<string, Sub>();
 	let nextReadings: NextReadings[] = $state([]);
@@ -57,66 +71,43 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
+		void initialize();
+	});
+
+	onDestroy(() => {
+		mounted = false;
+		plansPubSubService.unsubscribe(SUBSCRIBER_ID);
+	});
+
+	// ================================ FUNCS ==================================
+
+	async function initialize(): Promise<void> {
+		await initializePlansRuntime(
+			navigationState,
+			application
+		);
+
+		if (!mounted) {
+			return;
+		}
+
 		plansPubSubService.subscribe(
 			PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
 			onGetAllSubs,
 			SUBSCRIBER_ID
 		);
 		plansPubSubService.getAllSubs();
-	});
-
-	onDestroy(() => {
-		plansPubSubService.unsubscribe(SUBSCRIBER_ID);
-	});
-
-	// ================================ FUNCS ==================================
-
-	/**
-	 * Subscription func for getAllSubs. Anytime a sum is changed and published
-	 * this function will be called with the updated Subs data
-	 *
-	 * @param data
-	 */
-	async function onGetAllSubs(data: PlansSubscriptionsMessage) {
-		subsByID = data.subs;
-
-		await processNavReadings();
-		updateNextReadings();
 	}
 
 	/**
-	 * Necessary steps after a user completes a {@link Readings}.
+	 * Subscription func for getAllSubs. Anytime a subscription is changed and
+	 * published this function is called with the updated subscription data.
 	 */
-	async function processNavReadings() {
-		const buffer = workspaceRuntime.findPane(paneID)?.buffer;
-		if (!buffer) {
-			return;
-		}
-
-		const nr: NavReadings | undefined = buffer.bag.navReadings;
-
-		if (
-			!nr ||
-			nr.returnView !== PLANS_VIEWS.NEXT_LIST ||
-			processingNavReadings
-		) {
-			return;
-		}
-
-		processingNavReadings = true;
-
-		try {
-			const progress = await planProgressService.completeReading(
-				nr.subID,
-				nr.subNestedReadingsIndex
-			);
-
-			delete buffer.bag.navReadings;
-
-			plansPubSubService.putProgress(progress);
-		} finally {
-			processingNavReadings = false;
-		}
+	function onGetAllSubs(
+		data: PlansSubscriptionsMessage
+	): void {
+		subsByID = data.subs;
+		updateNextReadings();
 	}
 
 	function updateNextReadings() {
@@ -131,9 +122,7 @@
 	}
 
 	/**
-	 * skip completed subscriptions.
-	 *
-	 * @param s
+	 * Skip completed subscriptions.
 	 */
 	function filterSubsForNextReadings(s: Sub): boolean {
 		return subsEnricherService.hasNextReading(s);
@@ -151,43 +140,39 @@
 		};
 	}
 
-	// ============================== CLICK FUNCS ==============================
-
-	function onCloseNextReadings() {
-		navService.pop();
+	/**
+	 * Validates the navigation contract required by the next-readings view.
+	 */
+	function validateNavState(
+		value: unknown
+	): asserts value is NavigationState<PLANS_VIEWS.NEXT_LIST> {
+		if (
+			!isRecord(value) ||
+			value.module !== Modules.PLANS ||
+			value.view !== PLANS_VIEWS.NEXT_LIST ||
+			!isRecord(value.state)
+		) {
+			throw new Error(
+				'Invalid Plans next-readings navigation state'
+			);
+		}
 	}
 
-	function onSelectedNextReading(idx: number, returnView: PLANS_VIEWS) {
-		let nrs: NextReadings = nextReadings[idx];
-		const readings: Readings = nrs.readings;
-
-		let nr: NavReadings = {
-			subID: nrs.subID,
-			subNestedReadingsIndex: nrs.subReadingsIndex,
-			readings: readings,
-			currentNavReadingsIndex: 0,
-			returnView: returnView
-		};
-
-		const pane = workspaceRuntime.findPane(paneID);
-
-		workspaceRuntime.replaceBuffer(
-			paneID,
-			Modules.BIBLE,
-			{
-				...pane?.buffer?.bag,
-				navReadings: nr,
-				bibleLocationRef:
-					readings.bcvs[0].bibleLocationRef
-			}
+	function isRecord(
+		value: unknown
+	): value is Record<string, unknown> {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value)
 		);
 	}
 </script>
 
-{#snippet nextReading(n: NextReadings, idx: number)}
+{#snippet nextReading(n: NextReadings)}
 	<button
-		onclick={() => onSelectedNextReading(idx, PLANS_VIEWS.NEXT_LIST)}
-		class=" flex w-full flex-col px-2 py-4 text-base hover:bg-neutral-100"
+		disabled
+		class="flex w-full flex-col px-2 py-4 text-base"
 	>
 		<div class="flex">
 			<span class="pb-2 text-2xl">{n.name}</span>
@@ -220,7 +205,7 @@
 
 {#snippet header()}
 	<span class="flex-1">
-		<KJVButton classes="" onClick={onCloseNextReadings}>
+		<KJVButton classes="" onClick={() => navigation.back()}>
 			<ArrowBack></ArrowBack>
 		</KJVButton>
 	</span>
@@ -233,8 +218,8 @@
 
 {#snippet body()}
 	{#if nextReadings.length > 0}
-		{#each nextReadings as n, idx}
-			{@render nextReading(n, idx)}
+		{#each nextReadings as n}
+			{@render nextReading(n)}
 		{/each}
 	{/if}
 {/snippet}

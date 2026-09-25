@@ -164,6 +164,110 @@ describe(
 		);
 
 		it(
+			'rebuilds module selections after replacing one Resource selection',
+			() => {
+				let received:
+					ModuleResourceSelectionBuildContext |
+					undefined;
+
+				const originalSelection = {
+					publisher: 'original',
+					resourceId: 'test/resource/original'
+				};
+
+				const replacementSelection = {
+					publisher: 'replacement',
+					resourceId: 'test/resource/replacement'
+				};
+
+				const selections = {
+					'test/resource':
+						originalSelection,
+					'other/resource': {
+						publisher: 'other',
+						resourceId: 'other/resource/default'
+					}
+				};
+
+				const result = {
+					'normalized/resource': {
+						publisher: 'normalized',
+						resourceId: 'normalized/resource/default'
+					}
+				};
+
+				const builder =
+					new ModuleResourceSelectionBuilder(
+						createSnapshotProvider({
+							'global/resource': {
+								publisher: 'global',
+								resourceId: 'global/resource/default'
+							}
+						}),
+						[
+							createContributor(
+								Modules.BIBLE,
+								context => {
+									received = context;
+									return result;
+								}
+							)
+						]
+					);
+
+				expect(
+					builder.update(
+						Modules.BIBLE,
+						selections,
+						'test/resource',
+						replacementSelection
+					)
+				).toBe(result);
+
+				expect(
+					received
+				).toEqual({
+					originatingSelections: {
+						'test/resource':
+							replacementSelection,
+						'other/resource': {
+							publisher: 'other',
+							resourceId: 'other/resource/default'
+						}
+					},
+					currentSelections: {
+						'global/resource': {
+							publisher: 'global',
+							resourceId: 'global/resource/default'
+						}
+					}
+				});
+
+				expect(
+					selections[
+						'test/resource'
+					]
+				).toBe(
+					originalSelection
+				);
+
+				expect(
+					received?.originatingSelections
+				).not.toBe(
+					selections
+				);
+
+				expect(
+					received?.originatingSelections[
+						'test/resource'
+					]
+				).not.toBe(
+					replacementSelection
+				);
+			}
+		);
+
+		it(
 			'applies only the contributor registered for the target module',
 			() => {
 				const bibleBuild =

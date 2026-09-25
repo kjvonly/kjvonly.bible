@@ -91,3 +91,8 @@ export {
 export {
 	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 } from './resources/text-markup/bible-text-markup-interpreter';
+
+export {
+	BIBLE_VIEWS,
+	type BibleView
+} from './models/bible-navigation.model';

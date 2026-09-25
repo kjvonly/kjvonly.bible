@@ -3,51 +3,89 @@
 	// SVELTE
 	import { onMount, untrack } from 'svelte';
 
-	// COMPONENTS
+	// APPLICATION
+	import {
+		Modules,
+		type NavigationState,
+		type NavigationStateValue,
+		type NavigationViewState,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	import {
 		attachEvents,
 		BufferBody,
 		BufferHeader
 	} from '$lib/application/ui';
+
+	import {
+		BIBLE_VIEWS
+	} from '$lib/domains/bible';
+
+	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ReadingsComponent from '../components/readings.svelte';
-	// // SVGS
+	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
+
+	// SVGS
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 	import CheckCircle from '$lib/components/svgs/checkCircle.svelte';
 	import Pending from '$lib/components/svgs/pending.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/application';
-	import type { NavigationComponentProps } from '$lib/application';
 	import {
+		NullSub,
 		PLANS_VIEWS,
-		type NavReadings,
-		type Readings,
+		PLAN_NAVIGATION_RESULTS,
+		PLAN_PUBSUB_SUBSCRIPTIONS,
 		type Sub
 	} from '../../../models/plans.model';
-
-	// SERVICES
-	import { useApplicationContext } from '$lib/application';
+	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 
-	// =============================== BINDINGS ================================
-	let {
-		paneID,
-		clientHeight,
-		obj,
-		navService
-	}: NavigationComponentProps = $props();
+	type SubsDetailsNavigationState =
+		NavigationState<PLANS_VIEWS.SUBS_DETAILS> & {
+			readonly state:
+				NavigationViewState & {
+					subID: string;
+				};
+		};
 
-	let selectedSub: Sub = $derived(
-		obj.selectedSub as Sub
-	);
+	const application =
+		useApplicationContext();
 
 	const {
-		workspaceRuntime,
+		planProgressService,
+		plansPubSubService,
 		toastService
-	} = useApplicationContext();
+	} = application;
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
+	// =============================== BINDINGS ================================
+	let {
+		clientHeight,
+		obj = $bindable()
+	}: {
+		clientHeight: number;
+		obj: Record<string, unknown>;
+	} = $props();
+
+	const navigationState =
+		obj.navigationState;
+
+	validateNavState(
+		navigationState
+	);
+
+	const subID =
+		navigationState.state.subID;
+
+	let selectedSub: Sub = $state(NullSub());
 
 	// ================================== VARS =================================
 
@@ -57,18 +95,32 @@
 	let showCompletedReadings: boolean = $state(false);
 	let subListReadingsToShow: number = $state(0);
 	let subListViewID = uuid4();
+	let SUBSCRIBER_ID: string = uuid4();
+	let mounted = true;
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		loadMoreSubReadings();
-		setHasCompletedReadings();
+		void initialize();
 
-		return attachEvents(
+		const detachNavigationResult =
+			navigation.onResult(
+				navigationState,
+				onNavigationResult
+			);
+
+		const detachScroll = attachEvents(
 			`${subListViewID}-scroll-container`,
 			'scroll',
 			handleScroll
 		);
+
+		return () => {
+			mounted = false;
+			detachNavigationResult();
+			detachScroll();
+			plansPubSubService.unsubscribe(SUBSCRIBER_ID);
+		};
 	});
 
 	$effect(() => {
@@ -80,6 +132,32 @@
 	});
 
 	// ================================ FUNCS ==================================
+
+	async function initialize(): Promise<void> {
+		await initializePlansRuntime(
+			navigationState,
+			application
+		);
+
+		if (!mounted) {
+			return;
+		}
+
+		plansPubSubService.subscribe(
+			PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+			onGetAllSubs,
+			SUBSCRIBER_ID
+		);
+		plansPubSubService.getAllSubs();
+	}
+
+	function onGetAllSubs(
+		data: PlansSubscriptionsMessage
+	): void {
+		selectedSub =
+			data.subs.get(subID) ??
+			selectedSub;
+	}
 
 	function loadMoreSubReadings() {
 		let toShow = 0;
@@ -109,7 +187,7 @@
 			return;
 		}
 
-		const threshold = 20; // Adjust this value as needed
+		const threshold = 20;
 		const isReachBottom =
 			el.scrollHeight - el.clientHeight - el.scrollTop <= threshold;
 
@@ -122,49 +200,122 @@
 		hasCompletedReading = selectedSub.completedReadingIndexes.size > 0;
 	}
 
-	// ============================== CLICK FUNCS ==============================
-
 	function onSelectedSubReading(
-		subNestedReadingsIndex: number,
-		returnView: PLANS_VIEWS
+		subNestedReadingsIndex: number
 	): void {
-		const readings: Readings = selectedSub.nestedReadings[subNestedReadingsIndex];
+		const readings =
+			selectedSub.nestedReadings[
+				subNestedReadingsIndex
+			];
 
-		let np: NavReadings = {
-			subID: selectedSub.id,
-			subNestedReadingsIndex: subNestedReadingsIndex,
-			readings: readings,
-			currentNavReadingsIndex: 0,
-			returnView: returnView
+		const firstReading =
+			readings?.bcvs[0];
+
+		if (!readings || !firstReading) {
+			return;
+		}
+
+		const navReadings = {
+			readings: {
+				bcvs: readings.bcvs.map(
+					(reading) => ({
+						bookName: reading.bookName,
+						bookID: reading.bookID,
+						chapter: reading.chapter,
+						verses: reading.verses,
+						bibleLocationRef:
+							reading.bibleLocationRef
+					})
+				)
+			},
+			currentNavReadingsIndex: 0
 		};
 
-		const pane = workspaceRuntime.findPane(paneID);
-
-		workspaceRuntime.replaceBuffer(
-			paneID,
+		navigation.pushModule(
 			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
 			{
-				...pane?.buffer?.bag,
-				navReadings: np,
 				bibleLocationRef:
-					readings.bcvs[0].bibleLocationRef
+					firstReading.bibleLocationRef,
+				navReadings,
+				returnResult: {
+					type:
+						PLAN_NAVIGATION_RESULTS.READING_COMPLETED,
+					subID:
+						selectedSub.id,
+					subNestedReadingsIndex
+				}
 			}
 		);
 	}
 
+	/**
+	 * Applies a completed Bible reading returned to this still-mounted view.
+	 */
+	async function onNavigationResult(
+		result: NavigationStateValue
+	): Promise<void> {
+		if (
+			!isRecord(result) ||
+			result.type !==
+				PLAN_NAVIGATION_RESULTS.READING_COMPLETED ||
+			typeof result.subID !== 'string' ||
+			result.subID !== subID ||
+			typeof result.subNestedReadingsIndex !== 'number'
+		) {
+			throw new Error(
+				'Invalid completed Plan reading navigation result'
+			);
+		}
+
+		const progress =
+			await planProgressService.completeReading(
+				result.subID,
+				result.subNestedReadingsIndex
+			);
+
+		plansPubSubService.putProgress(
+			progress
+		);
+	}
+
 	function onCloseSubDetails(): void {
-		navService.pop();
+		navigation.back();
 	}
 
 	function onToggleCompletedReadings(): void {
 		showCompletedReadings = !showCompletedReadings;
-		let toastMsg = '';
-		if (showCompletedReadings) {
-			toastMsg = 'Showing Completed Readings';
-		} else {
-			toastMsg = 'Hiding CompletedReadings';
-		}
 		toastService.showToast('Toggled Completed Readings');
+	}
+
+	/**
+	 * Validates the navigation contract required by subscription details.
+	 */
+	function validateNavState(
+		value: unknown
+	): asserts value is SubsDetailsNavigationState {
+		if (
+			!isRecord(value) ||
+			value.module !== Modules.PLANS ||
+			value.view !== PLANS_VIEWS.SUBS_DETAILS ||
+			!isRecord(value.state) ||
+			typeof value.state.subID !== 'string' ||
+			value.state.subID.length === 0
+		) {
+			throw new Error(
+				'Invalid Plans subscription details navigation state'
+			);
+		}
+	}
+
+	function isRecord(
+		value: unknown
+	): value is Record<string, unknown> {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value)
+		);
 	}
 </script>
 
@@ -204,14 +355,14 @@
 
 {#snippet subListView(sub: Sub)}
 	<span
-		class=" sticky top-0 border-t border-neutral-400 bg-neutral-50 p-2 text-2xl"
+		class="sticky top-0 border-t border-neutral-400 bg-neutral-50 p-2 text-2xl"
 		>{sub.name}</span
 	>
 
 	{#each Array(subListReadingsToShow) as _, idx}
 		{#if !sub.completedReadingIndexes.has(idx) || (sub.completedReadingIndexes.has(idx) && showCompletedReadings)}
 			<button
-				onclick={() => onSelectedSubReading(idx, PLANS_VIEWS.SUBS_DETAILS)}
+				onclick={() => onSelectedSubReading(idx)}
 				class="flex w-full flex-row px-2 py-4 text-base hover:cursor-pointer hover:bg-neutral-100"
 			>
 				<div class="flex w-full min-w-50">

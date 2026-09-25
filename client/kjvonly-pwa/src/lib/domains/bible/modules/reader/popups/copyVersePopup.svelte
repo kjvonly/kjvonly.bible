@@ -22,7 +22,10 @@
 	import uuid4 from 'uuid4';
 
 	// NOSTR IMPL
-	import { useApplicationContext } from '$lib/application';
+	import {
+		useApplicationContext,
+		useNavigationEntryContext
+	} from '$lib/application';
 
 	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../../resources/chapters/bible-chapter-interpreter';
 
@@ -41,6 +44,10 @@
 		moduleResourceSelectionResolver,
 		bibleLocationReferenceService
 	} = useApplicationContext();
+
+	const {
+		navigationState
+	} = useNavigationEntryContext();
 
 	// =============================== BINDINGS ================================
 
@@ -86,8 +93,8 @@
 
 	// ================================ FUNCS ==================================
 	async function loadVerses() {
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
+		const source = moduleResourceSelectionResolver.requireWithNavigationState(
+			navigationState,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 
@@ -110,8 +117,8 @@
 		const bookID =
 			bibleLocationReferenceService.extractBookID(bibleLocationRef);
 
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
+		const source = moduleResourceSelectionResolver.requireWithNavigationState(
+			navigationState,
 			BIBLE_BOOKNAMES_RESOURCE_TYPE
 		);
 

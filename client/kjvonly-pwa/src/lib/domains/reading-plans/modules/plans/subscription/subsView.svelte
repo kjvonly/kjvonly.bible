@@ -3,155 +3,172 @@
 	// SVELTE
 	import { onDestroy, onMount } from 'svelte';
 
-	// COMPONENTS
-	import SubsDetails from './subsDetails.svelte';
-	import SubsList from './subsList.svelte';
-
 	// MODELS
 	import {
-		NullSub,
+		Modules,
+		type NavigationState,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
+	import {
 		type Sub,
-		type NavReadings,
 		PLANS_VIEWS,
 		PLAN_PUBSUB_SUBSCRIPTIONS
 	} from '../../../models/plans.model';
-	import type { NavigationComponentProps } from '$lib/application';
 	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
 
-	// SERVICES
-	import { useApplicationContext } from '$lib/application';
+	// COMPONENTS
+	import SubsList from './subsList.svelte';
+	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
 
 	// OTHER
 	import uuid4 from 'uuid4';
 
+	const application =
+		useApplicationContext();
+
 	const {
-		planProgressService,
-		plansPubSubService,
-		workspaceRuntime
-	} = useApplicationContext();
+		planSubscriptionsService,
+		plansPubSubService
+	} = application;
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
 		clientHeight,
-		navService
-	}: NavigationComponentProps = $props();
+		obj = $bindable()
+	}: {
+		clientHeight: number;
+		obj: Record<string, unknown>;
+	} = $props();
+
+	const navigationState =
+		obj.navigationState;
+
+	validateNavState(
+		navigationState
+	);
 
 	// ================================== VARS =================================
 
-	type SelectedSubNavigationState = {
-		selectedSub: Sub;
-	} & Record<string, unknown>;
-
-	let selectedSubView: SelectedSubNavigationState = $state({
-		selectedSub: NullSub()
-	});
-	let processingNavReadings: boolean = $state(false);
-	let SUBSCRIBER_ID: string = uuid4();
-	let subsByID: Map<string, Sub> = new Map<string, Sub>();
+	const SUBSCRIBER_ID = uuid4();
+	let mounted = true;
 	let subs: Sub[] = $state([]);
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
+		void initialize();
+	});
+
+	onDestroy(() => {
+		mounted = false;
+		plansPubSubService.unsubscribe(
+			SUBSCRIBER_ID
+		);
+	});
+
+	// ================================ FUNCS ==================================
+
+	async function initialize(): Promise<void> {
+		await initializePlansRuntime(
+			navigationState,
+			application
+		);
+
+		const subscriptions =
+			await planSubscriptionsService.list();
+
+		if (!mounted) {
+			return;
+		}
+
 		plansPubSubService.subscribe(
 			PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
 			onGetAllSubs,
 			SUBSCRIBER_ID
 		);
 		plansPubSubService.getAllSubs();
-	});
-
-	onDestroy(() => {
-		plansPubSubService.unsubscribe(SUBSCRIBER_ID);
-	});
-
-	// ================================ FUNCS ==================================
-
-	/**
-	 * Subscription func for getAllSubs. Anytime a sum is changed and published
-	 * this function will be called with the updated Subs data
-	 *
-	 * @param data
-	 */
-	async function onGetAllSubs(data: PlansSubscriptionsMessage) {
-		subsByID = data.subs;
-		subs.length = 0;
-		subsByID
-			.values()
-			.toArray()
-			.sort((a: Sub, b: Sub) => a.dateSubscribed - b.dateSubscribed)
-			.forEach((sub: Sub) => subs.push(sub));
-
-		if (selectedSubView.selectedSub.id) {
-			selectedSubView.selectedSub =
-				subsByID.get(selectedSubView.selectedSub.id) ??
-				selectedSubView.selectedSub;
-		}
-
-		await processNavReadings();
-	}
-
-	/**
-	 * Necessary steps after a user completes a {@link Readings} from a
-	 * subscription details view.
-	 */
-	function onSubSelected(sub: Sub): void {
-		selectedSubView.selectedSub = sub;
-
-		navService.push({
-			component: SubsDetails,
-			obj: selectedSubView
-		});
-	}
-
-	async function processNavReadings() {
-		const buffer = workspaceRuntime.findPane(paneID)?.buffer;
-		if (!buffer) {
-			return;
-		}
-
-		const nr: NavReadings | undefined =
-			buffer.bag.navReadings;
 
 		if (
-			!nr ||
-			nr.returnView !== PLANS_VIEWS.SUBS_DETAILS ||
-			processingNavReadings
+			subscriptions.length === 0 &&
+			navigation.isActive(
+				navigationState
+			)
 		) {
-			return;
-		}
-
-		processingNavReadings = true;
-		selectedSubView.selectedSub =
-			subsByID.get(nr.subID) ??
-			selectedSubView.selectedSub;
-
-		try {
-			const progress =
-				await planProgressService.completeReading(
-					nr.subID,
-					nr.subNestedReadingsIndex
-				);
-
-			delete buffer.bag.navReadings;
-
-			plansPubSubService.putProgress(
-				progress
+			navigation.pushView(
+				PLANS_VIEWS.PLANS_LIST,
+				{}
 			);
-
-			navService.push({
-				component: SubsDetails,
-				obj: selectedSubView
-			});
-		} finally {
-			processingNavReadings = false;
 		}
 	}
 
+	/**
+	 * Subscription func for getAllSubs. Anytime a subscription is changed and
+	 * published this function is called with the updated subscription data.
+	 */
+	function onGetAllSubs(
+		data: PlansSubscriptionsMessage
+	): void {
+		subs.length = 0;
+		data.subs
+			.values()
+			.toArray()
+			.sort(
+				(a: Sub, b: Sub) =>
+					a.dateSubscribed -
+					b.dateSubscribed
+			)
+			.forEach(
+				(sub: Sub) =>
+					subs.push(sub)
+			);
+	}
+
+	function onSubSelected(
+		sub: Sub
+	): void {
+		navigation.pushView(
+			PLANS_VIEWS.SUBS_DETAILS,
+			{
+				subID: sub.id
+			}
+		);
+	}
+
+	/**
+	 * Validates the navigation contract required by the Plans subscriptions view.
+	 */
+	function validateNavState(
+		value: unknown
+	): asserts value is NavigationState<PLANS_VIEWS.SUBS_LIST> {
+		if (
+			!isRecord(value) ||
+			value.module !== Modules.PLANS ||
+			value.view !== PLANS_VIEWS.SUBS_LIST ||
+			!isRecord(value.state)
+		) {
+			throw new Error(
+				'Invalid Plans subscriptions navigation state'
+			);
+		}
+	}
+
+	function isRecord(
+		value: unknown
+	): value is Record<string, unknown> {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value)
+		);
+	}
 </script>
 
 <!-- ============================== CONTAINER ============================== -->
 
-<SubsList {paneID} {clientHeight} {navService} subsList={subs} {onSubSelected}></SubsList>
+<SubsList {clientHeight} subsList={subs} {onSubSelected}></SubsList>

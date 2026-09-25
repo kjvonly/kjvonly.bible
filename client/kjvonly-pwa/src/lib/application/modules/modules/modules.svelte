@@ -11,11 +11,15 @@
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
 	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
+	import { PLANS_VIEWS } from '$lib/domains/reading-plans';
+	import { BIBLE_VIEWS } from '$lib/domains/bible';
 
 	// SERVICES
 	import { onMount } from 'svelte';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useNavigationRuntimeContext } from '$lib/application/runtime/navigation/navigation-runtime-context';
 	const { workspaceRuntime } = useApplicationContext();
+	const { navigation } = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 	let {
@@ -66,6 +70,33 @@
 	function onClose(): void {
 		workspaceRuntime.closePane(paneID);
 	}
+
+	function onModuleSelected(
+		module: Modules
+	): void {
+		if (module === Modules.PLANS) {
+			navigation.pushModule(
+				Modules.PLANS,
+				PLANS_VIEWS.SUBS_LIST,
+				{}
+			);
+			return;
+		}
+
+		if (module === Modules.BIBLE) {
+			navigation.pushModule(
+				Modules.BIBLE,
+				BIBLE_VIEWS.READER,
+				{}
+			);
+			return;
+		}
+
+		workspaceRuntime.replaceBuffer(
+			paneID,
+			module
+		);
+	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
@@ -84,7 +115,7 @@
 	{#each Object.keys(components) as c}
 		<div class="w-full">
 			<button
-				onclick={() => workspaceRuntime.replaceBuffer(paneID, components[c])}
+				onclick={() => onModuleSelected(components[c])}
 				class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-neutral-100"
 				>{c}</button
 			>

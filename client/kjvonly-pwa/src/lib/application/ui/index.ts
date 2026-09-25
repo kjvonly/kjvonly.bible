@@ -24,6 +24,10 @@ export {
 } from '../runtime/buffer/components/bufferHeader.svelte';
 
 export {
+	default as NavigationContainer
+} from '../runtime/navigation/components/navigationContainer.svelte';
+
+export {
 	default as Settings
 } from '../modules/settings/settings.svelte';
 

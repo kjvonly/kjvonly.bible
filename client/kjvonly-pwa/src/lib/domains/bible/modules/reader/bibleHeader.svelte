@@ -32,7 +32,11 @@
 
 	// SERVICES
 	import { PaneSplit } from '$lib/application';
-	import { useApplicationContext } from '$lib/application';
+	import {
+		useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 
 	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../resources/booknames/bible-booknames-interpreter';
 	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '../../resources/text-markup/bible-text-markup-interpreter';
@@ -51,6 +55,14 @@
 		bibleLocationReferenceService,
 		toastService
 	} = useApplicationContext();
+
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 
@@ -125,8 +137,8 @@
 
 		const bookID = bibleLocationReferenceService.extractBookID(locationRef);
 
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
+		const source = moduleResourceSelectionResolver.requireWithNavigationState(
+			navigationState,
 			BIBLE_BOOKNAMES_RESOURCE_TYPE
 		);
 
@@ -186,8 +198,8 @@
 	}
 
 	function hasTextMarkupSelection(): boolean {
-		return moduleResourceSelectionResolver.find(
-			paneID,
+		return moduleResourceSelectionResolver.findWithNavigationState(
+			navigationState,
 			BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 		) !== undefined;
 	}
@@ -215,8 +227,13 @@
 		mode.value = BIBLE_MODES.EDIT;
 	}
 
-	function onCloseClick() {
-		workspaceRuntime.closePane(paneID);
+	function onCloseClick(): void {
+		if (navigation.canGoBack()) {
+			navigation.back();
+			return;
+		}
+
+		navigation.clear();
 	}
 
 	function onSearchClick() {
@@ -324,7 +341,7 @@
 {#snippet bookChapterPopup()}
 	{#if showBookChapterPopup}
 		<PopupContainer {clientHeight}>
-			<BookChapterPopup {paneID} bind:showBookChapterPopup bind:bibleLocationRef
+			<BookChapterPopup bind:showBookChapterPopup bind:bibleLocationRef
 			></BookChapterPopup>
 		</PopupContainer>
 	{/if}
