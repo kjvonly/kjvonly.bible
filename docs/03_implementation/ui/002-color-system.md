@@ -738,6 +738,59 @@ tritanopia
 ## 8. Verify meaning without color
 Where colors communicate state or category, verify that another visual cue exists when required.
 ---
+# Tailwind Static Class Discovery
+Tailwind must be able to discover utility class names statically in source before it can emit the corresponding CSS.
+
+This matters when semantic application classes are selected dynamically through:
+```text
+resolver maps
+computed class strings
+stored Bible Text Markup classes
+runtime configuration
+```
+
+A class may be semantically valid and backed by a theme token while still being absent from the generated stylesheet if its literal utility name never appears in statically discoverable source.
+
+Examples include finite semantic families such as:
+```text
+text-vivid-*
+text-support-*
+text-highlight*
+decoration-highlight*
+```
+
+When a finite set of classes is intentionally selected dynamically, it is acceptable to retain literal hidden references so Tailwind sees the complete class set.
+
+For example:
+```svelte
+<!-- Tailwind must see these literal classes. Keep them in source/DOM. -->
+<span class="text-highlighta hidden"></span>
+<span class="text-highlightb hidden"></span>
+<span class="text-highlightc hidden"></span>
+<span class="text-highlightd hidden"></span>
+<span class="text-highlighte hidden"></span>
+
+<span class="decoration-highlighta hidden underline"></span>
+<span class="decoration-highlightb hidden underline"></span>
+<span class="decoration-highlightc hidden underline"></span>
+<span class="decoration-highlightd hidden underline"></span>
+<span class="decoration-highlighte hidden underline"></span>
+```
+
+The same technique may be used for other finite semantic color utilities when dynamic resolution prevents Tailwind from discovering their literal names.
+
+This is a build-time class-discovery concern, not a reason to replace semantic tokens with hard-coded colors.
+
+When an SVG uses:
+```text
+currentColor
+```
+
+and appears to ignore a semantic color, verify first that the expected Tailwind `text-*`, `fill-*`, or `decoration-*` utility was actually emitted in the generated CSS.
+
+A missing generated utility can look like an SVG/currentColor bug even when the SVG is behaving correctly.
+
+---
 # Testing Strategy
 Color themes need both structural and visual testing.
 ## Structural testing
