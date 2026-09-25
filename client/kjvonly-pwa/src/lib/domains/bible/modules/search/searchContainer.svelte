@@ -4,26 +4,33 @@
 	import { onMount } from 'svelte';
 
 	// COMPONENTS
-	import { BufferBody } from '$lib/application/ui';
-	import { BufferContainer } from '$lib/application/ui';
-	import { BufferHeader } from '$lib/application/ui';
-	import Close from '$lib/components/svgs/close.svelte';
-	import SearchInput from './searchInput.svelte';
+	import {
+		BufferBody,
+		BufferContainer,
+		BufferHeader,
+		SearchView,
+		type SearchAdapter,
+		type SearchViewResultSummary,
+		type SearchViewResultsContext
+	} from '$lib/application/ui';
+	import { KJVHeader } from '$lib/components/header';
+	import { BibleSearchAdapter } from './bible-search-adapter';
 	import SearchResults from './searchResults.svelte';
 
 	// MODELS
 	import type { Pane } from '$lib/application';
+	import type {
+		onFilterBibleLocationRefFunction,
+		SearchResultResponse
+	} from '../../models/search.model';
 
 	// SERVICES
 	import { useApplicationContext } from '$lib/application';
 
 	import { BIBLE_SEARCH_RESOURCE_TYPE } from '../../resources/search/bible-search-index-interpreter';
 
-	import type { PublishedResourceReference } from '$lib/resource';
-
 	// OTHER
 	import uuid4 from 'uuid4';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	const { workspaceRuntime } = useApplicationContext();
 
 	const { searchService, moduleResourceSelectionResolver } =
@@ -36,6 +43,7 @@
 		pane = $bindable<Pane>(),
 		showInput = true,
 		searchTerms = '',
+		placeholder = 'Search',
 		onClose = undefined,
 		onFilterBibleLocationRef = undefined
 	} = $props();
@@ -48,22 +56,86 @@
 
 	// component vars
 	let searchID: string = uuid4();
-	let searchText = $state('');
-	let searchSource: PublishedResourceReference | undefined = $state();
+	let searchAdapter: SearchAdapter<SearchResultResponse> | undefined = $state();
+	let searchResponse: SearchResultResponse | undefined = $state();
+	let searchResultSummary: SearchViewResultSummary | undefined = $state();
+	let useInitialFilter = $state(true);
+
+	let activeSearchQuery = '';
+	let activeSearchFilter: onFilterBibleLocationRefFunction | undefined;
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(async () => {
-		searchSource = moduleResourceSelectionResolver.require(
+	onMount(() => {
+		const searchSource = moduleResourceSelectionResolver.require(
 			paneID,
 			BIBLE_SEARCH_RESOURCE_TYPE
 		);
 
-		if (searchTerms?.length > 0) {
-			searchText = searchTerms;
-			await searchService.search(searchID, searchSource, searchTerms);
-		}
+		searchAdapter = new BibleSearchAdapter(
+			searchService,
+			searchID,
+			searchSource
+		);
+
+		return searchAdapter.subscribe(handleSearchResult);
 	});
+
+	// ================================ FUNCS ==================================
+
+	function handleQueryInput(value: string): void {
+		activeSearchQuery = value;
+		activeSearchFilter = undefined;
+		searchResponse = undefined;
+		searchResultSummary = undefined;
+		useInitialFilter = false;
+	}
+
+	function runSearch(value: string): Promise<void> {
+		if (!searchAdapter) {
+			return Promise.resolve();
+		}
+
+		activeSearchQuery = value;
+		activeSearchFilter = useInitialFilter
+			? onFilterBibleLocationRef
+			: undefined;
+		searchResponse = undefined;
+		searchResultSummary = undefined;
+
+		return searchAdapter.search(value);
+	}
+
+	function handleSearchResult(response: SearchResultResponse): void {
+		if (response.text !== activeSearchQuery) {
+			return;
+		}
+
+		const bibleLocationRefs = [...response.bibleLocationRefs];
+
+		searchResponse = {
+			...response,
+			bibleLocationRefs: activeSearchFilter
+				? activeSearchFilter(bibleLocationRefs)
+				: bibleLocationRefs
+		};
+	}
+
+	function handleRenderedResultsChanged(
+		query: string,
+		renderedCount: number,
+		totalCount: number
+	): void {
+		if (query !== activeSearchQuery) {
+			return;
+		}
+
+		searchResultSummary = {
+			query,
+			renderedCount,
+			totalCount
+		};
+	}
 
 	function applyOnClose() {
 		if (onClose) {
@@ -77,31 +149,51 @@
 <!-- ================================ HEADER =============================== -->
 
 {#snippet header()}
-	<div class="flex w-full items-center justify-between">
-		<span class="flex-1"></span>
-		<span class="text-center">Search</span>
-		<div class="flex flex-1 justify-end">
-			<KJVButton classes="" onClick={applyOnClose}>
-				<Close classes=""></Close>
-			</KJVButton>
-		</div>
-	</div>
+	<KJVHeader
+		title="Search"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Close search',
+			onClick: applyOnClose
+		}}
+		actions={[
+			{
+				icon: 'more-vertical',
+				label: 'More actions',
+				onClick: () => {}
+			}
+		]}
+	></KJVHeader>
+{/snippet}
+
+<!-- ============================ SEARCH RESULTS =========================== -->
+
+{#snippet searchResults(search: SearchViewResultsContext)}
+	<SearchResults
+		{paneID}
+		searchText={search.query}
+		scrollContainerID={searchID}
+		{searchResponse}
+		showResults={search.showResults}
+		onRenderedCountChanged={handleRenderedResultsChanged}
+	></SearchResults>
+	<div class="h-6"></div>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
 
 {#snippet body()}
-	{#if showInput && searchSource}
-		<SearchInput
-			bind:searchText
-			ID={searchID}
-			{searchSource}
-			{onFilterBibleLocationRef}
-		></SearchInput>
+	{#if searchAdapter}
+		<SearchView
+			initialQuery={searchTerms}
+			{showInput}
+			{placeholder}
+			resultSummary={searchResultSummary}
+			onSearch={runSearch}
+			onQueryInput={handleQueryInput}
+			results={searchResults}
+		></SearchView>
 	{/if}
-	<SearchResults {paneID} bind:searchText {searchID} {onFilterBibleLocationRef}
-	></SearchResults>
-	<div class="h-6"></div>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->

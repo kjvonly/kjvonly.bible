@@ -12,6 +12,7 @@ export type onFilterBibleLocationRefFunction = (
 
 export interface SearchResultResponse {
 	id: string;
+	text: string;
 	bibleLocationRefs: string[];
 	stats: SearchResultStats;
 }
@@ -19,6 +20,7 @@ export interface SearchResultResponse {
 export function newSearchResultResponse(): SearchResultResponse {
 	return {
 		id: '',
+		text: '',
 		bibleLocationRefs: [],
 		stats: newSearchResultStats()
 	};

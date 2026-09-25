@@ -32,6 +32,18 @@ export {
 } from '../modules/settings/settingsContainer.svelte';
 
 export {
+	default as SearchView
+} from './search/searchView.svelte';
+
+export type { SearchAdapter } from './search/search-adapter';
+
+export type {
+	SearchViewResultSummary,
+	SearchViewResultsContext,
+	SearchViewState
+} from './search/search-view.model';
+
+export {
 	attachEvents,
 	findElement,
 	scrollTo,

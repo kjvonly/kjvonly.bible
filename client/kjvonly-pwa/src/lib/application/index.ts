@@ -30,6 +30,10 @@ export {
 	type NavigationView
 } from './services/navigation.service';
 
+export {
+	DebounceService
+} from './services/debounce.service';
+
 export type {
 	AccountSetup,
 	AccountUpdate,
