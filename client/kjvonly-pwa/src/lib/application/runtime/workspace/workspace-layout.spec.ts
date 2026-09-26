@@ -170,7 +170,7 @@ function leaf(
 			undefined,
 		right:
 			undefined,
-		buffer:
+		state:
 			undefined
 	};
 }
@@ -186,7 +186,7 @@ function branch(
 		split,
 		left,
 		right,
-		buffer:
+		state:
 			undefined
 	};
 }

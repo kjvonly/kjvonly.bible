@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { useApplicationContext } from '$lib/application';
+	import {
+		type NavigationState,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	import type { StrongsPopups } from '$lib/domains/strongs';
 	// ================================ IMPORTS ================================
 	// COMPONENTS
@@ -7,19 +10,19 @@
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import PopupContainer from './popups/popupContainer.svelte';
 	import SearchPopup from './popups/searchPopup/searchPopup.svelte';
-	const { workspaceRuntime } = useApplicationContext();
+	const { navigation } = useNavigationRuntimeContext();
 
 	// SERVICES
 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
 		clientHeight,
+		navigationState,
 		popups = $bindable<StrongsPopups>()
 	}: {
-		paneID: string;
 		clientHeight: number;
+		navigationState: NavigationState;
 		popups: StrongsPopups;
 	} = $props();
 
@@ -27,7 +30,7 @@
 
 	function onClose(e: Event): void {
 		e.stopPropagation();
-		workspaceRuntime.closePane(paneID);
+		navigation.back();
 	}
 </script>
 
@@ -51,7 +54,7 @@
 {#snippet searchPopup()}
 	{#if popups.searchPopup}
 		<PopupContainer {clientHeight}>
-			<SearchPopup bind:popups></SearchPopup>
+			<SearchPopup bind:popups {navigationState}></SearchPopup>
 		</PopupContainer>
 	{/if}
 {/snippet}

@@ -32,7 +32,8 @@
 
 	// APPLICATION CONTEXT
 	import {
-		useApplicationContext
+		useApplicationContext,
+		useNavigationEntryContext
 	} from '$lib/application';
 
 	import {
@@ -73,6 +74,10 @@
 		bibleLocationReferenceService
 	} = useApplicationContext();
 
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
@@ -80,7 +85,6 @@
 		bibleVersion = $bindable<string>(),
 		id = $bindable<string>(),
 		mode = $bindable<BibleMode>(),
-		paneID,
 		textMarkup = $bindable<BibleTextMarkup>(),
 		lastKnownScrollPosition
 	}: {
@@ -88,7 +92,6 @@
 		bibleVersion: string;
 		id: string;
 		mode: BibleMode;
-		paneID: string;
 		textMarkup: BibleTextMarkup;
 		lastKnownScrollPosition: number;
 	} = $props();
@@ -178,11 +181,26 @@
 	}
 
 	function resetTextMarkup() {
-		textMarkup = {
-			id: '',
-			chapterRef: '',
-			markings: {}
-		};
+		const source =
+			moduleResourceSelectionResolver.find(
+				navigationState,
+				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+			);
+
+		if (!source) {
+			textMarkup = {
+				id: '',
+				chapterRef: '',
+				markings: {}
+			};
+			return;
+		}
+
+		textMarkup =
+			bibleTextMarkupService.create(
+				source,
+				bibleLocationRef
+			);
 	}
 
 	function resetParagraphs() {
@@ -248,7 +266,7 @@
 	async function loadTextMarkup() {
 		const source =
 			moduleResourceSelectionResolver.find(
-				paneID,
+				navigationState,
 				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 			);
 
@@ -283,7 +301,7 @@
 
 		const locationRef = bibleLocationRef;
 		const source = moduleResourceSelectionResolver.require(
-			paneID,
+			navigationState,
 			BIBLE_PARAGRAPHS_RESOURCE_TYPE
 		);
 
@@ -310,7 +328,7 @@
 
 		const locationRef = bibleLocationRef;
 		const source = moduleResourceSelectionResolver.require(
-			paneID,
+			navigationState,
 			BIBLE_PERICOPES_RESOURCE_TYPE
 		);
 
@@ -366,7 +384,7 @@
 
 	async function loadChapter() {
 		const source = moduleResourceSelectionResolver.require(
-			paneID,
+			navigationState,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 
@@ -405,7 +423,6 @@
 	{#each versesNumbersToShow as k, idx}
 		<span class="whitespace-normal" id={`${id}-vno-${idx + 1}`}>
 			<Verse
-				{paneID}
 				bind:textMarkup
 				bind:paragraphs
 				bind:pericopes

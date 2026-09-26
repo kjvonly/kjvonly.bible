@@ -18,40 +18,76 @@
 	import SearchResults from './searchResults.svelte';
 
 	// MODELS
-	import type { Pane } from '$lib/application';
+	import {
+		Modules,
+		type NavigationState,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	import type {
 		onFilterBibleLocationRefFunction,
 		SearchResultResponse
 	} from '../../models/search.model';
+	import {
+		SEARCH_VIEWS
+	} from '../../models/search-navigation.model';
 
 	// SERVICES
-	import { useApplicationContext } from '$lib/application';
+	const {
+		searchService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	import { BIBLE_SEARCH_RESOURCE_TYPE } from '../../resources/search/bible-search-index-interpreter';
 
 	// OTHER
 	import uuid4 from 'uuid4';
-	const { workspaceRuntime } = useApplicationContext();
-
-	const { searchService, moduleResourceSelectionResolver } =
-		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID = $bindable<string>(),
-		pane = $bindable<Pane>(),
+		clientHeight: entryClientHeight = 0,
+		obj = {},
 		showInput = true,
 		searchTerms = '',
 		placeholder = 'Search',
 		onClose = undefined,
-		onFilterBibleLocationRef = undefined
+		onFilterBibleLocationRef = undefined,
+		resourceNavigationState = undefined
+	}: {
+		clientHeight?: number;
+		obj?: Record<string, unknown>;
+		showInput?: boolean;
+		searchTerms?: string;
+		placeholder?: string;
+		onClose?: (() => void) | undefined;
+		onFilterBibleLocationRef?: onFilterBibleLocationRefFunction | undefined;
+		resourceNavigationState?: NavigationState;
 	} = $props();
+
+	const navigationState =
+		getNavigationState(obj);
+
+	const selectionNavigationState =
+		navigationState ?? resourceNavigationState;
+
+	if (!selectionNavigationState) {
+		throw new Error(
+			'Search Resource navigation state is required'
+		);
+	}
+
+	const initialSearchTerms =
+		getInitialSearchTerms();
 
 	// ================================= VARS ==================================
 
 	// DOM vars
-	let clientHeight = $state(0);
+	let legacyClientHeight = $state(0);
 	let headerHeight = $state(0);
 
 	// component vars
@@ -67,10 +103,11 @@
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		const searchSource = moduleResourceSelectionResolver.require(
-			paneID,
-			BIBLE_SEARCH_RESOURCE_TYPE
-		);
+		const searchSource =
+			moduleResourceSelectionResolver.require(
+				selectionNavigationState,
+				BIBLE_SEARCH_RESOURCE_TYPE
+			);
 
 		searchAdapter = new BibleSearchAdapter(
 			searchService,
@@ -94,6 +131,14 @@
 	function runSearch(value: string): Promise<void> {
 		if (!searchAdapter) {
 			return Promise.resolve();
+		}
+
+		if (navigationState) {
+			navigation.updateViewState(
+				navigationState,
+				'query',
+				value
+			);
 		}
 
 		activeSearchQuery = value;
@@ -137,12 +182,72 @@
 		};
 	}
 
-	function applyOnClose() {
+	function applyOnClose(): void {
 		if (onClose) {
 			onClose();
-		} else {
-			workspaceRuntime.closePane(paneID);
+			return;
 		}
+
+		navigation.back();
+	}
+
+	function getInitialSearchTerms(): string {
+		const query = navigationState?.state.query;
+
+		return typeof query === 'string'
+			? query
+			: searchTerms;
+	}
+
+	function getNavigationState(
+		value: unknown
+	): NavigationState<typeof SEARCH_VIEWS.RESULTS> | undefined {
+		if (!isRecord(value)) {
+			return undefined;
+		}
+
+		const candidate = value.navigationState;
+
+		if (candidate === undefined) {
+			return undefined;
+		}
+
+		validateNavigationState(candidate);
+		return candidate;
+	}
+
+	function validateNavigationState(
+		value: unknown
+	): asserts value is NavigationState<typeof SEARCH_VIEWS.RESULTS> {
+		if (
+			!isRecord(value) ||
+			value.module !== Modules.SEARCH ||
+			value.view !== SEARCH_VIEWS.RESULTS ||
+			!isRecord(value.state)
+		) {
+			throw new Error(
+				'Invalid Search navigation state'
+			);
+		}
+
+		if (
+			value.state.query !== undefined &&
+			typeof value.state.query !== 'string'
+		) {
+			throw new Error(
+				'Invalid Search query navigation state'
+			);
+		}
+	}
+
+	function isRecord(
+		value: unknown
+	): value is Record<string, unknown> {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value)
+		);
 	}
 </script>
 
@@ -170,7 +275,7 @@
 
 {#snippet searchResults(search: SearchViewResultsContext)}
 	<SearchResults
-		{paneID}
+		resourceNavigationState={selectionNavigationState}
 		searchText={search.query}
 		scrollContainerID={searchID}
 		{searchResponse}
@@ -185,7 +290,7 @@
 {#snippet body()}
 	{#if searchAdapter}
 		<SearchView
-			initialQuery={searchTerms}
+			initialQuery={initialSearchTerms}
 			{showInput}
 			{placeholder}
 			resultSummary={searchResultSummary}
@@ -198,7 +303,7 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferContainer bind:clientHeight>
+{#snippet content(clientHeight: number)}
 	<BufferHeader bind:headerHeight>
 		{@render header()}
 	</BufferHeader>
@@ -206,4 +311,12 @@
 	<BufferBody ID={searchID} {headerHeight} {clientHeight} classes="">
 		{@render body()}
 	</BufferBody>
-</BufferContainer>
+{/snippet}
+
+{#if navigationState}
+	{@render content(entryClientHeight)}
+{:else}
+	<BufferContainer bind:clientHeight={legacyClientHeight}>
+		{@render content(legacyClientHeight)}
+	</BufferContainer>
+{/if}

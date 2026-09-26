@@ -2,41 +2,51 @@
 	// ================================ IMPORTS ================================
 
 	// APPLICATION
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import type {
-		NavigationComponentProps,
-		NavigationView
-	} from '$lib/application/services/navigation.service';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 
 	// COMPONENTS
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Close from '$lib/components/svgs/close.svelte';
-	import ArchiveImport from './archiveImport.svelte';
-	import ArchiveExport from './archiveExport.svelte';
+
+	// MODELS
+	import {
+		ARCHIVE_VIEWS,
+		type ArchiveView
+	} from './archive-navigation.model';
 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+		clientHeight
+	}: {
+		clientHeight: number;
+	} = $props();
 
 	// ================================= VARS ==================================
 
 	let headerHeight: number = $state(0);
 
 	const {
-		workspaceRuntime
-	} = useApplicationContext();
+		navigation
+	} = useNavigationRuntimeContext();
 
-	const actions = {
-		import: ArchiveImport,
-		export: ArchiveExport
-	};
+	const actions: readonly {
+		label: string;
+		view: ArchiveView;
+	}[] = [
+		{
+			label: 'import',
+			view: ARCHIVE_VIEWS.IMPORT
+		},
+		{
+			label: 'export',
+			view: ARCHIVE_VIEWS.EXPORT
+		}
+	];
 
 	// ============================== CLICK FUNCS ==============================
 
@@ -44,19 +54,17 @@
 		event: Event
 	): void {
 		event.stopPropagation();
-		workspaceRuntime.closePane(
-			paneID
-		);
+
+		navigation.back();
 	}
 
 	function onSelect(
-		component:
-			NavigationView['component']
+		view: ArchiveView
 	): void {
-		navService.push({
-			component,
-			obj: {}
-		});
+		navigation.pushView(
+			view,
+			{}
+		);
 	}
 </script>
 
@@ -75,14 +83,14 @@
 <!-- ================================= BODY ================================ -->
 
 {#snippet body()}
-	{#each Object.entries(actions) as [label, component]}
+	{#each actions as action}
 		<div class="w-full">
 			<button
 				type="button"
-				onclick={() => onSelect(component)}
+				onclick={() => onSelect(action.view)}
 				class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-neutral-100"
 			>
-				{label}
+				{action.label}
 			</button>
 		</div>
 	{/each}

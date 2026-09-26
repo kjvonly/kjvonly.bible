@@ -2,7 +2,9 @@
 	// ================================ IMPORTS ================================
 
 	// APPLICATION
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import {
 		parseKJVOnlyArchiveExportPatterns,
 		type KJVOnlyArchiveExportSelection
@@ -29,11 +31,10 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+		clientHeight
+	}: {
+		clientHeight: number;
+	} = $props();
 
 	// ================================= VARS ==================================
 
@@ -44,6 +45,10 @@
 		archiveService,
 		toastService
 	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	let options = $state<ArchiveExportOption[]>([
 		{
@@ -169,7 +174,7 @@
 	// ============================== CLICK FUNCS ==============================
 
 	function onBack(): void {
-		navService.pop();
+		navigation.back();
 	}
 
 

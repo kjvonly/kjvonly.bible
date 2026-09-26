@@ -4,11 +4,12 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
-	// MODELS
-	import { Modules } from '$lib/application';
-
 	// SERVICES
-	import { useApplicationContext } from '$lib/application';
+	import {
+		useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 
 	// COMPONENTS
 	import LeftChevron from '$lib/components/buttons/chevrons/leftChevron.svelte';
@@ -22,9 +23,16 @@
 	} from '../../../models/bible.model';
 
 	const {
-		workspaceRuntime,
 		bibleNavigationService
 	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
+	const {
+		navigationState
+	} = useNavigationEntryContext();
 
 	// =============================== BINDINGS ================================
 
@@ -33,14 +41,12 @@
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		showNavButtons = $bindable<boolean>(),
-		paneID,
 		ID
 	}: {
 		mode: BibleMode;
 		bibleLocationRef: string;
 		bibleVersion: string;
 		showNavButtons: boolean;
-		paneID: string;
 		ID: string;
 	} = $props();
 
@@ -92,10 +98,17 @@
 		let ci = nr.currentNavReadingsIndex;
 		let nextIndex = ci + 1;
 		if (nextIndex > nr.readings.bcvs.length - 1) {
-			workspaceRuntime.replaceBuffer(
-				paneID,
-				Modules.PLANS
-			);
+			const returnResult =
+				navigationState.state.returnResult;
+
+			if (returnResult !== undefined) {
+				await navigation.backWithResult(
+					returnResult
+				);
+				return;
+			}
+
+			navigation.back();
 		} else {
 			nr.currentNavReadingsIndex = nextIndex;
 			bibleLocationRef = nr.readings.bcvs[nextIndex].bibleLocationRef;

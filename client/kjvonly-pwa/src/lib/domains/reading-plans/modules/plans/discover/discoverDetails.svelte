@@ -5,25 +5,34 @@
 
 	// APPLICATION
 	import {
-		type NavigationComponentProps,
-		useApplicationContext
+		Modules,
+		type NavigationState,
+		type NavigationViewState,
+		useApplicationContext,
+		useNavigationRuntimeContext
 	} from '$lib/application';
 	import {
 		attachEvents,
 		BufferBody,
 		BufferHeader
 	} from '$lib/application/ui';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
 
 	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ReadingsComponent from '../components/readings.svelte';
+	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
 
 	// SVGS
 	import AddCircle from '$lib/components/svgs/addCircle.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// MODELS
-	import type { PlanDefinitionView } from '../../../models/plans.model';
+	import {
+		NullPlanDefinitionView,
+		PLANS_VIEWS,
+		type PlanDefinitionView
+	} from '../../../models/plans.model';
 	import type { PlanSubscription } from '../../../models/plan-subscription';
 
 	// SERVICES
@@ -35,22 +44,52 @@
 	// OTHER
 	import uuid4 from 'uuid4';
 
+	type DiscoverDetailsNavigationState =
+		NavigationState<PLANS_VIEWS.PLANS_DETAILS> & {
+			readonly state:
+				NavigationViewState & {
+					planID: string;
+				};
+		};
+
+	const application =
+		useApplicationContext();
+
 	const {
+		bibleBooknamesService,
+		encodedReadingsDecoderService,
 		moduleResourceSelectionResolver,
+		planDefinitionsService,
 		planSubscriptionsService,
 		plansPubSubService,
 		toastService
-	} = useApplicationContext();
+	} = application;
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 	let {
-		paneID,
 		clientHeight,
-		obj,
-		navService
-	}: NavigationComponentProps = $props();
+		obj = $bindable()
+	}: {
+		clientHeight: number;
+		obj: Record<string, unknown>;
+	} = $props();
 
-	const selectedPlan = obj.selectedPlan as PlanDefinitionView;
+	const navigationState =
+		obj.navigationState;
+
+	validateNavState(
+		navigationState
+	);
+
+	const planID =
+		navigationState.state.planID;
+
+	let selectedPlan: PlanDefinitionView =
+		$state(NullPlanDefinitionView());
 
 	// ================================== VARS =================================
 	let headerHeight: number = $state(0);
@@ -59,7 +98,7 @@
 
 	// =============================== LIFECYCLE ===============================
 	onMount(() => {
-		loadMoreReadings();
+		void loadSelectedPlan();
 
 		return attachEvents(
 			`${discoverDetailID}-scroll-container`,
@@ -69,6 +108,45 @@
 	});
 
 	// ================================ FUNCS ==================================
+
+	/**
+	 * Loads the selected Plan definition using the Resource selections captured
+	 * by this navigation entry.
+	 */
+	async function loadSelectedPlan(): Promise<void> {
+		const booknamesSource =
+			moduleResourceSelectionResolver
+				.require(
+					navigationState,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+		const [booknames, definition] =
+			await Promise.all([
+				bibleBooknamesService.get(
+					booknamesSource
+				),
+				planDefinitionsService.get(
+					planID
+				)
+			]);
+
+		if (!definition) {
+			return;
+		}
+
+		selectedPlan = {
+			...definition,
+			nestedReadings:
+				encodedReadingsDecoderService.parseEncodedReadings(
+					[...definition.encodedReadings],
+					(bookID: string) =>
+						booknames.booknamesById[bookID] ?? ''
+				)
+		};
+
+		loadMoreReadings();
+	}
 
 	function loadMoreReadings() {
 		let toShow = 0;
@@ -103,11 +181,17 @@
 
 	// ============================== CLICK FUNCS ==============================
 	async function onAddPlanClicked() {
+		await initializePlansRuntime(
+			navigationState,
+			application
+		);
+
 		const subscriptionSource =
-			moduleResourceSelectionResolver.require(
-				paneID,
-				PLAN_SUBSCRIPTION_RESOURCE_TYPE
-			);
+			moduleResourceSelectionResolver
+				.require(
+					navigationState,
+					PLAN_SUBSCRIPTION_RESOURCE_TYPE
+				);
 
 		const subscription: PlanSubscription = {
 			id:
@@ -140,15 +224,45 @@
 			'Plan added to My Plans'
 		);
 
-		navService.pop();
-		navService.pop();
+		navigation.back();
+		navigation.back();
+	}
+
+	/**
+	 * Validates the navigation contract required by Plan discovery details.
+	 */
+	function validateNavState(
+		value: unknown
+	): asserts value is DiscoverDetailsNavigationState {
+		if (
+			!isRecord(value) ||
+			value.module !== Modules.PLANS ||
+			value.view !== PLANS_VIEWS.PLANS_DETAILS ||
+			!isRecord(value.state) ||
+			typeof value.state.planID !== 'string' ||
+			value.state.planID.length === 0
+		) {
+			throw new Error(
+				'Invalid Plans discovery details navigation state'
+			);
+		}
+	}
+
+	function isRecord(
+		value: unknown
+	): value is Record<string, unknown> {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value)
+		);
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<span class="flex-1">
-		<KJVButton classes="" onClick={() => navService.pop()}>
+		<KJVButton classes="" onClick={() => navigation.back()}>
 			<ArrowBack></ArrowBack>
 		</KJVButton>
 	</span>

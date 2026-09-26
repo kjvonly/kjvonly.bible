@@ -17,7 +17,7 @@ export class PaneService {
 		split: undefined,
 		left: undefined,
 		right: undefined,
-		buffer: undefined
+		state: undefined
 	};
 
 	/**

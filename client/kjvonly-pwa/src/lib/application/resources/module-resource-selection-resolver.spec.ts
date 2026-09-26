@@ -5,13 +5,21 @@ import {
 	vi
 } from 'vitest';
 
+import {
+	Modules
+} from '$lib/application/models/modules.model';
+
 import type {
-	Pane
-} from '$lib/application/runtime/pane/models/pane.model';
+	NavigationState
+} from '$lib/application/services/navigation.service';
 
 import type {
 	PublishedResourceReference
 } from '$lib/resource';
+
+import type {
+	ResourceSelections
+} from './resource-selections';
 
 import {
 	createModuleResourceSelectionResolver
@@ -33,110 +41,103 @@ describe(
 	'ModuleResourceSelectionResolver',
 	() => {
 		it(
-			'returns the selected Resource from the module Buffer',
+			'resolves a Resource from navigation-owned selections',
 			() => {
-				const modulePane =
-					createPane(
-						'module-pane',
-						{
+				const navigationState:
+					NavigationState = {
+						module: Modules.PLANS,
+						view: 'plans',
+						state: {
 							resourceSelections: {
-								[RESOURCE_TYPE]:
-									SOURCE
+								[RESOURCE_TYPE]: SOURCE
 							}
 						}
-					);
+					};
 
-				const findPane =
+				const related =
 					vi.fn(
-						() => modulePane
+						(
+							_module: Modules,
+							selections: ResourceSelections
+						) => selections
 					);
 
 				const resolver =
-					createModuleResourceSelectionResolver({
-						findPane
+					createResolver({
+						related
 					});
 
 				expect(
 					resolver.require(
-						'module-pane',
+						navigationState,
 						RESOURCE_TYPE
 					)
-				).toEqual(
-					SOURCE
-				);
+				).toEqual(SOURCE);
 
-				expect(
-					findPane
-				).toHaveBeenCalledWith(
-					'module-pane'
+				expect(related).toHaveBeenCalledWith(
+					Modules.PLANS,
+					navigationState.state.resourceSelections
 				);
 			}
 		);
 
 		it(
-			'throws when the module Pane does not exist',
+			'uses module defaults when navigation state has no Resource selections',
 			() => {
-				const resolver =
-					createModuleResourceSelectionResolver({
-						findPane:
-							() => undefined
-					});
+				const navigationState:
+					NavigationState = {
+						module: Modules.PLANS,
+						view: 'plans',
+						state: {}
+					};
 
-				expect(
-					() => resolver.require(
-						'missing-pane',
-						RESOURCE_TYPE
-					)
-				).toThrow(
-					'Module Pane not found: missing-pane'
-				);
-			}
-		);
-
-		it(
-			'throws when the module Pane has no Buffer',
-			() => {
-				const pane =
-					createPane('module-pane');
-
-				const resolver =
-					createModuleResourceSelectionResolver({
-						findPane:
-							() => pane
-					});
-
-				expect(
-					() => resolver.require(
-						'module-pane',
-						RESOURCE_TYPE
-					)
-				).toThrow(
-					'Module Buffer not found for Pane: module-pane'
-				);
-			}
-		);
-
-		it(
-			'returns undefined when an optional Resource selection is missing',
-			() => {
-				const pane =
-					createPane(
-						'module-pane',
-						{
-							resourceSelections:
-								{}
-						}
+				const independent =
+					vi.fn(
+						() => ({
+							[RESOURCE_TYPE]: SOURCE
+						})
 					);
 
 				const resolver =
-					createModuleResourceSelectionResolver({
-						findPane:
-							() => pane
+					createResolver({
+						independent
 					});
 
 				expect(
+					resolver.require(
+						navigationState,
+						RESOURCE_TYPE
+					)
+				).toEqual(SOURCE);
+
+				expect(independent).toHaveBeenCalledWith(
+					Modules.PLANS
+				);
+
+				expect(
+					navigationState.state.resourceSelections
+				).toEqual({
+					[RESOURCE_TYPE]: SOURCE
+				});
+			}
+		);
+
+		it(
+			'returns undefined for a missing optional navigation Resource selection',
+			() => {
+				const navigationState:
+					NavigationState = {
+						module: Modules.PLANS,
+						view: 'plans',
+						state: {}
+					};
+
+				const resolver =
+					createResolver();
+
+				expect(
 					resolver.find(
-						'module-pane',
+						navigationState,
 						RESOURCE_TYPE
 					)
 				).toBeUndefined();
@@ -144,26 +145,21 @@ describe(
 		);
 
 		it(
-			'uses the Buffer Resource selection requirement',
+			'uses the Resource selection requirement for navigation state',
 			() => {
-				const pane =
-					createPane(
-						'module-pane',
-						{
-							resourceSelections:
-								{}
-						}
-					);
+				const navigationState:
+					NavigationState = {
+						module: Modules.PLANS,
+						view: 'plans',
+						state: {}
+					};
 
 				const resolver =
-					createModuleResourceSelectionResolver({
-						findPane:
-							() => pane
-					});
+					createResolver();
 
 				expect(
 					() => resolver.require(
-						'module-pane',
+						navigationState,
 						RESOURCE_TYPE
 					)
 				).toThrow(
@@ -174,20 +170,23 @@ describe(
 	}
 );
 
-function createPane(
-	id: string,
-	buffer?: unknown
-): Pane {
-	return {
-		id,
-		left:
-			undefined,
-		right:
-			undefined,
-		split:
-			undefined,
-		buffer,
-		toggle:
-			undefined
-	};
+function createResolver(
+	overrides: {
+		independent?: (
+			module: Modules
+		) => ResourceSelections;
+		related?: (
+			module: Modules,
+			selections: ResourceSelections
+		) => ResourceSelections;
+	} = {}
+) {
+	return createModuleResourceSelectionResolver({
+		independent:
+			overrides.independent ??
+			(() => ({})),
+		related:
+			overrides.related ??
+			((_module, selections) => selections)
+	});
 }

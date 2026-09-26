@@ -1,31 +1,42 @@
 <script lang="ts">
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
-	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
-	import CreateAccount from '../createAccount/createAccount.svelte';
-	import NsecLogin from '../nsec/nsecLogin.svelte';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
 	import LoginOptionsHeader from './loginOptionsHeader.svelte';
+	import { LOGIN_VIEWS } from '../login-navigation.model';
 
 	let {
-		paneID,
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+		clientHeight
+	}: {
+		clientHeight: number;
+	} = $props();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	let headerHeight: number = $state(0);
 
-	function createAccount() {
-		navService.push({ component: CreateAccount, obj: {} });
+	function createAccount(): void {
+		navigation.pushView(
+			LOGIN_VIEWS.CREATE_ACCOUNT,
+			{}
+		);
 	}
-	function nsecLogin() {
-		navService.push({ component: NsecLogin, obj: {} });
+
+	function nsecLogin(): void {
+		navigation.pushView(
+			LOGIN_VIEWS.NSEC,
+			{}
+		);
 	}
 </script>
 
 {#snippet header()}
-	<LoginOptionsHeader {paneID}></LoginOptionsHeader>
+	<LoginOptionsHeader></LoginOptionsHeader>
 {/snippet}
 
 {#snippet body()}

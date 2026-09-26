@@ -8,19 +8,8 @@ import {
 } from 'vitest';
 
 import {
-	Modules
-} from '$lib/application/models/modules.model';
-
-import {
-	Buffer
-} from '$lib/application/runtime/buffer/models/buffer.model';
-
-import {
 	PaneService
 } from './pane.service.svelte';
-
-const CHAPTER_RESOURCE_TYPE =
-	'kjvonly/bible/chapters';
 
 describe(
 	'PaneService persistence',
@@ -56,16 +45,11 @@ describe(
 					);
 
 				paneService.rootPane = {
-					id:
-						'a',
-					split:
-						undefined,
-					left:
-						undefined,
-					right:
-						undefined,
-					buffer:
-						undefined
+					id: 'a',
+					split: undefined,
+					left: undefined,
+					right: undefined,
+					state: undefined
 				};
 			}
 		);
@@ -77,35 +61,16 @@ describe(
 		);
 
 		it(
-			'saves the Pane tree through the persistence boundary',
+			'saves Pane runtime state through the persistence boundary',
 			() => {
-				const buffer =
-					new Buffer({
-						[CHAPTER_RESOURCE_TYPE]: {
-							publisher:
-								'publisher-a',
-							resourceId:
-								`${CHAPTER_RESOURCE_TYPE}/kjvs`
-						}
-					});
-
-				buffer.key =
-					'buffer-a';
-				buffer.componentName =
-					Modules.BIBLE;
-
 				paneService.rootPane = {
-					id:
-						'a',
-					buffer,
-					split:
-						undefined,
-					left:
-						undefined,
-					right:
-						undefined,
-					toggle:
-						true
+					id: 'a',
+					state: {
+						navigation: []
+					},
+					split: undefined,
+					left: undefined,
+					right: undefined
 				};
 
 				paneService.save();
@@ -115,22 +80,9 @@ describe(
 						values.get('pane') ?? ''
 					)
 				).toEqual({
-					id:
-						'a',
-					buffer: {
-						key:
-							'buffer-a',
-						componentName:
-							Modules.BIBLE,
-						bag: {},
-						resourceSelections: {
-							[CHAPTER_RESOURCE_TYPE]: {
-								publisher:
-									'publisher-a',
-								resourceId:
-									`${CHAPTER_RESOURCE_TYPE}/kjvs`
-							}
-						}
+					id: 'a',
+					state: {
+						navigation: []
 					}
 				});
 			}
@@ -146,32 +98,14 @@ describe(
 		);
 
 		it(
-			'restores real Buffers with their exact Resource selections',
+			'restores persisted Pane runtime state',
 			() => {
 				values.set(
 					'pane',
 					JSON.stringify({
-						id:
-							'a',
-						buffer: {
-							key:
-								'buffer-a',
-							name:
-								'Bible',
-							componentName:
-								Modules.BIBLE,
-							bag: {
-								bibleLocationRef:
-									'10_1'
-							},
-							resourceSelections: {
-								[CHAPTER_RESOURCE_TYPE]: {
-									publisher:
-										'publisher-a',
-									resourceId:
-										`${CHAPTER_RESOURCE_TYPE}/kjvs`
-								}
-							}
+						id: 'a',
+						state: {
+							navigation: []
 						}
 					})
 				);
@@ -181,18 +115,9 @@ describe(
 				).toBe(true);
 
 				expect(
-					paneService.rootPane.buffer
-				).toBeInstanceOf(Buffer);
-
-				expect(
-					paneService.rootPane.buffer?.resourceSelections
+					paneService.rootPane.state
 				).toEqual({
-					[CHAPTER_RESOURCE_TYPE]: {
-						publisher:
-							'publisher-a',
-						resourceId:
-							`${CHAPTER_RESOURCE_TYPE}/kjvs`
-					}
+					navigation: []
 				});
 			}
 		);

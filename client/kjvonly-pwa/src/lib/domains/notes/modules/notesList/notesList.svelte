@@ -1,11 +1,17 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// MODELS
-	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
+	import {
+		Modules,
+		MODULES_VIEWS,
+		PaneSplit,
+		type NavigationState,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	import type {
 		Note,
-		NotesById,
-		NotesMode
+		NotesById
 	} from '../../models/note.model';
 	import { createNoteDomainObjectId } from '../../models/note-id';
 	import type {
@@ -30,19 +36,20 @@
 
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE,
-		BIBLE_BOOKNAMES_RESOURCE_TYPE
+		BIBLE_BOOKNAMES_RESOURCE_TYPE,
+		BIBLE_VIEWS
 	} from '$lib/domains/bible';
 
 	import {
 		NOTES_RESOURCE_TYPE
 	} from '../../resources/note-interpreter';
+	import { NOTES_VIEWS } from '../../models/notes-navigation.model';
 
 	import {
 		createNoteIdForSource
 	} from '../../resources/notes-resource-source';
 	const {
 		archiveService,
-		workspaceRuntime,
 		toastService,
 		verseService,
 		bibleBooknamesService,
@@ -50,32 +57,34 @@
 	} = useApplicationContext();
 
 
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
-		mode = $bindable(),
 		filterInput = $bindable(),
 		noteKeys,
 		notes,
 		onSelectedNote,
-		allNotes,
+		bibleLocationRef,
 		filterParams,
 		onFilterParamChanged,
 		onFilterInputChanged,
-		onAddNewNote
+		onAddNewNote,
+		navigationState
 	}: {
-		paneID: string;
-		mode: NotesMode;
 		filterInput: string;
 		noteKeys: string[];
 		notes: NotesById;
 		onSelectedNote: (noteId: string) => void;
-		allNotes: boolean;
+		bibleLocationRef?: string;
 		filterParams: NoteFilterParameter[];
 		onFilterParamChanged: (index: NoteFilterIndex, checked: boolean) => void;
 		onFilterInputChanged: () => void;
 		onAddNewNote: (note: Note) => void;
+		navigationState: NavigationState;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -96,12 +105,22 @@
 			void onExport();
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.MODULES, {});
+			navigation.split(
+				PaneSplit.VERTICAL,
+				Modules.MODULES,
+				MODULES_VIEWS.ROOT,
+				{}
+			);
 			showNoteListActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.MODULES, {});
+			navigation.split(
+				PaneSplit.HORIZONTAL,
+				Modules.MODULES,
+				MODULES_VIEWS.ROOT,
+				{}
+			);
 			showNoteListActions = false;
 		}
 	};
@@ -180,15 +199,22 @@
 		);
 	}
 
+	function requireResourceSelection(
+		resourceType: string
+	) {
+		return moduleResourceSelectionResolver
+			.require(
+				navigationState,
+				resourceType
+			);
+	}
+
 	async function onAdd() {
-		const bibleLocationRef: string | undefined =
-			mode.bibleLocationRef;
 		const keys = bibleLocationRef?.split('_');
 		const now = Date.now();
 		let newNote: Note;
 		const notesSource =
-			moduleResourceSelectionResolver.require(
-				paneID,
+			requireResourceSelection(
 				NOTES_RESOURCE_TYPE
 			);
 
@@ -224,14 +250,12 @@
 			}
 
 			const chapterSource =
-				moduleResourceSelectionResolver.require(
-					paneID,
+				requireResourceSelection(
 					BIBLE_CHAPTER_RESOURCE_TYPE
 				);
 
 			const booknamesSource =
-				moduleResourceSelectionResolver.require(
-					paneID,
+				requireResourceSelection(
 					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				);
 
@@ -281,31 +305,42 @@
 
 	function onBibleClicked(e: Event, note: Note): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
-			bibleLocationRef: note.bibleLocationRef
-		});
+
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
+			{
+				bibleLocationRef:
+					note.bibleLocationRef
+			}
+		);
 	}
 
 	function onHorizontalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.NOTES, {
-			noteID: noteID
-		});
+
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.NOTES,
+			NOTES_VIEWS.ROOT,
+			{ noteID }
+		);
 	}
 
 	function onVerticalClicked(e: Event, noteID: string): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.NOTES, {
-			noteID: noteID
-		});
+
+		navigation.split(
+			PaneSplit.VERTICAL,
+			Modules.NOTES,
+			NOTES_VIEWS.ROOT,
+			{ noteID }
+		);
 	}
 
 	function onClose(): void {
-		if (allNotes) {
-			workspaceRuntime.closePane(paneID);
-		} else {
-			mode.notePopup.show = false;
-		}
+		navigation.back();
 	}
 
 	function onFilterChanged(event: Event, index: NoteFilterIndex): void {
@@ -481,8 +516,8 @@
 <!-- ============================== CONTAINER ============================== -->
 
 <!--
-	Own BufferContainer here because NotesList can be reached through
-	NotesContainer or through the Bible popup, which renders Notes directly.
+	Own BufferContainer here so Notes can switch between its list and editor
+	without changing shell ownership.
 -->
 <BufferContainer bind:clientHeight>
 	<BufferHeader bind:headerHeight>

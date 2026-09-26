@@ -2,22 +2,17 @@ import type {
 	Pane
 } from '$lib/application/runtime/pane/models/pane.model';
 
+import type {
+	PaneState
+} from '$lib/application/runtime/pane/models/pane-state.model';
+
 import {
 	PaneSplit
 } from '$lib/application/runtime/pane/models/pane-split';
 
-import type {
-	PersistedBuffer
-} from '$lib/application/runtime/buffer/persistence/buffer-persistence';
-
-import {
-	restoreBuffer,
-	serializeBuffer
-} from '$lib/application/runtime/buffer/persistence/buffer-persistence';
-
 export interface PersistedLeafPane {
 	id: string;
-	buffer: PersistedBuffer;
+	state: PaneState;
 }
 
 export interface PersistedBranchPane {
@@ -77,9 +72,9 @@ export function serializePane(
 		);
 	}
 
-	if (pane.buffer === undefined) {
+	if (pane.state === undefined) {
 		throw new Error(
-			'Invalid Pane Buffer'
+			'Invalid Pane state'
 		);
 	}
 
@@ -87,10 +82,8 @@ export function serializePane(
 		id:
 			pane.id,
 
-		buffer:
-			serializeBuffer(
-				pane.buffer
-			)
+		state:
+			pane.state
 	};
 }
 
@@ -120,10 +113,7 @@ export function restorePane(
 					persisted.right
 				),
 
-			buffer:
-				undefined,
-
-			toggle:
+			state:
 				undefined
 		};
 	}
@@ -141,13 +131,8 @@ export function restorePane(
 		right:
 			undefined,
 
-		buffer:
-			restoreBuffer(
-				persisted.buffer
-			),
-
-		toggle:
-			undefined
+		state:
+			persisted.state
 	};
 }
 
@@ -206,19 +191,31 @@ function parsePersistedPane(
 		);
 	}
 
-	if (value.buffer === undefined) {
-		throw new Error(
-			'Invalid persisted Pane Buffer'
-		);
-	}
-
 	return {
 		id:
 			value.id,
 
-		buffer:
-			value.buffer as PersistedBuffer
+		state:
+			parsePaneState(
+				value.state
+			)
 	};
+}
+
+function parsePaneState(
+	value: unknown
+): PaneState {
+	if (
+		typeof value !== 'object' ||
+		value === null ||
+		Array.isArray(value)
+	) {
+		throw new Error(
+			'Invalid persisted Pane state'
+		);
+	}
+
+	return value as PaneState;
 }
 
 function isPersistedBranchPane(

@@ -1,30 +1,20 @@
 <script lang="ts">
-	// ================================ IMPORTS ================================
-	// COMPONENTS
-	import Close from '$lib/components/svgs/close.svelte';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-
-	// SERVICES
-	import type {
-		NavigationService
-	} from '$lib/application/services/navigation.service';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
-	// =============================== BINDINGS ================================
-
-	let { navService = $bindable() }: {
-		navService: NavigationService;
-	} = $props();
-
-	// ============================== CLICK FUNCS ==============================
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	function onBack(e: Event): void {
 		e.stopPropagation();
-		navService.pop();
+		navigation.back();
 	}
 </script>
 
-<!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<div
 		class="grid w-full grid-cols-3 bg-neutral-100 py-2 leading-tight"
@@ -37,5 +27,4 @@
 	</div>
 {/snippet}
 
-<!-- ============================== CONTAINER ============================== -->
 {@render header()}

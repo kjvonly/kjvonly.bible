@@ -1,29 +1,31 @@
 <script lang="ts">
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
-	import { Modules } from '$lib/application/models/modules.model';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useNavigationRuntimeContext } from '$lib/application/runtime/navigation/navigation-runtime-context';
+	import { completeAuthenticationNavigation } from '../complete-authentication-navigation';
 	import NsecLoginHeader from './nsecLoginHeader.svelte';
 
 	let {
-		paneID,
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+		clientHeight
+	}: {
+		clientHeight: number;
+	} = $props();
 
 	const {
 		authenticationService,
-		accountService,
-		workspaceRuntime
+		accountService
 	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	let headerHeight: number = $state(0);
 	let nsec = $state('');
 
-	async function nsecLogin() {
+	async function nsecLogin(): Promise<void> {
 		await authenticationService.login(nsec);
 
 		const userId =
@@ -40,12 +42,14 @@
 				);
 			});
 
-		workspaceRuntime.replaceBuffer(paneID, Modules.PROFILE);
+		completeAuthenticationNavigation(
+			navigation
+		);
 	}
 </script>
 
 {#snippet header()}
-	<NsecLoginHeader bind:navService></NsecLoginHeader>
+	<NsecLoginHeader></NsecLoginHeader>
 {/snippet}
 
 {#snippet body()}

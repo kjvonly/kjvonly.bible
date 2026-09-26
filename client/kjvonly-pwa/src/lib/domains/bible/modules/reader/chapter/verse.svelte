@@ -28,7 +28,6 @@
 		paragraphs = $bindable<BibleParagraphMap>(),
 		pericopes = $bindable<BiblePericopeMap>(),
 		mode = $bindable<BibleMode>(),
-		paneID,
 		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
@@ -40,7 +39,6 @@
 		paragraphs: BibleParagraphMap;
 		pericopes: BiblePericopeMap;
 		mode: BibleMode;
-		paneID: string;
 		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
@@ -64,7 +62,6 @@
 	 	 end of a line -->
 	<span class="inline-block">
 		{#each verse.words.slice(0, 2) as word, idx}<Word
-				{paneID}
 				bind:textMarkup
 				bind:notes
 				bind:mode
@@ -79,7 +76,6 @@
 		{/each}
 	</span>{#each verse.words.slice(2) as word, idx}
 		<Word
-			{paneID}
 			bind:textMarkup
 			bind:notes
 			bind:mode

@@ -26,6 +26,45 @@ describe(
 	'NavigationService',
 	() => {
 		it(
+			'hydrates a complete runtime stack without changing view identity',
+			() => {
+				const service =
+					new NavigationService();
+
+				const first = {
+					component:
+						FirstView,
+					obj: {
+						id: 'first'
+					}
+				};
+
+				const second = {
+					component:
+						SecondView,
+					obj: {
+						id: 'second'
+					}
+				};
+
+				service.hydrate([
+					first,
+					second
+				]);
+
+				const views =
+					get(service.views);
+
+				expect(views).toEqual([
+					first,
+					second
+				]);
+				expect(views[0]).toBe(first);
+				expect(views[1]).toBe(second);
+			}
+		);
+
+		it(
 			'pushes views in navigation order',
 			() => {
 				const service =
@@ -68,7 +107,7 @@ describe(
 		);
 
 		it(
-			'pops only the newest view',
+			'navigates back by popping only the newest view',
 			() => {
 				const service =
 					new NavigationService();
@@ -89,30 +128,41 @@ describe(
 					obj: {}
 				});
 
-				service.pop();
+				service.back();
 
-				const views =
-					get(service.views);
-
-				expect(views).toEqual([
+				expect(
+					get(service.views)
+				).toEqual([
 					first
 				]);
-				expect(views[0]).toBe(first);
 			}
 		);
 
 		it(
-			'keeps an empty stack empty when popped',
+			'keeps the root view when navigating back',
 			() => {
 				const service =
 					new NavigationService();
 
-				service.pop();
+				const root = {
+					component:
+						FirstView,
+					obj: {}
+				};
+
+				service.push(
+					root
+				);
+
+				service.back();
 
 				expect(
 					get(service.views)
-				).toEqual([]);
+				).toEqual([
+					root
+				]);
 			}
 		);
+
 	}
 );

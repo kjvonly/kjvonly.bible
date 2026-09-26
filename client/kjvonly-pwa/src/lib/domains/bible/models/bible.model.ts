@@ -70,17 +70,9 @@ export interface BibleMode {
   bibleLocationRef: string;
   bibleVersion: string;
 
-  notePopup: NotePopup;
-
   // edit options, word
   colorMarkup: string;
   type: string;
-}
-
-export interface NotePopup {
-  bibleLocationRef: string;
-  bibleVersion: string;
-  show: boolean;
 }
 
 export function newBibleMode(): BibleMode {
@@ -90,12 +82,7 @@ export function newBibleMode(): BibleMode {
     colorMarkup: 'bg-highlighta',
     type: '',
     bibleLocationRef: '73_1_1_1',
-    bibleVersion: 'kjvs',
-    notePopup: {
-      show: false,
-      bibleLocationRef: '73_1_1_1',
-      bibleVersion: 'kjvs'
-    }
+    bibleVersion: 'kjvs'
   };
 }
 

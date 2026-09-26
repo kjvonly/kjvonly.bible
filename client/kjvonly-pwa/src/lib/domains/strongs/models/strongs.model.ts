@@ -5,9 +5,6 @@ export interface StrongsPopups {
 }
 
 export interface StrongsSearchPopup {
-	paneID:
-		string;
-
 	searchTerms:
 		string;
 

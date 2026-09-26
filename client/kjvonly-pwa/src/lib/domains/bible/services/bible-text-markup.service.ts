@@ -186,13 +186,18 @@ export class BibleTextMarkupService {
 		}
 	}
 
-	async get(
+	/**
+	 * Creates the valid empty Text Markup object for a selected Resource and
+	 * Bible location. This gives the reader a stable Domain Object identity
+	 * before any asynchronous Resource loading completes.
+	 */
+	create(
 		source:
 			PublishedResourceReference,
 
 		bibleLocationRef:
 			string
-	): Promise<BibleTextMarkup> {
+	): BibleTextMarkup {
 		const {
 			name
 		} =
@@ -206,16 +211,37 @@ export class BibleTextMarkupService {
 					bibleLocationRef
 				);
 
-		const textMarkupId =
-			createBibleTextMarkupId(
-				source.publisher,
-				name,
-				chapterRef
+		return {
+			id:
+				createBibleTextMarkupId(
+					source.publisher,
+					name,
+					chapterRef
+				),
+
+			chapterRef,
+
+			markings:
+				{}
+		};
+	}
+
+	async get(
+		source:
+			PublishedResourceReference,
+
+		bibleLocationRef:
+			string
+	): Promise<BibleTextMarkup> {
+		const empty =
+			this.create(
+				source,
+				bibleLocationRef
 			);
 
 		const existing =
 			await this.textMarkup.get(
-				textMarkupId
+				empty.id
 			);
 
 		if (
@@ -228,24 +254,16 @@ export class BibleTextMarkupService {
 		const found =
 			await this.resourceLoader.load(
 				source,
-				chapterRef
+				empty.chapterRef
 			);
 
 		if (!found) {
-			return {
-				id:
-					textMarkupId,
-
-				chapterRef,
-
-				markings:
-					{}
-			};
+			return empty;
 		}
 
 		const installed =
 			await this.textMarkup.get(
-				textMarkupId
+				empty.id
 			);
 
 		if (
@@ -253,7 +271,7 @@ export class BibleTextMarkupService {
 			undefined
 		) {
 			throw new Error(
-				`Bible Text Markup was not installed: ${textMarkupId}`
+				`Bible Text Markup was not installed: ${empty.id}`
 			);
 		}
 

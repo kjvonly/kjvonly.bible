@@ -4,6 +4,11 @@
 	import { onMount } from 'svelte';
 
 	// MODEL
+	import {
+		Modules,
+		useNavigationRuntimeContext
+	} from '$lib/application';
+	import { NOTES_VIEWS } from '$lib/domains/notes';
 	import type { BibleMode } from '../../../models/bible.model';
 
 	import Highlighter from '$lib/components/svgs/highlighter.svelte';
@@ -19,6 +24,9 @@
 		mode: BibleMode;
 		onExitEdit: () => Promise<void>;
 	} = $props();
+
+	const { navigation } =
+		useNavigationRuntimeContext();
 
 	// ================================= VARS ==================================
 
@@ -58,9 +66,15 @@
 
 	async function onNoteClick(): Promise<void> {
 		await onExitEdit();
-		mode.notePopup.bibleLocationRef = mode.bibleLocationRef;
-		mode.notePopup.bibleVersion = mode.bibleVersion;
-		mode.notePopup.show = true;
+
+		navigation.pushModule(
+			Modules.NOTES,
+			NOTES_VIEWS.ROOT,
+			{
+				bibleLocationRef:
+					mode.bibleLocationRef
+			}
+		);
 	}
 
 	function updateColorMarkup() {

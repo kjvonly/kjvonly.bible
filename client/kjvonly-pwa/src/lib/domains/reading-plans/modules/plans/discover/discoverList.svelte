@@ -1,31 +1,35 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// APPLICATION
-	import type { NavigationService } from '$lib/application';
+	import { useNavigationRuntimeContext } from '$lib/application';
 	import {
 		BufferBody,
 		BufferHeader
 	} from '$lib/application/ui';
 
 	// COMPONENTS
-	import DiscoverDetails from './discoverDetails.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
 	// SVGS
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// MODELS
-	import type { PlanDefinitionView } from '../../../models/plans.model';
+	import {
+		PLANS_VIEWS,
+		type PlanDefinitionView
+	} from '../../../models/plans.model';
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 	let {
 		clientHeight,
-		planList,
-		navService
+		planList
 	}: {
 		clientHeight: number;
 		planList: PlanDefinitionView[];
-		navService: NavigationService;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -34,19 +38,19 @@
 	// ============================== CLICK FUNCS ==============================
 	function onPlanClicked(e: Event, plan: PlanDefinitionView) {
 		e.stopPropagation();
-		navService.push({
-			component: DiscoverDetails,
-			obj: {
-				selectedPlan: plan
+		navigation.pushView(
+			PLANS_VIEWS.PLANS_DETAILS,
+			{
+				planID: plan.id
 			}
-		});
+		);
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<span class="flex-1">
-		<KJVButton classes="" onClick={() => navService.pop()}>
+		<KJVButton classes="" onClick={() => navigation.back()}>
 			<ArrowBack></ArrowBack>
 		</KJVButton>
 	</span>

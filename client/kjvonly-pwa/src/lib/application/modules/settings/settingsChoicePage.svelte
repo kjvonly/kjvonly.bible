@@ -5,7 +5,6 @@
 
 	// MODELS
 	import type { Settings } from '../../models/settings.model';
-	import type { NavigationComponentProps } from '../../services/navigation.service';
 	import type {
 		SettingsOptionDefinition
 	} from './models/settings-definition.model';
@@ -14,23 +13,30 @@
 	import { requireSettingsSelectRow } from './resolvers/settings-definition-resolver';
 
 	// RUNTIME
+	import {
+		useNavigationEntryContext
+	} from '../../runtime/navigation/navigation-entry-context';
 	import { useSettingsContext } from './runtime/settings-context';
 	import { useSettingsNavigationContext } from './runtime/settings-navigation-context';
 
 	// =============================== BINDINGS ================================
 
 	let {
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+		clientHeight
+	}: {
+		clientHeight: number;
+	} = $props();
 
 	// ================================= VARS ==================================
 
-	let settingsContext = useSettingsContext();
-	let settingsNavigation = useSettingsNavigationContext();
+	const settingsContext = useSettingsContext();
+	const settingsNavigation = useSettingsNavigationContext();
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
 	let row = $derived.by(() => {
-		const rowID = obj.rowID;
+		const rowID = navigationState.state.rowID;
 
 		if (typeof rowID !== 'string') {
 			throw new Error('Settings choice navigation requires a rowID.');

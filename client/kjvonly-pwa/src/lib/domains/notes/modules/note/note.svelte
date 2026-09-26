@@ -20,7 +20,13 @@
 	import Tag from '$lib/components/svgs/tag.svelte';
 
 	// MODELS
-	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
+	import {
+		Modules,
+		MODULES_VIEWS,
+		PaneSplit,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	import type { Note, NoteTag } from '../../models/note.model';
 
 	// OTHER
@@ -30,18 +36,19 @@
 	import { parseNoteTagInput } from './note-tag-input';
 
 	// APPLICATION
-	const { workspaceRuntime, toastService, notesService } =
+	const { toastService, notesService } =
 		useApplicationContext();
+
+	const { navigation } =
+		useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
 		note,
 		persisted,
 		onCloseNote
 	}: {
-		paneID: string;
 		note: Note;
 		persisted: boolean;
 		onCloseNote: () => void;
@@ -77,20 +84,20 @@
 			showConfirmDelete = true;
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(
-				paneID,
+			navigation.split(
 				PaneSplit.VERTICAL,
 				Modules.MODULES,
+				MODULES_VIEWS.ROOT,
 				{}
 			);
 			showNoteActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(
-				paneID,
+			navigation.split(
 				PaneSplit.HORIZONTAL,
 				Modules.MODULES,
+				MODULES_VIEWS.ROOT,
 				{}
 			);
 			showNoteActions = false;

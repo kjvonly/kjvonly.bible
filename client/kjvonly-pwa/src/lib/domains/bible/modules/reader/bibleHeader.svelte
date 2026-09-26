@@ -3,15 +3,8 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 
 	// COMPONENTS
-	import BibleMenuPopup from './popups/bibleMenuPopup.svelte';
-	import BookChapterPopup from './popups/bookChapterVersePopup/bookChapterPopup.svelte';
-	import CopyVersePopup from './popups/copyVersePopup.svelte';
-	import NavReadingsList from './plans/navReadingsList.svelte';
-	import { Notes } from '$lib/domains/notes/ui';
-	import { SettingsContainer } from '$lib/application/ui';
 	import Edit from '$lib/components/svgs/edit.svelte';
 	import EditOff from '$lib/components/svgs/editOff.svelte';
-	import BibleVersionPopup from './popups/bibleVersionPopup.svelte';
 
 	// // TOOLBAR
 	import Close from '$lib/components/svgs/close.svelte';
@@ -19,7 +12,6 @@
 	import SettingsIcon from '$lib/components/svgs/settings.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Menu from '$lib/components/svgs/menu.svelte';
-	import PopupContainer from './popups/popupContainer.svelte';
 	import Search from '$lib/components/svgs/search.svelte';
 
 	// MODELS
@@ -28,11 +20,22 @@
 		ToolbarItems,
 		type BibleMode
 	} from '../../models/bible.model';
-	import { Modules } from '$lib/application';
+	import {
+		BIBLE_VIEWS
+	} from '../../models/bible-navigation.model';
+	import {
+		Modules,
+		SETTINGS_VIEWS
+	} from '$lib/application';
+	import { SEARCH_VIEWS } from '../../models/search-navigation.model';
 
 	// SERVICES
 	import { PaneSplit } from '$lib/application';
-	import { useApplicationContext } from '$lib/application';
+	import {
+		useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 
 	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../resources/booknames/bible-booknames-interpreter';
 	import { BIBLE_TEXT_MARKUP_RESOURCE_TYPE } from '../../resources/text-markup/bible-text-markup-interpreter';
@@ -41,10 +44,8 @@
 	import uuid4 from 'uuid4';
 	import { extractBibleVersion } from '../../utils/bible-identity';
 
-	import type { BibleVersion } from '../../models/bible-version.model';
 	import type { Settings as AppSettings } from '$lib/application';
 	const {
-		workspaceRuntime,
 		bibleBooknamesService,
 		moduleResourceSelectionResolver,
 		settingsService,
@@ -52,24 +53,26 @@
 		toastService
 	} = useApplicationContext();
 
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
 	// =============================== BINDINGS ================================
 
 	let {
 		mode = $bindable(),
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
-		clientHeight,
-		onBibleVersionSelected,
-		onExitEdit,
-		paneID
+		onExitEdit
 	}: {
 		mode: BibleMode;
 		bibleLocationRef: string;
 		bibleVersion: string;
-		clientHeight: number;
-		onBibleVersionSelected: (version: BibleVersion) => void;
 		onExitEdit: () => Promise<void>;
-		paneID: string;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -80,13 +83,6 @@
 	let headerGridCols = $state(7);
 	let showBibleVersion = $state(false);
 	let verses: string = $state('');
-
-	let showBookChapterPopup: boolean = $state(false);
-	let showNavReadingsPopup: boolean = $state(false);
-	let showSettingsPopup: boolean = $state(false);
-	let showMenuPopup: boolean = $state(false);
-	let showCopyVersesPopup: boolean = $state(false);
-	let showBibleVersionPopup: boolean = $state(false);
 
 	// TODO this will become dynamic option allowing users to configure their
 	// toolbar to their liking
@@ -126,7 +122,7 @@
 		const bookID = bibleLocationReferenceService.extractBookID(locationRef);
 
 		const source = moduleResourceSelectionResolver.require(
-			paneID,
+			navigationState,
 			BIBLE_BOOKNAMES_RESOURCE_TYPE
 		);
 
@@ -166,28 +162,49 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onBookChapterClick(event: Event) {
+	function onBookChapterClick(event: Event): void {
 		event.stopPropagation();
+
 		if (mode.navReadings) {
-			showNavReadingsPopup = !showNavReadingsPopup;
-		} else {
-			showBookChapterPopup = !showBookChapterPopup;
+			navigation.pushView(
+				BIBLE_VIEWS.NAV_READINGS,
+				{
+					navReadings: mode.navReadings
+				}
+			);
+			return;
 		}
+
+		navigation.pushView(
+			BIBLE_VIEWS.BOOK_CHAPTER_VERSE,
+			{}
+		);
 	}
 
-	function onSettingsClick(event: Event) {
+	function onSettingsClick(event: Event): void {
 		event.stopPropagation();
-		showSettingsPopup = !showSettingsPopup;
+
+		navigation.pushModule(
+			Modules.SETTINGS,
+			SETTINGS_VIEWS.ROOT,
+			{}
+		);
 	}
 
-	function onMenuClick(e: Event) {
+	function onMenuClick(e: Event): void {
 		e.stopPropagation();
-		showMenuPopup = !showMenuPopup;
+
+		navigation.pushView(
+			BIBLE_VIEWS.MENU,
+			{
+				bibleLocationRef
+			}
+		);
 	}
 
 	function hasTextMarkupSelection(): boolean {
 		return moduleResourceSelectionResolver.find(
-			paneID,
+			navigationState,
 			BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 		) !== undefined;
 	}
@@ -215,16 +232,26 @@
 		mode.value = BIBLE_MODES.EDIT;
 	}
 
-	function onCloseClick() {
-		workspaceRuntime.closePane(paneID);
+	function onCloseClick(): void {
+		navigation.back();
 	}
 
-	function onSearchClick() {
-		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.SEARCH, {});
+	function onSearchClick(): void {
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.SEARCH,
+			SEARCH_VIEWS.RESULTS,
+			{}
+		);
 	}
 
-	function onCopyClick() {
-		showCopyVersesPopup = true;
+	function onCopyClick(): void {
+		navigation.pushView(
+			BIBLE_VIEWS.COPY_VERSE,
+			{
+				bibleLocationRef
+			}
+		);
 	}
 </script>
 
@@ -319,94 +346,6 @@
 	</div>
 {/snippet}
 
-<!-- =============================== POPUPS ================================ -->
-
-{#snippet bookChapterPopup()}
-	{#if showBookChapterPopup}
-		<PopupContainer {clientHeight}>
-			<BookChapterPopup {paneID} bind:showBookChapterPopup bind:bibleLocationRef
-			></BookChapterPopup>
-		</PopupContainer>
-	{/if}
-{/snippet}
-
-{#snippet navReadingsPopup()}
-	{#if showNavReadingsPopup}
-		<PopupContainer {clientHeight}>
-			<NavReadingsList
-				bind:showNavReadingsPopup
-				bind:navReadings={mode.navReadings}
-				bind:bibleLocationRef
-			></NavReadingsList>
-		</PopupContainer>
-	{/if}
-{/snippet}
-
-{#snippet settingsPopup()}
-	{#if showSettingsPopup}
-		<PopupContainer {clientHeight}>
-			<SettingsContainer
-				{paneID}
-				onClose={() => {
-					showSettingsPopup = false;
-				}}
-			></SettingsContainer>
-		</PopupContainer>
-	{/if}
-{/snippet}
-
-{#snippet actionsPopup()}
-	{#if showMenuPopup}
-		<PopupContainer {clientHeight}>
-			<BibleMenuPopup
-				{paneID}
-				bind:showCopyVersesPopup
-				bind:showMenuPopup
-				bind:showBibleVersionPopup
-			></BibleMenuPopup>
-		</PopupContainer>
-	{/if}
-{/snippet}
-
-{#snippet bibleVersionPopup()}
-	{#if showBibleVersionPopup}
-		<PopupContainer {clientHeight}>
-			<BibleVersionPopup {onBibleVersionSelected} bind:showBibleVersionPopup
-			></BibleVersionPopup>
-		</PopupContainer>
-	{/if}
-{/snippet}
-
-{#snippet notePopup()}
-	{#if mode.notePopup.show}
-		<PopupContainer {clientHeight}>
-			<Notes {paneID} bind:mode allNotes={false}></Notes>
-		</PopupContainer>
-	{/if}
-{/snippet}
-
-{#snippet copyVersePopup()}
-	{#if showCopyVersesPopup}
-		<PopupContainer {clientHeight}>
-			<CopyVersePopup
-				{paneID}
-				bind:showCopyVersePopup={showCopyVersesPopup}
-				bind:bibleLocationRef
-				bind:bibleVersion
-			></CopyVersePopup>
-		</PopupContainer>
-	{/if}
-{/snippet}
-
-<!-- =========================== POPUP CONTAINER =========================== -->
-
 {@render header()}
-{@render bookChapterPopup()}
-{@render navReadingsPopup()}
-{@render settingsPopup()}
-{@render actionsPopup()}
-{@render bibleVersionPopup()}
-{@render notePopup()}
-{@render copyVersePopup()}
 
 <span class="hidden grid-cols-7"></span>

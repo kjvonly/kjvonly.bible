@@ -25,14 +25,39 @@ export {
 } from './services/settings.service';
 
 export {
-	NavigationService,
-	type NavigationComponentProps,
+	type NavigationState,
+	type NavigationStateValue,
+	type NavigationViewState,
 	type NavigationView
 } from './services/navigation.service';
 
 export {
 	DebounceService
 } from './services/debounce.service';
+
+export {
+	NavigationStateBuilder
+} from './services/navigation-state-builder';
+
+export {
+	PaneNavigationService
+} from './services/pane-navigation.service';
+
+export {
+	provideNavigationRuntimeContext,
+	useNavigationRuntimeContext,
+	type NavigationRuntimeContext
+} from './runtime/navigation/navigation-runtime-context';
+
+export {
+	provideNavigationEntryContext,
+	useNavigationEntryContext,
+	type NavigationEntryContext
+} from './runtime/navigation/navigation-entry-context';
+
+export type {
+	NavigationViewRegistration
+} from './runtime/rendering/navigation-view-registry';
 
 export type {
 	AccountSetup,
@@ -58,6 +83,16 @@ export type {
 // MODELS
 export { Modules } from './models/modules.model';
 
+export {
+	MODULES_VIEWS,
+	type ModulesView
+} from './modules/modules/modules-navigation.model';
+
+export {
+	SETTINGS_VIEWS,
+	type SettingsView
+} from './modules/settings/models/settings-navigation.model';
+
 export type {
 	Settings
 } from './models/settings.model';
@@ -78,12 +113,8 @@ export type {
 } from './runtime/pane/models/pane.model';
 
 export type {
-	BibleBufferBag,
-	NotesBufferBag,
-	ReferencesBufferBag,
-	ReadingPlansBufferBag,
-	BufferBag
-} from './runtime/buffer/models/buffer-bag.model';
+	PaneState
+} from './runtime/pane/models/pane-state.model';
 
 export {
 	WorkspaceChangeType,

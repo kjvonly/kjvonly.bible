@@ -28,22 +28,22 @@ Start with the smallest relevant set and follow cross-references only when the t
 
 # Core Runtime Documents
 
-## Buffer / Module Runtime
+## Pane / Navigation Runtime
 
 ```text
-docs/03_implementation/runtime/005-buffer-contract.md
+docs/03_implementation/runtime/016-navigation-architecture.md
 ```
 
 Read when working on:
 
 ```text
-Buffer identity
-Buffer.bag
-Buffer.resourceSelections
-ModuleBufferFactory
-related/independent Module creation
-Pane/Buffer relationship
-Module resource context
+Pane.state navigation persistence
+Pane-local navigation runtimes
+NavigationState ownership
+mounted view preservation
+modules.root invariants
+split navigation
+Resource context per navigation entry
 ```
 
 ---
@@ -60,7 +60,7 @@ Read when deciding:
 ApplicationContext vs Svelte context
 application-global vs module-local state
 view-local state
-Buffer state
+Pane/navigation state
 domain state
 who owns persistence
 who owns subscriptions
@@ -79,7 +79,7 @@ Read when working with:
 ```text
 paneID
 Pane object references
-Buffer keys
+NavigationState identity
 Module identity
 Domain Object IDs
 Resource IDs
@@ -194,7 +194,7 @@ Especially relevant to:
 ```text
 Settings
 Resource selections
-Buffer runtime state
+Pane navigation state
 editor drafts
 ```
 
@@ -248,12 +248,12 @@ Read when working on:
 ```text
 persistent navigation stacks
 Back behavior
-module overlays
-push vs replace vs split
+push vs split
+modules.root behavior
 Pane-local navigation context
 cross-module navigation
-Buffer-per-navigation-entry semantics
-resource context for hidden Modules
+Pane.state persistence
+resource context for hidden navigation entries
 ```
 
 Important:
@@ -330,7 +330,7 @@ Examples:
 unique IDs
 resolver completeness
 Node-safe domain roots
-Buffer identity rules
+Pane/navigation identity rules
 Resource snapshot rules
 navigation persistence
 subscriber cleanup
@@ -364,12 +364,11 @@ Use it as an implementation reference, not as a reason to make every Module Sett
 
 # Task-Oriented Reading Map
 
-## Working on Workspace / Pane / Buffer
+## Working on Workspace / Pane / Navigation
 
 Read:
 
 ```text
-runtime/005-buffer-contract.md
 runtime/007-state-ownership-context-boundaries.md
 runtime/008-identity-source-of-truth.md
 runtime/016-navigation-architecture.md
@@ -404,7 +403,6 @@ Read:
 
 ```text
 runtime/016-navigation-architecture.md
-runtime/005-buffer-contract.md
 runtime/008-identity-source-of-truth.md
 runtime/010-persistent-ui-lifecycle.md
 runtime/015-composition-root-container-boundaries.md

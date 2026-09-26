@@ -1,43 +1,69 @@
 <script lang="ts">
-	import { useApplicationContext } from '$lib/application';
 	// ================================ IMPORTS ================================
-	// COMPONENTS
-	import { Modules } from '$lib/application';
+	// APPLICATION
+	import {
+		Modules,
+		PaneSplit,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 
-	// SERVICES
+	// COMPONENTS
 	import KJVIconButton from '$lib/components/buttons/KJVIconButton.svelte';
 	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
 	import Copy from '$lib/components/svgs/copy.svelte';
-	import { PaneSplit } from '$lib/application';
-	const { workspaceRuntime, toastService } = useApplicationContext();
+
+	// MODELS
+	import {
+		BIBLE_VIEWS
+	} from '../../models/bible-navigation.model';
+
+	// SERVICES
+	const {
+		toastService
+	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 
-	let { paneID, searchResult } = $props();
+	let {
+		searchResult
+	} = $props();
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onCopyToClipboard() {
+	function onCopyToClipboard(): void {
 		let content = `${searchResult.bookName} ${searchResult.number}:${searchResult.verseNumber}\n${searchResult.text}`;
 		navigator.clipboard.writeText(content);
 		toastService.showToast(
 			`Copied ${searchResult.bookName} ${searchResult.number}:${searchResult.verseNumber}`
 		);
 	}
+
 	function onSplitScreenHorizontal(e: Event, bibleLocationRef: string): void {
 		e.stopPropagation();
 
-		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
-			bibleLocationRef: bibleLocationRef
-		});
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
+			{ bibleLocationRef }
+		);
 	}
 
 	function onSplitScreenVertical(e: Event, bibleLocationRef: string): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.BIBLE, {
-			bibleLocationRef: bibleLocationRef
-		});
+
+		navigation.split(
+			PaneSplit.VERTICAL,
+			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
+			{ bibleLocationRef }
+		);
 	}
 </script>
 

@@ -1,8 +1,7 @@
 export type {
 	Note,
 	NoteTag,
-	NotesById,
-	NotesMode
+	NotesById
 } from './models/note.model';
 
 export {
@@ -30,3 +29,8 @@ export {
 export type {
 	NotesSearchResult
 } from './runtime/search/notes-search-worker-message';
+
+export {
+	NOTES_VIEWS,
+	type NotesView
+} from './models/notes-navigation.model';

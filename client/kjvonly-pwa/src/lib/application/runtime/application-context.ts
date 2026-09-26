@@ -28,8 +28,8 @@ import type {
 } from '$lib/application/services/settings.service';
 
 import type {
-    NavigationServiceFactory
-} from '$lib/application/services/navigation-service-factory';
+    NavigationRuntimeFactory
+} from '$lib/application/runtime/navigation/navigation-runtime-factory';
 
 import type {
     KJVOnlyArchiveService
@@ -93,8 +93,8 @@ export interface ApplicationContext {
     readonly settingsService:
     SettingsService;
 
-    readonly navigationServiceFactory:
-    NavigationServiceFactory;
+    readonly navigationRuntimeFactory:
+    NavigationRuntimeFactory;
 
     readonly archiveService:
     KJVOnlyArchiveService;

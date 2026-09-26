@@ -14,8 +14,7 @@ export type {
 	PlanDefinitionView,
 	Sub,
 	Readings,
-	NextReadings,
-	NavReadings
+	NextReadings
 } from './models/plans.model';
 
 export {

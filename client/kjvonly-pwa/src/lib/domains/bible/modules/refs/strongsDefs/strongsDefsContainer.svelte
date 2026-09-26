@@ -16,7 +16,10 @@
 	import Dictionary from '$lib/components/svgs/dictionary.svelte';
 	import ShortText from '$lib/components/svgs/shortText.svelte';
 
-	import { useApplicationContext } from '$lib/application';
+	import {
+		useApplicationContext,
+		useNavigationEntryContext
+	} from '$lib/application';
 
 	import type { PublishedResourceReference } from '$lib/resource';
 
@@ -29,6 +32,9 @@
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
+	const { navigationState } =
+		useNavigationEntryContext();
+
 	// =============================== BINDINGS ================================
 	let {
 		popups = $bindable<StrongsPopups>(),
@@ -36,8 +42,7 @@
 		strongsSource,
 		strongsRefs,
 		strongsWords,
-		text,
-		paneID
+		text
 	}: {
 		popups: StrongsPopups;
 		hasCrossRef: boolean;
@@ -45,7 +50,6 @@
 		strongsRefs: string[];
 		strongsWords: string[] | undefined;
 		text: string;
-		paneID: string;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -105,7 +109,7 @@
 		const source =
 			moduleResourceSelectionResolver
 				.require(
-					paneID,
+					navigationState,
 					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				);
 
@@ -135,7 +139,6 @@
 		searchTerms = sanitize(searchText.substring(0, lastIndexOfOr));
 
 		popups.searchPopup = {
-			paneID,
 			searchTerms,
 			onFilterBibleLocationRefByBookID: (refs) =>
 				filterBibleLocationRefsByBookID(
@@ -149,7 +152,6 @@
 		searchTerms = sanitize(b.text);
 
 		popups.searchPopup = {
-			paneID,
 			searchTerms
 		};
 	}

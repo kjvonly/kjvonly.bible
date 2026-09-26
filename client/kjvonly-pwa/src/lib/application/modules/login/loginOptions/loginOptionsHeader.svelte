@@ -1,26 +1,22 @@
 <script lang="ts">
-	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	// ================================ IMPORTS ================================
-	// COMPONENTS
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
+
 	import Close from '$lib/components/svgs/close.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	const { workspaceRuntime } = useApplicationContext();
 
-	// SERVICES
-
-	// =============================== BINDINGS ================================
-
-	let { paneID } = $props();
-
-	// ============================== CLICK FUNCS ==============================
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	function onClose(e: Event): void {
 		e.stopPropagation();
-		workspaceRuntime.closePane(paneID);
+
+		navigation.back();
 	}
 </script>
 
-<!-- ================================ HEADER =============================== -->
 {#snippet header()}
 	<div
 		class="flex w-full flex-row bg-neutral-100 py-2 leading-tight"
@@ -35,5 +31,4 @@
 	</div>
 {/snippet}
 
-<!-- ============================== CONTAINER ============================== -->
 {@render header()}

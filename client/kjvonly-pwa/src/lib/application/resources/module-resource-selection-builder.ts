@@ -1,4 +1,8 @@
 import type {
+	PublishedResourceReference
+} from '$lib/resource';
+
+import type {
 	ResourceSelections
 } from './resource-selections';
 
@@ -59,23 +63,35 @@ export class ModuleResourceSelectionBuilder {
 		);
 	}
 
-	reconcileRestored(
+	/**
+	 * Rebuilds a Module's Resource selections after one selection changes.
+	 *
+	 * The supplied selections are treated as the candidate originating state.
+	 * The requested selection is replaced on a copy and the normal Module
+	 * contributor is then allowed to preserve, discard, replace, or default
+	 * selections according to the same policy used for related interactions.
+	 */
+	update(
 		module: Modules,
-		restoredSelections:
-			ResourceSelections
+		selections: ResourceSelections,
+		resourceType: string,
+		value: PublishedResourceReference
 	): ResourceSelections {
 		return this.build(
 			module,
-			restoredSelections,
-			true
+			{
+				...selections,
+				[resourceType]: {
+					...value
+				}
+			}
 		);
 	}
 
 	private build(
 		module: Modules,
 		originatingSelections:
-			ResourceSelections,
-		restoring = false
+			ResourceSelections
 	): ResourceSelections {
 		const contributor =
 			this.contributors.get(
@@ -92,12 +108,7 @@ export class ModuleResourceSelectionBuilder {
 			originatingSelections,
 			currentSelections:
 				this.selections
-					.snapshot(),
-			...(
-				restoring
-					? { restoring: true }
-					: {}
-			)
+					.snapshot()
 		});
 	}
 }

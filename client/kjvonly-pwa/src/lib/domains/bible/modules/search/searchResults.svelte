@@ -1,23 +1,28 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	import { Modules } from '$lib/application';
 	import { onMount, untrack } from 'svelte';
 
 	// COMPONENTS
 	import SearchResultActions from './searchResultActions.svelte';
 
 	// MODELS
+	import {
+		Modules,
+		type NavigationState,
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	import type {
 		SearchResult,
 		SearchResultResponse
 	} from '../../models/search.model';
+	import {
+		BIBLE_VIEWS
+	} from '../../models/bible-navigation.model';
+	import type { BibleBooknames } from '../../models/bible-booknames.model';
 
 	// SERVICES
-
-	// APPLICATION
-	import { useApplicationContext } from '$lib/application';
-	const { workspaceRuntime } = useApplicationContext();
 	const {
 		verseService,
 		bibleBooknamesService,
@@ -25,23 +30,25 @@
 		bibleLocationReferenceService
 	} = useApplicationContext();
 
-	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../resources/chapters/bible-chapter-interpreter';
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../resources/chapters/bible-chapter-interpreter';
 	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../resources/booknames/bible-booknames-interpreter';
 
-	import type { BibleBooknames } from '../../models/bible-booknames.model';
 	// =============================== BINDINGS ================================
 
 	let {
 		searchText,
-		paneID,
+		resourceNavigationState,
 		scrollContainerID,
 		searchResponse,
 		showResults,
 		onRenderedCountChanged
 	}: {
 		searchText: string;
-		paneID: string;
+		resourceNavigationState: NavigationState;
 		scrollContainerID: string;
 		searchResponse?: SearchResultResponse;
 		showResults: boolean;
@@ -110,10 +117,11 @@
 	}
 
 	async function loadBooknames(): Promise<BibleBooknames> {
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
-			BIBLE_BOOKNAMES_RESOURCE_TYPE
-		);
+		const source =
+			moduleResourceSelectionResolver.require(
+				resourceNavigationState,
+				BIBLE_BOOKNAMES_RESOURCE_TYPE
+			);
 
 		return bibleBooknamesService.get(source);
 	}
@@ -187,10 +195,11 @@
 	async function searchResultIndexToSearchResult(
 		bibleLocationRef: string
 	): Promise<SearchResult | undefined> {
-		const source = moduleResourceSelectionResolver.require(
-			paneID,
-			BIBLE_CHAPTER_RESOURCE_TYPE
-		);
+		const source =
+			moduleResourceSelectionResolver.require(
+				resourceNavigationState,
+				BIBLE_CHAPTER_RESOURCE_TYPE
+			);
 
 		const [verse, booknames] = await Promise.all([
 			verseService.get(source, bibleLocationRef),
@@ -217,13 +226,12 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onSearchResultClicked(sr: SearchResult) {
-		workspaceRuntime.replaceBuffer(
-			paneID,
+	function onSearchResultClicked(sr: SearchResult): void {
+		navigation.pushModule(
 			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
 			{
-				bibleLocationRef:
-					sr.key
+				bibleLocationRef: sr.key
 			}
 		);
 	}
@@ -262,7 +270,9 @@
 					</div>
 				</button>
 
-				<SearchResultActions {paneID} searchResult={sr}></SearchResultActions>
+				<SearchResultActions
+					searchResult={sr}
+				></SearchResultActions>
 			</div>
 		{/each}
 	</div>

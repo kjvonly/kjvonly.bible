@@ -1,20 +1,7 @@
-<!-- 
-The challenge to solve stemmed from two types of notes.
- 
-
-1. There are notes associated to verse words
-2. There are notes independent of verse words i.e sermon notes, bible study etc...
-
-bibleLocationRef maps a Bible-linked Note to <book>_<chapter>_<verse>_<word>.
-Standalone Notes use an undefined bibleLocationRef.
-
-kjvsearch worker uses flexsearch to index all the notes. We store all notes in indexdb and 
-load the notes into a flexsearch index to quickly query notes locally.
-
-We added in the boolean of allNotes to signal we are displaying all notes to the user. 
-Users can edit verse word notes as well as independent notes. If a user clicks on the 
-note icon in the Bible only the notes associated to that word will be displayed to the user.
-
+<!--
+Notes may be associated with a Bible location or may stand alone.
+When bibleLocationRef is supplied by NavigationState, this view shows only
+notes for that location. Without it, the view shows all notes.
 -->
 <script lang="ts">
 	// ================================ IMPORTS ================================
@@ -26,8 +13,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import NoteComponent from './note/note.svelte';
 	import type {
 		Note,
-		NotesById,
-		NotesMode
+		NotesById
 	} from '../models/note.model';
 	import type { NotesSearchResult } from '../runtime/search/notes-search-worker-message';
 	import type {
@@ -40,7 +26,10 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	import NotesList from './notesList/notesList.svelte';
 
 	// APPLICATION
-	import { useApplicationContext } from '$lib/application';
+	import {
+		type NavigationState,
+		useApplicationContext
+	} from '$lib/application';
 
 	const {
 		notesService
@@ -49,15 +38,13 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
-		mode = $bindable<NotesMode>(),
-		allNotes,
-		noteIDToOpen = ''
+		bibleLocationRef,
+		noteIDToOpen = '',
+		navigationState
 	}: {
-		paneID: string;
-		mode: NotesMode;
-		allNotes: boolean;
+		bibleLocationRef?: string;
 		noteIDToOpen: string;
+		navigationState: NavigationState;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -123,7 +110,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 	}
 
 	function onSearchResults(results: { notes: NotesById }) {
-		if (allNotes) {
+		if (bibleLocationRef === undefined) {
 			noteKeys = [];
 			notes = results.notes;
 			onFilterInputChanged();
@@ -132,7 +119,7 @@ note icon in the Bible only the notes associated to that word will be displayed 
 			notes = {};
 			/** filter to keys with the same bibleLocationRef*/
 			Object.keys(results.notes).forEach((k) => {
-				if (results.notes[k].bibleLocationRef == mode.bibleLocationRef) {
+				if (results.notes[k].bibleLocationRef === bibleLocationRef) {
 					notes[k] = results.notes[k];
 				}
 			});
@@ -210,19 +197,18 @@ note icon in the Bible only the notes associated to that word will be displayed 
 
 <!-- ============================== CONTAINER ============================== -->
 {#if note}
-	<NoteComponent {paneID} {note} persisted={notePersisted} {onCloseNote}></NoteComponent>
+	<NoteComponent {note} persisted={notePersisted} {onCloseNote}></NoteComponent>
 {:else}
 	<NotesList
-		{paneID}
-		bind:mode
 		bind:filterInput
 		{noteKeys}
 		{notes}
 		{onSelectedNote}
-		{allNotes}
+		{bibleLocationRef}
 		{filterParams}
 		{onFilterParamChanged}
 		{onFilterInputChanged}
 		{onAddNewNote}
+		{navigationState}
 	></NotesList>
 {/if}

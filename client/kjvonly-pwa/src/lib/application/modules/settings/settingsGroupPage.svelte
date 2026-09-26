@@ -3,28 +3,32 @@
 	import SettingsPage from './components/settingsPage.svelte';
 	import SettingsScreen from './components/settingsScreen.svelte';
 
-	// MODELS
-	import type { NavigationComponentProps } from '../../services/navigation.service';
-
 	// RESOLVERS
 	import { requireSettingsPage } from './resolvers/settings-definition-resolver';
 
 	// RUNTIME
+	import {
+		useNavigationEntryContext
+	} from '../../runtime/navigation/navigation-entry-context';
 	import { useSettingsNavigationContext } from './runtime/settings-navigation-context';
 
 	// =============================== BINDINGS ================================
 
 	let {
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+		clientHeight
+	}: {
+		clientHeight: number;
+	} = $props();
 
 	// ================================= VARS ==================================
 
-	let settingsNavigation = useSettingsNavigationContext();
+	const settingsNavigation = useSettingsNavigationContext();
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
 	let pageID = $derived.by(() => {
-		const pageID = obj.pageID;
+		const pageID = navigationState.state.pageID;
 
 		if (typeof pageID !== 'string') {
 			throw new Error('Settings page navigation requires a pageID.');
@@ -32,13 +36,15 @@
 
 		return pageID;
 	});
+
 	let focusRowID = $derived.by(() => {
-		const focusRowID = obj.focusRowID;
+		const focusRowID = navigationState.state.focusRowID;
 
 		return typeof focusRowID === 'string'
 			? focusRowID
 			: undefined;
 	});
+
 	let page = $derived(requireSettingsPage(pageID));
 
 	// ================================ FUNCS ==================================

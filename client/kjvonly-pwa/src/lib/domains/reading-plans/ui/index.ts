@@ -1,3 +1,3 @@
 export {
-	default as PlansContainer
-} from '../modules/plans/plansContainer.svelte';
+	plansNavigationViewRegistrations
+} from '../modules/plans/runtime/plans-navigation-view-registrations';

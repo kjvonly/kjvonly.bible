@@ -1,8 +1,7 @@
 import {
 	describe,
 	expect,
-	it,
-	vi
+	it
 } from 'vitest';
 
 import {
@@ -10,12 +9,12 @@ import {
 } from '$lib/application/runtime/pane/models/pane-split';
 
 import type {
-	Pane
-} from '$lib/application/runtime/pane/models/pane.model';
+	PaneState
+} from '$lib/application/runtime/pane/models/pane-state.model';
 
 import type {
-	Buffer
-} from '$lib/application/runtime/buffer/models/buffer.model';
+	Pane
+} from '$lib/application/runtime/pane/models/pane.model';
 
 import {
 	deletePane,
@@ -40,75 +39,42 @@ describe(
 						)
 					);
 
-				expect(
-					findPane(
-						root,
-						'a'
-					)?.id
-				).toBe('a');
-
-				expect(
-					findPane(
-						root,
-						'c'
-					)?.id
-				).toBe('c');
-
-				expect(
-					findPane(
-						root,
-						'missing'
-					)
-				).toBeUndefined();
+				expect(findPane(root, 'a')?.id).toBe('a');
+				expect(findPane(root, 'c')?.id).toBe('c');
+				expect(findPane(root, 'missing')).toBeUndefined();
 			}
 		);
 
 		it(
-			'splits a leaf while preserving its Buffer and rerender toggle on the left',
+			'splits a leaf while preserving its state on the left',
 			() => {
-				const originalBuffer =
-					buffer('original');
-				const relatedBuffer =
-					buffer('related');
+				const originalState =
+					state('original');
+				const relatedState =
+					state('related');
 				const root =
-					leaf(
-						'a',
-						originalBuffer,
-						true
-					);
+					leaf('a', originalState);
 
 				expect(
 					splitPane({
-						rootPane:
-							root,
-						paneID:
-							'a',
-						newPaneID:
-							'b',
-						split:
-							PaneSplit.VERTICAL,
-						buffer:
-							relatedBuffer
+						rootPane: root,
+						paneID: 'a',
+						newPaneID: 'b',
+						split: PaneSplit.VERTICAL,
+						state: relatedState
 					})
 				).toBe(true);
 
 				expect(root.id).toBeUndefined();
-				expect(root.split).toBe(
-					PaneSplit.VERTICAL
-				);
+				expect(root.state).toBeUndefined();
+				expect(root.split).toBe(PaneSplit.VERTICAL);
 				expect(root.left).toMatchObject({
-					id:
-						'a',
-					buffer:
-						originalBuffer,
-					toggle:
-						true
+					id: 'a',
+					state: originalState
 				});
 				expect(root.right).toMatchObject({
-					id:
-						'b',
-					buffer:
-						relatedBuffer
+					id: 'b',
+					state: relatedState
 				});
 			}
 		);
@@ -116,21 +82,15 @@ describe(
 		it(
 			'returns false when splitting an unknown Pane',
 			() => {
-				const root =
-					leaf('a');
+				const root = leaf('a');
 
 				expect(
 					splitPane({
-						rootPane:
-							root,
-						paneID:
-							'missing',
-						newPaneID:
-							'b',
-						split:
-							PaneSplit.HORIZONTAL,
-						buffer:
-							buffer('related')
+						rootPane: root,
+						paneID: 'missing',
+						newPaneID: 'b',
+						split: PaneSplit.HORIZONTAL,
+						state: state('related')
 					})
 				).toBe(false);
 
@@ -141,32 +101,19 @@ describe(
 		it(
 			'deletes a left leaf by collapsing its right sibling into the parent',
 			() => {
-				const rightBuffer =
-					buffer('right');
-				const root =
-					branch(
-						PaneSplit.VERTICAL,
-						leaf('a'),
-						leaf(
-							'b',
-							rightBuffer
-						)
-					);
+				const rightState = state('right');
+				const root = branch(
+					PaneSplit.VERTICAL,
+					leaf('a'),
+					leaf('b', rightState)
+				);
 
-				expect(
-					deletePane(
-						root,
-						'a'
-					)
-				).toEqual({
-					deletedPaneID:
-						'a'
+				expect(deletePane(root, 'a')).toEqual({
+					deletedPaneID: 'a'
 				});
 
 				expect(root.id).toBe('b');
-				expect(root.buffer).toBe(
-					rightBuffer
-				);
+				expect(root.state).toBe(rightState);
 				expect(root.split).toBeUndefined();
 				expect(root.left).toBeUndefined();
 				expect(root.right).toBeUndefined();
@@ -176,32 +123,19 @@ describe(
 		it(
 			'deletes a right leaf by collapsing its left sibling into the parent',
 			() => {
-				const leftBuffer =
-					buffer('left');
-				const root =
-					branch(
-						PaneSplit.HORIZONTAL,
-						leaf(
-							'a',
-							leftBuffer
-						),
-						leaf('b')
-					);
+				const leftState = state('left');
+				const root = branch(
+					PaneSplit.HORIZONTAL,
+					leaf('a', leftState),
+					leaf('b')
+				);
 
-				expect(
-					deletePane(
-						root,
-						'b'
-					)
-				).toEqual({
-					deletedPaneID:
-						'b'
+				expect(deletePane(root, 'b')).toEqual({
+					deletedPaneID: 'b'
 				});
 
 				expect(root.id).toBe('a');
-				expect(root.buffer).toBe(
-					leftBuffer
-				);
+				expect(root.state).toBe(leftState);
 				expect(root.split).toBeUndefined();
 			}
 		);
@@ -209,30 +143,22 @@ describe(
 		it(
 			'promotes a sibling branch without collapsing unrelated nested Panes',
 			() => {
-				const root =
+				const root = branch(
+					PaneSplit.VERTICAL,
+					leaf('a'),
 					branch(
-						PaneSplit.VERTICAL,
-						leaf('a'),
-						branch(
-							PaneSplit.HORIZONTAL,
-							leaf('b'),
-							leaf('c')
-						)
-					);
-
-				expect(
-					deletePane(
-						root,
-						'a'
+						PaneSplit.HORIZONTAL,
+						leaf('b'),
+						leaf('c')
 					)
-				).toEqual({
-					deletedPaneID:
-						'a'
+				);
+
+				expect(deletePane(root, 'a')).toEqual({
+					deletedPaneID: 'a'
 				});
 
-				expect(root.split).toBe(
-					PaneSplit.HORIZONTAL
-				);
+				expect(root.split).toBe(PaneSplit.HORIZONTAL);
+				expect(root.state).toBeUndefined();
 				expect(root.left?.id).toBe('b');
 				expect(root.right?.id).toBe('c');
 			}
@@ -241,80 +167,56 @@ describe(
 		it(
 			'promotes a left sibling branch when deleting the right leaf',
 			() => {
-				const root =
+				const root = branch(
+					PaneSplit.VERTICAL,
 					branch(
-						PaneSplit.VERTICAL,
-						branch(
-							PaneSplit.HORIZONTAL,
-							leaf('a'),
-							leaf('b')
-						),
-						leaf('c')
-					);
+						PaneSplit.HORIZONTAL,
+						leaf('a'),
+						leaf('b')
+					),
+					leaf('c')
+				);
 
-			expect(
-					deletePane(
-						root,
-						'c'
-					)
-				).toEqual({
-					deletedPaneID:
-						'c'
+				expect(deletePane(root, 'c')).toEqual({
+					deletedPaneID: 'c'
 				});
 
-			expect(root.split).toBe(
-					PaneSplit.HORIZONTAL
-				);
-			expect(root.left?.id).toBe('a');
-			expect(root.right?.id).toBe('b');
+				expect(root.split).toBe(PaneSplit.HORIZONTAL);
+				expect(root.state).toBeUndefined();
+				expect(root.left?.id).toBe('a');
+				expect(root.right?.id).toBe('b');
 			}
 		);
 
 		it(
 			'collapses only the immediate parent when deleting a nested Pane',
 			() => {
-				const root =
+				const root = branch(
+					PaneSplit.VERTICAL,
+					leaf('a'),
 					branch(
-						PaneSplit.VERTICAL,
-						leaf('a'),
-						branch(
-							PaneSplit.HORIZONTAL,
-							leaf('b'),
-							leaf('c')
-						)
-					);
-
-				expect(
-					deletePane(
-						root,
-						'b'
+						PaneSplit.HORIZONTAL,
+						leaf('b'),
+						leaf('c')
 					)
-				).toEqual({
-					deletedPaneID:
-						'b'
+				);
+
+				expect(deletePane(root, 'b')).toEqual({
+					deletedPaneID: 'b'
 				});
 
-				expect(root.split).toBe(
-					PaneSplit.VERTICAL
-				);
+				expect(root.split).toBe(PaneSplit.VERTICAL);
 				expect(root.left?.id).toBe('a');
 				expect(root.right?.id).toBe('c');
 			}
 		);
 
 		it(
-			'leaves the sole root leaf for the Workspace to replace instead of structurally deleting it',
+			'leaves the sole root leaf for the Workspace to retain instead of structurally deleting it',
 			() => {
-				const root =
-					leaf('a');
+				const root = leaf('a');
 
-				expect(
-					deletePane(
-						root,
-						'a'
-					)
-				).toBeUndefined();
-
+				expect(deletePane(root, 'a')).toBeUndefined();
 				expect(root.id).toBe('a');
 			}
 		);
@@ -323,20 +225,14 @@ describe(
 
 function leaf(
 	id: string,
-	bufferValue: Buffer = buffer(id),
-	toggle?: boolean
+	stateValue: PaneState = state(id)
 ): Pane {
 	return {
 		id,
-		split:
-			undefined,
-		left:
-			undefined,
-		right:
-			undefined,
-		buffer:
-			bufferValue,
-		toggle
+		split: undefined,
+		left: undefined,
+		right: undefined,
+		state: stateValue
 	};
 }
 
@@ -346,22 +242,14 @@ function branch(
 	right: Pane
 ): Pane {
 	return {
-		id:
-			undefined,
+		id: undefined,
 		split,
 		left,
 		right,
-		buffer:
-			undefined
+		state: undefined
 	};
 }
 
-function buffer(
-	label: string
-): Buffer {
-	return {
-		bag: {
-			label
-		}
-	} as Buffer;
+function state(label: string): PaneState {
+	return { label };
 }

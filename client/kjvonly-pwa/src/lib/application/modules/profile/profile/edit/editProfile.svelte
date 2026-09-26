@@ -1,7 +1,9 @@
 <script lang="ts">
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import type { AccountRelay } from '$lib/application/services/account/account-state';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
 	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
 	import EditProfileHeader from './editProfileHeader.svelte';
@@ -9,17 +11,20 @@
 	import Relays from './relays.svelte';
 
 	let {
-		paneID,
-		obj = $bindable(),
-		clientHeight,
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+		clientHeight
+	}: {
+		clientHeight: number;
+	} = $props();
 
 	const {
 		accountService,
 		authenticationService,
 		toastService
 	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	const account = accountService.getState();
 
@@ -93,7 +98,7 @@
 			);
 
 			toastService.showToast('Saved Profile');
-			navService.pop();
+			navigation.back();
 		} catch (error) {
 			console.warn('[Profile save failed]', error);
 			toastService.showToast('Unable to save Profile');
@@ -104,7 +109,7 @@
 </script>
 
 {#snippet header()}
-	<EditProfileHeader {saving} {onSave} bind:navService></EditProfileHeader>
+	<EditProfileHeader {saving} {onSave}></EditProfileHeader>
 {/snippet}
 
 {#snippet body()}
