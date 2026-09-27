@@ -4,631 +4,547 @@
 
 Current
 
+## Navigation Runtime Note
+
+The runtime Buffer presentation model has been removed. Current Module/application views are mounted as registered Pane navigation entries backed by `NavigationState`; previous entries may remain mounted while hidden. `docs/03_implementation/runtime/016-navigation-architecture.md` is authoritative for the current runtime presentation path.
+
 ---
 
 # Purpose
 
-This document defines how Domain behavior participates as an active interaction within the Workspace Runtime.
+This document defines how application behavior is presented to the user.
 
-Its primary question is:
+Module Presentation provides the architectural boundary between the Workspace Runtime and the application's Domains.
 
-> **When Domain behavior needs to become an interactive Workspace experience, how should it be represented as a Module?**
-
-A Module Instance is a conceptual wrapper around a Domain behavior. It allows the Workspace Runtime to host that behavior without understanding the Domain that gives it meaning.
+Its purpose is to allow new application capabilities to be introduced without requiring changes to the Workspace Runtime.
 
 ---
 
-# Module Model
+# Scope
 
-The Workspace Runtime operates on Runtime Objects:
+This document defines:
 
-```text
-Workspace
-    ↓
-Pane
-    ↓
-Buffer
-    ↓
-Module Instance
-```
+* Module Presentation,
+* Module Instances,
+* presentation responsibilities,
+* Domain capability presentation,
+* Module collaboration,
+* and the relationship between Modules and Domains.
 
-The Module Instance connects that Runtime structure to Domain behavior:
+It does not define:
 
-```text
-Workspace Runtime
-        ↓
-Buffer
-        ↓
-Module Instance
-        ↓
-Domain Behavior
-        ↓
-Domain Objects
-```
+* Workspace layout,
+* Pane management,
+* rendering implementation,
+* Svelte components,
+* presentation technologies,
+* or user interface design.
 
-The Runtime understands that a Buffer contains a Module Instance.
-
-It does not need to understand whether that Module represents Bible reading, Bible search, Notes, Reading Plans, or some future capability.
+Those responsibilities are described elsewhere within the Application Architecture and Implementation documentation.
 
 ---
 
-# What a Module Represents
+# Background
 
-A Module represents one independently useful interaction with application behavior.
+The Workspace Runtime is intentionally independent from the application's Domains.
 
-For example:
+Rather than understanding Bible, Notes, Reading Plans, or future application capabilities, the Runtime presents Module Instances through a common presentation model.
 
-```text
-Bible Domain
+Conceptually:
 
-    Bible reading
-        ↓
-    Bible Reader Module
+```mermaid id="qb7pg5"
+flowchart LR
 
-    Bible search
-        ↓
-    Bible Search Module
+    Runtime["Workspace / Pane Runtime"]
+
+    Entry["Navigation Entry"]
+
+    Module["Module Presentation"]
+
+    Domain["Domain Capability"]
+
+    Runtime --> Entry
+
+    Entry --> Module
+
+    Module --> Domain
 ```
 
-Both Modules belong to the same Domain because the Bible gives both behaviors meaning.
+This abstraction allows new application capabilities to be introduced without modifying the Runtime itself.
 
-The separate Modules exist because reading and searching are useful as separate Workspace interactions.
+The Runtime presents Modules.
 
-A Module therefore does not define architectural ownership.
+Modules present Domain capabilities.
 
-It defines how owned behavior participates in the Runtime.
+The Domains own the application's behavior.
+
+This separation keeps presentation infrastructure independent from application functionality.
 
 ---
 
-# Domain Behavior Comes First
+# Module Presentation Definition
 
-Do not begin a feature by deciding to create a Module.
+A Module presentation entry presents one Domain capability within a Pane navigation interaction.
 
-Begin with the Domain responsibility.
+A Module represents one focused area of application behavior rather than an entire Domain.
 
-```text
-New Behavior
-    ↓
-Determine Domain Ownership
-    ↓
-Define Domain Behavior
-    ↓
-Does it require an independent Workspace interaction?
+For example, the Bible Domain may expose multiple capabilities, each presented through its own Module Instance.
+
+Examples include:
+
+* Bible Chapter,
+* Bible Search,
+* Reading Plans,
+* Notes List,
+* Notes Search,
+* Settings,
+* and future Domain capabilities.
+
+Each Module focuses on presenting one capability while delegating application behavior to its owning Domain.
+
+Conceptually:
+
+```mermaid id="i9v0dc"
+flowchart TD
+
+    Domain["Domain"]
+
+    Capability1["Capability"]
+
+    Capability2["Capability"]
+
+    Capability3["Capability"]
+
+    Module1["Module"]
+
+    Module2["Module"]
+
+    Module3["Module"]
+
+    Domain --> Capability1
+
+    Domain --> Capability2
+
+    Domain --> Capability3
+
+    Capability1 --> Module1
+
+    Capability2 --> Module2
+
+    Capability3 --> Module3
 ```
 
-Only after the behavior and its owner are understood should a Module be considered.
+This separation allows Domains to evolve by introducing new capabilities without affecting the Workspace Runtime.
 
-This prevents presentation structure from defining the Domain model.
+The Runtime remains responsible only for presenting Module Instances.
+
+The Modules determine how individual Domain capabilities are presented.
+
+# Module Responsibility
+
+A Module Instance owns the presentation of one Domain capability.
+
+Its responsibility is to present application behavior to the user rather than implement that behavior.
+
+Conceptually:
+
+```mermaid id="1mddng"
+flowchart LR
+
+    Module["Module Instance"]
+
+    Domain["Domain"]
+
+    Objects["Domain Objects"]
+
+    Module --> Domain
+
+    Domain --> Objects
+```
+
+Modules present Domain capabilities by requesting behavior from their owning Domain.
+
+They do not own:
+
+* application state,
+* business rules,
+* persistence,
+* Resource management,
+* or cross-Domain coordination.
+
+Those responsibilities remain within the Domain and the shared application services.
+
+This separation allows presentation to evolve independently from application behavior.
 
 ---
 
-# Deciding Whether Behavior Needs a Module
+# Module Independence
 
-When adding Domain behavior, ask:
+The Workspace Runtime treats every Module Instance identically.
 
-> **Does this behavior need to participate as an independently active interaction within the Workspace?**
+The Runtime does not understand the capability being presented.
 
-If yes, a separate Module may be appropriate.
+Conceptually:
 
-For example:
+```mermaid id="jn80sv"
+flowchart TD
 
-```text
-Bible reading
-    → independent interaction
-    → Bible Reader Module
+    Runtime["Workspace Runtime"]
 
-Bible search
-    → independent interaction
-    → Bible Search Module
+    ModuleA["Bible Chapter"]
+
+    ModuleB["Bible Search"]
+
+    ModuleC["Notes List"]
+
+    ModuleD["Reading Plans"]
+
+    Runtime --> ModuleA
+
+    Runtime --> ModuleB
+
+    Runtime --> ModuleC
+
+    Runtime --> ModuleD
 ```
 
-Other behavior may remain part of an existing Module.
+Each Module conforms to the same presentation model regardless of the Domain capability it presents.
 
-For example:
+This allows new Modules to be introduced without modifying the Runtime.
 
-```text
-Bible Domain
+The Runtime presents Modules.
 
-    Bible reading
-    Bible text markup
-        ↓
-    Bible Reader Module
-```
-
-Text markup remains Bible-owned behavior, but it does not necessarily require its own independent Workspace interaction.
-
----
-
-# Module Boundaries
-
-A Module should represent a focused interaction rather than accumulate every capability owned by its Domain.
-
-For example, the Bible Domain may support:
-
-```text
-Bible Domain
-
-    Reading
-    Search
-    Text Markup
-    References
-
-Strong's Domain
-
-    Definitions
-```
-
-Domain capabilities do not map one-to-one to Modules.
-
-A Domain capability may appear inside an existing interaction, support another Domain's presentation, or justify its own independently openable Module.
-
-The decision depends on how the behavior participates in the Workspace.
-
-Ask:
-
-> **Should the user be able to open, replace, position, or interact with this capability independently from the others?**
-
-If so, a separate Module is a strong candidate.
-
-If the behavior primarily supports another interaction, it may belong within that Module instead.
-
----
-
-# Module Instances Are Runtime State
-
-A Module Instance exists within a Buffer as part of the active Workspace.
-
-Multiple Module Instances may therefore exist at the same time.
-
-For example:
-
-```text
-Workspace
-
-    Pane
-        Bible Reader Instance
-
-    Pane
-        Bible Reader Instance
-
-    Pane
-        Bible Search Instance
-
-    Pane
-        Notes Instance
-```
-
-The two Bible Reader instances participate in the same Bible Domain behavior but represent different active Runtime interactions.
-
-Creating another Module Instance does not create another Domain.
-
----
-
-# Module State and Domain State
-
-A Module Instance may require transient state describing its current interaction.
-
-That state is different from Domain state.
-
-For example:
-
-```text
-Bible Reader Module Instance
-
-    current interaction context
-    presentation state
-    selection state
-
-        ↓
-
-Bible Domain
-
-    Chapter
-    Text Markup
-    other Bible-owned state
-```
-
-State that describes the user's current interaction with one Module Instance belongs with that Runtime interaction.
-
-State whose meaning survives the Module and remains meaningful to the application belongs to the appropriate Domain or other architectural owner.
-
-A useful question is:
-
-> **If this Module Instance disappeared, should this information still exist?**
-
-If yes, the information probably does not belong exclusively to the Module Instance.
+The Modules determine what is presented.
 
 ---
 
 # Module Lifecycle
 
-Module Instances are created and removed as the Workspace changes.
+Module presentations are transient UI objects. They exist while their navigation entry is mounted; an entry may be active or hidden while remaining mounted.
 
 Conceptually:
 
-```text
-Open behavior
-    ↓
-Create Buffer
-    ↓
-Create Module Instance
-    ↓
-Active interaction
-    ↓
-Replace or close
-    ↓
-Module Instance removed
+```mermaid id="jlwm9i"
+flowchart LR
+
+    Entry["Navigation Entry"]
+
+    Module["Module Presentation"]
+
+    Present["Present Domain Capability"]
+
+    Close["Entry Popped"]
+
+    Entry --> Module
+
+    Module --> Present
+
+    Present --> Close
 ```
 
-Removing a Module Instance does not remove the Domain behavior or Domain Objects it was presenting.
+A Module may be created, replaced, or removed without affecting its owning Domain.
 
-The presentation is transient.
+The Domain continues to own application behavior independently of any active presentation.
 
-The underlying application meaning remains with its owner.
+This allows multiple Module Instances to simultaneously present the same Domain capability while sharing the same underlying application behavior.
 
----
+Presentation is temporary.
 
-# Runtime Operations
-
-A Module does not own Workspace composition.
-
-When an interaction requires a Runtime operation, it requests that behavior through the Workspace Runtime's Public API.
-
-For example:
-
-```text
-Bible Reader Module
-        ↓
-User opens verse reference
-        ↓
-Workspace Runtime Public API
-        ↓
-Open another Module
-```
-
-The Module expresses the desired interaction.
-
-The Workspace Runtime decides how that interaction affects Panes, Buffers, and Workspace structure.
-
-A Module should therefore not manipulate the Pane tree directly.
-
----
-
-# Navigation Context
-
-When one interaction opens another, the target Module may require information describing where or how to begin.
-
-Navigation Context carries that information through the Runtime.
-
-For example:
-
-```text
-Reading Plans Module
-        ↓
-Bible location
-        ↓
-Navigation Context
-        ↓
-Workspace Runtime
-        ↓
-Bible Reader Module
-```
-
-The Workspace Runtime transports the context without interpreting its Domain meaning.
-
-The receiving Module and its Domain understand the information.
-
-This preserves the Runtime's independence from Domain-specific navigation.
-
----
+Domain behavior is persistent.
 
 # Module Collaboration
 
-Modules should not create their own application-level coordination model.
-
-When one interaction requires behavior owned elsewhere, use the collaboration mechanism appropriate to that relationship.
-
-```text
-Need another owner's behavior?
-    → Public API
-
-Need to react to something that happened?
-    → Application Event
-
-Need to reference another owner's information?
-    → Shared Identifier
-
-Need to start another Runtime interaction?
-    → Navigation Context
-```
-
-For example, a Notes interaction may contain a Bible Location Reference.
-
-Opening that reference may result in:
-
-```text
-Notes Module
-    ↓
-Bible Location Reference
-    ↓
-Workspace Runtime
-    ↓
-Bible Reader Module
-```
-
-The Notes Module does not take ownership of Bible navigation.
-
-It supplies the information required to begin the Bible interaction.
-
----
-
-# Responding to Domain Changes
-
-A Module presents current application state.
-
-If the underlying Domain state changes, the Module should obtain the updated state through the owning Domain's normal boundary.
+Modules collaborate through the application architecture rather than by communicating directly with one another.
 
 Conceptually:
 
-```text
-Domain State Changes
-        ↓
-Application Event
-        ↓
-Interested Module
-        ↓
-Domain Public API
-        ↓
-Updated Domain Object
+```mermaid
+flowchart LR
+
+    ModuleA["Module"]
+
+    Domain["Domain"]
+
+    Services["Application Services"]
+
+    ModuleB["Module"]
+
+    ModuleA --> Domain
+
+    ModuleA --> Services
+
+    Domain --> ModuleB
+
+    Services --> ModuleB
 ```
 
-The exact implementation may vary.
+When a Module requires behavior outside its own Domain, it collaborates through shared application services or the appropriate Domain.
 
-The architectural rule is that Modules do not need direct knowledge of the mechanism that produced the change.
+Modules remain presentation objects.
 
-A background refresh, another Module, synchronization, or some future workflow may all result in the same Domain state change.
+They do not own cross-Domain coordination or application-wide behavior.
 
----
-
-# Presentation Without Domain Ownership
-
-A Module may contain substantial interaction behavior without becoming the owner of the underlying application capability.
-
-For example, a Bible Reader may handle:
-
-* selection,
-* scrolling,
-* user gestures,
-* presentation of text markup,
-* navigation commands,
-* and opening related interactions.
-
-Those responsibilities describe the interaction.
-
-The Bible Domain still owns:
-
-* Bible content,
-* text-markup meaning,
-* Bible navigation semantics,
-* and other enduring Bible behavior.
-
-The distinction is between **interaction state** and **application meaning**.
+This separation allows Modules to evolve independently while preserving the ownership boundaries established throughout the application architecture.
 
 ---
 
-# Runtime Independence
+# Relationship to Domains
 
-The Runtime should not require changes merely because a new Domain capability gains a Module.
+Modules present Domain capabilities.
 
-For example:
-
-```text
-Workspace Runtime
-
-    hosts Module Instance
-        ↓
-    Bible Reader
-
-    hosts Module Instance
-        ↓
-    Notes Search
-
-    hosts Module Instance
-        ↓
-    Future Capability
-```
-
-The Runtime provides the generic Workspace structure.
-
-Each Module determines how its particular Domain behavior participates within that structure.
-
-This is what allows new application capabilities to be added without teaching the Runtime about each Domain.
-
----
-
-# Module Presentation and User Interface
-
-Module Presentation defines the architectural relationship between Runtime interaction and Domain behavior.
-
-It does not define the visual design of the resulting interface.
+They do not define those capabilities.
 
 Conceptually:
 
-```text
-Domain Behavior
-    ↓
-Module Instance
-    ↓
-User Interface
+```mermaid
+flowchart TD
+
+    Domain["Domain"]
+
+    CapabilityA["Capability"]
+
+    CapabilityB["Capability"]
+
+    ModuleA["Module"]
+
+    ModuleB["Module"]
+
+    Domain --> CapabilityA
+
+    Domain --> CapabilityB
+
+    CapabilityA --> ModuleA
+
+    CapabilityB --> ModuleB
 ```
 
-The Module identifies the active interaction and connects it to Domain behavior.
+The Domain owns:
 
-The User Interface determines the concrete controls, visual hierarchy, styling, accessibility, and interaction presentation used to expose that behavior.
+* application behavior,
+* Domain Objects,
+* Domain Services,
+* persistence,
+* and Resource integration.
 
-Those concerns are addressed by the User Interface architecture.
+The Module owns only the presentation of one capability provided by that Domain.
+
+This separation allows Domains to evolve independently of their presentation while allowing presentation to evolve independently of application behavior.
 
 ---
 
-# Adding a Module
+# Module Extensibility
 
-When considering a new Module, work through the decisions in order:
+The Module abstraction allows new application capabilities to be introduced without modifying the Workspace Runtime.
 
-```text
-What behavior is being introduced?
-        ↓
-Which Domain owns it?
-        ↓
-What Domain behavior already exists?
-        ↓
-Does it need an independent Workspace interaction?
-        │
-        ├── No → Present through an existing Module
-        │
-        └── Yes
-             ↓
-What interaction state does the Module require?
-        ↓
-What Domain behavior does it request?
-        ↓
-What Navigation Context can initialize it?
-        ↓
-What Runtime operations can it request?
-        ↓
-What other owners must it collaborate with?
-        ↓
-Choose presentation implementation
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Module["New Module"]
+
+    Domain["Existing Domain"]
+
+    Runtime --> Module
+
+    Module --> Domain
 ```
 
-Do not begin with:
+A new Module may present:
 
-```text
-Which presentation component should I create?
+* a new Domain capability,
+* an alternative presentation of an existing capability,
+* or a future capability introduced by an existing or entirely new Domain.
 
-Where should the Module file live?
+The Workspace Runtime remains unchanged.
 
-Should this have its own Pane?
+Its responsibility is limited to hosting Pane navigation and rendering registered Module/application views without understanding their Domain behavior.
+
+As the application grows, new functionality should be introduced by extending Domains with new capabilities and presenting those capabilities through new Modules rather than by modifying the Runtime itself.
+
+This architectural boundary allows the application to scale by adding capabilities instead of increasing infrastructure complexity.
+
+# Presentation Independence
+
+Module Presentation intentionally separates application presentation from application behavior.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Module["Module Instance"]
+
+    Domain["Domain"]
+
+    Objects["Domain Objects"]
+
+    Runtime --> Module
+
+    Module --> Domain
+
+    Domain --> Objects
 ```
 
-Those decisions follow the architectural determination that the behavior actually requires an independent Module.
+The Workspace Runtime is responsible for presenting Module Instances.
+
+The Module Instance is responsible for presenting one Domain capability.
+
+The Domain remains responsible for application behavior.
+
+This separation allows each layer to evolve independently while preserving stable architectural boundaries.
+
+Changes to presentation should not require changes to Domain behavior.
+
+Changes to Domain behavior should not require changes to the Workspace Runtime.
 
 ---
 
-# Example: Bible Cross References
+# Module Composition
 
-Suppose the Bible Domain gains cross-reference behavior.
+Module Presentation encourages application functionality to be composed from many focused Module Instances rather than a small number of large application screens.
 
-Ownership is already clear:
+Conceptually:
 
-```text
-Cross References
-    ↓
-Bible Domain
+```mermaid
+flowchart TD
+
+    Domain["Bible Domain"]
+
+    Chapter["Bible Chapter"]
+
+    Search["Bible Search"]
+
+    Settings["Bible Settings"]
+
+    Strongs["Strong's Explorer"]
+
+    Domain --> Chapter
+
+    Domain --> Search
+
+    Domain --> Settings
+
+    Domain --> Strongs
 ```
 
-The next question is presentation.
+Each Module presents one focused capability.
 
-If cross references only appear alongside Bible reading:
+Additional capabilities should normally be introduced by creating new Modules rather than expanding existing Modules beyond their intended responsibility.
 
-```text
-Bible Domain
-
-    Reading
-    Cross References
-        ↓
-    Bible Reader Module
-```
-
-No new Module is required.
-
-If the user should be able to open and explore cross references independently:
-
-```text
-Bible Domain
-    ↓
-Cross-reference behavior
-    ↓
-Bible References Module
-```
-
-A new Module becomes appropriate because the behavior has gained an independent Workspace interaction.
-
-The Domain ownership did not change.
-
-Only its presentation composition changed.
+This keeps presentation focused, encourages reuse, and reduces coupling between unrelated application capabilities.
 
 ---
 
-# Example: Opening Multiple Bible Readers
+# Module Philosophy
 
-Suppose the user opens several passages simultaneously.
+Modules are intentionally lightweight presentation objects.
 
-The application may contain:
+They exist to expose Domain capabilities through a consistent presentation model.
 
-```text
-Workspace
+They should remain focused on:
 
-    Pane
-        Bible Reader
-        John 3
+* presenting information,
+* responding to user interaction,
+* requesting behavior from Domains,
+* and collaborating through shared application services when necessary.
 
-    Pane
-        Bible Reader
-        Romans 8
+Modules should avoid becoming owners of application behavior.
 
-    Pane
-        Bible Reader
-        Genesis 1
+As the application evolves, additional functionality should be added by extending Domains and introducing new Module Instances rather than increasing the responsibilities of existing presentation infrastructure.
+
+This keeps presentation simple while allowing the application to grow through independently developed capabilities.
+
+# Future Evolution
+
+The Module Presentation architecture has been intentionally designed around Domain capabilities rather than presentation technologies.
+
+As the application evolves, new capabilities should be introduced by extending existing Domains or introducing new Domains and presenting those capabilities through additional Module Instances.
+
+Conceptually:
+
+```mermaid
+flowchart TD
+
+    Domain["Domain"]
+
+    Capability["Domain Capability"]
+
+    Module["Module Instance"]
+
+    Runtime["Workspace Runtime"]
+
+    Future["Future Capabilities"]
+
+    Domain --> Capability
+
+    Capability --> Module
+
+    Runtime --> Module
+
+    Capability -.-> Future
 ```
 
-These are separate Module Instances with separate Runtime contexts.
+The Workspace Runtime should remain independent from the capabilities it presents.
 
-They all use the same Bible Domain.
+Future Modules may introduce entirely new application behavior without requiring changes to the Runtime or the presentation model.
 
-This distinction is central to the model:
+As additional Domains and capabilities are introduced, the application grows by adding presentation rather than increasing infrastructure complexity.
 
-```text
-One Domain
-    ↓
-Many possible Domain behaviors
-    ↓
-Many possible Module Instances
-```
+The implementation of individual Modules may evolve.
 
-Runtime multiplicity does not imply duplicated Domain ownership.
+The presentation architecture should remain stable.
 
 ---
 
 # Big Takeaway
 
-A Module Instance is the point where Domain behavior participates in the Workspace Runtime as an active interaction.
+Module Presentation provides the architectural boundary between the Workspace Runtime and the application's Domains.
 
-The architecture is:
+It allows the Runtime to present application behavior without understanding that behavior.
 
-```text
-Workspace
-    ↓
-Pane
-    ↓
-Buffer
-    ↓
-Module Instance
-    ↓
-Domain Behavior
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    Runtime["Workspace Runtime"]
+
+    Module["Module Instance"]
+
+    Capability["Domain Capability"]
+
+    Domain["Domain"]
+
+    Objects["Domain Objects"]
+
+    Runtime --> Module
+
+    Module --> Capability
+
+    Capability --> Domain
+
+    Domain --> Objects
 ```
 
-When adding functionality, first determine its Domain ownership and behavior.
+The Workspace Runtime presents Module Instances.
 
-Then ask:
+Module Instances present one Domain capability.
 
-> **Does this behavior need an independently active Workspace interaction?**
+Domains own application behavior.
 
-If yes, represent that interaction through a Module.
+Domain Objects represent application data.
 
-If no, keep the behavior with its Domain and present it through an existing Module where appropriate.
+This separation allows the application to grow by introducing new capabilities rather than modifying presentation infrastructure.
 
-The Runtime owns Workspace composition.
+The Runtime remains stable.
 
-Domains own application meaning and behavior.
+Domains evolve independently.
 
-Module Instances connect the two without transferring ownership between them.
+New functionality is introduced by presenting additional Domain capabilities through new Module Instances.
+
+This architecture allows the application to scale through composition while preserving clear ownership boundaries between presentation, application behavior, and application data.

@@ -1,4 +1,9 @@
 <script lang="ts">
+	// APPLICATION
+	import {
+		useNavigationRuntimeContext
+	} from '../../runtime/navigation/navigation-runtime-context';
+
 	// COMPONENTS
 	import SettingsPage from './components/settingsPage.svelte';
 	import SettingsSearch from './components/settingsSearch.svelte';
@@ -11,7 +16,6 @@
 	import { requireSettingsPage } from './resolvers/settings-definition-resolver';
 
 	// MODELS
-	import type { NavigationComponentProps } from '../../services/navigation.service';
 	import type { SettingsSearchEntry } from './search/settings-search.model';
 
 	// RUNTIME
@@ -23,15 +27,12 @@
 		searchSettings
 	} from './search/settings-search';
 
-	// =============================== BINDINGS ================================
-
-	let {
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
-
 	// ================================= VARS ==================================
+
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	const settingsNavigation = useSettingsNavigationContext();
 	const rootPage = requireSettingsPage(settingsDefinition.rootPageID);
@@ -46,13 +47,8 @@
 
 	function onClose(event: Event): void {
 		event.stopPropagation();
-		const close = obj.onClose;
 
-		if (typeof close !== 'function') {
-			throw new Error('Settings navigation requires an onClose callback.');
-		}
-
-		close();
+		navigation.back();
 	}
 
 	function onSearchResultSelect(result: SettingsSearchEntry): void {
@@ -64,7 +60,6 @@
 
 <SettingsScreen
 	title="Settings"
-	{clientHeight}
 	{onClose}
 	bodyClasses=""
 >

@@ -1,25 +1,28 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 
+	import {
+		usePaneLayoutContext
+	} from '../../runtime/pane/pane-layout-context';
 	// APPLICATION
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
+	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 	import ImportIcon from '$lib/components/svgs/import.svelte';
 
 	// =============================== BINDINGS ================================
 
-	let {
-		paneID,
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+	const paneLayout = usePaneLayoutContext();
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
 
 	// ================================= VARS ==================================
 
@@ -32,10 +35,14 @@
 		toastService
 	} = useApplicationContext();
 
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
 	// ============================== CLICK FUNCS ==============================
 
 	function onBack(): void {
-		navService.pop();
+		navigation.back();
 	}
 
 
@@ -159,10 +166,10 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferHeader bind:headerHeight>
+<ViewHeader bind:headerHeight>
 	{@render header()}
-</BufferHeader>
+</ViewHeader>
 
-<BufferBody {clientHeight} {headerHeight} classes="">
+<ViewBody {clientHeight} {headerHeight} classes="">
 	{@render body()}
-</BufferBody>
+</ViewBody>

@@ -1,18 +1,13 @@
 import {
-	get
-} from 'svelte/store';
-import {
 	describe,
 	expect,
-	it
+	it,
+	vi
 } from 'vitest';
 
-import type {
-	NavigationComponent
-} from '../../../services/navigation.service';
 import {
-	NavigationService
-} from '../../../services/navigation.service';
+	SETTINGS_VIEWS
+} from '../models/settings-navigation.model';
 import {
 	findSettingsRow,
 	requireSettingsCustomRow,
@@ -24,26 +19,18 @@ import {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-const GroupComponent = (() => undefined) as unknown as NavigationComponent;
-const SelectComponent = (() => undefined) as unknown as NavigationComponent;
-const CustomComponent = (() => undefined) as unknown as NavigationComponent;
-
-function createService(): {
-	navigationService: NavigationService;
-	settingsNavigationService: SettingsNavigationService;
-} {
-	const navigationService = new NavigationService();
+function createService() {
+	const pushView = vi.fn();
+	const back = vi.fn();
 
 	return {
-		navigationService,
-		settingsNavigationService: new SettingsNavigationService(
-			navigationService,
-			{
-				group: GroupComponent,
-				select: SelectComponent,
-				custom: CustomComponent
-			}
-		)
+		pushView,
+		back,
+		settingsNavigationService:
+			new SettingsNavigationService({
+				pushView,
+				back
+			})
 	};
 }
 
@@ -55,7 +42,11 @@ describe(
 		it(
 			'navigates group rows to their page',
 			() => {
-				const { navigationService, settingsNavigationService } = createService();
+				const {
+					pushView,
+					settingsNavigationService
+				} = createService();
+
 				const row = findSettingsRow('appearance');
 
 				if (row?.type !== 'group') {
@@ -64,55 +55,64 @@ describe(
 
 				settingsNavigationService.navigate(row);
 
-				expect(get(navigationService.views)).toEqual([
+				expect(pushView).toHaveBeenCalledWith(
+					SETTINGS_VIEWS.GROUP,
 					{
-						component: GroupComponent,
-						obj: {
-							pageID: 'appearance'
-						}
+						pageID: 'appearance'
 					}
-				]);
+				);
 			}
 		);
 
 		it(
 			'navigates select rows to the shared choice page',
 			() => {
-				const { navigationService, settingsNavigationService } = createService();
+				const {
+					pushView,
+					settingsNavigationService
+				} = createService();
+
 				const row = requireSettingsSelectRow('font-family');
 
 				settingsNavigationService.navigate(row);
 
-				expect(get(navigationService.views)[0]).toEqual({
-					component: SelectComponent,
-					obj: {
+				expect(pushView).toHaveBeenCalledWith(
+					SETTINGS_VIEWS.SELECT,
+					{
 						rowID: 'font-family'
 					}
-				});
+				);
 			}
 		);
 
 		it(
 			'navigates custom rows to the shared custom page',
 			() => {
-				const { navigationService, settingsNavigationService } = createService();
+				const {
+					pushView,
+					settingsNavigationService
+				} = createService();
+
 				const row = requireSettingsCustomRow('font-size');
 
 				settingsNavigationService.navigate(row);
 
-				expect(get(navigationService.views)[0]).toEqual({
-					component: CustomComponent,
-					obj: {
+				expect(pushView).toHaveBeenCalledWith(
+					SETTINGS_VIEWS.CUSTOM,
+					{
 						rowID: 'font-size'
 					}
-				});
+				);
 			}
 		);
 
 		it(
 			'navigates root search results through their row destination',
 			() => {
-				const { navigationService, settingsNavigationService } = createService();
+				const {
+					pushView,
+					settingsNavigationService
+				} = createService();
 
 				settingsNavigationService.navigateToSearchResult({
 					pageID: 'settings',
@@ -122,19 +122,22 @@ describe(
 					searchableText: 'appearance'
 				});
 
-				expect(get(navigationService.views)[0]).toEqual({
-					component: GroupComponent,
-					obj: {
+				expect(pushView).toHaveBeenCalledWith(
+					SETTINGS_VIEWS.GROUP,
+					{
 						pageID: 'appearance'
 					}
-				});
+				);
 			}
 		);
 
 		it(
 			'navigates nested search results to a focused row',
 			() => {
-				const { navigationService, settingsNavigationService } = createService();
+				const {
+					pushView,
+					settingsNavigationService
+				} = createService();
 
 				settingsNavigationService.navigateToSearchResult({
 					pageID: 'bible',
@@ -144,49 +147,50 @@ describe(
 					searchableText: 'pericopes'
 				});
 
-				expect(get(navigationService.views)[0]).toEqual({
-					component: GroupComponent,
-					obj: {
+				expect(pushView).toHaveBeenCalledWith(
+					SETTINGS_VIEWS.GROUP,
+					{
 						pageID: 'bible',
 						focusRowID: 'show-pericopes'
 					}
-				});
+				);
 			}
 		);
 
 		it(
 			'navigates directly to a focused settings row',
 			() => {
-				const { navigationService, settingsNavigationService } = createService();
+				const {
+					pushView,
+					settingsNavigationService
+				} = createService();
 
 				settingsNavigationService.navigateToPage(
 					'bible',
 					'show-pericopes'
 				);
 
-				expect(get(navigationService.views)[0]).toEqual({
-					component: GroupComponent,
-					obj: {
+				expect(pushView).toHaveBeenCalledWith(
+					SETTINGS_VIEWS.GROUP,
+					{
 						pageID: 'bible',
 						focusRowID: 'show-pericopes'
 					}
-				});
+				);
 			}
 		);
 
 		it(
-			'pops the current navigation view when navigating back',
+			'navigates back through the Pane stack',
 			() => {
-				const { navigationService, settingsNavigationService } = createService();
+				const {
+					back,
+					settingsNavigationService
+				} = createService();
 
-				settingsNavigationService.navigateToPage('appearance');
-				settingsNavigationService.navigateToPage('bible');
 				settingsNavigationService.back();
 
-				expect(get(navigationService.views)).toHaveLength(1);
-				expect(get(navigationService.views)[0].obj).toEqual({
-					pageID: 'appearance'
-				});
+				expect(back).toHaveBeenCalledOnce();
 			}
 		);
 	}

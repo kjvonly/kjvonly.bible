@@ -1,241 +1,342 @@
 # Module Presentation Stack
 
-**Status:** Current
+**Status:** Current  
 **Scope:** `client/kjvonly-pwa`
 
-## Purpose
+---
 
-This document describes how a persisted Module identity becomes rendered Svelte UI inside the Workspace.
+# Purpose
 
-The presentation stack is intentionally explicit and separate from Domain behavior.
+This document describes how a persisted Pane navigation state becomes rendered Svelte UI inside the Workspace.
 
-## Rendering Flow
+The current presentation stack is based on Pane-local navigation rather than the removed runtime Buffer model.
+
+---
+
+# Rendering Flow
 
 ```text
 Workspace Pane tree
     ↓
-deriveWorkspaceLayout()
+derive Workspace layout
     ↓
-normalized rectangular grid
+normalized grid
     ↓
-CSS grid areas / pane grid cell
+leaf Pane
     ↓
-leaf Pane / PaneContainer
+pane.svelte
     ↓
-Buffer
+PaneNavigationContainer
     ↓
-resolveModuleComponent(Buffer.componentName)
+PaneSurface
     ↓
-Module container/component
+NavigationEntry
     ↓
-BufferContainer
-    ↓
-BufferHeader / BufferBody / module content
+registered feature view
+    ├── ViewHeader
+    └── ViewBody / feature content
 ```
 
-The Workspace tree is recursive, but rendering is not an entirely recursive Svelte Pane-component tree. Layout is derived into a normalized grid first.
+The Workspace owns structure and geometry.
 
-The runtime implementation docs contain the detailed Pane/grid behavior.
+The Pane owns one navigation runtime and one layout context.
 
-## Component Resolution
+The navigation runtime resolves persisted stable view IDs into runtime components.
 
-`resolveModuleComponent()` is the explicit Module-to-component registry.
+---
 
-It maps `Modules` values to Svelte components.
+# Pane State
 
-Rules:
-
-- `Modules.NULL` resolves to no component;
-- known renderable Modules map explicitly;
-- unknown numeric values throw;
-- there is no silent default Module.
-
-Explicit failure protects persisted runtime state from accidentally rendering the wrong Module.
-
-## Browser-Only UI APIs
-
-Svelte component exports must remain separate from Node-safe root APIs.
-
-Current browser-facing boundaries include:
+A rendered leaf Pane persists its navigation stack under:
 
 ```text
-$lib/application/ui
-$lib/domains/bible/ui
-$lib/domains/notes/ui
-$lib/domains/reading-plans/ui
+Pane.state.navigation
 ```
 
-This separation exists because exporting Svelte components through a Node-safe root barrel can pull browser-only dependencies such as Quill into Node unit tests.
-
-That previously produced `document is not defined` failures.
-
-Therefore:
+The persisted representation is:
 
 ```text
-root API
-    = contracts/services/models safe for non-browser consumers
-
-/ui API
-    = Svelte/browser presentation exports
+NavigationState[]
 ```
 
-## Internal Presentation Imports
+Runtime component constructors are resolved from registered view IDs and are not persisted.
 
-The `/ui` API is an external boundary, not a requirement that every implementation file import its own components through a barrel.
+---
 
-Same-owner implementation code may import concrete component files directly.
+# Navigation Runtime
 
-This avoids unnecessary self-barrel cycles and keeps internal dependencies explicit.
+`NavigationRuntimeFactory` creates one isolated navigation runtime for one rendered leaf Pane.
 
-## Buffer Presentation Components
-
-The application runtime provides reusable Buffer presentation components such as:
+The runtime composes:
 
 ```text
-BufferContainer
-BufferHeader
-BufferBody
+NavigationService
+PaneNavigationService
+NavigationStatePersistence
+NavigationViewResolver
+NavigationStateBuilder
+Resource-selection policy
 ```
 
-These are presentation helpers for Module containers. They do not own Domain behavior.
+The Pane then provides the feature-facing navigation capability through Pane-local Svelte context.
 
-Modules may compose these components to get consistent sizing/header/body behavior while retaining their own content and actions.
+---
 
-## Presentation Ownership
+# Pane Presentation
 
-The presentation layers have distinct responsibilities:
+The Pane component owns:
 
 ```text
-+page.svelte / Workspace grid
-    = pane geometry and grid-cell boundary
-
-PaneContainer
-    = stable pane identity, pane dimensions, Buffer lookup, Module resolution,
-      and deliberate Module recreation after Buffer replacement
-
-BufferContainer
-    = common Buffer presentation shell, measured client height, background,
-      global maximum-width policy, and Buffer shell outline
-
-BufferHeader
-    = common header presentation and measured header height
-
-BufferBody
-    = body height derived from container/header measurements and vertical scrolling
-
-Module content
-    = internal layout only
+paneID
+Pane navigation runtime
+PaneLayoutContext
+rendered Pane dimensions
 ```
 
-Do not move width, height, overflow, outline, or maximum-width responsibilities between these layers merely to fix one Module locally. Trace which layer owns the behavior first.
+It does not render feature-specific UI directly.
 
-The Workspace grid-cell outline and the `BufferContainer` outline are not automatically duplicates. The former marks the Pane/grid boundary. `BufferContainer` is also used by full-buffer UI outside a normal Module root, including Bible popups, so its shell presentation cannot depend on the Workspace grid.
+It delegates navigation-stack rendering to `PaneNavigationContainer`.
 
-The global content-width policy belongs only to `BufferContainer`. Child Module content should not add another `max-w-lg`-style cap unless that content has an independent narrow-layout requirement.
+---
 
-## BufferContainer Ownership
+# PaneNavigationContainer
 
-Most Modules can place a single `BufferContainer` at their Module presentation root. That is the preferred simple shape, but it is not a universal rule.
-
-A reusable full-buffer view may have more than one host. In that case, the lowest shared presentation component that is present in every host must own the `BufferContainer`.
-
-Notes is the important current example:
+`PaneNavigationContainer` owns:
 
 ```text
-standalone Notes Module
-    NotesContainer
-        ↓
-    Notes
-        ↓
-    Note / NotesList
-        ↓
-    BufferContainer
-
-Bible Notes popup
-    Bible popup host
-        ↓
-    Notes
-        ↓
-    Note / NotesList
-        ↓
-    BufferContainer
+the mounted flat NavigationView stack
+active/hidden entry presentation
+keyed NavigationEntry rendering
+the single PaneSurface
 ```
 
-`NotesContainer` therefore intentionally does not own the Notes `BufferContainer`: the Bible popup renders `Notes` directly and bypasses `NotesContainer`.
+Previous entries remain mounted while hidden.
 
-Wrappers outside a child-owned `BufferContainer` must not accidentally clip its shell. In particular, avoid `overflow-hidden` on an outer host merely as a generic containment rule when it would clip the `BufferContainer` outline. Put overflow control at the layer that actually owns scrolling or internal content containment.
+The `{#each}` must remain keyed by runtime `NavigationView` identity so replacing an entry at the same stack depth destroys the old component and mounts the new one.
 
-## Pane Operations
+---
 
-Module UI interacts with Workspace structure through `WorkspaceRuntime`.
+# PaneSurface
 
-Examples:
+`PaneSurface` is the single shared visual shell for one rendered Pane.
+
+Location:
 
 ```text
-close Pane
-replace Buffer
-split Pane
-find Pane
-subscribe to Workspace changes
+client/kjvonly-pwa/src/lib/application/runtime/pane/components/paneSurface.svelte
 ```
 
-Svelte should not consume `PaneService` directly.
-
-## ApplicationContext
-
-A Module component consumes long-lived application/domain capabilities through `useApplicationContext()`.
-
-This keeps construction in `Application`, the composition root.
-
-Svelte components should not instantiate application-owned services directly.
-
-## Domain UI Boundaries
-
-Domain presentation components remain owned by their Domains.
-
-For example, the module component resolver consumes public Domain `/ui` exports rather than reaching into another Domain's internal `modules/` tree.
-
-Cross-domain UI imports should also use the owning Domain's `/ui` boundary.
-
-## Module Components Versus Domain Services
-
-A Module component coordinates user interaction and rendering.
-
-Domain services own Domain behavior and persistence-facing operations.
-
-The intended direction is:
+It owns Pane-wide presentation policy such as:
 
 ```text
-Module component
-    → ApplicationContext / Domain public API
-    → Domain service
-    → Resource/persistence boundaries
+background
+outline / visual surface
+min-size containment
+global max-width behavior
 ```
 
-Do not place persistence or transport logic directly in presentation components.
+Feature views do not create additional `PaneSurface` instances.
 
-## Stable Pane Identity and Recreation
+---
 
-Pane IDs are stable rendered identities and are not reused during the page lifetime.
+# NavigationEntry
 
-The runtime retains the `pane.toggle` recreation workaround for cases where stable Pane identity alone does not force Svelte to rebuild Module state after certain navigation changes.
+Each `NavigationEntry` renders one resolved feature component and provides the nearest `NavigationEntryContext`.
 
-That behavior is intentional and documented in the runtime implementation docs.
-
-## Summary
-
-The presentation stack resolves **where** through Workspace/Pane layout and **what** through Buffer/Module identity.
+The context owns entry-scoped operations such as:
 
 ```text
+navigationState access
+isActive()
+onResult()
+whenActive()
+updateState()
+updateResourceSelection()
+```
+
+The feature does not receive a generic mutable `obj` prop.
+
+---
+
+# ViewHeader and ViewBody
+
+Shared view presentation primitives live under:
+
+```text
+client/kjvonly-pwa/src/lib/application/runtime/pane/components/
+```
+
+The two important view-region components are:
+
+```text
+ViewHeader
+ViewBody
+```
+
+`ViewHeader` owns the standard header layout and header-height measurement.
+
+`ViewBody` owns the normal remaining-height body region and primary vertical scrolling contract.
+
+Feature views compose these primitives without creating another Pane shell.
+
+---
+
+# Height Flow
+
+The current sizing flow is:
+
+```text
+Pane DOM element
+    ↓ bind:clientHeight
+PaneLayoutContext
+    ↓
+feature view
+    ↓
+ViewBody(clientHeight, headerHeight)
+```
+
+Pane height is not measured separately by each feature view.
+
+---
+
+# Resource Context
+
+Resource selections belong to the semantic navigation entry:
+
+```text
+NavigationState.state.resourceSelections
+```
+
+Features consume their own entry state through `NavigationEntryContext` and Resource resolver boundaries.
+
+Resource lookup does not traverse a Pane-owned Buffer.
+
+---
+
+# Push / Back Lifecycle
+
+Push:
+
+```text
+current entry remains mounted
+new NavigationState created
+new NavigationView resolved
+new NavigationEntry mounted
+previous entry hidden
+```
+
+Back:
+
+```text
+active entry removed
+removed component destroyed
+previous mounted entry becomes active again
+```
+
+A browser reload reconstructs components from persisted semantic state; exact DOM identity is only preserved within the current runtime session.
+
+---
+
+# Split Presentation
+
+A split creates a new leaf Pane with its own:
+
+```text
+Pane state
+Pane navigation runtime
+PaneLayoutContext
+PaneSurface
+navigation stack
+```
+
+The origin Pane remains independent.
+
+The new Pane begins with the required `modules.root` navigation invariant and, when appropriate, the requested target entry above it.
+
+---
+
+# Presentation Ownership
+
+```text
+Workspace
+    owns Pane tree and geometry
+
 Pane
-    = where
+    owns Pane identity, layout context, navigation runtime
 
-Buffer + Modules value
-    = what instance
+PaneNavigationContainer
+    owns mounted navigation-stack rendering
 
-component resolver
-    = which Svelte presentation
+PaneSurface
+    owns Pane-wide visual shell
 
-ApplicationContext / Domain APIs
-    = behavior dependencies
+NavigationEntry
+    owns one mounted semantic interaction
+
+ViewHeader
+    owns standard header layout
+
+ViewBody
+    owns normal body / primary scroll region
+
+feature content
+    owns feature-specific presentation
 ```
+
+---
+
+# Public UI Boundary
+
+Cross-domain feature code should consume browser/Svelte presentation exports through the appropriate UI boundary rather than reaching into another domain's implementation tree.
+
+Within the application runtime itself, Pane presentation components may be imported directly from their owning runtime location when that is the composition boundary.
+
+---
+
+# Anti-Patterns
+
+Avoid:
+
+```text
+feature-owned generic NavigationService stacks
+nested PaneSurface instances
+feature-local Pane height measurement
+runtime component constructors in persisted NavigationState
+Pane traversal to discover active feature state
+generic mutable obj navigation props
+feature code mutating another entry's NavigationState
+Resource lookup through removed Buffer runtime concepts
+```
+
+---
+
+# Architecture Invariants
+
+1. Workspace owns Pane structure and geometry.
+2. Every rendered leaf Pane has one isolated navigation runtime.
+3. `Pane.state.navigation` is the persisted navigation source of truth.
+4. Runtime components are resolved from stable registered view IDs.
+5. Previous navigation entries remain mounted while hidden.
+6. Every rendered Pane has one `PaneSurface`.
+7. Feature views compose `ViewHeader` and `ViewBody` rather than another Pane shell.
+8. Pane measurements come from `PaneLayoutContext`.
+9. Resource selections belong to navigation-entry state.
+10. Domain behavior remains outside presentation/runtime infrastructure.
+
+---
+
+# Big Takeaway
+
+The current presentation stack is:
+
+```text
+Workspace
+    → Pane
+    → PaneNavigationContainer
+    → PaneSurface
+    → NavigationEntry
+    → feature view
+    → ViewHeader / ViewBody / feature content
+```
+
+There is one Pane surface and one flat navigation history per rendered leaf Pane.

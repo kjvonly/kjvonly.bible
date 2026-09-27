@@ -14,815 +14,546 @@ docs/03_implementation/runtime/011-ui-shell-layout-ownership.md
 
 # 1. Purpose
 
-This document defines ownership rules for application layout shells and the UI responsibilities that commonly become duplicated across nested components.
+This document defines ownership of the Pane presentation shell, view headers, view bodies, sizing, scrolling, outlines, and layout measurements.
 
-The recurring problem is not usually CSS syntax.
-
-It is unclear ownership of:
+The current presentation hierarchy is:
 
 ```text
-height
-width
-overflow
-scrolling
-outline/border
-padding
-header placement
-body placement
-focus surface
-module shell
-navigation shell
+Workspace
+    ↓
+Pane
+    ↓
+PaneNavigationContainer
+    ↓
+PaneSurface
+    ↓
+NavigationEntry
+    ↓
+feature view
+    ├── ViewHeader
+    └── ViewBody
 ```
 
 The central rule is:
 
-> **Each layout responsibility should have one clear owner at a given hierarchy level.**
-
-When two nested components both attempt to own the same dimension or scrolling boundary, regressions become difficult to reason about.
+> **Pane-level shell concerns are owned once by the Pane runtime. Individual navigation views compose their own header/body regions without creating another Pane surface.**
 
 ---
 
-# 2. Current Shell Hierarchy
+# 2. Workspace Ownership
 
-The common application structure is conceptually:
-
-```mermaid
-flowchart TD
-    W[Workspace] --> P[PaneContainer]
-    P --> B[BufferContainer]
-    B --> H[BufferHeader]
-    B --> BODY[BufferBody]
-    BODY --> FEATURE[Feature / Module Content]
-```
-
-Each layer should own a different concern.
-
----
-
-# 3. Workspace Ownership
-
-The Workspace owns:
+`WorkspaceRuntime` owns structural Pane layout:
 
 ```text
-pane tree
-grid placement
+Pane tree
 split geometry
-overall workspace dimensions
-which Pane occupies which grid area
+Pane creation/deletion
+persisted Workspace structure
 ```
 
-Feature Modules should not directly manipulate Workspace CSS grid placement.
+The Workspace does not own feature scrolling, view headers, or feature-specific body layout.
 
 ---
 
-# 4. PaneContainer Ownership
+# 3. Pane Ownership
 
-`PaneContainer` owns the visible Pane surface.
+The rendered Pane component owns one concrete Pane presentation instance.
 
-Typical responsibilities include:
-
-```text
-Pane structural placement
-Pane-level sizing
-Pane identity
-Module rendering boundary
-Pane-level outline/surface if required
-```
-
-It should not duplicate feature-level scrolling or body padding.
-
----
-
-# 5. BufferContainer Ownership
-
-`BufferContainer` is the primary Module surface shell.
-
-It should own the relationship between:
+It owns:
 
 ```text
-header
-body
-available client height
-module-level surface sizing
+paneID
+Pane-local navigation runtime
+PaneLayoutContext
+rendered Pane dimensions
 ```
+
+The Pane measures its rendered height and exposes that value reactively through `PaneLayoutContext`.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-    BC[BufferContainer] --> BH[BufferHeader]
-    BC --> BB[BufferBody]
-
-    BH --> FIXED[Header-sized region]
-    BB --> FLEX[Remaining content region]
+```text
+Pane DOM element
+    ↓ bind:clientHeight
+Pane-owned reactive layout state
+    ↓ PaneLayoutContext
+mounted navigation entries
 ```
 
-A Module should not normally wrap another full `BufferContainer` inside one that already owns the Module surface.
+Descendants that need Pane height should consume the context instead of introducing another measuring shell or threading `clientHeight` through generic navigation props.
 
 ---
 
-# 6. BufferHeader Ownership
+# 4. PaneSurface Ownership
 
-`BufferHeader` owns:
+`PaneSurface` is the single shared visual surface for a rendered Pane.
+
+Current source location:
 
 ```text
-header height
+client/kjvonly-pwa/src/lib/application/runtime/pane/components/paneSurface.svelte
+```
+
+`PaneNavigationContainer` owns the one `PaneSurface` instance for its Pane.
+
+`PaneSurface` owns Pane-wide presentation policy such as:
+
+```text
+full available Pane surface
+background
+outline / visual boundary
+global max-width policy
+minimum-size containment
+```
+
+It does **not** own feature navigation semantics, feature headers, feature body state, or Resource state.
+
+There should normally be exactly one `PaneSurface` per rendered leaf Pane.
+
+Feature views must not create nested `PaneSurface` instances merely because they need a header/body layout.
+
+---
+
+# 5. PaneNavigationContainer Ownership
+
+`PaneNavigationContainer` owns rendering of the Pane's flat navigation stack.
+
+It:
+
+```text
+renders NavigationView entries
+keeps previous entries mounted while hidden
+shows only the active top entry
+keys entries by NavigationView identity
+hosts the single PaneSurface
+```
+
+It does not render feature-specific headers or bodies.
+
+The shell and stack are therefore composed as:
+
+```text
+PaneNavigationContainer
+    ↓
+PaneSurface
+    ↓
+NavigationEntry[]
+```
+
+---
+
+# 6. NavigationEntry Ownership
+
+Each `NavigationEntry` owns one mounted navigation interaction.
+
+It provides:
+
+```text
+NavigationEntryContext
+entry activity
+entry-scoped result handling
+entry-scoped semantic state mutation
+entry-scoped Resource selection mutation
+```
+
+The feature component rendered by the entry decides whether it needs a `ViewHeader`, `ViewBody`, or a more specialized internal layout.
+
+`NavigationEntry` itself does not create a second surface shell.
+
+---
+
+# 7. ViewHeader Ownership
+
+`ViewHeader` is the shared header layout primitive for a navigation view.
+
+Current source location:
+
+```text
+client/kjvonly-pwa/src/lib/application/runtime/pane/components/viewHeader.svelte
+```
+
+It owns normal header-region presentation such as:
+
+```text
+header height measurement
 header alignment
 leading action slot
-title region
-trailing action slots
-header-specific padding
+title area
+trailing action area
+standard header spacing / boundary presentation
 ```
 
-Feature views supply content/actions.
+A feature-specific header such as Bible, Notes, Settings, Plans, or Profile may compose `ViewHeader` and place its own controls inside it.
 
-They should not recreate a parallel header shell unless they are themselves a nested independent surface.
+Feature-specific header components own semantic actions.
+
+`ViewHeader` owns only the shared header layout contract.
 
 ---
 
-# 7. BufferBody Ownership
+# 8. ViewBody Ownership
 
-`BufferBody` owns the normal content area beneath the header.
+`ViewBody` is the shared body/scroll-region primitive for a navigation view.
 
-Depending on the established implementation, it may own:
+Current source location:
 
 ```text
-remaining height
-primary scrolling boundary
-overflow
-content surface
+client/kjvonly-pwa/src/lib/application/runtime/pane/components/viewBody.svelte
 ```
 
-Feature components should not casually add another competing full-height scroll container.
+It consumes:
+
+```text
+Pane height
+ViewHeader height
+```
+
+and represents the remaining view body region.
+
+It may own:
+
+```text
+remaining-height calculation
+primary vertical scrolling
+standard body padding
+body overflow behavior
+```
+
+Feature content owns layout inside that region.
+
+A feature should not create another primary vertical scroll container unless it has a genuine nested scrolling requirement.
 
 ---
 
-# 8. Feature Component Ownership
+# 9. Height Ownership
 
-Feature content should generally own:
+Height has three distinct owners:
 
 ```text
-feature-specific spacing
-feature-specific internal grouping
-feature-specific list/item layout
-local alignment
-semantic sections
+Workspace
+    owns Pane geometry
+
+Pane
+    measures rendered Pane height
+
+ViewHeader
+    measures current view header height
+
+ViewBody
+    consumes Pane height + header height
+    owns remaining body region
 ```
 
-It should not own the Pane/Buffer shell unless the feature is explicitly implementing a nested independent surface.
+Do not measure Pane height independently inside feature views.
+
+Do not make `PaneSurface` responsible for a second height authority.
 
 ---
 
-# 9. One Scrolling Owner
+# 10. PaneLayoutContext
 
-A particularly important rule is:
+Pane layout measurements are exposed through Pane-local Svelte context.
 
-> **There should normally be one intentional vertical scrolling owner for a Module surface.**
+Conceptually:
 
-Bad:
+```ts
+interface PaneLayoutContext {
+    readonly clientHeight: number;
+}
+```
+
+A consumer that needs a reactive local value may use:
+
+```ts
+const paneLayout = usePaneLayoutContext();
+
+let clientHeight = $derived(
+    paneLayout.clientHeight
+);
+```
+
+or read `paneLayout.clientHeight` directly in reactive markup.
+
+Avoid destructuring the numeric value once when future resize updates are required.
+
+---
+
+# 11. One Primary Vertical Scroll Owner
+
+A normal navigation view should have one intentional primary vertical scroll owner.
+
+Preferred structure:
 
 ```text
-BufferBody
+ViewHeader
+    fixed header region
+
+ViewBody
+    remaining height
+    vertical scrolling
+
+feature content
+    normal flow
+```
+
+Avoid:
+
+```text
+ViewBody
     overflow-y-auto
 
 child wrapper
     h-full
     overflow-y-auto
-
-inner list
-    h-full
-    overflow-y-auto
 ```
 
-This creates:
+unless the child represents an intentionally independent nested scrolling region.
+
+---
+
+# 12. Outline and Visual Boundary Ownership
+
+Visual boundaries should have one semantic owner.
+
+Current normal ownership is:
 
 ```text
-double scrollbars
-lost scroll events
-height calculations that depend on ancestors
-scroll restoration ambiguity
-mobile overscroll problems
+PaneSurface
+    Pane-wide visual surface / outline
+
+ViewHeader
+    header-region boundary when required
+
+feature content
+    only feature-specific boundaries
+```
+
+Avoid recreating the Pane outline in each feature view.
+
+Use `outline` instead of `border` when the visual boundary must not change box dimensions.
+
+---
+
+# 13. Max-Width Ownership
+
+The global Pane content-width policy belongs to `PaneSurface`.
+
+A feature should not add another global `max-w-*` constraint merely to reproduce application-wide width behavior.
+
+A feature may still use a narrower width when the content itself has an independent semantic reason, such as:
+
+```text
+login form
+small settings control
+confirmation dialog content
+specialized editor column
+```
+
+The distinction is:
+
+```text
+application-wide Pane width policy
+    → PaneSurface
+
+feature-specific width requirement
+    → feature
 ```
 
 ---
 
-# 10. Scroll Ownership Decision
+# 14. Padding Ownership
 
-Ask:
-
-```text
-What exact region should remain fixed?
-What exact region should scroll?
-```
-
-Example:
-
-```text
-header
-    fixed
-
-body
-    scrolls
-```
-
-Then only the body boundary should own the full Module scroll.
-
-Inner lists may scroll only when the product intentionally requires nested scrolling.
-
----
-
-# 11. Height Ownership
-
-Avoid several nested layers all asserting:
-
-```text
-h-full
-min-h-0
-height: 100%
-clientHeight
-```
-
-without a clear reason.
-
-Height should flow deliberately:
-
-```text
-Workspace
-    provides Pane area
-
-PaneContainer
-    fills Pane area
-
-BufferContainer
-    fills Pane
-
-BufferBody
-    receives remaining space
-```
-
-Children should consume the available space rather than redefining the whole chain.
-
----
-
-# 12. Why `min-h-0` Matters
-
-In flex/grid layouts, scroll children often require:
-
-```text
-min-h-0
-```
-
-on the correct ancestor so content is allowed to shrink.
-
-Do not scatter `min-h-0` everywhere.
-
-Place it at the layout boundary whose child must be allowed to shrink into a scrollable region.
-
----
-
-# 13. Outline Versus Border
-
-The application intentionally uses `outline` in places where a visible boundary must not affect layout dimensions.
-
-A CSS border participates in box sizing.
-
-That can change:
-
-```text
-height
-width
-scroll calculations
-available body space
-```
-
-An outline does not consume layout space.
-
-Therefore:
-
-```text
-outline
-```
-
-is appropriate for visual Pane/Module boundaries when adding pixels to the box would disturb height calculations.
-
----
-
-# 14. Visual Boundary Ownership
-
-Do not apply equivalent Pane/module boundaries at multiple levels.
-
-Bad:
-
-```text
-PaneContainer outline
-BufferContainer outline
-feature root outline
-```
-
-unless they represent visually distinct semantic regions.
-
-Repeated shell decoration makes ownership unclear and may cause double edges.
-
----
-
-# 15. Padding Ownership
-
-Padding should belong to the layer that owns the spacing contract.
+Padding should belong to the layer that defines the spacing contract.
 
 Examples:
 
 ```text
-BufferHeader
-    owns standard header padding
+ViewHeader
+    standard header spacing
 
-SettingsScreen
-    may select standard body padding
+ViewBody
+    standard body padding when enabled
 
-feature list item
-    owns item padding
+feature section
+    semantic spacing between feature groups
 ```
 
-Avoid:
+Avoid accidental stacking such as:
 
 ```text
-BufferBody px-4
+ViewBody px-4
 child page px-4
 section px-4
 row px-4
 ```
 
-unless the cumulative indentation is intentional.
+unless each level intentionally represents a separate visual hierarchy.
 
 ---
 
-# 16. Full-Bleed Versus Padded Content
+# 15. Persistent Navigation and Hidden Entries
 
-Some views intentionally need:
+Previous navigation entries remain mounted while hidden.
 
-```text
-full-bleed lists
-```
-
-while others need:
+This means every mounted feature may still have its own:
 
 ```text
-padded content
+ViewHeader
+ViewBody
+component-local state
+subscriptions that are valid while inactive
 ```
 
-The shell should support this explicitly rather than requiring children to cancel parent padding with negative margins.
+Only the active entry is visible.
 
-A useful pattern is:
-
-```text
-screen/body shell accepts body classes
-```
-
-while preserving one owner for the body region.
+Hidden entries must not create additional Pane surfaces and must not become an alternate source of Pane dimensions.
 
 ---
 
-# 17. SettingsScreen Lesson
+# 16. SettingsScreen and Other Feature Shells
 
-Settings introduced a shared screen shell:
-
-```text
-SettingsScreen
-```
-
-It centralizes:
+Feature-level shell components such as `SettingsScreen` may compose:
 
 ```text
-BufferHeader
-BufferBody
-title
-Back
-Close
-body classes/padding
+ViewHeader
+ViewBody
+feature title/actions
+feature-specific body classes
 ```
 
-This avoids separate root/group/choice/custom screens each reconstructing the same shell.
+They do not own `PaneSurface`.
 
-The general lesson is:
-
-> **If several views repeatedly recreate the same shell, extract the shell before fixing each copy independently.**
+This lets features reuse the standard view-region layout without creating a competing Pane shell.
 
 ---
 
-# 18. Navigation Shell Lesson
+# 17. Notes Editor / Quill
 
-The Settings navigation work also exposed a different rule:
+The Notes editor is a useful sizing example.
 
-```text
-persistent stack rendering
-```
+Notes may use Pane height from `PaneLayoutContext` and subtract its `ViewHeader` height to size the editor region.
 
-and:
+The Quill editor should remain constrained to that view body region.
 
-```text
-BufferContainer shell
-```
-
-are separate responsibilities.
-
-For Settings internal views, combining them is convenient.
-
-For app-wide stacked Modules, full Module containers already own their Buffer shell.
-
-Therefore the stack renderer must be separable from the shell.
+It should not create or measure another Pane surface.
 
 ---
 
-# 19. Persistent Stack Primitive
+# 18. Book / Chapter / Verse Views
 
-Desired separation:
-
-```mermaid
-flowchart TD
-    STACK[PersistentNavigationStack]
-    STACK --> ENTRY[Stack Entry Renderer]
-
-    INTERNAL[Internal NavigationContainer] --> BC[BufferContainer]
-    INTERNAL --> STACK
-
-    PANE[Pane Navigation Host] --> STACK
-    PANE --> MODULES[Full Module Containers]
-```
-
-The stack primitive owns only:
+Bible book/chapter/verse navigation views use the same rule:
 
 ```text
-mount entries
-hide inactive entries
-show active entry
-unmount popped entries
+ViewHeader
+ViewBody
 ```
 
-It should not automatically own:
+They consume Pane layout height rather than wrapping themselves in another `PaneSurface`.
 
-```text
-header
-body
-scroll
-BufferContainer
-```
+This keeps the navigation shell singular regardless of how many feature views are pushed in the Pane stack.
 
 ---
 
-# 20. Avoid Wrapper Inflation
+# 19. Component Location
 
-A wrapper should exist because it owns a real responsibility.
-
-Avoid wrappers whose only effect is:
+The shared Pane/view presentation primitives live together under:
 
 ```text
-another div
-another h-full
-another overflow-hidden
-another flex
+client/kjvonly-pwa/src/lib/application/runtime/pane/components/
 ```
 
-without a clear ownership contract.
+Current important components include:
 
-Every wrapper increases the number of places a layout regression may originate.
+```text
+pane.svelte
+paneSurface.svelte
+viewHeader.svelte
+viewBody.svelte
+```
+
+`PaneNavigationContainer` remains under navigation runtime because it owns navigation-stack rendering, not the generic Pane visual primitives.
 
 ---
 
-# 21. Container Versus View
-
-A useful distinction:
-
-```text
-Container
-    composes runtime/shell/contexts
-
-View
-    renders feature content
-```
-
-Containers may own:
-
-```text
-Buffer shell
-context providers
-client height
-navigation infrastructure
-```
-
-Views should remain focused on feature presentation.
-
----
-
-# 22. Popup Ownership
-
-A popup is another shell.
-
-When a Module or feature is rendered inside a popup:
-
-```text
-popup shell
-```
-
-owns the popup boundary.
-
-The child should not assume:
-
-```text
-Workspace Pane close semantics
-Pane outline
-Pane sizing
-```
-
-unless the popup deliberately embeds the same Module container contract.
-
----
-
-# 23. Reuse Full Containers for Full Behavior
-
-The Settings popup bug demonstrated a useful lesson:
-
-If a feature requires the full Module composition behavior:
-
-```text
-contexts
-navigation
-sizing
-subscriptions
-```
-
-prefer rendering its full container rather than bypassing directly to a nested root view.
-
-This avoids two subtly different entry paths.
-
----
-
-# 24. Header Ownership
-
-The application design rule is approximately:
-
-```text
-one leading control
-title
-at most three trailing slots
-```
-
-A feature should not render competing header bars inside the same surface unless it represents a deliberately nested sub-surface.
-
-Nested navigation generally changes the current header content rather than stacking several full headers vertically.
-
----
-
-# 25. Action Ownership
-
-Header actions belong to the currently visible screen.
-
-Do not leave actions from hidden navigation views visible.
-
-Persistent navigation preserves hidden DOM, but shell rendering should ensure only the active entry's interactive header is presented.
-
----
-
-# 26. CSS Responsibility Review
-
-When a visual bug appears, inspect ownership before changing classes.
-
-Ask:
-
-```text
-Who owns height?
-Who owns scrolling?
-Who owns outline?
-Who owns body padding?
-Who owns header?
-Who owns overflow clipping?
-```
-
-If two answers point to two components for the same concern, resolve ownership first.
-
----
-
-# 27. Sizing Inputs
-
-When a component needs actual measured size, pass/provide it from the shell that owns that size.
-
-Example:
-
-```text
-BufferContainer
-    determines clientHeight
-```
-
-A deeply nested feature should not independently infer another interpretation of Module height if the shell already knows it.
-
----
-
-# 28. Avoid Measurement Dependency When CSS Can Own It
-
-Do not introduce:
-
-```text
-clientHeight plumbing
-ResizeObserver
-manual pixel calculations
-```
-
-when normal flex/grid layout can express the contract.
-
-Use measurement only for features that genuinely require numeric dimensions.
-
----
-
-# 29. Semantic Layout Components
-
-Shared layout components should encode application semantics:
-
-```text
-PaneContainer
-BufferContainer
-BufferHeader
-BufferBody
-SettingsScreen
-PersistentNavigationStack
-```
-
-rather than generic names such as:
-
-```text
-Wrapper
-Box
-Container2
-```
-
-Semantic names clarify ownership.
-
----
-
-# 30. Nested Scroll Exception
-
-Nested scrolling can be appropriate for:
-
-```text
-horizontal carousels
-code editors
-large table regions
-specialized virtualized lists
-```
-
-But it should be deliberate and documented.
-
-Do not create nested vertical scroll merely to "make it fit."
-
----
-
-# 31. Overflow Hidden
-
-`overflow-hidden` can mask an ownership bug.
-
-Before adding it, determine:
-
-```text
-which element is supposed to scroll?
-which element is accidentally overflowing?
-```
-
-Use clipping intentionally, not as a generic fix.
-
----
-
-# 32. Responsive Ownership
-
-Mobile-first behavior should remain owned at the appropriate shell.
-
-For example:
-
-```text
-header action constraints
-body sizing
-pane fill
-```
-
-should not need feature-specific media-query duplication in every Module.
-
----
-
-# 33. Testing Layout Ownership
-
-Browser tests are useful when regressions depend on real layout/lifecycle.
-
-Potential contracts:
-
-```text
-header remains fixed while body scrolls
-nested navigation does not create second Buffer shell
-popup and Pane entry render same Module behavior
-persistent hidden view does not affect visible layout
-```
-
-Avoid pixel-perfect tests unless exact dimensions are a requirement.
-
----
-
-# 34. Architecture Review Checklist
-
-Before adding a wrapper/container, ask:
-
-```text
-What responsibility does this layer own?
-Does an ancestor already own it?
-Does a child already own it?
-Will it introduce another scroll boundary?
-Will it alter box dimensions?
-Does it need full height?
-Does it need to measure height?
-```
-
----
-
-# 35. Anti-Patterns
+# 20. Anti-Patterns
 
 Avoid:
 
-## Duplicate full-height ownership
-
-Several ancestors all trying to define the same vertical area.
-
-## Nested vertical scroll by accident
-
-Multiple `overflow-y-auto` layers.
-
-## Border used where layout-neutral boundary is required
-
-Use outline when appropriate.
-
-## Full Module shell nested inside another full Module shell
-
-Separate navigation stack from Buffer shell.
-
-## Repeated header implementations
-
-Use shared header/screen components.
-
-## Negative margins to undo shell padding
-
-Fix padding ownership.
-
-## Wrapper-only components
-
-Require a real responsibility.
+```text
+feature view creates PaneSurface
+multiple PaneSurface instances in one rendered Pane
+feature measures Pane clientHeight independently
+clientHeight threaded through generic navigation props
+nested primary vertical scroll containers without a real nested-scroll requirement
+feature duplicates Pane max-width policy
+feature root redraws Pane outline
+ViewBody and child both claim the same scrolling region
+PaneSurface given feature-specific semantic state
+```
 
 ---
 
-# 36. Architecture Invariants
+# 21. Review Questions
 
-1. Workspace owns layout geometry.
-2. PaneContainer owns the Pane surface.
-3. BufferContainer owns the Module shell.
-4. BufferHeader owns header layout.
-5. BufferBody owns the normal Module content/scroll region.
-6. Feature components own feature layout, not Workspace shell layout.
-7. One primary vertical scroll owner is preferred.
-8. Visual boundaries have one clear owner.
-9. `outline` is preferred where a boundary must not affect box dimensions.
-10. Persistent stack rendering is separable from Buffer shell rendering.
-11. Containers compose shells/contexts; views render feature content.
-12. Measurement is used only when CSS layout cannot express the requirement.
+Before changing layout ownership, ask:
+
+```text
+Is this concern Pane-wide or only view-local?
+Who owns the measured dimension?
+Is there already a PaneSurface above this component?
+Is this the primary scrolling region or a truly nested one?
+Am I adding width/outline/padding that another layer already owns?
+Does this feature really need custom shell behavior?
+Can PaneLayoutContext provide the measurement instead of another wrapper?
+```
 
 ---
 
-# 37. Summary
+# 22. Architecture Invariants
 
-Most shell bugs are ownership bugs.
+1. Workspace owns Pane geometry.
+2. Each rendered leaf Pane owns one Pane-local layout context.
+3. `PaneNavigationContainer` owns the flat mounted navigation stack.
+4. Each rendered Pane has one `PaneSurface`.
+5. `PaneSurface` owns Pane-wide visual shell and max-width policy.
+6. `ViewHeader` owns the standard view-header layout contract.
+7. `ViewBody` owns the normal view body/scroll-region contract.
+8. Feature views compose `ViewHeader`/`ViewBody`; they do not create another Pane surface.
+9. Pane height comes from `PaneLayoutContext`, not feature-local measurement.
+10. One primary vertical scrolling owner is preferred per active view.
+11. Visual boundaries and padding have one clear semantic owner.
+12. Hidden navigation entries remain mounted without becoming alternate Pane shell/layout authorities.
 
-The default hierarchy should remain:
+---
+
+# 23. Big Takeaway
+
+The current shell hierarchy is:
 
 ```text
 Workspace
-    owns placement
+    owns Pane geometry
 
-PaneContainer
-    owns Pane surface
+Pane
+    owns Pane identity + Pane layout measurement
 
-BufferContainer
-    owns Module shell
+PaneNavigationContainer
+    owns navigation stack rendering
 
-BufferHeader
-    owns header
+PaneSurface
+    owns the one Pane-wide visual surface
 
-BufferBody
-    owns primary body/scroll
+NavigationEntry / feature view
+    owns one mounted interaction
 
-Feature
-    owns feature content
+ViewHeader
+    owns view header layout
+
+ViewBody
+    owns the normal view body / primary scroll region
+
+feature content
+    owns feature-specific presentation
 ```
 
-When adding or debugging layout code, identify the owner before adding another:
-
-```text
-h-full
-overflow
-padding
-outline
-wrapper
-measurement
-```
-
-Clear ownership produces simpler CSS, fewer regressions, and reusable shells.
+Keep those ownership boundaries singular.

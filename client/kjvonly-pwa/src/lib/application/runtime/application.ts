@@ -88,16 +88,71 @@ import {
 } from '$lib/domains/reading-plans/resources/plans-module-resource-selection-contributor';
 
 import {
+    plansNavigationViewRegistrations
+} from '$lib/domains/reading-plans/ui';
+
+import {
+    notesNavigationViewRegistrations
+} from '$lib/domains/notes/ui';
+
+import {
+    bibleNavigationViewRegistrations,
+    refsNavigationViewRegistrations,
+    searchNavigationViewRegistrations
+} from '$lib/domains/bible/ui';
+
+import {
     NoResourceModuleResourceSelectionContributor
 } from '$lib/application/resources/no-resource-module-resource-selection-contributor';
+
+import {
+    modulesNavigationViewRegistrations
+} from '$lib/application/modules/modules/modules-navigation-view-registrations';
+
+import {
+    archiveNavigationViewRegistrations
+} from '$lib/application/modules/archive/archive-navigation-view-registrations';
+
+import {
+    profileNavigationViewRegistrations
+} from '$lib/application/modules/profile/profile-navigation-view-registrations';
+
+import {
+    loginNavigationViewRegistrations
+} from '$lib/application/modules/login/login-navigation-view-registrations';
+
+import {
+    settingsNavigationViewRegistrations
+} from '$lib/application/modules/settings/settings-navigation-view-registrations';
+
+import {
+    ModuleLaunchDestinationResolver
+} from '../modules/modules/module-launch-destination-resolver';
+
+import {
+    ARCHIVE_VIEWS
+} from '../modules/archive/archive-navigation.model';
+
+import {
+    PROFILE_VIEWS
+} from '../modules/profile/profile-navigation.model';
+
+import {
+    SETTINGS_VIEWS
+} from '../modules/settings/models/settings-navigation.model';
+
+import {
+    MODULES_VIEWS
+} from '$lib/application/modules/modules/modules-navigation.model';
+
+import {
+    LOGIN_VIEWS
+} from '$lib/application/modules/login/login-navigation.model';
 
 import {
     Modules
 } from '$lib/application/models/modules.model';
 
-import {
-    ModuleBufferFactory
-} from '$lib/application/runtime/buffer/module-buffer-factory';
 
 import {
     createModuleResourceSelectionResolver
@@ -110,6 +165,10 @@ import {
 import {
     WorkspaceRuntime
 } from '$lib/application/runtime/workspace/workspace-runtime';
+
+import {
+    PaneNavigationSplitter
+} from '$lib/application/runtime/pane/pane-navigation-splitter';
 
 
 import {
@@ -129,8 +188,20 @@ import {
 } from '$lib/application/services/settings.service';
 
 import {
-    NavigationServiceFactory
-} from '$lib/application/services/navigation-service-factory';
+    NavigationStateBuilder
+} from '$lib/application/services/navigation-state-builder';
+
+import {
+    NavigationRuntimeFactory
+} from '$lib/application/runtime/navigation/navigation-runtime-factory';
+
+import {
+    NavigationViewRegistry
+} from '$lib/application/runtime/rendering/navigation-view-registry';
+
+import {
+    NavigationViewResolver
+} from '$lib/application/runtime/rendering/navigation-view-resolver';
 
 import {
     NostrAccountStrategy
@@ -189,6 +260,8 @@ import {
     BookGroupingsService,
     BibleLocationReferenceService,
     BibleNavigationService,
+    BIBLE_VIEWS,
+    SEARCH_VIEWS,
     createBibleVersionId,
     type BibleVersion
 } from '$lib/domains/bible';
@@ -280,6 +353,7 @@ import {
 
 import {
     NOTES_RESOURCE_TYPE,
+    NOTES_VIEWS,
     NotesService
 } from '$lib/domains/notes';
 
@@ -323,7 +397,8 @@ import {
     EncodedReadingsDecoderService,
     createPlansWorker,
     PLAN_SUBSCRIPTION_RESOURCE_TYPE,
-    PLAN_PROGRESS_RESOURCE_TYPE
+    PLAN_PROGRESS_RESOURCE_TYPE,
+    PLANS_VIEWS
 } from '$lib/domains/reading-plans';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -705,11 +780,6 @@ export class Application {
                 ]
             );
 
-        const moduleBufferFactory =
-            new ModuleBufferFactory(
-                moduleResourceSelectionBuilder
-            );
-
         const paneService =
             new PaneService(
                 localStorage
@@ -717,8 +787,7 @@ export class Application {
 
         const workspaceRuntime =
             new WorkspaceRuntime(
-                paneService,
-                moduleBufferFactory
+                paneService
             );
 
         const toastService =
@@ -727,8 +796,162 @@ export class Application {
         const settingsService =
             new SettingsService();
 
-        const navigationServiceFactory =
-            new NavigationServiceFactory();
+        const moduleLaunchDestinationResolver =
+            new ModuleLaunchDestinationResolver([
+                {
+                    module:
+                        Modules.PLANS,
+                    view:
+                        PLANS_VIEWS.SUBS_LIST,
+                    createState:
+                        () => ({})
+                },
+                {
+                    module:
+                        Modules.BIBLE,
+                    view:
+                        BIBLE_VIEWS.READER,
+                    createState:
+                        () => ({})
+                },
+                {
+                    module:
+                        Modules.SEARCH,
+                    view:
+                        SEARCH_VIEWS.RESULTS,
+                    createState:
+                        () => ({})
+                },
+                {
+                    module:
+                        Modules.NOTES,
+                    view:
+                        NOTES_VIEWS.ROOT,
+                    createState:
+                        () => ({})
+                },
+                {
+                    module:
+                        Modules.ARCHIVE,
+                    view:
+                        ARCHIVE_VIEWS.ROOT,
+                    createState:
+                        () => ({})
+                },
+                {
+                    module:
+                        Modules.PROFILE,
+                    view:
+                        PROFILE_VIEWS.ROOT,
+                    createState:
+                        () => ({})
+                },
+                {
+                    module:
+                        Modules.LOGIN,
+                    view:
+                        LOGIN_VIEWS.ROOT,
+                    createState:
+                        () => ({})
+                },
+                {
+                    module:
+                        Modules.SETTINGS,
+                    view:
+                        SETTINGS_VIEWS.ROOT,
+                    createState:
+                        () => ({})
+                }
+            ]);
+
+        const navigationViewRegistry =
+            new NavigationViewRegistry();
+
+        navigationViewRegistry.registerAll(
+            modulesNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            archiveNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            profileNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            loginNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            settingsNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            plansNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            bibleNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            refsNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            searchNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            notesNavigationViewRegistrations
+        );
+
+        const navigationViewResolver =
+            new NavigationViewResolver(
+                navigationViewRegistry
+            );
+
+        const navigationStateBuilder =
+            new NavigationStateBuilder(
+                moduleResourceSelectionBuilder
+            );
+
+        const paneNavigationSplitter =
+            new PaneNavigationSplitter(
+                workspaceRuntime
+            );
+
+        const navigationRuntimeFactory =
+            new NavigationRuntimeFactory(
+                navigationStateBuilder,
+                navigationViewResolver,
+                moduleResourceSelectionBuilder,
+                workspaceRuntime,
+                paneNavigationSplitter,
+                () => {
+                    const destinations = [
+                        {
+                            module: Modules.MODULES,
+                            view: MODULES_VIEWS.ROOT,
+                            state: {}
+                        }
+                    ];
+
+                    if (
+                        authenticationService
+                            .tryGetUserId() === undefined
+                    ) {
+                        destinations.push({
+                            module: Modules.LOGIN,
+                            view: LOGIN_VIEWS.ROOT,
+                            state: {}
+                        });
+                    }
+
+                    return destinations;
+                }
+            );
 
         const archiveService =
             new KJVOnlyArchiveService(
@@ -737,7 +960,7 @@ export class Application {
 
         const moduleResourceSelectionResolver =
             createModuleResourceSelectionResolver(
-                workspaceRuntime
+                moduleResourceSelectionBuilder
             );
 
         ///////////////////////////////////////////////////////////////////////
@@ -1109,7 +1332,8 @@ export class Application {
             accountService,
             toastService,
             settingsService,
-            navigationServiceFactory,
+            navigationRuntimeFactory,
+            moduleLaunchDestinationResolver,
             archiveService,
 
             workspaceRuntime,
@@ -1236,11 +1460,7 @@ export class Application {
 
             this.context
                 .workspaceRuntime
-                .initialize(
-                    userId === undefined
-                        ? Modules.LOGIN
-                        : Modules.BIBLE
-                );
+                .initialize();
 
             this.nostrClient
                 .setDefaultRelays(

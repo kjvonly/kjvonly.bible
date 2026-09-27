@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type {
-		NavigationComponentProps
-	} from '$lib/application/services/navigation.service';
+	import {
+		useNavigationEntryContext
+	} from '$lib/application';
 
-	let {
-		obj = $bindable()
-	}: Pick<NavigationComponentProps, 'obj'> = $props();
+	const navigationEntry =
+		useNavigationEntryContext();
 
 	let value = $state('');
 	let viewID = $derived(
-		typeof obj.id === 'string'
-			? obj.id
+		typeof navigationEntry.navigationState
+			.state.id === 'string'
+			? navigationEntry.navigationState
+				.state.id
 			: 'unknown'
 	);
 </script>

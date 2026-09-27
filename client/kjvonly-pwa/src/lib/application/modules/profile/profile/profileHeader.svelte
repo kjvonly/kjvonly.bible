@@ -2,29 +2,27 @@
 	// ================================ IMPORTS ================================
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import type { NavigationService } from '$lib/application/services/navigation.service';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 
 	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Close from '$lib/components/svgs/close.svelte';
 	import Edit from '$lib/components/svgs/edit.svelte';
-	import EditProfile from './edit/editProfile.svelte';
+
+	import {
+		PROFILE_VIEWS
+	} from '../profile-navigation.model';
 
 	const {
 		authenticationService,
-		toastService,
-		workspaceRuntime
+		toastService
 	} = useApplicationContext();
 
-	// =============================== BINDINGS ================================
-
-	let {
-		paneID,
-		navService = $bindable()
-	}: {
-		paneID: string;
-		navService: NavigationService;
-	} = $props();
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// ============================== CLICK FUNCS ==============================
 
@@ -36,15 +34,16 @@
 			return;
 		}
 
-		navService.push({
-			component: EditProfile,
-			obj: {}
-		});
+		navigation.pushView(
+			PROFILE_VIEWS.EDIT,
+			{}
+		);
 	}
 
 	function onClose(e: Event): void {
 		e.stopPropagation();
-		workspaceRuntime.closePane(paneID);
+
+		navigation.back();
 	}
 </script>
 

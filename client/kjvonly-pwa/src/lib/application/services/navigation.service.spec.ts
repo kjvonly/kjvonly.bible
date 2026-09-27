@@ -13,7 +13,12 @@ import {
 } from 'svelte/store';
 
 import {
-	NavigationService
+	Modules
+} from '../models/modules.model';
+
+import {
+	NavigationService,
+	type NavigationState
 } from './navigation.service';
 
 const FirstView =
@@ -26,6 +31,43 @@ describe(
 	'NavigationService',
 	() => {
 		it(
+			'hydrates a complete runtime stack without changing view identity',
+			() => {
+				const service =
+					new NavigationService();
+
+				const first = {
+					component:
+						FirstView,
+					navigationState:
+						createNavigationState('first')
+				};
+
+				const second = {
+					component:
+						SecondView,
+					navigationState:
+						createNavigationState('second')
+				};
+
+				service.hydrate([
+					first,
+					second
+				]);
+
+				const views =
+					get(service.views);
+
+				expect(views).toEqual([
+					first,
+					second
+				]);
+				expect(views[0]).toBe(first);
+				expect(views[1]).toBe(second);
+			}
+		);
+
+		it(
 			'pushes views in navigation order',
 			() => {
 				const service =
@@ -34,17 +76,15 @@ describe(
 				const first = {
 					component:
 						FirstView,
-					obj: {
-						id: 'first'
-					}
+					navigationState:
+						createNavigationState('first')
 				};
 
 				const second = {
 					component:
 						SecondView,
-					obj: {
-						id: 'second'
-					}
+					navigationState:
+						createNavigationState('second')
 				};
 
 				service.push(
@@ -68,7 +108,7 @@ describe(
 		);
 
 		it(
-			'pops only the newest view',
+			'navigates back by popping only the newest view',
 			() => {
 				const service =
 					new NavigationService();
@@ -76,7 +116,8 @@ describe(
 				const first = {
 					component:
 						FirstView,
-					obj: {}
+					navigationState:
+						createNavigationState('root')
 				};
 
 				service.push(
@@ -86,33 +127,56 @@ describe(
 				service.push({
 					component:
 						SecondView,
-					obj: {}
+					navigationState:
+						createNavigationState('child')
 				});
 
-				service.pop();
+				service.back();
 
-				const views =
-					get(service.views);
-
-				expect(views).toEqual([
+				expect(
+					get(service.views)
+				).toEqual([
 					first
 				]);
-				expect(views[0]).toBe(first);
 			}
 		);
 
 		it(
-			'keeps an empty stack empty when popped',
+			'keeps the root view when navigating back',
 			() => {
 				const service =
 					new NavigationService();
 
-				service.pop();
+				const root = {
+					component:
+						FirstView,
+					navigationState:
+						createNavigationState('root')
+				};
+
+				service.push(
+					root
+				);
+
+				service.back();
 
 				expect(
 					get(service.views)
-				).toEqual([]);
+				).toEqual([
+					root
+				]);
 			}
 		);
+
 	}
 );
+
+function createNavigationState(
+	view: string
+): NavigationState {
+	return {
+		module: Modules.MODULES,
+		view,
+		state: {}
+	};
+}

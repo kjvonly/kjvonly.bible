@@ -38,6 +38,39 @@ describe(
 	'BibleTextMarkupService',
 	() => {
 		it(
+			'creates a valid empty Text Markup object synchronously',
+			() => {
+				const service =
+					createService(
+						new FakeTextMarkupStore(),
+						new FakeResourceLoader()
+					);
+
+				expect(
+					service.create(
+						createSource({
+							publisher:
+								'publisher-a',
+
+							resourceId:
+								'kjvonly/overlays/text-markup/study'
+						}),
+						'2_3_4_5'
+					)
+				).toEqual({
+					id:
+						'publisher-a/study/2_3',
+
+					chapterRef:
+						'2_3',
+
+					markings:
+						{}
+				});
+			}
+		);
+
+		it(
 			'returns installed Text Markup without loading a Resource',
 			async () => {
 				const source =

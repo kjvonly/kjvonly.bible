@@ -1,25 +1,32 @@
 <script lang="ts">
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
 	import type { AccountRelay } from '$lib/application/services/account/account-state';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import {
+		usePaneLayoutContext
+	} from '../../../../runtime/pane/pane-layout-context';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
+	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
+	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
 	import EditProfileHeader from './editProfileHeader.svelte';
 	import Name from './name.svelte';
 	import Relays from './relays.svelte';
 
-	let {
-		paneID,
-		obj = $bindable(),
-		clientHeight,
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+	const paneLayout = usePaneLayoutContext();
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
 
 	const {
 		accountService,
 		authenticationService,
 		toastService
 	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	const account = accountService.getState();
 
@@ -93,7 +100,7 @@
 			);
 
 			toastService.showToast('Saved Profile');
-			navService.pop();
+			navigation.back();
 		} catch (error) {
 			console.warn('[Profile save failed]', error);
 			toastService.showToast('Unable to save Profile');
@@ -104,7 +111,7 @@
 </script>
 
 {#snippet header()}
-	<EditProfileHeader {saving} {onSave} bind:navService></EditProfileHeader>
+	<EditProfileHeader {saving} {onSave}></EditProfileHeader>
 {/snippet}
 
 {#snippet body()}
@@ -114,9 +121,9 @@
 	</div>
 {/snippet}
 
-<BufferHeader bind:headerHeight>
+<ViewHeader bind:headerHeight>
 	{@render header()}
-</BufferHeader>
-<BufferBody {clientHeight} {headerHeight}>
+</ViewHeader>
+<ViewBody {clientHeight} {headerHeight}>
 	{@render body()}
-</BufferBody>
+</ViewBody>

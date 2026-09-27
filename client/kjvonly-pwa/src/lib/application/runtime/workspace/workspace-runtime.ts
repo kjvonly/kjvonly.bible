@@ -1,6 +1,4 @@
-import { Modules } from '$lib/application/models/modules.model';
-import type { Buffer } from '$lib/application/runtime/buffer/models/buffer.model';
-import type { BufferBag } from '$lib/application/runtime/buffer/models/buffer-bag.model';
+import type { PaneState } from '$lib/application/runtime/pane/models/pane-state.model';
 import type { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
@@ -35,31 +33,13 @@ interface WorkspacePaneState {
 	): void;
 }
 
-interface WorkspaceBufferFactory {
-	independent(
-		module: Modules,
-		bag?: BufferBag
-	): Buffer;
-
-	related(
-		module: Modules,
-		originatingBuffer: Buffer,
-		bag?: BufferBag
-	): Buffer;
-
-	reconcileRestored(
-		buffer: Buffer
-	): void;
-}
-
 export interface WorkspaceSplitResult {
 	newPaneID: string;
 }
 
 export enum WorkspaceChangeType {
 	PANE_SPLIT = 'pane-split',
-	PANE_DELETED = 'pane-deleted',
-	PANE_BUFFER_REPLACED = 'pane-buffer-replaced'
+	PANE_DELETED = 'pane-deleted'
 }
 
 export type WorkspaceChange =
@@ -70,10 +50,6 @@ export type WorkspaceChange =
 	| {
 		type: WorkspaceChangeType.PANE_DELETED;
 		deletedPaneID: string;
-	}
-	| {
-		type: WorkspaceChangeType.PANE_BUFFER_REPLACED;
-		paneID: string;
 	};
 
 type WorkspaceChangeSubscriber = (
@@ -89,54 +65,21 @@ export class WorkspaceRuntime {
 
 	constructor(
 		private readonly panes:
-			WorkspacePaneState,
-		private readonly buffers:
-			WorkspaceBufferFactory
+			WorkspacePaneState
 	) {}
 
-	initialize(
-		defaultModule: Modules
-	): boolean {
+	initialize(): boolean {
 		const restored =
 			this.panes.restore();
 
 		if (restored) {
-			this.reconcileRestoredBuffers(
-				this.panes.rootPane
-			);
-
 			return true;
 		}
 
-		this.panes.rootPane.buffer =
-			this.buffers.independent(
-				defaultModule
-			);
+		this.panes.rootPane.state =
+			{};
 
 		return false;
-	}
-
-	private reconcileRestoredBuffers(
-		pane: Pane
-	): void {
-		if (pane.buffer) {
-			this.buffers
-				.reconcileRestored(
-					pane.buffer
-				);
-		}
-
-		if (pane.left) {
-			this.reconcileRestoredBuffers(
-				pane.left
-			);
-		}
-
-		if (pane.right) {
-			this.reconcileRestoredBuffers(
-				pane.right
-			);
-		}
 	}
 
 	subscribe(
@@ -206,80 +149,30 @@ export class WorkspaceRuntime {
 		this.panes.save();
 	}
 
-	replaceBuffer(
-		paneID: string,
-		module: Modules,
-		bag?: BufferBag
-	): boolean {
-		const pane =
-			this.findPane(
-				paneID
-			);
-
-		if (!pane) {
-			return false;
-		}
-
-		const currentBuffer =
-			pane.buffer;
-
-		const navigationContext =
-			bag === undefined
-				? currentBuffer?.bag ?? {}
-				: bag;
-
-		pane.buffer =
-			currentBuffer
-				? this.buffers.related(
-					module,
-					currentBuffer,
-					navigationContext
-				)
-				: this.buffers.independent(
-					module,
-					navigationContext
-				);
-
-		pane.toggle =
-			!pane.toggle;
-
-		this.panes.save();
-
-		this.publish({
-			type:
-				WorkspaceChangeType.PANE_BUFFER_REPLACED,
-			paneID
-		});
-
-		return true;
-	}
-
-	splitPane(
+	/**
+	 * Splits a Pane using already-prepared persisted Pane state.
+	 *
+	 * WorkspaceRuntime owns Pane-tree mutation, ID allocation, persistence, and
+	 * change publication. The caller owns the semantic contents of the state.
+	 */
+	splitPaneWithState(
 		paneID: string,
 		split: PaneSplit,
-		module: Modules,
-		bag: BufferBag
+		state: PaneState
 	): WorkspaceSplitResult | undefined {
-		this.trackCurrentPaneIDs();
-
 		const pane =
 			this.findPane(
 				paneID
 			);
 
-		if (!pane?.buffer) {
+		if (!pane?.state) {
 			return undefined;
 		}
 
+		this.trackCurrentPaneIDs();
+
 		const newPaneID =
 			this.allocatePaneID();
-
-		const buffer =
-			this.buffers.related(
-				module,
-				pane.buffer,
-				bag
-			);
 
 		if (
 			!splitPaneInTree({
@@ -288,7 +181,7 @@ export class WorkspaceRuntime {
 				paneID,
 				newPaneID,
 				split,
-				buffer
+				state
 			})
 		) {
 			return undefined;
@@ -305,45 +198,6 @@ export class WorkspaceRuntime {
 		return {
 			newPaneID
 		};
-	}
-
-	closePane(
-		paneID: string
-	): boolean {
-		const pane =
-			this.findPane(
-				paneID
-			);
-
-		if (!pane) {
-			return false;
-		}
-
-		if (
-			pane.buffer?.componentName !==
-			Modules.MODULES
-		) {
-			return this.replaceBuffer(
-				paneID,
-				Modules.MODULES,
-				{}
-			);
-		}
-
-		if (
-			pane ===
-			this.panes.rootPane &&
-			pane.left === undefined &&
-			pane.right === undefined
-		) {
-			return true;
-		}
-
-		return (
-			this.deletePane(
-				paneID
-			) !== undefined
-		);
 	}
 
 	deletePane(

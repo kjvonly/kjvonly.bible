@@ -3,8 +3,7 @@ import type {
   EncodedReadingsDecoderService
 } from '../services/encodedReadingsDecoder.service';
 import type {
-  BCV,
-  BibleReadingNavigation
+  BCV
 } from '$lib/domains/bible';
 import type { PlanDefinition } from './plan-definition';
 import type { PlanSubscription } from './plan-subscription';
@@ -127,32 +126,35 @@ export interface NextReadings {
   totalReadings: number;
 }
 
-/**
- * When a user selects a reading for a subscription, the app routes to the bible
- * module. The bible module will check the {@link Buffer.bag} for a plan
- * variable. If it exists the bible module restricts the module to only display
- * the {@link BCV}[] in the readings.
- */
-export interface NavReadings extends BibleReadingNavigation {
-  subID: string;
-  subNestedReadingsIndex: number;
-  readings: Readings;
-  returnView: PLANS_VIEWS;
-}
+export const PLAN_NAVIGATION_RESULTS = {
+  READING_COMPLETED: 'plans.reading-completed',
+  SUBSCRIPTION_ACTION: 'plans.subscription-action',
+  PLAN_SUBSCRIBED: 'plans.plan-subscribed'
+} as const;
+
+export const PLAN_SUBSCRIPTION_ACTIONS = {
+  PLANS: 'plans',
+  NEXT_READINGS: 'next-readings'
+} as const;
+
+export type PlanSubscriptionAction =
+  typeof PLAN_SUBSCRIPTION_ACTIONS[
+    keyof typeof PLAN_SUBSCRIPTION_ACTIONS
+  ];
 
 export enum PLANS_VIEWS {
   // PLAN
 
-  PLANS_LIST = 1,
-  PLANS_DETAILS = 3,
+  PLANS_LIST = 'plans.list',
+  PLANS_DETAILS = 'plans.details',
 
   // SUB
-  SUBS_LIST = 20,
-  SUBS_ACTIONS = 21,
-  SUBS_DETAILS = 22,
+  SUBS_LIST = 'plans.subscriptions',
+  SUBS_ACTIONS = 'plans.subscription-actions',
+  SUBS_DETAILS = 'plans.subscription-details',
 
   // NEXT READINGS
-  NEXT_LIST = 40
+  NEXT_LIST = 'plans.next-readings'
 }
 
 export enum PLAN_PUBSUB_SUBSCRIPTIONS {

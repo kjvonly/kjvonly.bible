@@ -2,29 +2,25 @@
 	// COMPONENTS
 	import SettingsScreen from './components/settingsScreen.svelte';
 
-	// MODELS
-	import type { NavigationComponentProps } from '../../services/navigation.service';
-
 	// RESOLVERS
 	import { resolveSettingsCustomViewComponent } from './resolvers/settings-custom-view-component-resolver';
 	import { requireSettingsCustomRow } from './resolvers/settings-definition-resolver';
 
 	// RUNTIME
+	import {
+		useNavigationEntryContext
+	} from '../../runtime/navigation/navigation-entry-context';
 	import { useSettingsNavigationContext } from './runtime/settings-navigation-context';
-
-	// =============================== BINDINGS ================================
-
-	let {
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
 
 	// ================================= VARS ==================================
 
-	let settingsNavigation = useSettingsNavigationContext();
+	const settingsNavigation = useSettingsNavigationContext();
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
 	let row = $derived.by(() => {
-		const rowID = obj.rowID;
+		const rowID = navigationState.state.rowID;
 
 		if (typeof rowID !== 'string') {
 			throw new Error('Settings custom navigation requires a rowID.');
@@ -43,7 +39,7 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<SettingsScreen title={row.title} {clientHeight} {onBack}>
+<SettingsScreen title={row.title} {onBack}>
 	{@const CustomComponent = resolveSettingsCustomViewComponent(row.view)}
 	<CustomComponent></CustomComponent>
 </SettingsScreen>

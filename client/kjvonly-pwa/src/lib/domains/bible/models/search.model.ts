@@ -6,10 +6,6 @@ export interface SearchResult {
 	text: string;
 }
 
-export type onFilterBibleLocationRefFunction = (
-	bibleLocationReferences: string[]
-) => string[];
-
 export interface SearchResultResponse {
 	id: string;
 	text: string;

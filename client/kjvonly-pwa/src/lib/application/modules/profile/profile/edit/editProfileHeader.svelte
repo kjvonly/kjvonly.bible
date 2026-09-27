@@ -1,22 +1,26 @@
 <script lang="ts">
-	import type { NavigationService } from '$lib/application/services/navigation.service';
+	import {
+		useNavigationRuntimeContext
+	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 	import Save from '$lib/components/svgs/save.svelte';
 
 	let {
-		navService = $bindable(),
 		saving = false,
 		onSave
 	}: {
-		navService: NavigationService;
 		saving?: boolean;
 		onSave: () => Promise<void>;
 	} = $props();
 
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
 	function onBack(e: Event): void {
 		e.stopPropagation();
-		navService.pop();
+		navigation.back();
 	}
 </script>
 

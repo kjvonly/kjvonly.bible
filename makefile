@@ -434,6 +434,7 @@ new-chat-files:
 		client/kjvonly-pwa/src \
 		client/kjvonly-pwa/package.json \
 		client/kjvonly-pwa/package-lock.json \
+		docs/ \
 		-x '*/node_modules/*' \
 		   '*/.svelte-kit/*' \
 		   '*/build/*' \

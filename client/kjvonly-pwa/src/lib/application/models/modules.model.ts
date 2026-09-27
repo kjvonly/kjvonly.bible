@@ -1,5 +1,5 @@
 /**
- * Application module identity persisted in Buffer.componentName.
+ * Application module identity used by navigation state and Module-owned policy.
  *
  * Keep the numeric values explicit. Renumbering is a deliberate persisted-state
  * compatibility break unless accompanied by a migration.
@@ -14,7 +14,7 @@ export enum Modules {
 	LOGIN = 7,
 	SETTINGS = 8,
 
-	// Buffer sentinel: intentionally has no renderable component.
+	// Non-renderable sentinel used by Module-owned policy registration.
 	NULL = 9,
 
 	PROFILE = 10,

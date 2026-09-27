@@ -3,18 +3,18 @@
 		provideApplicationContext,
 		type ApplicationContext
 	} from '$lib/application/runtime/application-context';
-	import NavigationContainer from '$lib/application/runtime/navigation/components/navigationContainer.svelte';
+	import PaneNavigationContainer from '$lib/application/runtime/navigation/components/paneNavigationContainer.svelte';
 	import type {
-		NavigationService
-	} from '$lib/application/services/navigation.service';
+		PaneNavigationService
+	} from '$lib/application/services/pane-navigation.service';
 	import {
 		SettingsService
 	} from '$lib/application/services/settings.service';
 
 	let {
-		navService
+		navigation
 	}: {
-		navService: NavigationService;
+		navigation: PaneNavigationService;
 	} = $props();
 
 	provideApplicationContext({
@@ -22,7 +22,6 @@
 	} as ApplicationContext);
 </script>
 
-<NavigationContainer
-	paneID="navigation-test-pane"
-	{navService}
-></NavigationContainer>
+<PaneNavigationContainer
+	{navigation}
+></PaneNavigationContainer>
