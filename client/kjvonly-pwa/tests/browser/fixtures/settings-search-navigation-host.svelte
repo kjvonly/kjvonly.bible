@@ -3,23 +3,18 @@
 		provideApplicationContext,
 		type ApplicationContext
 	} from '$lib/application/runtime/application-context';
-	import SettingsContainer from '$lib/application/modules/settings/settingsContainer.svelte';
-	import {
-		NavigationServiceFactory
-	} from '$lib/application/services/navigation-service-factory';
 	import {
 		SettingsService
 	} from '$lib/application/services/settings.service';
 
+	import SettingsNavigationTestPane from './settings-navigation-test-pane.svelte';
+
 	provideApplicationContext({
 		settingsService:
-			new SettingsService(),
-		navigationServiceFactory:
-			new NavigationServiceFactory()
+			new SettingsService()
 	} as ApplicationContext);
 </script>
 
-<SettingsContainer
+<SettingsNavigationTestPane
 	paneID="settings-search-test"
-	onClose={() => {}}
-></SettingsContainer>
+></SettingsNavigationTestPane>

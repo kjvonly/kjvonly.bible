@@ -1,14 +1,11 @@
 export type {
 	Strongs,
 	StrongsContent,
-	StrongsPopups,
-	StrongsSearchPopup,
 	UsageBy
 } from './models/strongs.model';
 
 export {
-	newStrongs,
-	newStrongsPopups
+	newStrongs
 } from './models/strongs.model';
 
 export {

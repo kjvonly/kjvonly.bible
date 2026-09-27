@@ -171,7 +171,7 @@ Outbox
     Outbox service/store
 
 Resource selections
-    ResourceSelectionService / Module buffer creation path
+    ResourceSelectionService / NavigationStateBuilder / ModuleResourceSelectionBuilder path
 ```
 
 UI components should not bypass the authority.
@@ -394,8 +394,8 @@ ArchiveImported
 Settings snapshot
     state
 
-PANE_BUFFER_REPLACED
-    event about runtime transition
+PANE_SPLIT / PANE_DELETED
+    events about Workspace structural transitions
 ```
 
 Do not force all communication into one pubsub abstraction without preserving semantics.

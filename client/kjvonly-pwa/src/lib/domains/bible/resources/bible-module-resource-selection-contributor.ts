@@ -78,12 +78,6 @@ implements ModuleResourceSelectionContributor {
 				context
 			);
 
-		if (context.restoring) {
-			delete selections[
-				BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-			];
-		}
-
 		const publisher =
 			this.currentUser
 				.tryGetUserId();

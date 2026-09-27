@@ -1,4 +1,4 @@
-import type { Buffer } from '$lib/application/runtime/buffer/models/buffer.model';
+import type { PaneState } from '$lib/application/runtime/pane/models/pane-state.model';
 import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 import type { PaneSplit } from '$lib/application/runtime/pane/models/pane-split';
 
@@ -7,7 +7,7 @@ export interface SplitPaneInput {
 	paneID: string;
 	newPaneID: string;
 	split: PaneSplit;
-	buffer: Buffer;
+	state: PaneState;
 }
 
 export interface DeletePaneResult {
@@ -48,7 +48,7 @@ export function splitPane({
 	paneID,
 	newPaneID,
 	split,
-	buffer
+	state
 }: SplitPaneInput): boolean {
 	const pane = findPane(
 		rootPane,
@@ -63,19 +63,16 @@ export function splitPane({
 	pane.left = {
 		id:
 			pane.id,
-		buffer:
-			pane.buffer,
-		toggle:
-			pane.toggle
+		state:
+			pane.state
 	};
 	pane.right = {
 		id:
 			newPaneID,
-		buffer,
-		toggle:
-			undefined
+		state
 	};
 	pane.id = undefined;
+	pane.state = undefined;
 
 	return true;
 }
@@ -162,6 +159,10 @@ function collapseInto(
 	sibling: Pane
 ): void {
 	if (sibling.split) {
+		target.id =
+			undefined;
+		target.state =
+			undefined;
 		target.split =
 			sibling.split;
 		target.left =
@@ -173,10 +174,8 @@ function collapseInto(
 
 	target.id =
 		sibling.id;
-	target.toggle =
-		sibling.toggle;
-	target.buffer =
-		sibling.buffer;
+	target.state =
+		sibling.state;
 	target.split =
 		undefined;
 	target.left =

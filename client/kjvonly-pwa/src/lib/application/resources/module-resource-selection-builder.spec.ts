@@ -79,51 +79,7 @@ describe(
 		);
 
 		it(
-			'marks restored selection reconciliation for the contributor',
-			() => {
-				let received:
-					ModuleResourceSelectionBuildContext |
-					undefined;
-
-				const restoredSelections = {
-					'origin/resource': {
-						publisher: 'origin',
-						resourceId: 'origin/resource/default'
-					}
-				};
-
-				const builder =
-					new ModuleResourceSelectionBuilder(
-						createSnapshotProvider({}),
-						[
-							createContributor(
-								Modules.BIBLE,
-								context => {
-									received = context;
-									return {};
-								}
-							)
-						]
-					);
-
-				builder.reconcileRestored(
-					Modules.BIBLE,
-					restoredSelections
-				);
-
-				expect(
-					received
-				).toEqual({
-					originatingSelections:
-						restoredSelections,
-					currentSelections: {},
-					restoring: true
-				});
-			}
-		);
-
-		it(
-			'passes originating Buffer selections to the contributor for related module construction',
+			'passes originating selections to the contributor for related module construction',
 			() => {
 				let received:
 					ModuleResourceSelectionBuildContext |
@@ -159,6 +115,110 @@ describe(
 					received?.originatingSelections
 				).toBe(
 					originatingSelections
+				);
+			}
+		);
+
+		it(
+			'rebuilds module selections after replacing one Resource selection',
+			() => {
+				let received:
+					ModuleResourceSelectionBuildContext |
+					undefined;
+
+				const originalSelection = {
+					publisher: 'original',
+					resourceId: 'test/resource/original'
+				};
+
+				const replacementSelection = {
+					publisher: 'replacement',
+					resourceId: 'test/resource/replacement'
+				};
+
+				const selections = {
+					'test/resource':
+						originalSelection,
+					'other/resource': {
+						publisher: 'other',
+						resourceId: 'other/resource/default'
+					}
+				};
+
+				const result = {
+					'normalized/resource': {
+						publisher: 'normalized',
+						resourceId: 'normalized/resource/default'
+					}
+				};
+
+				const builder =
+					new ModuleResourceSelectionBuilder(
+						createSnapshotProvider({
+							'global/resource': {
+								publisher: 'global',
+								resourceId: 'global/resource/default'
+							}
+						}),
+						[
+							createContributor(
+								Modules.BIBLE,
+								context => {
+									received = context;
+									return result;
+								}
+							)
+						]
+					);
+
+				expect(
+					builder.update(
+						Modules.BIBLE,
+						selections,
+						'test/resource',
+						replacementSelection
+					)
+				).toBe(result);
+
+				expect(
+					received
+				).toEqual({
+					originatingSelections: {
+						'test/resource':
+							replacementSelection,
+						'other/resource': {
+							publisher: 'other',
+							resourceId: 'other/resource/default'
+						}
+					},
+					currentSelections: {
+						'global/resource': {
+							publisher: 'global',
+							resourceId: 'global/resource/default'
+						}
+					}
+				});
+
+				expect(
+					selections[
+						'test/resource'
+					]
+				).toBe(
+					originalSelection
+				);
+
+				expect(
+					received?.originatingSelections
+				).not.toBe(
+					selections
+				);
+
+				expect(
+					received?.originatingSelections[
+						'test/resource'
+					]
+				).not.toBe(
+					replacementSelection
 				);
 			}
 		);

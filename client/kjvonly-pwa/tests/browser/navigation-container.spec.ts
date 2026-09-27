@@ -10,9 +10,27 @@ import {
 } from 'vitest';
 
 import {
+	Modules
+} from '$lib/application/models/modules.model';
+import type {
+	ResourceSelections
+} from '$lib/application/resources/resource-selections';
+import {
+	NavigationStateBuilder
+} from '$lib/application/services/navigation-state-builder';
+import {
+	PaneNavigationService
+} from '$lib/application/services/pane-navigation.service';
+import {
 	NavigationService,
 	type NavigationComponent
 } from '$lib/application/services/navigation.service';
+import {
+	NavigationViewRegistry
+} from '$lib/application/runtime/rendering/navigation-view-registry';
+import {
+	NavigationViewResolver
+} from '$lib/application/runtime/rendering/navigation-view-resolver';
 
 import NavigationContainerHost from './fixtures/navigation-container-host.svelte';
 import PersistentNavigationView from './fixtures/persistent-navigation-view.svelte';
@@ -35,30 +53,29 @@ function requireElement<T extends Element>(
 ///////////////////////////////////////////////////////////////////////////////
 
 describe(
-	'NavigationContainer',
+	'PaneNavigationContainer',
 	() => {
 		it(
-			'keeps previous views mounted and restores the same instance after pop',
+			'keeps previous views mounted and restores the same instance after Back',
 			async () => {
 				const target = document.createElement('div');
 				document.body.appendChild(target);
 
-				const navigationService = new NavigationService();
-				const component = PersistentNavigationView as NavigationComponent;
+				const navigation =
+					createNavigation();
 
-				navigationService.push({
-					component,
-					obj: {
-						id: 'first'
-					}
-				});
+				navigation.pushModule(
+					Modules.MODULES,
+					'test.first',
+					{ id: 'first' }
+				);
 
 				const navigationContainer = mount(
 					NavigationContainerHost,
 					{
 						target,
 						props: {
-							navService: navigationService
+							navigation
 						}
 					}
 				);
@@ -82,12 +99,10 @@ describe(
 					);
 					await tick();
 
-					navigationService.push({
-						component,
-						obj: {
-							id: 'second'
-						}
-					});
+					navigation.pushView(
+						'test.second',
+						{ id: 'second' }
+					);
 					await tick();
 
 					const firstView = requireElement<HTMLElement>(
@@ -102,7 +117,7 @@ describe(
 					expect(firstView.parentElement?.classList.contains('hidden')).toBe(true);
 					expect(secondView.parentElement?.classList.contains('hidden')).toBe(false);
 
-					navigationService.pop();
+					navigation.back();
 					await tick();
 
 					const restoredInput = requireElement<HTMLInputElement>(
@@ -128,3 +143,50 @@ describe(
 		);
 	}
 );
+
+function createNavigation():
+	PaneNavigationService {
+	const component =
+		PersistentNavigationView as
+			NavigationComponent;
+
+	const registry =
+		new NavigationViewRegistry();
+
+	registry.registerAll([
+		{
+			view: 'test.first',
+			component
+		},
+		{
+			view: 'test.second',
+			component
+		}
+	]);
+
+	const resourceSelections = {
+		independent: () => ({}),
+		related: (
+			_module: Modules,
+			originatingSelections:
+				ResourceSelections
+		) => originatingSelections,
+		update: (
+			_module: Modules,
+			originatingSelections:
+				ResourceSelections
+		) => originatingSelections
+	};
+
+	return new PaneNavigationService(
+		'navigation-test-pane',
+		new NavigationService(),
+		new NavigationStateBuilder(
+			resourceSelections
+		),
+		new NavigationViewResolver(
+			registry
+		),
+		resourceSelections
+	);
+}

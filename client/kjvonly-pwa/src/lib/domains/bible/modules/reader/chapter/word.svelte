@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { useApplicationContext } from '$lib/application';
+	import {
+		useApplicationContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	// ================================ IMPORTS ================================
 	// SVELTE
 	import { onMount } from 'svelte';
@@ -9,6 +12,8 @@
 
 	// SERVICES
 	import { PaneSplit } from '$lib/application';
+	import { REFS_VIEWS } from '../../../models/refs-navigation.model';
+	import { NOTES_VIEWS } from '$lib/domains/notes';
 	import type {
 		BibleTextMarkup,
 		BibleTextMarkupMarking
@@ -26,16 +31,16 @@
 		ChapterNotesByLocation
 	} from './chapter-notes';
 	const {
-		workspaceRuntime,
 		bibleLocationReferenceService
 	} = useApplicationContext();
+	const { navigation } =
+		useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
 		mode = $bindable<BibleMode>(),
-		paneID,
 		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
 		bibleVersion,
@@ -47,7 +52,6 @@
 	}: {
 		textMarkup: BibleTextMarkup;
 		mode: BibleMode;
-		paneID: string;
 		notes: ChapterNotesByLocation;
 		bibleLocationRef: string;
 		bibleVersion: string;
@@ -191,20 +195,30 @@
 		let refs = extractAllVerseRefs();
 		let strongsWords = extractStrongsWords();
 
-		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.STRONGS, {
-			footnotes: footnotes,
-			currentVerseRef: getBibleCrossReference(),
-			refs: refs,
-			strongsWords: strongsWords
-		});
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.STRONGS,
+			REFS_VIEWS.ROOT,
+			{
+				footnotes,
+				currentVerseRef: getBibleCrossReference(),
+				refs,
+				strongsWords
+			}
+		);
 	}
 
 	function nonVerseNumberClicked() {
-		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.STRONGS, {
-			word: word,
-			footnotes: footnotes,
-			currentVerseRef: getBibleCrossReference(),
-		});
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.STRONGS,
+			REFS_VIEWS.ROOT,
+			{
+				word,
+				footnotes,
+				currentVerseRef: getBibleCrossReference()
+			}
+		);
 	}
 
 	function applyMarkupToVerse() {
@@ -336,11 +350,20 @@
 	}
 
 	function onNotesClicked() {
-		let bookIDChapter =
-			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
+		const bookIDChapter =
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					bibleLocationRef
+				);
 
-		mode.bibleLocationRef = `${bookIDChapter}_${verse.number}_${wordIdx}`;
-		mode.notePopup.show = true;
+		navigation.pushModule(
+			Modules.NOTES,
+			NOTES_VIEWS.ROOT,
+			{
+				bibleLocationRef:
+					`${bookIDChapter}_${verse.number}_${wordIdx}`
+			}
+		);
 	}
 
 	function onMouseDownTouchStart() {

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import {
-		BufferContainer,
-		BufferHeader,
+		ViewHeader,
 		findElement
 	} from '$lib/application/ui';
 
@@ -20,7 +19,14 @@
 	import Tag from '$lib/components/svgs/tag.svelte';
 
 	// MODELS
-	import { Modules, PaneSplit, useApplicationContext } from '$lib/application';
+	import {
+		Modules,
+		MODULES_VIEWS,
+		PaneSplit,
+		useApplicationContext,
+		useNavigationRuntimeContext,
+		usePaneLayoutContext
+	} from '$lib/application';
 	import type { Note, NoteTag } from '../../models/note.model';
 
 	// OTHER
@@ -30,18 +36,21 @@
 	import { parseNoteTagInput } from './note-tag-input';
 
 	// APPLICATION
-	const { workspaceRuntime, toastService, notesService } =
+	const { toastService, notesService } =
 		useApplicationContext();
+
+	const { navigation } =
+		useNavigationRuntimeContext();
+
+	const paneLayout = usePaneLayoutContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
 		note,
 		persisted,
 		onCloseNote
 	}: {
-		paneID: string;
 		note: Note;
 		persisted: boolean;
 		onCloseNote: () => void;
@@ -58,7 +67,7 @@
 
 	// ================================== VARS =================================
 
-	let clientHeight = $state(0);
+	let clientHeight = $derived(paneLayout.clientHeight);
 	let isPersisted = $state(persisted);
 	let headerHeight = $state(0);
 	let showConfirmDelete = $state(false);
@@ -77,20 +86,20 @@
 			showConfirmDelete = true;
 		},
 		'split vertical': () => {
-			workspaceRuntime.splitPane(
-				paneID,
+			navigation.split(
 				PaneSplit.VERTICAL,
 				Modules.MODULES,
+				MODULES_VIEWS.ROOT,
 				{}
 			);
 			showNoteActions = false;
 		},
 
 		'split horizontal': () => {
-			workspaceRuntime.splitPane(
-				paneID,
+			navigation.split(
 				PaneSplit.HORIZONTAL,
 				Modules.MODULES,
+				MODULES_VIEWS.ROOT,
 				{}
 			);
 			showNoteActions = false;
@@ -353,18 +362,12 @@
 	</div>
 {/snippet}
 
-<!--
-	Own BufferContainer here because Note can be reached through NotesContainer
-	or through the Bible popup, which renders Notes directly.
--->
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render noteHeaderSnippet()}
-	</BufferHeader>
-	<div style="height: {Math.max(0, clientHeight - headerHeight)}px">
-		{@render noteBody()}
-	</div>
-</BufferContainer>
+<ViewHeader bind:headerHeight>
+	{@render noteHeaderSnippet()}
+</ViewHeader>
+<div style="height: {Math.max(0, clientHeight - headerHeight)}px">
+	{@render noteBody()}
+</div>
 
 <style>
 	:global(.notes-quill.ql-container) {

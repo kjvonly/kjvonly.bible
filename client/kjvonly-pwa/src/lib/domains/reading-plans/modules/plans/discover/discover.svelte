@@ -3,16 +3,28 @@
 	// SVELTE
 	import { onMount } from 'svelte';
 
+	// APPLICATION
+	import {
+		Modules,
+		type NavigationState,
+		type NavigationStateValue,
+		useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
+
 	// COMPONENTS
 	import DiscoverList from './discoverList.svelte';
+	import {
+		handlePlanDiscoveryNavigationResult
+	} from '../runtime/plan-discovery-navigation-result';
 
 	// MODELS
-	import type { PlanDefinitionView } from '../../../models/plans.model';
-	import type { NavigationComponentProps } from '$lib/application';
-
-	// APPLICATION
-	import { useApplicationContext } from '$lib/application';
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
+	import {
+		PLANS_VIEWS,
+		type PlanDefinitionView
+	} from '../../../models/plans.model';
 
 	const {
 		bibleBooknamesService,
@@ -22,23 +34,44 @@
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
-	let {
-		paneID,
-		clientHeight,
-		navService
-	}: NavigationComponentProps = $props();
+
+	const {
+		navigationState,
+		onResult,
+		whenActive
+	} = useNavigationEntryContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
+	validateNavState(
+		navigationState
+	);
 
 	// ================================== VARS =================================
 	let planList: PlanDefinitionView[] = $state([]);
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(async () => {
-		const booknamesSource =
-			moduleResourceSelectionResolver.require(
-				paneID,
-				BIBLE_BOOKNAMES_RESOURCE_TYPE
+	onMount(() => {
+		const detachNavigationResult =
+			onResult(
+				onNavigationResult
 			);
+
+		void initialize();
+
+		return detachNavigationResult;
+	});
+
+	async function initialize(): Promise<void> {
+		const booknamesSource =
+			moduleResourceSelectionResolver
+				.require(
+					navigationState,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
 
 		const booknames =
 			await bibleBooknamesService.get(
@@ -62,7 +95,45 @@
 					)
 			})
 		);
-	});
+	}
+
+	function onNavigationResult(
+		result: NavigationStateValue
+	): void {
+		handlePlanDiscoveryNavigationResult(
+			result,
+			navigation,
+			whenActive
+		);
+	}
+
+	/**
+	 * Validates the navigation contract required by the Plans discovery view.
+	 */
+	function validateNavState(
+		value: unknown
+	): asserts value is NavigationState<PLANS_VIEWS.PLANS_LIST> {
+		if (
+			!isRecord(value) ||
+			value.module !== Modules.PLANS ||
+			value.view !== PLANS_VIEWS.PLANS_LIST ||
+			!isRecord(value.state)
+		) {
+			throw new Error(
+				'Invalid Plans discovery navigation state'
+			);
+		}
+	}
+
+	function isRecord(
+		value: unknown
+	): value is Record<string, unknown> {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value)
+		);
+	}
 </script>
 
-<DiscoverList {clientHeight} {planList} {navService}></DiscoverList>
+<DiscoverList {planList}></DiscoverList>

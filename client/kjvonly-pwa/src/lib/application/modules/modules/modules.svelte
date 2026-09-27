@@ -1,30 +1,33 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 
+	import { usePaneLayoutContext } from '../../runtime/pane/pane-layout-context';
 	// COMPONENTS
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferContainer from '$lib/application/runtime/buffer/components/bufferContainer.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
+	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
 	import Close from '$lib/components/svgs/close.svelte';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
-	import type { Pane } from '$lib/application/runtime/pane/models/pane.model';
 
 	// SERVICES
 	import { onMount } from 'svelte';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
-	const { workspaceRuntime } = useApplicationContext();
+	import { useNavigationRuntimeContext } from '$lib/application/runtime/navigation/navigation-runtime-context';
+	const {
+		authenticationService,
+		moduleLaunchDestinationResolver
+	} = useApplicationContext();
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	// =============================== BINDINGS ================================
-	let {
-		paneID,
-		pane = $bindable<Pane>()
-	}: {
-		paneID: string;
-		pane: Pane;
-	} = $props();
+	const paneLayout = usePaneLayoutContext();
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
 
 	// ================================== VARS =================================
 
@@ -37,10 +40,7 @@
 		settings: Modules.SETTINGS
 	});
 
-	const { authenticationService } = useApplicationContext();
-
 	let headerHeight = $state(0);
-	let clientHeight = $state(0);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -64,7 +64,23 @@
 
 	// ============================== CLICK FUNCS ==============================
 	function onClose(): void {
-		workspaceRuntime.closePane(paneID);
+		navigation.closePane();
+	}
+
+	function onModuleSelected(
+		module: Modules
+	): void {
+		const destination =
+			moduleLaunchDestinationResolver
+				.resolve(
+					module
+				);
+
+		navigation.pushModule(
+			module,
+			destination.view,
+			destination.state
+		);
 	}
 </script>
 
@@ -84,7 +100,7 @@
 	{#each Object.keys(components) as c}
 		<div class="w-full">
 			<button
-				onclick={() => workspaceRuntime.replaceBuffer(paneID, components[c])}
+				onclick={() => onModuleSelected(components[c])}
 				class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-neutral-100"
 				>{c}</button
 			>
@@ -93,11 +109,9 @@
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
-		{@render header()}
-	</BufferHeader>
-	<BufferBody {clientHeight} {headerHeight} classes="">
-		{@render body()}
-	</BufferBody>
-</BufferContainer>
+<ViewHeader bind:headerHeight>
+	{@render header()}
+</ViewHeader>
+<ViewBody {clientHeight} {headerHeight} classes="">
+	{@render body()}
+</ViewBody>

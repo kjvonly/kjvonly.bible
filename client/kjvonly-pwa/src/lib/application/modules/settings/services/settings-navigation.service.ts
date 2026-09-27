@@ -1,10 +1,13 @@
 import type {
-	NavigationComponent,
-	NavigationService
+	NavigationViewState
 } from '../../../services/navigation.service';
 
 // DEFINITIONS
 import { settingsDefinition } from '../definitions/settings.definition';
+import {
+	SETTINGS_VIEWS,
+	type SettingsView
+} from '../models/settings-navigation.model';
 import type {
 	SettingsCustomRowDefinition,
 	SettingsGroupRowDefinition,
@@ -21,29 +24,33 @@ import type { SettingsSearchEntry } from '../search/settings-search.model';
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export interface SettingsNavigationComponents {
-	group: NavigationComponent;
-	select: NavigationComponent;
-	custom: NavigationComponent;
-}
-
 export type SettingsNavigableRowDefinition =
 	| SettingsGroupRowDefinition
 	| SettingsSelectRowDefinition
 	| SettingsCustomRowDefinition;
 
+interface SettingsPaneNavigation {
+	pushView(
+		view: SettingsView,
+		state: NavigationViewState
+	): unknown;
+
+	back(): void;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Module-local navigation facade for Settings views.
+ * Settings navigation facade over the Pane's flat navigation stack.
  *
- * Converts declarative navigable Settings rows into generic NavigationService
- * entries while keeping component selection out of the row renderer.
+ * Declarative Settings rows remain unaware of Pane navigation mechanics while
+ * every Settings screen participates in the same mounted Pane history as the
+ * rest of the application.
  */
 export class SettingsNavigationService {
 	constructor(
-		private readonly navigationService: NavigationService,
-		private readonly components: SettingsNavigationComponents
+		private readonly navigation:
+			SettingsPaneNavigation
 	) {}
 
 	/** Navigate to the destination represented by a declarative Settings row. */
@@ -55,20 +62,20 @@ export class SettingsNavigationService {
 				this.navigateToPage(row.pageID);
 				return;
 			case 'select':
-				this.navigationService.push({
-					component: this.components.select,
-					obj: {
+				this.navigation.pushView(
+					SETTINGS_VIEWS.SELECT,
+					{
 						rowID: row.id
 					}
-				});
+				);
 				return;
 			case 'custom':
-				this.navigationService.push({
-					component: this.components.custom,
-					obj: {
+				this.navigation.pushView(
+					SETTINGS_VIEWS.CUSTOM,
+					{
 						rowID: row.id
 					}
-				});
+				);
 		}
 	}
 
@@ -97,17 +104,17 @@ export class SettingsNavigationService {
 		pageID: SettingsPageID,
 		focusRowID?: SettingsRowID
 	): void {
-		this.navigationService.push({
-			component: this.components.group,
-			obj: {
+		this.navigation.pushView(
+			SETTINGS_VIEWS.GROUP,
+			{
 				pageID,
 				...(focusRowID ? { focusRowID } : {})
 			}
-		});
+		);
 	}
 
-	/** Pop the current Settings view and reveal the preserved previous view. */
+	/** Pop the current Settings entry and reveal the preserved previous view. */
 	back(): void {
-		this.navigationService.pop();
+		this.navigation.back();
 	}
 }

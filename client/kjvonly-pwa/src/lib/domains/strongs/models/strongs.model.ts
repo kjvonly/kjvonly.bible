@@ -1,31 +1,3 @@
-export interface StrongsPopups {
-	searchPopup:
-		StrongsSearchPopup |
-		undefined;
-}
-
-export interface StrongsSearchPopup {
-	paneID:
-		string;
-
-	searchTerms:
-		string;
-
-	onFilterBibleLocationRefByBookID?:
-		(
-			refs: string[]
-		) => string[];
-}
-
-export function newStrongsPopups():
-	StrongsPopups {
-
-	return {
-		searchPopup:
-			undefined
-	};
-}
-
 export interface Strongs {
 	id:
 		string;

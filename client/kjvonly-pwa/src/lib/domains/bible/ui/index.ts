@@ -3,9 +3,13 @@ export {
 } from '../modules/reader/bibleContainer.svelte';
 
 export {
-	default as RefsContainer
-} from '../modules/refs/refsContainer.svelte';
+	bibleNavigationViewRegistrations
+} from '../modules/reader/runtime/bible-navigation-view-registrations';
 
 export {
-	default as SearchContainer
-} from '../modules/search/searchContainer.svelte';
+	refsNavigationViewRegistrations
+} from '../modules/refs/runtime/refs-navigation-view-registrations';
+
+export {
+	searchNavigationViewRegistrations
+} from '../modules/search/runtime/search-navigation-view-registrations';

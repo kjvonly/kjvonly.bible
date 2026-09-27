@@ -2,12 +2,18 @@
 
 ## Status
 
-**Application Standard / Architecture Guidance**
+**Current Application Standard / Architecture Guidance**
 
-Save in the repository as:
+Repository path:
 
 ```text
 docs/03_implementation/runtime/010-persistent-ui-lifecycle.md
+```
+
+Related navigation detail:
+
+```text
+docs/03_implementation/runtime/016-navigation-architecture.md
 ```
 
 ---
@@ -16,19 +22,9 @@ docs/03_implementation/runtime/010-persistent-ui-lifecycle.md
 
 This document defines lifecycle semantics for UI that remains mounted while temporarily hidden.
 
-The Settings navigation refactor proved the value of persistent mounted views:
+The current Pane navigation model deliberately preserves previous navigation entries in the DOM until they are popped.
 
-```text
-search state survives
-scroll survives
-input values survive
-DOM identity survives
-Back is cheap
-```
-
-The proposed application-wide navigation architecture extends that behavior to full Modules.
-
-That introduces an important lifecycle distinction:
+This produces three distinct lifecycle states:
 
 ```text
 active
@@ -36,1182 +32,578 @@ inactive but mounted
 destroyed
 ```
 
-The application must treat these as different states.
+The central rule is:
+
+> **Hidden is not destroyed, and mounted is not necessarily active.**
+
+Components, subscriptions, workers, media, timers, and callbacks must choose behavior according to that distinction.
 
 ---
 
-# 2. Traditional Component Assumption
+# 2. Persistent Navigation Behavior
 
-Many components implicitly assume:
-
-```text
-visible
-    = mounted
-
-not visible
-    = destroyed
-```
-
-Persistent navigation breaks that assumption.
-
-A component may be:
+For a stack:
 
 ```text
-mounted
-reactive
-subscribed
-running effects
-hidden
+modules.root
+plans.subscription-details
+bible.reader
 ```
 
-for an extended period.
+only `bible.reader` is active and visible.
+
+The previous entries remain mounted.
+
+Back removes only the top entry:
+
+```text
+modules.root
+plans.subscription-details
+```
+
+The existing Plans component is revealed rather than recreated.
 
 ---
 
-# 3. Lifecycle State Model
+# 3. Why Mounted Preservation Matters
 
-```mermaid
-stateDiagram-v2
-    [*] --> MountedActive
-    MountedActive --> MountedInactive: another view/module pushed
-    MountedInactive --> MountedActive: entries above popped
-    MountedActive --> Destroyed: pop/reset/close
-    MountedInactive --> Destroyed: reset/close
-    Destroyed --> [*]
+Keeping prior entries mounted naturally preserves:
+
+```text
+DOM identity
+local Svelte state
+browser input values
+scroll-owned DOM state
+editor runtime state
+component-owned caches
+feature-local subscriptions that intentionally continue
 ```
 
-These states should be explicit in architecture.
+No feature-specific reconstruction is needed for ordinary Back navigation.
 
 ---
 
-# 4. Mounted Active
+# 4. Persistence Does Not Mean DOM Persistence Across Reload
 
-Active means:
+Mounted identity exists only within the live browser session.
 
-```text
-mounted
-visible
-current navigation entry
-user-interactive
-```
-
-The component may run:
+On reload:
 
 ```text
-workers
-subscriptions
-timers
-media
-focus behavior
-network updates
+Pane.state.navigation survives
+NavigationState[] is restored
+NavigationView[] is rebuilt
+components mount again
+DOM identity is new
 ```
 
-subject to feature requirements.
+Tests should distinguish:
+
+```text
+Back preserves same instance
+reload restores same semantic state
+```
+
+These are different contracts.
 
 ---
 
-# 5. Mounted Inactive
+# 5. PaneNavigationContainer Lifecycle
 
-Inactive means:
+`PaneNavigationContainer` renders every runtime `NavigationView`.
 
-```text
-mounted
-hidden
-not current navigation entry
-state preserved
-DOM preserved
-```
+Non-active entries are hidden rather than removed.
 
-It does **not** automatically mean:
-
-```text
-onDestroy ran
-subscriptions stopped
-workers terminated
-timers paused
-observers disconnected
-```
-
-If expensive behavior must stop, the component needs an explicit activity signal.
-
----
-
-# 6. Destroyed
-
-Destroyed means:
-
-```text
-component unmounted
-cleanup callbacks run
-DOM removed
-subscriptions should be released
-workers owned by component should be disposed
-```
-
-Destroyed state should not be confused with temporarily hidden.
-
----
-
-# 7. Why Persistent Mounting Is Valuable
-
-Persistent mounting avoids reconstruction code for state the browser/framework already owns.
-
-Examples:
-
-```text
-input contents
-scroll position
-selection state
-expanded sections
-temporary form state
-focus-related DOM
-component-local caches
-```
-
-Instead of:
-
-```text
-serialize state
-destroy component
-recreate component
-restore state
-```
-
-the application can:
-
-```text
-hide component
-later reveal same component
-```
-
----
-
-# 8. State Preservation Contract
-
-When a view is pushed underneath another persistent view, the default expectation is:
-
-```text
-local UI state remains unchanged
-```
-
-unless the feature explicitly chooses to react to deactivation.
-
-This is a meaningful user-facing contract.
-
----
-
-# 9. Visibility Versus Activity
-
-A hidden component may still be computationally active.
-
-Therefore:
-
-```text
-visibility
-```
-
-and:
-
-```text
-activity
-```
-
-should be treated separately.
-
-Possible future runtime context:
-
-```ts
-interface NavigationEntryContext {
-    isActive: boolean;
-}
-```
-
-or equivalent.
-
----
-
-# 10. Why Activity State Matters
-
-Full Modules may own expensive resources:
-
-```text
-Web Workers
-FlexSearch indexes
-audio playback
-timers
-network subscriptions
-ResizeObserver
-IntersectionObserver
-large in-memory caches
-media streams
-polling
-```
-
-Keeping all of those fully active for hidden Modules can waste memory/CPU.
-
----
-
-# 10.1 Performance Principle: Preserve UI, Release Recreatable Work
-Persistent navigation should not treat the choice as:
-```text
-keep the entire Module alive at full cost
-    or
-tear down the entire Module and lose its UI state
-```
-
-The preferred optimization boundary is:
-```text
-preserve lightweight mounted UI state
-    +
-release expensive recreatable runtime resources while inactive
-```
-
-Candidates include:
-```text
-search workers
-FlexSearch indexes
-Notes workers/indexes
-Reading Plans workers/indexes
-Strong's workers/indexes
-large temporary parsing state
-```
-
-This principle should guide future ephemeral-worker work.
-
-A hidden Module may keep:
-```text
-DOM
-scroll
-query text
-selected IDs
-navigation state
-local presentation state
-```
-
-while terminating or releasing an expensive worker/index that can be reconstructed from persisted/local data when the Module becomes active again.
-
-Do not destroy the entire persistent navigation entry merely to reclaim one expensive resource.
-
----
-# 11. Pause Without Losing UI State
-
-The desired pattern is often:
-
-```text
-inactive
-    preserve UI state
-    pause expensive runtime work
-
-active again
-    resume/recreate runtime work
-```
-
-This aligns well with the existing idea of ephemeral workers.
-
----
-
-# 12. Ephemeral Workers and Persistent UI
-
-A Module can remain mounted while its worker does not.
+The renderer keys entries by runtime `NavigationView` object identity.
 
 Conceptually:
 
-```mermaid
-flowchart TD
-    MOD[Mounted Module] --> ACTIVE{isActive?}
-
-    ACTIVE -->|yes| WORKER[Worker running]
-    ACTIVE -->|no| STOP[Worker stopped]
-
-    STOP -->|reactivated| RECREATE[Recreate worker]
-    RECREATE --> WORKER
+```svelte
+{#each $views as navigationView, index (navigationView)}
+    <div class={index === $views.length - 1 ? '' : 'hidden'}>
+        <NavigationEntry {navigationView} ... />
+    </div>
+{/each}
 ```
 
-The Module preserves:
-
-```text
-query
-selection
-UI state
-navigation state
-```
-
-while expensive processing can be reclaimed.
+The key is required so a pop followed by another push at the same array depth does not reuse the previous `NavigationEntry` component incorrectly.
 
 ---
 
-# 13. Worker Ownership
+# 6. NavigationEntry Lifecycle
 
-The component/service that creates an ephemeral worker should own its termination.
+Each mounted runtime entry has one `NavigationEntry` wrapper.
 
-Lifecycle policy should be explicit:
+It owns entry-scoped runtime setup such as:
 
 ```text
-on mount
-    maybe create
-
-on active
-    ensure running
-
-on inactive
-    optionally terminate
-
-on destroy
-    definitely terminate
+NavigationEntryContext
+entry-scoped result registration bridge
+whenActive lifecycle tracking
+entry semantic-state mutation bridge
+entry Resource-selection mutation bridge
 ```
+
+When the entry is popped, that `NavigationEntry` is destroyed and entry-owned runtime registrations are cleaned up.
 
 ---
 
-# 14. Subscription Ownership
+# 7. Active Versus Mounted
 
-Persistent hidden components may continue receiving application/domain updates.
+An entry may be mounted but inactive.
 
-Whether that is correct depends on the subscription.
+Use `NavigationEntryContext.isActive()` when behavior depends on current top-entry status.
+
+Do not infer active state from:
+
+```text
+component mounted
+component exists in DOM
+module type
+Pane identity
+```
+
+The top runtime entry is active by definition.
+
+---
+
+# 8. `whenActive()`
+
+`whenActive()` registers one-shot work that should happen when the current entry becomes active again.
+
+Typical result flow:
+
+```text
+parent entry active
+    ↓
+push child
+    ↓
+parent hidden/mounted
+    ↓
+child backWithResult(...)
+    ↓
+parent result handler schedules whenActive(...)
+    ↓
+child pops
+    ↓
+parent becomes active
+    ↓
+callback runs once
+```
+
+The subscription is entry-owned and must be canceled if the entry is destroyed before activation.
+
+---
+
+# 9. Navigation Results
+
+`onResult()` registers runtime-only handlers for the current entry.
+
+`backWithResult()` delivers to the direct mounted parent before the child is popped.
+
+Important lifecycle properties:
+
+```text
+result handler belongs to mounted parent entry
+handler is not persisted
+handler may be async
+child is not popped until result delivery completes
+normal Back delivers no result
+entry destruction removes its runtime registrations
+```
+
+Do not encode result handlers into `NavigationState`.
+
+---
+
+# 10. Component-Local State
+
+Local component state is the preferred owner when state only needs to survive while the entry remains mounted.
 
 Examples:
 
 ```text
-Settings live updates
-    likely continue while hidden
-
-expensive search-result subscription
-    may pause
-
-audio progress
-    depends on playback semantics
-```
-
-Do not apply one universal rule.
-
----
-
-# 15. Live Data While Hidden
-
-Sometimes hidden UI should continue receiving live state so it is immediately correct when revealed.
-
-Example:
-
-```text
-Settings module A hidden
-Settings changed elsewhere
-A should show latest values when revealed
-```
-
-This is different from expensive background computation.
-
----
-
-# 16. Snapshot Data While Hidden
-
-Some Module context should not change merely because the component is hidden.
-
-Example:
-
-```text
-Buffer.resourceSelections
-```
-
-A hidden Module keeps the Resource snapshot associated with its interaction.
-
-Reactivation should not silently replace it with current global selections.
-
----
-
-# 17. Timers
-
-Timers should be reviewed individually.
-
-Questions:
-
-```text
-Does elapsed real time matter while hidden?
-Is the timer purely visual?
-Does hidden execution waste CPU?
-Should state catch up on resume?
-```
-
-Avoid leaving animation-only intervals running invisibly.
-
----
-
-# 18. Media
-
-Audio/video needs explicit policy.
-
-Possible semantics:
-
-```text
-navigation push pauses playback
-```
-
-or:
-
-```text
-playback continues across navigation
-```
-
-This is product behavior, not an automatic lifecycle consequence.
-
-The owner should document it.
-
----
-
-# 19. Focus
-
-Hidden content must not remain normal keyboard focus targets.
-
-The stack renderer should use hiding/inert semantics that prevent inactive entries from participating in ordinary navigation.
-
-On push:
-
-```text
-focus should enter active destination
-```
-
-On pop:
-
-```text
-focus should return sensibly to revealed origin
-```
-
----
-
-# 20. Scroll
-
-Persistent views naturally retain scroll when their scrolling DOM remains mounted.
-
-Do not add manual scroll restoration unless a component destroys/recreates its scroll container or product behavior intentionally changes it.
-
----
-
-# 21. DOM Identity
-
-Persistent navigation promises same-instance restoration.
-
-Browser tests should verify:
-
-```ts
-expect(restoredElement).toBe(originalElement);
-```
-
-when DOM identity is part of the architecture.
-
----
-
-# 22. Svelte Effects
-
-Svelte reactive effects continue to exist while the component remains mounted.
-
-If an effect should only run while active, guard it with activity state.
-
-Conceptually:
-
-```ts
-$effect(() => {
-    if (!isActive) {
-        return;
-    }
-
-    // expensive active-only work
-});
-```
-
----
-
-# 23. `onMount` / `onDestroy`
-
-Persistent hidden state does not trigger:
-
-```text
-onDestroy
-```
-
-Therefore cleanup tied only to `onDestroy` happens only when:
-
-```text
-entry is popped
-stack reset
-pane/module destroyed
-```
-
-Do not expect hiding to trigger destruction cleanup.
-
----
-
-# 24. Activation Hooks
-
-App-wide navigation may benefit from an explicit abstraction equivalent to:
-
-```text
-onActivate
-onDeactivate
-```
-
-This does not need to be invented immediately.
-
-A reactive:
-
-```text
-isActive
-```
-
-context value may be sufficient initially.
-
-Add higher-level hooks only when real repeated patterns justify them.
-
----
-
-# 25. Lifecycle Context Scope
-
-Activity state belongs to:
-
-```text
-one navigation entry
-```
-
-not globally to the Module type.
-
-Two Bible instances can have different state:
-
-```text
-Bible A
-    inactive
-
-Bible B
-    active
-```
-
-Therefore activity must be instance-scoped.
-
----
-
-# 26. Module Container Boundary
-
-The Module container is a good place to consume navigation-entry lifecycle and provide it to descendants.
-
-Conceptually:
-
-```mermaid
-flowchart TD
-    ENTRY[Navigation Entry] --> STATE[active/inactive]
-    ENTRY --> MC[Module Container]
-    MC -->|provide| LC[Module Lifecycle Context]
-    LC --> CHILD[Module descendants]
-```
-
----
-
-# 27. Internal View Lifecycle
-
-Internal navigation has the same semantics.
-
-Example:
-
-```text
-Settings root
-    inactive but mounted
-
-Appearance
-    inactive but mounted
-
-Color Theme
-    active
-```
-
-Internal views may usually be cheap enough to remain fully reactive.
-
-Do not optimize prematurely.
-
----
-
-# 28. Full Module Lifecycle
-
-Full Modules are more likely to require activity-aware resource management.
-
-Examples:
-
-```text
-Search
-Strong's
-Audio
-Notes with large indexes
-Plans worker
-Dictionary
-```
-
-Audit these during migration to persistent cross-module navigation.
-
----
-
-# 29. Memory Versus UX Tradeoff
-
-Persistent mounting intentionally trades some memory for stronger UX/state preservation.
-
-The solution should not immediately abandon persistent mounting when memory increases.
-
-Instead:
-
-```text
-preserve lightweight UI
-release expensive recreatable resources
-```
-
-This is a more targeted optimization.
-
----
-
-# 30. Classify Module Resources
-
-For each Module, classify runtime resources.
-
-## Preserve while inactive
-
-Examples:
-
-```text
-small local state
-DOM
-form drafts
-scroll
-navigation state
-selected IDs
-```
-
-## Pause while inactive
-
-Examples:
-
-```text
-polling
-animation loops
-high-frequency subscriptions
-```
-
-## Recreate on activation
-
-Examples:
-
-```text
-large search worker
-large in-memory index
-temporary parsing worker
-```
-
-## Keep running intentionally
-
-Examples:
-
-```text
-background operation whose completion matters
-audio if product behavior permits
-critical shared sync
-```
-
----
-
-# 31. Background Operations
-
-Some tasks should outlive the UI entry that started them.
-
-Examples may include:
-
-```text
-Archive import/export
-Outbox publication
-Resource download
-```
-
-These should not be owned exclusively by a navigation entry if destruction should not cancel them.
-
-Move such work to the application/domain service that truly owns the operation.
-
----
-
-# 32. UI-Owned Versus Application-Owned Work
-
-Ask:
-
-```text
-Should closing this Module cancel the operation?
-```
-
-If:
-
-```text
-yes
-```
-
-Module ownership may be appropriate.
-
-If:
-
-```text
-no
-```
-
-the operation likely belongs to an application service/background runtime.
-
----
-
-# 33. Inactive Component Events
-
-Hidden components should not normally react to user input because they are not reachable.
-
-But application/service events may still arrive.
-
-Handlers should know whether their behavior:
-
-```text
-must update hidden state
-may defer until active
-should be ignored while inactive
-```
-
----
-
-# 34. Reactivation
-
-On reactivation, a Module should:
-
-```text
-already have preserved UI state
-resume required runtime resources
-reflect live application state that intentionally stayed subscribed
-continue using its captured interaction snapshots
-```
-
-Reactivation should not be equivalent to full remount.
-
----
-
-# 35. Destroy Cleanup
-
-When popped/destroyed, cleanup must release all Module-owned resources.
-
-Examples:
-
-```text
-unsubscribe
-terminate workers
-remove event listeners
-disconnect observers
-clear timers
-release media
-dispose editors
-```
-
-Persistent navigation increases the importance of correct eventual cleanup because entries may live longer.
-
----
-
-# 36. Subscription Leak Tests
-
-For important services:
-
-```text
-mount
-subscribe
-pop/unmount
-assert unsubscribed
-```
-
-This protects long-lived navigation sessions from accumulating dead subscribers.
-
----
-
-# 37. Worker Leak Tests
-
-Where practical:
-
-```text
-activate Module
-worker created
-deactivate
-worker paused/terminated according to policy
-reactivate
-worker recreated/resumed
-destroy
-worker definitely gone
-```
-
----
-
-# 38. Lifecycle Test Matrix
-
-| State transition | What to test |
-| --- | --- |
-| mount → active | resources initialize |
-| active → inactive | DOM preserved, expensive work policy applied |
-| inactive → active | same DOM/state restored, resources resume |
-| active → destroyed | cleanup |
-| inactive → destroyed | cleanup still runs |
-| push/pop | correct active entry |
-
----
-
-# 39. Browser Tests Are Required
-
-Persistent lifecycle semantics depend on actual component mounting.
-
-Unit tests alone cannot prove:
-
-```text
-same DOM remains
-onDestroy did not run on hide
-focus behavior
-browser input state
-scroll state
-```
-
-Use browser tests for these contracts.
-
----
-
-# 40. Minimal Lifecycle Harness
-
-A focused browser fixture can:
-
-```text
-mount view/module A
-expose lifecycle counters/state
-push B
-inspect A
-pop B
-inspect A again
-unmount
-```
-
-Do not bootstrap the entire application unless necessary.
-
----
-
-# 41. Lifecycle Instrumentation
-
-Avoid shipping debug-only global instrumentation just for tests.
-
-Prefer test fixtures or injectable lightweight services when lifecycle observation is required.
-
----
-
-# 42. Avoid Hidden Global Work
-
-A persistent hidden component that continues expensive work without clear reason is a performance smell.
-
-During module migration, audit:
-
-```text
-workers
-intervals
-subscriptions
-observers
-event listeners
-large caches
-```
-
----
-
-# 43. Avoid Destroy/Recreate as the Default Optimization
-
-Destroying inactive UI fixes resource usage at the cost of losing the primary navigation benefit.
-
-Prefer targeted cleanup of expensive resources.
-
----
-
-# 44. Avoid Manual State Serialization Without Need
-
-Do not serialize:
-
-```text
-search input
-scroll
+search query
 expanded section
-editor draft
+selected local tab
+unsaved presentation state
+scroll helper state
+open inline menu
 ```
 
-merely to support Back when persistent mounting already preserves them.
+Because hidden entries remain mounted, this state survives ordinary child navigation automatically.
 
-Manual restore code adds failure modes.
+Do not persist it merely to preserve Back behavior.
 
 ---
 
-# 45. Lifecycle and Buffer Identity
+# 11. Semantic State That Must Survive Reload
 
-A hidden Module entry keeps:
+When state must survive reload or Workspace restoration, place the serializable semantic portion in `NavigationState.state` if navigation owns it.
+
+Examples:
 
 ```text
-its Buffer key
-its Buffer bag
-its Resource snapshot
+Bible location
+Plan subscription/detail ID
+selected search navigation parameters
+note ID
+a Settings subpage destination when it is part of the persisted stack
 ```
 
-When reactivated, it resumes the same interaction.
-
-Do not replace its Buffer merely because it became active again.
+Keep runtime implementation objects out of persisted state.
 
 ---
 
-# 46. Lifecycle and Pane Identity
+# 12. Resource Snapshot Lifecycle
 
-The Pane remains stable through navigation activity changes.
-
-```text
-paneID
-```
-
-does not change when:
+An entry's Resource selections remain associated with that entry while it is hidden.
 
 ```text
-push
-hide
-show
-pop
+NavigationState.state.resourceSelections
 ```
 
-The lifecycle belongs inside the Pane navigation session.
+Hiding an entry does not cause it to re-resolve from current application defaults.
+
+This preserves independent interaction context.
+
+An explicit Resource update changes that entry's snapshot through the entry navigation boundary.
 
 ---
 
-# 47. Lifecycle and Persistence
+# 13. Subscriptions
 
-Initial app-wide navigation may persist only:
+Every subscription must have an owner and a policy for inactivity.
 
-```text
-active top Buffer
-```
-
-while the historical stack remains ephemeral.
-
-If the application reloads, persistent DOM state is naturally lost.
-
-That is acceptable unless full history restoration becomes a requirement.
-
-Do not confuse:
+Possible policies:
 
 ```text
-persistent while mounted
+continue while mounted
+pause while inactive
+unsubscribe/recreate on activation
+exist only while active
+exist for Application lifetime
 ```
 
-with:
+Choose deliberately.
 
-```text
-persistent across reload
-```
+A subscription should not continue merely because the component happened to remain mounted if inactive work would be incorrect or expensive.
 
 ---
 
-# 48. Visibility CSS
+# 14. Service Subscribers
 
-The stack implementation should use a consistent hiding strategy.
+Application-global service subscriptions often remain useful while a feature entry is hidden.
 
-Requirements:
+Example: a mounted Settings instance may continue receiving application Settings snapshots so it is current when revealed.
 
-```text
-inactive entry not visible
-inactive entry not taking interactive focus
-active entry owns visible surface
-layout not duplicated
-```
+If the projection does not need hidden updates, it may pause instead.
 
-Exact classes/attributes can evolve.
+The owner determines the policy.
 
 ---
 
-# 49. Accessibility
+# 15. Workers
 
-Inactive mounted UI must not create duplicate accessible content.
+Worker lifecycle is independent from DOM visibility unless the owner intentionally couples them.
 
-The navigation stack should ensure screen readers and keyboard navigation treat only the active entry as current interactive content.
+Possible patterns:
 
-This should be included in browser/a11y regression coverage where practical.
+```text
+Application-owned worker
+    survives all Pane/view lifecycle
+
+feature runtime worker
+    exists while feature entry is mounted
+
+active-only expensive worker
+    starts/stops with entry activity
+
+ephemeral operation worker
+    exists only for one import/export/search operation
+```
+
+Do not use one blanket rule for all workers.
 
 ---
 
-# 50. Active State and Context
+# 16. Timers and Polling
 
-A future context may expose:
+Timers owned by a hidden entry can continue consuming resources and mutating UI state.
 
-```ts
-interface ModuleLifecycleContext {
-    isActive: boolean;
-}
-```
-
-or fold this into:
+Ask whether the timer should:
 
 ```text
-ModuleRuntimeContext
+continue while hidden
+pause while hidden
+restart on activation
+move to an application-owned service
 ```
 
-The exact API should remain minimal until multiple Modules need it.
+Entry activity provides the correct semantic signal when visibility matters.
 
 ---
 
-# 51. JSDoc Expectations
+# 17. Audio and Media
 
-Lifecycle-sensitive functions should document:
+Media may have lifecycle semantics different from visual component visibility.
+
+For example, future audio playback might intentionally continue while its originating view is hidden.
+
+The media owner must decide:
 
 ```text
-whether hidden state stays mounted
-whether resources pause
-whether cleanup happens on deactivate or destroy
-whether state resumes
+UI hidden
+    does playback continue?
+
+entry destroyed
+    does playback stop or transfer to application owner?
 ```
+
+Do not let Svelte destruction accidentally define product behavior.
+
+---
+
+# 18. Focus and Accessibility
+
+Hidden navigation entries must not participate in normal user interaction.
+
+The navigation renderer's hidden state should prevent inactive content from acting as visible interactive UI.
+
+When an entry becomes active again, existing DOM state is revealed.
+
+If explicit focus restoration is required, keep it as UI/navigation lifecycle behavior rather than Domain state.
+
+---
+
+# 19. Layout Lifecycle
+
+`PaneLayoutContext` is owned by the rendered Pane.
+
+It exposes reactive layout values such as `clientHeight` to descendants.
+
+A navigation entry becoming hidden does not create a second Pane layout owner.
+
+Feature components consume the Pane's measurement rather than independently redefining Pane sizing.
+
+---
+
+# 20. Pop Lifecycle
+
+Back from depth greater than one performs the semantic lifecycle transition:
+
+```text
+active top entry
+    ↓
+persisted top state removed
+    ↓
+runtime top NavigationView removed
+    ↓
+NavigationEntry destroyed
+    ↓
+previous mounted entry becomes active
+```
+
+The previous entry is not remounted.
+
+---
+
+# 21. Push Lifecycle
+
+Push performs:
+
+```text
+build semantic NavigationState
+resolve runtime component
+persist new entry
+publish runtime NavigationView
+previous entry stays mounted/inactive
+new entry mounts/active
+```
+
+Persistence is updated before runtime notification so synchronous activation subscribers cannot observe a runtime stack that has not yet been persisted.
+
+---
+
+# 22. Split Lifecycle
+
+A split does not hide the originating entry behind another entry in the same Pane.
+
+Instead it creates another Pane with an independent navigation runtime.
+
+The origin Pane remains active with its existing stack.
+
+The new Pane starts with:
+
+```text
+modules.root
+[target when non-root]
+```
+
+Each Pane then owns independent mounted-entry lifecycles.
+
+---
+
+# 23. Closing `modules.root`
+
+`modules.root` represents the Pane's default/empty navigation state.
+
+Closing an ordinary working entry uses Back.
+
+Closing `modules.root` requests structural Pane deletion.
+
+If it is the final Pane, deletion is rejected and the Pane remains.
+
+This is Workspace lifecycle, not ordinary child-entry lifecycle.
+
+---
+
+# 24. Multi-Pane Lifecycle Isolation
+
+Two Panes must have independent lifecycle state.
 
 Example:
 
-```ts
-/**
- * Stops the Module's ephemeral search worker while the navigation entry is
- * inactive. UI state remains mounted and is reused when the entry becomes
- * active again.
- */
+```text
+Pane A
+    Search hidden under Bible
+
+Pane B
+    Settings root active
+```
+
+Activating/popping entries in Pane A must not affect:
+
+```text
+Pane B entry activity
+Pane B result handlers
+Pane B Resource snapshots
+Pane B component identity
+Pane B layout context
 ```
 
 ---
 
-# 52. Migration Audit Checklist
+# 25. Hidden State and Derived Work
 
-Before placing a Module in a persistent stack, inspect:
+A hidden component may still react to live stores and recompute `$derived` values.
+
+That is acceptable when cheap and semantically correct.
+
+For expensive work, consider:
 
 ```text
-onMount
-onDestroy
-$effect
-subscriptions
-workers
+entry activity gate
+service-level memoization
+worker pause/restart
+ephemeral worker creation
+```
+
+Do not optimize by destroying the entire entry if same-instance Back preservation is part of the interaction contract.
+
+---
+
+# 26. Destroy Cleanup
+
+When an entry is actually destroyed, release all entry-owned runtime resources.
+
+Examples:
+
+```text
+Svelte subscriptions
+manual store subscriptions
+whenActive subscriptions
+result registrations
+DOM listeners
+feature-owned workers
 timers
-observers
-audio/media
-large caches
-global event listeners
-focus assumptions
-scroll ownership
+media handles when entry-owned
+AbortControllers
 ```
 
-Decide what each does in inactive state.
+Cleanup is part of ownership, not optional polish.
 
 ---
 
-# 53. Suggested Module Migration Table
-
-For every migrated Module, document:
-
-```text
-Module:
-    Search
-
-UI state:
-    preserve
-
-Worker:
-    terminate inactive / recreate active
-
-Subscriptions:
-    keep/pause
-
-Media:
-    n/a
-
-Resource snapshot:
-    preserve Buffer
-
-Destroy cleanup:
-    terminate worker, unsubscribe
-```
-
-This makes lifecycle policy reviewable.
-
----
-
-# 54. Anti-Patterns
+# 27. Anti-Patterns
 
 Avoid:
 
-## Assuming hidden means destroyed
-
-Cleanup will not have run.
-
-## Keeping every expensive resource active
-
-Wastes CPU/memory.
-
-## Destroying all hidden UI
-
-Loses navigation-state benefits.
-
-## Replacing Buffer on reactivation
-
-Changes interaction identity.
-
-## Storing active state globally by Module type
-
-Multiple instances can coexist.
-
-## Letting inactive UI remain keyboard-accessible
-
-Accessibility bug.
-
-## Background operations owned by disposable UI when they should survive it
-
-Wrong lifecycle owner.
+```text
+treating mounted as active
+reconstructing previous view on Back
+persisting local UI state only to survive Back
+global activity flag shared by all Panes
+hidden entry resolving Resources from active top entry
+result handlers surviving destroyed entries
+whenActive subscriptions leaking after destruction
+array-index keyed navigation entries
+feature directly mutating runtime views
+component destruction accidentally owning application-global work
+```
 
 ---
 
-# 55. Architecture Invariants
+# 28. Lifecycle Decision Table
 
-1. Active, inactive-mounted, and destroyed are distinct lifecycle states.
-2. Push deactivates the previous entry without destroying it.
-3. Pop destroys only the popped entry and reactivates the previous one.
-4. UI state remains preserved while inactive unless explicitly designed otherwise.
-5. Expensive resources may pause/recreate independently from UI mounting.
-6. Buffer identity remains stable while an entry is inactive.
-7. Pane identity remains stable across navigation lifecycle transitions.
-8. Hidden entries must not participate in normal keyboard/accessibility interaction.
-9. Destroy cleanup releases all entry-owned resources.
-10. Application-owned background work is not accidentally canceled by UI destruction.
-11. Activity state is scoped per navigation entry/module instance.
-12. Browser tests protect persistent lifecycle contracts.
+| State/capability | Hidden entry | Destroyed entry |
+| --- | --- | --- |
+| Local Svelte state | preserve | release |
+| DOM identity | preserve | release |
+| NavigationState | preserve | removed when popped |
+| Entry Resource snapshot | preserve | removed with entry |
+| Result registration | preserve while entry exists | cleanup |
+| `whenActive` subscription | preserve until activation | cleanup |
+| Application service | continue | continue |
+| Entry-owned subscription | owner decides active/hidden policy | cleanup |
+| Entry-owned worker | owner decides | cleanup |
+| Application-owned worker | continue | continue |
 
 ---
 
-# 56. Summary
+# 29. Architecture Invariants
 
-Persistent navigation changes the lifecycle model from:
+1. Active, inactive-mounted, and destroyed are distinct states.
+2. Push hides the previous entry without destroying it.
+3. Back destroys only the popped entry and reveals the previous instance.
+4. Navigation entries are keyed by runtime identity, not array index.
+5. Same-session Back preserves component/DOM identity.
+6. Reload preserves semantic state, not DOM identity.
+7. Entry Resource snapshots survive inactivity unchanged unless explicitly updated.
+8. Result and activation registrations are runtime-only and entry-owned.
+9. Hidden entries do not become a source of Pane-global state.
+10. Destroy cleanup releases all entry-owned resources.
+11. Application-owned work does not accidentally stop because one view is destroyed.
+12. Multi-Pane lifecycle state remains isolated.
 
-```text
-visible
-    or
-destroyed
-```
+---
 
-to:
+# 30. Testing Guidance
 
-```text
-active
-inactive but preserved
-destroyed
-```
-
-That distinction allows the application to get both:
-
-```text
-strong Back/navigation UX
-```
-
-and:
+High-value browser/runtime tests include:
 
 ```text
-controlled CPU/memory usage
+push child → parent DOM node remains mounted
+Back → exact same parent DOM node visible
+pop + push different view at same depth → old component destroyed
+normal Back → no result callback
+backWithResult → parent handler runs before child pop
+whenActive → callback runs after parent becomes active
+entry destroyed before activation → pending activation callback does not leak
+Resource selection remains entry-local across hidden/visible transitions
+reload → semantic stack restored with new DOM instances
+two Panes → independent activity/lifecycle
 ```
 
-The recommended strategy is:
+---
+
+# 31. Summary
+
+Persistent UI lifecycle is based on one simple distinction:
 
 ```text
-preserve UI
-pause expensive work
-resume on activation
-clean up fully on destruction
+hidden != destroyed
+mounted != active
 ```
 
-This should become the default lifecycle model for Modules and views participating in persistent navigation.
+The navigation runtime preserves prior entries because same-instance continuation is valuable. Runtime owners must therefore decide explicitly what continues while hidden, what pauses until active, and what is released only on destruction.

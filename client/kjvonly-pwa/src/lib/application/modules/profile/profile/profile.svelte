@@ -1,25 +1,25 @@
 <script lang="ts">
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import {
+		usePaneLayoutContext
+	} from '../../../runtime/pane/pane-layout-context';
+	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
+	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
 	import ProfileHeader from './profileHeader.svelte';
 	import Pubkey from './home/pubkey.svelte';
 	import Relays from './home/relays.svelte';
 	import Name from './home/name.svelte';
 	import Nsec from './home/nsec.svelte';
 
-	let {
-		paneID,
-		obj = $bindable(),
-		clientHeight,
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+	const paneLayout = usePaneLayoutContext();
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
 
 	let headerHeight: number = $state(0);
 </script>
 
 {#snippet header()}
-	<ProfileHeader {paneID} bind:navService></ProfileHeader>
+	<ProfileHeader></ProfileHeader>
 {/snippet}
 
 {#snippet body()}
@@ -31,9 +31,9 @@
 	</div>
 {/snippet}
 
-<BufferHeader bind:headerHeight>
+<ViewHeader bind:headerHeight>
 	{@render header()}
-</BufferHeader>
-<BufferBody {clientHeight} {headerHeight}>
+</ViewHeader>
+<ViewBody {clientHeight} {headerHeight}>
 	{@render body()}
-</BufferBody>
+</ViewBody>

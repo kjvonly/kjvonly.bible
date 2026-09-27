@@ -1,29 +1,33 @@
 <script lang="ts">
-	import type { NavigationComponentProps } from '$lib/application/services/navigation.service';
-	import BufferBody from '$lib/application/runtime/buffer/components/bufferBody.svelte';
-	import BufferHeader from '$lib/application/runtime/buffer/components/bufferHeader.svelte';
+	import {
+		usePaneLayoutContext
+	} from '../../../runtime/pane/pane-layout-context';
+	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
+	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
 	import KJVButtonRounded from '$lib/components/buttons/KJVButtonRounded.svelte';
-	import { Modules } from '$lib/application/models/modules.model';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
+	import { useNavigationRuntimeContext } from '$lib/application/runtime/navigation/navigation-runtime-context';
+	import { LOGIN_NAVIGATION_RESULTS } from '../login-navigation.model';
 	import CreateAccountHeader from './createAccountHeader.svelte';
 
-	let {
-		paneID,
-		clientHeight,
-		obj = $bindable(),
-		navService = $bindable()
-	}: NavigationComponentProps = $props();
+	const paneLayout = usePaneLayoutContext();
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
 
 	const {
 		authenticationService,
-		accountService,
-		workspaceRuntime
+		accountService
 	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	let headerHeight: number = $state(0);
 	let name = $state('');
 
-	async function createAccount() {
+	async function createAccount(): Promise<void> {
 		await authenticationService.createIdentity();
 
 		await accountService.setup(
@@ -31,12 +35,15 @@
 			name
 		);
 
-		workspaceRuntime.replaceBuffer(paneID, Modules.PROFILE);
+		await navigation.backWithResult({
+			type:
+				LOGIN_NAVIGATION_RESULTS.AUTHENTICATED
+		});
 	}
 </script>
 
 {#snippet header()}
-	<CreateAccountHeader bind:navService></CreateAccountHeader>
+	<CreateAccountHeader></CreateAccountHeader>
 {/snippet}
 
 {#snippet body()}
@@ -55,12 +62,12 @@
 	</div>
 {/snippet}
 
-<BufferHeader
+<ViewHeader
 	bind:headerHeight
 	classes="flex w-full justify-between outline outline-neutral-400 text-neutral-700"
 >
 	{@render header()}
-</BufferHeader>
-<BufferBody {clientHeight} {headerHeight}>
+</ViewHeader>
+<ViewBody {clientHeight} {headerHeight}>
 	{@render body()}
-</BufferBody>
+</ViewBody>

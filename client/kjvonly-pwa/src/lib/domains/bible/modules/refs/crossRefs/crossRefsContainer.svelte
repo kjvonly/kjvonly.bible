@@ -15,7 +15,11 @@
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
 
 	// MODELS
-	import { Modules } from '$lib/application';
+	import {
+		Modules,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 	import {
 		newCrossRef,
 		type CrossRef
@@ -33,7 +37,6 @@
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application';
 	const {
-		workspaceRuntime,
 		toastService
 	} = useApplicationContext();
 	const {
@@ -43,9 +46,15 @@
 		bibleLocationReferenceService
 	} = useApplicationContext();
 
+	const { navigationState } =
+		useNavigationEntryContext();
+	const { navigation } =
+		useNavigationRuntimeContext();
+
 	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../../resources/chapters/bible-chapter-interpreter';
 
 	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_VIEWS } from '../../../models/bible-navigation.model';
 
 	import {
 		isCrossReference,
@@ -55,10 +64,8 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		paneID,
 		boundCrossRefs
 	}: {
-		paneID: string;
 		boundCrossRefs: string[];
 	} = $props();
 
@@ -96,7 +103,7 @@
 
 	async function loadBooknames(): Promise<void> {
 		const source = moduleResourceSelectionResolver.require(
-			paneID,
+			navigationState,
 			BIBLE_BOOKNAMES_RESOURCE_TYPE
 		);
 
@@ -119,7 +126,7 @@
 
 	function requireChapterSelection() {
 		return moduleResourceSelectionResolver.require(
-			paneID,
+			navigationState,
 			BIBLE_CHAPTER_RESOURCE_TYPE
 		);
 	}
@@ -196,6 +203,20 @@
 	// ============================== CLICK FUNCS ==============================
 
 	async function onCrossRefClicked(crossRef: CrossRef) {
+		const breadcrumbIndex =
+			breadcrumbCrossRefs.findIndex(
+				(breadcrumb) =>
+					breadcrumb.bibleLocationRef ===
+					crossRef.bibleLocationRef
+			);
+
+		if (breadcrumbIndex !== -1) {
+			onBreadcrumbCrossRefClicked(
+				breadcrumbIndex + 1
+			);
+			return;
+		}
+
 		let bibleLocationRef =
 			bibleLocationReferenceService.convertCrossRefToBibleLocationRef(
 				crossRef.crossRef
@@ -231,16 +252,26 @@
 
 	function onSplitScreenHorizontal(e: Event, crossRef: CrossRef): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(paneID, PaneSplit.HORIZONTAL, Modules.BIBLE, {
-			bibleLocationRef: `${crossRef.bookId}_${crossRef.chapterNumber}_${crossRef.verseNumber}`
-		});
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
+			{
+				bibleLocationRef: `${crossRef.bookId}_${crossRef.chapterNumber}_${crossRef.verseNumber}`
+			}
+		);
 	}
 
 	function onSplitScreenVertical(e: Event, crossRef: CrossRef): void {
 		e.stopPropagation();
-		workspaceRuntime.splitPane(paneID, PaneSplit.VERTICAL, Modules.BIBLE, {
-			bibleLocationRef: `${crossRef.bookId}_${crossRef.chapterNumber}_${crossRef.verseNumber}`
-		});
+		navigation.split(
+			PaneSplit.VERTICAL,
+			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
+			{
+				bibleLocationRef: `${crossRef.bookId}_${crossRef.chapterNumber}_${crossRef.verseNumber}`
+			}
+		);
 	}
 </script>
 

@@ -9,19 +9,24 @@
 	// SERVICES
 
 	// API
-	import type { Strongs, StrongsPopups, UsageBy } from '$lib/domains/strongs';
+	import type { Strongs, UsageBy } from '$lib/domains/strongs';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 	import KeyboardArrowDown from '$lib/components/svgs/keyboardArrowDown.svelte';
 	import Dictionary from '$lib/components/svgs/dictionary.svelte';
 	import ShortText from '$lib/components/svgs/shortText.svelte';
 
-	import { useApplicationContext } from '$lib/application';
+	import {
+		Modules,
+		useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext
+	} from '$lib/application';
 
 	import type { PublishedResourceReference } from '$lib/resource';
 
 	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
-	import { filterBibleLocationRefsByBookID } from './strongs-search';
+	import { SEARCH_VIEWS } from '../../../models/search-navigation.model';
 
 	const {
 		strongsService,
@@ -29,29 +34,30 @@
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
+	const { navigationState } =
+		useNavigationEntryContext();
+
+	const { navigation } =
+		useNavigationRuntimeContext();
+
 	// =============================== BINDINGS ================================
 	let {
-		popups = $bindable<StrongsPopups>(),
 		hasCrossRef,
 		strongsSource,
 		strongsRefs,
 		strongsWords,
-		text,
-		paneID
+		text
 	}: {
-		popups: StrongsPopups;
 		hasCrossRef: boolean;
 		strongsSource: PublishedResourceReference;
 		strongsRefs: string[];
 		strongsWords: string[] | undefined;
 		text: string;
-		paneID: string;
 	} = $props();
 
 	// ================================== VARS =================================
 
 	let toggleStrongs = $state(false);
-	let searchTerms = $state('');
 	let strongsWithToggle: StrongsWithToggle[] = $state([]);
 
 	interface StrongsWithToggle extends Strongs {
@@ -105,7 +111,7 @@
 		const source =
 			moduleResourceSelectionResolver
 				.require(
-					paneID,
+					navigationState,
 					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				);
 
@@ -131,27 +137,34 @@
 			searchText += `${shortName} ${ub.text} OR `;
 		});
 
-		let lastIndexOfOr = searchText.lastIndexOf('OR');
-		searchTerms = sanitize(searchText.substring(0, lastIndexOfOr));
+		const lastIndexOfOr =
+			searchText.lastIndexOf('OR');
 
-		popups.searchPopup = {
-			paneID,
-			searchTerms,
-			onFilterBibleLocationRefByBookID: (refs) =>
-				filterBibleLocationRefsByBookID(
-					refs,
-					bookID
-				)
-		};
+		const searchTerms = sanitize(
+			searchText.substring(
+				0,
+				lastIndexOfOr
+			)
+		);
+
+		navigation.pushModule(
+			Modules.SEARCH,
+			SEARCH_VIEWS.RESULTS,
+			{
+				query: searchTerms,
+				bookID
+			}
+		);
 	}
 
 	function onByWord(b: UsageBy): void {
-		searchTerms = sanitize(b.text);
-
-		popups.searchPopup = {
-			paneID,
-			searchTerms
-		};
+		navigation.pushModule(
+			Modules.SEARCH,
+			SEARCH_VIEWS.RESULTS,
+			{
+				query: sanitize(b.text)
+			}
+		);
 	}
 
 	function onStrongsWordClicked(s: StrongsWithToggle): void {

@@ -2,9 +2,9 @@
 
 ## Status
 
-**Application Standard / Architecture Guidance**
+**Current Application Standard / Architecture Guidance**
 
-Save in the repository as:
+Repository path:
 
 ```text
 docs/03_implementation/runtime/013-live-vs-snapshot-state.md
@@ -14,817 +14,629 @@ docs/03_implementation/runtime/013-live-vs-snapshot-state.md
 
 # 1. Purpose
 
-This document defines how KJVOnly.bible should decide whether runtime state is:
+This document defines how KJVOnly.bible distinguishes:
 
 ```text
-live
-snapshot
-derived
-draft
-cached
-```
-
-A major architectural source of bugs is using the wrong semantic model.
-
-Examples:
-
-```text
-Settings
-    should be live across mounted instances
-
-Buffer.resourceSelections
-    should be captured snapshots
-
-search results
-    should be derived
-
-editor content before Save
-    may be draft
+live state
+snapshot state
+authoritative state
+derived state
+draft state
+cached state
 ```
 
 The central rule is:
 
-> **Every important runtime value should have an explicit freshness semantic.**
+> **Every important runtime value should have explicit freshness semantics.**
+
+A value can be correctly owned but still behave incorrectly if the code assumes the wrong live/snapshot model.
 
 ---
 
-# 2. Why Freshness Semantics Matter
+# 2. Vocabulary
 
-Without an explicit rule, developers naturally choose whichever data source is easiest to access.
+## Live
 
-That can produce:
+A live value is expected to reflect later changes from its authority.
+
+## Snapshot
+
+A snapshot captures a value/context at a specific interaction boundary and does not automatically follow later source changes.
+
+## Authoritative
+
+The authoritative owner defines the logical current value.
+
+## Derived
+
+A derived value can be recomputed from authority and is not independently authoritative.
+
+## Draft
+
+A draft is intentionally uncommitted user work separate from committed authority.
+
+## Cache
+
+A cache is a performance/offline copy with explicit invalidation/rebuild rules.
+
+---
+
+# 3. Current Examples
 
 ```text
-open Module silently changes context
-hidden Module reads another Module's resources
-Settings UI becomes stale
-draft overwrites newer committed data
-derived values drift from authority
+SettingsService Settings
+    authoritative + live
+
+mounted SettingsContext.settings
+    live projection
+
+NavigationState.state.resourceSelections
+    snapshot
+
+NavigationState semantic fields
+    persisted interaction state; explicitly mutable through entry APIs
+
+Domain Object store
+    authoritative Domain state
+
+search results
+    derived
+
+editor unsaved content
+    draft
+
+search index in memory
+    cache / derived runtime projection
 ```
 
 ---
 
-# 3. Live State
+# 4. Application Settings Are Live
 
-Live state represents current application truth.
+Application Settings are shared application values.
 
-Consumers expect later changes to propagate.
+If one Settings instance changes a value:
+
+```text
+SettingsService
+    persists/applies authoritative change
+    ↓
+subscribers receive new snapshot
+    ↓
+other mounted Settings instances update
+    ↓
+other application consumers react
+```
+
+A mounted Settings instance should not intentionally remain on an old committed Settings value unless it is editing a separate draft.
+
+---
+
+# 5. Local Settings Projection Is Not Authority
+
+`SettingsContext` may hold a reactive local projection so the mounted Settings UI updates naturally.
+
+That projection is not an independent persistence owner.
+
+Mutation path:
+
+```text
+user action
+    ↓
+SettingsContext update capability
+    ↓
+SettingsService
+    ↓
+authoritative persistence/application
+    ↓
+subscriber projection update
+```
+
+Do not mutate the local projection and separately persist it through another path.
+
+---
+
+# 6. Entry Resource Selections Are Snapshots
+
+The primary snapshot example in the current navigation architecture is:
+
+```text
+NavigationState.state.resourceSelections
+```
+
+A navigation interaction captures the Resource selections that define that interaction.
+
+Later application default/current selection changes do not silently rewrite existing entries.
+
+This enables independent interactions such as:
+
+```text
+Pane A Bible entry → KJV
+Pane B Bible entry → ASV
+```
+
+or even multiple Bible entries in one Pane stack with different snapshots.
+
+---
+
+# 7. Snapshot Creation for New Navigation
+
+`NavigationStateBuilder` creates a new entry Resource snapshot through `ModuleResourceSelectionBuilder`.
+
+If there is no originating snapshot:
+
+```text
+independent(targetModule)
+```
+
+If there is an originating snapshot:
+
+```text
+related(targetModule, copiedOriginatingSelections)
+```
+
+The destination receives its own snapshot.
+
+It does not share the same mutable selection map object with the origin.
+
+---
+
+# 8. Explicit Snapshot Update
+
+Snapshots are not immutable forever.
+
+They change through an explicit operation when the user changes the interaction's selected Resource.
+
+Current flow:
+
+```text
+NavigationEntryContext.updateResourceSelection(...)
+    ↓
+PaneNavigationService
+    ↓
+ModuleResourceSelectionBuilder.update(...)
+    ↓
+normalized new ResourceSelections snapshot
+    ↓
+current NavigationState.state.resourceSelections
+    ↓
+persist Pane state
+```
+
+The important rule is:
+
+> Snapshot change is explicit and scoped to the owning interaction.
+
+---
+
+# 9. Navigation Semantic State
+
+`NavigationState.state` contains persisted semantic interaction state.
+
+Some fields are stable initialization values; others may be explicitly updated during the interaction.
 
 Examples:
 
 ```text
-SettingsService state
-authentication identity
-application events/current global status
-shared synchronization state
+Bible location
+selected note ID
+Plan detail ID
+feature semantic options
 ```
 
-Conceptually:
+This state is not automatically live from another application service merely because a similar value exists elsewhere.
 
-```mermaid
-flowchart TD
-    AUTH[Live authority] --> A[Consumer A]
-    AUTH --> B[Consumer B]
-    CHANGE[Change] --> AUTH
-    AUTH -->|new value| A
-    AUTH -->|new value| B
-```
+Define which owner is authoritative for each field.
 
 ---
 
-# 4. Snapshot State
+# 10. Domain Objects Are Authoritative Domain State
 
-Snapshot state is captured for a specific interaction/time.
+A Domain Object stored through its Domain service/store is normally authoritative for Domain truth.
 
-Later changes to the source do not automatically alter the snapshot.
+Navigation should carry an ID/reference to that object rather than duplicating a second live copy as authority.
 
 Example:
 
 ```text
-Buffer.resourceSelections
+NavigationState.state.noteID
+    ↓
+NotesService
+    ↓
+current Note Domain Object
 ```
 
-A Module interaction should continue using the Resource sources captured when its Buffer was created.
+The navigation state identifies the interaction target; the Domain store owns the Note.
 
 ---
 
-# 5. Snapshot Creation
+# 11. Draft State
 
-Conceptually:
+A draft is intentionally separate from committed authority.
 
-```mermaid
-flowchart TD
-    CURRENT[Current application selections]
-    ORIGIN[Originating Buffer selections]
-    POLICY[Target Module policy]
-
-    CURRENT --> BUILD[Build related Buffer]
-    ORIGIN --> BUILD
-    POLICY --> BUILD
-
-    BUILD --> SNAP[New resourceSelections snapshot]
-    SNAP --> MOD[Module interaction lifetime]
-```
-
-The snapshot is intentionally independent afterward.
-
----
-
-# 6. Snapshot Does Not Mean Immutable Object
-
-Snapshot semantics mean:
+Examples:
 
 ```text
-not automatically replaced by later source changes
+unsaved Note editor content
+future encrypted draft content
+temporary form edits
 ```
 
-They do not necessarily require JavaScript deep immutability.
-
-However, accidental shared mutable references can violate snapshot intent.
-
-Therefore snapshot construction should copy/own data appropriately.
-
----
-
-# 7. Live Does Not Mean Global
-
-A value can be live within a narrower scope.
-
-Example:
+A draft may live in:
 
 ```text
-Module-local navigation stack
+component state
+feature context
+draft store
 ```
 
-is live state for one Module instance.
+depending on required lifecycle.
 
-It is not application-global.
-
-"Live" describes freshness semantics, not scope.
-
----
-
-# 8. Snapshot Does Not Mean Persisted
-
-A snapshot may exist only in memory.
-
-Example:
+Its semantics must answer:
 
 ```text
-temporary interaction context
+Does it survive Back?
+Does it survive reload?
+Is it encrypted?
+When does it become authoritative?
 ```
 
-Persistence and freshness are separate questions.
-
-A value can be:
-
-```text
-live + persisted
-live + ephemeral
-snapshot + persisted
-snapshot + ephemeral
-```
-
----
-
-# 9. Settings as Live State
-
-Settings are application-global live state.
-
-Expected behavior:
-
-```text
-Settings module A changes theme
-Settings module B updates
-BufferContainer updates max-width behavior
-other Settings consumers update
-```
-
-A mounted consumer should not keep using an old Settings snapshot unless it explicitly represents a draft.
-
----
-
-# 10. Buffer Resource Selections as Snapshot State
-
-Resource selections on a Buffer are interaction context.
-
-Expected behavior:
-
-```text
-Bible Pane uses KJVS
-application current Bible selection changes later
-existing Bible interaction still uses KJVS
-```
-
-A newly created Module may use the newer application selection according to contributor policy.
-
----
-
-# 11. Application ResourceSelectionService as Live Policy State
-
-`ResourceSelectionService` represents current/default application selection policy.
-
-It is consulted when constructing new Module context.
-
-It should not be read repeatedly by an already-created Module as a substitute for its Buffer snapshot.
+Do not call a draft “current Domain state” until commit succeeds.
 
 ---
 
 # 12. Derived State
 
-Derived state is computed from other state.
+Derived state should normally be recomputed from authority.
 
 Examples:
 
 ```text
 search results
-current choice label
-formatted font-size text
-canGoBack
-active navigation entry
+formatted Settings labels
+active-entry boolean
+breadcrumb labels
+progress percentages
+filtered/sorted lists
 ```
 
-Derived state should normally update automatically from its dependencies.
+Do not persist a derived value merely because it is convenient to render.
 
-It should not become an independent stored authority.
+Persist it only when it is actually a cache with explicit lifecycle/invalidation semantics.
 
 ---
 
-# 13. Draft State
+# 13. Cached State
 
-Draft state intentionally diverges from authority until committed.
+A cache is allowed to be stale temporarily under an explicit policy.
+
+Examples may include:
+
+```text
+in-memory search index
+worker projection
+precomputed Resource-derived index
+```
+
+A cache must define:
+
+```text
+authoritative input
+creation/rebuild boundary
+invalidation signal
+staleness tolerance
+owner/lifecycle
+```
+
+Archive import is a good example of why cache invalidation must be explicit: imported accepted state may require worker/runtime projections to refresh.
+
+---
+
+# 14. Live Does Not Mean Global
+
+Live state may still be scoped.
 
 Examples:
 
 ```text
-Note editor draft
-Font Size unsaved input
-future encrypted draft content
+PaneLayoutContext.clientHeight
+    live + Pane-local
+
+SettingsContext.settings
+    live projection + feature-instance-local
+
+component $derived values
+    live + view-local
 ```
 
-Draft semantics should define:
-
-```text
-when created
-when saved
-when discarded
-whether auto-save exists
-```
+Freshness semantics and ownership scope are orthogonal.
 
 ---
 
-# 14. Cached State
+# 15. Snapshot Does Not Mean Stale Bug
 
-A cache stores a value for performance but should remain logically reproducible from another authority.
+A snapshot intentionally preserves interaction meaning.
 
-Examples might include:
+If global/default Resource selection changes while an existing Bible entry remains mounted, the existing entry retaining its prior Resource selection is correct snapshot behavior.
 
-```text
-local saved search index
-decoded resource cache
-computed lookup table
-```
-
-Cache invalidation rules should be explicit.
-
-A cache should not silently become the only source of truth unless architecture changes deliberately.
+Calling that value “stale” would be incorrect unless the product contract says existing entries must follow global changes.
 
 ---
 
-# 15. Freshness Matrix
+# 16. Same Value, Different Semantics
 
-| State kind | Later authority changes propagate automatically? | Can diverge intentionally? |
-| --- | ---: | ---: |
-| Live | Yes | No, except transient processing |
-| Snapshot | No | Yes, by design |
-| Derived | Recomputed | No independent authority |
-| Draft | No until commit | Yes |
-| Cache | Depends on invalidation | Temporarily |
+The same conceptual information may appear in different forms with different freshness rules.
+
+Example: Bible selection.
+
+```text
+ResourceSelectionService
+    current/default selection policy for new context
+
+NavigationState.state.resourceSelections
+    captured selection for one interaction
+
+component-derived Bible version label
+    presentation derived from entry snapshot
+```
+
+Do not synchronize all copies merely because they refer to the same Bible version concept.
 
 ---
 
-# 16. Scope and Freshness Are Separate Axes
+# 17. Copy Snapshots at Boundaries
 
-Example matrix:
+When creating a new interaction snapshot, avoid accidental mutable aliasing.
 
-| Value | Scope | Freshness |
-| --- | --- | --- |
-| Settings | Application | Live |
-| Settings navigation | Module instance | Live |
-| Settings search query | View | Live/local |
-| Buffer.resourceSelections | Module instance | Snapshot |
-| Buffer.bag | Module instance | Captured context |
-| Note Domain Object | Domain/application | Authoritative persisted |
-| Note edit draft | View/module | Draft |
-| Search results | View | Derived |
+`NavigationStateBuilder` copies Resource selections when constructing destination state.
 
-This vocabulary helps reviews.
-
----
-
-# 17. Captured Context
-
-`Buffer.bag` is best thought of as:
+The intended relationship is:
 
 ```text
-captured Module initialization/navigation context
-```
+origin snapshot
+    source context
 
-Some bag fields may later be updated deliberately, but the bag should not automatically mirror unrelated global state.
-
-Its semantics are closer to:
-
-```text
-interaction context
-```
-
-than:
-
-```text
-application-global live state
-```
-
----
-
-# 18. Related Snapshot Creation
-
-A related Module transition may inherit compatible context from an originating snapshot.
-
-This means:
-
-```text
 new snapshot
-    based partly on
-originating snapshot
+    related but independently owned
 ```
 
 not:
 
 ```text
-both Modules share one mutable selection object
+origin and destination share one mutable map
 ```
 
 ---
 
-# 19. Why Snapshots Matter for Multiple Panes
+# 18. Persisted Snapshot Semantics
 
-Multiple Panes may intentionally use different Resources.
+Snapshots that define restored interaction meaning belong in persisted semantic state.
 
-Example:
+For navigation Resource context:
 
 ```text
-Pane A
-    KJVS Bible
-
-Pane B
-    another Bible version
+Pane.state.navigation[].state.resourceSelections
 ```
 
-If both always read live global selection state, they could not remain independent.
-
-Buffer snapshots enable concurrent interaction contexts.
+This means a reload can reconstruct the same semantic Resource context even though runtime component identity is new.
 
 ---
 
-# 20. Why Snapshots Matter for Persistent Navigation
+# 19. Runtime-Only Live State
 
-Persistent cross-module navigation keeps hidden Modules mounted.
-
-Each hidden Module must retain:
-
-```text
-its own Buffer
-its own Resource snapshot
-```
-
-A paneID-only resolver that reads only current `Pane.buffer` would violate this.
-
----
-
-# 21. Live State Subscription
-
-Live state usually requires one of:
-
-```text
-reactive store
-subscriber API
-event + refresh
-context projection updated by authority
-```
-
-The subscription lifetime should match the consumer lifecycle.
-
----
-
-# 22. Snapshot Access
-
-Snapshot state should generally be accessed through the Module runtime/Buffer boundary.
-
-Avoid repeatedly re-deriving it from mutable application state.
-
----
-
-# 23. Conversion from Live to Snapshot
-
-Creating a Buffer is an example of converting live/default policy into a snapshot.
-
-```text
-current application state
-    +
-originating interaction
-    +
-Module policy
-    ↓
-captured Buffer state
-```
-
-This conversion should happen at an explicit factory/builder boundary.
-
----
-
-# 24. Conversion from Draft to Live Authority
-
-Saving an editor draft is another semantic transition.
-
-```text
-draft
-    ↓ command
-validate/persist
-    ↓
-authoritative state
-    ↓
-live synchronization
-```
-
-Do not blur draft and committed state.
-
----
-
-# 25. Conversion from Authority to Derived
-
-Example:
-
-```text
-Settings.fontSize = 16
-    +
-formatter
-    ↓
-"16 px"
-```
-
-The formatted string should remain derived.
-
-Do not store both unless necessary.
-
----
-
-# 26. Freshness at API Boundaries
-
-APIs should communicate semantics where ambiguity matters.
+Not all live state should be persisted.
 
 Examples:
 
 ```text
-getSettings()
-    current live authority snapshot at call time
-
-Buffer.resourceSelections
-    interaction snapshot
-
-getSearchResults()
-    derived result
+entry active status
+runtime result handlers
+whenActive subscriptions
+DOM focus
+hover state
+service/worker handles
+NavigationView runtime objects
 ```
 
-JSDoc should clarify subtle cases.
+These values are recreated from runtime ownership.
 
 ---
 
-# 27. Naming
+# 20. Subscriber Synchronization
 
-Useful naming words:
+For live shared state, subscriber updates synchronize projections.
+
+They should not become another mutation source.
+
+Bad loop:
 
 ```text
-current
-snapshot
-draft
-cached
-resolved
-derived
-initial
-published
+user mutation
+    ↓
+service persists
+    ↓
+subscriber receives
+    ↓
+subscriber writes service again
 ```
 
-Avoid vague names like:
+Preferred:
 
 ```text
-data
-state2
-currentData
+user mutation path writes authority
+subscriber path only updates projection
 ```
 
-when freshness semantics matter.
-
 ---
 
-# 28. Snapshot Versioning
+# 21. Multi-Instance Semantics
 
-If persisted snapshots later need migration/version handling, version the schema or normalize during restore.
+Two mounted instances may intentionally observe live values while retaining independent snapshots/local state.
 
-Do not assume old persisted context always matches current runtime expectations.
+Example: two Settings Panes.
 
----
-
-# 29. Refreshing a Snapshot
-
-Sometimes product behavior may explicitly refresh a snapshot.
-
-Example:
+Live/shared:
 
 ```text
-user chooses a new Resource source for an open Module
+SettingsService values
 ```
 
-That should be an explicit operation:
+Independent:
 
 ```text
-replace/update Buffer interaction context
+navigation stack
+search query
+scroll position
+entry Resource snapshots
+DOM identity
 ```
 
-not a hidden side effect of global selection changing.
+This is not inconsistency; it is correct mixed semantics.
 
 ---
 
-# 30. Replacing Versus Mutating Snapshot
+# 22. Choosing Live Versus Snapshot
 
-For major context changes, creating/replacing a Buffer may be safer than mutating an existing snapshot in place.
-
-This preserves:
+Ask:
 
 ```text
-interaction identity semantics
-testability
-history
+Should later source changes alter the meaning of this existing interaction?
 ```
 
-The exact behavior depends on the operation.
+If yes, likely live.
 
----
+If no, likely snapshot.
 
-# 31. Live State and Hidden Views
-
-A persistent hidden view may continue receiving live state.
-
-Example:
+Then ask:
 
 ```text
-Settings
+Who owns the source?
+When is the snapshot captured?
+How can it be explicitly refreshed/updated?
+Must it survive reload?
 ```
-
-This is expected.
-
-A hidden Module's snapshot state remains fixed while its live global dependencies may update.
-
-One component can consume both kinds simultaneously.
 
 ---
 
-# 32. Mixed Semantics Example
+# 23. Choosing Draft Versus Authority
 
-A Bible Module might consume:
+Ask:
 
 ```text
-Buffer.resourceSelections
-    snapshot
-
-global Settings
-    live
-
-current auth identity
-    live, depending on feature
-
-local search/filter
-    view-local live
-
-note edit draft
-    draft
+Has the user committed this value?
+Can it be discarded independently?
+Can committed data change elsewhere while this edit exists?
 ```
 
-Do not assume a Module has one freshness model for all data.
+If the value is independently discardable/uncommitted, model it as draft rather than silently replacing authority.
 
 ---
 
-# 33. Source Selection Versus Presentation Toggle
+# 24. Choosing Cache Versus Derived
 
-A useful example:
+Use pure derived state when recomputation is cheap and deterministic.
 
-```text
-which Paragraph Resource is selected?
-    snapshot Resource context
+Use a cache when recomputation/IO is expensive enough to justify retained state.
 
-should Paragraphs currently be shown?
-    live Settings/presentation state
-```
+A cache requires explicit invalidation ownership.
 
-These are different dimensions.
-
-Do not encode presentation visibility by adding/removing required Resource selections.
+Do not persist derived state without defining why the persisted copy is needed.
 
 ---
 
-# 34. Snapshot Versus Publication State
+# 25. Freshness Table
 
-Outbox/publication state has its own live lifecycle:
-
-```text
-pending
-in progress
-completed
-failed
-```
-
-The Domain Object being published may have identity/snapshot semantics separate from publication status.
-
-Keep those concepts distinct.
-
----
-
-# 35. Testing Live State
-
-Test:
-
-```text
-change authority
-all intended mounted consumers update
-new subscriber receives current value
-destroyed subscriber stops receiving
-```
-
-Settings multi-instance tests are the reference pattern.
+| Value | Scope | Semantics |
+| --- | --- | --- |
+| Application Settings | Application | authoritative + live |
+| Mounted Settings projection | feature instance | live projection |
+| Pane layout measurement | Pane | live |
+| Navigation stack | Pane | authoritative persisted semantic state |
+| NavigationState semantic fields | entry | persisted interaction state |
+| Entry Resource selections | entry | snapshot, explicitly updateable |
+| Domain Object | Domain | authoritative |
+| Search results | view/runtime | derived |
+| Search index | runtime/worker | cache/derived projection |
+| Unsaved editor content | view/feature | draft |
+| Navigation result handler | entry runtime | ephemeral |
 
 ---
 
-# 36. Testing Snapshot State
-
-Test:
-
-```text
-create Module Buffer
-change global/default selection
-existing Buffer selection unchanged
-new Buffer follows new policy
-```
-
-This proves the intended capture boundary.
-
----
-
-# 37. Testing Derived State
-
-Test inputs and resulting derived output.
-
-Avoid direct mutation APIs for derived state because there should not be one.
-
----
-
-# 38. Testing Draft State
-
-Test:
-
-```text
-edit draft
-authority unchanged before Save
-Save commits intended value
-Cancel/discard leaves authority unchanged
-```
-
-If auto-save exists, test its explicit trigger policy.
-
----
-
-# 39. Testing Persistent Navigation Snapshots
-
-For future app-wide navigation:
-
-```text
-Module A uses snapshot A
-push Module B using snapshot B
-A remains mounted hidden
-B becomes active
-A still resolves snapshot A
-pop B
-A resumes with snapshot A
-```
-
-This is a critical browser/integration contract.
-
----
-
-# 40. Freshness Review Questions
-
-Before consuming state, ask:
-
-```text
-Do I want the latest value?
-Do I want the value captured when this interaction started?
-Can the user intentionally edit a draft?
-Can I derive this instead?
-Is this only a cache?
-Should another Pane changing something affect this instance?
-```
-
----
-
-# 41. Anti-Patterns
+# 26. Anti-Patterns
 
 Avoid:
 
-## Reading mutable global Resource selection from an existing Module
-
-Breaks snapshot semantics.
-
-## Copying live Settings once and never subscribing
-
-Creates unintended stale state.
-
-## Treating a draft as committed authority
-
-Can leak unsaved edits.
-
-## Persisting derived labels/results independently
-
-Can drift from source.
-
-## Sharing mutable snapshot objects between Module instances
-
-Breaks isolation.
-
-## Calling snapshot state "current" without qualification
-
-Creates semantic ambiguity.
-
----
-
-# 42. Architecture Invariants
-
-1. Every important runtime value has explicit freshness semantics.
-2. Application Settings are live shared state.
-3. Buffer Resource selections are Module-instance snapshots.
-4. Application Resource selections are current/default policy for new context.
-5. Derived state is not independently authoritative.
-6. Draft state is explicitly separate from committed state.
-7. Snapshot creation occurs at explicit boundaries.
-8. Global state changes do not silently rewrite existing interaction snapshots.
-9. Hidden persistent Modules retain their own snapshots.
-10. Scope and freshness are treated as separate dimensions.
-11. Caches remain subordinate to their authority/invalidation policy.
-12. Explicit refresh/replacement operations are used when snapshots should change.
-
----
-
-# 43. Mermaid Summary
-
-```mermaid
-flowchart TD
-    AUTH[Live Authority] --> SUB[Live subscribers]
-    AUTH --> DER[Derived state]
-
-    AUTH --> CAPTURE[Explicit capture boundary]
-    CAPTURE --> SNAP[Snapshot]
-
-    DRAFT[Draft] -->|Save command| AUTH
-
-    AUTH --> CACHE[Cache]
-    CACHE -. invalidation/rebuild .-> AUTH
+```text
+existing entry rereads application default Resource selection on every render
+two navigation entries share one mutable ResourceSelections object
+subscriber callback republishes authoritative mutation
+local Settings projection becomes separate persistence owner
+Domain Object contents duplicated into navigation as competing authority
+search results persisted as truth without cache policy
+draft silently treated as committed Domain state
+snapshot called stale merely because a newer global default exists
+runtime active state persisted redundantly
 ```
 
 ---
 
-# 44. Summary
+# 27. Architecture Invariants
 
-The application should stop using "state" as if every value had the same freshness semantics.
+1. Every important value has explicit freshness semantics.
+2. Application Settings are live shared authority.
+3. Entry Resource selections are interaction snapshots.
+4. New Resource snapshots are derived through Module policy.
+5. Existing snapshots change only through explicit interaction mutation.
+6. Domain Objects remain authoritative in Domain-owned stores/services.
+7. Derived state is not independently authoritative.
+8. Draft state is separate from committed state.
+9. Caches define rebuild/invalidation ownership.
+10. Live/snapshot semantics do not imply global/local ownership by themselves.
+11. Runtime-only state is not persisted merely because it is live.
+12. Snapshot copies avoid accidental mutable aliasing.
 
-Instead classify values as:
+---
+
+# 28. Testing Guidance
+
+High-value tests include:
+
+```text
+existing Bible entry keeps Resource selection after global default changes
+new entry follows current/default or related policy
+updating one entry Resource selection does not mutate origin/other entry
+copied destination Resource map is independently owned
+Settings update propagates to two mounted Settings instances
+subscriber update does not trigger duplicate persistence mutation
+reload restores persisted interaction Resource snapshot
+search/worker cache refreshes after explicit invalidation event
+unsaved draft does not overwrite committed Domain state until commit
+```
+
+---
+
+# 29. Summary
+
+Use these words precisely:
 
 ```text
 live
+    follows authority changes
+
 snapshot
+    captures interaction context until explicitly changed
+
+authoritative
+    defines logical truth
+
 derived
+    recomputed from authority
+
 draft
+    uncommitted user work
+
 cache
+    retained optimization/projection with invalidation rules
 ```
 
-Then combine that with ownership scope:
-
-```text
-application
-Pane
-Module
-view
-domain
-```
-
-This vocabulary makes implementation decisions much clearer.
-
-The core rule is:
-
-> **Live state follows the authority; snapshot state follows the interaction.**
+Correct freshness semantics are as important as correct ownership. A value should not become live merely because a service can provide a newer value, and it should not become a snapshot merely because copying it is convenient.

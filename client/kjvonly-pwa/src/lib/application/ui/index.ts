@@ -12,24 +12,16 @@ export {
 } from '../runtime/pane/components/pane.svelte';
 
 export {
-	default as BufferBody
-} from '../runtime/buffer/components/bufferBody.svelte';
+	default as ViewBody
+} from '../runtime/navigation/components/viewBody.svelte';
 
 export {
-	default as BufferContainer
-} from '../runtime/buffer/components/bufferContainer.svelte';
-
-export {
-	default as BufferHeader
-} from '../runtime/buffer/components/bufferHeader.svelte';
+	default as ViewHeader
+} from '../runtime/navigation/components/viewHeader.svelte';
 
 export {
 	default as Settings
 } from '../modules/settings/settings.svelte';
-
-export {
-	default as SettingsContainer
-} from '../modules/settings/settingsContainer.svelte';
 
 export {
 	default as SearchView

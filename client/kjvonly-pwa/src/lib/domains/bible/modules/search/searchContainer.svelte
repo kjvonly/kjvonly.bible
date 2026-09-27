@@ -5,9 +5,8 @@
 
 	// COMPONENTS
 	import {
-		BufferBody,
-		BufferContainer,
-		BufferHeader,
+		ViewBody,
+		ViewHeader,
 		SearchView,
 		type SearchAdapter,
 		type SearchViewResultSummary,
@@ -18,40 +17,59 @@
 	import SearchResults from './searchResults.svelte';
 
 	// MODELS
-	import type { Pane } from '$lib/application';
+	import {
+		Modules,
+		type NavigationState,
+		useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext,
+		usePaneLayoutContext
+	} from '$lib/application';
 	import type {
-		onFilterBibleLocationRefFunction,
 		SearchResultResponse
 	} from '../../models/search.model';
+	import {
+		SEARCH_VIEWS
+	} from '../../models/search-navigation.model';
 
 	// SERVICES
-	import { useApplicationContext } from '$lib/application';
+	const {
+		searchService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	import { BIBLE_SEARCH_RESOURCE_TYPE } from '../../resources/search/bible-search-index-interpreter';
+	import { filterBibleLocationRefsByBookID } from './search-filter';
 
 	// OTHER
 	import uuid4 from 'uuid4';
-	const { workspaceRuntime } = useApplicationContext();
-
-	const { searchService, moduleResourceSelectionResolver } =
-		useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
-	let {
-		paneID = $bindable<string>(),
-		pane = $bindable<Pane>(),
-		showInput = true,
-		searchTerms = '',
-		placeholder = 'Search',
-		onClose = undefined,
-		onFilterBibleLocationRef = undefined
-	} = $props();
+	const paneLayout = usePaneLayoutContext();
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
+
+	const {
+		navigationState,
+		updateState
+	} = useNavigationEntryContext();
+
+	validateNavigationState(
+		navigationState
+	);
+
+	const initialSearchTerms =
+		getInitialSearchTerms();
 
 	// ================================= VARS ==================================
 
 	// DOM vars
-	let clientHeight = $state(0);
 	let headerHeight = $state(0);
 
 	// component vars
@@ -59,18 +77,17 @@
 	let searchAdapter: SearchAdapter<SearchResultResponse> | undefined = $state();
 	let searchResponse: SearchResultResponse | undefined = $state();
 	let searchResultSummary: SearchViewResultSummary | undefined = $state();
-	let useInitialFilter = $state(true);
-
 	let activeSearchQuery = '';
-	let activeSearchFilter: onFilterBibleLocationRefFunction | undefined;
+	let activeBookID: number | undefined;
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		const searchSource = moduleResourceSelectionResolver.require(
-			paneID,
-			BIBLE_SEARCH_RESOURCE_TYPE
-		);
+		const searchSource =
+			moduleResourceSelectionResolver.require(
+				navigationState,
+				BIBLE_SEARCH_RESOURCE_TYPE
+			);
 
 		searchAdapter = new BibleSearchAdapter(
 			searchService,
@@ -85,10 +102,16 @@
 
 	function handleQueryInput(value: string): void {
 		activeSearchQuery = value;
-		activeSearchFilter = undefined;
+		activeBookID = undefined;
 		searchResponse = undefined;
 		searchResultSummary = undefined;
-		useInitialFilter = false;
+
+		if (navigationState.state.bookID !== undefined) {
+			updateState(
+				'bookID',
+				undefined
+			);
+		}
 	}
 
 	function runSearch(value: string): Promise<void> {
@@ -96,10 +119,13 @@
 			return Promise.resolve();
 		}
 
+		updateState(
+			'query',
+			value
+		);
+
 		activeSearchQuery = value;
-		activeSearchFilter = useInitialFilter
-			? onFilterBibleLocationRef
-			: undefined;
+		activeBookID = getBookID();
 		searchResponse = undefined;
 		searchResultSummary = undefined;
 
@@ -115,8 +141,11 @@
 
 		searchResponse = {
 			...response,
-			bibleLocationRefs: activeSearchFilter
-				? activeSearchFilter(bibleLocationRefs)
+			bibleLocationRefs: activeBookID !== undefined
+				? filterBibleLocationRefsByBookID(
+					bibleLocationRefs,
+					activeBookID
+				)
 				: bibleLocationRefs
 		};
 	}
@@ -137,12 +166,67 @@
 		};
 	}
 
-	function applyOnClose() {
-		if (onClose) {
-			onClose();
-		} else {
-			workspaceRuntime.closePane(paneID);
+	function applyOnClose(): void {
+		navigation.back();
+	}
+
+	function getInitialSearchTerms(): string {
+		const query = navigationState.state.query;
+
+		return typeof query === 'string'
+			? query
+			: '';
+	}
+
+	function getBookID(): number | undefined {
+		const bookID = navigationState.state.bookID;
+
+		return typeof bookID === 'number'
+			? bookID
+			: undefined;
+	}
+
+	function validateNavigationState(
+		value: unknown
+	): asserts value is NavigationState<typeof SEARCH_VIEWS.RESULTS> {
+		if (
+			!isRecord(value) ||
+			value.module !== Modules.SEARCH ||
+			value.view !== SEARCH_VIEWS.RESULTS ||
+			!isRecord(value.state)
+		) {
+			throw new Error(
+				'Invalid Search navigation state'
+			);
 		}
+
+		if (
+			value.state.query !== undefined &&
+			typeof value.state.query !== 'string'
+		) {
+			throw new Error(
+				'Invalid Search query navigation state'
+			);
+		}
+
+		if (
+			value.state.bookID !== undefined &&
+			typeof value.state.bookID !== 'number'
+		) {
+			throw new Error(
+				'Invalid Search book navigation state'
+			);
+		}
+	}
+
+	function isRecord(
+		value: unknown
+	): value is Record<string, unknown> {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value)
+		);
 	}
 </script>
 
@@ -170,7 +254,7 @@
 
 {#snippet searchResults(search: SearchViewResultsContext)}
 	<SearchResults
-		{paneID}
+		resourceNavigationState={navigationState}
 		searchText={search.query}
 		scrollContainerID={searchID}
 		{searchResponse}
@@ -185,9 +269,7 @@
 {#snippet body()}
 	{#if searchAdapter}
 		<SearchView
-			initialQuery={searchTerms}
-			{showInput}
-			{placeholder}
+			initialQuery={initialSearchTerms}
 			resultSummary={searchResultSummary}
 			onSearch={runSearch}
 			onQueryInput={handleQueryInput}
@@ -198,12 +280,14 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<BufferContainer bind:clientHeight>
-	<BufferHeader bind:headerHeight>
+{#snippet content(clientHeight: number)}
+	<ViewHeader bind:headerHeight>
 		{@render header()}
-	</BufferHeader>
+	</ViewHeader>
 
-	<BufferBody ID={searchID} {headerHeight} {clientHeight} classes="">
+	<ViewBody ID={searchID} {headerHeight} {clientHeight} classes="">
 		{@render body()}
-	</BufferBody>
-</BufferContainer>
+	</ViewBody>
+{/snippet}
+
+{@render content(clientHeight)}
