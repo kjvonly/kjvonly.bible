@@ -11,10 +11,10 @@
 	} from '$lib/application/ui';
 
 	// COMPONENTS
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-
-	// SVGS
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 
 	// MODELS
 	import {
@@ -51,15 +51,23 @@
 </script>
 
 <!-- ================================ HEADER =============================== -->
-{#snippet header()}
-	<span class="flex-1">
-		<KJVButton classes="" onClick={() => navigation.back()}>
-			<ArrowBack></ArrowBack>
-		</KJVButton>
-	</span>
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle="Discover Plans"
+		shortTitle="Discover"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
 
-	<span class="text-cetner">Discover Plans</span>
-	<span class="flex-1"></span>
+{#snippet header()}
+	<KJVHeader
+		title="Discover Plans"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+		{titleContent}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

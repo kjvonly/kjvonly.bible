@@ -18,11 +18,11 @@
 	// SERVICES
 
 	// COMPONENTS
-	import Close from '$lib/components/svgs/close.svelte';
 	import Copy from '$lib/components/svgs/copy.svelte';
 	import { ViewHeader } from '$lib/application/ui';
 	import { ViewBody } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import { KJVAdaptiveHeaderTitle, KJVHeader } from '$lib/components';
 
 	//OTHER
 	import { scrollTo } from '$lib/application/ui';
@@ -72,7 +72,10 @@
 	let checked: boolean[] = $state([]);
 	let verseNumbers: string[] = $state([]);
 	let verses: { [verseNumber: string]: Verse } = $state({});
-	let title = $state('');
+	let longTitle = $state('');
+	let shortTitle = $state('');
+	let displayLongTitle = $derived(longTitle || 'Copy verses');
+	let displayShortTitle = $derived(shortTitle || displayLongTitle);
 	let selectedVerseRangeText = $state('');
 
 	// =============================== LIFECYCLE ===============================
@@ -125,11 +128,13 @@
 		const booknames = await bibleBooknamesService.get(source);
 
 		const bookName = booknames.booknamesById[bookID] ?? '';
+		const shortBookName = booknames.shortNames[bookID] ?? bookName;
 
 		const chapterNumber =
 			bibleLocationReferenceService.extractChapter(bibleLocationRef);
 
-		title = `${bookName} ${chapterNumber}`;
+		longTitle = `${bookName} ${chapterNumber}`;
+		shortTitle = `${shortBookName} ${chapterNumber}`;
 	}
 
 	function getBibleLocationRef(): string {
@@ -192,9 +197,9 @@
 	function getVerseRangeTitle(start: number, end: number): string {
 		let rangeTitle = '';
 		if (start === end) {
-			rangeTitle = `${title}:${start}\n`;
+			rangeTitle = `${longTitle}:${start}\n`;
 		} else {
-			rangeTitle = `${title}:${start}-${end}\n`;
+			rangeTitle = `${longTitle}:${start}-${end}\n`;
 		}
 
 		return rangeTitle;
@@ -299,10 +304,6 @@
 		}
 	}
 
-	function onClose() {
-		navigation.back();
-	}
-
 	function onVerseClicked(idx: number) {
 		checked[idx] = !checked[idx];
 		areAllVersesChecked();
@@ -344,16 +345,31 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle={displayLongTitle}
+		shortTitle={displayShortTitle}
+		secondary={longTitle ? 'Copy verses' : undefined}
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
+
 {#snippet header()}
-	<KJVButton classes="flex-1" onClick={onCopy}>
-		<Copy classes=""></Copy>
-	</KJVButton>
-
-	<span class="text-center">{title}</span>
-
-	<KJVButton classes="flex-1  flex justify-end" onClick={onClose}>
-		<Close classes=""></Close>
-	</KJVButton>
+	<KJVHeader
+		title={displayLongTitle}
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+		{titleContent}
+		actions={[
+			{
+				icon: 'copy',
+				label: 'Copy selected verses',
+				onClick: onCopy
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

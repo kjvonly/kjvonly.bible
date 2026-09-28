@@ -24,17 +24,12 @@
 	} from '$lib/domains/bible';
 
 	// COMPONENTS
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import { KJVHeader } from '$lib/components';
 	import ReadingsComponent from '../components/readings.svelte';
 	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
 	import {
 		applyPlanReadingNavigationResult
 	} from '../runtime/plan-reading-navigation-result';
-
-	// SVGS
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import CheckCircle from '$lib/components/svgs/checkCircle.svelte';
-	import Pending from '$lib/components/svgs/pending.svelte';
 
 	// MODELS
 	import {
@@ -267,7 +262,7 @@
 		);
 	}
 
-	function onCloseSubDetails(): void {
+	function onBack(): void {
 		navigation.back();
 	}
 
@@ -310,29 +305,26 @@
 <!-- ================================ HEADER =============================== -->
 
 {#snippet header()}
-	<div class="grid w-full grid-cols-3 place-items-center">
-		<div class="flex w-full">
-			<KJVButton classes="" onClick={onCloseSubDetails}>
-				<ArrowBack></ArrowBack>
-			</KJVButton>
-			<span class="flex-1"></span>
-		</div>
-		<span class="flex text-center">My plans</span>
-		<div class="flex w-full">
-			<span class="flex-1"></span>
-			<KJVButton
-				classes=""
-				disabled={!hasCompletedReading}
-				onClick={onToggleCompletedReadings}
-			>
-				{#if showCompletedReadings}
-					<Pending></Pending>
-				{:else}
-					<CheckCircle></CheckCircle>
-				{/if}
-			</KJVButton>
-		</div>
-	</div>
+	<KJVHeader
+		title="My Plans"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: onBack
+		}}
+		actions={[
+			{
+				icon: showCompletedReadings
+					? 'pending'
+					: 'check-circle',
+				label: showCompletedReadings
+					? 'Hide completed readings'
+					: 'Show completed readings',
+				onClick: onToggleCompletedReadings,
+				disabled: !hasCompletedReading
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

@@ -19,8 +19,10 @@
 	} from '$lib/domains/bible';
 
 	// COMPONENTS
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 	import ReadingsComponent from '../components/readings.svelte';
 	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
 	import {
@@ -291,15 +293,23 @@
 
 <!-- ================================ HEADER =============================== -->
 
-{#snippet header()}
-	<span class="flex-1">
-		<KJVButton classes="" onClick={() => navigation.back()}>
-			<ArrowBack></ArrowBack>
-		</KJVButton>
-	</span>
-	<span class="text-center">Next Readings</span>
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle="Next Readings"
+		shortTitle="Next"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
 
-	<span class="flex-1"></span>
+{#snippet header()}
+	<KJVHeader
+		title="Next Readings"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+		{titleContent}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

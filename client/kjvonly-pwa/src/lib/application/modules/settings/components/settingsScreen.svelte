@@ -4,9 +4,7 @@
 	// COMPONENTS
 	import ViewBody from '../../../runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '../../../runtime/navigation/components/viewHeader.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
+	import { KJVHeader } from '$lib/components';
 
 	// RUNTIME
 	import {
@@ -18,13 +16,11 @@
 	let {
 		title,
 		onBack,
-		onClose,
 		bodyClasses = 'px-4',
 		children
 	}: {
 		title: string;
 		onBack?: (event: Event) => void;
-		onClose?: (event: Event) => void;
 		bodyClasses?: string;
 		children: Snippet;
 	} = $props();
@@ -42,27 +38,16 @@
 <!-- ================================ HEADER =============================== -->
 
 {#snippet header()}
-	<div class="grid w-full grid-cols-3 place-items-center">
-		<div class="flex justify-center justify-self-start pe-4">
-			{#if onBack}
-				<KJVButton classes="" onClick={onBack}>
-					<ArrowBack classes=""></ArrowBack>
-					<span class="sr-only">Back</span>
-				</KJVButton>
-			{/if}
-		</div>
-
-		<span class="text-center">{title}</span>
-
-		<div class="flex justify-center justify-self-end ps-4">
-			{#if onClose}
-				<KJVButton classes="" onClick={onClose}>
-					<Close classes=""></Close>
-					<span class="sr-only">Close settings</span>
-				</KJVButton>
-			{/if}
-		</div>
-	</div>
+	<KJVHeader
+		{title}
+		leadingAction={onBack
+			? {
+					icon: 'arrow-back',
+					label: 'Back',
+					onClick: onBack
+				}
+			: undefined}
+	></KJVHeader>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->

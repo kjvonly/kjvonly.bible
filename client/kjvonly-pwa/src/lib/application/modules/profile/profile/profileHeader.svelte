@@ -7,10 +7,9 @@
 	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 
 	// COMPONENTS
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
-	import Edit from '$lib/components/svgs/edit.svelte';
+	import { KJVHeader } from '$lib/components';
 
+	// MODELS
 	import {
 		PROFILE_VIEWS
 	} from '../profile-navigation.model';
@@ -26,9 +25,7 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onEdit(e: Event): void {
-		e.stopPropagation();
-
+	function onEdit(): void {
 		if (authenticationService.getState().status !== 'authenticated') {
 			toastService.showToast('Login first');
 			return;
@@ -40,31 +37,28 @@
 		);
 	}
 
-	function onClose(e: Event): void {
-		e.stopPropagation();
-
+	function onBack(): void {
 		navigation.back();
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<div class="grid w-full grid-cols-3 place-items-center">
-		<div class="flex justify-center justify-self-start pe-4">
-			<KJVButton onClick={onEdit} classes="">
-				<Edit classes=""></Edit>
-				<span class="sr-only">Edit profile</span>
-			</KJVButton>
-		</div>
-
-		<span class="text-center">Profile</span>
-		<div class="flex justify-center justify-self-end pe-4">
-			<KJVButton onClick={onClose} classes="">
-				<Close classes=""></Close>
-				<span class="sr-only">Close profile</span>
-			</KJVButton>
-		</div>
-	</div>
+	<KJVHeader
+		title="Profile"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: onBack
+		}}
+		actions={[
+			{
+				icon: 'edit',
+				label: 'Edit profile',
+				onClick: onEdit
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->

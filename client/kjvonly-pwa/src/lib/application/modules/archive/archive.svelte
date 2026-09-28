@@ -12,8 +12,7 @@
 	// COMPONENTS
 	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
+	import { KJVHeader } from '$lib/components';
 
 	// MODELS
 	import {
@@ -52,11 +51,7 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onClose(
-		event: Event
-	): void {
-		event.stopPropagation();
-
+	function onBack(): void {
 		navigation.back();
 	}
 
@@ -73,13 +68,14 @@
 <!-- ================================ HEADER =============================== -->
 
 {#snippet header()}
-	<span class="flex-1"></span>
-	<span class="text-center">Archive</span>
-	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={onClose}>
-			<Close classes=""></Close>
-		</KJVButton>
-	</span>
+	<KJVHeader
+		title="Archive"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: onBack
+		}}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

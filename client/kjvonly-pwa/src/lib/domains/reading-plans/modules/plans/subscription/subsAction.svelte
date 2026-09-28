@@ -8,14 +8,11 @@
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import { ViewBody, ViewHeader } from '$lib/application/ui';
-
 	// COMPONENTS
-	import ActionItemsList from '../components/actionItemsList.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-
-	// SVGS
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
+	import {
+		KJVMenuView,
+		type KJVMenuAction
+	} from '$lib/components';
 
 	// MODELS
 	import {
@@ -45,22 +42,19 @@
 	);
 
 	// ================================== VARS =================================
-	let headerHeight: number = $state(0);
 
-	const subsActionItems: Record<string, () => void> = {
-		plans: () => {
-			void returnAction(
-				PLAN_SUBSCRIPTION_ACTIONS.PLANS
-			);
+	const actions: readonly KJVMenuAction<PlanSubscriptionAction>[] = [
+		{
+			label: 'Plans',
+			value: PLAN_SUBSCRIPTION_ACTIONS.PLANS
 		},
-		'next readings': () => {
-			void returnAction(
-				PLAN_SUBSCRIPTION_ACTIONS.NEXT_READINGS
-			);
+		{
+			label: 'Next readings',
+			value: PLAN_SUBSCRIPTION_ACTIONS.NEXT_READINGS
 		}
-	};
+	];
 
-	async function returnAction(
+	async function onAction(
 		action: PlanSubscriptionAction
 	): Promise<void> {
 		await navigation.backWithResult({
@@ -99,27 +93,12 @@
 	}
 </script>
 
-<!-- ================================ HEADER =============================== -->
-{#snippet header()}
-	<div class="grid w-full grid-cols-5 place-items-center">
-		<span class="flex w-full">
-			<KJVButton classes="" onClick={() => navigation.back()}>
-				<ArrowBack></ArrowBack>
-			</KJVButton>
-			<span class="flex-1"></span>
-		</span>
-	</div>
-{/snippet}
-
-<!-- ================================= BODY ================================ -->
-{#snippet body()}
-	<ActionItemsList actionItems={subsActionItems}></ActionItemsList>
-{/snippet}
-
 <!-- ============================== CONTAINER ============================== -->
-<ViewHeader bind:headerHeight>
-	{@render header()}
-</ViewHeader>
-<ViewBody {clientHeight} {headerHeight} classes="">
-	{@render body()}
-</ViewBody>
+
+<KJVMenuView
+	title="More actions"
+	{clientHeight}
+	{actions}
+	onBack={() => navigation.back()}
+	{onAction}
+></KJVMenuView>

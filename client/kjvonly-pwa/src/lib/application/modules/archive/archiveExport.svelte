@@ -17,9 +17,10 @@
 	// COMPONENTS
 	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import ExportIcon from '$lib/components/svgs/export.svelte';
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 
 	// ================================= TYPES =================================
 
@@ -256,20 +257,31 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle="Export archive"
+		shortTitle="Export"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
+
 {#snippet header()}
-	<span class="flex flex-1 justify-start">
-		<KJVButton classes="" onClick={onBack}>
-			<ArrowBack classes=""></ArrowBack>
-		</KJVButton>
-	</span>
-
-	<span class="text-center">Export</span>
-
-	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={onExport} disabled={exporting}>
-			<ExportIcon classes=""></ExportIcon>
-		</KJVButton>
-	</span>
+	<KJVHeader
+		title="Export archive"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: onBack
+		}}
+		{titleContent}
+		actions={[
+			{
+				icon: 'export',
+				label: 'Export archive',
+				onClick: onExport,
+				disabled: exporting
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

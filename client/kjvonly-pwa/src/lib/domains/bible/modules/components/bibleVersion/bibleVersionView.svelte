@@ -3,23 +3,30 @@
 		onMount
 	} from 'svelte';
 
-	import type {
-		BibleVersion
-	} from '../../../models/bible-version.model';
-
+	// APPLICATION
 	import {
 		useApplicationContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
+	import {
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
 
-	import KJVButton
-		from '$lib/components/buttons/KJVButton.svelte';
+	// COMPONENTS
+	import {
+		KJVHeader
+	} from '$lib/components';
 
-	import ArrowBack
-		from '$lib/components/svgs/arrowBack.svelte';
-	import { ViewHeader } from '$lib/application/ui';
-	import { ViewBody } from '$lib/application/ui';
+	// MODELS
+	import type {
+		BibleVersion
+	} from '../../../models/bible-version.model';
+
+	import {
+		createBibleVersionNavigationResult
+	} from './bible-version-navigation-result';
 
 	const paneLayout = usePaneLayoutContext();
 	let clientHeight = $derived(
@@ -51,26 +58,23 @@
 	async function onVersionClicked(
 		version: BibleVersion
 	): Promise<void> {
-		await navigation.backWithResult({
-			type: 'bible-version',
-			id: version.id,
-			publisher: version.publisher,
-			version: version.version
-		});
-	}
-
-	function onClose(): void {
-		navigation.back();
+		await navigation.backWithResult(
+			createBibleVersionNavigationResult(
+				version
+			)
+		);
 	}
 </script>
 
 <ViewHeader bind:headerHeight>
-	<KJVButton
-		onClick={onClose}
-		classes=""
-	>
-		<ArrowBack classes="" />
-	</KJVButton>
+	<KJVHeader
+		title="Bible version"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+	></KJVHeader>
 </ViewHeader>
 
 <ViewBody

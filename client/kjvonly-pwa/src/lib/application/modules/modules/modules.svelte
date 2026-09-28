@@ -5,11 +5,12 @@
 	// COMPONENTS
 	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import { KJVHeader } from '$lib/components';
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
+	import { PaneSplit } from '../../runtime/pane/models/pane-split';
+	import { MODULES_VIEWS } from './modules-navigation.model';
 
 	// SERVICES
 	import { onMount } from 'svelte';
@@ -67,6 +68,24 @@
 		navigation.closePane();
 	}
 
+	function onSplitHorizontal(): void {
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.MODULES,
+			MODULES_VIEWS.ROOT,
+			{}
+		);
+	}
+
+	function onSplitVertical(): void {
+		navigation.split(
+			PaneSplit.VERTICAL,
+			Modules.MODULES,
+			MODULES_VIEWS.ROOT,
+			{}
+		);
+	}
+
 	function onModuleSelected(
 		module: Modules
 	): void {
@@ -86,13 +105,26 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<span class="flex-1"></span>
-	<span class="text-center"> Modules </span>
-	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={onClose}>
-			<Close></Close>
-		</KJVButton>
-	</span>
+	<KJVHeader
+		title="Modules"
+		leadingAction={{
+			icon: 'close',
+			label: 'Close pane',
+			onClick: onClose
+		}}
+		actions={[
+			{
+				icon: 'split-horizontal',
+				label: 'Split pane horizontally',
+				onClick: onSplitHorizontal
+			},
+			{
+				icon: 'split-vertical',
+				label: 'Split pane vertically',
+				onClick: onSplitVertical
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

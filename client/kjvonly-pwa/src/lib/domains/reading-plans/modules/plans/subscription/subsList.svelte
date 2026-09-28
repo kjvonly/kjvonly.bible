@@ -8,11 +8,7 @@
 	import { ViewBody, ViewHeader } from '$lib/application/ui';
 
 	// COMPONENTS
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-
-	// SVGS
-	import Close from '$lib/components/svgs/close.svelte';
-	import Menu from '$lib/components/svgs/menu.svelte';
+	import { KJVHeader } from '$lib/components';
 
 	// MODELS
 	import {
@@ -44,8 +40,22 @@
 		onSubSelected(sub);
 	}
 
-	function onClosePlansList(): void {
+	function onBack(): void {
 		navigation.back();
+	}
+
+	function onDiscoverPlansClicked(): void {
+		navigation.pushView(
+			PLANS_VIEWS.PLANS_LIST,
+			{}
+		);
+	}
+
+	function onNextReadingsClicked(): void {
+		navigation.pushView(
+			PLANS_VIEWS.NEXT_LIST,
+			{}
+		);
 	}
 
 	function onMenuClicked(): void {
@@ -58,19 +68,31 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<div class="grid w-full grid-cols-5 place-items-center">
-		<snap></snap>
-		<span></span>
-		<span>My Plans</span>
-
-		<KJVButton classes="" onClick={onMenuClicked}>
-			<Menu></Menu>
-		</KJVButton>
-
-		<KJVButton classes="" onClick={onClosePlansList}>
-			<Close></Close>
-		</KJVButton>
-	</div>
+	<KJVHeader
+		title="My Plans"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: onBack
+		}}
+		actions={[
+			{
+				icon: 'document-search',
+				label: 'Discover plans',
+				onClick: onDiscoverPlansClicked
+			},
+			{
+				icon: 'book-ribbon',
+				label: 'Next readings',
+				onClick: onNextReadingsClicked
+			},
+			{
+				icon: 'more-vertical',
+				label: 'More actions',
+				onClick: onMenuClicked
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

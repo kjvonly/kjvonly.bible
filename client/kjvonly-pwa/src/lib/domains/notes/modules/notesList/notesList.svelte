@@ -24,14 +24,10 @@
 	import { ViewHeader, ViewBody } from '$lib/application/ui';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import { KJVHeader } from '$lib/components';
 	import Bible from '$lib/components/svgs/bible.svelte';
 	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
-	import AddNote from '$lib/components/svgs/addNote.svelte';
-	import Menu from '$lib/components/svgs/menu.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
-	import Filter from '$lib/components/svgs/filter.svelte';
-	import ClearFilter from '$lib/components/svgs/clearFilter.svelte';
 
 	// APPLICATION
 
@@ -100,10 +96,6 @@
 	const noteListControlID = uuid4();
 
 	const noteListActions: Record<string, () => void> = {
-		filter: () => {
-			showNoteListFilter = !showNoteListFilter;
-			showNoteListActions = false;
-		},
 		'export filtered notes': () => {
 			void onExport();
 		},
@@ -342,7 +334,7 @@
 		);
 	}
 
-	function onClose(): void {
+	function onBack(): void {
 		navigation.back();
 	}
 
@@ -352,6 +344,8 @@
 	}
 
 	function onToggleFilter(): void {
+		showNoteListActions = false;
+
 		if (showNoteListFilter) {
 			filterInput = '';
 			onFilterInputChanged();
@@ -362,27 +356,35 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet noteListHeader()}
-	<KJVButton onClick={onAdd} classes="">
-		<AddNote></AddNote>
-	</KJVButton>
-	<KJVButton onClick={onToggleFilter} classes="">
-		{#if showNoteListFilter}
-			<ClearFilter></ClearFilter>
-		{:else}
-			<Filter></Filter>
-		{/if}
-	</KJVButton>
-
-	<span class="">Notes</span>
-	<KJVButton
-		classes=""
-		onClick={() => (showNoteListActions = !showNoteListActions)}
-	>
-		<Menu></Menu>
-	</KJVButton>
-	<KJVButton classes="" onClick={onClose}>
-		<Close></Close>
-	</KJVButton>
+	<KJVHeader
+		title="Notes"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: onBack
+		}}
+		actions={[
+			{
+				icon: 'filter',
+				label: showNoteListFilter
+					? 'Hide note filters'
+					: 'Filter notes',
+				onClick: onToggleFilter,
+				selected: showNoteListFilter
+			},
+			{
+				icon: 'add-note',
+				label: 'Add note',
+				onClick: () => void onAdd()
+			},
+			{
+				icon: 'more-vertical',
+				label: 'More actions',
+				onClick: () =>
+					(showNoteListActions = !showNoteListActions)
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

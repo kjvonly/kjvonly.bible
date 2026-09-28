@@ -45,7 +45,7 @@
 
 	// ================================ FUNCS ==================================
 
-	function onClose(event: Event): void {
+	function onBack(event: Event): void {
 		event.stopPropagation();
 
 		navigation.back();
@@ -60,7 +60,7 @@
 
 <SettingsScreen
 	title="Settings"
-	{onClose}
+	{onBack}
 	bodyClasses=""
 >
 	<SettingsSearch

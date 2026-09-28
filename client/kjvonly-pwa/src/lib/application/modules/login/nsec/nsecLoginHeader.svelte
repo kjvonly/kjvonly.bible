@@ -1,30 +1,39 @@
 <script lang="ts">
+	// ================================ IMPORTS ================================
+	// APPLICATION
 	import {
 		useNavigationRuntimeContext
 	} from '$lib/application/runtime/navigation/navigation-runtime-context';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
+
+	// COMPONENTS
+	import { KJVHeader } from '$lib/components';
+
+	// ================================= VARS ==================================
 
 	const {
 		navigation
 	} = useNavigationRuntimeContext();
 
-	function onBack(e: Event): void {
-		e.stopPropagation();
+	// ============================== CLICK FUNCS ==============================
+
+	function onBack(): void {
 		navigation.back();
 	}
 </script>
 
-{#snippet header()}
-	<div
-		class="grid w-full grid-cols-3 bg-neutral-100 py-2 leading-tight"
-	>
-		<KJVButton onClick={onBack} classes="ps-4">
-			<ArrowBack></ArrowBack>
-		</KJVButton>
+<!-- ================================ HEADER =============================== -->
 
-		<span class="text-center">NSEC Login</span>
-	</div>
+{#snippet header()}
+	<KJVHeader
+		title="NSEC Login"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back to login options',
+			onClick: onBack
+		}}
+	></KJVHeader>
 {/snippet}
+
+<!-- ============================== CONTAINER ============================== -->
 
 {@render header()}

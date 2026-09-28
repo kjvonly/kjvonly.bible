@@ -8,6 +8,7 @@ import {
 } from '../../../models/search-navigation.model';
 
 import SearchContainer from '../searchContainer.svelte';
+import SearchOverflowActionsView from '../views/searchOverflowActionsView.svelte';
 
 /**
  * Search-owned navigation views registered by the application composition root.
@@ -17,5 +18,9 @@ export const searchNavigationViewRegistrations:
 		{
 			view: SEARCH_VIEWS.RESULTS,
 			component: SearchContainer
+		},
+		{
+			view: SEARCH_VIEWS.OVERFLOW_ACTIONS,
+			component: SearchOverflowActionsView
 		}
 	];
