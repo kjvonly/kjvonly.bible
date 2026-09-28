@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	// COMPONENTS
 	import {
@@ -12,25 +12,42 @@
 		type SearchViewResultSummary,
 		type SearchViewResultsContext
 	} from '$lib/application/ui';
-	import { KJVHeader } from '$lib/components/header';
+	import { KJVHeader } from '$lib/components';
 	import { BibleSearchAdapter } from './bible-search-adapter';
 	import SearchResults from './searchResults.svelte';
 
 	// MODELS
 	import {
+		MODULES_VIEWS,
 		Modules,
+		PaneSplit,
 		type NavigationState,
+		type NavigationStateValue,
 		useApplicationContext,
 		useNavigationEntryContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
 	import type {
+		BibleVersion
+	} from '../../models/bible-version.model';
+	import type {
 		SearchResultResponse
 	} from '../../models/search.model';
 	import {
 		SEARCH_VIEWS
 	} from '../../models/search-navigation.model';
+
+	// SHARED BIBLE MODULE COMPONENTS
+	import {
+		createBibleChapterResourceReference,
+		handleBibleVersionNavigationResult
+	} from '../components/bibleVersion';
+
+	// RUNTIME
+	import {
+		handleSearchOverflowNavigationResult
+	} from './runtime/search-overflow-navigation-result';
 
 	// SERVICES
 	const {
@@ -42,6 +59,7 @@
 		navigation
 	} = useNavigationRuntimeContext();
 
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../resources/chapters/bible-chapter-interpreter';
 	import { BIBLE_SEARCH_RESOURCE_TYPE } from '../../resources/search/bible-search-index-interpreter';
 	import { filterBibleLocationRefsByBookID } from './search-filter';
 
@@ -57,8 +75,16 @@
 
 	const {
 		navigationState,
+		onResult,
+		whenActive,
+		updateResourceSelection,
 		updateState
 	} = useNavigationEntryContext();
+
+	const unsubscribeNavigationResult =
+		onResult(
+			onNavigationResult
+		);
 
 	validateNavigationState(
 		navigationState
@@ -98,7 +124,84 @@
 		return searchAdapter.subscribe(handleSearchResult);
 	});
 
+	onDestroy(() => {
+		unsubscribeNavigationResult();
+	});
+
 	// ================================ FUNCS ==================================
+
+	async function onNavigationResult(
+		result: NavigationStateValue
+	): Promise<void> {
+		if (
+			handleSearchOverflowNavigationResult(
+				result,
+				{
+					navigation,
+					whenActive
+				}
+			)
+		) {
+			return;
+		}
+
+		handleBibleVersionNavigationResult(
+			result,
+			{
+				whenActive,
+				onVersionSelected:
+					onBibleVersionSelected
+			}
+		);
+	}
+
+	function onBibleVersionSelected(
+		version: BibleVersion
+	): void {
+		updateResourceSelection(
+			BIBLE_CHAPTER_RESOURCE_TYPE,
+			createBibleChapterResourceReference(
+				version
+			)
+		);
+
+		if (!searchResponse) {
+			return;
+		}
+
+		searchResultSummary = undefined;
+		searchResponse = {
+			...searchResponse,
+			bibleLocationRefs: [
+				...searchResponse.bibleLocationRefs
+			]
+		};
+	}
+
+	function onOverflowClick(): void {
+		navigation.pushView(
+			SEARCH_VIEWS.OVERFLOW_ACTIONS,
+			{}
+		);
+	}
+
+	function onSplitHorizontal(): void {
+		navigation.split(
+			PaneSplit.HORIZONTAL,
+			Modules.MODULES,
+			MODULES_VIEWS.ROOT,
+			{}
+		);
+	}
+
+	function onSplitVertical(): void {
+		navigation.split(
+			PaneSplit.VERTICAL,
+			Modules.MODULES,
+			MODULES_VIEWS.ROOT,
+			{}
+		);
+	}
 
 	function handleQueryInput(value: string): void {
 		activeSearchQuery = value;
@@ -237,14 +340,24 @@
 		title="Search"
 		leadingAction={{
 			icon: 'arrow-back',
-			label: 'Close search',
+			label: 'Back',
 			onClick: applyOnClose
 		}}
 		actions={[
 			{
+				icon: 'split-horizontal',
+				label: 'Split pane horizontally',
+				onClick: onSplitHorizontal
+			},
+			{
+				icon: 'split-vertical',
+				label: 'Split pane vertically',
+				onClick: onSplitVertical
+			},
+			{
 				icon: 'more-vertical',
 				label: 'More actions',
-				onClick: () => {}
+				onClick: onOverflowClick
 			}
 		]}
 	></KJVHeader>

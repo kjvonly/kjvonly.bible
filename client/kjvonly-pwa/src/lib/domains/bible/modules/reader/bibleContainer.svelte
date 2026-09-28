@@ -66,6 +66,12 @@
 	import {
 		handleBibleMenuNavigationResult
 	} from './runtime/bible-menu-navigation-result';
+
+	import {
+		createBibleChapterResourceReference,
+		handleBibleVersionNavigationResult
+	} from '../components/bibleVersion';
+
 	const {
 		moduleResourceSelectionResolver,
 		bibleLocationReferenceService,
@@ -183,20 +189,15 @@
 		}
 
 		if (
-			result.type === 'bible-version' &&
-			typeof result.id === 'string' &&
-			typeof result.publisher === 'string' &&
-			typeof result.version === 'string'
+			handleBibleVersionNavigationResult(
+				result,
+				{
+					whenActive,
+					onVersionSelected:
+						onBibleVersionSelected
+				}
+			)
 		) {
-			const version: BibleVersion = {
-				id: result.id,
-				publisher: result.publisher,
-				version: result.version
-			};
-
-			onBibleVersionResult(
-				version
-			);
 			return;
 		}
 
@@ -216,24 +217,6 @@
 		}
 	}
 
-	/**
-	 * Applies a returned Bible version once this reader entry is active again.
-	 *
-	 * backWithResult() intentionally delivers the result before popping the
-	 * child view. Waiting for this entry to become active keeps the Resource
-	 * update owned by bible.reader while leaving Pane navigation generic.
-	 */
-	function onBibleVersionResult(
-		version: BibleVersion
-	): void {
-		whenActive(
-			() => {
-				onBibleVersionSelected(
-					version
-				);
-			}
-		);
-	}
 
 	function setNavReadings(): void {
 		mode.navReadings =
@@ -339,18 +322,11 @@
 	function onBibleVersionSelected(
 		version: BibleVersion
 	): void {
-		const source:
-			PublishedResourceReference = {
-			publisher:
-				version.publisher,
-
-			resourceId:
-				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version.version}`
-		};
-
 		updateResourceSelection(
 			BIBLE_CHAPTER_RESOURCE_TYPE,
-			source
+			createBibleChapterResourceReference(
+				version
+			)
 		);
 
 		bibleVersion =

@@ -5,8 +5,7 @@
 		usePaneLayoutContext
 	} from '$lib/application';
 	import { ViewBody, ViewHeader } from '$lib/application/ui';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import Close from '$lib/components/svgs/close.svelte';
+	import { KJVHeader } from '$lib/components';
 	import type { BCV, BibleReadingNavigation } from '../../../models/bible.model';
 
 	const paneLayout = usePaneLayoutContext();
@@ -63,17 +62,14 @@
 </script>
 
 <ViewHeader bind:headerHeight>
-	<span class="flex-1"></span>
-	<span></span>
-
-	<span class="text-center">Readings</span>
-
-	<KJVButton
-		classes="flex-1 flex justify-end"
-		onClick={() => navigation.back()}
-	>
-		<Close classes=""></Close>
-	</KJVButton>
+	<KJVHeader
+		title="Readings"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+	></KJVHeader>
 </ViewHeader>
 
 <ViewBody {clientHeight} {headerHeight} classes="border">

@@ -1,135 +1,255 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+
 	// SVELTE
-	import { onMount } from 'svelte';
-	// COMPONENTS
-	import { ViewBody } from '$lib/application/ui';
-	import { ViewHeader } from '$lib/application/ui';
-
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-
-	// // SVGS
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import Toggle from '$lib/components/toggle.svelte';
-
 	import {
-		useApplicationContext,
+		onDestroy,
+		onMount
+	} from 'svelte';
+
+	// APPLICATION
+	import {
+		type NavigationStateValue,
+	useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
+	import {
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
+	// COMPONENTS
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 
 	// MODELS
-	import type { BibleBooknames } from '../../../../models/bible-booknames.model';
+	import type {
+		BibleBooknames
+	} from '../../../../models/bible-booknames.model';
+	import {
+		BIBLE_VIEWS
+	} from '../../../../models/bible-navigation.model';
 
-	// SERVICES
+	// RESOURCES
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '../../../../resources/booknames/bible-booknames-interpreter';
 
-	const { toastService } =
-		useApplicationContext();
+	// RUNTIME
+	import {
+		forwardBibleLocationNavigationResult
+	} from '../../runtime/bible-location-navigation-result';
+
+	const {
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
+	const {
+		navigationState,
+		onResult,
+		updateState,
+		whenActive
+	} = useNavigationEntryContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
+
 	const paneLayout = usePaneLayoutContext();
 
-	// =============================== BINDINGS ================================
+	const selectedBookID =
+		requireStringState(
+			navigationState.state.selectedBookID,
+			'selectedBookID'
+		);
 
-	let {
-		booknames,
-		selectedBookID = $bindable<string>(),
-		selectedChapter = $bindable<string>(),
-		goToVerses = $bindable<boolean>(),
-		onLocationSelected
-	}: {
-		booknames: BibleBooknames;
-		selectedBookID: string;
-		selectedChapter: string;
-		goToVerses: boolean;
-		onLocationSelected: (bibleLocationRef: string) => void;
-	} = $props();
+	const unsubscribeNavigationResult =
+		onResult(
+			onNavigationResult
+		);
 
 	// ================================== VARS =================================
 
-	let clientHeight = $derived(paneLayout.clientHeight);
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
 	let headerHeight = $state(0);
 
-	let bookName: string = $state('');
+	let booknames:
+		BibleBooknames |
+		undefined = $state();
+	let bookName = $state('');
+	let shortBookName = $state('');
 	let chapters: string[] = $state([]);
+	let goToVerses = $state(
+		navigationState.state.goToVerses === true
+	);
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		setChapters();
-		setBookName();
+		void loadBooknames();
+	});
+
+	onDestroy(() => {
+		unsubscribeNavigationResult();
 	});
 
 	// ================================ FUNCS ==================================
 
+	async function loadBooknames(): Promise<void> {
+		const source =
+			moduleResourceSelectionResolver.require(
+				navigationState,
+				BIBLE_BOOKNAMES_RESOURCE_TYPE
+			);
+
+		booknames =
+			await bibleBooknamesService.get(
+				source
+			);
+
+		setBookName();
+		setChapters();
+	}
+
 	function setBookName(): void {
-		bookName = booknames.booknamesById[selectedBookID] ?? '';
+		if (!booknames) {
+			return;
+		}
+
+		bookName =
+			booknames.booknamesById[selectedBookID] ?? '';
+		shortBookName =
+			booknames.shortNames[selectedBookID] ??
+			bookName;
 	}
 
 	function setChapters(): void {
+		if (!booknames) {
+			chapters = [];
+			return;
+		}
+
 		chapters = Object.keys(
-			booknames.bookchapterversecountById[selectedBookID] ?? {}
-		).sort((a, b) => Number(a) - Number(b));
+			booknames
+				.bookchapterversecountById[
+					selectedBookID
+				] ?? {}
+		).sort(
+			(a, b) =>
+				Number(a) - Number(b)
+		);
 	}
 
-	function chapterSelected(chapter: string): void {
+	function onNavigationResult(
+		result: NavigationStateValue
+	): void {
+		forwardBibleLocationNavigationResult(
+			result,
+			{
+				navigation,
+				whenActive
+			}
+		);
+	}
+
+	function chapterSelected(
+		chapter: string
+	): void {
 		if (goToVerses) {
-			selectedChapter = chapter;
-		} else {
-			onLocationSelected(
+			navigation.pushView(
+				BIBLE_VIEWS.BOOK_CHAPTER_VERSE_VERSE,
+				{
+					selectedBookID,
+					selectedChapter: chapter
+				}
+			);
+			return;
+		}
+
+		void navigation.backWithResult({
+			type: 'bible-location',
+			bibleLocationRef:
 				`${selectedBookID}_${chapter}`
+		});
+	}
+
+	function onToggleGoToVerses(): void {
+		goToVerses = !goToVerses;
+		updateState(
+			'goToVerses',
+			goToVerses
+		);
+	}
+
+	function requireStringState(
+		value: unknown,
+		key: string
+	): string {
+		if (
+			typeof value !== 'string' ||
+			value.length === 0
+		) {
+			throw new Error(
+				`Bible chapter view is missing ${key}`
 			);
 		}
-	}
 
-	// ============================== CLICK FUNCS ==============================
-
-	function onBackClicked(e: Event): void {
-		e.stopPropagation();
-		selectedBookID = '';
-	}
-
-	function onToggleGoToVerses(e: Event): void {
-		e.stopPropagation();
-		const message = goToVerses ? 'Go to verses enabled' : 'Go to verses disabled';
-		toastService.showToast(message);
+		return value;
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle={bookName || 'Bible'}
+		shortTitle={shortBookName || bookName || 'Bible'}
+		secondary="Chapter"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
+
 {#snippet header()}
-	<div class="flex w-full flex-row justify-between">
-		<KJVButton classes="flex-1" onClick={onBackClicked}>
-			<ArrowBack classes=""></ArrowBack>
-		</KJVButton>
-
-		<span class="text-center"
-			><span>{bookName} </span>
-			<span class="decoration-primary-500 underline underline-offset-12"
-				>Chapter</span
-			>
-			{#if goToVerses}
-				<span>Verse</span>
-			{/if}
-		</span>
-
-		<div class="flex flex-1 justify-end">
-			<Toggle onChange={onToggleGoToVerses} bind:isToggled={goToVerses}
-			></Toggle>
-		</div>
-	</div>
+	<KJVHeader
+		title={bookName || 'Chapter'}
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+		{titleContent}
+		actions={[
+			{
+				icon: 'format-list-numbered',
+				label: goToVerses
+					? 'Do not show verses after chapter'
+					: 'Show verses after chapter',
+				onClick: onToggleGoToVerses,
+				selected: goToVerses
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
 
 {#snippet body()}
 	<div class="grid w-[100%] grid-cols-5">
-		{#each chapters as ch}
+		{#each chapters as chapter}
 			<button
 				class="row-span-1 bg-neutral-50 p-4 hover:bg-neutral-100"
-				onclick={() => {
-					chapterSelected(ch);
-				}}
+				onclick={() =>
+					chapterSelected(
+						chapter
+					)}
 			>
-				{ch}
+				{chapter}
 			</button>
 		{/each}
 	</div>

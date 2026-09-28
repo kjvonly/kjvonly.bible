@@ -8,19 +8,11 @@ import {
 } from '$lib/application';
 
 import {
-	NOTES_VIEWS
-} from '$lib/domains/notes';
-
-import {
 	BIBLE_MENU_ACTIONS,
 	BIBLE_NAVIGATION_RESULTS,
 	BIBLE_VIEWS,
 	type BibleMenuAction
 } from '../../../models/bible-navigation.model';
-
-import {
-	SEARCH_VIEWS
-} from '../../../models/search-navigation.model';
 
 interface BibleMenuNavigationResultContext {
 	bibleLocationRef: string;
@@ -85,22 +77,6 @@ function applyBibleMenuAction(
 			);
 			return;
 
-		case BIBLE_MENU_ACTIONS.SEARCH:
-			navigation.pushModule(
-				Modules.SEARCH,
-				SEARCH_VIEWS.RESULTS,
-				{}
-			);
-			return;
-
-		case BIBLE_MENU_ACTIONS.NOTES:
-			navigation.pushModule(
-				Modules.NOTES,
-				NOTES_VIEWS.ROOT,
-				{}
-			);
-			return;
-
 		case BIBLE_MENU_ACTIONS.SPLIT_VERTICAL:
 			navigation.split(
 				PaneSplit.VERTICAL,
@@ -119,8 +95,6 @@ function applyBibleMenuAction(
 			);
 			return;
 
-		case BIBLE_MENU_ACTIONS.CLOSE:
-			navigation.back();
 	}
 }
 
@@ -130,11 +104,8 @@ function isBibleMenuAction(
 	return (
 		value === BIBLE_MENU_ACTIONS.COPY_VERSES ||
 		value === BIBLE_MENU_ACTIONS.BIBLE_VERSION ||
-		value === BIBLE_MENU_ACTIONS.SEARCH ||
-		value === BIBLE_MENU_ACTIONS.NOTES ||
 		value === BIBLE_MENU_ACTIONS.SPLIT_VERTICAL ||
-		value === BIBLE_MENU_ACTIONS.SPLIT_HORIZONTAL ||
-		value === BIBLE_MENU_ACTIONS.CLOSE
+		value === BIBLE_MENU_ACTIONS.SPLIT_HORIZONTAL
 	);
 }
 

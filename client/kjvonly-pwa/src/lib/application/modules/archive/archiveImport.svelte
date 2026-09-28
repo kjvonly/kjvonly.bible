@@ -13,9 +13,10 @@
 	// COMPONENTS
 	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
-	import ImportIcon from '$lib/components/svgs/import.svelte';
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 
 	// =============================== BINDINGS ================================
 
@@ -134,20 +135,31 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle="Import archive"
+		shortTitle="Import"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
+
 {#snippet header()}
-	<span class="flex flex-1 justify-start">
-		<KJVButton classes="" onClick={onBack}>
-			<ArrowBack classes=""></ArrowBack>
-		</KJVButton>
-	</span>
-
-	<span class="text-center">Import</span>
-
-	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={onChooseFile} disabled={importing}>
-			<ImportIcon classes=""></ImportIcon>
-		</KJVButton>
-	</span>
+	<KJVHeader
+		title="Import archive"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: onBack
+		}}
+		{titleContent}
+		actions={[
+			{
+				icon: 'import',
+				label: 'Choose archive to import',
+				onClick: onChooseFile,
+				disabled: importing
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

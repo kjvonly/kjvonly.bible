@@ -3,34 +3,19 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 
 	// COMPONENTS
-	import Edit from '$lib/components/svgs/edit.svelte';
-	import EditOff from '$lib/components/svgs/editOff.svelte';
-
-	// // TOOLBAR
-	import Close from '$lib/components/svgs/close.svelte';
-	import Copy from '$lib/components/svgs/copy.svelte';
-	import SettingsIcon from '$lib/components/svgs/settings.svelte';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import Menu from '$lib/components/svgs/menu.svelte';
-	import Search from '$lib/components/svgs/search.svelte';
+	import { KJVAdaptiveHeaderTitle, KJVHeader } from '$lib/components';
 
 	// MODELS
 	import {
 		BIBLE_MODES,
-		ToolbarItems,
 		type BibleMode
 	} from '../../models/bible.model';
 	import {
 		BIBLE_VIEWS
 	} from '../../models/bible-navigation.model';
-	import {
-		Modules,
-		SETTINGS_VIEWS
-	} from '$lib/application';
-	import { SEARCH_VIEWS } from '../../models/search-navigation.model';
+	import type { Settings as AppSettings } from '$lib/application';
 
 	// SERVICES
-	import { PaneSplit } from '$lib/application';
 	import {
 		useApplicationContext,
 		useNavigationEntryContext,
@@ -44,7 +29,6 @@
 	import uuid4 from 'uuid4';
 	import { extractBibleVersion } from '../../utils/bible-identity';
 
-	import type { Settings as AppSettings } from '$lib/application';
 	const {
 		bibleBooknamesService,
 		moduleResourceSelectionResolver,
@@ -77,24 +61,22 @@
 
 	// ================================== VARS =================================
 
-	let id = uuid4();
-	let bookName: string = $state('');
-	let bookChapter: number = $state(0);
-	let headerGridCols = $state(7);
+	const id = uuid4();
+	let fullBookName = $state('');
+	let shortBookName = $state('');
+	let bookChapter = $state(0);
 	let showBibleVersion = $state(false);
-	let verses: string = $state('');
 
-	// TODO this will become dynamic option allowing users to configure their
-	// toolbar to their liking
-	let toolbar = [
-		ToolbarItems.EDIT,
-		ToolbarItems.SETTINGS,
-		ToolbarItems.Copy,
-		ToolbarItems.BOOK_CHAPTER_VERSE,
-		ToolbarItems.SEARCH,
-		ToolbarItems.MENU,
-		ToolbarItems.Close
-	];
+	let longTitle = $derived(
+		fullBookName && bookChapter
+			? `${fullBookName} ${bookChapter}`
+			: 'Bible'
+	);
+	let shortTitle = $derived(
+		shortBookName && bookChapter
+			? `${shortBookName} ${bookChapter}`
+			: longTitle
+	);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -110,7 +92,6 @@
 		bibleLocationRef;
 		untrack(() => {
 			void setBookNameAndChapter();
-			setVerses();
 		});
 	});
 
@@ -119,7 +100,10 @@
 	async function setBookNameAndChapter(): Promise<void> {
 		const locationRef = bibleLocationRef;
 
-		const bookID = bibleLocationReferenceService.extractBookID(locationRef);
+		const bookID =
+			bibleLocationReferenceService.extractBookID(
+				locationRef
+			);
 
 		const source = moduleResourceSelectionResolver.require(
 			navigationState,
@@ -132,39 +116,53 @@
 			return;
 		}
 
-		bookName = booknames.shortNames[bookID] ?? '';
-
-		bookChapter = bibleLocationReferenceService.extractChapter(locationRef);
+		fullBookName =
+			booknames.booknamesById[bookID] ??
+			booknames.shortNames[bookID] ??
+			'';
+		shortBookName =
+			booknames.shortNames[bookID] ??
+			fullBookName;
+		bookChapter =
+			bibleLocationReferenceService.extractChapter(
+				locationRef
+			);
 	}
 
-	function setVerses() {
-		let [start, end] =
-			bibleLocationReferenceService.extractVersesOrOne(bibleLocationRef);
-		if (start + end > 0) {
-			verses = `:${start + 1}-${end}`;
-		} else {
-			verses = '';
-		}
+	function subscribeToSettings(): void {
+		settingsService.subscribe(
+			id,
+			onSettingsChange
+		);
+		onSettingsChange(
+			settingsService.getSettings()
+		);
 	}
 
-	function subscribeToSettings() {
-		settingsService.subscribe(id, onSettingsChange);
-		onSettingsChange(settingsService.getSettings());
-	}
-
-	function unsubscribeToSettings() {
+	function unsubscribeToSettings(): void {
 		settingsService.unsubscribe(id);
 	}
 
-	function onSettingsChange(settings: AppSettings) {
+	function onSettingsChange(
+		settings: AppSettings
+	): void {
 		showBibleVersion = settings.showBibleVersion;
+	}
+
+	function hasTextMarkupSelection(): boolean {
+		return moduleResourceSelectionResolver.find(
+			navigationState,
+			BIBLE_TEXT_MARKUP_RESOURCE_TYPE
+		) !== undefined;
 	}
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onBookChapterClick(event: Event): void {
-		event.stopPropagation();
+	function onBack(): void {
+		navigation.back();
+	}
 
+	function onBookChapterClick(): void {
 		if (mode.navReadings) {
 			navigation.pushView(
 				BIBLE_VIEWS.NAV_READINGS,
@@ -176,40 +174,19 @@
 		}
 
 		navigation.pushView(
-			BIBLE_VIEWS.BOOK_CHAPTER_VERSE,
+			BIBLE_VIEWS.BOOK_CHAPTER_VERSE_BOOK,
 			{}
 		);
 	}
 
-	function onSettingsClick(event: Event): void {
-		event.stopPropagation();
-
-		navigation.pushModule(
-			Modules.SETTINGS,
-			SETTINGS_VIEWS.ROOT,
-			{}
-		);
-	}
-
-	function onMenuClick(e: Event): void {
-		e.stopPropagation();
-
+	function onOverflowClick(): void {
 		navigation.pushView(
-			BIBLE_VIEWS.MENU,
+			BIBLE_VIEWS.OVERFLOW_ACTIONS,
 			{}
 		);
 	}
 
-	function hasTextMarkupSelection(): boolean {
-		return moduleResourceSelectionResolver.find(
-			navigationState,
-			BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-		) !== undefined;
-	}
-
-	function onEditClick(e: Event): void {
-		e.stopPropagation();
-
+	function onEditClick(): void {
 		if (mode.value === BIBLE_MODES.EDIT) {
 			void onExitEdit();
 			return;
@@ -219,131 +196,67 @@
 			toastService.showToast('Login first');
 			return;
 		}
-		let bookIDChapter =
-			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-		let verseNumber =
-			bibleLocationReferenceService.extractVerse(bibleLocationRef);
-		let wordIdx =
-			bibleLocationReferenceService.extractWordIndexOrDefault(bibleLocationRef);
-		mode.bibleLocationRef = `${bookIDChapter}_${verseNumber}_${wordIdx}`;
+
+		const bookIDChapter =
+			bibleLocationReferenceService.extractBookIDChapter(
+				bibleLocationRef
+			);
+		const verseNumber =
+			bibleLocationReferenceService.extractVerse(
+				bibleLocationRef
+			);
+		const wordIdx =
+			bibleLocationReferenceService.extractWordIndexOrDefault(
+				bibleLocationRef
+			);
+
+		mode.bibleLocationRef =
+			`${bookIDChapter}_${verseNumber}_${wordIdx}`;
 		mode.bibleVersion = bibleVersion;
 		mode.value = BIBLE_MODES.EDIT;
 	}
-
-	function onCloseClick(): void {
-		navigation.back();
-	}
-
-	function onSearchClick(): void {
-		navigation.split(
-			PaneSplit.HORIZONTAL,
-			Modules.SEARCH,
-			SEARCH_VIEWS.RESULTS,
-			{}
-		);
-	}
-
-	function onCopyClick(): void {
-		navigation.pushView(
-			BIBLE_VIEWS.COPY_VERSE,
-			{
-				bibleLocationRef
-			}
-		);
-	}
 </script>
 
-<!-- =============================== TOOLBAR =============================== -->
-
-{#snippet bookChapterVerseButton()}
-	<button onclick={onBookChapterClick} class=" text-center text-neutral-700">
-		<span class="kjvonly-noselect whitespace-wrap text-center">
-			{#if bookName && bookChapter}
-				{#if showBibleVersion}{extractBibleVersion(
-						bibleVersion
-					).toUpperCase()}<br />{/if}
-				{bookName}
-				{bookChapter}{verses}
-			{/if}
-		</span>
-	</button>
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		{longTitle}
+		shortTitle={shortTitle}
+		secondary={showBibleVersion
+			? extractBibleVersion(bibleVersion).toUpperCase()
+			: undefined}
+	></KJVAdaptiveHeaderTitle>
 {/snippet}
 
-{#snippet closeButton()}
-	<KJVButton onClick={onCloseClick} classes="">
-		<Close classes=""></Close>
-	</KJVButton>
-{/snippet}
-
-{#snippet copyButton()}
-	<KJVButton onClick={onCopyClick} classes="">
-		<Copy classes=""></Copy>
-	</KJVButton>
-{/snippet}
-
-{#snippet editButton()}
-	<KJVButton onClick={onEditClick} classes="">
-		{#if mode.value === BIBLE_MODES.EDIT}
-			<EditOff classes=""></EditOff>
-		{:else}
-			<Edit classes=""></Edit>
-		{/if}
-	</KJVButton>
-{/snippet}
-
-{#snippet menuButton()}
-	<KJVButton onClick={onMenuClick} classes="">
-		<Menu classes=""></Menu>
-	</KJVButton>
-{/snippet}
-
-{#snippet searchButton()}
-	<KJVButton onClick={onSearchClick} classes="">
-		<Search classes=""></Search>
-	</KJVButton>
-{/snippet}
-
-{#snippet settingsButton()}
-	<KJVButton classes="" onClick={onSettingsClick}>
-		<SettingsIcon classes=""></SettingsIcon>
-	</KJVButton>
-{/snippet}
-
-{#snippet header()}
-	<div
-		class="w-full bg-neutral-100 py-2 leading-tight"
-	>
-		<span
-			class="grid {'grid-cols-' +
-				headerGridCols} w-full place-items-center bg-neutral-100 text-neutral-700"
-		>
-			{#each toolbar as item}
-				{#if item === ToolbarItems.EDIT}
-					{@render editButton()}
-				{/if}
-				{#if item === ToolbarItems.Copy}
-					{@render copyButton()}
-				{/if}
-				{#if item === ToolbarItems.SETTINGS}
-					{@render settingsButton()}
-				{/if}
-				{#if item === ToolbarItems.BOOK_CHAPTER_VERSE}
-					{@render bookChapterVerseButton()}
-				{/if}
-				{#if item === ToolbarItems.SEARCH}
-					{@render searchButton()}
-				{/if}
-				{#if item === ToolbarItems.MENU}
-					{@render menuButton()}
-				{/if}
-				{#if item === ToolbarItems.Close}
-					{@render closeButton()}
-				{/if}
-			{/each}
-		</span>
-	</div>
-{/snippet}
-
-{@render header()}
-
-<span class="hidden grid-cols-7"></span>
+<KJVHeader
+	title="Bible"
+	leadingAction={{
+		icon: 'arrow-back',
+		label: 'Back',
+		onClick: onBack
+	}}
+	titleAction={{
+		label: mode.navReadings
+			? 'Show plan readings'
+			: 'Choose Bible book, chapter, and verse',
+		onClick: onBookChapterClick
+	}}
+	{titleContent}
+	actions={[
+		{
+			icon:
+				mode.value === BIBLE_MODES.EDIT
+					? 'edit-off'
+					: 'edit',
+			label:
+				mode.value === BIBLE_MODES.EDIT
+					? 'Exit edit mode'
+					: 'Edit',
+			onClick: onEditClick
+		},
+		{
+			icon: 'more-vertical',
+			label: 'More actions',
+			onClick: onOverflowClick
+		}
+	]}
+></KJVHeader>

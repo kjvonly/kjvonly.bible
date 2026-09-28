@@ -8,9 +8,13 @@ import {
 } from '../../../models/bible-navigation.model';
 
 import BibleContainer from '../bibleContainer.svelte';
-import BibleMenuView from '../views/bibleMenuView.svelte';
-import BibleVersionView from '../views/bibleVersionView.svelte';
-import BookChapterVerseView from '../views/bookChapterVerse/bookChapterVerseView.svelte';
+import BibleOverflowActionsView from '../views/bibleOverflowActionsView.svelte';
+import {
+	BibleVersionView
+} from '../../components/bibleVersion';
+import Books from '../views/bookChapterVerse/books.svelte';
+import Chapters from '../views/bookChapterVerse/chapters.svelte';
+import Verses from '../views/bookChapterVerse/verses.svelte';
 import CopyVerseView from '../views/copyVerseView.svelte';
 import NavReadingsView from '../views/navReadingsView.svelte';
 
@@ -24,16 +28,29 @@ export const bibleNavigationViewRegistrations:
 			component: BibleContainer
 		},
 		{
-			view: BIBLE_VIEWS.MENU,
-			component: BibleMenuView
+			view: BIBLE_VIEWS.OVERFLOW_ACTIONS,
+			component: BibleOverflowActionsView
 		},
 		{
 			view: BIBLE_VIEWS.VERSION,
 			component: BibleVersionView
 		},
 		{
+			view: BIBLE_VIEWS.BOOK_CHAPTER_VERSE_BOOK,
+			component: Books
+		},
+		{
+			view: BIBLE_VIEWS.BOOK_CHAPTER_VERSE_CHAPTER,
+			component: Chapters
+		},
+		{
+			view: BIBLE_VIEWS.BOOK_CHAPTER_VERSE_VERSE,
+			component: Verses
+		},
+		{
+			// Preserve persisted pre-split navigation entries during the migration.
 			view: BIBLE_VIEWS.BOOK_CHAPTER_VERSE,
-			component: BookChapterVerseView
+			component: Books
 		},
 		{
 			view: BIBLE_VIEWS.COPY_VERSE,

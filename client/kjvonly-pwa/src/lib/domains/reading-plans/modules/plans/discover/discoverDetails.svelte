@@ -21,13 +21,12 @@
 	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
 
 	// COMPONENTS
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 	import ReadingsComponent from '../components/readings.svelte';
 	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
-
-	// SVGS
-	import AddCircle from '$lib/components/svgs/addCircle.svelte';
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
 
 	// MODELS
 	import {
@@ -263,19 +262,30 @@
 </script>
 
 <!-- ================================ HEADER =============================== -->
-{#snippet header()}
-	<span class="flex-1">
-		<KJVButton classes="" onClick={() => navigation.back()}>
-			<ArrowBack></ArrowBack>
-		</KJVButton>
-	</span>
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle="Plan Details"
+		shortTitle="Details"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
 
-	<span class="text-cetner">Plan Details</span>
-	<span class="flex flex-1 justify-end">
-		<KJVButton classes="" onClick={onAddPlanClicked}>
-			<AddCircle></AddCircle>
-		</KJVButton>
-	</span>
+{#snippet header()}
+	<KJVHeader
+		title="Plan Details"
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+		{titleContent}
+		actions={[
+			{
+				icon: 'add-circle',
+				label: 'Add plan',
+				onClick: onAddPlanClicked
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

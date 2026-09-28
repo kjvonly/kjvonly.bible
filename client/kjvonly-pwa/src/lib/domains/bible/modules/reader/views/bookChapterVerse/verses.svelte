@@ -1,60 +1,134 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+
 	// SVELTE
-	import { onMount } from 'svelte';
+	import {
+		onMount
+	} from 'svelte';
+
+	// APPLICATION
+	import {
+		useApplicationContext,
+		useNavigationEntryContext,
+		useNavigationRuntimeContext,
+		usePaneLayoutContext
+	} from '$lib/application';
+	import {
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
 	// COMPONENTS
-
-	import { ViewBody } from '$lib/application/ui';
-	import { ViewHeader } from '$lib/application/ui';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import { usePaneLayoutContext } from '$lib/application';
-
-	// // SVGS
-	import ArrowBack from '$lib/components/svgs/arrowBack.svelte';
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 
 	// MODELS
-	import type { BibleBooknames } from '../../../../models/bible-booknames.model';
+	import type {
+		BibleBooknames
+	} from '../../../../models/bible-booknames.model';
+
+	// RESOURCES
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '../../../../resources/booknames/bible-booknames-interpreter';
+
+	const {
+		bibleBooknamesService,
+		moduleResourceSelectionResolver
+	} = useApplicationContext();
+
+	const {
+		navigationState
+	} = useNavigationEntryContext();
+
+	const {
+		navigation
+	} = useNavigationRuntimeContext();
 
 	const paneLayout = usePaneLayoutContext();
 
-	// =============================== BINDINGS ================================
-
-	let {
-		booknames,
-		selectedBookID,
-		selectedChapter = $bindable<string>(),
-		onLocationSelected
-	}: {
-		booknames: BibleBooknames;
-		selectedBookID: string;
-		selectedChapter: string;
-		onLocationSelected: (bibleLocationRef: string) => void;
-	} = $props();
+	const selectedBookID =
+		requireStringState(
+			navigationState.state.selectedBookID,
+			'selectedBookID'
+		);
+	const selectedChapter =
+		requireStringState(
+			navigationState.state.selectedChapter,
+			'selectedChapter'
+		);
 
 	// ================================== VARS =================================
 
-	let clientHeight = $derived(paneLayout.clientHeight);
+	let clientHeight = $derived(
+		paneLayout.clientHeight
+	);
 	let headerHeight = $state(0);
 
+	let booknames:
+		BibleBooknames |
+		undefined = $state();
 	let verses: number[] = $state([]);
 	let bookName = $state('');
+	let shortBookName = $state('');
+
+	let longTitle = $derived(
+		bookName
+			? `${bookName} ${selectedChapter}`
+			: `Chapter ${selectedChapter}`
+	);
+	let shortTitle = $derived(
+		shortBookName
+			? `${shortBookName} ${selectedChapter}`
+			: longTitle
+	);
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		setBookName();
-		setVerses();
+		void loadBooknames();
 	});
 
 	// ================================ FUNCS ==================================
 
+	async function loadBooknames(): Promise<void> {
+		const source =
+			moduleResourceSelectionResolver.require(
+				navigationState,
+				BIBLE_BOOKNAMES_RESOURCE_TYPE
+			);
+
+		booknames =
+			await bibleBooknamesService.get(
+				source
+			);
+
+		setBookName();
+		setVerses();
+	}
+
 	function setBookName(): void {
-		bookName = booknames.booknamesById[selectedBookID] ?? '';
+		if (!booknames) {
+			return;
+		}
+
+		bookName =
+			booknames.booknamesById[selectedBookID] ?? '';
+		shortBookName =
+			booknames.shortNames[selectedBookID] ??
+			bookName;
 	}
 
 	function setVerses(): void {
 		const verseCount =
-			booknames.bookchapterversecountById[selectedBookID]?.[selectedChapter];
+			booknames
+				?.bookchapterversecountById[
+					selectedBookID
+				]?.[
+					selectedChapter
+				];
 
 		verses = verseCount
 			? Array.from(
@@ -64,36 +138,53 @@
 			: [];
 	}
 
-	// ============================== CLICK FUNCS ==============================
-
-	function onBackClicked(e: Event): void {
-		e.stopPropagation();
-		selectedChapter = '';
+	function onVerseSelected(
+		verse: number
+	): void {
+		void navigation.backWithResult({
+			type: 'bible-location',
+			bibleLocationRef:
+				`${selectedBookID}_${selectedChapter}_${verse}`
+		});
 	}
 
-	function onVerseSelected(verse: number): void {
-		onLocationSelected(
-			`${selectedBookID}_${selectedChapter}_${verse}`
-		);
+	function requireStringState(
+		value: unknown,
+		key: string
+	): string {
+		if (
+			typeof value !== 'string' ||
+			value.length === 0
+		) {
+			throw new Error(
+				`Bible verse view is missing ${key}`
+			);
+		}
+
+		return value;
 	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
+
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		{longTitle}
+		shortTitle={shortTitle}
+		secondary="Verse"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
+
 {#snippet header()}
-	<div class="flex w-full flex-row justify-between">
-		<KJVButton classes="flex-1" onClick={onBackClicked}>
-			<ArrowBack classes=""></ArrowBack>
-		</KJVButton>
-
-		<span class="text-center"
-			><span>{bookName} {selectedChapter} </span>
-			<span class="decoration-primary-500 underline underline-offset-12"
-				>Verse</span
-			>
-		</span>
-
-		<div class="flex-1"></div>
-	</div>
+	<KJVHeader
+		title={longTitle}
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => navigation.back()
+		}}
+		{titleContent}
+	></KJVHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
@@ -103,9 +194,10 @@
 		{#each verses as verse}
 			<button
 				class="row-span-1 bg-neutral-50 p-4 hover:bg-neutral-100"
-				onclick={() => {
-					onVerseSelected(verse);
-				}}
+				onclick={() =>
+					onVerseSelected(
+						verse
+					)}
 			>
 				{verse}
 			</button>

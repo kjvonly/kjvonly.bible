@@ -1,6 +1,6 @@
 <script lang="ts">
 	// COMPONENTS
-	import KJVButton from '../buttons/KJVButton.svelte';
+	import KJVIconButton from '../buttons/KJVIconButton.svelte';
 
 	// MODELS
 	import type {
@@ -27,11 +27,13 @@
 	);
 </script>
 
-<KJVButton
-	classes="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full bg-transparent text-neutral-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+<KJVIconButton
+	label={action.label}
 	onClick={action.onClick}
 	disabled={action.disabled ?? false}
+	variant="quiet"
 >
-	<IconComponent classes="h-[1.25em] w-[1.25em]"></IconComponent>
-	<span class="sr-only">{action.label}</span>
-</KJVButton>
+	<IconComponent
+		classes={`h-[1.25em] w-[1.25em] ${action.selected ? 'text-primary-500' : ''}`}
+	></IconComponent>
+</KJVIconButton>

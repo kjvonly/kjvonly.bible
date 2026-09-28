@@ -9,14 +9,13 @@
 
 	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
+	import {
+		KJVAdaptiveHeaderTitle,
+		KJVHeader
+	} from '$lib/components';
 
-	// // SVGS
-	import Close from '$lib/components/svgs/close.svelte';
+	// SVGS
 	import Delete from '$lib/components/svgs/delete.svelte';
-	import Menu from '$lib/components/svgs/menu.svelte';
-	import NoTag from '$lib/components/svgs/noTag.svelte';
-	import Save from '$lib/components/svgs/save.svelte';
-	import Tag from '$lib/components/svgs/tag.svelte';
 
 	// MODELS
 	import {
@@ -159,12 +158,16 @@
 		onCloseNote();
 	}
 
-	async function onSave(toastMessage: string) {
+	async function persistDraft(): Promise<void> {
 		draft.dateUpdated = Date.now();
 
 		await notesService.put($state.snapshot(draft));
 
 		isPersisted = true;
+	}
+
+	async function onSave(toastMessage: string): Promise<void> {
+		await persistDraft();
 
 		toastService.showToast(toastMessage);
 	}
@@ -196,11 +199,12 @@
 		draft.tags = draft.tags.filter((tag: NoteTag) => tag.id !== tagID);
 	}
 
-	function onClose() {
+	async function onBack(): Promise<void> {
 		if (isShowingOptions()) {
 			return;
 		}
 
+		await persistDraft();
 		onCloseNote();
 	}
 </script>
@@ -208,30 +212,43 @@
 <!-- ================================ HEADER =============================== -->
 
 <!-- START NOTE SNIPPETS -->
+{#snippet titleContent()}
+	<KJVAdaptiveHeaderTitle
+		longTitle={draft.title || 'Note'}
+		shortTitle="Note"
+	></KJVAdaptiveHeaderTitle>
+{/snippet}
+
 {#snippet noteHeaderSnippet()}
-	<div class="grid w-full grid-cols-5 place-items-center">
-		<KJVButton classes="" onClick={() => onSave(`Saved Note: ${draft.title}`)}>
-			<Save></Save>
-		</KJVButton>
-
-		<KJVButton classes="" onClick={() => (showTags = !showTags)}>
-			{#if showTags}
-				<NoTag></NoTag>
-			{:else}
-				<Tag></Tag>
-			{/if}
-		</KJVButton>
-		<span class="text-center"
-			>{draft.title}{draft.title?.length === 20 ? '...' : ''}</span
-		>
-		<KJVButton classes="" onClick={() => (showNoteActions = !showNoteActions)}>
-			<Menu></Menu>
-		</KJVButton>
-
-		<KJVButton classes="" onClick={onClose}>
-			<Close></Close>
-		</KJVButton>
-	</div>
+	<KJVHeader
+		title={draft.title || 'Note'}
+		leadingAction={{
+			icon: 'arrow-back',
+			label: 'Back',
+			onClick: () => void onBack()
+		}}
+		{titleContent}
+		actions={[
+			{
+				icon: 'save',
+				label: 'Save note',
+				onClick: () =>
+					void onSave(`Saved Note: ${draft.title}`)
+			},
+			{
+				icon: 'tag',
+				label: showTags ? 'Hide tags' : 'Show tags',
+				onClick: () => (showTags = !showTags),
+				selected: showTags
+			},
+			{
+				icon: 'more-vertical',
+				label: 'More actions',
+				onClick: () =>
+					(showNoteActions = !showNoteActions)
+			}
+		]}
+	></KJVHeader>
 {/snippet}
 <!-- ================================= BODY ================================ -->
 
