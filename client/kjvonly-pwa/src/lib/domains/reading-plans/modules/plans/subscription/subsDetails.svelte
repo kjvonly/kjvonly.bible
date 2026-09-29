@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// APPLICATION
 	import {
@@ -14,18 +14,25 @@
 		usePaneLayoutContext
 	} from '$lib/application';
 	import {
-		attachEvents,
 		ViewBody,
 		ViewHeader
 	} from '$lib/application/ui';
 
+	// BIBLE
 	import {
-		BIBLE_VIEWS
+		BIBLE_BOOKNAMES_RESOURCE_TYPE,
+		BIBLE_VIEWS,
+		type BibleChapterVerseCountLookup
 	} from '$lib/domains/bible';
 
 	// COMPONENTS
-	import { KJVHeader } from '$lib/components';
-	import ReadingsComponent from '../components/readings.svelte';
+	import {
+		KJVAsyncState,
+		KJVHeader,
+		KJVScrubbedViewport
+	} from '$lib/components';
+	import PlanReadingsList from '../components/planReadingsList.svelte';
+	import PlansLoadState from '../components/plansLoadState.svelte';
 	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
 	import {
 		applyPlanReadingNavigationResult
@@ -40,9 +47,12 @@
 		type Sub
 	} from '../../../models/plans.model';
 	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
+	import type { PlansViewLoadState } from '../runtime/plans-view-load-state';
 
 	// OTHER
 	import uuid4 from 'uuid4';
+
+	const BATCH_SIZE_TO_SHOW = 30;
 
 	type SubsDetailsNavigationState =
 		NavigationState<PLANS_VIEWS.SUBS_DETAILS> & {
@@ -56,6 +66,9 @@
 		useApplicationContext();
 
 	const {
+		bibleBooknamesService,
+		moduleResourceSelectionResolver,
+		petNameService,
 		planProgressService,
 		plansPubSubService,
 		toastService
@@ -88,13 +101,68 @@
 	// ================================== VARS =================================
 
 	let headerHeight = $state(0);
-
 	let hasCompletedReading = $state(false);
-	let showCompletedReadings: boolean = $state(false);
-	let subListReadingsToShow: number = $state(0);
+	let showCompletedReadings = $state(false);
+	let visibleReadingEndExclusive = $state(0);
+	let scrubberReadingNumber = $state(1);
+	let verseCountByBookChapter =
+		$state<BibleChapterVerseCountLookup>({});
+	let shortBookNamesById =
+		$state<Readonly<Record<string, string>>>({});
 	let subListViewID = uuid4();
 	let SUBSCRIBER_ID: string = uuid4();
 	let mounted = true;
+	let loadState = $state<PlansViewLoadState>('initializing');
+	let subscriptionMissing = $state(false);
+
+
+	let firstVisibleReadingIndex = $derived(
+		showCompletedReadings
+			? 0
+			: Math.min(
+				selectedSub.nextReadingsIndex,
+				selectedSub.nestedReadings.length
+			)
+	);
+
+	let visibleReadingIndexes = $derived.by(() => {
+		const indexes: number[] = [];
+
+		for (
+			let index = firstVisibleReadingIndex;
+			index < visibleReadingEndExclusive;
+			index++
+		) {
+			if (
+				!showCompletedReadings &&
+				selectedSub.completedReadingIndexes.has(index)
+			) {
+				continue;
+			}
+
+			indexes.push(index);
+		}
+
+		return indexes;
+	});
+
+	let scrubberMinReadingNumber = $derived(
+		showCompletedReadings
+			? 1
+			: Math.min(
+				selectedSub.nextReadingsIndex + 1,
+				Math.max(1, selectedSub.nestedReadings.length)
+			)
+	);
+
+	let showScrubber = $derived(
+		selectedSub.nestedReadings.length > 1 &&
+		(
+			showCompletedReadings ||
+			selectedSub.nextReadingsIndex <
+				selectedSub.nestedReadings.length
+		)
+	);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -106,91 +174,241 @@
 				onNavigationResult
 			);
 
-		const detachScroll = attachEvents(
-			`${subListViewID}-scroll-container`,
-			'scroll',
-			handleScroll
-		);
-
 		return () => {
 			mounted = false;
 			detachNavigationResult();
-			detachScroll();
 			plansPubSubService.unsubscribe(SUBSCRIBER_ID);
 		};
 	});
 
-	$effect(() => {
-		selectedSub;
-		untrack(() => {
-			loadMoreSubReadings();
-			setHasCompletedReadings();
-		});
-	});
 
 	// ================================ FUNCS ==================================
 
 	async function initialize(): Promise<void> {
-		await initializePlansRuntime(
-			navigationState,
-			application
-		);
+		subscriptionMissing = false;
+		loadState = 'initializing';
+		plansPubSubService.unsubscribe(SUBSCRIBER_ID);
 
-		if (!mounted) {
-			return;
+		try {
+			await initializePlansRuntime(
+				navigationState,
+				application
+			);
+
+			if (!mounted) {
+				return;
+			}
+
+			loadState = 'loading';
+
+			const booknamesSource =
+				moduleResourceSelectionResolver.require(
+					navigationState,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+			const booknames =
+				await bibleBooknamesService.get(
+					booknamesSource
+				);
+
+			if (!mounted) {
+				return;
+			}
+
+			verseCountByBookChapter =
+				booknames.bookchapterversecountById;
+			shortBookNamesById =
+				booknames.shortNames;
+
+			plansPubSubService.subscribe(
+				PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+				onGetAllSubs,
+				SUBSCRIBER_ID
+			);
+			plansPubSubService.getAllSubs();
+		} catch {
+			if (mounted) {
+				loadState = 'failure';
+			}
 		}
+	}
 
-		plansPubSubService.subscribe(
-			PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
-			onGetAllSubs,
-			SUBSCRIBER_ID
-		);
-		plansPubSubService.getAllSubs();
+	function retryInitialize(): void {
+		void initialize();
 	}
 
 	function onGetAllSubs(
 		data: PlansSubscriptionsMessage
 	): void {
-		selectedSub =
-			data.subs.get(subID) ??
-			selectedSub;
-	}
+		const nextSub =
+			data.subs.get(subID);
 
-	function loadMoreSubReadings() {
-		let toShow = 0;
-		let count = 0;
-		const BATCH_SIZE_TO_SHOW = 30;
-
-		while (
-			toShow !== BATCH_SIZE_TO_SHOW &&
-			count + subListReadingsToShow < selectedSub.nestedReadings.length
-		) {
-			let hasCompletedReading = selectedSub.completedReadingIndexes.has(
-				subListReadingsToShow + count
-			);
-			count++;
-			if (hasCompletedReading && !showCompletedReadings) {
-				continue;
-			}
-			toShow = toShow + 1;
-		}
-
-		subListReadingsToShow += count;
-	}
-
-	function handleScroll() {
-		let el = document.getElementById(`${subListViewID}-scroll-container`);
-		if (el === null) {
+		if (!nextSub) {
+			selectedSub = NullSub();
+			hasCompletedReading = false;
+			visibleReadingEndExclusive = 0;
+			scrubberReadingNumber = 1;
+			subscriptionMissing = true;
+			loadState = 'ready';
 			return;
 		}
 
-		const threshold = 20;
-		const isReachBottom =
-			el.scrollHeight - el.clientHeight - el.scrollTop <= threshold;
+		subscriptionMissing = false;
 
-		if (isReachBottom) {
+		const isInitialLoad =
+			selectedSub.id.length === 0;
+
+		selectedSub = nextSub;
+		setHasCompletedReadings();
+
+		if (isInitialLoad) {
+			resetVisibleReadingWindow();
+		} else {
+			reconcileVisibleReadingWindow();
+		}
+
+		loadState = 'ready';
+	}
+
+	function resetVisibleReadingWindow(): void {
+		visibleReadingEndExclusive =
+			firstVisibleReadingIndex;
+		scrubberReadingNumber =
+			Math.min(
+				firstVisibleReadingIndex + 1,
+				Math.max(1, selectedSub.nestedReadings.length)
+			);
+		loadMoreSubReadings();
+	}
+
+
+	/**
+	 * Applies refreshed plan data without treating the existing pane as a new
+	 * Plan Details view. Worker broadcasts are shared across panes; local
+	 * scroll/scrubber state must therefore survive unrelated GET_ALL_SUBS
+	 * requests from another mounted Plans view.
+	 */
+	function reconcileVisibleReadingWindow(): void {
+		const totalReadings =
+			selectedSub.nestedReadings.length;
+
+		if (totalReadings === 0) {
+			visibleReadingEndExclusive = 0;
+			scrubberReadingNumber = 1;
+			return;
+		}
+
+		visibleReadingEndExclusive = Math.min(
+			visibleReadingEndExclusive,
+			totalReadings
+		);
+
+		if (
+			visibleReadingEndExclusive <=
+			firstVisibleReadingIndex
+		) {
+			visibleReadingEndExclusive =
+				firstVisibleReadingIndex;
 			loadMoreSubReadings();
 		}
+
+		scrubberReadingNumber = Math.max(
+			scrubberMinReadingNumber,
+			Math.min(
+				scrubberReadingNumber,
+				totalReadings
+			)
+		);
+	}
+
+	function loadMoreSubReadings(): void {
+		let visibleToAdd = 0;
+		let cursor = Math.max(
+			visibleReadingEndExclusive,
+			firstVisibleReadingIndex
+		);
+
+		while (
+			visibleToAdd < BATCH_SIZE_TO_SHOW &&
+			cursor < selectedSub.nestedReadings.length
+		) {
+			if (
+				showCompletedReadings ||
+				!selectedSub.completedReadingIndexes.has(cursor)
+			) {
+				visibleToAdd++;
+			}
+			cursor++;
+		}
+
+		visibleReadingEndExclusive = cursor;
+	}
+
+	/**
+	 * Resolves a requested 1-based scrubber value to a visible plan reading and
+	 * ensures that reading is rendered. DOM scrolling is owned by the shared
+	 * scrubbed viewport.
+	 */
+	function prepareScrubberValue(
+		readingNumber: number
+	): number | undefined {
+		const targetIndex = resolveVisibleReadingIndex(
+			readingNumber - 1
+		);
+
+		if (targetIndex === undefined) {
+			return undefined;
+		}
+
+		visibleReadingEndExclusive = Math.min(
+			selectedSub.nestedReadings.length,
+			Math.max(
+				visibleReadingEndExclusive,
+				targetIndex + BATCH_SIZE_TO_SHOW
+			)
+		);
+
+		return targetIndex + 1;
+	}
+
+	function resolveVisibleReadingIndex(
+		requestedIndex: number
+	): number | undefined {
+		const total = selectedSub.nestedReadings.length;
+		if (total === 0) {
+			return undefined;
+		}
+
+		const clamped = Math.max(
+			firstVisibleReadingIndex,
+			Math.min(requestedIndex, total - 1)
+		);
+
+		if (
+			showCompletedReadings ||
+			!selectedSub.completedReadingIndexes.has(clamped)
+		) {
+			return clamped;
+		}
+
+		for (let index = clamped + 1; index < total; index++) {
+			if (!selectedSub.completedReadingIndexes.has(index)) {
+				return index;
+			}
+		}
+
+		for (
+			let index = clamped - 1;
+			index >= firstVisibleReadingIndex;
+			index--
+		) {
+			if (!selectedSub.completedReadingIndexes.has(index)) {
+				return index;
+			}
+		}
+
+		return undefined;
 	}
 
 	function setHasCompletedReadings(): void {
@@ -268,8 +486,10 @@
 
 	function onToggleCompletedReadings(): void {
 		showCompletedReadings = !showCompletedReadings;
+		resetVisibleReadingWindow();
 		toastService.showToast('Toggled Completed Readings');
 	}
+
 
 	/**
 	 * Validates the navigation contract required by subscription details.
@@ -306,7 +526,7 @@
 
 {#snippet header()}
 	<KJVHeader
-		title="My Plans"
+		title="Plan Details"
 		leadingAction={{
 			icon: 'arrow-back',
 			label: 'Back',
@@ -314,14 +534,13 @@
 		}}
 		actions={[
 			{
-				icon: showCompletedReadings
-					? 'pending'
-					: 'check-circle',
+				icon: 'check',
 				label: showCompletedReadings
 					? 'Hide completed readings'
 					: 'Show completed readings',
 				onClick: onToggleCompletedReadings,
-				disabled: !hasCompletedReading
+				disabled: !hasCompletedReading,
+				selected: showCompletedReadings
 			}
 		]}
 	></KJVHeader>
@@ -330,46 +549,79 @@
 <!-- ================================= BODY ================================ -->
 
 {#snippet body()}
-	{@render subListView(selectedSub)}
+	{#if loadState !== 'ready'}
+		<PlansLoadState
+			state={loadState}
+			onRetry={retryInitialize}
+			subject="plan readings"
+		></PlansLoadState>
+	{:else if subscriptionMissing}
+		<KJVAsyncState
+			message="This plan is no longer in My Plans."
+			inset={false}
+		></KJVAsyncState>
+	{:else}
+		{@render subListView(selectedSub)}
+	{/if}
 {/snippet}
 
 {#snippet subListView(sub: Sub)}
-	<span
-		class="sticky top-0 border-t border-neutral-400 bg-neutral-50 p-2 text-2xl"
-		>{sub.name}</span
-	>
+	<div class="flex h-full min-h-0 w-full min-w-0 flex-col">
+		<section class="flex shrink-0 min-w-0 flex-col gap-2 py-4">
+			<div class="min-w-0">
+				<h2 class="truncate text-lg font-semibold text-neutral-700">{sub.name}</h2>
+				<div
+					class="truncate text-sm text-neutral-500"
+					title={sub.publisher}
+				>
+					Published by {petNameService.resolve(sub.publisher)}
+				</div>
+			</div>
 
-	{#each Array(subListReadingsToShow) as _, idx}
-		{#if !sub.completedReadingIndexes.has(idx) || (sub.completedReadingIndexes.has(idx) && showCompletedReadings)}
-			<button
-				onclick={() => onSelectedSubReading(idx)}
-				class="flex w-full flex-row px-2 py-4 text-base hover:cursor-pointer hover:bg-neutral-100"
+			{#if sub.description}
+				<p class="text-sm text-neutral-600">
+					{sub.description}
+				</p>
+			{/if}
+
+			<div class="text-sm text-neutral-500">
+				{sub.percentCompleted}% complete · {sub.completedReadingIndexes.size}
+				of {sub.nestedReadings.length} readings
+			</div>
+		</section>
+
+		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
+			<div class="shrink-0 pb-2 text-base text-neutral-700">Readings</div>
+
+			<KJVScrubbedViewport
+				min={scrubberMinReadingNumber}
+				max={Math.max(1, sub.nestedReadings.length)}
+				bind:value={scrubberReadingNumber}
+				label="Jump to plan reading"
+				{showScrubber}
+				formatValue={(readingNumber) => `Reading ${readingNumber}`}
+				onReachEnd={loadMoreSubReadings}
+				prepareValue={prepareScrubberValue}
 			>
-				<div class="flex w-full min-w-50">
-					<ReadingsComponent bind:readings={sub.nestedReadings[idx].bcvs}
-					></ReadingsComponent>
-				</div>
-
-				<div class="flex w-full min-w-50 flex-col">
-					<div class="flex w-full">
-						<span class="flex flex-grow"></span>
-						<div
-							class="text-lg {sub.completedReadingIndexes.has(idx)
-								? 'text-support-a-500'
-								: ''}"
-						>
-							{idx + 1} of {sub.nestedReadings.length}
-						</div>
+				{#if visibleReadingIndexes.length > 0}
+					<PlanReadingsList
+						readings={sub.nestedReadings}
+						readingIndexes={visibleReadingIndexes}
+						totalReadings={sub.nestedReadings.length}
+						nextReadingIndex={sub.nextReadingsIndex}
+						completedReadingIndexes={sub.completedReadingIndexes}
+						{verseCountByBookChapter}
+						{shortBookNamesById}
+						onReadingSelected={onSelectedSubReading}
+					></PlanReadingsList>
+				{:else if sub.nestedReadings.length > 0}
+					<div class="py-4 text-sm text-neutral-500">
+						All readings completed.
 					</div>
-					<div class="flex w-full justify-end">
-						<div class="text-base text-nowrap">
-							Verses: {sub.nestedReadings[idx].totalVerses}
-						</div>
-					</div>
-				</div>
-			</button>
-		{/if}
-	{/each}
+				{/if}
+			</KJVScrubbedViewport>
+		</div>
+	</div>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->
@@ -377,6 +629,6 @@
 <ViewHeader bind:headerHeight>
 	{@render header()}
 </ViewHeader>
-<ViewBody ID={subListViewID} {clientHeight} {headerHeight} classes="">
+<ViewBody ID={subListViewID} {clientHeight} {headerHeight}>
 	{@render body()}
 </ViewBody>

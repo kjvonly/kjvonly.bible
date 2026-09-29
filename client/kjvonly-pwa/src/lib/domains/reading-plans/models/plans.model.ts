@@ -7,6 +7,7 @@ import type {
 } from '$lib/domains/bible';
 import type { PlanDefinition } from './plan-definition';
 import type { PlanSubscription } from './plan-subscription';
+import { parsePlanDefinitionId } from './plan-definition-id';
 
 // ============================= PLAN DEFINITION VIEW =============================
 
@@ -41,6 +42,7 @@ export function NullPlanDefinitionView(): PlanDefinitionView {
 export interface Sub {
   id: string;
   planDefinitionId: string;
+  publisher: string;
   dateSubscribed: number;
 
   name: string;
@@ -56,6 +58,7 @@ export function NullSub(): Sub {
   return {
     id: '',
     planDefinitionId: '',
+    publisher: '',
     dateSubscribed: 0,
     name: '',
     description: '',
@@ -71,6 +74,10 @@ export function planSubscriptionToSub(
   bookNameLookup: BookNameLookup,
   encodedReadingsDecoderService: EncodedReadingsDecoderService
 ): Sub {
+  const { publisher } = parsePlanDefinitionId(
+    subscription.planDefinitionId
+  );
+
   const nestedReadings = encodedReadingsDecoderService.parseEncodedReadings(
     [...subscription.encodedReadings],
     bookNameLookup
@@ -79,6 +86,7 @@ export function planSubscriptionToSub(
   return {
     id: subscription.id,
     planDefinitionId: subscription.planDefinitionId,
+    publisher,
     dateSubscribed: subscription.dateSubscribed,
     name: subscription.name,
     description: subscription.description,
@@ -113,34 +121,10 @@ export function NullReadings(): Readings {
   };
 }
 
-/**
- * The next readings in a plan.
- */
-export interface NextReadings {
-  subID: string;
-  name: string;
-  readings: Readings;
-  dateSubscribed: number;
-  percentCompleted: number;
-  subReadingsIndex: number;
-  totalReadings: number;
-}
-
 export const PLAN_NAVIGATION_RESULTS = {
   READING_COMPLETED: 'plans.reading-completed',
-  SUBSCRIPTION_ACTION: 'plans.subscription-action',
   PLAN_SUBSCRIBED: 'plans.plan-subscribed'
 } as const;
-
-export const PLAN_SUBSCRIPTION_ACTIONS = {
-  PLANS: 'plans',
-  NEXT_READINGS: 'next-readings'
-} as const;
-
-export type PlanSubscriptionAction =
-  typeof PLAN_SUBSCRIPTION_ACTIONS[
-    keyof typeof PLAN_SUBSCRIPTION_ACTIONS
-  ];
 
 export enum PLANS_VIEWS {
   // PLAN
@@ -150,11 +134,7 @@ export enum PLANS_VIEWS {
 
   // SUB
   SUBS_LIST = 'plans.subscriptions',
-  SUBS_ACTIONS = 'plans.subscription-actions',
-  SUBS_DETAILS = 'plans.subscription-details',
-
-  // NEXT READINGS
-  NEXT_LIST = 'plans.next-readings'
+  SUBS_DETAILS = 'plans.subscription-details'
 }
 
 export enum PLAN_PUBSUB_SUBSCRIPTIONS {

@@ -36,6 +36,10 @@ export {
 } from './services/debounce.service';
 
 export {
+	PetNameService
+} from './services/pet-name.service';
+
+export {
 	NavigationStateBuilder
 } from './services/navigation-state-builder';
 

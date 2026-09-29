@@ -32,7 +32,12 @@ export function initializePlansRuntime(
 			initialize(
 				navigationState,
 				context
-			);
+			).catch((error: unknown) => {
+				// A failed startup must remain retryable. The UI-facing load state
+				// is intentionally independent of the worker's eventual lifetime.
+				initialization = undefined;
+				throw error;
+			});
 	}
 
 	return initialization;

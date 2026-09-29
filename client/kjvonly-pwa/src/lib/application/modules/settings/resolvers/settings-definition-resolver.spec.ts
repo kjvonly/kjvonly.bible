@@ -49,6 +49,10 @@ describe(
 					type: 'toggle',
 					setting: 'showPericopes'
 				});
+				expect(findSettingsRow('show-bible-scrollbar')).toMatchObject({
+					type: 'toggle',
+					setting: 'showBibleScrollbar'
+				});
 				expect(findSettingsRow('missing')).toBeUndefined();
 			}
 		);

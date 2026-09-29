@@ -1,6 +1,7 @@
 import Bible from '$lib/components/svgs/bible.svelte';
 import Colors from '$lib/components/svgs/colors.svelte';
 import LightMode from '$lib/components/svgs/lightMode.svelte';
+import List from '$lib/components/svgs/list.svelte';
 import PageHeader from '$lib/components/svgs/pageHeader.svelte';
 import Paragraph from '$lib/components/svgs/paragraph.svelte';
 import ShortText from '$lib/components/svgs/shortText.svelte';
@@ -25,6 +26,7 @@ const SETTINGS_ICON_COMPONENTS = {
 	paragraphs: Paragraph,
 	pericopes: PageHeader,
 	'bible-version': Bible,
+	scrollbar: List,
 	'max-width': WidthFull
 } as const satisfies Record<SettingsIconID, unknown>;
 

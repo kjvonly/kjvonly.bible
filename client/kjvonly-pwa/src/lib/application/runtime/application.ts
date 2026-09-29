@@ -188,6 +188,10 @@ import {
 } from '$lib/application/services/settings.service';
 
 import {
+    PetNameService
+} from '$lib/application/services/pet-name.service';
+
+import {
     NavigationStateBuilder
 } from '$lib/application/services/navigation-state-builder';
 
@@ -642,6 +646,15 @@ export class Application {
         const accountService =
             new AccountService(
                 nostrAccountStrategy
+            );
+
+        const petNameService =
+            new PetNameService(
+                localStorage,
+                {
+                    [KJVONLY_PUBKEY]:
+                        'KJVOnly'
+                }
             );
 
         ///////////////////////////////////////////////////////////////////////
@@ -1332,6 +1345,7 @@ export class Application {
             accountService,
             toastService,
             settingsService,
+            petNameService,
             navigationRuntimeFactory,
             moduleLaunchDestinationResolver,
             archiveService,

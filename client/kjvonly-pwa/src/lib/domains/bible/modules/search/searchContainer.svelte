@@ -240,32 +240,20 @@
 			return;
 		}
 
-		const bibleLocationRefs = [...response.bibleLocationRefs];
+		const bibleLocationRefs = activeBookID !== undefined
+			? filterBibleLocationRefsByBookID(
+				[...response.bibleLocationRefs],
+				activeBookID
+			)
+			: [...response.bibleLocationRefs];
 
 		searchResponse = {
 			...response,
-			bibleLocationRefs: activeBookID !== undefined
-				? filterBibleLocationRefsByBookID(
-					bibleLocationRefs,
-					activeBookID
-				)
-				: bibleLocationRefs
+			bibleLocationRefs
 		};
-	}
-
-	function handleRenderedResultsChanged(
-		query: string,
-		renderedCount: number,
-		totalCount: number
-	): void {
-		if (query !== activeSearchQuery) {
-			return;
-		}
-
 		searchResultSummary = {
-			query,
-			renderedCount,
-			totalCount
+			query: response.text,
+			totalCount: bibleLocationRefs.length
 		};
 	}
 
@@ -369,12 +357,9 @@
 	<SearchResults
 		resourceNavigationState={navigationState}
 		searchText={search.query}
-		scrollContainerID={searchID}
 		{searchResponse}
 		showResults={search.showResults}
-		onRenderedCountChanged={handleRenderedResultsChanged}
 	></SearchResults>
-	<div class="h-6"></div>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
@@ -398,7 +383,7 @@
 		{@render header()}
 	</ViewHeader>
 
-	<ViewBody ID={searchID} {headerHeight} {clientHeight} classes="">
+	<ViewBody {headerHeight} {clientHeight} classes="">
 		{@render body()}
 	</ViewBody>
 {/snippet}

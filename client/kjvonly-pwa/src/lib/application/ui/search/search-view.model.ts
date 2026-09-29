@@ -10,7 +10,6 @@ export type SearchViewState =
  */
 export interface SearchViewResultSummary {
 	query: string;
-	renderedCount: number;
 	totalCount: number;
 }
 

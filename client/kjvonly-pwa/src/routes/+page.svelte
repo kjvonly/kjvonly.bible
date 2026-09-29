@@ -92,8 +92,8 @@
 	});
 </script>
 
-<div class="flex h-[100vh] w-full flex-col">
-	<div style="max-height: 100vh; min-width: 1px; {template};" class="w-full">
+<div class="flex h-full min-h-0 w-full flex-col overflow-hidden">
+	<div style="min-width: 1px; {template};" class="h-full min-h-0 w-full overflow-hidden">
 		{#each paneIds as paneID}
 			{#if !deletedPaneIds[paneID]}
 				<div class="outline outline-neutral-400" style="grid-area: {paneID};">

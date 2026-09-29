@@ -113,12 +113,10 @@ describe(
 				searchSession.handleQueryInput('grace');
 				searchSession.applyResultSummary({
 					query: 'faith',
-					renderedCount: 10,
 					totalCount: 20
 				});
 
 				expect(searchSession.searchState).toBe('searching');
-				expect(searchSession.renderedResultsCount).toBe(0);
 				expect(searchSession.totalResultsCount).toBe(0);
 			}
 		);
@@ -131,7 +129,6 @@ describe(
 				searchSession.handleQueryInput('grace');
 				searchSession.applyResultSummary({
 					query: 'grace',
-					renderedCount: 0,
 					totalCount: 0
 				});
 
@@ -140,12 +137,10 @@ describe(
 				searchSession.handleQueryInput('faith');
 				searchSession.applyResultSummary({
 					query: 'faith',
-					renderedCount: 10,
 					totalCount: 25
 				});
 
 				expect(searchSession.searchState).toBe('results');
-				expect(searchSession.renderedResultsCount).toBe(10);
 				expect(searchSession.totalResultsCount).toBe(25);
 			}
 		);

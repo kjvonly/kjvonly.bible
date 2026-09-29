@@ -19,6 +19,9 @@
 	import {
 		handlePlanDiscoveryNavigationResult
 	} from '../runtime/plan-discovery-navigation-result';
+	import {
+		subscribeToPlanDefinition
+	} from '../runtime/subscribe-to-plan-definition';
 
 	// MODELS
 	import {
@@ -26,12 +29,16 @@
 		type PlanDefinitionView
 	} from '../../../models/plans.model';
 
+	const application =
+		useApplicationContext();
+
 	const {
 		bibleBooknamesService,
 		encodedReadingsDecoderService,
 		moduleResourceSelectionResolver,
-		planDefinitionsService
-	} = useApplicationContext();
+		planDefinitionsService,
+		toastService
+	} = application;
 
 	// =============================== BINDINGS ================================
 
@@ -97,6 +104,20 @@
 		);
 	}
 
+	async function onAddPlan(
+		plan: PlanDefinitionView
+	): Promise<void> {
+		await subscribeToPlanDefinition(
+			plan,
+			navigationState,
+			application
+		);
+
+		toastService.showToast(
+			'Plan added to My Plans'
+		);
+	}
+
 	function onNavigationResult(
 		result: NavigationStateValue
 	): void {
@@ -136,4 +157,4 @@
 	}
 </script>
 
-<DiscoverList {planList}></DiscoverList>
+<DiscoverList {planList} {onAddPlan}></DiscoverList>

@@ -2,6 +2,7 @@
 	// ================================ IMPORTS ================================
 	// APPLICATION
 	import {
+		useApplicationContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
@@ -13,14 +14,24 @@
 	// COMPONENTS
 	import {
 		KJVAdaptiveHeaderTitle,
-		KJVHeader
+		KJVCard,
+		KJVHeader,
+		KJVIconButton
 	} from '$lib/components';
+	import Add from '$lib/components/svgs/add.svelte';
 
 	// MODELS
 	import {
 		PLANS_VIEWS,
 		type PlanDefinitionView
 	} from '../../../models/plans.model';
+	import {
+		parsePlanDefinitionId
+	} from '../../../models/plan-definition-id';
+
+	const {
+		petNameService
+	} = useApplicationContext();
 
 	const {
 		navigation
@@ -30,22 +41,40 @@
 
 	// =============================== BINDINGS ================================
 	let {
-		planList
+		planList,
+		onAddPlan
 	}: {
 		planList: PlanDefinitionView[];
+		onAddPlan: (plan: PlanDefinitionView) => void | Promise<void>;
 	} = $props();
 
 	// ================================== VARS =================================
 	let headerHeight: number = $state(0);
 
 	// ============================== CLICK FUNCS ==============================
-	function onPlanClicked(e: Event, plan: PlanDefinitionView) {
-		e.stopPropagation();
+	function onPlanClicked(plan: PlanDefinitionView): void {
 		navigation.pushView(
 			PLANS_VIEWS.PLANS_DETAILS,
 			{
 				planID: plan.id
 			}
+		);
+	}
+
+	function onAddClicked(plan: PlanDefinitionView): void {
+		void onAddPlan(plan);
+	}
+
+	// ================================ DISPLAY ================================
+	function publisherLabel(plan: PlanDefinitionView): string {
+		const {
+			publisher
+		} = parsePlanDefinitionId(
+			plan.id
+		);
+
+		return petNameService.resolve(
+			publisher
 		);
 	}
 </script>
@@ -72,35 +101,49 @@
 
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
-	{@render plansListView()}
-{/snippet}
-
-{#snippet plansListView()}
-	<div class="{planList.length > 0 ? '' : 'hidden'} bg-neutral-50 pb-6">
+	<div class="flex w-full flex-col gap-4 py-4">
 		{#each planList as plan}
-			<div class="py-2 hover:bg-neutral-100">
-				<div
-					tabindex="0"
-					role="button"
-					class="px-4 leading-loose"
-					onclick={(e: Event) => {
-						onPlanClicked(e, plan);
-					}}
-					onkeydown={(e: KeyboardEvent) => {
-						if (e.key === 'Enter') {
-							onPlanClicked(e, plan);
-						}
-					}}
-				>
-					<div class="text-left whitespace-normal hover:cursor-pointer">
-						<span class="text-support-b-700 py-2 text-left font-semibold"
-							>{plan.name}</span
+			<KJVCard
+				onClick={() => onPlanClicked(plan)}
+				label={`Preview ${plan.name} plan`}
+			>
+				{#snippet header()}
+					<div class="min-w-0">
+						<div class="truncate text-base font-semibold text-neutral-700">
+							{plan.name}
+						</div>
+						<div
+							class="truncate text-sm text-neutral-500"
+							title={parsePlanDefinitionId(plan.id).publisher}
 						>
-						<span class="flex-fill flex"></span>
-						<span class="min-h-[2.75rem] line-clamp-2 leading-snug">{plan.description}</span>
+							Published by {publisherLabel(plan)}
+						</div>
 					</div>
-				</div>
-			</div>
+				{/snippet}
+
+				{#snippet body()}
+					{#if plan.description}
+						<p class="line-clamp-2 text-sm text-neutral-600">
+							{plan.description}
+						</p>
+					{/if}
+				{/snippet}
+
+				{#snippet actions()}
+					<div class="min-w-0 flex-1 text-sm text-neutral-500">
+						{plan.nestedReadings.length}
+						{plan.nestedReadings.length === 1 ? 'reading' : 'readings'}
+					</div>
+
+					<KJVIconButton
+						label={`Add ${plan.name} plan`}
+						variant="quiet"
+						onClick={() => onAddClicked(plan)}
+					>
+						<Add classes="h-[1.25em] w-[1.25em] text-primary-500" />
+					</KJVIconButton>
+				{/snippet}
+			</KJVCard>
 		{/each}
 	</div>
 {/snippet}
@@ -109,6 +152,6 @@
 <ViewHeader bind:headerHeight>
 	{@render header()}
 </ViewHeader>
-<ViewBody clientHeight={paneLayout.clientHeight} {headerHeight} classes="">
+<ViewBody clientHeight={paneLayout.clientHeight} {headerHeight}>
 	{@render body()}
 </ViewBody>

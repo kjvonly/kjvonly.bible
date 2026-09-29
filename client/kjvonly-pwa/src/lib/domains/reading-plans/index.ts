@@ -13,8 +13,7 @@ export type {
 export type {
 	PlanDefinitionView,
 	Sub,
-	Readings,
-	NextReadings
+	Readings
 } from './models/plans.model';
 
 export {

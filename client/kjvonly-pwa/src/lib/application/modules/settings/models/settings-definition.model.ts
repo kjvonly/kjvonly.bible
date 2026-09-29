@@ -25,6 +25,7 @@ export type SettingsIconID =
 	| 'paragraphs'
 	| 'pericopes'
 	| 'bible-version'
+	| 'scrollbar'
 	| 'max-width';
 
 /** Semantic root-icon accent identifier resolved to a static Tailwind class. */

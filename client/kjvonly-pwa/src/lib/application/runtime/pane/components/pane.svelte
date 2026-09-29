@@ -51,8 +51,8 @@
 		paneDimensionsByID: WorkspacePaneDimensionsByID
 	) {
 		if (paneDimensionsByID[paneID]) {
-			containerHeight = `height: ${paneDimensionsByID[paneID].height * 100}vh;`;
-			containerWidth = `width: ${paneDimensionsByID[paneID].width * 100}vw;`;
+			containerHeight = `height: ${paneDimensionsByID[paneID].height * 100}dvh;`;
+			containerWidth = `width: ${paneDimensionsByID[paneID].width * 100}dvw;`;
 		}
 	}
 

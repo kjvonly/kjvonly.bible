@@ -18,7 +18,8 @@
 	import { useNavigationRuntimeContext } from '$lib/application/runtime/navigation/navigation-runtime-context';
 	const {
 		authenticationService,
-		moduleLaunchDestinationResolver
+		moduleLaunchDestinationResolver,
+		workspaceRuntime
 	} = useApplicationContext();
 	const {
 		navigation
@@ -42,16 +43,37 @@
 	});
 
 	let headerHeight = $state(0);
+	let canClosePane = $state(false);
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		return authenticationService.subscribe((state) => {
-			addDynamicModules(state.status !== 'signed-out');
-		});
+		const unsubscribeAuthentication =
+			authenticationService.subscribe((state) => {
+				addDynamicModules(state.status !== 'signed-out');
+			});
+
+		updateCanClosePane();
+		const unsubscribeWorkspace =
+			workspaceRuntime.subscribe(
+				updateCanClosePane
+			);
+
+		return () => {
+			unsubscribeAuthentication();
+			unsubscribeWorkspace();
+		};
 	});
 
 	// ================================ FUNCS ==================================
+	function updateCanClosePane(): void {
+		canClosePane =
+			workspaceRuntime
+				.deriveLayout()
+				.activePaneIDs
+				.length > 1;
+	}
+
 	function addDynamicModules(isAuthenticated: boolean) {
 		delete components['profile'];
 		delete components['login'];
@@ -107,11 +129,14 @@
 {#snippet header()}
 	<KJVHeader
 		title="Modules"
-		leadingAction={{
-			icon: 'close',
-			label: 'Close pane',
-			onClick: onClose
-		}}
+		leadingAction={canClosePane
+			? {
+				icon: 'close',
+				label: 'Close pane',
+				onClick: onClose
+			}
+			: undefined}
+		reserveLeadingActionSpace={!canClosePane}
 		actions={[
 			{
 				icon: 'split-horizontal',
