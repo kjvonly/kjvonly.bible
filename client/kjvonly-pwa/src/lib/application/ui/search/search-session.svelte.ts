@@ -22,7 +22,6 @@ export interface SearchSessionOptions {
 export class SearchSession {
 	query = $state('');
 	searchState = $state<SearchViewState>('initial');
-	renderedResultsCount = $state(0);
 	totalResultsCount = $state(0);
 
 	private readonly searchDebounce: DebounceService;
@@ -52,7 +51,6 @@ export class SearchSession {
 		this.requestGeneration += 1;
 		this.query = value;
 		this.options.onQueryInput?.(value);
-		this.renderedResultsCount = 0;
 		this.totalResultsCount = 0;
 
 		if (value.length < this.options.minimumQueryLength) {
@@ -73,7 +71,6 @@ export class SearchSession {
 			return;
 		}
 
-		this.renderedResultsCount = summary.renderedCount;
 		this.totalResultsCount = summary.totalCount;
 
 		if (this.searchState === 'searching') {

@@ -7,6 +7,7 @@ export interface Settings {
   showParagraphs: boolean;
   showPericopes: boolean;
   showBibleVersion: boolean;
+  showBibleScrollbar: boolean;
   enableMaxWidth: boolean;
 }
 
@@ -20,6 +21,7 @@ export function newSettings(): Settings {
     showParagraphs: false,
     showPericopes: false,
     showBibleVersion: false,
+    showBibleScrollbar: false,
     enableMaxWidth: true
   };
 }
@@ -90,6 +92,11 @@ export function normalizeSettings(
       normalizeBoolean(
         settings.showBibleVersion,
         defaults.showBibleVersion
+      ),
+    showBibleScrollbar:
+      normalizeBoolean(
+        settings.showBibleScrollbar,
+        defaults.showBibleScrollbar
       ),
     enableMaxWidth:
       normalizeBoolean(

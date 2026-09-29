@@ -143,7 +143,8 @@ function renderWorkspaceGridTemplate(
 			.join('\n');
 
 	return `display: grid;
-	max-height: 100vh;
+	height: 100%;
+	min-height: 0;
 	grid-template-columns: ${renderGridTemplateColumns(gridTemplateAreas)};
 
 	grid-template-areas:

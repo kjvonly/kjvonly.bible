@@ -1,8 +1,10 @@
+import Add from '../svgs/add.svelte';
 import AddCircle from '../svgs/addCircle.svelte';
 import AddNote from '../svgs/addNote.svelte';
 import AlphaNumeric from '../svgs/alphaNumeric.svelte';
 import ArrowBack from '../svgs/arrowBack.svelte';
 import BookRibbon from '../svgs/bookRibbon.svelte';
+import Check from '../svgs/check.svelte';
 import CheckCircle from '../svgs/checkCircle.svelte';
 import Copy from '../svgs/copy.svelte';
 import DocumentSearch from '../svgs/documentSearch.svelte';
@@ -29,11 +31,13 @@ import type {
 ///////////////////////////////////////////////////////////////////////////////
 
 const HEADER_ICON_COMPONENTS = {
+	add: Add,
 	'add-circle': AddCircle,
 	'add-note': AddNote,
 	'alpha-numeric': AlphaNumeric,
 	'arrow-back': ArrowBack,
 	'book-ribbon': BookRibbon,
+	check: Check,
 	'check-circle': CheckCircle,
 	copy: Copy,
 	'document-search': DocumentSearch,

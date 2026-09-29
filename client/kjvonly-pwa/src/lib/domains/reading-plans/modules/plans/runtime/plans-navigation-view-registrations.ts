@@ -8,8 +8,6 @@ import {
 
 import Discover from '../discover/discover.svelte';
 import DiscoverDetails from '../discover/discoverDetails.svelte';
-import NextReadings from '../nextReadings/nextReadings.svelte';
-import SubsAction from '../subscription/subsAction.svelte';
 import SubsDetails from '../subscription/subsDetails.svelte';
 import SubsView from '../subscription/subsView.svelte';
 
@@ -25,10 +23,6 @@ export const plansNavigationViewRegistrations:
 			component: SubsView
 		},
 		{
-			view: PLANS_VIEWS.SUBS_ACTIONS,
-			component: SubsAction
-		},
-		{
 			view: PLANS_VIEWS.SUBS_DETAILS,
 			component: SubsDetails
 		},
@@ -39,9 +33,5 @@ export const plansNavigationViewRegistrations:
 		{
 			view: PLANS_VIEWS.PLANS_DETAILS,
 			component: DiscoverDetails
-		},
-		{
-			view: PLANS_VIEWS.NEXT_LIST,
-			component: NextReadings
 		}
 	];

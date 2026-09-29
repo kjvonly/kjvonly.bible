@@ -4,11 +4,13 @@ import type { MouseEventHandler } from 'svelte/elements';
 
 /** Semantic icon identifier resolved by the shared header icon mapper. */
 export type HeaderIconID =
+	| 'add'
 	| 'add-circle'
 	| 'add-note'
 	| 'book-ribbon'
 	| 'alpha-numeric'
 	| 'arrow-back'
+	| 'check'
 	| 'check-circle'
 	| 'copy'
 	| 'document-search'

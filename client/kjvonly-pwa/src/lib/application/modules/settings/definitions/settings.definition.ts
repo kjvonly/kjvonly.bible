@@ -234,7 +234,21 @@ export const settingsDefinition: SettingsDefinition = {
 								keywords: ['bible', 'version', 'translation']
 							},
 							setting: 'showBibleVersion'
-						}					]
+						},
+						{
+							type: 'toggle',
+							id: 'show-bible-scrollbar',
+							title: 'Scrollbar',
+							secondary: 'Show a scrollbar while reading Bible chapters',
+							icon: {
+								name: 'scrollbar'
+							},
+							search: {
+								keywords: ['scrollbar', 'scroll', 'chapter', 'length']
+							},
+							setting: 'showBibleScrollbar'
+						}
+					]
 				}
 			]
 		}

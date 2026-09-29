@@ -117,6 +117,28 @@
 }
 
 @layer base {
+	html,
+	body {
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		overflow: hidden;
+		overscroll-behavior: none;
+	}
+
+	/*
+	 * The document never owns application scrolling. Feature and pane surfaces
+	 * provide their own explicit scroll containers inside this viewport.
+	 */
+	.kjv-app-viewport {
+		width: 100%;
+		height: 100vh;
+		height: 100dvh;
+		min-height: 0;
+		overflow: hidden;
+		overscroll-behavior: none;
+	}
+
 	body {
 		@apply selection:bg-primary-100 font-primary bg-neutral-50 text-neutral-700;
 		button {
@@ -1354,6 +1376,36 @@
 	/* roundness of the scroll thumb */
 	border-radius: 1rem;
 	visibility: hidden;
+}
+
+/*
+ * Scrollbars are hidden by default across the application. Modules that make
+ * scroll position meaningful can opt back in with this shared class.
+ */
+.kjv-scrollbar-visible {
+	scrollbar-color: var(--color-neutral-400) transparent;
+	scrollbar-gutter: stable;
+	scrollbar-width: thin;
+}
+
+.kjv-scrollbar-visible::-webkit-scrollbar {
+	width: 0.5rem;
+}
+
+.kjv-scrollbar-visible::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.kjv-scrollbar-visible::-webkit-scrollbar-thumb {
+	background-color: var(--color-neutral-400);
+	background-clip: content-box;
+	border: 2px solid transparent;
+	border-radius: 1rem;
+	visibility: visible;
+}
+
+.kjv-scrollbar-visible::-webkit-scrollbar-thumb:hover {
+	background-color: var(--color-neutral-500);
 }
 
 span.bg-highlighta {

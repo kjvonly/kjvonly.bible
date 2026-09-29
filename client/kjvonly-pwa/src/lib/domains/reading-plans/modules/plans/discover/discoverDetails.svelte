@@ -14,19 +14,24 @@
 		usePaneLayoutContext
 	} from '$lib/application';
 	import {
-		attachEvents,
 		ViewBody,
 		ViewHeader
 	} from '$lib/application/ui';
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '$lib/domains/bible';
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE,
+		type BibleChapterVerseCountLookup
+	} from '$lib/domains/bible';
 
 	// COMPONENTS
 	import {
 		KJVAdaptiveHeaderTitle,
-		KJVHeader
+		KJVHeader,
+		KJVScrubbedViewport
 	} from '$lib/components';
-	import ReadingsComponent from '../components/readings.svelte';
-	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
+	import PlanReadingsList from '../components/planReadingsList.svelte';
+	import {
+		subscribeToPlanDefinition
+	} from '../runtime/subscribe-to-plan-definition';
 
 	// MODELS
 	import {
@@ -35,16 +40,14 @@
 		PLANS_VIEWS,
 		type PlanDefinitionView
 	} from '../../../models/plans.model';
-	import type { PlanSubscription } from '../../../models/plan-subscription';
-
-	// SERVICES
 	import {
-		PLAN_SUBSCRIPTION_RESOURCE_TYPE,
-		createPlanSubscriptionIdForSource
-	} from '../../../resources/subscriptions/plan-subscription-resource-source';
+		parsePlanDefinitionId
+	} from '../../../models/plan-definition-id';
 
 	// OTHER
 	import uuid4 from 'uuid4';
+
+	const BATCH_SIZE_TO_SHOW = 30;
 
 	type DiscoverDetailsNavigationState =
 		NavigationState<PLANS_VIEWS.PLANS_DETAILS> & {
@@ -61,9 +64,8 @@
 		bibleBooknamesService,
 		encodedReadingsDecoderService,
 		moduleResourceSelectionResolver,
+		petNameService,
 		planDefinitionsService,
-		planSubscriptionsService,
-		plansPubSubService,
 		toastService
 	} = application;
 
@@ -90,21 +92,37 @@
 
 	let selectedPlan: PlanDefinitionView =
 		$state(NullPlanDefinitionView());
+	let selectedPublisher = $derived(
+		selectedPlan.id.length > 0
+			? parsePlanDefinitionId(selectedPlan.id).publisher
+			: ''
+	);
+	let selectedPublisherLabel = $derived(
+		selectedPublisher.length > 0
+			? petNameService.resolve(selectedPublisher)
+			: ''
+	);
 
 	// ================================== VARS =================================
 	let headerHeight: number = $state(0);
 	let readingsToShow: number = $state(0);
+	let scrubberReadingNumber = $state(1);
+	let verseCountByBookChapter =
+		$state<BibleChapterVerseCountLookup>({});
+	let shortBookNamesById =
+		$state<Readonly<Record<string, string>>>({});
 	let discoverDetailID = uuid4();
+
+	let visibleReadingIndexes = $derived(
+		Array.from(
+			{ length: readingsToShow },
+			(_, index) => index
+		)
+	);
 
 	// =============================== LIFECYCLE ===============================
 	onMount(() => {
 		void loadSelectedPlan();
-
-		return attachEvents(
-			`${discoverDetailID}-scroll-container`,
-			'scroll',
-			handleScroll
-		);
 	});
 
 	// ================================ FUNCS ==================================
@@ -135,6 +153,11 @@
 			return;
 		}
 
+		verseCountByBookChapter =
+			booknames.bookchapterversecountById;
+		shortBookNamesById =
+			booknames.shortNames;
+
 		selectedPlan = {
 			...definition,
 			nestedReadings:
@@ -145,79 +168,55 @@
 				)
 		};
 
+		readingsToShow = 0;
+		scrubberReadingNumber = 1;
 		loadMoreReadings();
 	}
 
-	function loadMoreReadings() {
-		let toShow = 0;
-		let count = 0;
-		const BATCH_SIZE_TO_SHOW = 30;
-
-		while (
-			toShow !== BATCH_SIZE_TO_SHOW &&
-			count + readingsToShow < selectedPlan.nestedReadings.length
-		) {
-			toShow = toShow + 1;
-			count++;
-		}
-
-		readingsToShow += count;
+	function loadMoreReadings(): void {
+		readingsToShow = Math.min(
+			selectedPlan.nestedReadings.length,
+			readingsToShow + BATCH_SIZE_TO_SHOW
+		);
 	}
 
-	function handleScroll() {
-		let el = document.getElementById(`${discoverDetailID}-scroll-container`);
-		if (el === null) {
-			return;
+	/**
+	 * Ensures a scrubber target is rendered before the shared viewport scrolls
+	 * to it. The returned value is the 1-based reading number used by the
+	 * generic scrubber contract.
+	 */
+	function prepareScrubberValue(
+		readingNumber: number
+	): number | undefined {
+		if (selectedPlan.nestedReadings.length === 0) {
+			return undefined;
 		}
 
-		const threshold = 20;
-		const isReachBottom =
-			el.scrollHeight - el.clientHeight - el.scrollTop <= threshold;
+		const targetIndex = Math.max(
+			0,
+			Math.min(
+				readingNumber - 1,
+				selectedPlan.nestedReadings.length - 1
+			)
+		);
 
-		if (isReachBottom) {
-			loadMoreReadings();
-		}
+		readingsToShow = Math.min(
+			selectedPlan.nestedReadings.length,
+			Math.max(
+				readingsToShow,
+				targetIndex + BATCH_SIZE_TO_SHOW
+			)
+		);
+
+		return targetIndex + 1;
 	}
 
 	// ============================== CLICK FUNCS ==============================
-	async function onAddPlanClicked() {
-		await initializePlansRuntime(
+	async function onAddPlanClicked(): Promise<void> {
+		await subscribeToPlanDefinition(
+			selectedPlan,
 			navigationState,
 			application
-		);
-
-		const subscriptionSource =
-			moduleResourceSelectionResolver
-				.require(
-					navigationState,
-					PLAN_SUBSCRIPTION_RESOURCE_TYPE
-				);
-
-		const subscription: PlanSubscription = {
-			id:
-				createPlanSubscriptionIdForSource(
-					subscriptionSource,
-					uuid4()
-				),
-			planDefinitionId:
-				selectedPlan.id,
-			name:
-				selectedPlan.name,
-			description:
-				selectedPlan.description,
-			encodedReadings: [
-				...selectedPlan.encodedReadings
-			],
-			dateSubscribed:
-				Date.now()
-		};
-
-		await planSubscriptionsService.put(
-			subscription
-		);
-
-		plansPubSubService.putSub(
-			subscription
 		);
 
 		toastService.showToast(
@@ -264,14 +263,14 @@
 <!-- ================================ HEADER =============================== -->
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
-		longTitle="Plan Details"
-		shortTitle="Details"
+		longTitle="Plan Preview"
+		shortTitle="Preview"
 	></KJVAdaptiveHeaderTitle>
 {/snippet}
 
 {#snippet header()}
 	<KJVHeader
-		title="Plan Details"
+		title="Plan Preview"
 		leadingAction={{
 			icon: 'arrow-back',
 			label: 'Back',
@@ -280,7 +279,7 @@
 		{titleContent}
 		actions={[
 			{
-				icon: 'add-circle',
+				icon: 'add',
 				label: 'Add plan',
 				onClick: onAddPlanClicked
 			}
@@ -290,21 +289,48 @@
 
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
-	<div class="pt-2 pb-3 text-2xl text-support-b-700">{selectedPlan.name}</div>
-	<div>{selectedPlan.description}</div>
+	<div class="flex h-full min-h-0 w-full min-w-0 flex-col">
+		<section class="flex shrink-0 min-w-0 flex-col gap-2 py-4">
+			<h2 class="text-lg font-semibold text-neutral-700">{selectedPlan.name}</h2>
 
-	{#each Array(readingsToShow) as _, idx}
-		<div class="flex w-full min-w-0 items-start px-4 py-3">
-			<div class="w-28 shrink-0 self-stretch border-r border-neutral-300 pr-4 text-left whitespace-nowrap">
-				<span>Reading {idx + 1}</span>
-			</div>
-			<div class="min-w-0 pl-4 text-left">
-				<ReadingsComponent
-					bind:readings={selectedPlan.nestedReadings[idx].bcvs}
-				></ReadingsComponent>
-			</div>
+			{#if selectedPublisherLabel}
+				<p class="text-sm text-neutral-500" title={selectedPublisher}>
+					Published by {selectedPublisherLabel}
+				</p>
+			{/if}
+
+			{#if selectedPlan.description}
+				<p class="text-sm text-neutral-600">
+					{selectedPlan.description}
+				</p>
+			{/if}
+		</section>
+
+		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
+			<div class="shrink-0 pb-2 text-base text-neutral-700">Readings</div>
+
+			<KJVScrubbedViewport
+				min={1}
+				max={Math.max(1, selectedPlan.nestedReadings.length)}
+				bind:value={scrubberReadingNumber}
+				label="Jump to plan reading"
+				showScrubber={selectedPlan.nestedReadings.length > 1}
+				formatValue={(readingNumber) => `Reading ${readingNumber}`}
+				onReachEnd={loadMoreReadings}
+				prepareValue={prepareScrubberValue}
+			>
+				{#if visibleReadingIndexes.length > 0}
+					<PlanReadingsList
+						readings={selectedPlan.nestedReadings}
+						readingIndexes={visibleReadingIndexes}
+						totalReadings={selectedPlan.nestedReadings.length}
+						{verseCountByBookChapter}
+						{shortBookNamesById}
+					></PlanReadingsList>
+				{/if}
+			</KJVScrubbedViewport>
 		</div>
-	{/each}
+	</div>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->

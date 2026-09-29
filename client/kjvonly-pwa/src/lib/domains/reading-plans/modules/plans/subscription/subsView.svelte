@@ -13,18 +13,25 @@
 		useNavigationRuntimeContext
 	} from '$lib/application';
 	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE,
+		BIBLE_VIEWS,
+		type BibleChapterVerseCountLookup
+	} from '$lib/domains/bible';
+	import {
 		type Sub,
 		PLANS_VIEWS,
+		PLAN_NAVIGATION_RESULTS,
 		PLAN_PUBSUB_SUBSCRIPTIONS
 	} from '../../../models/plans.model';
 	import type { PlansSubscriptionsMessage } from '../../../models/plans-worker.model';
+	import type { PlansViewLoadState } from '../runtime/plans-view-load-state';
 
 	// COMPONENTS
 	import SubsList from './subsList.svelte';
 	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
 	import {
-		handlePlanSubscriptionActionNavigationResult
-	} from '../runtime/plan-subscription-action-navigation-result';
+		applyPlanReadingNavigationResult
+	} from '../runtime/plan-reading-navigation-result';
 
 	// OTHER
 	import uuid4 from 'uuid4';
@@ -33,7 +40,10 @@
 		useApplicationContext();
 
 	const {
+		bibleBooknamesService,
+		moduleResourceSelectionResolver,
 		planSubscriptionsService,
+		planProgressService,
 		plansPubSubService
 	} = application;
 
@@ -47,8 +57,7 @@
 	const {
 		navigationState,
 		isActive,
-		onResult,
-		whenActive
+		onResult
 	} = useNavigationEntryContext();
 
 	validateNavState(
@@ -60,6 +69,13 @@
 	const SUBSCRIBER_ID = uuid4();
 	let mounted = true;
 	let subs: Sub[] = $state([]);
+	let verseCountByBookChapter =
+		$state<BibleChapterVerseCountLookup>({});
+	let shortBookNamesById =
+		$state<Readonly<Record<string, string>>>({});
+	let selectedReadingSubscriptionID:
+		string | undefined;
+	let loadState = $state<PlansViewLoadState>('initializing');
 	let detachNavigationResult =
 		() => {};
 
@@ -85,34 +101,69 @@
 	// ================================ FUNCS ==================================
 
 	async function initialize(): Promise<void> {
-		await initializePlansRuntime(
-			navigationState,
-			application
-		);
-
-		const subscriptions =
-			await planSubscriptionsService.list();
-
-		if (!mounted) {
-			return;
-		}
-
-		plansPubSubService.subscribe(
-			PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
-			onGetAllSubs,
+		loadState = 'initializing';
+		plansPubSubService.unsubscribe(
 			SUBSCRIBER_ID
 		);
-		plansPubSubService.getAllSubs();
 
-		if (
-			subscriptions.length === 0 &&
-			isActive()
-		) {
-			navigation.pushView(
-				PLANS_VIEWS.PLANS_LIST,
-				{}
+		try {
+			await initializePlansRuntime(
+				navigationState,
+				application
 			);
+
+			if (!mounted) {
+				return;
+			}
+
+			loadState = 'loading';
+
+			const booknamesSource =
+				moduleResourceSelectionResolver.require(
+					navigationState,
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
+				);
+
+			const [subscriptions, booknames] =
+				await Promise.all([
+					planSubscriptionsService.list(),
+					bibleBooknamesService.get(booknamesSource)
+				]);
+
+			if (!mounted) {
+				return;
+			}
+
+			verseCountByBookChapter =
+				booknames.bookchapterversecountById;
+			shortBookNamesById =
+				booknames.shortNames;
+
+			plansPubSubService.subscribe(
+				PLAN_PUBSUB_SUBSCRIPTIONS.GET_ALL_SUBS,
+				onGetAllSubs,
+				SUBSCRIBER_ID
+			);
+			plansPubSubService.getAllSubs();
+
+			if (
+				subscriptions.length === 0 &&
+				isActive()
+			) {
+				navigation.pushView(
+					PLANS_VIEWS.PLANS_LIST,
+					{}
+				);
+			}
+		} catch {
+			if (mounted) {
+				loadState = 'failure';
+			}
 		}
+	}
+
+	function retryInitialize(): void {
+		void initialize();
 	}
 
 	/**
@@ -123,6 +174,7 @@
 		data: PlansSubscriptionsMessage
 	): void {
 		subs.length = 0;
+		loadState = 'ready';
 		data.subs
 			.values()
 			.toArray()
@@ -148,14 +200,85 @@
 		);
 	}
 
-	function onNavigationResult(
-		result: NavigationStateValue
+	function onNextReadingSelected(
+		sub: Sub
 	): void {
-		handlePlanSubscriptionActionNavigationResult(
-			result,
-			navigation,
-			whenActive
+		const readings =
+			sub.nestedReadings[
+				sub.nextReadingsIndex
+			];
+
+		const firstReading =
+			readings?.bcvs[0];
+
+		if (!readings || !firstReading) {
+			return;
+		}
+
+		selectedReadingSubscriptionID =
+			sub.id;
+
+		const navReadings = {
+			readings: {
+				bcvs: readings.bcvs.map(
+					(reading) => ({
+						bookName: reading.bookName,
+						bookID: reading.bookID,
+						chapter: reading.chapter,
+						verses: reading.verses,
+						bibleLocationRef:
+							reading.bibleLocationRef
+					})
+				)
+			},
+			currentNavReadingsIndex: 0
+		};
+
+		navigation.pushModule(
+			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
+			{
+				bibleLocationRef:
+					firstReading.bibleLocationRef,
+				navReadings,
+				returnResult: {
+					type:
+						PLAN_NAVIGATION_RESULTS.READING_COMPLETED,
+					subID: sub.id,
+					subNestedReadingsIndex:
+						sub.nextReadingsIndex
+				}
+			}
 		);
+	}
+
+	async function onNavigationResult(
+		result: NavigationStateValue
+	): Promise<void> {
+		if (
+			isRecord(result) &&
+			result.type ===
+				PLAN_NAVIGATION_RESULTS.READING_COMPLETED
+		) {
+			if (!selectedReadingSubscriptionID) {
+				throw new Error(
+					'My Plans reading result received without a selected subscription'
+				);
+			}
+
+			await applyPlanReadingNavigationResult(
+				result,
+				selectedReadingSubscriptionID,
+				{
+					planProgressService,
+					plansPubSubService
+				}
+			);
+
+			selectedReadingSubscriptionID =
+				undefined;
+			return;
+		}
 	}
 
 	/**
@@ -189,4 +312,12 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<SubsList subsList={subs} {onSubSelected}></SubsList>
+<SubsList
+	subsList={subs}
+	{verseCountByBookChapter}
+	{shortBookNamesById}
+	{loadState}
+	onRetryLoad={retryInitialize}
+	{onSubSelected}
+	{onNextReadingSelected}
+></SubsList>

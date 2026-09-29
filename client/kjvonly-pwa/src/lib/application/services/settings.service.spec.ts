@@ -108,6 +108,8 @@ describe(
 							false,
 						showBibleVersion:
 							false,
+						showBibleScrollbar:
+							false,
 						enableMaxWidth:
 							true
 					}
@@ -180,6 +182,8 @@ describe(
 							false,
 						showBibleVersion:
 							false,
+						showBibleScrollbar:
+							false,
 						enableMaxWidth:
 							true
 					}
@@ -249,6 +253,8 @@ describe(
 						showPericopes:
 							false,
 						showBibleVersion:
+							false,
+						showBibleScrollbar:
 							false,
 						enableMaxWidth:
 							true
@@ -346,6 +352,8 @@ describe(
 						showPericopes:
 							false,
 						showBibleVersion:
+							true,
+						showBibleScrollbar:
 							true,
 						enableMaxWidth:
 							false

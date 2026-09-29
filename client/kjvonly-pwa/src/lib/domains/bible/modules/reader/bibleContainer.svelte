@@ -24,6 +24,7 @@
 	// SERVICES
 	import {
 		Modules,
+		type Settings as AppSettings,
 		type NavigationState,
 		type NavigationStateValue,
 		type NavigationViewState,
@@ -75,7 +76,8 @@
 	const {
 		moduleResourceSelectionResolver,
 		bibleLocationReferenceService,
-		bibleTextMarkupService
+		bibleTextMarkupService,
+		settingsService
 	} = useApplicationContext();
 	// =============================== BINDINGS ================================
 
@@ -132,6 +134,7 @@
 	 */
 	let zeroHeaderHeight = $state(0);
 	let id = $state(uuid4());
+	const settingsSubscriberID = `${id}-bible-scrollbar`;
 	const LAST_BIBLE_LOCATION_REF = 'lastBibleLocationReference';
 	const DEFAULT_BIBLE_LOCATION_REF = '52_10_9';
 	let mode: BibleMode = $state(newBibleMode());
@@ -139,6 +142,9 @@
 	// DOM related vars
 	let lastKnownScrollPosition = $state(0);
 	let showNavButtons = $state(true);
+	let showBibleScrollbar = $state(
+		settingsService.getSettings().showBibleScrollbar
+	);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -146,11 +152,15 @@
 		setNavReadings();
 		setBibleLocationRef();
 		attachScrolls();
+		subscribeToSettings();
 		overrideContextMenu();
 	});
 
 	onDestroy(() => {
 		unsubscribeNavigationResult();
+		settingsService.unsubscribe(
+			settingsSubscriberID
+		);
 	});
 
 	$effect(() => {
@@ -282,6 +292,20 @@
 
 	function attachScrolls() {
 		attachEvents(`${id}-scroll-container`, 'scroll', trackScrollPosition);
+	}
+
+	function subscribeToSettings(): void {
+		settingsService.subscribe(
+			settingsSubscriberID,
+			onSettingsChange
+		);
+	}
+
+	function onSettingsChange(
+		settings: AppSettings
+	): void {
+		showBibleScrollbar =
+			settings.showBibleScrollbar;
 	}
 
 	function trackScrollPosition() {
@@ -477,7 +501,9 @@
 	ID={id}
 	{clientHeight}
 	{headerHeight}
-	classes="clear-default-classes"
+	classes={showBibleScrollbar
+		? 'clear-default-classes kjv-scrollbar-visible'
+		: 'clear-default-classes'}
 >
 	{#if bibleLocationRef}
 		{@render body()}

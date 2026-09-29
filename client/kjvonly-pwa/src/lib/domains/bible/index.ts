@@ -28,6 +28,14 @@ export {
 	BibleBooknamesService
 } from './services/bible-booknames.service';
 
+export {
+	BibleReferenceLabelService
+} from './services/bible-reference-label.service';
+
+export type {
+	BibleChapterVerseCountLookup
+} from './services/bible-reference-label.service';
+
 export type {
 	SearchService
 } from './services/search.service';

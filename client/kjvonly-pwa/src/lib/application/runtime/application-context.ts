@@ -28,6 +28,10 @@ import type {
 } from '$lib/application/services/settings.service';
 
 import type {
+    PetNameService
+} from '$lib/application/services/pet-name.service';
+
+import type {
     NavigationRuntimeFactory
 } from '$lib/application/runtime/navigation/navigation-runtime-factory';
 
@@ -96,6 +100,9 @@ export interface ApplicationContext {
 
     readonly settingsService:
     SettingsService;
+
+    readonly petNameService:
+    PetNameService;
 
     readonly navigationRuntimeFactory:
     NavigationRuntimeFactory;

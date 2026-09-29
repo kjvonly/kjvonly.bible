@@ -11,7 +11,6 @@
 	import { Modules } from '$lib/application';
 
 	// SERVICES
-	import { PaneSplit } from '$lib/application';
 	import { REFS_VIEWS } from '../../../models/refs-navigation.model';
 	import { NOTES_VIEWS } from '$lib/domains/notes';
 	import type {
@@ -195,8 +194,7 @@
 		let refs = extractAllVerseRefs();
 		let strongsWords = extractStrongsWords();
 
-		navigation.split(
-			PaneSplit.HORIZONTAL,
+		navigation.pushModule(
 			Modules.STRONGS,
 			REFS_VIEWS.ROOT,
 			{
@@ -209,8 +207,7 @@
 	}
 
 	function nonVerseNumberClicked() {
-		navigation.split(
-			PaneSplit.HORIZONTAL,
+		navigation.pushModule(
 			Modules.STRONGS,
 			REFS_VIEWS.ROOT,
 			{

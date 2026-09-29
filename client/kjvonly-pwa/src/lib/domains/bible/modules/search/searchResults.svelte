@@ -1,9 +1,14 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	import { onMount, untrack } from 'svelte';
+	import { untrack } from 'svelte';
 
 	// COMPONENTS
+	import {
+		KJVScrubbedViewport,
+		ScrubbedWindow,
+		type ScrubbedWindowEntry
+	} from '$lib/components';
 	import SearchResultActions from './searchResultActions.svelte';
 
 	// MODELS
@@ -42,61 +47,49 @@
 	let {
 		searchText,
 		resourceNavigationState,
-		scrollContainerID,
 		searchResponse,
-		showResults,
-		onRenderedCountChanged
+		showResults
 	}: {
 		searchText: string;
 		resourceNavigationState: NavigationState;
-		scrollContainerID: string;
 		searchResponse?: SearchResultResponse;
 		showResults: boolean;
-		onRenderedCountChanged: (
-			query: string,
-			rendered: number,
-			total: number
-		) => void;
 	} = $props();
 
 	let booknamesPromise: Promise<BibleBooknames> | undefined;
+	let booknames: BibleBooknames | undefined = $state();
 
 	// ================================== VARS =================================
 
-	let searchResults: SearchResult[] = $state([]);
-	let activeSearchResponse: SearchResultResponse | undefined = $state();
-	let renderedSearchResultsCount: number = $state(0);
-	let loadingResponse: SearchResultResponse | undefined;
+	const searchResultWindow = new ScrubbedWindow<SearchResult>({
+		batchSize: 10,
+		maxItems: 40,
+		jumpItems: 20,
+		loadItem: searchResultIndexToSearchResult,
+		onChange: (entries) => {
+			searchResults = [...entries];
+		}
+	});
 
-	/**
-	 * Position from bottom of scroll container before we load more
-	 * {@link SearchResult}s.
-	 */
-	let pixelsFromBottomBeforeLoadingMoreSearchResults = 20;
-	let numberOfSearchResultsToLoadAtOnce = 10;
+	let searchResults: ScrubbedWindowEntry<SearchResult>[] = $state([]);
+	let activeSearchResponse: SearchResultResponse | undefined = $state();
+	let scrubberValue = $state(1);
+
+	let scrubberMax = $derived(
+		activeSearchResponse?.bibleLocationRefs.length ?? 0
+	);
 
 	// =============================== LIFECYCLE ===============================
-
-	onMount(() => {
-		const el = document.getElementById(`${scrollContainerID}-scroll-container`);
-		el?.addEventListener('scroll', handleScroll);
-
-		return () => {
-			el?.removeEventListener('scroll', handleScroll);
-		};
-	});
 
 	$effect(() => {
 		const response = searchResponse;
 
 		untrack(() => {
 			activeSearchResponse = response;
-			renderedSearchResultsCount = 0;
-			searchResults = [];
-
-			if (response) {
-				void renderToScreenMoreSearchResults();
-			}
+			scrubberValue = 1;
+			void searchResultWindow.reset(
+				response?.bibleLocationRefs.length ?? 0
+			);
 		});
 	});
 
@@ -123,78 +116,52 @@
 				BIBLE_BOOKNAMES_RESOURCE_TYPE
 			);
 
-		return bibleBooknamesService.get(source);
+		const value = await bibleBooknamesService.get(source);
+		booknames = value;
+
+		return value;
 	}
 
-	function handleScroll() {
-		let el = document.getElementById(`${scrollContainerID}-scroll-container`);
-		if (el === null) {
-			return;
+	/**
+	 * Formats an absolute scrubber position with the short book name at that
+	 * position in the ordered search response. This lookup uses only the search
+	 * response's location references and Booknames metadata; it does not load the
+	 * corresponding verse or materialize that result in the sliding window.
+	 */
+	function formatScrubberValue(value: number): string {
+		const bibleLocationRef =
+			activeSearchResponse?.bibleLocationRefs[value - 1];
+
+		if (!bibleLocationRef || !booknames) {
+			return `Result ${value}`;
 		}
 
-		const isReachBottom =
-			el.scrollHeight - el.clientHeight - el.scrollTop <=
-			pixelsFromBottomBeforeLoadingMoreSearchResults;
+		const bookID =
+			bibleLocationReferenceService.extractBookID(bibleLocationRef);
 
-		if (isReachBottom) {
-			void renderToScreenMoreSearchResults();
-		}
-	}
-
-	async function renderToScreenMoreSearchResults() {
-		const response = activeSearchResponse;
-
-		if (!response || loadingResponse === response) {
-			return;
-		}
-
-		loadingResponse = response;
-
-		try {
-			for (
-				let i = 0;
-				shouldContinueLoadingSearchResults(i, response);
-				i++, renderedSearchResultsCount++
-			) {
-				let sr = await searchResultIndexToSearchResult(
-					response.bibleLocationRefs[renderedSearchResultsCount]
-				);
-
-				if (response !== activeSearchResponse) {
-					return;
-				}
-
-				if (!sr) {
-					continue;
-				}
-				searchResults.push(sr);
-			}
-
-			onRenderedCountChanged(
-				response.text,
-				renderedSearchResultsCount,
-				response.bibleLocationRefs.length
-			);
-		} finally {
-			if (loadingResponse === response) {
-				loadingResponse = undefined;
-			}
-		}
-	}
-
-	function shouldContinueLoadingSearchResults(
-		i: number,
-		response: SearchResultResponse
-	): boolean {
 		return (
-			i < numberOfSearchResultsToLoadAtOnce &&
-			renderedSearchResultsCount !== response.bibleLocationRefs.length
+			booknames.shortNames[bookID] ??
+			booknames.booknamesById[bookID] ??
+			`Result ${value}`
 		);
 	}
 
+	/**
+	 * Resolves one absolute search-result index for the generic scrubbed window.
+	 * A response identity check prevents an old asynchronous load from publishing
+	 * verse data into a newer search.
+	 */
 	async function searchResultIndexToSearchResult(
-		bibleLocationRef: string
+		index: number
 	): Promise<SearchResult | undefined> {
+		const response = activeSearchResponse;
+		const bibleLocationRef =
+			response?.bibleLocationRefs[index];
+
+		if (!response || !bibleLocationRef) {
+			return;
+		}
+
 		const source =
 			moduleResourceSelectionResolver.require(
 				resourceNavigationState,
@@ -206,22 +173,23 @@
 			getBooknames()
 		]);
 
-		if (!verse) {
+		if (
+			response !== activeSearchResponse ||
+			!verse
+		) {
 			return;
 		}
 
 		const bookID =
 			bibleLocationReferenceService.extractBookID(bibleLocationRef);
 
-		let sr: SearchResult = {
+		return {
 			key: bibleLocationRef,
 			bookName: booknames.booknamesById[bookID] ?? '',
 			number: bibleLocationReferenceService.extractChapter(bibleLocationRef),
 			verseNumber: verse.number,
 			text: verse.text
 		};
-
-		return sr;
 	}
 
 	// ============================== CLICK FUNCS ==============================
@@ -238,42 +206,54 @@
 </script>
 
 {#if showResults}
-	<div class="bg-neutral-50 pb-6">
-		{#each searchResults as sr}
-			<div
-				class="px-4 py-4 transition-colors duration-150 hover:bg-neutral-100 focus-within:bg-neutral-100"
-			>
-				<button
-					type="button"
-					class="w-full min-w-0 text-left active:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-primary-500"
-					onclick={() => onSearchResultClicked(sr)}
+	<KJVScrubbedViewport
+		min={1}
+		max={scrubberMax}
+		bind:value={scrubberValue}
+		label="Search results"
+		formatValue={formatScrubberValue}
+		onReachStart={() => searchResultWindow.prepend()}
+		onReachEnd={() => searchResultWindow.append()}
+		prepareValue={(value) => searchResultWindow.prepareValue(value)}
+	>
+		<div class="bg-neutral-50 pb-6">
+			{#each searchResults as entry (entry.value)}
+				<div
+					data-kjv-scrubber-value={entry.value}
+					class="px-4 py-4 transition-colors duration-150 hover:bg-neutral-100 focus-within:bg-neutral-100"
 				>
-					<div class="flex flex-col gap-2 whitespace-normal">
-						<div class="text-sm text-neutral-600">
-							{sr.bookName} {sr.number}:{sr.verseNumber}
+					<button
+						type="button"
+						class="w-full min-w-0 text-left active:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-primary-500"
+						onclick={() => onSearchResultClicked(entry.item)}
+					>
+						<div class="flex flex-col gap-2 whitespace-normal">
+							<div class="text-sm text-neutral-600">
+								{entry.item.bookName} {entry.item.number}:{entry.item.verseNumber}
+							</div>
+							<div class="text-base leading-relaxed text-neutral-700">
+								{#each entry.item.text.split(' ') as w, idx}
+									{#if match(w)}
+										<span>
+											{#if idx !== 0}<span>&nbsp;</span>{/if}
+											<span class="text-primary-500">{w}</span>
+										</span>
+									{:else}
+										<span>
+											{#if idx !== 0}<span>&nbsp;</span>{/if}
+											<span>{w}</span>
+										</span>
+									{/if}
+								{/each}
+							</div>
 						</div>
-						<div class="text-base leading-relaxed text-neutral-700">
-							{#each sr.text.split(' ') as w, idx}
-								{#if match(w)}
-									<span>
-										{#if idx !== 0}<span>&nbsp;</span>{/if}
-										<span class="text-primary-500">{w}</span>
-									</span>
-								{:else}
-									<span>
-										{#if idx !== 0}<span>&nbsp;</span>{/if}
-										<span>{w}</span>
-									</span>
-								{/if}
-							{/each}
-						</div>
-					</div>
-				</button>
+					</button>
 
-				<SearchResultActions
-					searchResult={sr}
-				></SearchResultActions>
-			</div>
-		{/each}
-	</div>
+					<SearchResultActions
+						searchResult={entry.item}
+					></SearchResultActions>
+				</div>
+			{/each}
+		</div>
+	</KJVScrubbedViewport>
 {/if}

@@ -18,19 +18,23 @@
 		leadingAction = undefined,
 		actions = [],
 		titleAction = undefined,
-		titleContent = undefined
+		titleContent = undefined,
+		reserveLeadingActionSpace = false
 	}: {
 		title: string;
 		leadingAction?: HeaderActionDefinition;
 		actions?: HeaderActions;
 		titleAction?: HeaderTitleActionDefinition;
 		titleContent?: Snippet;
+		reserveLeadingActionSpace?: boolean;
 	} = $props();
 </script>
 
 <div class="flex min-h-[44px] w-full min-w-0 items-center gap-1">
 	{#if leadingAction}
 		<HeaderActionButton action={leadingAction}></HeaderActionButton>
+	{:else if reserveLeadingActionSpace}
+		<div class="h-11 w-11 shrink-0" aria-hidden="true"></div>
 	{/if}
 
 	<div class="min-w-0 flex-1">
