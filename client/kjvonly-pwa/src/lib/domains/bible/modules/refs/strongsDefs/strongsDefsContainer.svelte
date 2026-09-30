@@ -76,27 +76,31 @@
 	// ================================ FUNCS ==================================
 	async function setStrongsRef():
 	Promise<void> {
+		if (!strongsRefs) {
+			return;
+		}
 
-	if (!strongsRefs) {
-		return;
-	}
+		// Load the complete group before publishing it to the UI. Rendering one
+		// definition at a time briefly selects the single-definition layout and
+		// then collapses it again when later definitions arrive.
+		strongsWithToggle =
+			await Promise.all(
+				strongsRefs.map(
+					async (ref) => {
+						const data =
+							await strongsService.get(
+								strongsSource,
+								ref.toUpperCase()
+							);
 
-	for (
-		const ref of strongsRefs
-	) {
-		const data =
-			await strongsService.get(
-				strongsSource,
-				ref.toUpperCase()
+						return {
+							...data,
+							toggle: false
+						};
+					}
+				)
 			);
-
-		strongsWithToggle.push({
-			...data,
-			toggle:
-				false
-		});
 	}
-}
 
 	function sanitize(w: string): string {
 		return w?.replace(/[^a-zA-Z0-9 ]/g, '');

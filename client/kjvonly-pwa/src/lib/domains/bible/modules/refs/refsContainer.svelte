@@ -89,10 +89,13 @@
 
 	// =============================== LIFECYCLE ===============================
 
+	// Reference classification is synchronous and determines the initial section
+	// layout. Complete it before the first render so collapse state is stable.
+	setRefs();
+	setCurrentVerseRef();
+	setWordText();
+
 	onMount(() => {
-		setRefs();
-		setCurrentVerseRef();
-		setWordText();
 		void setTitle();
 	});
 
