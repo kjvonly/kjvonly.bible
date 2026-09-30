@@ -32,7 +32,8 @@
 		verseService,
 		bibleBooknamesService,
 		moduleResourceSelectionResolver,
-		bibleLocationReferenceService
+		bibleLocationReferenceService,
+		bibleVerseReferenceService
 	} = useApplicationContext();
 
 	const {
@@ -182,13 +183,23 @@
 
 		const bookID =
 			bibleLocationReferenceService.extractBookID(bibleLocationRef);
-
+		const {
+			strongsRefs,
+			crossRefs,
+			strongsWords
+		} = bibleVerseReferenceService
+			.extractStrongsAndCrossReferences(
+				verse
+			);
 		return {
 			key: bibleLocationRef,
 			bookName: booknames.booknamesById[bookID] ?? '',
 			number: bibleLocationReferenceService.extractChapter(bibleLocationRef),
 			verseNumber: verse.number,
-			text: verse.text
+			text: verse.text,
+			strongsRefs,
+			verseRefs: crossRefs,
+			strongsWords
 		};
 	}
 

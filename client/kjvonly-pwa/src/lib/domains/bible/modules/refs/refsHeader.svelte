@@ -11,6 +11,14 @@
 	const { navigation } =
 		useNavigationRuntimeContext();
 
+	// =============================== BINDINGS ================================
+
+	let {
+		title = 'Strongs / Refs'
+	}: {
+		title?: string;
+	} = $props();
+
 	// ============================== CLICK FUNCS ==============================
 
 	function onBack(e: Event): void {
@@ -21,7 +29,7 @@
 
 <!-- ================================ HEADER =============================== -->
 <KJVHeader
-	title="Strongs / Refs"
+	{title}
 	leadingAction={{
 		icon: 'arrow-back',
 		label: 'Back',

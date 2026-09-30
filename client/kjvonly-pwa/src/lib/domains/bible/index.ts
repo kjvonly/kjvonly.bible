@@ -32,6 +32,14 @@ export {
 	BibleReferenceLabelService
 } from './services/bible-reference-label.service';
 
+export {
+	BibleVerseReferenceService
+} from './services/bible-verse-reference.service';
+
+export type {
+	BibleVerseReferences
+} from './services/bible-verse-reference.service';
+
 export type {
 	BibleChapterVerseCountLookup
 } from './services/bible-reference-label.service';

@@ -37,6 +37,25 @@ export class BibleLocationReferenceService {
 	convertCrossRefToBibleLocationRef(ref: string): string {
 		return ref.replaceAll('/', '_');
 	}
+
+	/**
+	 * Converts a Bible location reference into the cross-reference form used by
+	 * the Refs UI. Version and word-index detail are intentionally discarded.
+	 *
+	 * Example:
+	 * - `kjv/47_5_3_7` -> `47/5/3`
+	 * - `47_5_3` -> `47/5/3`
+	 */
+	convertBibleLocationRefToCrossRef(ref: string): string {
+		const locationRef = this.extractLocationRef(ref);
+		const [bookID, chapter, verse] = locationRef.split('_');
+
+		if (!bookID || !chapter || !verse) {
+			throw new Error(`Invalid bible verse location ref: ${ref}`);
+		}
+
+		return `${bookID}/${chapter}/${verse}`;
+	}
 	
 	/**
 	 * Returns the version from a Bible location ref when present.

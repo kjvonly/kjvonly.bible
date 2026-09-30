@@ -16,6 +16,8 @@
 	 */
 	import { Application } from '$lib/application/runtime/application';
 
+	const MINIMUM_SPLASH_DURATION_MS = 1_500;
+
 	const application = new Application(createApplicationConfig());
 
 	provideApplicationContext(application.context);
@@ -40,16 +42,23 @@
 		let disposed = false;
 
 		const start = async () => {
+			const minimumSplashDuration = new Promise<void>((resolve) => {
+				setTimeout(resolve, MINIMUM_SPLASH_DURATION_MS);
+			});
+
 			try {
 				void requestPersistentStorage();
 
 				await application.context.authenticationService.tryLogin();
 				await application.start();
+				await minimumSplashDuration;
 
 				if (!disposed) {
 					ready = true;
 				}
 			} catch (error) {
+				await minimumSplashDuration;
+
 				if (!disposed) {
 					startupError = error;
 				}
@@ -67,6 +76,50 @@
 	let { children } = $props();
 </script>
 
+{#snippet splash()}
+	<div
+		class="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#000205] p-6 sm:p-8"
+		role="status"
+		aria-live="polite"
+	>
+		<img
+			src="/icons/app-icon.svg"
+			alt=""
+			class="min-h-0 w-full flex-1 object-contain"
+		/>
+		<p class="splash-loading text-base text-white">Application Loading...</p>
+	</div>
+{/snippet}
+
+<style>
+	.splash-loading {
+		animation: splash-loading-pulse 1.4s ease-in-out infinite;
+	}
+
+	@keyframes splash-loading-pulse {
+		0%,
+		100% {
+			opacity: 0.55;
+			text-shadow: 0 0 0.15rem rgb(255 255 255 / 20%);
+		}
+
+		50% {
+			opacity: 1;
+			text-shadow:
+				0 0 0.45rem rgb(255 255 255 / 85%),
+				0 0 0.9rem rgb(255 255 255 / 45%);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.splash-loading {
+			animation: none;
+			opacity: 1;
+			text-shadow: 0 0 0.3rem rgb(255 255 255 / 35%);
+		}
+	}
+</style>
+
 <svelte:head>
 	<link rel="manifest" href="/manifest.json" />
 </svelte:head>
@@ -77,6 +130,6 @@
 	{:else if startupError}
 		<div>Application startup failed.</div>
 	{:else}
-		<div>Loading...</div>
+		{@render splash()}
 	{/if}
 </Container>

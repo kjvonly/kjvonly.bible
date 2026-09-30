@@ -10,7 +10,7 @@
 	import Copy from '$lib/components/svgs/copy.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 	import KeyboardArrowDown from '$lib/components/svgs/keyboardArrowDown.svelte';
-	import MenuBook from '$lib/components/svgs/menuBook.svelte';
+	import Link from '$lib/components/svgs/link.svelte';
 	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
 
@@ -64,9 +64,11 @@
 	// =============================== BINDINGS ================================
 
 	let {
-		boundCrossRefs
+		boundCrossRefs,
+		collapsible
 	}: {
 		boundCrossRefs: string[];
+		collapsible: boolean;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -339,16 +341,18 @@
 {/snippet}
 
 <!-- ================================ HEADER =============================== -->
-{#snippet crossRefsToggle()}
+{#snippet crossRefsHeader()}
 	<div class="flex flex-row items-center">
-		<KJVButton classes="" onClick={onToggle}>
-			{#if !toggleCrossRefs}
-				<KeyboardArrowRight></KeyboardArrowRight>
-			{:else}
-				<KeyboardArrowDown></KeyboardArrowDown>
-			{/if}
-		</KJVButton>
-		<MenuBook></MenuBook>
+		{#if collapsible}
+			<KJVButton classes="" onClick={onToggle}>
+				{#if !toggleCrossRefs}
+					<KeyboardArrowRight></KeyboardArrowRight>
+				{:else}
+					<KeyboardArrowDown></KeyboardArrowDown>
+				{/if}
+			</KJVButton>
+		{/if}
+		<Link></Link>
 		<p class="ps-1 pe-4 capitalize">Cross References</p>
 	</div>
 {/snippet}
@@ -391,8 +395,8 @@
 
 <div>
 	<div id={ID}>
-		{@render crossRefsToggle()}
-		{#if toggleCrossRefs}
+		{@render crossRefsHeader()}
+		{#if !collapsible || toggleCrossRefs}
 			<div class="ps-2">
 				{@render breadcrumbs()}
 				<div id="{ID}-cross-refs-spacer" class="py-4"></div>
