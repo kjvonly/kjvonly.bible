@@ -42,17 +42,17 @@
 
 	// =============================== BINDINGS ================================
 	let {
-		hasCrossRef,
 		strongsSource,
 		strongsRefs,
 		strongsWords,
-		text
+		text,
+		collapseDefinitions
 	}: {
-		hasCrossRef: boolean;
 		strongsSource: PublishedResourceReference;
 		strongsRefs: string[];
 		strongsWords: string[] | undefined;
 		text: string;
+		collapseDefinitions: boolean;
 	} = $props();
 
 	// ================================== VARS =================================
@@ -174,6 +174,7 @@
 	function onToggleStrongs(): void {
 		toggleStrongs = !toggleStrongs;
 	}
+
 </script>
 
 <!-- ================================= BODY ================================ -->
@@ -304,34 +305,36 @@
 	{/if}
 {/snippet}
 
-{#snippet strongsToggle()}
+{#snippet strongsHeader()}
 	<div class="flex flex-row items-center">
-		<KJVButton classes="" onClick={onToggleStrongs}>
-			{#if !toggleStrongs}
-				<KeyboardArrowRight></KeyboardArrowRight>
-			{:else}
-				<KeyboardArrowDown></KeyboardArrowDown>
-			{/if}
-		</KJVButton>
+		{#if collapseDefinitions}
+			<KJVButton classes="" onClick={onToggleStrongs}>
+				{#if !toggleStrongs}
+					<KeyboardArrowRight></KeyboardArrowRight>
+				{:else}
+					<KeyboardArrowDown></KeyboardArrowDown>
+				{/if}
+			</KJVButton>
+		{/if}
 		<Dictionary></Dictionary>
-		<p class="ps-1 pe-4 capitalize">definitions</p>
+		<p class="ps-1 pe-4 capitalize">
+			{strongsRefs.length === 1 ? 'definition' : 'definitions'}
+		</p>
 	</div>
 {/snippet}
 
 {#snippet strongsList()}
-	{#if toggleStrongs}
-		{#each strongsWithToggle as s, idx}
-			{@render strongsWordToggle(s, idx)}
-			{#if s.toggle}
-				{@render strongsHtml(s)}
-			{/if}
-		{/each}
-	{/if}
+	{#each strongsWithToggle as s, idx}
+		{@render strongsWordToggle(s, idx)}
+		{#if s.toggle}
+			{@render strongsHtml(s)}
+		{/if}
+	{/each}
 {/snippet}
 
 {#snippet strongsWordToggle(s: StrongsWithToggle, idx: number)}
 	<div class="flex flex-row items-center ps-2 pt-2">
-		{#if strongsWords && strongsWords.length > 0}
+		{#if strongsWithToggle.length > 1}
 			<KJVButton
 				classes=""
 				onClick={() => {
@@ -344,30 +347,15 @@
 					<KeyboardArrowDown></KeyboardArrowDown>
 				{/if}
 			</KJVButton>
+		{/if}
+
+		{#if strongsWords && strongsWords.length > 0}
 			<ShortText></ShortText>
 			<span class="ps-1 pe-4"
 				><pre class="inline-block">{`${s.number}:`.padStart(6, ' ')}</pre>
 				{sanitize(strongsWords[idx])}</span
 			>
 		{:else}
-			<!-- This is for single word clicks. That word could have an
-			 	 associated cross reference so we'd want to toggle the 
-				 strongs def. Also a word could have more than one associated 
-				 strongs def. If thats the case we want to toggle them -->
-			{#if hasCrossRef || strongsWithToggle?.length > 1}
-				<KJVButton
-					classes=""
-					onClick={() => {
-						onStrongsWordClicked(s);
-					}}
-				>
-					{#if !s.toggle}
-						<KeyboardArrowRight></KeyboardArrowRight>
-					{:else}
-						<KeyboardArrowDown></KeyboardArrowDown>
-					{/if}
-				</KJVButton>
-			{/if}
 			<span class="pe-4">{s.number}: {sanitize(text)}</span>
 		{/if}
 	</div>
@@ -375,8 +363,18 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-{#if strongsWithToggle.length > 1 || hasCrossRef}
-	{@render strongsToggle()}
+{#if collapseDefinitions}
+	{@render strongsHeader()}
+	{#if toggleStrongs}
+		{#if strongsWithToggle.length > 1}
+			{@render strongsList()}
+		{:else if strongsWithToggle.length === 1}
+			{@render strongsWordToggle(strongsWithToggle[0], 0)}
+			{@render strongsHtml(strongsWithToggle[0])}
+		{/if}
+	{/if}
+{:else if strongsWithToggle.length > 1}
+	{@render strongsHeader()}
 	{@render strongsList()}
 {:else if strongsWithToggle.length === 1}
 	{@render strongsWordToggle(strongsWithToggle[0], 0)}

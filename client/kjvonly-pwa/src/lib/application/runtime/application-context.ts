@@ -56,7 +56,8 @@ import type {
     VerseService,
     BookGroupingsService,
     BibleLocationReferenceService,
-    BibleNavigationService
+    BibleNavigationService,
+    BibleVerseReferenceService
 } from '$lib/domains/bible';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -157,6 +158,9 @@ export interface ApplicationContext {
 
     readonly bibleNavigationService:
     BibleNavigationService;
+
+    readonly bibleVerseReferenceService:
+    BibleVerseReferenceService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Notes

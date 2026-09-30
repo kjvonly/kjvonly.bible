@@ -157,6 +157,12 @@ describe(
 				).toBe('47_5_3');
 
 				expect(
+					service.convertBibleLocationRefToCrossRef(
+						'kjv/47_5_3_7'
+					)
+				).toBe('47/5/3');
+
+				expect(
 					service.makeBibleLocationRef(
 						'47',
 						5,

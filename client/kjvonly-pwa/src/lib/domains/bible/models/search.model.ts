@@ -4,6 +4,9 @@ export interface SearchResult {
 	number: number;
 	verseNumber: number;
 	text: string;
+	strongsRefs: string[];
+	verseRefs: string[];
+	strongsWords: string[];
 }
 
 export interface SearchResultResponse {

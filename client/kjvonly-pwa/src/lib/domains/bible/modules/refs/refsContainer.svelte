@@ -36,8 +36,13 @@
 		isStrongsReference,
 		tokenizeReferences
 	} from '../../services/reference-tokenizer.service';
+	import {
+		BIBLE_BOOKNAMES_RESOURCE_TYPE
+	} from '../../resources/booknames/bible-booknames-interpreter';
 
 	const {
+		bibleBooknamesService,
+		bibleLocationReferenceService,
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
@@ -59,11 +64,21 @@
 	// ================================== VARS =================================
 
 	let headerHeight: number = $state(0);
+	let title = $state('Strongs / Refs');
 
 	let footnotes: string[] = $state([]);
 	let strongsRefs: string[] = $state([]);
 	let text = $state('');
 	let crossRefs: string[] = $state([]);
+
+	let sectionCount = $derived(
+		Number(footnotes.length > 0) +
+		Number(strongsRefs.length > 0) +
+		Number(crossRefs.length > 0)
+	);
+	let collapseSections = $derived(
+		sectionCount > 1
+	);
 
 	let strongsSource = $derived(
 		moduleResourceSelectionResolver.require(
@@ -78,6 +93,7 @@
 		setRefs();
 		setCurrentVerseRef();
 		setWordText();
+		void setTitle();
 	});
 
 	// ================================ FUNCS ==================================
@@ -129,17 +145,83 @@
 
 	/**
 	 * Prepends the originating verse when the selected word has cross references.
+	 * The canonical Bible location is navigation state; the Refs-specific cross
+	 * reference representation is derived locally.
 	 */
 	function setCurrentVerseRef(): void {
-		const currentVerseRef =
+		const bibleLocationRef =
 			navigationState.state
-				.currentVerseRef;
+				.bibleLocationRef;
 
-		if (hasCrossRefs() && currentVerseRef) {
+		if (
+			hasCrossRefs() &&
+			bibleLocationRef &&
+			bibleLocationReferenceService
+				.hasVerse(
+					bibleLocationRef
+				)
+		) {
 			crossRefs = [
-				currentVerseRef,
+				bibleLocationReferenceService
+					.convertBibleLocationRefToCrossRef(
+						bibleLocationRef
+					),
 				...crossRefs
 			];
+		}
+	}
+
+	/**
+	 * Resolves the display title from the canonical Bible location captured by
+	 * this navigation entry. The Strong's Module owns a Booknames Resource
+	 * selection, so callers do not need to serialize presentation text.
+	 */
+	async function setTitle(): Promise<void> {
+		const bibleLocationRef =
+			navigationState.state
+				.bibleLocationRef;
+
+		if (!bibleLocationRef) {
+			return;
+		}
+
+		const source =
+			moduleResourceSelectionResolver.require(
+				navigationState,
+				BIBLE_BOOKNAMES_RESOURCE_TYPE
+			);
+		const booknames =
+			await bibleBooknamesService.get(
+				source
+			);
+		const bookID =
+			bibleLocationReferenceService
+				.extractBookID(
+					bibleLocationRef
+				);
+		const chapter =
+			bibleLocationReferenceService
+				.extractChapter(
+					bibleLocationRef
+				);
+		const bookName =
+			booknames.booknamesById[bookID] ??
+			booknames.shortNames[bookID] ??
+			bookID;
+
+		title = `${bookName} ${chapter}`;
+
+		if (
+			bibleLocationReferenceService
+				.hasVerse(
+					bibleLocationRef
+				)
+		) {
+			title +=
+				`:${bibleLocationReferenceService
+					.extractVerse(
+						bibleLocationRef
+					)}`;
 		}
 	}
 
@@ -182,11 +264,11 @@
 		const state = value.state;
 
 		if (
-			state.currentVerseRef !== undefined &&
-			typeof state.currentVerseRef !== 'string'
+			state.bibleLocationRef !== undefined &&
+			typeof state.bibleLocationRef !== 'string'
 		) {
 			throw new Error(
-				"Invalid Strong's/Refs verse state"
+				"Invalid Strong's/Refs Bible location state"
 			);
 		}
 
@@ -280,8 +362,8 @@
 			readonly state:
 				NavigationViewState & {
 					word?: Word;
+					bibleLocationRef?: string;
 					footnotes?: Record<string, string>;
-					currentVerseRef?: string;
 					refs?: string[];
 					strongsWords?: string[];
 				};
@@ -290,7 +372,9 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<RefsHeader></RefsHeader>
+	<RefsHeader
+		{title}
+	></RefsHeader>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->
@@ -298,7 +382,7 @@
 	{#if footnotes.length > 0}
 		<div class=" pt-4"></div>
 		<FootnoteContainer
-			hasCrossRef={navigationState.state.refs !== undefined}
+			collapsible={collapseSections}
 			{footnotes}
 			chapterFootnotes={navigationState.state.footnotes ?? {}}
 		></FootnoteContainer>
@@ -310,8 +394,8 @@
 			{text}
 			{strongsSource}
 			{strongsRefs}
-			hasCrossRef={crossRefs.length > 0}
 			strongsWords={navigationState.state.strongsWords}
+			collapseDefinitions={collapseSections}
 		></StrongsDefsContainer>
 	{/if}
 
@@ -319,6 +403,7 @@
 		<div class=" pt-4"></div>
 		<CrossRefsContainer
 			boundCrossRefs={crossRefs}
+			collapsible={collapseSections}
 		></CrossRefsContainer>
 	{/if}
 {/snippet}

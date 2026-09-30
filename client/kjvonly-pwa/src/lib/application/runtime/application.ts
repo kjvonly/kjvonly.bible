@@ -264,6 +264,7 @@ import {
     BookGroupingsService,
     BibleLocationReferenceService,
     BibleNavigationService,
+    BibleVerseReferenceService,
     BIBLE_VIEWS,
     SEARCH_VIEWS,
     createBibleVersionId,
@@ -990,6 +991,9 @@ export class Application {
                 bibleLocationReferenceService
             );
 
+        const bibleVerseReferenceService =
+            new BibleVerseReferenceService();
+
         const chapterStore =
             new IndexedDBChapterStore(
                 getApplicationDB
@@ -1364,6 +1368,7 @@ export class Application {
             bookGroupingsService,
             bibleLocationReferenceService,
             bibleNavigationService,
+            bibleVerseReferenceService,
 
             notesService,
 

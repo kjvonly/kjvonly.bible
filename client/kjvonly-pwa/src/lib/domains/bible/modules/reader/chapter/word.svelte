@@ -20,8 +20,7 @@
 	import {
 		BIBLE_MODES,
 		type BibleMode,
-		type Verse,
-		type Word
+		type Verse
 	} from '../../../models/bible.model';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import Notes from '$lib/components/svgs/notes.svelte';
@@ -30,7 +29,8 @@
 		ChapterNotesByLocation
 	} from './chapter-notes';
 	const {
-		bibleLocationReferenceService
+		bibleLocationReferenceService,
+		bibleVerseReferenceService
 	} = useApplicationContext();
 	const { navigation } =
 		useNavigationRuntimeContext();
@@ -190,30 +190,35 @@
 		}
 	}
 
-	function verseNumberClicked() {
-		let refs = extractAllVerseRefs();
-		let strongsWords = extractStrongsWords();
+	function verseNumberClicked(): void {
+		const {
+			refs,
+			strongsWords
+		} = bibleVerseReferenceService
+			.extractAll(verse);
 
 		navigation.pushModule(
 			Modules.STRONGS,
 			REFS_VIEWS.ROOT,
 			{
+				bibleLocationRef:
+					getVerseBibleLocationRef(),
 				footnotes,
-				currentVerseRef: getBibleCrossReference(),
 				refs,
 				strongsWords
 			}
 		);
 	}
 
-	function nonVerseNumberClicked() {
+	function nonVerseNumberClicked(): void {
 		navigation.pushModule(
 			Modules.STRONGS,
 			REFS_VIEWS.ROOT,
 			{
+				bibleLocationRef:
+					getVerseBibleLocationRef(),
 				word,
-				footnotes,
-				currentVerseRef: getBibleCrossReference()
+				footnotes
 			}
 		);
 	}
@@ -317,34 +322,14 @@
 		}
 	}
 
-	function extractAllVerseRefs(): string[] {
-		return verse.words
-			.flatMap((w: Word) => {
-				return w.href;
-			})
-			.filter((s: string | null) => {
-				return s !== null;
-			});
+
+	function getVerseBibleLocationRef(): string {
+		return `${bibleLocationReferenceService
+			.extractVersionBookIDChapter(
+				bibleLocationRef
+			)}_${verse.number}`;
 	}
 
-	function extractStrongsWords(): string[] {
-		return verse.words
-			.filter((w: Word) => {
-				return w.href?.find((ref: string) => {
-					return ref.startsWith('G') || ref.startsWith('H');
-				});
-			})
-			.map((w: Word) => {
-				return w.text;
-			});
-	}
-
-	function getBibleCrossReference(): string {
-		let bookIDChapter =
-			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-		let bookIDChapterVerse = `${bookIDChapter}_${verse.number}`;
-		return bookIDChapterVerse.replaceAll('_', '/');
-	}
 
 	function onNotesClicked() {
 		const bookIDChapter =

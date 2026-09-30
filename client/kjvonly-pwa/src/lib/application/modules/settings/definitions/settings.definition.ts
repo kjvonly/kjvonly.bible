@@ -91,6 +91,7 @@ export const settingsDefinition: SettingsDefinition = {
 							},
 							setting: 'colorTheme',
 							options: [
+								{ id: 'app', label: 'App', value: 'app' },
 								{ id: 'night', label: 'Night', value: 'night' },
 								{ id: 'night-colorblind', label: 'Night Colorblind', value: 'night-colorblind' },
 								{ id: 'red', label: 'Red', value: 'red' },
