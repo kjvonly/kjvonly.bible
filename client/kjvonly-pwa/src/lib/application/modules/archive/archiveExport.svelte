@@ -1,13 +1,10 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import KJVBackButton from '../../ui/navigation/KJVBackButton.svelte';
 
 	import {
 		usePaneLayoutContext
 	} from '../../runtime/pane/pane-layout-context';
-	// APPLICATION
-	import {
-		useNavigationRuntimeContext
-	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import {
 		parseKJVOnlyArchiveExportPatterns,
 		type KJVOnlyArchiveExportSelection
@@ -48,10 +45,6 @@
 		archiveService,
 		toastService
 	} = useApplicationContext();
-
-	const {
-		navigation
-	} = useNavigationRuntimeContext();
 
 	let options = $state<ArchiveExportOption[]>([
 		{
@@ -176,11 +169,6 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onBack(): void {
-		navigation.back();
-	}
-
-
 	async function onExport(): Promise<void> {
 		if (exporting) {
 			return;
@@ -257,6 +245,10 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
 		longTitle="Export archive"
@@ -267,11 +259,7 @@
 {#snippet header()}
 	<KJVHeader
 		title="Export archive"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 		{titleContent}
 		actions={[
 			{

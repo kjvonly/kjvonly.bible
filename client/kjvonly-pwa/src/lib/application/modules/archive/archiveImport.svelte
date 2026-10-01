@@ -1,13 +1,10 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import KJVBackButton from '../../ui/navigation/KJVBackButton.svelte';
 
 	import {
 		usePaneLayoutContext
 	} from '../../runtime/pane/pane-layout-context';
-	// APPLICATION
-	import {
-		useNavigationRuntimeContext
-	} from '$lib/application/runtime/navigation/navigation-runtime-context';
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 
 	// COMPONENTS
@@ -36,16 +33,7 @@
 		toastService
 	} = useApplicationContext();
 
-	const {
-		navigation
-	} = useNavigationRuntimeContext();
-
 	// ============================== CLICK FUNCS ==============================
-
-	function onBack(): void {
-		navigation.back();
-	}
-
 
 	function onChooseFile(): void {
 		if (importing) {
@@ -135,6 +123,10 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
 		longTitle="Import archive"
@@ -145,11 +137,7 @@
 {#snippet header()}
 	<KJVHeader
 		title="Import archive"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 		{titleContent}
 		actions={[
 			{

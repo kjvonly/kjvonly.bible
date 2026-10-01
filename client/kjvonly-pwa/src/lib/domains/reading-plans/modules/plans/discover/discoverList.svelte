@@ -1,15 +1,17 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton,
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
 	// APPLICATION
 	import {
 		useApplicationContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import {
-		ViewBody,
-		ViewHeader
-	} from '$lib/application/ui';
 
 	// COMPONENTS
 	import {
@@ -80,6 +82,11 @@
 </script>
 
 <!-- ================================ HEADER =============================== -->
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
 		longTitle="Discover Plans"
@@ -90,11 +97,7 @@
 {#snippet header()}
 	<KJVHeader
 		title="Discover Plans"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: () => navigation.back()
-		}}
+		{leadingContent}
 		{titleContent}
 	></KJVHeader>
 {/snippet}

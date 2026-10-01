@@ -1,12 +1,17 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton,
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
 	// APPLICATION
 	import {
 		useApplicationContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import { ViewBody, ViewHeader } from '$lib/application/ui';
 
 	// BIBLE
 	import {
@@ -73,10 +78,6 @@
 		onSubSelected(sub);
 	}
 
-	function onBack(): void {
-		navigation.back();
-	}
-
 	function onDiscoverPlansClicked(): void {
 		navigation.pushView(
 			PLANS_VIEWS.PLANS_LIST,
@@ -136,14 +137,15 @@
 </script>
 
 <!-- ================================ HEADER =============================== -->
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="My Plans"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 		actions={[
 			{
 				icon: 'document-search',

@@ -34,8 +34,6 @@ interface SettingsPaneNavigation {
 		view: SettingsView,
 		state: NavigationViewState
 	): unknown;
-
-	back(): void;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,10 +109,5 @@ export class SettingsNavigationService {
 				...(focusRowID ? { focusRowID } : {})
 			}
 		);
-	}
-
-	/** Pop the current Settings entry and reveal the preserved previous view. */
-	back(): void {
-		this.navigation.back();
 	}
 }

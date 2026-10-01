@@ -5,6 +5,10 @@ COMPOSE_FILE ?= docker-compose.prod.yml
 ENV_FILE ?= .env
 WEB_ENV_FILE ?= web.env
 
+GIT_COMMIT ?= $(shell git -C ../.. rev-parse HEAD 2>/dev/null || echo unknown)
+GIT_TAG ?= $(shell git -C ../.. describe --tags --exact-match 2>/dev/null || true)
+export GIT_COMMIT GIT_TAG
+
 .PHONY: help check config build deploy up restart down down-clean logs ps
 
 help:

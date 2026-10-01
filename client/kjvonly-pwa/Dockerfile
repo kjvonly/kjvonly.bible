@@ -13,7 +13,11 @@ RUN npm install --ignore-scripts --include=optional
 COPY . .
 
 ARG BASE_PATH=
+ARG APP_GIT_COMMIT=unknown
+ARG APP_GIT_TAG=
 ENV BASE_PATH=${BASE_PATH}
+ENV VITE_APP_GIT_COMMIT=${APP_GIT_COMMIT}
+ENV VITE_APP_GIT_TAG=${APP_GIT_TAG}
 
 RUN npm run prepare --workspace @kjvonly/pwa
 RUN --mount=type=secret,id=build_env,target=/app/kjvonly-pwa/.env.production.local \

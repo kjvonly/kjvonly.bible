@@ -1,5 +1,11 @@
 <script lang="ts">
 	import {
+		KJVBackButton,
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
+	import {
 		onMount
 	} from 'svelte';
 
@@ -9,10 +15,6 @@
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import {
-		ViewBody,
-		ViewHeader
-	} from '$lib/application/ui';
 
 	// COMPONENTS
 	import {
@@ -66,14 +68,14 @@
 	}
 </script>
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 <ViewHeader bind:headerHeight>
 	<KJVHeader
 		title="Bible version"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: () => navigation.back()
-		}}
+		{leadingContent}
 	></KJVHeader>
 </ViewHeader>
 

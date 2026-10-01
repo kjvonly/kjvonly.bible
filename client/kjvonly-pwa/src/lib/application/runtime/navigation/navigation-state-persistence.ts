@@ -97,6 +97,35 @@ export class NavigationStatePersistence {
 	}
 
 	/**
+	 * Replaces the persisted stack with one exact `modules.root` state.
+	 *
+	 * This is a runtime-shell operation for narrow invariant-preserving flows
+	 * such as escaping the sole final Pane. It deliberately cannot replace the
+	 * stack with an arbitrary feature destination.
+	 */
+	replaceWithRoot(
+		navigationState: NavigationState
+	): void {
+		if (
+			navigationState.module !== Modules.MODULES ||
+			navigationState.view !== MODULES_VIEWS.ROOT
+		) {
+			throw new Error(
+				'Navigation replacement must use modules.root'
+			);
+		}
+
+		const paneState =
+			this.requirePaneState();
+
+		paneState.navigation = [
+			navigationState
+		];
+
+		this.persistWorkspace();
+	}
+
+	/**
 	 * Appends the exact NavigationState object used by the runtime view and
 	 * persists Workspace state immediately. Keeping object identity shared lets
 	 * entry-scoped state updates mutate the persisted semantic entry in place.

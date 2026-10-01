@@ -1,4 +1,8 @@
 <script lang="ts">
+	import {
+		KJVBackButton
+	} from '$lib/application/ui';
+
 	// SVELTE
 	import { onDestroy, onMount, untrack } from 'svelte';
 
@@ -158,10 +162,6 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onBack(): void {
-		navigation.back();
-	}
-
 	function onBookChapterClick(): void {
 		if (mode.navReadings) {
 			navigation.pushView(
@@ -227,13 +227,13 @@
 	></KJVAdaptiveHeaderTitle>
 {/snippet}
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 <KJVHeader
 	title="Bible"
-	leadingAction={{
-		icon: 'arrow-back',
-		label: 'Back',
-		onClick: onBack
-	}}
+	{leadingContent}
 	titleAction={{
 		label: mode.navReadings
 			? 'Show plan readings'

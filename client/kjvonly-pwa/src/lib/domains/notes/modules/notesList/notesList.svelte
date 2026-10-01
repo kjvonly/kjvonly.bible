@@ -1,5 +1,11 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton,
+		ViewHeader,
+		ViewBody
+	} from '$lib/application/ui';
+
 	// MODELS
 	import {
 		Modules,
@@ -21,7 +27,6 @@
 	} from '../../ui/note-filter.model';
 
 	// OTHER
-	import { ViewHeader, ViewBody } from '$lib/application/ui';
 	import uuid4 from 'uuid4';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import { KJVHeader } from '$lib/components';
@@ -52,7 +57,6 @@
 		bibleBooknamesService,
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
-
 
 	const {
 		navigation
@@ -334,10 +338,6 @@
 		);
 	}
 
-	function onBack(): void {
-		navigation.back();
-	}
-
 	function onFilterChanged(event: Event, index: NoteFilterIndex): void {
 		const input = event.currentTarget as HTMLInputElement;
 		onFilterParamChanged(index, input.checked);
@@ -355,14 +355,15 @@
 </script>
 
 <!-- ================================ HEADER =============================== -->
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet noteListHeader()}
 	<KJVHeader
 		title="Notes"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 		actions={[
 			{
 				icon: 'filter',

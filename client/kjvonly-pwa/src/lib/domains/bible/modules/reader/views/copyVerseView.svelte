@@ -1,5 +1,12 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton,
+		ViewHeader,
+		ViewBody,
+		scrollTo
+	} from '$lib/application/ui';
+
 	//SVELTE
 	import { onMount, untrack } from 'svelte';
 
@@ -19,13 +26,10 @@
 
 	// COMPONENTS
 	import Copy from '$lib/components/svgs/copy.svelte';
-	import { ViewHeader } from '$lib/application/ui';
-	import { ViewBody } from '$lib/application/ui';
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 	import { KJVAdaptiveHeaderTitle, KJVHeader } from '$lib/components';
 
 	//OTHER
-	import { scrollTo } from '$lib/application/ui';
 	import uuid4 from 'uuid4';
 
 	// NOSTR IMPL
@@ -62,7 +66,6 @@
 
 	const bibleLocationRef =
 		getBibleLocationRef();
-
 
 	// ================================= VARS ==================================
 	// DOM
@@ -345,6 +348,10 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
 		longTitle={displayLongTitle}
@@ -356,11 +363,7 @@
 {#snippet header()}
 	<KJVHeader
 		title={displayLongTitle}
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: () => navigation.back()
-		}}
+		{leadingContent}
 		{titleContent}
 		actions={[
 			{

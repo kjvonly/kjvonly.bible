@@ -21,15 +21,12 @@ import {
 
 function createService() {
 	const pushView = vi.fn();
-	const back = vi.fn();
 
 	return {
 		pushView,
-		back,
 		settingsNavigationService:
 			new SettingsNavigationService({
-				pushView,
-				back
+				pushView
 			})
 	};
 }
@@ -177,20 +174,6 @@ describe(
 						focusRowID: 'show-pericopes'
 					}
 				);
-			}
-		);
-
-		it(
-			'navigates back through the Pane stack',
-			() => {
-				const {
-					back,
-					settingsNavigationService
-				} = createService();
-
-				settingsNavigationService.back();
-
-				expect(back).toHaveBeenCalledOnce();
 			}
 		);
 	}

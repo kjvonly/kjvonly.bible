@@ -1,5 +1,11 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton,
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
 	// SVELTE
 	import { onMount } from 'svelte';
 
@@ -13,10 +19,6 @@
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import {
-		ViewBody,
-		ViewHeader
-	} from '$lib/application/ui';
 
 	// BIBLE
 	import {
@@ -115,7 +117,6 @@
 	let loadState = $state<PlansViewLoadState>('initializing');
 	let subscriptionMissing = $state(false);
 
-
 	let firstVisibleReadingIndex = $derived(
 		showCompletedReadings
 			? 0
@@ -180,7 +181,6 @@
 			plansPubSubService.unsubscribe(SUBSCRIBER_ID);
 		};
 	});
-
 
 	// ================================ FUNCS ==================================
 
@@ -281,7 +281,6 @@
 			);
 		loadMoreSubReadings();
 	}
-
 
 	/**
 	 * Applies refreshed plan data without treating the existing pane as a new
@@ -480,16 +479,11 @@
 		);
 	}
 
-	function onBack(): void {
-		navigation.back();
-	}
-
 	function onToggleCompletedReadings(): void {
 		showCompletedReadings = !showCompletedReadings;
 		resetVisibleReadingWindow();
 		toastService.showToast('Toggled Completed Readings');
 	}
-
 
 	/**
 	 * Validates the navigation contract required by subscription details.
@@ -524,14 +518,14 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="Plan Details"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 		actions={[
 			{
 				icon: 'check',

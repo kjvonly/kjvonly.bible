@@ -1642,6 +1642,8 @@ None
 
 Use when the current view was reached through local navigation and returning should reveal the previous view.
 
+The standard Pane Back control may provide a secondary press-and-hold shortcut that exits the Pane context. This does not change the primary Back meaning: a normal tap/click still performs exactly one Back navigation step.
+
 ### Close
 
 Use when the current surface itself is being dismissed rather than navigating backward.
@@ -5430,6 +5432,8 @@ return to application root
 ```
 
 unless that is explicitly the current navigation context.
+
+The standard `<KJVBackButton>` keeps these semantics separate: tap/click is Back, while a deliberate press-and-hold invokes the distinct Pane-escape action. A custom Back behavior should use a custom leading control rather than changing the standard component's tap semantics.
 
 ### Example
 

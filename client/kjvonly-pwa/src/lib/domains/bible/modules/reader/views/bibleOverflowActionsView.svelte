@@ -1,5 +1,8 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton
+	} from '$lib/application/ui';
 
 	// APPLICATION
 	import {
@@ -71,17 +74,17 @@
 			action
 		});
 	}
-
-	function onBack(): void {
-		navigation.back();
-	}
 </script>
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
 
 <KJVMenuView
 	title="More actions"
 	{clientHeight}
 	{actions}
 	{headerActions}
-	{onBack}
+	{leadingContent}
 	{onAction}
 ></KJVMenuView>

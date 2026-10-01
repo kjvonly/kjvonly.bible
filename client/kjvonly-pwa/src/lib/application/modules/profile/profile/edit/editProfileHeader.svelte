@@ -1,9 +1,6 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
-	// APPLICATION
-	import {
-		useNavigationRuntimeContext
-	} from '$lib/application/runtime/navigation/navigation-runtime-context';
+	import KJVBackButton from '../../../../ui/navigation/KJVBackButton.svelte';
 
 	// COMPONENTS
 	import { KJVHeader } from '$lib/components';
@@ -18,26 +15,18 @@
 		onSave: () => Promise<void>;
 	} = $props();
 
-	const {
-		navigation
-	} = useNavigationRuntimeContext();
-
-	// ============================== CLICK FUNCS ==============================
-
-	function onBack(): void {
-		navigation.back();
-	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="Edit Profile"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back to profile',
-			onClick: onBack
-		}}
+		{leadingContent}
 		actions={[
 			{
 				icon: 'save',

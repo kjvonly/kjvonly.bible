@@ -10,11 +10,9 @@
 	import {
 		useNavigationEntryContext
 	} from '../../runtime/navigation/navigation-entry-context';
-	import { useSettingsNavigationContext } from './runtime/settings-navigation-context';
 
 	// ================================= VARS ==================================
 
-	const settingsNavigation = useSettingsNavigationContext();
 	const {
 		navigationState
 	} = useNavigationEntryContext();
@@ -39,16 +37,10 @@
 
 	let page = $derived(requireSettingsPage(pageID));
 
-	// ================================ FUNCS ==================================
-
-	function onBack(event: Event): void {
-		event.stopPropagation();
-		settingsNavigation.back();
-	}
 </script>
 
 <!-- ============================== CONTAINER ============================== -->
 
-<SettingsScreen title={page.title} {onBack}>
+<SettingsScreen title={page.title}>
 	<SettingsPage {page} {focusRowID}></SettingsPage>
 </SettingsScreen>

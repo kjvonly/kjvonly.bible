@@ -1,5 +1,11 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton,
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
 	// SVELTE
 	import { onMount } from 'svelte';
 
@@ -13,10 +19,6 @@
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import {
-		ViewBody,
-		ViewHeader
-	} from '$lib/application/ui';
 	import {
 		BIBLE_BOOKNAMES_RESOURCE_TYPE,
 		type BibleChapterVerseCountLookup
@@ -261,6 +263,11 @@
 </script>
 
 <!-- ================================ HEADER =============================== -->
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
 		longTitle="Plan Preview"
@@ -271,11 +278,7 @@
 {#snippet header()}
 	<KJVHeader
 		title="Plan Preview"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: () => navigation.back()
-		}}
+		{leadingContent}
 		{titleContent}
 		actions={[
 			{

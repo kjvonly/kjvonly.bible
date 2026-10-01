@@ -80,6 +80,10 @@ describe(
 					type: 'custom',
 					view: 'font-size'
 				});
+				expect(requireSettingsCustomRow('about')).toMatchObject({
+					type: 'custom',
+					view: 'about'
+				});
 				expect(
 					() => requireSettingsCustomRow('font-family')
 				).toThrow('Settings custom row not found: font-family');

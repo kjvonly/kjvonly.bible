@@ -10,6 +10,10 @@ PORT ?= 8080
 BASE_PATH ?=
 ENV_FILE ?=
 
+GIT_COMMIT ?= $(shell git -C ../.. rev-parse HEAD 2>/dev/null || echo unknown)
+GIT_TAG ?= $(shell git -C ../.. describe --tags --exact-match 2>/dev/null || true)
+BUILD_METADATA_ARGS := --build-arg APP_GIT_COMMIT="$(GIT_COMMIT)" --build-arg APP_GIT_TAG="$(GIT_TAG)"
+
 ENV_SECRET :=
 ifneq ($(strip $(ENV_FILE)),)
 ENV_SECRET := --secret=id=build_env,src="$(ENV_FILE)"
@@ -20,7 +24,7 @@ PLATFORMS ?= linux/amd64,linux/arm64
 PUSH_IMAGE ?=
 
 build:
-	docker build $(ENV_SECRET) \
+	docker build $(ENV_SECRET) $(BUILD_METADATA_ARGS) \
 		-f Dockerfile \
 		--build-arg BASE_PATH="$(BASE_PATH)" \
 		-t "$(IMAGE)" \
@@ -35,7 +39,7 @@ builder:
 	@docker buildx inspect "$(BUILDER)" --bootstrap >/dev/null
 
 build-arm64: builder
-	docker buildx build $(ENV_SECRET) \
+	docker buildx build $(ENV_SECRET) $(BUILD_METADATA_ARGS) \
 		--builder "$(BUILDER)" \
 		--platform linux/arm64 \
 		--load \
@@ -45,7 +49,7 @@ build-arm64: builder
 		..
 
 build-amd64: builder
-	docker buildx build $(ENV_SECRET) \
+	docker buildx build $(ENV_SECRET) $(BUILD_METADATA_ARGS) \
 		--builder "$(BUILDER)" \
 		--platform linux/amd64 \
 		--load \
@@ -59,7 +63,7 @@ build-all: build-arm64 build-amd64
 build-multi: builder
 	@test -n "$(PUSH_IMAGE)" || \
 		(echo "Usage: make build-multi PUSH_IMAGE=registry.example/kjvonly-pwa:tag" && exit 1)
-	docker buildx build $(ENV_SECRET) \
+	docker buildx build $(ENV_SECRET) $(BUILD_METADATA_ARGS) \
 		--builder "$(BUILDER)" \
 		--platform "$(PLATFORMS)" \
 		--push \
@@ -115,7 +119,7 @@ down-amd64:
 restart: down run
 
 rebuild:
-	docker build $(ENV_SECRET) \
+	docker build $(ENV_SECRET) $(BUILD_METADATA_ARGS) \
 		--no-cache \
 		-f Dockerfile \
 		--build-arg BASE_PATH="$(BASE_PATH)" \

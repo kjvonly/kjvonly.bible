@@ -127,29 +127,30 @@
 
 <!-- ================================ HEADER =============================== -->
 {#snippet header()}
-	<KJVHeader
-		title="Modules"
-		leadingAction={canClosePane
-			? {
-				icon: 'close',
-				label: 'Close pane',
-				onClick: onClose
-			}
-			: undefined}
-		reserveLeadingActionSpace={!canClosePane}
-		actions={[
-			{
-				icon: 'split-horizontal',
-				label: 'Split pane horizontally',
-				onClick: onSplitHorizontal
-			},
-			{
-				icon: 'split-vertical',
-				label: 'Split pane vertically',
-				onClick: onSplitVertical
-			}
-		]}
-	></KJVHeader>
+	<div class:ps-4={!canClosePane} class="w-full">
+		<KJVHeader
+			title="Modules"
+			leadingAction={canClosePane
+				? {
+					icon: 'close',
+					label: 'Close pane',
+					onClick: onClose
+				}
+				: undefined}
+			actions={[
+				{
+					icon: 'split-horizontal',
+					label: 'Split pane horizontally',
+					onClick: onSplitHorizontal
+				},
+				{
+					icon: 'split-vertical',
+					label: 'Split pane vertically',
+					onClick: onSplitVertical
+				}
+			]}
+		></KJVHeader>
+	</div>
 {/snippet}
 
 <!-- ================================= BODY ================================ -->

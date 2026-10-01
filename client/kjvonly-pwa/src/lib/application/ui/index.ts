@@ -20,6 +20,10 @@ export {
 } from '../runtime/navigation/components/viewHeader.svelte';
 
 export {
+	default as KJVBackButton
+} from './navigation/KJVBackButton.svelte';
+
+export {
 	default as Settings
 } from '../modules/settings/settings.svelte';
 

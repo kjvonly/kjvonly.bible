@@ -1,4 +1,8 @@
 <script lang="ts">
+	import {
+		KJVBackButton
+	} from '$lib/application/ui';
+
 	// APPLICATION
 	import {
 		useNavigationRuntimeContext,
@@ -47,10 +51,14 @@
 	}
 </script>
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 <KJVMenuView
 	title="More actions"
 	{clientHeight}
 	{actions}
-	onBack={() => navigation.back()}
+	{leadingContent}
 	{onAction}
 ></KJVMenuView>

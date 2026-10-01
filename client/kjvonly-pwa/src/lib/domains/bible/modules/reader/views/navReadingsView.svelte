@@ -1,10 +1,15 @@
 <script lang="ts">
 	import {
+		KJVBackButton,
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
+
+	import {
 		useNavigationEntryContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import { ViewBody, ViewHeader } from '$lib/application/ui';
 	import { KJVHeader } from '$lib/components';
 	import type { BCV, BibleReadingNavigation } from '../../../models/bible.model';
 
@@ -61,14 +66,14 @@
 	}
 </script>
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 <ViewHeader bind:headerHeight>
 	<KJVHeader
 		title="Readings"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: () => navigation.back()
-		}}
+		{leadingContent}
 	></KJVHeader>
 </ViewHeader>
 

@@ -1,4 +1,8 @@
 <script lang="ts" generics="TAction extends string">
+	import type {
+		Snippet
+	} from 'svelte';
+
 	// APPLICATION
 	import {
 		ViewBody,
@@ -23,14 +27,14 @@
 		clientHeight,
 		actions,
 		headerActions = [],
-		onBack,
+		leadingContent,
 		onAction
 	}: {
 		title?: string;
 		clientHeight: number;
 		actions: readonly KJVMenuAction<TAction>[];
 		headerActions?: HeaderActions;
-		onBack: () => void;
+		leadingContent: Snippet;
 		onAction: (action: TAction) => void | Promise<void>;
 	} = $props();
 
@@ -44,11 +48,7 @@
 <ViewHeader bind:headerHeight>
 	<KJVHeader
 		{title}
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 		actions={headerActions}
 	></KJVHeader>
 </ViewHeader>

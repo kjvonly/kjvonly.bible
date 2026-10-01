@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 
 	// COMPONENTS
+	import KJVBackButton from '../../../ui/navigation/KJVBackButton.svelte';
 	import ViewBody from '../../../runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '../../../runtime/navigation/components/viewHeader.svelte';
 	import { KJVHeader } from '$lib/components';
@@ -15,12 +16,10 @@
 
 	let {
 		title,
-		onBack,
 		bodyClasses = 'px-4',
 		children
 	}: {
 		title: string;
-		onBack?: (event: Event) => void;
 		bodyClasses?: string;
 		children: Snippet;
 	} = $props();
@@ -37,16 +36,14 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		{title}
-		leadingAction={onBack
-			? {
-					icon: 'arrow-back',
-					label: 'Back',
-					onClick: onBack
-				}
-			: undefined}
+		{leadingContent}
 	></KJVHeader>
 {/snippet}
 

@@ -227,7 +227,6 @@
 		}
 	}
 
-
 	function setNavReadings(): void {
 		mode.navReadings =
 			navigationState.state
