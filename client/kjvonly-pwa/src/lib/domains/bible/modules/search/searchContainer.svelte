@@ -1,10 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
-	// SVELTE
-	import { onDestroy, onMount } from 'svelte';
-
-	// COMPONENTS
 	import {
+		KJVBackButton,
 		ViewBody,
 		ViewHeader,
 		SearchView,
@@ -12,6 +9,11 @@
 		type SearchViewResultSummary,
 		type SearchViewResultsContext
 	} from '$lib/application/ui';
+
+	// SVELTE
+	import { onDestroy, onMount } from 'svelte';
+
+	// COMPONENTS
 	import { KJVHeader } from '$lib/components';
 	import { BibleSearchAdapter } from './bible-search-adapter';
 	import SearchResults from './searchResults.svelte';
@@ -257,10 +259,6 @@
 		};
 	}
 
-	function applyOnClose(): void {
-		navigation.back();
-	}
-
 	function getInitialSearchTerms(): string {
 		const query = navigationState.state.query;
 
@@ -323,14 +321,14 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="Search"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: applyOnClose
-		}}
+		{leadingContent}
 		actions={[
 			{
 				icon: 'split-horizontal',

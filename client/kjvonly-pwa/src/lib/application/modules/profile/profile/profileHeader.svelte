@@ -1,5 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import KJVBackButton from '../../../ui/navigation/KJVBackButton.svelte';
+
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application/runtime/application-context';
 	import {
@@ -37,20 +39,18 @@
 		);
 	}
 
-	function onBack(): void {
-		navigation.back();
-	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="Profile"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 		actions={[
 			{
 				icon: 'edit',

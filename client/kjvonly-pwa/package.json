@@ -5,9 +5,9 @@
 	"type": "module",
 	"scripts": {
 		"echo": "echo $BASE_PATH",
-		"dev": "BASE_PATH= vite dev",
-		"build": "BASE_PATH=$BASE_PATH vite build --base=$BASE_PATH/",
-		"build-local": "vite build",
+		"dev": "VITE_APP_VERSION=$npm_package_version VITE_APP_RELEASE_DATE=$(date -u +%Y-%m-%d) BASE_PATH= vite dev",
+		"build": "VITE_APP_VERSION=$npm_package_version VITE_APP_RELEASE_DATE=$(date -u +%Y-%m-%d) BASE_PATH=$BASE_PATH vite build --base=$BASE_PATH/",
+		"build-local": "VITE_APP_VERSION=$npm_package_version VITE_APP_RELEASE_DATE=$(date -u +%Y-%m-%d) vite build",
 		"prepare": "svelte-kit sync",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

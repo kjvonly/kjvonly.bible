@@ -89,6 +89,8 @@ services:
       dockerfile: kjvonly-pwa/Dockerfile
       args:
         BASE_PATH: ${BASE_PATH:-}
+        APP_GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        APP_GIT_TAG: ${GIT_TAG:-}
       secrets:
         - build_env
     ports:

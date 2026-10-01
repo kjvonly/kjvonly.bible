@@ -50,6 +50,19 @@ export const settingsDefinition: SettingsDefinition = {
 								keywords: ['bible', 'reader', 'display']
 							},
 							pageID: SETTINGS_PAGE_IDS.BIBLE
+						},
+						{
+							type: 'custom',
+							id: 'about',
+							title: 'About',
+							secondary: 'Version and application information',
+							icon: {
+								name: 'about'
+							},
+							search: {
+								keywords: ['about', 'version', 'release', 'build', 'app']
+							},
+							view: 'about'
 						}
 					]
 				}

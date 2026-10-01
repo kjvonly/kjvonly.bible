@@ -1,3 +1,4 @@
+import About from '../about.svelte';
 import FontSize from '../fontSize.svelte';
 
 import type { SettingsCustomViewID } from '../models/settings-definition.model';
@@ -5,7 +6,8 @@ import type { SettingsCustomViewID } from '../models/settings-definition.model';
 ///////////////////////////////////////////////////////////////////////////////
 
 const SETTINGS_CUSTOM_VIEW_COMPONENTS = {
-	'font-size': FontSize
+	'font-size': FontSize,
+	about: About
 } as const satisfies Record<SettingsCustomViewID, unknown>;
 
 ///////////////////////////////////////////////////////////////////////////////

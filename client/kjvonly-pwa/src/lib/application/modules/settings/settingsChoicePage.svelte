@@ -17,12 +17,10 @@
 		useNavigationEntryContext
 	} from '../../runtime/navigation/navigation-entry-context';
 	import { useSettingsContext } from './runtime/settings-context';
-	import { useSettingsNavigationContext } from './runtime/settings-navigation-context';
 
 	// ================================= VARS ==================================
 
 	const settingsContext = useSettingsContext();
-	const settingsNavigation = useSettingsNavigationContext();
 	const {
 		navigationState
 	} = useNavigationEntryContext();
@@ -38,11 +36,6 @@
 	});
 
 	// ================================ FUNCS ==================================
-
-	function onBack(event: Event): void {
-		event.stopPropagation();
-		settingsNavigation.back();
-	}
 
 	function setSetting<K extends keyof Settings>(
 		setting: K,
@@ -72,7 +65,7 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<SettingsScreen title={row.title} {onBack}>
+<SettingsScreen title={row.title}>
 	<div class="flex w-full flex-col">
 		{#each row.options as option (option.id)}
 			<button

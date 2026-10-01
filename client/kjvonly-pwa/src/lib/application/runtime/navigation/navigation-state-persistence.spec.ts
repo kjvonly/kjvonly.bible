@@ -145,6 +145,79 @@ describe(
 		);
 
 		it(
+			'replaces the persisted stack with one exact modules.root state',
+			() => {
+				const paneState:
+					PaneState = {
+						navigation: [
+							{
+								module: Modules.MODULES,
+								view: 'modules.root',
+								state: {}
+							},
+							{
+								module: Modules.PLANS,
+								view: 'plans.list',
+								state: {}
+							}
+						]
+					};
+
+				const persistWorkspace =
+					vi.fn();
+
+				const persistence =
+					new NavigationStatePersistence(
+						paneState,
+						persistWorkspace
+					);
+
+				const replacement = {
+					module: Modules.MODULES,
+					view: 'modules.root',
+					state: {}
+				};
+
+				persistence.replaceWithRoot(
+					replacement
+				);
+
+				const states =
+					paneState.navigation as
+						unknown[];
+
+				expect(states).toHaveLength(1);
+				expect(states[0]).toBe(
+					replacement
+				);
+				expect(
+					persistWorkspace
+				).toHaveBeenCalledOnce();
+			}
+		);
+
+		it(
+			'rejects replacing the persisted stack with a non-root destination',
+			() => {
+				const persistence =
+					new NavigationStatePersistence(
+						{},
+						vi.fn()
+					);
+
+				expect(() =>
+					persistence.replaceWithRoot({
+						module: Modules.PLANS,
+						view: 'plans.list',
+						state: {}
+					})
+				).toThrow(
+					'Navigation replacement must use modules.root'
+				);
+			}
+		);
+
+		it(
 			'pops only the newest persisted entry and preserves the root',
 			() => {
 				const first = {

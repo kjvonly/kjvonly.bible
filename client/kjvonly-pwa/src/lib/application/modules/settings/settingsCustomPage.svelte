@@ -10,11 +10,9 @@
 	import {
 		useNavigationEntryContext
 	} from '../../runtime/navigation/navigation-entry-context';
-	import { useSettingsNavigationContext } from './runtime/settings-navigation-context';
 
 	// ================================= VARS ==================================
 
-	const settingsNavigation = useSettingsNavigationContext();
 	const {
 		navigationState
 	} = useNavigationEntryContext();
@@ -29,17 +27,11 @@
 		return requireSettingsCustomRow(rowID);
 	});
 
-	// ================================ FUNCS ==================================
-
-	function onBack(event: Event): void {
-		event.stopPropagation();
-		settingsNavigation.back();
-	}
 </script>
 
 <!-- ============================== CONTAINER ============================== -->
 
-<SettingsScreen title={row.title} {onBack}>
+<SettingsScreen title={row.title}>
 	{@const CustomComponent = resolveSettingsCustomViewComponent(row.view)}
 	<CustomComponent></CustomComponent>
 </SettingsScreen>

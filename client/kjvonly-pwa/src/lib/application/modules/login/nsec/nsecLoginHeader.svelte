@@ -1,36 +1,22 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
-	// APPLICATION
-	import {
-		useNavigationRuntimeContext
-	} from '$lib/application/runtime/navigation/navigation-runtime-context';
+	import KJVBackButton from '../../../ui/navigation/KJVBackButton.svelte';
 
 	// COMPONENTS
 	import { KJVHeader } from '$lib/components';
 
-	// ================================= VARS ==================================
-
-	const {
-		navigation
-	} = useNavigationRuntimeContext();
-
-	// ============================== CLICK FUNCS ==============================
-
-	function onBack(): void {
-		navigation.back();
-	}
 </script>
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="NSEC Login"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back to login options',
-			onClick: onBack
-		}}
+		{leadingContent}
 	></KJVHeader>
 {/snippet}
 

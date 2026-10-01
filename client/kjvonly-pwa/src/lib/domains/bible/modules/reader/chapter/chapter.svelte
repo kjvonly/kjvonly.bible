@@ -29,7 +29,6 @@
 	import { scrollTo, scrollToTop } from '$lib/application/ui';
 	import type { Settings as AppSettings } from '$lib/application';
 
-
 	// APPLICATION CONTEXT
 	import {
 		useApplicationContext,

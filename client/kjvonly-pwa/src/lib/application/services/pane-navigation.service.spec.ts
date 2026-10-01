@@ -554,6 +554,129 @@ describe(
 		);
 
 		it(
+			'escapes by closing the Pane without rewriting its navigation stack',
+			() => {
+				const paneState:
+					PaneState = {};
+
+				const closePane =
+					vi.fn(
+						() => true
+					);
+
+				const navigation =
+					createNavigation({
+						paneState,
+						closePane
+					});
+
+				navigation.pushModule(
+					Modules.MODULES,
+					'modules.root',
+					{}
+				);
+
+				navigation.pushModule(
+					Modules.PLANS,
+					'plans.list',
+					{}
+				);
+
+				const before =
+					[...get(navigation.views)];
+
+				navigation.escapePane();
+
+				expect(
+					closePane
+				).toHaveBeenCalledOnce();
+
+				expect(
+					get(navigation.views)
+				).toEqual(before);
+			}
+		);
+
+		it(
+			'escapes the final Pane by replacing history with a fresh Modules root',
+			() => {
+				const paneState:
+					PaneState = {};
+
+				const persistWorkspace =
+					vi.fn();
+
+				const closePane =
+					vi.fn(
+						() => false
+					);
+
+				const navigation =
+					createNavigation({
+						paneState,
+						persistWorkspace,
+						closePane
+					});
+
+				const originalModules =
+					navigation.pushModule(
+						Modules.MODULES,
+						'modules.root',
+						{
+							previous: true
+						}
+					);
+
+				navigation.pushModule(
+					Modules.PLANS,
+					'plans.list',
+					{}
+				);
+
+				navigation.escapePane();
+
+				expect(
+					closePane
+				).toHaveBeenCalledOnce();
+
+				const views =
+					get(navigation.views);
+
+				expect(views).toHaveLength(1);
+				expect(
+					views[0]?.component
+				).toBe(ModulesLauncher);
+
+				const freshModules =
+					views[0]?.navigationState;
+
+				expect(
+					freshModules
+				).toEqual({
+					module: Modules.MODULES,
+					view: 'modules.root',
+					state: {}
+				});
+
+				expect(
+					freshModules
+				).not.toBe(
+					originalModules
+				);
+
+				expect(
+					paneState.navigation
+				).toEqual([
+					freshModules
+				]);
+
+				expect(
+					persistWorkspace
+				).toHaveBeenCalledTimes(3);
+			}
+		);
+
+		it(
 			'returns a result to the previous mounted entry before navigating back',
 			async () => {
 				const paneState:

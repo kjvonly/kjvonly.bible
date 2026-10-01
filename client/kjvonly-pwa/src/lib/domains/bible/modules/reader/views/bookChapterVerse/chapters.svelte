@@ -1,5 +1,10 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import {
+		KJVBackButton,
+		ViewBody,
+		ViewHeader
+	} from '$lib/application/ui';
 
 	// SVELTE
 	import {
@@ -15,10 +20,6 @@
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
-	import {
-		ViewBody,
-		ViewHeader
-	} from '$lib/application/ui';
 
 	// COMPONENTS
 	import {
@@ -207,6 +208,10 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
 		longTitle={bookName || 'Bible'}
@@ -218,11 +223,7 @@
 {#snippet header()}
 	<KJVHeader
 		title={bookName || 'Chapter'}
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: () => navigation.back()
-		}}
+		{leadingContent}
 		{titleContent}
 		actions={[
 			{

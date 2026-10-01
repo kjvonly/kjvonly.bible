@@ -7,6 +7,7 @@
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
 
 	// // SVG
+	import Bible from '$lib/components/svgs/bible.svelte';
 	import Copy from '$lib/components/svgs/copy.svelte';
 	import KeyboardArrowRight from '$lib/components/svgs/keyboardArrowRight.svelte';
 	import KeyboardArrowDown from '$lib/components/svgs/keyboardArrowDown.svelte';
@@ -252,6 +253,19 @@
 		scrollToBreadcrumbs();
 	}
 
+	function onOpenBible(e: Event, crossRef: CrossRef): void {
+		e.stopPropagation();
+
+		navigation.pushModule(
+			Modules.BIBLE,
+			BIBLE_VIEWS.READER,
+			{
+				bibleLocationRef:
+					crossRef.bibleLocationRef
+			}
+		);
+	}
+
 	function onSplitScreenHorizontal(e: Event, crossRef: CrossRef): void {
 		e.stopPropagation();
 		navigation.split(
@@ -280,6 +294,16 @@
 <!-- ================================= BODY ================================ -->
 {#snippet actions(crossRef: CrossRef)}
 	<div class="flex flex-row justify-end space-x-4 py-2">
+		<KJVButton
+			classes=""
+			onClick={(e: Event) => onOpenBible(e, crossRef)}
+		>
+			<Bible></Bible>
+			<span class="sr-only">
+				Open {crossRef.bookName} {crossRef.chapterNumber}:{crossRef.verseNumber} in Bible
+			</span>
+		</KJVButton>
+
 		<KJVButton classes="" onClick={(e: Event) => copyToClipboard(e, crossRef)}>
 			<Copy></Copy>
 		</KJVButton>

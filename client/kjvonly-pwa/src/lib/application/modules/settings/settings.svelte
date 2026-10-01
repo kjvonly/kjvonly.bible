@@ -1,9 +1,4 @@
 <script lang="ts">
-	// APPLICATION
-	import {
-		useNavigationRuntimeContext
-	} from '../../runtime/navigation/navigation-runtime-context';
-
 	// COMPONENTS
 	import SettingsPage from './components/settingsPage.svelte';
 	import SettingsSearch from './components/settingsSearch.svelte';
@@ -29,11 +24,6 @@
 
 	// ================================= VARS ==================================
 
-
-	const {
-		navigation
-	} = useNavigationRuntimeContext();
-
 	const settingsNavigation = useSettingsNavigationContext();
 	const rootPage = requireSettingsPage(settingsDefinition.rootPageID);
 	const searchEntries = createSettingsSearchEntries(settingsDefinition);
@@ -45,12 +35,6 @@
 
 	// ================================ FUNCS ==================================
 
-	function onBack(event: Event): void {
-		event.stopPropagation();
-
-		navigation.back();
-	}
-
 	function onSearchResultSelect(result: SettingsSearchEntry): void {
 		settingsNavigation.navigateToSearchResult(result);
 	}
@@ -60,7 +44,6 @@
 
 <SettingsScreen
 	title="Settings"
-	{onBack}
 	bodyClasses=""
 >
 	<SettingsSearch

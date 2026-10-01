@@ -26,7 +26,8 @@ export type SettingsIconID =
 	| 'pericopes'
 	| 'bible-version'
 	| 'scrollbar'
-	| 'max-width';
+	| 'max-width'
+	| 'about';
 
 /** Semantic root-icon accent identifier resolved to a static Tailwind class. */
 export type SettingsAccentID =
@@ -35,7 +36,8 @@ export type SettingsAccentID =
 
 /** Semantic custom-view identifier resolved by the Settings view mapper. */
 export type SettingsCustomViewID =
-	| 'font-size';
+	| 'font-size'
+	| 'about';
 
 /** Semantic formatter identifier for dynamic secondary Settings text. */
 export type SettingsValueFormatterID =

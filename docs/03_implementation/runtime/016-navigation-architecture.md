@@ -602,6 +602,30 @@ The Search view is revealed; it is not reconstructed.
 
 Back never removes the final `modules.root` entry.
 
+## Standard Pane Back Control
+
+`<KJVBackButton>` is the standard leading Back control for Pane navigation.
+
+Its primary interaction remains ordinary Back:
+
+```text
+tap / click
+    ↓
+navigation.back()
+```
+
+It also provides a deliberate press-and-hold shortcut for escaping a deep Pane history:
+
+```text
+press and hold for 1.5 seconds
+    ↓
+navigation.escapePane()
+```
+
+The hold-progress ring is intentionally delayed for 300 ms. Normal taps therefore do not flash partial progress. After the delay, the ring traces over the remaining hold interval.
+
+`escapePane()` is Pane-level behavior, not another meaning of `back()`. A feature whose leading action has different semantics should render its own control instead of using `<KJVBackButton>`.
+
 ---
 
 # 22. Persistence Ordering
@@ -756,6 +780,20 @@ If other Panes exist, Workspace removes the target Pane and collapses the parent
 
 The sole final Pane cannot be removed.
 
+`navigation.escapePane()` handles that final-Pane case explicitly:
+
+```text
+multiple Panes
+    → close current Pane
+
+sole final Pane
+    → discard current Pane history
+    → create a fresh modules.root NavigationState
+    → replace the runtime/persisted stack with that single root
+```
+
+The reset is intentionally narrow and owned by `PaneNavigationService`; feature code does not receive a general stack-replacement API.
+
 The Workspace must never contain zero Panes.
 
 ---
@@ -835,7 +873,10 @@ Back
 runtime result
 split
 modules.root close
+Pane escape
 ```
+
+`Pane escape` is the single narrow exception that may replace a stack, and only when structural Pane deletion is rejected for the sole final Pane. The replacement destination is always a fresh `modules.root`.
 
 ---
 

@@ -106,6 +106,14 @@ export interface PaneNavigation {
 	back(): void;
 
 	/**
+	 * Escapes the current Pane context.
+	 *
+	 * Removes the Pane when Workspace allows it. If this is the sole final Pane,
+	 * replaces its navigation history with one fresh `modules.root` entry.
+	 */
+	escapePane(): void;
+
+	/**
 	 * Requests structural removal of this Pane. Workspace may reject removal of
 	 * the final Pane, so callers must not assume the Pane was deleted.
 	 */
@@ -151,7 +159,7 @@ export class PaneNavigationService
 		private readonly persistence?:
 			Pick<
 				NavigationStatePersistence,
-				'append' | 'pop' | 'persist'
+				'append' | 'pop' | 'persist' | 'replaceWithRoot'
 			>,
 
 		private readonly splitPane?:
@@ -217,9 +225,7 @@ export class PaneNavigationService
 
 		const navigationState =
 			isModulesRoot
-				? this.states.create(
-					module,
-					view,
+				? this.createModulesRootState(
 					state
 				)
 				: this.states.create(
@@ -234,11 +240,7 @@ export class PaneNavigationService
 			isModulesRoot
 				? [navigationState]
 				: [
-					this.states.create(
-						Modules.MODULES,
-						MODULES_VIEWS.ROOT,
-						{}
-					),
+					this.createModulesRootState(),
 					navigationState
 				];
 
@@ -404,6 +406,21 @@ export class PaneNavigationService
 	}
 
 	/**
+	 * Escapes the current Pane without allowing the Workspace to become empty.
+	 *
+	 * A removable Pane is deleted structurally. When Workspace rejects deletion
+	 * because this is the final Pane, the existing history is discarded and a
+	 * fresh Modules root becomes the entire Pane navigation stack.
+	 */
+	escapePane(): void {
+		if (this.closePane()) {
+			return;
+		}
+
+		this.resetToFreshModulesRoot();
+	}
+
+	/**
 	 * Requests removal of this Pane from the Workspace.
 	 *
 	 * Workspace owns the Pane tree and may refuse the request when this is the
@@ -498,6 +515,53 @@ export class PaneNavigationService
 		});
 
 		return navigationState;
+	}
+
+	/**
+	 * Creates the canonical Modules root NavigationState for a Pane.
+	 */
+	private createModulesRootState(
+		state: NavigationViewState = {}
+	): NavigationState {
+		return this.states.create(
+			Modules.MODULES,
+			MODULES_VIEWS.ROOT,
+			state
+		);
+	}
+
+	/**
+	 * Replaces this Pane's history with a newly constructed Modules root.
+	 *
+	 * This is intentionally private rather than a general feature-facing stack
+	 * replacement API. It exists only to preserve the final-Pane invariant used
+	 * by escapePane().
+	 */
+	private resetToFreshModulesRoot(): void {
+		const navigationState =
+			this.createModulesRootState();
+
+		const component =
+			this.resolver.resolve(
+				navigationState
+			);
+
+		this.resultHandlers.clear();
+
+		/*
+		 * Persist the fresh root before publishing the runtime replacement so
+		 * synchronous subscribers observe matching semantic and runtime stacks.
+		 */
+		this.persistence?.replaceWithRoot(
+			navigationState
+		);
+
+		this.stack.hydrate([
+			{
+				component,
+				navigationState
+			}
+		]);
 	}
 
 	private findActiveState():

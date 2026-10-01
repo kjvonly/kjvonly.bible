@@ -1,5 +1,6 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import KJVBackButton from '../../ui/navigation/KJVBackButton.svelte';
 
 	import {
 		usePaneLayoutContext
@@ -51,10 +52,6 @@
 
 	// ============================== CLICK FUNCS ==============================
 
-	function onBack(): void {
-		navigation.back();
-	}
-
 	function onSelect(
 		view: ArchiveView
 	): void {
@@ -67,14 +64,14 @@
 
 <!-- ================================ HEADER =============================== -->
 
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="Archive"
-		leadingAction={{
-			icon: 'arrow-back',
-			label: 'Back',
-			onClick: onBack
-		}}
+		{leadingContent}
 	></KJVHeader>
 {/snippet}
 
