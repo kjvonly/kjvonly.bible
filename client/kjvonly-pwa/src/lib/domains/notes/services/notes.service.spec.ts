@@ -27,8 +27,14 @@ import type {
 } from '../runtime/search/notes-search-worker-message';
 
 import type {
+	ResourceDescriptor,
 	ResourcePublicationIntent
 } from '$lib/resource';
+
+import type {
+	FilesystemSearchByIndex,
+	FilesystemSearchMatch
+} from '$lib/domains/filesystem';
 
 function createNote(
 	id: string =
@@ -49,9 +55,61 @@ function createNote(
 	};
 }
 
+function createNoteDescriptor():
+	ResourceDescriptor {
+	return {
+		metadata: {
+			publisher:
+				'publisher',
+
+			resourceId:
+				'kjvonly/notes/entries/default/note-1',
+
+			category:
+				'kjvonly/notes/entries',
+
+			modifiedAt:
+				1,
+
+			representation:
+				'content',
+
+			mediaType:
+				'application/json'
+		},
+
+		strategy: {
+			type:
+				'example',
+
+			data: {}
+		}
+	};
+}
+
 class FakeNotesStore {
+	get =
+		vi.fn<(id: string) => Promise<Note | undefined>>();
+
 	getAll =
 		vi.fn<() => Promise<readonly Note[]>>();
+}
+
+class FakeFilesystemSearch {
+	search =
+		vi.fn<
+			(
+				byIndex:
+					FilesystemSearchByIndex,
+				text: string
+			) => Promise<readonly FilesystemSearchMatch[]>
+		>()
+			.mockResolvedValue([]);
+}
+
+class FakeResourceLoader {
+	loadDescriptor =
+		vi.fn<(descriptor: ResourceDescriptor) => Promise<void>>();
 }
 
 class FakeRuntime {
@@ -200,6 +258,479 @@ describe(
 				).toHaveBeenCalledWith([
 					note
 				]);
+			}
+		);
+
+		it(
+			'returns an existing Note without loading its descriptor',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				const runtime =
+					new FakeRuntime();
+
+				const resourceLoader =
+					new FakeResourceLoader();
+
+				const note =
+					createNote();
+
+				const descriptor =
+					createNoteDescriptor();
+
+				store.getAll
+					.mockResolvedValue([
+						note
+					]);
+
+				store.get
+					.mockResolvedValue(
+						note
+					);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						resourceLoader
+					);
+
+				await expect(
+					service.getByDescriptor(
+						descriptor
+					)
+				).resolves.toBe(
+					note
+				);
+
+				expect(
+					resourceLoader.loadDescriptor
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
+			'loads a missing Note descriptor then re-reads Notes persistence',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				const runtime =
+					new FakeRuntime();
+
+				const resourceLoader =
+					new FakeResourceLoader();
+
+				const note =
+					createNote();
+
+				const descriptor =
+					createNoteDescriptor();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				store.get
+					.mockResolvedValueOnce(
+						undefined
+					)
+					.mockResolvedValueOnce(
+						note
+					);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						resourceLoader
+					);
+
+				await expect(
+					service.getByDescriptor(
+						descriptor
+					)
+				).resolves.toBe(
+					note
+				);
+
+				expect(
+					resourceLoader.loadDescriptor
+				).toHaveBeenCalledWith(
+					descriptor
+				);
+
+				expect(
+					store.get
+				).toHaveBeenNthCalledWith(
+					1,
+					'publisher/default/note-1'
+				);
+
+				expect(
+					store.get
+				).toHaveBeenNthCalledWith(
+					2,
+					'publisher/default/note-1'
+				);
+
+				expect(
+					runtime.put
+				).toHaveBeenCalledWith(
+					note
+				);
+			}
+		);
+
+		it(
+			'fails when descriptor processing does not install the expected Note',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				const runtime =
+					new FakeRuntime();
+
+				const resourceLoader =
+					new FakeResourceLoader();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				store.get
+					.mockResolvedValue(
+						undefined
+					);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						resourceLoader
+					);
+
+				await expect(
+					service.getByDescriptor(
+						createNoteDescriptor()
+					)
+				).rejects.toThrow(
+					'Note was not installed: publisher/default/note-1'
+				);
+			}
+		);
+
+		it(
+			'finds uninstalled Note descriptors advertised by the filesystem',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				const runtime =
+					new FakeRuntime();
+
+				const filesystem =
+					new FakeFilesystemSearch();
+
+				const descriptor = {
+					...createNoteDescriptor(),
+					metadata: {
+						...createNoteDescriptor().metadata,
+						name: 'Grace Note',
+						dataType: 'kjvonly.note/v1'
+					}
+				};
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				store.get
+					.mockResolvedValue(
+						undefined
+					);
+
+				filesystem.search
+					.mockResolvedValue([
+						{
+							publisher:
+								'catalog-publisher',
+							rootPath:
+								'notes',
+							entry: {
+								path:
+									'studies/grace-note',
+								descriptor
+							}
+						}
+					]);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						undefined,
+						filesystem
+					);
+
+				await expect(
+					service.searchAvailableNotes(
+						'grace'
+					)
+				).resolves.toEqual([
+					{
+						id:
+							'publisher/default/note-1',
+						name:
+							'Grace Note',
+						filesystemPublisher:
+							'catalog-publisher',
+						rootPath:
+							'notes',
+						path:
+							'studies/grace-note',
+						descriptor
+					}
+				]);
+
+				expect(
+					filesystem.search
+				).toHaveBeenCalledWith(
+					{
+						index: 'category',
+						value:
+							'kjvonly/notes/entries'
+					},
+					'grace'
+				);
+			}
+		);
+
+		it(
+			'finds Note descriptors across data type versions by stable Resource category',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				const runtime =
+					new FakeRuntime();
+
+				const filesystem =
+					new FakeFilesystemSearch();
+
+				const v1Descriptor = {
+					...createNoteDescriptor(),
+					metadata: {
+						...createNoteDescriptor().metadata,
+						resourceId:
+							'kjvonly/notes/entries/default/note-v1',
+						dataType:
+							'kjvonly.note/v1'
+					}
+				};
+
+				const v2Descriptor = {
+					...createNoteDescriptor(),
+					metadata: {
+						...createNoteDescriptor().metadata,
+						resourceId:
+							'kjvonly/notes/entries/default/note-v2',
+						dataType:
+							'kjvonly.note/v2'
+					}
+				};
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				store.get
+					.mockResolvedValue(
+						undefined
+					);
+
+				filesystem.search
+					.mockResolvedValue([
+						{
+							publisher: 'catalog',
+							rootPath: 'notes',
+							entry: {
+								path: 'note-v1',
+								descriptor:
+									v1Descriptor
+							}
+						},
+						{
+							publisher: 'catalog',
+							rootPath: 'notes',
+							entry: {
+								path: 'note-v2',
+								descriptor:
+									v2Descriptor
+							}
+						}
+					]);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						undefined,
+						filesystem
+					);
+
+				await expect(
+					service.searchAvailableNotes(
+						''
+					)
+				).resolves.toHaveLength(
+					2
+				);
+
+				expect(
+					filesystem.search
+				).toHaveBeenCalledWith(
+					{
+						index: 'category',
+						value:
+							'kjvonly/notes/entries'
+					},
+					''
+				);
+			}
+		);
+
+		it(
+			'uses the filesystem basename when an available Note has no display name',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				const runtime =
+					new FakeRuntime();
+
+				const filesystem =
+					new FakeFilesystemSearch();
+
+				const descriptor =
+					createNoteDescriptor();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				store.get
+					.mockResolvedValue(
+						undefined
+					);
+
+				filesystem.search
+					.mockResolvedValue([
+						{
+							publisher: 'catalog',
+							rootPath: 'notes',
+							entry: {
+								path:
+									'studies/grace-note',
+								descriptor
+							}
+						}
+					]);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						undefined,
+						filesystem
+					);
+
+				const available =
+					await service
+						.searchAvailableNotes(
+							''
+						);
+
+				expect(
+					available[0]?.name
+				).toBe(
+					'grace-note'
+				);
+			}
+		);
+
+		it(
+			'omits filesystem Note descriptors that are already installed',
+			async () => {
+				const store =
+					new FakeNotesStore();
+
+				const runtime =
+					new FakeRuntime();
+
+				const filesystem =
+					new FakeFilesystemSearch();
+
+				const descriptor =
+					createNoteDescriptor();
+
+				store.getAll
+					.mockResolvedValue([]);
+
+				store.get
+					.mockResolvedValue(
+						createNote()
+					);
+
+				filesystem.search
+					.mockResolvedValue([
+						{
+							publisher: 'catalog-a',
+							rootPath: 'notes',
+							entry: {
+								path: 'note-1',
+								descriptor
+							}
+						},
+						{
+							publisher: 'catalog-b',
+							rootPath: 'favorites',
+							entry: {
+								path: 'same-note',
+								descriptor
+							}
+						}
+					]);
+
+				const service =
+					createService(
+						store,
+						runtime,
+						undefined,
+						undefined,
+						undefined,
+						filesystem
+					);
+
+				await expect(
+					service.searchAvailableNotes(
+						''
+					)
+				).resolves.toEqual([]);
+
+				expect(
+					store.get
+				).toHaveBeenCalledTimes(
+					1
+				);
 			}
 		);
 
@@ -623,7 +1154,15 @@ function createService(
 
 	wake:
 		ReturnType<typeof vi.fn> =
-			vi.fn()
+			vi.fn(),
+
+	resourceLoader:
+		FakeResourceLoader =
+			new FakeResourceLoader(),
+
+	filesystem:
+		FakeFilesystemSearch =
+			new FakeFilesystemSearch()
 ): NotesService {
 	return new NotesService(
 		store,
@@ -632,6 +1171,8 @@ function createService(
 		{
 			wake
 		},
+		filesystem,
+		resourceLoader,
 		runtime
 	);
 }

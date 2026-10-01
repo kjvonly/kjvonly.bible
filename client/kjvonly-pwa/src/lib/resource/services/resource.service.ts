@@ -3,6 +3,10 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
 	ResourceDiscovery
 } from '$lib/resource/nostr/resource-discovery';
 
@@ -13,6 +17,13 @@ import type {
 import type {
 	ResourceProcessor
 } from './resource-processor';
+
+interface KnownResourceDescriptorProcessor {
+	processDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<ResourceInstallResult>;
+}
 
 export class ResourceService {
 
@@ -33,7 +44,10 @@ export class ResourceService {
 			Pick<
 				ResourceProcessor,
 				'process'
-			>
+			>,
+
+		private readonly descriptorProcessor?:
+			KnownResourceDescriptorProcessor
 	) {}
 
 	install(
@@ -41,11 +55,60 @@ export class ResourceService {
 			PublishedResourceReference
 	): Promise<ResourceInstallResult> {
 
-		const key =
+		return this.runInstall(
 			this.createInstallKey(
 				reference
-			);
+			),
+			() =>
+				this.installResource(
+					reference
+				)
+		);
+	}
 
+	/**
+	 * Installs one already-known ResourceDescriptor without Resource discovery.
+	 *
+	 * The descriptor operation still participates in ResourceService in-flight
+	 * coordination so repeated requests for the same descriptor revision share
+	 * one installation lifecycle.
+	 */
+	installDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<ResourceInstallResult> {
+		const descriptorProcessor =
+			this.descriptorProcessor;
+
+		if (
+			descriptorProcessor ===
+				undefined
+		) {
+			return Promise.reject(
+				new Error(
+					'Resource descriptor installation is unavailable.'
+				)
+			);
+		}
+
+		return this.runInstall(
+			this.createDescriptorInstallKey(
+				descriptor
+			),
+			() =>
+				descriptorProcessor.processDescriptor(
+					descriptor
+				)
+		);
+	}
+
+	private runInstall(
+		key:
+			string,
+
+		create:
+			() => Promise<ResourceInstallResult>
+	): Promise<ResourceInstallResult> {
 		const inFlight =
 			this.inFlightInstalls.get(
 				key
@@ -53,15 +116,13 @@ export class ResourceService {
 
 		if (
 			inFlight !==
-			undefined
+				undefined
 		) {
 			return inFlight;
 		}
 
 		const install =
-			this.installResource(
-				reference
-			);
+			create();
 
 		this.inFlightInstalls.set(
 			key,
@@ -122,8 +183,21 @@ export class ResourceService {
 	): string {
 
 		return JSON.stringify([
+			'reference',
 			reference.publisher,
 			reference.resourceId
+		]);
+	}
+
+	private createDescriptorInstallKey(
+		descriptor:
+			ResourceDescriptor
+	): string {
+		return JSON.stringify([
+			'descriptor',
+			descriptor.metadata.publisher,
+			descriptor.metadata.resourceId,
+			descriptor.metadata.modifiedAt
 		]);
 	}
 

@@ -112,7 +112,15 @@ describe(
                         123456,
 
                     mediaType:
-                        'application/json'
+                        'application/json',
+
+                    dataType:
+                        'kjvonly.bible.chapter/v1',
+
+                    metadata: {
+                        f:
+                            'notes'
+                    }
                 });
             }
         );
@@ -250,6 +258,14 @@ function createVerifiedContent(
 
         mediaType:
             'application/json',
+
+        dataType:
+            'kjvonly.bible.chapter/v1',
+
+        metadata: {
+            f:
+                'notes'
+        },
 
         content:
             '{"chapter":1}',

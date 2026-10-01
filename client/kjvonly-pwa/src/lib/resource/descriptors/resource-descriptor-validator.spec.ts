@@ -150,15 +150,71 @@ describe(
 		);
 
 		it(
-			'rejects an invalid Resource Identifier',
+			'accepts Resource identity independently of Resource category',
+			() => {
+				const validator =
+					new ResourceDescriptorValidator();
+
+				const descriptor =
+					validator.validate(
+						createDescriptor({
+							metadata: {
+								...createMetadata(),
+
+								resourceId:
+									'my-filesystem',
+
+								category:
+									'fs'
+							}
+						})
+					);
+
+				expect(
+					descriptor.metadata
+				).toMatchObject({
+					resourceId:
+						'my-filesystem',
+
+					category:
+						'fs'
+				});
+			}
+		);
+
+		it(
+			'preserves valid protocol-agnostic Resource metadata',
+			() => {
+				const descriptor =
+					new ResourceDescriptorValidator()
+						.validate(
+							createDescriptor({
+								resourceMetadata: {
+									f:
+										'notes'
+								}
+							})
+						);
+
+				expect(
+					descriptor.resourceMetadata
+				).toEqual({
+					f:
+						'notes'
+				});
+			}
+		);
+
+		it(
+			'rejects non-scalar Resource metadata',
 			() => {
 				expectInvalid(
 					createDescriptor({
-						metadata: {
-							...createMetadata(),
-
-							resourceId:
-								'kjvonly/bible'
+						resourceMetadata: {
+							f: {
+								root:
+									'notes'
+							}
 						}
 					})
 				);
@@ -166,15 +222,154 @@ describe(
 		);
 
 		it(
-			'requires category to match the Resource Type',
+			'preserves optional semantic and file metadata',
+			() => {
+				const descriptor =
+					new ResourceDescriptorValidator()
+						.validate(
+							createDescriptor({
+								metadata: {
+									...createMetadata(),
+
+									name:
+										'Genesis 1',
+
+									dataType:
+										'kjvonly.bible.chapter/v1',
+
+									size:
+										2048,
+
+									hash: {
+										algorithm:
+											'sha256',
+
+										value:
+											'abc123'
+									},
+
+									attributes: {
+										title:
+											'Genesis 1',
+
+										language:
+											'en'
+									}
+								}
+							})
+						);
+
+				expect(
+					descriptor.metadata
+				).toMatchObject({
+					name:
+						'Genesis 1',
+
+					dataType:
+						'kjvonly.bible.chapter/v1',
+
+					size:
+						2048,
+
+					hash: {
+						algorithm:
+							'sha256',
+
+						value:
+							'abc123'
+					},
+
+					attributes: {
+						title:
+							'Genesis 1',
+
+						language:
+							'en'
+					}
+				});
+			}
+		);
+
+		it(
+			'rejects an empty name',
 			() => {
 				expectInvalid(
 					createDescriptor({
 						metadata: {
 							...createMetadata(),
 
-							category:
-								'kjvonly/strongs/definitions'
+							name:
+								''
+						}
+					})
+				);
+			}
+		);
+
+		it(
+			'rejects an empty dataType',
+			() => {
+				expectInvalid(
+					createDescriptor({
+						metadata: {
+							...createMetadata(),
+
+							dataType:
+								''
+						}
+					})
+				);
+			}
+		);
+
+		it(
+			'rejects an invalid size',
+			() => {
+				expectInvalid(
+					createDescriptor({
+						metadata: {
+							...createMetadata(),
+
+							size:
+								-1
+						}
+					})
+				);
+			}
+		);
+
+		it(
+			'rejects an invalid hash',
+			() => {
+				expectInvalid(
+					createDescriptor({
+						metadata: {
+							...createMetadata(),
+
+							hash: {
+								algorithm:
+									'',
+
+								value:
+									'abc123'
+							}
+						}
+					})
+				);
+			}
+		);
+
+		it(
+			'rejects non-object attributes',
+			() => {
+				expectInvalid(
+					createDescriptor({
+						metadata: {
+							...createMetadata(),
+
+							attributes: [
+								'title'
+							]
 						}
 					})
 				);

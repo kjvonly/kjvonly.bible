@@ -22,6 +22,9 @@ interface NostrStrategyData {
 		readonly string[];
 }
 
+/**
+ * Resolves Resource descriptors whose serialized content is retrieved from Nostr.
+ */
 export class NostrResourceResolutionStrategy
 	implements ResourceResolutionStrategy {
 
@@ -36,6 +39,7 @@ export class NostrResourceResolutionStrategy
 			>
 	) {}
 
+	/** Retrieves and verifies the Nostr event described by the Resource descriptor. */
 	async resolve(
 		descriptor:
 			ResourceDescriptor
@@ -216,6 +220,17 @@ function validateResolvedEvent(
 		descriptor.metadata.mediaType,
 		'mediaType'
 	);
+
+	for (const [name, value] of Object.entries(
+		descriptor.resourceMetadata ?? {}
+	)) {
+		validateTag(
+			event,
+			name,
+			value,
+			`metadata ${name}`
+		);
+	}
 }
 
 function validateTag(

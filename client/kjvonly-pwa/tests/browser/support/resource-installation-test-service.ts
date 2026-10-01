@@ -7,6 +7,10 @@ import type {
 } from '$lib/resource';
 
 import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
+
+import {
 	JsonResourceContentDecorator,
 	ResourceContentDecoder,
 	ResourceContentDecoratorBuilder,
@@ -65,14 +69,19 @@ export function createResourceInstallationTestService(
 			receiptStore
 		);
 
-	const processor =
-		new ResourceProcessor(
-			resolver,
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
 			[
 				handler
 			]
+		);
+
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			resolutionProcessor
 		);
 
 	return new ResourceService(

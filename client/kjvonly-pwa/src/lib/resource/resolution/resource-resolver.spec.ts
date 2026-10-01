@@ -75,7 +75,12 @@ describe(
 						123456,
 
 					mediaType:
-						'application/json'
+						'application/json',
+
+					metadata: {
+						f:
+							'notes'
+					}
 				});
 
 				expect(
@@ -227,6 +232,11 @@ function createResourceRepresentation(
 
 		mediaType:
 			'application/json',
+
+		metadata: {
+			f:
+				'notes'
+		},
 
 		payload:
 			'{"chapter":1}',

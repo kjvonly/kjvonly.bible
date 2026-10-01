@@ -8,13 +8,18 @@ import type {
 } from '$lib/resource/services/resource-install-result';
 
 import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
 	ResourceChildWorkerClient
 } from './resource-child-worker-client';
 
 type DescriptorWorkerClient =
 	Pick<
 		ResourceChildWorkerClient,
-		'process'
+		'process' |
+		'processDescriptor'
 	>;
 
 type DescriptorWorkerClients =
@@ -32,13 +37,7 @@ interface DescriptorWorkerSlot {
 		boolean;
 }
 
-interface DescriptorWorkerJob {
-	readonly requested:
-		PublishedResourceReference;
-
-	readonly representation:
-		ResourceRepresentation;
-
+interface DescriptorWorkerJobResult {
 	readonly resolve:
 		(
 			result:
@@ -51,6 +50,29 @@ interface DescriptorWorkerJob {
 				unknown
 		) => void;
 }
+
+type DescriptorWorkerJob =
+	| (
+		DescriptorWorkerJobResult & {
+			readonly type:
+				'representation';
+
+			readonly requested:
+				PublishedResourceReference;
+
+			readonly representation:
+				ResourceRepresentation;
+		}
+	)
+	| (
+		DescriptorWorkerJobResult & {
+			readonly type:
+				'descriptor';
+
+			readonly descriptor:
+				ResourceDescriptor;
+		}
+	);
 
 export class ResourceDescriptorWorkerPool {
 
@@ -91,6 +113,9 @@ export class ResourceDescriptorWorkerPool {
 
 				const job:
 					DescriptorWorkerJob = {
+					type:
+						'representation',
+
 					requested,
 					representation,
 					resolve,
@@ -122,6 +147,56 @@ export class ResourceDescriptorWorkerPool {
 		);
 	}
 
+	/**
+	 * Schedules one already-known Resource descriptor on the descriptor worker
+	 * pool without performing Resource discovery.
+	 */
+	processDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<ResourceInstallResult> {
+
+		return new Promise(
+			(
+				resolve,
+				reject
+			) => {
+
+				const job:
+					DescriptorWorkerJob = {
+					type:
+						'descriptor',
+
+					descriptor,
+					resolve,
+					reject
+				};
+
+				const slot =
+					this.slots.find(
+						(candidate) =>
+							!candidate.busy
+					);
+
+				if (
+					slot ===
+						undefined
+				) {
+					this.queue.push(
+						job
+					);
+
+					return;
+				}
+
+				this.dispatch(
+					slot,
+					job
+				);
+			}
+		);
+	}
+
 	private dispatch(
 		slot:
 			DescriptorWorkerSlot,
@@ -137,11 +212,24 @@ export class ResourceDescriptorWorkerPool {
 			Promise<ResourceInstallResult>;
 
 		try {
-			processing =
-				slot.client.process(
-					job.requested,
-					job.representation
-				);
+			switch (job.type) {
+				case 'representation':
+					processing =
+						slot.client.process(
+							job.requested,
+							job.representation
+						);
+
+					break;
+
+				case 'descriptor':
+					processing =
+						slot.client.processDescriptor(
+							job.descriptor
+						);
+
+					break;
+			}
 		} catch (error) {
 			this.release(
 				slot

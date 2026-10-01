@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
 	// ================================ IMPORTS ================================
 	import {
 		KJVBackButton,
@@ -12,7 +14,9 @@
 		MODULES_VIEWS,
 		PaneSplit,
 		type NavigationState,
+		type NavigationStateValue,
 		useApplicationContext,
+		useNavigationEntryContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
@@ -20,6 +24,9 @@
 		Note,
 		NotesById
 	} from '../../models/note.model';
+	import type {
+		AvailableNote
+	} from '../../models/available-note';
 	import { createNoteDomainObjectId } from '../../models/note-id';
 	import type {
 		NoteFilterIndex,
@@ -45,7 +52,12 @@
 	import {
 		NOTES_RESOURCE_TYPE
 	} from '../../resources/note-interpreter';
-	import { NOTES_VIEWS } from '../../models/notes-navigation.model';
+	import {
+		NOTES_LIST_ACTIONS,
+		NOTES_NAVIGATION_RESULTS,
+		NOTES_VIEWS,
+		type NotesListAction
+	} from '../../models/notes-navigation.model';
 
 	import {
 		createNoteIdForSource
@@ -62,6 +74,11 @@
 		navigation
 	} = useNavigationRuntimeContext();
 
+	const {
+		onResult,
+		whenActive
+	} = useNavigationEntryContext();
+
 	const paneLayout = usePaneLayoutContext();
 
 	// =============================== BINDINGS ================================
@@ -70,7 +87,9 @@
 		filterInput = $bindable(),
 		noteKeys,
 		notes,
+		availableNotes,
 		onSelectedNote,
+		onSelectedAvailableNote,
 		bibleLocationRef,
 		filterParams,
 		onFilterParamChanged,
@@ -81,7 +100,9 @@
 		filterInput: string;
 		noteKeys: string[];
 		notes: NotesById;
+		availableNotes: AvailableNote[];
 		onSelectedNote: (noteId: string) => void;
+		onSelectedAvailableNote: (note: AvailableNote) => Promise<void>;
 		bibleLocationRef?: string;
 		filterParams: NoteFilterParameter[];
 		onFilterParamChanged: (index: NoteFilterIndex, checked: boolean) => void;
@@ -95,36 +116,81 @@
 	let clientHeight = $derived(paneLayout.clientHeight);
 	let headerHeight = $state(0);
 
-	let showNoteListActions = $state(false);
 	let showNoteListFilter = $state(false);
 	const noteListControlID = uuid4();
 
-	const noteListActions: Record<string, () => void> = {
-		'export filtered notes': () => {
-			void onExport();
-		},
-		'split vertical': () => {
-			navigation.split(
-				PaneSplit.VERTICAL,
-				Modules.MODULES,
-				MODULES_VIEWS.ROOT,
-				{}
-			);
-			showNoteListActions = false;
-		},
+	// =============================== LIFECYCLE ===============================
 
-		'split horizontal': () => {
-			navigation.split(
-				PaneSplit.HORIZONTAL,
-				Modules.MODULES,
-				MODULES_VIEWS.ROOT,
-				{}
-			);
-			showNoteListActions = false;
-		}
-	};
+	onMount(() =>
+		onResult(
+			onNavigationResult
+		)
+	);
 
 	// ============================== CLICK FUNCS ==============================
+
+	function onNavigationResult(
+		result: NavigationStateValue
+	): void {
+		if (
+			typeof result !== 'object' ||
+			result === null ||
+			Array.isArray(result) ||
+			result.type !==
+				NOTES_NAVIGATION_RESULTS.LIST_ACTION ||
+			!isNotesListAction(
+				result.action
+			)
+		) {
+			return;
+		}
+
+		const action = result.action;
+
+		whenActive(() =>
+			applyNavigationAction(
+				action
+			)
+		);
+	}
+
+	async function applyNavigationAction(
+		action: NotesListAction
+	): Promise<void> {
+		switch (action) {
+			case NOTES_LIST_ACTIONS.EXPORT_FILTERED:
+				await onExport();
+				return;
+
+			case NOTES_LIST_ACTIONS.SPLIT_VERTICAL:
+				navigation.split(
+					PaneSplit.VERTICAL,
+					Modules.MODULES,
+					MODULES_VIEWS.ROOT,
+					{}
+				);
+				return;
+
+			case NOTES_LIST_ACTIONS.SPLIT_HORIZONTAL:
+				navigation.split(
+					PaneSplit.HORIZONTAL,
+					Modules.MODULES,
+					MODULES_VIEWS.ROOT,
+					{}
+				);
+				return;
+		}
+	}
+
+	function isNotesListAction(
+		value: unknown
+	): value is NotesListAction {
+		return (
+			value === NOTES_LIST_ACTIONS.EXPORT_FILTERED ||
+			value === NOTES_LIST_ACTIONS.SPLIT_VERTICAL ||
+			value === NOTES_LIST_ACTIONS.SPLIT_HORIZONTAL
+		);
+	}
 
 	async function onExport(): Promise<void> {
 		toastService.showToast(
@@ -343,9 +409,14 @@
 		onFilterParamChanged(index, input.checked);
 	}
 
-	function onToggleFilter(): void {
-		showNoteListActions = false;
+	function onOpenActions(): void {
+		navigation.pushView(
+			NOTES_VIEWS.ACTIONS,
+			{}
+		);
+	}
 
+	function onToggleFilter(): void {
 		if (showNoteListFilter) {
 			filterInput = '';
 			onFilterInputChanged();
@@ -381,8 +452,7 @@
 			{
 				icon: 'more-vertical',
 				label: 'More actions',
-				onClick: () =>
-					(showNoteListActions = !showNoteListActions)
+				onClick: onOpenActions
 			}
 		]}
 	></KJVHeader>
@@ -494,29 +564,31 @@
 			</div>
 		</div>
 	{/each}
-{/snippet}
 
-{#snippet noteListActionsSnippet()}
-	{#each Object.keys(noteListActions) as na}
-		<button
-			class="w-full py-4 ps-2 text-left capitalize hover:bg-neutral-100"
-			aria-label="note action button"
-			onclick={() => noteListActions[na]()}
+	{#each availableNotes as availableNote}
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			onclick={() => {
+				void onSelectedAvailableNote(
+					availableNote
+				);
+			}}
+			class="flex w-full flex-nowrap p-2 text-left hover:cursor-pointer hover:bg-neutral-100"
 		>
-			{na}
-		</button>
+			<div class="flex w-full flex-col">
+				<span>{availableNote.name}</span>
+				<span class="text-neutral-400">{availableNote.path}</span>
+			</div>
+		</div>
 	{/each}
 {/snippet}
 
 {#snippet noteListBody()}
-	{#if !showNoteListActions}
-		{#if showNoteListFilter}
-			{@render noteListFilter()}
-		{/if}
-		{@render noteListSnippet()}
-	{:else}
-		{@render noteListActionsSnippet()}
+	{#if showNoteListFilter}
+		{@render noteListFilter()}
 	{/if}
+	{@render noteListSnippet()}
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->

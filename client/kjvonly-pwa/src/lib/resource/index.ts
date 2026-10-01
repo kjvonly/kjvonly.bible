@@ -2,6 +2,7 @@ export {
 	RESOURCE_KIND,
 	type DecodedResourceContent,
 	type PublishedResourceReference,
+	type ResourceMetadata,
 	type ResourceRepresentation,
 	type ResourceRepresentationType,
 	type SerializedResourceContent,
@@ -124,6 +125,7 @@ export {
 
 export type {
 	ResourceDescriptor,
+	ResourceDescriptorHash,
 	ResourceDescriptorMetadata,
 	ResourceDescriptorStrategy
 } from './descriptors/resource-descriptor';

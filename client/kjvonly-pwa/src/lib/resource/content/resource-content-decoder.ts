@@ -7,6 +7,9 @@ import type {
 	ResourceContentDecoratorBuilder
 } from './resource-content-decorator-builder';
 
+/**
+ * Decodes verified serialized Resource content while preserving Resource envelope metadata.
+ */
 export class ResourceContentDecoder {
 	constructor(
 		private readonly decoratorBuilder:
@@ -42,6 +45,14 @@ export class ResourceContentDecoder {
 
 			mediaType:
 				resource.mediaType,
+
+			...(resource.dataType === undefined
+				? {}
+				: { dataType: resource.dataType }),
+
+			...(resource.metadata === undefined
+				? {}
+				: { metadata: resource.metadata }),
 
 			value
 		};

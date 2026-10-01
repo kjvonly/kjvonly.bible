@@ -8,6 +8,7 @@ import {
 } from '../../models/notes-navigation.model';
 
 import NotesContainer from '../notesContainer.svelte';
+import NotesListActionsView from '../notesList/notesListActionsView.svelte';
 
 /**
  * Notes-owned navigation views registered by the application composition root.
@@ -17,5 +18,9 @@ export const notesNavigationViewRegistrations:
 		{
 			view: NOTES_VIEWS.ROOT,
 			component: NotesContainer
+		},
+		{
+			view: NOTES_VIEWS.ACTIONS,
+			component: NotesListActionsView
 		}
 	];

@@ -25,6 +25,34 @@ import {
 } from '$lib/resource';
 
 import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
+
+import {
+	ResourceResolutionStrategyRegistry
+} from '$lib/resource/resolution/resource-resolution-strategy-registry';
+
+import {
+	ResourceDescriptorContentResolver
+} from '$lib/resource/resolution/resource-descriptor-content-resolver';
+
+import {
+	ResourceDescriptorCurrentness
+} from '$lib/resource/resolution/resource-descriptor-currentness';
+
+import {
+	ResourceDescriptorPreparer
+} from '$lib/resource/resolution/resource-descriptor-preparer';
+
+import {
+	ResourceDescriptorTerminalResolver
+} from '$lib/resource/resolution/resource-descriptor-terminal-resolver';
+
+import {
+	ResourceDescriptorGraphResolver
+} from '$lib/resource/resolution/resource-descriptor-graph-resolver';
+
+import {
 	IndexedDBResourceReceiptStore
 } from '$lib/resource/receipts/indexeddb-resource-receipt-store';
 
@@ -891,16 +919,43 @@ function createService(
 			contents
 		);
 
+	const descriptorDocumentDecoder =
+		new ResourceDescriptorDocumentDecoder(
+			decoratorBuilder
+		);
+
+	const strategyRegistry =
+		new ResourceResolutionStrategyRegistry([
+			strategy
+		]);
+
+	const descriptorContentResolver =
+		new ResourceDescriptorContentResolver(
+			strategyRegistry
+		);
+
+	const descriptorPreparer =
+		new ResourceDescriptorPreparer(
+			new ResourceDescriptorValidator(),
+			new ResourceDescriptorCurrentness(
+				receiptService
+			)
+		);
+
+	const descriptorGraphResolver =
+		new ResourceDescriptorGraphResolver(
+			descriptorDocumentDecoder,
+			descriptorPreparer,
+			descriptorContentResolver,
+			new ResourceDescriptorTerminalResolver(
+				descriptorContentResolver
+			)
+		);
+
 	const descriptorsResolver =
 		new DescriptorsRepresentationResolver(
-			new ResourceDescriptorDocumentDecoder(
-				decoratorBuilder
-			),
-			new ResourceDescriptorValidator(),
-			receiptService,
-			[
-				strategy
-			]
+			descriptorDocumentDecoder,
+			descriptorGraphResolver
 		);
 
 	const resolver =
@@ -954,15 +1009,20 @@ function createService(
 			strongsInstaller
 		);
 
-	const processor =
-		new ResourceProcessor(
-			resolver,
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
 			[
 				bibleChapterHandler,
 				strongsHandler
 			]
+		);
+
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			resolutionProcessor
 		);
 
 	const service =

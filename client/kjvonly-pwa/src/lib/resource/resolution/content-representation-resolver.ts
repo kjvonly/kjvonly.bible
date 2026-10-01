@@ -10,12 +10,16 @@ import type {
 	ResourceResolutionResult
 } from './resource-resolution-result';
 
+/**
+ * Resolves inline Resource content without interpreting or decoding its payload.
+ */
 export class ContentRepresentationResolver
 	implements ResourceRepresentationResolver {
 
 	readonly representation =
 		'content' as const;
 
+	/** Preserves Resource identity, type, revision, media type, and metadata. */
 	async resolve(
 		resource:
 			ResourceRepresentation
@@ -39,6 +43,10 @@ export class ContentRepresentationResolver
 
 					mediaType:
 						resource.mediaType,
+
+					...(resource.metadata === undefined
+						? {}
+						: { metadata: resource.metadata }),
 
 					content:
 						resource.payload

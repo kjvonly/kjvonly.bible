@@ -22,6 +22,7 @@ import {
 	deserializeResourceWorkerError,
 	deserializeResourceWorkerInstallResult,
 	serializeResourceWorkerError,
+	type ResourceWorkerInstallDescriptorRequest,
 	type ResourceWorkerInstallRequest,
 	type ResourceWorkerMainMessage,
 	type ResourceWorkerMessage
@@ -272,6 +273,79 @@ export class ResourceWorkerClient {
 					};
 					this.worker
 						.postMessage(message);
+				} catch (error) {
+
+					this.pendingInstalls
+						.delete(
+							requestId
+						);
+
+					reject(
+						error
+					);
+				}
+			}
+		);
+	}
+
+	/**
+	 * Installs one already-known Resource descriptor without Resource discovery.
+	 */
+	installDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<
+		ResourceInstallResult
+	> {
+
+		if (
+			this.state !==
+				'active'
+		) {
+			return Promise.reject(
+				this.terminalError ??
+					new Error(
+						'Resource worker client is unavailable.'
+					)
+			);
+		}
+
+		const requestId =
+			this.createRequestId(
+				'install-descriptor'
+			);
+
+		return new Promise(
+			(
+				resolve,
+				reject
+			) => {
+
+				this.pendingInstalls
+					.set(
+						requestId,
+						{
+							resolve,
+							reject
+						}
+					);
+
+				try {
+
+					const message:
+						ResourceWorkerInstallDescriptorRequest = {
+						type:
+							'install-descriptor',
+
+						requestId,
+
+						descriptor
+					};
+
+					this.worker
+						.postMessage(
+							message
+						);
 				} catch (error) {
 
 					this.pendingInstalls

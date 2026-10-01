@@ -3,6 +3,7 @@ import type {
 } from '$lib/application';
 
 import type {
+	ResourceMetadata,
 	ResourceRepresentationType
 } from '$lib/resource/models/resource.model';
 
@@ -33,6 +34,10 @@ export interface ResourcePublication
 
 	readonly mediaType:
 		string;
+
+	/** Additional protocol-agnostic Resource metadata to publish. */
+	readonly metadata?:
+		ResourceMetadata;
 
 	readonly value:
 		unknown;

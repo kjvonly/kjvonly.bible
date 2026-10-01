@@ -5,6 +5,15 @@ export type ResourceRepresentationType =
 	| 'content'
 	| 'descriptors';
 
+/**
+ * Protocol-agnostic scalar metadata attached to a Resource envelope.
+ *
+ * The generic Resource layer transports these values without assigning meaning
+ * to individual keys. Owning Domains may interpret keys they define.
+ */
+export type ResourceMetadata =
+	Readonly<Record<string, string>>;
+
 export interface PublishedResourceReference {
 	publisher: string;
 	resourceId: string;
@@ -26,6 +35,9 @@ export interface ResourceRepresentation {
 
 	mediaType: string;
 
+	/** Additional protocol-agnostic Resource metadata. */
+	metadata?: ResourceMetadata;
+
 	payload: string;
 }
 
@@ -44,6 +56,12 @@ export interface VerifiedResourceContent {
 
 	readonly mediaType: string;
 
+	/** Optional semantic application data contract advertised by a descriptor. */
+	readonly dataType?: string;
+
+	/** Additional protocol-agnostic Resource metadata. */
+	readonly metadata?: ResourceMetadata;
+
 	readonly content:
 		SerializedResourceContent;
 }
@@ -58,6 +76,12 @@ export interface DecodedResourceContent {
 	readonly modifiedAt: number;
 
 	readonly mediaType: string;
+
+	/** Optional semantic application data contract advertised by a descriptor. */
+	readonly dataType?: string;
+
+	/** Additional protocol-agnostic Resource metadata. */
+	readonly metadata?: ResourceMetadata;
 
 	readonly value: unknown;
 }

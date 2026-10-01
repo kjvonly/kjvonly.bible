@@ -4,13 +4,14 @@ import type {
 
 import {
 	RESOURCE_KIND,
+	type ResourceMetadata,
 	type ResourceRepresentation,
 	type ResourceRepresentationType
 } from '$lib/resource/models/resource.model';
 
 import {
-	extractResourceType
-} from '$lib/resource/utils/resource-identifier';
+	RESOURCE_ENVELOPE_TAGS
+} from './resource-envelope-tags';
 
 const RESOURCE_REPRESENTATIONS:
 	readonly ResourceRepresentationType[] = [
@@ -18,6 +19,13 @@ const RESOURCE_REPRESENTATIONS:
 		'descriptors'
 	];
 
+/**
+ * Maps one Nostr Resource event into the protocol-agnostic Resource envelope.
+ *
+ * The `d` tag supplies Resource identity and the `t` tag independently supplies
+ * Resource Type. Non-envelope scalar tags are preserved as generic Resource
+ * metadata for the owning Domain to interpret.
+ */
 export function toResourceRepresentation(
 	event: Event
 ): ResourceRepresentation {
@@ -37,24 +45,10 @@ export function toResourceRepresentation(
 		);
 
 	const resourceType =
-		extractResourceType(
-			resourceId
-		);
-
-	const classification =
 		requireTag(
 			event,
 			't'
 		);
-
-	if (
-		classification !==
-		resourceType
-	) {
-		throw new Error(
-			`Invalid Resource classification: ${classification}`
-		);
-	}
 
 	const representationValue =
 		requireTag(
@@ -78,6 +72,11 @@ export function toResourceRepresentation(
 			'm'
 		);
 
+	const metadata =
+		readResourceMetadata(
+			event
+		);
+
 	return {
 		publisher:
 			event.pubkey,
@@ -97,9 +96,48 @@ export function toResourceRepresentation(
 
 		mediaType,
 
+		...(metadata === undefined
+			? {}
+			: { metadata }),
+
 		payload:
 			event.content
 	};
+}
+
+/** Reads non-envelope scalar tags as generic Resource metadata. */
+function readResourceMetadata(
+	event: Event
+): ResourceMetadata | undefined {
+	const metadata:
+		Record<string, string> = {};
+
+	for (const tag of event.tags) {
+		const name =
+			tag[0];
+
+		const value =
+			tag[1];
+
+		if (
+			name === undefined ||
+			value === undefined ||
+			RESOURCE_ENVELOPE_TAGS.has(
+				name
+			)
+		) {
+			continue;
+		}
+
+		metadata[name] =
+			value;
+	}
+
+	return Object.keys(
+		metadata
+	).length === 0
+		? undefined
+		: metadata;
 }
 
 function requireTag(

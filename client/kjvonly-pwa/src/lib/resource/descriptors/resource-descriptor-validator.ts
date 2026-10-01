@@ -1,13 +1,18 @@
-import {
-	extractResourceType
-} from '$lib/resource/utils/resource-identifier';
-
 import type {
 	ResourceDescriptor
 } from './resource-descriptor';
 
+/**
+ * Validates untrusted descriptor data and returns a trusted ResourceDescriptor.
+ *
+ * Generic descriptor structure and Resource metadata are validated here while
+ * provider-specific strategy data remains the responsibility of each strategy.
+ */
 export class ResourceDescriptorValidator {
 
+	/**
+	 * Validates one unknown descriptor value.
+	 */
 	validate(
 		value: unknown
 	): ResourceDescriptor {
@@ -23,6 +28,11 @@ export class ResourceDescriptorValidator {
 				value.metadata
 			);
 
+		const resourceMetadata =
+			this.validateResourceMetadata(
+				value.resourceMetadata
+			);
+
 		const strategy =
 			this.validateStrategy(
 				value.strategy
@@ -30,6 +40,9 @@ export class ResourceDescriptorValidator {
 
 		return {
 			metadata,
+			...(resourceMetadata === undefined
+				? {}
+				: { resourceMetadata }),
 			strategy
 		};
 	}
@@ -66,25 +79,23 @@ export class ResourceDescriptorValidator {
 				'resourceId'
 			);
 
+		const name =
+			optionalString(
+				value.name,
+				'name'
+			);
+
 		const category =
 			requireString(
 				value.category,
 				'category'
 			);
 
-		const resourceType =
-			extractResourceType(
-				resourceId
+		const dataType =
+			optionalString(
+				value.dataType,
+				'dataType'
 			);
-
-		if (
-			category !==
-			resourceType
-		) {
-			throw new Error(
-				`Invalid Resource descriptor category: ${category}`
-			);
-		}
 
 		const modifiedAt =
 			value.modifiedAt;
@@ -122,14 +133,75 @@ export class ResourceDescriptorValidator {
 				'mediaType'
 			);
 
+		const size =
+			validateSize(
+				value.size
+			);
+
+		const hash =
+			validateHash(
+				value.hash
+			);
+
+		const attributes =
+			validateAttributes(
+				value.attributes
+			);
+
 		return {
 			publisher,
 			resourceId,
+			...(name === undefined
+				? {}
+				: { name }),
 			category,
+			...(dataType === undefined
+				? {}
+				: { dataType }),
 			modifiedAt,
 			representation,
-			mediaType
+			mediaType,
+			...(size === undefined
+				? {}
+				: { size }),
+			...(hash === undefined
+				? {}
+				: { hash }),
+			...(attributes === undefined
+				? {}
+				: { attributes })
 		};
+	}
+
+	/**
+	 * Validates optional protocol-agnostic Resource metadata without assigning
+	 * Domain meaning to individual keys.
+	 */
+	private validateResourceMetadata(
+		value: unknown
+	): ResourceDescriptor['resourceMetadata'] {
+		if (value === undefined) {
+			return undefined;
+		}
+
+		if (!isObject(value)) {
+			throw new Error(
+				'Invalid Resource descriptor resourceMetadata.'
+			);
+		}
+
+		for (const [name, metadataValue] of Object.entries(value)) {
+			if (
+				name.length === 0 ||
+				typeof metadataValue !== 'string'
+			) {
+				throw new Error(
+					'Invalid Resource descriptor resourceMetadata.'
+				);
+			}
+		}
+
+		return value as ResourceDescriptor['resourceMetadata'];
 	}
 
 	private validateStrategy(
@@ -166,6 +238,87 @@ export class ResourceDescriptorValidator {
 				value.data
 		};
 	}
+}
+
+/** Validates an optional non-empty string metadata field. */
+function optionalString(
+	value: unknown,
+	name: string
+): string | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+
+	return requireString(
+		value,
+		name
+	);
+}
+
+/** Validates optional resolved-byte size metadata. */
+function validateSize(
+	value: unknown
+): number | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+
+	if (
+		typeof value !== 'number' ||
+		!Number.isSafeInteger(value) ||
+		value < 0
+	) {
+		throw new Error(
+			'Invalid Resource descriptor size.'
+		);
+	}
+
+	return value;
+}
+
+/** Validates optional algorithm-independent content digest metadata. */
+function validateHash(
+	value: unknown
+): ResourceDescriptor['metadata']['hash'] {
+	if (value === undefined) {
+		return undefined;
+	}
+
+	if (!isObject(value)) {
+		throw new Error(
+			'Invalid Resource descriptor hash.'
+		);
+	}
+
+	return {
+		algorithm:
+			requireString(
+				value.algorithm,
+				'hash algorithm'
+			),
+		value:
+			requireString(
+				value.value,
+				'hash value'
+			)
+	};
+}
+
+/** Validates optional descriptor attributes used for catalog presentation. */
+function validateAttributes(
+	value: unknown
+): ResourceDescriptor['metadata']['attributes'] {
+	if (value === undefined) {
+		return undefined;
+	}
+
+	if (!isObject(value)) {
+		throw new Error(
+			'Invalid Resource descriptor attributes.'
+		);
+	}
+
+	return value;
 }
 
 function isObject(

@@ -3,24 +3,36 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
-	ResourceService
-} from '$lib/resource/services/resource.service';
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
 
 import type {
 	ResourceInstallResult
 } from '$lib/resource/services/resource-install-result';
 
 import type {
+	ResourceService
+} from '$lib/resource/services/resource.service';
+
+import type {
 	ResourceReferenceBuilder
 } from './resource-reference-builder';
 
+/**
+ * Loads Resources through the generic Resource installation lifecycle.
+ *
+ * Reference-based loading performs discovery through the injected installer.
+ * Descriptor-based loading skips discovery because the ResourceDescriptor
+ * already identifies and describes the Resource to resolve.
+ */
 export class ResourceLoader<TKey> {
 
 	constructor(
 		private readonly resources:
 			Pick<
 				ResourceService,
-				'install'
+				'install' |
+				'installDescriptor'
 			>,
 
 		private readonly references:
@@ -81,6 +93,28 @@ export class ResourceLoader<TKey> {
 		return true;
 	}
 
+	/**
+	 * Loads one already-known ResourceDescriptor and waits for its generic
+	 * Resource installation lifecycle to complete.
+	 *
+	 * The installed Domain object is intentionally not returned. The owning
+	 * Domain remains responsible for reading its own cache or persistence after
+	 * this method completes.
+	 */
+	async loadDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<void> {
+		const result =
+			await this.resources.installDescriptor(
+				descriptor
+			);
+
+		this.assertSuccessful(
+			result
+		);
+	}
+
 	private assertSuccessful(
 		result:
 			ResourceInstallResult
@@ -90,14 +124,16 @@ export class ResourceLoader<TKey> {
 		) {
 			if (
 				outcome.status ===
-				'handled'
+					'handled' ||
+				outcome.status ===
+					'current'
 			) {
 				continue;
 			}
 
 			if (
 				outcome.status ===
-				'failed'
+					'failed'
 			) {
 				throw outcome.error;
 			}

@@ -4,6 +4,10 @@ export type {
 	NotesById
 } from './models/note.model';
 
+export type {
+	AvailableNote
+} from './models/available-note';
+
 export {
 	NOTE_OBJECT_TYPE,
 	createNoteDomainObjectId
@@ -16,6 +20,10 @@ export {
 export {
 	NOTES_RESOURCE_TYPE
 } from './resources/note-interpreter';
+
+export {
+	NOTES_DATA_TYPE
+} from './resources/note-data-type';
 
 export {
 	DEFAULT_NOTES_RESOURCE_NAME,

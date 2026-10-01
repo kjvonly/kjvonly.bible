@@ -22,8 +22,15 @@ import type {
 	OutboxPublicationStrategy
 } from '$lib/application';
 
+import {
+	RESOURCE_ENVELOPE_TAGS
+} from './resource-envelope-tags';
+
 const NOSTR_DELETION_KIND = 5;
 
+/**
+ * Publishes protocol-agnostic Resource publication intents as Nostr events.
+ */
 export class NostrResourcePublicationStrategy
 	implements OutboxPublicationStrategy {
 	readonly type =
@@ -44,6 +51,7 @@ export class NostrResourcePublicationStrategy
 			>
 	) {}
 
+	/** Publishes one Resource or Resource deletion intent. */
 	async publish(
 		publication:
 			OutboxPublicationIntent
@@ -94,6 +102,11 @@ export class NostrResourcePublicationStrategy
 		resource:
 			ResourcePublication
 	): Promise<void> {
+		const metadataTags =
+			createMetadataTags(
+				resource.metadata
+			);
+
 		const content =
 			await this.contentEncoder
 				.encode(
@@ -130,7 +143,8 @@ export class NostrResourcePublicationStrategy
 					[
 						'representation',
 						resource.representation
-					]
+					],
+					...metadataTags
 				],
 
 				content
@@ -196,4 +210,35 @@ export class NostrResourcePublicationStrategy
 			);
 		}
 	}
+}
+
+/** Maps protocol-agnostic Resource metadata into Nostr scalar tags. */
+function createMetadataTags(
+	metadata:
+		ResourcePublication['metadata']
+): string[][] {
+	if (metadata === undefined) {
+		return [];
+	}
+
+	return Object.entries(
+		metadata
+	).map(
+		([name, value]) => {
+			if (
+				RESOURCE_ENVELOPE_TAGS.has(
+					name
+				)
+			) {
+				throw new Error(
+					`Resource metadata cannot use reserved Nostr tag: ${name}`
+				);
+			}
+
+			return [
+				name,
+				value
+			];
+		}
+	);
 }

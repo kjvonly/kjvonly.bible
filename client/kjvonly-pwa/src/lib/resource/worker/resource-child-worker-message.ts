@@ -4,6 +4,10 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
 	ResourceWorkerError,
 	ResourceWorkerInstallResult
 } from './resource-worker-message';
@@ -16,7 +20,7 @@ import type {
 ///////////////////////////////////////////////////////////////////////////////
 // Resource Coordinator → Child Resource Worker
 
-export interface ResourceChildWorkerProcessRequest {
+export interface ResourceChildWorkerProcessRepresentationRequest {
 	readonly type:
 		'process';
 
@@ -30,8 +34,21 @@ export interface ResourceChildWorkerProcessRequest {
 		ResourceRepresentation;
 }
 
+
+export interface ResourceChildWorkerProcessDescriptorRequest {
+	readonly type:
+		'process-descriptor';
+
+	readonly requestId:
+		string;
+
+	readonly descriptor:
+		ResourceDescriptor;
+}
+
 export type ResourceChildWorkerRequest =
-	| ResourceChildWorkerProcessRequest
+	| ResourceChildWorkerProcessRepresentationRequest
+	| ResourceChildWorkerProcessDescriptorRequest
 	| ResourceWorkerStrategyResolveResponse;
 
 ///////////////////////////////////////////////////////////////////////////////

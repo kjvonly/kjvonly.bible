@@ -20,6 +20,10 @@ import {
 } from '$lib/resource';
 
 import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
+
+import {
 	BibleBooknamesInterpreter,
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
 } from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
@@ -354,14 +358,19 @@ function createService(
 			installer
 		);
 
-	const processor =
-		new ResourceProcessor(
-			resolver,
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
 			[
 				handler
 			]
+		);
+
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			resolutionProcessor
 		);
 
 	return new ResourceService(

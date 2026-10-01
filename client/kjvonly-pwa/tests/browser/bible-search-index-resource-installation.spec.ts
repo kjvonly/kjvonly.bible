@@ -22,6 +22,10 @@ import {
 } from '$lib/resource';
 
 import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
+
+import {
 	BIBLE_SEARCH_RESOURCE_TYPE,
 	BibleSearchIndexInterpreter
 } from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
@@ -426,14 +430,19 @@ function createService(
 			installer
 		);
 
-	const processor =
-		new ResourceProcessor(
-			resolver,
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
 			[
 				handler
 			]
+		);
+
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			resolutionProcessor
 		);
 
 	return new ResourceService(

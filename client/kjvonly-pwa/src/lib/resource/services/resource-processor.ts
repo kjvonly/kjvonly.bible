@@ -1,8 +1,7 @@
 import type {
 	DecodedResourceContent,
 	PublishedResourceReference,
-	ResourceRepresentation,
-	VerifiedResourceContent
+	ResourceRepresentation
 } from '$lib/resource/models/resource.model';
 
 import type {
@@ -10,35 +9,23 @@ import type {
 } from '$lib/resource/resolution/resource-resolver';
 
 import type {
-	ResourceResolutionCurrent,
-	ResourceResolutionFailure
-} from '$lib/resource/resolution/resource-resolution-result';
-
-import type {
-	ResourceContentDecoder
-} from '$lib/resource/content/resource-content-decoder';
-
-import type {
-	ResourceHandler
-} from '$lib/resource/installation/resource-handler';
-
-import type {
-	ResourceReceiptService
-} from '$lib/resource/receipts/resource-receipt.service';
-
-import type {
 	ResourceInstallOutcome,
 	ResourceInstallResult
 } from './resource-install-result';
 
+import type {
+	ResourceResolutionProcessor
+} from './resource-resolution-processor';
+
+
+/**
+ * Adapts Resource representations into the reusable post-resolution lifecycle.
+ *
+ * Representation resolution is delegated to ResourceResolver. Existing
+ * ResourceResolutionResults and already-decoded Resource content are delegated
+ * to ResourceResolutionProcessor.
+ */
 export class ResourceProcessor {
-
-	private readonly handlers:
-		ReadonlyMap<
-			string,
-			ResourceHandler
-		>;
-
 	constructor(
 		private readonly resolver:
 			Pick<
@@ -46,50 +33,18 @@ export class ResourceProcessor {
 				'resolve'
 			>,
 
-		private readonly decoder:
+		private readonly resolutionProcessor:
 			Pick<
-				ResourceContentDecoder,
-				'decode'
-			>,
+				ResourceResolutionProcessor,
+				'process' |
+				'processDecoded'
+			>
+	) {}
 
-		private readonly receipts:
-			Pick<
-				ResourceReceiptService,
-				'markProcessed'
-			>,
-
-		handlers:
-			readonly ResourceHandler[]
-	) {
-		const handlerMap =
-			new Map<
-				string,
-				ResourceHandler
-			>();
-
-		for (
-			const handler of handlers
-		) {
-			if (
-				handlerMap.has(
-					handler.resourceType
-				)
-			) {
-				throw new Error(
-					`Duplicate Resource handler: ${handler.resourceType}`
-				);
-			}
-
-			handlerMap.set(
-				handler.resourceType,
-				handler
-			);
-		}
-
-		this.handlers =
-			handlerMap;
-	}
-
+	/**
+	 * Resolves one Resource representation and delegates the resulting Resource
+	 * resolution outcome to the installation-side processor.
+	 */
 	async process(
 		requested:
 			PublishedResourceReference,
@@ -103,241 +58,22 @@ export class ResourceProcessor {
 				representation
 			);
 
-		const resources:
-			ResourceInstallOutcome[] =
-				resolution.failures.map(
-					(failure) =>
-						this.createFailureOutcome(
-							failure
-						)
-				);
-
-		for (
-			const current
-			of resolution.current
-		) {
-			resources.push(
-				this.createCurrentOutcome(
-					current
-				)
-			);
-		}
-
-		for (
-			const content
-			of resolution.contents
-		) {
-			resources.push(
-				await this.processContent(
-					content
-				)
-			);
-		}
-
-		return {
+		return this.resolutionProcessor.process(
 			requested,
-			found:
-				true,
-			resources
-		};
+			resolution
+		);
 	}
 
-	private createCurrentOutcome(
-		current:
-			ResourceResolutionCurrent
-	): ResourceInstallOutcome {
-
-		return {
-			reference: {
-				publisher:
-					current.publisher,
-
-				resourceId:
-					current.resourceId
-			},
-
-			resourceType:
-				current.resourceType,
-
-			status:
-				'current'
-		};
-	}
-
-	private createFailureOutcome(
-		failure:
-			ResourceResolutionFailure
-	): ResourceInstallOutcome {
-		return {
-			...(
-				failure.publisher !==
-					undefined &&
-				failure.resourceId !==
-					undefined
-					? {
-							reference: {
-								publisher:
-									failure.publisher,
-
-								resourceId:
-									failure.resourceId
-							}
-						}
-					: {}
-			),
-
-			...(
-				failure.resourceType !==
-					undefined
-					? {
-							resourceType:
-								failure.resourceType
-						}
-					: {}
-			),
-
-			status:
-				'failed',
-
-			error:
-				failure.error
-		};
-	}
-
-	async processDecoded(
+	/**
+	 * Preserves the existing decoded-content entry point while delegating its
+	 * installation mechanics to ResourceResolutionProcessor.
+	 */
+	processDecoded(
 		content:
 			DecodedResourceContent
 	): Promise<ResourceInstallOutcome> {
-		const reference:
-			PublishedResourceReference = {
-			publisher:
-				content.publisher,
-
-			resourceId:
-				content.resourceId
-		};
-
-		const handler =
-			this.handlers.get(
-				content.resourceType
-			);
-
-		if (
-			handler === undefined
-		) {
-			return {
-				reference,
-				resourceType:
-					content.resourceType,
-				status:
-					'unsupported'
-			};
-		}
-
-		try {
-			await handler.handle(
-				content
-			);
-		} catch (error) {
-			return {
-				reference,
-				resourceType:
-					content.resourceType,
-				status:
-					'failed',
-				error
-			};
-		}
-
-		try {
-			await this.receipts.markProcessed(
-				content.publisher,
-				content.resourceId,
-				content.modifiedAt
-			);
-		} catch (error) {
-			console.warn(
-				'[Resource receipt write failed]',
-				{
-					publisher:
-						content.publisher,
-
-					resourceId:
-						content.resourceId,
-
-					modifiedAt:
-						content.modifiedAt,
-
-					error
-				}
-			);
-		}
-
-		return {
-			reference,
-			resourceType:
-				content.resourceType,
-			status:
-				'handled'
-		};
-	}
-
-	private async processContent(
-		content:
-			VerifiedResourceContent
-	): Promise<ResourceInstallOutcome> {
-		if (
-			!this.handlers.has(
-				content.resourceType
-			)
-		) {
-			return {
-				reference: {
-					publisher:
-						content.publisher,
-
-					resourceId:
-						content.resourceId
-				},
-
-				resourceType:
-					content.resourceType,
-
-				status:
-					'unsupported'
-			};
-		}
-
-		let decoded:
-			DecodedResourceContent;
-
-		try {
-			decoded =
-				await this.decoder.decode(
-					content
-				);
-		} catch (error) {
-			return {
-				reference: {
-				publisher:
-					content.publisher,
-
-				resourceId:
-					content.resourceId
-			},
-
-				resourceType:
-					content.resourceType,
-
-				status:
-					'failed',
-
-				error
-			};
-		}
-
-		return this.processDecoded(
-			decoded
+		return this.resolutionProcessor.processDecoded(
+			content
 		);
 	}
 }

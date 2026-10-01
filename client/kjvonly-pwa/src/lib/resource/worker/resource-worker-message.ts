@@ -4,6 +4,10 @@ import type {
 } from '$lib/resource/models/resource.model';
 
 import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
 	ResourceInstallOutcome,
 	ResourceInstallResult
 } from '$lib/resource/services/resource-install-result';
@@ -95,6 +99,17 @@ export interface ResourceWorkerInstallRequest {
 		PublishedResourceReference;
 }
 
+export interface ResourceWorkerInstallDescriptorRequest {
+	readonly type:
+		'install-descriptor';
+
+	readonly requestId:
+		string;
+
+	readonly descriptor:
+		ResourceDescriptor;
+}
+
 export interface ResourceWorkerDiscoveryResult {
 	readonly type:
 		'discovery-result';
@@ -120,6 +135,7 @@ export interface ResourceWorkerDiscoveryError {
 
 export type ResourceWorkerMainMessage =
 	| ResourceWorkerInstallRequest
+	| ResourceWorkerInstallDescriptorRequest
 	| ResourceWorkerDiscoveryResult
 	| ResourceWorkerDiscoveryError
 	| ResourceWorkerStrategyResolveResponse;

@@ -21,6 +21,10 @@ import {
 } from '$lib/resource';
 
 import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
+
+import {
 	BibleChapterInterpreter
 } from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
 
@@ -686,14 +690,19 @@ function createService(
 			installer
 		);
 
-	const processor =
-		new ResourceProcessor(
-			resolver,
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
 			[
 				handler
 			]
+		);
+
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			resolutionProcessor
 		);
 
 	return new ResourceService(

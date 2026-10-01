@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+	createNoteIdForDescriptor,
 	createNoteIdForSource,
 	parseNotesResourceSource
 } from './notes-resource-source';
@@ -46,6 +47,83 @@ describe(
 					)
 				).toBe(
 					'publisher/default/note-1'
+				);
+			}
+		);
+
+		it(
+			'creates a Note id from an individual Notes descriptor',
+			() => {
+				expect(
+					createNoteIdForDescriptor({
+						metadata: {
+							publisher:
+								'publisher',
+
+							resourceId:
+								'kjvonly/notes/entries/default/note-1',
+
+							category:
+								'kjvonly/notes/entries',
+
+							modifiedAt:
+								1,
+
+							representation:
+								'content',
+
+							mediaType:
+								'application/json'
+						},
+
+						strategy: {
+							type:
+								'example',
+
+							data: {}
+						}
+					})
+				).toBe(
+					'publisher/default/note-1'
+				);
+			}
+		);
+
+		it(
+			'rejects a Notes bundle descriptor when an individual Note is required',
+			() => {
+				expect(
+					() =>
+						createNoteIdForDescriptor({
+							metadata: {
+								publisher:
+									'publisher',
+
+								resourceId:
+									'kjvonly/notes/entries/default',
+
+								category:
+									'kjvonly/notes/entries',
+
+								modifiedAt:
+									1,
+
+								representation:
+									'content',
+
+								mediaType:
+									'application/json'
+							},
+
+							strategy: {
+								type:
+									'example',
+
+								data: {}
+							}
+						})
+				).toThrow(
+					'Invalid individual Notes Resource: kjvonly/notes/entries/default'
 				);
 			}
 		);

@@ -25,6 +25,9 @@ export const DOMAIN_OBJECTS =
 export const RESOURCE_INSTALLATIONS =
 	'resource_installations';
 
+export const FILESYSTEM_ENTRIES =
+	'filesystem_entries';
+
 export const RESOURCE_RECEIPTS =
 	'resource_receipts';
 
@@ -36,6 +39,15 @@ export const NOSTR_EVENTS =
 
 export const OBJECT_TYPE_INDEX =
 	'objectType';
+
+export const FILESYSTEM_ENTRY_PUBLISHER_ROOT_PATH_INDEX =
+	'publisherRootPath';
+
+export const FILESYSTEM_ENTRY_DATA_TYPE_INDEX =
+	'dataType';
+
+export const FILESYSTEM_ENTRY_CATEGORY_INDEX =
+	'category';
 
 export const OUTBOX_STATUS_INDEX =
 	'status';
@@ -53,7 +65,7 @@ const DATABASE_NAME =
 	'kjvonly-application';
 
 const DATABASE_VERSION =
-	3;
+	6;
 
 export interface StoredDomainObject {
 	readonly id:
@@ -69,6 +81,23 @@ export interface StoredDomainObject {
 	unknown;
 }
 
+export interface StoredFilesystemEntry {
+	readonly id:
+		string;
+
+	readonly publisher:
+		string;
+
+	readonly rootPath:
+		string;
+
+	readonly path:
+		string;
+
+	readonly value:
+		unknown;
+}
+
 export interface ApplicationDBSchema
 	extends DBSchema {
 
@@ -82,6 +111,25 @@ export interface ApplicationDBSchema
 		indexes: {
 			objectType:
 			string;
+		};
+	};
+
+	filesystem_entries: {
+		key:
+		string;
+
+		value:
+		StoredFilesystemEntry;
+
+		indexes: {
+			publisherRootPath:
+			[string, string];
+
+			dataType:
+				string;
+
+			category:
+				string;
 		};
 	};
 
@@ -155,7 +203,10 @@ export function getApplicationDB():
 				DATABASE_VERSION,
 				{
 					upgrade(
-						db
+						db,
+						_oldVersion,
+						_newVersion,
+						transaction
 					) {
 						if (
 							!db.objectStoreNames.contains(
@@ -176,6 +227,69 @@ export function getApplicationDB():
 									OBJECT_TYPE_INDEX,
 									'objectType'
 								);
+						}
+
+						if (
+							!db.objectStoreNames.contains(
+								FILESYSTEM_ENTRIES
+							)
+						) {
+							const filesystemEntries =
+								db.createObjectStore(
+									FILESYSTEM_ENTRIES,
+									{
+										keyPath:
+											'id'
+									}
+								);
+
+							filesystemEntries
+								.createIndex(
+									FILESYSTEM_ENTRY_PUBLISHER_ROOT_PATH_INDEX,
+									[
+										'publisher',
+										'rootPath'
+									]
+								);
+
+							filesystemEntries
+								.createIndex(
+									FILESYSTEM_ENTRY_DATA_TYPE_INDEX,
+									'value.descriptor.metadata.dataType'
+								);
+
+							filesystemEntries
+								.createIndex(
+									FILESYSTEM_ENTRY_CATEGORY_INDEX,
+									'value.descriptor.metadata.category'
+								);
+						} else {
+							const filesystemEntries =
+								transaction.objectStore(
+									FILESYSTEM_ENTRIES
+								);
+
+							if (
+								!filesystemEntries.indexNames.contains(
+									FILESYSTEM_ENTRY_DATA_TYPE_INDEX
+								)
+							) {
+								filesystemEntries.createIndex(
+									FILESYSTEM_ENTRY_DATA_TYPE_INDEX,
+									'value.descriptor.metadata.dataType'
+								);
+							}
+
+							if (
+								!filesystemEntries.indexNames.contains(
+									FILESYSTEM_ENTRY_CATEGORY_INDEX
+								)
+							) {
+								filesystemEntries.createIndex(
+									FILESYSTEM_ENTRY_CATEGORY_INDEX,
+									'value.descriptor.metadata.category'
+								);
+							}
 						}
 
 						if (

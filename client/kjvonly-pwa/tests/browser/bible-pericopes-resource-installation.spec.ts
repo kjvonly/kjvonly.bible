@@ -20,6 +20,10 @@ import {
 } from '$lib/resource';
 
 import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
+
+import {
 	BIBLE_PERICOPES_RESOURCE_TYPE,
 	BiblePericopesInterpreter
 } from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
@@ -420,14 +424,19 @@ function createService(
 			installer
 		);
 
-	const processor =
-		new ResourceProcessor(
-			resolver,
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
 			[
 				handler
 			]
+		);
+
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			resolutionProcessor
 		);
 
 	return new ResourceService(

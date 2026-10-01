@@ -15,6 +15,9 @@ notes for that location. Without it, the view shows all notes.
 		Note,
 		NotesById
 	} from '../models/note.model';
+	import type {
+		AvailableNote
+	} from '../models/available-note';
 	import type { NotesSearchResult } from '../runtime/search/notes-search-worker-message';
 	import type {
 		NoteFilterIndex,
@@ -32,7 +35,8 @@ notes for that location. Without it, the view shows all notes.
 	} from '$lib/application';
 
 	const {
-		notesService
+		notesService,
+		toastService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
@@ -54,6 +58,8 @@ notes for that location. Without it, the view shows all notes.
 	let notePersisted = $state(false);
 	let notes: NotesById = $state({});
 	let noteKeys: string[] = $state([]);
+	let availableNotes: AvailableNote[] = $state([]);
+	let availableSearchGeneration = 0;
 	let openedNoteID: string | undefined = $state();
 
 	const NOTE_SEARCH_ID = uuid4();
@@ -147,6 +153,68 @@ notes for that location. Without it, the view shows all notes.
 		} else {
 			updateNotesKeys();
 		}
+
+		void updateAvailableNotes();
+	}
+
+	/**
+	 * Refreshes discoverable Note Resources for the top-level Notes list.
+	 *
+	 * Location-specific Notes views remain installed-only because an unresolved
+	 * descriptor does not expose Note content or Bible-location metadata.
+	 */
+	async function updateAvailableNotes(): Promise<void> {
+		const generation =
+			++availableSearchGeneration;
+
+		const titleSearchEnabled =
+			filterInput.length === 0 ||
+			filterParams.some(
+				(filterParam) =>
+					filterParam.index ===
+						'title' &&
+					filterParam.checked
+			);
+
+		if (
+			bibleLocationRef !==
+				undefined ||
+			!titleSearchEnabled
+		) {
+			availableNotes = [];
+			return;
+		}
+
+		try {
+			const matches =
+				await notesService
+					.searchAvailableNotes(
+						filterInput
+					);
+
+			if (
+				generation !==
+					availableSearchGeneration
+			) {
+				return;
+			}
+
+			availableNotes = [
+				...matches
+			];
+		} catch (error) {
+			console.error(
+				'Available Notes search failed.',
+				error
+			);
+
+			if (
+				generation ===
+					availableSearchGeneration
+			) {
+				availableNotes = [];
+			}
+		}
 	}
 
 	function onFilterParamChanged(index: NoteFilterIndex, checked: boolean) {
@@ -167,6 +235,40 @@ notes for that location. Without it, the view shows all notes.
 				.sort((a, b) => {
 					return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
 				});
+		}
+	}
+
+	async function onSelectedAvailableNote(
+		availableNote: AvailableNote
+	): Promise<void> {
+		try {
+			const installed =
+				await notesService
+					.getByDescriptor(
+						availableNote.descriptor
+					);
+
+			availableNotes =
+				availableNotes.filter(
+					(candidate) =>
+						candidate.id !==
+							installed.id
+				);
+
+			// Edit a working copy so unsaved changes do not mutate list state.
+			note = $state.snapshot(
+				installed
+			);
+			notePersisted = true;
+		} catch (error) {
+			console.error(
+				'Available Note load failed.',
+				error
+			);
+
+			toastService.showToast(
+				'Note could not be loaded.'
+			);
 		}
 	}
 
@@ -203,7 +305,9 @@ notes for that location. Without it, the view shows all notes.
 		bind:filterInput
 		{noteKeys}
 		{notes}
+		{availableNotes}
 		{onSelectedNote}
+		{onSelectedAvailableNote}
 		{bibleLocationRef}
 		{filterParams}
 		{onFilterParamChanged}

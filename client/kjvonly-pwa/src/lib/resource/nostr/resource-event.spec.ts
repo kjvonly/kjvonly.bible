@@ -67,18 +67,18 @@ describe(
 		);
 
 		it(
-			'derives Resource Type from the first three Resource Identifier segments',
+			'uses t as Resource Type independently of d Resource identity',
 			() => {
 				const event =
 					createResourceEvent({
 						tags: [
 							[
 								'd',
-								'kjvonly/plans/readings/365-bible/v1'
+								'my-filesystem'
 							],
 							[
 								't',
-								'kjvonly/plans/readings'
+								'fs'
 							],
 							[
 								'representation',
@@ -96,11 +96,55 @@ describe(
 						event
 					);
 
+				expect(result.resourceId)
+					.toBe(
+						'my-filesystem'
+					);
+
+				expect(result.resourceType)
+					.toBe(
+						'fs'
+					);
+			}
+		);
+
+		it(
+			'preserves non-envelope scalar tags as Resource metadata',
+			() => {
+				const event =
+					createResourceEvent({
+						tags: [
+							[
+								'd',
+								'my-filesystem'
+							],
+							[
+								't',
+								'fs'
+							],
+							[
+								'f',
+								'notes'
+							],
+							[
+								'representation',
+								'content'
+							],
+							[
+								'm',
+								'application/json'
+							]
+						]
+					});
+
 				expect(
-					result.resourceType
-				).toBe(
-					'kjvonly/plans/readings'
-				);
+					toResourceRepresentation(
+						event
+					).metadata
+				).toEqual({
+					f:
+						'notes'
+				});
 			}
 		);
 
@@ -157,42 +201,6 @@ describe(
 		);
 
 		it(
-			'rejects a Resource Identifier without a Resource Type',
-			() => {
-				const event =
-					createResourceEvent({
-						tags: [
-							[
-								'd',
-								'kjvonly/bible'
-							],
-							[
-								't',
-								'kjvonly/bible'
-							],
-							[
-								'representation',
-								'content'
-							],
-							[
-								'm',
-								'application/json'
-							]
-						]
-					});
-
-				expect(
-					() =>
-						toResourceRepresentation(
-							event
-						)
-				).toThrow(
-					'Invalid Resource Identifier'
-				);
-			}
-		);
-
-		it(
 			'requires a t classification tag',
 			() => {
 				const event =
@@ -220,42 +228,6 @@ describe(
 						)
 				).toThrow(
 					'Resource event is missing t tag.'
-				);
-			}
-		);
-
-		it(
-			'requires the t classification to match the Resource Type',
-			() => {
-				const event =
-					createResourceEvent({
-						tags: [
-							[
-								'd',
-								'kjvonly/bible/chapters/kjv/1_1'
-							],
-							[
-								't',
-								'kjvonly/strongs/definitions'
-							],
-							[
-								'representation',
-								'content'
-							],
-							[
-								'm',
-								'application/json'
-							]
-						]
-					});
-
-				expect(
-					() =>
-						toResourceRepresentation(
-							event
-						)
-				).toThrow(
-					'Invalid Resource classification'
 				);
 			}
 		);

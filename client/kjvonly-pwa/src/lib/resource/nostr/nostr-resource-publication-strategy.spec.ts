@@ -86,6 +86,11 @@ describe(
 					mediaType:
 						'application/json+gzip+hex',
 
+					metadata: {
+						f:
+							'notes'
+					},
+
 					value: {
 						'1': {
 							'0': {
@@ -122,6 +127,10 @@ describe(
 						[
 							'representation',
 							'content'
+						],
+						[
+							'f',
+							'notes'
 						]
 					],
 
@@ -161,6 +170,58 @@ describe(
 						}
 					}
 				});
+			}
+		);
+
+		it(
+			'rejects Resource metadata that collides with envelope tags',
+			async () => {
+				const publishEvent =
+					vi.fn();
+
+				const publisher =
+					new NostrResourcePublicationStrategy(
+						createClient({
+							publishEvent
+						}),
+						createContentEncoder()
+					);
+
+				await expect(
+					publisher.publish({
+						type:
+							'resource',
+
+						publisher:
+							PUBKEY,
+
+						resourceType:
+							'fs',
+
+						resourceId:
+							'my-filesystem',
+
+						representation:
+							'content',
+
+						mediaType:
+							'application/json',
+
+						metadata: {
+							t:
+								'other'
+						},
+
+						value:
+							{}
+					})
+				).rejects.toThrow(
+					'Resource metadata cannot use reserved Nostr tag: t'
+				);
+
+				expect(
+					publishEvent
+				).not.toHaveBeenCalled();
 			}
 		);
 

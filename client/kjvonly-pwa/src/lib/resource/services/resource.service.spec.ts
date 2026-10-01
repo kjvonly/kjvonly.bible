@@ -14,6 +14,10 @@ import type {
 } from '$lib/resource/nostr/resource-discovery';
 
 import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
+import type {
 	ResourceInstallResult
 } from './resource-install-result';
 
@@ -545,6 +549,90 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'installs an already-known descriptor without discovery',
+			async () => {
+				const discovery =
+					new FakeDiscovery(
+						null
+					);
+
+				const descriptorProcessor =
+					new FakeDescriptorProcessor();
+
+				const service =
+					createService({
+						discovery,
+						descriptorProcessor
+					});
+
+				const descriptor =
+					createDescriptor();
+
+				await service.installDescriptor(
+					descriptor
+				);
+
+				expect(
+					descriptorProcessor.descriptors
+				).toEqual([
+					descriptor
+				]);
+
+				expect(
+					discovery.references
+				).toEqual([]);
+			}
+		);
+
+		it(
+			'deduplicates concurrent installs for the same descriptor revision',
+			async () => {
+				const descriptorProcessor =
+					new DeferredDescriptorProcessor();
+
+				const service =
+					createService({
+						descriptorProcessor
+					});
+
+				const descriptor =
+					createDescriptor();
+
+				const first =
+					service.installDescriptor(
+						descriptor
+					);
+
+				const second =
+					service.installDescriptor({
+						...descriptor,
+						metadata: {
+							...descriptor.metadata
+						}
+					});
+
+				expect(
+					first
+				).toBe(
+					second
+				);
+
+				expect(
+					descriptorProcessor.descriptors
+				).toHaveLength(
+					1
+				);
+
+				descriptorProcessor.resolveNext();
+
+				await Promise.all([
+					first,
+					second
+				]);
+			}
+		);
 	}
 );
 
@@ -562,6 +650,10 @@ function createService(
 
 		readonly processor?:
 			FakeProcessor;
+
+		readonly descriptorProcessor?:
+			FakeDescriptorProcessor |
+			DeferredDescriptorProcessor;
 	} = {}
 ): ResourceService {
 
@@ -575,8 +667,43 @@ function createService(
 			),
 
 		options.processor ??
-			new FakeProcessor()
+			new FakeProcessor(),
+
+		options.descriptorProcessor
 	);
+}
+
+function createDescriptor():
+	ResourceDescriptor {
+	return {
+		metadata: {
+			publisher:
+				'publisher',
+
+			resourceId:
+				'kjvonly/notes/example',
+
+			category:
+				'kjvonly/notes',
+
+			modifiedAt:
+				100,
+
+			representation:
+				'content',
+
+			mediaType:
+				'application/json'
+		},
+
+		strategy: {
+			type:
+				'example',
+
+			data:
+				{}
+		}
+	};
 }
 
 function createReference():
@@ -879,5 +1006,104 @@ class FakeProcessor {
 				resources:
 					[]
 			};
+	}
+}
+
+
+class FakeDescriptorProcessor {
+	readonly descriptors:
+		ResourceDescriptor[] =
+			[];
+
+	async processDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<ResourceInstallResult> {
+		this.descriptors.push(
+			descriptor
+		);
+
+		return {
+			requested: {
+				publisher:
+					descriptor.metadata.publisher,
+
+				resourceId:
+					descriptor.metadata.resourceId
+			},
+
+			found:
+				true,
+
+			resources:
+				[]
+		};
+	}
+}
+
+class DeferredDescriptorProcessor {
+	readonly descriptors:
+		ResourceDescriptor[] =
+			[];
+
+	private readonly pending:
+		{
+			readonly descriptor:
+				ResourceDescriptor;
+
+			readonly resolve:
+				(
+					result:
+						ResourceInstallResult
+				) => void;
+		}[] =
+			[];
+
+	processDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<ResourceInstallResult> {
+		this.descriptors.push(
+			descriptor
+		);
+
+		return new Promise(
+			(resolve) => {
+				this.pending.push({
+					descriptor,
+					resolve
+				});
+			}
+		);
+	}
+
+	resolveNext(): void {
+		const pending =
+			this.pending.shift();
+
+		if (
+			pending ===
+				undefined
+		) {
+			throw new Error(
+				'No pending descriptor install.'
+			);
+		}
+
+		pending.resolve({
+			requested: {
+				publisher:
+					pending.descriptor.metadata.publisher,
+
+				resourceId:
+					pending.descriptor.metadata.resourceId
+			},
+
+			found:
+				true,
+
+			resources:
+				[]
+		});
 	}
 }

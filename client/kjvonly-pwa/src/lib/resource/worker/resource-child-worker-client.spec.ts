@@ -95,6 +95,75 @@ describe(
 		);
 
 		it(
+			'sends direct descriptor process requests and resolves results',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const client =
+					createClient(
+						worker
+					);
+
+				const descriptor =
+					createDescriptor();
+
+				const promise =
+					client.processDescriptor(
+						descriptor
+					);
+
+				expect(
+					worker.messages
+				).toEqual([
+					{
+						type:
+							'process-descriptor',
+
+						requestId:
+							'1',
+
+						descriptor
+					}
+				]);
+
+				const requested = {
+					publisher:
+						descriptor.metadata.publisher,
+
+					resourceId:
+						descriptor.metadata.resourceId
+				};
+
+				worker.emitMessage({
+					type:
+						'process-result',
+
+					requestId:
+						'1',
+
+					result: {
+						requested,
+						found:
+							true,
+						resources:
+							[]
+					}
+				});
+
+				await expect(
+					promise
+				).resolves.toEqual({
+					requested,
+					found:
+						true,
+					resources:
+						[]
+				});
+			}
+		);
+
+		it(
 			'forwards Resource strategy resolution through the coordinator',
 			async () => {
 				const worker =

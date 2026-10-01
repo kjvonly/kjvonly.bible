@@ -19,6 +19,30 @@ import type {
 } from '$lib/resource/resolution/resource-resolution-strategy';
 
 import {
+	ResourceResolutionStrategyRegistry
+} from '$lib/resource/resolution/resource-resolution-strategy-registry';
+
+import {
+	ResourceDescriptorContentResolver
+} from '$lib/resource/resolution/resource-descriptor-content-resolver';
+
+import {
+	ResourceDescriptorCurrentness
+} from '$lib/resource/resolution/resource-descriptor-currentness';
+
+import {
+	ResourceDescriptorPreparer
+} from '$lib/resource/resolution/resource-descriptor-preparer';
+
+import {
+	ResourceDescriptorTerminalResolver
+} from '$lib/resource/resolution/resource-descriptor-terminal-resolver';
+
+import {
+	ResourceDescriptorGraphResolver
+} from '$lib/resource/resolution/resource-descriptor-graph-resolver';
+
+import {
 	ResourceContentDecoratorBuilder
 } from '$lib/resource/content/resource-content-decorator-builder';
 
@@ -61,6 +85,14 @@ import type {
 import {
 	ResourceProcessor
 } from '$lib/resource/services/resource-processor';
+
+import {
+	ResourceDescriptorProcessor
+} from '$lib/resource/services/resource-descriptor-processor';
+
+import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
 
 import {
 	getApplicationDB
@@ -206,6 +238,17 @@ import {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Filesystem
+
+import {
+	FilesystemInstaller,
+	FilesystemInterpreter,
+	FilesystemResourceHandler,
+	FilesystemValidator,
+	IndexedDBFilesystemInstallationTransaction
+} from '$lib/domains/filesystem';
+
+///////////////////////////////////////////////////////////////////////////////
 // Notes
 
 import {
@@ -339,21 +382,38 @@ export function createContentResourceProcessor():
 			new ContentRepresentationResolver()
 		]);
 
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
+			dependencies.decoder,
+			dependencies.receipts,
+			dependencies.handlers
+		);
+
 	return new ResourceProcessor(
 		resolver,
-		dependencies.decoder,
-		dependencies.receipts,
-		dependencies.handlers
+		resolutionProcessor
 	);
 }
 
-export function createDescriptorResourceProcessor(
+export interface DescriptorResourceProcessors {
+	readonly representation:
+		ResourceProcessor;
+
+	readonly descriptor:
+		ResourceDescriptorProcessor;
+}
+
+/**
+ * Composes the descriptor worker's representation and already-known descriptor
+ * entry points over one shared descriptor graph and installation lifecycle.
+ */
+export function createDescriptorResourceProcessors(
 	remoteStrategyResolver:
 		Pick<
 			ResourceResolutionStrategy,
 			'resolve'
 		>
-): ResourceProcessor {
+): DescriptorResourceProcessors {
 
 	const dependencies =
 		createResourceProcessingDependencies();
@@ -381,15 +441,45 @@ export function createDescriptorResourceProcessor(
 					)
 		};
 
+	const strategyRegistry =
+		new ResourceResolutionStrategyRegistry([
+			blossomStrategy,
+			nostrStrategy
+		]);
+
+	const descriptorContentResolver =
+		new ResourceDescriptorContentResolver(
+			strategyRegistry
+		);
+
+	const descriptorCurrentness =
+		new ResourceDescriptorCurrentness(
+			dependencies.receipts
+		);
+
+	const descriptorPreparer =
+		new ResourceDescriptorPreparer(
+			descriptorValidator,
+			descriptorCurrentness
+		);
+
+	const descriptorTerminalResolver =
+		new ResourceDescriptorTerminalResolver(
+			descriptorContentResolver
+		);
+
+	const descriptorGraphResolver =
+		new ResourceDescriptorGraphResolver(
+			descriptorDocumentDecoder,
+			descriptorPreparer,
+			descriptorContentResolver,
+			descriptorTerminalResolver
+		);
+
 	const descriptorsResolver =
 		new DescriptorsRepresentationResolver(
 			descriptorDocumentDecoder,
-			descriptorValidator,
-			dependencies.receipts,
-			[
-				blossomStrategy,
-				nostrStrategy
-			]
+			descriptorGraphResolver
 		);
 
 	const resolver =
@@ -397,12 +487,26 @@ export function createDescriptorResourceProcessor(
 			descriptorsResolver
 		]);
 
-	return new ResourceProcessor(
-		resolver,
-		dependencies.decoder,
-		dependencies.receipts,
-		dependencies.handlers
-	);
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
+			dependencies.decoder,
+			dependencies.receipts,
+			dependencies.handlers
+		);
+
+	return {
+		representation:
+			new ResourceProcessor(
+				resolver,
+				resolutionProcessor
+			),
+
+		descriptor:
+			new ResourceDescriptorProcessor(
+				descriptorGraphResolver,
+				resolutionProcessor
+			)
+	};
 }
 
 function createResourceProcessingDependencies():
@@ -572,6 +676,25 @@ function createResourceHandlers():
 		);
 
 
+	const filesystemInstallationTransaction =
+		new IndexedDBFilesystemInstallationTransaction(
+			getApplicationDB
+		);
+
+	const filesystemInstaller =
+		new FilesystemInstaller(
+			filesystemInstallationTransaction
+		);
+
+	const filesystemResourceHandler =
+		new FilesystemResourceHandler(
+			new FilesystemInterpreter(),
+			new FilesystemValidator(
+				new ResourceDescriptorValidator()
+			),
+			filesystemInstaller
+		);
+
 	const notesInstallationTransaction =
 		new IndexedDBNotesInstallationTransaction(
 			getApplicationDB
@@ -664,6 +787,7 @@ function createResourceHandlers():
 		biblePericopesResourceHandler,
 		bibleTextMarkupResourceHandler,
 		bibleSearchIndexResourceHandler,
+		filesystemResourceHandler,
 		noteResourceHandler,
 		planDefinitionResourceHandler,
 		planSubscriptionResourceHandler,

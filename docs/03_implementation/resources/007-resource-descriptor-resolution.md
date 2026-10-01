@@ -212,21 +212,163 @@ This keeps external retrieval separate from Resource content decoding and Domain
 
 # Strategy Registry
 
-`DescriptorsRepresentationResolver` receives a collection of strategies and builds a type-indexed registry.
+`ResourceResolutionStrategyRegistry` owns strategy registration and lookup.
 
-Duplicate strategy types are rejected during construction.
+The Resource worker composition root constructs the registry from the supported strategies.
 
-When processing a descriptor:
+Duplicate strategy types are rejected when the registry is constructed.
+
+---
+
+# Descriptor Content Resolver
+
+`ResourceDescriptorContentResolver` owns the provider-independent operation that turns one validated `ResourceDescriptor` into serialized bytes.
+
+Conceptually:
 
 ```text
+ResourceDescriptor
+    ↓
 descriptor.strategy.type
+    ↓
+ResourceResolutionStrategyRegistry
     ↓
 registered strategy
     ↓
 strategy.resolve(descriptor)
+    ↓
+Uint8Array
 ```
 
-An unknown strategy becomes a failure for that descriptor.
+An unknown strategy is rejected by the descriptor content resolver.
+
+`DescriptorsRepresentationResolver` consumes this operation rather than selecting strategies itself.
+
+The content resolver does not own descriptor validation, Resource receipt currentness, collection traversal, nesting policy, Domain decoding, or installation.
+
+---
+
+# Terminal Descriptor Resolution
+
+`ResourceDescriptorTerminalResolver` owns the terminal `content` branch for one already-validated descriptor.
+
+Conceptually:
+
+```text
+validated ResourceDescriptor
+    ↓
+ResourceDescriptorContentResolver
+    ↓
+Uint8Array
+    + trusted descriptor metadata
+    ↓
+VerifiedResourceContent
+```
+
+The terminal resolver preserves the descriptor's publisher, Resource ID, Resource Type, revision, and media type while attaching the serialized bytes returned by the configured resolution strategy.
+
+It does not evaluate Resource currentness, traverse nested descriptor collections, apply cycle/depth policy, decode the serialized content, or install Domain Objects.
+
+Nested `descriptors` entries continue to use `ResourceDescriptorContentResolver` directly because their retrieved bytes are descriptor documents that must re-enter descriptor-graph traversal rather than become terminal `VerifiedResourceContent`.
+
+---
+
+# Descriptor Currentness
+
+`ResourceDescriptorCurrentness` adapts one validated `ResourceDescriptor` to the generic Resource receipt currentness check.
+
+Conceptually:
+
+```text
+ResourceDescriptor
+    ↓
+publisher + resourceId + modifiedAt
+    ↓
+ResourceReceiptService.needsProcessing(...)
+    ↓
+boolean
+```
+
+This keeps Resource receipt identity/revision extraction out of descriptor collection traversal.
+
+The currentness collaborator does not validate descriptors, select or execute resolution strategies, traverse nested descriptor collections, or create resolution results.
+
+`DescriptorsRepresentationResolver` remains responsible for deciding what a current descriptor means to collection traversal and result aggregation.
+
+---
+
+# Descriptor Preparation
+
+`ResourceDescriptorPreparer` owns the boundary from one untrusted descriptor-document entry to a descriptor that is ready for traversal.
+
+Conceptually:
+
+```text
+unknown descriptor entry
+    ↓
+ResourceDescriptorValidator
+    ↓
+validated ResourceDescriptor
+    ↓
+ResourceDescriptorCurrentness
+    ↓
+ready | current | failed
+```
+
+The preparer preserves a validated descriptor on currentness failures so callers can retain trustworthy Resource identity in failure results. Validation failures do not invent Resource identity.
+
+The preparer does not retrieve bytes, inspect `representation`, traverse nested descriptor collections, apply cycle/depth policy, decode Resource content, or install Domain Objects.
+
+`ResourceDescriptorGraphResolver` consumes preparation outcomes during graph traversal.
+
+---
+
+# Descriptor Graph Resolution
+
+`ResourceDescriptorGraphResolver` owns traversal of descriptor-document entries after the containing document has been decoded.
+
+Conceptually:
+
+```text
+descriptor entries
+    ↓
+prepare each entry
+    ↓
+current | failed | ready
+    ↓
+ready representation?
+    ├── content
+    │    ↓
+    │  ResourceDescriptorTerminalResolver
+    │
+    └── descriptors
+         ↓
+       cycle/depth policy
+         ↓
+       ResourceDescriptorContentResolver
+         ↓
+       ResourceDescriptorDocumentDecoder
+         ↓
+       recurse
+```
+
+The graph resolver owns path-local cycle detection, maximum nesting depth, nested descriptor-document decoding, recursive traversal, sibling failure isolation, and flattening nested `contents`, `current`, and `failures` into one `ResourceResolutionResult`.
+
+It does not own descriptor validation/currentness rules, strategy registration/provider selection, terminal content construction, Domain decoding, or installation. Those responsibilities remain delegated to the focused collaborators extracted earlier.
+
+`DescriptorsRepresentationResolver` is now the representation-level facade. It decodes the outer `ResourceRepresentation` descriptor document, associates an outer document-decode failure with that containing Resource, and delegates the resulting entries plus root Resource identity to `ResourceDescriptorGraphResolver`.
+
+The graph resolver also exposes a direct entry point for an already-known `ResourceDescriptor`:
+
+```ts
+resolveDescriptor(
+    descriptor: ResourceDescriptor
+): Promise<ResourceResolutionResult>
+```
+
+This path does not manufacture a `ResourceRepresentation` or require an enclosing descriptor document. It seeds an empty visited set and then uses the same preparation, currentness, strategy, nesting, cycle/depth, failure-isolation, and terminal-resolution behavior as document-originated descriptors.
+
+This is the generic Resource-layer seam needed by callers that already possess a descriptor, including filesystem materialization. The filesystem remains responsible only for supplying the stored descriptor; descriptor resolution behavior remains owned by the Resource layer.
 
 ---
 
@@ -430,16 +572,18 @@ Descriptor-level failures. When validation succeeded, the failure includes publi
 
 # Processing After Resolution
 
-`ResourceProcessor` receives the resolution result.
+`ResourceProcessor` remains the representation-level facade. It resolves a `ResourceRepresentation` through `ResourceResolver` and delegates the resulting `ResourceResolutionResult` to `ResourceResolutionProcessor`.
 
-For each terminal content result it:
+`ResourceResolutionProcessor` owns the reusable downstream operation for an already-resolved Resource result. For each terminal content result it:
 
 1. decodes Resource content,
 2. dispatches the matching `ResourceHandler`,
 3. lets the Domain interpret/validate/install the object,
 4. marks the terminal Resource receipt processed only after successful processing.
 
-This ordering prevents a failed Domain installation from creating a receipt that would incorrectly suppress later retries.
+Current and failed resolution outcomes are mapped directly into installation outcomes without entering the content decoder or Domain handler path.
+
+This ordering prevents a failed Domain installation from creating a receipt that would incorrectly suppress later retries. It also makes the post-resolution lifecycle reusable by callers that resolve Resources without first producing a `ResourceRepresentation`.
 
 ---
 

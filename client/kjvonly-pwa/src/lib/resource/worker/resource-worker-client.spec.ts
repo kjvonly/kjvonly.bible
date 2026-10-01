@@ -139,6 +139,105 @@ describe(
 		);
 
 		it(
+			'sends descriptor install requests without discovery',
+			async () => {
+				const worker =
+					new FakeWorker();
+
+				const discovery =
+					new FakeDiscovery(
+						null
+					);
+
+				const client =
+					new ResourceWorkerClient(
+						worker,
+						discovery
+					);
+
+				const descriptor =
+					createDescriptor();
+
+				const promise =
+					client.installDescriptor(
+						descriptor
+					);
+
+				expect(
+					worker.messages
+				).toHaveLength(
+					1
+				);
+
+				const request =
+					worker.messages[0];
+
+				expect(
+					request
+				).toEqual({
+					type:
+						'install-descriptor',
+
+					requestId:
+						'install-descriptor-1',
+
+					descriptor
+				});
+
+				if (
+					request.type !==
+						'install-descriptor'
+				) {
+					throw new Error(
+						'Expected descriptor install request.'
+					);
+				}
+
+				const reference = {
+					publisher:
+						descriptor.metadata.publisher,
+
+					resourceId:
+						descriptor.metadata.resourceId
+				};
+
+				worker.emit({
+					type:
+						'install-result',
+
+					requestId:
+						request.requestId,
+
+					result: {
+						requested:
+							reference,
+
+						found:
+							true,
+
+						resources: []
+					}
+				});
+
+				await expect(
+					promise
+				).resolves.toEqual({
+					requested:
+						reference,
+
+					found:
+						true,
+
+					resources: []
+				});
+
+				expect(
+					discovery.references
+				).toEqual([]);
+			}
+		);
+
+		it(
 			'bridges discovery requests to ResourceDiscovery',
 			async () => {
 				const worker =

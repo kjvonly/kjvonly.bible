@@ -342,6 +342,17 @@ import {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Filesystem
+
+import {
+    FilesystemService
+} from '$lib/domains/filesystem';
+
+import {
+    IndexedDBFilesystemStore
+} from '$lib/domains/filesystem/persistence/indexeddb-filesystem-store';
+
+///////////////////////////////////////////////////////////////////////////////
 // Notes
 
 import {
@@ -1027,12 +1038,11 @@ export class Application {
             );
 
         /*
-         * ResourceLoader only depends on the generic
-         * install(reference) capability.
+         * ResourceLoader depends only on the generic Resource install
+         * capabilities exposed by ResourceWorkerClient.
          *
-         * Resource acquisition therefore executes through
-         * ResourceWorkerClient rather than a main-thread
-         * ResourceService.
+         * Resource acquisition therefore executes through the worker boundary
+         * rather than a main-thread ResourceService.
          */
         const chapterResourceLoader =
             new ResourceLoader<string>(
@@ -1193,6 +1203,19 @@ export class Application {
             );
 
         ///////////////////////////////////////////////////////////////////////
+        // Filesystem
+
+        const filesystemStore =
+            new IndexedDBFilesystemStore(
+                getApplicationDB
+            );
+
+        const filesystemService =
+            new FilesystemService(
+                filesystemStore
+            );
+
+        ///////////////////////////////////////////////////////////////////////
         // Notes
 
         const notesStore =
@@ -1208,12 +1231,20 @@ export class Application {
         const notesResourcePublication =
             new NotesResourcePublication();
 
+        const notesResourceLoader =
+            new ResourceLoader<string>(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
         const notesService =
             new NotesService(
                 notesStore,
                 notesWriteTransaction,
                 notesResourcePublication,
-                outboxProcessor
+                outboxProcessor,
+                filesystemService,
+                notesResourceLoader
             );
 
         archiveService.subscribeToImports(
@@ -1369,6 +1400,8 @@ export class Application {
             bibleLocationReferenceService,
             bibleNavigationService,
             bibleVerseReferenceService,
+
+            filesystemService,
 
             notesService,
 

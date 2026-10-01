@@ -5,12 +5,13 @@ import {
 
 import type {
 	ResourceChildWorkerMessage,
-	ResourceChildWorkerProcessRequest,
+	ResourceChildWorkerProcessDescriptorRequest,
+	ResourceChildWorkerProcessRepresentationRequest,
 	ResourceChildWorkerRequest
 } from './resource-child-worker-message';
 
 import {
-	createDescriptorResourceProcessor
+	createDescriptorResourceProcessors
 } from './resource-worker-composition';
 
 import {
@@ -48,8 +49,8 @@ const strategyResolver =
 			ResourceWorkerStrategyResolverPort
 	);
 
-const resourceProcessor =
-	createDescriptorResourceProcessor(
+const processors =
+	createDescriptorResourceProcessors(
 		strategyResolver
 	);
 
@@ -61,28 +62,76 @@ workerPort.addEventListener(
 			event.data;
 
 		if (
-			message.type !==
-			'process'
+			message.type ===
+				'process'
 		) {
+			void handleProcessRepresentation(
+				message
+			);
+
 			return;
 		}
 
-		void handleProcess(
-			message
-		);
+		if (
+			message.type ===
+				'process-descriptor'
+		) {
+			void handleProcessDescriptor(
+				message
+			);
+		}
 	}
 );
 
-async function handleProcess(
+async function handleProcessRepresentation(
 	message:
-		ResourceChildWorkerProcessRequest
+		ResourceChildWorkerProcessRepresentationRequest
 ): Promise<void> {
 
 	try {
 		const result =
-			await resourceProcessor.process(
+			await processors.representation.process(
 				message.requested,
 				message.representation
+			);
+
+		workerPort.postMessage({
+			type:
+				'process-result',
+
+			requestId:
+				message.requestId,
+
+			result:
+				serializeResourceWorkerInstallResult(
+					result
+				)
+		});
+	} catch (error) {
+		workerPort.postMessage({
+			type:
+				'process-error',
+
+			requestId:
+				message.requestId,
+
+			error:
+				serializeResourceWorkerError(
+					error
+				)
+		});
+	}
+}
+
+async function handleProcessDescriptor(
+	message:
+		ResourceChildWorkerProcessDescriptorRequest
+): Promise<void> {
+
+	try {
+		const result =
+			await processors.descriptor.process(
+				message.descriptor
 			);
 
 		workerPort.postMessage({

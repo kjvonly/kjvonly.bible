@@ -5,7 +5,7 @@ import {
 
 import type {
 	ResourceChildWorkerMessage,
-	ResourceChildWorkerProcessRequest,
+	ResourceChildWorkerProcessRepresentationRequest,
 	ResourceChildWorkerRequest
 } from './resource-child-worker-message';
 
@@ -62,7 +62,7 @@ workerPort.addEventListener(
 
 async function handleProcess(
 	message:
-		ResourceChildWorkerProcessRequest
+		ResourceChildWorkerProcessRepresentationRequest
 ): Promise<void> {
 
 	try {

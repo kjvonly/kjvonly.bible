@@ -25,6 +25,30 @@ import type {
 	ResourceResolutionStrategy
 } from './resource-resolution-strategy';
 
+import {
+	ResourceResolutionStrategyRegistry
+} from './resource-resolution-strategy-registry';
+
+import {
+	ResourceDescriptorContentResolver
+} from './resource-descriptor-content-resolver';
+
+import {
+	ResourceDescriptorCurrentness
+} from './resource-descriptor-currentness';
+
+import {
+	ResourceDescriptorPreparer
+} from './resource-descriptor-preparer';
+
+import {
+	ResourceDescriptorTerminalResolver
+} from './resource-descriptor-terminal-resolver';
+
+import {
+	ResourceDescriptorGraphResolver
+} from './resource-descriptor-graph-resolver';
+
 const PUBLISHER =
 	'a'.repeat(
 		64
@@ -50,33 +74,6 @@ describe(
 					resolver.representation
 				).toBe(
 					'descriptors'
-				);
-			}
-		);
-
-		it(
-			'rejects duplicate Resource resolution strategies',
-			() => {
-				const strategyA =
-					createStrategy(
-						'blossom'
-					);
-
-				const strategyB =
-					createStrategy(
-						'blossom'
-					);
-
-				expect(
-					() =>
-						createResolver({
-							strategies: [
-								strategyA,
-								strategyB
-							]
-						})
-				).toThrow(
-					'Duplicate Resource resolution strategy: blossom'
 				);
 			}
 		);
@@ -292,7 +289,8 @@ describe(
 						resolve:
 							vi.fn(
 								async (
-									descriptor
+									descriptor:
+										ResourceDescriptor
 								) =>
 									descriptor.metadata
 										.representation ===
@@ -302,14 +300,32 @@ describe(
 							)
 					};
 
+				const descriptorContentResolver =
+					new ResourceDescriptorContentResolver(
+						new ResourceResolutionStrategyRegistry([
+							strategy
+						])
+					);
+
+				const descriptorPreparer =
+					new ResourceDescriptorPreparer(
+						new ResourceDescriptorValidator(),
+						new ResourceDescriptorCurrentness(
+							receiptService
+						)
+					);
+
 				const resolver =
 					new DescriptorsRepresentationResolver(
 						documentDecoder,
-						new ResourceDescriptorValidator(),
-						receiptService,
-						[
-							strategy
-						]
+						new ResourceDescriptorGraphResolver(
+							documentDecoder,
+							descriptorPreparer,
+							descriptorContentResolver,
+							new ResourceDescriptorTerminalResolver(
+								descriptorContentResolver
+							)
+						)
 					);
 
 				const result =
@@ -558,7 +574,8 @@ describe(
 						resolve:
 							vi.fn(
 								async (
-									descriptor
+									descriptor:
+										ResourceDescriptor
 								) => {
 									const index =
 										descriptors.findIndex(
@@ -572,14 +589,32 @@ describe(
 							)
 					};
 
+				const descriptorContentResolver =
+					new ResourceDescriptorContentResolver(
+						new ResourceResolutionStrategyRegistry([
+							strategy
+						])
+					);
+
+				const descriptorPreparer =
+					new ResourceDescriptorPreparer(
+						new ResourceDescriptorValidator(),
+						new ResourceDescriptorCurrentness(
+							receiptService
+						)
+					);
+
 				const resolver =
 					new DescriptorsRepresentationResolver(
 						documentDecoder,
-						new ResourceDescriptorValidator(),
-						receiptService,
-						[
-							strategy
-						]
+						new ResourceDescriptorGraphResolver(
+							documentDecoder,
+							descriptorPreparer,
+							descriptorContentResolver,
+							new ResourceDescriptorTerminalResolver(
+								descriptorContentResolver
+							)
+						)
 					);
 
 				const result =
@@ -906,7 +941,8 @@ describe(
 						resolve:
 							vi.fn(
 								async (
-									descriptor
+									descriptor:
+										ResourceDescriptor
 								) => {
 									if (
 										descriptor.metadata
@@ -1011,16 +1047,34 @@ describe(
 						)
 				};
 
-				const resolver =
-					new DescriptorsRepresentationResolver(
-						documentDecoder,
-						new ResourceDescriptorValidator(),
-						receiptService,
-						[
+				const descriptorContentResolver =
+					new ResourceDescriptorContentResolver(
+						new ResourceResolutionStrategyRegistry([
 							createStrategy(
 								'blossom'
 							)
-						]
+						])
+					);
+
+				const descriptorPreparer =
+					new ResourceDescriptorPreparer(
+						new ResourceDescriptorValidator(),
+						new ResourceDescriptorCurrentness(
+							receiptService
+						)
+					);
+
+				const resolver =
+					new DescriptorsRepresentationResolver(
+						documentDecoder,
+						new ResourceDescriptorGraphResolver(
+							documentDecoder,
+							descriptorPreparer,
+							descriptorContentResolver,
+							new ResourceDescriptorTerminalResolver(
+								descriptorContentResolver
+							)
+						)
 					);
 
 				const resource =
@@ -1095,13 +1149,36 @@ function createResolver(
 			)
 	};
 
+	const descriptorContentResolver =
+		new ResourceDescriptorContentResolver(
+			new ResourceResolutionStrategyRegistry(
+				options.strategies ??
+				[]
+			)
+		);
+
+	const descriptorPreparer =
+		new ResourceDescriptorPreparer(
+			new ResourceDescriptorValidator(),
+			new ResourceDescriptorCurrentness(
+				receiptService
+			)
+		);
+
+	const descriptorGraphResolver =
+		new ResourceDescriptorGraphResolver(
+			documentDecoder,
+			descriptorPreparer,
+			descriptorContentResolver,
+			new ResourceDescriptorTerminalResolver(
+				descriptorContentResolver
+			)
+		);
+
 	const resolver =
 		new DescriptorsRepresentationResolver(
 			documentDecoder,
-			new ResourceDescriptorValidator(),
-			receiptService,
-			options.strategies ??
-			[]
+			descriptorGraphResolver
 		);
 
 	return {

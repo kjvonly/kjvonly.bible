@@ -3,6 +3,10 @@ import type {
 } from '../models/note.model';
 
 import type {
+	AvailableNote
+} from '../models/available-note';
+
+import type {
 	NotesStore
 } from '../persistence/notes-store';
 
@@ -25,6 +29,23 @@ import type {
 import type {
 	OutboxWakeup
 } from '$lib/application';
+
+import type {
+	ResourceDescriptor
+} from '$lib/resource';
+
+import type {
+	FilesystemSearchByIndex,
+	FilesystemSearchMatch
+} from '$lib/domains/filesystem';
+
+import {
+	createNoteIdForDescriptor
+} from '../resources/notes-resource-source';
+
+import {
+	NOTES_RESOURCE_TYPE
+} from '../resources/note-interpreter';
 
 interface NotesSearchRuntimePort {
 	setResultHandler(
@@ -57,6 +78,23 @@ interface NotesSearchRuntimePort {
 	): void;
 }
 
+interface NotesFilesystemSearchPort {
+	search(
+		byIndex:
+			FilesystemSearchByIndex,
+		text: string
+	): Promise<
+		readonly FilesystemSearchMatch[]
+	>;
+}
+
+interface NotesResourceDescriptorLoader {
+	loadDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<void>;
+}
+
 interface NotesSubscriber {
 	readonly subID: string;
 	readonly id: string;
@@ -73,8 +111,12 @@ interface NotesSubscriber {
  * Initial accepted Notes are loaded from the Domain store. Normal Note changes
  * are applied incrementally to the search runtime. External persistence changes
  * can signal refresh(), which asks the worker to reload accepted Notes directly
- * from IndexedDB and rebuild its search projection. Resource discovery and
- * synchronization are intentionally outside this service.
+ * from IndexedDB and rebuild its search projection.
+ *
+ * When an already-known ResourceDescriptor identifies an individual Note, this
+ * service preserves the normal Domain boundary: check Notes persistence first,
+ * ask the generic Resource loader to install the descriptor when missing, then
+ * read Notes persistence again. Resource installation never returns the Note.
  */
 export class NotesService {
 	private subscribers:
@@ -88,7 +130,8 @@ export class NotesService {
 		private readonly store:
 			Pick<
 				NotesStore,
-				'getAll'
+				'get' |
+					'getAll'
 			>,
 
 		private readonly writeTransaction:
@@ -103,6 +146,12 @@ export class NotesService {
 
 		private readonly outbox:
 			OutboxWakeup,
+
+		private readonly filesystem:
+			NotesFilesystemSearchPort,
+
+		private readonly resourceLoader:
+			NotesResourceDescriptorLoader,
 
 		private readonly runtime:
 			NotesSearchRuntimePort =
@@ -172,12 +221,172 @@ export class NotesService {
 		);
 	}
 
+	/**
+	 * Finds individual Note Resources advertised by mounted filesystems.
+	 *
+	 * Installed Notes are omitted so callers can merge this projection with the
+	 * normal local Notes search without showing the same Note twice.
+	 */
+	async searchAvailableNotes(
+		text: string
+	): Promise<
+		readonly AvailableNote[]
+	> {
+		await this.ready;
+
+		const matches =
+			await this.filesystem.search(
+				{
+					index: 'category',
+					value:
+						NOTES_RESOURCE_TYPE
+				},
+				text
+			);
+
+		const candidates =
+			new Map<
+				string,
+				AvailableNote
+			>();
+
+		for (const match of matches) {
+			const descriptor =
+				match.entry.descriptor;
+
+			if (
+				descriptor.metadata.category !==
+					NOTES_RESOURCE_TYPE
+			) {
+				continue;
+			}
+
+			let noteId: string;
+
+			try {
+				noteId =
+					createNoteIdForDescriptor(
+						descriptor
+					);
+			} catch {
+				// Bundle/invalid Note descriptors are not individual list entries.
+				continue;
+			}
+
+			if (
+				candidates.has(
+					noteId
+				)
+			) {
+				continue;
+			}
+
+			candidates.set(
+				noteId,
+				{
+					id: noteId,
+					name:
+						createAvailableNoteName(
+							match
+						),
+					filesystemPublisher:
+						match.publisher,
+					rootPath:
+						match.rootPath,
+					path:
+						match.entry.path,
+					descriptor
+				}
+			);
+		}
+
+		const availability =
+			await Promise.all(
+				[...candidates.values()]
+					.map(
+						async (candidate) => ({
+							candidate,
+							existing:
+								await this.store.get(
+									candidate.id
+								)
+						})
+					)
+			);
+
+		return availability
+			.filter(
+				({ existing }) =>
+					existing === undefined
+			)
+			.map(
+				({ candidate }) =>
+					candidate
+			);
+	}
+
 	refresh(): void {
 		void this.ready.then(
 			() => {
 				this.runtime.refresh();
 			}
 		);
+	}
+
+	/**
+	 * Returns one individual Note represented by an already-known descriptor.
+	 *
+	 * The Resource layer is responsible only for ensuring the descriptor is
+	 * processed. Notes remains authoritative for retrieving the installed
+	 * Domain object from its own persistence.
+	 */
+	async getByDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<Note> {
+		await this.ready;
+
+		const noteId =
+			createNoteIdForDescriptor(
+				descriptor
+			);
+
+		const existing =
+			await this.store.get(
+				noteId
+			);
+
+		if (
+			existing !==
+			undefined
+		) {
+			return existing;
+		}
+
+		await this.resourceLoader
+			.loadDescriptor(
+				descriptor
+			);
+
+		const installed =
+			await this.store.get(
+				noteId
+			);
+
+		if (
+			installed ===
+			undefined
+		) {
+			throw new Error(
+				`Note was not installed: ${noteId}`
+			);
+		}
+
+		this.runtime.put(
+			installed
+		);
+
+		return installed;
 	}
 
 	async put(
@@ -281,4 +490,29 @@ export class NotesService {
 			}
 		);
 	}
+}
+
+function createAvailableNoteName(
+	match: FilesystemSearchMatch
+): string {
+	const descriptorName =
+		match.entry.descriptor
+			.metadata.name;
+
+	if (descriptorName !== undefined) {
+		return descriptorName;
+	}
+
+	const pathSegments =
+		match.entry.path
+			.split('/')
+			.filter(Boolean);
+
+	return (
+		pathSegments[
+			pathSegments.length - 1
+		] ??
+		match.entry.descriptor
+			.metadata.resourceId
+	);
 }

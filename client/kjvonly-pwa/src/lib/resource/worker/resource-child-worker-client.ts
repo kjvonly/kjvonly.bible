@@ -160,6 +160,78 @@ export class ResourceChildWorkerClient {
 		);
 	}
 
+	/**
+	 * Processes one already-known Resource descriptor without Resource discovery.
+	 */
+	processDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<ResourceInstallResult> {
+
+		if (
+			this.disposed
+		) {
+			return Promise.reject(
+				new Error(
+					'Resource child worker has been disposed.'
+				)
+			);
+		}
+
+		if (
+			this.failure !==
+				undefined
+		) {
+			return Promise.reject(
+				this.failure
+			);
+		}
+
+		const requestId =
+			String(
+				++this.nextRequestId
+			);
+
+		return new Promise(
+			(
+				resolve,
+				reject
+			) => {
+				this.pending.set(
+					requestId,
+					{
+						resolve,
+						reject
+					}
+				);
+
+				const message:
+					ResourceChildWorkerRequest = {
+					type:
+						'process-descriptor',
+
+					requestId,
+
+					descriptor
+				};
+
+				try {
+					this.worker.postMessage(
+						message
+					);
+				} catch (error) {
+					this.pending.delete(
+						requestId
+					);
+
+					reject(
+						error
+					);
+				}
+			}
+		);
+	}
+
 	dispose(): void {
 
 		if (

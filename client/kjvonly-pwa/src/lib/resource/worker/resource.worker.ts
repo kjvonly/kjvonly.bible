@@ -11,6 +11,7 @@ import {
 import {
 	serializeResourceWorkerError,
 	serializeResourceWorkerInstallResult,
+	type ResourceWorkerInstallDescriptorRequest,
 	type ResourceWorkerInstallRequest
 } from './resource-worker-message';
 
@@ -103,8 +104,9 @@ function createDescriptorWorkerClient():
 //
 // ResourceService owns:
 //
-// - exact Published Resource in-flight deduplication
+// - in-flight Resource installation coordination
 // - root Resource Discovery
+// - already-known descriptor installation
 //
 // Once Discovery returns ResourceRepresentation, the Coordinator routes
 // processing by representation type.
@@ -118,7 +120,8 @@ const resourceWorkerProcessor =
 const resourceService =
 	new ResourceService(
 		resourceDiscovery,
-		resourceWorkerProcessor
+		resourceWorkerProcessor,
+		descriptorWorkerPool
 	);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -132,15 +135,24 @@ workerPort.addEventListener(
 			event.data;
 
 		if (
-			message.type !==
-			'install'
+			message.type ===
+				'install'
 		) {
+			void handleInstall(
+				message
+			);
+
 			return;
 		}
 
-		void handleInstall(
-			message
-		);
+		if (
+			message.type ===
+				'install-descriptor'
+		) {
+			void handleInstallDescriptor(
+				message
+			);
+		}
 	}
 );
 
@@ -153,6 +165,45 @@ async function handleInstall(
 		const result =
 			await resourceService.install(
 				message.reference
+			);
+
+		workerPort.postMessage({
+			type:
+				'install-result',
+
+			requestId:
+				message.requestId,
+
+			result:
+				serializeResourceWorkerInstallResult(
+					result
+				)
+		});
+	} catch (error) {
+		workerPort.postMessage({
+			type:
+				'install-error',
+
+			requestId:
+				message.requestId,
+
+			error:
+				serializeResourceWorkerError(
+					error
+				)
+		});
+	}
+}
+
+async function handleInstallDescriptor(
+	message:
+		ResourceWorkerInstallDescriptorRequest
+): Promise<void> {
+
+	try {
+		const result =
+			await resourceService.installDescriptor(
+				message.descriptor
 			);
 
 		workerPort.postMessage({

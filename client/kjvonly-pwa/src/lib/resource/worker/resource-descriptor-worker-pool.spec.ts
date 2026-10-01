@@ -13,6 +13,10 @@ import type {
 	ResourceInstallResult
 } from '$lib/resource/services/resource-install-result';
 
+import type {
+	ResourceDescriptor
+} from '$lib/resource/descriptors/resource-descriptor';
+
 import {
 	ResourceDescriptorWorkerPool
 } from './resource-descriptor-worker-pool';
@@ -346,6 +350,57 @@ describe(
 				]);
 			}
 		);
+
+		it(
+			'dispatches already-known descriptors through the same pool',
+			async () => {
+				const firstWorker =
+					new DeferredWorkerClient();
+
+				const secondWorker =
+					new DeferredWorkerClient();
+
+				const thirdWorker =
+					new DeferredWorkerClient();
+
+				const pool =
+					new ResourceDescriptorWorkerPool([
+						firstWorker,
+						secondWorker,
+						thirdWorker
+					]);
+
+				const descriptor =
+					createDescriptor(
+						'direct'
+					);
+
+				const processing =
+					pool.processDescriptor(
+						descriptor
+					);
+
+				expect(
+					firstWorker.descriptorCalls
+				).toEqual([
+					descriptor
+				]);
+
+				firstWorker.resolveNext();
+
+				await expect(
+					processing
+				).resolves.toMatchObject({
+					requested: {
+						publisher:
+							descriptor.metadata.publisher,
+
+						resourceId:
+							descriptor.metadata.resourceId
+					}
+				});
+			}
+		);
 	}
 );
 
@@ -380,6 +435,10 @@ class DeferredWorkerClient {
 		WorkerCall[] =
 			[];
 
+	readonly descriptorCalls:
+		ResourceDescriptor[] =
+			[];
+
 	private readonly pending:
 		PendingWorkerCall[] =
 			[];
@@ -396,6 +455,38 @@ class DeferredWorkerClient {
 			requested,
 			representation
 		});
+
+		return new Promise(
+			(
+				resolve,
+				reject
+			) => {
+
+				this.pending.push({
+					requested,
+					resolve,
+					reject
+				});
+			}
+		);
+	}
+
+	processDescriptor(
+		descriptor:
+			ResourceDescriptor
+	): Promise<ResourceInstallResult> {
+		this.descriptorCalls.push(
+			descriptor
+		);
+
+		const requested:
+			PublishedResourceReference = {
+			publisher:
+				descriptor.metadata.publisher,
+
+			resourceId:
+				descriptor.metadata.resourceId
+		};
 
 		return new Promise(
 			(
@@ -452,6 +543,41 @@ class DeferredWorkerClient {
 
 		return next;
 	}
+}
+
+function createDescriptor(
+	name:
+		string
+): ResourceDescriptor {
+	return {
+		metadata: {
+			publisher:
+				'publisher',
+
+			resourceId:
+				`kjvonly/resources/${name}`,
+
+			category:
+				'example/resource',
+
+			modifiedAt:
+				123,
+
+			representation:
+				'content',
+
+			mediaType:
+				'application/json'
+		},
+
+		strategy: {
+			type:
+				'example',
+
+			data:
+				{}
+		}
+	};
 }
 
 function createReference(

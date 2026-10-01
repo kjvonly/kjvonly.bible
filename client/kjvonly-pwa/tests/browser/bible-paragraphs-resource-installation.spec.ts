@@ -20,6 +20,10 @@ import {
 } from '$lib/resource';
 
 import {
+	ResourceResolutionProcessor
+} from '$lib/resource/services/resource-resolution-processor';
+
+import {
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE,
 	BibleParagraphsInterpreter
 } from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
@@ -401,14 +405,19 @@ function createService(
 			installer
 		);
 
-	const processor =
-		new ResourceProcessor(
-			resolver,
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
 			[
 				handler
 			]
+		);
+
+	const processor =
+		new ResourceProcessor(
+			resolver,
+			resolutionProcessor
 		);
 
 	return new ResourceService(

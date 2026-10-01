@@ -26,6 +26,10 @@ import {
 	ResourceProcessor
 } from './resource-processor';
 
+import {
+	ResourceResolutionProcessor
+} from './resource-resolution-processor';
+
 describe(
 	'ResourceProcessor',
 	() => {
@@ -963,6 +967,22 @@ function createProcessor(
 			readonly ResourceHandler[];
 	} = {}
 ): ResourceProcessor {
+	const resolutionProcessor =
+		new ResourceResolutionProcessor(
+			options.decoder ??
+				new FakeDecoder(),
+
+			options.receipts ??
+				new FakeReceiptService(),
+
+			options.handlers ??
+				[
+					new FakeHandler(
+						'kjvonly/strongs/definitions'
+					)
+				]
+		);
+
 	return new ResourceProcessor(
 		new FakeResolver({
 			contents:
@@ -980,18 +1000,7 @@ function createProcessor(
 				[]
 		}),
 
-		options.decoder ??
-			new FakeDecoder(),
-
-		options.receipts ??
-			new FakeReceiptService(),
-
-		options.handlers ??
-			[
-				new FakeHandler(
-					'kjvonly/strongs/definitions'
-				)
-			]
+		resolutionProcessor
 	);
 }
 
