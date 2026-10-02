@@ -9,15 +9,19 @@ import type {
 } from '$lib/resource';
 
 import {
-	NOTES_RESOURCE_TYPE,
 	NoteInterpreter
 } from './note-interpreter';
+
+import {
+	NOTE_DATA_TYPE_V1,
+	NOTES_RESOURCE_TYPE
+} from './notes-resource-contract';
 
 describe(
 	'NoteInterpreter',
 	() => {
 		it(
-			'interprets a Notes bundle into Note candidates',
+			'interprets a v1 Notes bundle into Note candidates',
 			() => {
 				const interpreter =
 					new NoteInterpreter();
@@ -104,6 +108,77 @@ describe(
 						value
 					}
 				]);
+			}
+		);
+
+		it(
+			'rejects a Notes Resource without a data type',
+			() => {
+				const interpreter =
+					new NoteInterpreter();
+
+				expect(
+					() => [
+						...interpreter.interpret(
+							createResource({
+								dataType:
+									undefined
+							})
+						)
+					]
+				).toThrow(
+					'Notes data type is required.'
+				);
+			}
+		);
+
+		it(
+			'accepts the explicit v1 Notes data type',
+			() => {
+				const interpreter =
+					new NoteInterpreter();
+
+				const candidates = [
+					...interpreter.interpret(
+						createResource({
+							dataType:
+								NOTE_DATA_TYPE_V1,
+
+							resourceId:
+								'kjvonly/notes/entries/default/note-1',
+
+							value:
+								createNoteValue()
+						})
+					)
+				];
+
+				expect(
+					candidates
+				).toHaveLength(
+					1
+				);
+			}
+		);
+
+		it(
+			'rejects an unsupported explicit Notes data type',
+			() => {
+				const interpreter =
+					new NoteInterpreter();
+
+				expect(
+					() => [
+						...interpreter.interpret(
+							createResource({
+								dataType:
+									'kjvonly.note/v2'
+							})
+						)
+					]
+				).toThrow(
+					'Unsupported Notes data type: kjvonly.note/v2'
+				);
 			}
 		);
 
@@ -221,6 +296,9 @@ function createResource(
 
 		mediaType:
 			'application/json',
+
+		dataType:
+			NOTE_DATA_TYPE_V1,
 
 		value: {},
 

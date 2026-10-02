@@ -4,6 +4,26 @@ I am continuing development and cleanup of **KJVOnly.bible**, an offline-first B
 
 Use this prompt as the baseline mental model for the codebase. Do not redesign established architecture unless I explicitly ask for architectural changes.
 
+I may also provide a feature-specific handoff for the work currently in progress.
+
+When information conflicts, use this precedence:
+
+```text
+newest explicit current source/archive I provide
+    ↓
+current feature-specific handoff
+    ↓
+this development-context prompt
+    ↓
+older uploaded source
+    ↓
+older patches / conversation assumptions
+```
+
+The newest supplied source is always the implementation source of truth.
+
+A handoff explains architectural intent, history, rejected approaches, and what we were trying to accomplish. The current source proves what is actually implemented.
+
 ---
 
 # 1. Project Overview
@@ -44,6 +64,7 @@ Notes
 Reading plans
 Text markup / highlighting
 Resource discovery
+Filesystem/resource catalogs
 Import / Export
 Settings
 Themes
@@ -101,6 +122,20 @@ Domain Object ID
 
 are different concepts and should remain separate.
 
+A useful architectural rule is:
+
+```text
+Resource
+    = how external/publishable data is discovered,
+      resolved, decoded, processed, and installed
+
+Domain
+    = what that data means to the application
+
+Application / Module
+    = how the user interacts with that data
+```
+
 ---
 
 # 3. Application Composition
@@ -118,6 +153,12 @@ Modules should normally consume application-facing services through the applicat
 Avoid introducing new global singleton dependencies when a service already exists in the application composition root.
 
 Infrastructure details should not leak unnecessarily into domain/UI code.
+
+Dependencies that represent infrastructure, workers, persistence, or cross-domain collaborators should normally be constructed at the composition root and injected.
+
+Avoid constructing infrastructure collaborators inside another service merely because it is convenient to instantiate them there.
+
+If a dependency has become a required production capability, prefer making that dependency explicit rather than preserving an unnecessary optional runtime branch.
 
 ---
 
@@ -154,6 +195,10 @@ ui/
 ```
 
 Do not dump unrelated files into a single large directory.
+
+Prefer small, explicit boundaries when responsibilities are genuinely distinct.
+
+Do not create abstractions merely for theoretical SRP purity. A new class/service should represent a real responsibility in the current architecture.
 
 ---
 
@@ -413,7 +458,62 @@ Do not bypass this architecture by publishing directly from UI/domain components
 
 ---
 
-# 13. UI Ownership
+# 13. Resource / Filesystem Boundary
+
+Filesystem and Resource have distinct responsibilities.
+
+Conceptually:
+
+```text
+Filesystem
+    = available/discoverable Resource mappings
+
+Resource
+    = Resource identity, resolution, decoding,
+      currentness, installation lifecycle
+
+Domain
+    = semantic application data and behavior
+
+Module/UI
+    = user-facing composition and policy
+```
+
+A filesystem entry describes where a Resource is available.
+
+It is not the target Domain Object.
+
+The desired general flow is:
+
+```text
+FilesystemEntry
+    ↓
+ResourceDescriptor
+    ↓
+generic Resource loading lifecycle
+    ↓
+owning ResourceHandler
+    ↓
+owning Domain
+```
+
+Do not introduce filesystem-specific copies of:
+
+```text
+Resource resolution
+Resource currentness
+content decoding
+Resource handler dispatch
+target Domain installation
+```
+
+when the generic Resource lifecycle already owns them.
+
+The current feature handoff should be used for the detailed Filesystem/Resource architecture when that area is being changed.
+
+---
+
+# 14. UI Ownership
 
 Prefer clear ownership of:
 
@@ -444,7 +544,189 @@ Use existing shared components when possible rather than recreating common butto
 
 ---
 
-# 14. SVG / Icon Conventions
+# 15. Header / Navigation UI Conventions
+
+For mobile/module headers, prefer:
+
+```text
+one leading control
+title
+no more than 3 trailing action slots
+```
+
+Prefer approximately:
+
+```text
+2 direct trailing actions
++
+overflow menu
+```
+
+when several actions are available.
+
+Use a **back arrow** for navigation/back behavior.
+
+Reserve an **X/close control** for actually closing a pane/view rather than navigating backward.
+
+## 15.1 Pane navigation stack
+
+Each rendered leaf Pane owns one flat persisted navigation stack:
+
+```text
+Pane.state.navigation
+    =
+NavigationState[]
+```
+
+Every pane begins with:
+
+```text
+modules.root
+```
+
+Feature views are pushed on top of that root. Back pops one navigation entry, but it must never remove the final `modules.root`.
+
+Navigation views remain mounted while hidden. Pushing a child view hides the previous view rather than destroying it, and Back reveals the same mounted instance.
+
+Feature code should use the narrow pane navigation API rather than manipulating the persisted stack directly. Typical operations include:
+
+```text
+pushView
+pushModule
+split
+backWithResult
+back
+closePane
+escapePane
+```
+
+Do not reintroduce a generic feature-facing stack replacement API merely to make one flow convenient.
+
+When opening another module as a drill-in from the current context, prefer pushing it onto the current pane stack when Back should return to the originating view.
+
+For example:
+
+```text
+strongs / refs
+    ↓ pushModule(Bible reader)
+Bible
+    ↓ Back
+strongs / refs
+```
+
+Pass canonical navigation state such as `bibleLocationRef`; do not serialize presentation-only labels when the destination can derive them from its own resources.
+
+## 15.2 Standard Back control
+
+The standard pane Back control is:
+
+```text
+KJVBackButton
+```
+
+Use it for ordinary navigation Back behavior instead of recreating an arrow button in each module.
+
+Its current interaction contract is:
+
+```text
+tap
+    → navigation.back()
+
+press and hold for 1.5 seconds
+    → navigation.escapePane()
+```
+
+The hold-progress indicator is intentionally delayed by approximately:
+
+```text
+300 ms
+```
+
+so normal taps do not flash the progress ring.
+
+`escapePane()` means:
+
+```text
+multiple panes
+    → close the current pane
+
+final/only pane
+    → discard that pane's current navigation history
+    → replace it with a fresh modules.root
+```
+
+The final pane itself is not removed.
+
+This is a semantic pane-escape operation. Do not replace it with a generic arbitrary stack-reset API.
+
+If a Back control has additional domain behavior, such as persisting a draft before leaving, it may remain a custom control rather than using `KJVBackButton`.
+
+## 15.3 Header leading content
+
+`KJVHeader` supports caller-owned leading content for cases where the leading control is richer than a simple header action.
+
+The standard pattern for Back is:
+
+```svelte
+{#snippet leadingContent()}
+    <KJVBackButton></KJVBackButton>
+{/snippet}
+
+<KJVHeader
+    {title}
+    {leadingContent}
+></KJVHeader>
+```
+
+`leadingContent` takes precedence over the simpler `leadingAction` definition.
+
+Shared views such as `KJVMenuView` should accept caller-owned leading content rather than owning navigation policy themselves.
+
+Do not add fake/invisible leading controls solely to preserve mathematical title centering. If a screen legitimately has no leading control, use normal container/layout spacing instead.
+
+## 15.4 Nested menu/navigation views
+
+A nested screen that presents a real Back affordance should normally be a real navigation entry.
+
+Do not model:
+
+```text
+parent view
+    + local boolean swaps body to "child screen"
+    + Back calls navigation.back()
+```
+
+because the pane stack still points at the parent and Back will pop too far.
+
+Instead prefer:
+
+```text
+parent view
+    ↓ pushView(child)
+child view
+    ↓ Back
+parent view
+```
+
+When a child menu needs the parent to perform an action using live parent state, return a small semantic result with:
+
+```text
+backWithResult(...)
+```
+
+The still-mounted parent owns interpretation of that result after it becomes active again.
+
+The Notes overflow menu follows this pattern: `notes.root` pushes `notes.actions`, and the actions view returns intent rather than copying the Notes list's live filtered state into persisted navigation.
+
+For patches primarily involving headers/navigation headers, the patch filename must include the exact word:
+
+```text
+headers
+```
+
+---
+
+# 16. SVG / Icon Conventions
 
 Avoid hard-coded inline SVG markup inside feature components when the icon is reusable.
 
@@ -476,7 +758,7 @@ or passed Tailwind fill/text classes.
 
 ---
 
-# 15. Styling
+# 17. Styling
 
 Use Tailwind utilities where practical.
 
@@ -548,7 +830,7 @@ Do not replace semantic theme classes with hard-coded colors merely to work arou
 
 ---
 
-# 16. Settings / Themes
+# 18. Settings / Themes
 
 Settings include visual properties such as:
 
@@ -564,13 +846,15 @@ and some module-display settings.
 
 Settings persistence is owned by the Settings service.
 
+The Settings module also includes an About page for application/project information such as build/source information and legal attribution. Keep About within the existing Settings navigation/page architecture rather than creating a separate module-specific shell.
+
 Do not write directly to localStorage from UI components unless the architecture explicitly requires it.
 
 The theme system uses semantic tokens and supports multiple light/dark themes.
 
 ---
 
-# 17. Workers
+# 19. Workers
 
 Workers are used for expensive or isolated tasks such as:
 
@@ -578,6 +862,7 @@ Workers are used for expensive or isolated tasks such as:
 Resource processing
 Archive import/export
 Search
+Filesystem search
 ```
 
 Keep worker boundaries one-directional.
@@ -586,9 +871,30 @@ Do not allow worker implementation modules to import browser worker factories if
 
 Browser worker construction should live at the main-thread boundary.
 
+When one worker supports materially different operations, prefer explicit request/message names.
+
+For example:
+
+```text
+ProcessRepresentationRequest
+ProcessDescriptorRequest
+```
+
+is preferable to an ambiguous:
+
+```text
+ProcessRequest
+```
+
+when both operations exist.
+
+When dispatching distinct job types, prefer explicit control flow such as a `switch` when it makes the boundary easier to understand.
+
+Do not optimize worker dispatch code for compactness at the expense of showing which operation is being performed.
+
 ---
 
-# 18. Archive / Import / Export
+# 20. Archive / Import / Export
 
 Archive operations use ephemeral workers.
 
@@ -607,20 +913,21 @@ Import/export should reuse established domain/resource pipelines rather than imp
 
 ---
 
-# 19. Development Style
+# 21. Development Style
 
 When investigating an issue:
 
 1. Inspect the current supplied source.
 2. Treat the newest file I provide as authoritative.
-3. Inspect nearby tests and established patterns before changing code.
-4. Identify the smallest correct change.
-5. Preserve existing architecture and behavior unless the requested change intentionally modifies it.
-6. Avoid unrelated cleanup in the same patch.
-7. Tell me briefly if you discover an important behavioral implication.
-8. Produce a patch.
-9. Verify the patch applies before giving it to me.
-10. Give validation commands separately from patch-application commands.
+3. Read the current feature handoff when one is supplied.
+4. Inspect nearby tests and established patterns before changing code.
+5. Identify the smallest correct change.
+6. Preserve existing architecture and behavior unless the requested change intentionally modifies it.
+7. Avoid unrelated cleanup in the same patch.
+8. Tell me briefly if you discover an important behavioral implication.
+9. Produce a patch when I ask for implementation.
+10. Verify the patch applies before giving it to me.
+11. Give validation commands separately from patch-application commands.
 
 I prefer incremental work.
 
@@ -628,13 +935,31 @@ Do not generate a giant refactor unless I explicitly request one.
 
 When a larger refactor is necessary, break it into small independently reviewable patches whenever practical.
 
+If I ask to:
+
+```text
+review
+audit
+discuss
+think through
+just tell me
+don't write code yet
+don't write a patch yet
+```
+
+do not produce implementation changes.
+
+Discuss the architecture/finding first and wait until I tell you to continue.
+
+If an investigation reveals a potentially important architectural change, explain it before broadening the implementation scope.
+
 ---
 
-# 20. Patch Workflow
+# 22. Patch Workflow
 
 When I ask for a code change, produce a downloadable `.patch` file unless I explicitly ask for another format.
 
-## 20.1 Patch filename convention
+## 22.1 Patch filename convention
 
 Use:
 
@@ -690,7 +1015,23 @@ circular-imports
 
 Do not silently change the active naming convention during a task.
 
-## 20.2 Recreated or revised patches
+### Required filename keywords
+
+For Filesystem-related work, the generated patch filename must contain the exact word:
+
+```text
+filesystem
+```
+
+For header/navigation-header work, the generated patch filename must contain the exact word:
+
+```text
+headers
+```
+
+These keyword requirements take precedence over a more generic scope name.
+
+## 22.2 Recreated or revised patches
 
 If a patch has already been given to me and must be recreated because:
 
@@ -724,7 +1065,41 @@ The revision number describes the patch artifact, not an application or API vers
 
 If I explicitly ask to keep the original filename, follow that instruction.
 
-## 20.3 Patch path format
+### Failed downloads
+
+A failed download is different from a code revision.
+
+If I say the generated patch download failed:
+
+```text
+do not change the patch contents
+```
+
+Re-upload the **same patch bytes** under the next revision filename:
+
+```text
+-v2
+-v3
+-v4
+```
+
+Example:
+
+```text
+20260930-filesystem-search.patch
+```
+
+download fails:
+
+```text
+20260930-filesystem-search-v2.patch
+```
+
+The only intended change is the artifact filename.
+
+Do not silently regenerate different code when I only reported a download failure.
+
+## 22.3 Patch path format
 
 Patch paths must always be repository-root-relative Git paths.
 
@@ -768,7 +1143,7 @@ The patch should be applicable from the repository root:
 
 Do not omit the `a/` and `b/` prefixes unless there is a specific reason and I explicitly request a different patch format.
 
-## 20.4 Patch generation
+## 22.4 Patch generation
 
 Prefer generating a real Git/unified diff from exact before/after source files.
 
@@ -787,17 +1162,22 @@ git apply --check PATCH_NAME.patch
 
 against the source state used to build it.
 
+When practical also run:
+
+```bash
+git diff --check
+```
+
 If the patch cannot be verified against the current source, say so explicitly instead of claiming it was verified.
 
-## 20.5 Patch delivery
+## 22.5 Patch delivery
 
 Always give me a downloadable patch link.
 
-Then give patch application commands separately:
+Then give one copyable patch application command:
 
 ```bash
-git apply --check PATCH_NAME.patch &&
-git apply PATCH_NAME.patch
+git apply --check PATCH_NAME.patch && git apply PATCH_NAME.patch
 ```
 
 Do not combine npm/test/build commands with the patch application command.
@@ -820,9 +1200,32 @@ npm run test:browser
 
 Run targeted tests first when they provide a faster useful failure signal, then run the broader validation when appropriate.
 
+### Patch checksums
+
+Do **not** provide:
+
+```text
+SHA256
+SHA
+MD5
+checksums
+```
+
+for generated patches unless I explicitly ask for one.
+
+The normal patch response should contain:
+
+```text
+download link
+apply command
+relevant validation information/commands
+```
+
+without a checksum.
+
 ---
 
-# 21. Patch Scope
+# 23. Patch Scope
 
 Keep patches focused.
 
@@ -855,9 +1258,11 @@ or:
 leave it as the next explicit patch
 ```
 
+Prefer extending an existing clean seam over creating a parallel lifecycle.
+
 ---
 
-# 22. Testing Strategy
+# 24. Testing Strategy
 
 Tests should protect behavior and architecture boundaries rather than merely increase test count.
 
@@ -871,7 +1276,7 @@ integration test
 
 Prefer the smallest test level that can accurately exercise the behavior.
 
-## 22.1 Regression-first workflow
+## 24.1 Regression-first workflow
 
 For a bug or regression:
 
@@ -884,7 +1289,11 @@ For a bug or regression:
 
 When I explicitly say not to write code yet, investigate and identify the likely failing boundary first without producing implementation changes.
 
-## 22.2 Unit and service tests
+If I provide actual failing test output, treat that output as authoritative.
+
+Diagnose the failure at the correct boundary before adding unrelated work.
+
+## 24.2 Unit and service tests
 
 Prefer normal Vitest/unit tests for deterministic code such as:
 
@@ -906,7 +1315,7 @@ Good tests verify meaningful contracts and edge cases.
 
 Avoid snapshotting trivial markup or testing implementation details that do not represent a behavioral contract.
 
-## 22.3 Browser tests
+## 24.3 Browser tests
 
 Use browser tests when the behavior depends on real browser or Svelte runtime behavior that a normal unit test would not faithfully represent.
 
@@ -947,7 +1356,7 @@ expect(restoredElement).toBe(originalElement);
 
 rather than only checking equal text or values.
 
-## 22.4 Browser-test fixtures
+## 24.4 Browser-test fixtures
 
 Keep browser-test hosts and fixtures minimal.
 
@@ -966,7 +1375,7 @@ Only mock the boundary that is not relevant to the test.
 
 For example, if `NavigationContainer` requires `ApplicationContext` only because `BufferContainer` reads `SettingsService`, provide the smallest valid context containing the real `SettingsService` rather than launching the whole app.
 
-## 22.5 Browser-test cleanup
+## 24.5 Browser-test cleanup
 
 Browser tests must clean up state they create.
 
@@ -983,7 +1392,7 @@ unsubscribe temporary subscribers
 
 Tests should not depend on execution order or leak state into later tests.
 
-## 22.6 Test naming and placement
+## 24.6 Test naming and placement
 
 Place tests next to the implementation when that is the established local pattern.
 
@@ -999,9 +1408,33 @@ preserves the root search state after navigating to a result and back
 
 Prefer behavioral language over names tied to private implementation details.
 
+## 24.7 Test-result honesty
+
+Do not claim the test suite passed unless it actually ran successfully.
+
+If an uploaded/extracted source tree does not contain `node_modules`, say explicitly that the real Vitest/build suite could not be run.
+
+Distinguish clearly between:
+
+```text
+git apply --check passed
+
+git diff --check passed
+
+TypeScript syntax/transpile checks passed
+
+targeted Vitest tests passed
+
+full test suite passed
+
+build passed
+```
+
+Do not describe one level of validation as though it proved another.
+
 ---
 
-# 23. JSDoc and Code Documentation
+# 25. JSDoc and Code Documentation
 
 Add JSDoc where it materially improves understanding, IDE hover information, or preservation of an architectural contract.
 
@@ -1068,35 +1501,81 @@ Keep comments and JSDoc synchronized with the implementation. Stale architectura
 
 ---
 
-# 24. Source Authority
+# 26. Source Authority
 
 I frequently modify the repository manually between messages.
 
 Therefore:
 
 ```text
-the newest source file I upload always wins
+the newest source file/archive I upload always wins
 ```
 
 Do not assume an older patch, handoff, ZIP, conversation snapshot, generated document, or previous assistant response still matches the repository.
 
 If I upload a current file, build the next patch against that exact file.
 
-If multiple uploaded sources conflict:
+If I upload a current archive, inspect that archive rather than reconstructing current state from older patches.
+
+If multiple sources conflict:
 
 ```text
 newest explicit current source
     wins over
+current feature handoff
+    wins over
+this development-context prompt
+    wins over
 older uploaded source
     wins over
-old patch/handoff/conversation assumptions
+old patch/conversation assumptions
 ```
 
 If the exact current source is required and is not available, retrieve or inspect it before generating a patch rather than guessing.
 
+Do not ask me to repeat information that is already available in the current source, handoff, or test output.
+
 ---
 
-# 25. Communication Style
+# 27. Handoff Usage
+
+For substantial ongoing work, I may provide a detailed handoff from the previous chat.
+
+Use it to understand:
+
+```text
+architecture
+decisions
+rejected approaches
+past bugs
+patch sequence
+reasoning behind current boundaries
+next intended work
+```
+
+The handoff should guide interpretation of the source.
+
+The source remains authoritative for what is actually implemented.
+
+A useful rule is:
+
+```text
+handoff explains intent
+latest source proves reality
+```
+
+If the source and handoff differ:
+
+1. identify the inconsistency;
+2. do not silently force the source to match the handoff;
+3. determine whether the source intentionally evolved;
+4. follow the newest source unless I explicitly tell you otherwise.
+
+When beginning a new chat from a handoff plus fresh source, first review the implementation against the handoff before proposing another patch.
+
+---
+
+# 28. Communication Style
 
 Be concise.
 
@@ -1124,35 +1603,53 @@ If something is intentionally unusual but architecturally valid, leave it alone 
 
 When a test fails after a patch, investigate the failure against the current source and adjust the patch/test at the correct boundary rather than immediately rewriting unrelated code.
 
+If I say:
+
+```text
+just tell me
+don't write a patch yet
+don't write code yet
+let's discuss this first
+```
+
+respond with analysis/design discussion only.
+
+Do not produce a patch until I tell you to continue.
+
 ---
 
-# 26. Default Chat Workflow Checklist
+# 29. Default Chat Workflow Checklist
 
 Use the following as the default workflow for code-change chats unless I explicitly override it.
 
 ```text
 1. Read the current source I supplied.
 2. Treat the newest source as authoritative.
-3. Inspect nearby implementation and tests.
-4. Preserve established architecture unless I request a redesign.
-5. Identify the smallest correct change.
-6. Add or update a focused test when the behavior warrants it.
-7. Use browser tests only when browser/Svelte runtime behavior is genuinely part of the contract.
-8. Add meaningful JSDoc to important APIs/functions when the change introduces or clarifies an architectural boundary.
-9. Generate a real repo-root patch using a/ and b/ paths.
-10. Name it YYYYMMDD-<scope>-<description>.patch.
-11. If recreating the same logical patch, use -v2, -v3, etc.
-12. Verify git apply --check before giving me the patch.
-13. Give me a downloadable patch link.
-14. Give git apply --check && git apply separately.
-15. Give tests/build commands separately.
-16. Stop after the focused step unless I ask to continue.
-17. When I say done, let's continue, move to the next logical small step.
+3. Read the current feature handoff when one is supplied.
+4. Inspect nearby implementation and tests.
+5. Preserve established architecture unless I request a redesign.
+6. Identify the smallest correct change.
+7. Add or update a focused test when the behavior warrants it.
+8. Use browser tests only when browser/Svelte runtime behavior is genuinely part of the contract.
+9. Add meaningful JSDoc to important APIs/functions when the change introduces or clarifies an architectural boundary.
+10. Generate a real repo-root patch using a/ and b/ paths.
+11. Name it YYYYMMDD-<scope>-<description>.patch.
+12. Apply any task-specific filename keyword requirements such as filesystem or headers.
+13. If revising/recreating the same logical patch, use -v2, -v3, etc.
+14. If only the download failed, re-upload identical patch contents under the next -vN filename.
+15. Verify git apply --check before giving me the patch.
+16. Run git diff --check when practical.
+17. Give me a downloadable patch link.
+18. Give git apply --check && git apply separately.
+19. Do not provide a checksum unless I request one.
+20. Give tests/build commands separately.
+21. Stop after the focused step unless I ask to continue.
+22. When I say done, let's continue, move to the next logical small step.
 ```
 
 ---
 
-# 27. Architecture Documentation Map
+# 30. Architecture Documentation Map
 
 Use the implementation docs as the primary architecture reference before redesigning established behavior.
 
@@ -1220,7 +1717,7 @@ Settings
 
 ---
 
-# 28. Current Engineering Philosophy
+# 31. Current Engineering Philosophy
 
 Prefer:
 
@@ -1230,6 +1727,7 @@ small boundaries
 domain separation
 stable pane identity
 captured resource selections
+composition-root dependencies
 shared UI components
 semantic theme classes
 data-driven definitions where appropriate
@@ -1237,6 +1735,7 @@ resolvers instead of repeated special-case branching
 meaningful JSDoc on important APIs
 behavior-focused tests
 browser tests for real browser/Svelte behavior
+generic infrastructure with domain-specific interpretation
 small verified patches
 repo-root a/ and b/ patch paths
 ```
@@ -1253,12 +1752,41 @@ large speculative refactors
 worker circular imports
 cached Pane references
 UI directly owning persistence infrastructure
+domain-specific behavior leaking into generic infrastructure
+parallel domain-specific copies of generic Resource machinery
 hand-written malformed patch hunks
 absolute filesystem paths in patches
 reusing the same filename for a recreated patch
+changing patch contents merely because a download failed
 browser tests for logic that should be a simple unit test
 tests that leak DOM/storage/subscriber state
 JSDoc that only repeats the function name
 ```
 
 When reviewing code, reason from this mental model first.
+
+---
+
+# 32. General Architecture Review Rule
+
+Before introducing a new service, resolver, processor, worker path, or abstraction, ask:
+
+```text
+Is this responsibility already owned somewhere else?
+
+Is this genuinely a new architectural boundary?
+
+Can an existing generic lifecycle support the operation?
+
+Am I pushing domain-specific interpretation into generic infrastructure?
+
+Am I creating a parallel path because the existing seam is inconvenient?
+
+Is this solving a current requirement or only a hypothetical future problem?
+```
+
+Prefer extending an existing clean seam over creating a parallel lifecycle.
+
+At the same time, do not force unrelated responsibilities into one large class merely to minimize the number of files.
+
+The goal is understandable code with explicit ownership and small, reusable boundaries.

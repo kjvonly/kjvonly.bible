@@ -368,7 +368,7 @@ resolveDescriptor(
 
 This path does not manufacture a `ResourceRepresentation` or require an enclosing descriptor document. It seeds an empty visited set and then uses the same preparation, currentness, strategy, nesting, cycle/depth, failure-isolation, and terminal-resolution behavior as document-originated descriptors.
 
-This is the generic Resource-layer seam needed by callers that already possess a descriptor, including filesystem materialization. The filesystem remains responsible only for supplying the stored descriptor; descriptor resolution behavior remains owned by the Resource layer.
+This is the generic Resource-layer seam needed by callers that already possess a descriptor, including loading a Resource advertised by the filesystem. The filesystem remains responsible only for supplying the stored descriptor; descriptor resolution behavior remains owned by the Resource layer.
 
 ---
 

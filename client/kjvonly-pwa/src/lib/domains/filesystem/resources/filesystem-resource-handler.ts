@@ -31,7 +31,7 @@ export interface FilesystemResourceInstaller {
  * Connects generic decoded `fs` Resources to the Filesystem domain pipeline.
  *
  * Handling mounts filesystem metadata only; target descriptors remain
- * unresolved until later materialization policy explicitly selects an entry.
+ * unresolved until later application policy explicitly selects an entry to load.
  */
 export class FilesystemResourceHandler
 	implements ResourceHandler {

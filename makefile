@@ -432,6 +432,7 @@ new-chat-files:
 	echo "Creating $$ZIP"; \
 	zip -r "$$ZIP" \
 		client/kjvonly-pwa/src \
+		client/kjvonly-pwa/tests \
 		client/kjvonly-pwa/package.json \
 		client/kjvonly-pwa/package-lock.json \
 		docs/ \

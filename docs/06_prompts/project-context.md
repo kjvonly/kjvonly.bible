@@ -12,12 +12,14 @@ Use this document to understand:
 * how the application is organized,
 * what the major architectural owners are,
 * how the Resource Boundary relates to the application,
+* how Resources may be available before their Domain information is installed,
 * how information moves between local Domain state and external Resources,
+* how Modules may present installed and discoverable information as one user experience,
 * and where to look for more detailed documentation.
 
 This is an orientation document.
 
-It intentionally avoids current source paths, concrete classes, framework wiring, storage schemas, and other implementation mechanics.
+It intentionally avoids current source paths, concrete classes, worker protocols, storage schemas, framework wiring, and other implementation mechanics.
 
 ---
 
@@ -62,6 +64,7 @@ It describes concepts such as:
 * Domains,
 * Public APIs,
 * Data Access,
+* Resource availability,
 * Technical Infrastructure,
 * Persistence,
 * Startup,
@@ -77,7 +80,9 @@ It defines concepts such as:
 
 * Resources,
 * Resource identity,
+* Resource metadata,
 * Resource representations,
+* Resource descriptions,
 * Discovery Roots,
 * Discovery,
 * Resolution,
@@ -178,10 +183,12 @@ Application
     Domains
     Domain Objects
     Application-owned capabilities
+    Resource availability / catalogs
 
 ================ Resource Boundary ================
 
     Resources
+    Resource Descriptions
     Resource Representations
     Nostr publication / discovery / synchronization
 ```
@@ -189,6 +196,8 @@ Application
 The application remains responsible for application meaning on both sides of the boundary.
 
 The Resource Boundary does not become the owner of Bible, Notes, Reading Plans, Strong's, or other Domain concepts merely because those concepts are distributed externally.
+
+Likewise, a catalog of available Resources does not become the owner of the Domain information those Resources may eventually produce.
 
 ---
 
@@ -207,6 +216,8 @@ Domain Objects
 ```
 
 The Resource Boundary intersects this model only when Domain information requires an external lifecycle.
+
+Resource availability may also be visible to the application before the corresponding Domain Object has been installed.
 
 Each concept has a different responsibility.
 
@@ -294,6 +305,24 @@ A Domain may support several Modules.
 
 A Module exists because a behavior needs an independently active Runtime interaction, not because it constitutes a new Domain.
 
+A Module may also compose multiple states of availability into one coherent user experience.
+
+For example, a Notes Module may present:
+
+```text
+an already installed Note
+
+and
+
+a discoverable Note Resource that can become installed
+```
+
+as Notes to the user.
+
+That presentation choice does not make the unresolved Resource into a Note Domain Object.
+
+Modules may unify experience without collapsing architectural state.
+
 ---
 
 # Domains
@@ -324,7 +353,7 @@ Strong's Domain
     Strong's definitions
 ```
 
-Application-wide concerns such as Settings and Workspace coordination are not Domains merely because they have state or user interfaces.
+Application-wide concerns such as Settings, Workspace coordination, and general Resource availability are not Domains merely because they have state or user interfaces.
 
 Ownership follows meaning.
 
@@ -371,6 +400,10 @@ Bible-reference ownership
 ```
 
 Cross-Domain collaboration should preserve both sides of that distinction.
+
+A Resource that advertises Note information also does not become a Note merely because the Notes Module can display or resolve it.
+
+The Notes Domain becomes responsible for the resulting Note only after the information has crossed the Resource and Domain acceptance boundaries.
 
 ---
 
@@ -419,9 +452,12 @@ Examples include:
 * application startup and lifecycle,
 * authentication state,
 * account state,
+* Resource availability and catalogs,
 * and other cross-cutting application capabilities.
 
 These responsibilities should not be forced into a Domain when their meaning belongs to the application itself.
+
+An application-owned capability may coordinate with several Domains without becoming the owner of their Domain Objects.
 
 ---
 
@@ -451,11 +487,13 @@ Strong's
 A Domain Object is not defined by:
 
 * its network representation,
+* a Resource description,
 * a protocol event,
 * a persistence record,
+* a filesystem/catalog location,
 * or the mechanism used to load it.
 
-Those mechanisms may preserve or reconstruct Domain information, but they do not define its meaning.
+Those mechanisms may preserve, advertise, locate, or reconstruct Domain information, but they do not define its meaning.
 
 ---
 
@@ -500,9 +538,12 @@ Notes
 
 Bible interaction
     → Strong's definitions
+
+Module interaction
+    → Resource availability
 ```
 
-The important rule is that dependencies point toward the owner of meaning.
+The important rule is that dependencies point toward the owner of meaning or capability.
 
 When collaboration becomes awkward, first reconsider ownership and responsibility rather than immediately creating a global abstraction.
 
@@ -520,6 +561,8 @@ The guiding rule is:
 
 External information must pass the applicable Resource, Domain, validation, and acceptance boundaries before it replaces accepted local Domain state.
 
+A discoverable Resource is therefore not equivalent to accepted local Domain state.
+
 This preserves a stable local model even when external systems are unavailable, inconsistent, or malicious.
 
 ---
@@ -532,9 +575,11 @@ It may need to be:
 
 * published,
 * discovered,
+* described,
 * distributed,
 * synchronized,
 * shared,
+* resolved,
 * installed,
 * or archived.
 
@@ -568,6 +613,283 @@ A Nostr event is a protocol representation used to publish or discover Resource 
 
 Keeping these concepts distinct prevents protocol and distribution concerns from becoming part of the Domain model.
 
+A Resource may be known to the application before the corresponding Domain Object exists locally.
+
+That distinction is intentional.
+
+---
+
+# Resource Descriptions
+
+A Resource may be described before its represented content is resolved.
+
+A Resource description identifies enough about a Resource for the Resource Boundary to determine how that Resource can participate in resolution and installation.
+
+Conceptually:
+
+```text
+Resource Description
+    ↓
+describes a Resource
+    ↓
+Resource Resolution
+    ↓
+Domain interpretation and installation
+```
+
+A Resource description is not:
+
+```text
+the Resource's Domain Object
+
+or
+
+proof that the Resource has already been installed
+```
+
+It is a boundary object used to describe something that may be available.
+
+This allows KJVOnly to reason about available information without eagerly downloading or installing everything that can be discovered.
+
+---
+
+# Resource Metadata
+
+Resources may carry metadata needed to understand or locate them without interpreting their full Domain content.
+
+Different metadata answers different questions.
+
+Conceptually:
+
+```text
+Resource category
+    = which family of Resource this belongs to
+
+Semantic data type
+    = which versioned application data contract it contains
+
+Media type
+    = how the represented content is physically encoded
+```
+
+These concepts should remain distinct.
+
+A stable Resource category may span multiple semantic data versions.
+
+For example, a Domain may continue to recognize an older semantic representation so that it can migrate or interpret that data after newer versions are introduced.
+
+Version-specific interpretation remains the responsibility of the owning Domain.
+
+---
+
+# Resource Availability
+
+A Resource can be **available** without being **installed**.
+
+This distinction is important.
+
+Conceptually:
+
+```text
+Available Resource
+    = the application knows where/how the Resource may be obtained
+
+Installed Domain Information
+    = the Resource has passed the required boundaries and produced
+      accepted local Domain state
+```
+
+Availability therefore does not imply:
+
+* the Resource content has been downloaded,
+* the Resource has been decoded,
+* the Resource has passed Domain validation,
+* or the corresponding Domain Object exists locally.
+
+This allows discovery and cataloging to remain lightweight.
+
+---
+
+# Filesystem / Resource Catalog
+
+KJVOnly uses a filesystem-like catalog capability for organizing available Resources.
+
+The filesystem concept should be understood as:
+
+```text
+filesystem location
+    ↓
+Resource description
+```
+
+rather than:
+
+```text
+filesystem location
+    ↓
+already installed Domain Object
+```
+
+A filesystem entry says, conceptually:
+
+> A Resource is available at this application-visible location.
+
+It does not say:
+
+> The Resource's Domain Object has already been installed.
+
+The filesystem therefore owns Resource availability and organization.
+
+It does not own:
+
+* Bible Chapters,
+* Notes,
+* Reading Plans,
+* Strong's definitions,
+* target Resource resolution rules,
+* or the resulting Domain Objects.
+
+Those responsibilities remain with Resource and Domain owners.
+
+---
+
+# Filesystem Paths And Resource Identity
+
+A filesystem location and a Resource identity answer different questions.
+
+Conceptually:
+
+```text
+Filesystem location
+    = where the application exposes or organizes an available Resource
+
+Resource identity
+    = which Resource is being described
+```
+
+The same Resource may be exposed through different filesystem locations.
+
+A filesystem owner may also expose a Resource published by someone else.
+
+Therefore filesystem organization must not be confused with Resource ownership or Resource identity.
+
+---
+
+# Nested Resource Catalogs
+
+A filesystem entry may itself refer to another filesystem/catalog Resource.
+
+This should be understood as composition rather than ownership transfer.
+
+Conceptually:
+
+```text
+Catalog A
+    ↓ contains a reference to
+Catalog B
+    ↓ contains Resources
+```
+
+The user interface may present this as one continuous browsable tree.
+
+Architecturally, the two catalogs remain distinct.
+
+The contents of the nested catalog do not become owned by the parent merely because they are reachable through it.
+
+---
+
+# Available And Installed Information In The UI
+
+The application may present available and installed information together when that creates the right user experience.
+
+For example:
+
+```text
+Notes Module
+
+    installed Note
+    available Note Resource
+    installed Note
+```
+
+may appear to the user simply as:
+
+```text
+Note
+Note
+Note
+```
+
+The presentation layer may intentionally hide the distinction.
+
+The architecture must not.
+
+Conceptually:
+
+```text
+installed item
+    → already has accepted Domain state
+
+available item
+    → Resource description that can be resolved and installed
+```
+
+When the user selects an available item:
+
+```text
+Available Resource
+    ↓
+Resource lifecycle
+    ↓
+Domain installation
+    ↓
+Domain retrieves accepted object
+    ↓
+ordinary application interaction
+```
+
+The Resource layer should not return a Domain Object merely to make this presentation easier.
+
+The owning Domain remains responsible for retrieving its installed object.
+
+---
+
+# Resource Loading And Domain Retrieval
+
+Resource installation and Domain retrieval are different responsibilities.
+
+Conceptually:
+
+```text
+Domain asks for information
+    ↓
+accepted local state exists?
+    ├── yes → return Domain Object
+    └── no
+         ↓
+      known Resource is loaded
+         ↓
+      normal Resource lifecycle
+         ↓
+      Domain installation
+         ↓
+      Domain checks its accepted local state again
+         ↓
+      return Domain Object
+```
+
+This pattern preserves the boundary:
+
+```text
+Resource
+    installs Resource-backed information
+
+Domain
+    retrieves Domain Objects
+```
+
+A successful Resource operation does not itself redefine the Domain's storage or retrieval API.
+
 ---
 
 # Nostr And The Resource Boundary
@@ -597,9 +919,9 @@ The Resource Boundary should not be treated as a generic synonym for every exter
 The inbound Resource lifecycle is conceptually:
 
 ```text
-Discovery Root / Resource Reference
+Discovery Root / Resource Reference / Resource Description
     ↓
-Resource Discovery
+Resource Discovery or Known Resource Resolution
     ↓
 Resource Representation
     ↓
@@ -618,9 +940,15 @@ Installation Decision
 Accepted Local Domain State
 ```
 
+Not every Resource begins at open-ended discovery.
+
+A Resource description may already identify a known Resource and allow the application to enter the lifecycle at the appropriate later boundary.
+
 Each stage answers a different question.
 
 Discovery asks what representation is available.
+
+Description identifies a Resource that may be resolved.
 
 Resolution obtains and verifies the represented content.
 
@@ -630,7 +958,7 @@ Domain validation determines whether it is valid for that Domain.
 
 Installation decides whether the proposed external information should become accepted local state.
 
-Successful discovery or resolution alone does not modify authoritative Domain state.
+Successful discovery, cataloging, description, or resolution alone does not modify authoritative Domain state.
 
 ---
 
@@ -641,6 +969,8 @@ Open-ended Resource discovery begins from configured Discovery Roots.
 A Discovery Root establishes a publisher from which the application permits open-ended discovery.
 
 An explicit Resource reference may be narrower than a Discovery Root.
+
+A Resource description obtained from an already accepted relationship may also identify a specific Resource without widening open-ended discovery.
 
 This distinction prevents one explicit cross-publisher relationship from silently widening the application's general trust/discovery scope.
 
@@ -670,13 +1000,15 @@ Publication is therefore asynchronous with respect to local application success.
 
 Network failure does not invalidate an already accepted local change.
 
+A Resource catalog or filesystem may also publish references to Resources without becoming the owner of the Resources' Domain meaning.
+
 ---
 
 # Synchronization
 
 Synchronization reconciles accepted local state with valid externally published state.
 
-It is not the same responsibility as normal Domain reads, Resource Discovery, Resource Resolution, or Outbox publication.
+It is not the same responsibility as normal Domain reads, Resource Discovery, Resource Resolution, Resource availability, catalog browsing, or Outbox publication.
 
 For synchronizable Resources, the architecture uses Last Write Wins as the conflict policy.
 
@@ -703,13 +1035,17 @@ The important architectural idea is that archived information returns through th
 
 Persistence preserves accepted application state across sessions.
 
-Architecture distinguishes persistence from Domain meaning and from the Resource lifecycle.
+Architecture distinguishes persistence from Domain meaning, Resource availability, and from the Resource lifecycle.
 
 Domains own the meaning of their information.
 
 Persistence preserves that accepted information.
 
+Resource catalogs preserve information about what Resources are available.
+
 The Resource Boundary records the external provenance and lifecycle information required by Resource-backed state.
+
+These responsibilities may use the same technical persistence mechanism without becoming the same architectural concept.
 
 The exact persistence technology belongs to Implementation.
 
@@ -731,7 +1067,47 @@ Accepted local state
 
 If obtaining missing or updated information requires Resource activity, that activity occurs beneath the appropriate boundary rather than becoming the consumer's responsibility.
 
-This keeps application behavior expressed in Domain terms.
+When a Module intentionally presents discoverable Resources before installation, it may also consume Resource-availability capabilities.
+
+That does not make the unresolved Resource into Domain information.
+
+A useful distinction is:
+
+```text
+Domain access
+    = obtain accepted Domain information
+
+Resource availability
+    = discover what information could become available
+```
+
+Modules may compose both when the user experience requires it.
+
+---
+
+# Search
+
+Search belongs to the owner of the information being searched.
+
+A Domain may provide rich search over installed Domain information because it understands that information's meaning and content.
+
+A Resource catalog may provide search over metadata describing available Resources.
+
+These are different capabilities.
+
+For example:
+
+```text
+Installed Notes search
+    → may search Note content and Note-specific fields
+
+Available Resource search
+    → may search Resource name, path, category, or other catalog metadata
+```
+
+A Module may merge those results into one user experience.
+
+It should not resolve every Resource merely to make catalog search equivalent to Domain full-text search.
 
 ---
 
@@ -765,6 +1141,8 @@ Infrastructure does not become an architectural owner merely because many parts 
 
 Architectural owners depend on technical mechanisms through boundaries that preserve application meaning.
 
+A worker, database, index, or protocol transport should therefore be understood as an implementation mechanism rather than as the owner of the concepts it processes.
+
 ---
 
 # Application Events
@@ -793,11 +1171,42 @@ A new Domain should represent a genuinely new area of enduring application meani
 * a new storage requirement,
 * a new protocol,
 * a new service,
+* a new catalog,
 * or a new implementation technique.
 
 Likewise, new Resource behavior should extend the Resource Boundary when it concerns the external lifecycle of Domain information rather than creating a competing application data model.
 
+Resource catalogs should extend Resource availability and organization rather than becoming alternate Domain stores.
+
 Implementation may evolve significantly while these responsibilities remain stable.
+
+---
+
+# Schema Evolution
+
+Externally available Resources may outlive a particular application data schema.
+
+A stable Resource family may therefore contain information encoded according to more than one semantic version.
+
+The owning Domain is responsible for interpreting or migrating representations it continues to support.
+
+Conceptually:
+
+```text
+Available Resource
+    ↓
+semantic data version
+    ↓
+owning Domain interpretation
+    ↓
+migration when required
+    ↓
+current Domain Object
+```
+
+Resource discovery should not unnecessarily hide older supported information merely because a newer semantic version exists.
+
+Likewise, generic Resource or filesystem/catalog infrastructure should not contain Domain-specific migration logic.
 
 ---
 
@@ -830,6 +1239,10 @@ Implementation documentation should not redefine architectural ownership.
 
 Developer guidance should not become a hidden source of architecture decisions.
 
+This Project Context document should remain an orientation layer.
+
+Detailed filesystem schemas, worker messages, concrete service names, database indexes, and other current mechanisms belong in Implementation documentation rather than here.
+
 ---
 
 # How To Approach A Change
@@ -845,10 +1258,14 @@ What responsibility is required?
     ↓
 What must other owners be allowed to consume?
     ↓
+Does an existing boundary already provide that capability?
+    ↓
 What implementation best fulfills that contract today?
 ```
 
 This keeps changes aligned with the architecture without freezing the implementation.
+
+Before creating a parallel lifecycle, first determine whether an existing owner already has the necessary responsibility but lacks the correct entry point.
 
 ---
 
@@ -861,18 +1278,26 @@ The following ideas should remain recognizable throughout the project:
 * Domains own application meaning and behavior.
 * Workspace Runtime owns study-session structure rather than Domain behavior.
 * Modules present Domain behavior as independently active interactions.
+* Modules may unify user experience without collapsing underlying architectural states.
 * Public APIs expose intentional cross-owner contracts.
 * Usage does not transfer ownership.
 * Strong's is its own Domain.
 * Settings is application-owned rather than a Domain.
+* Resource availability/cataloging is not itself a Domain.
 * Bible search and Bible text markup belong to the Bible Domain.
 * Reading Plans own Plan Definitions, Plan Subscriptions, and Plan Progress.
 * Accepted local state remains authoritative for normal application behavior.
 * The network proposes; the application decides.
 * Resources represent Domain information that requires an external lifecycle.
 * Not every Domain Object must become a Resource.
-* Resource, Domain Object, and Nostr Event are distinct concepts.
-* Discovery, Resolution, Installation, publication, and synchronization are distinct responsibilities.
+* Resource, Resource Description, Domain Object, and Nostr Event are distinct concepts.
+* A Resource may be available before its corresponding Domain Object is installed.
+* Filesystem/catalog entries represent available Resource mappings, not installed Domain Objects.
+* Filesystem location and Resource identity are distinct concepts.
+* Resource categories, semantic data types, and physical media types answer different questions.
+* Discovery, description, Resolution, Installation, publication, synchronization, and Domain retrieval are distinct responsibilities.
+* Loading a Resource and retrieving the resulting Domain Object are separate responsibilities.
+* Domain schema migration belongs to the owning Domain.
 * Nostr is the protocol defined by the Resource Boundary for Resource publication and discovery.
 * Implementation mechanisms remain subordinate to architectural responsibility.
 
@@ -897,6 +1322,8 @@ source code
 ```
 
 The architecture documents explain what the system owns and why.
+
+The Resource Boundary documents explain the external lifecycle of Resource-backed Domain information.
 
 The implementation documents explain how those responsibilities are currently realized.
 

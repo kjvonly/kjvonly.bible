@@ -21,13 +21,12 @@
 		usePaneLayoutContext
 	} from '$lib/application';
 	import type {
-		Note,
-		NotesById
+		Note
 	} from '../../models/note.model';
-	import type {
-		AvailableNote
-	} from '../../models/available-note';
 	import { createNoteDomainObjectId } from '../../models/note-id';
+	import type {
+		NoteListItem
+	} from './note-list-item';
 	import type {
 		NoteFilterIndex,
 		NoteFilterParameter
@@ -51,7 +50,7 @@
 
 	import {
 		NOTES_RESOURCE_TYPE
-	} from '../../resources/note-interpreter';
+	} from '../../resources/notes-resource-contract';
 	import {
 		NOTES_LIST_ACTIONS,
 		NOTES_NAVIGATION_RESULTS,
@@ -85,11 +84,8 @@
 
 	let {
 		filterInput = $bindable(),
-		noteKeys,
-		notes,
-		availableNotes,
-		onSelectedNote,
-		onSelectedAvailableNote,
+		noteListItems,
+		onSelectedNoteListItem,
 		bibleLocationRef,
 		filterParams,
 		onFilterParamChanged,
@@ -98,11 +94,8 @@
 		navigationState
 	}: {
 		filterInput: string;
-		noteKeys: string[];
-		notes: NotesById;
-		availableNotes: AvailableNote[];
-		onSelectedNote: (noteId: string) => void;
-		onSelectedAvailableNote: (note: AvailableNote) => Promise<void>;
+		noteListItems: NoteListItem[];
+		onSelectedNoteListItem: (item: NoteListItem) => Promise<void>;
 		bibleLocationRef?: string;
 		filterParams: NoteFilterParameter[];
 		onFilterParamChanged: (index: NoteFilterIndex, checked: boolean) => void;
@@ -201,8 +194,15 @@
 			const bytes =
 				await archiveService.exportIds({
 					ids:
-						noteKeys.map(
-							createNoteDomainObjectId
+						noteListItems.flatMap(
+							(item) =>
+								item.type === 'installed'
+									? [
+										createNoteDomainObjectId(
+											item.note.id
+										)
+									]
+									: []
 						)
 				});
 
@@ -529,57 +529,48 @@
 {/snippet}
 
 {#snippet noteListSnippet()}
-	{#each noteKeys as nk}
+	{#each noteListItems as item}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			onclick={() => {
-				onSelectedNote(nk);
-			}}
-			class="flex w-full flex-nowrap p-2 text-left hover:cursor-pointer hover:bg-neutral-100"
-		>
-			<div class="flex w-full flex-col">
-				<span
-					>{notes[nk].title}{notes[nk].title.length === 20 ? '...' : ''}</span
-				>
-				<span class="text-neutral-400"
-					>{new Date(notes[nk].dateUpdated).toLocaleDateString()}
-					{new Date(notes[nk].dateUpdated).toLocaleTimeString()}</span
-				>
-				{#if notes[nk].bibleReferenceText}
-					<span class="text-neutral-400">{notes[nk].bibleReferenceText}</span>
-				{/if}
-				<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
-					{#each notes[nk].tags as t}
-						<span
-							class="border-support-a-500 text-support-a-700 mt-2 inline-flex h-8 items-center justify-center rounded-full border px-2.5 py-2.5"
-						>
-							<p class="text-sm whitespace-nowrap">{t.tag}</p>
-						</span>
-					{/each}
-				</div>
-				<div class="flex flex-wrap items-center justify-end space-x-2 pt-2">
-					{@render actions(notes[nk], nk)}
-				</div>
-			</div>
-		</div>
-	{/each}
-
-	{#each availableNotes as availableNote}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			onclick={() => {
-				void onSelectedAvailableNote(
-					availableNote
+				void onSelectedNoteListItem(
+					item
 				);
 			}}
 			class="flex w-full flex-nowrap p-2 text-left hover:cursor-pointer hover:bg-neutral-100"
 		>
-			<div class="flex w-full flex-col">
-				<span>{availableNote.name}</span>
-				<span class="text-neutral-400">{availableNote.path}</span>
-			</div>
+			{#if item.type === 'installed'}
+				<div class="flex w-full flex-col">
+					<span
+						>{item.note.title}{item.note.title.length === 20 ? '...' : ''}</span
+					>
+					<span class="text-neutral-400"
+						>{new Date(item.note.dateUpdated).toLocaleDateString()}
+						{new Date(item.note.dateUpdated).toLocaleTimeString()}</span
+					>
+					{#if item.note.bibleReferenceText}
+						<span class="text-neutral-400">{item.note.bibleReferenceText}</span>
+					{/if}
+					<div class="flex flex-wrap items-center justify-start space-x-2 pt-2">
+						{#each item.note.tags as t}
+							<span
+								class="border-support-a-500 text-support-a-700 mt-2 inline-flex h-8 items-center justify-center rounded-full border px-2.5 py-2.5"
+							>
+								<p class="text-sm whitespace-nowrap">{t.tag}</p>
+							</span>
+						{/each}
+					</div>
+					<div class="flex flex-wrap items-center justify-end space-x-2 pt-2">
+						{@render actions(item.note, item.note.id)}
+					</div>
+				</div>
+			{:else}
+				<div class="flex w-full flex-col">
+					<span>{item.note.name}</span>
+					<span class="text-neutral-400">{item.note.path}</span>
+				</div>
+			{/if}
 		</div>
 	{/each}
 {/snippet}

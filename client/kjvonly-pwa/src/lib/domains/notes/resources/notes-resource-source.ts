@@ -13,7 +13,7 @@ import {
 
 import {
 	NOTES_RESOURCE_TYPE
-} from './note-interpreter';
+} from './notes-resource-contract';
 
 export interface NotesResourceSource {
 	readonly name:

@@ -6,7 +6,7 @@ import {
 
 import {
 	NOTES_RESOURCE_TYPE
-} from './note-interpreter';
+} from './notes-resource-contract';
 
 import {
 	createDefaultNotesSelection,

@@ -71,6 +71,7 @@ import type {
 // Notes
 
 import type {
+    NotesAvailabilityService,
     NotesService
 } from '$lib/domains/notes';
 
@@ -180,6 +181,9 @@ export interface ApplicationContext {
 
     readonly notesService:
     NotesService;
+
+    readonly notesAvailabilityService:
+    NotesAvailabilityService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Reading Plans

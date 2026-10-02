@@ -28,7 +28,7 @@ import type {
  * Installs filesystem mappings and their source Resource provenance atomically.
  *
  * Target Resource descriptors remain unresolved. A later application action may
- * materialize an entry through the generic Resource descriptor lifecycle.
+ * load an entry through the generic Resource descriptor lifecycle.
  */
 export class FilesystemInstaller {
 

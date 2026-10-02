@@ -62,6 +62,33 @@ function requireButtonByText(
 
 ///////////////////////////////////////////////////////////////////////////////
 
+function requireButtonByAriaLabel(
+	root: ParentNode,
+	label: string
+): HTMLButtonElement {
+	const button =
+		Array.from(
+			root.querySelectorAll<HTMLButtonElement>(
+				'button'
+			)
+		).find(
+			(candidate) =>
+				candidate.getAttribute(
+					'aria-label'
+				)?.startsWith(label)
+		);
+
+	if (!button) {
+		throw new Error(
+			`Expected button with aria-label starting with ${label}.`
+		);
+	}
+
+	return button;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 describe(
 	'Settings search navigation',
 	() => {
@@ -138,13 +165,13 @@ describe(
 					await tick();
 
 					expect(
-						requireButtonByText(
+						requireButtonByAriaLabel(
 							target,
 							'Back'
 						)
 					).toBeTruthy();
 
-					requireButtonByText(
+					requireButtonByAriaLabel(
 						target,
 						'Back'
 					).click();

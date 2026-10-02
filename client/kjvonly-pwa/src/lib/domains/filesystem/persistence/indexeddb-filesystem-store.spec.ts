@@ -7,7 +7,6 @@ import {
 
 import {
 	FILESYSTEM_ENTRIES,
-	FILESYSTEM_ENTRY_DATA_TYPE_INDEX,
 	FILESYSTEM_ENTRY_PUBLISHER_ROOT_PATH_INDEX,
 	type ApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
@@ -137,63 +136,6 @@ describe(
 						'alice',
 						'notes'
 					]
-				);
-			}
-		);
-
-		it(
-			'lists mounted entries by descriptor dataType with one index query',
-			async () => {
-				const entries = [
-					createEntry(),
-					createEntry({
-						path:
-							'exodus/1'
-					})
-				];
-
-				const getAllFromIndex =
-					vi.fn()
-						.mockResolvedValue(
-							entries.map(
-								(entry) => ({
-									id:
-										createFilesystemEntryId(
-											'alice',
-											'bible',
-											entry.path
-										),
-									publisher:
-										'alice',
-									rootPath:
-										'bible',
-									path:
-										entry.path,
-									value:
-										entry
-								})
-							)
-						);
-
-				const store =
-					createStore({
-						getAllFromIndex
-					});
-
-				await expect(
-					store.listByDataType(
-						'kjvonly.bible.chapter/v1'
-					)
-				).resolves.toEqual(
-					entries
-				);
-
-				expect(
-					getAllFromIndex
-				).toHaveBeenCalledWith(
-					FILESYSTEM_ENTRIES,
-					FILESYSTEM_ENTRY_DATA_TYPE_INDEX,
-					'kjvonly.bible.chapter/v1'
 				);
 			}
 		);

@@ -17,7 +17,7 @@ import type {
 	FilesystemSearchWorkerRequest
 } from '../runtime/search/filesystem-search-worker-message';
 
-/** Searches mounted filesystem metadata without materializing target Resources. */
+/** Searches mounted filesystem metadata without resolving target Resources. */
 async function search(
 	request:
 		FilesystemSearchWorkerRequest

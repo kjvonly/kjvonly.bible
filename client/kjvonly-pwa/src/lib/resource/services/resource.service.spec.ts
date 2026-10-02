@@ -669,7 +669,8 @@ function createService(
 		options.processor ??
 			new FakeProcessor(),
 
-		options.descriptorProcessor
+		options.descriptorProcessor ??
+			new FakeDescriptorProcessor()
 	);
 }
 

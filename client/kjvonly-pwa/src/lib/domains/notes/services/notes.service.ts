@@ -3,16 +3,8 @@ import type {
 } from '../models/note.model';
 
 import type {
-	AvailableNote
-} from '../models/available-note';
-
-import type {
 	NotesStore
 } from '../persistence/notes-store';
-
-import {
-	NotesSearchRuntime
-} from '../runtime/search/notes-search-runtime';
 
 import type {
 	NotesSearchResult
@@ -34,18 +26,9 @@ import type {
 	ResourceDescriptor
 } from '$lib/resource';
 
-import type {
-	FilesystemSearchByIndex,
-	FilesystemSearchMatch
-} from '$lib/domains/filesystem';
-
 import {
 	createNoteIdForDescriptor
 } from '../resources/notes-resource-source';
-
-import {
-	NOTES_RESOURCE_TYPE
-} from '../resources/note-interpreter';
 
 interface NotesSearchRuntimePort {
 	setResultHandler(
@@ -76,16 +59,6 @@ interface NotesSearchRuntimePort {
 	remove(
 		noteId: string
 	): void;
-}
-
-interface NotesFilesystemSearchPort {
-	search(
-		byIndex:
-			FilesystemSearchByIndex,
-		text: string
-	): Promise<
-		readonly FilesystemSearchMatch[]
-	>;
 }
 
 interface NotesResourceDescriptorLoader {
@@ -147,15 +120,11 @@ export class NotesService {
 		private readonly outbox:
 			OutboxWakeup,
 
-		private readonly filesystem:
-			NotesFilesystemSearchPort,
-
 		private readonly resourceLoader:
 			NotesResourceDescriptorLoader,
 
 		private readonly runtime:
-			NotesSearchRuntimePort =
-				new NotesSearchRuntime()
+			NotesSearchRuntimePort
 	) {
 		this.runtime.setResultHandler(
 			(response) => {
@@ -219,110 +188,6 @@ export class NotesService {
 				);
 			}
 		);
-	}
-
-	/**
-	 * Finds individual Note Resources advertised by mounted filesystems.
-	 *
-	 * Installed Notes are omitted so callers can merge this projection with the
-	 * normal local Notes search without showing the same Note twice.
-	 */
-	async searchAvailableNotes(
-		text: string
-	): Promise<
-		readonly AvailableNote[]
-	> {
-		await this.ready;
-
-		const matches =
-			await this.filesystem.search(
-				{
-					index: 'category',
-					value:
-						NOTES_RESOURCE_TYPE
-				},
-				text
-			);
-
-		const candidates =
-			new Map<
-				string,
-				AvailableNote
-			>();
-
-		for (const match of matches) {
-			const descriptor =
-				match.entry.descriptor;
-
-			if (
-				descriptor.metadata.category !==
-					NOTES_RESOURCE_TYPE
-			) {
-				continue;
-			}
-
-			let noteId: string;
-
-			try {
-				noteId =
-					createNoteIdForDescriptor(
-						descriptor
-					);
-			} catch {
-				// Bundle/invalid Note descriptors are not individual list entries.
-				continue;
-			}
-
-			if (
-				candidates.has(
-					noteId
-				)
-			) {
-				continue;
-			}
-
-			candidates.set(
-				noteId,
-				{
-					id: noteId,
-					name:
-						createAvailableNoteName(
-							match
-						),
-					filesystemPublisher:
-						match.publisher,
-					rootPath:
-						match.rootPath,
-					path:
-						match.entry.path,
-					descriptor
-				}
-			);
-		}
-
-		const availability =
-			await Promise.all(
-				[...candidates.values()]
-					.map(
-						async (candidate) => ({
-							candidate,
-							existing:
-								await this.store.get(
-									candidate.id
-								)
-						})
-					)
-			);
-
-		return availability
-			.filter(
-				({ existing }) =>
-					existing === undefined
-			)
-			.map(
-				({ candidate }) =>
-					candidate
-			);
 	}
 
 	refresh(): void {
@@ -490,29 +355,4 @@ export class NotesService {
 			}
 		);
 	}
-}
-
-function createAvailableNoteName(
-	match: FilesystemSearchMatch
-): string {
-	const descriptorName =
-		match.entry.descriptor
-			.metadata.name;
-
-	if (descriptorName !== undefined) {
-		return descriptorName;
-	}
-
-	const pathSegments =
-		match.entry.path
-			.split('/')
-			.filter(Boolean);
-
-	return (
-		pathSegments[
-			pathSegments.length - 1
-		] ??
-		match.entry.descriptor
-			.metadata.resourceId
-	);
 }

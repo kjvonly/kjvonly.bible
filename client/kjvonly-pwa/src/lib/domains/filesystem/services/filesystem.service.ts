@@ -14,10 +14,6 @@ import type {
 	FilesystemStore
 } from '../persistence/filesystem-store';
 
-import {
-	FilesystemSearchRuntime
-} from '../runtime/search/filesystem-search-runtime';
-
 interface FilesystemSearchPort {
 	search(
 		byIndex:
@@ -37,25 +33,17 @@ interface FilesystemSearchPort {
  */
 export class FilesystemService {
 
-	private searchRuntime:
-		FilesystemSearchPort |
-		undefined;
-
 	constructor(
 		private readonly store:
 			Pick<
 				FilesystemStore,
 				'get' |
-					'listByRootPath' |
-					'listByDataType'
+					'listByRootPath'
 			>,
 
-		searchRuntime?:
+		private readonly searchRuntime:
 			FilesystemSearchPort
-	) {
-		this.searchRuntime =
-			searchRuntime;
-	}
+	) {}
 
 	/** Returns one mounted entry by its filesystem identity. */
 	get(
@@ -86,20 +74,9 @@ export class FilesystemService {
 		);
 	}
 
-	/** Lists mounted entries whose descriptors advertise one semantic data type. */
-	listByDataType(
-		dataType: string
-	): Promise<
-		readonly FilesystemEntry[]
-	> {
-		return this.store.listByDataType(
-			dataType
-		);
-	}
-
 	/**
 	 * Searches mounted Resources selected by an indexed descriptor metadata
-	 * field, matching display name or filesystem path without materializing.
+	 * field, matching display name or filesystem path without resolving targets.
 	 */
 	search(
 		byIndex:
@@ -108,9 +85,6 @@ export class FilesystemService {
 	): Promise<
 		readonly FilesystemSearchMatch[]
 	> {
-		this.searchRuntime ??=
-			new FilesystemSearchRuntime();
-
 		return this.searchRuntime.search(
 			byIndex,
 			text

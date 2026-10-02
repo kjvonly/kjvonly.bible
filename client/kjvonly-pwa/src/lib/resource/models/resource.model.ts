@@ -77,7 +77,7 @@ export interface DecodedResourceContent {
 
 	readonly mediaType: string;
 
-	/** Optional semantic application data contract advertised by a descriptor. */
+	/** Optional normalized semantic application data contract. */
 	readonly dataType?: string;
 
 	/** Additional protocol-agnostic Resource metadata. */

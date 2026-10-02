@@ -111,8 +111,7 @@ export class ResourceDescriptorWorkerPool {
 				reject
 			) => {
 
-				const job:
-					DescriptorWorkerJob = {
+				this.enqueue({
 					type:
 						'representation',
 
@@ -120,29 +119,7 @@ export class ResourceDescriptorWorkerPool {
 					representation,
 					resolve,
 					reject
-				};
-
-				const slot =
-					this.slots.find(
-						(candidate) =>
-							!candidate.busy
-					);
-
-				if (
-					slot ===
-					undefined
-				) {
-					this.queue.push(
-						job
-					);
-
-					return;
-				}
-
-				this.dispatch(
-					slot,
-					job
-				);
+				});
 			}
 		);
 	}
@@ -162,38 +139,44 @@ export class ResourceDescriptorWorkerPool {
 				reject
 			) => {
 
-				const job:
-					DescriptorWorkerJob = {
+				this.enqueue({
 					type:
 						'descriptor',
 
 					descriptor,
 					resolve,
 					reject
-				};
-
-				const slot =
-					this.slots.find(
-						(candidate) =>
-							!candidate.busy
-					);
-
-				if (
-					slot ===
-						undefined
-				) {
-					this.queue.push(
-						job
-					);
-
-					return;
-				}
-
-				this.dispatch(
-					slot,
-					job
-				);
+				});
 			}
+		);
+	}
+
+	/** Schedules one job immediately when a worker is free, otherwise queues it. */
+	private enqueue(
+		job:
+			DescriptorWorkerJob
+	): void {
+
+		const slot =
+			this.slots.find(
+				(candidate) =>
+					!candidate.busy
+			);
+
+		if (
+			slot ===
+			undefined
+		) {
+			this.queue.push(
+				job
+			);
+
+			return;
+		}
+
+		this.dispatch(
+			slot,
+			job
 		);
 	}
 

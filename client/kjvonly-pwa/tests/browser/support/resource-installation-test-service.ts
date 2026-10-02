@@ -1,6 +1,7 @@
 import type {
 	PublishedResourceReference,
 	ResourceHandler,
+	ResourceMetadata,
 	ResourceRepresentation,
 	ResourceResolutionResult,
 	VerifiedResourceContent
@@ -31,6 +32,7 @@ export interface ResourceInstallationTestInput {
 	readonly publisher: string;
 	readonly resourceId: string;
 	readonly resourceType: string;
+	readonly metadata?: ResourceMetadata;
 	readonly value: unknown;
 	readonly modifiedAt?: number;
 }
@@ -86,7 +88,15 @@ export function createResourceInstallationTestService(
 
 	return new ResourceService(
 		discovery,
-		processor
+		processor,
+		{
+			processDescriptor:
+				async () => {
+					throw new Error(
+						'Resource installation browser-test helper does not process descriptors.'
+					);
+				}
+		}
 	);
 }
 
@@ -161,6 +171,10 @@ function createVerifiedContent(
 		mediaType:
 			'application/json',
 
+		...(input.metadata === undefined
+			? {}
+			: { metadata: input.metadata }),
+
 		content:
 			serialized
 	};
@@ -201,6 +215,10 @@ function createRepresentation(
 
 		mediaType:
 			content.mediaType,
+
+		...(content.metadata === undefined
+			? {}
+			: { metadata: content.metadata }),
 
 		payload:
 			content.content

@@ -126,6 +126,73 @@ describe(
         );
 
         it(
+            'normalizes semantic data type from Resource metadata',
+            async () => {
+                const decoder =
+                    createDecoder();
+
+                const result =
+                    await decoder.decode(
+                        createVerifiedContent({
+                            dataType:
+                                undefined,
+
+                            metadata: {
+                                dataType:
+                                    'kjvonly.note/v1',
+
+                                f:
+                                    'notes'
+                            }
+                        })
+                    );
+
+                expect(
+                    result.dataType
+                ).toBe(
+                    'kjvonly.note/v1'
+                );
+
+                expect(
+                    result.metadata
+                ).toEqual({
+                    dataType:
+                        'kjvonly.note/v1',
+
+                    f:
+                        'notes'
+                });
+            }
+        );
+
+        it(
+            'prefers explicit verified data type over Resource metadata',
+            async () => {
+                const decoder =
+                    createDecoder();
+
+                const result =
+                    await decoder.decode(
+                        createVerifiedContent({
+                            dataType:
+                                'kjvonly.note/v2',
+
+                            metadata: {
+                                dataType:
+                                    'kjvonly.note/v1'
+                            }
+                        })
+                    );
+
+                expect(
+                    result.dataType
+                ).toBe(
+                    'kjvonly.note/v2'
+                );
+            }
+        );
+
+        it(
             'does not perform Domain validation',
             async () => {
                 const decoder =

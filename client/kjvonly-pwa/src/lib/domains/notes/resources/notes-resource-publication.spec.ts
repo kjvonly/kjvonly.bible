@@ -45,6 +45,11 @@ describe(
 					mediaType:
 						'application/json+gzip+hex',
 
+					metadata: {
+						dataType:
+							'kjvonly.note/v1'
+					},
+
 					value: {
 						bibleLocationRef:
 							'43_3_16_0',

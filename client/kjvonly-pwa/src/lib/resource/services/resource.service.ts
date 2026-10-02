@@ -46,7 +46,7 @@ export class ResourceService {
 				'process'
 			>,
 
-		private readonly descriptorProcessor?:
+		private readonly descriptorProcessor:
 			KnownResourceDescriptorProcessor
 	) {}
 
@@ -77,26 +77,12 @@ export class ResourceService {
 		descriptor:
 			ResourceDescriptor
 	): Promise<ResourceInstallResult> {
-		const descriptorProcessor =
-			this.descriptorProcessor;
-
-		if (
-			descriptorProcessor ===
-				undefined
-		) {
-			return Promise.reject(
-				new Error(
-					'Resource descriptor installation is unavailable.'
-				)
-			);
-		}
-
 		return this.runInstall(
 			this.createDescriptorInstallKey(
 				descriptor
 			),
 			() =>
-				descriptorProcessor.processDescriptor(
+				this.descriptorProcessor.processDescriptor(
 					descriptor
 				)
 		);

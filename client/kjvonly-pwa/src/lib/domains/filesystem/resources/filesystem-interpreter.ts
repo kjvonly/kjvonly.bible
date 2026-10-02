@@ -16,7 +16,7 @@ export const FILESYSTEM_RESOURCE_TYPE =
  *
  * The Resource `f` metadata value supplies the filesystem root. Payload keys are
  * paths relative to that root. Target Resource descriptors are not resolved or
- * otherwise materialized during interpretation.
+ * loaded during interpretation.
  */
 export class FilesystemInterpreter
 	implements ResourceInterpreter<

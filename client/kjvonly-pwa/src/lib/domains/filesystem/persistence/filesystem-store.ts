@@ -28,13 +28,6 @@ export interface FilesystemStore {
 		readonly FilesystemEntry[]
 	>;
 
-	/** Lists all mounted entries advertising one semantic data type. */
-	listByDataType(
-		dataType: string
-	): Promise<
-		readonly FilesystemEntry[]
-	>;
-
 	/** Persists one root-relative mapping under the supplied filesystem root. */
 	put(
 		publisher: string,

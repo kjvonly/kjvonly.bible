@@ -27,6 +27,9 @@ notes for that location. Without it, the view shows all notes.
 		NOTES_COLLECTION_CHANGED
 	} from '../events/notes-events';
 	import NotesList from './notesList/notesList.svelte';
+	import type {
+		NoteListItem
+	} from './notesList/note-list-item';
 
 	// APPLICATION
 	import {
@@ -36,6 +39,7 @@ notes for that location. Without it, the view shows all notes.
 
 	const {
 		notesService,
+		notesAvailabilityService,
 		toastService
 	} = useApplicationContext();
 
@@ -61,6 +65,9 @@ notes for that location. Without it, the view shows all notes.
 	let availableNotes: AvailableNote[] = $state([]);
 	let availableSearchGeneration = 0;
 	let openedNoteID: string | undefined = $state();
+	let noteListItems: NoteListItem[] = $derived(
+		createNoteListItems()
+	);
 
 	const NOTE_SEARCH_ID = uuid4();
 
@@ -109,6 +116,36 @@ notes for that location. Without it, the view shows all notes.
 	});
 
 	// ================================ FUNCS ==================================
+	function createNoteListItems(): NoteListItem[] {
+		const installedItems =
+			noteKeys.flatMap(
+				(noteID): NoteListItem[] => {
+					const installedNote =
+						notes[noteID];
+
+					return installedNote
+						? [{
+							type: 'installed',
+							note: installedNote
+						}]
+						: [];
+				}
+			);
+
+		const availableItems =
+			availableNotes.map(
+				(availableNote): NoteListItem => ({
+					type: 'available',
+					note: availableNote
+				})
+			);
+
+		return [
+			...installedItems,
+			...availableItems
+		];
+	}
+
 	function updateNotesKeys() {
 		noteKeys = Object.keys(notes).sort((a, b) => {
 			return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
@@ -187,8 +224,8 @@ notes for that location. Without it, the view shows all notes.
 
 		try {
 			const matches =
-				await notesService
-					.searchAvailableNotes(
+				await notesAvailabilityService
+					.search(
 						filterInput
 					);
 
@@ -235,6 +272,24 @@ notes for that location. Without it, the view shows all notes.
 				.sort((a, b) => {
 					return (notes[a].dateUpdated - notes[b].dateUpdated) * -1;
 				});
+		}
+	}
+
+	async function onSelectedNoteListItem(
+		item: NoteListItem
+	): Promise<void> {
+		switch (item.type) {
+			case 'installed':
+				onSelectedNote(
+					item.note.id
+				);
+				return;
+
+			case 'available':
+				await onSelectedAvailableNote(
+					item.note
+				);
+				return;
 		}
 	}
 
@@ -303,11 +358,8 @@ notes for that location. Without it, the view shows all notes.
 {:else}
 	<NotesList
 		bind:filterInput
-		{noteKeys}
-		{notes}
-		{availableNotes}
-		{onSelectedNote}
-		{onSelectedAvailableNote}
+		{noteListItems}
+		{onSelectedNoteListItem}
 		{bibleLocationRef}
 		{filterParams}
 		{onFilterParamChanged}

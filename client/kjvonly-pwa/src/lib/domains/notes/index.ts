@@ -18,12 +18,13 @@ export {
 } from './services/notes.service';
 
 export {
-	NOTES_RESOURCE_TYPE
-} from './resources/note-interpreter';
+	NotesAvailabilityService
+} from './services/notes-availability.service';
 
 export {
-	NOTES_DATA_TYPE
-} from './resources/note-data-type';
+	NOTES_RESOURCE_TYPE,
+	NOTE_DATA_TYPE_V1
+} from './resources/notes-resource-contract';
 
 export {
 	DEFAULT_NOTES_RESOURCE_NAME,

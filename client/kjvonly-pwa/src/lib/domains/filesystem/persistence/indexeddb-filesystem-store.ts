@@ -1,6 +1,5 @@
 import {
 	FILESYSTEM_ENTRIES,
-	FILESYSTEM_ENTRY_DATA_TYPE_INDEX,
 	FILESYSTEM_ENTRY_PUBLISHER_ROOT_PATH_INDEX,
 	type ApplicationDB,
 	type StoredFilesystemEntry
@@ -23,7 +22,7 @@ import type {
  *
  * Filesystem entries deliberately live outside DOMAIN_OBJECTS because they
  * describe Resources that are available to the application rather than Domain
- * data that has already been materialized.
+ * data that has already been installed as accepted Domain state.
  */
 export class IndexedDBFilesystemStore
 	implements FilesystemStore {
@@ -78,28 +77,6 @@ export class IndexedDBFilesystemStore
 					publisher,
 					rootPath
 				]
-			);
-
-		return stored.map(
-			(row) =>
-				row.value as FilesystemEntry
-		);
-	}
-
-	/** Lists mounted entries by semantic data type. */
-	async listByDataType(
-		dataType: string
-	): Promise<
-		readonly FilesystemEntry[]
-	> {
-		const db =
-			await this.getDB();
-
-		const stored =
-			await db.getAllFromIndex(
-				FILESYSTEM_ENTRIES,
-				FILESYSTEM_ENTRY_DATA_TYPE_INDEX,
-				dataType
 			);
 
 		return stored.map(

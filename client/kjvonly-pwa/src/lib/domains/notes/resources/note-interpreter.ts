@@ -14,8 +14,10 @@ import type {
 	NoteCandidate
 } from './note-candidate';
 
-export const NOTES_RESOURCE_TYPE =
-	'kjvonly/notes/entries';
+import {
+	NOTE_DATA_TYPE_V1,
+	NOTES_RESOURCE_TYPE
+} from './notes-resource-contract';
 
 export class NoteInterpreter
 	implements ResourceInterpreter<
@@ -37,6 +39,10 @@ export class NoteInterpreter
 				`Invalid Notes Resource Type: ${resource.resourceType}`
 			);
 		}
+
+		validateNoteDataType(
+			resource.dataType
+		);
 
 		const identifier =
 			parseResourceIdentifier(
@@ -124,6 +130,31 @@ export class NoteInterpreter
 					value
 				};
 			}
+		);
+	}
+}
+
+
+/**
+ * Requires the semantic Notes schema version currently supported by the app.
+ */
+function validateNoteDataType(
+	dataType: string |
+		undefined
+): void {
+	if (
+		dataType === undefined
+	) {
+		throw new Error(
+			'Notes data type is required.'
+		);
+	}
+
+	if (
+		dataType !== NOTE_DATA_TYPE_V1
+	) {
+		throw new Error(
+			`Unsupported Notes data type: ${dataType}`
 		);
 	}
 }

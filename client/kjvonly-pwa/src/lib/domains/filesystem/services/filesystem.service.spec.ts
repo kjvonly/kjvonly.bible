@@ -94,40 +94,6 @@ describe(
 		);
 
 		it(
-			'lists mounted entries by descriptor data type',
-			async () => {
-				const entries = [
-					createEntry()
-				];
-
-				const listByDataType =
-					vi.fn()
-						.mockResolvedValue(
-							entries
-						);
-
-				const service =
-					createService({
-						listByDataType
-					});
-
-				await expect(
-					service.listByDataType(
-						'kjvonly.note/v1'
-					)
-				).resolves.toBe(
-					entries
-				);
-
-				expect(
-					listByDataType
-				).toHaveBeenCalledWith(
-					'kjvonly.note/v1'
-				);
-			}
-		);
-
-		it(
 			'searches mounted Resource metadata through the filesystem search boundary',
 			async () => {
 				const matches = [];
@@ -179,7 +145,11 @@ function createService(
 	return new FilesystemService(
 		createStore(
 			overrides
-		)
+		),
+		{
+			search:
+				vi.fn()
+		}
 	);
 }
 
@@ -189,15 +159,12 @@ function createStore(
 ): Pick<
 	FilesystemStore,
 	'get' |
-		'listByRootPath' |
-		'listByDataType'
+		'listByRootPath'
 > {
 	return {
 		get:
 			vi.fn(),
 		listByRootPath:
-			vi.fn(),
-		listByDataType:
 			vi.fn(),
 		...overrides
 	};

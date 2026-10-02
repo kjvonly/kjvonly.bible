@@ -30,7 +30,11 @@ import {
 } from '$lib/domains/notes/resources/note-installer';
 
 import {
-	NOTES_RESOURCE_TYPE,
+	NOTE_DATA_TYPE_V1,
+	NOTES_RESOURCE_TYPE
+} from '$lib/domains/notes';
+
+import {
 	NoteInterpreter
 } from '$lib/domains/notes/resources/note-interpreter';
 
@@ -113,6 +117,10 @@ describe(
 							resourceId,
 							resourceType:
 								NOTES_RESOURCE_TYPE,
+							metadata: {
+								dataType:
+									NOTE_DATA_TYPE_V1
+							},
 							value,
 							modifiedAt:
 								200

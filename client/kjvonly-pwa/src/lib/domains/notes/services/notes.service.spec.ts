@@ -31,11 +31,6 @@ import type {
 	ResourcePublicationIntent
 } from '$lib/resource';
 
-import type {
-	FilesystemSearchByIndex,
-	FilesystemSearchMatch
-} from '$lib/domains/filesystem';
-
 function createNote(
 	id: string =
 		'publisher/default/note-1'
@@ -93,18 +88,6 @@ class FakeNotesStore {
 
 	getAll =
 		vi.fn<() => Promise<readonly Note[]>>();
-}
-
-class FakeFilesystemSearch {
-	search =
-		vi.fn<
-			(
-				byIndex:
-					FilesystemSearchByIndex,
-				text: string
-			) => Promise<readonly FilesystemSearchMatch[]>
-		>()
-			.mockResolvedValue([]);
 }
 
 class FakeResourceLoader {
@@ -426,315 +409,6 @@ describe(
 		);
 
 		it(
-			'finds uninstalled Note descriptors advertised by the filesystem',
-			async () => {
-				const store =
-					new FakeNotesStore();
-
-				const runtime =
-					new FakeRuntime();
-
-				const filesystem =
-					new FakeFilesystemSearch();
-
-				const descriptor = {
-					...createNoteDescriptor(),
-					metadata: {
-						...createNoteDescriptor().metadata,
-						name: 'Grace Note',
-						dataType: 'kjvonly.note/v1'
-					}
-				};
-
-				store.getAll
-					.mockResolvedValue([]);
-
-				store.get
-					.mockResolvedValue(
-						undefined
-					);
-
-				filesystem.search
-					.mockResolvedValue([
-						{
-							publisher:
-								'catalog-publisher',
-							rootPath:
-								'notes',
-							entry: {
-								path:
-									'studies/grace-note',
-								descriptor
-							}
-						}
-					]);
-
-				const service =
-					createService(
-						store,
-						runtime,
-						undefined,
-						undefined,
-						undefined,
-						filesystem
-					);
-
-				await expect(
-					service.searchAvailableNotes(
-						'grace'
-					)
-				).resolves.toEqual([
-					{
-						id:
-							'publisher/default/note-1',
-						name:
-							'Grace Note',
-						filesystemPublisher:
-							'catalog-publisher',
-						rootPath:
-							'notes',
-						path:
-							'studies/grace-note',
-						descriptor
-					}
-				]);
-
-				expect(
-					filesystem.search
-				).toHaveBeenCalledWith(
-					{
-						index: 'category',
-						value:
-							'kjvonly/notes/entries'
-					},
-					'grace'
-				);
-			}
-		);
-
-		it(
-			'finds Note descriptors across data type versions by stable Resource category',
-			async () => {
-				const store =
-					new FakeNotesStore();
-
-				const runtime =
-					new FakeRuntime();
-
-				const filesystem =
-					new FakeFilesystemSearch();
-
-				const v1Descriptor = {
-					...createNoteDescriptor(),
-					metadata: {
-						...createNoteDescriptor().metadata,
-						resourceId:
-							'kjvonly/notes/entries/default/note-v1',
-						dataType:
-							'kjvonly.note/v1'
-					}
-				};
-
-				const v2Descriptor = {
-					...createNoteDescriptor(),
-					metadata: {
-						...createNoteDescriptor().metadata,
-						resourceId:
-							'kjvonly/notes/entries/default/note-v2',
-						dataType:
-							'kjvonly.note/v2'
-					}
-				};
-
-				store.getAll
-					.mockResolvedValue([]);
-
-				store.get
-					.mockResolvedValue(
-						undefined
-					);
-
-				filesystem.search
-					.mockResolvedValue([
-						{
-							publisher: 'catalog',
-							rootPath: 'notes',
-							entry: {
-								path: 'note-v1',
-								descriptor:
-									v1Descriptor
-							}
-						},
-						{
-							publisher: 'catalog',
-							rootPath: 'notes',
-							entry: {
-								path: 'note-v2',
-								descriptor:
-									v2Descriptor
-							}
-						}
-					]);
-
-				const service =
-					createService(
-						store,
-						runtime,
-						undefined,
-						undefined,
-						undefined,
-						filesystem
-					);
-
-				await expect(
-					service.searchAvailableNotes(
-						''
-					)
-				).resolves.toHaveLength(
-					2
-				);
-
-				expect(
-					filesystem.search
-				).toHaveBeenCalledWith(
-					{
-						index: 'category',
-						value:
-							'kjvonly/notes/entries'
-					},
-					''
-				);
-			}
-		);
-
-		it(
-			'uses the filesystem basename when an available Note has no display name',
-			async () => {
-				const store =
-					new FakeNotesStore();
-
-				const runtime =
-					new FakeRuntime();
-
-				const filesystem =
-					new FakeFilesystemSearch();
-
-				const descriptor =
-					createNoteDescriptor();
-
-				store.getAll
-					.mockResolvedValue([]);
-
-				store.get
-					.mockResolvedValue(
-						undefined
-					);
-
-				filesystem.search
-					.mockResolvedValue([
-						{
-							publisher: 'catalog',
-							rootPath: 'notes',
-							entry: {
-								path:
-									'studies/grace-note',
-								descriptor
-							}
-						}
-					]);
-
-				const service =
-					createService(
-						store,
-						runtime,
-						undefined,
-						undefined,
-						undefined,
-						filesystem
-					);
-
-				const available =
-					await service
-						.searchAvailableNotes(
-							''
-						);
-
-				expect(
-					available[0]?.name
-				).toBe(
-					'grace-note'
-				);
-			}
-		);
-
-		it(
-			'omits filesystem Note descriptors that are already installed',
-			async () => {
-				const store =
-					new FakeNotesStore();
-
-				const runtime =
-					new FakeRuntime();
-
-				const filesystem =
-					new FakeFilesystemSearch();
-
-				const descriptor =
-					createNoteDescriptor();
-
-				store.getAll
-					.mockResolvedValue([]);
-
-				store.get
-					.mockResolvedValue(
-						createNote()
-					);
-
-				filesystem.search
-					.mockResolvedValue([
-						{
-							publisher: 'catalog-a',
-							rootPath: 'notes',
-							entry: {
-								path: 'note-1',
-								descriptor
-							}
-						},
-						{
-							publisher: 'catalog-b',
-							rootPath: 'favorites',
-							entry: {
-								path: 'same-note',
-								descriptor
-							}
-						}
-					]);
-
-				const service =
-					createService(
-						store,
-						runtime,
-						undefined,
-						undefined,
-						undefined,
-						filesystem
-					);
-
-				await expect(
-					service.searchAvailableNotes(
-						''
-					)
-				).resolves.toEqual([]);
-
-				expect(
-					store.get
-				).toHaveBeenCalledTimes(
-					1
-				);
-			}
-		);
-
-		it(
 			'waits for accepted Notes to load before querying the runtime',
 			async () => {
 				let resolveNotes:
@@ -914,6 +588,12 @@ describe(
 								'content',
 							mediaType:
 								'application/json+gzip+hex',
+
+							metadata: {
+								dataType:
+									'kjvonly.note/v1'
+							},
+
 							value: {
 								bibleLocationRef:
 									undefined,
@@ -1158,11 +838,7 @@ function createService(
 
 	resourceLoader:
 		FakeResourceLoader =
-			new FakeResourceLoader(),
-
-	filesystem:
-		FakeFilesystemSearch =
-			new FakeFilesystemSearch()
+			new FakeResourceLoader()
 ): NotesService {
 	return new NotesService(
 		store,
@@ -1171,7 +847,6 @@ function createService(
 		{
 			wake
 		},
-		filesystem,
 		resourceLoader,
 		runtime
 	);

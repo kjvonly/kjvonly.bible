@@ -8,7 +8,7 @@ import type {
  *
  * The entry stores the target ResourceDescriptor unchanged. It describes
  * content that is available to the application; it is not itself the target
- * Domain Object and does not imply that the target Resource is materialized.
+ * Domain Object and does not imply that the target Resource has been loaded.
  */
 export interface FilesystemEntry {
 	/** Path relative to the filesystem root under which the entry is stored. */

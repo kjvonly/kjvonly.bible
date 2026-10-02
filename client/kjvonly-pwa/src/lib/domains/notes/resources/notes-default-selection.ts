@@ -4,7 +4,7 @@ import type {
 
 import {
 	NOTES_RESOURCE_TYPE
-} from './note-interpreter';
+} from './notes-resource-contract';
 
 export const DEFAULT_NOTES_RESOURCE_NAME =
 	'default';

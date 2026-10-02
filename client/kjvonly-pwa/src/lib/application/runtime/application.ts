@@ -352,6 +352,10 @@ import {
     IndexedDBFilesystemStore
 } from '$lib/domains/filesystem/persistence/indexeddb-filesystem-store';
 
+import {
+    FilesystemSearchRuntime
+} from '$lib/domains/filesystem/runtime/search/filesystem-search-runtime';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Notes
 
@@ -368,8 +372,13 @@ import {
 } from '$lib/domains/notes/resources/notes-resource-publication';
 
 import {
+    NotesSearchRuntime
+} from '$lib/domains/notes/runtime/search/notes-search-runtime';
+
+import {
     NOTES_RESOURCE_TYPE,
     NOTES_VIEWS,
+    NotesAvailabilityService,
     NotesService
 } from '$lib/domains/notes';
 
@@ -1210,9 +1219,13 @@ export class Application {
                 getApplicationDB
             );
 
+        const filesystemSearchRuntime =
+            new FilesystemSearchRuntime();
+
         const filesystemService =
             new FilesystemService(
-                filesystemStore
+                filesystemStore,
+                filesystemSearchRuntime
             );
 
         ///////////////////////////////////////////////////////////////////////
@@ -1237,14 +1250,23 @@ export class Application {
                 appendResourceReferenceBuilder
             );
 
+        const notesSearchRuntime =
+            new NotesSearchRuntime();
+
+        const notesAvailabilityService =
+            new NotesAvailabilityService(
+                notesStore,
+                filesystemService
+            );
+
         const notesService =
             new NotesService(
                 notesStore,
                 notesWriteTransaction,
                 notesResourcePublication,
                 outboxProcessor,
-                filesystemService,
-                notesResourceLoader
+                notesResourceLoader,
+                notesSearchRuntime
             );
 
         archiveService.subscribeToImports(
@@ -1404,6 +1426,7 @@ export class Application {
             filesystemService,
 
             notesService,
+            notesAvailabilityService,
 
             planDefinitionsService,
             planSubscriptionsService,

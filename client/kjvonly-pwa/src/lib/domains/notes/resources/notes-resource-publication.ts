@@ -12,8 +12,9 @@ import type {
 } from '$lib/resource';
 
 import {
+	NOTE_DATA_TYPE_V1,
 	NOTES_RESOURCE_TYPE
-} from './note-interpreter';
+} from './notes-resource-contract';
 
 export class NotesResourcePublication {
 
@@ -36,6 +37,11 @@ export class NotesResourcePublication {
 
 			mediaType:
 				'application/json+gzip+hex',
+
+			metadata: {
+				dataType:
+					NOTE_DATA_TYPE_V1
+			},
 
 			value:
 				createResourceValue(
