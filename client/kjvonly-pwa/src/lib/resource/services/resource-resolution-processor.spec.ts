@@ -30,13 +30,19 @@ describe(
 						'kjvonly/strongs/definitions/kjvs',
 
 					resourceType:
-						'kjvonly/strongs/definitions',
+						'strongs/definition',
 
 					modifiedAt:
 						100,
 
 					mediaType:
 						'application/json',
+
+					dataType:
+						'kjvonly.strongs-definition',
+
+					dataVersion:
+						1,
 
 					content:
 						'{}'
@@ -58,6 +64,12 @@ describe(
 
 					mediaType:
 						content.mediaType,
+
+					dataType:
+						content.dataType,
+
+					dataVersion:
+						content.dataVersion,
 
 					value:
 						{}
@@ -82,6 +94,14 @@ describe(
 						)
 				};
 
+				const genericInstaller = {
+					install:
+						vi.fn(
+							async () =>
+								undefined
+						)
+				};
+
 				const receipts = {
 					markProcessed:
 						vi.fn(
@@ -94,6 +114,7 @@ describe(
 					new ResourceResolutionProcessor(
 						decoder,
 						receipts,
+						genericInstaller,
 						[
 							handler
 						]
@@ -129,7 +150,7 @@ describe(
 										'kjvonly/bible/chapters/kjvs',
 
 									resourceType:
-										'kjvonly/bible/chapters'
+										'bible/chapter'
 								}
 							],
 
@@ -167,7 +188,7 @@ describe(
 							},
 
 							resourceType:
-								'kjvonly/bible/chapters',
+								'bible/chapter',
 
 							status:
 								'current'
@@ -208,6 +229,90 @@ describe(
 					content.publisher,
 					content.resourceId,
 					content.modifiedAt
+				);
+			}
+		);
+
+		it(
+			'falls back to generic semantic installation when no legacy Resource handler owns the Resource Type',
+			async () => {
+				const decoded:
+					DecodedResourceContent = {
+						publisher:
+							'publisher',
+
+						resourceId:
+							'documents/example',
+
+						resourceType:
+							'sermons',
+
+						modifiedAt:
+							100,
+
+						mediaType:
+							'application/json',
+
+						dataType:
+							'kjvonly.normalized-document',
+
+						dataVersion:
+							1,
+
+						value: {}
+					};
+
+				const genericInstaller = {
+					install:
+						vi.fn(
+							async () =>
+								undefined
+						)
+				};
+
+				const receipts = {
+					markProcessed:
+						vi.fn(
+							async () =>
+								undefined
+						)
+				};
+
+				const processor =
+					new ResourceResolutionProcessor(
+						{
+							decode:
+								vi.fn(
+									async () =>
+										decoded
+								)
+						},
+						receipts,
+						genericInstaller,
+						[]
+					);
+
+				const outcome =
+					await processor.processDecoded(
+						decoded
+					);
+
+				expect(
+					genericInstaller.install
+				).toHaveBeenCalledWith(
+					decoded
+				);
+
+				expect(outcome.status).toBe(
+					'handled'
+				);
+
+				expect(
+					receipts.markProcessed
+				).toHaveBeenCalledWith(
+					decoded.publisher,
+					decoded.resourceId,
+					decoded.modifiedAt
 				);
 			}
 		);

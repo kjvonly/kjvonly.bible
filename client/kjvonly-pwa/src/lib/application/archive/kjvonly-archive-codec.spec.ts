@@ -26,6 +26,10 @@ function createArchive():
 					'notes/note',
 				objectId:
 					'publisher/default/note-1',
+				dataType:
+					'kjvonly.note',
+				dataVersion:
+					1,
 				value: {
 					title:
 						'Archive note'

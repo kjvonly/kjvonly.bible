@@ -24,6 +24,12 @@ import {
 	FilesystemInstaller
 } from './filesystem-installer';
 
+import {
+	FILESYSTEM_ENTRIES_DATA_TYPE,
+	FILESYSTEM_ENTRIES_DATA_VERSION,
+	FILESYSTEM_RESOURCE_TYPE
+} from './filesystem-resource';
+
 import type {
 	FilesystemInstallationStores,
 	FilesystemInstallationTransaction
@@ -36,8 +42,14 @@ const DESCRIPTOR:
 				'b'.repeat(64),
 			resourceId:
 				'note-creation',
-			category:
-				'kjvonly/notes/entries',
+			resourceType:
+				'notes/note',
+			dataType:
+				'kjvonly.note',
+
+			dataVersion:
+				1,
+
 			modifiedAt:
 				50,
 			representation:
@@ -198,7 +210,13 @@ function createResource():
 		resourceId:
 			'my-filesystem',
 		resourceType:
-			'fs',
+			FILESYSTEM_RESOURCE_TYPE,
+
+		dataType:
+			FILESYSTEM_ENTRIES_DATA_TYPE,
+
+		dataVersion:
+			FILESYSTEM_ENTRIES_DATA_VERSION,
 		modifiedAt:
 			100,
 		mediaType:

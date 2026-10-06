@@ -38,11 +38,27 @@ describe(
 									tags: [
 										[
 											'd',
-											'kjvonly/bible/chapters/kjvs'
+											'kjvonly/bible/chapter/kjvs'
 										],
 										[
 											't',
-											'kjvonly/bible/chapters'
+											'bible/chapter'
+										],
+										[
+											'dataType',
+											'kjvonly.bible.chapter'
+										],
+										[
+											'dataVersion',
+											'1'
+										],
+										[
+											'version',
+											'kjvs'
+										],
+										[
+											'language',
+											'en'
 										]
 									]
 								},
@@ -115,10 +131,16 @@ describe(
 						),
 
 					resourceId:
-						'kjvonly/bible/chapters/kjvs',
+						'kjvonly/bible/chapter/kjvs',
 
-					category:
-						'kjvonly/bible/chapters',
+					resourceType:
+						'bible/chapter',
+
+					dataType:
+						'kjvonly.bible.chapter',
+
+					dataVersion:
+						1,
 
 					modifiedAt:
 						1000,
@@ -129,6 +151,17 @@ describe(
 					mediaType:
 						'application/json+gzip'
 				});
+
+
+			expect(
+				descriptor.resourceMetadata
+			).toEqual({
+				version:
+					'kjvs',
+
+				language:
+					'en'
+			});
 			}
 		);
 
@@ -166,7 +199,7 @@ describe(
 											],
 											[
 												't',
-												'category'
+												'resourceType'
 											]
 										]
 									},
@@ -233,5 +266,96 @@ describe(
 				);
 			}
 		);
+
+		it(
+			'rejects an invalid descriptor data version',
+			() => {
+
+				expect(
+					() =>
+						new ResourceDescriptorBuilder()
+							.build({
+								source: {
+									resourceName:
+										'bundle',
+
+									key:
+										'kjvs',
+
+									path:
+										'/data',
+
+									event: {
+										encoding:
+											[],
+
+										tags: [
+											['d', 'resource'],
+											['t', 'resourceType'],
+											['dataType', 'contract'],
+											['dataVersion', '0']
+										]
+									},
+
+									objectUpload: {
+										mediaType:
+											'application/json',
+
+										encoding:
+											[]
+									}
+								},
+
+								artifact: {
+									path:
+										'/artifact',
+
+									kind:
+										'file',
+
+									size:
+										1,
+
+									metadata: {
+										key:
+											'kjvs',
+
+										sourceMtimeMs:
+											1,
+
+										sourceSize:
+											1,
+
+										artifactRevision:
+											'12345678',
+
+										sha256:
+											'a'.repeat(64),
+
+										extension:
+											''
+									}
+								},
+
+								publisher:
+									'b'.repeat(64),
+
+								modifiedAt:
+									100,
+
+								strategy: {
+									type:
+										'blossom',
+
+									data:
+										{}
+								}
+							})
+				).toThrow(
+					'has an invalid "dataVersion" tag'
+				);
+			}
+		);
+
 	}
 );

@@ -1,7 +1,6 @@
 import {
 	type PublishedResourceReference,
-	type ResourceLoader,
-	parseResourceIdentifier
+	type ResourceLoader
 } from '$lib/resource';
 
 import type {
@@ -18,8 +17,8 @@ import type {
 
 
 import {
-	BIBLE_PARAGRAPHS_RESOURCE_TYPE
-} from '../resources/paragraphs/bible-paragraphs-interpreter';
+	parseBibleParagraphsResourceId
+} from '../resources/paragraphs/bible-paragraphs-resource';
 
 import type {
 	BibleLocationReferenceService
@@ -124,24 +123,14 @@ function parseParagraphsSource(
 	readonly source:
 		string;
 } {
-
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parseBibleParagraphsResourceId(
 			source.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		BIBLE_PARAGRAPHS_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Bible Paragraphs Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
+		identity.chapterRef !==
+			undefined
 	) {
 		throw new Error(
 			`Invalid Bible Paragraphs Resource source: ${source.resourceId}`
@@ -150,6 +139,6 @@ function parseParagraphsSource(
 
 	return {
 		source:
-			identifier.path[0]
+			identity.source
 	};
 }

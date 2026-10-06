@@ -38,6 +38,12 @@ export class ContentRepresentationResolver
 					resourceType:
 						resource.resourceType,
 
+					dataType:
+						resource.dataType,
+
+					dataVersion:
+						resource.dataVersion,
+
 					modifiedAt:
 						resource.modifiedAt,
 

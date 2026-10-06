@@ -1,3 +1,7 @@
+import {
+	BIBLE_CHAPTER_DATA_TYPE
+} from '../resources/chapters/bible-chapter-resource';
+
 import type {
 	Chapter
 } from '../models/bible.model';
@@ -65,6 +69,12 @@ export class IndexedDBChapterStore
 
 			objectType:
 				BIBLE_CHAPTER_OBJECT_TYPE,
+
+			dataType:
+				BIBLE_CHAPTER_DATA_TYPE,
+
+			dataVersion:
+				1,
 
 			objectId:
 				chapter.id,

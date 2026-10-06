@@ -5,6 +5,9 @@ import {
 } from 'vitest';
 
 import {
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	createResourceInstallationId,
 	createResourceReceiptId
 } from '$lib/resource';
@@ -18,42 +21,32 @@ import {
 } from '$lib/domains/reading-plans/persistence/indexeddb-plan-subscriptions-store';
 
 import {
-	IndexedDBPlanSubscriptionInstallationTransaction
-} from '$lib/domains/reading-plans/persistence/plan-subscription-installation-transaction';
-
-import {
 	PLAN_SUBSCRIPTION_OBJECT_TYPE
 } from '$lib/domains/reading-plans/persistence/plan-subscriptions-store';
 
 import {
-	PlanSubscriptionInstaller
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-installer';
+	PLAN_SUBSCRIPTION_DATA_TYPE,
+	PLAN_SUBSCRIPTION_DATA_VERSION,
+	PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+	PlanSubscriptionDataTypeHandler,
+	PlanSubscriptionDomainObjectFactory
+} from '$lib/domains/reading-plans';
 
 import {
-	PlanSubscriptionInterpreter
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-interpreter';
-
-import {
-	PlanSubscriptionResourceHandler
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-handler';
-
-import {
-	PLAN_SUBSCRIPTION_RESOURCE_TYPE
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-source';
-
-import {
-	PlanSubscriptionValidator
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-validator';
-
-import {
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
+	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
+
+import {
 	createBrowserTestPublisher,
-	createResourceInstallationTestService
+	createGenericResourceInstallationTestService
 } from './support/resource-installation-test-service';
 
 describe(
@@ -72,7 +65,7 @@ describe(
 					'browser-subscription';
 
 				const resourceId =
-					`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/${group}/${resourceSubscriptionId}`;
+					`kjvonly/reading-plans/plan-subscription/${group}/${resourceSubscriptionId}`;
 
 				const value = {
 					planDefinitionId:
@@ -93,22 +86,31 @@ describe(
 						100
 				};
 
+				const genericInstaller =
+					new GenericResourceInstaller(
+						new ResourceDataTypeResolver([
+							new PlanSubscriptionDataTypeHandler()
+						]),
+						new ResourceDomainObjectFactoryResolver([
+							new PlanSubscriptionDomainObjectFactory()
+						]),
+						new IndexedDBGenericResourceInstallationTransaction(
+							getApplicationDB
+						)
+					);
+
 				const service =
-					createResourceInstallationTestService(
-						new PlanSubscriptionResourceHandler(
-							new PlanSubscriptionInterpreter(),
-							new PlanSubscriptionValidator(),
-							new PlanSubscriptionInstaller(
-								new IndexedDBPlanSubscriptionInstallationTransaction(
-									getApplicationDB
-								)
-							)
-						),
+					createGenericResourceInstallationTestService(
+						genericInstaller,
 						{
 							publisher,
 							resourceId,
 							resourceType:
 								PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+							dataType:
+								PLAN_SUBSCRIPTION_DATA_TYPE,
+							dataVersion:
+								PLAN_SUBSCRIPTION_DATA_VERSION,
 							value,
 							modifiedAt:
 								200
@@ -171,14 +173,49 @@ describe(
 					...value
 				});
 
+				const db =
+					await getApplicationDB();
+
+				expect(
+					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							PLAN_SUBSCRIPTION_OBJECT_TYPE,
+							subscriptionId
+						)
+					)
+				).toEqual({
+					id:
+						createStoredDomainObjectId(
+							PLAN_SUBSCRIPTION_OBJECT_TYPE,
+							subscriptionId
+						),
+
+					objectType:
+						PLAN_SUBSCRIPTION_OBJECT_TYPE,
+
+					objectId:
+						subscriptionId,
+
+					dataType:
+						PLAN_SUBSCRIPTION_DATA_TYPE,
+
+					dataVersion:
+						1,
+
+					value: {
+						id:
+							subscriptionId,
+
+						...value
+					}
+				});
+
 				const installationId =
 					createResourceInstallationId(
 						PLAN_SUBSCRIPTION_OBJECT_TYPE,
 						subscriptionId
 					);
-
-				const db =
-					await getApplicationDB();
 
 				expect(
 					await db.get(

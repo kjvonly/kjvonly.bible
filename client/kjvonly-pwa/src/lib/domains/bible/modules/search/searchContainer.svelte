@@ -61,8 +61,8 @@
 		navigation
 	} = useNavigationRuntimeContext();
 
-	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../resources/chapters/bible-chapter-interpreter';
-	import { BIBLE_SEARCH_RESOURCE_TYPE } from '../../resources/search/bible-search-index-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../resources/chapters/bible-chapter-resource';
+	import { BIBLE_SEARCH_RESOURCE_TYPE } from '../../resources/search/bible-search-index-resource';
 	import { filterBibleLocationRefsByBookID } from './search-filter';
 
 	// OTHER

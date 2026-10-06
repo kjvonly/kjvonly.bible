@@ -38,8 +38,12 @@ describe(
 						'publisher',
 					resourceType:
 						PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+					dataType:
+						'kjvonly.reading-plan.subscription',
+					dataVersion:
+						1,
 					resourceId:
-						`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default/subscription-1`,
+						'kjvonly/reading-plans/plan-subscription/default/subscription-1',
 					representation:
 						'content',
 					mediaType:

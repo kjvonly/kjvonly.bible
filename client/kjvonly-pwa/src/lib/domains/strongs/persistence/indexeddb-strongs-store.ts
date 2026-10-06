@@ -1,3 +1,7 @@
+import {
+	STRONGS_DATA_TYPE
+} from '../resources/definitions/strongs-resource-contract';
+
 import type {
 	Strongs
 } from '../models/strongs.model';
@@ -61,6 +65,12 @@ export class IndexedDBStrongsStore
 
 				objectType:
 					STRONGS_DEFINITION_OBJECT_TYPE,
+
+				dataType:
+					STRONGS_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					strongs.id,

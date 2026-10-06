@@ -1,3 +1,7 @@
+import type {
+	ResourceMetadata
+} from '../models/resource.model';
+
 export interface ResourceInstallation {
 	readonly id:
 		string;
@@ -13,6 +17,10 @@ export interface ResourceInstallation {
 
 	readonly resourceId?:
 		string;
+
+	/** Resource envelope metadata preserved as installation provenance. */
+	readonly metadata?:
+		ResourceMetadata;
 
 	readonly modifiedAt:
 		number;

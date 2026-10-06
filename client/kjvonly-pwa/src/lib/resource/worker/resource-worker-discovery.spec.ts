@@ -202,7 +202,7 @@ describe(
 							secondReference.resourceId,
 
 						resourceType:
-							'kjvonly/strongs/definitions'
+							'strongs/definition'
 					});
 
 				const firstRepresentation =
@@ -214,7 +214,7 @@ describe(
 							firstReference.resourceId,
 
 						resourceType:
-							'kjvonly/bible/chapters'
+							'bible/chapter'
 					});
 
 				/*
@@ -364,7 +364,13 @@ function createRepresentation(
 			'kjvonly/resources/collections/default',
 
 		resourceType:
-			'kjvonly/resources/collections',
+			'resource/descriptor-collection',
+
+		dataType:
+			'kjvonly.resource-descriptor-collection',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'b'.repeat(

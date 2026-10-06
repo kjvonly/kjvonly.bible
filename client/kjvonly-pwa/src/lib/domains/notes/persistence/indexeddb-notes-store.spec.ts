@@ -1,4 +1,8 @@
 import {
+	NOTE_DATA_TYPE
+} from '../resources/notes-resource-contract';
+
+import {
 	describe,
 	expect,
 	it,
@@ -43,6 +47,12 @@ describe(
 								),
 							objectType:
 								NOTE_OBJECT_TYPE,
+
+							dataType:
+								NOTE_DATA_TYPE,
+
+							dataVersion:
+								1,
 							objectId:
 								note.id,
 							value:
@@ -99,6 +109,12 @@ describe(
 										),
 									objectType:
 										NOTE_OBJECT_TYPE,
+
+									dataType:
+										NOTE_DATA_TYPE,
+
+									dataVersion:
+										1,
 									objectId:
 										note.id,
 									value:
@@ -201,6 +217,12 @@ describe(
 							),
 						objectType:
 							NOTE_OBJECT_TYPE,
+
+						dataType:
+							NOTE_DATA_TYPE,
+
+						dataVersion:
+							1,
 						objectId:
 							note.id,
 						value:

@@ -1,4 +1,8 @@
 import {
+	PLAN_PROGRESS_DATA_TYPE
+} from '../resources/progress/plan-progress-resource';
+
+import {
 	describe,
 	expect,
 	it
@@ -141,6 +145,12 @@ describe(
 						storedId,
 					objectType:
 						PLAN_PROGRESS_OBJECT_TYPE,
+
+					dataType:
+						PLAN_PROGRESS_DATA_TYPE,
+
+					dataVersion:
+						1,
 					objectId:
 						updated.id,
 					value:
@@ -257,9 +267,13 @@ function createPublication(): ResourcePublication {
 		publisher:
 			'publisher',
 		resourceType:
-			'kjvonly/plans/progress',
+			'reading-plans/plan-progress',
+		dataType:
+			'kjvonly.reading-plan.progress',
+		dataVersion:
+			1,
 		resourceId:
-			'kjvonly/plans/progress/default/subscription-1',
+			'kjvonly/reading-plans/plan-progress/default/subscription-1',
 		representation:
 			'content',
 		mediaType:
@@ -328,6 +342,12 @@ class FakeApplicationDB {
 				id,
 				objectType:
 					PLAN_PROGRESS_OBJECT_TYPE,
+
+				dataType:
+					PLAN_PROGRESS_DATA_TYPE,
+
+				dataVersion:
+					1,
 				objectId:
 					progress.id,
 				value:

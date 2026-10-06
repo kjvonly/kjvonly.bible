@@ -26,6 +26,12 @@ export interface ResourceRepresentation {
 
 	resourceType: string;
 
+	/** Semantic application data contract carried by this Resource. */
+	dataType: string;
+
+	/** Version of the semantic application data contract. */
+	dataVersion: number;
+
 	eventId: string;
 
 	modifiedAt: number;
@@ -56,8 +62,11 @@ export interface VerifiedResourceContent {
 
 	readonly mediaType: string;
 
-	/** Optional semantic application data contract advertised by a descriptor. */
-	readonly dataType?: string;
+	/** Semantic application data contract carried by this Resource. */
+	readonly dataType: string;
+
+	/** Version of the semantic application data contract. */
+	readonly dataVersion: number;
 
 	/** Additional protocol-agnostic Resource metadata. */
 	readonly metadata?: ResourceMetadata;
@@ -77,8 +86,11 @@ export interface DecodedResourceContent {
 
 	readonly mediaType: string;
 
-	/** Optional normalized semantic application data contract. */
-	readonly dataType?: string;
+	/** Semantic application data contract carried by this Resource. */
+	readonly dataType: string;
+
+	/** Version of the semantic application data contract. */
+	readonly dataVersion: number;
 
 	/** Additional protocol-agnostic Resource metadata. */
 	readonly metadata?: ResourceMetadata;

@@ -72,8 +72,8 @@ resource/publication/
 It does not fully document:
 
 * Resource descriptor semantics,
-* Domain Resource handlers,
-* Domain installation transaction details,
+* semantic datatype / Domain Object factory details,
+* generic/specialized installation transaction details,
 * Resource-selection policy,
 * Outbox persistence semantics,
 * account/profile behavior,
@@ -189,9 +189,11 @@ ResourceResolver
     ↓
 ResourceContentDecoder
     ↓
-Domain ResourceHandler
+special ResourceHandler OR GenericResourceInstaller
     ↓
-Domain installation transaction
+semantic validation + Domain Object factory
+    ↓
+Domain Object + ResourceInstallation
     ↓
 Resource receipt
 ```
@@ -823,14 +825,14 @@ VerifiedResourceContent
     ↓
 ResourceContentDecoder
     ↓
-ResourceHandler
+DecodedResourceContent
     ↓
-Domain installation transaction
+special ResourceHandler OR GenericResourceInstaller
 ```
 
 The generic Resource layer does not hardcode Domain Object schemas.
 
-Domain-specific handlers own interpretation, validation, and installation behavior for their Resource Types.
+Normal Resource families register datatype handlers and Domain Object factories; specialized handlers remain only for materially different persistence paths such as Filesystem.
 
 ---
 
@@ -899,7 +901,7 @@ kind
 publisher
 modifiedAt
 resourceId
-category
+resourceType
 representation
 mediaType
 ```
@@ -957,7 +959,8 @@ It receives:
 ResourceResolver
 ResourceContentDecoder
 ResourceReceiptService
-ResourceHandler[]
+GenericResourceInstaller
+specialized ResourceHandler[]
 ```
 
 Its flow is:
@@ -971,9 +974,15 @@ for each VerifiedResourceContent
     ↓
 decode
     ↓
-find ResourceHandler by Resource Type
-    ↓
-handle Domain Resource
+specialized handler registered?
+    ├── yes → handler.handle(...)
+    └── no  → GenericResourceInstaller.install(...)
+                  ↓
+              datatype validation
+                  ↓
+              Domain Object factory
+                  ↓
+              generic currentness/persistence
     ↓
 mark Resource receipt
 ```
@@ -1460,7 +1469,7 @@ It should not own:
 ```text
 Domain Object schemas
 Domain persistence logic
-Resource Type handlers
+Resource semantic handlers/factories
 content decoding policy
 Resource descriptor recursion
 application Resource-selection state
@@ -1585,7 +1594,7 @@ flowchart TD
     Relay[Nostr Relay]
     Router[ResourceWorkerProcessorRouter]
     Processor[ResourceProcessor]
-    Handler[Domain ResourceHandler]
+    Install[Special Handler or Generic Installer]
     Store[Domain Persistence]
 
     Domain --> Loader
@@ -1604,8 +1613,8 @@ flowchart TD
     WorkerDiscovery --> Service
     Service --> Router
     Router --> Processor
-    Processor --> Handler
-    Handler --> Store
+    Processor --> Install
+    Install --> Store
 ```
 
 ---

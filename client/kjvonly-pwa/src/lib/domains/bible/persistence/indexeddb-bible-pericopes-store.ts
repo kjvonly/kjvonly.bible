@@ -1,3 +1,7 @@
+import {
+	BIBLE_PERICOPES_DATA_TYPE
+} from '../resources/pericopes/bible-pericopes-resource';
+
 import type {
 	BiblePericopes
 } from '../models/bible-pericopes.model';
@@ -62,6 +66,12 @@ export class IndexedDBBiblePericopesStore
 
 				objectType:
 					BIBLE_PERICOPES_OBJECT_TYPE,
+
+				dataType:
+					BIBLE_PERICOPES_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					pericopes.id,

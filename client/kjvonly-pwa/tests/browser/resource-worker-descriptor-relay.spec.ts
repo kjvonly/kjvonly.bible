@@ -26,6 +26,7 @@ import {
 } from '$lib/infrastructure/nostr/nostr';
 
 import {
+	BIBLE_CHAPTER_DATA_TYPE,
 	BIBLE_CHAPTER_RESOURCE_TYPE,
 	createBibleVersionId,
 	createChapterId
@@ -33,9 +34,10 @@ import {
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
+	STRONGS_DATA_TYPE,
 	STRONGS_RESOURCE_TYPE
 } from '$lib/domains/strongs';
 
@@ -76,10 +78,10 @@ const BOOTSTRAP_RESOURCE_ID =
 	'kjvonly/resources/collections/default';
 
 const CHAPTER_RESOURCE_ID =
-	`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`;
+	`kjvonly/bible/chapter/kjvs`;
 
 const STRONGS_RESOURCE_ID =
-	`${STRONGS_RESOURCE_TYPE}/kjvs`;
+	'kjvonly/strongs/definition/kjvs';
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -279,6 +281,12 @@ describe.skip(
 						objectType:
 							BIBLE_CHAPTER_OBJECT_TYPE,
 
+						dataType:
+							BIBLE_CHAPTER_DATA_TYPE,
+
+						dataVersion:
+							1,
+
 						objectId:
 							chapter1Id,
 
@@ -312,6 +320,12 @@ describe.skip(
 						objectType:
 							BIBLE_CHAPTER_OBJECT_TYPE,
 
+						dataType:
+							BIBLE_CHAPTER_DATA_TYPE,
+
+						dataVersion:
+							1,
+
 						objectId:
 							chapter2Id,
 
@@ -344,6 +358,12 @@ describe.skip(
 					).toMatchObject({
 						objectType:
 							STRONGS_DEFINITION_OBJECT_TYPE,
+
+						dataType:
+							STRONGS_DATA_TYPE,
+
+						dataVersion:
+							1,
 
 						objectId:
 							strongsId,
@@ -600,11 +620,11 @@ describe.skip(
 										KJVONLY_PUBKEY,
 
 									resourceId:
-										'kjvonly/bible/chapters/kjvs'
+										'kjvonly/bible/chapter/kjvs'
 								},
 
 								resourceType:
-									'kjvonly/bible/chapters',
+									'bible/chapter',
 
 								status:
 									'current'
@@ -615,11 +635,11 @@ describe.skip(
 										KJVONLY_PUBKEY,
 
 									resourceId:
-										'kjvonly/strongs/definitions/kjvs'
+										'kjvonly/strongs/definition/kjvs'
 								},
 
 								resourceType:
-									'kjvonly/strongs/definitions',
+									'strongs/definition',
 
 								status:
 									'current'

@@ -1,4 +1,8 @@
 import {
+	PLAN_SUBSCRIPTION_DATA_TYPE
+} from '../resources/subscriptions/plan-subscription-resource-source';
+
+import {
 	describe,
 	expect,
 	it,
@@ -43,6 +47,12 @@ describe(
 								),
 							objectType:
 								PLAN_SUBSCRIPTION_OBJECT_TYPE,
+
+							dataType:
+								PLAN_SUBSCRIPTION_DATA_TYPE,
+
+							dataVersion:
+								1,
 							objectId:
 								subscription.id,
 							value:
@@ -99,6 +109,12 @@ describe(
 										),
 									objectType:
 										PLAN_SUBSCRIPTION_OBJECT_TYPE,
+
+									dataType:
+										PLAN_SUBSCRIPTION_DATA_TYPE,
+
+									dataVersion:
+										1,
 									objectId:
 										subscription.id,
 									value:
@@ -161,6 +177,12 @@ describe(
 							),
 						objectType:
 							PLAN_SUBSCRIPTION_OBJECT_TYPE,
+
+						dataType:
+							PLAN_SUBSCRIPTION_DATA_TYPE,
+
+						dataVersion:
+							1,
 						objectId:
 							subscription.id,
 						value:

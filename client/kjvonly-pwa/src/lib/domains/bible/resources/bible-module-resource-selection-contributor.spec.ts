@@ -14,30 +14,31 @@ import type {
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from './chapters/bible-chapter-interpreter';
+} from './chapters/bible-chapter-resource';
 
 import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from './booknames/bible-booknames-interpreter';
+} from './booknames/bible-booknames-resource';
 
 import {
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE
-} from './paragraphs/bible-paragraphs-interpreter';
+} from './paragraphs/bible-paragraphs-resource';
 
 import {
 	BIBLE_PERICOPES_RESOURCE_TYPE
-} from './pericopes/bible-pericopes-interpreter';
+} from './pericopes/bible-pericopes-resource';
 
 import {
 	BIBLE_SEARCH_RESOURCE_TYPE
-} from './search/bible-search-index-interpreter';
+} from './search/bible-search-index-resource';
 
 import {
 	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-} from './text-markup/bible-text-markup-interpreter';
+} from './text-markup/bible-text-markup-resource';
 
 import {
-	STRONGS_RESOURCE_TYPE
+	STRONGS_RESOURCE_TYPE,
+	createStrongsResourceId
 } from '$lib/domains/strongs';
 
 import {
@@ -58,32 +59,34 @@ describe(
 					[BIBLE_CHAPTER_RESOURCE_TYPE]:
 						createReference(
 							'bible',
-							`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+							`kjvonly/bible/chapter/kjvs`
 						),
 					[BIBLE_PARAGRAPHS_RESOURCE_TYPE]:
 						createReference(
 							'paragraphs',
-							`${BIBLE_PARAGRAPHS_RESOURCE_TYPE}/default`
+							`kjvonly/bible/paragraphs/default`
 						),
 					[BIBLE_PERICOPES_RESOURCE_TYPE]:
 						createReference(
 							'pericopes',
-							`${BIBLE_PERICOPES_RESOURCE_TYPE}/default`
+							`kjvonly/bible/pericopes/default`
 						),
 					[BIBLE_BOOKNAMES_RESOURCE_TYPE]:
 						createReference(
 							'booknames',
-							`${BIBLE_BOOKNAMES_RESOURCE_TYPE}/default`
+							`kjvonly/bible/booknames/default`
 						),
 					[STRONGS_RESOURCE_TYPE]:
 						createReference(
 							'strongs',
-							`${STRONGS_RESOURCE_TYPE}/kjvs`
+							createStrongsResourceId(
+									'kjvs'
+								)
 						),
 					[BIBLE_SEARCH_RESOURCE_TYPE]:
 						createReference(
 							'search',
-							`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
+							`kjvonly/bible/search-index/kjvs`
 						)
 				};
 
@@ -134,7 +137,7 @@ describe(
 					publisher:
 						'user-pubkey',
 					resourceId:
-						`${NOTES_RESOURCE_TYPE}/default`
+						'kjvonly/notes/note/default'
 				});
 			}
 		);
@@ -145,7 +148,7 @@ describe(
 				const selectedNotes =
 					createReference(
 						'other-publisher',
-						`${NOTES_RESOURCE_TYPE}/study`
+						'kjvonly/notes/note/study'
 					);
 
 				const selections =
@@ -180,7 +183,7 @@ describe(
 							[BIBLE_CHAPTER_RESOURCE_TYPE]:
 								createReference(
 									'bible-publisher',
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+									`kjvonly/bible/chapter/kjvs`
 								)
 						})
 					);
@@ -193,7 +196,7 @@ describe(
 					publisher:
 						'user-pubkey',
 					resourceId:
-						`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/kjvs`
+						`kjvonly/bible/text-markup/kjvs`
 				});
 			}
 		);
@@ -204,7 +207,7 @@ describe(
 				const selectedMarkup =
 					createReference(
 						'other-publisher',
-						`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/study`
+						`kjvonly/bible/text-markup/study`
 					);
 
 				const selections =
@@ -219,7 +222,7 @@ describe(
 							[BIBLE_CHAPTER_RESOURCE_TYPE]:
 								createReference(
 									'bible-publisher',
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+									`kjvonly/bible/chapter/kjvs`
 								)
 						}
 					});
@@ -240,7 +243,7 @@ describe(
 				const originatingChapter =
 					createReference(
 						'origin',
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
+						`kjvonly/bible/chapter/kjv`
 					);
 
 				const selections =
@@ -255,7 +258,7 @@ describe(
 							[BIBLE_CHAPTER_RESOURCE_TYPE]:
 								createReference(
 									'global',
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+									`kjvonly/bible/chapter/kjvs`
 								)
 						}
 					});
@@ -273,7 +276,7 @@ describe(
 						BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 					]?.resourceId
 				).toBe(
-					`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/kjv`
+					`kjvonly/bible/text-markup/kjv`
 				);
 			}
 		);
@@ -305,7 +308,7 @@ describe(
 							[BIBLE_CHAPTER_RESOURCE_TYPE]:
 								createReference(
 									'bible-publisher',
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+									`kjvonly/bible/chapter/kjvs`
 								)
 						})
 					);

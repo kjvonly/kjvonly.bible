@@ -26,7 +26,7 @@ DecodedResourceContent
         ↓
 existing Resource handlers
         ↓
-existing Domain interpretation / validation / installation
+existing semantic validation / Domain Object factory / installation
 ```
 
 The archive subsystem does not define a second Domain validation or installation lifecycle.
@@ -45,7 +45,7 @@ This implementation covers:
 * persistence reads from `DOMAIN_OBJECTS` and `RESOURCE_INSTALLATIONS`,
 * import freshness prefiltering,
 * Domain-to-Resource reconstruction,
-* reuse of existing Resource handlers and installers,
+* reuse of the shared Resource processing and generic installation lifecycle,
 * an ephemeral Archive Worker,
 * Application-owned archive service composition,
 * generic import-completion notifications,
@@ -102,28 +102,34 @@ An empty export is still a valid archive and therefore still produces a non-empt
 
 # Archived Domain Object
 
-The archive stores the accepted persisted Domain Object representation:
+The archive stores the accepted persisted Domain Object representation.
+
+Current shape:
 
 ```ts
 interface ArchivedDomainObject {
     readonly id: string;
     readonly objectType: string;
     readonly objectId: string;
+    readonly dataType: string;
+    readonly dataVersion: number;
     readonly value: unknown;
 }
 ```
 
 The archive does not define Domain-specific value schemas.
 
-Those schemas continue to belong to their Domains.
+`dataType` and `dataVersion` are preserved as the semantic contract of the archived Domain Object. Archive reconstruction separately uses the Domain-owned `ResourcePublication` contract for the reconstructed Resource payload.
+
+The archived object's semantic contract may differ from the datatype of the originally published bundle Resource.
 
 ---
 
 # ResourceInstallation in Archives
 
-`ResourceInstallation` is used as the durable Resource-state record associated with a Domain Object.
+`ResourceInstallation` is the durable Resource-state record associated with a Resource-backed Domain Object.
 
-The current shape is:
+Current shape:
 
 ```ts
 interface ResourceInstallation {
@@ -132,17 +138,28 @@ interface ResourceInstallation {
     readonly objectId: string;
     readonly publisher: string;
     readonly resourceId?: string;
+    readonly metadata?: Readonly<Record<string, string>>;
     readonly modifiedAt: number;
 }
 ```
 
 `resourceId` is optional because locally authored Resource-backed state may exist before an external Resource identity has been observed through installation.
 
-The archive preserves the stored record as-is.
+`metadata` preserves Resource-envelope semantics/provenance that may be required to faithfully reconstruct a Resource while intentionally remaining outside the Domain Object value.
 
-`modifiedAt` is the Resource revision timestamp used for object-level freshness comparisons.
+Bible Chapter is the current important example:
 
-Archive export never invents a new `modifiedAt`.
+```text
+Chapter value
+    does not contain semantic Bible version label
+
+ResourceInstallation.metadata.version
+    preserves that Resource-envelope semantic value
+```
+
+`modifiedAt` remains the Resource revision timestamp used for object-level freshness comparisons. Metadata does not participate in currentness merely because it is preserved here.
+
+The archive preserves the stored installation record as-is and never invents a new revision during export.
 
 ---
 
@@ -356,18 +373,21 @@ Domain → Resource reconstruction
     ↓
 DecodedResourceContent
     ↓
-ResourceProcessor.processDecoded(...)
+ResourceResolutionProcessor.processDecoded(...)
     ↓
-existing ResourceHandler
+special ResourceHandler if registered
+otherwise GenericResourceInstaller
     ↓
-existing Interpreter
+dataType validation
     ↓
-existing Validator
+Domain Object factory
     ↓
-existing Installer
+normal object-level currentness + persistence
 ```
 
 Archive import never directly writes imported Domain Objects into IndexedDB.
+
+This is important because Archive is not a second semantic-validation or persistence architecture.
 
 ---
 
@@ -389,7 +409,7 @@ If no local record exists, or the archived revision is newer, processing continu
 
 This check is an optimization and early result classification.
 
-The Domain installer remains authoritative and retains its own freshness check.
+The normal Resource installation path remains authoritative and retains its own object-level freshness check.
 
 No local record is deleted during import workset filtering.
 
@@ -399,9 +419,7 @@ No local record is deleted during import workset filtering.
 
 The archive stores accepted Domain state, not serialized transport content.
 
-Before archived state can re-enter normal Resource handling, the importer reconstructs canonical Resource content.
-
-This uses `ResourcePublicationResolver`.
+Before archived state can re-enter normal Resource processing, the importer reconstructs canonical Resource content through `ResourcePublicationResolver`.
 
 The resolver maps:
 
@@ -413,11 +431,33 @@ objectType
 ResourcePublication
 ```
 
-The publication builders are the same Domain-owned conversions used for normal outbound Resource publication where available.
+The publication builder supplies Resource-family information such as:
 
-For inbound/reference types that previously had no publication path, reusable Domain-to-Resource publication builders were added in the owning Domain resource folders.
+```text
+publisher
+resourceId
+resourceType
+mediaType
+publication metadata fallback
+value
+```
 
-The archive subsystem does not duplicate Domain-specific path parsing or content mapping.
+The archive then combines that reconstructed publication with persisted Domain/Resource state:
+
+```text
+ArchivedDomainObject
+    → stored-object dataType + dataVersion
+
+ResourcePublication
+    → reconstructed Resource dataType + dataVersion
+
+ResourceInstallation
+    → modifiedAt + preferred Resource metadata
+```
+
+This separation is necessary because the canonical stored Domain Object contract may differ from the originally published Resource/bundle contract.
+
+The archive subsystem does not duplicate Domain-specific identity parsing or payload mapping.
 
 ---
 
@@ -450,7 +490,7 @@ Archives do not preserve original bundle boundaries.
 For example, a Chapter may have originally been installed from:
 
 ```text
-kjvonly/bible/chapters/kjvs
+kjvonly/bible/chapter/kjvs
 ```
 
 but the stored Domain Object represents one chapter:
@@ -462,7 +502,7 @@ but the stored Domain Object represents one chapter:
 Archive import reconstructs the canonical individual Resource:
 
 ```text
-kjvonly/bible/chapters/kjvs/1_1
+kjvonly/bible/chapter/kjvs/1_1
 ```
 
 The same normalization applies to Strong's and other bundle-installed data.
@@ -475,7 +515,9 @@ The newly installed Resource state after archive import reflects the canonical i
 
 # DecodedResourceContent Construction
 
-After reconstruction, the importer builds normal decoded Resource content:
+After reconstruction, the importer builds normal decoded Resource content using both archived records.
+
+Conceptually:
 
 ```ts
 {
@@ -484,13 +526,28 @@ After reconstruction, the importer builds normal decoded Resource content:
     resourceType: publication.resourceType,
     modifiedAt: installation.modifiedAt,
     mediaType: publication.mediaType,
+    dataType: publication.dataType,
+    dataVersion: publication.dataVersion,
+    metadata: installation.metadata ?? publication.metadata,
     value: publication.value
 }
 ```
 
-The archived revision timestamp is preserved.
+Metadata is omitted when neither source supplies it.
 
-The archive does not generate a new Resource revision merely because data was exported or imported.
+The precedence rule is intentional:
+
+```text
+ResourceInstallation.metadata
+    wins over
+ResourcePublication.metadata fallback
+```
+
+because installation metadata records the Resource envelope that supplied the accepted object.
+
+The reconstructed Resource uses the publication builder's payload datatype contract. The archived Domain Object keeps its own persisted semantic datatype independently.
+
+The archived revision timestamp is preserved. Archive import does not generate a new Resource revision merely because data was exported or imported.
 
 ---
 
@@ -645,7 +702,7 @@ large JSON parse/stringify
 large IndexedDB scans
 filtering
 many Domain-to-Resource reconstructions
-many Resource installs
+many Resource-backed Domain Object installations
 ```
 
 Keeping this bounded work off the main Svelte thread avoids turning the long-lived Resource Worker protocol into an archive-specific API.
@@ -658,23 +715,26 @@ Archive processing does not route archive messages through it.
 
 # Shared Resource Processing Composition
 
-The Archive Worker reuses the existing decoded-content processing composition from:
+Archive import reuses the same `createContentResourceProcessor()` composition used by normal Resource processing.
+
+The shared processor contains:
 
 ```text
-src/lib/resource/worker/resource-worker-composition.ts
+ResourceContentDecoder
+ResourceReceiptService
+ResourceDataTypeResolver
+ResourceDomainObjectFactoryResolver
+GenericResourceInstaller
+special ResourceHandler[]
 ```
 
-Specifically:
+At the current codebase state, normal Resource-backed Domain families use datatype handlers + Domain Object factories + `GenericResourceInstaller`.
 
-```ts
-createContentResourceProcessor()
-```
+Filesystem remains the specialized ResourceHandler because its accepted entries are persisted in the Filesystem store rather than `DOMAIN_OBJECTS`.
 
-That factory constructs the shared `ResourceProcessor` with the registered Domain Resource handlers, installers, receipt service, and persistence dependencies.
+Archive reconstruction of the currently supported Domain Object types therefore reaches the same semantic handlers, Domain factories, currentness rules, and generic transaction used by normal inbound installation.
 
-Both normal Resource processing and archive processing therefore use the same Domain installation implementation.
-
-The difference is only how content reaches `DecodedResourceContent`.
+This prevents Archive from becoming a parallel Domain installer.
 
 ---
 
@@ -945,7 +1005,7 @@ export
 → gzip
 → remove local state
 → import through ephemeral Archive Worker
-→ normal Resource handler/install path
+→ normal Resource processDecoded / generic installation path
 → Domain state restored
 ```
 
@@ -981,7 +1041,7 @@ Archive import reconstructs DecodedResourceContent.
 
 Existing Resource handlers perform Domain interpretation and validation.
 
-Existing installers remain authoritative for freshness and persistence.
+The normal Resource installation path remains authoritative for semantic validation, object-level freshness, and persistence.
 
 Archive import does not enqueue imported data for publication.
 

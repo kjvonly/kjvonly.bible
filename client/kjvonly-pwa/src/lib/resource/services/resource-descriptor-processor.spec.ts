@@ -111,8 +111,14 @@ function resourceDescriptor():
 			resourceId:
 				'resource-id',
 
-			category:
+			resourceType:
 				'example/resource',
+
+			dataType:
+				'example.resource',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				123,

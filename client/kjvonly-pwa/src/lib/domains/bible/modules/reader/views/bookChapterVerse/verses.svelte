@@ -33,7 +33,7 @@
 	// RESOURCES
 	import {
 		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	} from '../../../../resources/booknames/bible-booknames-interpreter';
+	} from '../../../../resources/booknames/bible-booknames-resource';
 
 	const {
 		bibleBooknamesService,

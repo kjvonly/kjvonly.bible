@@ -264,7 +264,7 @@ describe(
 								},
 
 								resourceType:
-									'kjvonly/strongs/definitions',
+									'strongs/definition',
 
 								status:
 									'failed',
@@ -684,8 +684,14 @@ function createDescriptor():
 			resourceId:
 				'kjvonly/notes/example',
 
-			category:
-				'kjvonly/notes',
+			resourceType:
+				'notes/note',
+
+			dataType:
+				'kjvonly.note',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				100,
@@ -734,7 +740,13 @@ function createRepresentation(
 			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/strongs/definitions',
+			'strongs/definition',
+
+		dataType:
+			'kjvonly.strongs.definition',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'a'.repeat(

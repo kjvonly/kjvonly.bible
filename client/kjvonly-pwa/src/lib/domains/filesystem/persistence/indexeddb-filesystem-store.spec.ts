@@ -252,7 +252,7 @@ function createEntry(
 					'bob',
 				resourceId:
 					'notes/creation',
-				category:
+				resourceType:
 					'notes',
 				modifiedAt:
 					100,
@@ -261,7 +261,7 @@ function createEntry(
 				mediaType:
 					'application/json',
 				dataType:
-					'kjvonly.bible.chapter/v1'
+					'kjvonly.bible.chapter'
 			},
 			strategy: {
 				type:

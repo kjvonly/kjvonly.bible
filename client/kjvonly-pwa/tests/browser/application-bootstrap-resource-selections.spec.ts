@@ -33,16 +33,16 @@ const RESOURCE_SELECTIONS_STORAGE_KEY =
 	'resourceSelections';
 
 const BIBLE_CHAPTER_RESOURCE_TYPE =
-	'kjvonly/bible/chapters';
+	'bible/chapter';
 
 const STRONGS_RESOURCE_TYPE =
-	'kjvonly/strongs/definitions';
+	'strongs/definition';
 
 const BIBLE_CHAPTER_RESOURCE_ID =
-	`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`;
+	`kjvonly/bible/chapter/kjvs`;
 
 const STRONGS_RESOURCE_ID =
-	`${STRONGS_RESOURCE_TYPE}/kjvs`;
+	'kjvonly/strongs/definition/kjvs';
 
 const BOOTSTRAP_RESOURCE_ID =
 	'kjvonly/resources/collections/default';
@@ -234,7 +234,7 @@ describe(
 								userPublisher,
 
 							resourceId:
-								`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
+								`kjvonly/bible/chapter/kjv`
 						}
 					};
 
@@ -272,7 +272,7 @@ describe(
 									userPublisher,
 
 								resourceId:
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
+									`kjvonly/bible/chapter/kjv`
 							},
 
 							[STRONGS_RESOURCE_TYPE]: {
@@ -355,7 +355,7 @@ describe(
 								),
 
 							resourceId:
-								`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
+								`kjvonly/bible/chapter/kjv`
 						}
 					};
 
@@ -623,7 +623,7 @@ function createDuplicateBootstrapResult():
 						KJVONLY_PUBKEY,
 
 					resourceId:
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
+						`kjvonly/bible/chapter/kjv`
 				},
 
 				resourceType:

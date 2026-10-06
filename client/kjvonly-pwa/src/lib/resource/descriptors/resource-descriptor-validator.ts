@@ -85,16 +85,21 @@ export class ResourceDescriptorValidator {
 				'name'
 			);
 
-		const category =
+		const resourceType =
 			requireString(
-				value.category,
-				'category'
+				value.resourceType,
+				'resourceType'
 			);
 
 		const dataType =
-			optionalString(
+			requireString(
 				value.dataType,
 				'dataType'
+			);
+
+		const dataVersion =
+			validateDataVersion(
+				value.dataVersion
 			);
 
 		const modifiedAt =
@@ -154,10 +159,9 @@ export class ResourceDescriptorValidator {
 			...(name === undefined
 				? {}
 				: { name }),
-			category,
-			...(dataType === undefined
-				? {}
-				: { dataType }),
+			resourceType,
+			dataType,
+			dataVersion,
 			modifiedAt,
 			representation,
 			mediaType,
@@ -240,6 +244,7 @@ export class ResourceDescriptorValidator {
 	}
 }
 
+
 /** Validates an optional non-empty string metadata field. */
 function optionalString(
 	value: unknown,
@@ -253,6 +258,24 @@ function optionalString(
 		value,
 		name
 	);
+}
+
+
+/** Validates a required positive integer semantic data version. */
+function validateDataVersion(
+	value: unknown
+): number {
+	if (
+		typeof value !== 'number' ||
+		!Number.isSafeInteger(value) ||
+		value < 1
+	) {
+		throw new Error(
+			'Invalid Resource descriptor dataVersion.'
+		);
+	}
+
+	return value;
 }
 
 /** Validates optional resolved-byte size metadata. */

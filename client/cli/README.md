@@ -145,9 +145,11 @@ collections:
         - hex
 
       tags:
-        - ["d", "kjvonly/bible/chapters"]
+        - ["d", "kjvonly/resources/collections/bible-chapters"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "resource/descriptor-collection"]
+        - ["dataType", "kjvonly.resource-descriptor-collection"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     resources:
@@ -319,6 +321,45 @@ collections:
   # Collection definitions
 ```
 
+
+Resource events use an explicit envelope. Every Resource and Collection event must contain exactly one of each:
+
+```text
+d
+m
+t
+dataType
+dataVersion
+representation
+```
+
+These fields intentionally describe different concerns:
+
+```text
+d
+    Resource identity
+
+t
+    Resource/application type
+
+dataType + dataVersion
+    semantic payload contract
+
+representation + m
+    how that Resource is represented and encoded
+```
+
+Resource Type and datatype are **not aliases**. A Bible Chapter Resource demonstrates the distinction:
+
+```text
+t        = bible/chapter
+dataType = kjvonly.bible.chapter
+```
+
+The Resource Type says what application object/concept the Resource represents. The datatype says what semantic structure the payload represents and therefore which semantic validator can understand it.
+
+`dataVersion` is a positive integer encoded as a Nostr tag string. Additional scalar tags are Resource metadata. Generic CLI code preserves them without assigning Domain meaning. For descriptor-backed Resources, those tags are copied into `ResourceDescriptor.resourceMetadata` so they survive deferred resolution. Bible Chapter Resources, for example, publish `version` separately from Resource identity and datatype.
+
 Relative `staging.path` and Resource paths are resolved relative to the manifest file, not the shell's current working directory.
 
 This allows manifests to remain portable regardless of where the CLI command is invoked.
@@ -335,10 +376,13 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/bible/chapters/kjv"]
+        - ["d", "kjvonly/bible/chapter/kjv"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
+        - ["version", "kjv"]
 
     object-upload:
       mediaType: application/json+gzip

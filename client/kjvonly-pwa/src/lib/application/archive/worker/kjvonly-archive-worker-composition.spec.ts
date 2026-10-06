@@ -26,7 +26,7 @@ import {
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
 	NOTE_OBJECT_TYPE
@@ -77,9 +77,9 @@ describe(
 							footnotes: {}
 						},
 						resourceType:
-							'kjvonly/bible/chapters',
+							'bible/chapter',
 						resourceId:
-							'kjvonly/bible/chapters/kjvs/1_1'
+							'kjvonly/bible/chapter/kjvs/1_1'
 					},
 					{
 						objectType:
@@ -96,7 +96,7 @@ describe(
 							bookchapterversecountById: {}
 						},
 						resourceType:
-							'kjvonly/bible/booknames',
+							'bible/booknames',
 						resourceId:
 							'kjvonly/bible/booknames/default'
 					},
@@ -112,9 +112,9 @@ describe(
 							paragraphs: {}
 						},
 						resourceType:
-							'kjvonly/overlays/paragraphs',
+							'bible/paragraphs',
 						resourceId:
-							'kjvonly/overlays/paragraphs/default/1_1'
+							'kjvonly/bible/paragraphs/default/1_1'
 					},
 					{
 						objectType:
@@ -128,9 +128,9 @@ describe(
 							pericopes: {}
 						},
 						resourceType:
-							'kjvonly/overlays/pericopes',
+							'bible/pericopes',
 						resourceId:
-							'kjvonly/overlays/pericopes/default/1_1'
+							'kjvonly/bible/pericopes/default/1_1'
 					},
 					{
 						objectType:
@@ -144,9 +144,9 @@ describe(
 							markings: {}
 						},
 						resourceType:
-							'kjvonly/overlays/text-markup',
+							'bible/text-markup',
 						resourceId:
-							'kjvonly/overlays/text-markup/kjvs/1_1'
+							'kjvonly/bible/text-markup/kjvs/1_1'
 					},
 					{
 						objectType:
@@ -160,9 +160,9 @@ describe(
 							chunks: {}
 						},
 						resourceType:
-							'kjvonly/bible/search',
+							'bible/search-index',
 						resourceId:
-							'kjvonly/bible/search/kjvs'
+							'kjvonly/bible/search-index/kjvs'
 					},
 					{
 						objectType:
@@ -182,9 +182,9 @@ describe(
 							tags: []
 						},
 						resourceType:
-							'kjvonly/notes/entries',
+							'notes/note',
 						resourceId:
-							'kjvonly/notes/entries/default/note-1'
+							'kjvonly/notes/note/default/note-1'
 					},
 					{
 						objectType:
@@ -199,9 +199,9 @@ describe(
 							encodedReadings: []
 						},
 						resourceType:
-							'kjvonly/plans/readings',
+							'reading-plans/plan-definition',
 						resourceId:
-							'kjvonly/plans/readings/default/plan-1'
+							'kjvonly/reading-plans/plan-definition/default/plan-1'
 					},
 					{
 						objectType:
@@ -219,9 +219,9 @@ describe(
 							dateSubscribed: 1
 						},
 						resourceType:
-							'kjvonly/plans/subscriptions',
+							'reading-plans/plan-subscription',
 						resourceId:
-							'kjvonly/plans/subscriptions/default/subscription-1'
+							'kjvonly/reading-plans/plan-subscription/default/subscription-1'
 					},
 					{
 						objectType:
@@ -234,9 +234,9 @@ describe(
 							completedReadingIndexes: []
 						},
 						resourceType:
-							'kjvonly/plans/progress',
+							'reading-plans/plan-progress',
 						resourceId:
-							'kjvonly/plans/progress/default/subscription-1'
+							'kjvonly/reading-plans/plan-progress/default/subscription-1'
 					},
 					{
 						objectType:
@@ -258,9 +258,9 @@ describe(
 							thayersDef: null
 						},
 						resourceType:
-							'kjvonly/strongs/definitions',
+							'strongs/definition',
 						resourceId:
-							'kjvonly/strongs/definitions/kjvs/G1'
+							'kjvonly/strongs/definition/kjvs/G1'
 					}
 				] as const;
 

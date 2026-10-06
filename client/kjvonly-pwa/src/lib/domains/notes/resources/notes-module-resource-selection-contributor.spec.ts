@@ -37,17 +37,17 @@ describe(
 							[BIBLE_CHAPTER_RESOURCE_TYPE]:
 								createReference(
 									'chapters',
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+									`kjvonly/bible/chapter/kjvs`
 								),
 							[BIBLE_BOOKNAMES_RESOURCE_TYPE]:
 								createReference(
 									'booknames',
-									`${BIBLE_BOOKNAMES_RESOURCE_TYPE}/default`
+									`kjvonly/bible/booknames/default`
 								),
 							[BIBLE_SEARCH_RESOURCE_TYPE]:
 								createReference(
 									'search',
-									`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
+									`kjvonly/bible/search-index/kjvs`
 								)
 						}
 					});
@@ -81,7 +81,7 @@ describe(
 					publisher:
 						'user-pubkey',
 					resourceId:
-						`${NOTES_RESOURCE_TYPE}/default`
+						'kjvonly/notes/note/default'
 				});
 			}
 		);
@@ -92,7 +92,7 @@ describe(
 				const selectedNotes =
 					createReference(
 						'other-publisher',
-						`${NOTES_RESOURCE_TYPE}/study`
+						'kjvonly/notes/note/study'
 					);
 
 				const selections =

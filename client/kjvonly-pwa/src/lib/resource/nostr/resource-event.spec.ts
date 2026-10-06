@@ -46,7 +46,13 @@ describe(
 						'kjvonly/bible/chapters/kjv/1_1',
 
 					resourceType:
-						'kjvonly/bible/chapters',
+						'bible/chapter',
+
+					dataType:
+						'kjvonly.bible.chapter',
+
+					dataVersion:
+						1,
 
 					eventId:
 						EVENT_ID,
@@ -79,6 +85,14 @@ describe(
 							[
 								't',
 								'fs'
+							],
+							[
+								'dataType',
+								'fs'
+							],
+							[
+								'dataVersion',
+								'1'
 							],
 							[
 								'representation',
@@ -121,6 +135,14 @@ describe(
 							[
 								't',
 								'fs'
+							],
+							[
+								'dataType',
+								'fs'
+							],
+							[
+								'dataVersion',
+								'1'
 							],
 							[
 								'f',
@@ -176,7 +198,15 @@ describe(
 						tags: [
 							[
 								't',
-								'kjvonly/bible/chapters'
+								'bible/chapter'
+							],
+							[
+								'dataType',
+								'kjvonly.bible.chapter'
+							],
+							[
+								'dataVersion',
+								'1'
 							],
 							[
 								'representation',
@@ -233,6 +263,51 @@ describe(
 		);
 
 		it(
+			'requires a dataType tag',
+			() => {
+				const event =
+					createResourceEvent({
+						tags: [
+							['d', 'kjvonly/bible/chapters/kjv/1_1'],
+							['t', 'bible/chapter'],
+							['dataVersion', '1'],
+							['representation', 'content'],
+							['m', 'application/json']
+						]
+					});
+
+				expect(
+					() => toResourceRepresentation(event)
+				).toThrow(
+					'Resource event is missing dataType tag.'
+				);
+			}
+		);
+
+		it(
+			'requires a positive integer dataVersion tag',
+			() => {
+				const event =
+					createResourceEvent({
+						tags: [
+							['d', 'kjvonly/bible/chapters/kjv/1_1'],
+							['t', 'bible/chapter'],
+							['dataType', 'kjvonly.bible.chapter'],
+							['dataVersion', '0'],
+							['representation', 'content'],
+							['m', 'application/json']
+						]
+					});
+
+				expect(
+					() => toResourceRepresentation(event)
+				).toThrow(
+					'Invalid Resource dataVersion: 0'
+				);
+			}
+		);
+
+		it(
 			'requires a representation tag',
 			() => {
 				const event =
@@ -244,7 +319,15 @@ describe(
 							],
 							[
 								't',
-								'kjvonly/bible/chapters'
+								'bible/chapter'
+							],
+							[
+								'dataType',
+								'kjvonly.bible.chapter'
+							],
+							[
+								'dataVersion',
+								'1'
 							],
 							[
 								'm',
@@ -276,7 +359,15 @@ describe(
 							],
 							[
 								't',
-								'kjvonly/bible/chapters'
+								'bible/chapter'
+							],
+							[
+								'dataType',
+								'kjvonly.bible.chapter'
+							],
+							[
+								'dataVersion',
+								'1'
 							],
 							[
 								'representation',
@@ -312,7 +403,15 @@ describe(
 							],
 							[
 								't',
-								'kjvonly/bible/chapters'
+								'bible/chapter'
+							],
+							[
+								'dataType',
+								'kjvonly.bible.chapter'
+							],
+							[
+								'dataVersion',
+								'1'
 							],
 							[
 								'representation',
@@ -358,7 +457,15 @@ function createResourceEvent(
 			],
 			[
 				't',
-				'kjvonly/bible/chapters'
+				'bible/chapter'
+			],
+			[
+				'dataType',
+				'kjvonly.bible.chapter'
+			],
+			[
+				'dataVersion',
+				'1'
 			],
 			[
 				'representation',

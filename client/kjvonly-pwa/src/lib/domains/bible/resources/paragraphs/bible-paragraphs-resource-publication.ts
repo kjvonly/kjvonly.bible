@@ -7,8 +7,10 @@ import type {
 } from '$lib/resource';
 
 import {
-	BIBLE_PARAGRAPHS_RESOURCE_TYPE
-} from './bible-paragraphs-interpreter';
+	BIBLE_PARAGRAPHS_DATA_TYPE,
+	BIBLE_PARAGRAPHS_RESOURCE_TYPE,
+	createBibleParagraphsResourceId
+} from './bible-paragraphs-resource';
 
 export class BibleParagraphsResourcePublication {
 
@@ -41,8 +43,17 @@ export class BibleParagraphsResourcePublication {
 			resourceType:
 				BIBLE_PARAGRAPHS_RESOURCE_TYPE,
 
+			dataType:
+				BIBLE_PARAGRAPHS_DATA_TYPE,
+
+			dataVersion:
+				1,
+
 			resourceId:
-				`${BIBLE_PARAGRAPHS_RESOURCE_TYPE}/${source}/${chapterRef}`,
+				createBibleParagraphsResourceId(
+					source,
+					chapterRef
+				),
 
 			representation:
 				'content',

@@ -16,7 +16,11 @@ import {
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from './definitions/strongs-interpreter';
+} from './definitions/strongs-resource-contract';
+
+import {
+	createStrongsResourceId
+} from './strongs-resource-id';
 
 import {
 	StrongsModuleResourceSelectionContributor
@@ -36,22 +40,24 @@ describe(
 								[STRONGS_RESOURCE_TYPE]:
 									createReference(
 										'strongs',
-										`${STRONGS_RESOURCE_TYPE}/kjvs`
+										createStrongsResourceId(
+									'kjvs'
+								)
 									),
 								[BIBLE_CHAPTER_RESOURCE_TYPE]:
 									createReference(
 										'chapters',
-										`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+										`kjvonly/bible/chapter/kjvs`
 									),
 								[BIBLE_SEARCH_RESOURCE_TYPE]:
 									createReference(
 										'search',
-										`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
+										`kjvonly/bible/search-index/kjvs`
 									),
 								[BIBLE_BOOKNAMES_RESOURCE_TYPE]:
 									createReference(
 										'booknames',
-										`${BIBLE_BOOKNAMES_RESOURCE_TYPE}/default`
+										`kjvonly/bible/booknames/default`
 									)
 							}
 						});

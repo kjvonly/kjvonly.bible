@@ -5,40 +5,20 @@ import {
 } from 'vitest';
 
 import {
-	type PublishedResourceReference,
-	type ResourceRepresentation,
-	type VerifiedResourceContent,
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	createResourceInstallationId,
-	createResourceReceiptId,
-	type ResourceResolutionResult,
-	ResourceContentDecoratorBuilder,
-	JsonResourceContentDecorator,
-	ResourceContentDecoder,
-	ResourceService,
-	ResourceProcessor,
-	ResourceReceiptService
+	createResourceReceiptId
 } from '$lib/resource';
 
 import {
-	ResourceResolutionProcessor
-} from '$lib/resource/services/resource-resolution-processor';
-
-import {
+	BIBLE_PARAGRAPHS_DATA_TYPE,
+	BIBLE_PARAGRAPHS_DATA_VERSION,
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE,
-	BibleParagraphsInterpreter
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
-
-import {
-	BibleParagraphsValidator
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-validator';
-
-import {
-	BibleParagraphsInstaller
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-installer';
-
-import {
-	BibleParagraphsResourceHandler
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-resource-handler';
+	BibleParagraphsDataTypeHandler,
+	BibleParagraphsDomainObjectFactory
+} from '$lib/domains/bible';
 
 import {
 	BIBLE_PARAGRAPHS_OBJECT_TYPE
@@ -49,34 +29,37 @@ import {
 } from '$lib/domains/bible/persistence/indexeddb-bible-paragraphs-store';
 
 import {
-	IndexedDBBibleParagraphsInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-paragraphs-installation-transaction';
-
-import {
 	createBibleParagraphsId
 } from '$lib/domains/bible/models/bible-paragraphs.model';
 
 import {
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
+	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
-	IndexedDBResourceReceiptStore
-} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
+
+import {
+	createBrowserTestPublisher,
+	createGenericResourceInstallationTestService
+} from './support/resource-installation-test-service';
 
 describe(
 	'Bible Paragraphs Resource installation',
 	() => {
 		it(
-			'decodes validates and installs a Paragraph bundle into IndexedDB',
+			'decodes validates and installs a Paragraph bundle into IndexedDB through the generic installer',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/overlays/paragraphs/default';
+					`kjvonly/bible/paragraphs/default`;
 
 				const content = {
 					'1_1': {
@@ -90,17 +73,21 @@ describe(
 				};
 
 				const service =
-					createService([
-						createVerifiedContent({
+					createGenericResourceInstallationTestService(
+						createInstaller(),
+						{
 							publisher,
 							resourceId,
-
-							content:
-								JSON.stringify(
-									content
-								)
-						})
-					]);
+							resourceType:
+								BIBLE_PARAGRAPHS_RESOURCE_TYPE,
+							dataType:
+								BIBLE_PARAGRAPHS_DATA_TYPE,
+							dataVersion:
+								BIBLE_PARAGRAPHS_DATA_VERSION,
+							value:
+								content
+						}
+					);
 
 				const result =
 					await service.install({
@@ -195,6 +182,38 @@ describe(
 
 				expect(
 					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							BIBLE_PARAGRAPHS_OBJECT_TYPE,
+							chapter1Id
+						)
+					)
+				).toEqual({
+					id:
+						createStoredDomainObjectId(
+							BIBLE_PARAGRAPHS_OBJECT_TYPE,
+							chapter1Id
+						),
+					objectType:
+						BIBLE_PARAGRAPHS_OBJECT_TYPE,
+					objectId:
+						chapter1Id,
+					dataType:
+						BIBLE_PARAGRAPHS_DATA_TYPE,
+					dataVersion:
+						BIBLE_PARAGRAPHS_DATA_VERSION,
+					value: {
+						id:
+							chapter1Id,
+						chapterRef:
+							'1_1',
+						paragraphs:
+							content['1_1']
+					}
+				});
+
+				expect(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						installationId
 					)
@@ -209,9 +228,7 @@ describe(
 						chapter1Id,
 
 					publisher,
-
 					resourceId,
-
 					modifiedAt:
 						200
 				});
@@ -232,9 +249,7 @@ describe(
 						),
 
 					publisher,
-
 					resourceId,
-
 					modifiedAt:
 						200
 				});
@@ -242,32 +257,37 @@ describe(
 		);
 
 		it(
-			'installs nothing when one Paragraph Chapter fails validation',
+			'installs nothing when one Paragraph Chapter fails Domain validation',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/overlays/paragraphs/default';
+					`kjvonly/bible/paragraphs/default`;
 
 				const service =
-					createService([
-						createVerifiedContent({
+					createGenericResourceInstallationTestService(
+						createInstaller(),
+						{
 							publisher,
 							resourceId,
+							resourceType:
+								BIBLE_PARAGRAPHS_RESOURCE_TYPE,
+							dataType:
+								BIBLE_PARAGRAPHS_DATA_TYPE,
+							dataVersion:
+								BIBLE_PARAGRAPHS_DATA_VERSION,
+							value: {
+								'1_1': {
+									'1_1_1_0': {}
+								},
 
-							content:
-								JSON.stringify({
-									'1_1': {
-										'1_1_1_0': {}
-									},
-
-									'1_2': {
-										'1_3_1_0': {}
-									}
-								})
-						})
-					]);
+								'1_2': {
+									'1_3_1_0': {}
+								}
+							}
+						}
+					);
 
 				const result =
 					await service.install({
@@ -361,205 +381,17 @@ describe(
 	}
 );
 
-function createService(
-	contents:
-		readonly VerifiedResourceContent[]
-): ResourceService {
-	const discovery =
-		new FakeDiscovery(
-			createRepresentation()
-		);
-
-	const resolver =
-		new FakeResolver(
-			contents
-		);
-
-	const decoder =
-		createDecoder();
-
-	const receiptStore =
-		new IndexedDBResourceReceiptStore(
+function createInstaller():
+	GenericResourceInstaller {
+	return new GenericResourceInstaller(
+		new ResourceDataTypeResolver([
+			new BibleParagraphsDataTypeHandler()
+		]),
+		new ResourceDomainObjectFactoryResolver([
+			new BibleParagraphsDomainObjectFactory()
+		]),
+		new IndexedDBGenericResourceInstallationTransaction(
 			getApplicationDB
-		);
-
-	const receiptService =
-		new ResourceReceiptService(
-			receiptStore
-		);
-
-	const installationTransaction =
-		new IndexedDBBibleParagraphsInstallationTransaction(
-			getApplicationDB
-		);
-
-	const installer =
-		new BibleParagraphsInstaller(
-			installationTransaction
-		);
-
-	const handler =
-		new BibleParagraphsResourceHandler(
-			new BibleParagraphsInterpreter(),
-			new BibleParagraphsValidator(),
-			installer
-		);
-
-	const resolutionProcessor =
-		new ResourceResolutionProcessor(
-			decoder,
-			receiptService,
-			[
-				handler
-			]
-		);
-
-	const processor =
-		new ResourceProcessor(
-			resolver,
-			resolutionProcessor
-		);
-
-	return new ResourceService(
-		discovery,
-		processor
+		)
 	);
-}
-
-function createDecoder():
-	ResourceContentDecoder {
-	const builder =
-		new ResourceContentDecoratorBuilder([
-			{
-				token:
-					'application/json',
-
-				decorate:
-					(inner) =>
-						new JsonResourceContentDecorator(
-							inner
-						)
-			}
-		]);
-
-	return new ResourceContentDecoder(
-		builder
-	);
-}
-
-function createVerifiedContent(
-	overrides:
-		Partial<VerifiedResourceContent> =
-		{}
-): VerifiedResourceContent {
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/overlays/paragraphs/default',
-
-		resourceType:
-			BIBLE_PARAGRAPHS_RESOURCE_TYPE,
-
-		modifiedAt:
-			200,
-
-		mediaType:
-			'application/json',
-
-		content:
-			'{}',
-
-		...overrides
-	};
-}
-
-function createRepresentation():
-	ResourceRepresentation {
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/overlays/paragraphs/default',
-
-		resourceType:
-			BIBLE_PARAGRAPHS_RESOURCE_TYPE,
-
-		eventId:
-			'c'.repeat(
-				64
-			),
-
-		modifiedAt:
-			200,
-
-		representation:
-			'content',
-
-		mediaType:
-			'application/json',
-
-		payload:
-			'{}'
-	};
-}
-
-function createPublisher():
-	string {
-	const value =
-		crypto
-			.randomUUID()
-			.replaceAll(
-				'-',
-				''
-			);
-
-	return (
-		value +
-		value
-	);
-}
-
-class FakeDiscovery {
-	constructor(
-		private readonly representation:
-			ResourceRepresentation
-	) { }
-
-	async get(
-		_reference:
-			PublishedResourceReference
-	): Promise<
-		ResourceRepresentation |
-		null
-	> {
-		return this.representation;
-	}
-}
-
-class FakeResolver {
-	constructor(
-		private readonly contents:
-			readonly VerifiedResourceContent[]
-	) {}
-
-	async resolve(
-		_resource:
-			ResourceRepresentation
-	): Promise<
-		ResourceResolutionResult
-	> {
-		return {
-			contents:
-				this.contents,
-
-			current:
-				[],
-
-			failures:
-				[]
-		};
-	}
 }

@@ -64,7 +64,15 @@ function createManifest() {
 						],
 						[
 							't',
-							'kjvonly/test'
+							'test/resource'
+						],
+						[
+							'dataType',
+							'kjvonly.test'
+						],
+						[
+							'dataVersion',
+							'1'
 						],
 						[
 							'representation',
@@ -230,6 +238,26 @@ describe(
 								[
 									'd',
 									'child'
+								],
+								[
+									'm',
+									'application/json+hex'
+								],
+								[
+									't',
+									'resource/descriptor-collection'
+								],
+								[
+									'dataType',
+									'kjvonly.resource-descriptor-collection'
+								],
+								[
+									'dataVersion',
+									'1'
+								],
+								[
+									'representation',
+									'descriptors'
 								]
 							]
 						},
@@ -249,6 +277,26 @@ describe(
 								[
 									'd',
 									'parent'
+								],
+								[
+									'm',
+									'application/json+hex'
+								],
+								[
+									't',
+									'resource/descriptor-collection'
+								],
+								[
+									'dataType',
+									'kjvonly.resource-descriptor-collection'
+								],
+								[
+									'dataVersion',
+									'1'
+								],
+								[
+									'representation',
+									'descriptors'
 								]
 							]
 						},
@@ -343,6 +391,26 @@ describe(
 								[
 									'd',
 									'collection'
+								],
+								[
+									'm',
+									'application/json+hex'
+								],
+								[
+									't',
+									'resource/descriptor-collection'
+								],
+								[
+									'dataType',
+									'kjvonly.resource-descriptor-collection'
+								],
+								[
+									'dataVersion',
+									'1'
+								],
+								[
+									'representation',
+									'descriptors'
 								]
 							]
 						},
@@ -364,5 +432,73 @@ describe(
 				);
 			}
 		);
+
+
+		it(
+			'rejects a Resource event without a semantic data contract',
+			() => {
+
+				const value =
+					createManifest();
+
+
+				value.resources.bundle.event.tags =
+					value.resources.bundle.event.tags
+						.filter(
+							tag =>
+								tag[0] !== 'dataType'
+						);
+
+
+				expect(
+					() =>
+						validateManifest(
+							value
+						)
+				).toThrow(
+					'Resource event requires exactly one "dataType" tag.'
+				);
+			}
+		);
+
+
+		it(
+			'rejects an invalid Resource data version',
+			() => {
+
+				const value =
+					createManifest();
+
+
+				const tag =
+					value.resources.bundle.event.tags
+						.find(
+							tag =>
+								tag[0] === 'dataVersion'
+						);
+
+
+				if (tag === undefined) {
+					throw new Error(
+						'Missing dataVersion test fixture.'
+					);
+				}
+
+
+				tag[1] =
+					'0';
+
+
+				expect(
+					() =>
+						validateManifest(
+							value
+						)
+				).toThrow(
+					'Resource event dataVersion must be a positive integer.'
+				);
+			}
+		);
+
 	}
 );

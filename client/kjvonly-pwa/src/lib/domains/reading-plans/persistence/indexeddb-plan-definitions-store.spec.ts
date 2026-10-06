@@ -1,4 +1,8 @@
 import {
+	PLAN_DEFINITION_DATA_TYPE
+} from '../resources/definitions/plan-definition-resource';
+
+import {
 	describe,
 	expect,
 	it,
@@ -43,6 +47,12 @@ describe(
 								),
 							objectType:
 								PLAN_DEFINITION_OBJECT_TYPE,
+
+							dataType:
+								PLAN_DEFINITION_DATA_TYPE,
+
+							dataVersion:
+								1,
 							objectId:
 								definition.id,
 							value:
@@ -99,6 +109,12 @@ describe(
 										),
 									objectType:
 										PLAN_DEFINITION_OBJECT_TYPE,
+
+									dataType:
+										PLAN_DEFINITION_DATA_TYPE,
+
+									dataVersion:
+										1,
 									objectId:
 										definition.id,
 									value:
@@ -165,6 +181,12 @@ describe(
 							),
 						objectType:
 							PLAN_DEFINITION_OBJECT_TYPE,
+
+						dataType:
+							PLAN_DEFINITION_DATA_TYPE,
+
+						dataVersion:
+							1,
 						objectId:
 							definition.id,
 						value:

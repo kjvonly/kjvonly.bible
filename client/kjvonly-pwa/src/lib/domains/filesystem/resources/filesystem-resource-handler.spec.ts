@@ -14,6 +14,12 @@ import {
 	FilesystemResourceHandler
 } from './filesystem-resource-handler';
 
+import {
+	FILESYSTEM_ENTRIES_DATA_TYPE,
+	FILESYSTEM_ENTRIES_DATA_VERSION,
+	FILESYSTEM_RESOURCE_TYPE
+} from './filesystem-resource';
+
 const DESCRIPTOR:
 	ResourceDescriptor = {
 		metadata: {
@@ -21,8 +27,14 @@ const DESCRIPTOR:
 				'b'.repeat(64),
 			resourceId:
 				'note-creation',
-			category:
-				'kjvonly/notes/entries',
+			resourceType:
+				'notes/note',
+			dataType:
+				'kjvonly.note',
+
+			dataVersion:
+				1,
+
 			modifiedAt:
 				50,
 			representation:
@@ -41,10 +53,23 @@ describe(
 	'FilesystemResourceHandler',
 	() => {
 		it(
-			'interprets validates and installs filesystem mappings',
+			'validates semantic data before interpreting validating and installing filesystem mappings',
 			async () => {
 				const resource =
-					createResource();
+					createResource({
+						value: {
+							creation: {
+								descriptor: {
+									raw: true
+								}
+							}
+						}
+					});
+				const data =
+					resource.value as Record<
+						string,
+						{ descriptor: unknown }
+					>;
 				const candidate = {
 					rootPath:
 						'notes',
@@ -63,6 +88,11 @@ describe(
 					descriptor:
 						DESCRIPTOR
 				};
+				const validateData =
+					vi.fn()
+						.mockReturnValue(
+							data
+						);
 				const interpret =
 					vi.fn()
 						.mockReturnValue([
@@ -81,8 +111,16 @@ describe(
 
 				await new FilesystemResourceHandler(
 					{
+						dataType:
+							FILESYSTEM_ENTRIES_DATA_TYPE,
+						dataVersion:
+							FILESYSTEM_ENTRIES_DATA_VERSION,
+						validate:
+							validateData
+					},
+					{
 						resourceType:
-							'fs',
+							FILESYSTEM_RESOURCE_TYPE,
 						interpret
 					},
 					{
@@ -96,9 +134,17 @@ describe(
 				);
 
 				expect(
+					validateData
+				).toHaveBeenCalledWith(
+					resource.value
+				);
+				expect(
 					interpret
 				).toHaveBeenCalledWith(
-					resource
+					expect.objectContaining({
+						value:
+							data
+					})
 				);
 				expect(
 					validate
@@ -108,25 +154,81 @@ describe(
 				expect(
 					install
 				).toHaveBeenCalledWith(
-					resource,
+					expect.objectContaining({
+						value:
+							data
+					}),
 					[
 						validated
 					]
 				);
 			}
 		);
+
+		it(
+			'rejects a semantic data contract that does not belong to Filesystem entries',
+			async () => {
+				const interpret =
+					vi.fn();
+
+				await expect(
+					new FilesystemResourceHandler(
+						{
+							dataType:
+								FILESYSTEM_ENTRIES_DATA_TYPE,
+							dataVersion:
+								FILESYSTEM_ENTRIES_DATA_VERSION,
+							validate:
+								vi.fn()
+						},
+						{
+							resourceType:
+								FILESYSTEM_RESOURCE_TYPE,
+							interpret
+						},
+						{
+							validate:
+								vi.fn()
+						},
+						{
+							install:
+								vi.fn()
+						}
+					).handle(
+						createResource({
+							dataType:
+								'kjvonly.note'
+						})
+					)
+				).rejects.toThrow(
+					'Unsupported Filesystem Resource data type: kjvonly.note@1'
+				);
+
+				expect(
+					interpret
+				).not.toHaveBeenCalled();
+			}
+		);
 	}
 );
 
-function createResource():
-	DecodedResourceContent {
+function createResource(
+	overrides:
+		Partial<DecodedResourceContent> = {}
+): DecodedResourceContent {
 	return {
 		publisher:
 			'a'.repeat(64),
 		resourceId:
 			'my-filesystem',
 		resourceType:
-			'fs',
+			FILESYSTEM_RESOURCE_TYPE,
+
+		dataType:
+			FILESYSTEM_ENTRIES_DATA_TYPE,
+
+		dataVersion:
+			FILESYSTEM_ENTRIES_DATA_VERSION,
 		modifiedAt:
 			100,
 		mediaType:
@@ -135,6 +237,7 @@ function createResource():
 			f:
 				'notes'
 		},
-		value: {}
+		value: {},
+		...overrides
 	};
 }

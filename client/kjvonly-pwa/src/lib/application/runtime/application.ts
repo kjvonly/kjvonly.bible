@@ -35,6 +35,7 @@ import {
 
 import {
 	ResourceLoader,
+	ResourceDescriptorValidator,
 	appendResourceReferenceBuilder,
 	ResourceContentDecoratorBuilder,
 	JsonResourceContentDecorator,
@@ -128,6 +129,10 @@ import {
 import {
     ModuleLaunchDestinationResolver
 } from '../modules/modules/module-launch-destination-resolver';
+
+import {
+    ApplicationReferenceResolver
+} from '../references/application-reference-resolver';
 
 import {
     ARCHIVE_VIEWS
@@ -253,6 +258,11 @@ import {
     BIBLE_PERICOPES_RESOURCE_TYPE,
     BIBLE_SEARCH_RESOURCE_TYPE,
     BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
+    createBibleChapterResourceId,
+    createBibleBooknamesResourceId,
+    createBibleParagraphsResourceId,
+    createBiblePericopesResourceId,
+    createBibleSearchIndexResourceId,
     ChapterService,
     ParagraphsService,
     PericopesService,
@@ -265,6 +275,7 @@ import {
     BibleLocationReferenceService,
     BibleNavigationService,
     BibleVerseReferenceService,
+    BIBLE_LOCATION_REFERENCE_TYPE,
     BIBLE_VIEWS,
     SEARCH_VIEWS,
     createBibleVersionId,
@@ -273,7 +284,8 @@ import {
 
 
 import {
-    STRONGS_RESOURCE_TYPE
+    STRONGS_RESOURCE_TYPE,
+    createStrongsResourceId
 } from '$lib/domains/strongs';
 
 
@@ -355,6 +367,21 @@ import {
 import {
     FilesystemSearchRuntime
 } from '$lib/domains/filesystem/runtime/search/filesystem-search-runtime';
+
+///////////////////////////////////////////////////////////////////////////////
+// Normalized Content
+
+import {
+    NormalizedContentService
+} from '$lib/domains/normalized-content';
+
+import {
+    normalizedContentNavigationViewRegistrations
+} from '$lib/domains/normalized-content/ui';
+
+import {
+    IndexedDBNormalizedContentStore
+} from '$lib/domains/normalized-content/persistence/indexeddb-normalized-content-store';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Notes
@@ -730,46 +757,76 @@ export class Application {
             new ResourceSelectionService(
                 [
                     {
+                        resourceType:
+                            BIBLE_CHAPTER_RESOURCE_TYPE,
+
                         publisher:
                             KJVONLY_PUBKEY,
 
                         resourceId:
-                            `${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+                            createBibleChapterResourceId(
+                                'kjvs'
+                            )
                     },
                     {
+                        resourceType:
+                            BIBLE_BOOKNAMES_RESOURCE_TYPE,
+
                         publisher:
                             KJVONLY_PUBKEY,
 
                         resourceId:
-                            `${BIBLE_BOOKNAMES_RESOURCE_TYPE}/default`
+                            createBibleBooknamesResourceId(
+                                'default'
+                            )
                     },
                     {
+                        resourceType:
+                            BIBLE_PARAGRAPHS_RESOURCE_TYPE,
+
                         publisher:
                             KJVONLY_PUBKEY,
 
                         resourceId:
-                            `${BIBLE_PARAGRAPHS_RESOURCE_TYPE}/default`
+                            createBibleParagraphsResourceId(
+                                'default'
+                            )
                     },
                     {
+                        resourceType:
+                            BIBLE_PERICOPES_RESOURCE_TYPE,
+
                         publisher:
                             KJVONLY_PUBKEY,
 
                         resourceId:
-                            `${BIBLE_PERICOPES_RESOURCE_TYPE}/default`
+                            createBiblePericopesResourceId(
+                                'default'
+                            )
                     },
                     {
+                        resourceType:
+                            BIBLE_SEARCH_RESOURCE_TYPE,
+
                         publisher:
                             KJVONLY_PUBKEY,
 
                         resourceId:
-                            `${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
+                            createBibleSearchIndexResourceId(
+                                'kjvs'
+                            )
                     },
                     {
+                        resourceType:
+                            STRONGS_RESOURCE_TYPE,
+
                         publisher:
                             KJVONLY_PUBKEY,
 
                         resourceId:
-                            `${STRONGS_RESOURCE_TYPE}/kjvs`
+                            createStrongsResourceId(
+                                'kjvs'
+                            )
                     }
                 ],
                 resourceSelectionStore
@@ -810,6 +867,9 @@ export class Application {
                     ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.ARCHIVE
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.NORMALIZED_CONTENT
                     )
                 ]
             );
@@ -898,6 +958,22 @@ export class Application {
                 }
             ]);
 
+        const applicationReferenceResolver =
+            new ApplicationReferenceResolver([
+                {
+                    referenceType:
+                        BIBLE_LOCATION_REFERENCE_TYPE,
+                    module:
+                        Modules.BIBLE,
+                    view:
+                        BIBLE_VIEWS.READER,
+                    createState:
+                        (bibleLocationRef) => ({
+                            bibleLocationRef
+                        })
+                }
+            ]);
+
         const navigationViewRegistry =
             new NavigationViewRegistry();
 
@@ -939,6 +1015,10 @@ export class Application {
 
         navigationViewRegistry.registerAll(
             notesNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            normalizedContentNavigationViewRegistrations
         );
 
         const navigationViewResolver =
@@ -1229,6 +1309,27 @@ export class Application {
             );
 
         ///////////////////////////////////////////////////////////////////////
+        // Normalized Content
+
+        const normalizedContentStore =
+            new IndexedDBNormalizedContentStore(
+                getApplicationDB
+            );
+
+        const normalizedContentResourceLoader =
+            new ResourceLoader<string>(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
+        const normalizedContentService =
+            new NormalizedContentService(
+                normalizedContentStore,
+                normalizedContentResourceLoader,
+                new ResourceDescriptorValidator()
+            );
+
+        ///////////////////////////////////////////////////////////////////////
         // Notes
 
         const notesStore =
@@ -1405,6 +1506,7 @@ export class Application {
             petNameService,
             navigationRuntimeFactory,
             moduleLaunchDestinationResolver,
+            applicationReferenceResolver,
             archiveService,
 
             workspaceRuntime,
@@ -1424,6 +1526,8 @@ export class Application {
             bibleVerseReferenceService,
 
             filesystemService,
+
+            normalizedContentService,
 
             notesService,
             notesAvailabilityService,
@@ -1817,8 +1921,16 @@ export class Application {
         this.resourceSelectionService
             .initializeMissing(
                 [
-                    ...selections.values()
-                ]
+                    ...selections.entries()
+                ].map(
+                    ([
+                        resourceType,
+                        reference
+                    ]) => ({
+                        resourceType,
+                        ...reference
+                    })
+                )
             );
     }
 

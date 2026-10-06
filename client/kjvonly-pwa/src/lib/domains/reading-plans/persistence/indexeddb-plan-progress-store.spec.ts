@@ -1,4 +1,8 @@
 import {
+	PLAN_PROGRESS_DATA_TYPE
+} from '../resources/progress/plan-progress-resource';
+
+import {
 	describe,
 	expect,
 	it,
@@ -43,6 +47,12 @@ describe(
 								),
 							objectType:
 								PLAN_PROGRESS_OBJECT_TYPE,
+
+							dataType:
+								PLAN_PROGRESS_DATA_TYPE,
+
+							dataVersion:
+								1,
 							objectId:
 								progress.id,
 							value:
@@ -99,6 +109,12 @@ describe(
 										),
 									objectType:
 										PLAN_PROGRESS_OBJECT_TYPE,
+
+									dataType:
+										PLAN_PROGRESS_DATA_TYPE,
+
+									dataVersion:
+										1,
 									objectId:
 										item.id,
 									value:
@@ -161,6 +177,12 @@ describe(
 							),
 						objectType:
 							PLAN_PROGRESS_OBJECT_TYPE,
+
+						dataType:
+							PLAN_PROGRESS_DATA_TYPE,
+
+						dataVersion:
+							1,
 						objectId:
 							progress.id,
 						value:

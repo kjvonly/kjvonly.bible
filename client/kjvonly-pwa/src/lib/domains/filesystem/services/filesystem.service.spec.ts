@@ -115,7 +115,7 @@ describe(
 						{
 							index: 'dataType',
 							value:
-								'kjvonly.note/v1'
+								'kjvonly.note'
 						},
 						'grace'
 					)
@@ -129,7 +129,7 @@ describe(
 					{
 						index: 'dataType',
 						value:
-							'kjvonly.note/v1'
+							'kjvonly.note'
 					},
 					'grace'
 				);
@@ -185,10 +185,13 @@ function createEntry():
 					'notes/creation',
 				name:
 					'Creation Note',
-				category:
+				resourceType:
 					'notes',
 				dataType:
-					'kjvonly.note/v1',
+					'kjvonly.note',
+
+				dataVersion:
+					1,
 				modifiedAt:
 					100,
 				representation:

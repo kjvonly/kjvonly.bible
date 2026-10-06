@@ -1,3 +1,7 @@
+import {
+	BIBLE_BOOKNAMES_DATA_TYPE
+} from '../resources/booknames/bible-booknames-resource';
+
 import type {
 	BibleBooknames
 } from '../models/bible-booknames.model';
@@ -62,6 +66,12 @@ export class IndexedDBBibleBooknamesStore
 
 				objectType:
 					BIBLE_BOOKNAMES_OBJECT_TYPE,
+
+				dataType:
+					BIBLE_BOOKNAMES_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					booknames.id,

@@ -12,6 +12,7 @@ import {
 } from '$lib/resource/services/resource-resolution-processor';
 
 import {
+	type GenericResourceInstaller,
 	JsonResourceContentDecorator,
 	ResourceContentDecoder,
 	ResourceContentDecoratorBuilder,
@@ -32,6 +33,8 @@ export interface ResourceInstallationTestInput {
 	readonly publisher: string;
 	readonly resourceId: string;
 	readonly resourceType: string;
+	readonly dataType: string;
+	readonly dataVersion: number;
 	readonly metadata?: ResourceMetadata;
 	readonly value: unknown;
 	readonly modifiedAt?: number;
@@ -40,6 +43,44 @@ export interface ResourceInstallationTestInput {
 export function createResourceInstallationTestService(
 	handler: ResourceHandler,
 	input: ResourceInstallationTestInput
+): ResourceService {
+	return createTestService(
+		input,
+		{
+			install:
+				async () =>
+					undefined
+		},
+		[
+			handler
+		]
+	);
+}
+
+export function createGenericResourceInstallationTestService(
+	installer:
+		Pick<
+			GenericResourceInstaller,
+			'install'
+		>,
+	input: ResourceInstallationTestInput
+): ResourceService {
+	return createTestService(
+		input,
+		installer,
+		[]
+	);
+}
+
+function createTestService(
+	input: ResourceInstallationTestInput,
+	genericInstaller:
+		Pick<
+			GenericResourceInstaller,
+			'install'
+		>,
+	handlers:
+		readonly ResourceHandler[]
 ): ResourceService {
 	const content =
 		createVerifiedContent(
@@ -75,9 +116,8 @@ export function createResourceInstallationTestService(
 		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
-			[
-				handler
-			]
+			genericInstaller,
+			handlers
 		);
 
 	const processor =
@@ -164,6 +204,12 @@ function createVerifiedContent(
 		resourceType:
 			input.resourceType,
 
+		dataType:
+			input.dataType,
+
+		dataVersion:
+			input.dataVersion,
+
 		modifiedAt:
 			input.modifiedAt ??
 			200,
@@ -201,6 +247,12 @@ function createRepresentation(
 
 		resourceType:
 			content.resourceType,
+
+		dataType:
+			content.dataType!,
+
+		dataVersion:
+			content.dataVersion!,
 
 		eventId:
 			'c'.repeat(

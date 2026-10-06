@@ -26,7 +26,7 @@ import {
 } from './module-resource-selection-resolver';
 
 const RESOURCE_TYPE =
-	'kjvonly/bible/booknames';
+	'bible/booknames';
 
 const SOURCE:
 	PublishedResourceReference = {
@@ -34,7 +34,7 @@ const SOURCE:
 		'publisher',
 
 	resourceId:
-		`${RESOURCE_TYPE}/default`
+		'opaque-resource-id'
 };
 
 describe(

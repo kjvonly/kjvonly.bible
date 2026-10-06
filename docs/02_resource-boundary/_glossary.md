@@ -88,7 +88,7 @@ The application-defined logical identifier stored in the Nostr `d` tag.
 Example:
 
 ```text
-kjvonly/bible/chapters/kjv
+kjvonly/bible/chapter/kjv
 ```
 
 The Resource Identifier participates in Published Resource Identity together with Nostr kind and publisher public key.
@@ -97,25 +97,17 @@ The Resource Identifier participates in Published Resource Identity together wit
 
 # Resource Type
 
-The logical class of Resource identified by the leading Resource Identifier path segments.
+The logical application object/resource type represented by a Resource.
 
 For example:
 
 ```text
-kjvonly/bible/chapters
+bible/chapter
 ```
 
-Resource Type identifies what kind of Domain information the Resource represents without determining its storage provider or Resource Representation.
+Resource Type is independent from Resource Identifier and semantic datatype. In the current Nostr representation it is carried by the `t` tag rather than inferred from `d` path segments.
 
----
-
-# Resource Classification
-
-Coarse Resource metadata used for Nostr discovery.
-
-Resource Classification may be represented through the Nostr `t` tag.
-
-It allows related Resources to be queried without requiring their complete Resource Identifiers.
+Resource Type identifies the owning Resource family without determining storage provider, Resource Representation, or semantic payload contract. It is also the canonical key for Resource Type discovery and dispatch.
 
 ---
 
@@ -250,7 +242,7 @@ Examples include:
 
 * publisher public key,
 * Published Resource Identity,
-* Resource Classification,
+* Resource Type,
 * Resource reference,
 * or Nostr event ID.
 
@@ -266,7 +258,7 @@ Resource Discovery may query by:
 
 * publisher,
 * Resource Identity,
-* Resource Classification,
+* Resource Type,
 * or exact Nostr event.
 
 Discovery determines what representations are available.
@@ -431,6 +423,37 @@ A portable collection of selected accepted Resource-backed Domain state.
 Resource Archives use the `.kjva` format and preserve the Resource metadata and revision information needed to reconstruct normal inbound Resource candidates. Original transport packaging does not need to be preserved.
 
 An archive is not automatically a complete backup of arbitrary local application state.
+
+---
+
+
+# Semantic Data Contract
+
+The versioned semantic payload contract declared by a Resource through:
+
+```text
+dataType + dataVersion
+```
+
+It determines which semantic validator understands the decoded Resource value. It is distinct from Resource Type and Resource Identity.
+
+---
+
+# Resource Metadata
+
+Protocol-agnostic scalar metadata carried on the Resource envelope and transported without generic interpretation.
+
+Owning Domains may define semantic keys. Resource metadata does not participate in Published Resource Identity unless another specification explicitly says so.
+
+---
+
+# ResourceInstallation
+
+The durable object-level Resource state associated with a Resource-backed Domain Object.
+
+It records Resource revision/provenance such as publisher, optional Resource ID, optional Resource metadata, and `modifiedAt`.
+
+It is separate from the Domain Object value and from Resource-level processing receipts.
 
 ---
 

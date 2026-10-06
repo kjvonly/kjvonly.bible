@@ -11,8 +11,11 @@ import type {
 } from '$lib/resource';
 
 import {
-	PLAN_DEFINITION_RESOURCE_TYPE
-} from './plan-definition-interpreter';
+	PLAN_DEFINITION_DATA_TYPE,
+	PLAN_DEFINITION_DATA_VERSION,
+	PLAN_DEFINITION_RESOURCE_TYPE,
+	createPlanDefinitionResourceId
+} from './plan-definition-resource';
 
 export class PlanDefinitionResourcePublication {
 
@@ -36,8 +39,17 @@ export class PlanDefinitionResourcePublication {
 			resourceType:
 				PLAN_DEFINITION_RESOURCE_TYPE,
 
+			dataType:
+				PLAN_DEFINITION_DATA_TYPE,
+
+			dataVersion:
+				PLAN_DEFINITION_DATA_VERSION,
+
 			resourceId:
-				`${PLAN_DEFINITION_RESOURCE_TYPE}/${group}/${planKey}`,
+				createPlanDefinitionResourceId(
+					group,
+					planKey
+				),
 
 			representation:
 				'content',

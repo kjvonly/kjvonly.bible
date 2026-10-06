@@ -2,15 +2,12 @@ import type {
     PublishedResourceReference
 } from '$lib/resource';
 
-import {
-    parseResourceIdentifier
-} from '$lib/resource';
-
 import type {
     ResourceSelectionStore
 } from './resource-selection-store';
 
 import type {
+    ResourceSelection,
     ResourceSelections
 } from './resource-selections';
 
@@ -49,7 +46,7 @@ export class ResourceSelectionService {
 
     constructor(
         fallbackSelections:
-            readonly PublishedResourceReference[] =
+            readonly ResourceSelection[] =
             [],
 
         private readonly store?:
@@ -60,6 +57,7 @@ export class ResourceSelectionService {
             fallbackSelections
         ) {
             this.setFallbackSelection(
+                selection.resourceType,
                 selection
             );
         }
@@ -107,12 +105,13 @@ export class ResourceSelectionService {
     }
 
     select(
-        reference:
-            PublishedResourceReference
+        selection:
+            ResourceSelection
     ): void {
 
         this.setSelection(
-            reference
+            selection.resourceType,
+            selection
         );
 
         this.persist();
@@ -174,12 +173,15 @@ export class ResourceSelectionService {
         }
 
         for (
-            const selection of
-            Object.values(
+            const [
+                resourceType,
+                selection
+            ] of Object.entries(
                 persisted
             )
         ) {
             this.setSelection(
+                resourceType,
                 selection
             );
         }
@@ -187,22 +189,20 @@ export class ResourceSelectionService {
 
     initializeMissing(
         selections:
-            readonly PublishedResourceReference[]
+            readonly ResourceSelection[]
     ): void {
 
         let changed =
             false;
 
         for (
-            const reference of
+            const selection of
             selections
         ) {
             const {
                 resourceType
             } =
-                parseResourceIdentifier(
-                    reference.resourceId
-                );
+                selection;
 
             /*
              * Only an established current selection blocks
@@ -222,7 +222,8 @@ export class ResourceSelectionService {
             }
 
             this.setSelection(
-                reference
+                resourceType,
+                selection
             );
 
             changed =
@@ -235,41 +236,37 @@ export class ResourceSelectionService {
     }
 
     private setSelection(
+        resourceType: string,
         reference:
             PublishedResourceReference
     ): void {
 
-        const {
-            resourceType
-        } =
-            parseResourceIdentifier(
-                reference.resourceId
-            );
-
         this.selections.set(
             resourceType,
             {
-                ...reference
+                publisher:
+                    reference.publisher,
+
+                resourceId:
+                    reference.resourceId
             }
         );
     }
 
     private setFallbackSelection(
+        resourceType: string,
         reference:
             PublishedResourceReference
     ): void {
 
-        const {
-            resourceType
-        } =
-            parseResourceIdentifier(
-                reference.resourceId
-            );
-
         this.fallbackSelections.set(
             resourceType,
             {
-                ...reference
+                publisher:
+                    reference.publisher,
+
+                resourceId:
+                    reference.resourceId
             }
         );
     }

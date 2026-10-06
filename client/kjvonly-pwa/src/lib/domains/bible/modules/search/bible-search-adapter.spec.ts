@@ -92,6 +92,6 @@ class FakeSearchService {
 function createSearchSource(): PublishedResourceReference {
 	return {
 		publisher: 'publisher',
-		resourceId: 'kjvonly/bible/search/kjvs'
+		resourceId: 'kjvonly/bible/search-index/kjvs'
 	};
 }

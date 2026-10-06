@@ -15,7 +15,7 @@ import {
 
 import {
 	PLAN_DEFINITION_RESOURCE_TYPE
-} from './definitions/plan-definition-interpreter';
+} from './definitions/plan-definition-resource';
 
 import {
 	createDefaultPlanDefinitionSelection

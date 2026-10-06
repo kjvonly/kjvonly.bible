@@ -86,7 +86,7 @@ describe(
 								],
 								[
 									't',
-									'kjvonly/chapters'
+									'test/chapter'
 								]
 							]
 						},
@@ -103,7 +103,7 @@ describe(
 					],
 					[
 						't',
-						'kjvonly/chapters'
+						'test/chapter'
 					]
 				]);
 			}

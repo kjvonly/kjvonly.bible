@@ -7,8 +7,11 @@ import type {
 } from '$lib/resource';
 
 import {
-	BIBLE_PERICOPES_RESOURCE_TYPE
-} from './bible-pericopes-interpreter';
+	BIBLE_PERICOPES_DATA_TYPE,
+	BIBLE_PERICOPES_DATA_VERSION,
+	BIBLE_PERICOPES_RESOURCE_TYPE,
+	createBiblePericopesResourceId
+} from './bible-pericopes-resource';
 
 export class BiblePericopesResourcePublication {
 
@@ -41,8 +44,17 @@ export class BiblePericopesResourcePublication {
 			resourceType:
 				BIBLE_PERICOPES_RESOURCE_TYPE,
 
+			dataType:
+				BIBLE_PERICOPES_DATA_TYPE,
+
+			dataVersion:
+				BIBLE_PERICOPES_DATA_VERSION,
+
 			resourceId:
-				`${BIBLE_PERICOPES_RESOURCE_TYPE}/${source}/${chapterRef}`,
+				createBiblePericopesResourceId(
+					source,
+					chapterRef
+				),
 
 			representation:
 				'content',

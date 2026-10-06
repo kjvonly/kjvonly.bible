@@ -52,10 +52,6 @@ export {
 } from './services/encodedReadingsDecoder.service';
 
 export {
-	PLAN_DEFINITION_RESOURCE_TYPE
-} from './resources/definitions/plan-definition-interpreter';
-
-export {
 	DEFAULT_PLAN_DEFINITION_RESOURCE_GROUP,
 	createDefaultPlanDefinitionSelection
 } from './resources/definitions/plan-definition-default-selection';
@@ -69,3 +65,43 @@ export {
 export {
 	PLAN_PROGRESS_RESOURCE_TYPE
 } from './resources/progress/plan-progress-resource';
+
+export {
+	PLAN_DEFINITION_DATA_TYPE,
+	PLAN_DEFINITION_DATA_VERSION,
+	PLAN_DEFINITION_RESOURCE_TYPE
+} from './resources/definitions/plan-definition-resource';
+
+export {
+	PlanDefinitionDataTypeHandler
+} from './resources/definitions/plan-definition-data-type-handler';
+
+export {
+	PlanDefinitionDomainObjectFactory
+} from './resources/definitions/plan-definition-domain-object-factory';
+
+export {
+	PLAN_SUBSCRIPTION_DATA_TYPE,
+	PLAN_SUBSCRIPTION_DATA_VERSION
+} from './resources/subscriptions/plan-subscription-resource-source';
+
+export {
+	PlanSubscriptionDataTypeHandler
+} from './resources/subscriptions/plan-subscription-data-type-handler';
+
+export {
+	PlanSubscriptionDomainObjectFactory
+} from './resources/subscriptions/plan-subscription-domain-object-factory';
+
+export {
+	PLAN_PROGRESS_DATA_TYPE,
+	PLAN_PROGRESS_DATA_VERSION
+} from './resources/progress/plan-progress-resource';
+
+export {
+	PlanProgressDataTypeHandler
+} from './resources/progress/plan-progress-data-type-handler';
+
+export {
+	PlanProgressDomainObjectFactory
+} from './resources/progress/plan-progress-domain-object-factory';

@@ -1,3 +1,7 @@
+import {
+	PLAN_PROGRESS_DATA_TYPE
+} from '../resources/progress/plan-progress-resource';
+
 import type {
 	PlanProgress
 } from '../models/plan-progress';
@@ -81,6 +85,12 @@ export class IndexedDBPlanProgressStore
 
 				objectType:
 					PLAN_PROGRESS_OBJECT_TYPE,
+
+				dataType:
+					PLAN_PROGRESS_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					progress.id,

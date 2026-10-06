@@ -5,6 +5,11 @@ import {
 } from 'vitest';
 
 import {
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION
+} from './notes-resource-contract';
+
+import {
 	createNoteIdForDescriptor,
 	createNoteIdForSource,
 	parseNotesResourceSource
@@ -22,7 +27,7 @@ describe(
 							'publisher',
 
 						resourceId:
-							'kjvonly/notes/entries/default'
+							'kjvonly/notes/note/default'
 					})
 				).toEqual({
 					name:
@@ -41,7 +46,7 @@ describe(
 								'publisher',
 
 							resourceId:
-								'kjvonly/notes/entries/default'
+								'kjvonly/notes/note/default'
 						},
 						'note-1'
 					)
@@ -61,10 +66,16 @@ describe(
 								'publisher',
 
 							resourceId:
-								'kjvonly/notes/entries/default/note-1',
+								'kjvonly/notes/note/default/note-1',
 
-							category:
-								'kjvonly/notes/entries',
+							resourceType:
+								'notes/note',
+
+							dataType:
+								NOTE_DATA_TYPE,
+
+							dataVersion:
+								NOTE_DATA_VERSION,
 
 							modifiedAt:
 								1,
@@ -100,10 +111,16 @@ describe(
 									'publisher',
 
 								resourceId:
-									'kjvonly/notes/entries/default',
+									'kjvonly/notes/note/default',
 
-								category:
-									'kjvonly/notes/entries',
+								resourceType:
+									'notes/note',
+
+								dataType:
+									NOTE_DATA_TYPE,
+
+								dataVersion:
+									NOTE_DATA_VERSION,
 
 								modifiedAt:
 									1,
@@ -123,7 +140,7 @@ describe(
 							}
 						})
 				).toThrow(
-					'Invalid individual Notes Resource: kjvonly/notes/entries/default'
+					'Invalid individual Notes Resource: kjvonly/notes/note/default'
 				);
 			}
 		);
@@ -138,10 +155,10 @@ describe(
 								'publisher',
 
 							resourceId:
-								'kjvonly/notes/entries/default/note-1'
+								'kjvonly/notes/note/default/note-1'
 						})
 				).toThrow(
-					'Invalid Notes Resource source: kjvonly/notes/entries/default/note-1'
+					'Invalid Notes Resource source: kjvonly/notes/note/default/note-1'
 				);
 			}
 		);

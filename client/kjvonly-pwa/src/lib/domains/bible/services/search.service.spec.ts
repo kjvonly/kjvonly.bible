@@ -200,7 +200,7 @@ function createSource(): PublishedResourceReference {
 		publisher:
 			'publisher',
 		resourceId:
-			'kjvonly/bible/search/kjvs'
+			'kjvonly/bible/search-index/kjvs'
 	};
 }
 

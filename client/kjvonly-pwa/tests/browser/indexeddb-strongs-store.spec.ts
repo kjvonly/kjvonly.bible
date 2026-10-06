@@ -5,6 +5,10 @@ import {
 	it
 } from 'vitest';
 
+import {
+	STRONGS_DATA_TYPE
+} from '$lib/domains/strongs';
+
 import type {
 	Strongs
 } from '$lib/domains/strongs/models/strongs.model';
@@ -106,6 +110,12 @@ describe(
 
 					objectType:
 						'strongs/definition',
+
+					dataType:
+						STRONGS_DATA_TYPE,
+
+					dataVersion:
+						1,
 
 					objectId:
 						'publisher/kjvs/G1',

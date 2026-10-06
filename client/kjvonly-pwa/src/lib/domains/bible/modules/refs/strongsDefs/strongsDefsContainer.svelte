@@ -25,7 +25,7 @@
 
 	import type { PublishedResourceReference } from '$lib/resource';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-resource';
 	import { SEARCH_VIEWS } from '../../../models/search-navigation.model';
 
 	const {

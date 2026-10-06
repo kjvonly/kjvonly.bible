@@ -38,10 +38,9 @@ The Resource Boundary separates these concepts:
 4. **Resource Identifier**
 5. **Published Resource Identity**
 6. **Resource Type**
-7. **Resource Classification**
-8. **Resource Granularity**
-9. **Resource Representation**
-10. **Serialized Resource Content**
+7. **Resource Granularity**
+8. **Resource Representation**
+9. **Serialized Resource Content**
 
 Each concept answers a different question.
 
@@ -254,47 +253,36 @@ The Domain meaning MUST remain recoverable.
 
 # Resource Identifier
 
-Every Resource has a logical Resource Identifier.
+Every Resource has a logical Resource Identifier (`resourceId`).
 
-The canonical Resource Identifier follows the path-like form:
+`resourceId` is the Resource's publisher-chosen identity inside the publisher/kind address space. It is carried by the Nostr `d` tag.
 
-```text
-namespace/domain/resource-type/...resource-id
-```
+It MAY be path-like, but the Resource Boundary does not assign generic semantic meaning to its segments.
 
-For example:
+For example, all of these may be valid identifiers for Resources of the same Resource Type:
 
 ```text
-kjvonly/bible/chapters/kjv
+kjvs/1_1
+bible-a/1_1
+2026-edition/genesis-1
+kjvonly/bible/chapter/kjvs/1_1
 ```
 
-may be interpreted as:
+The Resource ID grammar is owned by the Resource family. Generic Resource infrastructure treats the value as opaque and does not infer Resource Type from it.
+
+Therefore:
 
 ```text
-namespace      = kjvonly
-domain         = bible
-resource-type  = chapters
-resource-id    = kjv
+resourceId
+    = specific Resource identity
+
+Resource Type
+    = what class of Resource this is
 ```
 
-A more granular Resource may contain additional identity segments:
+A Domain MAY interpret identity structure that belongs to its own Resource contract. Generic Resource infrastructure MUST NOT infer Domain semantics such as Bible version, edition, chapter, plan, or filesystem path merely from arbitrary Resource ID segments.
 
-```text
-kjvonly/bible/chapters/kjv/1_1
-```
-
-where:
-
-```text
-namespace      = kjvonly
-domain         = bible
-resource-type  = chapters
-resource-id    = kjv/1_1
-```
-
-Additional segments are part of Resource Identity.
-
-They MUST NOT be interpreted as filesystem paths merely because the identifier uses `/` separators.
+Changing `resourceId` changes Published Resource Identity for a fixed publisher and Nostr kind. Two different Resource IDs MAY intentionally carry the same semantic metadata.
 
 ---
 
@@ -334,87 +322,118 @@ This ADR establishes the conceptual distinction; the protocol mapping belongs to
 
 # Resource Type
 
-A Resource Type identifies the semantic class of a Resource.
+A Resource Type identifies the application object/resource type represented by a Resource.
 
-It is expressed by the first three Resource Identifier segments:
-
-```text
-namespace/domain/resource-type
-```
-
-For example:
+Examples include:
 
 ```text
-kjvonly/bible/chapters
-kjvonly/plans/readings
-kjvonly/notes/notes
+bible/chapter
+notes/note
+strongs/definition
 ```
 
 The Resource Type answers:
 
-> **What kind of Domain information does this Resource contain?**
+> **Which Resource contract/factory owns this Resource?**
 
-The remaining identifier segments identify the particular Resource within that type.
+Resource Type is independent from `resourceId`.
 
-For example:
+Resource Type is carried explicitly and MUST NOT be inferred from `resourceId`.
 
-```text
-kjvonly/plans/readings/365-bible
-```
-
-contains:
-
-```text
-resource type = kjvonly/plans/readings
-resource id   = 365-bible
-```
-
-Resource Type is independent from:
+Resource Type is also independent from:
 
 * Resource Representation,
+* semantic payload `dataType`,
+* semantic `dataVersion`,
 * storage provider,
 * Resource Granularity,
 * and individual Nostr publication identity.
 
 ---
 
-# Resource Classification
+# Resource Type and Discovery
 
 Resource Identity identifies a specific Resource.
 
-Resource Classification allows clients to discover groups of related Resources.
-
-The primary classification is derived from Resource Type:
-
-```text
-namespace/domain/resource-type
-```
+Resource Type groups Resources by the application object/resource type they represent and provides the canonical discovery/dispatch key.
 
 For example:
 
 ```text
-kjvonly/bible/chapters
+bible/chapter
 ```
 
 Conceptually:
 
 ```text
-Resource Identifier
-    kjvonly/bible/chapters/kjv/1_1
-
+resourceId
+    bible-a/1_1
         ↓ specific identity
 
-Resource Classification
-    kjvonly/bible/chapters
-
-        ↓ discovery class
+resourceType
+    bible/chapter
+        ↓ discovery and Domain-factory key
 ```
 
-Identity and classification MUST remain distinct.
+Resource Type MUST remain distinct from Resource Identity.
 
-Classification MUST NOT replace Resource Identity.
+`resourceId` MUST NOT be parsed generically to rediscover `resourceType`.
 
-The Nostr Event Model defines how Resource Classification is represented in Nostr tags for relay discovery.
+The Nostr Event Model defines how Resource Type is represented through the `t` tag for relay discovery.
+
+---
+
+# Semantic Data Contract
+
+A Resource envelope identifies the semantic payload contract independently from Resource Type:
+
+```text
+dataType
++
+dataVersion
+```
+
+`dataType + dataVersion` answers:
+
+> **What semantic value contract does this payload claim to implement?**
+
+This is different from Resource Type:
+
+```text
+Resource Type
+    = which Resource family owns interpretation / Domain-object construction
+
+dataType + dataVersion
+    = which semantic value validator understands the decoded payload
+```
+
+The published Resource contract and the canonical persisted Domain Object contract MAY differ. For example, a bundle Resource may validate under a collection datatype while producing many individually stored Domain Objects with their own canonical datatype.
+
+---
+
+# Resource Metadata
+
+A Resource envelope MAY carry protocol-agnostic scalar metadata in addition to identity, Resource Type, and datatype information.
+
+Conceptually:
+
+```text
+metadata: Record<string, string>
+```
+
+The generic Resource layer transports this metadata without assigning meaning to individual keys.
+
+Owning Domains MAY define semantic keys that are required by their Resource contract.
+
+For example, a Bible Chapter Resource may carry:
+
+```text
+metadata.version = "King James Version"
+```
+
+while the Resource's identity namespace remains independent.
+
+Resource metadata MUST NOT implicitly participate in Published Resource Identity unless a protocol specification explicitly says otherwise.
 
 ---
 
@@ -540,56 +559,64 @@ Resource integrity and Domain validity are separate concerns.
 
 # From Resource Content to Domain Objects
 
-Resolved Resource content must be interpreted according to the owning Domain.
+Resolved and decoded Resource content enters two distinct semantic decisions.
 
 Conceptually:
 
 ```text
-Verified Resource Content
+Decoded Resource Value
         ↓
-Owning Domain
+dataType + dataVersion
         ↓
-Domain validation
+Semantic contract validation
+        ↓
+Resource Type
+        ↓
+Owning Domain Object construction
         ↓
 Candidate Domain Object(s)
 ```
 
-The owning Domain determines:
+The semantic datatype contract determines whether the decoded value is structurally and semantically valid for the declared payload contract.
 
-* the expected Domain schema,
-* Domain invariants,
+The owning Resource Type/Domain determines:
+
+* Domain Object identity,
+* context-dependent Domain invariants,
 * how many Domain Objects are produced,
-* and whether the content represents valid Domain information.
+* and the canonical stored Domain Object contracts.
 
-The Resource Boundary MUST NOT prescribe the internal mechanism used to perform Domain interpretation or validation.
-
-The architectural requirement is that Resource content is interpreted according to the rules of the Domain that gives the information meaning.
+This permits a published collection datatype to produce many canonical individual Domain Objects without conflating Resource Type with persisted object datatype.
 
 ---
 
-# Resource Type and Domain Interpretation
+# Resource Type, Datatype, and Domain Ownership
 
-Resource Type determines which Domain interpretation rules apply to resolved content.
+Resource Type determines which Resource family owns Domain Object construction.
 
 For example:
 
 ```text
-kjvonly/bible/chapters
+resourceType = bible/chapter
         ↓
-Bible Domain interpretation
+Bible Chapter Domain Object construction
 ```
 
-or:
+`dataType + dataVersion` independently determines which semantic value contract validates the decoded payload.
+
+Therefore:
 
 ```text
-kjvonly/plans/readings
-        ↓
-Reading Plans Domain interpretation
+Resource Type
+    = owning Resource Type / Domain factory
+
+dataType + dataVersion
+    = semantic payload contract
 ```
 
-Resource Type therefore identifies the semantic contract of the serialized Resource content.
+They MAY use the same string in a simple published Resource contract, but they are not the same architectural concept and MUST NOT be treated as interchangeable.
 
-It MUST NOT require the specification to expose the implementation object that performs the interpretation.
+The specification does not require a particular implementation class for either responsibility.
 
 ---
 
@@ -617,12 +644,12 @@ Conceptually:
 Bible Information
     │
     ├── Coarse Resource
-    │       kjvonly/bible/chapters/kjv
+    │       kjvonly/bible/chapter/kjv
     │
     └── Fine Resources
-            kjvonly/bible/chapters/kjv/1_1
-            kjvonly/bible/chapters/kjv/1_2
-            kjvonly/bible/chapters/kjv/1_3
+            kjvonly/bible/chapter/kjv/1_1
+            kjvonly/bible/chapter/kjv/1_2
+            kjvonly/bible/chapter/kjv/1_3
 ```
 
 Granularity SHOULD be chosen according to Resource lifecycle needs such as:
@@ -734,11 +761,11 @@ Discovery
         ↓
 Resolution
         ↓
-Verified Resource Content
+Decoded Resource Content
         ↓
-Domain Interpretation
+Semantic Datatype Validation
         ↓
-Candidate Domain Object
+Domain Object Construction
         ↓
 Installation / Acceptance
         ↓
@@ -837,7 +864,7 @@ This ADR defines:
 * Resource Identifier,
 * Published Resource Identity as a conceptual distinction,
 * Resource Type,
-* Resource Classification,
+* Resource Type,
 * Resource Granularity,
 * Resource Representation,
 * Serialized Resource Content,

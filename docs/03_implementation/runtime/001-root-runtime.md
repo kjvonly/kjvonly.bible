@@ -1014,7 +1014,7 @@ Resource resolution / descriptor processing
     ↓
 content decoding
     ↓
-Domain interpretation / validation
+semantic datatype validation / Domain Object factory
     ↓
 installation
 ```

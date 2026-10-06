@@ -21,7 +21,10 @@ import {
 	ResourceDescriptorValidator,
 	DescriptorsRepresentationResolver,
 	ContentRepresentationResolver,
-	ResourceResolver
+	ResourceResolver,
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver
 } from '$lib/resource';
 
 import {
@@ -60,53 +63,31 @@ import {
 // Bible
 
 import {
-	IndexedDBBibleChapterInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
-
-import {
-	BibleChapterInstaller,
-	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
-
-import {
-	BibleChapterInterpreter
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-	BibleChapterValidator
-} from '$lib/domains/bible/resources/chapters/bible-chapter-validator';
-
-import {
-	BibleChapterResourceHandler
-} from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
-
-import {
+	BIBLE_CHAPTER_DATA_VERSION,
+	BIBLE_CHAPTER_RESOURCE_TYPE,
+	BibleChapterDataTypeHandler,
+	BibleChapterDomainObjectFactory,
 	createBibleVersionId,
 	createChapterId
-} from '$lib/domains/bible/utils/bible-identity';
+} from '$lib/domains/bible';
+
+import {
+	BIBLE_CHAPTER_OBJECT_TYPE
+} from '$lib/domains/bible/persistence/chapter-store';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import {
-	IndexedDBStrongsInstallationTransaction
-} from '$lib/domains/strongs/persistence/strongs-installation-transaction';
+	STRONGS_RESOURCE_TYPE,
+	StrongsDataTypeHandler,
+	StrongsDefinitionDataTypeHandler,
+	StrongsDomainObjectFactory
+} from '$lib/domains/strongs';
 
 import {
-	StrongsInstaller
-} from '$lib/domains/strongs/resources/definitions/strongs-installer';
-
-import {
-	StrongsInterpreter
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
-
-import {
-	StrongsValidator
-} from '$lib/domains/strongs/resources/definitions/strongs-validator';
-
-import {
-	StrongsResourceHandler
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
 
 import {
 	STRONGS_DEFINITION_OBJECT_TYPE
@@ -130,10 +111,10 @@ const COLLECTION_RESOURCE_ID =
 	'kjvonly/resources/collections/default';
 
 const CHAPTER_RESOURCE_ID =
-	'kjvonly/bible/chapters/kjvs/1_1';
+	'kjvonly/bible/chapter/kjvs/1_1';
 
 const STRONGS_RESOURCE_ID =
-	'kjvonly/strongs/definitions/kjvs/G1';
+	'kjvonly/strongs/definition/kjvs/G1';
 
 describe(
 	'Resource descriptor installation',
@@ -166,8 +147,19 @@ describe(
 						resourceId:
 							CHAPTER_RESOURCE_ID,
 
-						category:
-							'kjvonly/bible/chapters',
+						resourceType:
+							'bible/chapter',
+
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							BIBLE_CHAPTER_DATA_VERSION,
+
+						resourceMetadata: {
+							version:
+								'kjvs'
+						},
 
 						modifiedAt:
 							100
@@ -180,8 +172,14 @@ describe(
 						resourceId:
 							STRONGS_RESOURCE_ID,
 
-						category:
-							'kjvonly/strongs/definitions',
+						resourceType:
+							'strongs/definition',
+
+						dataType:
+							'kjvonly.strongs.definition',
+
+						dataVersion:
+							1,
 
 						modifiedAt:
 							200
@@ -246,7 +244,7 @@ describe(
 							},
 
 							resourceType:
-								'kjvonly/bible/chapters',
+								'bible/chapter',
 
 							status:
 								'handled'
@@ -262,7 +260,7 @@ describe(
 							},
 
 							resourceType:
-								'kjvonly/strongs/definitions',
+								'strongs/definition',
 
 							status:
 								'handled'
@@ -464,8 +462,19 @@ describe(
 						resourceId:
 							CHAPTER_RESOURCE_ID,
 
-						category:
-							'kjvonly/bible/chapters',
+						resourceType:
+							'bible/chapter',
+
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							BIBLE_CHAPTER_DATA_VERSION,
+
+						resourceMetadata: {
+							version:
+								'kjvs'
+						},
 
 						modifiedAt:
 							100
@@ -478,8 +487,14 @@ describe(
 						resourceId:
 							unsupportedResourceId,
 
-						category:
-							'kjvonly/future/things',
+						resourceType:
+							'future/thing',
+
+						dataType:
+							'kjvonly.future-thing',
+
+						dataVersion:
+							1,
 
 						modifiedAt:
 							150,
@@ -495,8 +510,14 @@ describe(
 						resourceId:
 							STRONGS_RESOURCE_ID,
 
-						category:
-							'kjvonly/strongs/definitions',
+						resourceType:
+							'strongs/definition',
+
+						dataType:
+							'kjvonly.strongs.definition',
+
+						dataVersion:
+							1,
 
 						modifiedAt:
 							200
@@ -568,7 +589,7 @@ describe(
 							},
 
 							resourceType:
-								'kjvonly/bible/chapters',
+								'bible/chapter',
 
 							status:
 								'handled'
@@ -584,7 +605,7 @@ describe(
 							},
 
 							resourceType:
-								'kjvonly/strongs/definitions',
+								'strongs/definition',
 
 							status:
 								'handled'
@@ -600,7 +621,7 @@ describe(
 							},
 
 							resourceType:
-								'kjvonly/future/things',
+								'future/thing',
 
 							status:
 								'failed',
@@ -726,8 +747,19 @@ describe(
 						resourceId:
 							CHAPTER_RESOURCE_ID,
 
-						category:
-							'kjvonly/bible/chapters',
+						resourceType:
+							'bible/chapter',
+
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							BIBLE_CHAPTER_DATA_VERSION,
+
+						resourceMetadata: {
+							version:
+								'kjvs'
+						},
 
 						modifiedAt:
 							100
@@ -740,8 +772,14 @@ describe(
 						resourceId:
 							STRONGS_RESOURCE_ID,
 
-						category:
-							'kjvonly/strongs/definitions',
+						resourceType:
+							'strongs/definition',
+
+						dataType:
+							'kjvonly.strongs.definition',
+
+						dataVersion:
+							1,
 
 						modifiedAt:
 							200
@@ -826,11 +864,11 @@ describe(
 									resourcePublisher,
 
 								resourceId:
-									'kjvonly/bible/chapters/kjvs/1_1'
+									'kjvonly/bible/chapter/kjvs/1_1'
 							},
 
 							resourceType:
-								'kjvonly/bible/chapters',
+								'bible/chapter',
 
 							status:
 								'current'
@@ -841,11 +879,11 @@ describe(
 									resourcePublisher,
 
 								resourceId:
-									'kjvonly/strongs/definitions/kjvs/G1'
+									'kjvonly/strongs/definition/kjvs/G1'
 							},
 
 							resourceType:
-								'kjvonly/strongs/definitions',
+								'strongs/definition',
 
 							status:
 								'current'
@@ -970,53 +1008,30 @@ function createService(
 		);
 
 	///////////////////////////////////////////////////////////////////////
-	// Bible
+	// Generic Resource installation
 
-	const bibleChapterInstallationTransaction =
-		new IndexedDBBibleChapterInstallationTransaction(
-			getApplicationDB
-		);
-
-	const bibleChapterInstaller =
-		new BibleChapterInstaller(
-			bibleChapterInstallationTransaction
-		);
-
-	const bibleChapterHandler =
-		new BibleChapterResourceHandler(
-			new BibleChapterInterpreter(),
-			new BibleChapterValidator(),
-			bibleChapterInstaller
-		);
-
-	///////////////////////////////////////////////////////////////////////
-	// Strong's
-
-	const strongsInstallationTransaction =
-		new IndexedDBStrongsInstallationTransaction(
-			getApplicationDB
-		);
-
-	const strongsInstaller =
-		new StrongsInstaller(
-			strongsInstallationTransaction
-		);
-
-	const strongsHandler =
-		new StrongsResourceHandler(
-			new StrongsInterpreter(),
-			new StrongsValidator(),
-			strongsInstaller
+	const genericInstaller =
+		new GenericResourceInstaller(
+			new ResourceDataTypeResolver([
+				new BibleChapterDataTypeHandler(),
+				new StrongsDataTypeHandler(),
+				new StrongsDefinitionDataTypeHandler()
+			]),
+			new ResourceDomainObjectFactoryResolver([
+				new BibleChapterDomainObjectFactory(),
+				new StrongsDomainObjectFactory()
+			]),
+			new IndexedDBGenericResourceInstallationTransaction(
+				getApplicationDB
+			)
 		);
 
 	const resolutionProcessor =
 		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
-			[
-				bibleChapterHandler,
-				strongsHandler
-			]
+			genericInstaller,
+			[]
 		);
 
 	const processor =
@@ -1050,7 +1065,13 @@ function createRepresentation(
 			COLLECTION_RESOURCE_ID,
 
 		resourceType:
-			'kjvonly/resources/collections',
+			'resource/descriptor-collection',
+
+		dataType:
+			'kjvonly.resource-descriptor-collection',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'c'.repeat(
@@ -1081,8 +1102,17 @@ function createDescriptor(
 		readonly resourceId:
 		string;
 
-		readonly category:
+		readonly resourceType:
 		string;
+
+		readonly dataType:
+		string;
+
+		readonly dataVersion:
+		number;
+
+		readonly resourceMetadata?:
+		Readonly<Record<string, string>>;
 
 		readonly modifiedAt:
 		number;
@@ -1100,8 +1130,14 @@ function createDescriptor(
 			resourceId:
 				options.resourceId,
 
-			category:
-				options.category,
+			resourceType:
+				options.resourceType,
+
+			dataType:
+				options.dataType,
+
+			dataVersion:
+				options.dataVersion,
 
 			modifiedAt:
 				options.modifiedAt,
@@ -1112,6 +1148,10 @@ function createDescriptor(
 			mediaType:
 				'application/json'
 		},
+
+		...(options.resourceMetadata === undefined
+			? {}
+			: { resourceMetadata: options.resourceMetadata }),
 
 		strategy: {
 			type:

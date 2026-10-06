@@ -5,40 +5,20 @@ import {
 } from 'vitest';
 
 import {
-	type PublishedResourceReference,
-	type ResourceRepresentation,
-	type VerifiedResourceContent,
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	createResourceInstallationId,
-	createResourceReceiptId,
-	type ResourceResolutionResult,
-	ResourceContentDecoratorBuilder,
-	JsonResourceContentDecorator,
-	ResourceContentDecoder,
-	ResourceService,
-	ResourceProcessor,
-	ResourceReceiptService
+	createResourceReceiptId
 } from '$lib/resource';
 
 import {
-	ResourceResolutionProcessor
-} from '$lib/resource/services/resource-resolution-processor';
-
-import {
-	BibleBooknamesInterpreter,
-	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
-
-import {
-	BibleBooknamesValidator
-} from '$lib/domains/bible/resources/booknames/bible-booknames-validator';
-
-import {
-	BibleBooknamesInstaller
-} from '$lib/domains/bible/resources/booknames/bible-booknames-installer';
-
-import {
-	BibleBooknamesResourceHandler
-} from '$lib/domains/bible/resources/booknames/bible-booknames-resource-handler';
+	BIBLE_BOOKNAMES_DATA_TYPE,
+	BIBLE_BOOKNAMES_DATA_VERSION,
+	BIBLE_BOOKNAMES_RESOURCE_TYPE,
+	BibleBooknamesDataTypeHandler,
+	BibleBooknamesDomainObjectFactory
+} from '$lib/domains/bible';
 
 import {
 	BIBLE_BOOKNAMES_OBJECT_TYPE
@@ -49,50 +29,47 @@ import {
 } from '$lib/domains/bible/persistence/indexeddb-bible-booknames-store';
 
 import {
-	IndexedDBBibleBooknamesInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-booknames-installation-transaction';
-
-import {
 	createBibleBooknamesId
 } from '$lib/domains/bible/models/bible-booknames.model';
 
 import {
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
+	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
-	IndexedDBResourceReceiptStore
-} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
+
+import {
+	createBrowserTestPublisher,
+	createGenericResourceInstallationTestService
+} from './support/resource-installation-test-service';
 
 describe(
 	'Bible Booknames Resource installation',
 	() => {
 		it(
-			'decodes validates and installs Bible Booknames into IndexedDB',
+			'decodes validates and installs Bible Booknames into IndexedDB through the generic installer',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/bible/booknames/default';
+					`kjvonly/bible/booknames/default`;
 
 				const content =
 					createBooknamesContent();
 
 				const service =
-					createService([
-						createVerifiedContent({
-							publisher,
-							resourceId,
-
-							content:
-								JSON.stringify(
-									content
-								)
-						})
-					]);
+					createService(
+						publisher,
+						resourceId,
+						content
+					);
 
 				const result =
 					await service.install({
@@ -160,6 +137,41 @@ describe(
 
 				expect(
 					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							BIBLE_BOOKNAMES_OBJECT_TYPE,
+							booknamesId
+						)
+					)
+				).toEqual({
+					id:
+						createStoredDomainObjectId(
+							BIBLE_BOOKNAMES_OBJECT_TYPE,
+							booknamesId
+						),
+
+					objectType:
+						BIBLE_BOOKNAMES_OBJECT_TYPE,
+
+					objectId:
+						booknamesId,
+
+					dataType:
+						BIBLE_BOOKNAMES_DATA_TYPE,
+
+					dataVersion:
+						BIBLE_BOOKNAMES_DATA_VERSION,
+
+					value: {
+						id:
+							booknamesId,
+
+						...content
+					}
+				});
+
+				expect(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						installationId
 					)
@@ -174,9 +186,7 @@ describe(
 						booknamesId,
 
 					publisher,
-
 					resourceId,
-
 					modifiedAt:
 						200
 				});
@@ -197,9 +207,7 @@ describe(
 						),
 
 					publisher,
-
 					resourceId,
-
 					modifiedAt:
 						200
 				});
@@ -210,10 +218,10 @@ describe(
 			'installs nothing when Bible Booknames validation fails',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/bible/booknames/default';
+					`kjvonly/bible/booknames/default`;
 
 				const invalidContent =
 					createBooknamesContent();
@@ -224,17 +232,11 @@ describe(
 						2;
 
 				const service =
-					createService([
-						createVerifiedContent({
-							publisher,
-							resourceId,
-
-							content:
-								JSON.stringify(
-									invalidContent
-								)
-						})
-					]);
+					createService(
+						publisher,
+						resourceId,
+						invalidContent
+					);
 
 				const result =
 					await service.install({
@@ -315,148 +317,39 @@ describe(
 );
 
 function createService(
-	contents:
-		readonly VerifiedResourceContent[]
-): ResourceService {
-	const discovery =
-		new FakeDiscovery(
-			createRepresentation()
+	publisher: string,
+	resourceId: string,
+	value: unknown
+) {
+	const genericInstaller =
+		new GenericResourceInstaller(
+			new ResourceDataTypeResolver([
+				new BibleBooknamesDataTypeHandler()
+			]),
+			new ResourceDomainObjectFactoryResolver([
+				new BibleBooknamesDomainObjectFactory()
+			]),
+			new IndexedDBGenericResourceInstallationTransaction(
+				getApplicationDB
+			)
 		);
 
-	const resolver =
-		new FakeResolver(
-			contents
-		);
-
-	const decoder =
-		createDecoder();
-
-	const receiptStore =
-		new IndexedDBResourceReceiptStore(
-			getApplicationDB
-		);
-
-	const receiptService =
-		new ResourceReceiptService(
-			receiptStore
-		);
-
-	const installationTransaction =
-		new IndexedDBBibleBooknamesInstallationTransaction(
-			getApplicationDB
-		);
-
-	const installer =
-		new BibleBooknamesInstaller(
-			installationTransaction
-		);
-
-	const handler =
-		new BibleBooknamesResourceHandler(
-			new BibleBooknamesInterpreter(),
-			new BibleBooknamesValidator(),
-			installer
-		);
-
-	const resolutionProcessor =
-		new ResourceResolutionProcessor(
-			decoder,
-			receiptService,
-			[
-				handler
-			]
-		);
-
-	const processor =
-		new ResourceProcessor(
-			resolver,
-			resolutionProcessor
-		);
-
-	return new ResourceService(
-		discovery,
-		processor
+	return createGenericResourceInstallationTestService(
+		genericInstaller,
+		{
+			publisher,
+			resourceId,
+			resourceType:
+				BIBLE_BOOKNAMES_RESOURCE_TYPE,
+			dataType:
+				BIBLE_BOOKNAMES_DATA_TYPE,
+			dataVersion:
+				BIBLE_BOOKNAMES_DATA_VERSION,
+			value,
+			modifiedAt:
+				200
+		}
 	);
-}
-
-function createDecoder():
-	ResourceContentDecoder {
-	const builder =
-		new ResourceContentDecoratorBuilder([
-			{
-				token:
-					'application/json',
-
-				decorate:
-					(inner) =>
-						new JsonResourceContentDecorator(
-							inner
-						)
-			}
-		]);
-
-	return new ResourceContentDecoder(
-		builder
-	);
-}
-
-function createVerifiedContent(
-	overrides:
-		Partial<VerifiedResourceContent> =
-		{}
-): VerifiedResourceContent {
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/bible/booknames/default',
-
-		resourceType:
-			BIBLE_BOOKNAMES_RESOURCE_TYPE,
-
-		modifiedAt:
-			200,
-
-		mediaType:
-			'application/json',
-
-		content:
-			'{}',
-
-		...overrides
-	};
-}
-
-function createRepresentation():
-	ResourceRepresentation {
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/bible/booknames/default',
-
-		resourceType:
-			BIBLE_BOOKNAMES_RESOURCE_TYPE,
-
-		eventId:
-			'c'.repeat(
-				64
-			),
-
-		modifiedAt:
-			200,
-
-		representation:
-			'content',
-
-		mediaType:
-			'application/json',
-
-		payload:
-			'{}'
-	};
 }
 
 function createBooknamesContent() {
@@ -508,62 +401,4 @@ function createBooknamesContent() {
 			}
 		}
 	};
-}
-
-function createPublisher():
-	string {
-	const value =
-		crypto
-			.randomUUID()
-			.replaceAll(
-				'-',
-				''
-			);
-
-	return (
-		value +
-		value
-	);
-}
-
-class FakeDiscovery {
-	constructor(
-		private readonly representation:
-			ResourceRepresentation
-	) { }
-
-	async get(
-		_reference:
-			PublishedResourceReference
-	): Promise<
-		ResourceRepresentation |
-		null
-	> {
-		return this.representation;
-	}
-}
-
-class FakeResolver {
-	constructor(
-		private readonly contents:
-			readonly VerifiedResourceContent[]
-	) {}
-
-	async resolve(
-		_resource:
-			ResourceRepresentation
-	): Promise<
-		ResourceResolutionResult
-	> {
-		return {
-			contents:
-				this.contents,
-
-			current:
-				[],
-
-			failures:
-				[]
-		};
-	}
 }

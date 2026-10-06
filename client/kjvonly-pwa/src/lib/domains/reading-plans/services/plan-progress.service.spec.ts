@@ -33,9 +33,13 @@ const PUBLICATION:
 		publisher:
 			'publisher',
 		resourceType:
-			'kjvonly/plans/progress',
+			'reading-plans/plan-progress',
+		dataType:
+			'kjvonly.reading-plan.progress',
+		dataVersion:
+			1,
 		resourceId:
-			'kjvonly/plans/progress/default/subscription-1',
+			'kjvonly/reading-plans/plan-progress/default/subscription-1',
 		representation:
 			'content',
 		mediaType:

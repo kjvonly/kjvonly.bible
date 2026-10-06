@@ -33,9 +33,9 @@
 	import uuid4 from 'uuid4';
 
 	// NOSTR IMPL
-	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../../resources/chapters/bible-chapter-interpreter';
+	import { BIBLE_CHAPTER_RESOURCE_TYPE } from '../../../resources/chapters/bible-chapter-resource';
 
-	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-interpreter';
+	import { BIBLE_BOOKNAMES_RESOURCE_TYPE } from '../../../resources/booknames/bible-booknames-resource';
 	import SplitScreenBottom from '$lib/components/svgs/splitScreenBottom.svelte';
 	import SplitScreenRight from '$lib/components/svgs/splitScreenRight.svelte';
 	const {

@@ -7,8 +7,10 @@ import type {
 } from '$lib/resource';
 
 import {
-	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from './bible-booknames-interpreter';
+	BIBLE_BOOKNAMES_DATA_TYPE,
+	BIBLE_BOOKNAMES_RESOURCE_TYPE,
+	createBibleBooknamesResourceId
+} from './bible-booknames-resource';
 
 export class BibleBooknamesResourcePublication {
 
@@ -31,8 +33,16 @@ export class BibleBooknamesResourcePublication {
 			resourceType:
 				BIBLE_BOOKNAMES_RESOURCE_TYPE,
 
+			dataType:
+				BIBLE_BOOKNAMES_DATA_TYPE,
+
+			dataVersion:
+				1,
+
 			resourceId:
-				`${BIBLE_BOOKNAMES_RESOURCE_TYPE}/${key}`,
+				createBibleBooknamesResourceId(
+					key
+				),
 
 			representation:
 				'content',

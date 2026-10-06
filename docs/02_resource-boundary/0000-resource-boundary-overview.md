@@ -194,15 +194,13 @@ Resource Representation
         ↓
 Resource Resolution
         ↓
-Verified Serialized Resource Content
+Decoded Resource Envelope
         ↓
-Domain Interpretation
+dataType + dataVersion validation
         ↓
-Candidate Domain Object
+Domain Object construction
         ↓
-Domain Validation
-        ↓
-Installation Decision
+Installation / currentness decision
         ↓
 Accepted Local State
 ```
@@ -211,11 +209,13 @@ Each stage has a distinct responsibility.
 
 **Discovery** determines which Resource Representations are available.
 
-**Resolution** obtains and verifies serialized Resource content.
+**Resolution** obtains and verifies serialized Resource content and preserves the Resource envelope needed downstream.
 
-**Domain interpretation and validation** determine what that content means to the application.
+**Semantic contract validation** determines whether the decoded value satisfies the declared `dataType + dataVersion` contract.
 
-**Installation** determines whether that external information becomes accepted local state.
+**Domain Object construction** applies the owning Resource Type's Domain identity and invariants and may produce zero, one, or many Domain Objects.
+
+**Installation** applies local currentness and atomically persists accepted Domain state with its Resource association.
 
 Successful Discovery or Resolution MUST NOT automatically modify accepted application state.
 

@@ -1,7 +1,15 @@
-/** Stable Resource family handled by the Notes Domain. */
-export const NOTES_RESOURCE_TYPE =
-	'kjvonly/notes/entries';
+import {
+	NOTE_OBJECT_TYPE
+} from '../models/note-id';
 
-/** Semantic data contract advertised by descriptors for individual Notes. */
-export const NOTE_DATA_TYPE_V1 =
-	'kjvonly.note/v1';
+/** Application type represented by Note Resources. */
+export const NOTES_RESOURCE_TYPE =
+	NOTE_OBJECT_TYPE;
+
+/** Semantic Note data contract. */
+export const NOTE_DATA_TYPE =
+	'kjvonly.note';
+
+/** Current semantic Note data contract version. */
+export const NOTE_DATA_VERSION =
+	1;

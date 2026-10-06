@@ -1,7 +1,6 @@
 import {
 	type PublishedResourceReference,
-	type ResourceLoader,
-	parseResourceIdentifier
+	type ResourceLoader
 } from '$lib/resource';
 
 import type {
@@ -18,8 +17,8 @@ import {
 } from '../utils/strongs-identity';
 
 import {
-	STRONGS_RESOURCE_TYPE
-} from '../resources/definitions/strongs-interpreter';
+	parseStrongsResourceId
+} from '../resources/strongs-resource-id';
 
 export class StrongsService {
 
@@ -106,24 +105,15 @@ function parseStrongsSource(
 	readonly edition:
 		string;
 } {
-
-	const identifier =
-		parseResourceIdentifier(
-			source.resourceId
-		);
-
-	if (
-		identifier.resourceType !==
-		STRONGS_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Strong's Resource Type: ${identifier.resourceType}`
-		);
-	}
+	const {
+		edition,
+		key
+	} = parseStrongsResourceId(
+		source.resourceId
+	);
 
 	if (
-		identifier.path.length !==
-		1
+		key !== undefined
 	) {
 		throw new Error(
 			`Invalid Strong's Resource source: ${source.resourceId}`
@@ -131,7 +121,6 @@ function parseStrongsSource(
 	}
 
 	return {
-		edition:
-			identifier.path[0]
+		edition
 	};
 }

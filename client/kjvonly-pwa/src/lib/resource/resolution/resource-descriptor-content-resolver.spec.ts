@@ -107,8 +107,14 @@ function createDescriptor():
 			resourceId:
 				'kjvonly/bible/chapters/kjvs',
 
-			category:
-				'kjvonly/bible/chapters',
+			resourceType:
+				'bible/chapter',
+
+			dataType:
+				'kjvonly.bible.chapter',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				100,

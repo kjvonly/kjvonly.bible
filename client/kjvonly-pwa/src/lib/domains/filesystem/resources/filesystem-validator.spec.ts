@@ -20,8 +20,14 @@ const DESCRIPTOR:
 				'b'.repeat(64),
 			resourceId:
 				'note-creation',
-			category:
-				'kjvonly/notes/entries',
+			resourceType:
+				'notes/note',
+			dataType:
+				'kjvonly.note',
+
+			dataVersion:
+				1,
+
 			modifiedAt:
 				50,
 			representation:

@@ -49,6 +49,12 @@ describe(
 						objectType:
 							'bible/chapter',
 
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							1,
+
 						objectId:
 							'publisher/kjvs/1_1',
 
@@ -94,6 +100,12 @@ describe(
 						objectType:
 							'bible/chapter',
 
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							1,
+
 						objectId:
 							'publisher/kjvs/1_1',
 
@@ -111,6 +123,12 @@ describe(
 						objectType:
 							'bible/chapter',
 
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							1,
+
 						objectId:
 							'publisher/kjvs/1_2',
 
@@ -123,10 +141,16 @@ describe(
 				const strongs:
 					StoredDomainObject = {
 						id:
-							'bible/strongs-definition:publisher/kjvs/G1',
+							'strongs/definition:publisher/kjvs/G1',
 
 						objectType:
-							'bible/strongs-definition',
+							'strongs/definition',
+
+						dataType:
+							'kjvonly.strongs.definition',
+
+						dataVersion:
+							1,
 
 						objectId:
 							'publisher/kjvs/G1',
@@ -195,6 +219,12 @@ describe(
 
 						objectType:
 							'bible/chapter',
+
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							1,
 
 						objectId:
 							'publisher/kjvs/1_1',
@@ -289,6 +319,12 @@ describe(
 
 						objectType:
 							'bible/chapter',
+
+						dataType:
+							'kjvonly.bible.chapter',
+
+						dataVersion:
+							1,
 
 						objectId:
 							'publisher/kjvs/1_1',

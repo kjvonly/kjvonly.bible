@@ -109,8 +109,14 @@ function createDescriptor(
 
 			resourceId,
 
-			category:
-				'kjvonly/test',
+			resourceType:
+				'test/resource',
+
+			dataType:
+				'kjvonly.test',
+
+			dataVersion:
+				1,
 
 			modifiedAt,
 
@@ -220,7 +226,15 @@ describe(
 										],
 										[
 											't',
-											'kjvonly/resources/collections'
+											'resource/descriptor-collection'
+										],
+										[
+											'dataType',
+											'kjvonly.resource-descriptor-collection'
+										],
+										[
+											'dataVersion',
+											'1'
 										],
 										[
 											'representation',
@@ -487,7 +501,15 @@ describe(
 										],
 										[
 											't',
-											'kjvonly/resources/collections'
+											'resource/descriptor-collection'
+										],
+										[
+											'dataType',
+											'kjvonly.resource-descriptor-collection'
+										],
+										[
+											'dataVersion',
+											'1'
 										],
 										[
 											'representation',
@@ -512,7 +534,7 @@ describe(
 									tags: [
 										[
 											'd',
-											'kjvonly/plans/readings/default'
+											'kjvonly/reading-plans/plan-definition/default'
 										],
 										[
 											'm',
@@ -520,7 +542,15 @@ describe(
 										],
 										[
 											't',
-											'kjvonly/plans/readings'
+											'reading-plans/plan-definition'
+										],
+										[
+											'dataType',
+											'kjvonly.reading-plan.definition'
+										],
+										[
+											'dataVersion',
+											'1'
 										],
 										[
 											'representation',
@@ -642,10 +672,16 @@ describe(
 				).toMatchObject({
 					metadata: {
 						resourceId:
-							'kjvonly/plans/readings/default',
+							'kjvonly/reading-plans/plan-definition/default',
 
-						category:
-							'kjvonly/plans/readings',
+						resourceType:
+							'reading-plans/plan-definition',
+
+						dataType:
+							'kjvonly.reading-plan.definition',
+
+						dataVersion:
+							1,
 
 						representation:
 							'descriptors',
@@ -704,7 +740,15 @@ describe(
 								],
 								[
 									't',
-									'kjvonly/resources/collections'
+									'resource/descriptor-collection'
+								],
+								[
+									'dataType',
+									'kjvonly.resource-descriptor-collection'
+								],
+								[
+									'dataVersion',
+									'1'
 								],
 								[
 									'representation',

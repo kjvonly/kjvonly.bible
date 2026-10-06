@@ -1,6 +1,6 @@
 import {
 	FILESYSTEM_ENTRIES,
-	FILESYSTEM_ENTRY_CATEGORY_INDEX,
+	FILESYSTEM_ENTRY_RESOURCE_TYPE_INDEX,
 	FILESYSTEM_ENTRY_DATA_TYPE_INDEX,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
@@ -76,11 +76,11 @@ onmessage = async (
 function getDatabaseIndex(
 	index: FilesystemSearchIndex
 ):
-	typeof FILESYSTEM_ENTRY_CATEGORY_INDEX |
+	typeof FILESYSTEM_ENTRY_RESOURCE_TYPE_INDEX |
 	typeof FILESYSTEM_ENTRY_DATA_TYPE_INDEX {
 	switch (index) {
-		case 'category':
-			return FILESYSTEM_ENTRY_CATEGORY_INDEX;
+		case 'resourceType':
+			return FILESYSTEM_ENTRY_RESOURCE_TYPE_INDEX;
 
 		case 'dataType':
 			return FILESYSTEM_ENTRY_DATA_TYPE_INDEX;

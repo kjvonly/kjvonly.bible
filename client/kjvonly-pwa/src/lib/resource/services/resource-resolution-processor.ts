@@ -19,6 +19,10 @@ import type {
 } from '$lib/resource/installation/resource-handler';
 
 import type {
+	GenericResourceInstaller
+} from '$lib/resource/installation/generic-resource-installer';
+
+import type {
 	ResourceReceiptService
 } from '$lib/resource/receipts/resource-receipt.service';
 
@@ -32,8 +36,9 @@ import type {
  * Processes resolved Resource content through the installation side of the
  * generic Resource lifecycle.
  *
- * This class owns resolution-outcome mapping, content decoding, ResourceHandler
- * dispatch, Domain handling, and receipt recording after successful handling.
+ * This class owns resolution-outcome mapping, content decoding, legacy
+ * ResourceHandler dispatch, generic semantic installation fallback, and receipt
+ * recording after successful handling.
  * It does not perform Resource discovery or representation resolution.
  */
 export class ResourceResolutionProcessor {
@@ -55,6 +60,12 @@ export class ResourceResolutionProcessor {
 			Pick<
 				ResourceReceiptService,
 				'markProcessed'
+			>,
+
+		private readonly genericInstaller:
+			Pick<
+				GenericResourceInstaller,
+				'install'
 			>,
 
 		handlers:
@@ -165,23 +176,17 @@ export class ResourceResolutionProcessor {
 				content.resourceType
 			);
 
-		if (
-			handler ===
-			undefined
-		) {
-			return {
-				reference,
-				resourceType:
-					content.resourceType,
-				status:
-					'unsupported'
-			};
-		}
 
 		try {
-			await handler.handle(
-				content
-			);
+			if (handler !== undefined) {
+				await handler.handle(
+					content
+				);
+			} else {
+				await this.genericInstaller.install(
+					content
+				);
+			}
 		} catch (error) {
 			return {
 				reference,
@@ -302,28 +307,6 @@ export class ResourceResolutionProcessor {
 		content:
 			VerifiedResourceContent
 	): Promise<ResourceInstallOutcome> {
-		if (
-			!this.handlers.has(
-				content.resourceType
-			)
-		) {
-			return {
-				reference: {
-					publisher:
-						content.publisher,
-
-					resourceId:
-						content.resourceId
-				},
-
-				resourceType:
-					content.resourceType,
-
-				status:
-					'unsupported'
-			};
-		}
-
 		let decoded:
 			DecodedResourceContent;
 

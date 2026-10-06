@@ -53,7 +53,11 @@ describe(
 						publisher:
 							'publisher',
 						resourceType:
-							'kjvonly/example',
+							'example/resource',
+						dataType:
+							'example.resource',
+						dataVersion:
+							1,
 						resourceId:
 							'kjvonly/example/default/1_1',
 						representation:

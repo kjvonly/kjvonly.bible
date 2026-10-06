@@ -662,7 +662,7 @@ Different metadata answers different questions.
 Conceptually:
 
 ```text
-Resource category
+Resource Type
     = which family of Resource this belongs to
 
 Semantic data type
@@ -674,7 +674,7 @@ Media type
 
 These concepts should remain distinct.
 
-A stable Resource category may span multiple semantic data versions.
+A stable Resource Type may span multiple semantic data versions.
 
 For example, a Domain may continue to recognize an older semantic representation so that it can migrate or interpret that data after newer versions are introduced.
 

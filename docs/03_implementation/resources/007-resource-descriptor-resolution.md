@@ -91,7 +91,7 @@ interface ResourceDescriptor {
     metadata: {
         publisher: string;
         resourceId: string;
-        category: string;
+        resourceType: string;
         modifiedAt: number;
         representation: 'content' | 'descriptors';
         mediaType: string;
@@ -120,11 +120,9 @@ The publisher is a 64-character lowercase hexadecimal Nostr public key.
 
 The Resource identity/path of the described Resource.
 
-## category
+## resourceType
 
-The descriptor category must equal the Resource Type extracted from `resourceId`.
-
-This prevents a descriptor from advertising one Resource Type while pointing at an unrelated Resource ID.
+The descriptor carries Resource Type explicitly. Generic descriptor processing does not infer or validate Resource Type from `resourceId`; the owning Resource family interprets its own Resource ID grammar when needed.
 
 ## modifiedAt
 
@@ -175,7 +173,7 @@ A failure to decode the root descriptor document becomes a Resource resolution f
 - object shape,
 - publisher format,
 - Resource ID,
-- category/Resource-Type agreement,
+- Resource Type,
 - `modifiedAt`,
 - representation value,
 - media type,
@@ -421,7 +419,7 @@ kind
 publisher
 modifiedAt
 resourceId (#d)
-category (#t)
+resourceType (#t)
 representation
 mediaType (#m)
 ```
@@ -577,11 +575,11 @@ Descriptor-level failures. When validation succeeded, the failure includes publi
 `ResourceResolutionProcessor` owns the reusable downstream operation for an already-resolved Resource result. For each terminal content result it:
 
 1. decodes Resource content,
-2. dispatches the matching `ResourceHandler`,
-3. lets the Domain interpret/validate/install the object,
+2. uses a specialized `ResourceHandler` when one is registered, otherwise calls `GenericResourceInstaller`,
+3. runs semantic datatype validation, Domain Object construction, and the applicable persistence path,
 4. marks the terminal Resource receipt processed only after successful processing.
 
-Current and failed resolution outcomes are mapped directly into installation outcomes without entering the content decoder or Domain handler path.
+Current and failed resolution outcomes are mapped directly into installation outcomes without entering the content decoder or Resource installation path.
 
 This ordering prevents a failed Domain installation from creating a receipt that would incorrectly suppress later retries. It also makes the post-resolution lifecycle reusable by callers that resolve Resources without first producing a `ResourceRepresentation`.
 

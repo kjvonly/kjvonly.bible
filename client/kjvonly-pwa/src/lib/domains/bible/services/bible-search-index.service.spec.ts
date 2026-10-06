@@ -27,7 +27,7 @@ const SOURCE:
 			'publisher-a',
 
 		resourceId:
-			'kjvonly/bible/search/kjvs'
+			'kjvonly/bible/search-index/kjvs'
 	};
 
 const SEARCH_INDEX_ID =
@@ -211,7 +211,7 @@ describe(
 						SOURCE
 					)
 				).rejects.toThrow(
-					'Bible Search Index Resource not found: publisher-a/kjvonly/bible/search/kjvs'
+					'Bible Search Index Resource not found: publisher-a/kjvonly/bible/search-index/kjvs'
 				);
 			}
 		);
@@ -280,7 +280,7 @@ describe(
 						SOURCE
 					)
 				).rejects.toThrow(
-					'Unsupported Bible Search Resource: kjvonly/bible/search'
+					'Unsupported Bible Search Resource: bible/search-index'
 				);
 			}
 		);
@@ -336,10 +336,10 @@ describe(
 						publisher:
 							'publisher-a',
 						resourceId:
-							'kjvonly/bible/chapters/kjvs'
+							'kjvonly/bible/chapter/kjvs'
 					})
 				).rejects.toThrow(
-					'Invalid Bible Search Resource Type: kjvonly/bible/chapters'
+					'Invalid Bible Search Index Resource ID: kjvonly/bible/chapter/kjvs'
 				);
 
 				expect(
@@ -372,10 +372,10 @@ describe(
 						publisher:
 							'publisher-a',
 						resourceId:
-							'kjvonly/bible/search/kjvs/extra'
+							'kjvonly/bible/search-index/kjvs/extra'
 					})
 				).rejects.toThrow(
-					'Invalid Bible Search Resource source: kjvonly/bible/search/kjvs/extra'
+					'Invalid Bible Search Index Resource ID: kjvonly/bible/search-index/kjvs/extra'
 				);
 			}
 		);
@@ -422,7 +422,7 @@ function resultWithStatus(
 					SOURCE,
 
 				resourceType:
-					'kjvonly/bible/search',
+					'bible/search-index',
 
 				status
 			}
@@ -447,7 +447,7 @@ function failedResult(
 					SOURCE,
 
 				resourceType:
-					'kjvonly/bible/search',
+					'bible/search-index',
 
 				status:
 					'failed',

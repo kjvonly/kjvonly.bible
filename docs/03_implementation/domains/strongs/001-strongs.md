@@ -4,8 +4,9 @@
 
 **Status:** Current
 **Domain:** Strong's
-**Resource Type:** `kjvonly/strongs/definitions`
+**Resource Type:** `strongs/definition`
 **Domain Object Type:** `strongs/definition`
+**Data Type:** `kjvonly.strongs.definition@1`
 
 ---
 
@@ -24,11 +25,11 @@ Published Strong's Resource
     ↓
 Resource resolution / decoding
     ↓
-StrongsInterpreter
+StrongsDataTypeHandler
     ↓
-StrongsValidator
+StrongsDomainObjectFactory
     ↓
-StrongsInstaller
+GenericResourceInstaller
     ↓
 Strongs + ResourceInstallation
     ↓
@@ -67,7 +68,7 @@ The Resource namespace does not dictate source-folder ownership.
 The Resource Type is:
 
 ```text
-kjvonly/strongs/definitions
+strongs/definition
 ```
 
 Two path shapes are supported.
@@ -75,13 +76,13 @@ Two path shapes are supported.
 Individual definition:
 
 ```text
-kjvonly/strongs/definitions/<edition>/<key>
+kjvonly/strongs/definition/<edition>/<key>
 ```
 
 Bundle:
 
 ```text
-kjvonly/strongs/definitions/<edition>
+kjvonly/strongs/definition/<edition>
 ```
 
 The `<edition>` value is the version/edition scope used by the selected Strong's dataset.
@@ -151,17 +152,17 @@ The installed object remains free of Resource publication metadata.
 
 Strong's identity has three distinct layers that must not be conflated.
 
-## 6.1 Resource identity
+## 6.1 Resource ID
 
 Example:
 
 ```text
-kjvonly/strongs/definitions/<edition>/<key>
+kjvonly/strongs/definition/<edition>/<key>
 ```
 
 ## 6.2 Source/version identity
 
-The current installer scopes Strong's definitions by publisher plus edition using the same publisher/version identity shape used by Bible version identity:
+The current Domain Object factory scopes Strong's definitions by publisher plus edition:
 
 ```text
 <publisher>/<edition>
@@ -191,144 +192,134 @@ The Domain Object ID is not the Nostr event ID and is not the Resource ID.
 
 ---
 
-# 7. Interpretation
+# 7. Semantic Validation
 
-`StrongsInterpreter` verifies the Resource Type and parses the Resource identifier.
+Strong's Resources now use `StrongsDataTypeHandler` for the published Resource contract.
 
-For an individual Resource:
+The handler validates the single/bundle semantic shape before any Domain Object factory receives the value.
 
-```text
-path = [edition, key]
-```
-
-it produces:
+Archive reconstruction also registers `StrongsDefinitionDataTypeHandler` for the canonical persisted:
 
 ```text
-StrongsCandidate {
-    version: edition,
-    key,
-    value
-}
+strongs/definition@1
 ```
 
-For a bundle:
+contract.
 
-```text
-path = [edition]
-```
-
-it creates one candidate per object entry.
-
-Interpretation verifies routing structure only. It does not treat unvalidated serialized content as accepted Strong's Domain data.
+This distinction allows a collection Resource to produce individual canonical stored definitions without pretending the published and persisted datatype contracts are identical.
 
 ---
 
-# 8. Validation
+# 8. Domain Object Factory
 
-`StrongsValidator` owns Strong's Domain validation.
+`StrongsDomainObjectFactory` owns Strong's-specific Resource interpretation and Domain identity.
 
-It validates:
-
-1. key shape (`G...` or `H...`),
-2. full serialized Strong's content structure,
-3. recursive definition-node structure,
-4. usage structures,
-5. and key consistency.
-
-The key-consistency rule is:
+It handles both:
 
 ```text
-candidate.key === content.number
+individual Resource → one definition
+bundle Resource     → many definitions
 ```
 
-A Resource route claiming one Strong's key cannot silently contain a different Strong's definition.
-
-The result is a `ValidatedStrongsCandidate`.
-
----
-
-# 9. Installation
-
-`StrongsInstaller` receives decoded Resource metadata plus validated candidates.
-
-All candidates in one Resource installation must belong to one edition/version.
-
-The installer calculates the publisher-scoped source identity and then installs each accepted candidate independently inside one Strong's installation transaction.
-
-The transaction exposes narrow stores for:
+The factory validates routing/key invariants that require Resource context, including:
 
 ```text
-strongs
-resourceInstallations
+G/H Strong's key shape
+Resource key/content key consistency
+publisher + edition/key identity construction
+```
+
+It emits canonical candidates with:
+
+```text
+objectType  = strongs/definition
+dataType    = kjvonly.strongs.definition
+dataVersion = 1
 ```
 
 ---
 
-# 10. Installation Replacement Policy
+# 9. Generic Installation
 
-Replacement is per Strong's definition.
+Strong's no longer has a Domain-specific inbound installer, ResourceHandler, or installation transaction.
 
-For each candidate the installer reads the existing provenance for:
+`GenericResourceInstaller` receives the factory candidates and applies the shared object-level currentness rule.
 
-```text
-objectType = strongs/definition
-objectId = <strongsId>
-```
-
-If:
+For each definition:
 
 ```text
-incoming.modifiedAt <= existing.modifiedAt
+ResourceInstallation(strongs/definition, objectId)
+    ↓
+if incoming.modifiedAt <= existing.modifiedAt
+    → skip
+otherwise
+    → write StoredDomainObject
+    → write ResourceInstallation
 ```
 
-that definition is skipped.
+The writes occur through `IndexedDBGenericResourceInstallationTransaction` over:
 
-Otherwise the Strong's object and its `ResourceInstallation` record are written atomically.
-
-This gives bundle installation mixed freshness semantics: newer entries can replace older installed definitions while entries already sourced from equally new or newer publications remain unchanged.
+```text
+DOMAIN_OBJECTS
+RESOURCE_INSTALLATIONS
+```
 
 ---
 
-# 11. ResourceInstallation Provenance
+# 10. ResourceInstallation Provenance
 
-Each accepted definition has a separate provenance record containing:
+Each accepted definition has separate Resource state containing:
 
 ```text
 objectType
 objectId
 publisher
 resourceId
+optional Resource metadata
 modifiedAt
 ```
 
-The provenance answers which Resource publication installed the accepted definition.
-
-The Strong's object itself remains transport-agnostic.
+The Strong's object remains transport-agnostic.
 
 ---
 
-# 12. Persistence
+# 11. Persistence
 
-Strong's definitions are stored in the shared application IndexedDB rather than a Strong's-specific database.
-
-The Domain-facing store contract is `StrongsStore`:
-
-```text
-get(id)
-put(strongs)
-```
-
-The IndexedDB adapter stores Strong's Domain Objects in the shared `domain_objects` store using:
+Strong's definitions are stored in the shared application `DOMAIN_OBJECTS` store under:
 
 ```text
 objectType = strongs/definition
 ```
 
-Installation provenance is stored separately in `resource_installations`.
+`StrongsStore` remains the Domain-facing read abstraction.
 
-The Strong's installation transaction spans the required stores atomically.
+The important separation is:
 
-This was an important architecture proof: multiple Domains can share the physical Application database without sharing Domain models or persistence contracts.
+```text
+Domain service/store
+    = Strong's read semantics
+
+GenericResourceInstaller
+    = inbound Resource persistence/currentness
+```
+
+The shared physical database does not create a shared Domain model.
+
+---
+
+# 12. Bundle Semantics
+
+A Strong's bundle may produce many `strongs/definition` candidates.
+
+Currentness remains per definition, so one bundle may:
+
+```text
+replace some definitions
+skip some already-current definitions
+install some missing definitions
+```
+
+without a Strong's-specific installer.
 
 ---
 
@@ -412,38 +403,36 @@ rather than embedding definition data inside Chapter objects.
 
 # 16. Why Strong's Was Architecturally Important
 
-The Strong's implementation proved several Resource-architecture decisions beyond the original Chapter vertical slice.
+Strong's was the first migration that exposed several important generic-lifecycle requirements:
 
-It demonstrated that:
-
-1. `ResourceInterpreter` and `ResourceValidator` are reusable contracts without a giant generic Resource-Type framework.
-2. Domain-specific installers remain clearer than one universal installer.
-3. Domain identity rules can differ while sharing generic Resource provenance.
-4. the shared Application database can host multiple Domain object types.
-5. `ResourceInstallation` can remain cross-cutting without polluting Domain models.
-6. the local-first `ResourceLoader` service pattern applies beyond Bible Chapters.
-7. Resource namespace and source-code Domain ownership are separate concerns.
+1. Resource Type and semantic datatype are independent contracts;
+2. one Resource may produce many independently current Domain Objects;
+3. Domain Object candidates carry canonical `objectType/dataType/dataVersion`;
+4. the generic installer can own persistence/currentness without understanding Strong's Resource ID grammar;
+5. archive reconstruction uses the reconstructed publication's payload datatype when re-entering Resource validation;
+6. Domain-local reads remain local-first and independent from inbound installation mechanics.
 
 ---
 
-# 17. Deliberate Non-Generalization
+# 17. Current Generic Boundary
 
-The implementation does not introduce a universal Domain repository or one generic Resource installer that attempts to understand every Domain type.
-
-Instead, the generic Resource layer supplies stable contracts:
+The current split is:
 
 ```text
-ResourceInterpreter
-ResourceValidator
-ResourceHandler
-InstallationTransaction
-ResourceInstallation
-ResourceLoader
+ResourceDataTypeHandler
+    = semantic payload validation
+
+StrongsDomainObjectFactory
+    = Strong's identity + Resource-context invariants
+
+GenericResourceInstaller
+    = currentness + persistence + ResourceInstallation
+
+StrongsService / StrongsStore
+    = Domain-facing reads
 ```
 
-The Strong's Domain supplies concrete meaning and policy.
-
-That division has remained the preferred architecture as additional Resource types were implemented.
+The old Strong's Interpreter/Validator/Installer/ResourceHandler stack has been removed.
 
 ---
 
@@ -452,7 +441,7 @@ That division has remained the preferred architecture as additional Resource typ
 The Strong's pipeline rejects:
 
 - incorrect Resource Types,
-- malformed Resource paths,
+- malformed Strong's Resource IDs,
 - unsupported root Resources,
 - malformed bundle shapes,
 - bundle keys containing `/`,
@@ -473,11 +462,10 @@ The implementation has focused tests around:
 
 ```text
 Strong's identity
-StrongsInterpreter
-StrongsValidator
-StrongsInstaller
-StrongsResourceHandler
-Strong's installation transaction
+StrongsDataTypeHandler
+StrongsDefinitionDataTypeHandler
+StrongsDomainObjectFactory
+Generic Resource installation
 StrongsService
 Module Resource-selection contributor
 browser Resource installation

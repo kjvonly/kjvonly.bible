@@ -7,40 +7,20 @@ import {
 import FlexSearch from 'flexsearch';
 
 import {
-	type PublishedResourceReference,
-	type ResourceRepresentation,
-	type VerifiedResourceContent,
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	createResourceInstallationId,
-	createResourceReceiptId,
-	type ResourceResolutionResult,
-	ResourceContentDecoratorBuilder,
-	JsonResourceContentDecorator,
-	ResourceContentDecoder,
-	ResourceService,
-	ResourceProcessor,
-	ResourceReceiptService
+	createResourceReceiptId
 } from '$lib/resource';
 
 import {
-	ResourceResolutionProcessor
-} from '$lib/resource/services/resource-resolution-processor';
-
-import {
+	BIBLE_SEARCH_INDEX_DATA_TYPE,
+	BIBLE_SEARCH_INDEX_DATA_VERSION,
 	BIBLE_SEARCH_RESOURCE_TYPE,
-	BibleSearchIndexInterpreter
-} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
-
-import {
-	BibleSearchIndexValidator
-} from '$lib/domains/bible/resources/search/bible-search-index-validator';
-
-import {
-	BibleSearchIndexInstaller
-} from '$lib/domains/bible/resources/search/bible-search-index-installer';
-
-import {
-	BibleSearchIndexResourceHandler
-} from '$lib/domains/bible/resources/search/bible-search-index-resource-handler';
+	BibleSearchIndexDataTypeHandler,
+	BibleSearchIndexDomainObjectFactory
+} from '$lib/domains/bible';
 
 import {
 	BIBLE_SEARCH_INDEX_OBJECT_TYPE
@@ -51,51 +31,48 @@ import {
 } from '$lib/domains/bible/persistence/indexeddb-bible-search-index-store';
 
 import {
-	IndexedDBBibleSearchIndexInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-search-index-installation-transaction';
-
-import {
 	createBibleSearchIndexId,
 	type BibleSearchIndexChunks
 } from '$lib/domains/bible/models/bible-search-index.model';
 
 import {
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
+	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
-	IndexedDBResourceReceiptStore
-} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
+
+import {
+	createBrowserTestPublisher,
+	createGenericResourceInstallationTestService
+} from './support/resource-installation-test-service';
 
 describe(
 	'Bible Search Index Resource installation',
 	() => {
 		it(
-			'decodes validates installs and restores a real FlexSearch export from IndexedDB',
+			'decodes validates installs and restores a real FlexSearch export through the generic installer',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/bible/search/kjvs';
+					`kjvonly/bible/search-index/kjvs`;
 
 				const chunks =
 					await createFlexSearchExport();
 
 				const service =
-					createService([
-						createVerifiedContent({
-							publisher,
-							resourceId,
-
-							content:
-								JSON.stringify(
-									chunks
-								)
-						})
-					]);
+					createService(
+						publisher,
+						resourceId,
+						chunks
+					);
 
 				const result =
 					await service.install({
@@ -202,6 +179,42 @@ describe(
 
 				expect(
 					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							BIBLE_SEARCH_INDEX_OBJECT_TYPE,
+							searchIndexId
+						)
+					)
+				).toEqual({
+					id:
+						createStoredDomainObjectId(
+							BIBLE_SEARCH_INDEX_OBJECT_TYPE,
+							searchIndexId
+						),
+
+					objectType:
+						BIBLE_SEARCH_INDEX_OBJECT_TYPE,
+
+					objectId:
+						searchIndexId,
+
+					dataType:
+						BIBLE_SEARCH_INDEX_DATA_TYPE,
+
+					dataVersion:
+						BIBLE_SEARCH_INDEX_DATA_VERSION,
+
+					value: {
+						id:
+							searchIndexId,
+						version:
+							'kjvs',
+						chunks
+					}
+				});
+
+				expect(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						installationId
 					)
@@ -216,9 +229,7 @@ describe(
 						searchIndexId,
 
 					publisher,
-
 					resourceId,
-
 					modifiedAt:
 						200
 				});
@@ -239,9 +250,7 @@ describe(
 						),
 
 					publisher,
-
 					resourceId,
-
 					modifiedAt:
 						200
 				});
@@ -252,10 +261,10 @@ describe(
 			'installs nothing when the FlexSearch export is incomplete',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/bible/search/kjvs';
+					`kjvonly/bible/search-index/kjvs`;
 
 				const chunks =
 					await createFlexSearchExport();
@@ -263,21 +272,14 @@ describe(
 				const {
 					ctx: _,
 					...invalidChunks
-				} =
-					chunks;
+				} = chunks;
 
 				const service =
-					createService([
-						createVerifiedContent({
-							publisher,
-							resourceId,
-
-							content:
-								JSON.stringify(
-									invalidChunks
-								)
-						})
-					]);
+					createService(
+						publisher,
+						resourceId,
+						invalidChunks
+					);
 
 				const result =
 					await service.install({
@@ -387,204 +389,37 @@ async function createFlexSearchExport():
 }
 
 function createService(
-	contents:
-		readonly VerifiedResourceContent[]
-): ResourceService {
-	const discovery =
-		new FakeDiscovery(
-			createRepresentation()
-		);
+	publisher: string,
+	resourceId: string,
+	value: unknown
+) {
+	return createGenericResourceInstallationTestService(
+		createInstaller(),
+		{
+			publisher,
+			resourceId,
+			resourceType:
+				BIBLE_SEARCH_RESOURCE_TYPE,
+			dataType:
+				BIBLE_SEARCH_INDEX_DATA_TYPE,
+			dataVersion:
+				BIBLE_SEARCH_INDEX_DATA_VERSION,
+			value
+		}
+	);
+}
 
-	const resolver =
-		new FakeResolver(
-			contents
-		);
-
-	const decoder =
-		createDecoder();
-
-	const receiptStore =
-		new IndexedDBResourceReceiptStore(
+function createInstaller():
+	GenericResourceInstaller {
+	return new GenericResourceInstaller(
+		new ResourceDataTypeResolver([
+			new BibleSearchIndexDataTypeHandler()
+		]),
+		new ResourceDomainObjectFactoryResolver([
+			new BibleSearchIndexDomainObjectFactory()
+		]),
+		new IndexedDBGenericResourceInstallationTransaction(
 			getApplicationDB
-		);
-
-	const receiptService =
-		new ResourceReceiptService(
-			receiptStore
-		);
-
-	const installationTransaction =
-		new IndexedDBBibleSearchIndexInstallationTransaction(
-			getApplicationDB
-		);
-
-	const installer =
-		new BibleSearchIndexInstaller(
-			installationTransaction
-		);
-
-	const handler =
-		new BibleSearchIndexResourceHandler(
-			new BibleSearchIndexInterpreter(),
-			new BibleSearchIndexValidator(),
-			installer
-		);
-
-	const resolutionProcessor =
-		new ResourceResolutionProcessor(
-			decoder,
-			receiptService,
-			[
-				handler
-			]
-		);
-
-	const processor =
-		new ResourceProcessor(
-			resolver,
-			resolutionProcessor
-		);
-
-	return new ResourceService(
-		discovery,
-		processor
+		)
 	);
-}
-
-function createDecoder():
-	ResourceContentDecoder {
-	const builder =
-		new ResourceContentDecoratorBuilder([
-			{
-				token:
-					'application/json',
-
-				decorate:
-					(inner) =>
-						new JsonResourceContentDecorator(
-							inner
-						)
-			}
-		]);
-
-	return new ResourceContentDecoder(
-		builder
-	);
-}
-
-function createVerifiedContent(
-	overrides:
-		Partial<VerifiedResourceContent> =
-		{}
-): VerifiedResourceContent {
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/bible/search/kjvs',
-
-		resourceType:
-			BIBLE_SEARCH_RESOURCE_TYPE,
-
-		modifiedAt:
-			200,
-
-		mediaType:
-			'application/json',
-
-		content:
-			'{}',
-
-		...overrides
-	};
-}
-
-function createRepresentation():
-	ResourceRepresentation {
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/bible/search/kjvs',
-
-		resourceType:
-			BIBLE_SEARCH_RESOURCE_TYPE,
-
-		eventId:
-			'c'.repeat(
-				64
-			),
-
-		modifiedAt:
-			200,
-
-		representation:
-			'content',
-
-		mediaType:
-			'application/json',
-
-		payload:
-			'{}'
-	};
-}
-
-function createPublisher():
-	string {
-	const value =
-		crypto
-			.randomUUID()
-			.replaceAll(
-				'-',
-				''
-			);
-
-	return (
-		value +
-		value
-	);
-}
-
-class FakeDiscovery {
-	constructor(
-		private readonly representation:
-			ResourceRepresentation
-	) { }
-
-	async get(
-		_reference:
-			PublishedResourceReference
-	): Promise<
-		ResourceRepresentation |
-		null
-	> {
-		return this.representation;
-	}
-}
-
-class FakeResolver {
-	constructor(
-		private readonly contents:
-			readonly VerifiedResourceContent[]
-	) {}
-
-	async resolve(
-		_resource:
-			ResourceRepresentation
-	): Promise<
-		ResourceResolutionResult
-	> {
-		return {
-			contents:
-				this.contents,
-
-			current:
-				[],
-
-			failures:
-				[]
-		};
-	}
 }

@@ -389,6 +389,12 @@ export class CollectionBuilder {
 	}
 
 
+	/**
+	 * Converts a child Collection event into a deferred ResourceDescriptor.
+	 *
+	 * Collection Resource Type, semantic datatype, and Domain-owned Resource
+	 * metadata stay distinct exactly as they do for ordinary manifest Resources.
+	 */
 	private createCollectionDescriptor(
 		collectionName:
 			string,
@@ -408,7 +414,7 @@ export class CollectionBuilder {
 			);
 
 
-		const category =
+		const resourceType =
 			this.getRequiredTagValue(
 				collectionName,
 				event,
@@ -421,6 +427,27 @@ export class CollectionBuilder {
 				collectionName,
 				event,
 				'm'
+			);
+
+
+		const dataType =
+			this.getRequiredTagValue(
+				collectionName,
+				event,
+				'dataType'
+			);
+
+
+		const dataVersion =
+			this.getDataVersion(
+				collectionName,
+				event
+			);
+
+
+		const resourceMetadata =
+			this.getResourceMetadata(
+				event
 			);
 
 
@@ -449,7 +476,11 @@ export class CollectionBuilder {
 
 				resourceId,
 
-				category,
+				resourceType,
+
+				dataType,
+
+				dataVersion,
 
 				modifiedAt:
 					event.created_at,
@@ -458,6 +489,10 @@ export class CollectionBuilder {
 
 				mediaType
 			},
+
+			...(resourceMetadata === undefined
+				? {}
+				: { resourceMetadata }),
 
 			strategy: {
 				type:
@@ -473,6 +508,99 @@ export class CollectionBuilder {
 				}
 			}
 		};
+	}
+
+
+	/** Parses the child Collection's semantic contract version. */
+	private getDataVersion(
+		collectionName:
+			string,
+
+		event:
+			SignedNostrEvent
+	): number {
+		const value =
+			this.getRequiredTagValue(
+				collectionName,
+				event,
+				'dataVersion'
+			);
+
+
+		const dataVersion =
+			Number(
+				value
+			);
+
+
+		if (
+			!Number.isSafeInteger(
+				dataVersion
+			) ||
+			dataVersion < 1
+		) {
+			throw new Error(
+				`Collection "${collectionName}" has an invalid "dataVersion" tag.`
+			);
+		}
+
+
+		return dataVersion;
+	}
+
+
+	/**
+	 * Preserves non-envelope scalar Collection tags for deferred resolution.
+	 */
+	private getResourceMetadata(
+		event:
+			SignedNostrEvent
+	): Readonly<Record<string, string>> |
+		undefined {
+		const envelopeTags =
+			new Set([
+				'd',
+				'm',
+				't',
+				'dataType',
+				'dataVersion',
+				'representation'
+			]);
+
+
+		const metadata:
+			Record<string, string> = {};
+
+
+		for (const tag of event.tags) {
+			const name =
+				tag[0];
+
+			const value =
+				tag[1];
+
+
+			if (
+				name === undefined ||
+				value === undefined ||
+				envelopeTags.has(
+					name
+				)
+			) {
+				continue;
+			}
+
+
+			metadata[name] =
+				value;
+		}
+
+
+		return Object.keys(
+			metadata
+		).length === 0
+			? undefined
+			: metadata;
 	}
 
 

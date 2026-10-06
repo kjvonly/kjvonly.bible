@@ -40,6 +40,10 @@ import type {
 } from '../modules/modules/module-launch-destination-resolver';
 
 import type {
+    ApplicationReferenceResolver
+} from '../references/application-reference-resolver';
+
+import type {
     KJVOnlyArchiveService
 } from '$lib/application/archive/kjvonly-archive.service';
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,6 +70,13 @@ import type {
 import type {
     FilesystemService
 } from '$lib/domains/filesystem';
+
+///////////////////////////////////////////////////////////////////////////////
+// Normalized Content
+
+import type {
+    NormalizedContentService
+} from '$lib/domains/normalized-content';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Notes
@@ -118,6 +129,9 @@ export interface ApplicationContext {
 
     readonly moduleLaunchDestinationResolver:
     ModuleLaunchDestinationResolver;
+
+    readonly applicationReferenceResolver:
+    ApplicationReferenceResolver;
 
     readonly archiveService:
     KJVOnlyArchiveService;
@@ -175,6 +189,12 @@ export interface ApplicationContext {
 
     readonly filesystemService:
     FilesystemService;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Normalized Content
+
+    readonly normalizedContentService:
+    NormalizedContentService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Notes

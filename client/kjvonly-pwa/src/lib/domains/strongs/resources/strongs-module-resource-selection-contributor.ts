@@ -17,7 +17,7 @@ import {
 
 import {
 	STRONGS_RESOURCE_TYPE
-} from './definitions/strongs-interpreter';
+} from './definitions/strongs-resource-contract';
 
 const RESOURCE_TYPES = [
 	STRONGS_RESOURCE_TYPE,

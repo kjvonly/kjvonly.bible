@@ -12,9 +12,14 @@ import type {
 } from '$lib/resource';
 
 import {
-	NOTE_DATA_TYPE_V1,
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION,
 	NOTES_RESOURCE_TYPE
 } from './notes-resource-contract';
+
+import {
+	createNotesResourceId
+} from './notes-resource-id';
 
 export class NotesResourcePublication {
 
@@ -32,16 +37,17 @@ export class NotesResourcePublication {
 
 			...identity,
 
+			dataType:
+				NOTE_DATA_TYPE,
+
+			dataVersion:
+				NOTE_DATA_VERSION,
+
 			representation:
 				'content',
 
 			mediaType:
 				'application/json+gzip+hex',
-
-			metadata: {
-				dataType:
-					NOTE_DATA_TYPE_V1
-			},
 
 			value:
 				createResourceValue(
@@ -88,7 +94,10 @@ export class NotesResourcePublication {
 				NOTES_RESOURCE_TYPE,
 
 			resourceId:
-				`${NOTES_RESOURCE_TYPE}/${name}/${resourceNoteId}`
+				createNotesResourceId(
+					name,
+					resourceNoteId
+				)
 		};
 	}
 }

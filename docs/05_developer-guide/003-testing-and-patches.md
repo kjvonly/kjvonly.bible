@@ -23,10 +23,10 @@ Do not generate PWA patches relative to `client/kjvonly-pwa` when the patch is e
 Check before applying:
 
 ```bash
-git apply --check YYYYMMDD-description.patch &&
-git apply YYYYMMDD-description.patch
+git apply --check YYYYMMDD-wtx-description.patch &&
+git apply YYYYMMDD-wtx-description.patch
 ```
-
+where wtx is the worktree so if i dont tell you what x is ask. It will be wt1 or wt2 etc...
 Keep patch application separate from test/build commands so failures are easy to identify.
 
 ---

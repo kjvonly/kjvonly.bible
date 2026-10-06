@@ -1,3 +1,7 @@
+import {
+	BIBLE_TEXT_MARKUP_DATA_TYPE
+} from '../resources/text-markup/bible-text-markup-resource';
+
 import type {
 	BibleTextMarkup
 } from '../models/bible-text-markup.model';
@@ -62,6 +66,12 @@ export class IndexedDBBibleTextMarkupStore
 
 				objectType:
 					BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+
+				dataType:
+					BIBLE_TEXT_MARKUP_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					textMarkup.id,

@@ -3,7 +3,8 @@
 **Status:** Current
 **Domain:** Bible
 **Application object type:** `bible/text-markup`
-**Resource type:** `kjvonly/overlays/text-markup`
+**Resource type:** `bible/text-markup`
+**Data type:** `kjvonly.bible.text-markup@1`
 
 ---
 
@@ -21,7 +22,7 @@ underline / decoration classes
 
 The central distinction is:
 
-> Text Markup is a Bible Domain Object, while its external Resource belongs to the overlay namespace.
+> Text Markup uses the same application type on both sides of the Resource boundary, while its semantic payload contract remains independently versioned.
 
 Thus:
 
@@ -30,10 +31,11 @@ Application objectType
     bible/text-markup
 
 Resource Type
-    kjvonly/overlays/text-markup
-```
+    bible/text-markup
 
-These names are intentionally different.
+Data Type
+    kjvonly.bible.text-markup@1
+```
 
 ---
 
@@ -43,7 +45,7 @@ This document covers:
 
 - Text Markup Domain Object shape,
 - Domain identity,
-- Resource identity,
+- Resource Type and Resource ID,
 - default Resource selection,
 - read/install behavior,
 - validation and installation,
@@ -145,25 +147,25 @@ The application ID does not include the Resource Type or Nostr event ID.
 
 ---
 
-# Resource Identity
+# Resource Contract and Resource ID
 
 Text Markup uses:
 
 ```text
 Resource Type
-    kjvonly/overlays/text-markup
+    bible/text-markup
 ```
 
 A selected source represents a named collection:
 
 ```text
-kjvonly/overlays/text-markup/<name>
+kjvonly/bible/text-markup/<name>
 ```
 
 An individual chapter Resource is:
 
 ```text
-kjvonly/overlays/text-markup/<name>/<chapterRef>
+kjvonly/bible/text-markup/<name>/<chapterRef>
 ```
 
 The Resource publisher supplies the Domain identity's publisher segment.
@@ -185,7 +187,7 @@ It extracts the Chapter Resource's source name and builds:
 
 ```text
 publisher = current user
-resourceId = kjvonly/overlays/text-markup/<chapter-source-name>
+resourceId = kjvonly/bible/text-markup/<chapter-source-name>
 ```
 
 This means Text Markup defaults follow the Bible text source name while remaining owned by the current user.
@@ -237,7 +239,7 @@ name
 chapterRef
 ```
 
-Those values are derived from Resource identity.
+Those values are derived from the Resource publisher plus the Bible-owned Resource ID grammar.
 
 Outbound media type is:
 
@@ -258,41 +260,29 @@ content
 ```text
 Decoded Resource
     ↓
-BibleTextMarkupInterpreter
+BibleTextMarkupDataTypeHandler
     ↓
-BibleTextMarkupValidator
+BibleTextMarkupDomainObjectFactory
     ↓
-BibleTextMarkupInstaller
+bible/text-markup candidate(s)
+    ↓
+GenericResourceInstaller
     ↓
 BibleTextMarkup Domain Object
-    + ResourceInstallation
++ ResourceInstallation
 ```
 
-The generic Resource layer handles resolution/decoding/dispatch.
+The generic Resource layer owns common inbound currentness and persistence.
 
-The Bible Domain owns identity, validation, install policy, and persistence mapping.
+The Bible Domain still owns semantic marking validation, Resource ID interpretation, Bible reference invariants, and Domain Object identity.
 
 ---
 
-# Interpreter
+# Semantic Validation
 
-The Text Markup interpreter accepts Resource identity under:
+`BibleTextMarkupDataTypeHandler` validates the nested marking payload shape.
 
-```text
-kjvonly/overlays/text-markup
-```
-
-It converts Resource path/content into Text Markup candidates containing the collection name, chapter reference, and markings value.
-
-Identity shape is validated from Resource path rather than trusted from payload data.
-
----
-
-# Validation
-
-`BibleTextMarkupValidator` validates the nested marking shape.
-
-Important constraints include:
+Reusable Bible validation verifies constraints such as:
 
 ```text
 canonical verse keys
@@ -301,44 +291,36 @@ class arrays
 valid nested object structure
 ```
 
-The validated candidate contains a normalized chapter reference and markings map ready for installation.
-
 ---
 
-# Installation
+# Domain Object Factory
 
-`BibleTextMarkupInstaller` derives Domain identity from:
+`BibleTextMarkupDomainObjectFactory` interprets the Resource context and derives identity from:
 
 ```text
 Resource publisher
-+ Resource collection name
++ collection name
 + chapterRef
 ```
 
-It writes:
+It emits canonical `bible/text-markup@1` candidates.
 
-```text
-BibleTextMarkup Domain Object
-ResourceInstallation provenance
-```
+---
 
-atomically through the Text Markup installation transaction.
+# Generic Installation
 
-## Freshness policy
-
-The installer reads the current `ResourceInstallation` for the Text Markup application ID.
-
-If:
+The candidates are installed by `GenericResourceInstaller` using the shared per-object currentness rule:
 
 ```text
 incoming modifiedAt <= current ResourceInstallation.modifiedAt
+    → skip
+otherwise
+    → write Domain Object + ResourceInstallation atomically
 ```
 
-the candidate is skipped.
+The old Text Markup interpreter/installer/resource-handler/installation-transaction inbound stack has been removed.
 
-A newer Resource replaces the accepted Text Markup and writes the new `ResourceInstallation` atomically.
-
-This object-level freshness behavior is used by normal Resource installation and Archive import. Broader synchronization/conflict policy remains a separate concern.
+The separate Text Markup **local write transaction remains** because local edits must atomically update accepted Domain state, local Resource revision state, and Outbox publication intent.
 
 ---
 
@@ -483,14 +465,16 @@ It publishes:
 
 ```text
 publisher
-resourceType = kjvonly/overlays/text-markup
-resourceId = kjvonly/overlays/text-markup/<name>/<chapterRef>
+resourceType = bible/text-markup
+resourceId = kjvonly/bible/text-markup/<name>/<chapterRef>
+dataType = kjvonly.bible.text-markup
+dataVersion = 1
 representation = content
 mediaType = application/json+gzip+hex
 value = markings
 ```
 
-Resource identity is therefore derived from accepted Domain identity rather than passed independently by UI code.
+The published `resourceId` is therefore derived from accepted Domain identity rather than passed independently by UI code.
 
 ---
 
@@ -607,10 +591,10 @@ Text Markup has its own service subscription model and is not toggled by those S
 The Resource Worker composes:
 
 ```text
-BibleTextMarkupInterpreter
+BibleTextMarkupDataTypeHandler
 BibleTextMarkupValidator
-BibleTextMarkupInstaller
-BibleTextMarkupResourceHandler
+BibleTextMarkupDomainObjectFactory
+GenericResourceInstaller
 ```
 
 The main application owns the Svelte-facing `BibleTextMarkupService` and write transaction/publication mapper.
@@ -667,7 +651,7 @@ Application composition also registers it as a consumer of generic Archive impor
 
 Svelte components consume that application-owned instance.
 
-The Resource Worker independently composes the inbound handler/validator/installer path.
+The Resource Worker independently composes the inbound datatype handler + Domain Object factory path over `GenericResourceInstaller`.
 
 ---
 
@@ -679,10 +663,10 @@ Current tests cover:
 Domain identity/model behavior
 default Resource selection
 Resource source parsing
-interpreter
-validator
-installer
-Resource handler
+BibleTextMarkupDataTypeHandler
+BibleTextMarkupValidator
+BibleTextMarkupDomainObjectFactory
+generic Resource installation
 service local-first read behavior
 service writes/subscribers
 write transaction
@@ -695,20 +679,21 @@ Reader/browser behavior should additionally verify that chapter changes do not r
 
 # Architectural Invariants
 
-1. Text Markup belongs to the Bible Domain but uses the overlay Resource namespace.
-2. Application identity is `<publisher>/<name>/<chapterRef>`.
-3. Resource identity is `kjvonly/overlays/text-markup/<name>/<chapterRef>` plus publisher.
-4. Resource payload contains markings, not duplicated identity fields.
-5. Text Markup is chapter-scoped.
-6. Reads are local-first and may explicitly load the selected Resource on miss.
-7. Missing published markup is a normal empty state.
-8. Inbound installation is freshness-aware through `ResourceInstallation.modifiedAt`.
-9. Local writes persist Domain state + ResourceInstallation revision state + Outbox intent atomically.
-10. Local subscribers are notified after durable commit.
-11. Archive/import reconciliation may refresh only currently subscribed Text Markup IDs.
-12. User-owned Text Markup selection is absent when signed out and rebuilt against the current user during workspace restore.
-13. Resource selection lives on the Buffer; the service receives only `PublishedResourceReference` when one exists.
-14. Legacy annotation runtime must not be recreated.
+1. Text Markup uses `bible/text-markup` as both Resource Type and application object type.
+2. Its semantic payload contract is `kjvonly.bible.text-markup@1`.
+3. Application identity is `<publisher>/<name>/<chapterRef>`.
+4. Resource ID is `kjvonly/bible/text-markup/<name>/<chapterRef>`; Published Resource identity also includes publisher and Nostr kind.
+5. Resource payload contains markings, not duplicated identity fields.
+6. Text Markup is chapter-scoped.
+7. Reads are local-first and may explicitly load the selected Resource on miss.
+8. Missing published markup is a normal empty state.
+9. Inbound installation is freshness-aware through `ResourceInstallation.modifiedAt`.
+10. Local writes persist Domain state + ResourceInstallation revision state + Outbox intent atomically.
+11. Local subscribers are notified after durable commit.
+12. Archive/import reconciliation may refresh only currently subscribed Text Markup IDs.
+13. User-owned Text Markup selection is absent when signed out and rebuilt against the current user during workspace restore.
+14. Resource selection lives on the Buffer; the service receives only `PublishedResourceReference` when one exists.
+15. Legacy annotation runtime must not be recreated.
 
 ---
 

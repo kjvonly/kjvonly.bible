@@ -3,7 +3,8 @@
 **Status:** Current
 **Domain:** Notes
 **Application object type:** `notes/note`
-**Resource type:** `kjvonly/notes/entries`
+**Resource type:** `notes/note`
+**Data type:** `kjvonly.note@1`
 
 ---
 
@@ -51,11 +52,11 @@ Inbound explicit Resource installation uses:
 ```text
 Decoded Notes Resource
     ↓
-NoteInterpreter
+NoteDataTypeHandler
     ↓
-NoteValidator
+NoteDomainObjectFactory
     ↓
-NoteInstaller
+GenericResourceInstaller
     ↓
 domain_objects + resource_installations
 ```
@@ -69,7 +70,7 @@ This document covers:
 - Note Domain Object shape,
 - Notes application identity,
 - standalone and Bible-linked Notes,
-- Notes Resource identity,
+- Notes Resource Type and Resource ID,
 - module Resource selection,
 - persistence,
 - inbound Resource installation,
@@ -84,7 +85,7 @@ This document covers:
 
 This document does not define a completed multi-device synchronization system, conflict resolution, or multi-source aggregation.
 
-Notes participate in the shared KJVOnly Archive subsystem through their existing Domain-to-Resource conversion and normal inbound Resource handler.
+Notes participate in the shared KJVOnly Archive subsystem through their Domain-to-Resource conversion and the shared datatype/factory/generic installation path.
 
 ---
 
@@ -146,25 +147,28 @@ The ID does not contain the Resource Type or a Nostr event ID.
 
 ---
 
-# Resource Identity
+# Resource Contract and Resource ID
 
 Notes use:
 
 ```text
 Resource Type
-    kjvonly/notes/entries
+    notes/note
+
+Data Type
+    kjvonly.note@1
 ```
 
 A selected Notes Resource source represents a named collection:
 
 ```text
-kjvonly/notes/entries/<name>
+kjvonly/notes/note/<name>
 ```
 
 An individual published Note Resource is:
 
 ```text
-kjvonly/notes/entries/<name>/<noteId>
+kjvonly/notes/note/<name>/<noteId>
 ```
 
 The Resource publisher supplies the application `publisher` segment.
@@ -174,13 +178,13 @@ Thus:
 ```text
 Resource
     publisher = <publisher>
-    resourceId = kjvonly/notes/entries/<name>/<noteId>
+    resourceId = kjvonly/notes/note/<name>/<noteId>
 
 Domain Object
     id = <publisher>/<name>/<noteId>
 ```
 
-Resource identity and Domain identity are related but intentionally different.
+Resource ID and Domain identity are related but intentionally different. Resource Type is carried independently as `notes/note`.
 
 ---
 
@@ -206,7 +210,7 @@ If no Notes selection exists and an authenticated/read-only user ID is available
 
 ```text
 publisher = current user
-resourceId = kjvonly/notes/entries/default
+resourceId = kjvonly/notes/note/default
 ```
 
 The selected Notes source is captured on the module `Buffer`.
@@ -397,7 +401,7 @@ This ordering prevents the UI/search projection from advertising a Note that fai
 
 # Note Resource Publication
 
-Create/update publication derives Resource identity from the Note application ID.
+Create/update publication derives the Resource ID from the Note application ID.
 
 ```text
 Note.id
@@ -405,8 +409,10 @@ Note.id
 
 Resource
     publisher = <publisher>
-    resourceType = kjvonly/notes/entries
-    resourceId = kjvonly/notes/entries/<name>/<noteId>
+    resourceType = notes/note
+    resourceId = kjvonly/notes/note/<name>/<noteId>
+    dataType = kjvonly.note
+    dataVersion = 1
 ```
 
 Representation:
@@ -421,7 +427,7 @@ Media type:
 application/json+gzip+hex
 ```
 
-The Resource value excludes `id` because identity is encoded by publisher + Resource path.
+The Resource value excludes `id` because application identity is reconstructed from publisher plus the Notes-owned `resourceId` grammar. Published Resource identity remains the Nostr publisher/kind/`d` tuple.
 
 The value contains the Note content fields.
 
@@ -448,7 +454,7 @@ Outbox wake
 
 The delete does not need to look up a relay event first.
 
-The Resource identity is deterministically derived from the Note application ID.
+The Resource ID is deterministically derived from the Note application ID.
 
 Because Outbox uses the same durable object key for subsequent writes, update/delete operations for the same Note participate in normal last-write-wins coalescing.
 
@@ -456,110 +462,84 @@ Because Outbox uses the same durable object key for subsequent writes, update/de
 
 # Inbound Notes Resources
 
-`NoteInterpreter` supports two Resource shapes.
+Notes now use the generic Resource installation lifecycle.
 
-## Individual Note
+The Resource family supports:
 
 ```text
-kjvonly/notes/entries/<name>/<noteId>
+individual Note Resource
+named bundle Resource
 ```
 
-produces one candidate.
+The published semantic contract is validated by `NoteDataTypeHandler`.
 
-## Named bundle
-
-```text
-kjvonly/notes/entries/<name>
-```
-
-expects an object whose keys are Note IDs and produces one candidate per entry.
-
-The Notes Resource root by itself is not accepted.
-
-Paths deeper than an individual Note are rejected.
-
----
-
-# Validation
-
-`NoteValidator` validates Note content with a strict Zod schema.
-
-Validated content includes:
+`NoteDomainObjectFactory` then owns:
 
 ```text
-optional Bible location/reference text
-plain text
-HTML
-Title
-created/updated timestamps
-Note tags
+Resource ID interpretation
+publisher/name/noteId application identity
+bundle expansion
+canonical notes/note@1 candidate construction
 ```
 
 Transport identity is not trusted from payload fields.
 
-Publisher/name/note ID come from Resource identity and interpreter output.
-
 ---
 
-# Installation
+# Inbound Validation and Installation
 
-`NoteInstaller` derives application identity from:
-
-```text
-Resource publisher
-+ Notes name
-+ candidate Note ID
-```
-
-Installation writes:
+The current inbound path is:
 
 ```text
-Note Domain Object
-ResourceInstallation provenance
+DecodedResourceContent
+    ↓
+NoteDataTypeHandler
+    ↓
+NoteDomainObjectFactory
+    ↓
+notes/note candidate(s)
+    ↓
+GenericResourceInstaller
+    ↓
+DOMAIN_OBJECTS + RESOURCE_INSTALLATIONS
 ```
 
-in one installation transaction.
-
-## Freshness policy
-
-The installer reads the current `ResourceInstallation` for the Note application ID.
-
-If:
+Freshness uses the shared rule:
 
 ```text
 incoming modifiedAt <= current ResourceInstallation.modifiedAt
+    → skip candidate
+
+incoming newer or missing
+    → write Note + ResourceInstallation atomically
 ```
 
-the candidate is skipped.
-
-If the incoming Resource is newer, the installer replaces the accepted Note and writes the new `ResourceInstallation` in the same installation transaction.
-
-This gives Notes the same object-level Resource freshness model used by Archive import and other freshness-aware Resource installers. Broader multi-device synchronization/conflict policy remains separate from this basic revision ordering.
+The old `NoteInstaller` / `NoteResourceHandler` inbound stack has been removed.
 
 ---
 
 # Resource Worker Composition
 
-The Resource Worker registers:
+Worker composition registers:
 
 ```text
-NoteInterpreter
-NoteValidator
-NoteInstaller
-NoteResourceHandler
+NoteDataTypeHandler
+NoteDomainObjectFactory
 ```
 
-The generic Resource layer decodes and dispatches the Resource.
+with the shared datatype/factory resolvers.
 
-The Notes Domain owns:
+Notes does not require a specialized ResourceHandler.
+
+Application-side Notes local writes remain Domain-specific because they atomically maintain:
 
 ```text
-meaning
-identity
-validation
-installation policy
-Domain persistence mapping
+Note Domain state
+ResourceInstallation local revision state
+Outbox publication intent
 ```
+
+That local-write transaction is not an inbound Resource installer.
 
 ---
 
@@ -648,7 +628,7 @@ Closing without saving does not publish or persist it.
 
 Notes participate in the shared application Archive subsystem.
 
-Archive export selects persisted Note Domain Objects through their `ResourceInstallation` state. Archive import reconstructs normal Notes Resource content through `NotesResourcePublication`, then re-enters the existing Notes Resource interpreter, validator, and installer.
+Archive export selects persisted Note Domain Objects through their `ResourceInstallation` state. Archive import reconstructs normal Notes Resource content through `NotesResourcePublication`, then re-enters the shared datatype/factory/generic installation lifecycle.
 
 After Archive import successfully handles Notes Resources, the application-level Archive import event calls `NotesService.refresh()`. The main thread sends only a refresh command; the Notes worker reloads accepted Notes from IndexedDB and rebuilds its derived search projection off the main thread.
 
@@ -703,7 +683,7 @@ Application composition also registers `NotesService` as a consumer of generic A
 
 Svelte Notes/Bible consumers use that application-owned instance rather than constructing Notes services themselves.
 
-Inbound Resource handler/interpreter/validator/installer composition remains in the Resource Worker.
+Inbound Resource datatype/factory/generic installer composition remains in the Resource Worker.
 
 ---
 
@@ -730,12 +710,10 @@ Current tests cover:
 Note identity
 Resource source identity
 module Resource selection
-interpreter
-validator
-installer
-Resource handler
+NoteDataTypeHandler
+NoteDomainObjectFactory
+generic Resource installation
 IndexedDB Notes store
-installation transaction
 write transaction
 Resource publication
 NotesService

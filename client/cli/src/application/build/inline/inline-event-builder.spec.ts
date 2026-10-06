@@ -187,7 +187,7 @@ describe(
 								tags: [
 									[
 										'd',
-										'kjvonly/bible/chapters/kjvs/1_1'
+										'kjvonly/bible/chapter/kjvs/1_1'
 									],
 									[
 										'm',
@@ -195,7 +195,7 @@ describe(
 									],
 									[
 										't',
-										'kjvonly/bible/chapters'
+										'bible/chapter'
 									],
 									[
 										'representation',
@@ -237,7 +237,7 @@ describe(
 				).toEqual([
 					[
 						'd',
-						'kjvonly/bible/chapters/kjvs/1_1'
+						'kjvonly/bible/chapter/kjvs/1_1'
 					],
 					[
 						'm',
@@ -245,7 +245,7 @@ describe(
 					],
 					[
 						't',
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					],
 					[
 						'representation',

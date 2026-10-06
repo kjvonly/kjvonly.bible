@@ -178,6 +178,6 @@ function createSource(): PublishedResourceReference {
 		publisher:
 			'publisher',
 		resourceId:
-			'kjvonly/bible/chapters/kjvs/1_1'
+			'kjvonly/bible/chapter/kjvs/1_1'
 	};
 }

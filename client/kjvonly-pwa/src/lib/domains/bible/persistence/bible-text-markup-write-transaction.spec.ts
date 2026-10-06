@@ -1,4 +1,8 @@
 import {
+	BIBLE_TEXT_MARKUP_DATA_TYPE
+} from '../resources/text-markup/bible-text-markup-resource';
+
+import {
 	describe,
 	expect,
 	it
@@ -114,6 +118,12 @@ describe(
 
 					objectType:
 						BIBLE_TEXT_MARKUP_OBJECT_TYPE,
+
+					dataType:
+						BIBLE_TEXT_MARKUP_DATA_TYPE,
+
+					dataVersion:
+						1,
 
 					objectId:
 						textMarkup.id,
@@ -313,10 +323,13 @@ function createPublication():
 			'publisher',
 
 		resourceType:
-			'kjvonly/overlays/text-markup',
-
+			'bible/text-markup',
+		dataType:
+			'kjvonly.bible.text-markup',
+		dataVersion:
+			1,
 		resourceId:
-			'kjvonly/overlays/text-markup/kjvs/1_1',
+			'kjvonly/bible/text-markup/kjvs/1_1',
 
 		representation:
 			'content',

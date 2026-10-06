@@ -652,11 +652,11 @@ external retrieval / integrity verification
     ↓
 Resource content decoding
     ↓
-ResourceHandler dispatch
+special ResourceHandler or GenericResourceInstaller
     ↓
-Domain interpretation / validation
+semantic datatype validation / Domain Object factory
     ↓
-Domain installation
+object-level installation
     ↓
 Resource receipt persistence
 ```
@@ -1461,9 +1461,9 @@ ResourceService
 Resource Resolution
 Descriptor processing
 Resource decoding
-ResourceHandler dispatch
-Domain interpretation / validation
-Domain installation
+special ResourceHandler or GenericResourceInstaller
+semantic datatype validation / Domain Object factory
+object-level installation
 Resource receipt persistence
 ```
 

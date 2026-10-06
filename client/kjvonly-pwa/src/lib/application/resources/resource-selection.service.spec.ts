@@ -28,6 +28,9 @@ describe(
 					new ResourceSelectionService();
 
 				service.select({
+					resourceType:
+						'bible/chapter',
+
 					publisher:
 						'publisher',
 
@@ -37,7 +40,7 @@ describe(
 
 				expect(
 					service.get(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -57,6 +60,9 @@ describe(
 					new ResourceSelectionService();
 
 				service.select({
+					resourceType:
+						'bible/chapter',
+
 					publisher:
 						'publisher-a',
 
@@ -65,6 +71,9 @@ describe(
 				});
 
 				service.select({
+					resourceType:
+						'bible/chapter',
+
 					publisher:
 						'publisher-b',
 
@@ -74,7 +83,7 @@ describe(
 
 				expect(
 					service.get(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -93,6 +102,9 @@ describe(
 				const service =
 					new ResourceSelectionService([
 						{
+							resourceType:
+								'bible/chapter',
+
 							publisher:
 								'publisher',
 
@@ -100,6 +112,9 @@ describe(
 								'kjvonly/bible/chapters/kjvs'
 						},
 						{
+							resourceType:
+								'strongs/definition',
+
 							publisher:
 								'publisher',
 
@@ -110,7 +125,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -122,7 +137,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					)
 				).toEqual({
 					publisher:
@@ -144,10 +159,10 @@ describe(
 				expect(
 					() =>
 						service.require(
-							'kjvonly/bible/chapters'
+							'bible/chapter'
 						)
 				).toThrow(
-					'No Resource selected for type: kjvonly/bible/chapters'
+					'No Resource selected for type: bible/chapter'
 				);
 			}
 		);
@@ -159,6 +174,9 @@ describe(
 				const service =
 					new ResourceSelectionService([
 						{
+							resourceType:
+								'bible/chapter',
+
 							publisher:
 								'publisher-a',
 
@@ -171,6 +189,9 @@ describe(
 					service.snapshot();
 
 				service.select({
+					resourceType:
+						'bible/chapter',
+
 					publisher:
 						'publisher-b',
 
@@ -180,7 +201,7 @@ describe(
 
 				expect(
 					snapshot[
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					]
 				).toEqual({
 					publisher:
@@ -193,24 +214,34 @@ describe(
 		);
 
 		it(
-			'rejects an invalid Resource Identifier',
+			'keeps Resource Type independent from Resource Identifier shape',
 			() => {
 
 				const service =
 					new ResourceSelectionService();
 
-				expect(
-					() =>
-						service.select({
-							publisher:
-								'publisher',
+				service.select({
+					resourceType:
+						'bible/chapter',
 
-							resourceId:
-								'invalid'
-						})
-				).toThrow(
-					'Invalid Resource Identifier'
-				);
+					publisher:
+						'publisher',
+
+					resourceId:
+						'opaque-bible-resource'
+				});
+
+				expect(
+					service.require(
+						'bible/chapter'
+					)
+				).toEqual({
+					publisher:
+						'publisher',
+
+					resourceId:
+						'opaque-bible-resource'
+				});
 			}
 		);
 	}
@@ -230,6 +261,9 @@ describe(
 				new ResourceSelectionService(
 					[
 						{
+							resourceType:
+								'bible/chapter',
+
 							publisher:
 								'publisher',
 
@@ -237,6 +271,9 @@ describe(
 								'kjvonly/bible/chapters/kjvs'
 						},
 						{
+							resourceType:
+								'strongs/definition',
+
 							publisher:
 								'publisher',
 
@@ -259,7 +296,7 @@ describe(
 
 				const store =
 					new FakeResourceSelectionStore({
-						'kjvonly/bible/chapters': {
+						'bible/chapter': {
 							publisher:
 								'publisher-b',
 
@@ -272,6 +309,9 @@ describe(
 					new ResourceSelectionService(
 						[
 							{
+								resourceType:
+									'bible/chapter',
+
 								publisher:
 									'publisher-a',
 
@@ -286,7 +326,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -304,7 +344,7 @@ describe(
 
 				const store =
 					new FakeResourceSelectionStore({
-						'kjvonly/bible/chapters': {
+						'bible/chapter': {
 							publisher:
 								'publisher-b',
 
@@ -317,6 +357,9 @@ describe(
 					new ResourceSelectionService(
 						[
 							{
+								resourceType:
+									'bible/chapter',
+
 								publisher:
 									'publisher-a',
 
@@ -324,6 +367,9 @@ describe(
 									'kjvonly/bible/chapters/kjvs'
 							},
 							{
+								resourceType:
+									'strongs/definition',
+
 								publisher:
 									'publisher-a',
 
@@ -338,7 +384,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -350,7 +396,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					)
 				).toEqual({
 					publisher:
@@ -373,6 +419,9 @@ describe(
 					new ResourceSelectionService(
 						[
 							{
+								resourceType:
+									'bible/chapter',
+
 								publisher:
 									'publisher-a',
 
@@ -380,6 +429,9 @@ describe(
 									'kjvonly/bible/chapters/kjvs'
 							},
 							{
+								resourceType:
+									'strongs/definition',
+
 								publisher:
 									'publisher-a',
 
@@ -391,6 +443,9 @@ describe(
 					);
 
 				service.select({
+					resourceType:
+						'bible/chapter',
+
 					publisher:
 						'publisher-b',
 
@@ -400,7 +455,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -414,7 +469,7 @@ describe(
 					store.saved
 				).toEqual([
 					{
-						'kjvonly/bible/chapters': {
+						'bible/chapter': {
 							publisher:
 								'publisher-b',
 
@@ -441,6 +496,9 @@ describe(
 
 				service.initializeMissing([
 					{
+						resourceType:
+							'bible/chapter',
+
 						publisher:
 							'publisher-a',
 
@@ -451,7 +509,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -470,6 +528,9 @@ describe(
 				const service =
 					new ResourceSelectionService([
 						{
+							resourceType:
+								'bible/chapter',
+
 							publisher:
 								'publisher-fallback',
 
@@ -480,6 +541,9 @@ describe(
 
 				service.initializeMissing([
 					{
+						resourceType:
+							'bible/chapter',
+
 						publisher:
 							'publisher-bootstrap',
 
@@ -490,7 +554,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -509,6 +573,9 @@ describe(
 				const service =
 					new ResourceSelectionService([
 						{
+							resourceType:
+								'bible/chapter',
+
 							publisher:
 								'publisher-fallback',
 
@@ -516,6 +583,9 @@ describe(
 								'kjvonly/bible/chapters/kjvs'
 						},
 						{
+							resourceType:
+								'strongs/definition',
+
 							publisher:
 								'publisher-fallback',
 
@@ -525,6 +595,9 @@ describe(
 					]);
 
 				service.select({
+					resourceType:
+						'bible/chapter',
+
 					publisher:
 						'publisher-user',
 
@@ -534,6 +607,9 @@ describe(
 
 				service.initializeMissing([
 					{
+						resourceType:
+							'bible/chapter',
+
 						publisher:
 							'publisher-bootstrap',
 
@@ -541,6 +617,9 @@ describe(
 							'kjvonly/bible/chapters/kjvs'
 					},
 					{
+						resourceType:
+							'strongs/definition',
+
 						publisher:
 							'publisher-bootstrap',
 
@@ -551,7 +630,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -563,7 +642,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					)
 				).toEqual({
 					publisher:
@@ -586,6 +665,9 @@ describe(
 					new ResourceSelectionService(
 						[
 							{
+								resourceType:
+									'bible/chapter',
+
 								publisher:
 									'publisher-fallback',
 
@@ -593,6 +675,9 @@ describe(
 									'kjvonly/bible/chapters/kjvs'
 							},
 							{
+								resourceType:
+									'strongs/definition',
+
 								publisher:
 									'publisher-fallback',
 
@@ -605,6 +690,9 @@ describe(
 
 				service.initializeMissing([
 					{
+						resourceType:
+							'bible/chapter',
+
 						publisher:
 							'publisher-bootstrap',
 
@@ -617,7 +705,7 @@ describe(
 					store.saved
 				).toEqual([
 					{
-						'kjvonly/bible/chapters': {
+						'bible/chapter': {
 							publisher:
 								'publisher-bootstrap',
 
@@ -635,7 +723,7 @@ describe(
 
 				const store =
 					new FakeResourceSelectionStore({
-						'kjvonly/bible/chapters': {
+						'bible/chapter': {
 							publisher:
 								'publisher-user',
 
@@ -648,6 +736,9 @@ describe(
 					new ResourceSelectionService(
 						[
 							{
+								resourceType:
+									'bible/chapter',
+
 								publisher:
 									'publisher-fallback',
 
@@ -655,6 +746,9 @@ describe(
 									'kjvonly/bible/chapters/kjvs'
 							},
 							{
+								resourceType:
+									'strongs/definition',
+
 								publisher:
 									'publisher-fallback',
 
@@ -669,6 +763,9 @@ describe(
 
 				service.initializeMissing([
 					{
+						resourceType:
+							'bible/chapter',
+
 						publisher:
 							'publisher-default',
 
@@ -676,6 +773,9 @@ describe(
 							'kjvonly/bible/chapters/kjvs'
 					},
 					{
+						resourceType:
+							'strongs/definition',
+
 						publisher:
 							'publisher-default',
 
@@ -686,7 +786,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					)
 				).toEqual({
 					publisher:
@@ -698,7 +798,7 @@ describe(
 
 				expect(
 					service.require(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					)
 				).toEqual({
 					publisher:
@@ -712,7 +812,7 @@ describe(
 					store.saved
 				).toEqual([
 					{
-						'kjvonly/bible/chapters': {
+						'bible/chapter': {
 							publisher:
 								'publisher-user',
 
@@ -720,7 +820,7 @@ describe(
 								'kjvonly/bible/chapters/kjv'
 						},
 
-						'kjvonly/strongs/definitions': {
+						'strongs/definition': {
 							publisher:
 								'publisher-default',
 
@@ -738,7 +838,7 @@ describe(
 
 				const store =
 					new FakeResourceSelectionStore({
-						'kjvonly/bible/chapters': {
+						'bible/chapter': {
 							publisher:
 								'publisher-user',
 
@@ -751,6 +851,9 @@ describe(
 					new ResourceSelectionService(
 						[
 							{
+								resourceType:
+									'bible/chapter',
+
 								publisher:
 									'publisher-fallback',
 
@@ -765,6 +868,9 @@ describe(
 
 				service.initializeMissing([
 					{
+						resourceType:
+							'bible/chapter',
+
 						publisher:
 							'publisher-bootstrap',
 

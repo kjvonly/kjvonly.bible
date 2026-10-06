@@ -167,6 +167,21 @@ export class KJVOnlyArchiveImporter {
 						mediaType:
 							publication.mediaType,
 
+						dataType:
+							publication.dataType,
+
+						dataVersion:
+							publication.dataVersion,
+
+						...((installation.metadata ??
+							publication.metadata) === undefined
+							? {}
+							: {
+								metadata:
+									installation.metadata ??
+									publication.metadata
+							}),
+
 						value:
 							publication.value
 					};

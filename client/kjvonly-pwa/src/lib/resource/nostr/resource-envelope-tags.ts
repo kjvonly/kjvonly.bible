@@ -10,5 +10,7 @@ export const RESOURCE_ENVELOPE_TAGS =
 		'd',
 		'm',
 		't',
+		'dataType',
+		'dataVersion',
 		'representation'
 	]);

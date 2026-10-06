@@ -1,3 +1,7 @@
+import {
+	PLAN_SUBSCRIPTION_DATA_TYPE
+} from '../resources/subscriptions/plan-subscription-resource-source';
+
 import type {
 	PlanSubscription
 } from '../models/plan-subscription';
@@ -81,6 +85,12 @@ export class IndexedDBPlanSubscriptionsStore
 
 				objectType:
 					PLAN_SUBSCRIPTION_OBJECT_TYPE,
+
+				dataType:
+					PLAN_SUBSCRIPTION_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					subscription.id,

@@ -163,13 +163,13 @@ Conceptually:
 
 ```text
 Plan Definition
-    objectType = reading-plans/definition
+    objectType = reading-plans/plan-definition
 
 Plan Subscription
-    objectType = reading-plans/subscription
+    objectType = reading-plans/plan-subscription
 
 Plan Progress
-    objectType = reading-plans/progress
+    objectType = reading-plans/plan-progress
 ```
 
 The exact constants in source remain authoritative.
@@ -186,13 +186,16 @@ Plan Definitions use:
 
 ```text
 Resource Type
-    kjvonly/plans/readings
+    reading-plans/plan-definition
+
+Data Type
+    kjvonly.reading-plan.definition@1
 ```
 
 An individual definition Resource is:
 
 ```text
-kjvonly/plans/readings/<group>/<planKey>
+kjvonly/reading-plans/plan-definition/<group>/<planKey>
 ```
 
 The default group is:
@@ -216,35 +219,21 @@ Plan Definition resources are installed through the Resource Worker.
 ```text
 Decoded Resource
     ↓
-PlanDefinitionInterpreter
+PlanDefinitionDataTypeHandler
     ↓
-PlanDefinitionValidator
+PlanDefinitionDomainObjectFactory
     ↓
-PlanDefinitionInstaller
+reading-plans/plan-definition candidate
+    ↓
+GenericResourceInstaller
     ↓
 PlanDefinition Domain Object
-    + ResourceInstallation
++ ResourceInstallation
 ```
 
-## Interpreter
+The datatype handler validates the published Plan Definition semantic payload.
 
-The interpreter requires exactly two Resource path segments:
-
-```text
-<group>/<planKey>
-```
-
-One Resource produces one candidate.
-
-## Validator
-
-The validator accepts the canonical Plan Definition content shape and removes transport concerns from application content.
-
-## Installer
-
-The installer requires exactly one validated candidate.
-
-Application identity is derived from:
+The Domain Object factory owns Resource ID interpretation and application identity:
 
 ```text
 Resource publisher
@@ -252,15 +241,11 @@ Resource publisher
 + plan key
 ```
 
-The installer persists both the Domain Object and installation provenance in one transaction.
+It emits the canonical stored Plan Definition contract.
 
-## Freshness policy
+Plan Definitions use the shared `ResourceInstallation.modifiedAt` rule to reject older/equal Resource state for the same Domain Object identity.
 
-Plan Definitions use `ResourceInstallation.modifiedAt` to reject an older/equal Resource version for the same application identity.
-
-Thus reference Plan Definitions can be updated by a newer published Resource.
-
-This differs from writable user state such as Notes, where inbound overwrite policy is intentionally more conservative.
+The old `PlanDefinitionInterpreter` / Validator / Installer inbound stack has been removed.
 
 ---
 
@@ -338,13 +323,13 @@ PlansModuleResourceSelectionContributor
 Plan Definition Resource Type:
 
 ```text
-kjvonly/plans/readings
+reading-plans/plan-definition
 ```
 
 Plan Subscription Resource Type:
 
 ```text
-kjvonly/plans/subscriptions
+reading-plans/plan-subscription
 ```
 
 When a required Plans selection is absent and a current user ID is available, the contributor can create current-user `default` selections.
@@ -364,19 +349,25 @@ A subscription is user-owned mutable application state.
 Resource Type:
 
 ```text
-kjvonly/plans/subscriptions
+reading-plans/plan-subscription
+```
+
+Data Type:
+
+```text
+kjvonly.reading-plan.subscription@1
 ```
 
 Selected collection source:
 
 ```text
-kjvonly/plans/subscriptions/<group>
+kjvonly/reading-plans/plan-subscription/<group>
 ```
 
 Individual publication:
 
 ```text
-kjvonly/plans/subscriptions/<group>/<subscriptionId>
+kjvonly/reading-plans/plan-subscription/<group>/<subscriptionId>
 ```
 
 The default group is:
@@ -451,13 +442,19 @@ Payload excludes the application `id` because Resource publisher/path encode ide
 Progress Resource Type:
 
 ```text
-kjvonly/plans/progress
+reading-plans/plan-progress
+```
+
+Progress Data Type:
+
+```text
+kjvonly.reading-plan.progress@1
 ```
 
 Progress publication uses the same publisher/group/subscription ID parts as its associated subscription:
 
 ```text
-kjvonly/plans/progress/<group>/<subscriptionId>
+kjvonly/reading-plans/plan-progress/<group>/<subscriptionId>
 ```
 
 Payload:
@@ -510,7 +507,7 @@ Local write/publication
 Local write/publication
     implemented
 
-Inbound Resource interpreter/validator/installer
+Inbound Resource datatype/factory/generic installation
     implemented
 ```
 
@@ -520,7 +517,7 @@ Inbound Resource interpreter/validator/installer
 Local write/publication
     implemented
 
-Inbound Resource interpreter/validator/installer
+Inbound Resource datatype/factory/generic installation
     implemented
 ```
 
@@ -806,14 +803,14 @@ Current tests cover:
 
 ```text
 Plan Definition identity
-Plan Definition interpreter/validator/installer/handler
+PlanDefinitionDataTypeHandler / DomainObjectFactory
 Plan Definition store/service behavior
 module Resource selection
 Plan Subscription identity/source/publication
-Plan Subscription interpreter/validator/installer/handler
+PlanSubscriptionDataTypeHandler / DomainObjectFactory
 subscription persistence/write transaction
 Plan Progress publication/write transaction/service behavior
-Plan Progress interpreter/validator/installer/handler
+PlanProgressDataTypeHandler / DomainObjectFactory
 encoded reading decoding
 Subs enrichment
 Plans worker / PlansPubSubService message behavior
@@ -830,7 +827,7 @@ Browser installation tests also exercise Subscription and Progress through the r
 2. A Subscription is a snapshot of the Plan Definition at subscribe time.
 3. Progress is separate from the Subscription and reuses its application ID.
 4. Accepted state lives in Domain persistence; worker state is derived.
-5. Plan Definition, Subscription, and Progress inbound installation are implemented through normal Resource handlers.
+5. Plan Definition, Subscription, and Progress inbound installation use datatype handlers + Domain Object factories + `GenericResourceInstaller`.
 6. Subscription/Progress writes persist Domain state + ResourceInstallation state + Outbox intent atomically.
 7. Worker messages are explicitly typed.
 8. The worker is a separate composition root and does not use `ApplicationContext`.

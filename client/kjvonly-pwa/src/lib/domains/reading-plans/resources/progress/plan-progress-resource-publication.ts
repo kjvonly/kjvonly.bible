@@ -11,7 +11,10 @@ import type {
 } from '$lib/resource';
 
 import {
-	PLAN_PROGRESS_RESOURCE_TYPE
+	PLAN_PROGRESS_DATA_TYPE,
+	PLAN_PROGRESS_DATA_VERSION,
+	PLAN_PROGRESS_RESOURCE_TYPE,
+	createPlanProgressResourceId
 } from './plan-progress-resource';
 
 export class PlanProgressResourcePublication {
@@ -36,8 +39,17 @@ export class PlanProgressResourcePublication {
 			resourceType:
 				PLAN_PROGRESS_RESOURCE_TYPE,
 
+			dataType:
+				PLAN_PROGRESS_DATA_TYPE,
+
+			dataVersion:
+				PLAN_PROGRESS_DATA_VERSION,
+
 			resourceId:
-				`${PLAN_PROGRESS_RESOURCE_TYPE}/${group}/${subscriptionId}`,
+				createPlanProgressResourceId(
+					group,
+					subscriptionId
+				),
 
 			representation:
 				'content',

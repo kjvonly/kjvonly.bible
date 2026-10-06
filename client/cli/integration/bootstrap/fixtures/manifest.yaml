@@ -25,10 +25,13 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/bible/chapters/kjv/${key}"]
+        - ["d", "kjvonly/bible/chapter/kjv/${key}"]
         - ["m", "application/json+gzip+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "content"]
+        - ["version", "kjv"]
         - ["language", "en"]
 
   bible-chapters-kjvs:
@@ -37,10 +40,13 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/bible/chapters/kjvs/${key}"]
+        - ["d", "kjvonly/bible/chapter/kjvs/${key}"]
         - ["m", "application/json+gzip+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "content"]
+        - ["version", "kjvs"]
         - ["language", "en"]
 
   bible-bundle-kjv:
@@ -49,10 +55,13 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/bible/chapters/kjv"]
+        - ["d", "kjvonly/bible/chapter/kjv"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
+        - ["version", "kjv"]
         - ["language", "en"]
     object-upload:
       mediaType: application/json+gzip
@@ -64,10 +73,13 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/bible/chapters/kjvs"]
+        - ["d", "kjvonly/bible/chapter/kjvs"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
+        - ["version", "kjvs"]
         - ["language", "en"]
     object-upload:
       mediaType: application/json+gzip
@@ -79,9 +91,11 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/overlays/paragraphs/default"]
+        - ["d", "kjvonly/bible/paragraphs/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/overlays/paragraphs"]
+        - ["t", "bible/paragraphs"]
+        - ["dataType", "kjvonly.bible.paragraphs"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
     object-upload:
       mediaType: application/json+gzip
@@ -93,9 +107,11 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/overlays/pericopes/default"]
+        - ["d", "kjvonly/bible/pericopes/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/overlays/pericopes"]
+        - ["t", "bible/pericopes"]
+        - ["dataType", "kjvonly.bible.pericopes"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
     object-upload:
       mediaType: application/json+gzip
@@ -107,9 +123,11 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/search/bible/kjv"]
+        - ["d", "kjvonly/bible/search-index/kjv"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/search/bible"]
+        - ["t", "bible/search-index"]
+        - ["dataType", "kjvonly.bible.search-index"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
     object-upload:
       mediaType: application/json+gzip
@@ -123,7 +141,9 @@ resources:
       tags:
         - ["d", "kjvonly/bible/booknames/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/booknames"]
+        - ["t", "bible/booknames"]
+        - ["dataType", "kjvonly.bible.booknames"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
     object-upload:
       mediaType: application/json+gzip
@@ -135,9 +155,11 @@ resources:
       encoding:
         - hex
       tags:
-        - ["d", "kjvonly/strongs/definitions/kjvs"]
+        - ["d", "kjvonly/strongs/definition/kjvs"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/strongs/definitions"]
+        - ["t", "strongs/definition"]
+        - ["dataType", "kjvonly.strongs.definition"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
     object-upload:
       mediaType: application/json+gzip
@@ -151,7 +173,9 @@ collections:
       tags:
         - ["d", "kjvonly/resources/collections/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/resources/collections"]
+        - ["t", "resource/descriptor-collection"]
+        - ["dataType", "kjvonly.resource-descriptor-collection"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
     resources:
       - bible-bundle-kjvs

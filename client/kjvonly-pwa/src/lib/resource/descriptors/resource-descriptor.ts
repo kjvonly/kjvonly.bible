@@ -22,7 +22,6 @@ export interface ResourceDescriptor {
 		ResourceDescriptorStrategy;
 }
 
-/** Metadata that describes the target Resource independently of its provider. */
 export interface ResourceDescriptorMetadata {
 	readonly publisher: string;
 
@@ -31,11 +30,14 @@ export interface ResourceDescriptorMetadata {
 	/** Optional arbitrary human-facing display name for the Resource. */
 	readonly name?: string;
 
-	/** Resource category used for ResourceHandler routing. */
-	readonly category: string;
+	/** Application type of the Resource. */
+	readonly resourceType: string;
 
-	/** Optional semantic application contract represented by the Resource. */
-	readonly dataType?: string;
+	/** Semantic application contract represented by the Resource. */
+	readonly dataType: string;
+
+	/** Version of the semantic application contract. */
+	readonly dataVersion: number;
 
 	readonly modifiedAt: number;
 

@@ -69,7 +69,7 @@ describe(
 						'kjvonly/bible/chapters/kjv/1_1',
 
 					resourceType:
-						'kjvonly/bible/chapters',
+						'bible/chapter',
 
 					modifiedAt:
 						123456,
@@ -217,7 +217,13 @@ function createResourceRepresentation(
 			'kjvonly/bible/chapters/kjv/1_1',
 
 		resourceType:
-			'kjvonly/bible/chapters',
+			'bible/chapter',
+
+		dataType:
+			'kjvonly.bible.chapter',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'b'.repeat(

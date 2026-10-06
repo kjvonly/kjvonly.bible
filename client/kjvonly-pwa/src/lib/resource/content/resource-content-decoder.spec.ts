@@ -106,7 +106,7 @@ describe(
                         'kjvonly/bible/chapters/kjv/1_1',
 
                     resourceType:
-                        'kjvonly/bible/chapters',
+                        'bible/chapter',
 
                     modifiedAt:
                         123456,
@@ -115,7 +115,10 @@ describe(
                         'application/json',
 
                     dataType:
-                        'kjvonly.bible.chapter/v1',
+                        'kjvonly.bible.chapter',
+
+                    dataVersion:
+                        1,
 
                     metadata: {
                         f:
@@ -126,7 +129,7 @@ describe(
         );
 
         it(
-            'normalizes semantic data type from Resource metadata',
+            'preserves explicit semantic data version',
             async () => {
                 const decoder =
                     createDecoder();
@@ -134,60 +137,15 @@ describe(
                 const result =
                     await decoder.decode(
                         createVerifiedContent({
-                            dataType:
-                                undefined,
-
-                            metadata: {
-                                dataType:
-                                    'kjvonly.note/v1',
-
-                                f:
-                                    'notes'
-                            }
+                            dataVersion:
+                                1
                         })
                     );
 
                 expect(
-                    result.dataType
+                    result.dataVersion
                 ).toBe(
-                    'kjvonly.note/v1'
-                );
-
-                expect(
-                    result.metadata
-                ).toEqual({
-                    dataType:
-                        'kjvonly.note/v1',
-
-                    f:
-                        'notes'
-                });
-            }
-        );
-
-        it(
-            'prefers explicit verified data type over Resource metadata',
-            async () => {
-                const decoder =
-                    createDecoder();
-
-                const result =
-                    await decoder.decode(
-                        createVerifiedContent({
-                            dataType:
-                                'kjvonly.note/v2',
-
-                            metadata: {
-                                dataType:
-                                    'kjvonly.note/v1'
-                            }
-                        })
-                    );
-
-                expect(
-                    result.dataType
-                ).toBe(
-                    'kjvonly.note/v2'
+                    1
                 );
             }
         );
@@ -318,7 +276,7 @@ function createVerifiedContent(
             'kjvonly/bible/chapters/kjv/1_1',
 
         resourceType:
-            'kjvonly/bible/chapters',
+            'bible/chapter',
 
         modifiedAt:
             123456,
@@ -327,7 +285,10 @@ function createVerifiedContent(
             'application/json',
 
         dataType:
-            'kjvonly.bible.chapter/v1',
+            'kjvonly.bible.chapter',
+
+        dataVersion:
+            1,
 
         metadata: {
             f:

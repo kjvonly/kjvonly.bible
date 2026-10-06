@@ -6,9 +6,6 @@ import type {
 	ResourceInstallResult
 } from '$lib/resource';
 
-import {
-	parseResourceIdentifier
-} from '$lib/resource';
 
 import type {
 	BibleSearchIndex
@@ -23,8 +20,8 @@ import type {
 } from '../persistence/bible-search-index-store';
 
 import {
-	BIBLE_SEARCH_RESOURCE_TYPE
-} from '../resources/search/bible-search-index-interpreter';
+	parseBibleSearchIndexResourceId
+} from '../resources/search/bible-search-index-resource';
 
 interface ResourceInstaller {
 	install(
@@ -117,32 +114,11 @@ function parseBibleSearchSource(
 	readonly version:
 		string;
 } {
-	const identifier =
-		parseResourceIdentifier(
-			source.resourceId
-		);
-
-	if (
-		identifier.resourceType !==
-		BIBLE_SEARCH_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Bible Search Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
-	) {
-		throw new Error(
-			`Invalid Bible Search Resource source: ${source.resourceId}`
-		);
-	}
-
 	return {
 		version:
-			identifier.path[0]
+			parseBibleSearchIndexResourceId(
+				source.resourceId
+			)
 	};
 }
 

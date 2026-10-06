@@ -1,7 +1,6 @@
 import {
 	type PublishedResourceReference,
-	type ResourceLoader,
-	parseResourceIdentifier
+	type ResourceLoader
 } from '$lib/resource';
 
 import type {
@@ -18,8 +17,8 @@ import type {
 
 
 import {
-	BIBLE_PERICOPES_RESOURCE_TYPE
-} from '../resources/pericopes/bible-pericopes-interpreter';
+	parseBiblePericopesResourceId
+} from '../resources/pericopes/bible-pericopes-resource';
 
 import type {
 	BibleLocationReferenceService
@@ -124,24 +123,14 @@ function parsePericopesSource(
 	readonly source:
 		string;
 } {
-
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parseBiblePericopesResourceId(
 			source.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		BIBLE_PERICOPES_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Bible Pericopes Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
+		identity.chapterRef !==
+			undefined
 	) {
 		throw new Error(
 			`Invalid Bible Pericopes Resource source: ${source.resourceId}`
@@ -150,6 +139,6 @@ function parsePericopesSource(
 
 	return {
 		source:
-			identifier.path[0]
+			identity.source
 	};
 }

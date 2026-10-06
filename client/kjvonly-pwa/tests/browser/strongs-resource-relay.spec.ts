@@ -1,4 +1,8 @@
 import {
+	STRONGS_DATA_TYPE
+} from '$lib/domains/strongs';
+
+import {
 	generateSecretKey,
 	nip19
 } from 'nostr-tools';
@@ -156,10 +160,10 @@ describe(
 			"publishes discovers resolves decodes validates and installs a Strong's definition through the generic ResourceService",
 			async () => {
 				const resourceType =
-					'kjvonly/strongs/definitions';
+					'strongs/definition';
 
 				const resourceSourceId =
-					`${resourceType}/kjvs`;
+					'kjvonly/strongs/definition/kjvs';
 
 				const resourceId =
 					`${resourceSourceId}/G1`;
@@ -187,6 +191,14 @@ describe(
 								[
 									't',
 									resourceType
+								],
+								[
+									'dataType',
+									'kjvonly.strongs.definition'
+								],
+								[
+									'dataVersion',
+									'1'
 								],
 								[
 									'representation',
@@ -280,6 +292,12 @@ describe(
 
 					objectType:
 						STRONGS_DEFINITION_OBJECT_TYPE,
+
+					dataType:
+						STRONGS_DATA_TYPE,
+
+					dataVersion:
+						1,
 
 					objectId:
 						strongsId,

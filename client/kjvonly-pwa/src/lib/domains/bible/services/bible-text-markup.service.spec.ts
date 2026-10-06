@@ -53,7 +53,7 @@ describe(
 								'publisher-a',
 
 							resourceId:
-								'kjvonly/overlays/text-markup/study'
+								'kjvonly/bible/text-markup/study'
 						}),
 						'2_3_4_5'
 					)
@@ -247,7 +247,7 @@ describe(
 							'publisher-a',
 
 						resourceId:
-							'kjvonly/overlays/text-markup/study'
+							'kjvonly/bible/text-markup/study'
 					});
 
 				const store =
@@ -360,12 +360,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/bible/chapters/kjvs'
+								'kjvonly/bible/chapter/kjvs'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Text Markup Resource Type'
+					'Invalid Bible Text Markup Resource ID'
 				);
 
 				expect(
@@ -379,7 +379,7 @@ describe(
 		);
 
 		it(
-			'rejects the Text Markup Resource Type root as the selected source',
+			'rejects the Text Markup Resource ID root as the selected source',
 			async () => {
 				const service =
 					createService(
@@ -391,12 +391,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/overlays/text-markup'
+								'bible/text-markup'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Text Markup Resource source'
+					'Invalid Bible Text Markup Resource ID'
 				);
 			}
 		);
@@ -414,7 +414,7 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/overlays/text-markup/kjvs/1_1'
+								'kjvonly/bible/text-markup/kjvs/1_1'
 						}),
 						'1_1'
 					)
@@ -469,10 +469,16 @@ describe(
 							'publisher',
 
 						resourceType:
-							'kjvonly/overlays/text-markup',
+							'bible/text-markup',
+
+						dataType:
+							'kjvonly.bible.text-markup',
+
+						dataVersion:
+							1,
 
 						resourceId:
-							'kjvonly/overlays/text-markup/kjvs/1_1',
+							'kjvonly/bible/text-markup/kjvs/1_1',
 
 						representation:
 							'content',
@@ -723,7 +729,7 @@ describe(
 						'other-publisher',
 
 					resourceId:
-						'kjvonly/overlays/text-markup/study/1_1'
+						'kjvonly/bible/text-markup/study/1_1'
 				});
 			}
 		);
@@ -916,7 +922,7 @@ function createSource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/overlays/text-markup/kjvs',
+			'kjvonly/bible/text-markup/kjvs',
 
 		...overrides
 	};

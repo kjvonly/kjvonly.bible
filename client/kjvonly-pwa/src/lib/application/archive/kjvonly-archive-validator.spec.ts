@@ -21,6 +21,10 @@ function createArchive() {
 					'notes/note',
 				objectId:
 					'publisher/default/note-1',
+				dataType:
+					'kjvonly.note',
+				dataVersion:
+					1,
 				value: {
 					title:
 						'Archive note'
@@ -211,6 +215,55 @@ describe(
 							)
 				).toThrow(
 					`objectId mismatch for ${ID}.`
+				);
+			}
+		);
+
+		it(
+			'rejects a Domain Object without semantic contract metadata',
+			() => {
+				const archive =
+					createArchive();
+
+				delete (
+					archive.domain_objects[
+						ID
+					] as {
+						dataType?: string;
+					}
+				).dataType;
+
+				expect(
+					() =>
+						new KJVOnlyArchiveValidator()
+							.validate(
+								archive
+							)
+				).toThrow(
+					`Domain Object ${ID} requires dataType.`
+				);
+			}
+		);
+
+		it(
+			'rejects an invalid Domain Object dataVersion',
+			() => {
+				const archive =
+					createArchive();
+
+				archive.domain_objects[
+					ID
+				].dataVersion =
+					0;
+
+				expect(
+					() =>
+						new KJVOnlyArchiveValidator()
+							.validate(
+								archive
+							)
+				).toThrow(
+					`Domain Object ${ID} requires a positive integer dataVersion.`
 				);
 			}
 		);

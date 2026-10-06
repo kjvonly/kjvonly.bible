@@ -17,6 +17,26 @@ export type {
 	ResourceHandler
 } from './installation/resource-handler';
 
+export {
+	GenericResourceInstaller
+} from './installation/generic-resource-installer';
+
+export type {
+	ResourceDomainObjectCandidate,
+	ResourceDomainObjectFactory,
+	ResourceDomainObjectFactoryContext
+} from './domain-objects/resource-domain-object-factory';
+
+export {
+	ResourceDomainObjectFactoryResolver
+} from './domain-objects/resource-domain-object-factory-resolver';
+
+export type {
+	GenericResourceDomainObjectStore,
+	GenericResourceInstallationStores,
+	GenericResourceInstallationTransaction
+} from './installation/generic-resource-installation-stores';
+
 export type {
 	ResourceInstallationStore
 } from './installation/resource-installation-store';
@@ -26,13 +46,6 @@ export {
 	type ResourceInstallation
 } from './installation/resource-installation';
 
-export {
-	extractResourcePath,
-	extractResourceType,
-	parseResourceIdentifier,
-	type ResourceIdentifier
-} from './utils/resource-identifier';
-
 export type {
 	ResourceInterpreter
 } from './interpretation/resource-interpreter';
@@ -40,6 +53,14 @@ export type {
 export type {
 	ResourceValidator
 } from './validation/resource-validator';
+
+export type {
+	ResourceDataTypeHandler
+} from './data-types/resource-data-type-handler';
+
+export {
+	ResourceDataTypeResolver
+} from './data-types/resource-data-type-resolver';
 
 export {
 	isResourceDeletionPublication,

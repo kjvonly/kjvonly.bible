@@ -1,7 +1,7 @@
 import type {
 	DecodedResourceContent,
+	ResourceDataTypeHandler,
 	ResourceHandler,
-	ResourceInterpreter,
 	ResourceValidator
 } from '$lib/resource';
 
@@ -9,9 +9,15 @@ import type {
 	FilesystemEntryCandidate
 } from './filesystem-entry-candidate';
 
-import {
-	FILESYSTEM_RESOURCE_TYPE
+import type {
+	DecodedFilesystemResourceContent,
+	FilesystemInterpreter
 } from './filesystem-interpreter';
+
+import {
+	FILESYSTEM_RESOURCE_TYPE,
+	type FilesystemEntriesResourceData
+} from './filesystem-resource';
 
 import type {
 	ValidatedFilesystemEntryCandidate
@@ -28,10 +34,11 @@ export interface FilesystemResourceInstaller {
 }
 
 /**
- * Connects generic decoded `fs` Resources to the Filesystem domain pipeline.
+ * Connects decoded Filesystem Resources to the specialized Filesystem lifecycle.
  *
- * Handling mounts filesystem metadata only; target descriptors remain
- * unresolved until later application policy explicitly selects an entry to load.
+ * Resource Type selects this lifecycle. The Filesystem semantic data contract is
+ * still validated explicitly before Domain interpretation, matching the
+ * dataType/dataVersion boundary used by the generic Resource path.
  */
 export class FilesystemResourceHandler
 	implements ResourceHandler {
@@ -40,9 +47,15 @@ export class FilesystemResourceHandler
 		FILESYSTEM_RESOURCE_TYPE;
 
 	constructor(
+		private readonly dataType:
+			ResourceDataTypeHandler<
+				FilesystemEntriesResourceData
+			>,
 		private readonly interpreter:
-			ResourceInterpreter<
-				FilesystemEntryCandidate
+			Pick<
+				FilesystemInterpreter,
+				'resourceType' |
+				'interpret'
 			>,
 		private readonly validator:
 			ResourceValidator<
@@ -53,15 +66,37 @@ export class FilesystemResourceHandler
 			FilesystemResourceInstaller
 	) {}
 
-	/** Interprets, validates, and installs filesystem mappings. */
+	/** Validates the semantic payload, then interprets and installs mappings. */
 	async handle(
 		resource:
 			DecodedResourceContent
 	): Promise<void> {
+		if (
+			resource.dataType !==
+				this.dataType.dataType ||
+			resource.dataVersion !==
+				this.dataType.dataVersion
+		) {
+			throw new Error(
+				`Unsupported Filesystem Resource data type: ${resource.dataType}@${resource.dataVersion}`
+			);
+		}
+
+		const value =
+			this.dataType.validate(
+				resource.value
+			);
+
+		const filesystemResource:
+			DecodedFilesystemResourceContent = {
+				...resource,
+				value
+			};
+
 		const candidates =
 			Array.from(
 				this.interpreter.interpret(
-					resource
+					filesystemResource
 				)
 			);
 
@@ -74,7 +109,7 @@ export class FilesystemResourceHandler
 			);
 
 		await this.installer.install(
-			resource,
+			filesystemResource,
 			validated
 		);
 	}

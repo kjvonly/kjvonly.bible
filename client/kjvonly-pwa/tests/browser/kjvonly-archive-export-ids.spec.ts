@@ -32,6 +32,13 @@ import type {
 const OBJECT_TYPE =
 	'archive/browser-test';
 
+
+const DATA_TYPE =
+	'archive/browser-test';
+
+const DATA_VERSION =
+	1;
+
 const PUBLISHER =
 	'a'.repeat(
 		64
@@ -194,6 +201,10 @@ function createArchiveRecord(
 			objectType:
 				OBJECT_TYPE,
 			objectId,
+			dataType:
+				DATA_TYPE,
+			dataVersion:
+				DATA_VERSION,
 			value: {
 				id:
 					objectId,

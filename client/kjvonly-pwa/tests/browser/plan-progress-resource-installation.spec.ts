@@ -5,6 +5,9 @@ import {
 } from 'vitest';
 
 import {
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	createResourceInstallationId,
 	createResourceReceiptId
 } from '$lib/resource';
@@ -18,42 +21,32 @@ import {
 } from '$lib/domains/reading-plans/persistence/indexeddb-plan-progress-store';
 
 import {
-	IndexedDBPlanProgressInstallationTransaction
-} from '$lib/domains/reading-plans/persistence/plan-progress-installation-transaction';
-
-import {
 	PLAN_PROGRESS_OBJECT_TYPE
 } from '$lib/domains/reading-plans/persistence/plan-progress-store';
 
 import {
-	PlanProgressInstaller
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-installer';
+	PLAN_PROGRESS_DATA_TYPE,
+	PLAN_PROGRESS_DATA_VERSION,
+	PLAN_PROGRESS_RESOURCE_TYPE,
+	PlanProgressDataTypeHandler,
+	PlanProgressDomainObjectFactory
+} from '$lib/domains/reading-plans';
 
 import {
-	PlanProgressInterpreter
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-interpreter';
-
-import {
-	PlanProgressResourceHandler
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-handler';
-
-import {
-	PLAN_PROGRESS_RESOURCE_TYPE
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource';
-
-import {
-	PlanProgressValidator
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-validator';
-
-import {
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
+	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
+
+import {
 	createBrowserTestPublisher,
-	createResourceInstallationTestService
+	createGenericResourceInstallationTestService
 } from './support/resource-installation-test-service';
 
 describe(
@@ -72,7 +65,7 @@ describe(
 					'browser-subscription';
 
 				const resourceId =
-					`${PLAN_PROGRESS_RESOURCE_TYPE}/${group}/${subscriptionId}`;
+					`kjvonly/reading-plans/plan-progress/${group}/${subscriptionId}`;
 
 				const value = {
 					completedReadingIndexes: [
@@ -82,22 +75,31 @@ describe(
 					]
 				};
 
+				const genericInstaller =
+					new GenericResourceInstaller(
+						new ResourceDataTypeResolver([
+							new PlanProgressDataTypeHandler()
+						]),
+						new ResourceDomainObjectFactoryResolver([
+							new PlanProgressDomainObjectFactory()
+						]),
+						new IndexedDBGenericResourceInstallationTransaction(
+							getApplicationDB
+						)
+					);
+
 				const service =
-					createResourceInstallationTestService(
-						new PlanProgressResourceHandler(
-							new PlanProgressInterpreter(),
-							new PlanProgressValidator(),
-							new PlanProgressInstaller(
-								new IndexedDBPlanProgressInstallationTransaction(
-									getApplicationDB
-								)
-							)
-						),
+					createGenericResourceInstallationTestService(
+						genericInstaller,
 						{
 							publisher,
 							resourceId,
 							resourceType:
 								PLAN_PROGRESS_RESOURCE_TYPE,
+							dataType:
+								PLAN_PROGRESS_DATA_TYPE,
+							dataVersion:
+								PLAN_PROGRESS_DATA_VERSION,
 							value,
 							modifiedAt:
 								200
@@ -160,14 +162,49 @@ describe(
 					...value
 				});
 
+				const db =
+					await getApplicationDB();
+
+				expect(
+					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							PLAN_PROGRESS_OBJECT_TYPE,
+							progressId
+						)
+					)
+				).toEqual({
+					id:
+						createStoredDomainObjectId(
+							PLAN_PROGRESS_OBJECT_TYPE,
+							progressId
+						),
+
+					objectType:
+						PLAN_PROGRESS_OBJECT_TYPE,
+
+					objectId:
+						progressId,
+
+					dataType:
+						PLAN_PROGRESS_DATA_TYPE,
+
+					dataVersion:
+						1,
+
+					value: {
+						id:
+							progressId,
+
+						...value
+					}
+				});
+
 				const installationId =
 					createResourceInstallationId(
 						PLAN_PROGRESS_OBJECT_TYPE,
 						progressId
 					);
-
-				const db =
-					await getApplicationDB();
 
 				expect(
 					await db.get(

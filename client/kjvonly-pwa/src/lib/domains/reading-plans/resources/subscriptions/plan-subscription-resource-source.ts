@@ -3,35 +3,82 @@ import type {
 } from '$lib/resource';
 
 import {
-	parseResourceIdentifier
-} from '$lib/resource';
-
-import {
 	createPlanSubscriptionId
 } from '../../models/plan-subscription-id';
 
+import {
+	createReadingPlanResourceId,
+	parseReadingPlanResourceId
+} from '../reading-plan-resource-id';
+
+/** Application type represented by Reading Plan Subscription Resources. */
 export const PLAN_SUBSCRIPTION_RESOURCE_TYPE =
-	'kjvonly/plans/subscriptions';
+	'reading-plans/plan-subscription';
+
+/** Semantic payload contract for Reading Plan subscriptions. */
+export const PLAN_SUBSCRIPTION_DATA_TYPE =
+	'kjvonly.reading-plan.subscription';
+
+/** Current semantic version of the Reading Plan subscription payload contract. */
+export const PLAN_SUBSCRIPTION_DATA_VERSION =
+	1;
 
 export const DEFAULT_PLAN_SUBSCRIPTION_GROUP =
 	'default';
+
+export interface PlanSubscriptionResourceIdentity {
+	readonly group: string;
+	readonly subscriptionId?: string;
+}
 
 export interface PlanSubscriptionResourceSource {
 	readonly group: string;
 }
 
+export function createPlanSubscriptionResourceId(
+	group: string,
+	subscriptionId?: string
+): string {
+	return createReadingPlanResourceId(
+		'plan-subscription',
+		group,
+		...(subscriptionId === undefined
+			? []
+			: [subscriptionId])
+	);
+}
+
+export function parsePlanSubscriptionResourceId(
+	resourceId: string
+): PlanSubscriptionResourceIdentity {
+	const [
+		group,
+		subscriptionId
+	] = parseReadingPlanResourceId(
+		resourceId,
+		'plan-subscription',
+		[1, 2],
+		'Plan Subscription'
+	);
+
+	return {
+		group,
+		...(subscriptionId === undefined
+			? {}
+			: { subscriptionId })
+	};
+}
+
 export function parsePlanSubscriptionResourceSource(
 	source: PublishedResourceReference
 ): PlanSubscriptionResourceSource {
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parsePlanSubscriptionResourceId(
 			source.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		PLAN_SUBSCRIPTION_RESOURCE_TYPE ||
-		identifier.path.length !== 1
+		identity.subscriptionId !== undefined
 	) {
 		throw new Error(
 			`Invalid Plan Subscription Resource source: ${source.resourceId}`
@@ -40,7 +87,7 @@ export function parsePlanSubscriptionResourceSource(
 
 	return {
 		group:
-			identifier.path[0]
+			identity.group
 	};
 }
 
@@ -50,7 +97,9 @@ export function createDefaultPlanSubscriptionSelection(
 	return {
 		publisher,
 		resourceId:
-			`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/${DEFAULT_PLAN_SUBSCRIPTION_GROUP}`
+			createPlanSubscriptionResourceId(
+				DEFAULT_PLAN_SUBSCRIPTION_GROUP
+			)
 	};
 }
 

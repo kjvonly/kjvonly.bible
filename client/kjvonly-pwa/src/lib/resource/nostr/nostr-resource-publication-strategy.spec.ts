@@ -72,7 +72,13 @@ describe(
 						PUBKEY,
 
 					resourceType:
-						'kjvonly/overlays/text-markup',
+						'bible/text-markup',
+
+					dataType:
+						'kjvonly.bible.text-markup',
+
+					dataVersion:
+						1,
 
 					resourceId:
 						'kjvonly/overlays/text-markup/kjvs/1_1',
@@ -122,7 +128,15 @@ describe(
 						],
 						[
 							't',
-							'kjvonly/overlays/text-markup'
+							'bible/text-markup'
+						],
+						[
+							'dataType',
+							'kjvonly.bible.text-markup'
+						],
+						[
+							'dataVersion',
+							'1'
 						],
 						[
 							'representation',
@@ -198,6 +212,12 @@ describe(
 						resourceType:
 							'fs',
 
+						dataType:
+							'fs',
+
+						dataVersion:
+							1,
+
 						resourceId:
 							'my-filesystem',
 
@@ -254,7 +274,7 @@ describe(
 					publisher:
 						PUBKEY,
 					resourceType:
-						'kjvonly/notes/entries',
+						'notes/note',
 					resourceId:
 						'kjvonly/notes/entries/default/note-1',
 
@@ -319,7 +339,11 @@ describe(
 						publisher:
 							'other-publisher',
 						resourceType:
-							'kjvonly/overlays/text-markup',
+							'bible/text-markup',
+						dataType:
+							'kjvonly.bible.text-markup',
+						dataVersion:
+							1,
 						resourceId:
 							'kjvonly/overlays/text-markup/kjvs/1_1',
 						representation:
@@ -367,7 +391,11 @@ describe(
 						publisher:
 							PUBKEY,
 						resourceType:
-							'kjvonly/overlays/text-markup',
+							'bible/text-markup',
+						dataType:
+							'kjvonly.bible.text-markup',
+						dataVersion:
+							1,
 						resourceId:
 							'kjvonly/overlays/text-markup/kjvs/1_1',
 						representation:

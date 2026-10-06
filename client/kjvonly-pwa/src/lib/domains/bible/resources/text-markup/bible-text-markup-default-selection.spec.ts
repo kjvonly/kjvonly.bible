@@ -6,11 +6,11 @@ import {
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '../chapters/bible-chapter-interpreter';
+} from '../chapters/bible-chapter-resource';
 
 import {
 	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-} from './bible-text-markup-interpreter';
+} from './bible-text-markup-resource';
 
 import {
 	createDefaultBibleTextMarkupSelection
@@ -30,7 +30,7 @@ describe(
 								'bible-publisher',
 
 							resourceId:
-								`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+								`kjvonly/bible/chapter/kjvs`
 						}
 					)
 				).toEqual({
@@ -38,7 +38,7 @@ describe(
 						'user-pubkey',
 
 					resourceId:
-						`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/kjvs`
+						`kjvonly/bible/text-markup/kjvs`
 				});
 			}
 		);
@@ -59,7 +59,7 @@ describe(
 							}
 						)
 				).toThrow(
-					'Invalid Bible Chapter Resource Type: kjvonly/bible/booknames'
+					'Invalid Bible Chapter Resource ID: kjvonly/bible/booknames/default'
 				);
 			}
 		);
@@ -76,11 +76,11 @@ describe(
 									'bible-publisher',
 
 								resourceId:
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs/1_1`
+									`kjvonly/bible/chapter/kjvs/1_1`
 							}
 						)
 				).toThrow(
-					`Invalid Bible Chapter Resource source: ${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs/1_1`
+					`Invalid Bible Chapter Resource source: kjvonly/bible/chapter/kjvs/1_1`
 				);
 			}
 		);

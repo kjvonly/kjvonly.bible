@@ -141,6 +141,14 @@ export class NostrResourcePublicationStrategy
 						resource.resourceType
 					],
 					[
+						'dataType',
+						resource.dataType
+					],
+					[
+						'dataVersion',
+						`${resource.dataVersion}`
+					],
+					[
 						'representation',
 						resource.representation
 					],

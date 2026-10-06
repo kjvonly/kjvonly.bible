@@ -11,7 +11,10 @@ import type {
 } from '$lib/resource';
 
 import {
-	PLAN_SUBSCRIPTION_RESOURCE_TYPE
+	PLAN_SUBSCRIPTION_DATA_TYPE,
+	PLAN_SUBSCRIPTION_DATA_VERSION,
+	PLAN_SUBSCRIPTION_RESOURCE_TYPE,
+	createPlanSubscriptionResourceId
 } from './plan-subscription-resource-source';
 
 export class PlanSubscriptionResourcePublication {
@@ -36,8 +39,17 @@ export class PlanSubscriptionResourcePublication {
 			resourceType:
 				PLAN_SUBSCRIPTION_RESOURCE_TYPE,
 
+			dataType:
+				PLAN_SUBSCRIPTION_DATA_TYPE,
+
+			dataVersion:
+				PLAN_SUBSCRIPTION_DATA_VERSION,
+
 			resourceId:
-				`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/${group}/${subscriptionId}`,
+				createPlanSubscriptionResourceId(
+					group,
+					subscriptionId
+				),
 
 			representation:
 				'content',

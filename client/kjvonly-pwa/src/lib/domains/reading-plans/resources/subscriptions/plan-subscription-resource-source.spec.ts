@@ -22,7 +22,7 @@ describe(
 						publisher:
 							'publisher',
 						resourceId:
-							`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/study`
+							'kjvonly/reading-plans/plan-subscription/study'
 					})
 				).toEqual({
 					group:
@@ -42,7 +42,7 @@ describe(
 					publisher:
 						'publisher',
 					resourceId:
-						`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default`
+						'kjvonly/reading-plans/plan-subscription/default'
 				});
 			}
 		);
@@ -56,12 +56,29 @@ describe(
 							publisher:
 								'publisher',
 							resourceId:
-								`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default`
+								'kjvonly/reading-plans/plan-subscription/default'
 						},
 						'subscription-1'
 					)
 				).toBe(
 					'publisher/default/subscription-1'
+				);
+			}
+		);
+
+		it(
+			'rejects the historical Plan Subscription Resource ID',
+			() => {
+				expect(
+					() =>
+						parsePlanSubscriptionResourceSource({
+							publisher:
+								'publisher',
+							resourceId:
+								'kjvonly/plans/subscriptions/default'
+						})
+				).toThrow(
+					'Invalid Plan Subscription Resource ID'
 				);
 			}
 		);
@@ -75,7 +92,7 @@ describe(
 							publisher:
 								'publisher',
 							resourceId:
-								`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default/subscription-1`
+								'kjvonly/reading-plans/plan-subscription/default/subscription-1'
 						})
 				).toThrow(
 					'Invalid Plan Subscription Resource source'

@@ -196,7 +196,7 @@ describe(
 							publisher:
 								'publisher',
 							resourceType:
-								'kjvonly/overlays/text-markup',
+								'bible/text-markup',
 							resourceId:
 								'kjvonly/overlays/text-markup/kjvs/1_1'
 						}
@@ -373,7 +373,7 @@ function createEntry() {
 				'publisher',
 
 			resourceType:
-				'kjvonly/overlays/text-markup',
+				'bible/text-markup',
 
 			resourceId:
 				'kjvonly/overlays/text-markup/kjvs/1_1',

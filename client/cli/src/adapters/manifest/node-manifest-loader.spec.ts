@@ -389,9 +389,11 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/bible/chapters/kjvs/\${key}"]
+        - ["d", "kjvonly/bible/chapter/kjvs/\${key}"]
         - ["m", "application/json+gzip+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "content"]
 
 collections: {}
@@ -423,7 +425,7 @@ collections: {}
 						.tags[0]
 				).toEqual([
 					'd',
-					'kjvonly/bible/chapters/kjvs/${key}'
+					'kjvonly/bible/chapter/kjvs/${key}'
 				]);
 			}
 		);

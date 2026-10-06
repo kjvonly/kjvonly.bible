@@ -82,7 +82,7 @@ function createResource(
 				],
 				[
 					't',
-					'kjvonly/test'
+					'test/resource'
 				]
 			]
 		}

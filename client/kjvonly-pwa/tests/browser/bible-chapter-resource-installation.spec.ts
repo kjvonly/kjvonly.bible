@@ -1,49 +1,38 @@
 import {
+	beforeEach,
 	describe,
 	expect,
 	it
 } from 'vitest';
 
 import {
-	type PublishedResourceReference,
-	type ResourceRepresentation,
-	type ResourceRepresentationType,
-	type VerifiedResourceContent,
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	createResourceInstallationId,
-	createResourceReceiptId,
-	type ResourceResolutionResult,
-	ResourceContentDecoratorBuilder,
-	JsonResourceContentDecorator,
-	ResourceContentDecoder,
-	ResourceService,
-	ResourceProcessor,
-	ResourceReceiptService
+	createResourceReceiptId
 } from '$lib/resource';
 
 import {
-	ResourceResolutionProcessor
-} from '$lib/resource/services/resource-resolution-processor';
+	BIBLE_CHAPTER_DATA_TYPE,
+	BIBLE_CHAPTER_DATA_VERSION,
+	BIBLE_CHAPTER_RESOURCE_TYPE,
+	BibleChapterDataTypeHandler,
+	BibleChapterDomainObjectFactory
+} from '$lib/domains/bible';
 
 import {
-	BibleChapterInterpreter
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-	BibleChapterValidator
-} from '$lib/domains/bible/resources/chapters/bible-chapter-validator';
-
-import {
-	BibleChapterInstaller,
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
-	BibleChapterResourceHandler
-} from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
+	BIBLE_VERSION_OBJECT_TYPE
+} from '$lib/domains/bible/persistence/bible-version-store';
 
 import {
-	IndexedDBBibleChapterInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
+	createBibleVersionId,
+	createChapterId
+} from '$lib/domains/bible/utils/bible-identity';
 
 import {
 	DOMAIN_OBJECTS,
@@ -54,54 +43,80 @@ import {
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
-	createBibleVersionId,
-	createChapterId
-} from '$lib/domains/bible/utils/bible-identity';
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
 
 import {
-	IndexedDBResourceReceiptStore
-} from '$lib/resource/receipts/indexeddb-resource-receipt-store';
+	createBrowserTestPublisher,
+	createGenericResourceInstallationTestService
+} from './support/resource-installation-test-service';
 
-const BIBLE_VERSION_OBJECT_TYPE =
-	'bible/version';
+const BIBLE_ID =
+	'kjvs-resource-id';
+
+const SEMANTIC_VERSION =
+	'King James Version';
 
 describe(
 	'Bible Chapter Resource installation',
 	() => {
+		beforeEach(
+			async () => {
+				const db =
+					await getApplicationDB();
+
+				await db.clear(
+					DOMAIN_OBJECTS
+				);
+
+				await db.clear(
+					RESOURCE_INSTALLATIONS
+				);
+
+				await db.clear(
+					RESOURCE_RECEIPTS
+				);
+			}
+		);
+
 		it(
-			'decodes validates and installs a Chapter bundle into IndexedDB',
+			'installs a bundle with Domain identity from bibleId and semantic version from Resource metadata',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/bible/chapters/kjvs';
-
-				const eventId =
-					'a'.repeat(
-						64
-					);
+					`kjvonly/bible/chapter/${BIBLE_ID}`;
 
 				const service =
-					createService([
-						createVerifiedContent({
+					createGenericResourceInstallationTestService(
+						createInstaller(),
+						{
 							publisher,
 							resourceId,
+							resourceType:
+								BIBLE_CHAPTER_RESOURCE_TYPE,
+							dataType:
+								BIBLE_CHAPTER_DATA_TYPE,
+							dataVersion:
+								BIBLE_CHAPTER_DATA_VERSION,
+							metadata: {
+								version:
+									SEMANTIC_VERSION
+							},
+							value: {
+								[`${BIBLE_ID}/1_1`]:
+									createChapterContent(
+										1
+									),
 
-							content:
-								JSON.stringify({
-									'kjvs/1_1':
-										createChapterContent(
-											1
-										),
-
-									'kjvs/1_2':
-										createChapterContent(
-											2
-										)
-								})
-						})
-					]);
+								[`${BIBLE_ID}/1_2`]:
+									createChapterContent(
+										2
+									)
+							}
+						}
+					);
 
 				const result =
 					await service.install({
@@ -110,56 +125,61 @@ describe(
 					});
 
 				expect(
-					result
-				).toEqual({
-					requested: {
+					result.resources
+				).toEqual([
+					{
+						reference: {
+							publisher,
+							resourceId
+						},
+
+						resourceType:
+							BIBLE_CHAPTER_RESOURCE_TYPE,
+
+						status:
+							'handled'
+					}
+				]);
+
+				const bibleVersionId =
+					createBibleVersionId(
 						publisher,
-						resourceId
-					},
-
-					found:
-						true,
-
-					resources: [
-						{
-							reference: {
-								publisher,
-								resourceId
-							},
-
-							resourceType:
-								'kjvonly/bible/chapters',
-
-							status:
-								'handled'
-						}
-					]
-				});
+						BIBLE_ID
+					);
 
 				const chapter1Id =
 					createChapterId(
-						createBibleVersionId(
-							publisher,
-							'kjvs'
-						),
+						bibleVersionId,
 						'1_1'
 					);
 
 				const chapter2Id =
 					createChapterId(
-						createBibleVersionId(
-							publisher,
-							'kjvs'
-						),
+						bibleVersionId,
 						'1_2'
 					);
 
-				expect(
-					await getDomainObject(
+				await expect(
+					getDomainObject(
+						BIBLE_VERSION_OBJECT_TYPE,
+						bibleVersionId
+					)
+				).resolves.toEqual({
+					id:
+						bibleVersionId,
+
+					publisher,
+
+					version:
+						SEMANTIC_VERSION
+				});
+
+				await expect(
+					getDomainObject(
 						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter1Id
 					)
-				).toEqual({
+				).resolves.toEqual({
 					id:
 						chapter1Id,
 
@@ -168,12 +188,12 @@ describe(
 					)
 				});
 
-				expect(
-					await getDomainObject(
+				await expect(
+					getDomainObject(
 						BIBLE_CHAPTER_OBJECT_TYPE,
 						chapter2Id
 					)
-				).toEqual({
+				).resolves.toEqual({
 					id:
 						chapter2Id,
 
@@ -182,44 +202,57 @@ describe(
 					)
 				});
 
-				const bibleVersionId =
-					createBibleVersionId(
-						publisher,
-						'kjvs'
-					);
+				const db =
+					await getApplicationDB();
 
-				expect(
-					await getDomainObject(
-						BIBLE_VERSION_OBJECT_TYPE,
-						bibleVersionId
+				await expect(
+					db.get(
+						RESOURCE_INSTALLATIONS,
+						createResourceInstallationId(
+							BIBLE_VERSION_OBJECT_TYPE,
+							bibleVersionId
+						)
 					)
-				).toEqual({
+				).resolves.toEqual({
 					id:
+						createResourceInstallationId(
+							BIBLE_VERSION_OBJECT_TYPE,
+							bibleVersionId
+						),
+
+					objectType:
+						BIBLE_VERSION_OBJECT_TYPE,
+
+					objectId:
 						bibleVersionId,
 
 					publisher,
 
-					version:
-						'kjvs'
+					resourceId,
+
+					metadata: {
+						version:
+							SEMANTIC_VERSION
+					},
+
+					modifiedAt:
+						200
 				});
 
-				const installationId =
-					createResourceInstallationId(
-						BIBLE_CHAPTER_OBJECT_TYPE,
-						chapter1Id
-					);
-
-				const db =
-					await getApplicationDB();
-
-				expect(
-					await db.get(
+				await expect(
+					db.get(
 						RESOURCE_INSTALLATIONS,
-						installationId
+						createResourceInstallationId(
+							BIBLE_CHAPTER_OBJECT_TYPE,
+							chapter1Id
+						)
 					)
-				).toEqual({
+				).resolves.toEqual({
 					id:
-						installationId,
+						createResourceInstallationId(
+							BIBLE_CHAPTER_OBJECT_TYPE,
+							chapter1Id
+						),
 
 					objectType:
 						BIBLE_CHAPTER_OBJECT_TYPE,
@@ -231,29 +264,26 @@ describe(
 
 					resourceId,
 
+					metadata: {
+						version:
+							SEMANTIC_VERSION
+					},
+
 					modifiedAt:
 						200
 				});
 
-				expect(
-					await db.get(
+				await expect(
+					db.get(
 						RESOURCE_RECEIPTS,
 						createResourceReceiptId(
 							publisher,
 							resourceId
 						)
 					)
-				).toEqual({
-					id:
-						createResourceReceiptId(
-							publisher,
-							resourceId
-						),
-
+				).resolves.toMatchObject({
 					publisher,
-
 					resourceId,
-
 					modifiedAt:
 						200
 				});
@@ -261,38 +291,43 @@ describe(
 		);
 
 		it(
-			'installs nothing when one Chapter in a bundle fails validation',
+			'installs nothing when one Chapter in a bundle violates Bible invariants',
 			async () => {
 				const publisher =
-					createPublisher();
+					createBrowserTestPublisher();
 
 				const resourceId =
-					'kjvonly/bible/chapters/kjvs';
+					`kjvonly/bible/chapter/${BIBLE_ID}`;
 
 				const service =
-					createService([
-						createVerifiedContent({
+					createGenericResourceInstallationTestService(
+						createInstaller(),
+						{
 							publisher,
 							resourceId,
+							resourceType:
+								BIBLE_CHAPTER_RESOURCE_TYPE,
+							dataType:
+								BIBLE_CHAPTER_DATA_TYPE,
+							dataVersion:
+								BIBLE_CHAPTER_DATA_VERSION,
+							metadata: {
+								version:
+									SEMANTIC_VERSION
+							},
+							value: {
+								[`${BIBLE_ID}/1_1`]:
+									createChapterContent(
+										1
+									),
 
-							content:
-								JSON.stringify({
-									'kjvs/1_1':
-										createChapterContent(
-											1
-										),
-
-									'kjvs/1_2': {
-										...createChapterContent(
-											2
-										),
-
-										bookName:
-											''
-									}
-								})
-						})
-					]);
+								[`${BIBLE_ID}/1_2`]:
+									createChapterContent(
+										3
+									)
+							}
+						}
+					);
 
 				const result =
 					await service.install({
@@ -301,498 +336,52 @@ describe(
 					});
 
 				expect(
-					result.found
-				).toBe(
-					true
-				);
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						reference: {
-							publisher,
-							resourceId
-						},
-
-						resourceType:
-							'kjvonly/bible/chapters',
-
-						status:
-							'failed',
-
-						error:
-							expect.any(
-								Error
-							)
-					}
-				]);
-
-				const chapter1Id =
-					createChapterId(
-						createBibleVersionId(
-							publisher,
-							'kjvs'
-						),
-						'1_1'
-					);
-
-				const chapter2Id =
-					createChapterId(
-						createBibleVersionId(
-							publisher,
-							'kjvs'
-						),
-						'1_2'
-					);
-
-				expect(
-					await getDomainObject(
-						BIBLE_CHAPTER_OBJECT_TYPE,
-						chapter1Id
-					)
-				).toBeUndefined();
-
-				expect(
-					await getDomainObject(
-						BIBLE_CHAPTER_OBJECT_TYPE,
-						chapter2Id
-					)
-				).toBeUndefined();
-
-				expect(
-					await getDomainObject(
-						BIBLE_VERSION_OBJECT_TYPE,
-						createBibleVersionId(
-							publisher,
-							'kjvs'
-						)
-					)
-				).toBeUndefined();
-
-				const db =
-					await getApplicationDB();
-
-				expect(
-					await db.get(
-						RESOURCE_INSTALLATIONS,
-						createResourceInstallationId(
-							BIBLE_CHAPTER_OBJECT_TYPE,
-							chapter1Id
-						)
-					)
-				).toBeUndefined();
-
-				expect(
-					await db.get(
-						RESOURCE_RECEIPTS,
-						createResourceReceiptId(
-							publisher,
-							resourceId
-						)
-					)
-				).toBeUndefined();
-			}
-		);
-
-		it(
-			'commits each resolved descriptor independently',
-			async () => {
-				const publisher =
-					createPublisher();
-
-				const chapter1ResourceId =
-					'kjvonly/bible/chapters/kjvs/1_1';
-
-				const chapter2ResourceId =
-					'kjvonly/bible/chapters/kjvs/1_2';
-
-				const eventA =
-					'a'.repeat(
-						64
-					);
-
-				const eventB =
-					'b'.repeat(
-						64
-					);
-
-				const service =
-					createService(
-						[
-							createVerifiedContent({
-								publisher,
-
-								resourceId:
-									chapter1ResourceId,
-
-								modifiedAt:
-									100,
-
-								content:
-									JSON.stringify(
-										createChapterContent(
-											1
-										)
-									)
-							}),
-
-							createVerifiedContent({
-								publisher,
-
-								resourceId:
-									chapter2ResourceId,
-
-								modifiedAt:
-									200,
-
-								content:
-									JSON.stringify({
-										...createChapterContent(
-											2
-										),
-
-										bookName:
-											''
-									})
-							})
-						],
-						'descriptors'
-					);
-
-				const requestedResourceId =
-					'kjvonly/bible/chapters/kjvs';
-
-				const result =
-					await service.install({
-						publisher,
-
-						resourceId:
-							requestedResourceId
-					});
-
-				expect(
-					result.found
-				).toBe(
-					true
-				);
-
-				expect(
-					result.requested
-				).toEqual({
-					publisher,
-
-					resourceId:
-						requestedResourceId
-				});
-
-				expect(
-					result.resources
-				).toEqual([
-					{
-						reference: {
-							publisher,
-
-							resourceId:
-								chapter1ResourceId
-						},
-
-						resourceType:
-							'kjvonly/bible/chapters',
-
-						status:
-							'handled'
-					},
-
-					{
-						reference: {
-							publisher,
-
-							resourceId:
-								chapter2ResourceId
-						},
-
-						resourceType:
-							'kjvonly/bible/chapters',
-
-						status:
-							'failed',
-
-						error:
-							expect.any(
-								Error
-							)
-					}
-				]);
-
-				const chapter1Id =
-					createChapterId(
-						createBibleVersionId(
-							publisher,
-							'kjvs'
-						),
-						'1_1'
-					);
-
-				const chapter2Id =
-					createChapterId(
-						createBibleVersionId(
-							publisher,
-							'kjvs'
-						),
-						'1_2'
-					);
-
-				/*
-				 * Descriptor A completed its own
-				 * installation transaction.
-				 */
-				expect(
-					await getDomainObject(
-						BIBLE_CHAPTER_OBJECT_TYPE,
-						chapter1Id
-					)
-				).toEqual({
-					id:
-						chapter1Id,
-
-					...createChapterContent(
-						1
-					)
-				});
-
-				const db =
-					await getApplicationDB();
-
-				expect(
-					await db.get(
-						RESOURCE_INSTALLATIONS,
-						createResourceInstallationId(
-							BIBLE_CHAPTER_OBJECT_TYPE,
-							chapter1Id
-						)
-					)
+					result.resources[0]
 				).toMatchObject({
-					objectId:
-						chapter1Id,
-
-					modifiedAt:
-						100
+					status:
+						'failed'
 				});
 
-				/*
-				 * Descriptor B failed validation,
-				 * so its transaction never began.
-				 */
-				expect(
-					await getDomainObject(
+				const bibleVersionId =
+					createBibleVersionId(
+						publisher,
+						BIBLE_ID
+					);
+
+				await expect(
+					getDomainObject(
+						BIBLE_VERSION_OBJECT_TYPE,
+						bibleVersionId
+					)
+				).resolves.toBeUndefined();
+
+				await expect(
+					getDomainObject(
 						BIBLE_CHAPTER_OBJECT_TYPE,
-						chapter2Id
-					)
-				).toBeUndefined();
-
-				expect(
-					await db.get(
-						RESOURCE_INSTALLATIONS,
-						createResourceInstallationId(
-							BIBLE_CHAPTER_OBJECT_TYPE,
-							chapter2Id
+						createChapterId(
+							bibleVersionId,
+							'1_1'
 						)
 					)
-				).toBeUndefined();
-
-				expect(
-					await db.get(
-						RESOURCE_RECEIPTS,
-						createResourceReceiptId(
-							publisher,
-							chapter1ResourceId
-						)
-					)
-				).toEqual({
-					id:
-						createResourceReceiptId(
-							publisher,
-							chapter1ResourceId
-						),
-
-					publisher,
-
-					resourceId:
-						chapter1ResourceId,
-
-					modifiedAt:
-						100
-				});
-
-				expect(
-					await db.get(
-						RESOURCE_RECEIPTS,
-						createResourceReceiptId(
-							publisher,
-							chapter2ResourceId
-						)
-					)
-				).toBeUndefined();
+				).resolves.toBeUndefined();
 			}
 		);
 	}
 );
 
-function createService(
-	contents:
-		readonly VerifiedResourceContent[],
-
-	representation:
-		ResourceRepresentationType =
-		'content'
-): ResourceService {
-
-	const discovery =
-		new FakeDiscovery(
-			createRepresentation(
-				representation
-			)
-		);
-
-	const resolver =
-		new FakeResolver(
-			contents
-		);
-
-	const decoder =
-		createDecoder();
-
-	const receiptStore =
-		new IndexedDBResourceReceiptStore(
+function createInstaller():
+	GenericResourceInstaller {
+	return new GenericResourceInstaller(
+		new ResourceDataTypeResolver([
+			new BibleChapterDataTypeHandler(),
+		]),
+		new ResourceDomainObjectFactoryResolver([
+			new BibleChapterDomainObjectFactory()
+		]),
+		new IndexedDBGenericResourceInstallationTransaction(
 			getApplicationDB
-		);
-
-	const receiptService =
-		new ResourceReceiptService(
-			receiptStore
-		);
-
-	const installationTransaction =
-		new IndexedDBBibleChapterInstallationTransaction(
-			getApplicationDB
-		);
-
-	const installer =
-		new BibleChapterInstaller(
-			installationTransaction
-		);
-
-	const handler =
-		new BibleChapterResourceHandler(
-			new BibleChapterInterpreter(),
-			new BibleChapterValidator(),
-			installer
-		);
-
-	const resolutionProcessor =
-		new ResourceResolutionProcessor(
-			decoder,
-			receiptService,
-			[
-				handler
-			]
-		);
-
-	const processor =
-		new ResourceProcessor(
-			resolver,
-			resolutionProcessor
-		);
-
-	return new ResourceService(
-		discovery,
-		processor
+		)
 	);
-}
-
-function createDecoder():
-	ResourceContentDecoder {
-
-	const builder =
-		new ResourceContentDecoratorBuilder([
-			{
-				token:
-					'application/json',
-
-				decorate:
-					(inner) =>
-						new JsonResourceContentDecorator(
-							inner
-						)
-			}
-		]);
-
-	return new ResourceContentDecoder(
-		builder
-	);
-}
-
-function createVerifiedContent(
-	overrides:
-		Partial<VerifiedResourceContent> =
-		{}
-): VerifiedResourceContent {
-
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/bible/chapters/kjvs',
-
-		resourceType:
-			'kjvonly/bible/chapters',
-
-		modifiedAt:
-			200,
-
-		mediaType:
-			'application/json',
-
-		content:
-			'{}',
-
-		...overrides
-	};
-}
-
-function createRepresentation(
-	representation:
-		ResourceRepresentationType
-): ResourceRepresentation {
-
-	return {
-		publisher:
-			'publisher',
-
-		resourceId:
-			'kjvonly/bible/chapters/kjvs',
-
-		resourceType:
-			'kjvonly/bible/chapters',
-
-		eventId:
-			'c'.repeat(
-				64
-			),
-
-		modifiedAt:
-			200,
-
-		representation,
-
-		mediaType:
-			'application/json',
-
-		payload:
-			'{}'
-	};
 }
 
 function createChapterContent(
@@ -812,30 +401,10 @@ function createChapterContent(
 	};
 }
 
-function createPublisher():
-	string {
-
-	const value =
-		crypto
-			.randomUUID()
-			.replaceAll(
-				'-',
-				''
-			);
-
-	return (
-		value +
-		value
-	);
-}
-
 async function getDomainObject(
 	objectType: string,
 	objectId: string
-): Promise<
-	unknown |
-	undefined
-> {
+): Promise<unknown | undefined> {
 	const db =
 		await getApplicationDB();
 
@@ -849,49 +418,4 @@ async function getDomainObject(
 		);
 
 	return stored?.value;
-}
-
-class FakeDiscovery {
-
-	constructor(
-		private readonly representation:
-			ResourceRepresentation
-	) { }
-
-	async get(
-		_reference:
-			PublishedResourceReference
-	): Promise<
-		ResourceRepresentation |
-		null
-	> {
-		return this.representation;
-	}
-}
-
-class FakeResolver {
-
-	constructor(
-		private readonly contents:
-			readonly VerifiedResourceContent[]
-	) {}
-
-	async resolve(
-		_resource:
-			ResourceRepresentation
-	): Promise<
-		ResourceResolutionResult
-	> {
-
-		return {
-			contents:
-				this.contents,
-
-			current:
-				[],
-
-			failures:
-				[]
-		};
-	}
 }

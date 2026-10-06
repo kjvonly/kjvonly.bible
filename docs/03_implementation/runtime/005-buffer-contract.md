@@ -552,10 +552,10 @@ Record<
 For example:
 
 ```text
-kjvonly/bible/chapters
+bible/chapter
     → publisher + chapter Resource ID
 
-kjvonly/overlays/paragraphs
+bible/paragraphs
     → publisher + paragraph Resource ID
 ```
 
@@ -874,9 +874,9 @@ publisher
 resourceId
 ```
 
-and the Resource type encoded by the Resource ID must match the map key.
+The map key is the explicit Resource Type. `resourceId` is treated as an opaque identity value by generic application/runtime code; it is not parsed to rediscover or verify the Resource Type.
 
-Invalid selections are rejected.
+Invalid selection shapes are rejected.
 
 The runtime does not silently rebuild invalid persisted Buffer selections from
 current global application state.

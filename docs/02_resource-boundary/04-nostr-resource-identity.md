@@ -75,14 +75,16 @@ When represented as a Nostr addressable event, that identifier is carried in the
 For example:
 
 ```text
-kjvonly/bible/chapters/kjv
+bible-a/1_1
 ```
 
 may be represented as:
 
 ```json
-["d", "kjvonly/bible/chapters/kjv"]
+["d", "bible-a/1_1"]
 ```
+
+Application Resource IDs may be path-like, such as `kjvonly/bible/chapter/kjvs/1_1`, but that grammar is owned by the Resource family. Resource Type is not encoded or inferred generically from `d`.
 
 The `d` tag identifies the Resource within a publisher's address space and Nostr kind.
 
@@ -131,9 +133,9 @@ The protocol does not assign additional meaning to why the identity changed.
 For example, a publisher may choose identifiers such as:
 
 ```text
-kjvonly/bible/chapters/kjv
+kjvonly/bible/chapter/kjv
 
-kjvonly/bible/chapters/kjv/v2
+kjvonly/bible/chapter/kjv/v2
 ```
 
 These are different Resource Identifiers and therefore different Published Resources when published under the same kind and publisher.

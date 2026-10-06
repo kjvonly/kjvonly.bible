@@ -446,10 +446,10 @@ describe(
 						publisher:
 							'publisher-a',
 						resourceId:
-							'kjvonly/bible/chapters/kjvs'
+							'kjvonly/bible/chapter/kjvs'
 					})
 				).rejects.toThrow(
-					'Invalid Bible Booknames Resource Type: kjvonly/bible/chapters'
+					'Invalid Bible Booknames Resource ID: kjvonly/bible/chapter/kjvs'
 				);
 
 				expect(
@@ -485,7 +485,7 @@ describe(
 							'kjvonly/bible/booknames/default/extra'
 					})
 				).rejects.toThrow(
-					'Invalid Bible Booknames Resource source: kjvonly/bible/booknames/default/extra'
+					'Invalid Bible Booknames Resource ID: kjvonly/bible/booknames/default/extra'
 				);
 			}
 		);
@@ -524,7 +524,7 @@ function resultWithStatus(
 					SOURCE,
 
 				resourceType:
-					'kjvonly/bible/booknames',
+					'bible/booknames',
 
 				status
 			}
@@ -549,7 +549,7 @@ function failedResult(
 					SOURCE,
 
 				resourceType:
-					'kjvonly/bible/booknames',
+					'bible/booknames',
 
 				status:
 					'failed',

@@ -111,15 +111,13 @@ Discovery
     ↓
 Resource Representation
     ↓
-Resolution
+Resolution / Decoding
     ↓
-Verified Resource Content
+Decoded Resource Content
     ↓
-Domain Interpretation
+Semantic Datatype Validation
     ↓
-Candidate Domain Object
-    ↓
-Domain Validation
+Domain Object Construction
     ↓
 Installation
     ↓

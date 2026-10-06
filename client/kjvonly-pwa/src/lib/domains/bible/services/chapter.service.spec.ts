@@ -174,7 +174,7 @@ describe(
 							'publisher-a',
 
 						resourceId:
-							'kjvonly/bible/chapters/kjv'
+							'kjvonly/bible/chapter/kjv'
 					});
 
 				const chapters =
@@ -360,12 +360,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/strongs/definitions/kjvs'
+								'kjvonly/strongs/definition/kjvs'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Chapter Resource Type'
+					'Invalid Bible Chapter Resource ID'
 				);
 
 				expect(
@@ -397,7 +397,7 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/bible/chapters/kjvs/1_1'
+								'kjvonly/bible/chapter/kjvs/1_1'
 						}),
 						'1_1'
 					)
@@ -416,7 +416,7 @@ describe(
 		);
 
 		it(
-			'rejects the Bible Chapter Resource Type root as the selected source',
+			'rejects the Bible Chapter Resource ID root as the selected source',
 			async () => {
 				const chapters =
 					new FakeChapterStore();
@@ -434,12 +434,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/bible/chapters'
+								'bible/chapter'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Chapter Resource source'
+					'Invalid Bible Chapter Resource ID'
 				);
 
 				expect(
@@ -565,7 +565,7 @@ function createSource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/bible/chapters/kjvs',
+			'kjvonly/bible/chapter/kjvs',
 
 		...overrides
 	};

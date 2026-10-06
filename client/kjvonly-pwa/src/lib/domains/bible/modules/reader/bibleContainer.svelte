@@ -45,16 +45,14 @@
 	} from '$lib/resource';
 
 	import {
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '../../resources/chapters/bible-chapter-interpreter';
+		BIBLE_CHAPTER_RESOURCE_TYPE,
+		parseBibleChapterResourceId
+	} from '../../resources/chapters/bible-chapter-resource';
 
 	import type {
 		BibleVersion
 	} from '../../models/bible-version.model';
 
-	import {
-		parseResourceIdentifier
-	} from '$lib/resource';
 
 	import {
 		createBibleVersionId
@@ -237,15 +235,15 @@
 	function getBibleVersionId(
 		source: PublishedResourceReference
 	): string {
-		const identifier =
-			parseResourceIdentifier(
+		const identity =
+			parseBibleChapterResourceId(
 				source.resourceId
 			);
 
-		const version =
-			identifier.path[0];
-
-		if (!version) {
+		if (
+			identity.chapterRef !==
+				undefined
+		) {
 			throw new Error(
 				`Invalid Bible Chapter Resource selection: ${source.resourceId}`
 			);
@@ -253,7 +251,7 @@
 
 		return createBibleVersionId(
 			source.publisher,
-			version
+			identity.bibleId
 		);
 	}
 

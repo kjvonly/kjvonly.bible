@@ -37,19 +37,19 @@
 
 	import {
 		BIBLE_CHAPTER_RESOURCE_TYPE
-	} from '../../../resources/chapters/bible-chapter-interpreter';
+	} from '../../../resources/chapters/bible-chapter-resource';
 
 	import {
 		BIBLE_PARAGRAPHS_RESOURCE_TYPE
-	} from '../../../resources/paragraphs/bible-paragraphs-interpreter';
+	} from '../../../resources/paragraphs/bible-paragraphs-resource';
 
 	import {
 		BIBLE_PERICOPES_RESOURCE_TYPE
-	} from '../../../resources/pericopes/bible-pericopes-interpreter';
+	} from '../../../resources/pericopes/bible-pericopes-resource';
 
 	import {
 		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-	} from '../../../resources/text-markup/bible-text-markup-interpreter';
+	} from '../../../resources/text-markup/bible-text-markup-resource';
 
 	import {
 		NOTES_COLLECTION_CHANGED

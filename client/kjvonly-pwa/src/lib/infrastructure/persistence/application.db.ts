@@ -46,8 +46,8 @@ export const FILESYSTEM_ENTRY_PUBLISHER_ROOT_PATH_INDEX =
 export const FILESYSTEM_ENTRY_DATA_TYPE_INDEX =
 	'dataType';
 
-export const FILESYSTEM_ENTRY_CATEGORY_INDEX =
-	'category';
+export const FILESYSTEM_ENTRY_RESOURCE_TYPE_INDEX =
+	'resourceType';
 
 export const OUTBOX_STATUS_INDEX =
 	'status';
@@ -65,7 +65,7 @@ const DATABASE_NAME =
 	'kjvonly-application';
 
 const DATABASE_VERSION =
-	6;
+	7;
 
 export interface StoredDomainObject {
 	readonly id:
@@ -76,6 +76,14 @@ export interface StoredDomainObject {
 
 	readonly objectId:
 	string;
+
+	/** Semantic contract of the persisted value. */
+	readonly dataType:
+	string;
+
+	/** Version of the semantic value contract. */
+	readonly dataVersion:
+	number;
 
 	readonly value:
 	unknown;
@@ -128,7 +136,7 @@ export interface ApplicationDBSchema
 			dataType:
 				string;
 
-			category:
+			resourceType:
 				string;
 		};
 	};
@@ -260,8 +268,8 @@ export function getApplicationDB():
 
 							filesystemEntries
 								.createIndex(
-									FILESYSTEM_ENTRY_CATEGORY_INDEX,
-									'value.descriptor.metadata.category'
+									FILESYSTEM_ENTRY_RESOURCE_TYPE_INDEX,
+									'value.descriptor.metadata.resourceType'
 								);
 						} else {
 							const filesystemEntries =
@@ -281,13 +289,23 @@ export function getApplicationDB():
 							}
 
 							if (
+								filesystemEntries.indexNames.contains(
+									'category'
+								)
+							) {
+								filesystemEntries.deleteIndex(
+									'category'
+								);
+							}
+
+							if (
 								!filesystemEntries.indexNames.contains(
-									FILESYSTEM_ENTRY_CATEGORY_INDEX
+									FILESYSTEM_ENTRY_RESOURCE_TYPE_INDEX
 								)
 							) {
 								filesystemEntries.createIndex(
-									FILESYSTEM_ENTRY_CATEGORY_INDEX,
-									'value.descriptor.metadata.category'
+									FILESYSTEM_ENTRY_RESOURCE_TYPE_INDEX,
+									'value.descriptor.metadata.resourceType'
 								);
 							}
 						}

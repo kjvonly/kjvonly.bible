@@ -1,3 +1,9 @@
+export const BIBLE_VERSION_OBJECT_TYPE =
+	'bible/version';
+
+export const BIBLE_VERSION_DATA_TYPE =
+	'kjvonly.bible.version';
+
 import type {
 	BibleVersion
 } from '../models/bible-version.model';

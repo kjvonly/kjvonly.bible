@@ -135,8 +135,14 @@ function createDescriptor():
 			resourceId:
 				'kjvonly/plans/readings/default',
 
-			category:
-				'kjvonly/plans/readings',
+			resourceType:
+				'reading-plans/plan-definition',
+
+			dataType:
+				'kjvonly.reading-plan.definition',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				100,

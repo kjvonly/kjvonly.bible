@@ -47,9 +47,13 @@ const PUBLICATION:
 		publisher:
 			'publisher',
 		resourceType:
-			'kjvonly/plans/subscriptions',
+			'reading-plans/plan-subscription',
+		dataType:
+			'kjvonly.reading-plan.subscription',
+		dataVersion:
+			1,
 		resourceId:
-			'kjvonly/plans/subscriptions/default/subscription-1',
+			'kjvonly/reading-plans/plan-subscription/default/subscription-1',
 		representation:
 			'content',
 		mediaType:

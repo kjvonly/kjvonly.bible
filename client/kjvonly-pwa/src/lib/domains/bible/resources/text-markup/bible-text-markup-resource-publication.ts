@@ -7,8 +7,11 @@ import type {
 } from '../../models/bible-text-markup.model';
 
 import {
-	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-} from './bible-text-markup-interpreter';
+	BIBLE_TEXT_MARKUP_DATA_TYPE,
+	BIBLE_TEXT_MARKUP_DATA_VERSION,
+	BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
+	createBibleTextMarkupResourceId
+} from './bible-text-markup-resource';
 
 export class BibleTextMarkupResourcePublication {
 
@@ -43,8 +46,17 @@ export class BibleTextMarkupResourcePublication {
 			resourceType:
 				BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
 
+			dataType:
+				BIBLE_TEXT_MARKUP_DATA_TYPE,
+
+			dataVersion:
+				BIBLE_TEXT_MARKUP_DATA_VERSION,
+
 			resourceId:
-				`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/${name}/${chapterRef}`,
+				createBibleTextMarkupResourceId(
+					name,
+					chapterRef
+				),
 
 			representation:
 				'content',

@@ -203,8 +203,22 @@ function validateResolvedEvent(
 	validateTag(
 		event,
 		't',
-		descriptor.metadata.category,
-		'category'
+		descriptor.metadata.resourceType,
+		'resourceType'
+	);
+
+	validateTag(
+		event,
+		'dataType',
+		descriptor.metadata.dataType,
+		'dataType'
+	);
+
+	validateTag(
+		event,
+		'dataVersion',
+		`${descriptor.metadata.dataVersion}`,
+		'dataVersion'
 	);
 
 	validateTag(

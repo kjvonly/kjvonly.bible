@@ -48,6 +48,14 @@ export type {
 } from './services/pane-navigation.service';
 
 export {
+	ApplicationReferenceResolver,
+	parseApplicationReference,
+	type ApplicationReference,
+	type ApplicationReferenceConsumerRegistration,
+	type ApplicationReferenceDestination
+} from './references/application-reference-resolver';
+
+export {
 	provideNavigationRuntimeContext,
 	useNavigationRuntimeContext,
 	type NavigationRuntimeContext
@@ -153,6 +161,7 @@ export type {
 
 export {
 	parseResourceSelections,
+	type ResourceSelection,
 	type ResourceSelections
 } from './resources/resource-selections';
 

@@ -140,6 +140,16 @@ export class KJVOnlyArchiveValidator {
 			`Invalid KJVOnly archive: Domain Object ${key} requires objectId.`
 		);
 
+		requireNonEmptyString(
+			domainObject.dataType,
+			`Invalid KJVOnly archive: Domain Object ${key} requires dataType.`
+		);
+
+		requirePositiveSafeInteger(
+			domainObject.dataVersion,
+			`Invalid KJVOnly archive: Domain Object ${key} requires a positive integer dataVersion.`
+		);
+
 		if (
 			!Object.prototype.hasOwnProperty.call(
 				domainObject,
@@ -203,6 +213,41 @@ export class KJVOnlyArchiveValidator {
 			);
 		}
 
+
+		if (
+			installation.metadata !==
+				undefined
+		) {
+			const metadata =
+				requireRecord(
+					installation.metadata,
+					`Invalid KJVOnly archive: Resource Installation ${key} metadata must be an object when present.`
+				);
+
+			for (
+				const [
+					metadataKey,
+					metadataValue
+				] of Object.entries(
+					metadata
+				)
+			) {
+				requireNonEmptyString(
+					metadataKey,
+					`Invalid KJVOnly archive: Resource Installation ${key} metadata keys must be non-empty strings.`
+				);
+
+				if (
+					typeof metadataValue !==
+						'string'
+				) {
+					throw new Error(
+						`Invalid KJVOnly archive: Resource Installation ${key} metadata value for ${metadataKey} must be a string.`
+					);
+				}
+			}
+		}
+
 		if (
 			typeof installation.modifiedAt !==
 				'number' ||
@@ -247,6 +292,23 @@ function requireNonEmptyString(
 	if (
 		typeof value !== 'string' ||
 		value.length === 0
+	) {
+		throw new Error(
+			message
+		);
+	}
+}
+
+function requirePositiveSafeInteger(
+	value: unknown,
+	message: string
+): asserts value is number {
+	if (
+		typeof value !== 'number' ||
+		!Number.isSafeInteger(
+			value
+		) ||
+		value < 1
 	) {
 		throw new Error(
 			message

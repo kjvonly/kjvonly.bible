@@ -159,7 +159,7 @@ describe(
 							'publisher-a',
 
 						resourceId:
-							'kjvonly/overlays/pericopes/scheme-a'
+							'kjvonly/bible/pericopes/scheme-a'
 					});
 
 				const store =
@@ -333,12 +333,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/bible/chapters/kjvs'
+								'kjvonly/bible/chapter/kjvs'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Pericopes Resource Type'
+					'Invalid Bible Pericopes Resource ID'
 				);
 
 				expect(
@@ -352,7 +352,7 @@ describe(
 		);
 
 		it(
-			'rejects the Bible Pericopes Resource Type root as the selected source',
+			'rejects the Bible Pericopes Resource ID root as the selected source',
 			async () => {
 				const store =
 					new FakePericopesStore();
@@ -370,12 +370,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/overlays/pericopes'
+								'bible/pericopes'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Pericopes Resource source'
+					'Invalid Bible Pericopes Resource ID'
 				);
 
 				expect(
@@ -407,7 +407,7 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/overlays/pericopes/default/1_1'
+								'kjvonly/bible/pericopes/default/1_1'
 						}),
 						'1_1'
 					)
@@ -539,7 +539,7 @@ function createSource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/overlays/pericopes/default',
+			'kjvonly/bible/pericopes/default',
 
 		...overrides
 	};

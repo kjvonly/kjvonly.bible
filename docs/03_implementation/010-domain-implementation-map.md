@@ -802,24 +802,26 @@ The Resource layer does not own Bible, Notes, Reading Plans, or Strong's meaning
 
 # Domain Resource Integration
 
-Domains participate in the Resource lifecycle at Domain-owned boundaries.
+Domains participate in the Resource lifecycle through registered semantic handlers and Domain Object factories.
 
 Typical ownership is:
 
 ```text
 Resource Boundary
-    owns generic content / resolution / installation protocol
+    owns generic resolution / decoding
+    datatype dispatch
+    generic currentness and Domain Object persistence
 
 Domain
     owns Resource Type meaning
-    interpreter
-    validator
-    Domain Object mapping
+    semantic datatype implementation
+    Domain Object factory / identity
+    Domain invariants
     publication mapping
-    persistence transaction semantics
+    local-write transaction semantics
 ```
 
-For example, Bible chapter interpretation belongs to Bible even though the generic `ResourceInterpreter` contract belongs to `$lib/resource`.
+For example, Bible Chapter identity and metadata interpretation belong to Bible while `GenericResourceInstaller` owns the shared inbound persistence mechanics.
 
 ---
 
@@ -856,23 +858,35 @@ The root Resource API is not intended to re-export every concrete Nostr/IndexedD
 
 # Resource Installation
 
-Resource Installation is generic acceptance coordination around Domain-owned handlers.
+Resource Installation is generic acceptance coordination around two Domain-owned registrations:
+
+```text
+dataType + dataVersion
+    → ResourceDataTypeHandler
+
+Resource Type
+    → ResourceDomainObjectFactory
+```
 
 Conceptually:
 
 ```text
-Resolved Resource content
+Decoded Resource content
     ↓
-Domain ResourceHandler / interpreter / validator
+semantic datatype validation
     ↓
-Domain Object
+Domain Object factory
     ↓
-Domain persistence transaction
+canonical Domain Object candidate(s)
     ↓
-Resource installation metadata / receipt
+GenericResourceInstaller
+    ↓
+Domain Object + ResourceInstallation
 ```
 
-Generic installation machinery does not become the owner of Domain interpretation.
+Generic installation machinery owns repeatable currentness/persistence mechanics but does not become the owner of Domain identity or semantic meaning.
+
+Filesystem remains a specialized handler because it persists accepted entries in a different physical store.
 
 ---
 

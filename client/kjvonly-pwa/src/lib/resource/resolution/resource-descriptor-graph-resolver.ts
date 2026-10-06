@@ -189,7 +189,7 @@ export class ResourceDescriptorGraphResolver {
 						descriptor.metadata.resourceId,
 
 					resourceType:
-						descriptor.metadata.category
+						descriptor.metadata.resourceType
 				});
 
 				continue;
@@ -222,7 +222,7 @@ export class ResourceDescriptorGraphResolver {
 						descriptor.metadata.resourceId,
 
 					resourceType:
-						descriptor.metadata.category,
+						descriptor.metadata.resourceType,
 
 					error:
 						preparation.error
@@ -325,7 +325,7 @@ export class ResourceDescriptorGraphResolver {
 						descriptor.metadata.resourceId,
 
 					resourceType:
-						descriptor.metadata.category,
+						descriptor.metadata.resourceType,
 
 					error
 				});

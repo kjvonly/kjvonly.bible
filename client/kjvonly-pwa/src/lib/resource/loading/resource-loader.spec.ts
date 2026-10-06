@@ -226,7 +226,7 @@ describe(
 						'G1'
 					)
 				).rejects.toThrow(
-					'Unsupported Resource Type: kjvonly/strongs/definitions'
+					'Unsupported Resource Type: strongs/definition'
 				);
 
 				expect(
@@ -463,8 +463,14 @@ function resourceDescriptor():
 			resourceId:
 				descriptorReference().resourceId,
 
-			category:
-				'kjvonly/notes',
+			resourceType:
+				'notes/note',
+
+			dataType:
+				'kjvonly.note',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				123,
@@ -517,7 +523,7 @@ function handled(
 			{
 				reference,
 				resourceType:
-					'kjvonly/strongs/definitions',
+					'strongs/definition',
 				status:
 					'handled'
 			}
@@ -540,7 +546,7 @@ function current(
 			{
 				reference,
 				resourceType:
-					'kjvonly/notes',
+					'notes/note',
 				status:
 					'current'
 			}
@@ -565,7 +571,7 @@ function failed(
 			{
 				reference,
 				resourceType:
-					'kjvonly/strongs/definitions',
+					'strongs/definition',
 				status:
 					'failed',
 				error
@@ -589,7 +595,7 @@ function unsupported(
 			{
 				reference,
 				resourceType:
-					'kjvonly/strongs/definitions',
+					'strongs/definition',
 				status:
 					'unsupported'
 			}

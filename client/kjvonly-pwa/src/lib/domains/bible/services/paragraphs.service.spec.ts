@@ -159,7 +159,7 @@ describe(
 							'publisher-a',
 
 						resourceId:
-							'kjvonly/overlays/paragraphs/scheme-a'
+							'kjvonly/bible/paragraphs/scheme-a'
 					});
 
 				const store =
@@ -333,12 +333,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/bible/chapters/kjvs'
+								'kjvonly/bible/chapter/kjvs'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Paragraphs Resource Type'
+					'Invalid Bible Paragraphs Resource ID'
 				);
 
 				expect(
@@ -352,7 +352,7 @@ describe(
 		);
 
 		it(
-			'rejects the Bible Paragraphs Resource Type root as the selected source',
+			'rejects the Bible Paragraphs Resource ID root as the selected source',
 			async () => {
 				const store =
 					new FakeParagraphsStore();
@@ -370,12 +370,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/overlays/paragraphs'
+								'bible/paragraphs'
 						}),
 						'1_1'
 					)
 				).rejects.toThrow(
-					'Invalid Bible Paragraphs Resource source'
+					'Invalid Bible Paragraphs Resource ID'
 				);
 
 				expect(
@@ -407,7 +407,7 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/overlays/paragraphs/default/1_1'
+								'kjvonly/bible/paragraphs/default/1_1'
 						}),
 						'1_1'
 					)
@@ -539,7 +539,7 @@ function createSource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/overlays/paragraphs/default',
+			'kjvonly/bible/paragraphs/default',
 
 		...overrides
 	};

@@ -2,187 +2,145 @@
 
 ## Status
 
-Current
+**Status:** Current
+**Scope:** decoded Resource content through accepted local persistence
+**Primary implementation:** generic datatype validation + Domain Object factories + generic installation transaction
 
 ---
 
 # Purpose
 
-This document describes the current Resource installation boundary used by the KJVOnly.bible client.
+This document describes the current Resource installation implementation used by the KJVOnly.bible client.
 
-Installation is the point where generic decoded Resource content becomes durable Domain state.
-
-The generic Resource pipeline owns:
-
-```text
-Resource discovery
-    ↓
-Resource representation resolution
-    ↓
-verified Resource content
-    ↓
-media-type decoding
-    ↓
-DecodedResourceContent
-```
-
-The Domain then owns:
+The codebase has completed the migration away from per-Domain inbound stacks such as:
 
 ```text
 ResourceHandler
     ↓
-interpretation
+Domain Interpreter
     ↓
-validation
+Domain Validator
     ↓
-Domain installer
+Domain Installer
     ↓
-Domain Object identity
-    ↓
-Domain Object persistence
-    +
-ResourceInstallation provenance
+Domain-specific installation transaction
 ```
 
-The central rule is:
+for normal Resource-backed Domain Objects.
 
-> The Resource layer delivers decoded content and dispatches by Resource Type. The Domain decides what that content means, which Domain Objects it produces, whether those objects should be installed, and how those writes are committed atomically.
-
-This boundary prevents generic Resource infrastructure from acquiring Domain-specific knowledge.
-
----
-
-# Scope
-
-This document covers:
-
-* `ResourceHandler`,
-* Resource Type dispatch,
-* Domain interpretation and validation,
-* Domain installers,
-* `InstallationTransaction<TStores>`,
-* Domain-specific installation-store contracts,
-* `ResourceInstallation`,
-* object-level installation freshness,
-* atomic Domain Object + installation-provenance writes,
-* installation failure behavior,
-* the relationship between `ResourceReceipt` and `ResourceInstallation`,
-* representative Bible, Strong's, Notes, and Reading Plans installation behavior,
-* worker ownership,
-* and testing expectations.
-
-This document does not redefine:
-
-* Resource discovery,
-* descriptor recursion,
-* Resource content decoding,
-* Resource publication,
-* Outbox behavior,
-* Module Resource selection,
-* Domain Object read APIs,
-* or synchronization policy.
-
-Those are separate concerns.
-
----
-
-# Related Documents
-
-Read this document together with:
+The default implementation is now:
 
 ```text
-docs/03_implementation/resources/001-resource-transport.md
-docs/03_implementation/resources/005-resource-lifecycle-content.md
-docs/03_implementation/010-domain-implementation-map.md
-docs/03_implementation/011-target-code-organization.md
+DecodedResourceContent
+    ↓
+ResourceDataTypeResolver
+    ↓
+ResourceDataTypeHandler.validate(...)
+    ↓
+ResourceDomainObjectFactoryResolver
+    ↓
+ResourceDomainObjectFactory.create(...)
+    ↓
+ResourceDomainObjectCandidate[]
+    ↓
+GenericResourceInstaller
+    ↓
+IndexedDBGenericResourceInstallationTransaction
+    ↓
+DOMAIN_OBJECTS
++
+RESOURCE_INSTALLATIONS
 ```
 
-The lifecycle document explains how verified content reaches installation.
+The remaining specialized inbound `ResourceHandler` is Filesystem because Filesystem entries are persisted in their own physical store and have different addressing requirements.
 
-This document focuses specifically on the boundary after decoding.
+This is an important implementation boundary:
+
+```text
+same generic Resource acquisition/resolution
+        ↓
+normal Domain Objects
+    → GenericResourceInstaller
+
+specialized persistence target
+    → specialized ResourceHandler/installer
+```
 
 ---
 
-# Architectural Position
+# Related Architecture
 
-Installation sits between generic Resource processing and Domain persistence.
+The implementation realizes these Resource Boundary decisions:
+
+```text
+docs/02_resource-boundary/01-domain-resource-model.md
+docs/02_resource-boundary/03-nostr-event-model.md
+docs/02_resource-boundary/04-nostr-resource-identity.md
+docs/02_resource-boundary/08-resource-installation-lifecycle.md
+docs/02_resource-boundary/11-resource-archives.md
+```
+
+Current source is authoritative for concrete class names and file layout.
+
+---
+
+# High-Level Runtime Flow
+
+The normal content path is:
 
 ```mermaid
 flowchart TD
-    A[Published Resource] --> B[Resource Resolution]
-    B --> C[VerifiedResourceContent]
-    C --> D[ResourceContentDecoder]
-    D --> E[DecodedResourceContent]
-    E --> F[ResourceHandler]
-    F --> G[Domain Interpreter]
-    G --> H[Domain Validator]
-    H --> I[Domain Installer]
-    I --> J[InstallationTransaction]
-    J --> K[Domain Object Store]
-    J --> L[ResourceInstallation Store]
+    A[Resource Representation] --> B[Resource Resolution]
+    B --> C[ResourceContentDecoder]
+    C --> D[DecodedResourceContent]
+    D --> E{Special ResourceHandler?}
+    E -- yes --> F[Specialized Handler]
+    E -- no --> G[GenericResourceInstaller]
+    G --> H[ResourceDataTypeResolver]
+    H --> I[ResourceDataTypeHandler.validate]
+    I --> J[ResourceDomainObjectFactoryResolver]
+    J --> K[ResourceDomainObjectFactory.create]
+    K --> L[ResourceDomainObjectCandidate 0..n]
+    L --> M[Object-level currentness]
+    M --> N[DOMAIN_OBJECTS]
+    M --> O[RESOURCE_INSTALLATIONS]
+    N --> P[Commit]
+    O --> P
+    P --> Q[ResourceReceipt markProcessed]
 ```
 
-The important boundary is between `DecodedResourceContent` and Domain interpretation.
-
-Before that point, the Resource pipeline is generic.
-
-After that point, semantics are Domain-owned.
-
----
-
-# High-Level Installation Flow
-
-For one resolved Resource content item:
+The key composition point is:
 
 ```text
-ResourceProcessor.processContent()
-    ↓
-find ResourceHandler by content.resourceType
-    ↓
-ResourceContentDecoder.decode(...)
-    ↓
-DecodedResourceContent
-    ↓
-ResourceHandler.handle(...)
-    ↓
-ResourceInterpreter.interpret(...)
-    ↓
-Domain candidate(s)
-    ↓
-ResourceValidator.validate(...)
-    ↓
-validated candidate(s)
-    ↓
-Domain Installer.install(...)
-    ↓
-InstallationTransaction.run(...)
-    ↓
-read current Domain/install state
-    ↓
-decide install / skip / reject
-    ↓
-write Domain Object(s)
-    +
-write ResourceInstallation record(s)
-    ↓
-transaction commits
-    ↓
-ResourceProcessor marks ResourceReceipt
-    ↓
-ResourceInstallOutcome = handled
+src/lib/resource/worker/resource-worker-composition.ts
 ```
 
-If any decode, handler, interpretation, validation, or installation step throws, `ResourceProcessor` converts that content item to a failed install outcome.
+`createResourceProcessingDependencies()` constructs:
 
-The Resource receipt is not written when Domain handling fails.
+```text
+ResourceContentDecoder
+ResourceReceiptService
+ResourceDataTypeResolver
+ResourceDomainObjectFactoryResolver
+IndexedDBGenericResourceInstallationTransaction
+GenericResourceInstaller
+special ResourceHandler[]
+```
+
+At the current state of the codebase:
+
+```text
+special ResourceHandler[]
+    = Filesystem only
+```
+
+Bible, Notes, Reading Plans, Strong's, and Normalized Content use the generic path.
 
 ---
 
 # DecodedResourceContent
 
-The Domain installation boundary receives `DecodedResourceContent`.
-
-Conceptually:
+Current model:
 
 ```ts
 interface DecodedResourceContent {
@@ -191,319 +149,419 @@ interface DecodedResourceContent {
     readonly resourceType: string;
     readonly modifiedAt: number;
     readonly mediaType: string;
+    readonly dataType: string;
+    readonly dataVersion: number;
+    readonly metadata?: Readonly<Record<string, string>>;
     readonly value: unknown;
 }
 ```
 
-This object preserves Resource provenance while exposing decoded content.
-
-The Domain should not need the original Nostr event, Blossom URL, descriptor document, gzip bytes, or transport-specific request objects.
-
-Important fields have different responsibilities:
+Important distinctions:
 
 ```text
-publisher
-    identifies who published the Resource
-
 resourceId
-    identifies the published Resource
+    = Resource identity supplied by the publisher
 
 resourceType
-    selects the Domain ResourceHandler
+    = Resource Type / family
 
-modifiedAt
-    participates in freshness decisions
+dataType + dataVersion
+    = semantic payload contract
 
-mediaType
-    describes the decoded Resource representation lineage
+metadata
+    = additional Resource-envelope metadata
 
 value
-    contains generic decoded data that still requires Domain interpretation
+    = decoded but not yet semantically accepted payload
 ```
 
-`value` remains `unknown` intentionally.
-
-Generic JSON decoding does not make content a valid Domain Object.
+Do not treat `resourceType`, `dataType`, and `resourceId` as interchangeable.
 
 ---
 
-# ResourceHandler
+# ResourceMetadata
 
-The generic handler contract is deliberately small:
+Current model:
 
 ```ts
-interface ResourceHandler {
-    readonly resourceType: string;
+export type ResourceMetadata =
+    Readonly<Record<string, string>>;
+```
 
-    handle(
-        resource: DecodedResourceContent
-    ): Promise<void>;
+It is intentionally protocol-agnostic and scalar.
+
+Metadata is preserved through:
+
+```text
+ResourceRepresentation
+    ↓
+VerifiedResourceContent
+    ↓
+DecodedResourceContent
+    ↓
+ResourceDomainObjectFactoryContext
+```
+
+The generic Resource layer transports metadata without assigning meaning to individual keys.
+
+Owning Domains interpret keys they define.
+
+Current Bible Chapter example:
+
+```text
+metadata.version
+    = semantic Bible version label
+```
+
+This value is deliberately separate from the Chapter Resource identity namespace (`bibleId`).
+
+---
+
+# ResourceDataTypeHandler
+
+Source:
+
+```text
+src/lib/resource/data-types/resource-data-type-handler.ts
+```
+
+Contract:
+
+```ts
+interface ResourceDataTypeHandler<TValue = unknown> {
+    readonly dataType: string;
+    readonly dataVersion: number;
+
+    validate(value: unknown): TValue;
 }
 ```
 
-A handler belongs to a Domain Resource Type.
-
-Its responsibility is to connect generic decoded content to Domain-specific processing.
-
-A typical handler performs:
+A handler understands exactly one semantic contract:
 
 ```text
-DecodedResourceContent
-    ↓
-interpret
-    ↓
-validate
-    ↓
-install
+(dataType, dataVersion)
 ```
 
-A handler should not become a second generic Resource pipeline.
+Its responsibility is to validate the decoded value's semantic structure.
 
-It should remain a thin Domain entry point.
-
----
-
-# Resource Type Dispatch
-
-`ResourceProcessor` receives a list of `ResourceHandler` instances during composition.
-
-It builds a map keyed by:
+It does not own:
 
 ```text
-handler.resourceType
-```
-
-Conceptually:
-
-```text
-resourceType
-    → ResourceHandler
-```
-
-Examples include Resource Types owned by:
-
-```text
-Bible
-    chapters
-    paragraphs
-    pericopes
-    book names
-    search index
-    text markup
-
-Strong's
-    definitions
-
-Notes
-    notes
-
-Reading Plans
-    plan definitions
-```
-
-The Resource layer does not contain a switch such as:
-
-```ts
-if (resourceType === 'bible/chapter') {
-    // Bible behavior
-}
-```
-
-That would leak Domain knowledge into generic infrastructure.
-
-Instead, composition registers Domain handlers.
-
----
-
-# Duplicate Handler Protection
-
-`ResourceProcessor` rejects duplicate handlers for the same Resource Type during construction.
-
-This is important because Resource Type dispatch must be deterministic.
-
-The composition root must not accidentally register two competing handlers for one Resource Type.
-
-The invariant is:
-
-```text
-one Resource Type
-    → zero or one registered ResourceHandler
-```
-
-Zero handlers means the Resource Type is unsupported by that worker composition.
-
-More than one handler is a composition error.
-
----
-
-# Unsupported Resource Types
-
-If decoded content resolves successfully but no handler is registered for its Resource Type, installation does not throw globally.
-
-The Resource outcome becomes:
-
-```text
-status = unsupported
-```
-
-This allows descriptor collections to contain Resource Types the current client does not understand without requiring the entire resolved collection to fail.
-
-Unsupported content is not installed.
-
----
-
-# Domain Interpretation
-
-Interpretation converts generic decoded data into Domain candidates.
-
-The generic contract is represented by `ResourceInterpreter<TCandidate>`.
-
-Conceptually:
-
-```text
-DecodedResourceContent.value
-    ↓
-Domain Resource Interpreter
-    ↓
-zero, one, or many Domain candidates
-```
-
-Interpretation owns questions such as:
-
-* what JSON shape belongs to this Resource Type,
-* how one Resource expands into multiple Domain candidates,
-* which values are identifiers versus content,
-* what Resource-relative metadata must be carried into a candidate,
-* and how serialized Resource structure maps to Domain concepts.
-
-Interpretation does not persist data.
-
----
-
-# Domain Validation
-
-Validation converts interpreted candidates into validated candidates.
-
-Conceptually:
-
-```text
-candidate
-    ↓
-ResourceValidator
-    ↓
-validated candidate
-```
-
-Validation owns Domain invariants.
-
-Examples include:
-
-* required fields,
-* valid chapter references,
-* valid plan-definition structure,
-* valid Strong's keys,
-* valid note structure,
-* valid text-markup shape,
-* and constraints specific to one Domain Resource Type.
-
-Generic Resource infrastructure should not know these rules.
-
-A validation error aborts handling of that content item.
-
----
-
-# Domain Installer
-
-The installer owns the final transition from validated Domain candidates to durable Domain Objects.
-
-A typical installer receives:
-
-```text
-DecodedResourceContent
-+
-validated candidate(s)
-```
-
-It then decides:
-
-```text
+Resource identity
+Resource Type dispatch
 Domain Object identity
-freshness policy
-duplicate policy
-supporting Domain Object creation
-which stores participate
-which writes are atomic
-ResourceInstallation provenance
+currentness
+persistence
+ResourceInstallation
+publication
+Module behavior
 ```
-
-This is intentionally Domain-owned.
-
-There is no generic Resource installer that knows how every Domain Object should be identified or updated.
 
 ---
 
-# Why Installation Is Domain-Owned
+# ResourceDataTypeResolver
 
-One published Resource can map to very different Domain storage shapes.
+Source:
+
+```text
+src/lib/resource/data-types/resource-data-type-resolver.ts
+```
+
+The resolver is composed from registered handlers and indexes them by an exact key:
+
+```text
+<dataType>@<dataVersion>
+```
 
 For example:
 
 ```text
-one Bible Chapter Resource
-    → one or more Chapter objects
-    → may also ensure BibleVersion exists
-
-one Strong's Resource
-    → many Strong's definition objects
-
-one Plan Definition Resource
-    → exactly one PlanDefinition object
-
-one Notes Resource
-    → one or more Note objects
+kjvonly.bible.chapter@1
+kjvonly.bible.version@1
+kjvonly.strongs.definition@1
 ```
 
-Those mappings cannot be expressed correctly by a generic persistence layer without teaching it Domain semantics.
+Duplicate registrations throw during composition.
 
-The Resource layer therefore stops at decoded content and handler dispatch.
+An unsupported datatype/version also throws before Domain Object construction or persistence.
 
 ---
 
-# Domain Object Identity
+# Published Datatype vs Canonical Object Datatype
 
-Domain Object identity is not Resource identity.
+The published Resource datatype is not required to equal the datatype persisted on each resulting Domain Object.
 
-This distinction is fundamental.
+This matters for bundles and archive reconstruction.
+
+Conceptually:
 
 ```text
-Published Resource identity
-    = publisher + resourceId
-
-Domain Object identity
-    = objectType + objectId
+Published Resource
+    dataType = collection/bundle contract
+        ↓
+factory expands collection
+        ↓
+Stored Domain Object
+    dataType = canonical object contract
 ```
 
-A Resource may install:
+Several Resource families therefore register two handlers:
 
 ```text
-zero Domain Objects
-one Domain Object
+Published Resource handler
+Canonical object/archive handler
+```
+
+Examples include:
+
+```text
+Strong's definitions
+Bible Chapters
+Bible Booknames
+Bible Paragraphs
+Bible Pericopes
+Bible Text Markup
+Bible Search Index
+Reading Plan definitions/subscriptions/progress
+```
+
+The second handler exists because Archive import reconstructs individual canonical Domain Objects and feeds them back through the same generic installer.
+
+---
+
+# ResourceDomainObjectFactory
+
+Source:
+
+```text
+src/lib/resource/domain-objects/resource-domain-object-factory.ts
+```
+
+Factory context:
+
+```ts
+Omit<DecodedResourceContent, 'value'>
+```
+
+The factory therefore receives Resource context such as:
+
+```text
+publisher
+resourceId
+resourceType
+modifiedAt
+mediaType
+dataType
+dataVersion
+metadata
+```
+
+but receives the semantic value separately only after datatype validation succeeds.
+
+Contract:
+
+```ts
+interface ResourceDomainObjectFactory {
+    readonly resourceType: string;
+
+    create(
+        resource: ResourceDomainObjectFactoryContext,
+        value: unknown
+    ): readonly ResourceDomainObjectCandidate[];
+}
+```
+
+The factory owns:
+
+```text
+Domain Object identity
+Domain-specific interpretation of Resource identity
+Domain-specific interpretation of Resource metadata
+cross-field / context-dependent Domain invariants
+canonical persisted datatype/version
+bundle expansion
+```
+
+One factory may produce:
+
+```text
+0 Domain Objects
+1 Domain Object
 many Domain Objects
 ```
 
-A Domain Object ID is derived by the Domain installer using Domain rules.
+---
 
-The Resource layer must not derive Domain Object IDs from Resource paths generically.
+# ResourceDomainObjectCandidate
+
+Current candidate shape:
+
+```ts
+interface ResourceDomainObjectCandidate {
+    readonly objectType: string;
+    readonly objectId: string;
+    readonly dataType: string;
+    readonly dataVersion: number;
+    readonly value: unknown;
+}
+```
+
+There is intentionally no Domain-specific installation policy flag on the candidate.
+
+All normal candidates follow the same generic persistence/currentness rules.
+
+A previous attempt to add a special `derived-if-absent` installation mode was rejected because it made one Domain's historical persistence behavior part of the generic Resource contract.
+
+The current rule is simpler:
+
+> If a factory emits a normal Resource-backed candidate, it follows normal Resource currentness and provenance behavior.
+
+---
+
+# ResourceDomainObjectFactoryResolver
+
+Source:
+
+```text
+src/lib/resource/domain-objects/resource-domain-object-factory-resolver.ts
+```
+
+Factories are registered by Resource Type.
+
+Conceptually:
+
+```text
+resource.resourceType
+    ↓
+ResourceDomainObjectFactoryResolver
+    ↓
+factory.resourceType
+```
+
+Duplicate Resource Type registrations throw during composition.
+
+An unregistered Resource Type reaches the generic installer and fails installation.
+
+---
+
+# GenericResourceInstaller
+
+Source:
+
+```text
+src/lib/resource/installation/generic-resource-installer.ts
+```
+
+The implementation sequence is:
+
+```text
+resolve datatype handler
+    ↓
+validate resource.value
+    ↓
+resolve Domain Object factory by resourceType
+    ↓
+remove raw value from Resource context
+    ↓
+factory.create(context, validatedValue)
+    ↓
+transaction.run(...)
+    ↓
+for each candidate:
+    load ResourceInstallation
+    compare modifiedAt
+    construct StoredDomainObject
+    construct ResourceInstallation
+    persist both
+```
+
+The installer does not know Bible, Notes, Plans, Strong's, or Normalized Content identity rules.
+
+It operates only on the generic candidate contract.
+
+---
+
+# Object-Level Currentness
+
+For every candidate:
+
+```ts
+const currentInstallation =
+    await stores.resourceInstallations.get(
+        candidate.objectType,
+        candidate.objectId
+    );
+```
+
+Then:
+
+```text
+no current installation
+    → install
+
+incoming resource.modifiedAt > current.modifiedAt
+    → replace
+
+incoming resource.modifiedAt <= current.modifiedAt
+    → skip this candidate
+```
+
+Currentness is object-level.
+
+This means a bundle can legitimately produce mixed results:
+
+```text
+candidate A newer locally → skip
+candidate B older locally → replace
+candidate C missing       → install
+```
+
+The transaction still succeeds atomically for the writes that should occur.
+
+---
+
+# StoredDomainObject
+
+The generic installer persists accepted values into `DOMAIN_OBJECTS` using:
+
+```ts
+interface StoredDomainObject {
+    id: string;
+    objectType: string;
+    objectId: string;
+    dataType: string;
+    dataVersion: number;
+    value: unknown;
+}
+```
+
+`id` is created from:
+
+```text
+objectType + objectId
+```
+
+The candidate, not the incoming Resource envelope, defines the persisted Domain Object's:
+
+```text
+objectType
+dataType
+dataVersion
+```
+
+That distinction is required when the published Resource contract differs from the canonical stored Domain Object contract.
 
 ---
 
 # ResourceInstallation
 
-`ResourceInstallation` records the Resource revision currently associated with a Resource-backed Domain Object.
+Source:
 
-The record was originally introduced for externally installed Resources. It is now also written for locally authored Resource-backed state so local state has the same object-level Resource revision metadata used by archive export and later synchronization/publication.
+```text
+src/lib/resource/installation/resource-installation.ts
+```
 
-Conceptually:
+Current model:
 
 ```ts
 interface ResourceInstallation {
@@ -512,1141 +570,744 @@ interface ResourceInstallation {
     readonly objectId: string;
     readonly publisher: string;
     readonly resourceId?: string;
+    readonly metadata?: ResourceMetadata;
     readonly modifiedAt: number;
 }
 ```
 
-`resourceId` is optional because a locally authored Resource-backed Domain Object may have Resource revision state without having been installed from an external Resource.
-
-The ID is created as:
+Its identity is:
 
 ```text
-${objectType}:${objectId}
+<objectType>:<objectId>
 ```
 
-through:
+`ResourceInstallation` is not the Domain Object.
+
+It stores Resource-backed state associated with the accepted object:
 
 ```text
-createResourceInstallationId(objectType, objectId)
+publisher
+known Resource identity
+Resource revision timestamp
+optional Resource-envelope metadata
 ```
-
-This keeps installation identity aligned with Domain Object identity.
 
 ---
 
-# ResourceInstallation Purpose
+# Why ResourceInstallation Keeps Resource Metadata
 
-A `ResourceInstallation` answers:
+The generic installer copies Resource metadata into `ResourceInstallation` when metadata is present.
+
+This does not affect currentness. Currentness still compares only:
 
 ```text
-For this Resource-backed Domain Object,
-which Resource revision does the current stored value represent,
-who is its publisher,
-and what object-level modifiedAt is authoritative?
+resource.modifiedAt
+vs
+installation.modifiedAt
 ```
 
-When `resourceId` is present it also preserves known Resource provenance.
+Metadata is preserved because some Domain semantics belong to the Resource envelope rather than the canonical Domain object.
 
-It supports:
+Bible Chapter is the current important example:
 
-* provenance where available,
-* object-level freshness decisions,
-* idempotent installation,
-* replacement/update decisions,
-* local Resource revision tracking,
-* and archive export/import workset selection.
+```text
+Chapter Domain Object
+    = Chapter content + Domain identity
+    does not care about semantic Bible version label
 
-It is stored separately from the Domain Object so Domain data does not need to embed Resource transport metadata.
+Resource metadata.version
+    = semantic version label required to reconstruct the Resource envelope
+```
+
+Archive reconstruction processes individual archived Domain Objects. Preserving the incoming Resource metadata on the installation allows reconstruction to retain information that intentionally was not duplicated into the Chapter value.
+
+This is provenance/reconstruction state, not Domain payload state.
 
 ---
 
-# ResourceInstallationStore
+# Generic Installation Transaction
 
-The generic store contract is:
+Sources:
 
-```ts
-interface ResourceInstallationStore {
-    get(
-        objectType: string,
-        objectId: string
-    ): Promise<ResourceInstallation | undefined>;
-
-    put(
-        installation: ResourceInstallation
-    ): Promise<void>;
-}
+```text
+src/lib/resource/installation/generic-resource-installation-stores.ts
+src/lib/resource/installation/indexeddb-generic-resource-installation-transaction.ts
 ```
 
-Domain installation transactions expose this contract alongside the stores required by that installer.
+The IndexedDB implementation opens one read/write transaction over:
 
-The installer depends on the contract, not IndexedDB directly.
+```text
+DOMAIN_OBJECTS
+RESOURCE_INSTALLATIONS
+```
+
+For every accepted candidate, the Domain Object and ResourceInstallation are written within that transaction.
+
+If the operation throws, the transaction is aborted and the original error is preserved.
+
+The transaction exposes narrow store contracts rather than the complete application database.
+
+---
+
+# Atomicity
+
+Semantic validation and factory construction happen before persistence begins.
+
+Then candidate persistence is performed inside one generic transaction.
+
+Therefore:
+
+```text
+invalid Resource payload
+    → no write
+
+factory invariant failure
+    → no write
+
+persistence failure
+    → transaction abort
+
+current candidate
+    → intentional no-op
+```
+
+A skipped current candidate is not considered a failed atomic installation.
 
 ---
 
 # ResourceReceipt vs ResourceInstallation
 
-These two records solve different problems and must not be collapsed.
+These remain distinct.
 
 ## ResourceReceipt
 
-A Resource receipt is Resource-processing state.
-
-Conceptually it answers:
-
-```text
-Has this published Resource revision already been processed?
-```
-
-Its identity is based on:
-
-```text
-publisher + resourceId
-```
-
-Receipts are used in generic Resource resolution, especially descriptor-backed processing, to avoid unnecessary reprocessing.
-
-## ResourceInstallation
-
-A Resource installation is Domain Object provenance.
-
-It answers:
-
-```text
-Which published Resource revision installed this Domain Object?
-```
-
-Its identity is based on:
-
-```text
-objectType + objectId
-```
-
-## Why Both Exist
-
-A single Resource can install many Domain Objects.
-
-Therefore:
-
-```text
-one ResourceReceipt
-```
-
-cannot replace:
-
-```text
-many ResourceInstallation records
-```
-
-Likewise, checking every possible Domain Object installation is not a generic replacement for Resource-level receipt processing.
-
----
-
-# Two Freshness Layers
-
-The current implementation intentionally has two freshness layers.
-
-```text
-Resource-level freshness
-    → ResourceReceipt
-
-Domain Object-level freshness
-    → ResourceInstallation
-```
-
-They operate at different boundaries.
-
-The Resource layer can decide that a descriptor item is already processed.
-
-A Domain installer can independently decide that a particular object is already current or otherwise should not be replaced.
-
-Do not merge these responsibilities.
-
----
-
-# Object-Level Freshness
-
-Many installers use `ResourceInstallation.modifiedAt` to decide whether a candidate should replace the stored object.
-
-Typical policy:
-
-```text
-if current installation exists
-and incoming modifiedAt <= installed modifiedAt
-    → skip object write
-else
-    → write object + new ResourceInstallation
-```
-
-This pattern is used by current installers such as:
-
-* Bible Chapters,
-* Bible Paragraphs,
-* Bible Pericopes,
-* Bible Booknames,
-* Bible Search Index,
-* Reading Plan Definitions,
-* and Strong's Definitions.
-
-The exact rule still belongs to the Domain installer.
-
----
-
-# Domain-Specific Duplicate Policies
-
-Not every installer uses identical freshness semantics.
-
-For example, Notes installation currently treats an existing Note identity as already present and skips it rather than applying the generic modified-time replacement rule.
-
-That difference is intentional at the architecture level:
-
-> Generic Resource infrastructure does not dictate one universal Domain Object replacement policy.
-
-If Notes synchronization semantics change later, that policy should be changed in the Notes installer/synchronization design rather than hidden in generic Resource code.
-
----
-
-# InstallationTransaction
-
-The generic transaction abstraction is intentionally tiny:
-
-```ts
-interface InstallationTransaction<TStores> {
-    run<TResult>(
-        operation: (
-            stores: TStores
-        ) => Promise<TResult>
-    ): Promise<TResult>;
-}
-```
-
-The generic abstraction does not know IndexedDB store names.
-
-It does not know Bible, Notes, Plans, or Strong's.
-
-It only establishes:
-
-```text
-run this installation operation
-against a Domain-specific group of stores
-as one transaction boundary
-```
-
----
-
-# Domain-Specific Installation Stores
-
-Each installer defines the narrow store set it needs.
-
-For example, Bible Chapter installation conceptually requires:
-
-```text
-ChapterStore
-BibleVersionStore
-ResourceInstallationStore
-```
-
-A Domain-specific contract groups those stores:
-
-```text
-BibleChapterInstallationStores
-```
-
-and specializes the generic transaction:
-
-```text
-InstallationTransaction<BibleChapterInstallationStores>
-```
-
-This gives the Domain installer a clean persistence boundary without importing the application database directly.
-
----
-
-# Why Transactions Expose Narrow Stores
-
-The installer should express Domain behavior in terms of meaningful storage capabilities.
-
-It should not know:
-
-```text
-IndexedDB database name
-object store names
-IDB transaction APIs
-StoredDomainObject envelope details
-schema-version mechanics
-```
-
-Those are persistence-adapter concerns.
-
-This keeps installer tests simple and prevents Domain installation logic from becoming coupled to IndexedDB.
-
----
-
-# IndexedDB Installation Transactions
-
-Concrete IndexedDB transaction adapters live in Domain persistence code.
-
-A typical adapter:
-
-```text
-opens ApplicationDB
-    ↓
-starts one readwrite transaction
-    ↓
-opens DOMAIN_OBJECTS
-    +
-RESOURCE_INSTALLATIONS
-    ↓
-wraps raw stores in Domain-specific store contracts
-    ↓
-runs Domain installation callback
-    ↓
-awaits transaction.done
-```
-
-On failure it attempts to abort the transaction and then rethrows the original error.
-
-The original operation error remains the meaningful failure.
-
----
-
-# Atomic Write Requirement
-
-When a Domain Object is installed from a Resource, the Domain Object and its `ResourceInstallation` state must be committed together.
-
-Resource-backed local writes that queue a Resource publication also commit their Domain Object, `ResourceInstallation`, and Outbox publication intent in one transaction:
-
-```text
-DOMAIN_OBJECTS
-+ RESOURCE_INSTALLATIONS
-+ OUTBOX
-```
-
-The local write allocates one monotonic `modifiedAt` revision and stores the same value on the queued Resource publication intent. Nostr publication later reuses that revision as `created_at` rather than creating a newer timestamp.
-
-The desired invariant for inbound installation remains:
-
-```text
-Domain Object write succeeds
-AND
-ResourceInstallation write succeeds
-```
-
-or:
-
-```text
-neither write is committed
-```
-
-This prevents states such as:
-
-```text
-new Domain Object
-+
-stale installation provenance
-```
-
-or:
-
-```text
-new installation provenance
-+
-missing Domain Object
-```
-
----
-
-# StoredDomainObject Persistence
-
-Current IndexedDB Domain persistence uses a generic stored envelope in the application database.
+Resource-level processing state.
 
 Conceptually:
 
 ```text
-StoredDomainObject {
-    id
-    objectType
-    objectId
-    value
-}
+publisher + resourceId
+    → this Resource revision has been processed/current
 ```
 
-The concrete installation transaction maps a Domain-specific store contract onto that generic persistence representation.
+Receipts participate in resolution/currentness optimization.
 
-The Domain installer still works with `Chapter`, `Note`, `PlanDefinition`, `Strongs`, and other Domain types rather than `StoredDomainObject` directly.
+## ResourceInstallation
+
+Object-level Resource state.
+
+Conceptually:
+
+```text
+objectType + objectId
+    → this accepted Domain Object corresponds to this Resource revision
+```
+
+One Resource can produce many objects:
+
+```text
+1 ResourceReceipt
+many ResourceInstallations
+```
+
+A Resource receipt is marked processed only after the Resource's handler/generic installation path completes successfully.
+
+Receipt write failure is logged after successful Domain handling rather than rolling back Domain persistence.
 
 ---
 
-# Bible Chapter Installation Example
+# ResourceResolutionProcessor Dispatch
 
-Bible Chapter installation is a useful representative example.
-
-High-level flow:
+Source:
 
 ```text
-Decoded Bible Chapter Resource
-    ↓
-BibleChapterResourceHandler
-    ↓
-BibleChapterInterpreter
-    ↓
-BibleChapterCandidate[]
-    ↓
-BibleChapterValidator
-    ↓
-ValidatedBibleChapterCandidate[]
-    ↓
-BibleChapterInstaller
+src/lib/resource/services/resource-resolution-processor.ts
 ```
 
-The installer then:
+After decoding, the processor checks for a specialized ResourceHandler by `resourceType`:
 
 ```text
-requires all candidates to use one Bible version
-    ↓
-ensures BibleVersion exists
-    ↓
-for each chapter candidate
-    ↓
-derives chapter Domain Object ID
-    ↓
-reads ResourceInstallation
-    ↓
-skips stale/equal incoming revision
-    ↓
-writes Chapter
-    ↓
-writes ResourceInstallation
+special handler registered
+    → handler.handle(decoded)
+
+no special handler
+    → genericInstaller.install(decoded)
 ```
 
-All participating writes occur through one Bible Chapter installation transaction.
+This allows exceptional Resource families to keep specialized persistence without forcing every Domain through custom infrastructure.
+
+Standalone Normalized Content demonstrates the normal generic contract clearly:
+
+```text
+resourceType = normalized-content/document
+objectType   = normalized-content/document
+dataType     = kjvonly.normalized-document
+dataVersion  = 1
+resourceId   = opaque to generic Resource infrastructure
+```
+
+The semantic datatype is reusable independently from Resource Type. A future Resource Type such as `sermon` may reuse `kjvonly.normalized-document@1` while a module that understands the `sermon` type adds richer application behavior.
+
+At present the intended special-case list is:
+
+```text
+Filesystem
+```
 
 ---
 
-# Supporting Domain Objects
+# Filesystem Exception
 
-An installer may create supporting Domain state in addition to the directly represented object.
-
-Bible Chapter installation demonstrates this by ensuring the corresponding `BibleVersion` exists.
-
-That behavior belongs to the Bible Domain because only the Bible Domain understands the relationship between:
+Filesystem remains on its specialized installation path, but it uses the same Resource vocabulary as the generic path:
 
 ```text
-Bible publisher
-Bible version
-Chapter identity
+resourceType = filesystem/entry
+objectType   = filesystem/entry
+dataType     = kjvonly.filesystem.entries
+dataVersion  = 1
 ```
 
-Generic Resource infrastructure should not manufacture those supporting Domain Objects.
+The plural semantic datatype is intentional: one Filesystem Resource payload contains a path-keyed collection of entries, while each installed filesystem object is one `filesystem/entry`.
 
----
+Current flow:
 
-# Strong's Installation Example
+```text
+Decoded Filesystem Resource
+    ↓
+FilesystemResourceHandler
+    ↓
+FilesystemEntriesDataTypeHandler
+    ↓
+FilesystemInterpreter
+    ↓
+FilesystemValidator
+    ↓
+FilesystemInstaller
+    ↓
+FilesystemInstallationTransaction
+```
 
-Strong's installation validates that all candidates in one Resource belong to one Bible version.
+The specialized handler validates the declared semantic payload contract before interpretation. The reason for keeping a separate lifecycle is persistence, not different Resource semantics.
 
-It then derives Strong's Domain Object IDs using:
+Filesystem entries are stored in their own physical store with addressing based on:
 
 ```text
 publisher
-Bible version
-Strong's key
+rootPath / mount
+entry path
 ```
 
-For each definition it:
+Its transaction writes:
 
 ```text
-checks current ResourceInstallation
-    ↓
-skips stale/equal incoming content
-    ↓
-writes Strong's Domain Object
-    ↓
-writes installation provenance
+FILESYSTEM store
++
+RESOURCE_INSTALLATIONS
 ```
 
-The Strong's Domain owns those identity and freshness rules.
+rather than:
+
+```text
+DOMAIN_OBJECTS
++
+RESOURCE_INSTALLATIONS
+```
+
+Filesystem also preserves deferred `ResourceDescriptor` values and mount/path behavior that belong to the Filesystem Domain.
+
+For now, this is a legitimate specialized installer and should not be generalized away merely to eliminate the final `ResourceHandler`.
 
 ---
 
-# Reading Plan Definition Installation Example
+# Domain-Specific Local Write Transactions
 
-A Plan Definition Resource currently requires exactly one validated Plan Definition candidate.
-
-The installer derives a Domain Object ID from:
+Files such as:
 
 ```text
-publisher
-group
-plan key
+bible-text-markup-write-transaction.ts
 ```
 
-It then compares the incoming Resource `modifiedAt` with the installed provenance and either:
+are not leftover inbound Resource installers.
+
+They own local application mutations.
+
+A typical local Resource-backed write must atomically maintain:
 
 ```text
-skip current/stale definition
-```
-
-or:
-
-```text
-write PlanDefinition
+DOMAIN_OBJECTS
 +
-write ResourceInstallation
+RESOURCE_INSTALLATIONS
++
+OUTBOX
 ```
 
-The cardinality rule—exactly one plan definition—is a Reading Plans rule, not a generic Resource rule.
+Conceptually:
+
+```text
+user/application modifies Domain state
+    ↓
+Domain local-write service
+    ↓
+allocate monotonic modifiedAt
+    ↓
+write accepted Domain Object
+write ResourceInstallation revision state
+queue publication intent
+    ↓
+commit
+```
+
+This is different from inbound `GenericResourceInstaller`:
+
+```text
+GenericResourceInstaller
+    = accept an external/decoded Resource
+
+Domain write transaction
+    = create/update locally authoritative state and queue publication
+```
+
+Do not remove local-write transactions just because inbound installation became generic.
 
 ---
 
-# Notes Installation Example
+# Bible Chapter Example
 
-Notes demonstrate that installation policy can differ from the common modified-time pattern.
+Bible Chapters demonstrate several important boundaries.
 
-The Notes installer:
+Published Chapter Resource:
 
 ```text
-requires candidates to share one Notes resource name
-    ↓
-derives Note identity from publisher + name + note ID
-    ↓
-checks whether the Note already exists
-    ↓
-skips an existing Note
-    ↓
-writes new Note
-+
-writes ResourceInstallation
+resourceType = bible/chapter
+dataType     = kjvonly.bible.chapter
+dataVersion  = 1
+metadata.version = semantic Bible version label
 ```
 
-This is why installation behavior remains Domain-owned.
+The Bible Domain owns the path-like Resource ID grammar:
+
+```text
+kjvonly/bible/chapter/<bibleId>/<chapterRef>
+```
+
+or bundle:
+
+```text
+kjvonly/bible/chapter/<bibleId>
+```
+
+The factory treats:
+
+```text
+bibleId
+    = identity namespace derived from Resource identity
+
+metadata.version
+    = semantic version label
+```
+
+They are intentionally independent.
+
+For a non-empty Chapter Resource, the factory emits:
+
+```text
+bible/version
++
+one or more bible/chapter candidates
+```
+
+Both are normal candidates and use the same generic currentness/provenance rules.
+
+No special `derived-if-absent` mode exists.
+
+---
+
+# Notes Example
+
+Notes use:
+
+```text
+NoteDataTypeHandler
+NoteDomainObjectFactory
+GenericResourceInstaller
+```
+
+The old Notes-specific interpreter/validator/installer/resource-handler installation stack has been removed.
+
+Application-side Notes writes/publication remain Domain-specific because they are local mutation/outbound behavior, not inbound installation.
+
+---
+
+# Reading Plans Example
+
+Plan Definition, Subscription, and Progress each register:
+
+```text
+published datatype handler
+canonical object/archive datatype handler where required
+Domain Object factory
+```
+
+They share the same GenericResourceInstaller.
+
+Local subscription/progress write transactions remain because local writes must update Domain state, Resource revision state, and Outbox intent atomically.
+
+---
+
+# Strong's Example
+
+Strong's established the important distinction between:
+
+```text
+published Resource datatype
+and
+canonical stored Domain Object datatype
+```
+
+A definitions bundle may validate as a published collection contract while the factory emits individual objects with:
+
+```text
+objectType = strongs/definition
+dataType   = kjvonly.strongs.definition@1
+```
+
+The generic installer persists candidate metadata supplied by the factory rather than blindly copying the incoming Resource datatype onto every object.
+
+---
+
+# Bible Resource Migration State
+
+The following Bible Resource families now use generic datatype/factory installation:
+
+```text
+Chapters
+Booknames
+Paragraphs
+Pericopes
+Text Markup
+Search Index
+```
+
+Their old inbound:
+
+```text
+Interpreter
+Installer
+ResourceHandler
+Domain-specific installation transaction
+```
+
+stacks have been removed where no longer required.
+
+Reusable Domain validators remain when the new datatype/factory code still uses them.
+
+Filesystem remains the intentional specialized inbound path.
+
+---
+
+# Archive Reconstruction
+
+Archive import does not write archived Domain Objects directly.
+
+It reconstructs a `ResourcePublication`, then builds `DecodedResourceContent` and calls:
+
+```text
+ResourceResolutionProcessor.processDecoded(...)
+```
+
+The reconstructed envelope uses:
+
+```text
+publisher          ← publication
+resourceId         ← publication
+resourceType       ← publication
+modifiedAt         ← archived ResourceInstallation
+dataType            ← publication
+dataVersion         ← publication
+metadata            ← installation.metadata ?? publication.metadata
+value               ← publication.value
+```
+
+The reconstructed Resource then follows the same specialized/generic installation dispatch as normal inbound Resources.
+
+The reconstructed Resource therefore validates against the publication payload contract, while the archived Domain Object keeps its own persisted semantic datatype. ResourceInstallation metadata may still be required for faithful Resource reconstruction.
 
 ---
 
 # Empty Candidate Sets
 
-Some installers treat an empty interpreted/validated candidate collection as a no-op.
+A valid factory may return:
 
-That behavior is also Domain-specific.
+```text
+[]
+```
 
-A generic Resource handler should not assume that every successfully decoded Resource must produce at least one Domain Object.
+The generic installer still runs the transaction callback, but no Domain Object or ResourceInstallation writes occur.
 
-Some Resource Types may validly produce zero installable objects.
+The enclosing Resource processing may still mark the Resource itself processed successfully.
 
-Other Resource Types may reject that condition.
-
-For example, the Plan Definition installer requires exactly one candidate.
+A Domain factory should return an empty candidate list only when an empty semantic value is valid for that Resource contract.
 
 ---
 
-# ResourceHandler Failure Semantics
+# Failure Semantics
 
-`ResourceProcessor` wraps Domain handling for each resolved content item.
-
-If decoding or `handler.handle()` throws:
+The generic path can fail because of:
 
 ```text
-ResourceInstallOutcome.status = failed
+unsupported dataType/dataVersion
+semantic validation error
+unsupported Resource Type
+factory invariant error
+transaction/persistence error
 ```
 
-and the error is attached to that outcome.
+`ResourceResolutionProcessor` converts these errors into a failed `ResourceInstallOutcome` for that Resource.
 
-The processor continues to model failure at the Resource-content level rather than allowing one thrown handler error to erase all context from the returned install result.
+The generic installer does not swallow semantic or persistence failures.
 
 ---
 
-# Transaction Failure Semantics
+# Source Organization
 
-Within a Domain installation transaction:
-
-```text
-operation throws
-    ↓
-transaction adapter attempts abort
-    ↓
-transaction completion is drained/observed
-    ↓
-original operation error is rethrown
-```
-
-The persistence adapter should not replace the meaningful Domain/install error with a secondary abort error.
-
----
-
-# Receipt Write Happens After Domain Handling
-
-After a handler completes successfully, `ResourceProcessor` attempts to write a Resource receipt.
-
-Ordering is therefore:
+Generic Resource installation infrastructure:
 
 ```text
-Domain installation succeeds
-    ↓
-Resource receipt markProcessed(...)
+src/lib/resource/
+├── data-types/
+│   ├── resource-data-type-handler.ts
+│   └── resource-data-type-resolver.ts
+├── domain-objects/
+│   ├── resource-domain-object-factory.ts
+│   └── resource-domain-object-factory-resolver.ts
+├── installation/
+│   ├── generic-resource-installer.ts
+│   ├── generic-resource-installation-stores.ts
+│   ├── indexeddb-generic-resource-installation-transaction.ts
+│   └── resource-installation.ts
+└── worker/
+    └── resource-worker-composition.ts
 ```
 
-not:
+A typical migrated Domain Resource folder now contains:
 
 ```text
-receipt first
-    ↓
-Domain installation later
+<resource>-resource.ts
+<resource>-data-type-handler.ts
+<resource>-domain-object-factory.ts
+<resource>-resource-publication.ts
 ```
 
-This prevents a failed Domain install from being recorded as successfully processed.
-
----
-
-# Receipt Write Failure Policy
-
-A receipt write failure does not convert an otherwise successful Domain installation into a failed Resource outcome.
-
-Current behavior logs a warning and returns:
-
-```text
-status = handled
-```
-
-This is deliberate because the Domain state has already committed successfully.
-
-The consequence of a missing receipt is potential redundant future processing, not loss of the installed Domain Object.
-
-Domain-level installation provenance still protects installers that use `ResourceInstallation` freshness checks.
-
----
-
-# ResourceInstallResult
-
-Installation returns structured outcomes rather than a single boolean.
-
-A Resource can contain or resolve to multiple Resource content items.
-
-Each item can independently be:
-
-```text
-handled
-current
-unsupported
-failed
-```
-
-The overall result also records:
-
-```text
-requested PublishedResourceReference
-found boolean
-```
-
-This allows callers to distinguish:
-
-```text
-Resource not found
-Resource already current
-Resource installed
-Resource unsupported
-Resource failed
-partial descriptor success/failure
-```
-
----
-
-# `current` vs Installer Skip
-
-There are two places where work may be skipped.
-
-## Resolution-level current
-
-Descriptor-backed resolution may use Resource receipts and produce:
-
-```text
-status = current
-```
-
-without decoding/installing that content again.
-
-## Installer-level skip
-
-A Domain installer may receive content but decide that a specific Domain Object should not be replaced because its `ResourceInstallation` is already as new or newer.
-
-The handler can still complete successfully.
-
-These are different levels of idempotence.
-
----
-
-# Installation and Bundles
-
-Installation does not need to know whether content originated from:
-
-```text
-direct content representation
-single descriptor
-bundle descriptor
-nested descriptor collection
-Blossom content
-Nostr descriptor target
-```
-
-By the time content reaches a `ResourceHandler`, those acquisition details have already been normalized to `DecodedResourceContent`.
-
-That separation is intentional.
-
----
-
-# Installation and Module Resource Selection
-
-Module Resource selection chooses which published Resource references a module instance uses.
-
-Installation consumes those references downstream.
-
-The Domain installer does not know:
-
-```text
-Pane ID
-Buffer
-ModuleResourceSelectionResolver
-ResourceSelectionService
-```
-
-Its input is decoded Resource content.
-
-Do not leak Pane/Buffer mechanics into installers.
-
----
-
-# Installation and Publication
-
-Inbound installation and outbound publication are separate boundaries.
-
-Inbound:
-
-```text
-Published Resource
-    → decoded content
-    → Domain Object installation
-```
-
-Outbound:
-
-```text
-Domain write
-    → ResourcePublication
-    → Outbox
-    → publication strategy
-```
-
-A Domain installer should not publish the object it is installing.
-
-Installation is not synchronization echo logic.
-
----
-
-# Installation and Synchronization
-
-Installation is a mechanism used by acquisition/synchronization, but it is not itself the synchronization coordinator.
-
-For example, Notes fetching/synchronization policy should determine which Resources to acquire.
-
-The Notes installer only answers:
-
-```text
-Given this decoded Notes Resource,
-how should its Domain Objects be installed?
-```
-
-Do not recreate removed acquisition coordinators inside installer code.
-
----
-
-# Worker Ownership
-
-Current Resource installation runs inside Resource worker composition.
-
-The Resource worker constructs:
-
-```text
-Resource resolvers
-content decoder
-ResourceProcessor instances
-Domain ResourceHandlers
-Domain interpreters
-Domain validators
-Domain installers
-installation transaction adapters
-receipt service
-```
-
-Workers are separate composition roots.
-
-They do not use Svelte `ApplicationContext`.
-
----
-
-# Main Thread Ownership
-
-The main application requests installation through the Resource Worker boundary.
-
-Main-thread code should not manually reproduce Domain handler pipelines.
-
-Application/domain services normally deal with:
-
-```text
-PublishedResourceReference
-```
-
-and receive Resource install results through the public Resource API.
-
----
-
-# Public Resource API
-
-Stable installation contracts are exported through:
-
-```text
-$lib/resource
-```
-
-This includes concepts such as:
-
-```text
-ResourceHandler
-InstallationTransaction
-ResourceInstallation
-ResourceInstallationStore
-createResourceInstallationId
-ResourceInstallResult
-ResourceInstallOutcome
-```
-
-Domain consumers should use the Resource root public API rather than deep-importing these contracts.
-
-Internal Resource implementation code may still use direct internal imports.
-
----
-
-# Domain Public APIs
-
-Installation implementations remain Domain-owned.
-
-External consumers should not generally import a concrete Bible or Notes installer to perform ordinary Resource installation.
-
-The worker composition wires concrete implementations.
-
-The Domain public root remains the boundary for stable Domain concepts.
-
-Concrete persistence/resource implementation imports are appropriate in composition roots.
-
----
-
-# Current Source Organization
-
-Generic installation contracts live under:
-
-```text
-src/lib/resource/installation/
-    installation-transaction.ts
-    resource-handler.ts
-    resource-installation.ts
-    resource-installation-store.ts
-```
-
-Generic processing is under:
-
-```text
-src/lib/resource/services/
-    resource-processor.ts
-    resource-install-result.ts
-```
-
-Domain installation implementations live near their Resource Types, for example:
-
-```text
-src/lib/domains/bible/resources/chapters/
-src/lib/domains/bible/resources/paragraphs/
-src/lib/domains/bible/resources/pericopes/
-src/lib/domains/bible/resources/booknames/
-src/lib/domains/bible/resources/search/
-src/lib/domains/bible/resources/text-markup/
-
-src/lib/domains/notes/resources/
-
-src/lib/domains/reading-plans/resources/definitions/
-
-src/lib/domains/strongs/resources/definitions/
-```
-
-Concrete IndexedDB transaction adapters live in Domain persistence folders.
-
----
-
-# Naming Pattern
-
-The implementation commonly follows this naming sequence:
-
-```text
-<ResourceType>ResourceHandler
-<ResourceType>Interpreter
-<ResourceType>Validator
-<ResourceType>Installer
-<ResourceType>InstallationStores
-IndexedDB<ResourceType>InstallationTransaction
-```
-
-Not every Resource Type must use exactly the same filenames, but the responsibilities should remain distinct.
+plus Domain validators/services as actually required.
 
 ---
 
 # Testing Strategy
 
-Installation behavior should be tested at several levels.
+The generic installation architecture should be tested at several levels.
 
-## ResourceHandler tests
+## DataType handler tests
 
-Handler tests verify:
-
-```text
-interpret called
-validated candidates produced
-installer receives validated candidates
-errors propagate appropriately
-```
-
-They should not require real IndexedDB.
-
-## Installer tests
-
-Installer tests verify Domain policy such as:
+Verify:
 
 ```text
-identity derivation
-freshness rules
-duplicate rules
-supporting-object creation
-candidate cardinality
-provenance records
+valid values accepted
+invalid semantic shape rejected
+canonical object/archive contract behavior
 ```
 
-Use in-memory/fake transaction stores where practical.
+## Factory tests
 
-## Transaction tests
-
-Concrete IndexedDB transaction tests verify:
+Verify:
 
 ```text
-correct object store usage
-Domain Object persistence
-ResourceInstallation persistence
-atomic commit
-rollback on failure
+Resource context interpretation
+Domain Object IDs
+bundle expansion
+Domain invariants
+metadata interpretation
+candidate semantic metadata
 ```
 
-## ResourceProcessor tests
+## Generic installer tests
 
-Processor tests verify:
+Verify:
 
 ```text
-handler dispatch
-duplicate handler rejection
-unsupported Resource Types
-failure outcomes
-receipt ordering
-receipt failure policy
+datatype dispatch
+factory dispatch
+0..n candidates
+modifiedAt currentness
+StoredDomainObject construction
+ResourceInstallation construction
+metadata preservation
+atomic transaction behavior
 ```
 
-## Browser integration tests
+## Browser installation tests
 
-Browser tests cover real worker/database boundaries when that behavior is the subject of the test.
+Use real IndexedDB/Worker execution to prove representative Resources install through production composition.
+
+## Relay integration tests
+
+For important Resource families such as Bible Chapters, publish a real Nostr Resource event and exercise discovery → resolution → decoding → generic installation.
+
+Test fixtures must include all Resource-envelope metadata required by the Domain contract.
+
+---
+
+# Extension Procedure for a Normal Resource Family
+
+To add a Resource family that persists normal Domain Objects:
+
+1. Define the Resource contract constants.
+2. Define `dataType` and `dataVersion` explicitly.
+3. Add a `ResourceDataTypeHandler` for the published semantic payload.
+4. Add a `ResourceDomainObjectFactory` registered by Resource Type.
+5. Put Domain identity and context-dependent invariants in the factory.
+6. Return canonical `ResourceDomainObjectCandidate` values.
+7. Provide a Domain-owned `ResourcePublication` builder for archive/outbound reconstruction where required.
+8. Register handlers/factory in Resource worker composition.
+9. Add focused datatype/factory/generic installation tests.
+10. Add or update Archive `ResourcePublication` reconstruction.
+11. Do not add a custom ResourceHandler/Installer unless persistence requirements genuinely differ from the generic path.
+
+---
+
+# When a Specialized Installer Is Justified
+
+Before adding a specialized inbound installer, ask:
+
+```text
+Can the accepted state be represented as normal StoredDomainObject candidates
+and persisted to DOMAIN_OBJECTS + RESOURCE_INSTALLATIONS?
+```
+
+If yes:
+
+```text
+use GenericResourceInstaller
+```
+
+A specialized installer is justified only when there is a real lifecycle/persistence difference, such as:
+
+```text
+separate physical store
+special addressing model
+required atomic stores not represented by generic transaction
+non-Domain-object installation semantics
+```
+
+Filesystem currently satisfies this exception.
+
+A Domain being "special" semantically is not enough.
 
 ---
 
 # Important Invariants
 
-## Generic Resource code does not own Domain Object identity
+```text
+1. dataType + dataVersion own semantic payload validation.
 
-Domain installers derive Domain Object IDs.
+2. Resource Type owns Domain Object factory selection.
 
-## Resource identity is not Domain Object identity
+3. Resource ID does not generically define Domain semantics.
 
-Do not use `resourceId` as a universal Domain Object ID.
+4. Resource metadata is transported generically and interpreted by owning Domains.
 
-## Installation policy is Domain-owned
+5. Factories receive validated values, never raw unvalidated payloads.
 
-Freshness and duplicate behavior may differ by Domain Resource Type.
+6. Factories own Domain Object identity and canonical persisted semantic metadata.
 
-## Domain Object and installation provenance are atomic
+7. One Resource may produce zero, one, or many Domain Objects.
 
-When an installer records provenance for an object, both writes belong in one transaction.
+8. GenericResourceInstaller owns normal currentness and persistence only.
 
-## ResourceReceipt and ResourceInstallation remain separate
+9. Currentness is per Domain Object using ResourceInstallation.modifiedAt.
 
-They track different identities and different lifecycle levels.
+10. Stored Domain Object + ResourceInstallation writes are atomic.
 
-## Handlers are registered by Resource Type
+11. ResourceInstallation metadata is provenance/reconstruction state, not Domain payload.
 
-Do not add generic Domain-specific switch statements to `ResourceProcessor`.
+12. ResourceReceipt and ResourceInstallation are separate layers.
 
-## Decoded content is still untrusted Domain input
+13. Domain-specific local-write transactions are not obsolete inbound installers.
 
-JSON decoding does not replace interpretation and validation.
+14. Specialized inbound installers require materially different persistence requirements.
 
-## Workers are composition roots
-
-Worker installation code does not obtain services through Svelte `ApplicationContext`.
-
-## Installation does not publish
-
-Inbound installation and outbound publication remain separate flows.
+15. Filesystem remains specialized because it writes its own store.
+```
 
 ---
 
 # Common Anti-Patterns
 
-Do not introduce code shaped like:
-
-```ts
-switch (resource.resourceType) {
-    case 'bible/chapter':
-        // generic Resource service now knows Bible
-}
-```
-
-Do not make installers depend directly on:
+Avoid reintroducing:
 
 ```text
-Pane
-Buffer
-Svelte context
-Nostr event objects
-rx-nostr
-Blossom HTTP responses
-raw descriptor documents
+one Interpreter + Validator + Installer + ResourceHandler stack per Domain
 ```
 
-Do not write the Domain Object in one transaction and its `ResourceInstallation` later in another operation.
+when the only difference is semantic validation and Domain identity.
 
-Do not treat Resource receipts as a replacement for Domain Object provenance.
-
-Do not make one universal `modifiedAt` policy mandatory for every Domain installer.
-
-Do not put IndexedDB transaction mechanics into the Domain installer.
-
----
-
-# Extension Procedure for a New Resource Type
-
-When adding a new installable Resource Type:
+Avoid:
 
 ```text
-1. define the Resource Type in the owning Domain
-2. define interpretation candidate type
-3. implement ResourceInterpreter
-4. implement ResourceValidator
-5. define Domain Object identity
-6. define installer behavior
-7. define required installation stores
-8. implement InstallationTransaction adapter
-9. implement ResourceHandler
-10. register handler in Resource worker composition
-11. add handler/interpreter/validator/installer tests
-12. add persistence transaction tests where relevant
-13. add browser integration coverage if the worker/database boundary matters
+parsing Resource ID generically to infer Domain meaning
 ```
 
-The generic Resource processor should normally require no Domain-specific change beyond handler registration.
-
----
-
-# Review Checklist
-
-When reviewing installation code, ask:
+Avoid:
 
 ```text
-Does the ResourceHandler remain thin?
-
-Is interpretation separate from persistence?
-
-Is validation explicit?
-
-Does the Domain derive its own object identity?
-
-Is freshness policy located in the Domain installer?
-
-Are Domain Object and ResourceInstallation writes atomic?
-
-Does the installer depend on narrow store contracts rather than IndexedDB?
-
-Is Resource receipt logic still outside the Domain installer?
-
-Does the code avoid Pane/Buffer/UI dependencies?
-
-Is the handler registered exactly once?
-
-Are worker and application composition responsibilities clear?
+using dataType as Resource Type
 ```
 
----
-
-# Historical Notes
-
-Earlier Resource architecture discussions sometimes treated installation as part of a larger monolithic Resource client flow.
-
-That is not the current implementation.
-
-The current separation is intentionally explicit:
+Avoid:
 
 ```text
-transport/discovery
-    ↓
-resolution
-    ↓
-decoding
-    ↓
-Domain handling
-    ↓
-Domain installation
+copying the published datatype blindly onto every stored Domain Object
 ```
 
-Likewise, the current application does not use a generic Domain Store that blindly persists every decoded Resource object.
+Avoid:
 
-Installation is Domain-specific because identity, cardinality, supporting objects, and freshness semantics are Domain-specific.
+```text
+special candidate persistence flags for one Domain
+```
+
+Avoid:
+
+```text
+removing local-write transactions because inbound installation became generic
+```
+
+Avoid:
+
+```text
+forcing Filesystem into DOMAIN_OBJECTS solely for architectural uniformity
+```
 
 ---
 
 # Summary
 
-The Resource installation boundary is where generic Resource content becomes durable Domain state.
-
-The current architecture is:
+The current Resource installation implementation is intentionally small at its center:
 
 ```text
-DecodedResourceContent
+Decoded Resource
     ↓
-ResourceHandler selected by Resource Type
+validate dataType + dataVersion
     ↓
-Domain interpretation
+factory constructs canonical Domain Objects
     ↓
-Domain validation
+GenericResourceInstaller applies modifiedAt currentness
     ↓
-Domain installer
-    ↓
-Domain-specific InstallationTransaction
-    ↓
-Domain Object write
-    +
-ResourceInstallation provenance write
-    ↓
-commit
+DOMAIN_OBJECTS + RESOURCE_INSTALLATIONS
 ```
 
-The Resource layer owns dispatch and generic processing.
+This shared path now installs the normal Resource-backed Domain state across Bible, Notes, Reading Plans, Strong's, and Normalized Content.
 
-The Domain owns meaning, identity, validation, installation policy, and persistence behavior.
+Domain code supplies meaning and identity rather than reimplementing the lifecycle.
 
-`ResourceInstallation` records object-level provenance and freshness.
+Filesystem remains a specialized inbound installer because it persists accepted entries in a different store with different addressing semantics.
 
-`ResourceReceipt` records Resource-level processing state.
-
-Those concepts remain separate.
-
-The most important rule is:
-
-> Generic Resource infrastructure delivers decoded content; the owning Domain decides what gets installed and commits the resulting Domain state atomically with its Resource provenance.
+Local-write transactions remain Domain-specific because they own a different responsibility: atomically updating locally authoritative Domain state, Resource revision state, and publication intent.

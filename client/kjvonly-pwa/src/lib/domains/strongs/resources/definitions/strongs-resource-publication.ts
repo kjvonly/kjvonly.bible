@@ -7,8 +7,14 @@ import type {
 } from '$lib/resource';
 
 import {
+	createStrongsResourceId
+} from '../strongs-resource-id';
+
+import {
+	STRONGS_DATA_TYPE,
+	STRONGS_DATA_VERSION,
 	STRONGS_RESOURCE_TYPE
-} from './strongs-interpreter';
+} from './strongs-resource-contract';
 
 export class StrongsResourcePublication {
 
@@ -41,8 +47,17 @@ export class StrongsResourcePublication {
 			resourceType:
 				STRONGS_RESOURCE_TYPE,
 
+			dataType:
+				STRONGS_DATA_TYPE,
+
+			dataVersion:
+				STRONGS_DATA_VERSION,
+
 			resourceId:
-				`${STRONGS_RESOURCE_TYPE}/${version}/${key}`,
+				createStrongsResourceId(
+					version,
+					key
+				),
 
 			representation:
 				'content',

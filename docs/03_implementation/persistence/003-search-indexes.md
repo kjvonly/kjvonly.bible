@@ -154,9 +154,11 @@ Instead:
 ```text
 Published Resource
     ↓
-Bible Search Resource handler
+BibleSearchIndexDataTypeHandler
     ↓
-interpret + validate
+BibleSearchIndexDomainObjectFactory
+    ↓
+GenericResourceInstaller
     ↓
 BibleSearchIndex Domain Object
     ↓
@@ -181,13 +183,19 @@ path.
 The current Bible Search Resource Type is:
 
 ```text
-kjvonly/bible/search
+bible/search-index
 ```
 
-The Resource path contains the Bible version:
+Its semantic payload contract is:
 
 ```text
-kjvonly/bible/search/<version>
+kjvonly.bible.search-index@1
+```
+
+The Bible Domain owns the Search Resource ID grammar; generic Resource infrastructure treats the value as opaque:
+
+```text
+kjvonly/bible/search-index/<version>
 ```
 
 The Resource publisher remains part of the `PublishedResourceReference` and
@@ -264,35 +272,21 @@ Bible Search Worker
 
 # Bible Search Installation
 
-Bible Search installation follows the normal Resource installation boundary.
+Bible Search Index Resources use the normal generic installation path.
 
 ```mermaid
 flowchart TD
-    A[DecodedResourceContent] --> B[BibleSearchIndexInterpreter]
-    B --> C[BibleSearchIndexCandidate]
-    C --> D[BibleSearchIndexValidator]
-    D --> E[ValidatedBibleSearchIndexCandidate]
-    E --> F[BibleSearchIndexInstaller]
-    F --> G[Installation Transaction]
-    G --> H[domain_objects]
-    G --> I[resource_installations]
+    A[DecodedResourceContent] --> B[BibleSearchIndexDataTypeHandler]
+    B --> C[BibleSearchIndexDomainObjectFactory]
+    C --> D[bible/search-index candidate]
+    D --> E[GenericResourceInstaller]
+    E --> F[DOMAIN_OBJECTS]
+    E --> G[RESOURCE_INSTALLATIONS]
 ```
 
-## Interpreter
+## Semantic validation
 
-The interpreter verifies:
-
-- the Resource Type is `kjvonly/bible/search`,
-- the Resource identifier uses the same Resource Type,
-- the Resource path contains exactly one segment,
-- that segment is the Bible version.
-
-It produces the candidate value plus the interpreted version.
-
-## Validator
-
-The validator verifies the persisted FlexSearch export rather than accepting
-arbitrary JSON.
+`BibleSearchIndexDataTypeHandler` validates the persisted FlexSearch export rather than accepting arbitrary JSON.
 
 Current validation includes:
 
@@ -300,44 +294,36 @@ Current validation includes:
 - every chunk value must be a string,
 - every chunk string must contain valid JSON,
 - required FlexSearch chunks must exist,
-- the exported FlexSearch configuration must use a supported Index
-  configuration.
+- the exported FlexSearch configuration must use a supported Index configuration.
 
-This prevents malformed or incompatible index exports from becoming accepted
-Bible Search Domain Objects.
+## Domain Object factory
 
-## Installer
+`BibleSearchIndexDomainObjectFactory` owns Resource ID interpretation and constructs the publisher-scoped Search Index Domain Object identity.
 
-The installer derives the Domain Object ID from:
+It emits canonical:
 
 ```text
-resource.publisher
-candidate.version
+objectType  = bible/search-index
+dataType    = kjvonly.bible.search-index
+dataVersion = 1
 ```
 
-It checks existing `ResourceInstallation` provenance before replacing an
-installed index.
+## Generic installation
 
-If the incoming Resource is not newer than the installed publication, the
-installer keeps the current object.
+`GenericResourceInstaller` checks existing `ResourceInstallation` state before replacing an installed Search Index.
 
-For an accepted replacement, the installer writes:
+If the incoming Resource is not newer, the current object is retained.
+
+Accepted replacement writes:
 
 ```text
 BibleSearchIndex
 ResourceInstallation
 ```
 
-inside one installation transaction.
+atomically through the generic installation transaction.
 
-The transaction uses:
-
-```text
-domain_objects
-resource_installations
-```
-
-so the Search Index Domain Object and its Resource provenance remain atomic.
+The old Search interpreter/validator-installer/resource-handler installation stack has been removed.
 
 ---
 
@@ -967,11 +953,9 @@ Search behavior is tested at multiple levels.
 Tests cover:
 
 ```text
-interpreter
-validator
-installer
-installation transaction
-Resource handler
+BibleSearchIndexDataTypeHandler
+BibleSearchIndexDomainObjectFactory
+generic Resource installation
 module Resource-selection contributor
 ```
 
@@ -1038,8 +1022,6 @@ src/lib/domains/bible/workers/search/search-worker-message.ts
 
 src/lib/domains/bible/persistence/bible-search-index-store.ts
 src/lib/domains/bible/persistence/indexeddb-bible-search-index-store.ts
-src/lib/domains/bible/persistence/bible-search-index-installation-transaction.ts
-
 src/lib/domains/bible/resources/search/
 ```
 

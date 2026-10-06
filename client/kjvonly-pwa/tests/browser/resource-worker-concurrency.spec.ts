@@ -38,6 +38,7 @@ import {
 } from '$lib/infrastructure/nostr/nostr';
 
 import {
+	BIBLE_CHAPTER_DATA_TYPE,
 	BIBLE_CHAPTER_RESOURCE_TYPE,
 	createBibleVersionId,
 	createChapterId
@@ -45,7 +46,7 @@ import {
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
 	DOMAIN_OBJECTS,
@@ -213,7 +214,7 @@ describe.skip(
 							contentPublisher,
 
 						resourceId:
-							`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version}/1_1`
+							`kjvonly/bible/chapter/${version}/1_1`
 					};
 
 					const representations =
@@ -373,6 +374,12 @@ describe.skip(
 						objectType:
 							BIBLE_CHAPTER_OBJECT_TYPE,
 
+						dataType:
+							BIBLE_CHAPTER_DATA_TYPE,
+
+						dataVersion:
+							1,
+
 						objectId:
 							chapterId,
 
@@ -519,7 +526,13 @@ function createHeavyDescriptorRepresentation(
 			reference.resourceId,
 
 		resourceType:
-			'kjvonly/resources/collections',
+			'resource/descriptor-collection',
+
+		dataType:
+			'kjvonly.resource-descriptor-collection',
+
+		dataVersion:
+			1,
 
 		eventId:
 			createEventId(
@@ -560,6 +573,12 @@ function createContentRepresentation(
 
 		resourceType:
 			BIBLE_CHAPTER_RESOURCE_TYPE,
+
+		dataType:
+			BIBLE_CHAPTER_DATA_TYPE,
+
+		dataVersion:
+			1,
 
 		eventId:
 			'f'.repeat(

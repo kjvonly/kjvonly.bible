@@ -63,7 +63,7 @@ Once a publisher is established as a Discovery Root, its Resource publications b
 For example, Discovery may query that publisher by:
 
 * Published Resource Identity,
-* Resource Classification,
+* Resource Type,
 * or broader publisher Resource queries.
 
 The exact Nostr query shapes belong to Resource Discovery.
@@ -78,7 +78,7 @@ ADR 06 may perform discovery from inputs such as:
 
 ```text
 Published Resource Identity
-Resource Classification
+Resource Type
 Resource reference
 Nostr event ID
 ```
@@ -286,7 +286,7 @@ Resource Discovery answers:
 ADR 06 defines:
 
 * Nostr query shapes,
-* identity and classification filtering,
+* identity and Resource Type filtering,
 * multi-relay discovery,
 * current-publication selection,
 * descriptor traversal,

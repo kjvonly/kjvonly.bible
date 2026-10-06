@@ -128,10 +128,13 @@ function createRow(
 							overrides.name
 					}
 					: {}),
-				category:
+				resourceType:
 					'notes',
 				dataType:
-					'kjvonly.note/v1',
+					'kjvonly.note',
+
+				dataVersion:
+					1,
 				modifiedAt:
 					1,
 				representation:

@@ -198,6 +198,28 @@ export const manifestSchema =
 					manifest.resources
 				)
 			) {
+				for (
+					const message
+					of validateResourceEventTags(
+						resource.event.tags
+					)
+				) {
+					context.addIssue({
+						code:
+							'custom',
+
+						path: [
+							'resources',
+							resourceName,
+							'event',
+							'tags'
+						],
+
+						message
+					});
+				}
+
+
 				const objectUpload =
 					resource[
 						'object-upload'
@@ -273,6 +295,28 @@ export const manifestSchema =
 					manifest.collections
 				)
 			) {
+				for (
+					const message
+					of validateResourceEventTags(
+						collection.event.tags
+					)
+				) {
+					context.addIssue({
+						code:
+							'custom',
+
+						path: [
+							'collections',
+							collectionName,
+							'event',
+							'tags'
+						],
+
+						message
+					});
+				}
+
+
 				for (
 					const resourceName
 					of collection.resources
@@ -356,6 +400,128 @@ export const manifestSchema =
 			}
 		}
 	);
+
+
+/**
+ * Required generic Resource envelope.
+ *
+ * `t` classifies the Resource for the application; `dataType` + `dataVersion`
+ * identify the payload schema. They are required separately so manifests cannot
+ * accidentally use Resource Type as a substitute for semantic type.
+ */
+const RESOURCE_EVENT_REQUIRED_TAGS = [
+	'd',
+	'm',
+	't',
+	'dataType',
+	'dataVersion',
+	'representation'
+] as const;
+
+
+/**
+ * Validates the generic Resource envelope without knowing Domain-specific tag
+ * semantics. Non-envelope scalar tags are intentionally allowed as Resource
+ * metadata.
+ */
+function validateResourceEventTags(
+	tags:
+		readonly (readonly string[])[]
+): string[] {
+	const messages:
+		string[] = [];
+
+
+	for (
+		const tagName
+		of RESOURCE_EVENT_REQUIRED_TAGS
+	) {
+		const matches =
+			tags.filter(
+				tag =>
+					tag[0] ===
+						tagName
+			);
+
+
+		if (
+			matches.length !==
+				1
+		) {
+			messages.push(
+				`Resource event requires exactly one "${tagName}" tag.`
+			);
+
+			continue;
+		}
+
+
+		const value =
+			matches[0]?.[1];
+
+
+		if (
+			value === undefined ||
+			value.trim().length === 0
+		) {
+			messages.push(
+				`Resource event has an invalid "${tagName}" tag.`
+			);
+		}
+	}
+
+
+	const dataVersion =
+		tags.find(
+			tag =>
+				tag[0] ===
+					'dataVersion'
+		)?.[1];
+
+
+	if (
+		dataVersion !== undefined
+	) {
+		const parsed =
+			Number(
+				dataVersion
+			);
+
+
+		if (
+			!Number.isSafeInteger(
+				parsed
+			) ||
+			parsed < 1
+		) {
+			messages.push(
+				'Resource event dataVersion must be a positive integer.'
+			);
+		}
+	}
+
+
+	const representation =
+		tags.find(
+			tag =>
+				tag[0] ===
+					'representation'
+		)?.[1];
+
+
+	if (
+		representation !== undefined &&
+		representation !== 'content' &&
+		representation !== 'descriptors'
+	) {
+		messages.push(
+			`Unsupported Resource representation: ${representation}`
+		);
+	}
+
+
+	return messages;
+}
 
 
 export type Manifest =

@@ -30,10 +30,6 @@ export class ResourceContentDecoder {
 				resource.content
 			);
 
-		const dataType =
-			resource.dataType ??
-			resource.metadata?.dataType;
-
 		return {
 			publisher:
 				resource.publisher,
@@ -50,9 +46,11 @@ export class ResourceContentDecoder {
 			mediaType:
 				resource.mediaType,
 
-			...(dataType === undefined
-				? {}
-				: { dataType }),
+			dataType:
+				resource.dataType,
+
+			dataVersion:
+				resource.dataVersion,
 
 			...(resource.metadata === undefined
 				? {}

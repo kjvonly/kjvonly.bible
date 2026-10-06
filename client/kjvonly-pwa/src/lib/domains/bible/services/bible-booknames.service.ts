@@ -6,9 +6,6 @@ import type {
 	ResourceInstallResult
 } from '$lib/resource';
 
-import {
-	parseResourceIdentifier
-} from '$lib/resource';
 
 import type {
 	BibleBooknames
@@ -23,8 +20,8 @@ import type {
 } from '../persistence/bible-booknames-store';
 
 import {
-	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '../resources/booknames/bible-booknames-interpreter';
+	parseBibleBooknamesResourceId
+} from '../resources/booknames/bible-booknames-resource';
 
 interface ResourceInstaller {
 	install(
@@ -162,32 +159,11 @@ function parseBibleBooknamesSource(
 	readonly key:
 		string;
 } {
-	const identifier =
-		parseResourceIdentifier(
-			source.resourceId
-		);
-
-	if (
-		identifier.resourceType !==
-		BIBLE_BOOKNAMES_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Bible Booknames Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
-	) {
-		throw new Error(
-			`Invalid Bible Booknames Resource source: ${source.resourceId}`
-		);
-	}
-
 	return {
 		key:
-			identifier.path[0]
+			parseBibleBooknamesResourceId(
+				source.resourceId
+			)
 	};
 }
 

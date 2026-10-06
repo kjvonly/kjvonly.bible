@@ -160,7 +160,13 @@ describe(
 						RESOURCE_ID,
 
 					resourceType:
-						'kjvonly/bible/chapters',
+						'bible/chapter',
+
+					dataType:
+						'kjvonly.bible.chapter',
+
+					dataVersion:
+						1,
 
 					eventId:
 						EVENT_ID,
@@ -203,7 +209,7 @@ describe(
 
 				await discovery.listByType(
 					PUBLISHER,
-					'kjvonly/bible/chapters'
+					'bible/chapter'
 				);
 
 				expect(
@@ -218,7 +224,7 @@ describe(
 					],
 
 					'#t': [
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					]
 				});
 			}
@@ -268,7 +274,7 @@ describe(
 				const result =
 					await discovery.listByType(
 						PUBLISHER,
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					);
 
 				expect(
@@ -359,7 +365,15 @@ function createResourceEvent(
 			],
 			[
 				't',
-				'kjvonly/bible/chapters'
+				'bible/chapter'
+			],
+			[
+				'dataType',
+				'kjvonly.bible.chapter'
+			],
+			[
+				'dataVersion',
+				'1'
 			],
 			[
 				'representation',

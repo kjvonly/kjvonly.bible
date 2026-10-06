@@ -7,13 +7,14 @@ import type {
 } from './bible-version-catalog';
 
 import {
+	BIBLE_VERSION_OBJECT_TYPE
+} from './bible-version-store';
+
+import {
 	DOMAIN_OBJECTS,
 	OBJECT_TYPE_INDEX,
 	type ApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
-
-const BIBLE_VERSION_OBJECT_TYPE =
-	'bible/version';
 
 export class IndexedDBBibleVersionCatalog
 	implements BibleVersionCatalog {

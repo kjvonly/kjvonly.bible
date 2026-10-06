@@ -50,6 +50,20 @@ export function toResourceRepresentation(
 			't'
 		);
 
+	const dataType =
+		requireTag(
+			event,
+			'dataType'
+		);
+
+	const dataVersion =
+		parseDataVersion(
+			requireTag(
+				event,
+				'dataVersion'
+			)
+		);
+
 	const representationValue =
 		requireTag(
 			event,
@@ -84,6 +98,10 @@ export function toResourceRepresentation(
 		resourceId,
 
 		resourceType,
+
+		dataType,
+
+		dataVersion,
 
 		eventId:
 			event.id,
@@ -166,4 +184,24 @@ function isResourceRepresentationType(
 		.includes(
 			value as ResourceRepresentationType
 		);
+}
+
+function parseDataVersion(
+	value: string
+): number {
+	const version =
+		Number(value);
+
+	if (
+		!Number.isSafeInteger(
+			version
+		) ||
+		version < 1
+	) {
+		throw new Error(
+			`Invalid Resource dataVersion: ${value}`
+		);
+	}
+
+	return version;
 }

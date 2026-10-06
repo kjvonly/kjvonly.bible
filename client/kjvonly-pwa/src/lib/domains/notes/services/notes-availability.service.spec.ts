@@ -19,7 +19,8 @@ import type {
 } from '$lib/domains/filesystem';
 
 import {
-	NOTE_DATA_TYPE_V1,
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION,
 	NOTES_RESOURCE_TYPE
 } from '../resources/notes-resource-contract';
 
@@ -62,7 +63,9 @@ describe(
 						...createNoteDescriptor().metadata,
 						name: 'Grace Note',
 						dataType:
-							NOTE_DATA_TYPE_V1
+							NOTE_DATA_TYPE,
+						dataVersion:
+							NOTE_DATA_VERSION
 					}
 				};
 
@@ -116,7 +119,7 @@ describe(
 					filesystem.search
 				).toHaveBeenCalledWith(
 					{
-						index: 'category',
+						index: 'resourceType',
 						value:
 							NOTES_RESOURCE_TYPE
 					},
@@ -126,7 +129,7 @@ describe(
 		);
 
 		it(
-			'finds Note descriptors across data type versions by stable Resource category',
+			'finds Note descriptors across data type versions by stable Resource Type',
 			async () => {
 				const store =
 					new FakeNotesStore();
@@ -139,9 +142,11 @@ describe(
 					metadata: {
 						...createNoteDescriptor().metadata,
 						resourceId:
-							'kjvonly/notes/entries/default/note-v1',
+							'kjvonly/notes/note/default/note-v1',
 						dataType:
-							NOTE_DATA_TYPE_V1
+							NOTE_DATA_TYPE,
+						dataVersion:
+							NOTE_DATA_VERSION
 					}
 				};
 
@@ -150,9 +155,11 @@ describe(
 					metadata: {
 						...createNoteDescriptor().metadata,
 						resourceId:
-							'kjvonly/notes/entries/default/note-v2',
+							'kjvonly/notes/note/default/note-v2',
 						dataType:
-							'kjvonly.note/v2'
+							NOTE_DATA_TYPE,
+						dataVersion:
+							2
 					}
 				};
 
@@ -201,7 +208,7 @@ describe(
 					filesystem.search
 				).toHaveBeenCalledWith(
 					{
-						index: 'category',
+						index: 'resourceType',
 						value:
 							NOTES_RESOURCE_TYPE
 					},
@@ -434,10 +441,16 @@ function createNoteDescriptor():
 				'publisher',
 
 			resourceId:
-				'kjvonly/notes/entries/default/note-1',
+				'kjvonly/notes/note/default/note-1',
 
-			category:
+			resourceType:
 				NOTES_RESOURCE_TYPE,
+
+			dataType:
+				NOTE_DATA_TYPE,
+
+			dataVersion:
+				NOTE_DATA_VERSION,
 
 			modifiedAt:
 				1,

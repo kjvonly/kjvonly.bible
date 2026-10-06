@@ -45,8 +45,12 @@ describe(
 						'publisher',
 					resourceType:
 						PLAN_PROGRESS_RESOURCE_TYPE,
+					dataType:
+						'kjvonly.reading-plan.progress',
+					dataVersion:
+						1,
 					resourceId:
-						`${PLAN_PROGRESS_RESOURCE_TYPE}/default/subscription-1`,
+						'kjvonly/reading-plans/plan-progress/default/subscription-1',
 					representation:
 						'content',
 					mediaType:

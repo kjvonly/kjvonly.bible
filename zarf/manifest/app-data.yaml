@@ -32,10 +32,13 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/bible/chapters/kjvs/${key}"]
+        - ["d", "kjvonly/bible/chapter/kjvs/${key}"]
         - ["m", "application/json+gzip+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "content"]
+        - ["version", "kjvs"]
 
   # ---------------------------------------------------------------------------
   # Bible Chapters - KJVS - Bundle
@@ -49,10 +52,13 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/bible/chapters/kjvs"]
+        - ["d", "kjvonly/bible/chapter/kjvs"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
+        - ["version", "kjvs"]
 
     object-upload:
       mediaType: application/json+gzip
@@ -70,9 +76,11 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/bible/search/kjvs"]
+        - ["d", "kjvonly/bible/search-index/kjvs"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/search"]
+        - ["t", "bible/search-index"]
+        - ["dataType", "kjvonly.bible.search-index"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     object-upload:
@@ -91,9 +99,11 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/overlays/paragraphs/default"]
+        - ["d", "kjvonly/bible/paragraphs/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/overlays/paragraphs"]
+        - ["t", "bible/paragraphs"]
+        - ["dataType", "kjvonly.bible.paragraphs"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     object-upload:
@@ -112,9 +122,11 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/overlays/pericopes/default"]
+        - ["d", "kjvonly/bible/pericopes/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/overlays/pericopes"]
+        - ["t", "bible/pericopes"]
+        - ["dataType", "kjvonly.bible.pericopes"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     object-upload:
@@ -135,7 +147,9 @@ resources:
       tags:
         - ["d", "kjvonly/bible/booknames/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/bible/booknames"]
+        - ["t", "bible/booknames"]
+        - ["dataType", "kjvonly.bible.booknames"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     object-upload:
@@ -157,9 +171,11 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/strongs/definitions/kjvs"]
+        - ["d", "kjvonly/strongs/definition/kjvs"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/strongs/definitions"]
+        - ["t", "strongs/definition"]
+        - ["dataType", "kjvonly.strongs.definition"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     object-upload:
@@ -178,9 +194,11 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/plans/readings/default/${key}"]
+        - ["d", "kjvonly/reading-plans/plan-definition/default/${key}"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/plans/readings"]
+        - ["t", "reading-plans/plan-definition"]
+        - ["dataType", "kjvonly.reading-plan.definition"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     object-upload:
@@ -199,9 +217,11 @@ collections:
         - hex
 
       tags:
-        - ["d", "kjvonly/plans/readings/default"]
+        - ["d", "kjvonly/reading-plans/plan-definition/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/plans/readings"]
+        - ["t", "reading-plans/plan-definition"]
+        - ["dataType", "kjvonly.reading-plan.definition"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     resources:
@@ -219,7 +239,9 @@ collections:
       tags:
         - ["d", "kjvonly/resources/collections/default"]
         - ["m", "application/json+hex"]
-        - ["t", "kjvonly/resources/collections"]
+        - ["t", "resource/descriptor-collection"]
+        - ["dataType", "kjvonly.resource-descriptor-collection"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
     resources:

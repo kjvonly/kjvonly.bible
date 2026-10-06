@@ -21,6 +21,59 @@ The CLI source workspace is not present in the current PWA handoff archive used 
 
 When the CLI workspace is available again, validate this document against the source before changing its status to **Current**.
 
+## 2026-10-04 Resource Contract Delta
+
+The application Resource contract has moved beyond the September capture in several important ways. Before publishing the next Resource set, the CLI manifests/source must be verified and updated to emit the current contract.
+
+For a Bible Chapter Resource, the target envelope is now:
+
+```text
+d = kjvonly/bible/chapter/kjvs/<chapterRef>
+t = bible/chapter
+dataType = kjvonly.bible.chapter
+dataVersion = 1
+version = kjvs
+representation = content
+```
+
+The fields have separate responsibilities:
+
+```text
+d / resourceId
+    = publisher-controlled Resource ID; generic consumers treat it as opaque
+
+t / resourceType
+    = canonical application Resource Type used for routing/ownership
+
+dataType + dataVersion
+    = semantic payload contract used for parsing/validation
+
+other scalar tags such as version
+    = Domain-owned Resource metadata
+```
+
+Current application Resource Types include:
+
+```text
+bible/chapter
+bible/booknames
+bible/paragraphs
+bible/pericopes
+bible/search-index
+bible/text-markup
+strongs/definition
+reading-plans/plan-definition
+reading-plans/plan-subscription
+reading-plans/plan-progress
+notes/note
+filesystem/entry
+normalized-content/document
+```
+
+There is no separate Resource `category` concept. Resource Type and semantic datatype must not be conflated, and Resource Type must not be inferred from the `d` path.
+
+The CLI source and manifests should be updated and source-verified against this delta before the new events are published. The historical sections below remain the September capture and intentionally retain their original examples.
+
 ---
 
 # 1. Purpose

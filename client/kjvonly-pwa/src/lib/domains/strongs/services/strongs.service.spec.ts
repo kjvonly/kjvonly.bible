@@ -152,7 +152,7 @@ describe(
 							'publisher-a',
 
 						resourceId:
-							'kjvonly/strongs/definitions/kjv'
+							'kjvonly/strongs/definition/kjv'
 					});
 
 				const store =
@@ -320,7 +320,7 @@ describe(
 		);
 
 		it(
-			"rejects a source for another Resource Type",
+			"rejects a source with invalid Strong's Resource ID",
 			async () => {
 				const store =
 					new FakeStrongsStore();
@@ -338,12 +338,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/bible/chapters/kjvs'
+								'kjvonly/bible/chapter/kjvs'
 						}),
 						'G1'
 					)
 				).rejects.toThrow(
-					"Invalid Strong's Resource Type"
+					"Invalid Strong's Resource ID"
 				);
 
 				expect(
@@ -379,7 +379,7 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/strongs/definitions/kjvs/G1'
+								'kjvonly/strongs/definition/kjvs/G1'
 						}),
 						'G1'
 					)
@@ -402,7 +402,7 @@ describe(
 		);
 
 		it(
-			"rejects a Strong's Resource Type root as the selected source",
+			"rejects an invalid Strong's Resource ID root as the selected source",
 			async () => {
 				const store =
 					new FakeStrongsStore();
@@ -420,12 +420,12 @@ describe(
 					service.get(
 						createSource({
 							resourceId:
-								'kjvonly/strongs/definitions'
+								'kjvonly/strongs/definition'
 						}),
 						'G1'
 					)
 				).rejects.toThrow(
-					"Invalid Strong's Resource source"
+					"Invalid Strong's Resource ID"
 				);
 
 				expect(
@@ -545,7 +545,7 @@ function createSource(
 			'publisher',
 
 		resourceId:
-			'kjvonly/strongs/definitions/kjvs',
+			'kjvonly/strongs/definition/kjvs',
 
 		...overrides
 	};

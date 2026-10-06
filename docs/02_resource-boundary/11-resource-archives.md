@@ -336,10 +336,17 @@ Archive metadata MAY preserve Resource provenance that remains useful after acce
 
 Useful provenance may include:
 
-```text id="k2vyyt"
+```text
 publisher public key
 original Resource Identifier
+Resource-envelope metadata required for reconstruction
 ```
+
+Resource-envelope metadata may intentionally preserve semantic information that does not belong in the accepted Domain Object itself.
+
+For example, a Chapter object may remain pure Chapter content while its installation state preserves a semantic Bible version label needed to reconstruct a valid Chapter Resource later.
+
+Such metadata is provenance/reconstruction state. It does not automatically participate in Resource identity or revision ordering.
 
 Provenance helps describe where accepted Resource-backed state came from.
 

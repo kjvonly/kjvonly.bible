@@ -7,8 +7,12 @@ import type {
 } from '$lib/resource';
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from './bible-chapter-interpreter';
+	BIBLE_CHAPTER_DATA_TYPE,
+	BIBLE_CHAPTER_DATA_VERSION,
+	BIBLE_CHAPTER_RESOURCE_TYPE,
+	createBibleChapterResourceId,
+	BIBLE_CHAPTER_VERSION_METADATA_KEY
+} from './bible-chapter-resource';
 
 export class BibleChapterResourcePublication {
 
@@ -17,7 +21,7 @@ export class BibleChapterResourcePublication {
 	): ResourcePublication {
 		const {
 			publisher,
-			version,
+			bibleId,
 			chapterRef
 		} = parseBibleChapterId(
 			chapter.id
@@ -32,14 +36,34 @@ export class BibleChapterResourcePublication {
 			resourceType:
 				BIBLE_CHAPTER_RESOURCE_TYPE,
 
+			dataType:
+				BIBLE_CHAPTER_DATA_TYPE,
+
+			dataVersion:
+				BIBLE_CHAPTER_DATA_VERSION,
+
 			resourceId:
-				`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version}/${chapterRef}`,
+				createBibleChapterResourceId(
+					bibleId,
+					chapterRef
+				),
 
 			representation:
 				'content',
 
 			mediaType:
 				'application/json+gzip+hex',
+
+			/*
+			 * A Chapter Domain object intentionally does not duplicate its semantic
+			 * Bible version label. Archive import prefers metadata preserved on the
+			 * ResourceInstallation. This identity-derived value is only a backward-
+			 * compatible fallback for older objects that predate metadata provenance.
+			 */
+			metadata: {
+				[BIBLE_CHAPTER_VERSION_METADATA_KEY]:
+					bibleId
+			},
 
 			value: {
 				number:
@@ -65,7 +89,7 @@ interface BibleChapterIdParts {
 	readonly publisher:
 		string;
 
-	readonly version:
+	readonly bibleId:
 		string;
 
 	readonly chapterRef:
@@ -92,13 +116,13 @@ function parseBibleChapterId(
 
 	const [
 		publisher,
-		version,
+		bibleId,
 		chapterRef
 	] = parts;
 
 	return {
 		publisher,
-		version,
+		bibleId,
 		chapterRef
 	};
 }

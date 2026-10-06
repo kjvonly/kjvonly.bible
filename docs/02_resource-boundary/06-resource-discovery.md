@@ -14,7 +14,7 @@ A client may know:
 
 * a publisher,
 * a Published Resource Identity,
-* a Resource Classification,
+* a Resource Type,
 * an event ID,
 * or a Resource reference discovered from another Resource.
 
@@ -62,7 +62,7 @@ publisher public key
 
 Published Resource Identity
 
-Resource Classification
+Resource Type
 
 Resource reference
 
@@ -99,42 +99,38 @@ For example:
 
 ```text id="1699d7"
 publisher = <publisher-pubkey>
-resource  = kjvonly/bible/chapters/kjv
+resource  = kjvonly/bible/chapter/kjv
 ```
 
 Direct discovery is preferred when the complete identity is already known.
 
 ---
 
-# Classification Discovery
+# Resource Type Discovery
 
-A client may discover related Resources using Resource Classification.
+A client may discover related Resources using Resource Type.
 
-Classification follows the Domain Resource Model:
-
-```text id="f374a6"
-namespace/domain/resource-type
-```
+Resource Type discovery uses the explicit `resourceType` carried by the Resource envelope / Nostr `t` tag.
 
 For example:
 
 ```text id="781d57"
-kjvonly/bible/chapters
-kjvonly/plans/readings
-kjvonly/notes/notes
+bible/chapter
+reading-plans/plan-definition
+notes/note
 ```
 
-When the publisher and applicable Resource kind are known, a classification query uses:
+When the publisher and applicable Resource kind are known, a Resource Type query uses:
 
 ```json id="c54f3c"
 {
   "kinds": ["<resource-kind>"],
   "authors": ["<publisher-pubkey>"],
-  "#t": ["kjvonly/plans/readings"]
+  "#t": ["reading-plans/plan-definition"]
 }
 ```
 
-Classification discovery answers:
+Resource Type discovery answers:
 
 > **Which Resources of this class has this publisher published?**
 
@@ -437,7 +433,7 @@ Discovery returns Resource Representations.
 
 Exact Resource discovery uses Published Resource Identity.
 
-Classification discovery uses Resource Classification.
+Resource Type discovery uses the canonical Resource Type.
 
 Known publishers should constrain relay queries when possible.
 
@@ -460,7 +456,7 @@ Discovery does not install or establish local authority.
 This ADR defines:
 
 * direct Published Resource discovery,
-* Resource Classification discovery,
+* Resource Type discovery,
 * publisher discovery,
 * event lookup,
 * Nostr relay query shapes,
@@ -495,7 +491,7 @@ Resource Discovery has one responsibility:
 
 > **Find the Nostr Resource Representations available from known discovery information.**
 
-It uses Nostr identity and classification metadata to query relays, merges results across relays, and may follow references to other Nostr Resources.
+It uses Nostr identity and Resource Type metadata to query relays, merges results across relays, and may follow references to other Nostr Resources.
 
 It stops before external content retrieval, Domain interpretation, Installation, or local acceptance.
 

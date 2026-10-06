@@ -34,10 +34,16 @@ describe(
 						'publisher',
 
 					resourceType:
-						'kjvonly/overlays/text-markup',
+						'bible/text-markup',
+
+					dataType:
+						'kjvonly.bible.text-markup',
+
+					dataVersion:
+						1,
 
 					resourceId:
-						'kjvonly/overlays/text-markup/kjvs/1_1',
+						'kjvonly/bible/text-markup/kjvs/1_1',
 
 					representation:
 						'content',
@@ -77,7 +83,7 @@ describe(
 				expect(
 					publication.resourceId
 				).toBe(
-					'kjvonly/overlays/text-markup/study/1_1'
+					'kjvonly/bible/text-markup/study/1_1'
 				);
 			}
 		);

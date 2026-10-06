@@ -27,7 +27,7 @@ const SOURCE:
 	publisher:
 		'publisher',
 	resourceId:
-		'kjvonly/bible/search/kjvs'
+		'kjvonly/bible/search-index/kjvs'
 };
 
 const SEARCH_INDEX:

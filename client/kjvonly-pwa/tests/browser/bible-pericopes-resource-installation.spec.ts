@@ -11,6 +11,9 @@ import {
 	createResourceInstallationId,
 	createResourceReceiptId,
 	type ResourceResolutionResult,
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	ResourceContentDecoratorBuilder,
 	JsonResourceContentDecorator,
 	ResourceContentDecoder,
@@ -24,21 +27,12 @@ import {
 } from '$lib/resource/services/resource-resolution-processor';
 
 import {
+	BIBLE_PERICOPES_DATA_TYPE,
+	BIBLE_PERICOPES_DATA_VERSION,
 	BIBLE_PERICOPES_RESOURCE_TYPE,
-	BiblePericopesInterpreter
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
-
-import {
-	BiblePericopesValidator
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-validator';
-
-import {
-	BiblePericopesInstaller
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-installer';
-
-import {
-	BiblePericopesResourceHandler
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-resource-handler';
+	BiblePericopesDataTypeHandler,
+	BiblePericopesDomainObjectFactory
+} from '$lib/domains/bible';
 
 import {
 	BIBLE_PERICOPES_OBJECT_TYPE
@@ -49,16 +43,18 @@ import {
 } from '$lib/domains/bible/persistence/indexeddb-bible-pericopes-store';
 
 import {
-	IndexedDBBiblePericopesInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-pericopes-installation-transaction';
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
 
 import {
 	createBiblePericopesId
 } from '$lib/domains/bible/models/bible-pericopes.model';
 
 import {
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
+	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
@@ -70,13 +66,13 @@ describe(
 	'Bible Pericopes Resource installation',
 	() => {
 		it(
-			'decodes validates and installs a Pericope bundle into IndexedDB',
+			'decodes validates and installs a Pericope bundle into IndexedDB through the generic installer',
 			async () => {
 				const publisher =
 					createPublisher();
 
 				const resourceId =
-					'kjvonly/overlays/pericopes/default';
+					'kjvonly/bible/pericopes/default';
 
 				const content = {
 					'1_1': {
@@ -204,6 +200,38 @@ describe(
 
 				expect(
 					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							BIBLE_PERICOPES_OBJECT_TYPE,
+							chapter1Id
+						)
+					)
+				).toEqual({
+					id:
+						createStoredDomainObjectId(
+							BIBLE_PERICOPES_OBJECT_TYPE,
+							chapter1Id
+						),
+					objectType:
+						BIBLE_PERICOPES_OBJECT_TYPE,
+					objectId:
+						chapter1Id,
+					dataType:
+						BIBLE_PERICOPES_DATA_TYPE,
+					dataVersion:
+						BIBLE_PERICOPES_DATA_VERSION,
+					value: {
+						id:
+							chapter1Id,
+						chapterRef:
+							'1_1',
+						pericopes:
+							content['1_1']
+					}
+				});
+
+				expect(
+					await db.get(
 						RESOURCE_INSTALLATIONS,
 						installationId
 					)
@@ -257,7 +285,7 @@ describe(
 					createPublisher();
 
 				const resourceId =
-					'kjvonly/overlays/pericopes/default';
+					'kjvonly/bible/pericopes/default';
 
 				const service =
 					createService([
@@ -407,30 +435,25 @@ function createService(
 			receiptStore
 		);
 
-	const installationTransaction =
-		new IndexedDBBiblePericopesInstallationTransaction(
-			getApplicationDB
-		);
-
 	const installer =
-		new BiblePericopesInstaller(
-			installationTransaction
-		);
-
-	const handler =
-		new BiblePericopesResourceHandler(
-			new BiblePericopesInterpreter(),
-			new BiblePericopesValidator(),
-			installer
+		new GenericResourceInstaller(
+			new ResourceDataTypeResolver([
+				new BiblePericopesDataTypeHandler()
+			]),
+			new ResourceDomainObjectFactoryResolver([
+				new BiblePericopesDomainObjectFactory()
+			]),
+			new IndexedDBGenericResourceInstallationTransaction(
+				getApplicationDB
+			)
 		);
 
 	const resolutionProcessor =
 		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
-			[
-				handler
-			]
+			installer,
+			[]
 		);
 
 	const processor =
@@ -476,10 +499,16 @@ function createVerifiedContent(
 			'publisher',
 
 		resourceId:
-			'kjvonly/overlays/pericopes/default',
+			'kjvonly/bible/pericopes/default',
 
 		resourceType:
 			BIBLE_PERICOPES_RESOURCE_TYPE,
+
+		dataType:
+			BIBLE_PERICOPES_DATA_TYPE,
+
+		dataVersion:
+			BIBLE_PERICOPES_DATA_VERSION,
 
 		modifiedAt:
 			200,
@@ -501,10 +530,16 @@ function createRepresentation():
 			'publisher',
 
 		resourceId:
-			'kjvonly/overlays/pericopes/default',
+			'kjvonly/bible/pericopes/default',
 
 		resourceType:
 			BIBLE_PERICOPES_RESOURCE_TYPE,
+
+		dataType:
+			BIBLE_PERICOPES_DATA_TYPE,
+
+		dataVersion:
+			BIBLE_PERICOPES_DATA_VERSION,
 
 		eventId:
 			'c'.repeat(

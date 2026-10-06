@@ -15,7 +15,7 @@ import {
 
 import {
 	PLAN_DEFINITION_RESOURCE_TYPE
-} from './definitions/plan-definition-interpreter';
+} from './definitions/plan-definition-resource';
 
 import {
 	PLAN_SUBSCRIPTION_RESOURCE_TYPE
@@ -40,22 +40,22 @@ describe(
 							[BIBLE_BOOKNAMES_RESOURCE_TYPE]:
 								createReference(
 									'booknames',
-									`${BIBLE_BOOKNAMES_RESOURCE_TYPE}/default`
+									`kjvonly/bible/booknames/default`
 								),
 							[PLAN_DEFINITION_RESOURCE_TYPE]:
 								createReference(
 									'plans-publisher',
-									`${PLAN_DEFINITION_RESOURCE_TYPE}/study`
+									'kjvonly/reading-plans/plan-definition/study'
 								),
 							[PLAN_SUBSCRIPTION_RESOURCE_TYPE]:
 								createReference(
 									'subscriptions-publisher',
-									`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default`
+									'kjvonly/reading-plans/plan-subscription/default'
 								),
 							[BIBLE_CHAPTER_RESOURCE_TYPE]:
 								createReference(
 									'chapters',
-									`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+									`kjvonly/bible/chapter/kjvs`
 								)
 						}
 					});
@@ -90,7 +90,7 @@ describe(
 						'user-pubkey',
 
 					resourceId:
-						`${PLAN_DEFINITION_RESOURCE_TYPE}/default`
+						'kjvonly/reading-plans/plan-definition/default'
 				});
 			}
 		);
@@ -115,7 +115,7 @@ describe(
 						'user-pubkey',
 
 					resourceId:
-						`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/default`
+						'kjvonly/reading-plans/plan-subscription/default'
 				});
 			}
 		);
@@ -126,7 +126,7 @@ describe(
 				const selectedPlans =
 					createReference(
 						'other-publisher',
-						`${PLAN_DEFINITION_RESOURCE_TYPE}/study`
+						'kjvonly/reading-plans/plan-definition/study'
 					);
 
 				const selections =
@@ -156,7 +156,7 @@ describe(
 				const selectedSubscriptions =
 					createReference(
 						'other-publisher',
-						`${PLAN_SUBSCRIPTION_RESOURCE_TYPE}/study`
+						'kjvonly/reading-plans/plan-subscription/study'
 					);
 
 				const selections =

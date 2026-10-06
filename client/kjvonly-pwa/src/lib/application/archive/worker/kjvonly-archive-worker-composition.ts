@@ -48,7 +48,7 @@ import {
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
 	BibleChapterResourcePublication

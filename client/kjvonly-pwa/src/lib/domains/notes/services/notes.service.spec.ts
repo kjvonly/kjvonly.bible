@@ -17,6 +17,11 @@ import {
 	NotesResourcePublication
 } from '../resources/notes-resource-publication';
 
+import {
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION
+} from '../resources/notes-resource-contract';
+
 import type {
 	NotesWriteStores,
 	NotesWriteTransaction
@@ -58,10 +63,16 @@ function createNoteDescriptor():
 				'publisher',
 
 			resourceId:
-				'kjvonly/notes/entries/default/note-1',
+				'kjvonly/notes/note/default/note-1',
 
-			category:
-				'kjvonly/notes/entries',
+			resourceType:
+				'notes/note',
+
+			dataType:
+				NOTE_DATA_TYPE,
+
+			dataVersion:
+				NOTE_DATA_VERSION,
 
 			modifiedAt:
 				1,
@@ -581,18 +592,17 @@ describe(
 							publisher:
 								'publisher',
 							resourceType:
-								'kjvonly/notes/entries',
+								'notes/note',
+							dataType:
+								NOTE_DATA_TYPE,
+							dataVersion:
+								NOTE_DATA_VERSION,
 							resourceId:
-								'kjvonly/notes/entries/default/note-1',
+								'kjvonly/notes/note/default/note-1',
 							representation:
 								'content',
 							mediaType:
 								'application/json+gzip+hex',
-
-							metadata: {
-								dataType:
-									'kjvonly.note/v1'
-							},
 
 							value: {
 								bibleLocationRef:
@@ -704,9 +714,9 @@ describe(
 							publisher:
 								'publisher',
 							resourceType:
-								'kjvonly/notes/entries',
+								'notes/note',
 							resourceId:
-								'kjvonly/notes/entries/default/note-1'
+								'kjvonly/notes/note/default/note-1'
 						}
 					}
 				]);

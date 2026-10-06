@@ -10,18 +10,19 @@ import type {
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '../chapters/bible-chapter-interpreter';
+} from '../chapters/bible-chapter-resource';
 
 import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '../booknames/bible-booknames-interpreter';
+} from '../booknames/bible-booknames-resource';
 
 import {
 	BIBLE_SEARCH_RESOURCE_TYPE
-} from './bible-search-index-interpreter';
+} from './bible-search-index-resource';
 
 import {
-	STRONGS_RESOURCE_TYPE
+	STRONGS_RESOURCE_TYPE,
+	createStrongsResourceId
 } from '$lib/domains/strongs';
 
 import {
@@ -42,22 +43,24 @@ describe(
 								[BIBLE_SEARCH_RESOURCE_TYPE]:
 									createReference(
 										'search',
-										`${BIBLE_SEARCH_RESOURCE_TYPE}/kjvs`
+										`kjvonly/bible/search-index/kjvs`
 									),
 								[BIBLE_CHAPTER_RESOURCE_TYPE]:
 									createReference(
 										'chapters',
-										`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+										`kjvonly/bible/chapter/kjvs`
 									),
 								[BIBLE_BOOKNAMES_RESOURCE_TYPE]:
 									createReference(
 										'booknames',
-										`${BIBLE_BOOKNAMES_RESOURCE_TYPE}/default`
+										`kjvonly/bible/booknames/default`
 									),
 								[STRONGS_RESOURCE_TYPE]:
 									createReference(
 										'strongs',
-										`${STRONGS_RESOURCE_TYPE}/kjvs`
+										createStrongsResourceId(
+									'kjvs'
+								)
 									)
 							}
 						});
@@ -79,7 +82,7 @@ describe(
 				const originatingChapter =
 					createReference(
 						'origin',
-						`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjv`
+						`kjvonly/bible/chapter/kjv`
 					);
 
 				const selections =
@@ -93,7 +96,7 @@ describe(
 								[BIBLE_CHAPTER_RESOURCE_TYPE]:
 									createReference(
 										'global',
-										`${BIBLE_CHAPTER_RESOURCE_TYPE}/kjvs`
+										`kjvonly/bible/chapter/kjvs`
 									)
 							}
 						});

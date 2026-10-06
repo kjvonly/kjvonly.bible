@@ -18,9 +18,12 @@ resources:
         - hex
 
       tags:
-        - ["d", "kjvonly/bible/chapters/test/${key}"]
+        - ["d", "kjvonly/bible/chapter/test/${key}"]
         - ["m", "application/json+gzip+hex"]
-        - ["t", "kjvonly/bible/chapters"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
         - ["representation", "content"]
+        - ["version", "test"]
 
 collections: {}

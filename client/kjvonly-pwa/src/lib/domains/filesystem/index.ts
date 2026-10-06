@@ -33,9 +33,18 @@ export {
 } from './resources/filesystem-installer';
 
 export {
-	FilesystemInterpreter,
-	FILESYSTEM_RESOURCE_TYPE
+	FilesystemInterpreter
 } from './resources/filesystem-interpreter';
+
+export {
+	FilesystemEntriesDataTypeHandler
+} from './resources/filesystem-entries-data-type-handler';
+
+export {
+	FILESYSTEM_RESOURCE_TYPE,
+	FILESYSTEM_ENTRIES_DATA_TYPE,
+	FILESYSTEM_ENTRIES_DATA_VERSION
+} from './resources/filesystem-resource';
 
 export {
 	FilesystemResourceHandler,

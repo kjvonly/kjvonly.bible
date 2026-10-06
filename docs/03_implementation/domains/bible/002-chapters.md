@@ -4,89 +4,177 @@
 
 **Status:** Current
 **Domain:** Bible
-**Resource Type:** `kjvonly/bible/chapters`
-**Domain Object Type:** `bible/chapter`
+**Resource Type:** `bible/chapter`
+**Published data type:** `kjvonly.bible.chapter@1`
+**Canonical Chapter object type:** `bible/chapter`
+**Canonical Chapter data type:** `kjvonly.bible.chapter@1`
 
 ---
 
 # 1. Purpose
 
-This document describes the current Bible Chapter implementation from Resource identity through local read behavior.
+This document describes the current Bible Chapter implementation after migration to the generic Resource installation lifecycle.
 
-Bible Chapters were the first concrete vertical slice used to prove the Resource architecture against a real Domain. The durable design decisions from that implementation remain important because they establish the pattern reused by later Resource-backed Domain types.
-
-The current Chapter path is:
+The current inbound path is:
 
 ```text
 Published Bible Chapter Resource
     ↓
-Resource resolution / decoding
+Resource Resolution / decoding
     ↓
-BibleChapterInterpreter
+BibleChapterDataTypeHandler
     ↓
-BibleChapterValidator
+BibleChapterDomainObjectFactory
     ↓
-BibleChapterInstaller
+BibleVersion + Chapter candidate(s)
     ↓
-Chapter + BibleVersion + ResourceInstallation
+GenericResourceInstaller
     ↓
-IndexedDB
+DOMAIN_OBJECTS + RESOURCE_INSTALLATIONS
     ↓
 ChapterService
     ↓
 Bible Reader
 ```
 
-The important ownership rule is:
+The previous Chapter-specific inbound stack has been removed:
 
 ```text
-Resource layer
-    = transport, decoding, generic handler dispatch
+BibleChapterInterpreter
+BibleChapterValidator
+BibleChapterInstaller
+BibleChapterResourceHandler
+BibleChapterInstallationTransaction
+```
 
-Bible Domain
-    = chapter route meaning, validation, identity,
-      installation policy, persistence contract, read semantics
+Reusable Bible validation remains in generic-era Chapter validation code where it is still required.
+
+---
+
+# 2. Core Identity Decision
+
+The most important current rule is:
+
+```text
+bibleId
+    ≠
+semantic Bible version label
+```
+
+Historically one path segment was called `version` and served two roles:
+
+```text
+Resource / Domain identity namespace
++
+semantic Bible version name
+```
+
+Those roles are now separated.
+
+The current conceptual model is:
+
+```text
+Resource identity component
+    → bibleId
+
+Resource metadata.version
+    → semantic Bible version label
+```
+
+The two values MAY be equal, but equality is not required and is not validated.
+
+For example:
+
+```text
+bibleId = kjvs
+metadata.version = kjvs
+```
+
+is valid, and so is:
+
+```text
+bibleId = bible-a
+metadata.version = King James Version
+```
+
+Two different Resource identities may publish the same `metadata.version` value.
+
+---
+
+# 3. Resource Contract
+
+Resource Type:
+
+```text
+bible/chapter
+```
+
+Published datatype:
+
+```text
+kjvonly.bible.chapter@1
+```
+
+Required Resource metadata:
+
+```text
+version = <non-empty semantic version label>
+```
+
+Current source constants:
+
+```text
+BIBLE_CHAPTER_RESOURCE_TYPE
+BIBLE_CHAPTER_DATA_TYPE
+BIBLE_CHAPTER_DATA_VERSION
+BIBLE_CHAPTER_VERSION_METADATA_KEY
+```
+
+Source:
+
+```text
+src/lib/domains/bible/resources/chapters/bible-chapter-resource.ts
 ```
 
 ---
 
-# 2. Resource Contract
+# 4. Resource ID Grammar
 
-The Resource Type is:
+`resourceType` and `resourceId` are separate contracts. Generic Resource infrastructure treats `resourceId` as opaque; the Bible Domain owns the Chapter Resource ID grammar.
 
-```text
-kjvonly/bible/chapters
-```
-
-The interpreter supports two Resource path shapes.
-
-Individual chapter:
+Current Chapter Resource IDs are:
 
 ```text
-kjvonly/bible/chapters/<version>/<chapterRef>
+individual:
+kjvonly/bible/chapter/<bibleId>/<chapterRef>
+
+bundle/source:
+kjvonly/bible/chapter/<bibleId>
 ```
 
 Example:
 
 ```text
-kjvonly/bible/chapters/kjv/1_1
+kjvonly/bible/chapter/kjvs/1_1
 ```
 
-Bundle:
+The Resource ID segments after `kjvonly/bible/chapter` are Bible-owned identity:
 
 ```text
-kjvonly/bible/chapters/<version>
+kjvs
+    = bibleId identity namespace
+
+1_1
+    = chapterRef
 ```
 
-A bundle value is an object whose entries identify chapters belonging to that version.
-
-The selected module Resource normally points at the version-level Resource identity. `ResourceLoader` can then load a requested chapter by appending the chapter reference while retaining bundle fallback behavior.
+The `kjvonly/bible/chapter` Resource ID namespace does not define Resource Type; Resource Type is carried independently as `bible/chapter`.
 
 ---
 
-# 3. Chapter Reference
+# 5. Chapter Reference
 
-A chapter reference is:
+A Chapter reference has the form:
 
 ```text
 <bookId>_<chapter>
@@ -97,314 +185,536 @@ Examples:
 ```text
 1_1
 43_3
-73_22
+66_22
 ```
 
-The chapter reference is Domain location information. It is not the installed Domain Object ID by itself.
+`chapterRef` remains Bible Domain semantics and is validated by the Chapter factory's invariant layer.
 
-The Bible Domain combines publisher, version, and chapter reference to construct local identity.
+The reference must:
+
+```text
+match ^(\d+)_(\d+)$
+```
+
+and the chapter number encoded in the reference must equal:
+
+```text
+ChapterContent.number
+```
+
+Verse map/object keys are also validated as positive canonical integer strings whose key matches each Verse object's `number`.
 
 ---
 
-# 4. Bible Version Identity
+# 6. Domain Identity
 
-A Bible version is publisher-scoped.
+The current Domain identity remains tied to publisher + `bibleId`, not `metadata.version`.
 
-The local Bible Version ID is:
+Conceptually:
 
 ```text
-<publisher>/<version>
+Bible identity
+    = <publisher>/<bibleId>
+
+Chapter identity
+    = <publisher>/<bibleId>/<chapterRef>
 ```
 
-Constructed by:
+Current helpers are historically named:
 
 ```text
 createBibleVersionId(publisher, version)
+createChapterId(bibleVersionId, chapterRef)
 ```
 
-This means two publishers may publish resources with the same textual version name without colliding in local storage.
+The helper parameter/property names still say `version`, but for Chapter Resource identity the value passed there is now semantically the `bibleId` identity namespace.
 
-The installed `BibleVersion` model contains:
+This is an implementation naming debt, not a reason to reconnect identity to `metadata.version`.
+
+Example:
 
 ```text
-id
-publisher
-version
-```
+publisher = abc123
+bibleId   = bible-a
+chapterRef = 1_1
 
-The Bible Version is Domain state. It is distinct from Resource publication metadata.
+BibleVersion/Bible identity:
+abc123/bible-a
+
+Chapter identity:
+abc123/bible-a/1_1
+```
 
 ---
 
-# 5. Chapter Identity
+# 7. BibleVersion Domain Object
 
-The installed Chapter ID is:
+The current supporting model remains named `BibleVersion`:
 
-```text
-<bibleVersionId>/<chapterRef>
+```ts
+interface BibleVersion {
+    readonly id: string;
+    readonly publisher: string;
+    readonly version: string;
+}
 ```
 
-or equivalently:
+Its fields now represent two distinct concepts:
 
 ```text
-<publisher>/<version>/<bookId>_<chapter>
+id
+    = publisher + bibleId identity
+
+version
+    = semantic label from Resource metadata.version
 ```
 
-Constructed by:
+Example:
+
+```ts
+{
+    id: 'abc123/bible-a',
+    publisher: 'abc123',
+    version: 'King James Version'
+}
+```
+
+This supporting object gives the Bible Domain a catalog entry containing the semantic label without forcing Chapter payloads to duplicate it.
+
+---
+
+# 8. Chapter Domain Object
+
+The installed Chapter contains Chapter content plus local Domain identity.
+
+Conceptually:
+
+```ts
+interface Chapter {
+    id: string;
+    number: number;
+    bookName: string;
+    verses: Record<string, Verse>;
+    verseMap: Record<string, string>;
+    footnotes: Record<string, string>;
+}
+```
+
+The Chapter intentionally does not carry:
 
 ```text
-createChapterId(bibleVersionId, chapterRef)
+semantic Bible version label
+publisher as a separate field
+Resource ID
+Resource metadata
+Nostr event metadata
+media type
+representation
+```
+
+The Chapter does not need to know which human-readable Bible version label it belongs to in order to represent Chapter content.
+
+That separation is deliberate.
+
+---
+
+# 9. Structural Datatype Validation
+
+Source:
+
+```text
+src/lib/domains/bible/resources/chapters/bible-chapter-data-type-handler.ts
+```
+
+`BibleChapterDataTypeHandler` validates the published `kjvonly.bible.chapter@1` payload.
+
+It accepts either:
+
+```text
+one ChapterContent
+```
+
+or:
+
+```text
+Record<string, ChapterContent>
+```
+
+for a bundle.
+
+The datatype handler validates structural semantics such as:
+
+```text
+positive Chapter number
+non-empty bookName
+Verse shape
+Word shape
+verseMap shape
+footnotes shape
+bundle value shape
+```
+
+It deliberately does not interpret:
+
+```text
+Resource identity
+bibleId
+chapterRef
+metadata.version
+```
+
+Those require Resource context and belong to the Domain Object factory.
+
+---
+
+# 10. Stored Chapter Semantic Contract
+
+Accepted Chapter Domain Objects retain the semantic datatype:
+
+```text
+objectType  = bible/chapter
+dataType    = kjvonly.bible.chapter
+dataVersion = 1
+```
+
+`objectType` identifies the application object kind. `dataType + dataVersion` identifies the stored value's semantic contract. They are intentionally different fields.
+
+Archive reconstruction creates a canonical `ResourcePublication` and uses that publication's `dataType + dataVersion` when the reconstructed Resource re-enters semantic validation. There is no separate object-type datatype compatibility handler.
+
+---
+
+# 11. BibleChapterDomainObjectFactory
+
+Source:
+
+```text
+src/lib/domains/bible/resources/chapters/bible-chapter-domain-object-factory.ts
+```
+
+The factory receives:
+
+```text
+validated Chapter Resource value
++
+ResourceDomainObjectFactoryContext
+```
+
+The Resource context includes:
+
+```text
+publisher
+resourceId
+resourceType
+modifiedAt
+mediaType
+dataType
+dataVersion
+metadata
+```
+
+The factory owns:
+
+```text
+bibleId extraction
+metadata.version requirement
+individual vs bundle interpretation
+chapterRef extraction
+Bible-specific reference/Verse invariants
+BibleVersion identity
+Chapter identity
+candidate construction
+```
+
+---
+
+# 12. Semantic Version Metadata
+
+The factory requires:
+
+```text
+resource.metadata.version
+```
+
+to exist and contain a non-empty string.
+
+If missing or empty:
+
+```text
+Bible Chapter Resource metadata requires a non-empty version.
+```
+
+The factory does not compare this value with `bibleId`.
+
+That is intentional.
+
+Resource identity and semantic labeling are separate contracts.
+
+---
+
+# 13. Individual Chapter Resource
+
+For an individual Resource, the Bible-owned Resource ID parses to:
+
+```text
+path = [bibleId, chapterRef]
+```
+
+The validated payload must be one `ChapterContent`.
+
+The factory validates the Chapter reference and creates Domain identity from:
+
+```text
+publisher
++
+bibleId
++
+chapterRef
+```
+
+---
+
+# 14. Bundle Resource
+
+For a bundle Resource, the Bible-owned Resource ID parses to:
+
+```text
+path = [bibleId]
+```
+
+Bundle entries currently use:
+
+```text
+<bibleId>/<chapterRef>
 ```
 
 Example:
 
 ```text
-<publisher>/kjv/1_1
+kjvs/1_1
+kjvs/1_2
 ```
 
-The Chapter object does not contain Nostr event IDs, Resource kinds, descriptor metadata, or transport information.
+The factory requires each bundle entry's `bibleId` to match the Resource's `bibleId` identity namespace.
 
-Resource identity and Domain Object identity remain separate.
+This is an identity consistency rule.
+
+It is not a comparison against `metadata.version`.
+
+A bundle with no Chapter entries returns no candidates and therefore creates no `BibleVersion`/Chapter objects.
 
 ---
 
-# 6. Chapter Content
+# 15. Factory Output
 
-The serialized Chapter content contains Domain data such as:
+For a non-empty accepted Chapter Resource, the factory emits:
 
 ```text
-number
-bookName
-verses
-verseMap
-footnotes
+1 bible/version candidate
++
+1..n bible/chapter candidates
 ```
 
-Each Verse contains:
+The `bible/version` candidate is:
 
 ```text
-number
-words
-text
-```
-
-Each Word contains:
-
-```text
-text
-class
-href
-emphasis
-```
-
-The installed Chapter adds only its local Domain `id` to the validated content.
-
----
-
-# 7. Interpretation
-
-`BibleChapterInterpreter` owns the Resource-path interpretation rules.
-
-It first verifies:
-
-```text
-resource.resourceType === kjvonly/bible/chapters
-```
-
-For an individual Resource:
-
-```text
-path = [version, chapterRef]
-```
-
-it produces one candidate:
-
-```text
-BibleChapterCandidate {
-    version,
-    chapterRef,
-    value
+objectType  = bible/version
+objectId    = <publisher>/<bibleId>
+dataType    = kjvonly.bible.version
+dataVersion = 1
+value       = BibleVersion {
+    id: <publisher>/<bibleId>,
+    publisher,
+    version: metadata.version
 }
 ```
 
-For a bundle Resource:
+Each Chapter candidate is:
 
 ```text
-path = [version]
+objectType  = bible/chapter
+objectId    = <publisher>/<bibleId>/<chapterRef>
+dataType    = kjvonly.bible.chapter
+dataVersion = 1
+value       = Chapter
 ```
-
-it interprets each bundle entry into a candidate.
-
-Bundle entries must identify the same version as the Resource path. A bundle entry cannot silently switch versions.
-
-Interpretation establishes Resource route meaning. It does not decide whether the Chapter content is valid Domain data.
 
 ---
 
-# 8. Validation
+# 16. No Special BibleVersion Installation Mode
 
-`BibleChapterValidator` owns Chapter Domain validation.
+`bible/version` is a normal Resource-backed candidate.
 
-Validation includes the serialized shape and cross-field consistency.
-
-The current schema requires:
+There is no special candidate mode such as:
 
 ```text
-chapter.number
-chapter.bookName
-chapter.verses
-chapter.verseMap
-chapter.footnotes
+derived-if-absent
 ```
 
-Word and Verse structures are also validated.
+and no special generic installer branch for Bible catalog objects.
 
-The validator additionally verifies:
+Both `bible/version` and `bible/chapter` follow the same generic rules:
 
-1. `chapterRef` has the form `<bookId>_<chapter>`.
-2. the chapter number in `chapterRef` matches `content.number`.
-3. every Verse map key is a positive canonical integer string.
-4. each Verse object's `number` matches its Verse map key.
+```text
+load ResourceInstallation
+compare incoming modifiedAt
+write if newer/missing
+skip if equal/older
+```
 
-The output is a `ValidatedBibleChapterCandidate`.
+This keeps the generic installer uniform.
 
-No persistence begins until interpretation and validation have completed.
+If multiple Chapter Resources target the same `bible/version` object, normal Resource currentness determines which accepted Resource revision supplies that object.
 
 ---
 
-# 9. Installation
+# 17. Generic Persistence
 
-`BibleChapterInstaller` accepts:
+Bible Chapter installation uses:
 
 ```text
-DecodedResourceContent
-+ validated Chapter candidates
+GenericResourceInstaller
 ```
 
-All candidates in one install operation must belong to the same Bible version.
-
-Installation runs through `BibleChapterInstallationTransaction`.
-
-The transaction exposes narrow stores for:
+and:
 
 ```text
-chapters
-bibleVersions
-resourceInstallations
+IndexedDBGenericResourceInstallationTransaction
 ```
 
-The installer does not receive the entire database.
-
----
-
-# 10. Atomicity
-
-The IndexedDB implementation uses one read/write transaction spanning:
+The transaction writes:
 
 ```text
-domain_objects
-resource_installations
+DOMAIN_OBJECTS
++
+RESOURCE_INSTALLATIONS
 ```
 
-Within that transaction the installer may write:
+There is no Chapter-specific inbound installation transaction anymore.
+
+For every candidate that wins currentness:
 
 ```text
-BibleVersion
-Chapter
+StoredDomainObject
++
 ResourceInstallation
 ```
 
-This preserves the core installation invariant:
-
-> Accepted Domain state and the provenance that explains its Resource installation are committed atomically.
-
-Network requests, Resource resolution, decoding, interpretation, and validation occur outside that IndexedDB transaction.
-
-The transaction is intentionally short-lived and persistence-focused.
+are committed atomically.
 
 ---
 
-# 11. Installation Replacement Policy
+# 18. Chapter Currentness
 
-Replacement is decided per installed Chapter, not only per Resource.
+Currentness is per accepted Domain Object.
 
-For each candidate the installer looks up the current `ResourceInstallation` for:
-
-```text
-objectType = bible/chapter
-objectId = <chapterId>
-```
-
-If an installation already exists and:
+For a Chapter:
 
 ```text
-incoming.modifiedAt <= existing.modifiedAt
-```
-
-that Chapter is skipped.
-
-Otherwise the Chapter and its installation provenance are replaced atomically.
-
-This per-object rule is important for bundles. One bundle can contain Chapters whose currently installed provenance differs.
-
-A newer individual Chapter can replace one Chapter previously installed from a bundle without requiring the entire bundle to be replaced.
-
----
-
-# 12. ResourceInstallation Provenance
-
-Each installed Chapter records provenance separately from the Chapter object.
-
-The record includes:
-
-```text
-objectType
-objectId
-publisher
-resourceId
-modifiedAt
-```
-
-Its ID is derived by:
-
-```text
-createResourceInstallationId(
-    'bible/chapter',
-    chapterId
+ResourceInstallation(
+    objectType = bible/chapter,
+    objectId   = <publisher>/<bibleId>/<chapterRef>
 )
 ```
 
-This answers:
+is compared with the incoming Resource's `modifiedAt`.
+
+If:
 
 ```text
-Which Resource publication installed the currently accepted Chapter?
+incoming.modifiedAt <= current.modifiedAt
 ```
 
-It does not make transport metadata part of the Chapter model.
+that candidate is skipped.
+
+This allows bundle and individual Resources to overlap safely at the Domain Object level.
+
+A newer individual Chapter can replace one Chapter that originally arrived in a bundle without requiring every Chapter in the bundle to be replaced.
 
 ---
 
-# 13. Bible Version Installation
+# 19. BibleVersion Currentness
 
-Before installing Chapters, the installer ensures the publisher-scoped `BibleVersion` exists.
-
-If absent it creates:
+Because `bible/version` is now a normal candidate, it also receives its own:
 
 ```text
-BibleVersion {
-    id,
-    publisher,
-    version
-}
+ResourceInstallation(
+    objectType = bible/version,
+    objectId   = <publisher>/<bibleId>
+)
 ```
 
-This gives the Bible Domain a local catalog of installed versions independently from the individual Chapter objects.
+The same incoming `modifiedAt` comparison applies.
+
+There is no special "only if missing" persistence behavior.
+
+This means the semantic label can update when a newer Resource for the same `bibleId` is accepted.
 
 ---
 
-# 14. Read Path
+# 20. ResourceInstallation Metadata
 
-`ChapterService` implements the Domain-facing local-first read path.
+When Chapter Resource metadata is present, the generic installer preserves it on each written `ResourceInstallation`.
+
+For Chapters this means:
+
+```text
+metadata.version
+```
+
+is stored as Resource provenance/reconstruction information.
+
+It does not participate in Chapter identity or object-level currentness.
+
+This is useful because the Chapter Domain Object intentionally does not duplicate the semantic version label.
+
+Archive reconstruction can therefore recover the Resource-envelope semantic metadata without changing the Chapter model.
+
+---
+
+# 21. Archive Reconstruction
+
+`BibleChapterResourcePublication` reconstructs the canonical individual Resource shape from a Chapter Domain Object.
+
+Because the Chapter itself does not know the semantic Bible version label, the publication builder has an identity-derived fallback:
+
+```text
+metadata.version = bibleId
+```
+
+for older/local object contexts that do not provide better provenance.
+
+During Archive import, however, the importer prefers:
+
+```text
+installation.metadata
+```
+
+over:
+
+```text
+publication.metadata
+```
+
+Therefore a Chapter originally installed with:
+
+```text
+bibleId = bible-a
+metadata.version = King James Version
+```
+
+can be reconstructed with the original semantic label instead of incorrectly assuming:
+
+```text
+version = bible-a
+```
+
+This is the current reason ResourceInstallation metadata is preserved.
+
+---
+
+# 22. Read Path
+
+`ChapterService` remains local-first.
 
 Conceptually:
 
@@ -413,214 +723,266 @@ ChapterService.get(source, bibleLocationRef)
     ↓
 parse selected Chapter Resource source
     ↓
-extract chapterRef
+obtain identity namespace from source
     ↓
-construct BibleVersion ID
+extract chapterRef from BibleLocationReference
     ↓
-construct Chapter ID
+construct Chapter Domain ID
     ↓
 read ChapterStore
-```
-
-If the Chapter exists locally, it is returned immediately.
-
-If it is missing:
-
-```text
-ChapterService
-    ↓
+        ↓ missing
 ResourceLoader.load(source, chapterRef)
-    ↓
+        ↓
 Resource pipeline installs Chapter
-    ↓
-ChapterService reads ChapterStore again
+        ↓
+read ChapterStore again
 ```
 
-If the Resource cannot be found, the service throws a Resource-not-found error.
+If local Chapter state already exists, no Resource load is needed.
 
-If the Resource path reports success but the expected Chapter is still absent, it throws an installation error rather than returning fabricated data.
+If Resource acquisition reports success but the expected Chapter is still absent, the service throws rather than fabricating data.
 
 ---
 
-# 15. Selected Resource Source
+# 23. Current ChapterService Naming Debt
 
-`ChapterService` receives a `PublishedResourceReference`.
-
-It validates that the selected source belongs to:
+`ChapterService` and `bible-identity.ts` still contain names such as:
 
 ```text
-kjvonly/bible/chapters
+version
+BibleVersionId
+extractBibleVersion
 ```
 
-and that the selected source path identifies exactly one Bible version.
+for the identity namespace historically called version.
 
-The service does not consult global mutable Resource selection itself.
+In current Chapter Resource semantics, the value extracted from the selected Resource ID is the `bibleId` identity component.
 
-Module Resource selection is captured on the Buffer and resolved before the Domain service call.
-
-This preserves the boundary:
+It must not be confused with:
 
 ```text
-Pane / Buffer / module selection mechanics
-    ✕ ChapterService
-
-PublishedResourceReference
-    ✓ ChapterService
+resource.metadata.version
 ```
+
+which is the semantic Bible version label.
+
+The current refactor intentionally avoided a broad downstream rename because Domain lookup behavior did not need to change.
+
+Future cleanup may rename identity-oriented helpers once the Resource ID/source migration is addressed.
 
 ---
 
-# 16. Module Resource Selection
+# 24. Module Resource Selection
 
-The Bible Module requires Chapter Resources as part of a larger Resource context.
+The Bible Module still selects a version/source-level Chapter Resource reference.
 
-Current Bible requirements include:
+The source identity allows `ChapterService`/`ResourceLoader` to request an individual Chapter by appending `chapterRef` while retaining bundle fallback behavior.
 
-```text
-Bible Chapters
-Paragraphs
-Pericopes
-Booknames
-Strong's definitions
-Text Markup
-Notes
-```
+This is why the current compatibility Resource ID shape remains in place even though the architecture no longer treats classification prefixes or semantic version values as generically encoded in Resource ID segments.
 
-The Module Resource-selection contributor builds that snapshot when a Bible Buffer is created.
-
-The Chapter service therefore receives the explicit selected Chapter source rather than deriving the source from `BibleMode.bibleVersion` or another UI field.
+Module Resource selection does not need access to the semantic version label to identify the Chapter Domain object.
 
 ---
 
-# 17. Relationship to Paragraphs and Pericopes
+# 25. Relationship to Paragraphs and Pericopes
 
-Paragraphs and Pericopes are separate Bible Resource Types and separate Domain Objects.
+Chapter text remains separate from structural overlays.
 
-They are not embedded into Chapter persistence.
-
-At render time the Reader combines:
+Conceptually:
 
 ```text
-Chapter text
+Chapter
 + Paragraph metadata
 + Pericope metadata
 + Text Markup
+    ↓
+Bible presentation
 ```
 
-This keeps canonical Bible text independent from presentation overlays and structural metadata.
+Paragraphs and Pericopes now also use the generic datatype/factory installer path.
+
+The Chapter Domain Object remains canonical Scripture content rather than absorbing presentation structure.
 
 ---
 
-# 18. Relationship to Search
+# 26. Relationship to Search
 
-Bible Search uses a separately published prebuilt search index.
+Bible Search Index is also migrated to the generic installer.
 
-A search result identifies Bible locations. The Reader then obtains the Chapter through the normal Chapter service path.
+Search indexes remain separate Resource-backed Domain Objects and are not embedded into Chapter values.
 
-The Chapter service does not own search indexing or search result routing.
-
----
-
-# 19. Relationship to Strong's
-
-Strong's definitions are a separate Domain and Resource Type.
-
-Bible Words may contain `href` values that reference Strong's keys, but the Chapter object does not embed Strong's definitions.
-
-The Reader resolves Strong's information through the Strong's Domain using its selected Resource source.
+Chapter installation does not construct or mutate Search Index state.
 
 ---
 
-# 20. Failure Boundaries
+# 27. Relationship to Strong's
 
-The Chapter pipeline fails explicitly when:
+Strong's definitions are independent Resource-backed Domain Objects installed through the same generic lifecycle.
 
-- the Resource Type is wrong,
-- the Resource path shape is invalid,
-- a bundle has invalid entry routing,
-- serialized Chapter content is malformed,
-- a Chapter reference disagrees with the serialized chapter number,
-- Verse keys disagree with Verse numbers,
-- one installation operation mixes Bible versions,
-- a missing Resource cannot be acquired,
-- or Resource acquisition completes without installing the expected Chapter.
-
-No partially validated Chapter should become accepted local state.
+Chapter words may reference Strong's information, but Chapter installation does not own Strong's definition installation semantics.
 
 ---
 
-# 21. Testing
+# 28. Failure Boundaries
 
-Focused tests cover the concrete boundaries separately.
-
-Important test areas include:
+Chapter installation can fail because of:
 
 ```text
-BibleChapterInterpreter
-BibleChapterValidator
-BibleChapterInstaller
-BibleChapterResourceHandler
-IndexedDBBibleChapterInstallationTransaction
-ChapterService
-Bible identity helpers
-browser Resource installation
-relay-backed Resource acquisition
+unsupported dataType/dataVersion
+invalid Chapter structural payload
+missing/empty metadata.version
+invalid Resource ID shape for the Chapter contract
+bundle entry bibleId mismatch
+invalid chapterRef
+chapterRef/content.number mismatch
+invalid Verse key
+Verse key/Verse.number mismatch
+persistence failure
 ```
 
-Tests should prefer Domain-facing service paths when the intent is application integration coverage.
+All semantic/factory validation occurs before the generic transaction begins.
 
-Concrete Resource/infrastructure tests may still construct lower-level implementations directly when those implementations are the subject under test.
-
----
-
-# 22. Important Invariants
-
-## 22.1 Publisher scopes the version
-
-```text
-BibleVersion ID = publisher/version
-```
-
-## 22.2 Chapter identity is Domain identity
-
-```text
-Chapter ID = publisher/version/chapterRef
-```
-
-It is not a Nostr event ID or Resource ID.
-
-## 22.3 Resource provenance is separate
-
-`ResourceInstallation` stores publication provenance. Chapter content remains Domain data.
-
-## 22.4 Replacement is per Chapter
-
-Bundle publication does not make freshness an all-or-nothing bundle decision.
-
-## 22.5 Validation precedes persistence
-
-Malformed candidate content is rejected before the installation transaction begins.
-
-## 22.6 The read path is local-first
-
-Network/resource acquisition occurs only when the expected Chapter is absent locally.
-
-## 22.7 Resource selection is explicit
-
-`ChapterService` receives a `PublishedResourceReference`; it does not know Pane or Buffer mechanics.
+Persistence errors abort the generic installation transaction.
 
 ---
 
-# 23. Related Documents
+# 29. Testing
+
+Current tests should cover at least:
 
 ```text
-docs/03_implementation/resources/002-resource-selection.md
+BibleChapterDataTypeHandler
+BibleChapterDomainObjectFactory
+Generic Resource installation with Chapters
+real Worker installation
+relay integration
+archive reconstruction/round trip
+ChapterService local-first behavior
+```
+
+Important assertions include:
+
+```text
+metadata.version is required
+bibleId and metadata.version may differ
+Domain ID uses bibleId
+BibleVersion.value.version uses metadata.version
+bundle identity is consistent
+invalid Chapter references fail before persistence
+bible/version receives normal ResourceInstallation state
+Chapter ResourceInstallation preserves metadata
+```
+
+Relay/Worker test fixtures must publish/provide:
+
+```text
+version
+```
+
+metadata because that is now part of the Chapter Resource contract.
+
+---
+
+# 30. Important Invariants
+
+## 30.1 `bibleId` is identity
+
+```text
+publisher + bibleId
+```
+
+forms the Bible identity namespace used by installed Chapter IDs.
+
+## 30.2 `metadata.version` is semantics
+
+The human/semantic Bible version label comes from Resource metadata.
+
+It is not required to equal `bibleId`.
+
+## 30.3 Chapter payload does not know the semantic version
+
+The Chapter remains reusable Bible content with local identity.
+
+Resource-envelope semantics remain outside the Chapter value.
+
+## 30.4 Chapter reference semantics remain strict
+
+`chapterRef` remains Bible-owned structured location identity and is validated against Chapter content.
+
+## 30.5 Generic installation owns persistence/currentness
+
+There is no Bible Chapter-specific inbound installer or transaction.
+
+## 30.6 BibleVersion is a normal candidate
+
+No special `derived-if-absent` or other one-off generic persistence mode exists.
+
+## 30.7 ResourceInstallation metadata is provenance/reconstruction state
+
+It does not alter Chapter identity or currentness.
+
+## 30.8 Read path remains local-first
+
+The Domain service checks accepted local Chapter state before Resource loading.
+
+---
+
+# 31. Current Source Organization
+
+```text
+src/lib/domains/bible/resources/chapters/
+├── bible-chapter-resource.ts
+├── bible-chapter-data-type-handler.ts
+├── bible-chapter-data-type-handler.spec.ts
+├── bible-chapter-domain-object-factory.ts
+├── bible-chapter-domain-object-factory.spec.ts
+├── bible-chapter-validation.ts
+└── bible-chapter-resource-publication.ts
+```
+
+Generic persistence lives under:
+
+```text
+src/lib/resource/data-types/
+src/lib/resource/domain-objects/
+src/lib/resource/installation/
+```
+
+The old Chapter-specific inbound interpreter/installer/handler/transaction files have been removed.
+
+---
+
+# 32. Related Documents
+
+```text
+docs/02_resource-boundary/01-domain-resource-model.md
+docs/02_resource-boundary/04-nostr-resource-identity.md
+docs/02_resource-boundary/08-resource-installation-lifecycle.md
+docs/02_resource-boundary/11-resource-archives.md
+
 docs/03_implementation/resources/004-resource-installation.md
-docs/03_implementation/resources/005-resource-lifecycle-content.md
-docs/03_implementation/persistence/001-indexeddb.md
-docs/03_implementation/persistence/002-store-implementation.md
-docs/03_implementation/persistence/003-search-indexes.md
-docs/03_implementation/domains/bible/001-text-markup.md
+docs/03_implementation/archive/001-kjvonly-archive.md
 ```
 
-This document should remain focused on the concrete Bible Chapter vertical slice rather than re-documenting the generic Resource pipeline.
+---
+
+# 33. Summary
+
+The current Chapter design separates three concepts that historical code had conflated:
+
+```text
+Resource Type
+    = bible/chapter
+
+bibleId
+    = Resource/Domain identity namespace
+
+metadata.version
+    = semantic Bible version label
+```
+
+The Chapter itself remains concerned with Chapter content and its Domain identity.
+
+The semantic version label belongs to Resource/Bible catalog context, not the Chapter payload.
+
+Installation is now performed through the same generic datatype/factory/currentness/persistence lifecycle used by the rest of the normal Resource-backed codebase.

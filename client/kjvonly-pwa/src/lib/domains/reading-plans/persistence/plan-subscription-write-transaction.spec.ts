@@ -1,4 +1,8 @@
 import {
+	PLAN_SUBSCRIPTION_DATA_TYPE
+} from '../resources/subscriptions/plan-subscription-resource-source';
+
+import {
 	describe,
 	expect,
 	it
@@ -117,6 +121,12 @@ describe(
 						storedId,
 					objectType:
 						PLAN_SUBSCRIPTION_OBJECT_TYPE,
+
+					dataType:
+						PLAN_SUBSCRIPTION_DATA_TYPE,
+
+					dataVersion:
+						1,
 					objectId:
 						subscription.id,
 					value:
@@ -244,9 +254,13 @@ function createPublication(): ResourcePublication {
 		publisher:
 			'publisher',
 		resourceType:
-			'kjvonly/plans/subscriptions',
+			'reading-plans/plan-subscription',
+		dataType:
+			'kjvonly.reading-plan.subscription',
+		dataVersion:
+			1,
 		resourceId:
-			'kjvonly/plans/subscriptions/default/subscription-1',
+			'kjvonly/reading-plans/plan-subscription/default/subscription-1',
 		representation:
 			'content',
 		mediaType:

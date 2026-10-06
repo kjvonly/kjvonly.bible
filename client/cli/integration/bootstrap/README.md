@@ -218,12 +218,18 @@ event:
 object-upload:
 ```
 
-The relevant event tags include:
+The Resource envelope tags are:
 
 ```yaml
 - ["d", "..."]
+- ["m", "..."]
+- ["t", "..."]
+- ["dataType", "..."]
+- ["dataVersion", "1"]
 - ["representation", "..."]
 ```
+
+Additional scalar tags are Resource metadata. Descriptor-backed Resources copy that metadata into the generated descriptor's `resourceMetadata` field. Bible Chapters use this for the semantic `version` label, which is independent from Resource identity.
 
 The test therefore uses the same contract that the CLI used when publishing the Resource.
 
@@ -255,7 +261,7 @@ For example, it does **not** assume:
 
 ```text
 d:
-kjvonly/overlays/paragraphs/default
+kjvonly/bible/paragraphs/default
 ```
 
 must correspond to some particular hard-coded filesystem location.
@@ -268,7 +274,12 @@ bible-paragraphs:
 
   event:
     tags:
-      - ["d", "kjvonly/overlays/paragraphs/default"]
+      - ["d", "kjvonly/bible/paragraphs/default"]
+      - ["m", "application/json+hex"]
+      - ["t", "bible/paragraphs"]
+      - ["dataType", "kjvonly.bible.paragraphs"]
+      - ["dataVersion", "1"]
+      - ["representation", "descriptors"]
 ```
 
 The manifest therefore bridges:
@@ -292,12 +303,12 @@ The general convention is:
 ```text
 data/
 └── <domain>/
-    └── <resource category>/
+    └── <resource type>/
         ├── content/
         └── bundles/
 ```
 
-Not every Resource category must contain both directories.
+Not every Resource type must contain both directories.
 
 Only create the directories that are actually used.
 
@@ -339,7 +350,7 @@ For example:
     ↓
 key = 1_1
     ↓
-kjvonly/bible/chapters/kjvs/1_1
+kjvonly/bible/chapter/kjvs/1_1
 ```
 
 The current verifier derives the key from the filename before the first `.`.
@@ -584,6 +595,10 @@ collections:
     event:
       tags:
         - ["d", "kjvonly/resources/collections/default"]
+        - ["m", "application/json+hex"]
+        - ["t", "resource/descriptor-collection"]
+        - ["dataType", "kjvonly.resource-descriptor-collection"]
+        - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 ```
 
@@ -1159,7 +1174,7 @@ Verification errors (4)
 [collection] kjvonly/resources/collections/default
   Expected exactly one Collection event, found 0.
 
-[resource] kjvonly/bible/chapters/kjvs/1_2
+[resource] kjvonly/bible/chapter/kjvs/1_2
   Expected exactly one relay event, found 0.
 
 [file] bible/chapters/content/kjvs/1_2.json.gz
@@ -1221,12 +1236,12 @@ data/
 └── plans/
 ```
 
-Each domain can define its own Resource categories:
+Each domain can define its own Resource types:
 
 ```text
 data/
 └── <domain>/
-    └── <resource-category>/
+    └── <resource-type>/
         ├── content/
         └── bundles/
 ```

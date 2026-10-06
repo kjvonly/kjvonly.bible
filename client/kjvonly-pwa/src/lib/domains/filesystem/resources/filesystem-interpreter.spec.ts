@@ -4,13 +4,16 @@ import {
 	it
 } from 'vitest';
 
-import type {
-	DecodedResourceContent
-} from '$lib/resource';
-
 import {
+	type DecodedFilesystemResourceContent,
 	FilesystemInterpreter
 } from './filesystem-interpreter';
+
+import {
+	FILESYSTEM_ENTRIES_DATA_TYPE,
+	FILESYSTEM_ENTRIES_DATA_VERSION,
+	FILESYSTEM_RESOURCE_TYPE
+} from './filesystem-resource';
 
 const TARGET_PUBLISHER =
 	'b'.repeat(64);
@@ -102,15 +105,21 @@ describe(
 
 function createResource(
 	overrides:
-		Partial<DecodedResourceContent> = {}
-): DecodedResourceContent {
+		Partial<DecodedFilesystemResourceContent> = {}
+): DecodedFilesystemResourceContent {
 	return {
 		publisher:
 			'a'.repeat(64),
 		resourceId:
 			'my-filesystem',
 		resourceType:
-			'fs',
+			FILESYSTEM_RESOURCE_TYPE,
+
+		dataType:
+			FILESYSTEM_ENTRIES_DATA_TYPE,
+
+		dataVersion:
+			FILESYSTEM_ENTRIES_DATA_VERSION,
 		modifiedAt:
 			100,
 		mediaType:
@@ -131,8 +140,12 @@ function createDescriptor() {
 				TARGET_PUBLISHER,
 			resourceId:
 				'note-creation',
-			category:
-				'kjvonly/notes/entries',
+			resourceType:
+				'notes/note',
+			dataType:
+				'kjvonly.note',
+			dataVersion:
+				1,
 			modifiedAt:
 				50,
 			representation:

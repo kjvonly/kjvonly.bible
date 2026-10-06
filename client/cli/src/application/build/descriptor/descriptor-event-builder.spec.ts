@@ -89,7 +89,7 @@ describe(
 								tags: [
 									[
 										'd',
-										'kjvonly/bible/chapters/kjvs'
+										'kjvonly/bible/chapter/kjvs'
 									],
 									[
 										'm',
@@ -97,7 +97,19 @@ describe(
 									],
 									[
 										't',
-										'kjvonly/bible/chapters'
+										'bible/chapter'
+									],
+									[
+										'dataType',
+										'kjvonly.bible.chapter'
+									],
+									[
+										'dataVersion',
+										'1'
+									],
+									[
+										'version',
+										'kjvs'
 									],
 									[
 										'representation',
@@ -190,7 +202,7 @@ describe(
 				).toEqual([
 					[
 						'd',
-						'kjvonly/bible/chapters/kjvs'
+						'kjvonly/bible/chapter/kjvs'
 					],
 					[
 						'm',
@@ -198,7 +210,19 @@ describe(
 					],
 					[
 						't',
-						'kjvonly/bible/chapters'
+						'bible/chapter'
+					],
+					[
+						'dataType',
+						'kjvonly.bible.chapter'
+					],
+					[
+						'dataVersion',
+						'1'
+					],
+					[
+						'version',
+						'kjvs'
 					],
 					[
 						'representation',
@@ -252,6 +276,34 @@ describe(
 				).toBe(
 					'content'
 				);
+
+
+
+				expect(
+					decoded[0]
+						.metadata
+						.dataType
+				).toBe(
+					'kjvonly.bible.chapter'
+				);
+
+
+				expect(
+					decoded[0]
+						.metadata
+						.dataVersion
+				).toBe(
+					1
+				);
+
+
+				expect(
+					decoded[0]
+						.resourceMetadata
+				).toEqual({
+					version:
+						'kjvs'
+				});
 			}
 		);
 	}

@@ -75,11 +75,11 @@ Resource Representation
         ↓
 Resource Resolution
         ↓
-Verified Resource Content
+Decoded Resource Content
         ↓
-Domain Interpretation
+Semantic Datatype Validation
         ↓
-Candidate Domain Object
+Domain Object Construction
 ```
 
 The Resource Boundary understands the Nostr event structure.
@@ -205,14 +205,16 @@ d tag
 For example:
 
 ```text
-kjvonly/bible/chapters/kjv
+bible-a/1_1
 ```
 
 may be carried as:
 
 ```json
-["d", "kjvonly/bible/chapters/kjv"]
+["d", "bible-a/1_1"]
 ```
+
+Application Resource IDs may be path-like, but the protocol treats the `d` value as opaque. Resource Type is carried separately by `t`.
 
 The exact canonical identity of the published Resource is defined by ADR 04 — Nostr Resource Identity.
 
@@ -220,22 +222,16 @@ This ADR does not redefine those replacement or identity rules.
 
 ---
 
-# Resource Classification
+# Resource Type
 
-A Resource event SHOULD expose the Resource Classification required for relay discovery.
+A Resource event SHOULD expose its canonical Resource Type for relay discovery and application dispatch.
 
-The Domain Resource Model defines classification using:
-
-```text
-namespace/domain/resource-type
-```
-
-That classification is represented through a Nostr `t` tag.
+Resource Type is represented through one canonical Nostr `t` tag.
 
 For example:
 
 ```json
-["t", "kjvonly/bible/chapters"]
+["t", "bible/chapter"]
 ```
 
 Conceptually:
@@ -250,7 +246,7 @@ t tag
 class of Resources
 ```
 
-Classification supports discovery.
+Resource Type supports discovery and dispatch.
 
 It MUST NOT replace Resource Identity.
 
@@ -324,6 +320,50 @@ These MUST remain separate.
 
 ---
 
+# Semantic Data Contract
+
+A Resource event carries the semantic payload contract as Resource-envelope metadata:
+
+```json
+["dataType", "kjvonly.bible.chapter"]
+["dataVersion", "1"]
+```
+
+These values are preserved through Resource Resolution and decoding. They select semantic payload validation after decoding.
+
+They are not Resource identity fields and are not substitutes for Resource Type.
+
+Conceptually:
+
+```text
+t tag
+    = Resource Type / discovery class
+
+dataType + dataVersion
+    = semantic payload contract
+
+d tag
+    = specific Resource identity
+```
+
+---
+
+# Domain-Owned Resource Metadata
+
+A Resource event MAY carry additional scalar Resource metadata required by the owning Domain's Resource contract.
+
+For example:
+
+```json
+["version", "King James Version"]
+```
+
+The generic Nostr/Resource layer transports such metadata without interpreting the key's Domain meaning.
+
+Metadata keys do not participate in addressable-event replacement identity. Two different `d` tags may carry the same semantic metadata value, and a metadata value is not required to equal any Resource ID segment.
+
+---
+
 # `content` Representation
 
 For a `content` representation, the Nostr event `content` directly contains the serialized Resource content.
@@ -345,8 +385,8 @@ For example:
 ```json
 {
   "tags": [
-    ["d", "kjvonly/plans/readings/365-bible"],
-    ["t", "kjvonly/plans/readings"],
+    ["d", "kjvonly/reading-plans/plan-definition/default/365-bible"],
+    ["t", "reading-plans/plan-definition"],
     ["representation", "content"],
     ["m", "application/json"]
   ],
@@ -385,8 +425,8 @@ For example:
 ```json
 {
   "tags": [
-    ["d", "kjvonly/bible/chapters/kjv"],
-    ["t", "kjvonly/bible/chapters"],
+    ["d", "kjvonly/bible/chapter/kjv"],
+    ["t", "bible/chapter"],
     ["representation", "descriptor"],
     ["m", "application/json"]
   ],
@@ -614,7 +654,7 @@ The Resource Boundary then verifies that the event satisfies the Resource-event 
 This may include required:
 
 * identity metadata,
-* classification metadata,
+* Resource Type metadata,
 * representation metadata,
 * and representation structure.
 
@@ -871,7 +911,7 @@ from Domain behavior.
 
 Resource Identity is distinct from event ID.
 
-Resource Classification is distinct from Resource Identity.
+Resource Type is distinct from Resource Identity.
 
 Representation determines how serialized content is obtained.
 
@@ -919,7 +959,7 @@ This ADR defines:
 * Nostr events as Resource protocol representations,
 * the responsibilities of core event fields,
 * Resource addressing metadata,
-* Resource classification metadata,
+* Resource Type metadata,
 * Resource representation metadata,
 * the mapping of `content`, `descriptor`, and `descriptors` representations,
 * protocol and Resource-event validation boundaries,
@@ -962,7 +1002,7 @@ Nostr Event
 Relay
 ```
 
-The event carries the publisher, Resource addressing metadata, classification, representation metadata, payload, publication timestamp, event identity, and signature required by the Nostr protocol.
+The event carries the publisher, Resource addressing metadata, Resource Type, representation metadata, payload, publication timestamp, event identity, and signature required by the Nostr protocol.
 
 It does not become the application's Domain model.
 

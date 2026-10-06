@@ -11,15 +11,15 @@ import {
 
 import {
 	BIBLE_SEARCH_RESOURCE_TYPE
-} from './bible-search-index-interpreter';
+} from './bible-search-index-resource';
 
 import {
 	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '../chapters/bible-chapter-interpreter';
+} from '../chapters/bible-chapter-resource';
 
 import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
-} from '../booknames/bible-booknames-interpreter';
+} from '../booknames/bible-booknames-resource';
 
 import {
 	STRONGS_RESOURCE_TYPE

@@ -1,3 +1,7 @@
+import {
+	BIBLE_SEARCH_INDEX_DATA_TYPE
+} from '../resources/search/bible-search-index-resource';
+
 import type {
 	BibleSearchIndex
 } from '../models/bible-search-index.model';
@@ -62,6 +66,12 @@ export class IndexedDBBibleSearchIndexStore
 
 				objectType:
 					BIBLE_SEARCH_INDEX_OBJECT_TYPE,
+
+				dataType:
+					BIBLE_SEARCH_INDEX_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					searchIndex.id,

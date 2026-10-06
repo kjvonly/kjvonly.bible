@@ -1,3 +1,7 @@
+import {
+	NOTE_DATA_TYPE
+} from '../resources/notes-resource-contract';
+
 import type {
 	Note
 } from '../models/note.model';
@@ -81,6 +85,12 @@ export class IndexedDBNotesStore
 
 				objectType:
 					NOTE_OBJECT_TYPE,
+
+				dataType:
+					NOTE_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					note.id,

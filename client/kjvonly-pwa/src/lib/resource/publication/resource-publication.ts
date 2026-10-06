@@ -18,6 +18,12 @@ export interface ResourcePublication
 	readonly resourceType:
 		string;
 
+	readonly dataType:
+		string;
+
+	readonly dataVersion:
+		number;
+
 	readonly resourceId:
 		string;
 

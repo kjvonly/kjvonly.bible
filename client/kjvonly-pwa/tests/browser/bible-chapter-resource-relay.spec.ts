@@ -30,7 +30,7 @@ import {
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
 	DOMAIN_OBJECTS,
@@ -156,10 +156,10 @@ describe(
 			'publishes discovers resolves decodes validates and installs a Bible Chapter',
 			async () => {
 				const resourceType =
-					'kjvonly/bible/chapters';
+					'bible/chapter';
 
 				const resourceSourceId =
-					`${resourceType}/kjvs`;
+					'kjvonly/bible/chapter/kjvs';
 
 				const resourceId =
 					`${resourceSourceId}/1_1`;
@@ -185,6 +185,18 @@ describe(
 								[
 									't',
 									resourceType
+								],
+								[
+									'dataType',
+									'kjvonly.bible.chapter'
+								],
+								[
+									'dataVersion',
+									'1'
+								],
+								[
+									'version',
+									'kjvs'
 								],
 								[
 									'representation',
@@ -315,6 +327,11 @@ describe(
 					publisher,
 
 					resourceId,
+
+					metadata: {
+						version:
+							'kjvs'
+					},
 
 					modifiedAt:
 						expect.any(

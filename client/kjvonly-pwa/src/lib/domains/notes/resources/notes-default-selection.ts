@@ -3,8 +3,8 @@ import type {
 } from '$lib/resource';
 
 import {
-	NOTES_RESOURCE_TYPE
-} from './notes-resource-contract';
+	createNotesResourceId
+} from './notes-resource-id';
 
 export const DEFAULT_NOTES_RESOURCE_NAME =
 	'default';
@@ -16,6 +16,8 @@ export function createDefaultNotesSelection(
 		publisher,
 
 		resourceId:
-			`${NOTES_RESOURCE_TYPE}/${DEFAULT_NOTES_RESOURCE_NAME}`
+			createNotesResourceId(
+				DEFAULT_NOTES_RESOURCE_NAME
+			)
 	};
 }

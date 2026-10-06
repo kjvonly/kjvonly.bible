@@ -10,11 +10,18 @@ Accepted
 
 Resource Discovery finds available Resource Representations.
 
-Resource Resolution turns those representations into verified serialized Resource content.
+Resource Resolution obtains and verifies serialized Resource content and produces a decoded Resource envelope.
 
-The application does not operate directly on Nostr events or serialized Resource content. Before externally obtained information can become application state, the owning Domain must interpret and validate it.
+The application does not operate directly on Nostr events, serialized payloads, or arbitrary decoded values. Before external information can become accepted application state, the application must establish:
 
-The Resource Boundary therefore needs a defined transition between:
+```text
+what semantic contract the value satisfies
+what Domain Objects it represents
+which Domain identities those objects have
+whether the incoming Resource revision should replace local state
+```
+
+The Resource Boundary therefore needs a stable acceptance transition between:
 
 ```text
 verified external Resource information
@@ -32,291 +39,471 @@ That transition is Resource Installation.
 
 # Decision
 
-Resource Installation determines whether verified Resource content becomes accepted local application state.
+Resource Installation is a generic acceptance lifecycle for Resource-backed Domain information.
 
-The installation lifecycle is:
+The normal lifecycle is:
 
 ```text
-Verified Resource Content
+Decoded Resource Envelope
         ↓
-Domain Interpretation
+dataType + dataVersion
+        ↓
+Semantic Payload Validation
+        ↓
+Resource Category / Type
+        ↓
+Domain Object Construction
         ↓
 Candidate Domain Object(s)
         ↓
-Domain Validation
+Per-Object Currentness
         ↓
-Installation Decision
+Atomic Persistence
         ↓
 Accepted Local Domain Object(s)
+        +
+ResourceInstallation state
 ```
 
-Installation is the acceptance boundary between externally represented Resource information and the application's local Domain model.
+Installation MUST NOT treat successful Discovery, Resolution, decoding, or Nostr replacement as automatic acceptance.
 
-Installation MUST NOT treat successful Discovery or Resolution as automatic acceptance.
-
----
-
-# Candidate Domain Objects
-
-Verified Resource content is interpreted according to the Resource Type and owning Domain.
-
-That interpretation produces one or more **candidate Domain Objects**.
-
-Candidate Domain Objects are not yet accepted application state.
-
-The owning Domain determines:
-
-* how the serialized content is interpreted,
-* which Domain Objects it represents,
-* and whether those objects satisfy Domain invariants.
-
-The Resource Boundary does not prescribe the internal mechanism used to perform Domain interpretation, validation, or installation.
+The generic lifecycle separates semantic validation, Domain identity construction, and persistence so that Domains do not need complete custom installation pipelines merely to store Resource-backed Domain Objects.
 
 ---
 
-# Domain Validation
+# Decoded Resource Envelope
 
-Domain validation occurs after Resource Resolution.
-
-Resolution establishes that the Resource content is the content represented by the Resource Representation.
-
-Domain validation establishes that the resulting information is valid according to application meaning.
-
-Therefore:
-
-```text
-Resource integrity
-    ≠
-Domain validity
-```
-
-Installation MUST NOT accept candidate Domain Objects that fail Domain validation.
-
----
-
-# Installation Decision
-
-Passing Domain validation does not by itself require installation.
-
-Installation determines whether the valid candidate information should become accepted local state.
-
-The decision may depend on the workflow that requested installation, such as:
-
-* explicit user installation,
-* application-provided Resource installation,
-* import,
-* synchronization,
-* or another application policy.
-
-A discovered, resolved, or newer network publication MUST NOT bypass this acceptance decision.
-
-> **The network proposes. The application decides.**
-
----
-
-# Installed State
-
-A Resource is installed when the candidate Domain Objects accepted from that Resource have become part of the application's accepted local state.
-
-The application installs Domain information.
-
-It does not install:
-
-* Nostr events,
-* Resource Representations,
-* descriptors,
-* or external storage objects.
-
-Those remain Resource Boundary representations or provenance information.
-
-Installation status is therefore a local application concept.
-
----
-
-# Installation and Persistence
-
-Installation and persistence are separate responsibilities.
-
-Installation answers:
-
-> **Should this external information become accepted local state?**
-
-Persistence answers:
-
-> **How does accepted local state survive application execution?**
+Installation receives a decoded Resource envelope that preserves the Resource context required after payload decoding.
 
 Conceptually:
 
 ```text
-Candidate Domain Objects
-        ↓
-Accept / Install
-        ↓
-Accepted Local State
-        ↓
-Persistence
+publisher
+resourceId
+Resource Type
+modifiedAt
+mediaType
+dataType
+dataVersion
+optional Resource metadata
+decoded value
 ```
 
-Any suitable local persistence mechanism MAY persist accepted state.
+These fields serve different purposes.
 
-No specific persistence abstraction or storage technology is required by this ADR.
+In particular:
+
+```text
+resourceId
+    = Resource identity component
+
+Resource Type
+    = Resource family / Domain factory selection
+
+dataType + dataVersion
+    = semantic payload contract
+
+metadata
+    = optional Domain-owned Resource-envelope semantics
+
+modifiedAt
+    = Resource revision ordering value
+```
+
+The Resource Boundary MUST NOT collapse these concepts into one path convention.
+
+---
+
+# Semantic Payload Validation
+
+The decoded Resource value is validated according to its declared:
+
+```text
+dataType + dataVersion
+```
+
+Semantic payload validation answers:
+
+> **Does this decoded value satisfy the semantic contract it claims to implement?**
+
+A supported datatype handler may validate:
+
+* scalar or object structure,
+* required fields,
+* collection/bundle shape,
+* canonical value constraints,
+* or another contract-specific semantic structure.
+
+The datatype layer MUST NOT own:
+
+* Resource identity,
+* Domain Object identity,
+* generic currentness,
+* local persistence,
+* Module selection,
+* UI behavior,
+* or publication.
+
+If no semantic contract handler exists for the exact `dataType + dataVersion`, installation fails before accepted Domain state is written.
+
+---
+
+# Domain Object Construction
+
+After semantic payload validation, the owning Resource Type converts the accepted value into zero, one, or many candidate Domain Objects.
+
+Conceptually:
+
+```text
+validated semantic value
++
+Resource envelope context
+        ↓
+Domain Object Factory
+        ↓
+0..n Domain Object candidates
+```
+
+A candidate carries the accepted Domain persistence contract:
+
+```text
+objectType
+objectId
+dataType
+dataVersion
+value
+```
+
+The factory owns:
+
+* Domain Object identity,
+* Resource-Type-specific Resource ID interpretation,
+* Domain invariants that require Resource context,
+* canonical persisted datatype/version,
+* and one-to-many or bundle expansion.
+
+The factory receives only semantically validated payload values. Raw unvalidated Resource payloads MUST NOT cross this boundary.
+
+---
+
+# Resource Identity and Domain Identity
+
+Resource identity and Domain Object identity are related but distinct.
+
+Generic Resource infrastructure MUST NOT derive Domain Object IDs from Resource IDs by convention.
+
+The owning Domain factory MAY use Resource context as an input to Domain identity when that relationship belongs to the Domain contract.
+
+For example:
+
+```text
+publisher
++
+Resource identity namespace
++
+Bible chapter reference
+        ↓
+Bible Chapter Domain Object ID
+```
+
+This does not make arbitrary Resource ID segments generically meaningful.
+
+---
+
+# Resource Metadata
+
+A Resource envelope MAY carry protocol-agnostic scalar metadata.
+
+The generic Resource lifecycle transports these values without assigning meaning to individual keys.
+
+An owning Domain MAY require and interpret metadata as part of its Resource contract.
+
+For example, a Bible Chapter Resource may separate:
+
+```text
+bibleId
+    = identity namespace derived from Resource identity
+
+metadata.version
+    = semantic Bible version label
+```
+
+Two Resource identities MAY carry the same semantic metadata value. The Resource Boundary MUST NOT require metadata to equal an identifier segment unless that equality is explicitly part of the owning Domain's contract.
+
+---
+
+# Installation Decision and Currentness
+
+Passing semantic and Domain validation does not mean every candidate must overwrite local state.
+
+Currentness is evaluated per candidate Domain Object.
+
+Conceptually:
+
+```text
+ResourceInstallation(objectType, objectId)
+        ↓
+compare incoming Resource modifiedAt
+        ↓
+missing installation
+    → install
+
+incoming modifiedAt > current modifiedAt
+    → replace
+
+incoming modifiedAt <= current modifiedAt
+    → keep current object
+```
+
+This permits one Resource bundle to contain some objects that are newer locally and other objects that should be installed from the incoming Resource.
+
+Currentness is therefore object-level even when acquisition occurs at Resource/bundle granularity.
+
+---
+
+# ResourceInstallation
+
+A Resource-backed Domain Object has associated Resource revision/provenance state.
+
+Conceptually:
+
+```text
+ResourceInstallation
+    objectType
+    objectId
+    publisher
+    optional resourceId
+    optional Resource metadata
+    modifiedAt
+```
+
+`ResourceInstallation` serves a different purpose from the Domain Object itself.
+
+It may preserve:
+
+* object-level Resource revision ordering,
+* publisher association,
+* known Resource identity,
+* Resource-envelope metadata needed for later reconstruction,
+* and archive/export eligibility.
+
+Domain payloads SHOULD NOT duplicate transport/provenance fields merely because the Resource layer needs them later.
+
+Resource metadata in `ResourceInstallation` does not automatically become Domain state and does not participate in currentness unless an explicit contract says otherwise.
 
 ---
 
 # Atomic Installation
 
-Installation is atomic with respect to the Domain Objects produced by one Resource installation.
+For the normal generic Domain Object persistence path, accepted Domain Objects and their `ResourceInstallation` records are committed atomically.
 
-Either:
+Conceptually:
 
-* all Domain Objects required by that installation become accepted together,
+```text
+BEGIN TRANSACTION
+    for each candidate that wins currentness:
+        write Domain Object
+        write ResourceInstallation
+COMMIT
+```
 
-or:
+If validation or Domain-object construction fails, no candidate from that Resource is written.
 
-* the previously accepted state remains unchanged.
+If persistence fails, accepted Domain state and its Resource revision state MUST NOT diverge.
 
-The application MUST NOT expose a partially accepted installation.
+A candidate that is intentionally skipped because local state is newer is not a partial failure.
 
-If persistence is involved, its implementation MUST preserve this atomic acceptance invariant.
+---
+
+# One Resource May Produce Many Domain Objects
+
+A Resource is not required to map one-to-one to a Domain Object.
+
+Valid relationships include:
+
+```text
+one Resource → zero Domain Objects
+one Resource → one Domain Object
+one Resource → many Domain Objects
+```
+
+Examples include:
+
+* a Chapter bundle producing many Chapter objects,
+* a definition collection producing individual Definition objects,
+* a Resource producing a supporting Domain catalog object plus content objects,
+* or an empty valid collection producing no objects.
+
+The persisted Domain Object contract MAY differ from the published Resource datatype contract.
+
+---
+
+# Supporting Domain Objects
+
+A factory MAY produce supporting Domain Objects required by the owning Domain.
+
+Supporting objects that are emitted through the normal candidate contract follow the same normal currentness and ResourceInstallation rules as every other candidate.
+
+The generic lifecycle MUST NOT add one-off persistence modes for a particular Domain's historical behavior.
+
+If an object should not be Resource-backed, it should not be modeled as a normal Resource-backed candidate merely to obtain a persistence side effect.
+
+---
+
+# Generic Path and Specialized Persistence
+
+The generic installer is the default for Resource-backed Domain Objects persisted through the application's general Domain Object store.
+
+A Resource family MAY retain specialized installation when its accepted state has materially different persistence requirements.
+
+The current motivating example is Filesystem:
+
+```text
+Filesystem Resource
+    ↓
+Filesystem Domain validation
+    ↓
+FilesystemEntry candidates
+    ↓
+Filesystem-specific installer
+    ↓
+FILESYSTEM store
++
+RESOURCE_INSTALLATIONS
+```
+
+Filesystem entries are not persisted through the general Domain Object store. Their store has mount/root/path addressing semantics that are part of the Filesystem Domain.
+
+The existence of a specialized installer MUST be justified by a real persistence/lifecycle difference, not merely because a Resource belongs to a different Domain.
+
+---
+
+# Local Creation and Local Writes
+
+Locally created or modified Domain Objects originate inside application authority and do not pass through inbound Resource Installation before becoming valid local state.
+
+For Resource-backed local state, a Domain-specific local-write transaction MAY atomically maintain:
+
+```text
+Domain Object
++
+ResourceInstallation revision state
++
+Outbox publication intent
+```
+
+This is not a second inbound installer.
+
+It is the outbound/local mutation boundary that ensures one local revision is represented consistently in durable Domain state and publication work.
+
+Therefore Domain-specific files named `*-write-transaction` may remain appropriate even after Domain-specific inbound Resource installers have been removed.
+
+---
+
+# ResourceReceipt vs ResourceInstallation
+
+Resource-level processing and object-level installation are separate concerns.
+
+A Resource receipt answers questions such as:
+
+```text
+Has this Resource revision already been resolved/processed?
+```
+
+A `ResourceInstallation` answers:
+
+```text
+Which Resource revision is associated with this accepted Domain Object?
+```
+
+One Resource may produce many Domain Objects and therefore many `ResourceInstallation` records while having one Resource-level processing receipt.
+
+Neither record replaces the other.
 
 ---
 
 # Installation Sources
 
-Installation is independent of how the Resource entered the Resource Boundary.
+Installation is independent of how decoded Resource content entered the boundary.
 
-Verified Resource content may originate through:
+It may originate through:
 
 * Resource Discovery and Resolution,
+* direct Resource references,
 * Resource Archives,
 * application bootstrap,
 * synchronization,
-* direct Resource references,
 * or another compatible Resource source.
 
-Once verified content reaches Installation, the same Domain validation and acceptance rules apply.
-
----
-
-# Resource Dependencies
-
-A Resource may require other Resources to be available before its installation can complete.
-
-When such dependencies are part of the Resource contract, Installation coordinates their availability before accepting the dependent Resource.
-
-Installation does not define how dependencies are:
-
-* represented,
-* discovered,
-* or resolved.
-
-Those responsibilities remain with the specifications that own them.
-
-A dependent Resource MUST NOT be exposed as successfully installed when required dependencies have failed to reach the state required by its installation contract.
+Archive reconstruction should re-enter the same semantic validation, Domain Object construction, currentness, and persistence lifecycle rather than directly writing archived Domain payloads.
 
 ---
 
 # Installing Another Publication
 
-A Published Resource may have multiple Nostr publications over time.
+A Published Resource may have multiple addressable-event publications over time.
 
-Receiving or resolving another publication of the same Published Resource does not automatically replace the currently accepted local state.
+Receiving another publication does not bypass validation or object-level currentness.
 
-Conceptually:
+Published Resource replacement identity determines which external Resource is being updated.
 
-```text
-New Publication
-        ↓
-Discovery / Synchronization
-        ↓
-Resolution
-        ↓
-Candidate Domain Information
-        ↓
-Installation Decision
-```
+`modifiedAt` and accepted local ResourceInstallation state determine whether each produced Domain Object should be replaced.
 
-The synchronization or update-selection policy determines which publication is presented for installation.
-
-Installation then applies the same validation and acceptance rules as any other external Resource information.
-
-Published Resource Identity alone does not determine local replacement.
+Installation MUST NOT invent an additional generic semantic "version" from Resource ID segments.
 
 ---
 
 # Different Published Resources
 
-Installing a different Published Resource creates a separate Resource-origin relationship unless Domain policy explicitly defines another behavior.
+Different Resource IDs under the same publisher/kind identify different Published Resources.
 
-Whether two publications belong to the same Published Resource is determined by ADR 04 — Nostr Resource Identity.
+Those Resources MAY still produce candidates targeting the same Domain Object identity if the owning Domain contract allows it.
 
-Installation MUST NOT invent additional version, revision, or fork identity rules.
+In that case the normal object-level currentness rules determine accepted local state.
 
----
-
-# Local Creation
-
-Locally created Domain Objects originate inside application authority.
-
-For example:
-
-```text
-User creates Note
-        ↓
-Notes Domain
-        ↓
-Accepted Local Note
-```
-
-Such objects do not need to arrive through Nostr or pass through inbound Resource Installation before becoming valid local state.
-
-If that information later participates in the Resource lifecycle, publication is handled independently by the outbound Resource specifications.
+The Resource Boundary does not need to prohibit two independently addressed Resources from carrying the same Domain metadata or targeting the same Domain identity.
 
 ---
 
 # Uninstallation
 
-Uninstallation removes the locally accepted state associated with an installed Resource according to the owning Domain's rules.
+Uninstallation removes locally accepted state according to the owning Domain's rules.
+
+This ADR does not require a generic inverse of Resource installation.
 
 Uninstallation does not alter:
 
 * the Published Resource,
 * its Nostr identity,
 * publisher identity,
-* or the existence of the external publication.
-
-It changes local application state only.
-
-Removing local state also does not prevent that Resource from being discovered or installed again later.
+* or the existence of external publications.
 
 ---
 
 # Installation Failure
 
-Installation fails when required candidate information cannot be validly and atomically accepted.
+Installation fails when required information cannot be validly and atomically accepted.
 
 Examples include:
 
-* Domain validation failure,
+* unsupported `dataType + dataVersion`,
+* semantic payload validation failure,
 * unsupported Resource Type,
+* Domain factory invariant failure,
 * required dependency failure,
-* or inability to preserve atomic acceptance.
+* or persistence failure.
 
-Failure MUST leave the previously accepted installation unchanged.
-
-The exact error model is an implementation detail.
+Failure MUST leave previously accepted state unchanged for the affected atomic installation operation.
 
 ---
 
 # Offline-First Behavior
 
-Installation operates on verified Resource content that may already be locally available.
+Installation operates on decoded Resource content that may already be locally available.
 
-It MUST NOT require an active relay connection merely to accept content that has already completed the required Resource Resolution process.
+It MUST NOT require a live relay connection merely to validate and persist content that has already completed the required Resource acquisition steps.
 
 Once installed, loss of network connectivity does not invalidate accepted local state.
-
-Future discovery or synchronization may occur independently.
 
 ---
 
@@ -325,27 +512,29 @@ Future discovery or synchronization may occur independently.
 A compatible implementation MUST preserve these rules:
 
 ```text
-Installation is the transition from verified
-external Resource information to accepted local state.
+Resource identity, Resource Type,
+and semantic datatype are distinct.
 
-Resolved content is not automatically installed.
+Decoded Resource values are validated by
+dataType + dataVersion before Domain construction.
 
-Domain validation occurs before acceptance.
+Domain factories own Domain identity and may
+produce zero, one, or many Domain Objects.
 
-Candidate Domain Objects are not accepted state.
+Generic installation owns normal object-level
+currentness and atomic persistence.
 
-Installation is atomic.
+Resource metadata is transported generically
+but interpreted by owning Domains.
 
-Persistence is separate from Installation.
+ResourceInstallation is separate from Domain data.
 
-Newer publications do not automatically replace
-accepted local state.
+Specialized inbound installers require a real
+persistence/lifecycle difference.
 
-Locally created Domain Objects do not require
-inbound Resource Installation.
+Local-write transactions are not inbound installers.
 
-Uninstallation changes local state,
-not external Resource identity.
+Resolved content is not automatically accepted.
 ```
 
 ---
@@ -354,56 +543,48 @@ not external Resource identity.
 
 This ADR defines:
 
-* candidate Domain Objects,
-* Domain validation within the inbound Resource lifecycle,
-* the Installation decision,
-* installed local state,
-* atomic installation,
-* Resource dependency coordination,
-* installation of later publications,
-* uninstallation,
-* and the separation between Installation and persistence.
+* semantic Resource validation before acceptance,
+* Domain Object candidate construction,
+* Domain identity ownership,
+* generic object-level currentness,
+* ResourceInstallation association,
+* atomic accepted-state persistence,
+* one-to-many Resource installation,
+* the specialized-persistence exception,
+* and the distinction between inbound installation and local writes.
 
 It does not define:
 
 * Resource Discovery,
 * Resource Resolution,
-* Resource Identity,
-* Resource serialization,
-* Domain-specific validation rules,
-* persistence mechanisms,
-* synchronization conflict selection,
+* Nostr Resource Identity,
+* concrete datatype schemas,
+* Domain-specific identity formats,
+* persistence technologies,
+* archive encoding,
 * publication,
-* or local storage implementation.
-
-Those concerns belong to the corresponding Resource Boundary or Application Architecture specifications.
+* or synchronization conflict policy.
 
 ---
 
 # Big Takeaway
 
-Resource Installation answers one question:
-
-> **Should this verified external Resource information become accepted local application state?**
-
-The transition is:
+The default inbound Resource acceptance path is:
 
 ```text
-Verified Resource Content
-        ↓
-Candidate Domain Object
-        ↓
-Domain Validation
-        ↓
-Accept / Install
-        ↓
-Accepted Local State
+Decoded Resource
+    ↓
+validate declared semantic datatype
+    ↓
+construct Domain-owned identities and values
+    ↓
+apply generic object-level currentness
+    ↓
+atomically persist Domain state + Resource state
 ```
 
-Resolution proves what content was obtained.
+The generic Resource layer owns the repeatable lifecycle.
 
-The Domain determines what that content means.
+Domains own meaning and identity.
 
-Installation determines whether it becomes local application state.
-
-Persistence determines how that accepted state survives.
+Specialized installation remains appropriate only where accepted state truly has different persistence requirements.

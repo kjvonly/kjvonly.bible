@@ -7,8 +7,8 @@ import type {
 } from '../../../models/bible-version.model';
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '../../../resources/chapters/bible-chapter-interpreter';
+	createBibleChapterResourceId
+} from '../../../resources/chapters/bible-chapter-resource';
 
 /** Returns the Bible Chapter Resource represented by one Bible version. */
 export function createBibleChapterResourceReference(
@@ -17,6 +17,8 @@ export function createBibleChapterResourceReference(
 	return {
 		publisher: version.publisher,
 		resourceId:
-			`${BIBLE_CHAPTER_RESOURCE_TYPE}/${version.version}`
+			createBibleChapterResourceId(
+				version.version
+			)
 	};
 }

@@ -217,6 +217,64 @@ describe(
 		);
 
 		it(
+			'rejects a Nostr Resource whose data type does not match the descriptor',
+			async () => {
+				const strategy =
+					new NostrResourceResolutionStrategy({
+						getEvent:
+							async () =>
+								createEvent({
+									tags: [
+										['d', RESOURCE_ID],
+										['t', RESOURCE_TYPE],
+										['dataType', 'other.type'],
+										['dataVersion', '1'],
+										['representation', 'descriptors'],
+										['m', 'application/json+hex']
+									]
+								})
+					});
+
+				await expect(
+					strategy.resolve(
+						createDescriptor()
+					)
+				).rejects.toThrow(
+					'Nostr Resource dataType mismatch.'
+				);
+			}
+		);
+
+		it(
+			'rejects a Nostr Resource whose data version does not match the descriptor',
+			async () => {
+				const strategy =
+					new NostrResourceResolutionStrategy({
+						getEvent:
+							async () =>
+								createEvent({
+									tags: [
+										['d', RESOURCE_ID],
+										['t', RESOURCE_TYPE],
+										['dataType', RESOURCE_TYPE],
+										['dataVersion', '2'],
+										['representation', 'descriptors'],
+										['m', 'application/json+hex']
+									]
+								})
+					});
+
+				await expect(
+					strategy.resolve(
+						createDescriptor()
+					)
+				).rejects.toThrow(
+					'Nostr Resource dataVersion mismatch.'
+				);
+			}
+		);
+
+		it(
 			'rejects a Nostr Resource whose representation does not match the descriptor',
 			async () => {
 				const strategy =
@@ -227,6 +285,8 @@ describe(
 									tags: [
 										['d', RESOURCE_ID],
 										['t', RESOURCE_TYPE],
+										['dataType', RESOURCE_TYPE],
+										['dataVersion', '1'],
 										['representation', 'content'],
 										['m', 'application/json+hex']
 									]
@@ -271,8 +331,14 @@ function createDescriptor(
 			resourceId:
 				RESOURCE_ID,
 
-			category:
+			resourceType:
 				RESOURCE_TYPE,
+
+			dataType:
+				RESOURCE_TYPE,
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				100,
@@ -317,6 +383,8 @@ function createEvent(
 		tags: [
 			['d', RESOURCE_ID],
 			['t', RESOURCE_TYPE],
+			['dataType', RESOURCE_TYPE],
+			['dataVersion', '1'],
 			['representation', 'descriptors'],
 			['m', 'application/json+hex']
 		],

@@ -1,4 +1,8 @@
 import {
+	PLAN_DEFINITION_DATA_TYPE
+} from '$lib/domains/reading-plans';
+
+import {
 	beforeEach,
 	describe,
 	expect,
@@ -22,7 +26,7 @@ import {
 
 import {
 	PLAN_DEFINITION_RESOURCE_TYPE
-} from '$lib/domains/reading-plans/resources/definitions/plan-definition-interpreter';
+} from '$lib/domains/reading-plans/resources/definitions/plan-definition-resource';
 
 import {
 	createPlanDefinitionId
@@ -40,10 +44,10 @@ const ROOT_RESOURCE_ID =
 	'kjvonly/resources/collections/default';
 
 const NESTED_RESOURCE_ID =
-	'kjvonly/plans/readings/default';
+	'kjvonly/reading-plans/plan-definition/default';
 
 const TERMINAL_RESOURCE_ID =
-	'kjvonly/plans/readings/default/browser-test';
+	'kjvonly/reading-plans/plan-definition/default/browser-test';
 
 describe(
 	'Resource Worker descriptor resolution',
@@ -97,6 +101,12 @@ describe(
 						resourceId:
 							TERMINAL_RESOURCE_ID,
 
+						dataType:
+							'kjvonly.reading-plan.definition',
+
+						dataVersion:
+							1,
+
 						representation:
 							'content',
 
@@ -111,6 +121,12 @@ describe(
 
 						resourceId:
 							NESTED_RESOURCE_ID,
+
+						dataType:
+							'kjvonly.reading-plan.definition',
+
+						dataVersion:
+							1,
 
 						representation:
 							'descriptors',
@@ -254,6 +270,12 @@ describe(
 						objectType:
 							PLAN_DEFINITION_OBJECT_TYPE,
 
+						dataType:
+							PLAN_DEFINITION_DATA_TYPE,
+
+						dataVersion:
+							1,
+
 						objectId:
 							definitionId,
 
@@ -355,6 +377,12 @@ describe(
 						resourceId:
 							TERMINAL_RESOURCE_ID,
 
+						dataType:
+							'kjvonly.reading-plan.definition',
+
+						dataVersion:
+							1,
+
 						representation:
 							'content',
 
@@ -369,6 +397,12 @@ describe(
 
 						resourceId:
 							NESTED_RESOURCE_ID,
+
+						dataType:
+							'kjvonly.reading-plan.definition',
+
+						dataVersion:
+							1,
 
 						representation:
 							'descriptors',
@@ -480,6 +514,12 @@ interface DescriptorOptions {
 	readonly resourceId:
 		string;
 
+	readonly dataType:
+		string;
+
+	readonly dataVersion:
+		number;
+
 	readonly representation:
 		ResourceDescriptor['metadata']['representation'];
 
@@ -499,8 +539,14 @@ function createDescriptor(
 			resourceId:
 				options.resourceId,
 
-			category:
+			resourceType:
 				PLAN_DEFINITION_RESOURCE_TYPE,
+
+			dataType:
+				options.dataType,
+
+			dataVersion:
+				options.dataVersion,
 
 			modifiedAt:
 				options.modifiedAt,
@@ -537,7 +583,13 @@ function createRootRepresentation(
 			reference.resourceId,
 
 		resourceType:
-			'kjvonly/resources/collections',
+			'resource/descriptor-collection',
+
+		dataType:
+			'kjvonly.resource-descriptor-collection',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'a'.repeat(

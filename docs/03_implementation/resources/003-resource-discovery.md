@@ -164,17 +164,22 @@ Nostr Resource events are converted through:
 toResourceRepresentation()
 ```
 
-The representation preserves Resource-boundary information such as:
+The representation preserves the complete generic Resource envelope needed by downstream resolution and semantic installation:
 
 ```text
 publisher
 resourceId
 resourceType
+dataType
+dataVersion
 modifiedAt
 representation
 mediaType
+metadata?
 payload
 ```
+
+For Nostr Resources, `d` supplies `resourceId`, `t` independently supplies `resourceType`, and non-envelope scalar tags are preserved as protocol-agnostic `ResourceMetadata`. Discovery does not derive Resource Type or semantic datatype from the Resource ID.
 
 The result is still a published Resource representation, not a Domain Object.
 

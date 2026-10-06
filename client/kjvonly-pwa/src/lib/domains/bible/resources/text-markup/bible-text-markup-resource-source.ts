@@ -2,13 +2,10 @@ import type {
 	PublishedResourceReference
 } from '$lib/resource';
 
-import {
-	parseResourceIdentifier
-} from '$lib/resource';
 
 import {
-	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-} from './bible-text-markup-interpreter';
+	parseBibleTextMarkupResourceId
+} from './bible-text-markup-resource';
 
 export interface BibleTextMarkupResourceSource {
 	readonly name:
@@ -19,23 +16,14 @@ export function parseBibleTextMarkupResourceSource(
 	source:
 		PublishedResourceReference
 ): BibleTextMarkupResourceSource {
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parseBibleTextMarkupResourceId(
 			source.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Bible Text Markup Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
+		identity.chapterRef !==
+			undefined
 	) {
 		throw new Error(
 			`Invalid Bible Text Markup Resource source: ${source.resourceId}`
@@ -44,6 +32,6 @@ export function parseBibleTextMarkupResourceSource(
 
 	return {
 		name:
-			identifier.path[0]
+			identity.name
 	};
 }

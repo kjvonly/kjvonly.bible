@@ -26,7 +26,11 @@ describe(
 							publisher:
 								'publisher',
 							resourceType:
-								'kjvonly/notes/entries',
+								'notes/note',
+							dataType:
+								'kjvonly.note',
+							dataVersion:
+								1,
 							resourceId:
 								`kjvonly/notes/entries/default/${objectId}`,
 							representation:
@@ -102,7 +106,11 @@ describe(
 							publisher:
 								'publisher',
 							resourceType:
-								'kjvonly/notes/entries',
+								'notes/note',
+							dataType:
+								'kjvonly.note',
+							dataVersion:
+								1,
 							resourceId:
 								'kjvonly/notes/entries/default/note-1',
 							representation:

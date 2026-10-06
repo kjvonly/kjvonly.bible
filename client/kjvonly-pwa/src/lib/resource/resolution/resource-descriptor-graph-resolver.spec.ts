@@ -39,7 +39,7 @@ function createDescriptor(
 			'content' |
 			'descriptors';
 
-		readonly category?:
+		readonly resourceType?:
 			string;
 	} =
 		{}
@@ -53,9 +53,16 @@ function createDescriptor(
 				overrides.resourceId ??
 				'kjvonly/bible/chapters/kjvs',
 
-			category:
-				overrides.category ??
+			resourceType:
+				overrides.resourceType ??
 				'kjvonly/bible/chapters',
+
+			dataType:
+				overrides.resourceType ??
+				'kjvonly/bible/chapters',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				100,
@@ -97,7 +104,13 @@ function createVerifiedContent(
 			descriptor.metadata.resourceId,
 
 		resourceType:
-			descriptor.metadata.category,
+			descriptor.metadata.resourceType,
+
+		dataType:
+			descriptor.metadata.dataType,
+
+		dataVersion:
+			descriptor.metadata.dataVersion,
 
 		modifiedAt:
 			descriptor.metadata.modifiedAt,
@@ -204,8 +217,8 @@ describe(
 						resourceId:
 							'kjvonly/resources/collections/plans',
 
-						category:
-							'kjvonly/resources/collections',
+						resourceType:
+							'resource/descriptor-collection',
 
 						representation:
 							'descriptors'
@@ -401,8 +414,8 @@ describe(
 						resourceId:
 							'kjvonly/resources/collections/plans',
 
-						category:
-							'kjvonly/resources/collections',
+						resourceType:
+							'resource/descriptor-collection',
 
 						representation:
 							'descriptors'
@@ -552,7 +565,7 @@ describe(
 								descriptor.metadata.resourceId,
 
 							resourceType:
-								descriptor.metadata.category
+								descriptor.metadata.resourceType
 						}
 					],
 
@@ -617,7 +630,7 @@ describe(
 							descriptor.metadata.resourceId,
 
 						resourceType:
-							descriptor.metadata.category,
+							descriptor.metadata.resourceType,
 
 						error
 					}
@@ -633,8 +646,8 @@ describe(
 						resourceId:
 							'kjvonly/resources/collections/self',
 
-						category:
-							'kjvonly/resources/collections',
+						resourceType:
+							'resource/descriptor-collection',
 
 						representation:
 							'descriptors'
@@ -714,8 +727,8 @@ describe(
 						resourceId:
 							ROOT_RESOURCE_ID,
 
-						category:
-							'kjvonly/resources/collections',
+						resourceType:
+							'resource/descriptor-collection',
 
 						representation:
 							'descriptors'

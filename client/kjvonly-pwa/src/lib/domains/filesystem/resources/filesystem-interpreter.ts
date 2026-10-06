@@ -1,14 +1,21 @@
 import type {
-	DecodedResourceContent,
-	ResourceInterpreter
+	DecodedResourceContent
 } from '$lib/resource';
 
 import type {
 	FilesystemEntryCandidate
 } from './filesystem-entry-candidate';
 
-export const FILESYSTEM_RESOURCE_TYPE =
-	'fs';
+import {
+	FILESYSTEM_RESOURCE_TYPE,
+	type FilesystemEntriesResourceData
+} from './filesystem-resource';
+
+export type DecodedFilesystemResourceContent =
+	Omit<DecodedResourceContent, 'value'> & {
+		readonly value:
+			FilesystemEntriesResourceData;
+	};
 
 /**
  * Interprets one decoded filesystem Resource as root-relative mapping
@@ -18,10 +25,7 @@ export const FILESYSTEM_RESOURCE_TYPE =
  * paths relative to that root. Target Resource descriptors are not resolved or
  * loaded during interpretation.
  */
-export class FilesystemInterpreter
-	implements ResourceInterpreter<
-		FilesystemEntryCandidate
-	> {
+export class FilesystemInterpreter {
 
 	readonly resourceType =
 		FILESYSTEM_RESOURCE_TYPE;
@@ -29,7 +33,7 @@ export class FilesystemInterpreter
 	/** Interprets the path-keyed filesystem payload without resolving targets. */
 	interpret(
 		resource:
-			DecodedResourceContent
+			DecodedFilesystemResourceContent
 	): Iterable<FilesystemEntryCandidate> {
 		if (
 			resource.resourceType !==
@@ -52,12 +56,6 @@ export class FilesystemInterpreter
 			);
 		}
 
-		if (!isRecord(resource.value)) {
-			throw new Error(
-				'Filesystem Resource content must be an object.'
-			);
-		}
-
 		return Object.entries(
 			resource.value
 		).map(
@@ -74,26 +72,8 @@ export class FilesystemInterpreter
 	private interpretEntry(
 		rootPath: string,
 		path: string,
-		value: unknown
+		value: FilesystemEntriesResourceData[string]
 	): FilesystemEntryCandidate {
-		if (!isRecord(value)) {
-			throw new Error(
-				`Filesystem entry must be an object: ${path}`
-			);
-		}
-
-		if (
-			!Object.prototype
-				.hasOwnProperty.call(
-					value,
-					'descriptor'
-				)
-		) {
-			throw new Error(
-				`Filesystem entry is missing descriptor: ${path}`
-			);
-		}
-
 		return {
 			rootPath,
 			path,
@@ -101,18 +81,4 @@ export class FilesystemInterpreter
 				value.descriptor
 		};
 	}
-}
-
-/** Returns true when a decoded JSON value is a non-array object. */
-function isRecord(
-	value: unknown
-): value is Record<string, unknown> {
-	return (
-		typeof value ===
-			'object' &&
-		value !== null &&
-		!Array.isArray(
-			value
-		)
-	);
 }

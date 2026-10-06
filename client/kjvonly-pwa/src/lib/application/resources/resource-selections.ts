@@ -2,9 +2,10 @@ import type {
 	PublishedResourceReference
 } from '$lib/resource';
 
-import {
-	parseResourceIdentifier
-} from '$lib/resource';
+export interface ResourceSelection extends PublishedResourceReference {
+	readonly resourceType:
+		string;
+}
 
 export type ResourceSelections =
 	Record<
@@ -86,19 +87,6 @@ export function parseResourceSelections(
 			);
 		}
 
-		const identifier =
-			parseResourceIdentifier(
-				reference.resourceId
-			);
-
-		if (
-			identifier.resourceType !==
-			resourceType
-		) {
-			throw new Error(
-				`Resource selection type mismatch: ${resourceType}`
-			);
-		}
 
 		selections[
 			resourceType

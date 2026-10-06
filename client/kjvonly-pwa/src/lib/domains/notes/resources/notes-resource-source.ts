@@ -4,16 +4,16 @@ import type {
 } from '$lib/resource';
 
 import {
-	parseResourceIdentifier
-} from '$lib/resource';
-
-import {
 	createNoteId
 } from '../models/note-id';
 
 import {
 	NOTES_RESOURCE_TYPE
 } from './notes-resource-contract';
+
+import {
+	parseNotesResourceId
+} from './notes-resource-id';
 
 export interface NotesResourceSource {
 	readonly name:
@@ -24,23 +24,14 @@ export function parseNotesResourceSource(
 	source:
 		PublishedResourceReference
 ): NotesResourceSource {
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parseNotesResourceId(
 			source.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		NOTES_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Notes Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
+		identity.noteId !==
+			undefined
 	) {
 		throw new Error(
 			`Invalid Notes Resource source: ${source.resourceId}`
@@ -49,7 +40,7 @@ export function parseNotesResourceSource(
 
 	return {
 		name:
-			identifier.path[0]
+			identity.name
 	};
 }
 
@@ -75,7 +66,7 @@ export function createNoteIdForSource(
  * Creates the Domain Note id represented by one individual Notes descriptor.
  *
  * Filesystem and other catalog layers may discover the descriptor, but Notes
- * remains responsible for translating the Resource identity into its own
+ * remains responsible for translating the Resource ID into its own
  * Domain object identity.
  */
 export function createNoteIdForDescriptor(
@@ -83,45 +74,31 @@ export function createNoteIdForDescriptor(
 		ResourceDescriptor
 ): string {
 	if (
-		descriptor.metadata.category !==
+		descriptor.metadata.resourceType !==
 		NOTES_RESOURCE_TYPE
 	) {
 		throw new Error(
-			`Invalid Notes Resource Type: ${descriptor.metadata.category}`
+			`Invalid Notes Resource Type: ${descriptor.metadata.resourceType}`
 		);
 	}
 
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parseNotesResourceId(
 			descriptor.metadata.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		NOTES_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Notes Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		2
+		identity.noteId ===
+			undefined
 	) {
 		throw new Error(
 			`Invalid individual Notes Resource: ${descriptor.metadata.resourceId}`
 		);
 	}
 
-	const [
-		name,
-		noteId
-	] = identifier.path;
-
 	return createNoteId(
 		descriptor.metadata.publisher,
-		name,
-		noteId
+		identity.name,
+		identity.noteId
 	);
 }

@@ -535,6 +535,18 @@ function createRepresentation(
 				)
 				.join('/'),
 
+		dataType:
+			reference.resourceId
+				.split('/')
+				.slice(
+					0,
+					3
+				)
+				.join('/'),
+
+		dataVersion:
+			1,
+
 		eventId:
 			'a'.repeat(
 				64

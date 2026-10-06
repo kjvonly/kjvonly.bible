@@ -59,6 +59,18 @@ const SECOND_PUBLISHER =
 		64
 	);
 
+const BIBLE_CHAPTER_DATA_TYPE =
+	'test.bible-chapter';
+
+const STRONGS_DEFINITION_DATA_TYPE =
+	'test.strongs-definition';
+
+const RESOURCE_DESCRIPTOR_COLLECTION_DATA_TYPE =
+	'test.resource-descriptor-collection';
+
+const DATA_VERSION =
+	1;
+
 describe(
 	'DescriptorsRepresentationResolver',
 	() => {
@@ -151,7 +163,13 @@ describe(
 								'kjvonly/bible/chapters/kjvs',
 
 							resourceType:
-								'kjvonly/bible/chapters',
+								'bible/chapter',
+
+							dataType:
+								BIBLE_CHAPTER_DATA_TYPE,
+
+							dataVersion:
+								DATA_VERSION,
 
 							modifiedAt:
 								100,
@@ -188,8 +206,14 @@ describe(
 							resourceId:
 								'kjvonly/resources/collections/plans',
 
-							category:
-								'kjvonly/resources/collections',
+							resourceType:
+								'resource/descriptor-collection',
+
+							dataType:
+								RESOURCE_DESCRIPTOR_COLLECTION_DATA_TYPE,
+
+							dataVersion:
+								DATA_VERSION,
 
 							modifiedAt:
 								110,
@@ -211,8 +235,14 @@ describe(
 							resourceId:
 								'kjvonly/strongs/definitions/kjvs',
 
-							category:
-								'kjvonly/strongs/definitions',
+							resourceType:
+								'strongs/definition',
+
+							dataType:
+								STRONGS_DEFINITION_DATA_TYPE,
+
+							dataVersion:
+								DATA_VERSION,
 
 							modifiedAt:
 								200,
@@ -345,7 +375,13 @@ describe(
 								'kjvonly/strongs/definitions/kjvs',
 
 							resourceType:
-								'kjvonly/strongs/definitions',
+								'strongs/definition',
+
+							dataType:
+								STRONGS_DEFINITION_DATA_TYPE,
+
+							dataVersion:
+								DATA_VERSION,
 
 							modifiedAt:
 								200,
@@ -396,8 +432,14 @@ describe(
 							resourceId:
 								resource.resourceId,
 
-							category:
+							resourceType:
 								resource.resourceType,
+
+							dataType:
+								RESOURCE_DESCRIPTOR_COLLECTION_DATA_TYPE,
+
+							dataVersion:
+								DATA_VERSION,
 
 							modifiedAt:
 								resource.modifiedAt,
@@ -487,8 +529,14 @@ describe(
 								resourceId:
 									`kjvonly/resources/collections/${key}`,
 
-								category:
-									'kjvonly/resources/collections',
+								resourceType:
+									'resource/descriptor-collection',
+
+								dataType:
+									RESOURCE_DESCRIPTOR_COLLECTION_DATA_TYPE,
+
+								dataVersion:
+									DATA_VERSION,
 
 								modifiedAt:
 									100 +
@@ -644,7 +692,7 @@ describe(
 						'kjvonly/resources/collections/d',
 
 					resourceType:
-						'kjvonly/resources/collections',
+						'resource/descriptor-collection',
 
 					error:
 						expect.objectContaining({
@@ -705,7 +753,7 @@ describe(
 								'kjvonly/bible/chapters/kjvs',
 
 							resourceType:
-								'kjvonly/bible/chapters'
+								'bible/chapter'
 						}
 					],
 
@@ -749,8 +797,14 @@ describe(
 							resourceId:
 								'kjvonly/strongs/definitions/kjvs',
 
-							category:
-								'kjvonly/strongs/definitions',
+							resourceType:
+								'strongs/definition',
+
+							dataType:
+								STRONGS_DEFINITION_DATA_TYPE,
+
+							dataVersion:
+								DATA_VERSION,
 
 							modifiedAt:
 								200,
@@ -791,7 +845,13 @@ describe(
 							'kjvonly/strongs/definitions/kjvs',
 
 						resourceType:
-							'kjvonly/strongs/definitions',
+							'strongs/definition',
+
+						dataType:
+							STRONGS_DEFINITION_DATA_TYPE,
+
+						dataVersion:
+							DATA_VERSION,
 
 						modifiedAt:
 							200,
@@ -819,7 +879,7 @@ describe(
 						'kjvonly/bible/chapters/kjvs',
 
 					resourceType:
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 				});
 
 				expect(
@@ -919,8 +979,14 @@ describe(
 							resourceId:
 								'kjvonly/strongs/definitions/kjvs',
 
-							category:
-								'kjvonly/strongs/definitions',
+							resourceType:
+								'strongs/definition',
+
+							dataType:
+								STRONGS_DEFINITION_DATA_TYPE,
+
+							dataVersion:
+								DATA_VERSION,
 
 							modifiedAt:
 								200,
@@ -1001,7 +1067,7 @@ describe(
 						'kjvonly/bible/chapters/kjvs',
 
 					resourceType:
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 				});
 
 				expect(
@@ -1227,8 +1293,14 @@ function createDescriptor(
 				resourceId:
 					'kjvonly/bible/chapters/kjvs',
 
-				category:
-					'kjvonly/bible/chapters',
+				resourceType:
+					'bible/chapter',
+
+				dataType:
+					BIBLE_CHAPTER_DATA_TYPE,
+
+				dataVersion:
+					DATA_VERSION,
 
 				modifiedAt:
 					100,
@@ -1264,7 +1336,13 @@ function createResourceRepresentation():
 			'kjvonly/resources/collections/default',
 
 		resourceType:
-			'kjvonly/resources/collections',
+			'resource/descriptor-collection',
+
+		dataType:
+			'kjvonly.resource-descriptor-collection',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'd'.repeat(

@@ -1,4 +1,8 @@
 import {
+	NOTE_DATA_TYPE
+} from '../resources/notes-resource-contract';
+
+import {
 	describe,
 	expect,
 	it
@@ -110,6 +114,12 @@ describe(
 						storedId,
 					objectType:
 						NOTE_OBJECT_TYPE,
+
+					dataType:
+						NOTE_DATA_TYPE,
+
+					dataVersion:
+						1,
 					objectId:
 						note.id,
 					value:
@@ -321,9 +331,13 @@ function createPublication():
 		publisher:
 			'publisher',
 		resourceType:
-			'kjvonly/notes/entries',
+			'notes/note',
+		dataType:
+			'kjvonly.note',
+		dataVersion:
+			1,
 		resourceId:
-			'kjvonly/notes/entries/default/note-1',
+			'kjvonly/notes/note/default/note-1',
 		representation:
 			'content',
 		mediaType:
@@ -346,9 +360,9 @@ function createDeletion():
 		publisher:
 			'publisher',
 		resourceType:
-			'kjvonly/notes/entries',
+			'notes/note',
 		resourceId:
-			'kjvonly/notes/entries/default/note-1'
+			'kjvonly/notes/note/default/note-1'
 	};
 }
 

@@ -379,7 +379,7 @@ function createResourceEntry(
 				'publisher',
 
 			resourceType:
-				'kjvonly/overlays/text-markup',
+				'bible/text-markup',
 
 			resourceId:
 				`kjvonly/overlays/text-markup/kjvs/${chapterRef}`,

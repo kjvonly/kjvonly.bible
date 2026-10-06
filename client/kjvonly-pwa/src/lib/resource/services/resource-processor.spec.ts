@@ -38,7 +38,7 @@ describe(
 			async () => {
 				const handler =
 					new FakeHandler(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					);
 
 				const decoder =
@@ -128,7 +128,7 @@ describe(
 			async () => {
 				const handler =
 					new FakeHandler(
-						'kjvonly/notes/entries'
+						'notes/note'
 					);
 
 				const decoder =
@@ -155,7 +155,13 @@ describe(
 						resourceId:
 							'kjvonly/notes/entries/default/note-1',
 						resourceType:
-							'kjvonly/notes/entries',
+							'notes/note',
+
+						dataType:
+							'kjvonly.note',
+
+						dataVersion:
+							1,
 						modifiedAt:
 							200,
 						mediaType:
@@ -226,7 +232,7 @@ describe(
 									'kjvonly/bible/chapters/kjvs',
 
 								resourceType:
-									'kjvonly/bible/chapters',
+									'bible/chapter',
 
 								error
 							}
@@ -252,7 +258,7 @@ describe(
 						},
 
 						resourceType:
-							'kjvonly/bible/chapters',
+							'bible/chapter',
 
 						status:
 							'failed',
@@ -313,7 +319,7 @@ describe(
 
 				const handler =
 					new FakeHandler(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					);
 
 				const current:
@@ -325,7 +331,7 @@ describe(
 						'kjvonly/bible/chapters/kjvs',
 
 					resourceType:
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 				};
 
 				const processor =
@@ -460,7 +466,7 @@ describe(
 		);
 
 		it(
-			'reports an unsupported Resource Type without decoding or recording a receipt',
+			'falls back to generic installation when no legacy Resource handler owns the Resource Type',
 			async () => {
 				const decoder =
 					new FakeDecoder();
@@ -468,13 +474,27 @@ describe(
 				const receipts =
 					new FakeReceiptService();
 
+				const genericInstaller = {
+					install:
+						vi.fn(
+							async () =>
+								undefined
+						)
+				};
+
 				const content =
 					createVerifiedContent({
 						resourceType:
-							'kjvonly/future/things',
+							'future/thing',
 
 						resourceId:
-							'kjvonly/future/things/default'
+							'kjvonly/future/things/default',
+
+						dataType:
+							'kjvonly.future-thing',
+
+						dataVersion:
+							1
 					});
 
 				const processor =
@@ -484,6 +504,7 @@ describe(
 						],
 						decoder,
 						receipts,
+						genericInstaller,
 						handlers:
 							[]
 					});
@@ -510,20 +531,24 @@ describe(
 							content.resourceType,
 
 						status:
-							'unsupported'
+							'handled'
 					}
 				]);
 
 				expect(
 					decoder.contents
-				).toHaveLength(
-					0
-				);
+				).toEqual([
+					content
+				]);
+
+				expect(
+					genericInstaller.install
+				).toHaveBeenCalledOnce();
 
 				expect(
 					receipts.calls
 				).toHaveLength(
-					0
+					1
 				);
 			}
 		);
@@ -533,12 +558,12 @@ describe(
 			async () => {
 				const strongsHandler =
 					new FakeHandler(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					);
 
 				const chapterHandler =
 					new FakeHandler(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					);
 
 				const receipts =
@@ -550,7 +575,7 @@ describe(
 				const chapter =
 					createVerifiedContent({
 						resourceType:
-							'kjvonly/bible/chapters',
+							'bible/chapter',
 
 						resourceId:
 							'kjvonly/bible/chapters/kjvs/1_1'
@@ -595,7 +620,7 @@ describe(
 					strongsHandler.resources[0]
 						.resourceType
 				).toBe(
-					'kjvonly/strongs/definitions'
+					'strongs/definition'
 				);
 
 				expect(
@@ -608,7 +633,7 @@ describe(
 					chapterHandler.resources[0]
 						.resourceType
 				).toBe(
-					'kjvonly/bible/chapters'
+					'bible/chapter'
 				);
 
 				expect(
@@ -648,13 +673,13 @@ describe(
 
 				const strongsHandler =
 					new FakeHandler(
-						'kjvonly/strongs/definitions',
+						'strongs/definition',
 						failure
 					);
 
 				const chapterHandler =
 					new FakeHandler(
-						'kjvonly/bible/chapters'
+						'bible/chapter'
 					);
 
 				const receipts =
@@ -666,7 +691,7 @@ describe(
 				const handled =
 					createVerifiedContent({
 						resourceType:
-							'kjvonly/bible/chapters',
+							'bible/chapter',
 
 						resourceId:
 							'kjvonly/bible/chapters/kjvs/1_1'
@@ -750,7 +775,7 @@ describe(
 
 				const handler =
 					new FakeHandler(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					);
 
 				const receipts =
@@ -922,12 +947,12 @@ describe(
 			() => {
 				const handlerA =
 					new FakeHandler(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					);
 
 				const handlerB =
 					new FakeHandler(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					);
 
 				expect(
@@ -939,7 +964,7 @@ describe(
 							]
 						})
 				).toThrow(
-					'Duplicate Resource handler: kjvonly/strongs/definitions'
+					'Duplicate Resource handler: strongs/definition'
 				);
 			}
 		);
@@ -963,6 +988,11 @@ function createProcessor(
 		readonly receipts?:
 			FakeReceiptService;
 
+		readonly genericInstaller?: {
+			readonly install:
+				(resource: DecodedResourceContent) => Promise<void>;
+		};
+
 		readonly handlers?:
 			readonly ResourceHandler[];
 	} = {}
@@ -975,10 +1005,16 @@ function createProcessor(
 			options.receipts ??
 				new FakeReceiptService(),
 
+			options.genericInstaller ?? {
+				install:
+					async () =>
+						undefined
+			},
+
 			options.handlers ??
 				[
 					new FakeHandler(
-						'kjvonly/strongs/definitions'
+						'strongs/definition'
 					)
 				]
 		);
@@ -1029,7 +1065,13 @@ function createRepresentation(
 			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/strongs/definitions',
+			'strongs/definition',
+
+		dataType:
+			'kjvonly.strongs.definition',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'a'.repeat(
@@ -1065,7 +1107,13 @@ function createVerifiedContent(
 			'kjvonly/strongs/definitions/kjvs',
 
 		resourceType:
-			'kjvonly/strongs/definitions',
+			'strongs/definition',
+
+		dataType:
+			'kjvonly.strongs.definition',
+
+		dataVersion:
+			1,
 
 		modifiedAt:
 			100,
@@ -1134,6 +1182,12 @@ class FakeDecoder {
 
 			resourceType:
 				content.resourceType,
+
+			dataType:
+				content.dataType,
+
+			dataVersion:
+				content.dataVersion,
 
 			modifiedAt:
 				content.modifiedAt,

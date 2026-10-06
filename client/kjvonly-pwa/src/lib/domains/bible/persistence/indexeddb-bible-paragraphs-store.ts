@@ -1,3 +1,7 @@
+import {
+	BIBLE_PARAGRAPHS_DATA_TYPE
+} from '../resources/paragraphs/bible-paragraphs-resource';
+
 import type {
 	BibleParagraphs
 } from '../models/bible-paragraphs.model';
@@ -62,6 +66,12 @@ export class IndexedDBBibleParagraphsStore
 
 				objectType:
 					BIBLE_PARAGRAPHS_OBJECT_TYPE,
+
+				dataType:
+					BIBLE_PARAGRAPHS_DATA_TYPE,
+
+				dataVersion:
+					1,
 
 				objectId:
 					paragraphs.id,

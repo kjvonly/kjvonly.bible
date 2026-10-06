@@ -38,8 +38,14 @@ describe(
 						resourceId:
 							'kjvonly/bible/chapters/kjvs',
 
-						category:
-							'kjvonly/bible/chapters',
+						resourceType:
+							'bible/chapter',
+
+						dataType:
+							'kjvonly.normalized-document',
+
+						dataVersion:
+							1,
 
 						modifiedAt:
 							100,
@@ -150,7 +156,7 @@ describe(
 		);
 
 		it(
-			'accepts Resource identity independently of Resource category',
+			'accepts Resource identity independently of Resource Type',
 			() => {
 				const validator =
 					new ResourceDescriptorValidator();
@@ -164,7 +170,7 @@ describe(
 								resourceId:
 									'my-filesystem',
 
-								category:
+								resourceType:
 									'fs'
 							}
 						})
@@ -176,7 +182,7 @@ describe(
 					resourceId:
 						'my-filesystem',
 
-					category:
+					resourceType:
 						'fs'
 				});
 			}
@@ -235,7 +241,10 @@ describe(
 										'Genesis 1',
 
 									dataType:
-										'kjvonly.bible.chapter/v1',
+										'kjvonly.bible.chapter',
+
+									dataVersion:
+										1,
 
 									size:
 										2048,
@@ -266,7 +275,10 @@ describe(
 						'Genesis 1',
 
 					dataType:
-						'kjvonly.bible.chapter/v1',
+						'kjvonly.bible.chapter',
+
+					dataVersion:
+						1,
 
 					size:
 						2048,
@@ -317,6 +329,70 @@ describe(
 							dataType:
 								''
 						}
+					})
+				);
+			}
+		);
+
+		it(
+			'rejects an invalid dataVersion',
+			() => {
+				expectInvalid(
+					createDescriptor({
+						metadata: {
+							...createMetadata(),
+
+							dataVersion:
+								0
+						}
+					})
+				);
+			}
+		);
+
+		it(
+			'requires dataType',
+			() => {
+				const metadata = {
+					...createMetadata()
+				};
+
+				delete (
+					metadata as
+						Partial<
+							ReturnType<
+								typeof createMetadata
+							>
+						>
+				).dataType;
+
+				expectInvalid(
+					createDescriptor({
+						metadata
+					})
+				);
+			}
+		);
+
+		it(
+			'requires dataVersion',
+			() => {
+				const metadata = {
+					...createMetadata()
+				};
+
+				delete (
+					metadata as
+						Partial<
+							ReturnType<
+								typeof createMetadata
+							>
+						>
+				).dataVersion;
+
+				expectInvalid(
+					createDescriptor({
+						metadata
 					})
 				);
 			}
@@ -642,8 +718,14 @@ function createMetadata():
 		resourceId:
 			'kjvonly/bible/chapters/kjvs',
 
-		category:
-			'kjvonly/bible/chapters',
+		resourceType:
+			'bible/chapter',
+
+		dataType:
+			'kjvonly.normalized-document',
+
+		dataVersion:
+			1,
 
 		modifiedAt:
 			100,

@@ -95,8 +95,8 @@ describe(
 									'b'.repeat(64),
 								resourceId:
 									'note-creation',
-								category:
-									'kjvonly/notes/entries',
+								resourceType:
+									'notes/note',
 								modifiedAt:
 									50,
 								representation:

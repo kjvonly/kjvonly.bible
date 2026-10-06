@@ -1,4 +1,12 @@
 import {
+	STRONGS_DATA_TYPE
+} from '$lib/domains/strongs';
+
+import {
+	BIBLE_CHAPTER_DATA_TYPE
+} from '$lib/domains/bible';
+
+import {
 	beforeEach,
 	describe,
 	expect,
@@ -15,12 +23,16 @@ import {
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
 	createBibleVersionId,
 	createChapterId
 } from '$lib/domains/bible/utils/bible-identity';
+
+import {
+	BIBLE_VERSION_OBJECT_TYPE
+} from '$lib/domains/bible/persistence/bible-version-store';
 
 import {
 	STRONGS_DEFINITION_OBJECT_TYPE
@@ -45,16 +57,19 @@ import {
 } from '$lib/resource';
 
 const CHAPTER_BUNDLE_RESOURCE_ID =
-	'kjvonly/bible/chapters/kjvs';
+	'kjvonly/bible/chapter/kjvs';
 
 const CHAPTER_RESOURCE_ID =
-	'kjvonly/bible/chapters/kjvs/1_1';
+	'kjvonly/bible/chapter/kjvs/1_1';
+
+const CHAPTER_SEMANTIC_VERSION =
+	'King James Version';
 
 const STRONGS_BUNDLE_RESOURCE_ID =
-	'kjvonly/strongs/definitions/kjvs';
+	'kjvonly/strongs/definition/kjvs';
 
 const STRONGS_RESOURCE_ID =
-	'kjvonly/strongs/definitions/kjvs/G1';
+	'kjvonly/strongs/definition/kjvs/G1';
 
 describe(
 	'KJVOnly Archive Worker round trip',
@@ -124,6 +139,12 @@ describe(
 						objectType:
 							BIBLE_CHAPTER_OBJECT_TYPE,
 
+						dataType:
+							BIBLE_CHAPTER_DATA_TYPE,
+
+						dataVersion:
+							1,
+
 						objectId:
 							chapterId,
 
@@ -142,6 +163,12 @@ describe(
 
 						objectType:
 							STRONGS_DEFINITION_OBJECT_TYPE,
+
+						dataType:
+							STRONGS_DATA_TYPE,
+
+						dataVersion:
+							1,
 
 						objectId:
 							strongsId,
@@ -169,6 +196,11 @@ describe(
 
 						resourceId:
 							CHAPTER_BUNDLE_RESOURCE_ID,
+
+						metadata: {
+							version:
+								CHAPTER_SEMANTIC_VERSION
+						},
 
 						modifiedAt:
 							200
@@ -273,6 +305,15 @@ describe(
 
 				expect(
 					archive.resource_installations[
+						chapterStoredId
+					]?.metadata
+				).toEqual({
+					version:
+						CHAPTER_SEMANTIC_VERSION
+				});
+
+				expect(
+					archive.resource_installations[
 						strongsStoredId
 					]?.resourceId
 				).toBe(
@@ -304,7 +345,7 @@ describe(
 								'handled',
 
 							resourceType:
-								'kjvonly/bible/chapters',
+								'bible/chapter',
 
 							resourceId:
 								CHAPTER_RESOURCE_ID
@@ -317,7 +358,7 @@ describe(
 								'handled',
 
 							resourceType:
-								'kjvonly/strongs/definitions',
+								'strongs/definition',
 
 							resourceId:
 								STRONGS_RESOURCE_ID
@@ -333,6 +374,29 @@ describe(
 				).toEqual(
 					chapterObject
 				);
+
+				expect(
+					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							BIBLE_VERSION_OBJECT_TYPE,
+							bibleVersionId
+						)
+					)
+				).toMatchObject({
+					objectType:
+						BIBLE_VERSION_OBJECT_TYPE,
+
+					value: {
+						id:
+							bibleVersionId,
+
+						publisher,
+
+						version:
+							CHAPTER_SEMANTIC_VERSION
+					}
+				});
 
 				expect(
 					await db.get(
@@ -362,6 +426,11 @@ describe(
 
 					resourceId:
 						CHAPTER_RESOURCE_ID,
+
+					metadata: {
+						version:
+							CHAPTER_SEMANTIC_VERSION
+					},
 
 					modifiedAt:
 						200

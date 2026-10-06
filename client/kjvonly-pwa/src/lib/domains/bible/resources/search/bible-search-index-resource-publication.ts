@@ -7,8 +7,11 @@ import type {
 } from '$lib/resource';
 
 import {
-	BIBLE_SEARCH_RESOURCE_TYPE
-} from './bible-search-index-interpreter';
+	BIBLE_SEARCH_INDEX_DATA_TYPE,
+	BIBLE_SEARCH_INDEX_DATA_VERSION,
+	BIBLE_SEARCH_RESOURCE_TYPE,
+	createBibleSearchIndexResourceId
+} from './bible-search-index-resource';
 
 export class BibleSearchIndexResourcePublication {
 
@@ -40,8 +43,16 @@ export class BibleSearchIndexResourcePublication {
 			resourceType:
 				BIBLE_SEARCH_RESOURCE_TYPE,
 
+			dataType:
+				BIBLE_SEARCH_INDEX_DATA_TYPE,
+
+			dataVersion:
+				BIBLE_SEARCH_INDEX_DATA_VERSION,
+
 			resourceId:
-				`${BIBLE_SEARCH_RESOURCE_TYPE}/${version}`,
+				createBibleSearchIndexResourceId(
+					version
+				),
 
 			representation:
 				'content',

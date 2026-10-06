@@ -15,6 +15,12 @@ export interface ArchivedDomainObject {
 	readonly objectId:
 		string;
 
+	readonly dataType:
+		string;
+
+	readonly dataVersion:
+		number;
+
 	readonly value:
 		unknown;
 }

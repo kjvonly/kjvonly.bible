@@ -1,7 +1,6 @@
 import {
 	type PublishedResourceReference,
-	type ResourceLoader,
-	parseResourceIdentifier
+	type ResourceLoader
 } from '$lib/resource';
 
 import type {
@@ -14,8 +13,8 @@ import type {
 
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '../resources/chapters/bible-chapter-interpreter';
+	parseBibleChapterResourceId
+} from '../resources/chapters/bible-chapter-resource';
 
 import {
 	createBibleVersionId,
@@ -130,24 +129,14 @@ function parseChapterSource(
 	readonly version:
 		string;
 } {
-
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parseBibleChapterResourceId(
 			source.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Bible Chapter Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
+		identity.chapterRef !==
+			undefined
 	) {
 		throw new Error(
 			`Invalid Bible Chapter Resource source: ${source.resourceId}`
@@ -156,6 +145,6 @@ function parseChapterSource(
 
 	return {
 		version:
-			identifier.path[0]
+			identity.bibleId
 	};
 }

@@ -5,8 +5,8 @@ import {
 } from 'vitest';
 
 import {
-	NOTES_RESOURCE_TYPE
-} from './notes-resource-contract';
+	createNotesResourceId
+} from './notes-resource-id';
 
 import {
 	createDefaultNotesSelection,
@@ -28,7 +28,9 @@ describe(
 						'user-pubkey',
 
 					resourceId:
-						`${NOTES_RESOURCE_TYPE}/${DEFAULT_NOTES_RESOURCE_NAME}`
+						createNotesResourceId(
+							DEFAULT_NOTES_RESOURCE_NAME
+						)
 				});
 			}
 		);

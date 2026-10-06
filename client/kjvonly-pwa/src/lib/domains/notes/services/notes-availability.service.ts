@@ -59,7 +59,7 @@ export class NotesAvailabilityService {
 		const matches =
 			await this.filesystem.search(
 				{
-					index: 'category',
+					index: 'resourceType',
 					value:
 						NOTES_RESOURCE_TYPE
 				},
@@ -77,7 +77,7 @@ export class NotesAvailabilityService {
 				match.entry.descriptor;
 
 			if (
-				descriptor.metadata.category !==
+				descriptor.metadata.resourceType !==
 					NOTES_RESOURCE_TYPE
 			) {
 				continue;

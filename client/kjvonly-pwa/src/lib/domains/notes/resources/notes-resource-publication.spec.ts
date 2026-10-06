@@ -34,21 +34,22 @@ describe(
 						'publisher',
 
 					resourceType:
-						'kjvonly/notes/entries',
+						'notes/note',
+
+					dataType:
+						'kjvonly.note',
+
+					dataVersion:
+						1,
 
 					resourceId:
-						'kjvonly/notes/entries/default/note-1',
+						'kjvonly/notes/note/default/note-1',
 
 					representation:
 						'content',
 
 					mediaType:
 						'application/json+gzip+hex',
-
-					metadata: {
-						dataType:
-							'kjvonly.note/v1'
-					},
 
 					value: {
 						bibleLocationRef:
@@ -129,7 +130,7 @@ describe(
 				expect(
 					publication.resourceId
 				).toBe(
-					'kjvonly/notes/entries/study/note-1'
+					'kjvonly/notes/note/study/note-1'
 				);
 			}
 		);
@@ -156,10 +157,10 @@ describe(
 						'publisher',
 
 					resourceType:
-						'kjvonly/notes/entries',
+						'notes/note',
 
 					resourceId:
-						'kjvonly/notes/entries/default/note-1'
+						'kjvonly/notes/note/default/note-1'
 				});
 			}
 		);

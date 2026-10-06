@@ -83,6 +83,22 @@ import type {
 } from '$lib/resource/installation/resource-handler';
 
 import {
+	ResourceDataTypeResolver
+} from '$lib/resource/data-types/resource-data-type-resolver';
+
+import {
+	ResourceDomainObjectFactoryResolver
+} from '$lib/resource/domain-objects/resource-domain-object-factory-resolver';
+
+import {
+	GenericResourceInstaller
+} from '$lib/resource/installation/generic-resource-installer';
+
+import {
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
+
+import {
 	ResourceProcessor
 } from '$lib/resource/services/resource-processor';
 
@@ -102,145 +118,56 @@ import {
 // Bible Chapter
 
 import {
-	IndexedDBBibleChapterInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-chapter-installation-transaction';
-
-import {
-	BibleChapterInstaller
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
-
-import {
-	BibleChapterInterpreter
-} from '$lib/domains/bible/resources/chapters/bible-chapter-interpreter';
-
-import {
-	BibleChapterValidator
-} from '$lib/domains/bible/resources/chapters/bible-chapter-validator';
-
-import {
-	BibleChapterResourceHandler
-} from '$lib/domains/bible/resources/chapters/bible-chapter-resource-handler';
+	BibleChapterDataTypeHandler,
+	BibleChapterDomainObjectFactory
+} from '$lib/domains/bible';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible Booknames
 
 import {
-	IndexedDBBibleBooknamesInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-booknames-installation-transaction';
-
-import {
-	BibleBooknamesInstaller
-} from '$lib/domains/bible/resources/booknames/bible-booknames-installer';
-
-import {
-	BibleBooknamesInterpreter
-} from '$lib/domains/bible/resources/booknames/bible-booknames-interpreter';
-
-import {
-	BibleBooknamesValidator
-} from '$lib/domains/bible/resources/booknames/bible-booknames-validator';
-
-import {
-	BibleBooknamesResourceHandler
-} from '$lib/domains/bible/resources/booknames/bible-booknames-resource-handler';
+	BibleBooknamesDataTypeHandler,
+	BibleBooknamesDomainObjectFactory
+} from '$lib/domains/bible';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible Paragraphs
 
 import {
-	IndexedDBBibleParagraphsInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-paragraphs-installation-transaction';
-
-import {
-	BibleParagraphsInstaller
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-installer';
-
-import {
-	BibleParagraphsInterpreter
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-interpreter';
-
-import {
-	BibleParagraphsValidator
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-validator';
-
-import {
-	BibleParagraphsResourceHandler
-} from '$lib/domains/bible/resources/paragraphs/bible-paragraphs-resource-handler';
+	BibleParagraphsDataTypeHandler,
+	BibleParagraphsDomainObjectFactory
+} from '$lib/domains/bible';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible Pericopes
 
 import {
-	IndexedDBBiblePericopesInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-pericopes-installation-transaction';
-
-import {
-	BiblePericopesInstaller
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-installer';
-
-import {
-	BiblePericopesInterpreter
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-interpreter';
-
-import {
-	BiblePericopesValidator
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-validator';
-
-import {
-	BiblePericopesResourceHandler
-} from '$lib/domains/bible/resources/pericopes/bible-pericopes-resource-handler';
+	BiblePericopesDataTypeHandler,
+	BiblePericopesDomainObjectFactory
+} from '$lib/domains/bible';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible Text Markup
 
 import {
-	IndexedDBBibleTextMarkupInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-text-markup-installation-transaction';
-
-import {
-	BibleTextMarkupInstaller
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-installer';
-
-import {
-	BibleTextMarkupInterpreter
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-interpreter';
-
-import {
-	BibleTextMarkupValidator
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-validator';
-
-import {
-	BibleTextMarkupResourceHandler
-} from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-handler';
+	BibleTextMarkupDataTypeHandler,
+	BibleTextMarkupDomainObjectFactory
+} from '$lib/domains/bible';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible Search Index
 
 import {
-	IndexedDBBibleSearchIndexInstallationTransaction
-} from '$lib/domains/bible/persistence/bible-search-index-installation-transaction';
-
-import {
-	BibleSearchIndexInstaller
-} from '$lib/domains/bible/resources/search/bible-search-index-installer';
-
-import {
-	BibleSearchIndexInterpreter
-} from '$lib/domains/bible/resources/search/bible-search-index-interpreter';
-
-import {
-	BibleSearchIndexValidator
-} from '$lib/domains/bible/resources/search/bible-search-index-validator';
-
-import {
-	BibleSearchIndexResourceHandler
-} from '$lib/domains/bible/resources/search/bible-search-index-resource-handler';
+	BibleSearchIndexDataTypeHandler,
+	BibleSearchIndexDomainObjectFactory
+} from '$lib/domains/bible';
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Filesystem
 
 import {
+	FilesystemEntriesDataTypeHandler,
 	FilesystemInstaller,
 	FilesystemInterpreter,
 	FilesystemResourceHandler,
@@ -249,113 +176,48 @@ import {
 } from '$lib/domains/filesystem';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Normalized Content
+
+import {
+	NormalizedDocumentValidator
+} from '$lib/domains/normalized-content/validation/normalized-document-validator';
+
+import {
+	NormalizedDocumentDataTypeHandler
+} from '$lib/domains/normalized-content/validation/normalized-document-data-type-handler';
+
+import {
+	NormalizedContentDomainObjectFactory
+} from '$lib/domains/normalized-content/resources/normalized-content-domain-object-factory';
+
+///////////////////////////////////////////////////////////////////////////////
 // Notes
 
 import {
-	IndexedDBNotesInstallationTransaction
-} from '$lib/domains/notes/persistence/notes-installation-transaction';
-
-import {
-	NoteInstaller
-} from '$lib/domains/notes/resources/note-installer';
-
-import {
-	NoteInterpreter
-} from '$lib/domains/notes/resources/note-interpreter';
-
-import {
-	NoteValidator
-} from '$lib/domains/notes/resources/note-validator';
-
-import {
-	NoteResourceHandler
-} from '$lib/domains/notes/resources/note-resource-handler';
+	NoteDataTypeHandler,
+	NoteDomainObjectFactory
+} from '$lib/domains/notes';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reading Plans
 
 import {
-	IndexedDBPlanDefinitionInstallationTransaction
-} from '$lib/domains/reading-plans/persistence/plan-definition-installation-transaction';
-
-import {
-	PlanDefinitionInstaller
-} from '$lib/domains/reading-plans/resources/definitions/plan-definition-installer';
-
-import {
-	PlanDefinitionInterpreter
-} from '$lib/domains/reading-plans/resources/definitions/plan-definition-interpreter';
-
-import {
-	PlanDefinitionValidator
-} from '$lib/domains/reading-plans/resources/definitions/plan-definition-validator';
-
-import {
-	PlanDefinitionResourceHandler
-} from '$lib/domains/reading-plans/resources/definitions/plan-definition-resource-handler';
-
-import {
-	IndexedDBPlanSubscriptionInstallationTransaction
-} from '$lib/domains/reading-plans/persistence/plan-subscription-installation-transaction';
-
-import {
-	PlanSubscriptionInstaller
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-installer';
-
-import {
-	PlanSubscriptionInterpreter
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-interpreter';
-
-import {
-	PlanSubscriptionValidator
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-validator';
-
-import {
-	PlanSubscriptionResourceHandler
-} from '$lib/domains/reading-plans/resources/subscriptions/plan-subscription-resource-handler';
-
-import {
-	IndexedDBPlanProgressInstallationTransaction
-} from '$lib/domains/reading-plans/persistence/plan-progress-installation-transaction';
-
-import {
-	PlanProgressInstaller
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-installer';
-
-import {
-	PlanProgressInterpreter
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-interpreter';
-
-import {
-	PlanProgressValidator
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-validator';
-
-import {
-	PlanProgressResourceHandler
-} from '$lib/domains/reading-plans/resources/progress/plan-progress-resource-handler';
+	PlanDefinitionDataTypeHandler,
+	PlanDefinitionDomainObjectFactory,
+	PlanSubscriptionDataTypeHandler,
+	PlanSubscriptionDomainObjectFactory,
+	PlanProgressDataTypeHandler,
+	PlanProgressDomainObjectFactory
+} from '$lib/domains/reading-plans';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
 import {
-	IndexedDBStrongsInstallationTransaction
-} from '$lib/domains/strongs/persistence/strongs-installation-transaction';
-
-import {
-	StrongsInstaller
-} from '$lib/domains/strongs/resources/definitions/strongs-installer';
-
-import {
-	StrongsInterpreter
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
-
-import {
-	StrongsValidator
-} from '$lib/domains/strongs/resources/definitions/strongs-validator';
-
-import {
-	StrongsResourceHandler
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
+	StrongsDataTypeHandler,
+	StrongsDefinitionDataTypeHandler,
+	StrongsDomainObjectFactory
+} from '$lib/domains/strongs';
 
 interface ResourceProcessingDependencies {
 	readonly decoratorBuilder:
@@ -366,6 +228,9 @@ interface ResourceProcessingDependencies {
 
 	readonly receipts:
 		ResourceReceiptService;
+
+	readonly genericInstaller:
+		GenericResourceInstaller;
 
 	readonly handlers:
 		readonly ResourceHandler[];
@@ -386,6 +251,7 @@ export function createContentResourceProcessor():
 		new ResourceResolutionProcessor(
 			dependencies.decoder,
 			dependencies.receipts,
+			dependencies.genericInstaller,
 			dependencies.handlers
 		);
 
@@ -491,6 +357,7 @@ export function createDescriptorResourceProcessors(
 		new ResourceResolutionProcessor(
 			dependencies.decoder,
 			dependencies.receipts,
+			dependencies.genericInstaller,
 			dependencies.handlers
 		);
 
@@ -561,10 +428,61 @@ function createResourceProcessingDependencies():
 			receiptStore
 		);
 
+	const normalizedDocumentValidator =
+		new NormalizedDocumentValidator();
+
+	const dataTypes =
+		new ResourceDataTypeResolver([
+			new NormalizedDocumentDataTypeHandler(
+				normalizedDocumentValidator
+			),
+			new StrongsDataTypeHandler(),
+			new StrongsDefinitionDataTypeHandler(),
+			new NoteDataTypeHandler(),
+			new BibleChapterDataTypeHandler(),
+			new BibleBooknamesDataTypeHandler(),
+			new BibleParagraphsDataTypeHandler(),
+			new BiblePericopesDataTypeHandler(),
+			new BibleTextMarkupDataTypeHandler(),
+			new BibleSearchIndexDataTypeHandler(),
+			new PlanDefinitionDataTypeHandler(),
+			new PlanSubscriptionDataTypeHandler(),
+			new PlanProgressDataTypeHandler()
+		]);
+
+	const domainObjectFactories =
+		new ResourceDomainObjectFactoryResolver([
+			new NormalizedContentDomainObjectFactory(),
+			new StrongsDomainObjectFactory(),
+			new NoteDomainObjectFactory(),
+			new BibleChapterDomainObjectFactory(),
+			new BibleBooknamesDomainObjectFactory(),
+			new BibleParagraphsDomainObjectFactory(),
+			new BiblePericopesDomainObjectFactory(),
+			new BibleTextMarkupDomainObjectFactory(),
+			new BibleSearchIndexDomainObjectFactory(),
+			new PlanDefinitionDomainObjectFactory(),
+			new PlanSubscriptionDomainObjectFactory(),
+			new PlanProgressDomainObjectFactory()
+		]);
+
+	const genericInstallationTransaction =
+		new IndexedDBGenericResourceInstallationTransaction(
+			getApplicationDB
+		);
+
+	const genericInstaller =
+		new GenericResourceInstaller(
+			dataTypes,
+			domainObjectFactories,
+			genericInstallationTransaction
+		);
+
 	return {
 		decoratorBuilder,
 		decoder,
 		receipts,
+		genericInstaller,
 		handlers:
 			createResourceHandlers()
 	};
@@ -572,109 +490,6 @@ function createResourceProcessingDependencies():
 
 function createResourceHandlers():
 	readonly ResourceHandler[] {
-
-	const bibleChapterInstallationTransaction =
-		new IndexedDBBibleChapterInstallationTransaction(
-			getApplicationDB
-		);
-
-	const bibleChapterInstaller =
-		new BibleChapterInstaller(
-			bibleChapterInstallationTransaction
-		);
-
-	const bibleChapterResourceHandler =
-		new BibleChapterResourceHandler(
-			new BibleChapterInterpreter(),
-			new BibleChapterValidator(),
-			bibleChapterInstaller
-		);
-
-	const bibleBooknamesInstallationTransaction =
-		new IndexedDBBibleBooknamesInstallationTransaction(
-			getApplicationDB
-		);
-
-	const bibleBooknamesInstaller =
-		new BibleBooknamesInstaller(
-			bibleBooknamesInstallationTransaction
-		);
-
-	const bibleBooknamesResourceHandler =
-		new BibleBooknamesResourceHandler(
-			new BibleBooknamesInterpreter(),
-			new BibleBooknamesValidator(),
-			bibleBooknamesInstaller
-		);
-
-	const bibleParagraphsInstallationTransaction =
-		new IndexedDBBibleParagraphsInstallationTransaction(
-			getApplicationDB
-		);
-
-	const bibleParagraphsInstaller =
-		new BibleParagraphsInstaller(
-			bibleParagraphsInstallationTransaction
-		);
-
-	const bibleParagraphsResourceHandler =
-		new BibleParagraphsResourceHandler(
-			new BibleParagraphsInterpreter(),
-			new BibleParagraphsValidator(),
-			bibleParagraphsInstaller
-		);
-
-	const biblePericopesInstallationTransaction =
-		new IndexedDBBiblePericopesInstallationTransaction(
-			getApplicationDB
-		);
-
-	const biblePericopesInstaller =
-		new BiblePericopesInstaller(
-			biblePericopesInstallationTransaction
-		);
-
-	const biblePericopesResourceHandler =
-		new BiblePericopesResourceHandler(
-			new BiblePericopesInterpreter(),
-			new BiblePericopesValidator(),
-			biblePericopesInstaller
-		);
-
-	const bibleTextMarkupInstallationTransaction =
-		new IndexedDBBibleTextMarkupInstallationTransaction(
-			getApplicationDB
-		);
-
-	const bibleTextMarkupInstaller =
-		new BibleTextMarkupInstaller(
-			bibleTextMarkupInstallationTransaction
-		);
-
-	const bibleTextMarkupResourceHandler =
-		new BibleTextMarkupResourceHandler(
-			new BibleTextMarkupInterpreter(),
-			new BibleTextMarkupValidator(),
-			bibleTextMarkupInstaller
-		);
-
-	const bibleSearchIndexInstallationTransaction =
-		new IndexedDBBibleSearchIndexInstallationTransaction(
-			getApplicationDB
-		);
-
-	const bibleSearchIndexInstaller =
-		new BibleSearchIndexInstaller(
-			bibleSearchIndexInstallationTransaction
-		);
-
-	const bibleSearchIndexResourceHandler =
-		new BibleSearchIndexResourceHandler(
-			new BibleSearchIndexInterpreter(),
-			new BibleSearchIndexValidator(),
-			bibleSearchIndexInstaller
-		);
-
 
 	const filesystemInstallationTransaction =
 		new IndexedDBFilesystemInstallationTransaction(
@@ -688,6 +503,7 @@ function createResourceHandlers():
 
 	const filesystemResourceHandler =
 		new FilesystemResourceHandler(
+			new FilesystemEntriesDataTypeHandler(),
 			new FilesystemInterpreter(),
 			new FilesystemValidator(
 				new ResourceDescriptorValidator()
@@ -695,103 +511,8 @@ function createResourceHandlers():
 			filesystemInstaller
 		);
 
-	const notesInstallationTransaction =
-		new IndexedDBNotesInstallationTransaction(
-			getApplicationDB
-		);
-
-	const noteInstaller =
-		new NoteInstaller(
-			notesInstallationTransaction
-		);
-
-	const noteResourceHandler =
-		new NoteResourceHandler(
-			new NoteInterpreter(),
-			new NoteValidator(),
-			noteInstaller
-		);
-
-	const planDefinitionInstallationTransaction =
-		new IndexedDBPlanDefinitionInstallationTransaction(
-			getApplicationDB
-		);
-
-	const planDefinitionInstaller =
-		new PlanDefinitionInstaller(
-			planDefinitionInstallationTransaction
-		);
-
-	const planDefinitionResourceHandler =
-		new PlanDefinitionResourceHandler(
-			new PlanDefinitionInterpreter(),
-			new PlanDefinitionValidator(),
-			planDefinitionInstaller
-		);
-
-	const planSubscriptionInstallationTransaction =
-		new IndexedDBPlanSubscriptionInstallationTransaction(
-			getApplicationDB
-		);
-
-	const planSubscriptionInstaller =
-		new PlanSubscriptionInstaller(
-			planSubscriptionInstallationTransaction
-		);
-
-	const planSubscriptionResourceHandler =
-		new PlanSubscriptionResourceHandler(
-			new PlanSubscriptionInterpreter(),
-			new PlanSubscriptionValidator(),
-			planSubscriptionInstaller
-		);
-
-	const planProgressInstallationTransaction =
-		new IndexedDBPlanProgressInstallationTransaction(
-			getApplicationDB
-		);
-
-	const planProgressInstaller =
-		new PlanProgressInstaller(
-			planProgressInstallationTransaction
-		);
-
-	const planProgressResourceHandler =
-		new PlanProgressResourceHandler(
-			new PlanProgressInterpreter(),
-			new PlanProgressValidator(),
-			planProgressInstaller
-		);
-
-	const strongsInstallationTransaction =
-		new IndexedDBStrongsInstallationTransaction(
-			getApplicationDB
-		);
-
-	const strongsInstaller =
-		new StrongsInstaller(
-			strongsInstallationTransaction
-		);
-
-	const strongsResourceHandler =
-		new StrongsResourceHandler(
-			new StrongsInterpreter(),
-			new StrongsValidator(),
-			strongsInstaller
-		);
 
 	return [
-		bibleChapterResourceHandler,
-		bibleBooknamesResourceHandler,
-		bibleParagraphsResourceHandler,
-		biblePericopesResourceHandler,
-		bibleTextMarkupResourceHandler,
-		bibleSearchIndexResourceHandler,
-		filesystemResourceHandler,
-		noteResourceHandler,
-		planDefinitionResourceHandler,
-		planSubscriptionResourceHandler,
-		planProgressResourceHandler,
-		strongsResourceHandler
+		filesystemResourceHandler
 	];
 }

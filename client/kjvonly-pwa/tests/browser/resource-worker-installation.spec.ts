@@ -1,4 +1,8 @@
 import {
+	BIBLE_CHAPTER_DATA_TYPE
+} from '$lib/domains/bible';
+
+import {
 	beforeEach,
 	describe,
 	expect,
@@ -19,7 +23,7 @@ import {
 
 import {
 	BIBLE_CHAPTER_OBJECT_TYPE
-} from '$lib/domains/bible/resources/chapters/bible-chapter-installer';
+} from '$lib/domains/bible/persistence/chapter-store';
 
 import {
 	createBibleVersionId,
@@ -65,7 +69,7 @@ describe(
 					createPublisher();
 
 				const resourceId =
-					'kjvonly/bible/chapters/kjvs';
+					'kjvonly/bible/chapter/kjvs';
 
 				const reference:
 					PublishedResourceReference = {
@@ -80,7 +84,13 @@ describe(
 					resourceId,
 
 					resourceType:
-						'kjvonly/bible/chapters',
+						'bible/chapter',
+
+					dataType:
+						'kjvonly.bible.chapter',
+
+					dataVersion:
+						1,
 
 					eventId:
 						'a'.repeat(
@@ -95,6 +105,11 @@ describe(
 
 					mediaType:
 						'application/json',
+
+					metadata: {
+						version:
+							'kjvs'
+					},
 
 					payload:
 						JSON.stringify({
@@ -135,7 +150,7 @@ describe(
 								reference,
 
 								resourceType:
-									'kjvonly/bible/chapters',
+									'bible/chapter',
 
 								status:
 									'handled'
@@ -181,6 +196,12 @@ describe(
 
 						objectType:
 							BIBLE_CHAPTER_OBJECT_TYPE,
+
+						dataType:
+							BIBLE_CHAPTER_DATA_TYPE,
+
+						dataVersion:
+							1,
 
 						objectId:
 							chapterId,

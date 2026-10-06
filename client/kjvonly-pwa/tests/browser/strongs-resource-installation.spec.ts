@@ -17,7 +17,10 @@ import {
 	ResourceContentDecoder,
 	ResourceService,
 	ResourceProcessor,
-	ResourceReceiptService
+	ResourceReceiptService,
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver
 } from '$lib/resource';
 
 import {
@@ -25,24 +28,15 @@ import {
 } from '$lib/resource/services/resource-resolution-processor';
 
 import {
-	StrongsInterpreter
-} from '$lib/domains/strongs/resources/definitions/strongs-interpreter';
+	STRONGS_DATA_TYPE,
+	StrongsDataTypeHandler,
+	StrongsDefinitionDataTypeHandler,
+	StrongsDomainObjectFactory
+} from '$lib/domains/strongs';
 
 import {
-	StrongsValidator
-} from '$lib/domains/strongs/resources/definitions/strongs-validator';
-
-import {
-	StrongsInstaller
-} from '$lib/domains/strongs/resources/definitions/strongs-installer';
-
-import {
-	StrongsResourceHandler
-} from '$lib/domains/strongs/resources/definitions/strongs-resource-handler';
-
-import {
-	IndexedDBStrongsInstallationTransaction
-} from '$lib/domains/strongs/persistence/strongs-installation-transaction';
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
 
 import {
 	STRONGS_DEFINITION_OBJECT_TYPE
@@ -78,7 +72,7 @@ describe(
 					createPublisher();
 
 				const resourceId =
-					'kjvonly/strongs/definitions/kjvs';
+					'kjvonly/strongs/definition/kjvs';
 
 				const eventId =
 					'a'.repeat(
@@ -137,7 +131,7 @@ describe(
 							},
 
 							resourceType:
-								'kjvonly/strongs/definitions',
+								'strongs/definition',
 
 							status:
 								'handled'
@@ -184,6 +178,12 @@ describe(
 					objectType:
 						STRONGS_DEFINITION_OBJECT_TYPE,
 
+					dataType:
+						STRONGS_DATA_TYPE,
+
+					dataVersion:
+						1,
+
 					objectId:
 						g1Id,
 
@@ -212,6 +212,12 @@ describe(
 
 					objectType:
 						STRONGS_DEFINITION_OBJECT_TYPE,
+
+					dataType:
+						STRONGS_DATA_TYPE,
+
+					dataVersion:
+						1,
 
 					objectId:
 						h1Id,
@@ -285,7 +291,7 @@ describe(
 					createPublisher();
 
 				const resourceId =
-					'kjvonly/strongs/definitions/kjvs';
+					'kjvonly/strongs/definition/kjvs';
 
 				const service =
 					createService([
@@ -334,7 +340,7 @@ describe(
 						},
 
 						resourceType:
-							'kjvonly/strongs/definitions',
+							'strongs/definition',
 
 						status:
 							'failed',
@@ -426,10 +432,10 @@ describe(
 					createPublisher();
 
 				const g1ResourceId =
-					'kjvonly/strongs/definitions/kjvs/G1';
+					'kjvonly/strongs/definition/kjvs/G1';
 
 				const g2ResourceId =
-					'kjvonly/strongs/definitions/kjvs/G2';
+					'kjvonly/strongs/definition/kjvs/G2';
 
 				const eventA =
 					'a'.repeat(
@@ -485,7 +491,7 @@ describe(
 					);
 
 				const requestedResourceId =
-					'kjvonly/strongs/definitions/kjvs';
+					'kjvonly/strongs/definition/kjvs';
 
 				const result =
 					await service.install({
@@ -522,7 +528,7 @@ describe(
 						},
 
 						resourceType:
-							'kjvonly/strongs/definitions',
+							'strongs/definition',
 
 						status:
 							'handled'
@@ -537,7 +543,7 @@ describe(
 						},
 
 						resourceType:
-							'kjvonly/strongs/definitions',
+							'strongs/definition',
 
 						status:
 							'failed',
@@ -591,6 +597,12 @@ describe(
 
 					objectType:
 						STRONGS_DEFINITION_OBJECT_TYPE,
+
+					dataType:
+						STRONGS_DATA_TYPE,
+
+					dataVersion:
+						1,
 
 					objectId:
 						g1Id,
@@ -718,30 +730,26 @@ function createService(
 			receiptStore
 		);
 
-	const installationTransaction =
-		new IndexedDBStrongsInstallationTransaction(
-			getApplicationDB
-		);
-
-	const installer =
-		new StrongsInstaller(
-			installationTransaction
-		);
-
-	const handler =
-		new StrongsResourceHandler(
-			new StrongsInterpreter(),
-			new StrongsValidator(),
-			installer
+	const genericInstaller =
+		new GenericResourceInstaller(
+			new ResourceDataTypeResolver([
+				new StrongsDataTypeHandler(),
+				new StrongsDefinitionDataTypeHandler()
+			]),
+			new ResourceDomainObjectFactoryResolver([
+				new StrongsDomainObjectFactory()
+			]),
+			new IndexedDBGenericResourceInstallationTransaction(
+				getApplicationDB
+			)
 		);
 
 	const resolutionProcessor =
 		new ResourceResolutionProcessor(
 			decoder,
 			receiptService,
-			[
-				handler
-			]
+			genericInstaller,
+			[]
 		);
 
 	const processor =
@@ -789,10 +797,16 @@ function createVerifiedContent(
 			'publisher',
 
 		resourceId:
-			'kjvonly/strongs/definitions/kjvs',
+			'kjvonly/strongs/definition/kjvs',
 
 		resourceType:
-			'kjvonly/strongs/definitions',
+			'strongs/definition',
+
+		dataType:
+			'kjvonly.strongs.definition',
+
+		dataVersion:
+			1,
 
 		modifiedAt:
 			200,
@@ -817,10 +831,16 @@ function createRepresentation(
 			'publisher',
 
 		resourceId:
-			'kjvonly/strongs/definitions/kjvs',
+			'kjvonly/strongs/definition/kjvs',
 
 		resourceType:
-			'kjvonly/strongs/definitions',
+			'strongs/definition',
+
+		dataType:
+			'kjvonly.strongs.definition',
+
+		dataVersion:
+			1,
 
 		eventId:
 			'c'.repeat(

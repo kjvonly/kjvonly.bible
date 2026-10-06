@@ -23,8 +23,22 @@ export {
 
 export {
 	NOTES_RESOURCE_TYPE,
-	NOTE_DATA_TYPE_V1
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION
 } from './resources/notes-resource-contract';
+
+export {
+	createNotesResourceId,
+	parseNotesResourceId
+} from './resources/notes-resource-id';
+
+export {
+	NoteDataTypeHandler
+} from './resources/note-data-type-handler';
+
+export {
+	NoteDomainObjectFactory
+} from './resources/note-domain-object-factory';
 
 export {
 	DEFAULT_NOTES_RESOURCE_NAME,

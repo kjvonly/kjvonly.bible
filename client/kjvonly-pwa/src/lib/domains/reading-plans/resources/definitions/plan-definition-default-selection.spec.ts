@@ -6,7 +6,7 @@ import {
 
 import {
 	PLAN_DEFINITION_RESOURCE_TYPE
-} from './plan-definition-interpreter';
+} from './plan-definition-resource';
 
 import {
 	createDefaultPlanDefinitionSelection,
@@ -28,7 +28,7 @@ describe(
 						'user-pubkey',
 
 					resourceId:
-						`${PLAN_DEFINITION_RESOURCE_TYPE}/${DEFAULT_PLAN_DEFINITION_RESOURCE_GROUP}`
+						'kjvonly/reading-plans/plan-definition/default'
 				});
 			}
 		);

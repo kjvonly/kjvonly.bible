@@ -69,7 +69,7 @@ describe(
 						'kjvonly/bible/chapters/kjvs',
 
 					resourceType:
-						'kjvonly/bible/chapters',
+						'bible/chapter',
 
 					modifiedAt:
 						100,
@@ -78,7 +78,10 @@ describe(
 						'application/json+gzip',
 
 					dataType:
-						'kjvonly.bible.chapter/v1',
+						'kjvonly.bible.chapter',
+
+					dataVersion:
+						1,
 
 					metadata: {
 						f:
@@ -131,8 +134,8 @@ function createDescriptor():
 			resourceId:
 				'kjvonly/bible/chapters/kjvs',
 
-			category:
-				'kjvonly/bible/chapters',
+			resourceType:
+				'bible/chapter',
 
 			modifiedAt:
 				100,
@@ -144,7 +147,10 @@ function createDescriptor():
 				'application/json+gzip',
 
 			dataType:
-				'kjvonly.bible.chapter/v1'
+				'kjvonly.bible.chapter',
+
+			dataVersion:
+				1
 		},
 
 		resourceMetadata: {

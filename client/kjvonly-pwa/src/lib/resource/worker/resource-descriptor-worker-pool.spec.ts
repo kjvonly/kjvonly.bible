@@ -557,8 +557,14 @@ function createDescriptor(
 			resourceId:
 				`kjvonly/resources/${name}`,
 
-			category:
+			resourceType:
 				'example/resource',
+
+			dataType:
+				'example.resource',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				123,
@@ -607,7 +613,13 @@ function createRepresentation(
 			`kjvonly/resources/collections/${name}`,
 
 		resourceType:
-			'kjvonly/resources/collections',
+			'resource/descriptor-collection',
+
+		dataType:
+			'kjvonly.resource-descriptor-collection',
+
+		dataVersion:
+			1,
 
 		eventId:
 			name.padEnd(

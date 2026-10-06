@@ -5,6 +5,9 @@ import {
 } from 'vitest';
 
 import {
+	GenericResourceInstaller,
+	ResourceDataTypeResolver,
+	ResourceDomainObjectFactoryResolver,
 	createResourceInstallationId,
 	createResourceReceiptId
 } from '$lib/resource';
@@ -22,39 +25,29 @@ import {
 } from '$lib/domains/notes/persistence/indexeddb-notes-store';
 
 import {
-	IndexedDBNotesInstallationTransaction
-} from '$lib/domains/notes/persistence/notes-installation-transaction';
-
-import {
-	NoteInstaller
-} from '$lib/domains/notes/resources/note-installer';
-
-import {
-	NOTE_DATA_TYPE_V1,
-	NOTES_RESOURCE_TYPE
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION,
+	NOTES_RESOURCE_TYPE,
+	createNotesResourceId,
+	NoteDataTypeHandler,
+	NoteDomainObjectFactory
 } from '$lib/domains/notes';
 
 import {
-	NoteInterpreter
-} from '$lib/domains/notes/resources/note-interpreter';
-
-import {
-	NoteResourceHandler
-} from '$lib/domains/notes/resources/note-resource-handler';
-
-import {
-	NoteValidator
-} from '$lib/domains/notes/resources/note-validator';
-
-import {
+	DOMAIN_OBJECTS,
 	RESOURCE_INSTALLATIONS,
 	RESOURCE_RECEIPTS,
+	createStoredDomainObjectId,
 	getApplicationDB
 } from '$lib/infrastructure/persistence/application.db';
 
 import {
+	IndexedDBGenericResourceInstallationTransaction
+} from '$lib/resource/installation/indexeddb-generic-resource-installation-transaction';
+
+import {
 	createBrowserTestPublisher,
-	createResourceInstallationTestService
+	createGenericResourceInstallationTestService
 } from './support/resource-installation-test-service';
 
 describe(
@@ -73,7 +66,10 @@ describe(
 					'browser-note';
 
 				const resourceId =
-					`${NOTES_RESOURCE_TYPE}/${name}/${resourceNoteId}`;
+					createNotesResourceId(
+						name,
+						resourceNoteId
+					);
 
 				const value = {
 					bibleLocationRef:
@@ -101,26 +97,31 @@ describe(
 						[]
 				};
 
+				const genericInstaller =
+					new GenericResourceInstaller(
+						new ResourceDataTypeResolver([
+							new NoteDataTypeHandler()
+						]),
+						new ResourceDomainObjectFactoryResolver([
+							new NoteDomainObjectFactory()
+						]),
+						new IndexedDBGenericResourceInstallationTransaction(
+							getApplicationDB
+						)
+					);
+
 				const service =
-					createResourceInstallationTestService(
-						new NoteResourceHandler(
-							new NoteInterpreter(),
-							new NoteValidator(),
-							new NoteInstaller(
-								new IndexedDBNotesInstallationTransaction(
-									getApplicationDB
-								)
-							)
-						),
+					createGenericResourceInstallationTestService(
+						genericInstaller,
 						{
 							publisher,
 							resourceId,
 							resourceType:
 								NOTES_RESOURCE_TYPE,
-							metadata: {
-								dataType:
-									NOTE_DATA_TYPE_V1
-							},
+							dataType:
+								NOTE_DATA_TYPE,
+							dataVersion:
+								NOTE_DATA_VERSION,
 							value,
 							modifiedAt:
 								200
@@ -172,6 +173,9 @@ describe(
 						getApplicationDB
 					);
 
+				const db =
+					await getApplicationDB();
+
 				expect(
 					await notesStore.get(
 						noteId
@@ -183,14 +187,46 @@ describe(
 					...value
 				});
 
+				expect(
+					await db.get(
+						DOMAIN_OBJECTS,
+						createStoredDomainObjectId(
+							NOTE_OBJECT_TYPE,
+							noteId
+						)
+					)
+				).toEqual({
+					id:
+						createStoredDomainObjectId(
+							NOTE_OBJECT_TYPE,
+							noteId
+						),
+
+					objectType:
+						NOTE_OBJECT_TYPE,
+
+					objectId:
+						noteId,
+
+					dataType:
+						NOTE_DATA_TYPE,
+
+					dataVersion:
+						1,
+
+					value: {
+						id:
+							noteId,
+
+						...value
+					}
+				});
+
 				const installationId =
 					createResourceInstallationId(
 						NOTE_OBJECT_TYPE,
 						noteId
 					);
-
-				const db =
-					await getApplicationDB();
 
 				expect(
 					await db.get(

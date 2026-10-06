@@ -68,7 +68,7 @@ describe(
 						status:
 							'current',
 						resourceId:
-							'kjvonly/notes/entries/default/note-1'
+							'kjvonly/notes/note/default/note-1'
 					}
 				]);
 
@@ -137,13 +137,17 @@ describe(
 					publisher:
 						'publisher',
 					resourceType:
-						'kjvonly/notes/entries',
+						'notes/note',
 					resourceId:
-						'kjvonly/notes/entries/default/note-1',
+						'kjvonly/notes/note/default/note-1',
 					modifiedAt:
 						100,
 					mediaType:
 						'application/json+gzip+hex',
+					dataType:
+						'kjvonly.note',
+					dataVersion:
+						1,
 					value: {
 						text:
 							'resource note'
@@ -159,9 +163,9 @@ describe(
 						status:
 							'handled',
 						resourceType:
-							'kjvonly/notes/entries',
+							'notes/note',
 						resourceId:
-							'kjvonly/notes/entries/default/note-1'
+							'kjvonly/notes/note/default/note-1'
 					}
 				]);
 			}
@@ -363,9 +367,13 @@ function createImporter(
 					options.publicationPublisher ??
 					'publisher',
 				resourceType:
-					'kjvonly/notes/entries',
+					'notes/note',
+				dataType:
+					'kjvonly.note',
+				dataVersion:
+					1,
 				resourceId:
-					'kjvonly/notes/entries/default/note-1',
+					'kjvonly/notes/note/default/note-1',
 				representation:
 					'content' as const,
 				mediaType:
@@ -447,6 +455,10 @@ function createArchive(
 				objectType,
 				objectId:
 					'publisher/default/note-1',
+				dataType:
+					objectType,
+				dataVersion:
+					1,
 				value:
 					overrides.domainValue ?? {
 						id:
@@ -478,7 +490,7 @@ function createInstallation(
 		publisher:
 			'publisher',
 		resourceId:
-			'kjvonly/notes/entries/default/note-1',
+			'kjvonly/notes/note/default/note-1',
 		modifiedAt:
 			100,
 		...overrides

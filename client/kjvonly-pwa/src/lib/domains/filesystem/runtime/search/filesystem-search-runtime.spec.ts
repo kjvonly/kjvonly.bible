@@ -45,7 +45,7 @@ describe(
 						{
 							index: 'dataType',
 							value:
-								'kjvonly.note/v1'
+								'kjvonly.note'
 						},
 						'grace'
 					);
@@ -58,7 +58,7 @@ describe(
 					byIndex: {
 						index: 'dataType',
 						value:
-							'kjvonly.note/v1'
+							'kjvonly.note'
 					},
 					text: 'grace'
 				});
@@ -97,7 +97,7 @@ describe(
 						{
 							index: 'dataType',
 							value:
-								'kjvonly.note/v1'
+								'kjvonly.note'
 						},
 						'grace'
 					);

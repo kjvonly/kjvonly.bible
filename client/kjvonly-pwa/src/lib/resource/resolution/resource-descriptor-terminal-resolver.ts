@@ -50,7 +50,7 @@ export class ResourceDescriptorTerminalResolver {
 				descriptor.metadata.resourceId,
 
 			resourceType:
-				descriptor.metadata.category,
+				descriptor.metadata.resourceType,
 
 			modifiedAt:
 				descriptor.metadata.modifiedAt,
@@ -58,9 +58,11 @@ export class ResourceDescriptorTerminalResolver {
 			mediaType:
 				descriptor.metadata.mediaType,
 
-			...(descriptor.metadata.dataType === undefined
-				? {}
-				: { dataType: descriptor.metadata.dataType }),
+			dataType:
+				descriptor.metadata.dataType,
+
+			dataVersion:
+				descriptor.metadata.dataVersion,
 
 			...(descriptor.resourceMetadata === undefined
 				? {}

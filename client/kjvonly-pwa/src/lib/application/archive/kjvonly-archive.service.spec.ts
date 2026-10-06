@@ -99,20 +99,20 @@ describe(
 							{
 								id: 'note:1',
 								status: 'handled',
-								resourceType: 'kjvonly/notes/entries',
-								resourceId: 'kjvonly/notes/entries/default/1'
+								resourceType: 'notes/note',
+								resourceId: 'kjvonly/notes/note/default/1'
 							},
 							{
 								id: 'plan:1',
 								status: 'handled',
-								resourceType: 'kjvonly/plans/progress',
-								resourceId: 'kjvonly/plans/progress/default/1'
+								resourceType: 'reading-plans/plan-progress',
+								resourceId: 'kjvonly/reading-plans/plan-progress/default/1'
 							},
 							{
 								id: 'plan:2',
 								status: 'current',
-								resourceType: 'kjvonly/plans/subscriptions',
-								resourceId: 'kjvonly/plans/subscriptions/default/2'
+								resourceType: 'reading-plans/plan-subscription',
+								resourceId: 'kjvonly/reading-plans/plan-subscription/default/2'
 							}
 						]
 					};
@@ -162,8 +162,8 @@ describe(
 					event.importedResourceTypes
 				).toEqual(
 					new Set([
-						'kjvonly/notes/entries',
-						'kjvonly/plans/progress'
+						'notes/note',
+						'reading-plans/plan-progress'
 					])
 				);
 			}

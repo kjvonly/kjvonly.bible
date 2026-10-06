@@ -3,8 +3,8 @@ import type {
 } from '$lib/resource';
 
 import {
-	PLAN_DEFINITION_RESOURCE_TYPE
-} from './plan-definition-interpreter';
+	createPlanDefinitionResourceId
+} from './plan-definition-resource';
 
 export const DEFAULT_PLAN_DEFINITION_RESOURCE_GROUP =
 	'default';
@@ -16,6 +16,8 @@ export function createDefaultPlanDefinitionSelection(
 		publisher,
 
 		resourceId:
-			`${PLAN_DEFINITION_RESOURCE_TYPE}/${DEFAULT_PLAN_DEFINITION_RESOURCE_GROUP}`
+			createPlanDefinitionResourceId(
+				DEFAULT_PLAN_DEFINITION_RESOURCE_GROUP
+			)
 	};
 }

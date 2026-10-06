@@ -2,40 +2,28 @@ import type {
 	PublishedResourceReference
 } from '$lib/resource';
 
-import {
-	parseResourceIdentifier
-} from '$lib/resource';
 
 import {
-	BIBLE_CHAPTER_RESOURCE_TYPE
-} from '../chapters/bible-chapter-interpreter';
+	parseBibleChapterResourceId
+} from '../chapters/bible-chapter-resource';
 
 import {
-	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
-} from './bible-text-markup-interpreter';
+	createBibleTextMarkupResourceId
+} from './bible-text-markup-resource';
 
 export function createDefaultBibleTextMarkupSelection(
 	publisher: string,
 	chapterSource:
 		PublishedResourceReference
 ): PublishedResourceReference {
-	const identifier =
-		parseResourceIdentifier(
+	const identity =
+		parseBibleChapterResourceId(
 			chapterSource.resourceId
 		);
 
 	if (
-		identifier.resourceType !==
-		BIBLE_CHAPTER_RESOURCE_TYPE
-	) {
-		throw new Error(
-			`Invalid Bible Chapter Resource Type: ${identifier.resourceType}`
-		);
-	}
-
-	if (
-		identifier.path.length !==
-		1
+		identity.chapterRef !==
+			undefined
 	) {
 		throw new Error(
 			`Invalid Bible Chapter Resource source: ${chapterSource.resourceId}`
@@ -46,6 +34,8 @@ export function createDefaultBibleTextMarkupSelection(
 		publisher,
 
 		resourceId:
-			`${BIBLE_TEXT_MARKUP_RESOURCE_TYPE}/${identifier.path[0]}`
+			createBibleTextMarkupResourceId(
+				identity.bibleId
+			)
 	};
 }

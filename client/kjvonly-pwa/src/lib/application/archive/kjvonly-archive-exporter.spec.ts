@@ -458,7 +458,14 @@ function createDomainObject(
 			`${objectType}:${objectId}`,
 
 		objectType,
+
 		objectId,
+
+		dataType:
+			objectType,
+
+		dataVersion:
+			1,
 
 		value: {
 			name:

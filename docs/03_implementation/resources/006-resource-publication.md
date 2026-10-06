@@ -341,10 +341,13 @@ interface ResourcePublication
     readonly type: 'resource';
     readonly publisher: string;
     readonly resourceType: string;
+    readonly dataType: string;
+    readonly dataVersion: number;
     readonly resourceId: string;
     readonly modifiedAt?: number;
     readonly representation: ResourceRepresentationType;
     readonly mediaType: string;
+    readonly metadata?: ResourceMetadata;
     readonly value: unknown;
 }
 ```
@@ -448,13 +451,65 @@ For Nostr Resource publication it becomes the Resource event's `t` tag.
 
 # `resourceId`
 
-`resourceId` is the Resource-side identity path.
+`resourceId` is the publisher-chosen logical Resource identity.
 
-It is not the application's Domain Object storage ID.
+It is not the application's Domain Object storage ID and it is not the Resource Type. Existing Resource families may retain path-like IDs for compatibility, but generic publication code does not assign semantic meaning to path segments.
 
 For addressable Nostr Resource publication it becomes the `d` tag.
 
 A Domain publication mapper derives it from Domain identity according to that Domain's Resource contract.
+
+---
+
+# `dataType` and `dataVersion`
+
+`dataType + dataVersion` identify the semantic payload contract carried by the published Resource.
+
+They are distinct from `resourceType`:
+
+```text
+resourceType
+    = Resource family / application classification
+
+dataType + dataVersion
+    = semantic payload contract
+```
+
+For Nostr Resource publication they become the required `dataType` and `dataVersion` tags.
+
+The receiving generic Resource installer resolves this pair through `ResourceDataTypeResolver` before any Domain Object factory receives the value.
+
+---
+
+# `metadata`
+
+`metadata` is optional protocol-agnostic scalar Resource-envelope metadata:
+
+```ts
+type ResourceMetadata =
+    Readonly<Record<string, string>>;
+```
+
+The generic Resource layer transports these values without assigning Domain meaning to individual keys. Owning Domains define and interpret their own metadata keys.
+
+For Nostr publication each metadata entry becomes one scalar tag. Metadata cannot reuse generic Resource-envelope tag names such as:
+
+```text
+d
+m
+t
+dataType
+dataVersion
+representation
+```
+
+For example, Bible Chapter Resources use:
+
+```text
+metadata.version
+```
+
+for the semantic Bible version label independently from the Resource identity component used as `bibleId`.
 
 ---
 
@@ -1592,14 +1647,18 @@ signer implementation
 
 For a normal Resource publication, the strategy publishes a Resource event using the application's Resource kind.
 
-The event carries these tags:
+The event carries the generic Resource envelope as tags:
 
 ```text
 d              Resource ID
 m              media type
 t              Resource Type
+dataType       semantic payload contract
+dataVersion    semantic contract version
 representation Resource representation
 ```
+
+Optional protocol-agnostic Resource metadata is appended as additional scalar tags after reserved-envelope collision checks.
 
 Conceptually:
 
@@ -1610,7 +1669,10 @@ tags = [
     ['d', resource.resourceId],
     ['m', resource.mediaType],
     ['t', resource.resourceType],
-    ['representation', resource.representation]
+    ['dataType', resource.dataType],
+    ['dataVersion', String(resource.dataVersion)],
+    ['representation', resource.representation],
+    ...metadataTags
 ]
 
 content = encoded Resource value

@@ -408,7 +408,7 @@ describe(
 									requested,
 
 								resourceType:
-									'kjvonly/bible/chapters',
+									'bible/chapter',
 
 								status:
 									'failed',
@@ -733,8 +733,14 @@ function createDescriptor():
 			resourceId:
 				'kjvonly/plans/readings/default',
 
-			category:
-				'kjvonly/plans/readings',
+			resourceType:
+				'reading-plans/plan-definition',
+
+			dataType:
+				'kjvonly.reading-plan.definition',
+
+			dataVersion:
+				1,
 
 			modifiedAt:
 				100,
@@ -790,6 +796,18 @@ function createRepresentation(
 					3
 				)
 				.join('/'),
+
+		dataType:
+			reference.resourceId
+				.split('/')
+				.slice(
+					0,
+					3
+				)
+				.join('/'),
+
+		dataVersion:
+			1,
 
 		eventId:
 			'a'.repeat(
