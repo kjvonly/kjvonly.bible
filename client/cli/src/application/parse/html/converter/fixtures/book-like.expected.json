@@ -1,0 +1,77 @@
+{
+  "source": "fixtures/book-like.html",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "content": [
+        { "type": "word", "text": "Chapter" },
+        { "type": "word", "text": "One" }
+      ],
+      "class": ["text-center"],
+      "id": "chapter-title"
+    },
+    {
+      "type": "text",
+      "content": [
+        { "type": "word", "text": "Opening" },
+        { "type": "word", "text": "words" },
+        { "type": "word", "text": "before." }
+      ],
+      "id": "<generated>"
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "word", "text": "A" },
+        { "type": "word", "text": "careful", "marks": ["underline"] },
+        { "type": "word", "text": "reader" },
+        { "type": "word", "text": "sees" },
+        { "type": "word", "text": "old", "marks": ["strikethrough"] },
+        { "type": "word", "text": "new", "marks": ["highlight"] },
+        { "type": "word", "text": "things." }
+      ],
+      "id": "body"
+    },
+    {
+      "type": "quote",
+      "blocks": [
+        {
+          "type": "text",
+          "content": [
+            { "type": "word", "text": "before" },
+            { "type": "word", "text": "quote" }
+          ],
+          "id": "<generated>"
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            { "type": "word", "text": "Nested" },
+            { "type": "word", "text": "2", "marks": ["subscript"] },
+            { "type": "word", "text": "text." }
+          ],
+          "id": "excerpt-paragraph"
+        },
+        {
+          "type": "text",
+          "content": [
+            { "type": "word", "text": "after" },
+            { "type": "word", "text": "quote" }
+          ],
+          "id": "<generated>"
+        }
+      ],
+      "id": "excerpt"
+    },
+    {
+      "type": "text",
+      "content": [
+        { "type": "word", "text": "Closing" },
+        { "type": "word", "text": "words" },
+        { "type": "word", "text": "after." }
+      ],
+      "id": "<generated>"
+    }
+  ]
+}

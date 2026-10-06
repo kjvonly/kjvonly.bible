@@ -1,0 +1,102 @@
+{
+  "source": "fixtures/sermon-like.html",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 1,
+      "content": [
+        { "type": "word", "text": "Faith" },
+        { "type": "word", "text": "and" },
+        { "type": "word", "text": "Hope" }
+      ],
+      "class": ["text-center"],
+      "id": "title"
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "word", "text": "Grace" },
+        { "type": "word", "text": "through", "strong": true },
+        { "type": "word", "text": "faith", "emphasis": true, "strong": true },
+        { "type": "word", "text": "Romans", "href": ["/kjv/45_5_1"] },
+        { "type": "word", "text": "5:1", "href": ["/kjv/45_5_1"] },
+        { "type": "line-break" },
+        { "type": "word", "text": "Stand" },
+        { "type": "word", "text": "firm." }
+      ],
+      "id": "intro"
+    },
+    {
+      "type": "quote",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "content": [
+            { "type": "word", "text": "For", "marks": ["small"] },
+            { "type": "word", "text": "God" },
+            { "type": "word", "text": "1", "marks": ["superscript"] },
+            { "type": "word", "text": "so" },
+            { "type": "word", "text": "loved." }
+          ],
+          "id": "quote-paragraph"
+        }
+      ],
+      "id": "quote"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "blocks": [
+        {
+          "type": "list-item",
+          "blocks": [
+            {
+              "type": "text",
+              "content": [
+                { "type": "word", "text": "First" },
+                { "type": "word", "text": "truth", "marks": ["code"] }
+              ],
+              "id": "<generated>"
+            }
+          ],
+          "id": "point-one"
+        },
+        {
+          "type": "list-item",
+          "blocks": [
+            {
+              "type": "text",
+              "content": [
+                { "type": "word", "text": "Second" }
+              ],
+              "id": "<generated>"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "blocks": [
+                {
+                  "type": "list-item",
+                  "blocks": [
+                    {
+                      "type": "text",
+                      "content": [
+                        { "type": "word", "text": "Remember", "marks": ["highlight"] },
+                        { "type": "word", "text": "this" }
+                      ],
+                      "id": "<generated>"
+                    }
+                  ],
+                  "id": "nested-point"
+                }
+              ],
+              "id": "nested-points"
+            }
+          ],
+          "id": "point-two"
+        }
+      ],
+      "id": "points"
+    }
+  ]
+}

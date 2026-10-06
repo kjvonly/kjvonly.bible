@@ -68,6 +68,39 @@ import { ResourceDescriptorBuilder } from '#application/build/descriptor/resourc
 import { EncodingRegistry } from '#application/build/encoding/encoding-registry.js';
 import { InlineEventBuilder } from '#application/build/inline/inline-event-builder.js';
 import { SourceExpander } from '#application/build/source/source-expander.js';
+import { ParseUseCase } from '#application/parse/parse.js';
+import { ParseDirectoryUseCase } from '#application/parse/batch/parse-directory.js';
+import { NodeParseWorkspace } from '#adapters/parse/node-parse-workspace.js';
+import { CheerioHtmlParser } from '#application/parse/html/parser/cheerio-html-parser.js';
+import {
+	DeterministicNormalizedBlockIdGenerator
+} from '#application/parse/html/identity/deterministic-normalized-block-id-generator.js';
+import { CaptionBlockProcessor } from '#application/parse/html/processors/caption-block-processor.js';
+import { FigureBlockProcessor } from '#application/parse/html/processors/figure-block-processor.js';
+import { HeadingBlockProcessor } from '#application/parse/html/processors/heading-block-processor.js';
+import { HtmlBlockProcessorRegistry } from '#application/parse/html/registry/html-block-processor-registry.js';
+import { ListBlockProcessor } from '#application/parse/html/processors/list-block-processor.js';
+import { ListItemBlockProcessor } from '#application/parse/html/processors/list-item-block-processor.js';
+import { ParagraphBlockProcessor } from '#application/parse/html/processors/paragraph-block-processor.js';
+import { PreformattedBlockProcessor } from '#application/parse/html/processors/preformatted-block-processor.js';
+import { QuoteBlockProcessor } from '#application/parse/html/processors/quote-block-processor.js';
+import { TableBlockProcessor } from '#application/parse/html/processors/table-block-processor.js';
+import { TableCellBlockProcessor } from '#application/parse/html/processors/table-cell-block-processor.js';
+import { TableRowBlockProcessor } from '#application/parse/html/processors/table-row-block-processor.js';
+import { TableSectionBlockProcessor } from '#application/parse/html/processors/table-section-block-processor.js';
+import { ThematicBreakBlockProcessor } from '#application/parse/html/processors/thematic-break-block-processor.js';
+import { TransparentContainerBlockProcessor } from '#application/parse/html/processors/transparent-container-block-processor.js';
+import { UnsupportedSemanticBlockProcessor } from '#application/parse/html/processors/unsupported-semantic-block-processor.js';
+import { HtmlInlineParser } from '#application/parse/html/inline/html-inline-parser.js';
+import { HtmlInlineProcessorRegistry } from '#application/parse/html/inline/html-inline-processor-registry.js';
+import { AnchorInlineProcessor } from '#application/parse/html/inline/processors/anchor-inline-processor.js';
+import { EmphasisInlineProcessor } from '#application/parse/html/inline/processors/emphasis-inline-processor.js';
+import { LineBreakInlineProcessor } from '#application/parse/html/inline/processors/line-break-inline-processor.js';
+import { MarkInlineProcessor } from '#application/parse/html/inline/processors/mark-inline-processor.js';
+import { StrongInlineProcessor } from '#application/parse/html/inline/processors/strong-inline-processor.js';
+import {
+	HtmlNormalizedDocumentConverter
+} from '#application/parse/html/converter/html-normalized-document-converter.js';
 import { BlossomArtifactPublisher } from '#application/publish/blossom/blossom-artifact-publisher.js';
 import { NostrStagedEventPublisher } from '#application/publish/nostr/nostr-staged-event-publisher.js';
 import { PublicationPreflight } from '#application/publish/preflight/publication-preflight.js';
@@ -77,13 +110,139 @@ import { connectNodeNostrToolsRelay } from '#adapters/nostr/relay/connect-node-n
 import { NostrToolsRelayPreflight } from '#adapters/nostr/relay/nostr-tools-relay-preflight.js';
 import { NostrToolsRelayReconciler } from '#adapters/nostr/relay/nostr-tools-relay-reconciler.js';
 import { LocalNostrSigner } from '#adapters/nostr/signer/local-nostr-signer.js';
+import { NormalizedDocumentValidator } from '#domain/normalized-content/validation/normalized-document-validator.js';
 
 export function createCliComposition() {
+	// =============================================================================
+	// Shared
 	const logger =
 		new ConsoleLogger(
 			false
 		);
 
+
+	// =============================================================================
+	// Parse
+	const htmlParser =
+		new CheerioHtmlParser();
+
+	const normalizedDocumentValidator =
+		new NormalizedDocumentValidator();
+
+	const htmlBlockProcessorRegistry =
+		new HtmlBlockProcessorRegistry([
+			new CaptionBlockProcessor(),
+			new FigureBlockProcessor(),
+			new HeadingBlockProcessor(),
+			new ParagraphBlockProcessor(),
+			new PreformattedBlockProcessor(),
+			new TableBlockProcessor(),
+			new TableCellBlockProcessor(),
+			new TableRowBlockProcessor(),
+			new TableSectionBlockProcessor(),
+			new ThematicBreakBlockProcessor(),
+			new QuoteBlockProcessor(),
+			new ListBlockProcessor(),
+			new ListItemBlockProcessor(),
+			new TransparentContainerBlockProcessor(),
+			new UnsupportedSemanticBlockProcessor()
+		]);
+
+	const htmlInlineProcessorRegistry =
+		new HtmlInlineProcessorRegistry([
+			new LineBreakInlineProcessor(),
+			new AnchorInlineProcessor(),
+			new EmphasisInlineProcessor(),
+			new StrongInlineProcessor(),
+			new MarkInlineProcessor(
+				[
+					'sup'
+				],
+				'superscript'
+			),
+			new MarkInlineProcessor(
+				[
+					'sub'
+				],
+				'subscript'
+			),
+			new MarkInlineProcessor(
+				[
+					'u'
+				],
+				'underline'
+			),
+			new MarkInlineProcessor(
+				[
+					'del',
+					's',
+					'strike'
+				],
+				'strikethrough'
+			),
+			new MarkInlineProcessor(
+				[
+					'small'
+				],
+				'small'
+			),
+			new MarkInlineProcessor(
+				[
+					'code'
+				],
+				'code'
+			),
+			new MarkInlineProcessor(
+				[
+					'mark'
+				],
+				'highlight'
+			)
+		]);
+
+	const htmlInlineParser =
+		new HtmlInlineParser(
+			htmlInlineProcessorRegistry,
+			tag =>
+				htmlBlockProcessorRegistry.has(
+					tag
+				)
+		);
+
+	/**
+	 * Creates document-scoped ID state so collision counters never leak between
+	 * independent HTML conversions.
+	 */
+	const createNormalizedBlockIdGenerator =
+		() =>
+			new DeterministicNormalizedBlockIdGenerator();
+
+	const htmlNormalizedDocumentConverter =
+		new HtmlNormalizedDocumentConverter(
+			normalizedDocumentValidator,
+			htmlBlockProcessorRegistry,
+			htmlInlineParser,
+			createNormalizedBlockIdGenerator
+		);
+
+	const parse =
+		new ParseUseCase(
+			htmlParser,
+			htmlNormalizedDocumentConverter
+		);
+
+	const parseWorkspace =
+		new NodeParseWorkspace();
+
+	const parseDirectory =
+		new ParseDirectoryUseCase(
+			parse,
+			parseWorkspace
+		);
+
+
+	// =============================================================================
+	// Manifest / Build / Publish / Sync
 	const workingDirectory =
 		process.cwd();
 
@@ -286,8 +445,12 @@ export function createCliComposition() {
 			logger
 		);
 
+
+	// =============================================================================
+	// CLI
 	const cli =
 		createCli({
+			parseDirectory,
 			buildManifest,
 			publishManifest,
 			syncManifest,
@@ -302,6 +465,7 @@ export function createCliComposition() {
 
 
 	return {
-		cli
+		cli,
+		parse
 	};
 }

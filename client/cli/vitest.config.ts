@@ -5,6 +5,7 @@ import {
 import {
 	defineConfig
 } from 'vitest/config';
+
 /**
  * Maps the CLI package import aliases to source while Vitest executes TypeScript
  * directly. Runtime package imports continue to target dist through package.json;
@@ -21,7 +22,7 @@ const sourceAlias = (
 	);
 
 export default defineConfig({
-		resolve: {
+	resolve: {
 		alias: {
 			'#adapters':
 				sourceAlias(
