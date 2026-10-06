@@ -20,6 +20,7 @@ import List from '../svgs/list.svelte';
 import MoreVertical from '../svgs/moreVertical.svelte';
 import Pending from '../svgs/pending.svelte';
 import Save from '../svgs/save.svelte';
+import Search from '../svgs/search.svelte';
 import SplitScreenBottom from '../svgs/splitScreenBottom.svelte';
 import SplitScreenRight from '../svgs/splitScreenRight.svelte';
 import Tag from '../svgs/tag.svelte';
@@ -53,6 +54,7 @@ const HEADER_ICON_COMPONENTS = {
 	'more-vertical': MoreVertical,
 	pending: Pending,
 	save: Save,
+	search: Search,
 	'split-horizontal': SplitScreenBottom,
 	'split-vertical': SplitScreenRight,
 	tag: Tag

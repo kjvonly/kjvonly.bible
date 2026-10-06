@@ -3,6 +3,10 @@ export type {
 } from './models/filesystem-entry';
 
 export type {
+	FilesystemRoot
+} from './models/filesystem-root';
+
+export type {
 	FilesystemSearchMatch
 } from './models/filesystem-search-match';
 

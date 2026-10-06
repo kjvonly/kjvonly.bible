@@ -364,6 +364,23 @@ multi-instance synchronization
 
 Use it as an implementation reference, not as a reason to make every Module Settings-shaped.
 
+## FileManager Module
+
+```text
+docs/03_implementation/modules/007-file-manager.md
+```
+
+Read when working on:
+
+```text
+filesystem root presentation
+projected folder browsing
+FileManager list/grid presentation
+global filesystem metadata search
+FileManager search Worker lifecycle
+Resource-to-Module opening from filesystem entries
+```
+
 ---
 
 # Task-Oriented Reading Map

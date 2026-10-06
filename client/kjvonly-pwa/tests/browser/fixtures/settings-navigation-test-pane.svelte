@@ -79,7 +79,8 @@
 
 	const paneLayout =
 		$state<PaneLayoutContext>({
-			clientHeight: 0
+			clientHeight: 0,
+			clientWidth: 0
 		});
 
 	providePaneLayoutContext(
@@ -95,7 +96,8 @@
 
 <div
 	bind:clientHeight={paneLayout.clientHeight}
-	style="height: 800px;"
+	bind:clientWidth={paneLayout.clientWidth}
+	style="height: 800px; width: 800px;"
 >
 	<PaneNavigationContainer
 		{navigation}

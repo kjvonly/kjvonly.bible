@@ -9,7 +9,8 @@ export type ResourceRepresentationType =
  * Protocol-agnostic scalar metadata attached to a Resource envelope.
  *
  * The generic Resource layer transports these values without assigning meaning
- * to individual keys. Owning Domains may interpret keys they define.
+ * to individual keys. Higher-level application or Domain owners may define and
+ * interpret keys that belong to their contracts.
  */
 export type ResourceMetadata =
 	Readonly<Record<string, string>>;

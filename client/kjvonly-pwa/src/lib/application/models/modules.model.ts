@@ -19,6 +19,6 @@ export enum Modules {
 
 	PROFILE = 10,
 	ARCHIVE = 11,
-
+	FILE_MANAGER = 12,
 	NORMALIZED_CONTENT = 13
 }

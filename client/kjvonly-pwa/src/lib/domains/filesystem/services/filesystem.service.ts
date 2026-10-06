@@ -3,6 +3,10 @@ import type {
 } from '../models/filesystem-entry';
 
 import type {
+	FilesystemRoot
+} from '../models/filesystem-root';
+
+import type {
 	FilesystemSearchMatch
 } from '../models/filesystem-search-match';
 
@@ -38,12 +42,20 @@ export class FilesystemService {
 			Pick<
 				FilesystemStore,
 				'get' |
+					'listRoots' |
 					'listByRootPath'
 			>,
 
 		private readonly searchRuntime:
 			FilesystemSearchPort
 	) {}
+
+	/** Returns the mounted filesystem roots available to the application. */
+	listRoots(): Promise<
+		readonly FilesystemRoot[]
+	> {
+		return this.store.listRoots();
+	}
 
 	/** Returns one mounted entry by its filesystem identity. */
 	get(

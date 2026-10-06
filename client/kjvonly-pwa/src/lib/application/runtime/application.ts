@@ -127,12 +127,19 @@ import {
 } from '$lib/application/modules/settings/settings-navigation-view-registrations';
 
 import {
+    fileManagerNavigationViewRegistrations
+} from '$lib/application/modules/file-manager/file-manager-navigation-view-registrations';
+
+import {
     ModuleLaunchDestinationResolver
 } from '../modules/modules/module-launch-destination-resolver';
 
 import {
     ApplicationReferenceResolver
 } from '../references/application-reference-resolver';
+
+import {    ResourceModuleResolver
+}  from '../modules/modules/resource-module-resolver';
 
 import {
     ARCHIVE_VIEWS
@@ -145,6 +152,10 @@ import {
 import {
     SETTINGS_VIEWS
 } from '../modules/settings/models/settings-navigation.model';
+
+import {
+    FILE_MANAGER_VIEWS
+} from '../modules/file-manager/models/file-manager-navigation.model';
 
 import {
     MODULES_VIEWS
@@ -368,6 +379,10 @@ import {
     FilesystemSearchRuntime
 } from '$lib/domains/filesystem/runtime/search/filesystem-search-runtime';
 
+import {
+    MockFilesystemRuntime
+} from './dev/mock-filesystem-runtime';
+
 ///////////////////////////////////////////////////////////////////////////////
 // Normalized Content
 
@@ -470,6 +485,16 @@ import {
 import {
     LocalStorageResourceSelectionStore
 } from '$lib/infrastructure/persistence/local-storage-resource-selection-store';
+
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Development composition switch for visually exercising FileManager without
+ * requiring mounted filesystem data. Set to false to restore the normal
+ * IndexedDB + filesystem search runtime composition.
+ */
+const USE_MOCK_FILESYSTEM_RUNTIME =
+    true;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -870,7 +895,12 @@ export class Application {
                     ),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.NORMALIZED_CONTENT
-                    )
+                    ),
+                    new NoResourceModuleResourceSelectionContributor(
+                        Modules.FILE_MANAGER
+                    ),
+ 
+
                 ]
             );
 
@@ -889,6 +919,9 @@ export class Application {
 
         const settingsService =
             new SettingsService();
+
+        const resourceModuleResolver =
+            new ResourceModuleResolver([]);
 
         const moduleLaunchDestinationResolver =
             new ModuleLaunchDestinationResolver([
@@ -955,6 +988,14 @@ export class Application {
                         SETTINGS_VIEWS.ROOT,
                     createState:
                         () => ({})
+                },
+                {
+                    module:
+                        Modules.FILE_MANAGER,
+                    view:
+                        FILE_MANAGER_VIEWS.ROOT,
+                    createState:
+                        () => ({})
                 }
             ]);
 
@@ -995,6 +1036,10 @@ export class Application {
 
         navigationViewRegistry.registerAll(
             settingsNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            fileManagerNavigationViewRegistrations
         );
 
         navigationViewRegistry.registerAll(
@@ -1294,12 +1339,19 @@ export class Application {
         ///////////////////////////////////////////////////////////////////////
         // Filesystem
 
+        const mockFilesystemRuntime =
+            USE_MOCK_FILESYSTEM_RUNTIME ?
+                new MockFilesystemRuntime() :
+                undefined;
+
         const filesystemStore =
+            mockFilesystemRuntime ??
             new IndexedDBFilesystemStore(
                 getApplicationDB
             );
 
         const filesystemSearchRuntime =
+            mockFilesystemRuntime ??
             new FilesystemSearchRuntime();
 
         const filesystemService =
@@ -1507,6 +1559,7 @@ export class Application {
             navigationRuntimeFactory,
             moduleLaunchDestinationResolver,
             applicationReferenceResolver,
+            resourceModuleResolver,
             archiveService,
 
             workspaceRuntime,

@@ -11,6 +11,7 @@ import {
  */
 export interface PaneLayoutContext {
 	clientHeight: number;
+	clientWidth: number;
 }
 
 const PANE_LAYOUT_CONTEXT =

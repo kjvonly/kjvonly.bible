@@ -26,6 +26,7 @@ export type HeaderIconID =
 	| 'more-vertical'
 	| 'pending'
 	| 'save'
+	| 'search'
 	| 'split-horizontal'
 	| 'split-vertical'
 	| 'tag';

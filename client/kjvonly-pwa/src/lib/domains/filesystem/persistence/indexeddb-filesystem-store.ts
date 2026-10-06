@@ -9,6 +9,10 @@ import type {
 	FilesystemEntry
 } from '../models/filesystem-entry';
 
+import type {
+	FilesystemRoot
+} from '../models/filesystem-root';
+
 import {
 	createFilesystemEntryId
 } from '../models/filesystem-entry-id';
@@ -31,6 +35,68 @@ export class IndexedDBFilesystemStore
 		private readonly getDB:
 			() => Promise<ApplicationDB>
 	) {}
+
+	/** Returns each distinct source publisher/root pair currently mounted. */
+	async listRoots(): Promise<
+		readonly FilesystemRoot[]
+	> {
+		const db =
+			await this.getDB();
+
+		const transaction =
+			db.transaction(
+				FILESYSTEM_ENTRIES,
+				'readonly'
+			);
+
+		const index =
+			transaction.store.index(
+				FILESYSTEM_ENTRY_PUBLISHER_ROOT_PATH_INDEX
+			);
+
+		const roots:
+			FilesystemRoot[] = [];
+
+		let previousPublisher:
+			string | undefined;
+
+		let previousRootPath:
+			string | undefined;
+
+		let cursor =
+			await index.openKeyCursor();
+
+		while (cursor !== null) {
+			const [
+				publisher,
+				rootPath
+			] = cursor.key;
+
+			if (
+				publisher !==
+					previousPublisher ||
+				rootPath !==
+					previousRootPath
+			) {
+				roots.push({
+					publisher,
+					rootPath
+				});
+
+				previousPublisher =
+					publisher;
+				previousRootPath =
+					rootPath;
+			}
+
+			cursor =
+				await cursor.continue();
+		}
+
+		await transaction.done;
+
+		return roots;
+	}
 
 	/** Returns one entry by its source filesystem identity. */
 	async get(

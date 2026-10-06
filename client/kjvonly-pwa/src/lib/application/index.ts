@@ -96,6 +96,13 @@ export type {
 export { Modules } from './models/modules.model';
 
 export {
+	ResourceModuleResolver,
+	type ResourceModuleDestination,
+	type ResourceModuleMatch,
+	type ResourceModuleRegistration
+} from './modules/modules/resource-module-resolver';
+
+export {
 	MODULES_VIEWS,
 	type ModulesView
 } from './modules/modules/modules-navigation.model';

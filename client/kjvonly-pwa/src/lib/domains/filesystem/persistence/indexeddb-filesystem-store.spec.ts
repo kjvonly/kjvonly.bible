@@ -27,6 +27,105 @@ describe(
 	'IndexedDBFilesystemStore',
 	() => {
 		it(
+			'lists distinct filesystem roots from the publisher/root index',
+			async () => {
+				const cursors =
+					createKeyCursors([
+						[
+							'alice',
+							'notes'
+						],
+						[
+							'alice',
+							'notes'
+						],
+						[
+							'alice',
+							'sermons'
+						],
+						[
+							'bob',
+							'notes'
+						]
+					]);
+
+				const openKeyCursor =
+					vi.fn()
+						.mockResolvedValue(
+							cursors[0] ??
+								null
+						);
+
+				const index = {
+					openKeyCursor
+				};
+
+				const indexByName =
+					vi.fn()
+						.mockReturnValue(
+							index
+						);
+
+				const transaction = {
+					store: {
+						index:
+							indexByName
+					},
+					done:
+						Promise.resolve()
+				};
+
+				const createTransaction =
+					vi.fn()
+						.mockReturnValue(
+							transaction
+						);
+
+				const store =
+					createStore({
+						transaction:
+							createTransaction
+					});
+
+				await expect(
+					store.listRoots()
+				).resolves.toEqual([
+					{
+						publisher:
+							'alice',
+						rootPath:
+							'notes'
+					},
+					{
+						publisher:
+							'alice',
+						rootPath:
+							'sermons'
+					},
+					{
+						publisher:
+							'bob',
+						rootPath:
+							'notes'
+					}
+				]);
+
+				expect(
+					createTransaction
+				).toHaveBeenCalledWith(
+					FILESYSTEM_ENTRIES,
+					'readonly'
+				);
+
+				expect(
+					indexByName
+				).toHaveBeenCalledWith(
+					FILESYSTEM_ENTRY_PUBLISHER_ROOT_PATH_INDEX
+				);
+			}
+		);
+
+		it(
 			'gets an entry by source publisher, root, and relative path',
 			async () => {
 				const entry =
@@ -236,6 +335,39 @@ function createStore(
 		async () =>
 			db as ApplicationDB
 	);
+}
+
+function createKeyCursors(
+	keys:
+		readonly (
+			readonly [
+				string,
+				string
+			]
+		)[]
+) {
+	const cursors =
+		keys.map(
+			(key) => ({
+				key,
+				continue:
+					vi.fn()
+			})
+		);
+
+	for (
+		let index = 0;
+		index < cursors.length;
+		index += 1
+	) {
+		cursors[index].continue
+			.mockResolvedValue(
+				cursors[index + 1] ??
+					null
+			);
+	}
+
+	return cursors;
 }
 
 function createEntry(

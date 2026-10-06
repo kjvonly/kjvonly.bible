@@ -21,6 +21,41 @@ describe(
 	'FilesystemService',
 	() => {
 		it(
+			'lists mounted filesystem roots',
+			async () => {
+				const roots = [
+					{
+						publisher:
+							'alice',
+						rootPath:
+							'notes'
+					}
+				];
+
+				const listRoots =
+					vi.fn()
+						.mockResolvedValue(
+							roots
+						);
+
+				const service =
+					createService({
+						listRoots
+					});
+
+				await expect(
+					service.listRoots()
+				).resolves.toBe(
+					roots
+				);
+
+				expect(
+					listRoots
+				).toHaveBeenCalledOnce();
+			}
+		);
+
+		it(
 			'gets one mounted entry by filesystem identity',
 			async () => {
 				const entry =
@@ -159,10 +194,13 @@ function createStore(
 ): Pick<
 	FilesystemStore,
 	'get' |
+		'listRoots' |
 		'listByRootPath'
 > {
 	return {
 		get:
+			vi.fn(),
+		listRoots:
 			vi.fn(),
 		listByRootPath:
 			vi.fn(),

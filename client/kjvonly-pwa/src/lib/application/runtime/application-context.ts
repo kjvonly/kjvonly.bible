@@ -43,6 +43,9 @@ import type {
     ApplicationReferenceResolver
 } from '../references/application-reference-resolver';
 
+import type {    ResourceModuleResolver
+} from '../modules/modules/resource-module-resolver';
+
 import type {
     KJVOnlyArchiveService
 } from '$lib/application/archive/kjvonly-archive.service';
@@ -132,6 +135,9 @@ export interface ApplicationContext {
 
     readonly applicationReferenceResolver:
     ApplicationReferenceResolver;
+
+    readonly resourceModuleResolver:
+    ResourceModuleResolver;
 
     readonly archiveService:
     KJVOnlyArchiveService;

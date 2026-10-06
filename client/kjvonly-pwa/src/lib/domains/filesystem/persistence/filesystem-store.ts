@@ -2,6 +2,10 @@ import type {
 	FilesystemEntry
 } from '../models/filesystem-entry';
 
+import type {
+	FilesystemRoot
+} from '../models/filesystem-root';
+
 /**
  * Persistence boundary for discoverable filesystem mappings.
  *
@@ -10,6 +14,11 @@ import type {
  * publisher and therefore does not participate in filesystem entry identity.
  */
 export interface FilesystemStore {
+	/** Returns the distinct mounted filesystem roots currently persisted. */
+	listRoots(): Promise<
+		readonly FilesystemRoot[]
+	>;
+
 	/** Returns one mapping by source publisher, root, and relative path. */
 	get(
 		publisher: string,
