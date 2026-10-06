@@ -424,7 +424,7 @@ worktree-watch:
 	echo $$! > "$$PIDFILE"; \
 	echo "Watcher started for $$NAME"
 
-.PHONY: new-chat-files new-chat-prompt
+.PHONY: new-chat-files new-chat-prompt worktree-backups
 
 new-chat-files:
 	@DATE=$$(date +%Y%m%d); \
@@ -436,6 +436,22 @@ new-chat-files:
 		client/kjvonly-pwa/package.json \
 		client/kjvonly-pwa/package-lock.json \
 		docs/ \
+		-x '*/node_modules/*' \
+		   '*/.svelte-kit/*' \
+		   '*/build/*' \
+		   '*/.DS_Store'
+
+worktrees-backups:
+	@DATE=$$(date +%Y%m%d); \
+	ZIP="kjvonly-worktree-backups-$$DATE.zip"; \
+	echo "Creating $$ZIP"; \
+	zip -r "$$ZIP" \
+		worktrees/wt{1,2,3}/client/kjvonly-pwa/src \
+		worktrees/wt{1,2,3}/client/kjvonly-pwa/tests \
+		worktrees/wt{1,2,3}/client/kjvonly-pwa/package.json \
+		worktrees/wt{1,2,3}/client/kjvonly-pwa/package-lock.json \
+		worktrees/wt{1,2,3}/client/cli \
+		worktrees/wt{1,2,3}/docs \
 		-x '*/node_modules/*' \
 		   '*/.svelte-kit/*' \
 		   '*/build/*' \
