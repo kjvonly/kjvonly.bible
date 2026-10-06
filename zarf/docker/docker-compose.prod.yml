@@ -17,38 +17,88 @@ services:
       timeout: 45s
       retries: 10
 
-  minio:
-    image: quay.io/minio/minio:RELEASE.2025-05-24T17-08-30Z
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:4.48
+    command: master -ip=seaweedfs-master -ip.bind=0.0.0.0 -mdir=/data
     ports:
-      - "${MINIO_API_PORT}:9000"
-      - "${MINIO_CONSOLE_PORT}:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    command: server /data --console-address ":9001"
+      - "${SEAWEEDFS_MASTER_PORT}:9333"
     volumes:
-      - minio_data:/data
+      - seaweedfs_master_data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+      test: ["CMD", "curl", "-f", "http://localhost:9333/cluster/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  minio-init:
-    image: quay.io/minio/mc:RELEASE.2025-05-21T01-59-54Z
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:4.48
+    command: volume -ip=seaweedfs-volume -ip.bind=0.0.0.0 -master=seaweedfs-master:9333 -dir=/data
+    volumes:
+      - seaweedfs_volume_data:/data
     depends_on:
-      minio:
+      seaweedfs-master:
         condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:4.48
+    command: filer -ip=seaweedfs-filer -ip.bind=0.0.0.0 -master=seaweedfs-master:9333 -defaultStoreDir=/data
+    ports:
+      - "${SEAWEEDFS_FILER_PORT}:8888"
+    volumes:
+      - seaweedfs_filer_data:/data
+    depends_on:
+      seaweedfs-master:
+        condition: service_healthy
+      seaweedfs-volume:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:4.48
+    command: s3 -filer=seaweedfs-filer:8888 -ip.bind=0.0.0.0
+    ports:
+      - "${SEAWEEDFS_S3_PORT}:8333"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
-      mc mb --ignore-existing local/$$MINIO_BUCKET
-      "
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+    depends_on:
+      seaweedfs-filer:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8333/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  seaweedfs-init:
+    image: chrislusf/seaweedfs:4.48
+    environment:
+      S3_BUCKET: ${S3_BUCKET}
+    depends_on:
+      seaweedfs-s3:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        buckets="$$(echo 's3.bucket.list' | weed shell -master=seaweedfs-master:9333 -filer=seaweedfs-filer:8888)"
+        if printf '%s\n' "$$buckets" | grep -Eq "^[[:space:]]*$${S3_BUCKET}[[:space:]]"; then
+          exit 0
+        fi
+        echo "s3.bucket.create -name $${S3_BUCKET}" | weed shell -master=seaweedfs-master:9333 -filer=seaweedfs-filer:8888
     restart: "no"
 
   relay:
@@ -72,15 +122,16 @@ services:
       - "${BLOSSOM_PORT}:3335"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${BLOSSOM_DB}?sslmode=disable
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
+      S3_ENDPOINT: http://seaweedfs-s3:8333
+      S3_REGION: ${S3_REGION}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET}
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
+      seaweedfs-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   web:
@@ -99,7 +150,9 @@ services:
 
 volumes:
   postgres_data:
-  minio_data:
+  seaweedfs_master_data:
+  seaweedfs_volume_data:
+  seaweedfs_filer_data:
 
 secrets:
   build_env:

@@ -2,6 +2,10 @@ import {
 	load
 } from 'cheerio';
 
+import {
+	isTag
+} from 'domhandler';
+
 import type {
 	CheerioAPI
 } from 'cheerio';
@@ -50,10 +54,19 @@ class CheerioParsedHtmlDocument
 	selectFirst(
 		selector: string
 	): Element | undefined {
-		return this.$(
-			selector
-		).first().get(
-			0
-		);
+		const node =
+			this.$(
+				selector
+			).first().get(
+				0
+			);
+
+		return node !==
+			undefined &&
+			isTag(
+				node
+			)
+			? node
+			: undefined;
 	}
 }

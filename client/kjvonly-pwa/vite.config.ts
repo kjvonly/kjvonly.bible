@@ -9,12 +9,12 @@ export default defineConfig(({ command }) => ({
 			? {
 					host: '0.0.0.0',
 					https: {
-						key: fs.readFileSync('./.certs/app.local.key'),
-						cert: fs.readFileSync('./.certs/app.local.crt')
+						key: fs.readFileSync('./.certs/app.test.key'),
+						cert: fs.readFileSync('./.certs/app.test.crt')
 					},
 					hmr: {
 						protocol: 'wss',
-						host: 'app.local',
+						host: 'app.test',
 						port: 5173
 					}
 				}

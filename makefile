@@ -73,7 +73,7 @@ DOCKER_COMPOSE_TEST = docker compose \
 	down-clean \
 	logs \
 	logs-postgres \
-	logs-minio \
+	logs-seaweedfs \
 	logs-relay \
 	logs-blossom \
 	psql \
@@ -83,7 +83,7 @@ DOCKER_COMPOSE_TEST = docker compose \
 	test-down-clean \
 	test-logs \
 	test-logs-postgres \
-	test-logs-minio \
+	test-logs-seaweedfs \
 	test-logs-relay \
 	test-logs-blossom \
 	test-psql \
@@ -108,8 +108,8 @@ logs:
 logs-postgres:
 	$(DOCKER_COMPOSE) logs -f postgres
 
-logs-minio:
-	$(DOCKER_COMPOSE) logs -f minio
+logs-seaweedfs:
+	$(DOCKER_COMPOSE) logs -f seaweedfs-master seaweedfs-volume seaweedfs-filer seaweedfs-s3 seaweedfs-init
 
 logs-relay:
 	$(DOCKER_COMPOSE) logs -f relay
@@ -144,8 +144,8 @@ test-logs:
 test-logs-postgres:
 	$(DOCKER_COMPOSE_TEST) logs -f postgres
 
-test-logs-minio:
-	$(DOCKER_COMPOSE_TEST) logs -f minio
+test-logs-seaweedfs:
+	$(DOCKER_COMPOSE_TEST) logs -f seaweedfs-master seaweedfs-volume seaweedfs-filer seaweedfs-s3 seaweedfs-init
 
 test-logs-relay:
 	$(DOCKER_COMPOSE_TEST) logs -f relay
@@ -267,7 +267,7 @@ client-dev-restart: client-dev-stop client-dev
 
 CLIENT_DIR := client
 CERT_DIR := $(CLIENT_DIR)/.certs
-SSL_DOMAIN := app.local
+SSL_DOMAIN := app.test
 
 ssl: ssl-root-ca ssl-app-cert
 
@@ -432,6 +432,7 @@ new-chat-files:
 	echo "Creating $$ZIP"; \
 	zip -r "$$ZIP" \
 		client/kjvonly-pwa/src \
+	    client/cli \
 		client/kjvonly-pwa/tests \
 		client/kjvonly-pwa/package.json \
 		client/kjvonly-pwa/package-lock.json \

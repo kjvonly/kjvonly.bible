@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/fiatjaf/eventstore/postgresql"
 	"github.com/fiatjaf/khatru"
 	"github.com/fiatjaf/khatru/blossom"
 	"github.com/fiatjaf/khatru/policies"
-	minio "github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/nbd-wtf/go-nostr"
 )
 
@@ -74,48 +76,73 @@ func main() {
 	)
 
 	//////////////////////////////////////////////////////////////////////////
-	// MINIO
+	// S3 OBJECT STORAGE
 
-	client, err := minio.New(
-		env("MINIO_ENDPOINT", "minio:9000"),
-		&minio.Options{
-			Creds: credentials.NewStaticV4(
-				env("MINIO_ACCESS_KEY", "minioadmin"),
-				env("MINIO_SECRET_KEY", "minioadmin"),
-				"",
-			),
-			Secure: env("MINIO_SECURE", "false") == "true",
-		},
+	s3Endpoint := env("S3_ENDPOINT", "http://seaweedfs:8333")
+	s3Region := env("S3_REGION", "us-east-1")
+	s3AccessKey := env("S3_ACCESS_KEY", "admin")
+	s3SecretKey := env("S3_SECRET_KEY", "secret")
+	bucketName := env("S3_BUCKET", "kjvonly")
+
+	awsConfig, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion(s3Region),
+		config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(s3AccessKey, s3SecretKey, ""),
+		),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bucketName := "kjvonly"
+	s3Client := s3.NewFromConfig(awsConfig, func(options *s3.Options) {
+		options.BaseEndpoint = aws.String(s3Endpoint)
+		options.UsePathStyle = true
+	})
 
 	bl := blossom.New(relay, "http://localhost:3335")
 	bl.Store = blossom.EventStoreBlobIndexWrapper{Store: &db, ServiceURL: bl.ServiceURL}
 
-	// StoreBlob uploads the blob to MinIO
+	// StoreBlob uploads the blob to S3-compatible object storage.
 	bl.StoreBlob = append(bl.StoreBlob, func(ctx context.Context, sha256 string, ext string, body []byte) error {
-		_, err := client.PutObject(ctx, bucketName, sha256, bytes.NewReader(body), int64(len(body)), minio.PutObjectOptions{})
+		_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
+			Bucket:        aws.String(bucketName),
+			Key:           aws.String(sha256),
+			Body:          bytes.NewReader(body),
+			ContentLength: aws.Int64(int64(len(body))),
+		})
 		return err
 	})
 
-	// LoadBlob retrieves the blob from MinIO
+	// LoadBlob retrieves the blob from S3-compatible object storage.
 	bl.LoadBlob = append(bl.LoadBlob, func(ctx context.Context, sha256 string, ext string) (io.ReadSeeker, error) {
-		obj, err := client.GetObject(ctx, bucketName, sha256, minio.GetObjectOptions{})
+		output, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(sha256),
+		})
 		if err != nil {
 			return nil, err
 		}
-		data, _ := io.ReadAll(obj)
-		obj.Close()
+
+		data, readErr := io.ReadAll(output.Body)
+		closeErr := output.Body.Close()
+		if readErr != nil {
+			return nil, readErr
+		}
+		if closeErr != nil {
+			return nil, closeErr
+		}
+
 		return bytes.NewReader(data), nil
 	})
 
-	// DeleteBlob removes the blob from MinIO
+	// DeleteBlob removes the blob from S3-compatible object storage.
 	bl.DeleteBlob = append(bl.DeleteBlob, func(ctx context.Context, sha256 string, ext string) error {
-		return client.RemoveObject(ctx, bucketName, sha256, minio.RemoveObjectOptions{})
+		_, err := s3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(sha256),
+		})
+		return err
 	})
 
 	fmt.Println("running on :3335")

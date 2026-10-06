@@ -1,3 +1,7 @@
+import {
+	isText
+} from 'domhandler';
+
 import type {
 	AnyNode,
 	Element
@@ -248,7 +252,7 @@ export class HtmlInlineParser {
 		options: HtmlInlineParseOptions
 	): void {
 		if (
-			isTextNode(
+			isText(
 				node
 			)
 		) {
@@ -317,13 +321,6 @@ export class HtmlInlineParser {
 			);
 		}
 	}
-}
-
-function isTextNode(
-	node: AnyNode
-): node is AnyNode & { type: 'text'; data: string } {
-	return node.type ===
-		'text';
 }
 
 function isElement(
