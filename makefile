@@ -319,7 +319,7 @@ ssl-clean:
 # CLIENT
 
 CLI_DIR = client/cli
-APP_DATA_MANIFEST = ../../zarf/manifest/filesystem-smoke.yaml
+APP_DATA_MANIFEST = ../../zarf/manifest/app-data.yaml
 APP_DATA_LOG_DIR := $(CURDIR)/logs/app-data
 
 .PHONY: \
@@ -436,7 +436,7 @@ worktree-watch:
 	echo $$! > "$$PIDFILE"; \
 	echo "Watcher started for $$NAME"
 
-.PHONY: new-chat-files new-chat-prompt worktree-backups
+.PHONY: new-chat-files new-chat-prompt worktrees-backups
 
 new-chat-files:
 	@DATE=$$(date +%Y%m%d); \
@@ -459,15 +459,14 @@ worktrees-backups:
 	ZIP="kjvonly-worktree-backups-$$DATE.zip"; \
 	echo "Creating $$ZIP"; \
 	zip -r "$$ZIP" \
-		worktrees/wt{1,2,3}/client/kjvonly-pwa/src \
-		worktrees/wt{1,2,3}/client/kjvonly-pwa/tests \
-		worktrees/wt{1,2,3}/client/kjvonly-pwa/package.json \
-		worktrees/wt{1,2,3}/client/kjvonly-pwa/package-lock.json \
-		worktrees/wt{1,2,3}/client/cli \
-		worktrees/wt{1,2,3}/docs \
+		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/src \
+		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/tests \
+		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/package.json \
+		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/package-lock.json \
+		worktrees/wt{1,2,3,4}/client/cli \
+		worktrees/wt{1,2,3,4}/docs \
 		-x '*/node_modules/*' \
 		   '*/.svelte-kit/*' \
-		   '*/build/*' \
 		   '*/.DS_Store'
 
 new-chat-prompt:
