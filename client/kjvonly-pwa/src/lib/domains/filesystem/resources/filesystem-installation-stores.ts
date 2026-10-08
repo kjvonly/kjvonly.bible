@@ -20,6 +20,11 @@ export interface FilesystemInstallationStores {
 
 /** Transaction boundary for filesystem mappings and Resource provenance. */
 export interface FilesystemInstallationTransaction {
+	/**
+	 * Executes one atomic Filesystem mapping/provenance operation.
+	 *
+	 * @param operation Work that must commit or roll back as one transaction.
+	 */
 	run<TResult>(
 		operation:
 			(

@@ -92,6 +92,10 @@ import {
 } from './descriptor/resource-descriptor-builder.js';
 
 import {
+    NostrEventResourceDescriptorBuilder
+} from './descriptor/nostr-event-resource-descriptor-builder.js';
+
+import {
     NodeCollectionEventStagingRepository
 } from '#adapters/staging/node-collection-event-staging-repository.js';
 
@@ -183,6 +187,9 @@ function createManifest() {
         },
 
         collections:
+            {},
+
+        filesystems:
             {}
     } satisfies Manifest;
 }
@@ -290,6 +297,8 @@ function createBuild(
                 clock
             ),
 
+            new NostrEventResourceDescriptorBuilder(),
+
             new NodeCollectionEventStagingRepository(),
             logger
         );
@@ -316,6 +325,10 @@ function createBuild(
 
         descriptorBackedResourceBuilder,
         collectionBuilder,
+        {
+            build:
+                async () => {}
+        },
         logger
     );
 }

@@ -1,10 +1,12 @@
 import { StagedArtifactMetadata } from "#domain/staging/staged-artifact-filename.js";
 
+/** Physical representation used for one locally staged external artifact. */
 export type StagedArtifactKind =
 	| 'symlink'
 	| 'file';
 
 
+/** Metadata and local path for one staged external artifact. */
 export interface StagedArtifactEntry {
 	readonly path:
 		string;
@@ -20,6 +22,7 @@ export interface StagedArtifactEntry {
 }
 
 
+/** Request to stage source bytes unchanged, typically through an identity link. */
 export interface StageIdentityArtifactRequest {
 	readonly stagingRoot:
 		string;
@@ -50,6 +53,7 @@ export interface StageIdentityArtifactRequest {
 }
 
 
+/** Request to stage already-materialized artifact bytes. */
 export interface StageMaterializedArtifactRequest {
 	readonly stagingRoot:
 		string;
@@ -80,6 +84,7 @@ export interface StageMaterializedArtifactRequest {
 }
 
 
+/** Persistence boundary for desired local external-artifact staging state. */
 export interface ArtifactStagingRepository {
 	list(
 		stagingRoot:

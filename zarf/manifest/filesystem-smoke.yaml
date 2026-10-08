@@ -1,0 +1,107 @@
+version: 1
+
+kind: 37770
+
+staging:
+  path: ./.kjvonly-filesystem-smoke
+
+nostr:
+  relays:
+    - ws://localhost:13334
+
+defaults:
+  strategy: local
+
+strategies:
+  local:
+    type: blossom
+    urls:
+      - http://localhost:13335
+
+# -----------------------------------------------------------------------------
+# One descriptor-backed Resource.
+#
+# This fixture intentionally uses one concrete KJVS chapter so the smoke test
+# exercises the same Resource -> Collection -> Filesystem build order without
+# pulling the complete application publication graph into staging.
+# -----------------------------------------------------------------------------
+resources:
+  filesystem-smoke-chapter:
+    path: ../../client/cli/integration/bootstrap/fixtures/data/bible/chapters/content/kjvs/1_1.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/bible/chapter/filesystem-smoke/1_1"]
+        - ["m", "application/json+hex"]
+        - ["t", "bible/chapter"]
+        - ["dataType", "kjvonly.bible.chapter"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+        - ["version", "filesystem-smoke"]
+        - ["language", "en"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+# -----------------------------------------------------------------------------
+# One Collection containing the Resource above.
+# -----------------------------------------------------------------------------
+collections:
+  filesystem-smoke-collection:
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/resource/descriptor-collection/filesystem-smoke"]
+        - ["m", "application/json+hex"]
+        - ["t", "resource/descriptor-collection"]
+        - ["dataType", "kjvonly.resource-descriptor-collection"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    resources:
+      - filesystem-smoke-chapter
+
+# -----------------------------------------------------------------------------
+# One Filesystem Resource exposing both the Resource and Collection.
+#
+# Expected full Filesystem paths:
+#   filesystem-smoke/content/chapter/1_1
+#   filesystem-smoke/content/collection
+#
+# `chapter` intentionally omits `key`, exercising bulk expansion. Because the
+# referenced Resource definition currently builds one concrete key (`1_1`), it
+# produces one file entry. The same declaration would expand to N entries if the
+# Resource definition later produced N staged keys.
+# -----------------------------------------------------------------------------
+filesystems:
+  filesystem-smoke:
+    root: filesystem-smoke
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/filesystem/filesystem-smoke"]
+        - ["m", "application/json+hex"]
+        - ["t", "filesystem/entry"]
+        - ["dataType", "kjvonly.filesystem.entries"]
+        - ["dataVersion", "1"]
+        - ["representation", "content"]
+
+    directories:
+      - path: content
+
+        resources:
+          chapter:
+            resource: filesystem-smoke-chapter
+
+        collections:
+          collection:
+            collection: filesystem-smoke-collection

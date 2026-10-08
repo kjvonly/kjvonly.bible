@@ -126,7 +126,7 @@ describe(
 		);
 
 		it(
-			'gets an entry by source publisher, root, and relative path',
+			'gets an entry by source publisher, root, and complete path',
 			async () => {
 				const entry =
 					createEntry();
@@ -185,7 +185,7 @@ describe(
 					createEntry(),
 					createEntry({
 						path:
-							'the-fall/temptation'
+							'notes/the-fall/temptation'
 					})
 				];
 
@@ -293,7 +293,7 @@ describe(
 		);
 
 		it(
-			'deletes an entry by source publisher, root, and relative path',
+			'deletes an entry by source publisher, root, and complete path',
 			async () => {
 				const deleteValue =
 					vi.fn()
@@ -310,7 +310,7 @@ describe(
 				await store.delete(
 					'alice',
 					'notes',
-					'the-fall/creation'
+					'notes/the-fall/creation'
 				);
 
 				expect(
@@ -320,7 +320,7 @@ describe(
 					createFilesystemEntryId(
 						'alice',
 						'notes',
-						'the-fall/creation'
+						'notes/the-fall/creation'
 					)
 				);
 			}
@@ -377,7 +377,7 @@ function createEntry(
 ): FilesystemEntry {
 	return {
 		path:
-			'the-fall/creation',
+			'notes/the-fall/creation',
 		descriptor: {
 			metadata: {
 				publisher:

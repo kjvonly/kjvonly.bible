@@ -1,3 +1,4 @@
+/** Filename metadata describing one staged external artifact revision. */
 export interface StagedArtifactMetadata {
 	readonly key:
 		string;
@@ -31,6 +32,7 @@ const FILENAME_PATTERN =
 	/^(.*)--(\d+)--(\d+)--([0-9a-f]{8})--([0-9a-f]{64})(.*)$/;
 
 
+/** Builds the deterministic filename for one staged external artifact. */
 export function buildStagedArtifactFilename(
 	metadata:
 		StagedArtifactMetadata
@@ -52,6 +54,7 @@ export function buildStagedArtifactFilename(
 }
 
 
+/** Parses and validates one staged external-artifact filename. */
 export function parseStagedArtifactFilename(
 	filename:
 		string

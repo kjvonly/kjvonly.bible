@@ -727,18 +727,16 @@ rather than:
 ```text
 filesystem location
     ↓
-already installed Domain Object
+already installed target Domain Object
 ```
 
 A filesystem entry says, conceptually:
 
 > A Resource is available at this application-visible location.
 
-It does not say:
+The `FilesystemEntry` mapping itself is first-class accepted application state and is persisted by the Filesystem owner. It does not imply that the Resource it describes has already been resolved or that the target Resource's Domain Object has already been installed.
 
-> The Resource's Domain Object has already been installed.
-
-The filesystem therefore owns Resource availability and organization.
+The filesystem therefore owns accepted Resource-availability mappings and organization.
 
 It does not own:
 
@@ -767,9 +765,11 @@ Resource identity
     = which Resource is being described
 ```
 
-The same Resource may be exposed through different filesystem locations.
+The same Resource may be exposed through different filesystem locations. Each such location is a distinct first-class Filesystem entry backed by the same target Resource descriptor.
 
 A filesystem owner may also expose a Resource published by someone else.
+
+For a Filesystem Resource, `d/resourceId` identifies the Filesystem Resource itself, while Filesystem-owned `f` metadata identifies the contributed root/mount. Payload keys and accepted `FilesystemEntry.path` values are complete paths including that root; an entry path is a strict descendant of `f`.
 
 Therefore filesystem organization must not be confused with Resource ownership or Resource identity.
 
@@ -1292,7 +1292,7 @@ The following ideas should remain recognizable throughout the project:
 * Not every Domain Object must become a Resource.
 * Resource, Resource Description, Domain Object, and Nostr Event are distinct concepts.
 * A Resource may be available before its corresponding Domain Object is installed.
-* Filesystem/catalog entries represent available Resource mappings, not installed Domain Objects.
+* Filesystem/catalog entries are first-class accepted availability mappings; they do not imply that the target Resource's Domain Object is installed.
 * Filesystem location and Resource identity are distinct concepts.
 * Resource categories, semantic data types, and physical media types answer different questions.
 * Discovery, description, Resolution, Installation, publication, synchronization, and Domain retrieval are distinct responsibilities.

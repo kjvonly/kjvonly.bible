@@ -5,11 +5,23 @@ import { Logger } from "#ports/logging/logger.js";
 import { EventSigner } from "#ports/nostr/event-signer.js";
 import { NostrEventPublisher } from "#ports/nostr/nostr-event-publisher.js";
 import { NostrRelayReconciler } from "#ports/nostr/nostr-relay-reconciler.js";
-import { NostrEventStagingRepository } from "#ports/staging/nostr-event-staging-repository.js";
+import { NostrEventStagingRepository, StagedNostrEventCategory, StagedNostrEventEntry } from "#ports/staging/nostr-event-staging-repository.js";
 
 
+const NOSTR_PUBLICATION_CATEGORY_ORDER:
+    readonly StagedNostrEventCategory[] = [
+        'resource',
+        'collection',
+        'filesystem'
+    ];
 
 
+/**
+ * Reconciles and publishes staged Nostr events using application-owned category order.
+ *
+ * The order Resource → Collection → Filesystem is a category policy only; this
+ * publisher does not topologically sort dependencies within an individual category.
+ */
 export class NostrStagedEventPublisher {
 
     constructor(
@@ -30,6 +42,12 @@ export class NostrStagedEventPublisher {
     ) { }
 
 
+    /**
+     * Reconciles staged event IDs per relay and publishes only missing events.
+     *
+     * @param manifest Publication policy including kind and configured relays.
+     * @param stagingRoot Root of the desired local staging state.
+     */
     async publish(
         manifest:
             Manifest,
@@ -47,11 +65,9 @@ export class NostrStagedEventPublisher {
 
 
         const stagedEvents =
-            await this
-                .stagingRepository
-                .list(
-                    stagingRoot
-                );
+            await this.listStagedEventsInPublicationOrder(
+                stagingRoot
+            );
 
 
         this.logStagedEventsLoaded(
@@ -253,6 +269,43 @@ export class NostrStagedEventPublisher {
 
 
         return results;
+    }
+
+
+    /**
+     * Lists staged events in publication category order.
+     *
+     * This establishes only category ordering. It does not topologically sort
+     * dependencies among events within the same category.
+     */
+    private async listStagedEventsInPublicationOrder(
+        stagingRoot:
+            string
+    ): Promise<
+        readonly StagedNostrEventEntry[]
+    > {
+
+        const stagedEvents:
+            StagedNostrEventEntry[] =
+                [];
+
+
+        for (
+            const category
+            of NOSTR_PUBLICATION_CATEGORY_ORDER
+        ) {
+            stagedEvents.push(
+                ...await this
+                    .stagingRepository
+                    .list(
+                        stagingRoot,
+                        category
+                    )
+            );
+        }
+
+
+        return stagedEvents;
     }
 
 

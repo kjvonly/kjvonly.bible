@@ -23,6 +23,9 @@ git clone --recursive <repo-url>
 ```bash
 git submodule update --init --recursive
 git submodule foreach --recursive 'git lfs pull'
+
+# in a worktree
+git submodule update --init --reference ../../data data
 ```
 
 ```bash

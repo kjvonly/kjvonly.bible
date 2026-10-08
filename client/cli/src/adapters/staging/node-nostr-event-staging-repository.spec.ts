@@ -26,11 +26,34 @@ import {
 
 import type {
     CollectionEventStagingRepository
-} from '#ports/collection-event-staging-repository.js';
+} from '#ports/staging/collection-event-staging-repository.js';
 
 import type {
     SignedEventStagingRepository
-} from '#ports/signed-event-staging-repository.js';
+} from '#ports/staging/signed-event-staging-repository.js';
+
+import type {
+    FilesystemEventStagingRepository
+} from '#ports/staging/filesystem-event-staging-repository.js';
+
+
+function createEmptyFilesystemEventStagingRepository():
+    FilesystemEventStagingRepository {
+
+    return {
+        list:
+            async () => [],
+
+        read:
+            vi.fn(),
+
+        stage:
+            vi.fn(),
+
+        remove:
+            vi.fn()
+    };
+}
 
 
 describe(
@@ -64,7 +87,7 @@ describe(
 
 
         it(
-            'lists resource and collection events without reading them',
+            'lists Resource, Collection, and Filesystem events independently without reading them',
             async () => {
 
                 const stagingRoot =
@@ -107,6 +130,19 @@ describe(
                 );
 
 
+                await mkdir(
+                    join(
+                        stagingRoot,
+                        'events',
+                        '__filesystems__'
+                    ),
+                    {
+                        recursive:
+                            true
+                    }
+                );
+
+
                 const resourcePath =
                     join(
                         stagingRoot,
@@ -122,6 +158,15 @@ describe(
                         'events',
                         '__collections__',
                         'collection.json'
+                    );
+
+
+                const filesystemPath =
+                    join(
+                        stagingRoot,
+                        'events',
+                        '__filesystems__',
+                        'filesystem.json'
                     );
 
 
@@ -228,30 +273,63 @@ describe(
                 };
 
 
+                const filesystemEventRead =
+                    vi.fn();
+
+
+                const filesystemEventStagingRepository:
+                    FilesystemEventStagingRepository = {
+                    list:
+                        vi.fn(
+                            async () => [
+                                {
+                                    path:
+                                        filesystemPath,
+
+                                    filesystemName:
+                                        'library',
+
+                                    inputRevision:
+                                        'c'.repeat(
+                                            32
+                                        ),
+
+                                    createdAt:
+                                        1002,
+
+                                    eventId:
+                                        'c'.repeat(
+                                            64
+                                        )
+                                }
+                            ]
+                        ),
+
+                    read:
+                        filesystemEventRead,
+
+                    stage:
+                        vi.fn(),
+
+                    remove:
+                        vi.fn()
+                };
+
+
                 const repository =
                     new NodeNostrEventStagingRepository(
                         signedEventStagingRepository,
-                        collectionEventStagingRepository
+                        collectionEventStagingRepository,
+                        filesystemEventStagingRepository
                     );
 
 
                 expect(
                     await repository.list(
-                        stagingRoot
+                        stagingRoot,
+                        'resource'
                     )
                 ).toEqual([
-                    {
-                        path:
-                            collectionPath,
-
-                        eventId:
-                            'b'.repeat(
-                                64
-                            ),
-
-                        createdAt:
-                            1001
-                    },
                     {
                         path:
                             resourcePath,
@@ -268,12 +346,80 @@ describe(
 
 
                 expect(
+                    await repository.list(
+                        stagingRoot,
+                        'collection'
+                    )
+                ).toEqual([
+                    {
+                        path:
+                            collectionPath,
+
+                        eventId:
+                            'b'.repeat(
+                                64
+                            ),
+
+                        createdAt:
+                            1001
+                    }
+                ]);
+
+
+                expect(
+                    await repository.list(
+                        stagingRoot,
+                        'filesystem'
+                    )
+                ).toEqual([
+                    {
+                        path:
+                            filesystemPath,
+
+                        eventId:
+                            'c'.repeat(
+                                64
+                            ),
+
+                        createdAt:
+                            1002
+                    }
+                ]);
+
+
+                expect(
+                    signedEventStagingRepository.list
+                ).toHaveBeenCalledTimes(
+                    1
+                );
+
+
+                expect(
+                    collectionEventStagingRepository.list
+                ).toHaveBeenCalledTimes(
+                    1
+                );
+
+
+                expect(
+                    filesystemEventStagingRepository.list
+                ).toHaveBeenCalledTimes(
+                    1
+                );
+
+
+                expect(
                     signedEventRead
                 ).not.toHaveBeenCalled();
 
 
                 expect(
                     collectionEventRead
+                ).not.toHaveBeenCalled();
+
+
+                expect(
+                    filesystemEventRead
                 ).not.toHaveBeenCalled();
             }
         );
@@ -392,7 +538,8 @@ describe(
                 const repository =
                     new NodeNostrEventStagingRepository(
                         signedEventStagingRepository,
-                        collectionEventStagingRepository
+                        collectionEventStagingRepository,
+                        createEmptyFilesystemEventStagingRepository()
                     );
 
 
@@ -523,7 +670,8 @@ describe(
                 const repository =
                     new NodeNostrEventStagingRepository(
                         signedEventStagingRepository,
-                        collectionEventStagingRepository
+                        collectionEventStagingRepository,
+                        createEmptyFilesystemEventStagingRepository()
                     );
 
 
@@ -553,5 +701,149 @@ describe(
                 );
             }
         );
+
+        it(
+            'reads a staged Filesystem event through the Filesystem event repository',
+            async () => {
+
+                const path =
+                    '/tmp/staging/events/__filesystems__/event.json';
+
+
+                const event = {
+                    id:
+                        'a'.repeat(
+                            64
+                        ),
+
+                    pubkey:
+                        'b'.repeat(
+                            64
+                        ),
+
+                    created_at:
+                        1000,
+
+                    kind:
+                        37770,
+
+                    tags:
+                        [],
+
+                    content:
+                        'content',
+
+                    sig:
+                        'c'.repeat(
+                            128
+                        )
+                };
+
+
+                const sourceEntry = {
+                    path,
+
+                    filesystemName:
+                        'library',
+
+                    inputRevision:
+                        'd'.repeat(
+                            32
+                        ),
+
+                    createdAt:
+                        1000,
+
+                    eventId:
+                        event.id
+                };
+
+
+                const filesystemEventRead =
+                    vi.fn(
+                        async () =>
+                            event
+                    );
+
+
+                const filesystemEventStagingRepository:
+                    FilesystemEventStagingRepository = {
+                    list:
+                        vi.fn(
+                            async () => [
+                                sourceEntry
+                            ]
+                        ),
+
+                    read:
+                        filesystemEventRead,
+
+                    stage:
+                        vi.fn(),
+
+                    remove:
+                        vi.fn()
+                };
+
+
+                const repository =
+                    new NodeNostrEventStagingRepository(
+                        {
+                            list:
+                                async () => [],
+
+                            read:
+                                vi.fn(),
+
+                            stage:
+                                vi.fn(),
+
+                            remove:
+                                vi.fn()
+                        },
+                        {
+                            list:
+                                async () => [],
+
+                            read:
+                                vi.fn(),
+
+                            stage:
+                                vi.fn(),
+
+                            remove:
+                                vi.fn()
+                        },
+                        filesystemEventStagingRepository
+                    );
+
+
+                const result =
+                    await repository.read({
+                        path,
+
+                        eventId:
+                            event.id,
+
+                        createdAt:
+                            1000
+                    });
+
+
+                expect(
+                    result
+                ).toBe(
+                    event
+                );
+
+
+                expect(
+                    filesystemEventRead
+                ).toHaveBeenCalledWith(
+                    sourceEntry
+                );
+            }
+        );
+
     }
 );

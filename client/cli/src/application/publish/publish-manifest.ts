@@ -63,7 +63,8 @@ export class PublishManifestUseCase
 		this.logManifestLoaded(
 			manifestPath,
 			loaded.manifest.resources,
-			loaded.manifest.collections
+			loaded.manifest.collections,
+			loaded.manifest.filesystems
 		);
 
 
@@ -179,6 +180,14 @@ export class PublishManifestUseCase
 					string,
 					unknown
 				>
+			>,
+
+		filesystems:
+			Readonly<
+				Record<
+					string,
+					unknown
+				>
 			>
 	): void {
 
@@ -195,6 +204,11 @@ export class PublishManifestUseCase
 				collectionCount:
 					Object.keys(
 						collections
+					).length,
+
+				filesystemCount:
+					Object.keys(
+						filesystems
 					).length
 			}
 		);

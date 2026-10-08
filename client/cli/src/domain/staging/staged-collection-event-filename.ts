@@ -1,3 +1,4 @@
+/** Filename metadata identifying one generated Collection Resource event. */
 export interface StagedCollectionEventMetadata {
 	readonly collectionName:
 	string;
@@ -24,6 +25,7 @@ const MAX_STAGED_COLLECTION_NAME_BYTES =
 const MAX_STAGED_COLLECTION_EVENT_FILENAME_BYTES =
 	255;
 
+/** Builds the deterministic filename for one staged Collection event. */
 export function buildStagedCollectionEventFilename(
 	metadata:
 		StagedCollectionEventMetadata
@@ -90,6 +92,7 @@ export function buildStagedCollectionEventFilename(
 }
 
 
+/** Parses and validates one staged Collection-event filename. */
 export function parseStagedCollectionEventFilename(
 	filename:
 		string

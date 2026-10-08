@@ -136,8 +136,14 @@ describe(
                     NostrEventStagingRepository = {
                     list:
                         vi.fn(
-                            async () =>
-                                stagedEvents
+                            async (
+                                _stagingRoot,
+                                category
+                            ) =>
+                                category ===
+                                    'resource'
+                                    ? stagedEvents
+                                    : []
                         ),
 
                     read
@@ -189,6 +195,40 @@ describe(
                         createManifest(),
                         '/staging'
                     );
+
+
+                expect(
+                    stagingRepository.list
+                ).toHaveBeenCalledTimes(
+                    3
+                );
+
+
+                expect(
+                    stagingRepository.list
+                ).toHaveBeenNthCalledWith(
+                    1,
+                    '/staging',
+                    'resource'
+                );
+
+
+                expect(
+                    stagingRepository.list
+                ).toHaveBeenNthCalledWith(
+                    2,
+                    '/staging',
+                    'collection'
+                );
+
+
+                expect(
+                    stagingRepository.list
+                ).toHaveBeenNthCalledWith(
+                    3,
+                    '/staging',
+                    'filesystem'
+                );
 
 
                 expect(
@@ -395,9 +435,16 @@ describe(
                     NostrEventStagingRepository = {
                     list:
                         vi.fn(
-                            async () => [
-                                stagedEntry
-                            ]
+                            async (
+                                _stagingRoot,
+                                category
+                            ) =>
+                                category ===
+                                    'resource'
+                                    ? [
+                                        stagedEntry
+                                    ]
+                                    : []
                         ),
 
                     read
@@ -505,6 +552,122 @@ describe(
             }
         );
         it(
+            'publishes missing events in Resource, Collection, and Filesystem category order',
+            async () => {
+                const relay =
+                    'wss://relay.example';
+
+                const publisher =
+                    'a'.repeat(64);
+
+                const stagedEntries = {
+                    resource: {
+                        path: '/staging/events/chapters/1.json',
+                        eventId: 'b'.repeat(64),
+                        createdAt: 1000
+                    },
+                    collection: {
+                        path: '/staging/events/__collections__/defaults.json',
+                        eventId: 'c'.repeat(64),
+                        createdAt: 1001
+                    },
+                    filesystem: {
+                        path: '/staging/events/__filesystems__/library.json',
+                        eventId: 'd'.repeat(64),
+                        createdAt: 1002
+                    }
+                } as const;
+
+                const read =
+                    vi.fn(
+                        async (
+                            entry:
+                                Parameters<
+                                    NostrEventStagingRepository['read']
+                                >[0]
+                        ) => ({
+                            id: entry.eventId,
+                            pubkey: publisher,
+                            created_at: entry.createdAt,
+                            kind: 37770,
+                            tags: [],
+                            content: entry.eventId,
+                            sig: 'e'.repeat(128)
+                        })
+                    );
+
+                const stagingRepository:
+                    NostrEventStagingRepository = {
+                    list:
+                        vi.fn(
+                            async (
+                                _stagingRoot,
+                                category
+                            ) => [
+                                stagedEntries[category]
+                            ]
+                        ),
+                    read
+                };
+
+                const publishEvent =
+                    vi.fn();
+
+                const nostrPublisher =
+                    new NostrStagedEventPublisher(
+                        stagingRepository,
+                        {
+                            getPublicKey:
+                                vi.fn(
+                                    async () => publisher
+                                ),
+                            sign:
+                                vi.fn()
+                        },
+                        {
+                            reconcile:
+                                vi.fn(
+                                    async () => [
+                                        stagedEntries.filesystem.eventId,
+                                        stagedEntries.collection.eventId,
+                                        stagedEntries.resource.eventId
+                                    ]
+                                )
+                        },
+                        {
+                            publish:
+                                publishEvent
+                        },
+                        createLogger()
+                    );
+
+                await nostrPublisher.publish(
+                    {
+                        ...createManifest(),
+                        nostr: {
+                            relays: [
+                                relay
+                            ]
+                        }
+                    },
+                    '/staging'
+                );
+
+                expect(
+                    publishEvent.mock.calls.map(
+                        call =>
+                            call[1].id
+                    )
+                ).toEqual([
+                    stagedEntries.resource.eventId,
+                    stagedEntries.collection.eventId,
+                    stagedEntries.filesystem.eventId
+                ]);
+            }
+        );
+
+
+        it(
             'reconciles and publishes independently per relay',
             async () => {
 
@@ -564,9 +727,16 @@ describe(
                     NostrEventStagingRepository = {
                     list:
                         vi.fn(
-                            async () => [
-                                stagedEntry
-                            ]
+                            async (
+                                _stagingRoot,
+                                category
+                            ) =>
+                                category ===
+                                    'resource'
+                                    ? [
+                                        stagedEntry
+                                    ]
+                                    : []
                         ),
 
                     read
@@ -719,9 +889,16 @@ describe(
                     NostrEventStagingRepository = {
                     list:
                         vi.fn(
-                            async () => [
-                                stagedEntry
-                            ]
+                            async (
+                                _stagingRoot,
+                                category
+                            ) =>
+                                category ===
+                                    'resource'
+                                    ? [
+                                        stagedEntry
+                                    ]
+                                    : []
                         ),
 
                     read

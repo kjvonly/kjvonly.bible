@@ -308,10 +308,10 @@ initializes WorkspaceRuntime
 configures default Nostr relays
 loads cached account state for the restored user
 starts a non-blocking account refresh
-starts bootstrap Resource installation only when signing authentication is available
+evaluates configured application and Filesystem bootstrap Resource installation only when signing authentication is available
 ```
 
-Authentication restoration is therefore a bootstrap prerequisite, while account network refresh is not. A `signed-out` or `read-only` state does not start relay-backed bootstrap Resource installation. If the user later becomes `authenticated`, Application starts the bootstrap work from that authentication-state transition.
+Authentication restoration is therefore a bootstrap prerequisite, while account network refresh is not. A `signed-out` or `read-only` state does not start relay-backed bootstrap Resource installation. If the user later becomes `authenticated`, Application evaluates the independent normal-application and Filesystem bootstrap policies from that authentication-state transition. Authentication owns the prerequisite state; it does not own either bootstrap policy.
 
 ---
 

@@ -22,7 +22,7 @@ describe(
 	'FilesystemInterpreter',
 	() => {
 		it(
-			'interprets f as rootPath and payload keys as root-relative paths',
+			'interprets f as rootPath and preserves full payload paths',
 			() => {
 				const descriptor =
 					createDescriptor();
@@ -33,7 +33,7 @@ describe(
 							.interpret(
 								createResource({
 									value: {
-										'the-fall/creation': {
+										'notes/the-fall/creation': {
 											descriptor
 										}
 									}
@@ -48,7 +48,7 @@ describe(
 						rootPath:
 							'notes',
 						path:
-							'the-fall/creation',
+							'notes/the-fall/creation',
 						descriptor
 					}
 				]);
@@ -85,7 +85,7 @@ describe(
 							.interpret(
 								createResource({
 									value: {
-										entry: {
+										'notes/entry': {
 											descriptor
 										}
 									}

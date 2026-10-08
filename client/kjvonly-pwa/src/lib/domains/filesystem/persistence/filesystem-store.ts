@@ -7,7 +7,7 @@ import type {
 } from '../models/filesystem-root';
 
 /**
- * Persistence boundary for discoverable filesystem mappings.
+ * Persistence boundary for accepted Filesystem mappings.
  *
  * Publisher, rootPath, and path are separate structural identity components.
  * The target descriptor may reference a Resource owned by a different
@@ -19,7 +19,7 @@ export interface FilesystemStore {
 		readonly FilesystemRoot[]
 	>;
 
-	/** Returns one mapping by source publisher, root, and relative path. */
+	/** Returns one mapping by source publisher, root, and complete filesystem path. */
 	get(
 		publisher: string,
 		rootPath: string,
@@ -37,14 +37,14 @@ export interface FilesystemStore {
 		readonly FilesystemEntry[]
 	>;
 
-	/** Persists one root-relative mapping under the supplied filesystem root. */
+	/** Persists one full-path mapping under the supplied filesystem root. */
 	put(
 		publisher: string,
 		rootPath: string,
 		entry: FilesystemEntry
 	): Promise<void>;
 
-	/** Removes one mapping by source publisher, root, and relative path. */
+	/** Removes one mapping by source publisher, root, and complete filesystem path. */
 	delete(
 		publisher: string,
 		rootPath: string,

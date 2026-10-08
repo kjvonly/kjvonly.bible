@@ -2,10 +2,10 @@
 
 ## Status
 
-**Status:** Captured Implementation Record
-**Last source-verified capture:** 2026-09-08
-**Current-source verification:** Not available in the PWA handoff archive
-**Scope:** Manifest-driven Resource build, staging, Blossom publication, Nostr reconciliation/publication, Collections, logging, and repository integration
+**Status:** Captured Implementation Record with current deltas
+**Last full historical capture:** 2026-09-08
+**Current-source verification:** 2026-10-06 for Resource contracts and Filesystem overlay support
+**Scope:** Manifest-driven Resource build, staging, Blossom publication, Nostr reconciliation/publication, Collections, Filesystem overlays, logging, and repository integration
 
 This document consolidates the captured Resource Publishing CLI design and implementation state from:
 
@@ -17,9 +17,7 @@ This document consolidates the captured Resource Publishing CLI design and imple
 
 The September 8 capture explicitly superseded the September 5 implementation snapshot and is therefore the primary source for the implementation details below.
 
-The CLI source workspace is not present in the current PWA handoff archive used to maintain these implementation docs. Therefore this document records the last captured implementation state rather than claiming present-day source verification.
-
-When the CLI workspace is available again, validate this document against the source before changing its status to **Current**.
+Most sections below intentionally preserve the September 8 captured implementation record. Current deltas are called out explicitly where later source has been re-verified rather than silently rewriting historical behavior.
 
 ## 2026-10-04 Resource Contract Delta
 
@@ -72,7 +70,85 @@ normalized-content/document
 
 There is no separate Resource `category` concept. Resource Type and semantic datatype must not be conflated, and Resource Type must not be inferred from the `d` path.
 
-The CLI source and manifests should be updated and source-verified against this delta before the new events are published. The historical sections below remain the September capture and intentionally retain their original examples.
+Current CLI source and the smoke manifest have been source-verified against this Resource contract, and the Filesystem smoke graph has been published successfully. The historical sections below remain the September capture and intentionally retain their original examples.
+
+---
+
+## 2026-10-06 Filesystem Overlay Delta
+
+Current CLI source adds a third top-level manifest assembly category:
+
+```text
+resources
+collections
+filesystems
+```
+
+Current build order is:
+
+```text
+Resources
+    ↓
+Collections
+    ↓
+Filesystems
+```
+
+A Filesystem definition builds an ordinary Resource with:
+
+```text
+t = filesystem/entry
+dataType = kjvonly.filesystem.entries
+dataVersion = 1
+representation = content
+f = <manifest root>
+```
+
+Its decoded semantic content is:
+
+```text
+complete filesystem path → ResourceDescriptor
+```
+
+`d/resourceId` identifies the Filesystem Resource; `f` identifies its independent root/mount. Payload keys are complete paths including the root and must be strict descendants of it.
+
+Filesystem placement may reference named Resources or Collections already built in the same manifest. A Resource placement without `key` expands every staged concrete Resource under `<placement>/<concrete-key>`; supplying `key` selects one concrete staged Resource. A Collection placement points to the Collection Resource itself.
+
+Target descriptors are constructed from the already-signed staged Nostr Resource/Collection events plus `manifest.nostr.relays`, so Filesystem assembly remains independent of whether the target event uses `content` or `descriptors` representation.
+
+Generated Filesystem events use dedicated staging under:
+
+```text
+events/__filesystems__/
+```
+
+Top-level Resource, Collection, and Filesystem manifest names are validated as staging-safe logical names before build work begins. They are limited to one non-hidden path segment and 128 UTF-8 bytes, and cannot use the generated staging directory names `__collections__` or `__filesystems__`. This prevents manifest names from colliding with or disappearing inside the Node staging layout.
+
+and reuse the exact prior signed Filesystem event when the semantic input revision is unchanged. The revision includes publisher, root, event definition, relay list, generated paths, and exact target event IDs.
+
+Nostr publication category order is explicit:
+
+```text
+ordinary Resources
+    ↓
+Collections
+    ↓
+Filesystems
+```
+
+This is application-owned category ordering, not a complete dependency/topological
+sort among events within one category.
+
+Collection events retain the accepted v1 behavior of being rebuilt/re-signed on each build. Therefore a newly signed Collection event intentionally changes a dependent Filesystem overlay's input revision. Collection reuse remains a deferred optimization.
+
+The V1 flow was smoke-built and published with `zarf/manifest/filesystem-smoke.yaml`, producing two live mappings:
+
+```text
+filesystem-smoke/content/chapter/1_1
+filesystem-smoke/content/collection
+```
+
+The relay payload confirmed that both mappings point to the target Nostr Resource events, preserving the normal Resource resolution chain rather than bypassing it for Blossom.
 
 ---
 
@@ -267,6 +343,7 @@ stage external artifacts
 calculate artifact hashes/sizes
 build ResourceDescriptor documents
 build Collections
+build Filesystem overlays
 construct Nostr events
 sign events
 reuse unchanged staged state
@@ -494,6 +571,7 @@ event encodings
 event tags
 object-upload behavior
 Collections
+Filesystem overlays
 ```
 
 The CLI must not infer application-specific policy that belongs in the manifest.
@@ -809,21 +887,33 @@ That property makes reconciliation meaningful because the staged event ID is sta
 
 # 21. Staging Index
 
-The captured Nostr staging repository supported a metadata-only view across normal Resource events and Collection events.
+The current Nostr staging boundary exposes metadata-only listing for ordinary Resource events, Collection events, and Filesystem events. The Node staging adapter owns finding and reading staged events for a requested category; it does not own publication category selection or ordering.
+
+The application Nostr publisher currently requests the categories in this order:
+
+```text
+Resource
+    ↓
+Collection
+    ↓
+Filesystem
+```
 
 The publication path was designed so reconciliation can inspect event identity without opening every event JSON file.
 
 Conceptually:
 
 ```text
-list staged event metadata
+list staged metadata by publication category
     ↓
-reconcile IDs
+combine metadata in application-owned category order
+    ↓
+reconcile exact IDs
     ↓
 read exact JSON only for missing IDs
 ```
 
-This metadata-only listing was treated as a performance invariant.
+This is category ordering, not a topological sort of dependencies among events within one category. Metadata-only listing remains a performance invariant.
 
 ---
 
@@ -1060,7 +1150,27 @@ Collection incremental reuse was deferred optimization work.
 
 ---
 
-# 35. App-Data Manifest
+# 35. Filesystem Overlays
+
+Current V1 Filesystem overlay support is documented in:
+
+```text
+docs/03_implementation/tooling/002-filesystem-overlays.md
+```
+
+The manifest category is declarative and composes already-built named Resources and Collections into filesystem paths. Filesystem publication is still ordinary Resource publication; the special behavior is semantic payload assembly and, on the client, specialized Filesystem persistence.
+
+The first validation manifest is:
+
+```text
+zarf/manifest/filesystem-smoke.yaml
+```
+
+`zarf/manifest/app-data.yaml` integration remains intentionally deferred until end-to-end client installation is proven.
+
+---
+
+# 36. App-Data Manifest
 
 The captured repository integration used:
 
@@ -1089,7 +1199,7 @@ The captured implementation intentionally omitted some production expansion, suc
 
 ---
 
-# 36. Application Defaults Are Manifest Policy
+# 37. Application Defaults Are Manifest Policy
 
 The CLI did not know that a Collection named `application-defaults` was special.
 
@@ -1109,7 +1219,7 @@ publication mechanics
 
 ---
 
-# 37. Make Integration
+# 38. Make Integration
 
 The captured repository exposed app-data build/publish/sync workflows through Make.
 
@@ -1121,7 +1231,7 @@ The exact Make targets should be verified against current repository source befo
 
 ---
 
-# 38. Structured Logging
+# 39. Structured Logging
 
 Structured verbose logging was treated as part of the integration/debugging contract.
 
@@ -1158,7 +1268,7 @@ unnecessarily verbose protocol payloads
 
 ---
 
-# 39. Security Invariants
+# 40. Security Invariants
 
 The captured CLI design established several security boundaries:
 
@@ -1172,7 +1282,7 @@ The captured CLI design established several security boundaries:
 
 ---
 
-# 40. Testing Philosophy
+# 41. Testing Philosophy
 
 Unit tests were intended to remain network-independent.
 
@@ -1193,7 +1303,7 @@ Collection replacement
 
 ---
 
-# 41. Captured Integration Evidence
+# 42. Captured Integration Evidence
 
 The September 8 document recorded successful large-set publication/reconciliation against local infrastructure.
 
@@ -1217,7 +1327,7 @@ This is historical integration evidence, not a substitute for re-running current
 
 ---
 
-# 42. Idempotency Goal
+# 43. Idempotency Goal
 
 The intended `sync` behavior was:
 
@@ -1235,7 +1345,7 @@ The captured exception was v1 Collection rebuilding/re-signing.
 
 ---
 
-# 43. Failure Semantics
+# 44. Failure Semantics
 
 Publication failures should fail the operation visibly.
 
@@ -1247,7 +1357,7 @@ This supports safe retry behavior.
 
 ---
 
-# 44. Development vs Production Policy
+# 45. Development vs Production Policy
 
 The CLI is generic across environments.
 
@@ -1267,7 +1377,7 @@ Do not add environment-specific branches to the core CLI when the difference can
 
 ---
 
-# 45. Locked Captured Decisions
+# 46. Locked Captured Decisions
 
 The September 8 implementation record treated the following as established decisions:
 
@@ -1293,15 +1403,18 @@ The September 8 implementation record treated the following as established decis
 20. Remote cleanup requires an explicit workflow.
 21. Zero-transform artifacts may be symlink-staged.
 22. Collections may be re-signed each build under the captured v1 behavior.
-23. Structured verbose logging is part of operational debugging.
-24. The CLI does not know that `application-defaults` means bootstrap.
-25. Resource-specific development omissions are manifest policy, not CLI branching.
+23. Filesystem overlays build after Resources and Collections and publish after both.
+24. Filesystem overlay payload keys are complete strict-descendant paths; `root` is published as `f`.
+25. Unchanged Filesystem semantic inputs reuse the exact signed staged Filesystem event.
+26. Structured verbose logging is part of operational debugging.
+27. The CLI does not know that `application-defaults` means bootstrap.
+28. Resource-specific development omissions are manifest policy, not CLI branching.
 
 These decisions should be revalidated against current CLI source before being treated as present-day implementation invariants.
 
 ---
 
-# 46. Explicit Non-Goals
+# 47. Explicit Non-Goals
 
 The captured design explicitly avoided:
 
@@ -1321,40 +1434,34 @@ These are useful architectural guardrails even when the CLI source is later refa
 
 ---
 
-# 47. High-Level Build Flow
+# 48. High-Level Build Flow
 
 ```mermaid
 flowchart TD
     A[Operator / Make] --> B[CLI build]
     B --> C[Manifest Loader]
     C --> D[Render + Validate]
-    D --> E[Source Expansion]
+    D --> E[Build Resources]
 
-    E --> F{Descriptor-backed?}
+    E --> F[Signed Resource Events]
+    F --> G[Build Collections]
+    G --> H[Signed Collection Events]
 
-    F -->|No| G[Inline Event Encoding]
-    G --> H[Unsigned Resource Event]
+    F --> I[Filesystem Placement Resolution]
+    H --> I
+    I --> J[Filesystem Content]
+    J --> K[Signed Filesystem Event]
 
-    F -->|Yes| I[Object Encoding]
-    I --> J[Artifact Staging]
-    J --> K[SHA + Size]
-    K --> L[ResourceDescriptor]
-    L --> M[Descriptor JSON]
-    M --> N[Event Encoding]
-    N --> H
-
-    H --> O[Event Signer]
-    O --> P[Signed Resource Event]
-    P --> Q[Signed Event Staging]
-
-    L --> R[Collection Assembly]
-    R --> S[Collection Event]
-    S --> O
+    F --> L[Signed Staging]
+    H --> L
+    K --> L
 ```
+
+Within the Resource phase, ordinary inline and descriptor-backed pipelines retain their existing encoding/artifact behavior. The important current dependency order is Resource → Collection → Filesystem.
 
 ---
 
-# 48. High-Level Publish Flow
+# 49. High-Level Publish Flow
 
 ```mermaid
 flowchart TD
@@ -1365,19 +1472,20 @@ flowchart TD
     D --> E[Ensure Blossom Artifacts]
     E --> F[Nostr Staged Publisher]
 
-    F --> G[List Staged Event Metadata]
-    G --> H[Per-Relay Reconciliation]
-    H --> I{Missing?}
-
-    I -->|No| J[Already Present]
-    I -->|Yes| K[Read Exact Staged Event]
-    K --> L[Normal Nostr EVENT Publish]
+    F --> G[List Resource Metadata]
+    G --> H[List Collection Metadata]
+    H --> I[List Filesystem Metadata]
+    I --> J[Combine in Application Publication Order]
+    J --> K[Reconcile Exact IDs per Relay]
+    K --> L[Publish Missing Events in Preserved Category Order]
     L --> M[Published]
 ```
 
+The application publisher owns which staging categories participate and the category order `Resource → Collection → Filesystem`. The staging adapter only fulfills category-specific listing and exact staged-event reads. This ordering does not claim a complete dependency/topological sort within a category.
+
 ---
 
-# 49. Captured Reconciliation Flow
+# 50. Captured Reconciliation Flow
 
 ```mermaid
 flowchart TD
@@ -1398,7 +1506,7 @@ That value requires current-source verification before being described as curren
 
 ---
 
-# 50. End-to-End Mental Model
+# 51. End-to-End Mental Model
 
 Producer:
 
@@ -1444,44 +1552,30 @@ The producer and consumer share Resource contracts, not runtime implementation o
 
 ---
 
-# 51. Source-Verification Checklist
+# 52. Source-Verification Checklist
 
-When the CLI workspace is next included in a handoff, verify at least:
+When changing the CLI, verify at least:
 
 ```text
-client/cli still exists at the documented path
-commands are still build/publish/sync
-manifest version remains 1
-current source organization matches this document
-import aliases remain valid
-nostr-tools remains the Nostr implementation
-NIP-77 remains the reconciliation protocol
-exact-ID batching still exists
-current reconciliation batch size
+commands remain build/publish/sync
+manifest version remains 1 unless intentionally migrated
+Resource → Collection → Filesystem build ordering remains explicit
+Blossom artifacts publish before Nostr events
+application-owned Nostr publication category order remains Resource → Collection → Filesystem
+Filesystem target descriptors are built from signed staged events
+Filesystem input revision includes exact target event IDs
+Collections retain their documented v1 incremental behavior unless intentionally optimized
+NIP-77 / exact-ID reconciliation behavior remains valid
 Blossom descriptor shape remains urls[]
-Collections still have the documented incremental behavior
-app-data.yaml still represents the current repository publication policy
 current Make targets and local endpoints
 current tests/build commands
 ```
 
-Then change the status from:
-
-```text
-Captured Implementation Record
-```
-
-to:
-
-```text
-Current
-```
-
-only after that source review.
+Because this document retains a historical September capture plus later source-verified deltas, update the dated delta sections when behavior changes rather than silently treating historical examples as current.
 
 ---
 
-# 52. Historical Capture Disposition
+# 53. Historical Capture Disposition
 
 This document consolidates the unique implementation/design material from the three dated CLI captures.
 

@@ -22,11 +22,12 @@ import type {
 } from './filesystem-store';
 
 /**
- * IndexedDB persistence adapter for discoverable filesystem mappings.
+ * IndexedDB persistence adapter for accepted Filesystem mappings.
  *
- * Filesystem entries deliberately live outside DOMAIN_OBJECTS because they
- * describe Resources that are available to the application rather than Domain
- * data that has already been installed as accepted Domain state.
+ * Filesystem entries deliberately live outside DOMAIN_OBJECTS because the
+ * accepted value is the Filesystem mapping itself, not the target Resource's
+ * Domain Object. A stored descriptor may identify a target Resource that has
+ * not yet been resolved or installed.
  */
 export class IndexedDBFilesystemStore
 	implements FilesystemStore {

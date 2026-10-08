@@ -5,6 +5,9 @@
  * descriptors exposed beneath the root may belong to different publishers.
  */
 export interface FilesystemRoot {
+	/** Publisher/source that contributed this mounted Filesystem root. */
 	readonly publisher: string;
+
+	/** Canonical root/mount path contributed by the Filesystem Resource. */
 	readonly rootPath: string;
 }

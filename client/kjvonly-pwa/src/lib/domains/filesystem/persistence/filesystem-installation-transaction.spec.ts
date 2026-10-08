@@ -88,7 +88,7 @@ describe(
 				const entry:
 					FilesystemEntry = {
 						path:
-							'the-fall/creation',
+							'notes/the-fall/creation',
 						descriptor: {
 							metadata: {
 								publisher:

@@ -19,6 +19,12 @@ export class FilesystemEntriesDataTypeHandler
 	readonly dataVersion =
 		FILESYSTEM_ENTRIES_DATA_VERSION;
 
+	/**
+	 * Validates only the path-keyed Filesystem payload shape.
+	 * Descriptor semantics and path placement are validated by later boundaries.
+	 *
+	 * @param value Untrusted decoded semantic Resource value.
+	 */
 	validate(
 		value: unknown
 	): FilesystemEntriesResourceData {

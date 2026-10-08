@@ -25,6 +25,7 @@ import {
 import { ArtifactStagingRepository, StagedArtifactEntry, StageIdentityArtifactRequest, StageMaterializedArtifactRequest } from '#ports/staging/artifact-staging-repository.js';
 import { parseStagedArtifactFilename, buildStagedArtifactFilename } from '#domain/staging/staged-artifact-filename.js';
 
+/** Node filesystem adapter for external-artifact staging mechanics. */
 export class NodeArtifactStagingRepository
     implements ArtifactStagingRepository {
 

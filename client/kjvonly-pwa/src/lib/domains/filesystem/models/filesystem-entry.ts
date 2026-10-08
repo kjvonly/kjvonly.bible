@@ -3,12 +3,12 @@ import type {
 } from '$lib/resource';
 
 /**
- * A discoverable mapping from a filesystem path to a target Resource.
+ * First-class accepted Filesystem state mapping a path to a target Resource.
  * The stored path includes the filesystem root path used to mount the entry.
  *
- * The entry stores the target ResourceDescriptor unchanged. It describes
- * content that is available to the application; it is not itself the target
- * Domain Object and does not imply that the target Resource has been loaded.
+ * The entry stores the target ResourceDescriptor unchanged. The mapping itself
+ * is accepted Filesystem state; its target Resource may still be unresolved or
+ * uninstalled, and the entry is not that target Resource's Domain Object.
  */
 export interface FilesystemEntry {
 	/** Filesystem path including the root path under which the entry is stored. */

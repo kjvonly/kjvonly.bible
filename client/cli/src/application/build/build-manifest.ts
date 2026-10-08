@@ -22,6 +22,10 @@ import {
 	CollectionBuilder
 } from './collection/collection-builder.js';
 
+import {
+	FilesystemBuilder
+} from './filesystem/filesystem-builder.js';
+
 import type{  Logger } from '#ports/logging/logger.js';
 import { ManifestLoader } from '#ports/manifest/manifest-loader.js';
 import { EventSigner } from '#ports/nostr/event-signer.js';
@@ -66,6 +70,9 @@ export class BuildManifestUseCase
 
 		private readonly collectionBuilder:
 			CollectionBuilder,
+
+		private readonly filesystemBuilder:
+			Pick<FilesystemBuilder, 'build'>,
 
 		private readonly logger:
 			Logger
@@ -376,6 +383,18 @@ export class BuildManifestUseCase
 			});
 
 
+		await this
+			.filesystemBuilder
+			.build({
+				manifest:
+					loaded.manifest,
+
+				stagingRoot,
+
+				publisher
+			});
+
+
 		this.logBuildComplete(
 			manifestPath
 		);
@@ -419,6 +438,11 @@ export class BuildManifestUseCase
 				collectionCount:
 					Object.keys(
 						manifest.collections
+					).length,
+
+				filesystemCount:
+					Object.keys(
+						manifest.filesystems
 					).length
 			}
 		);

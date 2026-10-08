@@ -29,9 +29,9 @@ interface FilesystemSearchPort {
 }
 
 /**
- * Application-facing read boundary for mounted filesystem Resources.
+ * Application-facing read boundary for accepted mounted Filesystem mappings.
  *
- * This service only discovers Resource mappings that are already mounted.
+ * This service reads mappings already accepted by the Filesystem lifecycle.
  * Resolving or installing an entry's target Resource remains the Resource
  * layer's responsibility.
  */
@@ -50,7 +50,7 @@ export class FilesystemService {
 			FilesystemSearchPort
 	) {}
 
-	/** Returns the mounted filesystem roots available to the application. */
+	/** Returns the accepted filesystem roots currently mounted in the application. */
 	listRoots(): Promise<
 		readonly FilesystemRoot[]
 	> {
@@ -87,8 +87,8 @@ export class FilesystemService {
 	}
 
 	/**
-	 * Searches mounted Resources selected by an indexed descriptor metadata
-	 * field, matching display name or filesystem path without resolving targets.
+	 * Searches accepted mounted mappings by indexed descriptor metadata, matching
+	 * display name or filesystem path without resolving target Resources.
 	 */
 	search(
 		byIndex:

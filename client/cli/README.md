@@ -163,6 +163,60 @@ Collections are assembly definitions. They are not another Resource representati
 
 ---
 
+## Filesystems
+
+Filesystems are a third manifest assembly category. They build ordinary `representation = content` Resources whose semantic payload maps complete filesystem paths to deferred `ResourceDescriptor` values.
+
+Build category order is explicit:
+
+```text
+Resources
+    ↓
+Collections
+    ↓
+Filesystems
+```
+
+A Filesystem definition chooses a root and explicitly places named Resources or Collections beneath it. `root` is emitted as Resource metadata `f`; `d` remains the independent Resource identity.
+
+Example:
+
+```yaml
+filesystems:
+  library:
+    root: library
+
+    event:
+      encoding:
+        - hex
+      tags:
+        - ["d", "kjvonly/filesystem/library"]
+        - ["m", "application/json+hex"]
+        - ["t", "filesystem/entry"]
+        - ["dataType", "kjvonly.filesystem.entries"]
+        - ["dataVersion", "1"]
+        - ["representation", "content"]
+
+    directories:
+      - path: bible/chapters
+        resources:
+          kjvs:
+            resource: bible-chapters-kjvs
+
+      - path: bootstrap
+        collections:
+          defaults:
+            collection: application-defaults
+```
+
+Resource placement without `key` expands every staged concrete key under `<placement>/<key>`. Supplying `key` selects exactly one staged Resource and places it at the placement basename. Collection placement always refers to the Collection Resource itself.
+
+Generated payload keys are complete paths including the root. The builder rejects paths equal to the root, paths outside the root, exact collisions, and file/directory prefix collisions before signing the Filesystem Resource.
+
+Filesystem omission is not deletion on the client: a later overlay that omits a mapping does not delete previously accepted Filesystem state.
+
+---
+
 # Getting Started
 
 ## Install
@@ -321,10 +375,13 @@ resources:
 
 collections:
   # Collection definitions
+
+filesystems:
+  # Filesystem overlay definitions
 ```
 
 
-Resource events use an explicit envelope. Every Resource and Collection event must contain exactly one of each:
+Resource events use an explicit envelope. Every Resource, Collection, and Filesystem event must contain exactly one of each:
 
 ```text
 d
@@ -418,6 +475,8 @@ Conceptually:
 └── events/
 ```
 
+Resource, Collection, and Filesystem manifest names participate directly in this staging layout. They must therefore be staging-safe logical names: one visible path segment, at most 128 UTF-8 bytes, not dot-prefixed, and not a reserved generated-directory name. The reserved names are currently `__collections__` and `__filesystems__`.
+
 Resource names create namespaces beneath those directories.
 
 Example:
@@ -430,6 +489,7 @@ Example:
 │
 └── events/
     ├── __collections__/
+    ├── __filesystems__/
     ├── bible-bundle-kjv/
     └── bible-bundle-kjvs/
 ```
@@ -461,17 +521,21 @@ Blossom servers
 
 The current policy is strict: every configured target is required.
 
-## Artifacts Before Events
+## Publication Order
 
 Publication order is:
 
 ```text
 Blossom artifacts
        ↓
-Nostr events
+ordinary Resource Nostr events
+       ↓
+Collection Nostr events
+       ↓
+Filesystem Nostr events
 ```
 
-This prevents a published descriptor from pointing at an artifact that has not yet been made available.
+This orders broad publication categories so referenced artifacts and earlier Resource categories are attempted first. The application publisher owns the Nostr category order; staging adapters do not. This is not a complete dependency/topological sort among events inside one category.
 
 ## Nostr Reconciliation
 
@@ -602,6 +666,7 @@ application/build/
 ├── collection/
 ├── descriptor/
 ├── encoding/
+├── filesystem/
 ├── inline/
 └── source/
 ```
@@ -926,6 +991,8 @@ sync composes build and publish.
 Resources produce content events or descriptors.
 
 Collections aggregate Resource descriptors.
+
+Filesystems map full application-visible paths to descriptors for already-built Resources and Collections.
 
 Application code owns workflow and policy.
 

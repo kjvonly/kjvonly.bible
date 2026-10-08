@@ -23,7 +23,9 @@ import {
 import { CollectionEventStagingRepository, StagedCollectionEventEntry, StageCollectionEventRequest } from '#ports/staging/collection-event-staging-repository.js';
 import { parseSignedNostrEvent } from '#domain/event/parse-signed-nostr-event.js';
 import { parseStagedCollectionEventFilename, buildStagedCollectionEventFilename } from '#domain/staging/staged-collection-event-filename.js';
+import { assertStagingLogicalName, STAGED_COLLECTIONS_DIRECTORY } from '#domain/staging/staging-layout.js';
 
+/** Node filesystem adapter for generated Collection-event staging mechanics. */
 export class NodeCollectionEventStagingRepository
 	implements CollectionEventStagingRepository {
 
@@ -214,6 +216,11 @@ export class NodeCollectionEventStagingRepository
 		StagedCollectionEventEntry
 	> {
 
+		assertStagingLogicalName(
+			request.collectionName
+		);
+
+
 		const directory =
 			this.getDirectory(
 				request.stagingRoot
@@ -333,7 +340,7 @@ export class NodeCollectionEventStagingRepository
 		return join(
 			stagingRoot,
 			'events',
-			'__collections__'
+			STAGED_COLLECTIONS_DIRECTORY
 		);
 	}
 

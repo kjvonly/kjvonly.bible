@@ -479,9 +479,25 @@ Module/UI
     = user-facing composition and policy
 ```
 
-A filesystem entry describes where a Resource is available.
+A filesystem entry describes where a Resource is available. The `FilesystemEntry` mapping is first-class accepted application state persisted in the Filesystem store; it is not the target Domain Object.
 
-It is not the target Domain Object.
+Current Filesystem path semantics are explicit:
+
+```text
+d / resourceId
+    = identity of the Filesystem Resource
+
+metadata.f
+    = filesystem root / mount
+
+payload key
+    = complete filesystem path including the root
+
+FilesystemEntry.path
+    = payload key preserved unchanged
+```
+
+An entry path must be a strict descendant of `metadata.f`; it cannot equal the root. Omission from a later Filesystem Resource is non-destructive and does not delete previously accepted mappings.
 
 The desired general flow is:
 

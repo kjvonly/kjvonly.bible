@@ -767,7 +767,7 @@ dataType     = kjvonly.filesystem.entries
 dataVersion  = 1
 ```
 
-The plural semantic datatype is intentional: one Filesystem Resource payload contains a path-keyed collection of entries, while each installed filesystem object is one `filesystem/entry`.
+The plural semantic datatype is intentional: one Filesystem Resource payload contains a path-keyed collection of entries, while each installed filesystem object is one `filesystem/entry`. Each accepted `FilesystemEntry` is first-class application state; its specialized store does not make it temporary metadata, and it remains distinct from the target Resource's Domain Object.
 
 Current flow:
 
@@ -796,6 +796,36 @@ publisher
 rootPath / mount
 entry path
 ```
+
+The Filesystem Resource and accepted-entry path contract is:
+
+```text
+resourceId / d
+    = identity of the Filesystem Resource
+
+metadata.f
+    = filesystem root / mount
+
+payload key
+    = canonical complete filesystem path including that root
+
+FilesystemEntry.path
+    = payload key preserved unchanged
+```
+
+Each entry path must be a strict descendant of `metadata.f`. The path cannot
+equal the root, sit outside it, or merely share a lexical prefix. Filesystem
+installation does not strip the root from payload keys or reconstruct paths by
+joining root-relative values.
+
+`metadata.f` is validated as Resource-level Filesystem metadata before entry
+interpretation, so an empty path map cannot bypass root canonical validation.
+
+Filesystem Resources are non-destructive overlays. A mapping supplied by the
+Resource may install or update that entry according to currentness; a mapping
+omitted from the Resource does not delete previously accepted Filesystem state.
+This prevents incomplete discovery or a temporarily unavailable relay from
+causing destructive local deletion.
 
 Its transaction writes:
 

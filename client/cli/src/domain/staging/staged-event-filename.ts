@@ -1,3 +1,4 @@
+/** Filename metadata identifying one staged concrete Resource event revision. */
 export interface StagedEventMetadata {
 	readonly key:
 	string;
@@ -34,6 +35,7 @@ const MAX_STAGED_EVENT_KEY_BYTES =
 const MAX_STAGED_EVENT_FILENAME_BYTES =
 	255;
 
+/** Builds the deterministic filename for one staged concrete Resource event. */
 export function buildStagedEventFilename(
 	metadata:
 		StagedEventMetadata
@@ -63,6 +65,7 @@ export function buildStagedEventFilename(
 }
 
 
+/** Parses and validates one staged concrete Resource-event filename. */
 export function parseStagedEventFilename(
 	filename:
 		string

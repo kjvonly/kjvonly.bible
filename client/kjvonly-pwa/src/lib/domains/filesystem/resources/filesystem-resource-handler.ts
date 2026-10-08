@@ -23,8 +23,26 @@ import type {
 	ValidatedFilesystemEntryCandidate
 } from './validated-filesystem-entry-candidate';
 
+/** Validator contract consumed by the Filesystem Resource handler. */
+export interface FilesystemResourceValidator
+	extends ResourceValidator<
+		FilesystemEntryCandidate,
+		ValidatedFilesystemEntryCandidate
+	> {
+	/** Validates Filesystem Resource root metadata independently of entry count. */
+	validateRootPath(
+		rootPath: string
+	): void;
+}
+
 /** Installer contract consumed by the Filesystem Resource handler. */
 export interface FilesystemResourceInstaller {
+	/**
+	 * Persists validated mappings for one decoded Filesystem Resource.
+	 *
+	 * @param resource Source Resource whose provenance/currentness is recorded.
+	 * @param candidates Validated Filesystem mappings proposed by the Resource.
+	 */
 	install(
 		resource:
 			DecodedResourceContent,
@@ -58,15 +76,16 @@ export class FilesystemResourceHandler
 				'interpret'
 			>,
 		private readonly validator:
-			ResourceValidator<
-				FilesystemEntryCandidate,
-				ValidatedFilesystemEntryCandidate
-			>,
+			FilesystemResourceValidator,
 		private readonly installer:
 			FilesystemResourceInstaller
 	) {}
 
-	/** Validates the semantic payload, then interprets and installs mappings. */
+	/**
+	 * Validates payload and root metadata, then interprets and installs mappings.
+	 *
+	 * @param resource Decoded Resource dispatched by Filesystem Resource Type.
+	 */
 	async handle(
 		resource:
 			DecodedResourceContent
@@ -92,6 +111,22 @@ export class FilesystemResourceHandler
 				...resource,
 				value
 			};
+
+		const rootPath =
+			filesystemResource.metadata?.f;
+
+		if (
+			rootPath === undefined ||
+			rootPath.length === 0
+		) {
+			throw new Error(
+				'Filesystem Resource is missing f metadata.'
+			);
+		}
+
+		this.validator.validateRootPath(
+			rootPath
+		);
 
 		const candidates =
 			Array.from(

@@ -43,6 +43,10 @@ import {
 } from './collection-event-builder.js';
 
 import {
+	NostrEventResourceDescriptorBuilder
+} from '../descriptor/nostr-event-resource-descriptor-builder.js';
+
+import {
 	EncodingRegistry
 } from '../encoding/encoding-registry.js';
 import { LocalNostrSigner } from '#adapters/nostr/signer/local-nostr-signer.js';
@@ -301,6 +305,8 @@ describe(
 										1000
 							}
 						),
+
+						new NostrEventResourceDescriptorBuilder(),
 
 						stagingRepository,
 						logger
@@ -599,6 +605,8 @@ describe(
 							}
 						),
 
+						new NostrEventResourceDescriptorBuilder(),
+
 						stagingRepository,
 						createLogger()
 					);
@@ -827,6 +835,8 @@ describe(
 							}
 						),
 
+						new NostrEventResourceDescriptorBuilder(),
+
 						new NodeCollectionEventStagingRepository(),
 						createLogger()
 					);
@@ -924,6 +934,8 @@ describe(
 										1000
 							}
 						),
+
+						new NostrEventResourceDescriptorBuilder(),
 
 						new NodeCollectionEventStagingRepository(),
 						createLogger()

@@ -276,11 +276,15 @@ wake durable Outbox processing
     ↓
 mark application started
     ↓
-start bootstrap Resource installation asynchronously
+evaluate configured application and Filesystem bootstrap policies
+    ↓
+start enabled Resource installations asynchronously
 ```
 
 Bootstrap Resource installation intentionally does not block application
-interactivity.
+interactivity. The normal application bootstrap and published Filesystem bootstrap
+are independent policies; Filesystem runtime backing is a separate development
+composition concern.
 
 ---
 

@@ -22,7 +22,7 @@ describe(
 					createRow({
 						publisher: 'alice',
 						rootPath: 'notes',
-						path: 'studies/grace',
+						path: 'notes/studies/grace',
 						name: 'Grace Study'
 					});
 
@@ -46,7 +46,7 @@ describe(
 			() => {
 				const row =
 					createRow({
-						path: 'spurgeon/morning-and-evening'
+						path: 'notes/spurgeon/morning-and-evening'
 					});
 
 				expect(
@@ -65,10 +65,10 @@ describe(
 			() => {
 				const rows = [
 					createRow({
-						path: 'one'
+						path: 'notes/one'
 					}),
 					createRow({
-						path: 'two'
+						path: 'notes/two'
 					})
 				];
 
@@ -88,7 +88,7 @@ describe(
 			() => {
 				const row =
 					createRow({
-						path: 'creation',
+						path: 'notes/creation',
 						name: 'Creation'
 					});
 

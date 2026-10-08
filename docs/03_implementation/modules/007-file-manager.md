@@ -82,6 +82,8 @@ Destination Module
     "What does this Resource mean, and how is it acquired and used?"
 ```
 
+A `FilesystemEntry` in this projection is already first-class accepted Filesystem state. "Resource availability" describes the target identified by its `ResourceDescriptor`; it does not mean the mapping itself is provisional. The target Resource may remain unresolved or uninstalled until a later application action.
+
 The filesystem location and the Resource identity remain separate. Resource metadata also keeps machine-facing contracts distinct from optional user-facing presentation metadata:
 
 ```text

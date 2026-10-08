@@ -11,9 +11,10 @@ export const FILESYSTEM_ENTRY_OBJECT_TYPE =
  * Creates the stable identity of one filesystem entry.
  *
  * Identity belongs to the filesystem source publisher, filesystem root, and
- * root-relative path. The publisher inside the target ResourceDescriptor
- * deliberately does not participate, so a publisher may curate or expose a
- * Resource published by someone else.
+ * complete filesystem path. The path includes the root, while `rootPath` remains
+ * a separate identity component for mounted-root grouping. The publisher inside
+ * the target ResourceDescriptor deliberately does not participate, so a publisher
+ * may curate or expose a Resource published by someone else.
  */
 export function createFilesystemEntryId(
 	publisher: string,

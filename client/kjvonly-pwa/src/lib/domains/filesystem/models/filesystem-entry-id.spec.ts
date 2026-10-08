@@ -12,19 +12,19 @@ describe(
 	'Filesystem entry identity',
 	() => {
 		it(
-			'uses the filesystem source publisher, root, and relative path',
+			'uses the filesystem source publisher, root, and complete path',
 			() => {
 				expect(
 					createFilesystemEntryId(
 						'alice',
 						'notes',
-						'the-fall/creation'
+						'notes/the-fall/creation'
 					)
 				).toBe(
 					JSON.stringify([
 						'alice',
 						'notes',
-						'the-fall/creation'
+						'notes/the-fall/creation'
 					])
 				);
 			}
@@ -56,20 +56,20 @@ describe(
 		);
 
 		it(
-			'allows the same relative path under different roots',
+			'allows equivalent descendant placements under different roots',
 			() => {
 				const notes =
 					createFilesystemEntryId(
 						'alice',
 						'notes',
-						'favorites/item'
+						'notes/favorites/item'
 					);
 
 				const audio =
 					createFilesystemEntryId(
 						'alice',
 						'audio',
-						'favorites/item'
+						'audio/favorites/item'
 					);
 
 				expect(

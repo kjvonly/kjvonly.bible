@@ -7,14 +7,23 @@ import {
 	dirname,
 	join
 } from 'node:path';
+
+import {
+	isStagingLogicalName,
+	STAGED_COLLECTIONS_DIRECTORY,
+	STAGED_FILESYSTEMS_DIRECTORY
+} from '#domain/staging/staging-layout.js';
+
 import { CollectionEventStagingRepository, StagedCollectionEventEntry } from '#ports/staging/collection-event-staging-repository.js';
-import { NostrEventStagingRepository, StagedNostrEventEntry } from '#ports/staging/nostr-event-staging-repository.js';
+import { FilesystemEventStagingRepository, StagedFilesystemEventEntry } from '#ports/staging/filesystem-event-staging-repository.js';
+import { NostrEventStagingRepository, StagedNostrEventCategory, StagedNostrEventEntry } from '#ports/staging/nostr-event-staging-repository.js';
 import { SignedEventStagingRepository, StagedEventEntry } from '#ports/staging/signed-event-staging-repository.js';
 
-const COLLECTION_DIRECTORY =
-	'__collections__';
 
-
+/**
+ * Reads staged Nostr Resource events from the Node staging layout.
+ * Publication category selection and ordering are owned by the application layer.
+ */
 export class NodeNostrEventStagingRepository
 	implements NostrEventStagingRepository {
 
@@ -23,71 +32,46 @@ export class NodeNostrEventStagingRepository
 			SignedEventStagingRepository,
 
 		private readonly collectionEventStagingRepository:
-			CollectionEventStagingRepository
+			CollectionEventStagingRepository,
+
+		private readonly filesystemEventStagingRepository:
+			FilesystemEventStagingRepository
 	) {}
 
 
 	async list(
 		stagingRoot:
-			string
+			string,
+
+		category:
+			StagedNostrEventCategory
 	): Promise<
 		readonly StagedNostrEventEntry[]
 	> {
 
-		const resourceNames =
-			await this.listResourceNames(
-				stagingRoot
-			);
-
-
-		const resourceEntries =
-			await Promise.all(
-				resourceNames.map(
-					resourceName =>
-						this
-							.signedEventStagingRepository
-							.list(
-								stagingRoot,
-								resourceName
-							)
-				)
-			);
-
-
-		const collectionEntries =
-			await this
-				.collectionEventStagingRepository
-				.list(
+		switch (
+			category
+		) {
+			case 'resource':
+				return this.listResourceEntries(
 					stagingRoot
 				);
 
+			case 'collection':
+				return this.listCollectionEntries(
+					stagingRoot
+				);
 
-		return [
-			...resourceEntries
-				.flat()
-				.map(
-					entry =>
-						this.fromResourceEntry(
-							entry
-						)
-				),
+			case 'filesystem':
+				return this.listFilesystemEntries(
+					stagingRoot
+				);
 
-			...collectionEntries
-				.map(
-					entry =>
-						this.fromCollectionEntry(
-							entry
-						)
-				)
-		].sort(
-			(
-				left,
-				right
-			) =>
-				left.path.localeCompare(
-					right.path
-				)
-		);
+			default:
+				throw new Error(
+					`Unsupported staged Nostr event category: ${String(category)}`
+				);
+		}
 	}
 
 
@@ -116,7 +100,7 @@ export class NodeNostrEventStagingRepository
 
 		if (
 			resourceName ===
-				COLLECTION_DIRECTORY
+				STAGED_COLLECTIONS_DIRECTORY
 		) {
 			const staged =
 				await this
@@ -152,6 +136,50 @@ export class NodeNostrEventStagingRepository
 
 			return this
 				.collectionEventStagingRepository
+				.read(
+					sourceEntry
+				);
+		}
+
+
+		if (
+			resourceName ===
+				STAGED_FILESYSTEMS_DIRECTORY
+		) {
+			const staged =
+				await this
+					.filesystemEventStagingRepository
+					.list(
+						stagingRoot
+					);
+
+
+			const sourceEntry =
+				staged.find(
+					candidate =>
+						candidate.path ===
+							entry.path
+				);
+
+
+			if (
+				sourceEntry ===
+					undefined
+			) {
+				throw new Error(
+					`Staged Nostr event not found: ${entry.path}`
+				);
+			}
+
+
+			this.assertFilesystemEntry(
+				entry,
+				sourceEntry
+			);
+
+
+			return this
+				.filesystemEventStagingRepository
 				.read(
 					sourceEntry
 				);
@@ -196,6 +224,98 @@ export class NodeNostrEventStagingRepository
 			.read(
 				sourceEntry
 			);
+	}
+
+
+	private async listResourceEntries(
+		stagingRoot:
+			string
+	): Promise<
+		readonly StagedNostrEventEntry[]
+	> {
+
+		const resourceNames =
+			await this.listResourceNames(
+				stagingRoot
+			);
+
+
+		const resourceEntries =
+			await Promise.all(
+				resourceNames.map(
+					resourceName =>
+						this
+							.signedEventStagingRepository
+							.list(
+								stagingRoot,
+								resourceName
+							)
+				)
+			);
+
+
+		return this.sortByPath(
+			resourceEntries
+				.flat()
+				.map(
+					entry =>
+						this.fromResourceEntry(
+							entry
+						)
+				)
+		);
+	}
+
+
+	private async listCollectionEntries(
+		stagingRoot:
+			string
+	): Promise<
+		readonly StagedNostrEventEntry[]
+	> {
+
+		const entries =
+			await this
+				.collectionEventStagingRepository
+				.list(
+					stagingRoot
+				);
+
+
+		return this.sortByPath(
+			entries.map(
+				entry =>
+					this.fromCollectionEntry(
+						entry
+					)
+			)
+		);
+	}
+
+
+	private async listFilesystemEntries(
+		stagingRoot:
+			string
+	): Promise<
+		readonly StagedNostrEventEntry[]
+	> {
+
+		const entries =
+			await this
+				.filesystemEventStagingRepository
+				.list(
+					stagingRoot
+				);
+
+
+		return this.sortByPath(
+			entries.map(
+				entry =>
+					this.fromFilesystemEntry(
+						entry
+					)
+			)
+		);
 	}
 
 
@@ -247,11 +367,9 @@ export class NodeNostrEventStagingRepository
 			.filter(
 				entry =>
 					entry.isDirectory() &&
-					!entry.name.startsWith(
-						'.'
-					) &&
-					entry.name !==
-						COLLECTION_DIRECTORY
+					isStagingLogicalName(
+						entry.name
+					)
 			)
 			.map(
 				entry =>
@@ -282,6 +400,24 @@ export class NodeNostrEventStagingRepository
 	private fromCollectionEntry(
 		entry:
 			StagedCollectionEventEntry
+	): StagedNostrEventEntry {
+
+		return {
+			path:
+				entry.path,
+
+			eventId:
+				entry.eventId,
+
+			createdAt:
+				entry.createdAt
+		};
+	}
+
+
+	private fromFilesystemEntry(
+		entry:
+			StagedFilesystemEventEntry
 	): StagedNostrEventEntry {
 
 		return {
@@ -336,6 +472,47 @@ export class NodeNostrEventStagingRepository
 				`Staged Nostr event metadata does not match filename: ${entry.path}`
 			);
 		}
+	}
+
+
+	private assertFilesystemEntry(
+		entry:
+			StagedNostrEventEntry,
+
+		sourceEntry:
+			StagedFilesystemEventEntry
+	): void {
+
+		if (
+			entry.eventId !==
+				sourceEntry.eventId ||
+			entry.createdAt !==
+				sourceEntry.createdAt
+		) {
+			throw new Error(
+				`Staged Nostr event metadata does not match filename: ${entry.path}`
+			);
+		}
+	}
+
+
+	/** Sorts each publication dependency group deterministically by staged path. */
+	private sortByPath(
+		entries:
+			readonly StagedNostrEventEntry[]
+	): readonly StagedNostrEventEntry[] {
+
+		return [
+			...entries
+		].sort(
+			(
+				left,
+				right
+			) =>
+				left.path.localeCompare(
+					right.path
+				)
+		);
 	}
 
 

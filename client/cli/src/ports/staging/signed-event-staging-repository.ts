@@ -3,6 +3,7 @@ import { StagedEventMetadata } from "#domain/staging/staged-event-filename.js";
 
 
 
+/** Metadata and local path for one staged concrete Resource event. */
 export interface StagedEventEntry {
 	readonly path:
 		string;
@@ -12,6 +13,7 @@ export interface StagedEventEntry {
 }
 
 
+/** Request to atomically replace one concrete Resource's staged signed event. */
 export interface StageSignedEventRequest {
 	readonly stagingRoot:
 		string;
@@ -42,6 +44,7 @@ export interface StageSignedEventRequest {
 }
 
 
+/** Persistence boundary for concrete signed Resource-event staging. */
 export interface SignedEventStagingRepository {
 	list(
 		stagingRoot:

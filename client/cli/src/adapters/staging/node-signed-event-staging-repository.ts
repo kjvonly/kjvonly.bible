@@ -20,9 +20,11 @@ import {
 } from 'nostr-tools/pure';
 import { parseSignedNostrEvent } from '#domain/event/parse-signed-nostr-event.js';
 import { parseStagedEventFilename, buildStagedEventFilename } from '#domain/staging/staged-event-filename.js';
+import { assertStagingLogicalName } from '#domain/staging/staging-layout.js';
 import { SignedEventStagingRepository, StagedEventEntry, StageSignedEventRequest } from '#ports/staging/signed-event-staging-repository.js';
 import { SignedNostrEvent } from '#domain/event/nostr-event.js';
 
+/** Node filesystem adapter for concrete signed Resource-event staging mechanics. */
 export class NodeSignedEventStagingRepository
 	implements SignedEventStagingRepository {
 
@@ -343,6 +345,11 @@ export class NodeSignedEventStagingRepository
 		resourceName:
 			string
 	): string {
+
+		assertStagingLogicalName(
+			resourceName
+		);
+
 
 		return join(
 			stagingRoot,

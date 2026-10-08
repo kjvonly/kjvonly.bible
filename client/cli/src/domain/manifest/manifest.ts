@@ -2,6 +2,23 @@ import {
 	z
 } from 'zod';
 
+import {
+	FILESYSTEM_ENTRIES_DATA_TYPE,
+	FILESYSTEM_ENTRIES_DATA_VERSION,
+	FILESYSTEM_RESOURCE_TYPE,
+	FILESYSTEM_ROOT_METADATA_KEY
+} from '#domain/filesystem/filesystem-resource-contract.js';
+
+import {
+	isCanonicalFilesystemDirectoryPath,
+	isCanonicalFilesystemPath,
+	isFilesystemPathSegment
+} from '#domain/filesystem/filesystem-path.js';
+
+import {
+	getStagingLogicalNameError
+} from '#domain/staging/staging-layout.js';
+
 
 const nonEmptyString =
 	z.string()
@@ -101,6 +118,181 @@ export const collectionDefinitionSchema =
 	});
 
 
+/** Selects all staged Resources for one definition, or one staged `key`. */
+export const filesystemResourcePlacementDefinitionSchema =
+	z.object({
+		resource:
+			nonEmptyString,
+
+		key:
+			nonEmptyString
+				.optional()
+	});
+
+
+/** Places one already-built Collection Resource at a Filesystem location. */
+export const filesystemCollectionPlacementDefinitionSchema =
+	z.object({
+		collection:
+			nonEmptyString
+	});
+
+
+/** Groups Resource and Collection placements beneath one root-relative directory. */
+export const filesystemDirectoryDefinitionSchema =
+	z.object({
+		path:
+			z.string()
+				.trim()
+				.refine(
+					isCanonicalFilesystemDirectoryPath,
+					{
+						message:
+							'Filesystem directory path must be canonical.'
+					}
+				)
+				.default(''),
+
+		resources:
+			z.record(
+				nonEmptyString,
+				filesystemResourcePlacementDefinitionSchema
+			)
+			.default({}),
+
+		collections:
+			z.record(
+				nonEmptyString,
+				filesystemCollectionPlacementDefinitionSchema
+			)
+			.default({})
+	})
+	.superRefine(
+		(
+			directory,
+			context
+		) => {
+			const resourcePlacements =
+				Object.keys(
+					directory.resources
+				);
+
+			const collectionPlacements =
+				Object.keys(
+					directory.collections
+				);
+
+
+			if (
+				resourcePlacements.length === 0 &&
+				collectionPlacements.length === 0
+			) {
+				context.addIssue({
+					code:
+						'custom',
+
+					message:
+						'Filesystem directory must contain at least one Resource or Collection placement.'
+				});
+			}
+
+
+			for (
+				const placementName
+				of resourcePlacements
+			) {
+				if (
+					!isFilesystemPathSegment(
+						placementName
+					)
+				) {
+					context.addIssue({
+						code:
+							'custom',
+
+						path: [
+							'resources',
+							placementName
+						],
+
+						message:
+							`Invalid Filesystem placement name: ${placementName}`
+					});
+				}
+
+
+				if (
+					directory.collections[
+						placementName
+					] !== undefined
+				) {
+					context.addIssue({
+						code:
+							'custom',
+
+						path: [
+							'resources',
+							placementName
+						],
+
+						message:
+							`Filesystem placement name is used by both a Resource and Collection: ${placementName}`
+					});
+				}
+			}
+
+
+			for (
+				const placementName
+				of collectionPlacements
+			) {
+				if (
+					!isFilesystemPathSegment(
+						placementName
+					)
+				) {
+					context.addIssue({
+						code:
+							'custom',
+
+						path: [
+							'collections',
+							placementName
+						],
+
+						message:
+							`Invalid Filesystem placement name: ${placementName}`
+					});
+				}
+			}
+		}
+	);
+
+
+/** Defines one Filesystem overlay Resource assembled after Resources and Collections. */
+export const filesystemDefinitionSchema =
+	z.object({
+		root:
+			nonEmptyString
+				.refine(
+					isCanonicalFilesystemPath,
+					{
+						message:
+							'Filesystem root must be a canonical path.'
+					}
+				),
+
+		event:
+			eventDefinitionSchema,
+
+		directories:
+			z.array(
+				filesystemDirectoryDefinitionSchema
+			)
+			.min(1)
+	});
+
+
 export const manifestSchema =
 	z.object({
 		version:
@@ -152,6 +344,13 @@ export const manifestSchema =
 				nonEmptyString,
 				collectionDefinitionSchema
 			)
+			.default({}),
+
+		filesystems:
+			z.record(
+				nonEmptyString,
+				filesystemDefinitionSchema
+			)
 			.default({})
 	})
 	.superRefine(
@@ -159,6 +358,59 @@ export const manifestSchema =
 			manifest,
 			context
 		) => {
+
+			for (
+				const [
+					category,
+					definitions
+				]
+				of [
+					[
+						'resources',
+						manifest.resources
+					],
+					[
+						'collections',
+						manifest.collections
+					],
+					[
+						'filesystems',
+						manifest.filesystems
+					]
+				] as const
+			) {
+				for (
+					const name
+					of Object.keys(
+						definitions
+					)
+				) {
+					const error =
+						getStagingLogicalNameError(
+							name
+						);
+
+
+					if (
+						error !==
+							undefined
+					) {
+						context.addIssue({
+							code:
+								'custom',
+
+							path: [
+								category,
+								name
+							],
+
+							message:
+								error
+						});
+					}
+				}
+			}
+
 
 			const defaultStrategy =
 				manifest
@@ -398,6 +650,128 @@ export const manifestSchema =
 					}
 				}
 			}
+
+			for (
+				const [
+					filesystemName,
+					filesystem
+				]
+				of Object.entries(
+					manifest.filesystems
+				)
+			) {
+				for (
+					const message
+					of validateResourceEventTags(
+						filesystem.event.tags
+					)
+				) {
+					context.addIssue({
+						code:
+							'custom',
+
+						path: [
+							'filesystems',
+							filesystemName,
+							'event',
+							'tags'
+						],
+
+						message
+					});
+				}
+
+
+				for (
+					const message
+					of validateFilesystemEventTags(
+						filesystem.event.tags
+					)
+				) {
+					context.addIssue({
+						code:
+							'custom',
+
+						path: [
+							'filesystems',
+							filesystemName,
+							'event',
+							'tags'
+						],
+
+						message
+					});
+				}
+
+
+				for (
+					const [
+						directoryIndex,
+						directory
+					]
+					of filesystem.directories.entries()
+				) {
+					for (
+						const placement
+						of Object.values(
+							directory.resources
+						)
+					) {
+						if (
+							manifest.resources[
+								placement.resource
+							] === undefined
+						) {
+							context.addIssue({
+								code:
+									'custom',
+
+								path: [
+									'filesystems',
+									filesystemName,
+									'directories',
+									directoryIndex,
+									'resources'
+								],
+
+								message:
+									`Unknown Resource: ${placement.resource}`
+							});
+						}
+					}
+
+
+					for (
+						const placement
+						of Object.values(
+							directory.collections
+						)
+					) {
+						if (
+							manifest.collections[
+								placement.collection
+							] === undefined
+						) {
+							context.addIssue({
+								code:
+									'custom',
+
+								path: [
+									'filesystems',
+									filesystemName,
+									'directories',
+									directoryIndex,
+									'collections'
+								],
+
+								message:
+									`Unknown Collection: ${placement.collection}`
+							});
+						}
+					}
+				}
+			}
+
 		}
 	);
 
@@ -524,6 +898,120 @@ function validateResourceEventTags(
 }
 
 
+/**
+ * Validates the Resource envelope constraints owned by a Filesystem definition.
+ *
+ * The manifest `root` field is the single source of truth for `f`; the builder
+ * derives that metadata tag later. Filesystem overlays otherwise remain ordinary
+ * content Resources.
+ */
+function validateFilesystemEventTags(
+	tags:
+		readonly (readonly string[])[]
+): string[] {
+	const messages:
+		string[] = [];
+
+
+	if (
+		tags.some(
+			tag =>
+				tag[0] ===
+					FILESYSTEM_ROOT_METADATA_KEY
+		)
+	) {
+		messages.push(
+			'Filesystem event must not declare an "f" tag; filesystems.<name>.root supplies it.'
+		);
+	}
+
+
+	validateFilesystemTagValue(
+		tags,
+		't',
+		FILESYSTEM_RESOURCE_TYPE,
+		messages
+	);
+
+	validateFilesystemTagValue(
+		tags,
+		'dataType',
+		FILESYSTEM_ENTRIES_DATA_TYPE,
+		messages
+	);
+
+	validateFilesystemTagValue(
+		tags,
+		'dataVersion',
+		String(
+			FILESYSTEM_ENTRIES_DATA_VERSION
+		),
+		messages
+	);
+
+	validateFilesystemTagValue(
+		tags,
+		'representation',
+		'content',
+		messages
+	);
+
+
+	return messages;
+}
+
+
+/**
+ * Requires one already-present generic Resource tag to use the Filesystem value.
+ *
+ * Missing or duplicate tags are reported by `validateResourceEventTags`; this
+ * helper avoids duplicating those generic errors.
+ *
+ * @param tags Resource event tags declared by the Filesystem manifest entry.
+ * @param tagName Generic Resource tag whose Filesystem value is constrained.
+ * @param expectedValue Required Filesystem value for the tag.
+ * @param messages Validation errors accumulated for the Filesystem definition.
+ */
+function validateFilesystemTagValue(
+	tags:
+		readonly (readonly string[])[],
+	tagName:
+		string,
+	expectedValue:
+		string,
+	messages:
+		string[]
+): void {
+	const matches =
+		tags.filter(
+			tag =>
+				tag[0] ===
+					tagName
+		);
+
+
+	if (
+		matches.length !== 1
+	) {
+		return;
+	}
+
+
+	const actualValue =
+		matches[0]?.[1];
+
+
+	if (
+		actualValue !==
+			expectedValue
+	) {
+		messages.push(
+			`Filesystem event "${tagName}" tag must be "${expectedValue}".`
+		);
+	}
+}
+
+
 export type Manifest =
 	z.infer<
 		typeof manifestSchema
@@ -551,6 +1039,30 @@ export type ObjectUploadDefinition =
 export type CollectionDefinition =
 	z.infer<
 		typeof collectionDefinitionSchema
+	>;
+
+
+export type FilesystemDefinition =
+	z.infer<
+		typeof filesystemDefinitionSchema
+	>;
+
+
+export type FilesystemDirectoryDefinition =
+	z.infer<
+		typeof filesystemDirectoryDefinitionSchema
+	>;
+
+
+export type FilesystemResourcePlacementDefinition =
+	z.infer<
+		typeof filesystemResourcePlacementDefinitionSchema
+	>;
+
+
+export type FilesystemCollectionPlacementDefinition =
+	z.infer<
+		typeof filesystemCollectionPlacementDefinitionSchema
 	>;
 
 

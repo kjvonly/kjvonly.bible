@@ -7,23 +7,23 @@ import {
 
 import type {
 	Manifest
-} from '#domain/manifest.js';
+} from '#domain/manifest/manifest.js';
 
 import type {
 	ManifestLoader
-} from '#ports/manifest-loader.js';
+} from '#ports/manifest/manifest-loader.js';
 
 import type {
 	Logger
-} from '#ports/logger.js';
+} from '#ports/logging/logger.js';
 
 import type {
 	BlossomArtifactPublisher
-} from './blossom-artifact-publisher.js';
+} from './blossom/blossom-artifact-publisher.js';
 
 import type {
 	NostrStagedEventPublisher
-} from './nostr-staged-event-publisher.js';
+} from './nostr/nostr-staged-event-publisher.js';
 
 import {
 	PublishManifestUseCase
@@ -31,7 +31,7 @@ import {
 
 import type {
 	PublicationPreflight
-} from './publication-preflight.js';
+} from './preflight/publication-preflight.js';
 
 
 function createLogger():
@@ -71,6 +71,9 @@ function createManifest() {
 			{},
 
 		collections:
+			{},
+
+		filesystems:
 			{}
 	} satisfies Manifest;
 }
@@ -275,6 +278,9 @@ describe(
 							0,
 
 						collectionCount:
+							0,
+
+						filesystemCount:
 							0
 					}
 				);

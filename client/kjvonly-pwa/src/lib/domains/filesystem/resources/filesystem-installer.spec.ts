@@ -84,7 +84,7 @@ describe(
 							rootPath:
 								'notes',
 							path:
-								'the-fall/creation',
+								'notes/the-fall/creation',
 							descriptor:
 								DESCRIPTOR
 						}
@@ -95,7 +95,7 @@ describe(
 					createFilesystemEntryId(
 						resource.publisher,
 						'notes',
-						'the-fall/creation'
+						'notes/the-fall/creation'
 					);
 
 				expect(
@@ -108,7 +108,7 @@ describe(
 							'notes',
 						entry: {
 							path:
-								'the-fall/creation',
+								'notes/the-fall/creation',
 							descriptor:
 								DESCRIPTOR
 						}
@@ -146,6 +146,31 @@ describe(
 		);
 
 		it(
+			'treats an omitted mapping set as a non-destructive no-op',
+			async () => {
+				const transaction =
+					new FakeTransaction();
+
+				await new FilesystemInstaller(
+					transaction
+				).install(
+					createResource(),
+					[]
+				);
+
+				expect(
+					transaction.runs
+				).toBe(0);
+				expect(
+					transaction.entries
+				).toHaveLength(0);
+				expect(
+					transaction.installations
+				).toHaveLength(0);
+			}
+		);
+
+		it(
 			'skips an older or equal source Resource revision',
 			async () => {
 				const resource =
@@ -154,7 +179,7 @@ describe(
 					createFilesystemEntryId(
 						resource.publisher,
 						'notes',
-						'the-fall/creation'
+						'notes/the-fall/creation'
 					);
 
 				const transaction =
@@ -184,7 +209,7 @@ describe(
 							rootPath:
 								'notes',
 							path:
-								'the-fall/creation',
+								'notes/the-fall/creation',
 							descriptor:
 								DESCRIPTOR
 						}
@@ -231,6 +256,8 @@ function createResource():
 
 class FakeTransaction
 	implements FilesystemInstallationTransaction {
+	runs = 0;
+
 	readonly entries: {
 		publisher: string;
 		rootPath: string;
@@ -252,6 +279,8 @@ class FakeTransaction
 					FilesystemInstallationStores
 			) => Promise<TResult>
 	): Promise<TResult> {
+		this.runs += 1;
+
 		return operation({
 			filesystem: {
 				put:

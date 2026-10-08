@@ -8,6 +8,10 @@ import {
 	CollectionEventBuilder
 } from './collection-event-builder.js';
 
+import {
+	NostrEventResourceDescriptorBuilder
+} from '../descriptor/nostr-event-resource-descriptor-builder.js';
+
 
 export interface BuildCollectionsRequest {
 	readonly manifest:
@@ -29,6 +33,9 @@ export class CollectionBuilder {
 	constructor(
 		private readonly eventBuilder:
 			CollectionEventBuilder,
+
+		private readonly nostrEventResourceDescriptorBuilder:
+			NostrEventResourceDescriptorBuilder,
 
 		private readonly stagingRepository:
 			CollectionEventStagingRepository,
@@ -281,11 +288,33 @@ export class CollectionBuilder {
 
 
 				const childDescriptor =
-					this.createCollectionDescriptor(
-						childCollectionName,
-						childEvent,
-						request.manifest.nostr.relays
+					this
+						.nostrEventResourceDescriptorBuilder
+						.build({
+							resourceName:
+								childCollectionName,
+
+							event:
+								childEvent,
+
+							relays:
+								request
+									.manifest
+									.nostr
+									.relays
+						});
+
+
+				if (
+					childDescriptor
+						.metadata
+						.representation !==
+							'descriptors'
+				) {
+					throw new Error(
+						`Nested Collection "${childCollectionName}" must use representation "descriptors".`
 					);
+				}
 
 
 				this.logCollectionMemberResolved(
@@ -386,268 +415,6 @@ export class CollectionBuilder {
 				collectionName
 			);
 		}
-	}
-
-
-	/**
-	 * Converts a child Collection event into a deferred ResourceDescriptor.
-	 *
-	 * Collection Resource Type, semantic datatype, and Domain-owned Resource
-	 * metadata stay distinct exactly as they do for ordinary manifest Resources.
-	 */
-	private createCollectionDescriptor(
-		collectionName:
-			string,
-
-		event:
-			SignedNostrEvent,
-
-		relays:
-			readonly string[]
-	): ResourceDescriptor {
-
-		const resourceId =
-			this.getRequiredTagValue(
-				collectionName,
-				event,
-				'd'
-			);
-
-
-		const resourceType =
-			this.getRequiredTagValue(
-				collectionName,
-				event,
-				't'
-			);
-
-
-		const mediaType =
-			this.getRequiredTagValue(
-				collectionName,
-				event,
-				'm'
-			);
-
-
-		const dataType =
-			this.getRequiredTagValue(
-				collectionName,
-				event,
-				'dataType'
-			);
-
-
-		const dataVersion =
-			this.getDataVersion(
-				collectionName,
-				event
-			);
-
-
-		const resourceMetadata =
-			this.getResourceMetadata(
-				event
-			);
-
-
-		const representation =
-			this.getRequiredTagValue(
-				collectionName,
-				event,
-				'representation'
-			);
-
-
-		if (
-			representation !==
-				'descriptors'
-		) {
-			throw new Error(
-				`Nested Collection "${collectionName}" must use representation "descriptors".`
-			);
-		}
-
-
-		return {
-			metadata: {
-				publisher:
-					event.pubkey,
-
-				resourceId,
-
-				resourceType,
-
-				dataType,
-
-				dataVersion,
-
-				modifiedAt:
-					event.created_at,
-
-				representation,
-
-				mediaType
-			},
-
-			...(resourceMetadata === undefined
-				? {}
-				: { resourceMetadata }),
-
-			strategy: {
-				type:
-					'nostr',
-
-				data: {
-					kind:
-						event.kind,
-
-					relays: [
-						...relays
-					]
-				}
-			}
-		};
-	}
-
-
-	/** Parses the child Collection's semantic contract version. */
-	private getDataVersion(
-		collectionName:
-			string,
-
-		event:
-			SignedNostrEvent
-	): number {
-		const value =
-			this.getRequiredTagValue(
-				collectionName,
-				event,
-				'dataVersion'
-			);
-
-
-		const dataVersion =
-			Number(
-				value
-			);
-
-
-		if (
-			!Number.isSafeInteger(
-				dataVersion
-			) ||
-			dataVersion < 1
-		) {
-			throw new Error(
-				`Collection "${collectionName}" has an invalid "dataVersion" tag.`
-			);
-		}
-
-
-		return dataVersion;
-	}
-
-
-	/**
-	 * Preserves non-envelope scalar Collection tags for deferred resolution.
-	 */
-	private getResourceMetadata(
-		event:
-			SignedNostrEvent
-	): Readonly<Record<string, string>> |
-		undefined {
-		const envelopeTags =
-			new Set([
-				'd',
-				'm',
-				't',
-				'dataType',
-				'dataVersion',
-				'representation'
-			]);
-
-
-		const metadata:
-			Record<string, string> = {};
-
-
-		for (const tag of event.tags) {
-			const name =
-				tag[0];
-
-			const value =
-				tag[1];
-
-
-			if (
-				name === undefined ||
-				value === undefined ||
-				envelopeTags.has(
-					name
-				)
-			) {
-				continue;
-			}
-
-
-			metadata[name] =
-				value;
-		}
-
-
-		return Object.keys(
-			metadata
-		).length === 0
-			? undefined
-			: metadata;
-	}
-
-
-	private getRequiredTagValue(
-		collectionName:
-			string,
-
-		event:
-			SignedNostrEvent,
-
-		tagName:
-			string
-	): string {
-
-		const values =
-			event.tags
-				.filter(
-					tag =>
-						tag[0] ===
-							tagName
-				)
-				.map(
-					tag =>
-						tag[1]
-				)
-				.filter(
-					(
-						value
-					): value is string =>
-						value !==
-							undefined &&
-						value.length >
-							0
-				);
-
-
-		if (
-			values.length !==
-				1
-		) {
-			throw new Error(
-				`Nested Collection "${collectionName}" requires exactly one "${tagName}" tag.`
-			);
-		}
-
-
-		return values[0]!;
 	}
 
 

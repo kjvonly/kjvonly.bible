@@ -76,7 +76,7 @@ describe(
 					service.get(
 						'alice',
 						'notes',
-						'the-fall/creation'
+						'notes/the-fall/creation'
 					)
 				).resolves.toBe(
 					entry
@@ -87,7 +87,7 @@ describe(
 				).toHaveBeenCalledWith(
 					'alice',
 					'notes',
-					'the-fall/creation'
+					'notes/the-fall/creation'
 				);
 			}
 		);
@@ -212,7 +212,7 @@ function createEntry():
 	FilesystemEntry {
 	return {
 		path:
-			'the-fall/creation',
+			'notes/the-fall/creation',
 		descriptor: {
 			metadata: {
 				publisher:

@@ -11,6 +11,7 @@ import {
 	type FilesystemEntriesResourceData
 } from './filesystem-resource';
 
+/** Decoded Resource whose semantic value satisfies the Filesystem payload shape. */
 export type DecodedFilesystemResourceContent =
 	Omit<DecodedResourceContent, 'value'> & {
 		readonly value:
@@ -18,19 +19,22 @@ export type DecodedFilesystemResourceContent =
 	};
 
 /**
- * Interprets one decoded filesystem Resource as root-relative mapping
- * candidates.
+ * Interprets one decoded filesystem Resource as full-path mapping candidates.
  *
  * The Resource `f` metadata value supplies the filesystem root. Payload keys are
- * paths relative to that root. Target Resource descriptors are not resolved or
- * loaded during interpretation.
+ * complete filesystem paths that include that root. Target Resource descriptors
+ * are not resolved or loaded during interpretation.
  */
 export class FilesystemInterpreter {
 
 	readonly resourceType =
 		FILESYSTEM_RESOURCE_TYPE;
 
-	/** Interprets the path-keyed filesystem payload without resolving targets. */
+	/**
+	 * Interprets the path-keyed Filesystem payload without resolving targets.
+	 *
+	 * @param resource Decoded Filesystem Resource with validated payload shape.
+	 */
 	interpret(
 		resource:
 			DecodedFilesystemResourceContent
@@ -68,7 +72,7 @@ export class FilesystemInterpreter {
 		);
 	}
 
-	/** Interprets one root-relative payload entry while leaving validation later. */
+	/** Interprets one full-path payload entry while leaving placement validation later. */
 	private interpretEntry(
 		rootPath: string,
 		path: string,

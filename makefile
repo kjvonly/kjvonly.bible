@@ -319,12 +319,14 @@ ssl-clean:
 # CLIENT
 
 CLI_DIR = client/cli
-APP_DATA_MANIFEST = ../../zarf/manifest/app-data.yaml
+APP_DATA_MANIFEST = ../../zarf/manifest/filesystem-smoke.yaml
 APP_DATA_LOG_DIR := $(CURDIR)/logs/app-data
 
 .PHONY: \
 	app-data-build \
+	app-data-build-verbose \
 	app-data-publish \
+	app-data-publish-verbose \
 	app-data-sync \
 	app-data-sync-verbose
 
@@ -333,19 +335,29 @@ app-data-build:
 		npm run build && \
 		node dist/main.js build $(APP_DATA_MANIFEST)
 
+app-data-build-verbose:
+	cd $(CLI_DIR) && \
+		npm run build && \
+		node dist/main.js build -v $(APP_DATA_MANIFEST)
+
 app-data-publish:
 	cd $(CLI_DIR) && \
 		npm run build && \
 		NODE_USE_SYSTEM_CA=1 \
 		node dist/main.js publish $(APP_DATA_MANIFEST)
 
+app-data-publish-verbose:
+	cd $(CLI_DIR) && \
+		npm run build && \
+		NODE_USE_SYSTEM_CA=1 \
+		node dist/main.js publish -v $(APP_DATA_MANIFEST)
+
+
 app-data-sync: up
 	cd $(CLI_DIR) && \
 		npm run build && \
 		node dist/main.js sync $(APP_DATA_MANIFEST)
 
-
-APP_DATA_LOG_DIR := $(CURDIR)/logs/app-data
 
 app-data-sync-verbose: up
 	@mkdir -p "$(APP_DATA_LOG_DIR)"

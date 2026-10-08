@@ -379,9 +379,27 @@ import {
     FilesystemSearchRuntime
 } from '$lib/domains/filesystem/runtime/search/filesystem-search-runtime';
 
+///////////////////////////////////////////////////////////////////////////////
+// Development
+
+import {
+    createApplicationBootstrapMode,
+    type ApplicationBootstrapMode
+} from './dev/application-bootstrap-mode';
+
+import {
+    createFilesystemRuntimeMode,
+    type FilesystemRuntimeMode
+} from './dev/filesystem-runtime-mode';
+
 import {
     MockFilesystemRuntime
 } from './dev/mock-filesystem-runtime';
+
+import {
+    createFilesystemBootstrapMode,
+    type FilesystemBootstrapMode
+} from './filesystem-bootstrap-mode';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Normalized Content
@@ -489,15 +507,11 @@ import {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Development composition switch for visually exercising FileManager without
- * requiring mounted filesystem data. Set to false to restore the normal
- * IndexedDB + filesystem search runtime composition.
+ * Published Resource collection installed by the normal application bootstrap.
+ *
+ * Production always retains this bootstrap policy. Development may disable it
+ * only through the dedicated development override for focused workflows.
  */
-const USE_MOCK_FILESYSTEM_RUNTIME =
-    true;
-
-///////////////////////////////////////////////////////////////////////////////
-
 const APPLICATION_BOOTSTRAP_RESOURCE:
     PublishedResourceReference = {
 
@@ -506,6 +520,23 @@ const APPLICATION_BOOTSTRAP_RESOURCE:
 
     resourceId:
         'kjvonly/resources/collections/default'
+};
+
+/**
+ * Published Filesystem Resource installed when the Filesystem bootstrap
+ * release feature is enabled.
+ *
+ * The current Resource remains the small integration fixture until it is
+ * replaced by the application's durable published Filesystem content.
+ */
+const FILESYSTEM_BOOTSTRAP_RESOURCE:
+    PublishedResourceReference = {
+
+    publisher:
+        KJVONLY_PUBKEY,
+
+    resourceId:
+        'kjvonly/filesystem/filesystem-smoke'
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -545,6 +576,18 @@ export class Application {
 
     private readonly outboxProcessor:
         OutboxProcessor;
+
+    private readonly applicationBootstrapMode:
+        ApplicationBootstrapMode =
+        createApplicationBootstrapMode();
+
+    private readonly filesystemRuntimeMode:
+        FilesystemRuntimeMode =
+        createFilesystemRuntimeMode();
+
+    private readonly filesystemBootstrapMode:
+        FilesystemBootstrapMode =
+        createFilesystemBootstrapMode();
 
     private authenticationBootstrapUnsubscribe:
         (() => void) |
@@ -1340,7 +1383,8 @@ export class Application {
         // Filesystem
 
         const mockFilesystemRuntime =
-            USE_MOCK_FILESYSTEM_RUNTIME ?
+            this.filesystemRuntimeMode ===
+                'mock' ?
                 new MockFilesystemRuntime() :
                 undefined;
 
@@ -1767,6 +1811,10 @@ export class Application {
 
     ///////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Starts each enabled bootstrap policy only while the application is started
+     * and signing authentication is available. Install work remains asynchronous.
+     */
     private observeAuthenticatedBootstrap():
         void {
 
@@ -1786,13 +1834,32 @@ export class Application {
                             return;
                         }
 
-                        void this.installBootstrapResources();
+                        if (
+                            this.applicationBootstrapMode ===
+                                'enabled'
+                        ) {
+                            void this.installBootstrapResources();
+                        }
+
+                        if (
+                            this.filesystemBootstrapMode ===
+                                'enabled' &&
+                            this.filesystemRuntimeMode ===
+                                'indexeddb'
+                        ) {
+                            void this
+                                .installFilesystemBootstrapResource();
+                        }
                     }
                 );
     }
 
     ///////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Installs the normal application bootstrap collection and initializes any
+     * unambiguous global Resource selections produced by its terminal Resources.
+     */
     private async installBootstrapResources():
         Promise<void> {
 
@@ -1852,6 +1919,65 @@ export class Application {
                 {
                     reference:
                         APPLICATION_BOOTSTRAP_RESOURCE,
+
+                    error
+                }
+            );
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Installs the configured application Filesystem through the normal
+     * Resource Worker.
+     *
+     * The mock Filesystem runtime is a development-only UI composition aid and
+     * intentionally does not participate in published Filesystem bootstrap.
+     */
+    private async installFilesystemBootstrapResource():
+        Promise<void> {
+
+        try {
+            const result =
+                await this.resourceWorkerClient
+                    .install(
+                        FILESYSTEM_BOOTSTRAP_RESOURCE
+                    );
+
+            if (!result.found) {
+                console.warn(
+                    '[Filesystem bootstrap Resource not found]',
+                    FILESYSTEM_BOOTSTRAP_RESOURCE
+                );
+
+                return;
+            }
+
+            const incomplete =
+                result.resources.filter(
+                    (resource) =>
+                        resource.status !==
+                            'handled' &&
+                        resource.status !==
+                            'current'
+                );
+
+            if (
+                incomplete.length >
+                0
+            ) {
+                console.warn(
+                    '[Filesystem bootstrap Resources incomplete]',
+                    incomplete
+                );
+            }
+        } catch (error) {
+            console.warn(
+                '[Filesystem bootstrap Resource installation failed]',
+                {
+                    reference:
+                        FILESYSTEM_BOOTSTRAP_RESOURCE,
 
                     error
                 }

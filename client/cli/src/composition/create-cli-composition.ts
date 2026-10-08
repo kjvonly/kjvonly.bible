@@ -46,6 +46,10 @@ import {
 	NodeCollectionEventStagingRepository
 } from '#adapters/staging/node-collection-event-staging-repository.js';
 
+import {
+	NodeFilesystemEventStagingRepository
+} from '#adapters/staging/node-filesystem-event-staging-repository.js';
+
 import { NodeBlossomPreflight } from '#adapters/blossom/node-blossom-preflight.js';
 import { NodeBlossomPublicationClient } from '#adapters/blossom/node-blossom-publication-client.js';
 
@@ -65,6 +69,10 @@ import { DescriptorBackedResourceBuilder } from '#application/build/descriptor/d
 import { DescriptorEventBuilder } from '#application/build/descriptor/descriptor-event-builder.js';
 import { DescriptorStrategyRegistry } from '#application/build/descriptor/descriptor-strategy-registry.js';
 import { ResourceDescriptorBuilder } from '#application/build/descriptor/resource-descriptor-builder.js';
+import { NostrEventResourceDescriptorBuilder } from '#application/build/descriptor/nostr-event-resource-descriptor-builder.js';
+import { FilesystemBuilder } from '#application/build/filesystem/filesystem-builder.js';
+import { FilesystemContentBuilder } from '#application/build/filesystem/filesystem-content-builder.js';
+import { FilesystemEventBuilder } from '#application/build/filesystem/filesystem-event-builder.js';
 import { EncodingRegistry } from '#application/build/encoding/encoding-registry.js';
 import { InlineEventBuilder } from '#application/build/inline/inline-event-builder.js';
 import { SourceExpander } from '#application/build/source/source-expander.js';
@@ -355,10 +363,44 @@ export function createCliComposition() {
 		);
 
 
+	const nostrEventResourceDescriptorBuilder =
+		new NostrEventResourceDescriptorBuilder();
+
+
 	const collectionBuilder =
 		new CollectionBuilder(
 			collectionEventBuilder,
+			nostrEventResourceDescriptorBuilder,
 			collectionEventStagingRepository,
+			logger
+		);
+
+
+	const filesystemEventStagingRepository =
+		new NodeFilesystemEventStagingRepository();
+
+
+	const filesystemContentBuilder =
+		new FilesystemContentBuilder(
+			stagingRepository,
+			collectionEventStagingRepository,
+			nostrEventResourceDescriptorBuilder
+		);
+
+
+	const filesystemEventBuilder =
+		new FilesystemEventBuilder(
+			encodingRegistry,
+			signer,
+			clock
+		);
+
+
+	const filesystemBuilder =
+		new FilesystemBuilder(
+			filesystemContentBuilder,
+			filesystemEventBuilder,
+			filesystemEventStagingRepository,
 			logger
 		);
 
@@ -372,6 +414,7 @@ export function createCliComposition() {
 			stagingRepository,
 			descriptorBackedResourceBuilder,
 			collectionBuilder,
+			filesystemBuilder,
 			logger
 		);
 
@@ -402,7 +445,8 @@ export function createCliComposition() {
 	const nostrEventStagingRepository =
 		new NodeNostrEventStagingRepository(
 			stagingRepository,
-			collectionEventStagingRepository
+			collectionEventStagingRepository,
+			filesystemEventStagingRepository
 		);
 
 	const nostrRelayReconciler =

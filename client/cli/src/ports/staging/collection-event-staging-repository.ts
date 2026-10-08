@@ -1,5 +1,6 @@
 import { SignedNostrEvent } from "#domain/event/nostr-event.js";
 
+/** Metadata for one generated Collection event currently present in staging. */
 export interface StagedCollectionEventEntry {
 	readonly path:
 		string;
@@ -15,6 +16,7 @@ export interface StagedCollectionEventEntry {
 }
 
 
+/** Request to atomically replace one manifest Collection's staged event. */
 export interface StageCollectionEventRequest {
 	readonly stagingRoot:
 		string;
@@ -30,6 +32,7 @@ export interface StageCollectionEventRequest {
 }
 
 
+/** Persistence boundary for generated Collection Resource events. */
 export interface CollectionEventStagingRepository {
 	list(
 		stagingRoot:

@@ -138,7 +138,7 @@ describe(
 		);
 
 		it(
-			'starts bootstrap Resource installation after authentication',
+			'starts application bootstrap installation after authentication',
 			async () => {
 
 				const install =
@@ -166,6 +166,16 @@ describe(
 						).toHaveBeenCalledTimes(
 							1
 						);
+
+						expect(
+							install
+						).toHaveBeenCalledWith({
+							publisher:
+								KJVONLY_PUBKEY,
+
+							resourceId:
+								BOOTSTRAP_RESOURCE_ID
+						});
 					}
 				);
 			}

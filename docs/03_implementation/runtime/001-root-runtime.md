@@ -71,7 +71,7 @@ This document covers:
 * Nostr relay startup configuration,
 * account loading and refresh,
 * Outbox wakeup,
-* authentication-gated asynchronous bootstrap Resource installation,
+* authentication-gated asynchronous application and Filesystem bootstrap Resource installation,
 * the root Workspace page,
 * Workspace change subscriptions,
 * layout refresh,
@@ -935,7 +935,7 @@ the entire UI behind the loading screen.
 After entering the started state, Application observes `AuthenticationService`.
 The current authentication state is delivered immediately.
 
-Application starts bootstrap Resource installation only when:
+Application evaluates configured bootstrap policies only when:
 
 ```text
 AuthenticationState.status = authenticated
@@ -943,7 +943,7 @@ AuthenticationState.status = authenticated
 
 A signing identity is required because the configured Nostr relay may require
 AUTH before Resource discovery. `signed-out` and `read-only` states therefore do
-not start bootstrap work.
+not start relay-backed bootstrap work.
 
 The sequence for restored authentication is:
 
@@ -954,33 +954,25 @@ Application state = started
     ↓
 authentication state = authenticated
     ↓
-start bootstrap Resource install asynchronously
+evaluate application bootstrap policy
+    +
+evaluate Filesystem bootstrap policy
+    ↓
+start enabled Resource installs asynchronously
     ↓
 return from Application.start()
 ```
 
-For a fresh signed-out session:
+For a fresh signed-out session, policy evaluation is deferred until a later authenticated state.
 
-```text
-Application state = started
-    ↓
-bootstrap deferred
-    ↓
-user successfully authenticates
-    ↓
-AuthenticationService publishes authenticated state
-    ↓
-start bootstrap Resource install asynchronously
-```
-
-The install is intentionally not awaited. This keeps startup and login responsive
+The installs are intentionally not awaited. This keeps startup and login responsive
 while the Resource worker continues background installation.
 
 ---
 
 # Bootstrap Resource Ownership
 
-Bootstrap Resource installation is Application policy.
+Bootstrap Resource installation policy belongs to Application.
 
 It is not owned by:
 
@@ -989,10 +981,35 @@ It is not owned by:
 * `WorkspaceRuntime`,
 * a Pane,
 * a Buffer,
+* FileManager,
 * or an individual module component.
 
-The Application knows which bootstrap Resource reference represents the default
-application dataset/collection.
+The Application currently owns two independent bootstrap references/policies:
+
+```text
+normal application bootstrap
+    → kjvonly/resources/collections/default
+
+Filesystem bootstrap
+    → kjvonly/filesystem/filesystem-smoke
+```
+
+The second identity is temporary integration content; the Filesystem bootstrap mechanism is generic application policy.
+
+The three related configuration concerns remain independent:
+
+```text
+VITE_APPLICATION_BOOTSTRAP_DEV_MODE
+    = dev-only normal application bootstrap override
+
+VITE_FILESYSTEM_BOOTSTRAP_MODE
+    = release-capable Filesystem bootstrap feature
+
+VITE_FILESYSTEM_DEV_MODE
+    = dev-only Filesystem runtime backing: indexeddb | mock
+```
+
+Production always uses the IndexedDB Filesystem runtime and always retains normal application bootstrap. Filesystem bootstrap may independently be enabled or disabled in either development or production, and currently defaults to disabled.
 
 The Resource worker owns the actual Resource-processing pipeline.
 
@@ -1000,8 +1017,8 @@ The Resource worker owns the actual Resource-processing pipeline.
 
 # Bootstrap Resource Processing Boundary
 
-The Application asks the private `ResourceWorkerClient` to install the
-application bootstrap Resource.
+The Application asks the private `ResourceWorkerClient` to install each enabled
+bootstrap Resource.
 
 Conceptually:
 

@@ -19,7 +19,7 @@ It documents how the application:
 * initializes the Workspace,
 * configures Nostr transport,
 * resumes durable publication work,
-* starts bootstrap Resource installation after signing authentication is available without blocking interactivity,
+* starts configured application and Filesystem bootstrap Resource installation after signing authentication is available without blocking interactivity,
 * and disposes application-owned browser infrastructure.
 
 The central implementation boundary is the concrete `Application` composition root:
@@ -60,7 +60,7 @@ This document covers:
 * Nostr relay configuration,
 * Account loading and refresh,
 * Outbox wakeup,
-* bootstrap Resource installation,
+* application and Filesystem bootstrap Resource installation,
 * Resource Worker ownership,
 * main-thread Resource Discovery,
 * application readiness,
@@ -1238,21 +1238,25 @@ This preserves the local-first startup rule.
 
 ---
 
-# Step 10 — Start Bootstrap Resources When Authenticated
+# Step 10 — Start Configured Bootstrap Resources When Authenticated
 
-After becoming started, Application subscribes to `AuthenticationService`. The subscription immediately publishes the current state. Application starts bootstrap Resource installation only for:
+After becoming started, Application subscribes to `AuthenticationService`. The subscription immediately publishes the current state. Application evaluates bootstrap policies only for:
 
 ```text
 status = authenticated
 ```
 
-`authenticated` means a signing identity is available to answer relay AUTH challenges. `signed-out` and `read-only` states skip bootstrap installation.
+`authenticated` means a signing identity is available to answer relay AUTH challenges. `signed-out` and `read-only` states skip relay-backed bootstrap installation.
 
-If startup restored an authenticated login, the initial subscription callback starts bootstrap immediately. If startup is signed out, a later successful NSEC, NIP-07, NIP-46, or newly created identity transition starts the same bootstrap installation.
+If startup restored an authenticated login, the initial subscription callback evaluates the bootstrap policies immediately. If startup is signed out, a later successful NSEC, NIP-07, NIP-46, or newly created identity transition evaluates the same policies.
 
-The install remains asynchronous and does not block `Application.start()` or the login flow.
+Bootstrap installs remain asynchronous and do not block `Application.start()` or the login flow.
 
-The configured bootstrap Resource is currently:
+Application currently owns two independent bootstrap policies.
+
+## Normal Application Bootstrap
+
+The normal application bootstrap installs:
 
 ```text
 publisher:
@@ -1262,15 +1266,71 @@ resourceId:
     kjvonly/resources/collections/default
 ```
 
-The Resource Worker performs installation.
-
 The bootstrap collection may recursively install multiple Resources.
+
+Development builds may bypass this large default graph for focused work with:
+
+```ini
+VITE_APPLICATION_BOOTSTRAP_DEV_MODE=disabled
+```
+
+The accepted development values are `enabled` and `disabled`, with `enabled` as the default. This override is deliberately development-only. Production builds always retain normal application bootstrap behavior.
+
+## Filesystem Bootstrap
+
+Filesystem bootstrap is a separate release feature. It installs the application's configured published Filesystem Resource through the same Resource Worker lifecycle.
+
+The current configured Resource is still the small integration Resource:
+
+```text
+publisher:
+    KJVONLY_PUBKEY
+
+resourceId:
+    kjvonly/filesystem/filesystem-smoke
+```
+
+The bootstrap mechanism is intentionally generic even though the current Resource content remains a smoke fixture.
+
+Filesystem bootstrap is controlled by:
+
+```ini
+VITE_FILESYSTEM_BOOTSTRAP_MODE=enabled
+VITE_FILESYSTEM_BOOTSTRAP_MODE=disabled
+```
+
+This setting is release-capable rather than development-only. Both development and production builds may enable or disable it. It currently defaults to `disabled` so a production build cannot accidentally install the smoke Resource.
+
+Filesystem bootstrap runs only with the real IndexedDB Filesystem runtime. The development mock runtime is a FileManager composition aid and does not install or consume the published Filesystem bootstrap Resource.
+
+## Filesystem Runtime Backing
+
+Filesystem runtime backing is independent from Filesystem bootstrap policy. Development builds may select:
+
+```ini
+VITE_FILESYSTEM_DEV_MODE=indexeddb
+VITE_FILESYSTEM_DEV_MODE=mock
+```
+
+`indexeddb` is the default. Production builds always use IndexedDB regardless of the development override.
+
+A focused Filesystem integration environment can therefore use:
+
+```ini
+VITE_APPLICATION_BOOTSTRAP_DEV_MODE=disabled
+VITE_FILESYSTEM_BOOTSTRAP_MODE=enabled
+VITE_FILESYSTEM_DEV_MODE=indexeddb
+```
+
+while FileManager-only UI work can use the mock runtime without enabling Filesystem bootstrap.
+
+The Resource Worker performs both bootstrap installations; Application owns only the policy and configured Resource references.
 
 ---
 
 # Bootstrap Resource Failure Is Non-Fatal
 
-Bootstrap installation is intentionally best-effort after readiness.
+Application and Filesystem bootstrap installation are intentionally best-effort after readiness.
 
 Application logs conditions such as:
 
@@ -1291,7 +1351,7 @@ A user should be able to enter the application from available local state even i
 
 # Bootstrap Resource Selections
 
-After successful bootstrap installation, Application examines the terminal installed Resources and initializes missing global Resource selections where the result is unambiguous.
+After successful **normal application bootstrap** installation, Application examines the terminal installed Resources and initializes missing global Resource selections where the result is unambiguous. Filesystem bootstrap does not initialize global Resource selections.
 
 The logic deliberately ignores:
 
@@ -1327,7 +1387,8 @@ Application.start() completed
 Readiness does **not** require:
 
 ```text
-bootstrap Resource installation completion
+application bootstrap Resource installation completion
+Filesystem bootstrap Resource installation completion
 Account remote refresh completion
 all Resources downloaded
 all relays reachable

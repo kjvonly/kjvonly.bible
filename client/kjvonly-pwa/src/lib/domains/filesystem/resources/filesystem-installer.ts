@@ -28,7 +28,9 @@ import type {
  * Installs filesystem mappings and their source Resource provenance atomically.
  *
  * Target Resource descriptors remain unresolved. A later application action may
- * load an entry through the generic Resource descriptor lifecycle.
+ * load an entry through the generic Resource descriptor lifecycle. A valid empty
+ * overlay is a non-destructive no-op; Resource-level root validation happens
+ * before this installer is invoked.
  */
 export class FilesystemInstaller {
 
@@ -37,7 +39,12 @@ export class FilesystemInstaller {
 			FilesystemInstallationTransaction
 	) {}
 
-	/** Installs only mappings supplied by the Resource; omission never deletes. */
+	/**
+	 * Installs only mappings supplied by the Resource; omission never deletes.
+	 *
+	 * @param resource Source Filesystem Resource used for provenance/currentness.
+	 * @param candidates Validated complete-path mappings to install or update.
+	 */
 	async install(
 		resource:
 			DecodedResourceContent,

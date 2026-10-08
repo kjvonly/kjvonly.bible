@@ -15,8 +15,8 @@ interface MockFilesystemRootData {
 }
 
 /**
- * In-memory filesystem runtime used only when explicitly selected by the
- * application composition root.
+ * In-memory filesystem runtime used only when the development composition
+ * selects `VITE_FILESYSTEM_DEV_MODE=mock`.
  *
  * It implements the same read/search seams consumed by FilesystemService, so
  * FileManager and every other FilesystemService consumer remain unaware that

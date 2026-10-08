@@ -11,6 +11,14 @@ import type {
 } from '$lib/resource';
 
 import {
+	FilesystemEntriesDataTypeHandler
+} from './filesystem-entries-data-type-handler';
+
+import {
+	FilesystemInterpreter
+} from './filesystem-interpreter';
+
+import {
 	FilesystemResourceHandler
 } from './filesystem-resource-handler';
 
@@ -19,6 +27,10 @@ import {
 	FILESYSTEM_ENTRIES_DATA_VERSION,
 	FILESYSTEM_RESOURCE_TYPE
 } from './filesystem-resource';
+
+import {
+	FilesystemValidator
+} from './filesystem-validator';
 
 const DESCRIPTOR:
 	ResourceDescriptor = {
@@ -53,12 +65,12 @@ describe(
 	'FilesystemResourceHandler',
 	() => {
 		it(
-			'validates semantic data before interpreting validating and installing filesystem mappings',
+			'validates semantic data and root metadata before interpreting validating and installing filesystem mappings',
 			async () => {
 				const resource =
 					createResource({
 						value: {
-							creation: {
+							'notes/creation': {
 								descriptor: {
 									raw: true
 								}
@@ -74,7 +86,7 @@ describe(
 					rootPath:
 						'notes',
 					path:
-						'creation',
+						'notes/creation',
 					descriptor: {
 						raw:
 							true
@@ -84,7 +96,7 @@ describe(
 					rootPath:
 						'notes',
 					path:
-						'creation',
+						'notes/creation',
 					descriptor:
 						DESCRIPTOR
 				};
@@ -98,6 +110,8 @@ describe(
 						.mockReturnValue([
 							candidate
 						]);
+				const validateRootPath =
+					vi.fn();
 				const validate =
 					vi.fn()
 						.mockReturnValue(
@@ -124,6 +138,7 @@ describe(
 						interpret
 					},
 					{
+						validateRootPath,
 						validate
 					},
 					{
@@ -137,6 +152,11 @@ describe(
 					validateData
 				).toHaveBeenCalledWith(
 					resource.value
+				);
+				expect(
+					validateRootPath
+				).toHaveBeenCalledWith(
+					'notes'
 				);
 				expect(
 					interpret
@@ -166,6 +186,75 @@ describe(
 		);
 
 		it(
+			'accepts an empty Filesystem payload when its root is canonical',
+			async () => {
+				const install =
+					vi.fn()
+						.mockResolvedValue(
+							undefined
+						);
+
+				await new FilesystemResourceHandler(
+					new FilesystemEntriesDataTypeHandler(),
+					new FilesystemInterpreter(),
+					new FilesystemValidator({
+						validate:
+							vi.fn()
+					}),
+					{
+						install
+					}
+				).handle(
+					createResource()
+				);
+
+				expect(
+					install
+				).toHaveBeenCalledWith(
+					expect.objectContaining({
+						value: {}
+					}),
+					[]
+				);
+			}
+		);
+
+		it(
+			'rejects a malformed Filesystem root even when the payload is empty',
+			async () => {
+				const install =
+					vi.fn();
+
+				await expect(
+					new FilesystemResourceHandler(
+						new FilesystemEntriesDataTypeHandler(),
+						new FilesystemInterpreter(),
+						new FilesystemValidator({
+							validate:
+								vi.fn()
+						}),
+						{
+							install
+						}
+					).handle(
+						createResource({
+							metadata: {
+								f:
+									'../bad'
+							}
+						})
+					)
+				).rejects.toThrow(
+					'Invalid Filesystem rootPath: ../bad'
+				);
+
+				expect(
+					install
+				).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
 			'rejects a semantic data contract that does not belong to Filesystem entries',
 			async () => {
 				const interpret =
@@ -187,6 +276,8 @@ describe(
 							interpret
 						},
 						{
+							validateRootPath:
+								vi.fn(),
 							validate:
 								vi.fn()
 						},
