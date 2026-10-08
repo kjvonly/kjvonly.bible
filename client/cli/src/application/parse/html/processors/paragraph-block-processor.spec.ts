@@ -10,7 +10,7 @@ import {
 
 import type {
 	NormalizedContent
-} from '#domain/normalized-content/models/normalized-content.model.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	HtmlBlockProcessorContext

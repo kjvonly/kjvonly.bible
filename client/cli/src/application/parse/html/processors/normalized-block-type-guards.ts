@@ -5,7 +5,7 @@ import type {
 	NormalizedListItemBlock,
 	NormalizedTableCellBlock,
 	NormalizedTableRowBlock
-} from '#domain/normalized-content/models/normalized-block.model.js';
+} from '@kjvonly/normalized-content';
 
 /** Runtime discriminator set mirroring the NormalizedFlowBlock compile-time union. */
 const flowBlockTypes:

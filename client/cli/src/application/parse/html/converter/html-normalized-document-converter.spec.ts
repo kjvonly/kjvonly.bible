@@ -6,11 +6,11 @@ import {
 
 import type {
 	NormalizedBlock
-} from '#domain/normalized-content/models/normalized-block.model.js';
+} from '@kjvonly/normalized-content';
 
 import {
 	NormalizedDocumentValidator
-} from '#domain/normalized-content/validation/normalized-document-validator.js';
+} from '@kjvonly/normalized-content';
 
 import {
 	DeterministicNormalizedBlockIdGenerator

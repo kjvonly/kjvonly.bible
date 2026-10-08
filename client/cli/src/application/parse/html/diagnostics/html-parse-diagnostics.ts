@@ -5,16 +5,16 @@ import type {
 
 import type {
 	NormalizedBlock
-} from '#domain/normalized-content/models/normalized-block.model.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	NormalizedDocument
-} from '#domain/normalized-content/models/normalized-document.model.js';
+} from '@kjvonly/normalized-content';
 
 import {
 	getDocumentLocalLinkTargetId,
 	getUnsafeNormalizedLinkScheme
-} from '#domain/normalized-content/links/normalized-link-target.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	ParseDiagnostics,

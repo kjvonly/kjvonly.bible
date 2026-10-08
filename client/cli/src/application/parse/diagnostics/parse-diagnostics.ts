@@ -1,6 +1,6 @@
 import type {
 	NormalizedDocument
-} from '#domain/normalized-content/models/normalized-document.model.js';
+} from '@kjvonly/normalized-content';
 
 /** One auditable condition encountered while normalizing a source document. */
 export interface ParseWarning {

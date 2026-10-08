@@ -172,7 +172,9 @@ The CLI lives in the `client` npm workspace:
 ```text
 client/
 ├── kjvonly-pwa/
-└── cli/
+├── cli/
+└── packages/
+    └── normalized-content/
 ```
 
 Install workspace dependencies from `client/`:

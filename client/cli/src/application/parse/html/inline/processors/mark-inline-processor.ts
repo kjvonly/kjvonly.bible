@@ -4,7 +4,7 @@ import type {
 
 import type {
 	NormalizedMark
-} from '#domain/normalized-content/vocabulary/normalized-presentation-vocabulary.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	HtmlInlineProcessorResult,

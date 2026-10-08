@@ -1,0 +1,23 @@
+{
+	"name": "@kjvonly/normalized-content",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"test": "npm run build && vitest run"
+	},
+	"dependencies": {
+		"zod": "^4.5.4"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.3",
+		"vitest": "^4.1.11"
+	}
+}

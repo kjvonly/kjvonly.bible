@@ -2,7 +2,7 @@ import type {
 	NormalizedContent,
 	NormalizedLineBreak,
 	NormalizedWord
-} from '#domain/normalized-content/models/normalized-content.model.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	HtmlInlineState

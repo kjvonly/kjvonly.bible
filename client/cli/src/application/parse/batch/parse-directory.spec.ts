@@ -11,7 +11,7 @@ import {
 
 import type {
 	NormalizedDocument
-} from '#domain/normalized-content/models/normalized-document.model.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	ParseDiagnostics,

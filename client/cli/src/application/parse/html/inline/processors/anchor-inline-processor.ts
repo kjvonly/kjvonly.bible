@@ -13,7 +13,7 @@ import type {
 
 import {
 	isSafeNormalizedLinkTarget
-} from '#domain/normalized-content/links/normalized-link-target.js';
+} from '@kjvonly/normalized-content';
 
 /** Adds an HTML anchor target to inherited word semantics. */
 export class AnchorInlineProcessor

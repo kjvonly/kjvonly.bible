@@ -4,11 +4,11 @@ import type {
 
 import {
 	isNormalizedClassName
-} from '#domain/normalized-content/vocabulary/normalized-presentation-vocabulary.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	NormalizedClassName
-} from '#domain/normalized-content/vocabulary/normalized-presentation-vocabulary.js';
+} from '@kjvonly/normalized-content';
 
 /**
  * Projects only source-independent presentation hints into the normalized

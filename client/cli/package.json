@@ -15,10 +15,13 @@
 		"#ports/*": "./dist/ports/*"
 	},
 	"scripts": {
+		"prebuild": "npm --prefix ../packages/normalized-content run build",
 		"build": "tsc -p tsconfig.build.json",
+		"pretest": "npm --prefix ../packages/normalized-content run test",
 		"test": "vitest run --config vitest.config.ts"
 	},
 	"dependencies": {
+		"@kjvonly/normalized-content": "file:../packages/normalized-content",
 		"cheerio": "^1.1.2",
 		"commander": "^14.0.0",
 		"domhandler": "^5.0.3",

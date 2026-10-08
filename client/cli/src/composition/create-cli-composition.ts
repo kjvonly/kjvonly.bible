@@ -110,7 +110,7 @@ import { connectNodeNostrToolsRelay } from '#adapters/nostr/relay/connect-node-n
 import { NostrToolsRelayPreflight } from '#adapters/nostr/relay/nostr-tools-relay-preflight.js';
 import { NostrToolsRelayReconciler } from '#adapters/nostr/relay/nostr-tools-relay-reconciler.js';
 import { LocalNostrSigner } from '#adapters/nostr/signer/local-nostr-signer.js';
-import { NormalizedDocumentValidator } from '#domain/normalized-content/validation/normalized-document-validator.js';
+import { NormalizedDocumentValidator } from '@kjvonly/normalized-content';
 
 export function createCliComposition() {
 	// =============================================================================

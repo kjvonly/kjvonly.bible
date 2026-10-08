@@ -5,15 +5,15 @@ import type {
 
 import type {
 	NormalizedBlock
-} from '#domain/normalized-content/models/normalized-block.model.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	NormalizedContent
-} from '#domain/normalized-content/models/normalized-content.model.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	NormalizedDocument
-} from '#domain/normalized-content/models/normalized-document.model.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	ParseResult
@@ -25,7 +25,7 @@ import type {
 
 import type {
 	NormalizedDocumentValidator
-} from '#domain/normalized-content/validation/normalized-document-validator.js';
+} from '@kjvonly/normalized-content';
 
 import type {
 	DeterministicNormalizedBlockIdGenerator

@@ -1,7 +1,7 @@
 import type {
 	NormalizedClassName,
 	NormalizedMark
-} from '#domain/normalized-content/vocabulary/normalized-presentation-vocabulary.js';
+} from '@kjvonly/normalized-content';
 
 /**
  * Accumulated inline semantics inherited by descendants during recursive parsing.

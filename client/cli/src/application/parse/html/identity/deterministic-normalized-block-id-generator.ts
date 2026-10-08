@@ -1,6 +1,6 @@
 import type {
 	NormalizedBlock
-} from '#domain/normalized-content/models/normalized-block.model.js';
+} from '@kjvonly/normalized-content';
 
 /** Generated-address algorithm version embedded in every generated block ID. */
 const GENERATED_ID_VERSION =

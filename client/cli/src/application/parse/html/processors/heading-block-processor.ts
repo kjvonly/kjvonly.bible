@@ -5,7 +5,7 @@ import type {
 import type {
 	NormalizedBlock,
 	NormalizedHeadingLevel
-} from '#domain/normalized-content/models/normalized-block.model.js';
+} from '@kjvonly/normalized-content';
 
 import {
 	hasMeaningfulInlineContent
