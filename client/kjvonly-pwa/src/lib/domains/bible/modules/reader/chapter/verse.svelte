@@ -32,7 +32,6 @@
 		bibleLocationRef,
 		bibleVersion,
 		footnotes,
-		lastKnownScrollPosition,
 		verse
 	}: {
 		textMarkup: BibleTextMarkup;
@@ -43,7 +42,6 @@
 		bibleLocationRef: string;
 		bibleVersion: string;
 		footnotes: { [key: string]: string };
-		lastKnownScrollPosition: number;
 		verse: Verse;
 	} = $props();
 </script>
@@ -70,7 +68,6 @@
 				{footnotes}
 				{bibleLocationRef}
 				{bibleVersion}
-				{lastKnownScrollPosition}
 				wordIdx={idx}
 			></Word>
 		{/each}
@@ -84,7 +81,6 @@
 			{footnotes}
 			{bibleLocationRef}
 			{bibleVersion}
-			{lastKnownScrollPosition}
 			wordIdx={idx + 2}
 		></Word>
 	{/each}

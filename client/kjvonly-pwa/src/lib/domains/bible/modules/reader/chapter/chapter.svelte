@@ -22,6 +22,14 @@
 	import type {
 		BibleTextMarkup
 	} from '../../../models/bible-text-markup.model';
+	import {
+		applyBibleTextMarkupWord,
+		removeBibleTextMarkupWord
+	} from './text-markup-edit';
+	import {
+		bibleTextMarkupDrag,
+		type BibleTextMarkupDragTarget
+	} from './interactions/bible-text-markup-drag';
 
 	// SERVICES
 	// OTHER
@@ -84,15 +92,13 @@
 		bibleVersion = $bindable<string>(),
 		id = $bindable<string>(),
 		mode = $bindable<BibleMode>(),
-		textMarkup = $bindable<BibleTextMarkup>(),
-		lastKnownScrollPosition
+		textMarkup = $bindable<BibleTextMarkup>()
 	}: {
 		bibleLocationRef: string;
 		bibleVersion: string;
 		id: string;
 		mode: BibleMode;
 		textMarkup: BibleTextMarkup;
-		lastKnownScrollPosition: number;
 	} = $props();
 
 	// ================================= VARS ==================================
@@ -416,6 +422,28 @@
 				data.notes
 			);
 	}
+
+	function applyDragMarkup(
+		target: BibleTextMarkupDragTarget
+	): void {
+		applyBibleTextMarkupWord(
+			textMarkup,
+			target.verseNumber,
+			target.wordIndex,
+			mode
+		);
+	}
+
+	function removeDragMarkup(
+		target: BibleTextMarkupDragTarget
+	): void {
+		removeBibleTextMarkupWord(
+			textMarkup,
+			target.verseNumber,
+			target.wordIndex,
+			mode
+		);
+	}
 </script>
 
 {#snippet versesView()}
@@ -431,13 +459,20 @@
 				verse={chapter?.verses[k] as VerseModel}
 				{bibleLocationRef}
 				{bibleVersion}
-				{lastKnownScrollPosition}
 			></Verse>
 		</span>
 	{/each}
 {/snippet}
 
-<div class="px-4 leading-loose">
+<div
+	use:bibleTextMarkupDrag={{
+		enabled: mode.value === BIBLE_MODES.EDIT,
+		onApply: applyDragMarkup,
+		onRemove: removeDragMarkup
+	}}
+	class="px-4 leading-loose"
+	class:touch-pan-y={mode.value === BIBLE_MODES.EDIT}
+>
 	{#if toggleVersesView}
 		{@render versesView()}
 	{:else}

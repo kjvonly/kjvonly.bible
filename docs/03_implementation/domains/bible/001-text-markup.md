@@ -564,6 +564,14 @@ BibleTextMarkupService.put()
 
 Closing/canceling rereads accepted Text Markup through the service and discards unsaved UI edits.
 
+The accepted design for horizontal multi-word drag editing is documented in:
+
+```text
+docs/03_implementation/domains/bible/003-text-markup-drag-editing.md
+```
+
+That interaction reuses this same mutable edit draft and save lifecycle; it does not introduce a second Text Markup model.
+
 ---
 
 # Relationship to Paragraphs and Pericopes

@@ -28,6 +28,10 @@
 	import type {
 		ChapterNotesByLocation
 	} from './chapter-notes';
+	import {
+		toggleBibleTextMarkupVerse,
+		toggleBibleTextMarkupWord
+	} from './text-markup-edit';
 	const {
 		bibleLocationReferenceService,
 		bibleVerseReferenceService
@@ -44,7 +48,6 @@
 		bibleLocationRef,
 		bibleVersion,
 		footnotes,
-		lastKnownScrollPosition,
 		verse,
 		word,
 		wordIdx
@@ -55,7 +58,6 @@
 		bibleLocationRef: string;
 		bibleVersion: string;
 		footnotes: { [key: string]: string };
-		lastKnownScrollPosition: number;
 		verse: Verse;
 		word: Word;
 		wordIdx: number;
@@ -63,18 +65,14 @@
 
 	// ================================= VARS ==================================
 
-	interface LongPressState {
-		startTime: number;
-		lastKnownScrollPosition: number;
-		finished: boolean;
-		timeoutID?: ReturnType<typeof setTimeout>;
-	}
-
-	let longPress: LongPressState | undefined;
 	let wordMarkup: BibleTextMarkupMarking | undefined = $state();
 	let wordHasNotes: boolean = $state(false);
 	let verseHasReferences = $state(false);
-	const pressThresholdInMilliseconds = 1000;
+	let bibleWordAttributes = $derived({
+		'data-bible-word': '',
+		'data-verse': verse.number,
+		'data-word-index': wordIdx
+	});
 
 	// =============================== LIFECYCLE ===============================
 
@@ -90,10 +88,6 @@
 
 	onMount(() => {
 		setVerseHasReferences();
-
-		return () => {
-			clearPendingLongPress();
-		};
 	});
 
 	// ================================ FUNCS ==================================
@@ -140,11 +134,6 @@
 			wordKey in notes;
 	}
 
-	function updateMode(updMode: BIBLE_MODES) {
-		updateBibleLocationRef();
-		mode.value = updMode;
-	}
-
 	function updateBibleLocationRef() {
 		let bookIDChapter =
 			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
@@ -163,14 +152,6 @@
 			return;
 		}
 
-		if (longPress?.finished) {
-			return;
-		}
-
-		if (longPress) {
-			longPress.finished = true;
-		}
-
 		if (isWordAVerseNumber()) {
 			verseNumberClicked();
 		} else {
@@ -183,6 +164,7 @@
 	}
 
 	function onEditClick() {
+		updateBibleLocationRef();
 		if (isWordAVerseNumber()) {
 			applyMarkupToVerse();
 		} else {
@@ -224,104 +206,22 @@
 	}
 
 	function applyMarkupToVerse() {
-		let w = initWordMarkup(0);
-		let exists = getExistingMarkupIndex(w) !== undefined;
-		let wordIndexes = getWordIndexesToEdit();
-		wordIndexes.forEach((i) => {
-			let w = initWordMarkup(i);
-			if (exists) {
-				clearMarkup(w);
-			} else {
-				clearMarkup(w);
-				addMarkup(w.class);
-			}
-		});
+		toggleBibleTextMarkupVerse(
+			textMarkup,
+			verse.number,
+			verse.words.length,
+			mode
+		);
 	}
 
 	function applyMarkupToWord() {
-		let w = initWordMarkup(wordIdx);
-		updateMarkup(w);
+		toggleBibleTextMarkupWord(
+			textMarkup,
+			verse.number,
+			wordIdx,
+			mode
+		);
 	}
-
-	function initWordMarkup(wordIndex: number): BibleTextMarkupMarking {
-		if (!textMarkup.markings[verse.number]) {
-			textMarkup.markings[verse.number] = {};
-		}
-
-		if (!textMarkup.markings[verse.number][wordIndex]) {
-			textMarkup.markings[verse.number][wordIndex] = { class: [] };
-		}
-
-		return textMarkup.markings[verse.number][wordIndex];
-	}
-
-	function getExistingMarkupIndex(w: BibleTextMarkupMarking): number | undefined {
-		let indexOf: number | undefined;
-		w.class?.forEach((c: string, idx: number) => {
-			if (c.startsWith(mode.type)) {
-				indexOf = idx;
-			}
-		});
-		return indexOf;
-	}
-
-	function getWordIndexesToEdit(): number[] {
-		let wordIndexes = [];
-		for (let i = 0; i < verse.words.length; i++) {
-			wordIndexes.push(i);
-		}
-		return wordIndexes;
-	}
-
-	function clearMarkup(w: BibleTextMarkupMarking) {
-		let indexOf = getExistingMarkupIndex(w);
-		if (indexOf !== undefined) {
-			removeMarkup(w.class, indexOf);
-		}
-	}
-
-	function removeMarkup(cls: string[], indexOf: number) {
-		cls.splice(indexOf, 1);
-		removeClassDecorations(cls);
-	}
-
-	function removeClassDecorations(cls: string[]) {
-		if (mode.type === 'decoration') {
-			let filtered = cls.filter((c: string) => {
-				if (c === 'underline' || c.startsWith('decoration')) {
-					return;
-				}
-				return c;
-			});
-			cls.length = 0;
-			cls.push(...filtered);
-		}
-	}
-
-	function addMarkup(cls: string[]) {
-		addColorMarkup(cls);
-		addClassDecorations(cls);
-	}
-
-	function addColorMarkup(cls: string[]) {
-		cls.push(mode.colorMarkup);
-	}
-
-	function addClassDecorations(cls: string[]) {
-		if (mode.type === 'decoration') {
-			cls.push('underline', 'decoration-solid');
-		}
-	}
-
-	function updateMarkup(w: BibleTextMarkupMarking) {
-		let indexOf = getExistingMarkupIndex(w);
-		if (indexOf !== undefined) {
-			removeMarkup(w.class, indexOf);
-		} else {
-			addMarkup(w.class);
-		}
-	}
-
 
 	function getVerseBibleLocationRef(): string {
 		return `${bibleLocationReferenceService
@@ -347,48 +247,6 @@
 			}
 		);
 	}
-
-	function onMouseDownTouchStart() {
-		longPress = {
-			startTime: Date.now(),
-			lastKnownScrollPosition,
-			finished: false
-		};
-
-		longPress.timeoutID = setTimeout(() => {
-			if (!longPress || longPress.finished) {
-				return;
-			}
-
-			if (longPress.lastKnownScrollPosition !== lastKnownScrollPosition) {
-				longPress = undefined;
-				return;
-			}
-
-			updateMode(BIBLE_MODES.EDIT);
-
-			longPress.finished = true;
-		}, pressThresholdInMilliseconds);
-	}
-
-	function onMouseUpTouchEnd() {
-		if (!longPress) {
-			return;
-		}
-
-		const differenceInMilliseconds = Date.now() - longPress.startTime;
-		if (differenceInMilliseconds < pressThresholdInMilliseconds) {
-			clearPendingLongPress();
-		}
-	}
-
-	function clearPendingLongPress() {
-		if (longPress?.timeoutID !== undefined) {
-			clearTimeout(longPress.timeoutID);
-		}
-
-		longPress = undefined;
-	}
 </script>
 
 {#if wordHasNotes}
@@ -398,49 +256,34 @@
 		</KJVButton>
 	</span>
 {/if}{#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
-	<span class={wordMarkup?.class?.join(' ')}>
+	<span {...bibleWordAttributes} class={wordMarkup?.class?.join(' ')}>
 		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
 			role="button"
 			tabindex="-1"
 			onkeydown={() => {}}
 			onclick={onWordClicked}
-			ontouchstart={onMouseDownTouchStart}
-			ontouchend={onMouseUpTouchEnd}
-			ontouchcancel={clearPendingLongPress}
-			onmousedown={onMouseDownTouchStart}
-			onmouseup={onMouseUpTouchEnd}
 			class="{word.class?.join(' ')} {verseHasReferences
 				? 'vno-refs'
 				: ''} {wordMarkup?.class?.join(' ')}">{word.text}</span
 		></span
 	>
 {:else if mode.value === BIBLE_MODES.EDIT}
-	<span class=" {wordMarkup?.class?.join(' ')}">
+	<span {...bibleWordAttributes} class=" {wordMarkup?.class?.join(' ')}">
 		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
 			tabindex="-1"
 			role="button"
 			onkeydown={() => {}}
-			ontouchstart={onMouseDownTouchStart}
-			ontouchend={onMouseUpTouchEnd}
-			ontouchcancel={clearPendingLongPress}
-			onmousedown={onMouseDownTouchStart}
-			onmouseup={onMouseUpTouchEnd}
 			onclick={onEditClick}
 			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"
 			>{word.text}</span
 		></span
 	>
 {:else}
-	<span class=" {wordMarkup?.class?.join(' ')}">
+	<span {...bibleWordAttributes} class=" {wordMarkup?.class?.join(' ')}">
 		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
 			tabindex="-1"
 			role="button"
 			onkeydown={() => {}}
-			ontouchstart={onMouseDownTouchStart}
-			ontouchend={onMouseUpTouchEnd}
-			ontouchcancel={clearPendingLongPress}
-			onmousedown={onMouseDownTouchStart}
-			onmouseup={onMouseUpTouchEnd}
 			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"
 			>{word.text}</span
 		></span

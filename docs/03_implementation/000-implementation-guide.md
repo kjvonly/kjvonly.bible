@@ -291,6 +291,43 @@ custom escape hatches
 
 ---
 
+# Bible Domain Implementation
+
+## Bible Text Markup
+
+```text
+docs/03_implementation/domains/bible/001-text-markup.md
+```
+
+Read when working on:
+
+```text
+BibleTextMarkup Domain state
+Text Markup persistence/publication
+Reader markup draft lifecycle
+markup Resource selection
+Text Markup save/cancel behavior
+```
+
+## Bible Text Markup Drag Editing
+
+```text
+docs/03_implementation/domains/bible/003-text-markup-drag-editing.md
+```
+
+Read when working on:
+
+```text
+word-level markup click behavior
+horizontal paint/erase gestures
+pointer capture and hit testing
+real-time markup feedback
+DOM word identity
+selected-word Note reference behavior
+```
+
+---
+
 # Testing Architecture
 
 ## Testing Strategy and Browser Harnesses

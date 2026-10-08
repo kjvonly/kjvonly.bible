@@ -138,7 +138,6 @@
 	let mode: BibleMode = $state(newBibleMode());
 
 	// DOM related vars
-	let lastKnownScrollPosition = $state(0);
 	let showNavButtons = $state(true);
 	let showBibleScrollbar = $state(
 		settingsService.getSettings().showBibleScrollbar
@@ -149,7 +148,6 @@
 	onMount(async () => {
 		setNavReadings();
 		setBibleLocationRef();
-		attachScrolls();
 		subscribeToSettings();
 		overrideContextMenu();
 	});
@@ -287,10 +285,6 @@
 		);
 	}
 
-	function attachScrolls() {
-		attachEvents(`${id}-scroll-container`, 'scroll', trackScrollPosition);
-	}
-
 	function subscribeToSettings(): void {
 		settingsService.subscribe(
 			settingsSubscriberID,
@@ -303,14 +297,6 @@
 	): void {
 		showBibleScrollbar =
 			settings.showBibleScrollbar;
-	}
-
-	function trackScrollPosition() {
-		let el = document.getElementById(`${id}-scroll-container`);
-		if (!el) {
-			return;
-		}
-		lastKnownScrollPosition = el.scrollTop;
 	}
 
 	function onBibleLocationRefChanged(): void {
@@ -447,7 +433,6 @@
 					bind:id
 					bind:mode
 					bind:textMarkup
-					{lastKnownScrollPosition}
 				></Chapter>
 			</div>
 		</div>
