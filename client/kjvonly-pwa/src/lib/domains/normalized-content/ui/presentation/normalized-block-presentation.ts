@@ -1,25 +1,47 @@
 import type {
-	NormalizedBlock
-} from '../../models/normalized-block.model';
+	NormalizedBlock,
+	NormalizedHeadingLevel
+} from '@kjvonly/normalized-content';
 
 export type NormalizedBlockElement =
 	| 'blockquote'
+	| 'caption'
+	| 'figcaption'
+	| 'figure'
 	| 'h1'
 	| 'h2'
 	| 'h3'
 	| 'h4'
 	| 'h5'
 	| 'h6'
+	| 'hr'
 	| 'li'
 	| 'ol'
 	| 'p'
+	| 'pre'
 	| 'span'
+	| 'table'
+	| 'td'
+	| 'th'
+	| 'tr'
 	| 'ul';
 
+/**
+ * Identifies which canonical child payload a block presentation renders.
+ * `none` is used by structural nodes that intentionally own no child content.
+ */
 export type NormalizedBlockContentKind =
 	| 'content'
-	| 'blocks';
+	| 'blocks'
+	| 'none';
 
+/** Structural context supplied by the recursive renderer for contextual nodes. */
+export interface NormalizedBlockPresentationContext {
+	/** Canonical type of the block that directly owns the candidate block. */
+	parentType?: NormalizedBlock['type'];
+}
+
+/** Semantic DOM presentation owned by the normalized-content UI layer. */
 export interface NormalizedBlockPresentation {
 	element: NormalizedBlockElement;
 	classes?: string;
@@ -28,7 +50,7 @@ export interface NormalizedBlockPresentation {
 
 const HEADING_PRESENTATIONS: Readonly<
 	Record<
-		number,
+		NormalizedHeadingLevel,
 		NormalizedBlockPresentation
 	>
 > = {
@@ -64,80 +86,198 @@ const HEADING_PRESENTATIONS: Readonly<
 	}
 };
 
-const BLOCK_PRESENTATIONS: Readonly<
-	Record<
-		string,
-		NormalizedBlockPresentation
-	>
-> = {
-	paragraph: {
-		element: 'p',
-		classes: 'my-4',
-		contentKind: 'content'
-	},
-	text: {
-		element: 'span',
-		contentKind: 'content'
-	},
-	quote: {
-		element: 'blockquote',
-		classes: 'my-6 border-l-2 border-neutral-400 pl-4',
-		contentKind: 'blocks'
-	},
-	'list-item': {
-		element: 'li',
-		classes: 'my-2',
-		contentKind: 'blocks'
-	}
-};
-
+/**
+ * Resolves one canonical normalized block into explicit semantic DOM presentation.
+ *
+ * The discriminated-union switch is intentionally exhaustive. When the shared
+ * NormalizedDocument contract adds a block type, this renderer must make an
+ * explicit presentation decision before the PWA compiles against that contract.
+ * Context-only structures also require their owning parent so their DOM semantics
+ * cannot be guessed or flattened into a generic element.
+ *
+ * @param block Canonical normalized block to present.
+ * @param context Direct structural parent supplied by recursive rendering.
+ * @returns Semantic element, application presentation classes, and child payload kind.
+ */
 export function resolveNormalizedBlockPresentation(
-	block: NormalizedBlock
+	block: NormalizedBlock,
+	context: NormalizedBlockPresentationContext = {}
 ): NormalizedBlockPresentation {
-	if (
-		block.type ===
-			'heading'
-	) {
-		const presentation =
-			HEADING_PRESENTATIONS[
-				block.level ?? -1
+	switch (block.type) {
+		case 'heading':
+			return HEADING_PRESENTATIONS[
+				block.level
 			];
 
-		if (!presentation) {
-			throw new Error(
-				`Unsupported normalized heading level: ${block.level ?? 'missing'}`
-			);
-		}
+		case 'paragraph':
+			return {
+				element: 'p',
+				classes: 'my-4',
+				contentKind: 'content'
+			};
 
-		return presentation;
-	}
+		case 'text':
+			return {
+				element: 'span',
+				contentKind: 'content'
+			};
 
-	if (
-		block.type ===
-			'list'
-	) {
-		return {
-			element:
-				block.ordered
+		case 'preformatted':
+			return {
+				element: 'pre',
+				classes: 'my-4 overflow-x-auto',
+				contentKind: 'content'
+			};
+
+		case 'thematic-break':
+			return {
+				element: 'hr',
+				classes: 'my-6',
+				contentKind: 'none'
+			};
+
+		case 'quote':
+			return {
+				element: 'blockquote',
+				classes: 'my-6 border-l-2 border-neutral-400 pl-4',
+				contentKind: 'blocks'
+			};
+
+		case 'list':
+			return {
+				element: block.ordered
 					? 'ol'
 					: 'ul',
-			classes:
-				'my-4 pl-6',
-			contentKind:
-				'blocks'
-		};
+				classes: 'my-4 pl-6',
+				contentKind: 'blocks'
+			};
+
+		case 'list-item':
+			return {
+				element: 'li',
+				classes: 'my-2',
+				contentKind: 'blocks'
+			};
+
+		case 'figure':
+			return {
+				element: 'figure',
+				classes: 'my-6',
+				contentKind: 'blocks'
+			};
+
+		case 'caption':
+			return resolveNormalizedCaptionPresentation(
+				context
+			);
+
+		case 'table':
+			return {
+				element: 'table',
+				classes: 'my-6 w-full',
+				contentKind: 'blocks'
+			};
+
+		case 'table-row':
+			requireNormalizedParent(
+				block.type,
+				context.parentType,
+				'table'
+			);
+
+			return {
+				element: 'tr',
+				contentKind: 'blocks'
+			};
+
+		case 'table-cell':
+			requireNormalizedParent(
+				block.type,
+				context.parentType,
+				'table-row'
+			);
+
+			return {
+				element: block.header
+					? 'th'
+					: 'td',
+				classes: 'p-2 align-top',
+				contentKind: 'blocks'
+			};
+
+		default:
+			return assertUnsupportedNormalizedBlock(
+				block
+			);
+	}
+}
+
+/**
+ * Resolves a contextual caption according to the canonical structure that owns it.
+ *
+ * @param context Direct structural parent supplied by recursive rendering.
+ * @returns Figure or table caption presentation.
+ */
+function resolveNormalizedCaptionPresentation(
+	context: NormalizedBlockPresentationContext
+): NormalizedBlockPresentation {
+	switch (context.parentType) {
+		case 'figure':
+			return {
+				element: 'figcaption',
+				classes: 'mt-2 text-sm',
+				contentKind: 'blocks'
+			};
+
+		case 'table':
+			return {
+				element: 'caption',
+				classes: 'mb-2 text-sm',
+				contentKind: 'blocks'
+			};
+
+		default:
+			throw new Error(
+				`Unsupported normalized caption parent: ${context.parentType ?? 'root'}`
+			);
+	}
+}
+
+/**
+ * Requires one context-only normalized block to be rendered beneath its
+ * canonical structural owner. Runtime validation should already guarantee this
+ * grammar; this guard keeps direct renderer use from silently inventing DOM.
+ *
+ * @param blockType Context-only canonical block type being rendered.
+ * @param actualParentType Structural parent received from the recursive renderer.
+ * @param expectedParentType Canonical structural owner required by the model.
+ */
+function requireNormalizedParent(
+	blockType: NormalizedBlock['type'],
+	actualParentType: NormalizedBlock['type'] | undefined,
+	expectedParentType: NormalizedBlock['type']
+): void {
+	if (
+		actualParentType ===
+		expectedParentType
+	) {
+		return;
 	}
 
-	const presentation =
-		BLOCK_PRESENTATIONS[
-			block.type
-		];
+	throw new Error(
+		`Unsupported normalized ${blockType} parent: ${actualParentType ?? 'root'}`
+	);
+}
 
-	if (!presentation) {
-		throw new Error(
-			`Unsupported normalized block type: ${block.type}`
-		);
-	}
-
-	return presentation;
+/**
+ * Compile-time exhaustiveness guard for the shared normalized block union.
+ * Runtime invocation is possible only when unvalidated data bypasses the shared
+ * NormalizedDocument validator.
+ */
+function assertUnsupportedNormalizedBlock(
+	block: never
+): never {
+	throw new Error(
+		`Unsupported normalized block type: ${(block as { type?: unknown }).type ?? 'missing'}`
+	);
 }

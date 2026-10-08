@@ -22,13 +22,16 @@
 
 	import type {
 		NormalizedDocument
-	} from '../../models/normalized-document.model';
+	} from '@kjvonly/normalized-content';
 
 	import {
 		NORMALIZED_CONTENT_VIEWS
 	} from '../../models/normalized-content-navigation.model';
 
 	import NormalizedContentRenderer from '../../ui/components/normalizedContentRenderer.svelte';
+	import {
+		findNormalizedContentLocalTarget
+	} from '../../ui/presentation/normalized-content-local-target';
 
 	const {
 		applicationReferenceResolver,
@@ -75,14 +78,29 @@
 	let loading =
 		$state(true);
 
+	let renderedDocumentRoot:
+		HTMLDivElement | undefined =
+		$state();
+
 	onMount(() => {
 		void loadDocument();
 	});
 
+	/**
+	 * Handles normalized link targets in canonical order.
+	 *
+	 * Document-local fragments are resolved against this mounted document before
+	 * application references are considered, preserving the document-local ID
+	 * namespace without teaching the generic renderer application routing rules.
+	 */
 	function onLinkActivate(
 		hrefs: readonly string[]
 	): boolean {
 		for (const href of hrefs) {
+			if (activateDocumentLocalTarget(href)) {
+				return true;
+			}
+
 			const destination =
 				applicationReferenceResolver
 					.resolve(href);
@@ -101,6 +119,35 @@
 		}
 
 		return false;
+	}
+
+	/**
+	 * Scrolls one resolved document-local block or inline anchor into view.
+	 *
+	 * @returns True only when the current rendered document owns the target.
+	 */
+	function activateDocumentLocalTarget(
+		href: string
+	): boolean {
+		if (!renderedDocumentRoot) {
+			return false;
+		}
+
+		const target =
+			findNormalizedContentLocalTarget(
+				renderedDocumentRoot,
+				href
+			);
+
+		if (!target) {
+			return false;
+		}
+
+		target.scrollIntoView({
+			block: 'start'
+		});
+
+		return true;
 	}
 
 	async function loadDocument(): Promise<void> {
@@ -198,7 +245,10 @@
 			{errorMessage}
 		</div>
 	{:else if document}
-		<div class="py-4">
+		<div
+			class="py-4"
+			bind:this={renderedDocumentRoot}
+		>
 			<NormalizedContentRenderer
 				{document}
 				{onLinkActivate}

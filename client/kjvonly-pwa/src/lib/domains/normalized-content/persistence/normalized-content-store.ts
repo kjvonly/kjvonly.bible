@@ -1,6 +1,6 @@
 import type {
 	NormalizedDocument
-} from '../models/normalized-document.model';
+} from '@kjvonly/normalized-content';
 
 export interface NormalizedContentStore {
 	get(

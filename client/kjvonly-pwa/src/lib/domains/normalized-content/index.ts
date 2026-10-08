@@ -1,20 +1,50 @@
 export type {
-	NormalizedBlock
-} from './models/normalized-block.model';
-
-export type {
+	NormalizedAnchor,
+	NormalizedBlock,
+	NormalizedCaptionBlock,
+	NormalizedClassName,
 	NormalizedContent,
+	NormalizedFigureBlock,
+	NormalizedFlowBlock,
+	NormalizedHeadingBlock,
+	NormalizedHeadingLevel,
 	NormalizedLineBreak,
-	NormalizedWord
-} from './models/normalized-content.model';
-
-export type {
+	NormalizedListBlock,
+	NormalizedListItemBlock,
+	NormalizedMark,
+	NormalizedParagraphBlock,
+	NormalizedPreformattedBlock,
+	NormalizedQuoteBlock,
+	NormalizedTableBlock,
+	NormalizedTableCellBlock,
+	NormalizedTableRowBlock,
+	NormalizedTextBlock,
+	NormalizedThematicBreakBlock,
+	NormalizedWord,
 	NormalizedDocument
-} from './models/normalized-document.model';
+} from '@kjvonly/normalized-content';
 
 export {
 	NormalizedDocumentValidator
-} from './validation/normalized-document-validator';
+} from '@kjvonly/normalized-content';
+
+export type {
+	NormalizedContentAddress
+} from './models/normalized-content-address.model';
+
+export {
+	resolveNormalizedContentAtAddress
+} from './models/normalized-content-address.model';
+
+export type {
+	NormalizedContentTextMarkupContentMap,
+	NormalizedContentTextMarkupMap,
+	NormalizedContentTextMarkupMarking
+} from './models/normalized-content-text-markup.model';
+
+export {
+	getNormalizedContentTextMarkupMarking
+} from './models/normalized-content-text-markup.model';
 
 export {
 	NormalizedDocumentDataTypeHandler
@@ -23,7 +53,6 @@ export {
 export {
 	NormalizedContentDomainObjectFactory
 } from './resources/normalized-content-domain-object-factory';
-
 
 export {
 	NORMALIZED_DOCUMENT_OBJECT_TYPE,

@@ -81,13 +81,30 @@ describe(
 							type:
 								'paragraph',
 
+							id:
+								'browser-test-paragraph',
+
 							content: [
 								{
 									type:
 										'word',
 
 									text:
-										'Generic resource lifecycle'
+										'Generic'
+								},
+								{
+									type:
+										'word',
+
+									text:
+										'resource'
+								},
+								{
+									type:
+										'word',
+
+									text:
+										'lifecycle'
 								}
 							]
 						}

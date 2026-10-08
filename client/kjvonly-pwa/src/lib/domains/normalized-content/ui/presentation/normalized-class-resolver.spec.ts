@@ -21,30 +21,10 @@ describe(
 				'indent-6'
 			],
 			[
-				'small',
-				'text-sm'
-			],
-			[
-				'color-blue',
-				'text-vivid-b-700'
-			],
-			[
-				'color-green',
-				'text-support-a-700'
-			],
-			[
-				'color-dark-blue',
-				'text-vivid-b-900'
-			],
-			[
-				'color-red-brown',
-				'text-support-b-700'
-			],
-			[
 				'nowrap',
 				'whitespace-nowrap'
 			]
-		])(
+		] as const)(
 			'maps %s to controlled application presentation',
 			(
 				sourceClass,
@@ -61,45 +41,25 @@ describe(
 		);
 
 		it(
-			'composes multiple known classes in source order',
+			'composes canonical presentation classes in source order',
 			() => {
 				expect(
 					resolveNormalizedClasses([
 						'text-center',
-						'color-dark-blue',
-						'small'
+						'indent',
+						'nowrap'
 					])
 				).toBe(
-					'text-center text-vivid-b-900 text-sm'
-				);
-			}
-		);
-
-		it(
-			'deduplicates mapped application classes',
-			() => {
-				expect(
-					resolveNormalizedClasses([
-						'small',
-						'small'
-					])
-				).toBe(
-					'text-sm'
+					'text-center indent-6 whitespace-nowrap'
 				);
 			}
 		);
 
 		it.each([
-			'quote-text',
-			'scripSection',
-			'list-marker',
-			'list-marker-roman',
-			'list-marker-arabic',
 			'list-roman',
-			'list-arabic',
-			'blb-tagged'
-		])(
-			'ignores known source-only class %s',
+			'list-arabic'
+		] as const)(
+			'leaves structural list class %s to list presentation',
 			(sourceClass) => {
 				expect(
 					resolveNormalizedClasses([
@@ -109,25 +69,10 @@ describe(
 			}
 		);
 
-		it(
-			'ignores unknown publisher classes instead of leaking them',
-			() => {
-				expect(
-					resolveNormalizedClasses([
-						'publisher-special',
-						'text-center'
-					])
-				).toBe(
-					'text-center'
-				);
-			}
-		);
-
 		it.each([
 			undefined,
-			null,
 			[]
-		])(
+		] as const)(
 			'returns undefined when no presentation class remains',
 			(classes) => {
 				expect(

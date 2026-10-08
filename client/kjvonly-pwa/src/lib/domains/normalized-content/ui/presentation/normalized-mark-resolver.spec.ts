@@ -12,103 +12,101 @@ import {
 describe(
 	'resolveNormalizedMarks',
 	() => {
-		it(
-			'maps small to the semantic small element',
-			() => {
+		it.each([
+			[
+				'superscript',
+				'sup'
+			],
+			[
+				'subscript',
+				'sub'
+			],
+			[
+				'underline',
+				'u'
+			],
+			[
+				'strikethrough',
+				's'
+			],
+			[
+				'small',
+				'small'
+			],
+			[
+				'code',
+				'code'
+			],
+			[
+				'highlight',
+				'mark'
+			]
+		] as const)(
+			'maps %s to the semantic %s element',
+			(
+				mark,
+				element
+			) => {
 				expect(
 					resolveNormalizedMarks([
-						'small'
+						mark
 					])
 				).toEqual([
 					{
-						mark:
-							'small',
-						element:
-							'small'
+						mark,
+						element
 					}
 				]);
 			}
 		);
 
 		it(
-			'maps superscript to the semantic sup element',
+			'normalizes multiple marks to canonical deterministic wrapper order',
 			() => {
 				expect(
 					resolveNormalizedMarks([
-						'superscript'
-					])
-				).toEqual([
-					{
-						mark:
-							'superscript',
-						element:
-							'sup'
-					}
+						'highlight',
+						'underline',
+						'superscript',
+						'code'
+					]).map(
+						(presentation) =>
+							presentation.mark
+					)
+			).toEqual([
+					'superscript',
+					'underline',
+					'code',
+					'highlight'
 				]);
-			}
+		}
 		);
 
 		it(
-			'normalizes multiple marks to deterministic wrapper order',
+			'exposes every canonical mark in shared vocabulary order',
 			() => {
-				expect(
-					resolveNormalizedMarks([
-						'small',
-						'superscript'
-					])
-				).toEqual([
-					{
-						mark:
-							'superscript',
-						element:
-							'sup'
-					},
-					{
-						mark:
-							'small',
-						element:
-							'small'
-					}
-				]);
-
 				expect(
 					NORMALIZED_MARK_PRESENTATIONS.map(
 						(presentation) =>
 							presentation.mark
 					)
-				).toEqual([
+			).toEqual([
 					'superscript',
-					'small'
+					'subscript',
+					'underline',
+					'strikethrough',
+					'small',
+					'code',
+					'highlight'
 				]);
-			}
-		);
-
-		it(
-			'deduplicates marks and ignores unknown presentation hints',
-			() => {
-				expect(
-					resolveNormalizedMarks([
-						'small',
-						'publisher-mark',
-						'small',
-						'superscript'
-					]).map(
-						(presentation) =>
-							presentation.mark
-					)
-				).toEqual([
-					'superscript',
-					'small'
-				]);
-			}
+		}
 		);
 
 		it.each([
 			undefined,
-			null,
 			[]
-		])(
-			'returns no marks when no supported mark is present',
+		] as const)(
+			'returns no marks when no canonical mark is present',
 			(marks) => {
 				expect(
 					resolveNormalizedMarks(

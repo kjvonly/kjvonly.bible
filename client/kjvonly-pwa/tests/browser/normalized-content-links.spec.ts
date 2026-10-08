@@ -111,23 +111,68 @@ describe('NormalizedContentRenderer links', () => {
 		]);
 	});
 
+	it('preserves an empty canonical primary href as a native link', () => {
+		mountDocument(
+			createLinkedDocument(
+				[''],
+				'current'
+			)
+		);
+
+		const link = requireLink();
+		expect(link.getAttribute('href')).toBe('');
+		expect(link.textContent).toBe('current');
+	});
+
+	it('delegates every target when the primary href is empty', async () => {
+		const onLinkActivate = vi.fn(() => true);
+		const hrefs = [
+			'',
+			'bibleLocationReference:50_3_16'
+		];
+
+		mountDocument(
+			createLinkedDocument(
+				hrefs,
+				'current'
+			),
+			onLinkActivate
+		);
+
+		const event = new MouseEvent(
+			'click',
+			{
+				bubbles: true,
+				cancelable: true,
+				button: 0
+			}
+		);
+
+		requireLink().dispatchEvent(event);
+		await tick();
+
+		expect(event.defaultPrevented).toBe(true);
+		expect(onLinkActivate).toHaveBeenCalledWith(
+			hrefs
+		);
+	});
+
 	it('keeps document-local anchors as native hrefs when no host handler is supplied', () => {
 		mountDocument({
 			blocks: [
 				{
 					type: 'paragraph',
+					id: 'paragraph-link-target',
 					content: [
 						{
 							type: 'word',
 							text: '[1]',
 							href: ['#fn1']
-						}
-					]
-				},
-				{
-					type: 'text',
-					id: 'fn1',
-					content: [
+						},
+						{
+							type: 'anchor',
+							id: 'fn1'
+						},
 						{
 							type: 'word',
 							text: 'Footnote'
@@ -205,6 +250,7 @@ describe('NormalizedContentRenderer links', () => {
 			blocks: [
 				{
 					type: 'paragraph',
+					id: 'paragraph-spacing',
 					content: [
 						{
 							type: 'word',
@@ -267,6 +313,7 @@ function createLinkedDocument(
 		blocks: [
 			{
 				type: 'paragraph',
+				id: 'linked-paragraph',
 				content: [
 					{
 						type: 'word',

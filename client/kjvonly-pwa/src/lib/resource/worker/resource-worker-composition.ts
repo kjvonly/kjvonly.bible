@@ -180,7 +180,7 @@ import {
 
 import {
 	NormalizedDocumentValidator
-} from '$lib/domains/normalized-content/validation/normalized-document-validator';
+} from '@kjvonly/normalized-content';
 
 import {
 	NormalizedDocumentDataTypeHandler

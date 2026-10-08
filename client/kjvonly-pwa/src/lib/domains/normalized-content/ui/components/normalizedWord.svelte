@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type {
 		NormalizedWord
-	} from '../../models/normalized-content.model';
+	} from '@kjvonly/normalized-content';
 	import type {
 		NormalizedContentLinkHandler
 	} from '../models/normalized-content-link-handler';
+	import type {
+		NormalizedContentWordActivationHandler
+	} from '../models/normalized-content-word-activation-handler';
 	import {
 		resolveNormalizedClasses
 	} from '../presentation/normalized-class-resolver';
@@ -15,36 +18,71 @@
 
 	let {
 		word,
+		blockId,
+		contentIndex,
+		textMarkupClassName,
+		onWordActivate,
 		onLinkActivate
 	}: {
 		word: NormalizedWord;
+		blockId: string;
+		contentIndex: number;
+		textMarkupClassName?: string;
+		onWordActivate?: NormalizedContentWordActivationHandler;
 		onLinkActivate?: NormalizedContentLinkHandler;
 	} = $props();
 
 	const className = $derived(
-		resolveNormalizedClasses(
-			word.class
-		)
+		[
+			resolveNormalizedClasses(
+				word.class
+			),
+			textMarkupClassName
+		]
+			.filter(Boolean)
+			.join(' ') || undefined
 	);
 
 	const hrefs = $derived(
 		word.href ?? []
 	);
 
-	const href = $derived(
+	const primaryHref = $derived(
 		hrefs[0]
 	);
 
+	const hasPrimaryHref = $derived(
+		primaryHref !== undefined
+	);
+
+	/**
+	 * Delegates one ordinary word activation before linked-word navigation.
+	 * Modified gestures remain native browser behavior.
+	 */
 	function onClick(
 		event: MouseEvent
 	): void {
 		if (
-			!onLinkActivate ||
-			hrefs.length ===
-				0 ||
 			!shouldDelegateNormalizedLinkActivation(
 				event
 			)
+		) {
+			return;
+		}
+
+		if (
+			onWordActivate?.({
+				blockId,
+				contentIndex
+			})
+		) {
+			event.preventDefault();
+			return;
+		}
+
+		if (
+			!onLinkActivate ||
+			hrefs.length === 0
 		) {
 			return;
 		}
@@ -59,16 +97,23 @@
 	}
 </script>
 
-{#if href}
+{#if hasPrimaryHref}
 	<a
 		class={className}
-		{href}
+		href={primaryHref}
+		data-normalized-content-index={contentIndex}
+		data-normalized-content-kind="word"
 		onclick={onClick}
 	>
 		<NormalizedMarkedText {word}></NormalizedMarkedText>
 	</a>
 {:else}
-	<span class={className}>
+	<span
+		class={className}
+		data-normalized-content-index={contentIndex}
+		data-normalized-content-kind="word"
+		onclick={onClick}
+	>
 		<NormalizedMarkedText {word}></NormalizedMarkedText>
 	</span>
 {/if}

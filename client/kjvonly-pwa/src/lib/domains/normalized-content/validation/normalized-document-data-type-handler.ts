@@ -3,17 +3,15 @@ import type {
 } from '$lib/resource';
 
 import type {
-	NormalizedDocument
-} from '../models/normalized-document.model';
+	NormalizedDocument,
+	NormalizedDocumentValidator
+} from '@kjvonly/normalized-content';
 
 import {
 	NORMALIZED_DOCUMENT_DATA_TYPE,
 	NORMALIZED_DOCUMENT_DATA_VERSION
 } from '../resources/normalized-content-resource-contract';
 
-import type {
-	NormalizedDocumentValidator
-} from './normalized-document-validator';
 
 /** Semantic Resource datatype capability for NormalizedDocument v1. */
 export class NormalizedDocumentDataTypeHandler implements ResourceDataTypeHandler<NormalizedDocument> {

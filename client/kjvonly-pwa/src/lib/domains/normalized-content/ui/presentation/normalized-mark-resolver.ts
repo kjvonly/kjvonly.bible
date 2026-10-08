@@ -1,40 +1,76 @@
-export type NormalizedMark =
-	| 'superscript'
-	| 'small';
+import {
+	NORMALIZED_MARK_NAMES,
+	type NormalizedMark
+} from '@kjvonly/normalized-content';
 
+/** HTML element used to render one canonical normalized inline mark. */
 export type NormalizedMarkElement =
 	| 'sup'
-	| 'small';
+	| 'sub'
+	| 'u'
+	| 's'
+	| 'small'
+	| 'code'
+	| 'mark';
 
+/** Presentation mapping for one canonical normalized inline mark. */
 export interface NormalizedMarkPresentation {
+	/** Canonical mark stored on the normalized word. */
 	mark: NormalizedMark;
+
+	/** Semantic HTML element used to present the mark. */
 	element: NormalizedMarkElement;
 }
 
 /**
- * Canonical outermost-to-innermost wrapper order.
+ * Closed mapping from the shared NormalizedDocument mark vocabulary to semantic
+ * HTML elements.
  *
- * This order is independent of publisher/source ordering so rendering remains
- * deterministic when more than one supported mark is present.
+ * Keeping this as an exhaustive Record makes renderer drift visible at compile
+ * time when the shared contract adds or changes a canonical mark.
+ */
+const NORMALIZED_MARK_ELEMENT_MAP: Readonly<
+	Record<
+		NormalizedMark,
+		NormalizedMarkElement
+	>
+> = {
+	superscript: 'sup',
+	subscript: 'sub',
+	underline: 'u',
+	strikethrough: 's',
+	small: 'small',
+	code: 'code',
+	highlight: 'mark'
+};
+
+/**
+ * Canonical outermost-to-innermost wrapper order for normalized inline marks.
+ *
+ * The shared vocabulary owns mark identity and order. The renderer owns only
+ * the corresponding presentation element.
  */
 export const NORMALIZED_MARK_PRESENTATIONS:
-	readonly NormalizedMarkPresentation[] = [
-		{
-			mark:
-				'superscript',
+	readonly NormalizedMarkPresentation[] =
+	NORMALIZED_MARK_NAMES.map(
+		(mark) => ({
+			mark,
 			element:
-				'sup'
-		},
-		{
-			mark:
-				'small',
-			element:
-				'small'
-		}
-	];
+				NORMALIZED_MARK_ELEMENT_MAP[
+					mark
+				]
+		})
+	);
 
+/**
+ * Resolves the canonical marks present on one word into deterministic renderer
+ * wrapper order.
+ *
+ * @param marks Canonical marks attached to the normalized word.
+ * @returns Presentation mappings for the marks that are present.
+ */
 export function resolveNormalizedMarks(
-	marks: readonly string[] | null | undefined
+	marks: readonly NormalizedMark[] | undefined
 ): NormalizedMarkPresentation[] {
 	if (
 		!marks ||

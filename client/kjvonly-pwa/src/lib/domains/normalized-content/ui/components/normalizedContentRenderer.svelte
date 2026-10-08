@@ -1,17 +1,27 @@
 <script lang="ts">
 	import type {
 		NormalizedDocument
-	} from '../../models/normalized-document.model';
+	} from '@kjvonly/normalized-content';
+	import type {
+		NormalizedContentTextMarkupMap
+	} from '../../models/normalized-content-text-markup.model';
 	import type {
 		NormalizedContentLinkHandler
 	} from '../models/normalized-content-link-handler';
+	import type {
+		NormalizedContentWordActivationHandler
+	} from '../models/normalized-content-word-activation-handler';
 	import NormalizedBlockRenderer from './normalizedBlockRenderer.svelte';
 
 	let {
 		document,
+		textMarkupMarkings,
+		onWordActivate,
 		onLinkActivate
 	}: {
 		document: NormalizedDocument;
+		textMarkupMarkings?: NormalizedContentTextMarkupMap;
+		onWordActivate?: NormalizedContentWordActivationHandler;
 		onLinkActivate?: NormalizedContentLinkHandler;
 	} = $props();
 </script>
@@ -20,6 +30,8 @@
 	{#each document.blocks as block}
 		<NormalizedBlockRenderer
 			{block}
+			{textMarkupMarkings}
+			{onWordActivate}
 			{onLinkActivate}
 		></NormalizedBlockRenderer>
 	{/each}

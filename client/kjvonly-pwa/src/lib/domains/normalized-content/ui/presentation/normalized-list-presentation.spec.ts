@@ -5,8 +5,9 @@ import {
 } from 'vitest';
 
 import type {
-	NormalizedBlock
-} from '../../models/normalized-block.model';
+	NormalizedClassName,
+	NormalizedListBlock
+} from '@kjvonly/normalized-content';
 
 import {
 	resolveNormalizedListMarkerClass
@@ -14,30 +15,17 @@ import {
 
 function list(
 	ordered: boolean,
-	classes?: string[],
-	childClasses?: string[]
-): NormalizedBlock {
+	classes?: NormalizedClassName[]
+): NormalizedListBlock {
 	return {
 		type:
 			'list',
+		id:
+			'list-1',
 		ordered,
 		class:
 			classes,
-		blocks: [
-			{
-				type:
-					'list-item',
-				blocks: [
-					{
-						type:
-							'text',
-						class:
-							childClasses,
-						content: []
-					}
-				]
-			}
-		]
+		blocks: []
 	};
 }
 
@@ -70,7 +58,7 @@ describe(
 		);
 
 		it(
-			'uses normalized list style hints when the source has no visible markers',
+			'uses canonical list style hints',
 			() => {
 				expect(
 					resolveNormalizedListMarkerClass(
@@ -84,27 +72,18 @@ describe(
 				).toBe(
 					'list-[upper-roman]'
 				);
-			}
-		);
 
-		it(
-			'suppresses browser markers when every list item already contains a source marker',
-			() => {
 				expect(
 					resolveNormalizedListMarkerClass(
 						list(
 							true,
 							[
-								'list-roman'
-							],
-							[
-								'list-marker',
-								'list-marker-roman'
+								'list-arabic'
 							]
 						)
 					)
 				).toBe(
-					'list-none'
+					'list-decimal'
 				);
 			}
 		);
@@ -116,6 +95,8 @@ describe(
 					resolveNormalizedListMarkerClass({
 						type:
 							'paragraph',
+						id:
+							'paragraph-1',
 						content: []
 					})
 				).toBeUndefined();

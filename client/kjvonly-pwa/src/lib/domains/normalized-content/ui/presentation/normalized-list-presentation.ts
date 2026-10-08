@@ -1,13 +1,6 @@
 import type {
 	NormalizedBlock
-} from '../../models/normalized-block.model';
-
-const SOURCE_MARKER_CLASSES =
-	new Set([
-		'list-marker',
-		'list-marker-roman',
-		'list-marker-arabic'
-	]);
+} from '@kjvonly/normalized-content';
 
 export function resolveNormalizedListMarkerClass(
 	block: NormalizedBlock
@@ -17,14 +10,6 @@ export function resolveNormalizedListMarkerClass(
 			'list'
 	) {
 		return undefined;
-	}
-
-	if (
-		hasSourceProvidedMarkers(
-			block
-		)
-	) {
-		return 'list-none';
 	}
 
 	if (
@@ -46,28 +31,4 @@ export function resolveNormalizedListMarkerClass(
 	return block.ordered
 		? 'list-decimal'
 		: 'list-disc';
-}
-
-function hasSourceProvidedMarkers(
-	block: NormalizedBlock
-): boolean {
-	const listItems =
-		block.blocks ?? [];
-
-	return (
-		listItems.length >
-			0 &&
-		listItems.every(
-			(item) =>
-				(item.blocks ?? []).some(
-					(child) =>
-						(child.class ?? []).some(
-							(className) =>
-								SOURCE_MARKER_CLASSES.has(
-									className
-								)
-						)
-				)
-		)
-	);
 }

@@ -16,7 +16,7 @@ import {
 
 import type {
 	NormalizedDocumentValidator
-} from './normalized-document-validator';
+} from '@kjvonly/normalized-content';
 
 describe(
 	'NormalizedDocumentDataTypeHandler',

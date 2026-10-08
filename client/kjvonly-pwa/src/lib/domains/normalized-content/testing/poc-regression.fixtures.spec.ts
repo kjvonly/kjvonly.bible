@@ -5,14 +5,11 @@ import {
 } from 'vitest';
 
 import {
-	NormalizedDocumentValidator
-} from '../validation/normalized-document-validator';
-import type {
-	NormalizedBlock
-} from '../models/normalized-block.model';
-import type {
-	NormalizedDocument
-} from '../models/normalized-document.model';
+	NormalizedDocumentValidator,
+	type NormalizedBlock,
+	type NormalizedDocument
+} from '@kjvonly/normalized-content';
+
 import {
 	POC_REGRESSION_FIXTURES
 } from './poc-regression.fixtures';
@@ -81,8 +78,11 @@ function containsLegacyBlockText(
 				block,
 				'text'
 			) ||
-			containsLegacyBlockText(
-				block.blocks ?? []
+			(
+				'blocks' in block &&
+				containsLegacyBlockText(
+					block.blocks
+				)
 			)
 	);
 }
@@ -96,7 +96,11 @@ function collectHrefs(
 		visitBlocks(
 			document.blocks,
 			(block) => {
-				for (const content of block.content ?? []) {
+				if (!('content' in block)) {
+					return;
+				}
+
+				for (const content of block.content) {
 					if (
 						content.type === 'word'
 					) {
@@ -120,7 +124,8 @@ function maxBlockDepth(
 		(maxDepth, block) =>
 			Math.max(
 				maxDepth,
-				block.blocks?.length
+				'blocks' in block &&
+					block.blocks.length > 0
 					? maxBlockDepth(
 						block.blocks,
 						depth + 1
@@ -137,9 +142,12 @@ function visitBlocks(
 ): void {
 	for (const block of blocks) {
 		visit(block);
-		visitBlocks(
-			block.blocks ?? [],
-			visit
-		);
+
+		if ('blocks' in block) {
+			visitBlocks(
+				block.blocks,
+				visit
+			);
+		}
 	}
 }

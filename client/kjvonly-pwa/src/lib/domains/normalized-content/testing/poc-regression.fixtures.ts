@@ -1,6 +1,8 @@
 import type {
-	NormalizedDocument
-} from '../models/normalized-document.model';
+	NormalizedClassName,
+	NormalizedDocument,
+	NormalizedMark
+} from '@kjvonly/normalized-content';
 
 /**
  * Compact regression fixtures derived from the supplied normalized-document POC.
@@ -20,32 +22,29 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 		blocks: [
 			{
 				type: 'heading',
+				id: 'poc-heading-1',
 				level: 1,
 				class: [
 					'text-center',
-					'color-blue'
 				],
 				content: [
 					word('THE', {
-						class: ['color-blue'],
 						strong: true
 					}),
 					word('IMMUTABILITY', {
-						class: ['color-blue'],
 						strong: true
 					}),
 					word('OF', {
-						class: ['color-blue'],
 						strong: true
 					}),
 					word('GOD', {
-						class: ['color-blue'],
 						strong: true
 					})
 				]
 			},
 			{
 				type: 'paragraph',
+				id: 'poc-paragraph-1',
 				class: ['text-center'],
 				content: [
 					word('A', { strong: true }),
@@ -76,62 +75,52 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 			},
 			{
 				type: 'quote',
+				id: 'poc-quote-1',
 				class: [
 					'text-center',
-					'color-dark-blue'
 				],
 				blocks: [
 					{
 						type: 'text',
+						id: 'poc-text-1',
 						class: [
-							'quote-text',
 							'text-center',
-							'color-dark-blue'
 						],
 						content: [
 							word('“I', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							word('am', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							word('the', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							word('LORD,', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							word('I', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							word('change', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							word('not;', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							{ type: 'line-break' },
 							word('Malachi', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							}),
 							word('3:6', {
-								class: ['color-dark-blue'],
 								strong: true,
 								emphasis: true
 							})
@@ -141,18 +130,17 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 			},
 			{
 				type: 'list',
+				id: 'poc-list-1',
 				class: ['list-roman'],
 				ordered: true,
 				blocks: [
 					{
 						type: 'list-item',
+						id: 'poc-list_item-1',
 						blocks: [
 							{
 								type: 'text',
-								class: [
-									'list-marker',
-									'list-marker-roman'
-								],
+								id: 'poc-text-2',
 								content: [
 									word('I.'),
 									word('First'),
@@ -162,18 +150,17 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 							},
 							{
 								type: 'list',
+								id: 'poc-list-2',
 								class: ['list-arabic'],
 								ordered: true,
 								blocks: [
 									{
 										type: 'list-item',
+										id: 'poc-list_item-2',
 										blocks: [
 											{
 												type: 'text',
-												class: [
-													'list-marker',
-													'list-marker-arabic'
-												],
+												id: 'poc-text-3',
 												content: [
 													word('1.'),
 													word('I'),
@@ -191,6 +178,7 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 			},
 			{
 				type: 'paragraph',
+				id: 'poc-paragraph-2',
 				content: [
 					word('June'),
 					word('8'),
@@ -208,6 +196,7 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 		blocks: [
 			{
 				type: 'heading',
+				id: 'poc-heading-2',
 				level: 1,
 				content: [
 					word('John'),
@@ -235,14 +224,12 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 					word('Gen', {
 						class: [
 							'nowrap',
-							'blb-tagged'
 						],
 						href: ['bibleLocationReference:1_31_42']
 					}),
 					word('31:42', {
 						class: [
 							'nowrap',
-							'blb-tagged'
 						],
 						href: ['bibleLocationReference:1_31_42']
 					}),
@@ -250,14 +237,12 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 					word('Gen', {
 						class: [
 							'nowrap',
-							'blb-tagged'
 						],
 						href: ['bibleLocationReference:1_31_53']
 					}),
 					word('31:53', {
 						class: [
 							'nowrap',
-							'blb-tagged'
 						],
 						href: ['bibleLocationReference:1_31_53']
 					}),
@@ -270,10 +255,12 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 			},
 			{
 				type: 'list',
+				id: 'poc-list-3',
 				ordered: false,
 				blocks: [
 					{
 						type: 'list-item',
+						id: 'poc-list_item-3',
 						blocks: [
 							{
 								type: 'paragraph',
@@ -288,10 +275,12 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 							},
 							{
 								type: 'list',
+								id: 'poc-list-4',
 								ordered: false,
 								blocks: [
 									{
 										type: 'list-item',
+										id: 'poc-list_item-4',
 										blocks: [
 											{
 												type: 'paragraph',
@@ -321,6 +310,7 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 		blocks: [
 			{
 				type: 'heading',
+				id: 'poc-heading-3',
 				level: 1,
 				content: [
 					word('Matthew'),
@@ -334,6 +324,7 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 			},
 			{
 				type: 'heading',
+				id: 'poc-heading-4',
 				level: 4,
 				content: [
 					word('Chapter'),
@@ -342,6 +333,7 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 			},
 			{
 				type: 'paragraph',
+				id: 'poc-paragraph-3',
 				content: [
 					word('“Where'),
 					word('is'),
@@ -352,14 +344,12 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 					word('Job', {
 						class: [
 							'nowrap',
-							'blb-tagged'
 						],
 						href: ['bibleLocationReference:22_35_10']
 					}),
 					word('35:10', {
 						class: [
 							'nowrap',
-							'blb-tagged'
 						],
 						href: ['bibleLocationReference:22_35_10']
 					}),
@@ -368,13 +358,16 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 			},
 			{
 				type: 'list',
+				id: 'poc-list-5',
 				ordered: false,
 				blocks: [
 					{
 						type: 'list-item',
+						id: 'poc-list_item-5',
 						blocks: [
 							{
 								type: 'text',
+								id: 'poc-text-4',
 								content: [
 									word('1.'),
 									word('Observe,'),
@@ -385,13 +378,16 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 							},
 							{
 								type: 'list',
+								id: 'poc-list-6',
 								ordered: false,
 								blocks: [
 									{
 										type: 'list-item',
+										id: 'poc-list_item-6',
 										blocks: [
 											{
 												type: 'text',
+												id: 'poc-text-5',
 												content: [
 													word('(1.)'),
 													word('The'),
@@ -412,11 +408,11 @@ export const POC_REGRESSION_FIXTURES: readonly NormalizedDocument[] = [
 ];
 
 type WordOptions = {
-	class?: string[];
+	class?: NormalizedClassName[];
 	href?: string[];
-	emphasis?: boolean;
-	strong?: boolean;
-	marks?: string[];
+	emphasis?: true;
+	strong?: true;
+	marks?: NormalizedMark[];
 };
 
 function word(

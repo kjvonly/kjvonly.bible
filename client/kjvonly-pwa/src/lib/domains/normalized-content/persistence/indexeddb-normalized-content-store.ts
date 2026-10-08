@@ -4,7 +4,7 @@ import {
 
 import type {
 	NormalizedDocument
-} from '../models/normalized-document.model';
+} from '@kjvonly/normalized-content';
 
 import {
 	NORMALIZED_DOCUMENT_DATA_TYPE,
