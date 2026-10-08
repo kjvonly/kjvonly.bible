@@ -41,6 +41,8 @@ describe(
 				const parsedDocument:
 					ParsedHtmlDocument = {
 						selectFirst:
+							vi.fn(),
+						getSourceLocation:
 							vi.fn()
 					};
 

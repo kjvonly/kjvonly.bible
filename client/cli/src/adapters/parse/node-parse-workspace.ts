@@ -1,21 +1,31 @@
 import {
+	link,
+	open,
 	readdir,
 	readFile,
+	rename,
 	stat,
-	writeFile
+	unlink
 } from 'node:fs/promises';
 
 import {
+	basename,
+	dirname,
 	extname,
 	join,
+	normalize,
 	relative,
 	resolve,
 	sep
 } from 'node:path';
 
+import {
+	randomUUID
+} from 'node:crypto';
+
 import type {
 	ParseSourceFile,
-	ParseTextWriteOptions,
+	ParseOutputWriteOptions,
 	ParseWorkspace
 } from '#ports/parse/parse-workspace.js';
 
@@ -28,6 +38,13 @@ import type {
 export class NodeParseWorkspace
 	implements ParseWorkspace {
 
+	/**
+	 * Recursively discovers supported files and emits stable root-relative provenance.
+	 *
+	 * @param rootDirectory Root directory scanned recursively.
+	 * @param extensions File extensions accepted for this parse format.
+	 * @returns Deterministically ordered source files.
+	 */
 	async findSourceFiles(
 		rootDirectory: string,
 		extensions: readonly string[]
@@ -83,6 +100,29 @@ export class NodeParseWorkspace
 		);
 	}
 
+	/**
+	 * Creates a conservative portable comparison key without changing the path
+	 * that will actually be emitted. Case folding intentionally rejects output
+	 * sets that would alias on common case-insensitive filesystems even when the
+	 * current host filesystem permits both names.
+	 *
+	 * @param path Candidate output path.
+	 * @returns Normalized, case-insensitive key used only for collision checks.
+	 */
+	getPathCollisionKey(
+		path: string
+	): string {
+		return normalize(
+			path
+		).toLowerCase();
+	}
+
+	/**
+	 * Checks current filesystem existence for batch preflight only.
+	 *
+	 * @param path Native filesystem path to inspect.
+	 * @returns Whether the path existed when stat completed.
+	 */
 	async pathExists(
 		path: string
 	): Promise<boolean> {
@@ -110,6 +150,12 @@ export class NodeParseWorkspace
 		}
 	}
 
+	/**
+	 * Reads one complete UTF-8 source file for parser input.
+	 *
+	 * @param path Native filesystem path to the source document.
+	 * @returns Complete UTF-8 source text.
+	 */
 	async readTextFile(
 		path: string
 	): Promise<string> {
@@ -119,23 +165,97 @@ export class NodeParseWorkspace
 		);
 	}
 
-	async writeTextFile(
+	/**
+	 * Writes a complete artifact to a same-directory temporary file before the
+	 * final filesystem publication step. Non-overwrite publication uses an
+	 * atomic hard-link create so a destination that appears after preflight still
+	 * fails with `EEXIST`; overwrite publication uses same-filesystem rename so
+	 * consumers never observe a partially written destination.
+	 *
+	 * @param path Final output path.
+	 * @param content Complete UTF-8 artifact content.
+	 * @param options Whether an existing final output may be replaced.
+	 * @returns Promise resolved after the complete output is visible at `path`.
+	 */
+	async writeOutputAtomically(
 		path: string,
 		content: string,
-		options: ParseTextWriteOptions
+		options: ParseOutputWriteOptions
 	): Promise<void> {
-		await writeFile(
-			path,
-			content,
-			{
-				encoding:
-					'utf8',
-				flag:
-					options.overwrite
-						? 'w'
-						: 'wx'
+		const temporaryPath =
+			createTemporaryOutputPath(
+				path
+			);
+
+		let temporaryFileCreated =
+			false;
+
+		try {
+			const temporaryFile =
+				await open(
+					temporaryPath,
+					'wx'
+				);
+
+			temporaryFileCreated =
+				true;
+
+			try {
+				await temporaryFile.writeFile(
+					content,
+					{
+						encoding:
+							'utf8'
+					}
+				);
+
+				await temporaryFile.sync();
 			}
-		);
+			finally {
+				await temporaryFile.close();
+			}
+
+			if (
+				options.overwrite
+			) {
+				await rename(
+					temporaryPath,
+					path
+				);
+
+				temporaryFileCreated =
+					false;
+
+				return;
+			}
+
+			await link(
+				temporaryPath,
+				path
+			);
+		}
+		catch (
+			error:
+				unknown
+		) {
+			if (
+				temporaryFileCreated
+			) {
+				await removeTemporaryOutputBestEffort(
+					temporaryPath
+				);
+			}
+
+			throw error;
+		}
+
+		if (
+			temporaryFileCreated
+		) {
+			await removeTemporaryOutputBestEffort(
+				temporaryPath
+			);
+		}
 	}
 
 	/**
@@ -197,6 +317,47 @@ export class NodeParseWorkspace
 				);
 			}
 		}
+	}
+}
+
+/**
+ * Creates a unique temporary path beside the final artifact so the publication
+ * operation remains on the same filesystem as its destination.
+ *
+ * @param outputPath Final output path.
+ * @returns Same-directory path reserved for one temporary artifact attempt.
+ */
+function createTemporaryOutputPath(
+	outputPath: string
+): string {
+	return join(
+		dirname(
+			outputPath
+		),
+		`.${basename(
+			outputPath
+		)}.kjvonly-tmp-${randomUUID()}`
+	);
+}
+
+/**
+ * Best-effort cleanup for a temporary output artifact. Cleanup must not turn a
+ * successfully published final artifact into a reported parse failure.
+ *
+ * @param temporaryPath Temporary artifact path to remove when still present.
+ * @returns Promise resolved after the best-effort cleanup attempt completes.
+ */
+async function removeTemporaryOutputBestEffort(
+	temporaryPath: string
+): Promise<void> {
+	try {
+		await unlink(
+			temporaryPath
+		);
+	}
+	catch {
+		// A complete destination may already be published. Temporary cleanup must
+		// not replace the publication result with a cleanup-only failure.
 	}
 }
 

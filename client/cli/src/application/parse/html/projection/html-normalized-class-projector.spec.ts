@@ -14,6 +14,7 @@ import {
 
 import {
 	getIgnoredSourceClassNames,
+	getUnsupportedSourceStyleDeclarations,
 	projectNormalizedClasses
 } from './html-normalized-class-projector.js';
 
@@ -100,6 +101,29 @@ describe(
 						)
 					)
 				).toBeUndefined();
+			}
+		);
+
+		it(
+			'reports valid unsupported style declarations using the final value for repeated properties',
+			() => {
+				expect(
+					getUnsupportedSourceStyleDeclarations(
+						element(
+							'<p style="DISPLAY:none; font-weight:bold; malformed; text-align:left; text-align:center; color:">KJV</p>',
+							'p'
+						)
+					)
+				).toEqual([
+					{
+						property: 'display',
+						value: 'none'
+					},
+					{
+						property: 'font-weight',
+						value: 'bold'
+					}
+				]);
 			}
 		);
 

@@ -139,11 +139,11 @@ Example:
 
 Absolute paths such as `/Users/...` or `/home/...` are filesystem implementation details and are not persisted as document provenance.
 
-Before parsing begins, the batch computes the complete source-to-output plan. If multiple source files map to the same `.json` path, every source participating in that collision fails preflight and that output is not written. Non-colliding sources in the same batch may still be converted.
+Before parsing begins, the batch computes the complete source-to-output plan. If multiple source files map to the same `.json` path, every source participating in that collision fails preflight and that output is not written. Collision comparison uses a workspace-owned comparison key rather than rewriting emitted filenames. The Node workspace conservatively compares normalized paths case-insensitively, so inputs such as `KJV.html` and `kjv.htm` are rejected as ambiguous even on a case-sensitive host because their outputs would alias on common case-insensitive filesystems. Non-colliding sources retain their original output path casing and may still be converted.
 
 Existing output paths are also checked during preflight. By default, an existing `.json` file protects that source from conversion and is reported as a failure. Use `--overwrite` only when replacing existing normalized output is intentional. Source-to-source output collisions remain errors even with `--overwrite`; overwrite permission never chooses one ambiguous source over another.
 
-The filesystem write enforces the same policy after preflight: normal writes use exclusive creation, while `--overwrite` explicitly permits replacement. This protects against a file appearing between the preflight check and the write.
+Final output publication enforces the same policy after preflight. The Node workspace first writes and syncs the complete JSON artifact to a uniquely named temporary file in the destination directory. Without `--overwrite`, it publishes the completed file with an atomic create-if-absent hard link so a destination that appears after preflight still fails rather than being replaced. With `--overwrite`, it atomically renames the completed same-filesystem temporary file over the destination. Temporary artifacts are cleaned up on ordinary failure paths where practical. Consumers therefore never need to observe a partially written final JSON file, and overwrite intent remains enforced at the final filesystem step.
 
 ---
 
@@ -362,7 +362,7 @@ tbody
 tfoot
 ```
 
-are structural source containers and are flattened into their rows when doing so is semantically safe.
+are structural source containers whose grouping semantics are not represented by v1. Their rows are preserved through table-aware traversal, while the section boundary itself emits `html-element-unsupported`.
 
 The parser does not permit contextual blocks to leak into ordinary document flow. A malformed processor result such as a `caption` inside a `quote`, a `table-cell` directly under a table, or a `list-item` at the document root is rejected rather than normalized into an ambiguous tree.
 
@@ -411,8 +411,12 @@ An HTML element is never treated as semantically neutral merely because no proce
 registered block/inline processor
     → normalize supported semantics
 
-registered transparent structural processor
-    → recurse after its semantic-loss guards pass
+deliberately neutral structural wrapper (`div`)
+    → recurse after its identity/presentation-loss guards pass
+
+registered unsupported semantic structural wrapper
+    → preserve representable descendants
+    → emit an unsupported-element warning
 
 explicitly neutral inline wrapper
     → recurse with no warning
@@ -425,13 +429,15 @@ unsupported/unregistered element
     → emit an unsupported-element warning
 ```
 
-The current generic neutral inline wrapper set is deliberately small: `span` is known to be transparent because its useful normalized classes are projected onto descendant words before recursion. Other unregistered elements are **not** declared neutral. Instead, elements such as `abbr`, `time`, `q`, `details`, `summary`, `img`, `data`, or custom elements are tolerated as unsupported boundaries. Their descendant text/blocks are preserved wherever the current canonical model can represent them, and diagnostics tell the user that the wrapper semantics were not normalized.
+The neutral wrapper vocabulary is deliberately small. `div` is the only structural wrapper treated as semantically neutral, and `span` is the neutral inline wrapper because its useful normalized classes are projected onto descendant words before recursion. Semantic structural wrappers that v1 does not model—`address`, `article`, `aside`, `footer`, `header`, `main`, `nav`, and `section`—use registered traversal support so their descendants remain structurally valid, but their own source boundaries emit `html-element-unsupported`. Other unregistered elements are **not** declared neutral either. Elements such as `abbr`, `time`, `q`, `details`, `summary`, `img`, `data`, or custom elements are tolerated as unsupported boundaries. Their descendant text/blocks are preserved wherever the current canonical model can represent them, and diagnostics tell the user that the wrapper semantics were not normalized.
 
 Unsupported-element diagnostics include the source opening tag and its attributes, for example:
 
 ```text
 Unsupported source HTML element <time datetime="2026-10-04">; descendant content was preserved where representable, but this element's semantics were not normalized.
 ```
+
+Intentionally ignored elements likewise retain their opening tag and attributes in `html-element-ignored`. An intentionally ignored boundary is terminal for conversion decisions and diagnostics: because conversion discards its complete subtree, descendants inside that boundary are not separately inspected, reported, or allowed to influence structural-vs-inline traversal of an enclosing wrapper. The ignored-element vocabulary is owned by the HTML element semantic policy and reused by block traversal, inline traversal, structural-descendant detection, source-ID reservation, and diagnostics; those layers must not maintain separate tag lists. Once the complete element boundary is classified as unsupported or intentionally ignored, its class/style/attribute metadata is not also reported through narrower diagnostics; the boundary warning already captures that source information. Narrow class/style/attribute warnings are reserved for supported elements whose content or boundary semantics are otherwise normalized.
 
 This makes conversion forward-compatible: future processors can add explicit support for edge cases without forcing incomplete documents today. Leaf elements with no descendant content, such as an unsupported `img`, may still contribute no canonical content; their full source tag/attributes remain visible in diagnostics so the loss is auditable.
 
@@ -728,7 +734,7 @@ For example, a supported source hint such as `style="text-align:center"` may pro
 text-center
 ```
 
-Publisher/site-specific classes are ignored rather than becoming part of the canonical document contract.
+Publisher/site-specific classes are ignored rather than becoming part of the canonical document contract. Valid source style declarations that are not represented by the controlled projector are likewise omitted from canonical content, but they emit `html-style-unsupported` diagnostics so presentation loss is auditable rather than silent.
 
 The vocabulary is domain-owned and closed for the current data version. Canonical validation rejects unknown, empty, null, or duplicate class collections instead of allowing parser-specific values to expand the shared document contract accidentally.
 
@@ -867,6 +873,7 @@ ignored script elements
 ignored style elements
 ignored noscript elements
 ignored template elements
+unsupported source style declarations that were not projected
 unsafe executable link targets whose behavior was stripped
 unresolved document-local link targets inside the selected extraction boundary
 ```
@@ -878,7 +885,7 @@ Parsed 12/12 file(s); 0 failed.
 Produced 420 block(s), 6821 word(s); preserved 34 source id(s), generated 386 id(s), linked 52 word(s).
 ```
 
-Warnings and metrics are import-tooling information. They do not become fields in `NormalizedDocument`. Diagnostics inspect the imported descendants only; metadata on the extraction boundary is intentionally outside both normalized output and ignored-source warnings.
+Warnings and metrics are import-tooling information. They do not become fields in `NormalizedDocument`. HTML parsing enables parse5 source-location metadata so authored warning occurrences can carry 1-based line/column positions. Equivalent warnings remain aggregated by stable warning identity, with their known positions retained separately as `sourceLocations`; location text is not folded into the warning message or canonical identity. Parser-inserted recovery elements may have no source position and therefore do not receive invented coordinates. Diagnostics inspect the imported descendants only; metadata on the extraction boundary is intentionally outside both normalized output and ignored-source warnings. Unsupported or intentionally ignored element boundaries are diagnosed once as complete source boundaries rather than also producing duplicate class/style/attribute warnings for the same opening tag.
 
 ---
 
@@ -891,8 +898,8 @@ Examples of conditions that can fail a source document include:
 ```text
 configured root selector is missing
 duplicate canonical-preservable source ids within the imported descendants
-flattening a structural wrapper would discard an addressable id
-flattening a structural wrapper would discard supported normalized presentation
+flattening the neutral `div` wrapper would discard an addressable id
+flattening the neutral `div` wrapper would discard supported normalized presentation
 invalid final NormalizedDocument structure
 ```
 
@@ -954,7 +961,7 @@ flowchart TD
         BlockProcessors["Block processors"]
         Inline["HtmlInlineParser"]
         Projection["HtmlNormalizedClassProjector"]
-        Identity["DeterministicNormalizedBlockIdGenerator"]
+        Identity["OrdinalNormalizedBlockIdGenerator"]
     end
 
     subgraph Domain["Normalized content domain"]

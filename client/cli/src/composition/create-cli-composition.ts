@@ -81,8 +81,8 @@ import { ParseDirectoryUseCase } from '#application/parse/batch/parse-directory.
 import { NodeParseWorkspace } from '#adapters/parse/node-parse-workspace.js';
 import { CheerioHtmlParser } from '#application/parse/html/parser/cheerio-html-parser.js';
 import {
-	DeterministicNormalizedBlockIdGenerator
-} from '#application/parse/html/identity/deterministic-normalized-block-id-generator.js';
+	OrdinalNormalizedBlockIdGenerator
+} from '#application/parse/html/identity/ordinal-normalized-block-id-generator.js';
 import { CaptionBlockProcessor } from '#application/parse/html/processors/caption-block-processor.js';
 import { FigureBlockProcessor } from '#application/parse/html/processors/figure-block-processor.js';
 import { HeadingBlockProcessor } from '#application/parse/html/processors/heading-block-processor.js';
@@ -223,7 +223,7 @@ export function createCliComposition() {
 	 */
 	const createNormalizedBlockIdGenerator =
 		() =>
-			new DeterministicNormalizedBlockIdGenerator();
+			new OrdinalNormalizedBlockIdGenerator();
 
 	const htmlNormalizedDocumentConverter =
 		new HtmlNormalizedDocumentConverter(

@@ -74,7 +74,12 @@ export interface ParseDirectoryResult {
 
 /** Application boundary for recursively normalizing a source directory. */
 export interface ParseDirectory {
-	/** Processes every supported source independently and returns one batch report. */
+	/**
+	 * Processes every supported source independently and returns one batch report.
+	 *
+	 * @param request Directory, format, extraction, and overwrite policy for the batch.
+	 * @returns Aggregate successes and per-source failures after publication attempts.
+	 */
 	run(
 		request: ParseDirectoryRequest
 	): Promise<ParseDirectoryResult>;
@@ -107,6 +112,9 @@ export class ParseDirectoryUseCase
 	 * Preflights every discovered output before writing anything. Sources with
 	 * ambiguous or protected output paths fail independently; remaining sources
 	 * are still attempted so one bad document does not abort the batch.
+	 *
+	 * @param request Directory, extraction boundary, and overwrite intent.
+	 * @returns Complete batch report after all unblocked sources are attempted.
 	 */
 	async run(
 		request: ParseDirectoryRequest
@@ -171,7 +179,7 @@ export class ParseDirectoryUseCase
 							plannedSource.sourceFile.relativePath
 					});
 
-				await this.workspace.writeTextFile(
+				await this.workspace.writeOutputAtomically(
 					plannedSource.outputPath,
 					`${JSON.stringify(
 						parseResult.document,
@@ -235,32 +243,35 @@ export class ParseDirectoryUseCase
 		const failures:
 			ParseSourceFailure[] = [];
 
-		const sourcesByOutputPath =
+		const sourcesByOutputCollisionKey =
 			new Map<string, PlannedSourceFile[]>();
 
 		for (
 			const plannedSource of plan
 		) {
-			const sources =
-				sourcesByOutputPath.get(
+			const outputCollisionKey =
+				this.workspace.getPathCollisionKey(
 					plannedSource.outputPath
+				);
+
+			const sources =
+				sourcesByOutputCollisionKey.get(
+					outputCollisionKey
 				) ?? [];
 
 			sources.push(
 				plannedSource
 			);
 
-			sourcesByOutputPath.set(
-				plannedSource.outputPath,
+			sourcesByOutputCollisionKey.set(
+				outputCollisionKey,
 				sources
 			);
 		}
 
 		for (
-			const [
-				outputPath,
-				collidingSources
-			] of sourcesByOutputPath
+			const collidingSources of
+				sourcesByOutputCollisionKey.values()
 		) {
 			if (
 				collidingSources.length <= 1
@@ -274,10 +285,21 @@ export class ParseDirectoryUseCase
 						plannedSource.sourceFile.path
 				);
 
+			const outputPaths =
+				[
+					...new Set(
+						collidingSources.map(
+							plannedSource =>
+								plannedSource.outputPath
+						)
+					)
+				];
+
 			const message =
-				`Output path collision: ${sourcePaths.join(
-					', '
-				)} all map to ${outputPath}.`;
+				createOutputCollisionMessage(
+					sourcePaths,
+					outputPaths
+				);
 
 			for (
 				const plannedSource of collidingSources
@@ -371,6 +393,33 @@ export class ParseDirectoryUseCase
 				return HTML_SOURCE_EXTENSIONS;
 		}
 	}
+}
+
+/**
+ * Describes a source-to-output ambiguity while preserving the exact emitted
+ * output paths for diagnostics.
+ *
+ * @param sourcePaths Source files participating in the collision.
+ * @param outputPaths Distinct emitted paths represented by one collision key.
+ * @returns Human-readable preflight failure shared by each colliding source.
+ */
+function createOutputCollisionMessage(
+	sourcePaths: readonly string[],
+	outputPaths: readonly string[]
+): string {
+	if (
+		outputPaths.length === 1
+	) {
+		return `Output path collision: ${sourcePaths.join(
+			', '
+		)} all map to ${outputPaths[0]}.`;
+	}
+
+	return `Output path collision: ${sourcePaths.join(
+		', '
+	)} map to filesystem-equivalent output paths: ${outputPaths.join(
+		', '
+	)}.`;
 }
 
 /** Creates the complete source-to-output mapping before conversion begins. */

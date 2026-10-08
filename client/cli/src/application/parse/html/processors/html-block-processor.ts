@@ -22,7 +22,13 @@ export interface HtmlBlockProcessor {
 	/** Whether the source element boundary itself becomes canonical block identity. */
 	readonly preservesSourceIdentity?: boolean;
 
-	/** Projects one structural element into zero or more normalized blocks. */
+	/**
+	 * Projects one structural element into zero or more normalized blocks.
+	 *
+	 * @param element Source element owned by this processor.
+	 * @param context Converter-owned recursion and canonical block-construction capabilities.
+	 * @returns Canonical blocks representing the source element's supported semantics.
+	 */
 	process(
 		element: Element,
 		context: HtmlBlockProcessorContext

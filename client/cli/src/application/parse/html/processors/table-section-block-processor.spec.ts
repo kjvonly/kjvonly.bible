@@ -58,23 +58,37 @@ describe(
 		);
 
 		it(
-			'rejects an addressable section because flattening would lose its identity',
+			'preserves rows when the source section carries unsupported boundary semantics',
 			() => {
+				const rows:
+					NormalizedBlock[] = [
+						{
+							type:
+								'table-row',
+							id:
+								'test-table-row',
+							blocks: []
+						}
+					];
+
 				expect(
-					() =>
-						new TableSectionBlockProcessor()
-							.process(
-								element(
-									'tbody',
-									{
-										id:
-											'body-1'
-									}
-								),
-								context([])
+					new TableSectionBlockProcessor()
+						.process(
+							element(
+								'tbody',
+								{
+									id:
+										'body-1',
+									style:
+										'text-align:center'
+								}
+							),
+							context(
+								rows
 							)
-				).toThrow(
-					'Cannot discard addressable table section <tbody>#body-1.'
+						)
+				).toBe(
+					rows
 				);
 			}
 		);

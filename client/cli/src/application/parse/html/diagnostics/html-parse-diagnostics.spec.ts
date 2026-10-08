@@ -282,6 +282,186 @@ describe(
 		);
 
 		it(
+			'reports unsupported and intentionally ignored boundaries without duplicating boundary metadata warnings',
+			() => {
+				const diagnostics =
+					createHtmlParseDiagnostics(
+						getRoot(
+							'<main><section class="legacy" data-source="publisher" style="font-weight:bold"><p>KJV</p></section><script class="legacy-script" data-source="publisher">x()</script></main>'
+						),
+						{
+							blocks: []
+						},
+						allElementsSupported
+					);
+
+				expect(
+					diagnostics.warnings
+				).toEqual([
+					{
+						code:
+							'html-element-ignored',
+						message:
+							'Ignored source HTML element <script class="legacy-script" data-source="publisher">.',
+						count:
+							1
+					},
+					{
+						code:
+							'html-element-unsupported',
+						message:
+							'Unsupported source HTML element <section class="legacy" data-source="publisher" style="font-weight:bold">; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
+						count:
+							1
+					}
+				]);
+			}
+		);
+
+		it(
+			'does not diagnose descendants inside an intentionally ignored source boundary',
+			() => {
+				const ignoredDescendant = {
+					type: 'tag',
+					name: 'section',
+					attribs: {
+						class: 'legacy'
+					},
+					children: []
+				} as unknown as Element;
+
+				const ignoredBoundary = {
+					type: 'tag',
+					name: 'template',
+					attribs: {
+						id: 'publisher-template'
+					},
+					children: [
+						ignoredDescendant
+					]
+				} as unknown as Element;
+
+				const root = {
+					type: 'tag',
+					name: 'main',
+					attribs: {},
+					children: [
+						ignoredBoundary
+					]
+				} as unknown as Element;
+
+				const diagnostics =
+					createHtmlParseDiagnostics(
+						root,
+						{
+							blocks: []
+						},
+						allElementsSupported
+					);
+
+				expect(
+					diagnostics.warnings
+				).toEqual([
+					{
+						code: 'html-element-ignored',
+						message: 'Ignored source HTML element <template id="publisher-template">.',
+						count: 1
+					}
+				]);
+			}
+		);
+
+		it(
+			'reports unsupported source styles on supported descendants without reporting represented or boundary styles',
+			() => {
+				const diagnostics =
+					createHtmlParseDiagnostics(
+						getRoot(
+							'<main style="display:none"><p style="font-weight:bold">KJV</p><p style="font-weight:bold">Bible</p><p style="text-align:center">Centered</p><span style="font-style:italic">Text</span></main>'
+						),
+						{
+							blocks: []
+						},
+						allElementsSupported
+					);
+
+				expect(
+					diagnostics.warnings
+				).toEqual([
+					{
+						code:
+							'html-style-unsupported',
+						message:
+							'Unsupported source HTML style declaration "font-style:italic" on <span style="font-style:italic">; the element was normalized, but this declaration\'s presentation semantics were not preserved.',
+						count:
+							1
+					},
+					{
+						code:
+							'html-style-unsupported',
+						message:
+							'Unsupported source HTML style declaration "font-weight:bold" on <p style="font-weight:bold">; the element was normalized, but this declaration\'s presentation semantics were not preserved.',
+						count:
+							2
+					}
+				]);
+			}
+		);
+
+		it(
+			'preserves every known source location when equivalent warnings are aggregated',
+			() => {
+				const root =
+					getRoot(
+						'<main><p class="legacy">One</p><p class="legacy">Two</p></main>'
+					);
+
+				let line =
+					4;
+
+				const diagnostics =
+					createHtmlParseDiagnostics(
+						root,
+						{
+							blocks: []
+						},
+						allElementsSupported,
+						() => ({
+							line:
+								line++,
+							column:
+								3
+						})
+					);
+
+				expect(
+					diagnostics.warnings
+				).toContainEqual({
+					code:
+						'html-class-ignored',
+					message:
+						'Ignored source HTML class "legacy".',
+					count:
+						2,
+					sourceLocations: [
+						{
+							line:
+								4,
+							column:
+								3
+						},
+						{
+							line:
+								5,
+							column:
+								3
+						}
+					]
+				});
+			}
+		);
+
+		it(
 			'reports unconsumed attributes on supported elements without duplicating source metadata',
 			() => {
 				const diagnostics =
@@ -315,6 +495,37 @@ describe(
 							1
 					}
 				]);
+			}
+		);
+
+		it.each([
+			'thead',
+			'tbody',
+			'tfoot'
+		])(
+			'reports registered table section <%s> as unsupported semantic structure',
+			(tag: string) => {
+				const diagnostics =
+					createHtmlParseDiagnostics(
+						getRoot(
+							`<main><table><${tag}><tr><td>KJV</td></tr></${tag}></table></main>`
+						),
+						{
+							blocks: []
+						},
+						allElementsSupported
+					);
+
+				expect(
+					diagnostics.warnings
+				).toContainEqual({
+					code:
+						'html-element-unsupported',
+					message:
+						`Unsupported source HTML element <${tag}>; descendant content was preserved where representable, but this element's semantics were not normalized.`,
+					count:
+						1
+				});
 			}
 		);
 

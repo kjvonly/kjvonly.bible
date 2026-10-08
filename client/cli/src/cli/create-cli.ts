@@ -17,6 +17,10 @@ import type {
 	ParseDirectoryResult
 } from '#application/parse/batch/parse-directory.js';
 
+import type {
+	ParseWarning
+} from '#application/parse/diagnostics/parse-diagnostics.js';
+
 
 export interface CliDependencies {
 	readonly parseDirectory:
@@ -206,6 +210,26 @@ export function createCli(
 
 	return program;
 }
+/** Formats known 1-based source positions without changing warning identity. */
+function formatWarningSourceLocations(
+	warning: ParseWarning
+): string {
+	if (
+		!warning.sourceLocations ||
+		warning.sourceLocations.length ===
+			0
+	) {
+		return '';
+	}
+
+	return ` [source: ${warning.sourceLocations
+		.map(
+			location =>
+				`${location.line}:${location.column}`
+		)
+		.join(', ')}]`;
+}
+
 /**
  * Reports one completed parse batch at the CLI boundary. Individual conversion
  * failures are surfaced without hiding successful outputs from the same batch.
@@ -227,7 +251,7 @@ function reportParseResult(
 			const warning of output.diagnostics.warnings
 		) {
 			console.warn(
-				`[WARN] ${output.sourcePath}: ${warning.message} (${warning.count})`
+				`[WARN] ${output.sourcePath}: ${warning.message} (${warning.count})${formatWarningSourceLocations(warning)}`
 			);
 		}
 	}

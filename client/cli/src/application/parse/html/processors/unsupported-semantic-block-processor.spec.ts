@@ -24,9 +24,17 @@ describe(
 	'UnsupportedSemanticBlockProcessor',
 	() => {
 		it.each([
+			'address',
+			'article',
+			'aside',
 			'dl',
 			'dt',
-			'dd'
+			'dd',
+			'footer',
+			'header',
+			'main',
+			'nav',
+			'section'
 		])(
 			'preserves representable descendants of unsupported semantic block <%s>',
 			(tag: string) => {

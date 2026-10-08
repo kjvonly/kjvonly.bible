@@ -54,7 +54,12 @@ export class HtmlBlockProcessorRegistry {
 		}
 	}
 
-	/** Returns whether a structural strategy is registered for the supplied tag. */
+	/**
+	 * Returns whether a structural strategy is registered for the supplied tag.
+	 *
+	 * @param tag Lowercase structural HTML tag.
+	 * @returns Whether composition registered a block processor for the tag.
+	 */
 	has(
 		tag: string
 	): boolean {
@@ -63,7 +68,12 @@ export class HtmlBlockProcessorRegistry {
 		);
 	}
 
-	/** Returns whether the processor preserves the element boundary as block identity. */
+	/**
+	 * Returns whether the processor preserves the element boundary as block identity.
+	 *
+	 * @param tag Lowercase structural HTML tag.
+	 * @returns Whether source identity on that element can survive normalization.
+	 */
 	preservesSourceIdentity(
 		tag: string
 	): boolean {
@@ -84,6 +94,10 @@ export class HtmlBlockProcessorRegistry {
 	 * Delegates an element to the processor registered for its lowercase tag.
 	 * Missing registrations are treated as converter defects rather than silently
 	 * flattening structural meaning.
+	 *
+	 * @param element Structural source element to normalize.
+	 * @param context Converter-owned recursion and canonical construction capabilities.
+	 * @returns Canonical blocks produced by the registered strategy.
 	 */
 	process(
 		element: Element,

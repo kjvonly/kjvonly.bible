@@ -44,11 +44,16 @@ function createWorkspace() {
 	return {
 		findSourceFiles:
 			vi.fn(),
+		getPathCollisionKey:
+			vi.fn(
+				(path: string) =>
+					path
+			),
 		pathExists:
 			vi.fn(),
 		readTextFile:
 			vi.fn(),
-		writeTextFile:
+		writeOutputAtomically:
 			vi.fn()
 	};
 }
@@ -180,7 +185,7 @@ describe(
 				);
 
 				expect(
-					workspace.writeTextFile
+					workspace.writeOutputAtomically
 				).toHaveBeenNthCalledWith(
 					1,
 					'/docs/a.json',
@@ -196,7 +201,7 @@ describe(
 				);
 
 				expect(
-					workspace.writeTextFile
+					workspace.writeOutputAtomically
 				).toHaveBeenNthCalledWith(
 					2,
 					'/docs/nested/b.json',
@@ -316,7 +321,7 @@ describe(
 				);
 
 				expect(
-					workspace.writeTextFile
+					workspace.writeOutputAtomically
 				).toHaveBeenCalledOnce();
 
 				expect(
@@ -416,7 +421,7 @@ describe(
 				);
 
 				expect(
-					workspace.writeTextFile
+					workspace.writeOutputAtomically
 				).toHaveBeenCalledWith(
 					'/docs/sermon.json',
 					`${JSON.stringify(
@@ -470,6 +475,120 @@ describe(
 		);
 
 		it(
+			'rejects case-equivalent output paths without rewriting emitted filenames',
+			async () => {
+				const workspace =
+					createWorkspace();
+
+				workspace.getPathCollisionKey.mockImplementation(
+					(path: string) =>
+						path.toLowerCase()
+				);
+
+				workspace.findSourceFiles.mockResolvedValue([
+					{
+						path: '/docs/KJV.html',
+						relativePath: 'KJV.html'
+					},
+					{
+						path: '/docs/kjv.htm',
+						relativePath: 'kjv.htm'
+					},
+					{
+						path: '/docs/Sermon.html',
+						relativePath: 'Sermon.html'
+					}
+				]);
+
+				workspace.readTextFile.mockResolvedValue(
+					'<p>Sermon</p>'
+				);
+
+				const run =
+					vi.fn()
+						.mockReturnValue(
+							createParseResult({
+								blocks: []
+							})
+						);
+
+				const useCase =
+					new ParseDirectoryUseCase(
+						{
+							run
+						},
+						workspace
+					);
+
+				const result =
+					await useCase.run({
+						format:
+							'html',
+						directory:
+							'/docs',
+						overwrite:
+							true
+					});
+
+				expect(
+					workspace.getPathCollisionKey
+				).toHaveBeenCalledWith(
+					'/docs/KJV.json'
+				);
+
+				expect(
+					workspace.getPathCollisionKey
+				).toHaveBeenCalledWith(
+					'/docs/kjv.json'
+				);
+
+				expect(
+					workspace.readTextFile
+				).toHaveBeenCalledOnce();
+
+				expect(
+					workspace.readTextFile
+				).toHaveBeenCalledWith(
+					'/docs/Sermon.html'
+				);
+
+				expect(
+					workspace.writeOutputAtomically
+				).toHaveBeenCalledWith(
+					'/docs/Sermon.json',
+					`${JSON.stringify(
+						{
+							blocks: []
+						},
+						null,
+						2
+					)}\n`,
+					{
+						overwrite:
+							true
+					}
+				);
+
+				expect(
+					result.failures
+				).toEqual([
+					{
+						sourcePath:
+							'/docs/KJV.html',
+						message:
+							'Output path collision: /docs/KJV.html, /docs/kjv.htm map to filesystem-equivalent output paths: /docs/KJV.json, /docs/kjv.json.'
+					},
+					{
+						sourcePath:
+							'/docs/kjv.htm',
+						message:
+							'Output path collision: /docs/KJV.html, /docs/kjv.htm map to filesystem-equivalent output paths: /docs/KJV.json, /docs/kjv.json.'
+					}
+				]);
+			}
+		);
+
+		it(
 			'preflights existing outputs before writing any safe source',
 			async () => {
 				const workspace =
@@ -491,7 +610,7 @@ describe(
 						path: string
 					) => {
 						expect(
-							workspace.writeTextFile
+							workspace.writeOutputAtomically
 						).not.toHaveBeenCalled();
 
 						return path ===
@@ -544,7 +663,7 @@ describe(
 				);
 
 				expect(
-					workspace.writeTextFile
+					workspace.writeOutputAtomically
 				).toHaveBeenCalledWith(
 					'/docs/new.json',
 					`${JSON.stringify(
@@ -570,6 +689,108 @@ describe(
 							'Output already exists: /docs/existing.json. Existing outputs are not replaced unless overwrite is enabled.'
 					}
 				]);
+			}
+		);
+
+		it(
+			'reports a final publication race even after a successful non-overwrite preflight',
+			async () => {
+				const workspace =
+					createWorkspace();
+
+				workspace.findSourceFiles.mockResolvedValue([
+					{
+						path: '/docs/race.html',
+						relativePath: 'race.html'
+					}
+				]);
+
+				workspace.pathExists.mockResolvedValue(
+					false
+				);
+
+				workspace.readTextFile.mockResolvedValue(
+					'<p>Race</p>'
+				);
+
+				workspace.writeOutputAtomically.mockRejectedValue(
+					Object.assign(
+						new Error(
+							'Output appeared before final publication.'
+						),
+						{
+							code:
+								'EEXIST'
+						}
+					)
+				);
+
+				const run =
+					vi.fn()
+						.mockReturnValue(
+							createParseResult({
+								blocks: []
+							})
+						);
+
+				const useCase =
+					new ParseDirectoryUseCase(
+						{
+							run
+						},
+						workspace
+					);
+
+				const result =
+					await useCase.run({
+						format:
+							'html',
+						directory:
+							'/docs'
+					});
+
+				expect(
+					workspace.pathExists
+				).toHaveBeenCalledWith(
+					'/docs/race.json'
+				);
+
+				expect(
+					workspace.writeOutputAtomically
+				).toHaveBeenCalledWith(
+					'/docs/race.json',
+					`${JSON.stringify(
+						{
+							blocks: []
+						},
+						null,
+						2
+					)}\n`,
+					{
+						overwrite:
+							false
+					}
+				);
+
+				expect(
+					result
+				).toEqual({
+					total:
+						1,
+					converted:
+						0,
+					failed:
+						1,
+					outputs: [],
+					failures: [
+						{
+							sourcePath:
+								'/docs/race.html',
+							message:
+								'Output appeared before final publication.'
+						}
+					]
+				});
 			}
 		);
 

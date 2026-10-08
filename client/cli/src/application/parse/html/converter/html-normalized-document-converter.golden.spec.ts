@@ -21,8 +21,8 @@ import {
 } from '@kjvonly/normalized-content';
 
 import {
-	DeterministicNormalizedBlockIdGenerator
-} from '../identity/deterministic-normalized-block-id-generator.js';
+	OrdinalNormalizedBlockIdGenerator
+} from '../identity/ordinal-normalized-block-id-generator.js';
 
 import {
 	HtmlInlineParser
@@ -313,7 +313,7 @@ function createConverter():
 		blockProcessorRegistry,
 		inlineParser,
 		() =>
-			new DeterministicNormalizedBlockIdGenerator()
+			new OrdinalNormalizedBlockIdGenerator()
 	);
 }
 

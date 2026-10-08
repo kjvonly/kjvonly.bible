@@ -158,7 +158,17 @@ describe(
 											{
 												code: 'html-class-ignored',
 												message: 'Ignored source HTML class "legacy".',
-												count: 2
+												count: 2,
+												sourceLocations: [
+													{
+														line: 3,
+														column: 5
+													},
+													{
+														line: 7,
+														column: 5
+													}
+												]
 											}
 										]
 									}
@@ -203,7 +213,7 @@ describe(
 				expect(
 					warn
 				).toHaveBeenCalledWith(
-					'[WARN] /docs/a.html: Ignored source HTML class "legacy". (2)'
+					'[WARN] /docs/a.html: Ignored source HTML class "legacy". (2) [source: 3:5, 7:5]'
 				);
 
 				expect(

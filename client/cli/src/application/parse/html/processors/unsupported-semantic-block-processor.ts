@@ -31,6 +31,14 @@ export class UnsupportedSemanticBlockProcessor
 	readonly tags =
 		unsupportedSemanticBlockTags;
 
+	/**
+	 * Flattens one unsupported semantic boundary while retaining every descendant
+	 * block that the canonical grammar can faithfully represent.
+	 *
+	 * @param element Unsupported source semantic container being traversed.
+	 * @param context Converter capabilities used to normalize structural children.
+	 * @returns Representable normalized descendants in source order.
+	 */
 	process(
 		element: Element,
 		context: HtmlBlockProcessorContext

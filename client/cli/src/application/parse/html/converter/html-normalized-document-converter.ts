@@ -28,8 +28,8 @@ import type {
 } from '@kjvonly/normalized-content';
 
 import type {
-	DeterministicNormalizedBlockIdGenerator
-} from '../identity/deterministic-normalized-block-id-generator.js';
+	OrdinalNormalizedBlockIdGenerator
+} from '../identity/ordinal-normalized-block-id-generator.js';
 
 import type {
 	HtmlBlockProcessorContext,
@@ -100,7 +100,7 @@ export class HtmlNormalizedDocumentConverter {
 		private readonly inlineParser:
 			HtmlInlineParser,
 		private readonly createBlockIdGenerator:
-			() => DeterministicNormalizedBlockIdGenerator
+			() => OrdinalNormalizedBlockIdGenerator
 	) {}
 
 	/**
@@ -109,6 +109,10 @@ export class HtmlNormalizedDocumentConverter {
 	 * When rootSelector is provided, the first matching element becomes an extraction
 	 * boundary: its children are converted, while metadata on the boundary itself is
 	 * intentionally outside the normalized document. Otherwise body is the boundary.
+	 *
+	 * @param parsedDocument Parsed source tree from the HTML syntax boundary.
+	 * @param options Extraction-boundary and provenance options.
+	 * @returns Validated canonical document; conversion diagnostics are discarded.
 	 */
 	convert(
 		parsedDocument: ParsedHtmlDocument,
@@ -124,6 +128,10 @@ export class HtmlNormalizedDocumentConverter {
 	/**
 	 * Converts one parsed HTML document and returns import-only diagnostics
 	 * alongside the accepted document. Diagnostics never become persisted content.
+	 *
+	 * @param parsedDocument Parsed source tree from the HTML syntax boundary.
+	 * @param options Extraction-boundary and provenance options.
+	 * @returns Validated canonical document plus source-conversion diagnostics.
 	 */
 	convertWithDiagnostics(
 		parsedDocument: ParsedHtmlDocument,
@@ -218,7 +226,11 @@ export class HtmlNormalizedDocumentConverter {
 				createHtmlParseDiagnostics(
 					rootElement,
 					document,
-					elementSupport
+					elementSupport,
+					element =>
+						parsedDocument.getSourceLocation(
+							element
+						)
 				)
 		};
 	}
@@ -233,7 +245,7 @@ function parseBlockChildren(
 	parent: Element,
 	registry: HtmlBlockProcessorRegistry,
 	inlineParser: HtmlInlineParser,
-	idGenerator: DeterministicNormalizedBlockIdGenerator,
+	idGenerator: OrdinalNormalizedBlockIdGenerator,
 	inheritedInlineState: HtmlInlineState,
 	leadingInlineContent: readonly NormalizedContent[] = []
 ): NormalizedBlock[] {
@@ -325,7 +337,7 @@ function parseBlockChildren(
 			isElement(
 				child
 			) &&
-			isIgnoredTag(
+			isIntentionallyIgnoredHtmlElement(
 				child.name.toLowerCase()
 			)
 		) {
@@ -416,7 +428,7 @@ function parseBlockChildren(
 function createBlockProcessorContext(
 	registry: HtmlBlockProcessorRegistry,
 	inlineParser: HtmlInlineParser,
-	idGenerator: DeterministicNormalizedBlockIdGenerator,
+	idGenerator: OrdinalNormalizedBlockIdGenerator,
 	inheritedInlineState: HtmlInlineState
 ): HtmlBlockProcessorContext {
 	return {
@@ -448,7 +460,16 @@ function createBlockProcessorContext(
 	};
 }
 
-/** Returns whether a wrapper contains a registered structural tag. */
+/**
+ * Returns whether a wrapper contains a structural descendant that participates
+ * in normalization. Intentionally ignored source subtrees are terminal: hidden
+ * block tags inside them must not force the surrounding wrapper into block
+ * traversal or change canonical block segmentation.
+ *
+ * @param element Wrapper whose descendants are inspected.
+ * @param registry Structural processor registry used to recognize block tags.
+ * @returns Whether a non-ignored descendant requires structural traversal.
+ */
 function hasRegisteredStructuralDescendant(
 	element: Element,
 	registry: HtmlBlockProcessorRegistry
@@ -464,6 +485,14 @@ function hasRegisteredStructuralDescendant(
 
 		const tag =
 			child.name.toLowerCase();
+
+		if (
+			isIntentionallyIgnoredHtmlElement(
+				tag
+			)
+		) {
+			continue;
+		}
 
 		if (
 			registry.has(
@@ -488,13 +517,14 @@ function hasRegisteredStructuralDescendant(
 
 /**
  * Finalizes one normalized block with controlled presentation metadata and a
- * stable ID. Source IDs win; otherwise the deterministic generator supplies ID.
+ * document-local ID. Source IDs win; otherwise the ordinal generator supplies the
+ * next available ID.
  */
 function createNormalizedBlock(
 	element: Element | undefined,
 	block: NormalizedBlockCreationInput,
 	idGenerator:
-		DeterministicNormalizedBlockIdGenerator
+		OrdinalNormalizedBlockIdGenerator
 ): NormalizedBlock {
 	const classes =
 		element
@@ -619,22 +649,6 @@ function isElement(
 			'script' ||
 		node.type ===
 			'style'
-	);
-}
-
-/** Identifies executable/template elements intentionally excluded from conversion. */
-function isIgnoredTag(
-	tag: string
-): boolean {
-	return (
-		tag ===
-			'script' ||
-		tag ===
-			'style' ||
-		tag ===
-			'noscript' ||
-		tag ===
-			'template'
 	);
 }
 

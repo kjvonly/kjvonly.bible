@@ -2,6 +2,15 @@ import type {
 	NormalizedDocument
 } from '@kjvonly/normalized-content';
 
+/** One source position reported by the syntax parser for diagnostic use. */
+export interface ParseSourceLocation {
+	/** 1-based source line number. */
+	readonly line: number;
+
+	/** 1-based source column number. */
+	readonly column: number;
+}
+
 /** One auditable condition encountered while normalizing a source document. */
 export interface ParseWarning {
 	/** Stable machine-oriented warning category. */
@@ -12,6 +21,9 @@ export interface ParseWarning {
 
 	/** Number of equivalent conditions aggregated into this warning. */
 	readonly count: number;
+
+	/** Known source positions for the aggregated occurrences, in traversal order. */
+	readonly sourceLocations?: readonly ParseSourceLocation[];
 }
 
 /**

@@ -57,7 +57,12 @@ export class HtmlInlineProcessorRegistry {
 		}
 	}
 
-	/** Returns whether an inline semantic strategy is registered for the tag. */
+	/**
+	 * Returns whether an inline semantic strategy is registered for the tag.
+	 *
+	 * @param tag HTML tag name; lookup is case-insensitive.
+	 * @returns Whether composition registered an inline semantic processor.
+	 */
 	has(
 		tag: string
 	): boolean {
@@ -66,7 +71,14 @@ export class HtmlInlineProcessorRegistry {
 		);
 	}
 
-	/** Applies a registered strategy or transparently preserves unsupported descendants. */
+	/**
+	 * Applies a registered strategy or transparently preserves unsupported descendants.
+	 *
+	 * @param element Source inline element at the current traversal boundary.
+	 * @param state Inherited inline state entering that boundary.
+	 * @param content Ordered canonical content receiving direct processor emissions.
+	 * @returns State and recursion decision consumed by HtmlInlineParser.
+	 */
 	process(
 		element: Element,
 		state: HtmlInlineState,

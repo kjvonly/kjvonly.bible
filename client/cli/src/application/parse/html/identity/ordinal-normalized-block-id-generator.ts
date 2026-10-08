@@ -7,14 +7,14 @@ const GENERATED_ID_VERSION =
 	'v1';
 
 /**
- * Assigns deterministic document-local block IDs in traversal order.
+ * Assigns document-local block IDs using per-type ordinals in traversal order.
  *
  * Source-authored IDs are preserved verbatim. Blocks without source IDs receive
  * a per-block-type ordinal such as `nd-v1-paragraph-1`. Generated IDs are not
  * content fingerprints and are not expected to survive reparsing after source
  * structure changes.
  */
-export class DeterministicNormalizedBlockIdGenerator {
+export class OrdinalNormalizedBlockIdGenerator {
 	/** Canonical-preservable source IDs reserved before generated identity is assigned. */
 	private readonly reservedSourceIds =
 		new Set<string>();

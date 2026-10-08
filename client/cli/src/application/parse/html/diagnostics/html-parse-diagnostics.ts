@@ -18,11 +18,13 @@ import {
 
 import type {
 	ParseDiagnostics,
+	ParseSourceLocation,
 	ParseWarning
 } from '../../diagnostics/parse-diagnostics.js';
 
 import {
-	getIgnoredSourceClassNames
+	getIgnoredSourceClassNames,
+	getUnsupportedSourceStyleDeclarations
 } from '../projection/html-normalized-class-projector.js';
 
 import {
@@ -40,32 +42,44 @@ import {
  * Builds an auditable conversion report from the accepted document and the
  * descendants of its extraction root. The boundary element itself is selector
  * metadata, not normalized source content, so its IDs/classes are not reported.
+ *
+ * @param root Selected extraction boundary whose descendants were normalized.
+ * @param document Accepted canonical document produced from that boundary.
+ * @param elementSupport Parser support lookup used to classify source elements.
+ * @param getSourceLocation Resolves authored source coordinates for diagnostic metadata.
+ * @returns Import-only metrics and non-fatal source-loss diagnostics.
  */
 export function createHtmlParseDiagnostics(
 	root: Element,
 	document: NormalizedDocument,
-	elementSupport: HtmlElementSupportLookup
+	elementSupport: HtmlElementSupportLookup,
+	getSourceLocation:
+		(element: Element) => ParseSourceLocation | undefined =
+			() => undefined
 ): ParseDiagnostics {
 	const sourceIds =
 		new Set<string>();
 
 	const ignoredClassCounts =
-		new Map<string, number>();
+		new Map<string, WarningOccurrences>();
 
 	const ignoredElementCounts =
-		new Map<string, number>();
+		new Map<string, WarningOccurrences>();
 
 	const unsupportedElementCounts =
-		new Map<string, number>();
+		new Map<string, WarningOccurrences>();
 
 	const unsupportedAttributeCounts =
-		new Map<string, number>();
+		new Map<string, WarningOccurrences>();
+
+	const unsupportedStyleCounts =
+		new Map<string, WarningOccurrences>();
 
 	const unsafeLinkTargetCounts =
-		new Map<string, number>();
+		new Map<string, WarningOccurrences>();
 
 	const missingLocalLinkTargetCounts =
-		new Map<string, number>();
+		new Map<string, WarningOccurrences>();
 
 	const canonicalIds =
 		collectCanonicalIds(
@@ -75,20 +89,18 @@ export function createHtmlParseDiagnostics(
 	visitDescendantElements(
 		root,
 		element => {
-			for (
-				const className of
-					getIgnoredSourceClassNames(
-						element
-					)
-			) {
-				increment(
-					ignoredClassCounts,
-					className
+			const sourceLocation =
+				getSourceLocation(
+					element
 				);
-			}
 
 			const tag =
 				element.name.toLowerCase();
+
+			const sourceTag =
+				formatHtmlElementOpeningTag(
+					element
+				);
 
 			if (
 				isIntentionallyIgnoredHtmlElement(
@@ -97,9 +109,14 @@ export function createHtmlParseDiagnostics(
 			) {
 				increment(
 					ignoredElementCounts,
-					tag
+					sourceTag,
+					sourceLocation
 				);
-				return;
+
+				// Conversion discards this entire source subtree, so diagnostics stop at
+				// the ignored boundary instead of reporting semantics that were never
+				// considered for canonical normalization.
+				return false;
 			}
 
 			if (
@@ -110,11 +127,23 @@ export function createHtmlParseDiagnostics(
 			) {
 				increment(
 					unsupportedElementCounts,
-					formatHtmlElementOpeningTag(
-						element
-					)
+					sourceTag,
+					sourceLocation
 				);
 				return;
+			}
+
+			for (
+				const className of
+					getIgnoredSourceClassNames(
+						element
+					)
+			) {
+				increment(
+					ignoredClassCounts,
+					className,
+					sourceLocation
+				);
 			}
 
 			const sourceId =
@@ -132,10 +161,18 @@ export function createHtmlParseDiagnostics(
 				);
 			}
 
-			const sourceTag =
-				formatHtmlElementOpeningTag(
-					element
+			for (
+				const declaration of
+					getUnsupportedSourceStyleDeclarations(
+						element
+					)
+			) {
+				increment(
+					unsupportedStyleCounts,
+					`Unsupported source HTML style declaration "${declaration.property}:${declaration.value}" on ${sourceTag}; the element was normalized, but this declaration's presentation semantics were not preserved.`,
+					sourceLocation
 				);
+			}
 
 			if (
 				tag === 'a' &&
@@ -152,7 +189,8 @@ export function createHtmlParseDiagnostics(
 				if (unsafeScheme) {
 					increment(
 						unsafeLinkTargetCounts,
-						`Unsafe source HTML link target on ${sourceTag} uses the ${unsafeScheme}: scheme; descendant content was normalized, but executable link behavior was not preserved.`
+						`Unsafe source HTML link target on ${sourceTag} uses the ${unsafeScheme}: scheme; descendant content was normalized, but executable link behavior was not preserved.`,
+						sourceLocation
 					);
 				} else {
 					const localTargetId =
@@ -168,7 +206,8 @@ export function createHtmlParseDiagnostics(
 					) {
 						increment(
 							missingLocalLinkTargetCounts,
-							`Document-local source link target "${href}" on ${sourceTag} does not resolve to a canonical block or inline anchor inside the selected extraction boundary.`
+							`Document-local source link target "${href}" on ${sourceTag} does not resolve to a canonical block or inline anchor inside the selected extraction boundary.`,
+							sourceLocation
 						);
 					}
 				}
@@ -182,7 +221,8 @@ export function createHtmlParseDiagnostics(
 			) {
 				increment(
 					unsupportedAttributeCounts,
-					`Unsupported source HTML attribute "${attribute.name}" on ${sourceTag}; the element was normalized, but this attribute's semantics were not preserved.`
+					`Unsupported source HTML attribute "${attribute.name}" on ${sourceTag}; the element was normalized, but this attribute's semantics were not preserved.`,
+					sourceLocation
 				);
 			}
 		}
@@ -208,6 +248,9 @@ export function createHtmlParseDiagnostics(
 		warnings: [
 			...toClassWarnings(
 				ignoredClassCounts
+			),
+			...toUnsupportedStyleWarnings(
+				unsupportedStyleCounts
 			),
 			...toElementWarnings(
 				ignoredElementCounts
@@ -391,10 +434,15 @@ function countDocumentMetrics(
 	return metrics;
 }
 
-/** Visits only elements inside the extraction boundary, never the boundary itself. */
+/**
+ * Visits elements inside the extraction boundary, never the boundary itself.
+ *
+ * @param root Extraction boundary whose descendants are inspected.
+ * @param visit Visitor that may return `false` to prune one source subtree.
+ */
 function visitDescendantElements(
 	root: Element,
-	visit: (element: Element) => void
+	visit: (element: Element) => boolean | void
 ): void {
 	for (
 		const child of root.children
@@ -406,21 +454,32 @@ function visitDescendantElements(
 	}
 }
 
-/** Visits one descendant element and its nested element subtree depth-first. */
+/**
+ * Visits one descendant element depth-first unless the visitor prunes its subtree.
+ *
+ * @param node Source node to inspect.
+ * @param visit Visitor that returns `false` when descendants must be excluded.
+ */
 function visitElement(
 	node: AnyNode,
-	visit: (element: Element) => void
+	visit: (element: Element) => boolean | void
 ): void {
 	if (!isElement(node)) {
 		return;
 	}
 
-	visit(
-		node
-	);
+	const shouldDescend =
+		visit(
+			node
+		) !== false;
 
-	// Continue depth-first through the source tree so ignored elements/classes
-	// are counted regardless of nesting depth.
+	if (!shouldDescend) {
+		return;
+	}
+
+	// Continue depth-first only while the source boundary participates in
+	// conversion/diagnostic inspection. Intentionally ignored elements prune their
+	// complete subtree just as conversion does.
 	for (
 		const child of node.children
 	) {
@@ -445,22 +504,76 @@ function isElement(
 	);
 }
 
-/** Increments one deterministic warning counter. */
+/** Aggregated occurrences for one stable diagnostic key. */
+interface WarningOccurrences {
+	/** Number of equivalent source conditions encountered. */
+	count: number;
+
+	/** Authored source positions known for those occurrences. */
+	readonly sourceLocations: ParseSourceLocation[];
+}
+
+/** Increments one deterministic warning counter and preserves known positions. */
 function increment(
-	counts: Map<string, number>,
-	key: string
+	counts: Map<string, WarningOccurrences>,
+	key: string,
+	sourceLocation?: ParseSourceLocation
 ): void {
+	const occurrences =
+		counts.get(
+			key
+		);
+
+	if (occurrences) {
+		occurrences.count++;
+
+		if (sourceLocation) {
+			occurrences.sourceLocations.push(
+				sourceLocation
+			);
+		}
+
+		return;
+	}
+
 	counts.set(
 		key,
-		(counts.get(
-			key
-		) ?? 0) + 1
+		{
+			count:
+				1,
+			sourceLocations:
+				sourceLocation
+					? [sourceLocation]
+					: []
+		}
 	);
+}
+
+/** Creates one warning while omitting location metadata when none is known. */
+function createParseWarning(
+	code: string,
+	message: string,
+	occurrences: WarningOccurrences
+): ParseWarning {
+	const warning = {
+		code,
+		message,
+		count:
+			occurrences.count
+	};
+
+	return occurrences.sourceLocations.length > 0
+		? {
+			...warning,
+			sourceLocations:
+				occurrences.sourceLocations
+		}
+		: warning;
 }
 
 /** Converts ignored-class counters into stable, sorted diagnostics. */
 function toClassWarnings(
-	counts: ReadonlyMap<string, number>
+	counts: ReadonlyMap<string, WarningOccurrences>
 ): ParseWarning[] {
 	return [
 		...counts.entries()
@@ -472,19 +585,18 @@ function toClassWarnings(
 				)
 		)
 		.map(
-			([className, count]) => ({
-				code:
+			([className, occurrences]) =>
+				createParseWarning(
 					'html-class-ignored',
-				message:
 					`Ignored source HTML class "${className}".`,
-				count
-			})
+					occurrences
+				)
 		);
 }
 
-/** Converts ignored-element counters into stable, sorted diagnostics. */
-function toElementWarnings(
-	counts: ReadonlyMap<string, number>
+/** Converts unsupported-style counters into stable, source-rich diagnostics. */
+function toUnsupportedStyleWarnings(
+	counts: ReadonlyMap<string, WarningOccurrences>
 ): ParseWarning[] {
 	return [
 		...counts.entries()
@@ -496,19 +608,41 @@ function toElementWarnings(
 				)
 		)
 		.map(
-			([tag, count]) => ({
-				code:
+			([message, occurrences]) =>
+				createParseWarning(
+					'html-style-unsupported',
+					message,
+					occurrences
+				)
+		);
+}
+
+/** Converts ignored-element counters into stable, source-rich diagnostics. */
+function toElementWarnings(
+	counts: ReadonlyMap<string, WarningOccurrences>
+): ParseWarning[] {
+	return [
+		...counts.entries()
+	]
+		.sort(
+			([left], [right]) =>
+				left.localeCompare(
+					right
+				)
+		)
+		.map(
+			([sourceTag, occurrences]) =>
+				createParseWarning(
 					'html-element-ignored',
-				message:
-					`Ignored source HTML element <${tag}>.`,
-				count
-			})
+					`Ignored source HTML element ${sourceTag}.`,
+					occurrences
+				)
 		);
 }
 
 /** Converts unsupported-element counters into stable, source-rich diagnostics. */
 function toUnsupportedElementWarnings(
-	counts: ReadonlyMap<string, number>
+	counts: ReadonlyMap<string, WarningOccurrences>
 ): ParseWarning[] {
 	return [
 		...counts.entries()
@@ -520,20 +654,19 @@ function toUnsupportedElementWarnings(
 				)
 		)
 		.map(
-			([sourceTag, count]) => ({
-				code:
+			([sourceTag, occurrences]) =>
+				createParseWarning(
 					'html-element-unsupported',
-				message:
 					`Unsupported source HTML element ${sourceTag}; descendant content was preserved where representable, but this element's semantics were not normalized.`,
-				count
-			})
+					occurrences
+				)
 		);
 }
 
 
 /** Converts unsupported-attribute counters into stable, source-rich diagnostics. */
 function toUnsupportedAttributeWarnings(
-	counts: ReadonlyMap<string, number>
+	counts: ReadonlyMap<string, WarningOccurrences>
 ): ParseWarning[] {
 	return [
 		...counts.entries()
@@ -545,18 +678,18 @@ function toUnsupportedAttributeWarnings(
 				)
 		)
 		.map(
-			([message, count]) => ({
-				code:
+			([message, occurrences]) =>
+				createParseWarning(
 					'html-attribute-unsupported',
-				message,
-				count
-			})
+					message,
+					occurrences
+				)
 		);
 }
 
 /** Converts stripped unsafe-link counters into stable diagnostics. */
 function toUnsafeLinkTargetWarnings(
-	counts: ReadonlyMap<string, number>
+	counts: ReadonlyMap<string, WarningOccurrences>
 ): ParseWarning[] {
 	return [
 		...counts.entries()
@@ -568,18 +701,18 @@ function toUnsafeLinkTargetWarnings(
 				)
 		)
 		.map(
-			([message, count]) => ({
-				code:
+			([message, occurrences]) =>
+				createParseWarning(
 					'html-link-target-unsafe',
-				message,
-				count
-			})
+					message,
+					occurrences
+				)
 		);
 }
 
 /** Converts unresolved local-fragment counters into stable diagnostics. */
 function toMissingLocalLinkTargetWarnings(
-	counts: ReadonlyMap<string, number>
+	counts: ReadonlyMap<string, WarningOccurrences>
 ): ParseWarning[] {
 	return [
 		...counts.entries()
@@ -591,12 +724,12 @@ function toMissingLocalLinkTargetWarnings(
 				)
 		)
 		.map(
-			([message, count]) => ({
-				code:
+			([message, occurrences]) =>
+				createParseWarning(
 					'html-local-link-target-missing',
-				message,
-				count
-			})
+					message,
+					occurrences
+				)
 		);
 }
 

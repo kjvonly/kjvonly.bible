@@ -13,7 +13,13 @@ import type {
 
 /** Source-specific converter contract used by the generic parse application boundary. */
 export interface HtmlDocumentConverter {
-	/** Converts one parsed HTML document and returns canonical content plus diagnostics. */
+	/**
+	 * Converts one parsed HTML tree into canonical content plus import diagnostics.
+	 *
+	 * @param document Parsed source tree produced by the HTML syntax boundary.
+	 * @param options Extraction-boundary and provenance options for this conversion.
+	 * @returns Validated normalized document and non-persisted conversion diagnostics.
+	 */
 	convertWithDiagnostics(
 		document: ParsedHtmlDocument,
 		options?: HtmlNormalizedDocumentConversionOptions
@@ -41,7 +47,12 @@ export type ParseRequest =
 
 /** Source-neutral application boundary for document normalization. */
 export interface Parse {
-	/** Normalizes one source request using its registered format pipeline. */
+	/**
+	 * Normalizes one source request using its registered format pipeline.
+	 *
+	 * @param request Source-format request containing the complete source document.
+	 * @returns Canonical document and conversion diagnostics.
+	 */
 	run(
 		request: ParseRequest
 	): ParseResult;
@@ -68,6 +79,9 @@ export class ParseUseCase
 	/**
 	 * Normalizes one source document without taking ownership of filesystem IO,
 	 * batch traversal, Resource publication, or rendering.
+	 *
+	 * @param request Source-format request dispatched to its parser/converter pipeline.
+	 * @returns Canonical document and import-only diagnostics.
 	 */
 	run(
 		request: ParseRequest

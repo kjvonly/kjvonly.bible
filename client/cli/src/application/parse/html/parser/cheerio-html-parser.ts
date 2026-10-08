@@ -19,6 +19,10 @@ import type {
 	ParsedHtmlDocument
 } from './html-parser.js';
 
+import type {
+	ParseSourceLocation
+} from '../../diagnostics/parse-diagnostics.js';
+
 /**
  * Cheerio-backed HTML syntax parser.
  *
@@ -28,13 +32,22 @@ import type {
 export class CheerioHtmlParser
 	implements HtmlParser {
 
-	/** Parses one source string using Cheerio's HTML document recovery behavior. */
+	/**
+	 * Parses one source string using Cheerio's HTML document recovery behavior.
+	 *
+	 * @param html Complete source HTML text.
+	 * @returns Parsed-document capability that keeps Cheerio behind this adapter.
+	 */
 	parse(
 		html: string
 	): ParsedHtmlDocument {
 		return new CheerioParsedHtmlDocument(
 			load(
-				html
+				html,
+				{
+					sourceCodeLocationInfo:
+						true
+				}
 			)
 		);
 	}
@@ -51,6 +64,12 @@ class CheerioParsedHtmlDocument
 			CheerioAPI
 	) {}
 
+	/**
+	 * Resolves the first matching element without exposing Cheerio collection APIs.
+	 *
+	 * @param selector CSS selector supplied by the converter.
+	 * @returns First matching domhandler element, or undefined when absent.
+	 */
 	selectFirst(
 		selector: string
 	): Element | undefined {
@@ -68,5 +87,47 @@ class CheerioParsedHtmlDocument
 			)
 			? node
 			: undefined;
+	}
+
+	/**
+	 * Reads parse5-authored source coordinates without exposing parser-specific
+	 * location metadata through the ParsedHtmlDocument contract.
+	 *
+	 * @param element Parsed element whose opening-tag position is requested.
+	 * @returns 1-based line/column coordinates, or undefined for implicit nodes.
+	 */
+	getSourceLocation(
+		element: Element
+	): ParseSourceLocation | undefined {
+		const location =
+			element.sourceCodeLocation;
+
+		if (!location) {
+			return undefined;
+		}
+
+		const start =
+			location.startTag ??
+				location;
+
+		if (
+			!Number.isInteger(
+				start.startLine
+			) ||
+			!Number.isInteger(
+				start.startCol
+			) ||
+			start.startLine < 1 ||
+			start.startCol < 1
+		) {
+			return undefined;
+		}
+
+		return {
+			line:
+				start.startLine,
+			column:
+				start.startCol
+		};
 	}
 }

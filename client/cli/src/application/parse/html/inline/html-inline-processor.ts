@@ -29,7 +29,14 @@ export interface HtmlInlineTagProcessor {
 	/** Lowercase inline HTML tags owned by this processor strategy. */
 	readonly tags: readonly string[];
 
-	/** Applies tag semantics and returns the state/recursion decision for children. */
+	/**
+	 * Applies tag semantics and returns the state/recursion decision for children.
+	 *
+	 * @param element Source inline element owned by this processor.
+	 * @param state Inherited inline semantics entering the element boundary.
+	 * @param content Ordered canonical content receiving zero-width/direct emissions.
+	 * @returns Descendant state and whether HtmlInlineParser should recurse.
+	 */
 	process(
 		element: Element,
 		state: HtmlInlineState,

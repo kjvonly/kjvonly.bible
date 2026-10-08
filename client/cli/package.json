@@ -15,7 +15,8 @@
 		"#ports/*": "./dist/ports/*"
 	},
 	"scripts": {
-		"prebuild": "npm --prefix ../packages/normalized-content run build",
+		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+		"prebuild": "npm --prefix ../packages/normalized-content run build && npm run clean",
 		"build": "tsc -p tsconfig.build.json",
 		"pretest": "npm --prefix ../packages/normalized-content run test",
 		"test": "vitest run --config vitest.config.ts"

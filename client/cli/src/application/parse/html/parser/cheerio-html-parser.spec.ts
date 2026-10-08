@@ -112,6 +112,65 @@ describe(
 		);
 
 		it(
+			'exposes authored opening-tag line and column coordinates without leaking parse5 metadata',
+			() => {
+				const document =
+					parser.parse(
+						'<main>\n  <p id="target">KJV</p>\n</main>'
+					);
+
+				const paragraph =
+					document.selectFirst(
+						'#target'
+					);
+
+				if (!paragraph) {
+					throw new Error(
+						'Missing test paragraph.'
+					);
+				}
+
+				expect(
+					document.getSourceLocation(
+						paragraph
+					)
+				).toEqual({
+					line:
+						2,
+					column:
+						3
+				});
+			}
+		);
+
+		it(
+			'returns no source coordinates for parser-inserted recovery elements',
+			() => {
+				const document =
+					parser.parse(
+						'<table><tr><td>KJV</td></tr></table>'
+					);
+
+				const tableBody =
+					document.selectFirst(
+						'tbody'
+					);
+
+				if (!tableBody) {
+					throw new Error(
+						'Missing parser-inserted tbody.'
+					);
+				}
+
+				expect(
+					document.getSourceLocation(
+						tableBody
+					)
+				).toBeUndefined();
+			}
+		);
+
+		it(
 			'returns undefined when no element matches the requested selector',
 			() => {
 				const document =

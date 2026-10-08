@@ -14,19 +14,38 @@ const intentionallyIgnoredElements =
 	]);
 
 /**
- * Semantic block structures currently preserved only by recursively normalizing
- * their descendants. Their own source meaning is reported as unsupported.
+ * Semantic block structures handled by the generic unsupported-block processor.
+ * Their descendants remain representable while their source boundary is diagnosed.
  */
 export const unsupportedSemanticBlockTags = [
+	'address',
+	'article',
+	'aside',
 	'dd',
 	'dl',
-	'dt'
+	'dt',
+	'footer',
+	'header',
+	'main',
+	'nav',
+	'section'
 ] as const;
 
-const unsupportedSemanticBlockElements =
-	new Set<string>(
-		unsupportedSemanticBlockTags
-	);
+/**
+ * Registered structural wrappers whose descendants require specialized traversal
+ * even though the wrapper's own source semantics are not represented by v1.
+ */
+const unsupportedRegisteredStructuralTags = [
+	'thead',
+	'tbody',
+	'tfoot'
+] as const;
+
+const unsupportedSemanticElements =
+	new Set<string>([
+		...unsupportedSemanticBlockTags,
+		...unsupportedRegisteredStructuralTags
+	]);
 
 /** Lookup used to distinguish implemented element semantics from fallbacks. */
 export interface HtmlElementSupportLookup {
@@ -55,7 +74,14 @@ export function isTransparentHtmlElement(
 	);
 }
 
-/** Returns whether source content is deliberately omitted rather than normalized. */
+/**
+ * Classifies source elements whose complete subtree is deliberately excluded from
+ * normalization. This policy is shared by block traversal, inline traversal,
+ * diagnostics, and source-ID reservation so those responsibilities cannot drift.
+ *
+ * @param tag Source HTML tag to classify; comparison is case-insensitive.
+ * @returns Whether the element and all descendants are intentionally ignored.
+ */
 export function isIntentionallyIgnoredHtmlElement(
 	tag: string
 ): boolean {
@@ -106,8 +132,13 @@ export function preservesHtmlElementSourceIdentity(
  *
  * Unsupported elements are deliberately tolerated: descendant content is kept
  * wherever the existing block/inline model can represent it, while diagnostics
- * preserve the source tag and attributes for review. Adding a real processor later
- * removes that element from this fallback without changing the canonical document.
+ * preserve the source tag and attributes for review. Processor registration alone
+ * does not imply semantic support: some registered wrappers exist only to preserve
+ * descendant grammar while their own source meaning remains unsupported.
+ *
+ * @param tag Source HTML tag to classify; comparison is case-insensitive.
+ * @param support Registered block/inline capabilities available to conversion.
+ * @returns Whether the element boundary has source semantics not represented by v1.
  */
 export function isUnsupportedHtmlElement(
 	tag: string,
@@ -128,7 +159,7 @@ export function isUnsupportedHtmlElement(
 	}
 
 	if (
-		unsupportedSemanticBlockElements.has(
+		unsupportedSemanticElements.has(
 			normalizedTag
 		)
 	) {

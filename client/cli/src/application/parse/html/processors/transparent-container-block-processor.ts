@@ -19,8 +19,12 @@ import type {
 } from './html-block-processor.js';
 
 /**
- * Recurses through layout-only containers when discarding the wrapper cannot lose
- * addressability or supported normalized presentation semantics.
+ * Recurses through deliberately neutral structural containers when discarding the
+ * wrapper cannot lose addressability or supported normalized presentation.
+ *
+ * `div` is the only v1 structural wrapper treated as semantically neutral. HTML
+ * sectioning/landmark elements use UnsupportedSemanticBlockProcessor so their
+ * representable descendants survive while diagnostics report the lost boundary.
  */
 export class TransparentContainerBlockProcessor
 	implements HtmlBlockProcessor {
@@ -28,17 +32,17 @@ export class TransparentContainerBlockProcessor
 		false;
 
 	readonly tags = [
-		'address',
-		'article',
-		'aside',
-		'div',
-		'footer',
-		'header',
-		'main',
-		'nav',
-		'section'
+		'div'
 	];
 
+	/**
+	 * Flattens one neutral container only when its own canonical metadata would not
+	 * be lost. Semantic structural wrappers are deliberately owned elsewhere.
+	 *
+	 * @param element Source `div` whose children should remain in document flow.
+	 * @param context Converter capabilities used to normalize structural children.
+	 * @returns Normalized descendants in their original source order.
+	 */
 	process(
 		element: Element,
 		context: HtmlBlockProcessorContext

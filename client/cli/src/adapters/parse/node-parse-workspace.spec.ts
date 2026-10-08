@@ -2,6 +2,7 @@ import {
 	mkdtemp,
 	mkdir,
 	readFile,
+	readdir,
 	rm,
 	writeFile
 } from 'node:fs/promises';
@@ -163,7 +164,45 @@ describe(
 		);
 
 		it(
-			'reads, detects, and safely writes UTF-8 text files',
+			'creates a portable case-insensitive collision key without changing the emitted path',
+			() => {
+				const workspace =
+					new NodeParseWorkspace();
+
+				const upperCasePath =
+					join(
+						'root',
+						'KJV',
+						'Chapter.json'
+					);
+
+				const lowerCasePath =
+					join(
+						'root',
+						'kjv',
+						'chapter.json'
+					);
+
+				expect(
+					workspace.getPathCollisionKey(
+						upperCasePath
+					)
+				).toBe(
+					workspace.getPathCollisionKey(
+						lowerCasePath
+					)
+				);
+
+				expect(
+					upperCasePath
+				).not.toBe(
+					lowerCasePath
+				);
+			}
+		);
+
+		it(
+			'reads, detects, and atomically publishes UTF-8 text files',
 			async () => {
 				const root =
 					await createTemporaryDirectory();
@@ -205,7 +244,7 @@ describe(
 					false
 				);
 
-				await workspace.writeTextFile(
+				await workspace.writeOutputAtomically(
 					outputPath,
 					'{"ok":true}\n',
 					{
@@ -223,7 +262,7 @@ describe(
 				);
 
 				await expect(
-					workspace.writeTextFile(
+					workspace.writeOutputAtomically(
 						outputPath,
 						'{"ok":false}\n',
 						{
@@ -236,7 +275,7 @@ describe(
 						'EEXIST'
 				});
 
-				await workspace.writeTextFile(
+				await workspace.writeOutputAtomically(
 					outputPath,
 					'{"ok":false}\n',
 					{
@@ -252,6 +291,84 @@ describe(
 					)
 				).toBe(
 					'{"ok":false}\n'
+				);
+
+				const directoryEntries =
+					await readdir(
+						root
+					);
+
+				expect(
+					directoryEntries.some(
+						entry =>
+							entry.includes(
+								'.kjvonly-tmp-'
+							)
+					)
+				).toBe(
+					false
+				);
+			}
+		);
+
+		it(
+			'leaves an existing output unchanged when non-overwrite publication loses the final-path race',
+			async () => {
+				const root =
+					await createTemporaryDirectory();
+
+				const outputPath =
+					join(
+						root,
+						'race.json'
+					);
+
+				await writeFile(
+					outputPath,
+					'{"winner":"other-process"}\n',
+					'utf8'
+				);
+
+				const workspace =
+					new NodeParseWorkspace();
+
+				await expect(
+					workspace.writeOutputAtomically(
+						outputPath,
+						'{"winner":"parser"}\n',
+						{
+							overwrite:
+								false
+						}
+					)
+				).rejects.toMatchObject({
+					code:
+						'EEXIST'
+				});
+
+				expect(
+					await readFile(
+						outputPath,
+						'utf8'
+					)
+				).toBe(
+					'{"winner":"other-process"}\n'
+				);
+
+				const directoryEntries =
+					await readdir(
+						root
+					);
+
+				expect(
+					directoryEntries.some(
+						entry =>
+							entry.includes(
+								'.kjvonly-tmp-'
+							)
+					)
+				).toBe(
+					false
 				);
 			}
 		);

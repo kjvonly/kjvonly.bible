@@ -13,8 +13,8 @@ import {
 } from '@kjvonly/normalized-content';
 
 import {
-	DeterministicNormalizedBlockIdGenerator
-} from '../identity/deterministic-normalized-block-id-generator.js';
+	OrdinalNormalizedBlockIdGenerator
+} from '../identity/ordinal-normalized-block-id-generator.js';
 
 import {
 	CaptionBlockProcessor
@@ -209,7 +209,7 @@ const converter =
 		blockProcessorRegistry,
 		inlineParser,
 		() =>
-			new DeterministicNormalizedBlockIdGenerator()
+			new OrdinalNormalizedBlockIdGenerator()
 	);
 
 const htmlParser =
@@ -804,6 +804,52 @@ describe(
 		);
 
 		it(
+			'preserves table-section descendants while diagnosing the unsupported source boundary',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						`<table><tbody id="body-1" class="legacy-body" style="text-align:center"><tr id="row-1"><td>KJV</td></tr></tbody></table>`
+					);
+
+				expect(
+					result.document.blocks
+				).toMatchObject([
+					{
+						type:
+							'table',
+						blocks: [
+							{
+								type:
+									'table-row',
+								id:
+									'row-1'
+							}
+						]
+					}
+				]);
+
+				expect(
+					result.diagnostics.warnings
+				).toContainEqual({
+					code:
+						'html-element-unsupported',
+					message:
+						'Unsupported source HTML element <tbody class="legacy-body" id="body-1" style="text-align:center">; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
+					count:
+						1,
+					sourceLocations: [
+						{
+							line:
+								1,
+							column:
+								8
+						}
+					]
+				});
+			}
+		);
+
+		it(
 			'preserves an explicitly empty anchor href because href is a consumed source attribute',
 			() => {
 				const result =
@@ -876,7 +922,15 @@ describe(
 					message:
 						'Unsafe source HTML link target on <a href="javascript:alert(1)"> uses the javascript: scheme; descendant content was normalized, but executable link behavior was not preserved.',
 					count:
-						1
+						1,
+					sourceLocations: [
+						{
+							line:
+								1,
+							column:
+								4
+						}
+					]
 				});
 			}
 		);
@@ -915,7 +969,15 @@ describe(
 					message:
 						'Document-local source link target "#fn1" on <a href="#fn1"> does not resolve to a canonical block or inline anchor inside the selected extraction boundary.',
 					count:
-						1
+						1,
+					sourceLocations: [
+						{
+							line:
+								1,
+							column:
+								4
+						}
+					]
 				});
 			}
 		);
@@ -942,54 +1004,64 @@ describe(
 			[
 				'<blockquote cite="/source">KJV quotation</blockquote>',
 				'cite',
-				'<blockquote cite="/source">'
+				'<blockquote cite="/source">',
+				1
 			],
 			[
 				'<ol start="2"><li>Second reading</li></ol>',
 				'start',
-				'<ol start="2">'
+				'<ol start="2">',
+				1
 			],
 			[
 				'<ol type="I"><li>KJV edition</li></ol>',
 				'type',
-				'<ol type="I">'
+				'<ol type="I">',
+				1
 			],
 			[
 				'<ol><li value="3">Third reading</li></ol>',
 				'value',
-				'<li value="3">'
+				'<li value="3">',
+				5
 			],
 			[
 				'<table summary="KJV readings"><tr><td>Genesis</td></tr></table>',
 				'summary',
-				'<table summary="KJV readings">'
+				'<table summary="KJV readings">',
+				1
 			],
 			[
 				'<table><tr><td colspan="2">Genesis</td></tr></table>',
 				'colspan',
-				'<td colspan="2">'
+				'<td colspan="2">',
+				12
 			],
 			[
 				'<table><tr><th scope="col">Book</th></tr></table>',
 				'scope',
-				'<th scope="col">'
+				'<th scope="col">',
+				12
 			],
 			[
 				'<p><del datetime="2026-10-04">old KJV note</del></p>',
 				'datetime',
-				'<del datetime="2026-10-04">'
+				'<del datetime="2026-10-04">',
+				4
 			],
 			[
 				'<p><a href="/kjv/1_1_1" target="_blank">Genesis 1:1</a></p>',
 				'target',
-				'<a href="/kjv/1_1_1" target="_blank">'
+				'<a href="/kjv/1_1_1" target="_blank">',
+				4
 			]
 		])(
 			'preserves supported content and reports unsupported source attribute %s',
 			(
 				html: string,
 				attribute: string,
-				openingTag: string
+				openingTag: string,
+				column: number
 			) => {
 				const result =
 					convertHtmlWithDiagnostics(
@@ -1010,7 +1082,14 @@ describe(
 					message:
 						`Unsupported source HTML attribute "${attribute}" on ${openingTag}; the element was normalized, but this attribute's semantics were not preserved.`,
 					count:
-						1
+						1,
+					sourceLocations: [
+						{
+							line:
+								1,
+							column
+						}
+					]
 				});
 			}
 		);
@@ -1300,7 +1379,8 @@ describe(
 				).toContainEqual({
 					code: 'html-element-unsupported',
 					message: 'Unsupported source HTML element <time data-source="publisher" datetime="2026-10-04">; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
-					count: 1
+					count: 1,
+					sourceLocations: [{ line: 1, column: 14 }]
 				});
 			}
 		);
@@ -1347,12 +1427,14 @@ describe(
 						{
 							code: 'html-element-unsupported',
 							message: 'Unsupported source HTML element <details open>; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
-							count: 1
+							count: 1,
+							sourceLocations: [{ line: 1, column: 1 }]
 						},
 						{
 							code: 'html-element-unsupported',
 							message: 'Unsupported source HTML element <summary>; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
-							count: 1
+							count: 1,
+							sourceLocations: [{ line: 1, column: 15 }]
 						}
 					])
 				);
@@ -1384,7 +1466,8 @@ describe(
 				).toContainEqual({
 					code: 'html-element-unsupported',
 					message: 'Unsupported source HTML element <img alt="Publisher logo">; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
-					count: 1
+					count: 1,
+					sourceLocations: [{ line: 1, column: 9 }]
 				});
 			}
 		);
@@ -1461,16 +1544,60 @@ describe(
 		);
 
 		it(
-			'rejects an addressable transparent container rather than silently losing its id',
+			'preserves descendants of semantic structural wrappers while diagnosing the unsupported boundary',
 			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						`<section id="section-anchor" class="text-center"><p>Text</p></section>`
+					);
+
+				const paragraph =
+					requireBlockType(
+						result.document.blocks,
+						0,
+						'paragraph'
+					);
+
 				expect(
-					() =>
-						convertHtml(
-							`<section id="section-anchor"><p>Text</p></section>`
-						)
-				).toThrow(
-					'Cannot discard addressable container <section>#section-anchor.'
+					paragraph
+				).toMatchObject({
+					id:
+						'nd-v1-paragraph-1',
+					content: [
+						{
+							type:
+								'word',
+							text:
+								'Text'
+						}
+					]
+				});
+
+				expect(
+					paragraph
+				).not.toHaveProperty(
+					'class'
 				);
+
+				expect(
+					result.diagnostics.sourceIdsPreserved
+				).toBe(
+					0
+				);
+
+				expect(
+					result.diagnostics.warnings
+				).toContainEqual({
+					code:
+						'html-element-unsupported',
+					message:
+						'Unsupported source HTML element <section class="text-center" id="section-anchor">; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
+					count:
+						1,
+					sourceLocations: [
+						{ line: 1, column: 1 }
+					]
+				});
 			}
 		);
 
@@ -1603,20 +1730,20 @@ describe(
 		it(
 			'ignores executable source nodes instead of preserving them as content',
 			() => {
-				const document =
-					convertHtml(
-						`<script>alert('no')</script><p>Safe</p><style>.x{}</style>`
+				const result =
+					convertHtmlWithDiagnostics(
+						`<body><script>alert('no')</script><p>Safe</p><style>.x{}</style></body>`
 					);
 
 				expect(
-					document.blocks
+					result.document.blocks
 				).toHaveLength(
 					1
 				);
 
 				const paragraph =
 					requireBlockType(
-						document.blocks,
+						result.document.blocks,
 						0,
 						'paragraph'
 					);
@@ -1629,6 +1756,98 @@ describe(
 					text:
 						'Safe'
 				});
+
+				expect(
+					result.diagnostics.warnings
+				).toEqual([
+					{
+						code:
+							'html-element-ignored',
+						message:
+							'Ignored source HTML element <script>.',
+						count:
+							1,
+						sourceLocations: [
+							{
+								line:
+									1,
+								column:
+									7
+							}
+						]
+					},
+					{
+						code:
+							'html-element-ignored',
+						message:
+							'Ignored source HTML element <style>.',
+						count:
+							1,
+						sourceLocations: [
+							{
+								line:
+									1,
+								column:
+									46
+							}
+						]
+					}
+				]);
+			}
+		);
+
+		it(
+			'does not let ignored structural descendants split surrounding inline content',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<body>A<span><template><p>ignored</p></template>B</span>C</body>'
+					);
+
+				expect(
+					result.document.blocks
+				).toHaveLength(
+					1
+				);
+
+				const textBlock =
+					requireBlockType(
+						result.document.blocks,
+						0,
+						'text'
+					);
+
+				expect(
+					textBlock.content
+				).toEqual([
+					{
+						type:
+							'word',
+						text:
+							'ABC'
+					}
+				]);
+
+				expect(
+					result.diagnostics.warnings
+				).toEqual([
+					{
+						code:
+							'html-element-ignored',
+						message:
+							'Ignored source HTML element <template>.',
+						count:
+							1,
+						sourceLocations: [
+							{
+								line:
+									1,
+								column:
+									14
+							}
+						]
+					}
+				]);
 			}
 		);
 

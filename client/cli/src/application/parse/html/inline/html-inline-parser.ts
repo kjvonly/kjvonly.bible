@@ -16,6 +16,7 @@ import {
 } from '../projection/html-normalized-class-projector.js';
 
 import {
+	isIntentionallyIgnoredHtmlElement,
 	isTransparentHtmlElement
 } from '../semantics/html-element-semantic-policy.js';
 
@@ -66,7 +67,12 @@ export class HtmlInlineParser {
 			(tag: string) => boolean
 	) {}
 
-	/** Returns whether an inline semantic processor is registered for the tag. */
+	/**
+	 * Returns whether an inline semantic processor is registered for the tag.
+	 *
+	 * @param tag HTML tag queried by structural conversion/diagnostics.
+	 * @returns Whether that tag has explicit inline semantic handling.
+	 */
 	hasProcessor(
 		tag: string
 	): boolean {
@@ -81,6 +87,10 @@ export class HtmlInlineParser {
 	 * Structural traversal uses this when an inline semantic wrapper contains block
 	 * descendants. The context carries both inherited descendant semantics and any
 	 * zero-width anchor contributed at the wrapper opening boundary.
+	 *
+	 * @param element Supported/transparent inline wrapper surrounding block descendants.
+	 * @param inheritedState Inline semantics inherited before entering the wrapper.
+	 * @returns Descendant state plus zero-width content emitted at the opening boundary.
 	 */
 	createDescendantInlineContext(
 		element: Element,
@@ -133,7 +143,14 @@ export class HtmlInlineParser {
 		};
 	}
 
-	/** Parses sibling inline nodes in source order with optional inherited semantics. */
+	/**
+	 * Parses sibling inline nodes in source order with optional inherited semantics.
+	 *
+	 * @param nodes Source nodes sharing one horizontal text stream.
+	 * @param options Source-newline behavior for this parsing run.
+	 * @param inheritedState Optional semantics inherited from an enclosing inline wrapper.
+	 * @returns Ordered canonical inline content with lexical continuity preserved.
+	 */
 	parseNodes(
 		nodes: readonly AnyNode[],
 		options: HtmlInlineParseOptions = {},
@@ -279,7 +296,7 @@ export class HtmlInlineParser {
 			node.name.toLowerCase();
 
 		if (
-			isIgnoredTag(
+			isIntentionallyIgnoredHtmlElement(
 				tag
 			)
 		) {
@@ -334,17 +351,4 @@ function isElement(
 		node.type ===
 			'style'
 	);
-}
-
-function isIgnoredTag(
-	tag: string
-): boolean {
-	return tag ===
-		'script' ||
-		tag ===
-			'style' ||
-		tag ===
-			'noscript' ||
-		tag ===
-			'template';
 }

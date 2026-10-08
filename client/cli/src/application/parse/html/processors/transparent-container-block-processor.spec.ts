@@ -42,7 +42,7 @@ describe(
 				expect(
 					processor.process(
 						element(
-							'section'
+							'div'
 						),
 						context(
 							blocks

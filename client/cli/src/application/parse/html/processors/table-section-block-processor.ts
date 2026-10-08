@@ -6,10 +6,6 @@ import type {
 	NormalizedBlock
 } from '@kjvonly/normalized-content';
 
-import {
-	projectNormalizedClasses
-} from '../projection/html-normalized-class-projector.js';
-
 import type {
 	HtmlBlockProcessorContext
 } from '../context/html-block-processor-context.js';
@@ -19,11 +15,11 @@ import type {
 } from './html-block-processor.js';
 
 /**
- * Flattens HTML table section wrappers while preserving their row children.
+ * Preserves table-specific traversal through HTML section wrappers.
  *
- * The canonical table contract does not retain thead/tbody/tfoot as blocks. An
- * addressable or normalized-presentational section is rejected rather than
- * silently losing source meaning during flattening.
+ * NormalizedDocument v1 does not retain thead/tbody/tfoot boundaries. The
+ * diagnostics layer therefore reports each wrapper as unsupported while this
+ * processor keeps representable row descendants in canonical table order.
  */
 export class TableSectionBlockProcessor
 	implements HtmlBlockProcessor {
@@ -36,29 +32,17 @@ export class TableSectionBlockProcessor
 		'tfoot'
 	];
 
+	/**
+	 * Flattens one table-section boundary into its normalized row descendants.
+	 *
+	 * @param element Source table-section element whose boundary is not canonical.
+	 * @param context Converter capabilities used to normalize structural children.
+	 * @returns Normalized descendants in their original source order.
+	 */
 	process(
 		element: Element,
 		context: HtmlBlockProcessorContext
 	): NormalizedBlock[] {
-		if (
-			element.attribs.id
-		) {
-			throw new Error(
-				`Cannot discard addressable table section <${element.name}>#${element.attribs.id}.`
-			);
-		}
-
-		const classes =
-			projectNormalizedClasses(
-				element
-			);
-
-		if (classes) {
-			throw new Error(
-				`Cannot discard normalized presentation on table section <${element.name}>: ${classes.join(' ')}.`
-			);
-		}
-
 		return context.parseBlockChildren(
 			element
 		);

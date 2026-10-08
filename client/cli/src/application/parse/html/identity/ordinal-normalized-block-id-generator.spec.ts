@@ -5,17 +5,17 @@ import {
 } from 'vitest';
 
 import {
-	DeterministicNormalizedBlockIdGenerator
-} from './deterministic-normalized-block-id-generator.js';
+	OrdinalNormalizedBlockIdGenerator
+} from './ordinal-normalized-block-id-generator.js';
 
 describe(
-	'DeterministicNormalizedBlockIdGenerator',
+	'OrdinalNormalizedBlockIdGenerator',
 	() => {
 		it(
 			'preserves an explicit source id verbatim',
 			() => {
 				const generator =
-					new DeterministicNormalizedBlockIdGenerator();
+					new OrdinalNormalizedBlockIdGenerator();
 
 				expect(
 					generator.createId(
@@ -32,7 +32,7 @@ describe(
 			'assigns versioned per-type ordinal ids',
 			() => {
 				const generator =
-					new DeterministicNormalizedBlockIdGenerator();
+					new OrdinalNormalizedBlockIdGenerator();
 
 				expect(
 					generator.createId(
@@ -56,7 +56,7 @@ describe(
 			'keeps independent counters for different block types',
 			() => {
 				const generator =
-					new DeterministicNormalizedBlockIdGenerator();
+					new OrdinalNormalizedBlockIdGenerator();
 
 				expect(
 					generator.createId(
@@ -103,7 +103,7 @@ describe(
 			'does not advance a generated counter when preserving a source id',
 			() => {
 				const generator =
-					new DeterministicNormalizedBlockIdGenerator();
+					new OrdinalNormalizedBlockIdGenerator();
 
 				generator.createId(
 					'paragraph',
@@ -124,7 +124,7 @@ describe(
 			'skips generated ordinals reserved by source html',
 			() => {
 				const generator =
-					new DeterministicNormalizedBlockIdGenerator();
+					new OrdinalNormalizedBlockIdGenerator();
 
 				generator.reserveSourceIds([
 					'nd-v1-paragraph-1',
@@ -153,7 +153,7 @@ describe(
 			'rejects duplicate source ids before generated identity is assigned',
 			() => {
 				const generator =
-					new DeterministicNormalizedBlockIdGenerator();
+					new OrdinalNormalizedBlockIdGenerator();
 
 				expect(
 					() =>
@@ -172,7 +172,7 @@ describe(
 function generatedId(
 	type: 'paragraph'
 ): string {
-	return new DeterministicNormalizedBlockIdGenerator()
+	return new OrdinalNormalizedBlockIdGenerator()
 		.createId(
 			type
 		);
