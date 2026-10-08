@@ -319,7 +319,7 @@ ssl-clean:
 # CLIENT
 
 CLI_DIR = client/cli
-APP_DATA_MANIFEST = ../../zarf/manifest/app-data.yaml
+APP_DATA_MANIFEST = ../../zarf/manifest/app-data-home.yaml
 APP_DATA_LOG_DIR := $(CURDIR)/logs/app-data
 
 .PHONY: \
