@@ -27,6 +27,8 @@ import {
  */
 export class QuoteBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'blockquote'
 	];

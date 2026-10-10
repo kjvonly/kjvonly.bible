@@ -30,6 +30,8 @@ import {
  */
 export class FigureBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'figure'
 	];

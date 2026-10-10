@@ -392,7 +392,7 @@ tbody
 tfoot
 ```
 
-are structural source containers whose grouping semantics are not represented by v1. Their rows are preserved through table-aware traversal, while the section boundary itself emits `html-element-unsupported`.
+are structural source containers whose grouping semantics are not represented by v1. Their rows are preserved through table-aware traversal, while the section boundary itself emits `html-element-unsupported`. The table-section vocabulary is owned by the HTML element semantic policy and reused by the table-section processor so semantic classification and specialized traversal registration cannot drift.
 
 The parser does not permit contextual blocks to leak into ordinary document flow. A malformed processor result such as a `caption` inside a `quote`, a `table-cell` directly under a table, or a `list-item` at the document root is rejected rather than normalized into an ambiguous tree.
 
@@ -459,7 +459,7 @@ unsupported/unregistered element
     → emit an unsupported-element warning
 ```
 
-The neutral wrapper vocabulary is deliberately small. `div` is the only structural wrapper treated as semantically neutral, and `span` is the neutral inline wrapper because its useful normalized classes are projected onto descendant words before recursion. Semantic structural wrappers that v1 does not model—`address`, `article`, `aside`, `footer`, `header`, `main`, `nav`, and `section`—use registered traversal support so their descendants remain structurally valid, but their own source boundaries emit `html-element-unsupported`. Other unregistered elements are **not** declared neutral either. Elements such as `abbr`, `time`, `q`, `details`, `summary`, `img`, `data`, or custom elements are tolerated as unsupported boundaries. Their descendant text/blocks are preserved wherever the current canonical model can represent them, and diagnostics tell the user that the wrapper semantics were not normalized.
+The neutral wrapper vocabulary is deliberately small. `div` is the only structural wrapper treated as semantically neutral, and `span` is the neutral inline wrapper because its useful normalized classes are projected onto descendant words before recursion. Semantic structural wrappers that v1 does not model—`address`, `article`, `aside`, `dl`, `dt`, `dd`, `footer`, `header`, `main`, `nav`, and `section`—use registered traversal support so their descendants remain structurally valid, but their own source boundaries emit `html-element-unsupported`. Definition-list wrappers (`dl`, `dt`, and `dd`) therefore preserve representable definition content without claiming canonical definition-list semantics. Table-section wrappers (`thead`, `tbody`, and `tfoot`) are a separate registered-unsupported family: they use table-specific traversal so rows/cells remain inside the canonical table grammar while the section grouping boundary is diagnosed as unsupported. Other unregistered elements are **not** declared neutral either. Elements such as `abbr`, `time`, `q`, `details`, `summary`, `img`, `data`, or custom elements are tolerated as unsupported boundaries. Their descendant text/blocks are preserved wherever the current canonical model can represent them, but the unsupported boundary's own identity and presentation metadata are not projected into canonical content; the full boundary diagnostic records those unrepresented semantics instead.
 
 Unsupported-element diagnostics include the source opening tag and its attributes, for example:
 
@@ -510,29 +510,27 @@ This rule applies only to supported semantic block types that have a canonical n
 
 ---
 
-## Transparent Structural Containers
+## Neutral Structural Containers
 
-Several HTML elements are treated as structural wrappers rather than canonical normalized block types, including source structures such as:
+`div` is the only deliberately neutral structural container. Its processor recursively
+flattens descendant content without claiming a canonical block for the wrapper.
 
-```text
-address
-article
-aside
-div
-footer
-header
-main
-nav
-section
-```
+Flattening a neutral `div` is rejected when its own canonical metadata would be
+lost: a source `id` is addressable identity, and supported normalized presentation
+cannot silently disappear with the wrapper. An unsupported class alone does not
+make the wrapper canonical.
 
-A neutral wrapper can be flattened by recursively parsing its children.
+Other structural wrappers can also flatten descendants, but **are not neutral**.
+Semantic sectioning/landmark and definition-list wrappers have unsupported source
+semantics, so they preserve representable descendants while emitting a boundary
+warning instead of applying the neutral `div` rejection rule. Table-section wrappers
+similarly preserve table children and warn that section grouping is not represented.
+See [Unsupported element policy](#unsupported-element-policy) for these families.
 
-Flattening is rejected when it would discard canonical information. In particular, an addressable source container with an `id` is not silently removed, and supported normalized presentation is not silently discarded from a transparent container.
-
-This prevents source boundaries that may matter for durable document locations from disappearing accidentally.
-
-The selected extraction root is the deliberate exception. Because that element defines the boundary around imported content rather than content itself, its own ID/presentation is intentionally not normalized or diagnosed. The same container nested *inside* the extraction boundary still follows the semantic-loss guards above.
+The selected extraction root is the deliberate exception. It defines the boundary
+around imported content rather than content itself, so its own ID/presentation is
+intentionally neither normalized nor diagnosed. A nested `div` still follows the
+neutral-container loss guards above.
 
 ---
 
@@ -556,6 +554,8 @@ interface NormalizedWord {
 ```
 
 Whitespace, not DOM node boundaries, defines ordinary word separation. Adjacent text fragments with the same normalized inline semantics are merged into one addressable word token even when HTML wrappers split the source text.
+
+Structural traversal retains whitespace-only source text between inline siblings until the inline tokenizer has seen it. For example, `<span>King</span> <span>James</span>` yields two words, not `KingJames`. Inter-block indentation/newlines do not produce separate text blocks because a synthetic inline run must contain a meaningful word, anchor, or line break.
 
 When an inline semantic boundary must split one visible lexical token, `joinPrevious: true` records that there was no source whitespace before the new fragment. For example:
 
@@ -612,6 +612,19 @@ Supported inline semantics include:
 | `mark` | `marks: ['highlight']` |
 | `br` | `line-break` |
 
+### Terminal inline presentation
+
+Inline processors explicitly declare whether projected presentation on their
+source boundary can survive in canonical content. Recursive processors retain
+presentation in descendant word state; terminal `<br>` produces only a line break,
+which cannot carry classes or styles. Its unrepresented presentation is diagnosed.
+
+A supported inline wrapper (including neutral `span`) likewise cannot preserve
+projected classes or styles when its descendants produce no canonical words, as
+in `<span class="text-center"><br></span>` or a wrapper containing only zero-width
+anchors. Those hints are diagnosed rather than reported as preserved. Wrappers
+with canonical word descendants still project presentation normally.
+
 ### Link target safety and local integrity
 
 Normalized link targets remain opaque navigation data. The Normalized Content Domain does not interpret Bible/application routes, relative Resource paths, document fragments, or ordinary external URLs; the renderer/host continues to own destination behavior.
@@ -623,6 +636,8 @@ javascript:
 vbscript:
 data:
 ```
+
+An otherwise safe link is also reported as `html-link-target-unrepresented` when its source boundary has no linkable words: canonical line breaks and zero-width anchors cannot carry `href`. Intentionally ignored descendants do not count as linkable text. Such a link does not additionally produce a missing-local-target warning, because the `href` itself cannot be represented. Ordinary links containing canonical words remain unchanged.
 
 During HTML conversion an unsafe `a[href]` does **not** abort otherwise useful document import. Its descendant text/structure is preserved, the unsafe `href` is omitted from normalized words, and conversion emits `html-link-target-unsafe`. The strict Domain validator also rejects those schemes so another source adapter cannot inject them directly into a canonical `NormalizedDocument`.
 
@@ -764,7 +779,7 @@ For example, a supported source hint such as `style="text-align:center"` may pro
 text-center
 ```
 
-Publisher/site-specific classes are ignored rather than becoming part of the canonical document contract. Valid source style declarations that are not represented by the controlled projector are likewise omitted from canonical content, but they emit `html-style-unsupported` diagnostics so presentation loss is auditable rather than silent.
+Publisher/site-specific classes are ignored rather than becoming part of the canonical document contract. The style projector recognizes a small subset of presentation (currently `text-align:center`). It splits inline `style` text into nonempty `property:value` pairs, normalizes their casing, and keeps the last value for a repeated property; **it does not validate CSS syntax or implement the cascade**. Parsed declarations outside the supported projection are omitted from canonical content and reported as `html-style-unsupported`. Declarations that cannot be parsed into a nonempty property/value pair are skipped by this limited parser rather than validated or represented.
 
 The vocabulary is domain-owned and closed for the current data version. Canonical validation rejects unknown, empty, null, or duplicate class collections instead of allowing parser-specific values to expand the shared document contract accidentally.
 
@@ -778,7 +793,7 @@ Every canonical block requires an ID at both the TypeScript model and runtime-va
 
 Source-authored IDs on representable elements *inside* the extraction boundary are authoritative. A supported block preserves its ID on the block; a supported or neutral inline element preserves its ID as an inline anchor. The extraction boundary's own ID is selector metadata and is not reserved because the boundary itself is not normalized content. IDs on unsupported or intentionally ignored elements are not canonical identities and therefore do not reserve generated addresses.
 
-Structural processors make this identity behavior explicit. Processors whose element boundary materializes as a canonical block preserve source identity by default. Flattening processors—such as transparent containers, table section wrappers, and unsupported block fallbacks—declare that their own boundary does not become canonical identity. This lets reservation follow processor semantics instead of maintaining a second tag list.
+Structural processors make this identity behavior explicit through the required `preservesSourceIdentity` capability. Processors whose element boundary materializes as a canonical block declare `true`; flattening processors—such as transparent containers, table section wrappers, and unsupported block fallbacks—declare `false`. There is no implicit default, so adding a processor requires an explicit identity decision and source-ID reservation follows processor semantics instead of a second tag list.
 
 Blocks without source IDs receive a deterministic **document-local ordinal ID**. Inline anchors are never generated; they exist only when the source provides an inline identity. Generated block IDs are intentionally simple and are not content fingerprints. They identify a block within one normalized document snapshot; they are not expected to remain attached to the same logical content after the source is reparsed.
 
@@ -895,18 +910,20 @@ generated block ids
 linked words produced
 ```
 
-It also emits warnings for auditable source information that was intentionally not carried into the normalized document, including:
+It also emits these warning categories when a corresponding loss is detected:
 
-```text
-ignored source HTML classes
-ignored script elements
-ignored style elements
-ignored noscript elements
-ignored template elements
-unsupported source style declarations that were not projected
-unsafe executable link targets whose behavior was stripped
-unresolved document-local link targets inside the selected extraction boundary
-```
+| Code | Condition |
+| --- | --- |
+| `html-class-ignored` | Source class cannot be projected or has no canonical word to carry it. |
+| `html-style-unsupported` | Parsed style declaration is not projected, including supported hints on wordless inline boundaries. |
+| `html-element-ignored` | An intentionally ignored element (`script`, `style`, `noscript`, or `template`) and its subtree are excluded. |
+| `html-element-unsupported` | An element's own semantics are unsupported; representable descendants are retained. |
+| `html-attribute-unsupported` | A supported element has an unrepresented semantic attribute. |
+| `html-link-target-unsafe` | An unsafe `href` scheme is removed from canonical link behavior. |
+| `html-link-target-unrepresented` | A safe `href` has no canonical linked word to carry it. |
+| `html-local-link-target-missing` | A represented local fragment link has no canonical target inside the extraction boundary. |
+
+Warnings are not a claim of lossless HTML/CSS interpretation. The parser reports the source conditions its explicit conversion and diagnostic policies recognize; it does not run a browser layout engine or validate arbitrary CSS.
 
 Example summary:
 
@@ -921,7 +938,7 @@ Warnings and metrics are import-tooling information. They do not become fields i
 
 ## Failure Behavior
 
-The converter never silently discards semantic loss. Recoverable source semantics are reported as diagnostics; failures are reserved for conditions where continuing would violate canonical identity or structure.
+The converter reports recognized, recoverable semantic loss through diagnostics instead of failing the entire source. It does not guarantee lossless interpretation of arbitrary HTML/CSS. Failures are reserved for conditions where continuing would violate canonical identity, structure, or an explicit conversion guard.
 
 Examples of conditions that can fail a source document include:
 

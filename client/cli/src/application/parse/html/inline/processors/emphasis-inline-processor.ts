@@ -14,6 +14,9 @@ import type {
 /** Marks descendants of em/i as emphasized. */
 export class EmphasisInlineProcessor
 	implements HtmlInlineTagProcessor {
+	readonly preservesProjectedPresentation =
+		true;
+
 	readonly tags = [
 		'em',
 		'i'

@@ -379,6 +379,66 @@ describe(
 		);
 
 		it(
+			'preserves whitespace-only source text between root-level inline siblings',
+			() => {
+				const document =
+					convertHtml(
+						'<span>King</span> <span>James</span>'
+					);
+
+				expect(
+					document.blocks
+				).toEqual([
+					{
+						type: 'text',
+						id: 'nd-v1-text-1',
+						content: [
+							{ type: 'word', text: 'King' },
+							{ type: 'word', text: 'James' }
+						]
+					}
+				]);
+			}
+		);
+
+		it(
+			'preserves inline separators inside flattened structural wrappers without creating whitespace-only blocks',
+			() => {
+				const document =
+					convertHtml(
+						'<div><em>King</em>\n <strong>James</strong></div>\n<p>Bible</p>\n<p>Study</p>'
+					);
+
+				expect(
+					document.blocks
+				).toEqual([
+					{
+						type: 'text',
+						id: 'nd-v1-text-1',
+						content: [
+							{ type: 'word', text: 'King', emphasis: true },
+							{ type: 'word', text: 'James', strong: true }
+						]
+					},
+					{
+						type: 'paragraph',
+						id: 'nd-v1-paragraph-1',
+						content: [
+							{ type: 'word', text: 'Bible' }
+						]
+					},
+					{
+						type: 'paragraph',
+						id: 'nd-v1-paragraph-2',
+						content: [
+							{ type: 'word', text: 'Study' }
+						]
+					}
+				]);
+			}
+		);
+
+		it(
 			'uses recursive inline processors for links, marks, emphasis, strong, classes, and line breaks',
 			() => {
 				const document =
@@ -551,6 +611,125 @@ describe(
 						]
 					}
 				]);
+			}
+		);
+
+		it(
+			'diagnoses presentation that a terminal br cannot preserve',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<p><br class="text-center" style="text-align:center"></p>'
+					);
+
+				expect(
+					result.document.blocks[0]
+				).toMatchObject({
+					type: 'paragraph',
+					content: [
+						{
+							type: 'line-break'
+						}
+					]
+				});
+
+				expect(
+					result.diagnostics.warnings
+				).toEqual([
+					{
+						code: 'html-class-ignored',
+						message: 'Ignored source HTML class "text-center".',
+						count: 1,
+						sourceLocations: [{ line: 1, column: 4 }]
+					},
+					{
+						code: 'html-style-unsupported',
+						message: 'Unsupported source HTML style declaration "text-align:center" on <br class="text-center" style="text-align:center">; the element was normalized, but this declaration\'s presentation semantics were not preserved.',
+						count: 1,
+						sourceLocations: [{ line: 1, column: 4 }]
+					}
+				]);
+			}
+		);
+
+		it(
+			'diagnoses supported inline presentation with no canonical word destination',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<p><span class="text-center" style="text-align:center"><br></span></p>'
+					);
+
+				expect(
+					result.document.blocks[0]
+				).toMatchObject({
+					type: 'paragraph',
+					content: [{ type: 'line-break' }]
+				});
+
+				expect(
+					result.diagnostics.warnings
+				).toEqual([
+					{
+						code: 'html-class-ignored',
+						message: 'Ignored source HTML class "text-center".',
+						count: 1,
+						sourceLocations: [{ line: 1, column: 4 }]
+					},
+					{
+						code: 'html-style-unsupported',
+						message: 'Unsupported source HTML style declaration "text-align:center" on <span class="text-center" style="text-align:center">; the element was normalized, but this declaration\'s presentation semantics were not preserved.',
+						count: 1,
+						sourceLocations: [{ line: 1, column: 4 }]
+					}
+				]);
+			}
+		);
+
+		it(
+			'diagnoses inline presentation when only anchors and ignored descendants survive',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<p><em class="text-center"><span id="fn1"></span><template>KJV</template></em></p>'
+					);
+
+				expect(
+					result.document.blocks[0]
+				).toMatchObject({
+					type: 'paragraph',
+					content: [{ type: 'anchor', id: 'fn1' }]
+				});
+
+				expect(
+					result.diagnostics.warnings
+				).toContainEqual({
+					code: 'html-class-ignored',
+					message: 'Ignored source HTML class "text-center".',
+					count: 1,
+					sourceLocations: [{ line: 1, column: 4 }]
+				});
+			}
+		);
+
+		it(
+			'preserves projected inline presentation on canonical words without a loss warning',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<p><span class="text-center" style="text-align:center">KJV</span></p>'
+					);
+
+				expect(
+					result.document.blocks[0]
+				).toMatchObject({
+					type: 'paragraph',
+					content: [{ type: 'word', text: 'KJV', class: ['text-center'] }]
+				});
+
+				expect(
+					result.diagnostics.warnings
+				).toEqual([]);
 			}
 		);
 
@@ -936,6 +1115,99 @@ describe(
 		);
 
 		it(
+			'reports a safe link whose only canonical content is a line break',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<p><a href="/kjv/1_1_1"><br></a></p>'
+					);
+
+				expect(
+					result.document.blocks[0]
+				).toMatchObject({
+					type: 'paragraph',
+					content: [
+						{ type: 'line-break' }
+					]
+				});
+
+				expect(
+					result.diagnostics.warnings
+				).toContainEqual({
+					code: 'html-link-target-unrepresented',
+					message: 'Source HTML link target "/kjv/1_1_1" on <a href="/kjv/1_1_1"> could not be represented because the element produced no linkable words.',
+					count: 1,
+					sourceLocations: [{ line: 1, column: 4 }]
+				});
+			}
+		);
+
+		it(
+			'does not report a missing local target for an unrepresentable local link',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<p><a href="#fn1"><br></a></p>'
+					);
+
+				expect(
+					result.diagnostics.warnings
+						.filter(warning =>
+							warning.code.startsWith('html-link-target-') ||
+							warning.code === 'html-local-link-target-missing'
+						)
+				).toEqual([{
+					code: 'html-link-target-unrepresented',
+					message: 'Source HTML link target "#fn1" on <a href="#fn1"> could not be represented because the element produced no linkable words.',
+					count: 1,
+					sourceLocations: [{ line: 1, column: 4 }]
+				}]);
+			}
+		);
+
+		it(
+			'excludes ignored descendants when checking whether a link has representable words',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+							'<p><a href="/kjv/1_1_1"><template>KJV</template><br></a></p>'
+						);
+
+				expect(
+					result.diagnostics.warnings
+				).toContainEqual({
+					code: 'html-link-target-unrepresented',
+					message: 'Source HTML link target "/kjv/1_1_1" on <a href="/kjv/1_1_1"> could not be represented because the element produced no linkable words.',
+					count: 1,
+					sourceLocations: [{ line: 1, column: 4 }]
+				});
+				expect(
+					result.diagnostics.linkedWordsProduced
+				).toBe(0);
+			}
+		);
+
+		it(
+			'does not diagnose ordinary safe links as unrepresented',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+							'<p><a href="/kjv/1_1_1">KJV</a></p>'
+						);
+
+				expect(
+					result.diagnostics.linkedWordsProduced
+				).toBe(1);
+				expect(
+					result.diagnostics.warnings
+						.filter(warning =>
+							warning.code === 'html-link-target-unrepresented'
+						)
+				).toEqual([]);
+			}
+		);
+
+		it(
 			'preserves an unresolved document-local href and reports the missing canonical target',
 			() => {
 				const result =
@@ -1104,7 +1376,8 @@ describe(
 						<pre id="pre-anchor"></pre>
 						<blockquote id="quote-anchor"></blockquote>
 						<ul id="list-anchor"><li id="item-anchor"></li></ul>
-						<figure id="figure-anchor"><figcaption id="caption-anchor"></figcaption></figure>`
+						<figure id="figure-anchor"><figcaption id="caption-anchor"></figcaption></figure>
+						<table id="table-anchor"></table>`
 					);
 
 				expect(
@@ -1167,6 +1440,13 @@ describe(
 								blocks: []
 							}
 						]
+					},
+					{
+						type:
+							'table',
+						id:
+							'table-anchor',
+						blocks: []
 					}
 				]);
 			}
@@ -1200,7 +1480,7 @@ describe(
 			() => {
 				const document =
 					convertHtml(
-						`<p></p><h1></h1><pre></pre><blockquote></blockquote><ul></ul><figure></figure><p class="publisher-only"></p>`
+						`<p></p><h1></h1><pre></pre><blockquote></blockquote><ul></ul><figure></figure><table></table><p class="publisher-only"></p>`
 					);
 
 				expect(
@@ -1351,34 +1631,38 @@ describe(
 		);
 
 		it(
-			'preserves unsupported inline content and reports the source tag with attributes',
+			'preserves unsupported inline content without projecting the unsupported boundary presentation',
 			() => {
 				const result =
 					convertHtmlWithDiagnostics(
-						'<p>Published <time datetime="2026-10-04" data-source="publisher">today</time>.</p>'
+						'<p>Published <time class="text-center" data-source="publisher" datetime="2026-10-04" style="text-align:center">today</time>.</p>'
+					);
+
+				const paragraph =
+					requireBlockType(
+						result.document.blocks,
+						0,
+						'paragraph'
 					);
 
 				expect(
-					result.document.blocks[0]
-				).toMatchObject({
-					type: 'paragraph',
-					content: [
-						{
-							type: 'word',
-							text: 'Published'
-						},
-						{
-							type: 'word',
-							text: 'today.'
-						}
-					]
-				});
+					paragraph.content
+				).toEqual([
+					{
+						type: 'word',
+						text: 'Published'
+					},
+					{
+						type: 'word',
+						text: 'today.'
+					}
+				]);
 
 				expect(
 					result.diagnostics.warnings
 				).toContainEqual({
 					code: 'html-element-unsupported',
-					message: 'Unsupported source HTML element <time data-source="publisher" datetime="2026-10-04">; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
+					message: 'Unsupported source HTML element <time class="text-center" data-source="publisher" datetime="2026-10-04" style="text-align:center">; descendant content was preserved where representable, but this element\'s semantics were not normalized.',
 					count: 1,
 					sourceLocations: [{ line: 1, column: 14 }]
 				});
@@ -1682,6 +1966,79 @@ describe(
 						]
 					}
 				]);
+			}
+		);
+
+		it(
+			'keeps ignored subtree ids out of source reservations and diagnostic counts',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<body><template id="nd-v1-paragraph-1"><p id="hidden">Hidden</p></template><p>KJV</p></body>'
+					);
+
+				expect(
+					result.document.blocks
+				).toEqual([
+					{
+						type: 'paragraph',
+						id: 'nd-v1-paragraph-1',
+						content: [
+							{ type: 'word', text: 'KJV' }
+						]
+					}
+				]);
+				expect(
+					result.diagnostics.sourceIdsPreserved
+				).toBe(0);
+				expect(
+					result.diagnostics.idsGenerated
+				).toBe(1);
+				expect(
+					result.diagnostics.warnings
+				).toEqual([
+					{
+						code: 'html-element-ignored',
+						message: 'Ignored source HTML element <template id="nd-v1-paragraph-1">.',
+						count: 1,
+						sourceLocations: [
+							{ line: 1, column: 7 }
+						]
+					}
+				]);
+			}
+		);
+
+		it(
+			'reserves inline anchor ids against generated text blocks without collapsing sibling whitespace',
+			() => {
+				const result =
+					convertHtmlWithDiagnostics(
+						'<span id="nd-v1-text-1"></span><span>King</span> <span>James</span>'
+					);
+
+				expect(
+					result.document.blocks
+				).toEqual([
+					{
+						type: 'text',
+						id: 'nd-v1-text-2',
+						content: [
+							{ type: 'anchor', id: 'nd-v1-text-1' },
+							{ type: 'word', text: 'King' },
+							{ type: 'word', text: 'James' }
+						]
+					}
+				]);
+				expect(
+					result.diagnostics.sourceIdsPreserved
+				).toBe(1);
+				expect(
+					result.diagnostics.idsGenerated
+				).toBe(1);
+				expect(
+					result.diagnostics.warnings
+				).toEqual([]);
 			}
 		);
 

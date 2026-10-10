@@ -41,6 +41,9 @@ export interface UnsupportedHtmlSemanticAttribute {
  * element itself is supported, every attribute must either be owned elsewhere,
  * explicitly consumed by that element's normalization strategy, or reported.
  * `data-*` remains source/application metadata and is intentionally ignored.
+ *
+ * @param element Supported source element whose attribute semantics are inspected.
+ * @returns Unrepresented attributes sorted by lowercase attribute name.
  */
 export function getUnsupportedHtmlSemanticAttributes(
 	element: Element

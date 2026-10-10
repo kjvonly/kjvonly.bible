@@ -23,7 +23,11 @@ export interface HtmlInlineState {
 	marks: Set<NormalizedMark>;
 }
 
-/** Creates fresh state for one independent inline run. */
+/**
+ * Creates isolated semantic decorator state for a new inline run.
+ *
+ * @returns Empty mutable class/mark sets, link stack, and emphasis/strong flags.
+ */
 export function createHtmlInlineState(): HtmlInlineState {
 	return {
 		classes:
@@ -42,6 +46,9 @@ export function createHtmlInlineState(): HtmlInlineState {
 /**
  * Clones inherited inline state before a child element applies its own semantics.
  * Mutable collections are copied so decorators cannot leak into sibling content.
+ *
+ * @param state Inherited decorator state shared by the enclosing inline scope.
+ * @returns Independent state with copied classes, links, marks, and semantic flags.
  */
 export function cloneHtmlInlineState(
 	state: HtmlInlineState

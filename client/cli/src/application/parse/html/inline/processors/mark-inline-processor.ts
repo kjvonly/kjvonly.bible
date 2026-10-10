@@ -18,6 +18,9 @@ import type {
 /** Adds one normalized mark to descendants of the configured HTML tags. */
 export class MarkInlineProcessor
 	implements HtmlInlineTagProcessor {
+	readonly preservesProjectedPresentation =
+		true;
+
 	constructor(
 		readonly tags: readonly string[],
 		private readonly mark: NormalizedMark

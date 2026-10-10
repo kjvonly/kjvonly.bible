@@ -47,6 +47,8 @@ const allElementsSupported = {
 		() => true,
 	hasInlineProcessor:
 		() => false,
+	preservesInlinePresentation:
+		() => true,
 	preservesBlockSourceIdentity:
 		() => true
 };
@@ -403,6 +405,43 @@ describe(
 							'Unsupported source HTML style declaration "font-weight:bold" on <p style="font-weight:bold">; the element was normalized, but this declaration\'s presentation semantics were not preserved.',
 						count:
 							2
+					}
+				]);
+			}
+		);
+
+		it(
+			'reports presentation that a terminal inline processor cannot preserve',
+			() => {
+				const diagnostics =
+					createHtmlParseDiagnostics(
+						getRoot(
+							'<main><br class="text-center" style="text-align:center"></main>'
+						),
+						{
+							blocks: []
+						},
+						{
+							...allElementsSupported,
+							hasInlineProcessor:
+								tag => tag === 'br',
+							preservesInlinePresentation:
+								() => false
+						}
+					);
+
+				expect(
+					diagnostics.warnings
+				).toEqual([
+					{
+						code: 'html-class-ignored',
+						message: 'Ignored source HTML class "text-center".',
+						count: 1
+					},
+					{
+						code: 'html-style-unsupported',
+						message: 'Unsupported source HTML style declaration "text-align:center" on <br class="text-center" style="text-align:center">; the element was normalized, but this declaration\'s presentation semantics were not preserved.',
+						count: 1
 					}
 				]);
 			}

@@ -17,6 +17,10 @@ import {
 } from './processors/mark-inline-processor.js';
 
 import {
+	LineBreakInlineProcessor
+} from './processors/line-break-inline-processor.js';
+
+import {
 	createHtmlInlineState
 } from './html-inline-state.js';
 
@@ -72,6 +76,32 @@ describe(
 				).toBe(
 					false
 				);
+			}
+		);
+
+		it(
+			'exposes whether registered processors preserve projected presentation',
+			() => {
+				const registry =
+					new HtmlInlineProcessorRegistry([
+						new MarkInlineProcessor(
+							['mark'],
+							'highlight'
+						),
+						new LineBreakInlineProcessor()
+					]);
+
+				expect(
+					registry.preservesProjectedPresentation(
+						'mark'
+					)
+				).toBe(true);
+
+				expect(
+					registry.preservesProjectedPresentation(
+						'br'
+					)
+				).toBe(false);
 			}
 		);
 

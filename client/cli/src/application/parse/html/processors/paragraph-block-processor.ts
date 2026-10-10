@@ -27,6 +27,8 @@ import type {
  */
 export class ParagraphBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'p'
 	];

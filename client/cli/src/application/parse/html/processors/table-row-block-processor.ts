@@ -21,6 +21,8 @@ import {
 /** Preserves one HTML table row and its ordered cell children. */
 export class TableRowBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'tr'
 	];

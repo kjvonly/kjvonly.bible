@@ -72,6 +72,21 @@ export class HtmlInlineProcessorRegistry {
 	}
 
 	/**
+	 * Returns whether the registered processor can preserve projected presentation.
+	 *
+	 * @param tag HTML tag name; lookup is case-insensitive.
+	 * @returns Whether the processor's canonical output can carry projected presentation.
+	 */
+	preservesProjectedPresentation(
+		tag: string
+	): boolean {
+		return this.processors.get(
+			tag.toLowerCase()
+		)?.preservesProjectedPresentation ===
+			true;
+	}
+
+	/**
 	 * Applies a registered strategy or transparently preserves unsupported descendants.
 	 *
 	 * @param element Source inline element at the current traversal boundary.

@@ -28,6 +28,8 @@ import type {
  */
 export class HeadingBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'h1',
 		'h2',

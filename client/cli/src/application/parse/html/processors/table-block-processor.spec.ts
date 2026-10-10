@@ -24,6 +24,40 @@ describe(
 	'TableBlockProcessor',
 	() => {
 		it(
+			'omits an empty table that carries no canonical metadata',
+			() => {
+				expect(
+					new TableBlockProcessor()
+						.process(
+							element(),
+							context([])
+						)
+				).toEqual([]);
+			}
+		);
+
+		it(
+			'preserves an empty table carrying canonical source identity',
+			() => {
+				expect(
+					new TableBlockProcessor()
+						.process(
+							element({
+								id: 'table-anchor'
+							}),
+							context([])
+						)
+				).toEqual([
+					{
+						type: 'table',
+						id: 'test-table',
+						blocks: []
+					}
+				]);
+			}
+		);
+
+		it(
 			'preserves the table boundary and ordered child blocks',
 			() => {
 				const blocks:
@@ -72,10 +106,12 @@ function context(
 	};
 }
 
-function element(): Element {
+function element(
+	attribs: Record<string, string> = {}
+): Element {
 	return {
 		name:
 			'table',
-		attribs: {}
+		attribs
 	} as Element;
 }

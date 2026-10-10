@@ -29,6 +29,9 @@ export interface HtmlInlineTagProcessor {
 	/** Lowercase inline HTML tags owned by this processor strategy. */
 	readonly tags: readonly string[];
 
+	/** Whether projected boundary presentation can survive in canonical output. */
+	readonly preservesProjectedPresentation: boolean;
+
 	/**
 	 * Applies tag semantics and returns the state/recursion decision for children.
 	 *

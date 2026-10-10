@@ -30,6 +30,8 @@ import {
  */
 export class CaptionBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'figcaption',
 		'caption'

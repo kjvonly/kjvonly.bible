@@ -24,6 +24,8 @@ import {
  */
 export class TableCellBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'td',
 		'th'

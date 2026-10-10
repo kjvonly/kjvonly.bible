@@ -10,6 +10,10 @@ import type {
 	HtmlBlockProcessorContext
 } from '../context/html-block-processor-context.js';
 
+import {
+	unsupportedTableSectionTags
+} from '../semantics/html-element-semantic-policy.js';
+
 import type {
 	HtmlBlockProcessor
 } from './html-block-processor.js';
@@ -26,11 +30,8 @@ export class TableSectionBlockProcessor
 	readonly preservesSourceIdentity =
 		false;
 
-	readonly tags = [
-		'thead',
-		'tbody',
-		'tfoot'
-	];
+	readonly tags =
+		unsupportedTableSectionTags;
 
 	/**
 	 * Flattens one table-section boundary into its normalized row descendants.

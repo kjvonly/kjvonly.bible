@@ -5,7 +5,8 @@ import {
 } from 'vitest';
 
 import {
-	isIntentionallyIgnoredHtmlElement
+	isIntentionallyIgnoredHtmlElement,
+	unsupportedTableSectionTags
 } from './html-element-semantic-policy.js';
 
 describe(
@@ -47,6 +48,23 @@ describe(
 				).toBe(
 					false
 				);
+			}
+		);
+	}
+);
+describe(
+	'unsupportedTableSectionTags',
+	() => {
+		it(
+			'owns the table-section wrappers that require specialized unsupported traversal',
+			() => {
+				expect(
+					unsupportedTableSectionTags
+				).toEqual([
+					'thead',
+					'tbody',
+					'tfoot'
+				]);
 			}
 		);
 	}

@@ -18,6 +18,9 @@ import type {
 /** Emits an explicit normalized line break for HTML br. */
 export class LineBreakInlineProcessor
 	implements HtmlInlineTagProcessor {
+	readonly preservesProjectedPresentation =
+		false;
+
 	readonly tags = [
 		'br'
 	];

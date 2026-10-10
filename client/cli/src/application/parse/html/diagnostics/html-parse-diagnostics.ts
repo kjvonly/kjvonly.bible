@@ -1,3 +1,7 @@
+import {
+	isText
+} from 'domhandler';
+
 import type {
 	AnyNode,
 	Element
@@ -24,11 +28,14 @@ import type {
 
 import {
 	getIgnoredSourceClassNames,
+	getSourceClassNames,
+	getSourceStyleDeclarations,
 	getUnsupportedSourceStyleDeclarations
 } from '../projection/html-normalized-class-projector.js';
 
 import {
 	isIntentionallyIgnoredHtmlElement,
+	isTransparentHtmlElement,
 	isUnsupportedHtmlElement,
 	preservesHtmlElementSourceIdentity,
 	type HtmlElementSupportLookup
@@ -79,6 +86,9 @@ export function createHtmlParseDiagnostics(
 		new Map<string, WarningOccurrences>();
 
 	const missingLocalLinkTargetCounts =
+		new Map<string, WarningOccurrences>();
+
+	const unrepresentedLinkTargetCounts =
 		new Map<string, WarningOccurrences>();
 
 	const canonicalIds =
@@ -133,10 +143,54 @@ export function createHtmlParseDiagnostics(
 				return;
 			}
 
+			// Projected classes/styles on inline boundaries only survive when
+			// canonical words receive them. A supported wrapper containing only
+			// line breaks, zero-width anchors, or ignored content has no such
+			// destination even if its processor normally propagates presentation.
+			const carriesInlinePresentation =
+				!elementSupport.hasInlineProcessor(
+					tag
+				) ||
+				elementSupport.preservesInlinePresentation(
+					tag
+				);
+
+			// Most inline elements have no presentation metadata. Avoid scanning
+			// their descendants (which would repeatedly traverse nested wrappers).
+			const needsInlineWordDestination =
+				Boolean(
+					element.attribs.class ||
+					element.attribs.style
+				) &&
+				(
+					elementSupport.hasInlineProcessor(
+						tag
+					) ||
+					isTransparentHtmlElement(
+						tag
+					)
+				);
+
+			const hasPresentationDestination =
+				!needsInlineWordDestination ||
+				hasRepresentableDescendantWordText(
+					element
+				);
+
+			const preservesInlinePresentation =
+				carriesInlinePresentation &&
+				hasPresentationDestination;
+
 			for (
 				const className of
-					getIgnoredSourceClassNames(
-						element
+					(
+						preservesInlinePresentation
+							? getIgnoredSourceClassNames(
+								element
+							)
+							: getSourceClassNames(
+								element
+							)
 					)
 			) {
 				increment(
@@ -163,8 +217,14 @@ export function createHtmlParseDiagnostics(
 
 			for (
 				const declaration of
-					getUnsupportedSourceStyleDeclarations(
-						element
+					(
+						preservesInlinePresentation
+							? getUnsupportedSourceStyleDeclarations(
+								element
+							)
+							: getSourceStyleDeclarations(
+								element
+							)
 					)
 			) {
 				increment(
@@ -190,6 +250,19 @@ export function createHtmlParseDiagnostics(
 					increment(
 						unsafeLinkTargetCounts,
 						`Unsafe source HTML link target on ${sourceTag} uses the ${unsafeScheme}: scheme; descendant content was normalized, but executable link behavior was not preserved.`,
+						sourceLocation
+					);
+				} else if (
+					!hasRepresentableDescendantWordText(
+						element
+					)
+				) {
+					// A canonical line break or zero-width anchor cannot carry href.
+					// Do not also report a missing local target for a link that
+					// cannot be represented in the first place.
+					increment(
+						unrepresentedLinkTargetCounts,
+						`Source HTML link target "${href}" on ${sourceTag} could not be represented because the element produced no linkable words.`,
 						sourceLocation
 					);
 				} else {
@@ -264,11 +337,57 @@ export function createHtmlParseDiagnostics(
 			...toUnsafeLinkTargetWarnings(
 				unsafeLinkTargetCounts
 			),
+			...toUnrepresentedLinkTargetWarnings(
+				unrepresentedLinkTargetCounts
+			),
 			...toMissingLocalLinkTargetWarnings(
 				missingLocalLinkTargetCounts
 			)
 		]
 	};
+}
+
+/**
+ * Checks for descendant source text that can become a canonical word.
+ * Shared by link-target and inline-presentation diagnostics: intentionally
+ * ignored elements contribute no words, while terminal content such as <br>
+ * and zero-width anchors cannot carry word-level semantics.
+ *
+ * @param element Source element whose descendants are inspected.
+ * @returns Whether its representable descendants contain word-bearing text.
+ */
+function hasRepresentableDescendantWordText(
+	element: Element
+): boolean {
+	const hasText = (
+		node: AnyNode
+	): boolean => {
+		if (isText(node)) {
+			return /\S/u.test(
+				node.data
+			);
+		}
+
+		if (!isElement(node)) {
+			return false;
+		}
+
+		if (
+			isIntentionallyIgnoredHtmlElement(
+				node.name
+			)
+		) {
+			return false;
+		}
+
+		return node.children.some(
+			hasText
+		);
+	};
+
+	return element.children.some(
+		hasText
+	);
 }
 
 /** Collects every canonical block/inline-anchor identity in the accepted document. */
@@ -704,6 +823,29 @@ function toUnsafeLinkTargetWarnings(
 			([message, occurrences]) =>
 				createParseWarning(
 					'html-link-target-unsafe',
+					message,
+					occurrences
+				)
+		);
+}
+
+/** Converts safe but unrepresentable link targets into stable diagnostics. */
+function toUnrepresentedLinkTargetWarnings(
+	counts: ReadonlyMap<string, WarningOccurrences>
+): ParseWarning[] {
+	return [
+		...counts.entries()
+	]
+		.sort(
+			([left], [right]) =>
+				left.localeCompare(
+					right
+				)
+		)
+		.map(
+			([message, occurrences]) =>
+				createParseWarning(
+					'html-link-target-unrepresented',
 					message,
 					occurrences
 				)

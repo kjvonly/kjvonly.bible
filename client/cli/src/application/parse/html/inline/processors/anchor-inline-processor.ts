@@ -18,6 +18,9 @@ import {
 /** Adds an HTML anchor target to inherited word semantics. */
 export class AnchorInlineProcessor
 	implements HtmlInlineTagProcessor {
+	readonly preservesProjectedPresentation =
+		true;
+
 	readonly tags = [
 		'a'
 	];

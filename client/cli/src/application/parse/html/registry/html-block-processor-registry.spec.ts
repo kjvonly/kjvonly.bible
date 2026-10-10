@@ -31,6 +31,7 @@ describe(
 						tags: [
 							'custom'
 						],
+						preservesSourceIdentity: true,
 						process: () => [
 							{
 								type:
@@ -83,6 +84,7 @@ describe(
 							tags: [
 								'paragraph-like'
 							],
+							preservesSourceIdentity: true,
 							process: () => []
 						},
 						{
@@ -126,6 +128,7 @@ describe(
 						tags: [
 							tag
 						],
+						preservesSourceIdentity: true,
 						process: () => []
 					});
 

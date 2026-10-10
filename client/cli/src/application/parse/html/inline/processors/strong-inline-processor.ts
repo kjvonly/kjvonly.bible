@@ -14,6 +14,9 @@ import type {
 /** Marks descendants of b/strong as strong. */
 export class StrongInlineProcessor
 	implements HtmlInlineTagProcessor {
+	readonly preservesProjectedPresentation =
+		true;
+
 	readonly tags = [
 		'b',
 		'strong'

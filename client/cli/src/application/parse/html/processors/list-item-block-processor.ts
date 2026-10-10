@@ -27,6 +27,8 @@ import {
  */
 export class ListItemBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'li'
 	];

@@ -27,7 +27,11 @@ export interface HtmlInlineTextStreamState {
 	lineBreaksFromPreformattedSourceNewlines: Set<NormalizedLineBreak>;
 }
 
-/** Creates fresh visible-text stream state for one independent inline run. */
+/**
+ * Creates the visible-text continuity state for one independent inline run.
+ *
+ * @returns No pending separator and no source-newline line breaks to trim.
+ */
 export function createHtmlInlineTextStreamState(): HtmlInlineTextStreamState {
 	return {
 		pendingSeparator:
@@ -46,6 +50,12 @@ export function createHtmlInlineTextStreamState(): HtmlInlineTextStreamState {
  *
  * `textStream` is shared across recursive inline traversal because DOM text-node
  * and element boundaries do not themselves imply visible separation.
+ *
+ * @param value Source text node content (including any source whitespace).
+ * @param state Active presentation, link, and mark semantics for emitted words.
+ * @param content Mutable canonical inline sequence receiving words and line breaks.
+ * @param textStream Shared continuity state across sibling and descendant text nodes.
+ * @param preservePreformattedSourceNewlines Whether source LF/CRLF delimiters emit line breaks.
  */
 export function appendHtmlInlineText(
 	value: string,
@@ -115,7 +125,11 @@ export function appendHtmlInlineText(
 /**
  * Removes boundary line breaks only when they originated from source newline
  * characters preserved for preformatted text. Explicit HTML <br> line breaks
- * remain canonical at any position.
+ * remain canonical at any position. Does not mutate the supplied content array.
+ *
+ * @param content Canonical inline run that may begin or end with source-newline breaks.
+ * @param textStream Tracks exactly which line-break objects came from source newlines.
+ * @returns A new content array without those boundary source-newline breaks.
  */
 export function trimBoundaryLineBreaksFromPreformattedSourceNewlines(
 	content: readonly NormalizedContent[],

@@ -28,6 +28,8 @@ import {
  */
 export class ListBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'ol',
 		'ul'

@@ -1,8 +1,8 @@
-# KJVOnly Resource Publishing CLI
+# KJVOnly CLI
 
-The KJVOnly Resource Publishing CLI builds, stages, and publishes application Resources from declarative YAML manifests.
+The KJVOnly CLI normalizes source documents and builds, stages, and publishes application Resources from declarative YAML manifests.
 
-It exists to replace resource-specific publishing scripts with a generic workflow that can publish different Resource types without adding Bible-, dictionary-, Strong's-, or other domain-specific logic to the CLI itself.
+Its publication workflow replaces resource-specific publishing scripts with a generic workflow that can publish different Resource types without adding Bible-, dictionary-, Strong's-, or other domain-specific logic to the publishing code.
 
 The CLI is written in TypeScript and runs on Node.js.
 
@@ -116,16 +116,19 @@ publish
 Blossom + Nostr
 ```
 
-The CLI exposes build, publish, sync, and a Normalized Document-only directory import:
+The CLI exposes four top-level command families. Parsing is independent of Resource publication:
 
 ```text
+parse html <directory>
 build <manifest>
 publish <manifest>
 sync <manifest>
 import normalized-documents <directory> --manifest <manifest> --root <filesystem-root> --output-manifest <output.json>
 ```
 
-Where:
+`parse html` recursively converts supported HTML-family source files into validated `NormalizedDocument` JSON. It does not require a manifest, stage Resources, or publish to Blossom/Nostr. The user can review and organize the resulting files before including them in a manifest. See [Normalized Content Parsing](docs/normalized-content-parsing.md) for the conversion contract and options.
+
+The manifest-driven publication commands are:
 
 ```text
 build
@@ -346,7 +349,7 @@ cd cli
 npm run build
 ```
 
-Compiled output is written to:
+The build first builds the shared `@kjvonly/normalized-content` package and removes stale CLI `dist` output before TypeScript compilation. Compiled output is written to:
 
 ```text
 dist/
@@ -381,6 +384,14 @@ After building:
 ```bash
 node dist/main.js --help
 ```
+
+## Normalize HTML Source Files
+
+```bash
+node dist/main.js parse html ./sermons --root-selector '#content'
+```
+
+Recursively converts `.html`, `.htm`, and `.cfm` source documents to adjacent `NormalizedDocument` JSON files, without publishing them. Output files are protected from replacement unless `--overwrite` is supplied. Parsing failures are reported per file. See [Normalized Content Parsing](docs/normalized-content-parsing.md) for extraction, diagnostics, and output safety details.
 
 ## Build Only
 
@@ -754,9 +765,14 @@ The top level follows the command model:
 ```text
 application/
 ├── build/
+├── parse/
 ├── publish/
 └── sync/
 ```
+
+### Parse
+
+`application/parse/` owns batch conversion, HTML interpretation, and import-only diagnostics. The canonical `NormalizedDocument` contract and validation live in the shared `@kjvonly/normalized-content` package, not in the CLI parser. Parsing does not invoke Resource staging or publication.
 
 ### Build
 

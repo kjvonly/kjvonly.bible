@@ -20,7 +20,7 @@ export interface HtmlBlockProcessor {
 	readonly tags: readonly string[];
 
 	/** Whether the source element boundary itself becomes canonical block identity. */
-	readonly preservesSourceIdentity?: boolean;
+	readonly preservesSourceIdentity: boolean;
 
 	/**
 	 * Projects one structural element into zero or more normalized blocks.

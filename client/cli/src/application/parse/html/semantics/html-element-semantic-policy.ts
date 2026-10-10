@@ -35,7 +35,7 @@ export const unsupportedSemanticBlockTags = [
  * Registered structural wrappers whose descendants require specialized traversal
  * even though the wrapper's own source semantics are not represented by v1.
  */
-const unsupportedRegisteredStructuralTags = [
+export const unsupportedTableSectionTags = [
 	'thead',
 	'tbody',
 	'tfoot'
@@ -44,7 +44,7 @@ const unsupportedRegisteredStructuralTags = [
 const unsupportedSemanticElements =
 	new Set<string>([
 		...unsupportedSemanticBlockTags,
-		...unsupportedRegisteredStructuralTags
+		...unsupportedTableSectionTags
 	]);
 
 /** Lookup used to distinguish implemented element semantics from fallbacks. */
@@ -59,13 +59,23 @@ export interface HtmlElementSupportLookup {
 		tag: string
 	): boolean;
 
+	/** Whether a registered inline processor can preserve projected presentation. */
+	preservesInlinePresentation(
+		tag: string
+	): boolean;
+
 	/** Whether a structural processor preserves the element boundary as block identity. */
 	preservesBlockSourceIdentity(
 		tag: string
 	): boolean;
 }
 
-/** Returns whether an unregistered inline wrapper is deliberately semantics-free. */
+/**
+ * Identifies the explicitly neutral inline wrapper (`span`), not structural `div`.
+ *
+ * @param tag Source HTML tag name; comparison is case-insensitive.
+ * @returns Whether the inline boundary is intentionally presentation-capable but semantically neutral.
+ */
 export function isTransparentHtmlElement(
 	tag: string
 ): boolean {
@@ -91,8 +101,14 @@ export function isIntentionallyIgnoredHtmlElement(
 }
 
 /**
- * Returns whether a source element's `id` can become canonical block or inline
- * identity. Unsupported/ignored/flattened structural boundaries are excluded.
+ * Returns whether a source element's `id` is eligible to become canonical block
+ * or zero-width inline-anchor identity. Unsupported, ignored, and flattening
+ * structural boundaries do not reserve generated block IDs. Eligibility is
+ * distinct from whether an otherwise-empty element is eventually emitted.
+ *
+ * @param tag Source HTML tag name; comparison is case-insensitive.
+ * @param support Registered processor capabilities for the current composition.
+ * @returns Whether the source boundary can preserve its ID in canonical content.
  */
 export function preservesHtmlElementSourceIdentity(
 	tag: string,

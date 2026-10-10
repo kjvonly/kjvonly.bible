@@ -19,6 +19,8 @@ import type {
  */
 export class ThematicBreakBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'hr'
 	];

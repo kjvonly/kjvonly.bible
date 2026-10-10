@@ -82,12 +82,8 @@ export class HtmlBlockProcessorRegistry {
 				tag
 			);
 
-		return (
-			processor !==
-				undefined &&
-			processor.preservesSourceIdentity !==
-				false
-		);
+		return processor?.preservesSourceIdentity ===
+			true;
 	}
 
 	/**

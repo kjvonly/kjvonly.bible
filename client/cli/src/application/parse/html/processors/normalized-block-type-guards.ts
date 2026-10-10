@@ -22,7 +22,12 @@ const flowBlockTypes:
 		'table'
 	]);
 
-/** Identifies blocks that may participate in ordinary normalized document flow. */
+/**
+ * Identifies blocks that may participate in ordinary normalized document flow.
+ *
+ * @param block Candidate canonical block.
+ * @returns Whether the block is a legal document-flow type.
+ */
 export function isNormalizedFlowBlock(
 	block: NormalizedBlock
 ): block is NormalizedFlowBlock {
@@ -31,7 +36,12 @@ export function isNormalizedFlowBlock(
 	);
 }
 
-/** Identifies the contextual child type owned by a normalized list. */
+/**
+ * Identifies the contextual child type owned by a normalized list.
+ *
+ * @param block Candidate canonical block.
+ * @returns Whether the block is a list item.
+ */
 export function isNormalizedListItemBlock(
 	block: NormalizedBlock
 ): block is NormalizedListItemBlock {
@@ -39,7 +49,12 @@ export function isNormalizedListItemBlock(
 		'list-item';
 }
 
-/** Identifies a normalized caption contextual block. */
+/**
+ * Identifies a normalized caption contextual block.
+ *
+ * @param block Candidate canonical block.
+ * @returns Whether the block is a caption.
+ */
 export function isNormalizedCaptionBlock(
 	block: NormalizedBlock
 ): block is NormalizedCaptionBlock {
@@ -47,7 +62,12 @@ export function isNormalizedCaptionBlock(
 		'caption';
 }
 
-/** Identifies the contextual row type owned by a normalized table. */
+/**
+ * Identifies the contextual row type owned by a normalized table.
+ *
+ * @param block Candidate canonical block.
+ * @returns Whether the block is a table row.
+ */
 export function isNormalizedTableRowBlock(
 	block: NormalizedBlock
 ): block is NormalizedTableRowBlock {
@@ -55,7 +75,12 @@ export function isNormalizedTableRowBlock(
 		'table-row';
 }
 
-/** Identifies the contextual cell type owned by a normalized table row. */
+/**
+ * Identifies the contextual cell type owned by a normalized table row.
+ *
+ * @param block Candidate canonical block.
+ * @returns Whether the block is a table cell.
+ */
 export function isNormalizedTableCellBlock(
 	block: NormalizedBlock
 ): block is NormalizedTableCellBlock {
@@ -63,7 +88,14 @@ export function isNormalizedTableCellBlock(
 		'table-cell';
 }
 
-/** Returns ordinary-flow children or fails before a contextual block can leak in. */
+/**
+ * Returns ordinary-flow children or fails before a contextual block can leak in.
+ *
+ * @param blocks Children produced by recursive HTML traversal in source order.
+ * @param owner Human-readable parent context included in a grammar error.
+ * @returns The same ordered children narrowed to legal ordinary-flow blocks.
+ * @throws Error when a contextual child would violate the parent's canonical grammar.
+ */
 export function requireNormalizedFlowBlocks(
 	blocks: NormalizedBlock[],
 	owner: string
@@ -87,7 +119,14 @@ export function requireNormalizedFlowBlocks(
 	);
 }
 
-/** Returns list-item children or fails when a list produced another block type. */
+/**
+ * Returns list-item children or fails when a list produced another block type.
+ *
+ * @param blocks Children produced by recursive HTML traversal in source order.
+ * @param owner Human-readable parent context included in a grammar error.
+ * @returns The same ordered children narrowed to legal list-item blocks.
+ * @throws Error when a non-list-item child would violate the parent's canonical grammar.
+ */
 export function requireNormalizedListItemBlocks(
 	blocks: NormalizedBlock[],
 	owner: string
@@ -111,7 +150,14 @@ export function requireNormalizedListItemBlocks(
 	);
 }
 
-/** Returns table children while enforcing the canonical caption-or-row grammar. */
+/**
+ * Returns table children while enforcing the canonical caption-or-row grammar.
+ *
+ * @param blocks Children produced by recursive HTML traversal in source order.
+ * @param owner Human-readable parent context included in a grammar error.
+ * @returns The same ordered children narrowed to legal caption or row blocks.
+ * @throws Error when a non-caption/non-row child would violate the parent's canonical grammar.
+ */
 export function requireNormalizedTableChildren(
 	blocks: NormalizedBlock[],
 	owner: string
@@ -149,7 +195,14 @@ export function requireNormalizedTableChildren(
 	);
 }
 
-/** Returns table-cell children or fails when a row produced another block type. */
+/**
+ * Returns table-cell children or fails when a row produced another block type.
+ *
+ * @param blocks Children produced by recursive HTML traversal in source order.
+ * @param owner Human-readable parent context included in a grammar error.
+ * @returns The same ordered children narrowed to legal table-cell blocks.
+ * @throws Error when a non-table-cell child would violate the parent's canonical grammar.
+ */
 export function requireNormalizedTableCellBlocks(
 	blocks: NormalizedBlock[],
 	owner: string
@@ -173,7 +226,14 @@ export function requireNormalizedTableCellBlocks(
 	);
 }
 
-/** Returns figure children while allowing ordinary flow plus a contextual caption. */
+/**
+ * Returns figure children while allowing ordinary flow plus a contextual caption.
+ *
+ * @param blocks Children produced by recursive HTML traversal in source order.
+ * @param owner Human-readable parent context included in a grammar error.
+ * @returns The same ordered children narrowed to legal flow or caption blocks.
+ * @throws Error when a non-flow/non-caption child would violate the parent's canonical grammar.
+ */
 export function requireNormalizedFigureChildren(
 	blocks: NormalizedBlock[],
 	owner: string

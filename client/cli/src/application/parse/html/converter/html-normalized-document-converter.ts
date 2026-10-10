@@ -170,6 +170,11 @@ export class HtmlNormalizedDocumentConverter {
 					this.inlineParser.hasProcessor(
 						tag
 					),
+			preservesInlinePresentation:
+				tag =>
+					this.inlineParser.preservesProcessorPresentation(
+						tag
+					),
 			preservesBlockSourceIdentity:
 				tag =>
 					this.blockProcessorRegistry.preservesSourceIdentity(
@@ -325,11 +330,10 @@ function parseBlockChildren(
 	for (
 		const child of parent.children
 	) {
-		if (
-			isIgnorableNode(
-				child
-			)
-		) {
+		// Comments cannot contribute content. Preserve whitespace-only text nodes:
+		// they may be the sole separator between adjacent inline element siblings.
+		// Whitespace-only runs are discarded when a text block is flushed.
+		if (child.type === 'comment') {
 			continue;
 		}
 
@@ -622,22 +626,6 @@ function collectPreservableDescendantElementIds(
 	return ids;
 }
 
-/** Returns true for source nodes that cannot contribute normalized content. */
-function isIgnorableNode(
-	node: AnyNode
-): boolean {
-	return (
-		node.type ===
-			'comment' ||
-		(
-			isTextNode(
-				node
-			) &&
-			!node.data.trim()
-		)
-	);
-}
-
 /** Narrows DOM nodes that expose element name/attributes/children. */
 function isElement(
 	node: AnyNode
@@ -649,16 +637,5 @@ function isElement(
 			'script' ||
 		node.type ===
 			'style'
-	);
-}
-
-/** Narrows a DOM node to source text. */
-function isTextNode(
-	node: AnyNode
-): node is AnyNode & { data: string } {
-	return (
-		node.type ===
-			'text' &&
-		'data' in node
 	);
 }

@@ -546,6 +546,23 @@ describe(
 		);
 
 		it(
+			'does not project presentation from unsupported inline wrappers',
+			() => {
+				expect(
+					parser.parseNodes(
+						nodes(
+							'<abbr class="text-center" style="text-align:center">KJV</abbr>'
+						)
+					)
+				).toEqual([
+					word(
+						'KJV'
+					)
+				]);
+			}
+		);
+
+		it(
 			'ignores script, style, noscript, and template content',
 			() => {
 				expect(

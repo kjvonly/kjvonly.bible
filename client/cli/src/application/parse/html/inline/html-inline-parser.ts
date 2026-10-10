@@ -82,6 +82,20 @@ export class HtmlInlineParser {
 	}
 
 	/**
+	 * Returns whether a registered inline processor can carry projected presentation.
+	 *
+	 * @param tag HTML tag queried by conversion/diagnostics.
+	 * @returns Whether projected classes/styles can survive that processor boundary.
+	 */
+	preservesProcessorPresentation(
+		tag: string
+	): boolean {
+		return this.processorRegistry.preservesProjectedPresentation(
+			tag
+		);
+	}
+
+	/**
 	 * Applies one inline wrapper's semantics without traversing its children.
 	 *
 	 * Structural traversal uses this when an inline semantic wrapper contains block
@@ -197,7 +211,18 @@ export class HtmlInlineParser {
 		);
 	}
 
-	/** Applies one inline element boundary to a cloned descendant semantic state. */
+	/**
+	 * Applies one inline element boundary to cloned descendant semantic state.
+	 *
+	 * Only supported inline processors and explicitly neutral wrappers may project
+	 * boundary identity/presentation into canonical content. Unsupported wrappers
+	 * recurse solely to preserve representable descendants.
+	 *
+	 * @param element Source inline element at the current semantic boundary.
+	 * @param state Inline semantics inherited before entering the element.
+	 * @param content Ordered canonical content receiving zero-width emissions.
+	 * @returns Descendant state plus the processor's recursion decision.
+	 */
 	private applyElementSemantics(
 		element: Element,
 		state: HtmlInlineState,
@@ -238,15 +263,29 @@ export class HtmlInlineParser {
 				state
 			);
 
-		for (
-			const className of
-				projectNormalizedClasses(
-					element
-				) ?? []
+		// Presentation projection belongs only to source boundaries whose semantics
+		// are supported or explicitly neutral. Unsupported inline wrappers recurse
+		// only to preserve descendant content; their own presentation metadata is
+		// captured by the unsupported-element diagnostic rather than normalized.
+		if (
+			isTransparent ||
+			(
+				hasInlineProcessor &&
+				this.processorRegistry.preservesProjectedPresentation(
+					tag
+				)
+			)
 		) {
-			childState.classes.add(
-				className
-			);
+			for (
+				const className of
+					projectNormalizedClasses(
+						element
+					) ?? []
+			) {
+				childState.classes.add(
+					className
+				);
+			}
 		}
 
 		return this.processorRegistry.process(

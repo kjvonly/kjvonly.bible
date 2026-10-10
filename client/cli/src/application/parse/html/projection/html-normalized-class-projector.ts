@@ -69,8 +69,8 @@ export function projectNormalizedClasses(
 export function getIgnoredSourceClassNames(
 	element: Element
 ): string[] {
-	return parseClassNames(
-		element.attribs.class
+	return getSourceClassNames(
+		element
 	).filter(
 		className =>
 			!isNormalizedClassName(
@@ -79,7 +79,7 @@ export function getIgnoredSourceClassNames(
 	);
 }
 
-/** One valid source CSS declaration not represented by the current projector. */
+/** One parsed, nonempty CSS property/value pair not represented by the current projector. */
 export interface UnsupportedHtmlStyleDeclaration {
 	/** Lowercase CSS property name. */
 	readonly property: string;
@@ -89,12 +89,13 @@ export interface UnsupportedHtmlStyleDeclaration {
 }
 
 /**
- * Returns valid source style declarations whose presentation semantics are not
+ * Returns parsed source style declarations whose presentation semantics are not
  * represented by the normalized-class projector.
  *
- * Malformed declarations are omitted because this boundary intentionally does
- * not implement a general CSS parser. Repeated properties retain the final
- * declaration, matching the projection behavior.
+ * Parsing accepts nonempty `property:value` pairs and lowercases both sides;
+ * it does not validate CSS syntax or property/value compatibility. Entries without
+ * a colon or with an empty side are omitted. Repeated properties retain the last
+ * parsed value, matching the projection behavior.
  *
  * @param element Source HTML element whose style attribute is inspected.
  * @returns Effective style declarations that would otherwise be silently lost.
@@ -102,23 +103,15 @@ export interface UnsupportedHtmlStyleDeclaration {
 export function getUnsupportedSourceStyleDeclarations(
 	element: Element
 ): UnsupportedHtmlStyleDeclaration[] {
-	return [
-		...parseStyle(
-			element.attribs.style
-		).entries()
-	]
+	return getSourceStyleDeclarations(
+		element
+	)
 		.filter(
-			([property, value]) =>
+			({property, value}) =>
 				!(
 					property === 'text-align' &&
 					value === 'center'
 				)
-		)
-		.map(
-			([property, value]) => ({
-				property,
-				value
-			})
 		)
 		.sort(
 			(left, right) =>
@@ -126,6 +119,42 @@ export function getUnsupportedSourceStyleDeclarations(
 					`${right.property}:${right.value}`
 				)
 		);
+}
+
+/**
+ * Returns every authored source class name on the element.
+ *
+ * @param element Source HTML element whose class attribute is inspected.
+ * @returns Parsed source class names in authored order.
+ */
+export function getSourceClassNames(
+	element: Element
+): string[] {
+	return parseClassNames(
+		element.attribs.class
+	);
+}
+
+/**
+ * Returns every parseable effective source style declaration understood by the projector.
+ * This is a limited declaration splitter, not CSS syntax validation.
+ *
+ * @param element Source HTML element whose style attribute is inspected.
+ * @returns Effective declarations after repeated-property resolution.
+ */
+export function getSourceStyleDeclarations(
+	element: Element
+): UnsupportedHtmlStyleDeclaration[] {
+	return [
+		...parseStyle(
+			element.attribs.style
+		).entries()
+	].map(
+		([property, value]) => ({
+			property,
+			value
+		})
+	);
 }
 
 function parseClassNames(

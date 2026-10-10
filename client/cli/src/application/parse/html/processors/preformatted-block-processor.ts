@@ -29,6 +29,8 @@ import type {
  */
 export class PreformattedBlockProcessor
 	implements HtmlBlockProcessor {
+	readonly preservesSourceIdentity =
+		true;
 	readonly tags = [
 		'pre'
 	];
