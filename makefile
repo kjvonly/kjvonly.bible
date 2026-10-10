@@ -372,6 +372,62 @@ app-data-sync-verbose: up
 				| tee "$(APP_DATA_LOG_DIR)/$$TIMESTAMP.log" \
 		'
 
+# =============================================================================
+# Normalized Document Filesystem Smoke
+# =============================================================================
+NORMALIZED_DOCUMENT_SMOKE_SOURCE = ../../zarf/manifest/normalized-document-smoke/source
+NORMALIZED_DOCUMENT_SMOKE_MANIFEST = ../../zarf/manifest/normalized-document-smoke.yaml
+NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST = ../../zarf/manifest/normalized-document-smoke/.publication.generated.json
+NORMALIZED_DOCUMENT_SMOKE_ROOT = normalized-document-smoke
+NORMALIZED_DOCUMENT_SMOKE_LARGE_STUB = zarf/manifest/normalized-document-smoke/large.nd.json.stub
+NORMALIZED_DOCUMENT_SMOKE_LARGE = zarf/manifest/normalized-document-smoke/source/sermons/large.nd.json
+NORMALIZED_DOCUMENT_SMOKE_BLOCK = zarf/manifest/normalized-document-smoke/.large-content-block
+
+# Blossom smoke fixture: keep only the short template under version control.
+# The generated 1 MiB word block and expanded .nd.json are both Git-ignored.
+# An unchanged source is retained between builds to exercise event reuse.
+$(NORMALIZED_DOCUMENT_SMOKE_LARGE): $(NORMALIZED_DOCUMENT_SMOKE_LARGE_STUB)
+	@mkdir -p "$(dir $@)"
+	@{ printf '{"type":"word","text":"'; \
+		head -c 1048576 /dev/zero | tr '\0' 'A'; \
+		printf '"}\n'; } > "$(NORMALIZED_DOCUMENT_SMOKE_BLOCK)"
+	@sed -e '/^__LARGE_WORD__$$/r $(NORMALIZED_DOCUMENT_SMOKE_BLOCK)' \
+		-e '/^__LARGE_WORD__$$/d' "$<" > "$@"
+
+.PHONY: \
+	normalized-document-smoke-build \
+	normalized-document-smoke-build-verbose \
+	normalized-document-smoke-publish \
+	normalized-document-smoke-publish-verbose
+
+normalized-document-smoke-build: $(NORMALIZED_DOCUMENT_SMOKE_LARGE)
+	cd $(CLI_DIR) && \
+		npm run build && \
+		node dist/main.js import normalized-documents $(NORMALIZED_DOCUMENT_SMOKE_SOURCE) \
+			--manifest $(NORMALIZED_DOCUMENT_SMOKE_MANIFEST) \
+			--root $(NORMALIZED_DOCUMENT_SMOKE_ROOT) \
+			--output-manifest $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
+
+normalized-document-smoke-build-verbose: $(NORMALIZED_DOCUMENT_SMOKE_LARGE)
+	cd $(CLI_DIR) && \
+		npm run build && \
+		node dist/main.js import normalized-documents -v $(NORMALIZED_DOCUMENT_SMOKE_SOURCE) \
+			--manifest $(NORMALIZED_DOCUMENT_SMOKE_MANIFEST) \
+			--root $(NORMALIZED_DOCUMENT_SMOKE_ROOT) \
+			--output-manifest $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
+
+normalized-document-smoke-publish:
+	cd $(CLI_DIR) && \
+		npm run build && \
+		NODE_USE_SYSTEM_CA=1 \
+		node dist/main.js publish $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
+
+normalized-document-smoke-publish-verbose:
+	cd $(CLI_DIR) && \
+		npm run build && \
+		NODE_USE_SYSTEM_CA=1 \
+		node dist/main.js publish -v $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
+
 ###############################################################################
 # GIT
 
@@ -451,7 +507,6 @@ new-chat-files:
 		docs/ \
 		-x '*/node_modules/*' \
 		   '*/.svelte-kit/*' \
-		   '*/build/*' \
 		   '*/.DS_Store'
 
 worktrees-backups:

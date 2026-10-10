@@ -10,25 +10,34 @@ import {
 } from './staged-collection-event-filename.js';
 
 
+const inputRevision =
+	'b'.repeat(
+		32
+	);
+
+
+const eventId =
+	'a'.repeat(
+		64
+	);
+
+
 describe(
 	'staged collection event filename',
 	() => {
-
 		it(
-			'round trips collection staging metadata',
+			'round trips current collection staging metadata',
 			() => {
-
 				const metadata = {
 					collectionName:
 						'application-defaults',
 
+					inputRevision,
+
 					createdAt:
 						1000,
 
-					eventId:
-						'a'.repeat(
-							64
-						)
+					eventId
 				};
 
 
@@ -41,7 +50,7 @@ describe(
 				expect(
 					filename
 				).toBe(
-					`application-defaults--1000--${'a'.repeat(64)}.json`
+					`application-defaults--${inputRevision}--1000--${eventId}.v2.json`
 				);
 
 
@@ -57,21 +66,55 @@ describe(
 
 
 		it(
+			'parses legacy collection staging metadata without an input revision',
+			() => {
+				expect(
+					parseStagedCollectionEventFilename(
+						`application-defaults--1000--${eventId}.json`
+					)
+				).toEqual({
+					collectionName:
+						'application-defaults',
+					createdAt:
+						1000,
+					eventId
+				});
+			}
+		);
+
+
+		it(
+			'keeps revision-like suffixes inside legacy collection names',
+			() => {
+				const collectionName =
+					`legacy--${inputRevision}`;
+
+
+				expect(
+					parseStagedCollectionEventFilename(
+						`${collectionName}--1000--${eventId}.json`
+					)
+				).toEqual({
+					collectionName,
+					createdAt:
+						1000,
+					eventId
+				});
+			}
+		);
+
+
+		it(
 			'supports -- inside collection names',
 			() => {
-
 				const filename =
 					buildStagedCollectionEventFilename({
 						collectionName:
 							'application--defaults',
-
+						inputRevision,
 						createdAt:
 							1000,
-
-						eventId:
-							'a'.repeat(
-								64
-							)
+						eventId
 					});
 
 
@@ -85,10 +128,10 @@ describe(
 			}
 		);
 
+
 		it(
 			'accepts a 128-byte collection name',
 			() => {
-
 				expect(
 					() =>
 						buildStagedCollectionEventFilename({
@@ -96,22 +139,19 @@ describe(
 								'a'.repeat(
 									128
 								),
-
+							inputRevision,
 							createdAt:
 								1000,
-
-							eventId:
-								'a'.repeat(
-									64
-								)
+							eventId
 						})
 				).not.toThrow();
 			}
 		);
+
+
 		it(
 			'rejects a collection name longer than 128 bytes',
 			() => {
-
 				expect(
 					() =>
 						buildStagedCollectionEventFilename({
@@ -119,24 +159,21 @@ describe(
 								'a'.repeat(
 									129
 								),
-
+							inputRevision,
 							createdAt:
 								1000,
-
-							eventId:
-								'a'.repeat(
-									64
-								)
+							eventId
 						})
 				).toThrow(
 					'Collection name exceeds 128 UTF-8 bytes.'
 				);
 			}
 		);
+
+
 		it(
 			'measures collection name length in UTF-8 bytes',
 			() => {
-
 				const build =
 					(
 						collectionName:
@@ -144,14 +181,10 @@ describe(
 					) =>
 						buildStagedCollectionEventFilename({
 							collectionName,
-
+							inputRevision,
 							createdAt:
 								1000,
-
-							eventId:
-								'a'.repeat(
-									64
-								)
+							eventId
 						});
 
 
@@ -174,6 +207,27 @@ describe(
 						)
 				).toThrow(
 					'Collection name exceeds 128 UTF-8 bytes.'
+				);
+			}
+		);
+
+
+		it(
+			'rejects an invalid input revision',
+			() => {
+				expect(
+					() =>
+						buildStagedCollectionEventFilename({
+							collectionName:
+								'application-defaults',
+							inputRevision:
+								'invalid',
+							createdAt:
+								1000,
+							eventId
+						})
+				).toThrow(
+					'Invalid Collection input revision.'
 				);
 			}
 		);

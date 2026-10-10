@@ -102,6 +102,10 @@ export class NodeCollectionEventStagingRepository
 								metadata
 									.collectionName,
 
+							...(metadata.inputRevision === undefined
+								? {}
+								: { inputRevision: metadata.inputRevision }),
+
 							createdAt:
 								metadata
 									.createdAt,
@@ -241,6 +245,9 @@ export class NodeCollectionEventStagingRepository
 				collectionName:
 					request.collectionName,
 
+				inputRevision:
+					request.inputRevision,
+
 				createdAt:
 					request.event.created_at,
 
@@ -297,6 +304,9 @@ export class NodeCollectionEventStagingRepository
 
 			collectionName:
 				request.collectionName,
+
+			inputRevision:
+				request.inputRevision,
 
 			createdAt:
 				request.event.created_at,

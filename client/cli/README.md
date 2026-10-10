@@ -6,6 +6,100 @@ It exists to replace resource-specific publishing scripts with a generic workflo
 
 The CLI is written in TypeScript and runs on Node.js.
 
+
+## Recursive Normalized Document import (build/stage)
+
+Import a directory of canonical `.nd.json` Normalized Documents (including
+nested directories) into ordinary staged Resource and Filesystem events:
+
+```bash
+kjvonly import normalized-documents ./content --manifest ./publication.yaml --root library --output-manifest ./publication.generated.json
+```
+
+The configuration-only YAML manifest supplies publication settings (`kind`, `nostr.relays`,
+`staging.path`, and optional Blossom strategy). It is still loaded and validated
+through the existing manifest loader. The directory importer compiles one
+Resource per `.nd.json` file, with a published identity and Filesystem path
+that mirror `library/<relative path>`. It then runs the same Manifest build
+executor used by `build`.
+
+The input YAML must not contain existing Resource, Collection, or Filesystem
+definitions; combining explicit definitions with a separate source-directory
+root is deferred to a later slice.
+
+Only `.nd.json` files are imported by this initial command. Other files,
+hidden paths, and symlinks are skipped; invalid `.nd.json` documents abort the
+batch before any staging begins. An empty selection is an error. Files up to
+1 MiB use inline gzip+hex; larger documents require `defaults.strategy` for
+the existing object-upload path. The staging directory is resolved relative
+to the YAML manifest. A generated publication Manifest is saved as JSON after
+successful staging and contains all built Resources, including object-upload
+metadata needed for Blossom publication. Each directory import builds in a
+private staging generation, seeded from the previously published generation
+for signed-event reuse. After the build succeeds, the generated Manifest is
+atomically updated to point to the new generation. Failed imports leave the
+previous generated Manifest and staged events unchanged. Previous generations
+are retained on disk (including orphaned generations from interrupted runs)
+until explicitly cleaned up. The original YAML is never rewritten.
+
+This command **stages but does not publish**. Afterwards use:
+
+```bash
+kjvonly publish ./publication.generated.json
+```
+
+The generalized classifier's optional `.json` structural hints are not yet
+part of this initial directory command. Generic file import and other semantic
+families remain future work.
+
+For the implemented behavior and longer-term design (clearly distinguished),
+see [Filesystem recursive import](docs/filesystem-recursive-import-discovery.md).
+
+### Incremental rebuild and exceptional reprocessing
+
+Normal import builds use each source's **modification time, byte size, and
+build-definition revision** (plus signing identity where relevant) to decide
+whether a previously signed Resource or staged object artifact can be reused.
+Unchanged inputs do **not** require a fresh SHA-256 read of every source file.
+Blossom still uses SHA-256 for an artifact when that artifact is actually staged.
+Dependent Filesystem events are rebuilt when referenced Resource events change.
+
+This is an intentional fast-path tradeoff: if another tool replaces file contents
+while preserving *both* the size and modification time, the CLI may reuse an
+older staged event. To request reprocessing in that exceptional case, update
+its modification time and rerun import, then **publish the generated Manifest**:
+
+```bash
+find ./content -type f -name '*.nd.json' -exec touch {} +
+kjvonly import normalized-documents ./content --manifest ./publication.yaml --root library --output-manifest ./publication.generated.json
+kjvonly publish ./publication.generated.json
+```
+
+The same approach can target a single `.nd.json` file. There is no requirement
+for an import-specific `--force` option or mandatory whole-tree source hashing.
+Do not delete the staging generation still referenced by the generated Manifest.
+
+### Staging generations and source-backed objects
+
+The generated JSON Manifest is a **local pointer** to the last successful
+staging generation, not a record of completed remote publication. Each new
+import copies the previous generation for event reuse and switches the pointer
+only after a successful build. Previously selected generations are retained;
+failed builds discard their unfinished generation. A crash can leave an
+unreferenced generation that must be cleaned up manually.
+
+Unencoded Blossom artifacts may be stored as symlinks to the original source
+files instead of immutable copies. Keeping an old Manifest and event signatures
+does not guarantee that those original bytes remain available after source
+changes or deletion. Publish promptly or keep the source tree available;
+rebuild and republish after changes. Automatic staging-generation garbage
+collection and concurrent-import locking are not part of this command.
+
+See [Filesystem recursive import and discovery](docs/filesystem-recursive-import-discovery.md)
+for the implemented boundaries, staging guarantees, tests, and deferred scope.
+
+---
+
 ## Mental Model
 
 The most important model to understand is:
@@ -22,12 +116,13 @@ publish
 Blossom + Nostr
 ```
 
-The CLI exposes three commands:
+The CLI exposes build, publish, sync, and a Normalized Document-only directory import:
 
 ```text
 build <manifest>
 publish <manifest>
 sync <manifest>
+import normalized-documents <directory> --manifest <manifest> --root <filesystem-root> --output-manifest <output.json>
 ```
 
 Where:
@@ -158,6 +253,8 @@ collections:
 ```
 
 The resulting Collection event contains the generated descriptors in deterministic manifest order.
+
+Collection staging records a semantic input revision over the signer, event definition, and ordered descriptor payload. An unchanged Collection therefore reuses the exact previously signed event; a changed Resource descriptor or nested Collection event produces a new Collection revision. Legacy pre-reuse Collection staging remains readable and is migrated on the next build.
 
 Collections are assembly definitions. They are not another Resource representation.
 
@@ -498,9 +595,12 @@ Staging represents **current desired state**, not publication history.
 
 Incremental builds attempt to reuse unchanged state.
 
-For inline and descriptor-backed Resources, source metadata and build-definition revisions are used to determine when rebuilding is required.
+For inline and descriptor-backed Resources, source mtime, byte size,
+source/definition revisions, and signing identity where applicable determine
+when rebuilding is required. Matching metadata intentionally allows signed
+Resource event and artifact reuse without rereading and hashing every file.
 
-Identity object uploads may be staged as symlinks. Byte-changing transformations are staged as materialized files.
+Identity object uploads may be staged as symlinks to mutable sources. Byte-changing transformations are staged as materialized files. Reusing a signed event is separate from checking whether the relay already has that event.
 
 ---
 

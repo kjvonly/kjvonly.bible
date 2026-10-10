@@ -1,0 +1,25 @@
+# Configuration only: `import normalized-documents` generates Resource/Filesystem definitions.
+# Endpoints match the local relay (3334) and Blossom (3335) smoke environment.
+version: 1
+kind: 37770
+
+staging:
+  path: ./normalized-document-smoke/.staging
+
+nostr:
+  relays:
+    - ws://localhost:3334
+
+# Available for source documents larger than the 1 MiB inline threshold.
+defaults:
+  strategy: local-blossom
+
+strategies:
+  local-blossom:
+    type: blossom
+    urls:
+      - http://localhost:3335
+
+resources: {}
+collections: {}
+filesystems: {}

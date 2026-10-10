@@ -8,6 +8,10 @@ export interface StagedCollectionEventEntry {
 	readonly collectionName:
 		string;
 
+	/** Absent only for legacy pre-reuse Collection staging. */
+	readonly inputRevision?:
+		string;
+
 	readonly createdAt:
 		number;
 
@@ -24,6 +28,9 @@ export interface StageCollectionEventRequest {
 	readonly collectionName:
 		string;
 
+	readonly inputRevision:
+		string;
+
 	readonly event:
 		SignedNostrEvent;
 
@@ -34,6 +41,7 @@ export interface StageCollectionEventRequest {
 
 /** Persistence boundary for generated Collection Resource events. */
 export interface CollectionEventStagingRepository {
+	/** Lists current and legacy Collection staging metadata without reading event JSON. */
 	list(
 		stagingRoot:
 			string
@@ -42,6 +50,7 @@ export interface CollectionEventStagingRepository {
 	>;
 
 
+	/** Reads and validates one exact staged Collection event. */
 	read(
 		entry:
 			StagedCollectionEventEntry
@@ -50,6 +59,7 @@ export interface CollectionEventStagingRepository {
 	>;
 
 
+	/** Atomically stages a revision-bearing Collection event and removes its predecessor. */
 	stage(
 		request:
 			StageCollectionEventRequest
@@ -58,6 +68,7 @@ export interface CollectionEventStagingRepository {
 	>;
 
 
+	/** Removes obsolete local Collection staging only. */
 	remove(
 		entry:
 			StagedCollectionEventEntry

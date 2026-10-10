@@ -116,15 +116,23 @@ Filesystem placement may reference named Resources or Collections already built 
 
 Target descriptors are constructed from the already-signed staged Nostr Resource/Collection events plus `manifest.nostr.relays`, so Filesystem assembly remains independent of whether the target event uses `content` or `descriptors` representation.
 
+Generated Collection events use dedicated staging under:
+
+```text
+events/__collections__/
+```
+
+Collection staging records a semantic input revision derived from the signer, event definition, and complete ordered descriptor payload. When that revision and signer are unchanged, the builder reuses the exact previously signed Collection event. A changed Resource descriptor or nested Collection event therefore invalidates only the affected Collection graph. Legacy Collection staging filenames from before revision-based reuse remain readable and are rebuilt once into the current revision-bearing format.
+
 Generated Filesystem events use dedicated staging under:
 
 ```text
 events/__filesystems__/
 ```
 
-Top-level Resource, Collection, and Filesystem manifest names are validated as staging-safe logical names before build work begins. They are limited to one non-hidden path segment and 128 UTF-8 bytes, and cannot use the generated staging directory names `__collections__` or `__filesystems__`. This prevents manifest names from colliding with or disappearing inside the Node staging layout.
+Filesystem staging likewise reuses the exact prior signed event when its semantic input revision is unchanged. That revision includes publisher, root, event definition, relay list, generated paths, and exact target event IDs.
 
-and reuse the exact prior signed Filesystem event when the semantic input revision is unchanged. The revision includes publisher, root, event definition, relay list, generated paths, and exact target event IDs.
+Top-level Resource, Collection, and Filesystem manifest names are validated as staging-safe logical names before build work begins. They are limited to one non-hidden path segment and 128 UTF-8 bytes, and cannot use the generated staging directory names `__collections__` or `__filesystems__`. This prevents manifest names from colliding with or disappearing inside the Node staging layout.
 
 Nostr publication category order is explicit:
 
@@ -139,7 +147,7 @@ Filesystems
 This is application-owned category ordering, not a complete dependency/topological
 sort among events within one category.
 
-Collection events retain the accepted v1 behavior of being rebuilt/re-signed on each build. Therefore a newly signed Collection event intentionally changes a dependent Filesystem overlay's input revision. Collection reuse remains a deferred optimization.
+Collection and Filesystem incremental staging are now aligned: unchanged semantic inputs preserve exact signed event IDs. Because Filesystem input revisions include exact target Collection event IDs, an unchanged Collection no longer causes a downstream Filesystem rebuild, while a genuinely changed Collection still invalidates the dependent Filesystem as intended.
 
 The V1 flow was smoke-built and published with `zarf/manifest/filesystem-smoke.yaml`, producing two live mappings:
 
@@ -1144,9 +1152,7 @@ The September 8 capture recorded one accepted v1 limitation:
 Collection events may be rebuilt/re-signed each build
 ```
 
-This was explicitly considered separate from ordinary Resource incremental event reuse.
-
-Collection incremental reuse was deferred optimization work.
+That statement remains historically accurate for the captured implementation. Current source has since added Collection semantic input revisions and exact signed-event reuse, bringing Collection incremental staging in line with ordinary Resource and Filesystem reuse behavior.
 
 ---
 
@@ -1316,7 +1322,7 @@ unchanged chapter Resource events
     → not republished
 
 Collection event
-    → rebuilt/re-signed under current v1 behavior
+    → rebuilt/re-signed under the captured v1 behavior
     → new event ID
     → published as current addressable replacement
 ```
@@ -1341,7 +1347,7 @@ remote reconciliation sees them already present
 no duplicate publication
 ```
 
-The captured exception was v1 Collection rebuilding/re-signing.
+The captured exception was v1 Collection rebuilding/re-signing. Current source closes that exception by reusing the exact signed Collection event when its semantic inputs are unchanged.
 
 ---
 

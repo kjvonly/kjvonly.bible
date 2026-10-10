@@ -21,6 +21,10 @@ const NOSTR_PUBLICATION_CATEGORY_ORDER:
  *
  * The order Resource → Collection → Filesystem is a category policy only; this
  * publisher does not topologically sort dependencies within an individual category.
+ * Only logical names in the supplied Manifest are queried from local staging;
+ * stale events copied from a previous generation are not intentionally published.
+ * Reconciliation checks whether staged event IDs are present on each relay;
+ * it does not rebuild, re-sign, or delete old replaceable events.
  */
 export class NostrStagedEventPublisher {
 
@@ -66,7 +70,8 @@ export class NostrStagedEventPublisher {
 
         const stagedEvents =
             await this.listStagedEventsInPublicationOrder(
-                stagingRoot
+                stagingRoot,
+                manifest
             );
 
 
@@ -273,14 +278,16 @@ export class NostrStagedEventPublisher {
 
 
     /**
-     * Lists staged events in publication category order.
-     *
+     * Lists only entries belonging to the current Manifest in category order.
+     * Obsolete staged names remain on disk for inspection but are not published.
      * This establishes only category ordering. It does not topologically sort
      * dependencies among events within the same category.
      */
     private async listStagedEventsInPublicationOrder(
         stagingRoot:
-            string
+            string,
+        manifest:
+            Manifest
     ): Promise<
         readonly StagedNostrEventEntry[]
     > {
@@ -289,6 +296,12 @@ export class NostrStagedEventPublisher {
             StagedNostrEventEntry[] =
                 [];
 
+
+        const logicalNamesByCategory: Record<StagedNostrEventCategory, readonly string[]> = {
+            resource: Object.keys(manifest.resources),
+            collection: Object.keys(manifest.collections),
+            filesystem: Object.keys(manifest.filesystems)
+        };
 
         for (
             const category
@@ -299,7 +312,8 @@ export class NostrStagedEventPublisher {
                     .stagingRepository
                     .list(
                         stagingRoot,
-                        category
+                        category,
+                        logicalNamesByCategory[category]
                     )
             );
         }

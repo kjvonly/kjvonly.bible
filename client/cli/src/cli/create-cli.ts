@@ -11,6 +11,7 @@ import type {
 } from '#application/sync/sync-manifest.js';
 
 import { BuildManifest } from '#application/build/build-manifest.js';
+import type { BuildNormalizedDocumentDirectory } from '#application/import/directory/build-normalized-document-directory.js';
 
 import type {
 	ParseDirectory,
@@ -28,6 +29,9 @@ export interface CliDependencies {
 
 	readonly buildManifest:
 	BuildManifest;
+
+	readonly buildNormalizedDocumentDirectory:
+		Pick<BuildNormalizedDocumentDirectory, 'build'>;
 
 	readonly publishManifest:
 	PublishManifest;
@@ -135,6 +139,28 @@ export function createCli(
 				);
 			}
 		);
+
+
+	program
+		.command('import')
+		.description('Import supported source files through the Manifest build pipeline')
+		.command('normalized-documents')
+		.description('Recursively build and stage .nd.json Resources and a Filesystem overlay')
+		.argument('<directory>', 'source directory to scan recursively')
+		.requiredOption('--manifest <path>', 'base publication manifest (YAML)')
+		.requiredOption('--root <root>', 'Filesystem root/mount name')
+		.requiredOption('--output-manifest <path>', 'generated publication Manifest JSON path')
+		.action(async (
+			directory: string,
+			options: { manifest: string; root: string; outputManifest: string }
+		): Promise<void> => {
+			await dependencies.buildNormalizedDocumentDirectory.build({
+				directory,
+				manifestPath: options.manifest,
+				outputManifestPath: options.outputManifest,
+				filesystemRoot: options.root
+			});
+		});
 
 	program
 		.command('build')

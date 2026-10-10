@@ -37,6 +37,7 @@ function createDependencies(
 						failures: []
 					})
 		},
+		buildNormalizedDocumentDirectory: { build: vi.fn() },
 		buildManifest: {
 			build:
 				vi.fn()
@@ -67,6 +68,24 @@ afterEach(
 describe(
 	'createCli',
 	() => {
+
+		it('routes recursive Normalized Document import to the shared directory workflow', async () => {
+			const build = vi.fn();
+			const cli = createCli(createDependencies({
+				buildNormalizedDocumentDirectory: { build }
+			}));
+			await cli.parseAsync([
+				'node', 'kjvonly', 'import', 'normalized-documents', './content',
+				'--manifest', './publication.yaml', '--root', 'library',
+				'--output-manifest', './compiled.json'
+			]);
+			expect(build).toHaveBeenCalledOnce();
+			expect(build).toHaveBeenCalledWith({
+				directory: './content', manifestPath: './publication.yaml',
+				outputManifestPath: './compiled.json', filesystemRoot: 'library'
+			});
+		});
+
 		it(
 			'routes parse html to ParseDirectory',
 			async () => {

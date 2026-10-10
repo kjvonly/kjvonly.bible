@@ -72,6 +72,9 @@ function createManifest() {
             {},
 
         collections:
+            {},
+
+        filesystems:
             {}
     } satisfies Manifest;
 }
@@ -209,7 +212,8 @@ describe(
                 ).toHaveBeenNthCalledWith(
                     1,
                     '/staging',
-                    'resource'
+                    'resource',
+                    []
                 );
 
 
@@ -218,7 +222,8 @@ describe(
                 ).toHaveBeenNthCalledWith(
                     2,
                     '/staging',
-                    'collection'
+                    'collection',
+                    []
                 );
 
 
@@ -227,7 +232,8 @@ describe(
                 ).toHaveBeenNthCalledWith(
                     3,
                     '/staging',
-                    'filesystem'
+                    'filesystem',
+                    []
                 );
 
 

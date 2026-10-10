@@ -25,13 +25,19 @@ export interface StagedNostrEventEntry {
  * Implementations expose staged state; callers own category participation/order.
  */
 export interface NostrEventStagingRepository {
-	/** Lists one requested staging category without imposing publication order. */
+	/**
+	 * Lists one staging category, optionally scoped to logical names declared by
+	 * the publication Manifest. An empty supplied list selects no events; omitting
+	 * it retains unfiltered listing for staging inspection and legacy consumers.
+	 */
 	list(
 		stagingRoot:
 			string,
 
 		category:
-			StagedNostrEventCategory
+			StagedNostrEventCategory,
+
+		logicalNames?: readonly string[]
 	): Promise<
 		readonly StagedNostrEventEntry[]
 	>;

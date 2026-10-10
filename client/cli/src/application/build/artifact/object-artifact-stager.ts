@@ -15,6 +15,7 @@ import { calculateArtifactDefinitionRevision } from '#domain/artifact/artifact-d
 import { ConcreteSource } from '#domain/source/concrete-source.js';
 import { deriveSourceExtension } from '#domain/source/source-extension.js';
 
+/** Inputs for incremental staging of object-upload content. */
 export interface StageObjectArtifactsRequest {
 	readonly stagingRoot:
 	string;
@@ -27,6 +28,15 @@ export interface StageObjectArtifactsRequest {
 }
 
 
+/**
+ * Stages object-upload sources, reusing artifacts when source mtime, source
+ * size, and artifact-definition revision match. That metadata-based fast path
+ * deliberately avoids hashing every unchanged file; callers can `touch` files
+ * to request a rebuild when an external tool preserved their metadata.
+ *
+ * Identity uploads may be source-backed symlinks rather than immutable copies.
+ * A source modified after staging must be rebuilt before publication.
+ */
 export class ObjectArtifactStager {
 
 	constructor(
@@ -44,6 +54,11 @@ export class ObjectArtifactStager {
 	) { }
 
 
+	/**
+	 * @param request Current Resource's concrete sources and staging location.
+	 * @returns Current staged artifacts in source order, including reused entries.
+	 * @throws If a source cannot be read or staged.
+	 */
 	async stage(
 		request:
 			StageObjectArtifactsRequest

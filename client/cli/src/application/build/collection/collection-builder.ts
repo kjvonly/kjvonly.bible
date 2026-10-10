@@ -1,6 +1,7 @@
 import { Manifest } from '#domain/manifest/manifest.js';
 import { ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
 import { SignedNostrEvent } from '#domain/event/nostr-event.js';
+import { calculateCollectionInputRevision } from '#domain/collection/collection-input-revision.js';
 import { Logger } from '#ports/logging/logger.js';
 import { CollectionEventStagingRepository, StagedCollectionEventEntry } from '#ports/staging/collection-event-staging-repository.js';
 
@@ -13,13 +14,21 @@ import {
 } from '../descriptor/nostr-event-resource-descriptor-builder.js';
 
 
+/** Inputs required to reconcile manifest Collections into local signed staging. */
 export interface BuildCollectionsRequest {
+	/** Fully rendered and validated CLI manifest. */
 	readonly manifest:
 		Manifest;
 
+	/** Root containing already-built Resource and Collection staging. */
 	readonly stagingRoot:
 		string;
 
+	/** Public key expected to sign generated Collection Resource events. */
+	readonly publisher:
+		string;
+
+	/** Resource descriptors already produced by earlier build phases. */
 	readonly descriptorsByResource:
 		ReadonlyMap<
 			string,
@@ -28,6 +37,13 @@ export interface BuildCollectionsRequest {
 }
 
 
+/**
+ * Builds manifest Collections after Resource descriptors are available.
+ *
+ * Exact signed Collection events are reused when their semantic input revision
+ * and signer are unchanged. Nested Collections are resolved recursively first,
+ * so a changed child event naturally invalidates only dependent parents.
+ */
 export class CollectionBuilder {
 
 	constructor(
@@ -45,6 +61,7 @@ export class CollectionBuilder {
 	) {}
 
 
+	/** Reconciles every manifest Collection and removes obsolete local staging. */
 	async build(
 		request:
 			BuildCollectionsRequest
@@ -332,21 +349,79 @@ export class CollectionBuilder {
 			}
 
 
+			const inputRevision =
+				calculateCollectionInputRevision({
+					kind:
+						request.manifest.kind,
+					publisher:
+						request.publisher,
+					event:
+						collection.event,
+					descriptors
+				});
+
+
 			const previous =
 				stagedByName.get(
 					collectionName
 				);
 
 
-			const previousEvent =
-				previous ===
-					undefined
-					? undefined
-					: await this
+			let previousEvent:
+				SignedNostrEvent |
+				undefined;
+
+
+			if (
+				previous !== undefined &&
+				previous.inputRevision === inputRevision
+			) {
+				previousEvent =
+					await this
 						.stagingRepository
 						.read(
 							previous
 						);
+
+
+				if (
+					previousEvent.pubkey ===
+						request.publisher
+				) {
+					builtEvents.set(
+						collectionName,
+						previousEvent
+					);
+
+
+					this.logEventReused(
+						collectionName,
+						previous.eventId
+					);
+
+
+					this.logCollectionComplete(
+						collectionName,
+						descriptors.length
+					);
+
+
+					return previousEvent;
+				}
+			}
+
+
+			if (
+				previous !== undefined &&
+				previousEvent === undefined
+			) {
+				previousEvent =
+					await this
+						.stagingRepository
+						.read(
+							previous
+						);
+			}
 
 
 			this.logEventBuild(
@@ -383,6 +458,8 @@ export class CollectionBuilder {
 						request.stagingRoot,
 
 					collectionName,
+
+					inputRevision,
 
 					event,
 
@@ -493,6 +570,23 @@ export class CollectionBuilder {
 				collectionName,
 				childCollectionName,
 				resourceId
+			}
+		);
+	}
+
+
+	private logEventReused(
+		collectionName:
+			string,
+
+		eventId:
+			string
+	): void {
+		this.logger.verbose(
+			'collection.event.reused',
+			{
+				collectionName,
+				eventId
 			}
 		);
 	}

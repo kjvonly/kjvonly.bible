@@ -1,0 +1,8 @@
+# Generated publication Manifest and isolated staging generations.
+.publication.generated.json
+.staging/
+.staging.import-*/
+
+# Make-generated Blossom test data; the committed stub stays small.
+.large-content-block
+/source/sermons/large.nd.json

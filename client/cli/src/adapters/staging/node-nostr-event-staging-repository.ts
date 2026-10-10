@@ -44,7 +44,9 @@ export class NodeNostrEventStagingRepository
 			string,
 
 		category:
-			StagedNostrEventCategory
+			StagedNostrEventCategory,
+
+		logicalNames?: readonly string[]
 	): Promise<
 		readonly StagedNostrEventEntry[]
 	> {
@@ -54,17 +56,17 @@ export class NodeNostrEventStagingRepository
 		) {
 			case 'resource':
 				return this.listResourceEntries(
-					stagingRoot
+					stagingRoot, logicalNames
 				);
 
 			case 'collection':
 				return this.listCollectionEntries(
-					stagingRoot
+					stagingRoot, logicalNames
 				);
 
 			case 'filesystem':
 				return this.listFilesystemEntries(
-					stagingRoot
+					stagingRoot, logicalNames
 				);
 
 			default:
@@ -229,15 +231,17 @@ export class NodeNostrEventStagingRepository
 
 	private async listResourceEntries(
 		stagingRoot:
-			string
+			string,
+		logicalNames?: readonly string[]
 	): Promise<
 		readonly StagedNostrEventEntry[]
 	> {
 
-		const resourceNames =
-			await this.listResourceNames(
-				stagingRoot
-			);
+		// A supplied manifest list is authoritative; do not scan unrelated
+		// directories left behind by earlier imports or different manifests.
+		const resourceNames = logicalNames === undefined
+			? await this.listResourceNames(stagingRoot)
+			: [...new Set(logicalNames)].sort();
 
 
 		const resourceEntries =
@@ -269,7 +273,8 @@ export class NodeNostrEventStagingRepository
 
 	private async listCollectionEntries(
 		stagingRoot:
-			string
+			string,
+		logicalNames?: readonly string[]
 	): Promise<
 		readonly StagedNostrEventEntry[]
 	> {
@@ -282,20 +287,19 @@ export class NodeNostrEventStagingRepository
 				);
 
 
+		const names = logicalNames === undefined ? undefined : new Set(logicalNames);
 		return this.sortByPath(
-			entries.map(
-				entry =>
-					this.fromCollectionEntry(
-						entry
-					)
-			)
+			entries
+				.filter(entry => names === undefined || names.has(entry.collectionName))
+				.map(entry => this.fromCollectionEntry(entry))
 		);
 	}
 
 
 	private async listFilesystemEntries(
 		stagingRoot:
-			string
+			string,
+		logicalNames?: readonly string[]
 	): Promise<
 		readonly StagedNostrEventEntry[]
 	> {
@@ -308,13 +312,11 @@ export class NodeNostrEventStagingRepository
 				);
 
 
+		const names = logicalNames === undefined ? undefined : new Set(logicalNames);
 		return this.sortByPath(
-			entries.map(
-				entry =>
-					this.fromFilesystemEntry(
-						entry
-					)
-			)
+			entries
+				.filter(entry => names === undefined || names.has(entry.filesystemName))
+				.map(entry => this.fromFilesystemEntry(entry))
 		);
 	}
 

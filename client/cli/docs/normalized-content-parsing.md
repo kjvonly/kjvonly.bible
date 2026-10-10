@@ -126,6 +126,13 @@ sermons/
 
 The JSON is pretty-printed for inspection and ends with a newline.
 
+**Naming boundary:** `parse html` emits `.json`, whereas the separate
+`import normalized-documents` command discovers only `.nd.json`. Parsing does
+not silently rename its output or import it. After inspecting the result,
+copy/move it to the desired publication directory with a `.nd.json` suffix
+before using that importer. This keeps source conversion and Resource
+publication as separate, explicit operations.
+
 The document's optional `source` field records the source path relative to the parse root rather than an absolute machine path.
 
 Example:
@@ -189,7 +196,30 @@ kjvonly parse html ./incoming-sermons --root-selector '#content'
 kjvonly sync ./manifest.yaml
 ```
 
-The existing Resource build/publish pipeline consumes files. It does not need to understand HTML or reconstruct the source conversion process.
+Alternatively, use the implemented recursive Normalized Document import
+rather than writing Resource/Filesystem definitions for each accepted file.
+The `.nd.json` naming step is required because parsing outputs `.json`:
+
+```bash
+kjvonly parse html ./incoming-sermons --root-selector '#content'
+
+# After review, arrange approved output files under ./publication-source,
+# using names such as ./publication-source/sermons/romans-8.nd.json.
+kjvonly import normalized-documents ./publication-source \
+  --manifest ./publication.yaml \
+  --root library \
+  --output-manifest ./publication.generated.json
+kjvonly publish ./publication.generated.json
+```
+
+Here `publication.yaml` is a configuration-only publication Manifest (no
+explicit Resource, Collection, or Filesystem entries). Import builds and stages;
+only the subsequent `publish` command uploads artifacts and sends Nostr events.
+See [Filesystem recursive import](filesystem-recursive-import-discovery.md)
+for the implemented importer contract and the deferred mixed-type design.
+
+The Resource build/publish pipeline consumes files. Neither publication path
+needs to understand HTML or reconstruct the source conversion process.
 
 ---
 

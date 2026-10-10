@@ -1,0 +1,11 @@
+{
+  "blocks": [
+    {
+      "type": "paragraph",
+      "id": "blossom-large-paragraph",
+      "content": [
+__LARGE_WORD__
+      ]
+    }
+  ]
+}

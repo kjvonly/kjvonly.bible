@@ -51,6 +51,7 @@ import type {
 import {
     BuildManifestUseCase
 } from './build-manifest.js';
+import { ManifestBuildExecutor } from './manifest-build-executor.js';
 
 import {
     EncodingRegistry
@@ -303,9 +304,7 @@ function createBuild(
             logger
         );
 
-    return new BuildManifestUseCase(
-        loader,
-
+    const executor = new ManifestBuildExecutor(
         new SourceExpander(
             sourceRepository
         ),
@@ -329,6 +328,12 @@ function createBuild(
             build:
                 async () => {}
         },
+        logger
+    );
+
+    return new BuildManifestUseCase(
+        loader,
+        executor,
         logger
     );
 }

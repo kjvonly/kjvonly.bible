@@ -12,6 +12,7 @@ import { PublicationResult } from '#domain/publication/publication-result.js';
 
 
 
+/** Publishes previously staged state selected by one Manifest. */
 export interface PublishManifest {
 	publish(
 		manifestPath:
@@ -22,6 +23,11 @@ export interface PublishManifest {
 }
 
 
+/**
+ * Reads a Manifest's staging pointer, preflights remote targets, then attempts
+ * Blossom publication before Nostr reconciliation. Never rebuilds or resigns
+ * source events; remote publication is not part of the atomic local import.
+ */
 export class PublishManifestUseCase
 	implements PublishManifest {
 
@@ -43,6 +49,11 @@ export class PublishManifestUseCase
 	) { }
 
 
+	/**
+	 * @param manifestPath Input Manifest selecting the staged generation to publish.
+	 * @returns Per-target artifact/event publication results.
+	 * @throws If Manifest loading, preflight, upload, or relay publication fails.
+	 */
 	async publish(
 		manifestPath:
 			string

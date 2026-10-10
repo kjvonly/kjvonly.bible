@@ -1,22 +1,51 @@
-/** Filename metadata identifying one generated Collection Resource event. */
+/** Metadata identifying one current generated Collection Resource staging file. */
 export interface StagedCollectionEventMetadata {
 	readonly collectionName:
-	string;
+		string;
+
+	readonly inputRevision:
+		string;
 
 	readonly createdAt:
-	number;
+		number;
 
 	readonly eventId:
-	string;
+		string;
 }
+
+
+/** Metadata parsed from current or legacy Collection staging filenames. */
+export interface ParsedStagedCollectionEventMetadata {
+	readonly collectionName:
+		string;
+
+	/** Absent only for legacy pre-reuse Collection staging filenames. */
+	readonly inputRevision?:
+		string;
+
+	readonly createdAt:
+		number;
+
+	readonly eventId:
+		string;
+}
+
+
+const INPUT_REVISION_PATTERN =
+	/^[0-9a-f]{32}$/;
 
 
 const EVENT_ID_PATTERN =
 	/^[0-9a-f]{64}$/;
 
 
-const FILENAME_PATTERN =
+const CURRENT_FILENAME_PATTERN =
+	/^(.*)--([0-9a-f]{32})--(\d+)--([0-9a-f]{64})\.v2\.json$/;
+
+
+const LEGACY_FILENAME_PATTERN =
 	/^(.*)--(\d+)--([0-9a-f]{64})\.json$/;
+
 
 const MAX_STAGED_COLLECTION_NAME_BYTES =
 	128;
@@ -25,32 +54,27 @@ const MAX_STAGED_COLLECTION_NAME_BYTES =
 const MAX_STAGED_COLLECTION_EVENT_FILENAME_BYTES =
 	255;
 
-/** Builds the deterministic filename for one staged Collection event. */
+
+/** Builds the deterministic current filename for one staged Collection event. */
 export function buildStagedCollectionEventFilename(
 	metadata:
 		StagedCollectionEventMetadata
 ): string {
+	assertCollectionName(
+		metadata.collectionName
+	);
+
 
 	if (
-		metadata.collectionName.length ===
-		0
+		!INPUT_REVISION_PATTERN.test(
+			metadata.inputRevision
+		)
 	) {
 		throw new Error(
-			'Collection name is empty.'
+			'Invalid Collection input revision.'
 		);
 	}
 
-	if (
-		Buffer.byteLength(
-			metadata.collectionName,
-			'utf8'
-		) >
-		MAX_STAGED_COLLECTION_NAME_BYTES
-	) {
-		throw new Error(
-			`Collection name exceeds ${MAX_STAGED_COLLECTION_NAME_BYTES} UTF-8 bytes.`
-		);
-	}
 
 	if (
 		!Number.isInteger(
@@ -78,8 +102,9 @@ export function buildStagedCollectionEventFilename(
 	const filename =
 		(
 			`${metadata.collectionName}` +
+			`--${metadata.inputRevision}` +
 			`--${metadata.createdAt}` +
-			`--${metadata.eventId}.json`
+			`--${metadata.eventId}.v2.json`
 		);
 
 
@@ -92,73 +117,63 @@ export function buildStagedCollectionEventFilename(
 }
 
 
-/** Parses and validates one staged Collection-event filename. */
+/**
+ * Parses and validates one current or legacy staged Collection-event filename.
+ * Legacy files remain readable so the next build can migrate them by rebuilding
+ * once with semantic revision metadata.
+ */
 export function parseStagedCollectionEventFilename(
 	filename:
 		string
-): StagedCollectionEventMetadata {
-
+): ParsedStagedCollectionEventMetadata {
 	try {
 		assertFilename(
 			filename
 		);
 	}
 	catch {
-		throw new Error(
-			`Malformed staged collection event filename: ${filename}`
+		throw malformedFilename(
+			filename
 		);
 	}
-	const match =
-		FILENAME_PATTERN.exec(
+
+
+	const currentMatch =
+		CURRENT_FILENAME_PATTERN.exec(
 			filename
 		);
 
-
-	if (
-		match ===
-		null
-	) {
-		throw new Error(
-			`Malformed staged collection event filename: ${filename}`
-		);
-	}
+	const legacyMatch =
+		currentMatch === null
+			? LEGACY_FILENAME_PATTERN.exec(
+				filename
+			)
+			: null;
 
 
 	const collectionName =
-		match[1];
+		currentMatch?.[1] ??
+		legacyMatch?.[1];
 
-	if (collectionName &&
-		Buffer.byteLength(
-			collectionName,
-			'utf8'
-		) >
-		MAX_STAGED_COLLECTION_NAME_BYTES
-	) {
-		throw new Error(
-			`Malformed staged collection event filename: ${filename}`
-		);
-	}
+	const inputRevision =
+		currentMatch?.[2];
 
 	const createdAtText =
-		match[2];
-
+		currentMatch?.[3] ??
+		legacyMatch?.[2];
 
 	const eventId =
-		match[3];
+		currentMatch?.[4] ??
+		legacyMatch?.[3];
 
 
 	if (
-		collectionName ===
-		undefined ||
-		collectionName.length ===
-		0 ||
-		createdAtText ===
-		undefined ||
-		eventId ===
-		undefined
+		collectionName === undefined ||
+		createdAtText === undefined ||
+		eventId === undefined
 	) {
-		throw new Error(
-			`Malformed staged collection event filename: ${filename}`
+		throw malformedFilename(
+			filename
 		);
 	}
 
@@ -169,30 +184,81 @@ export function parseStagedCollectionEventFilename(
 		);
 
 
-	if (
-		!Number.isInteger(
-			createdAt
-		) ||
-		createdAt < 0
-	) {
-		throw new Error(
-			`Malformed staged collection event filename: ${filename}`
+	try {
+		assertCollectionName(
+			collectionName
+		);
+
+		if (
+			inputRevision !== undefined &&
+			!INPUT_REVISION_PATTERN.test(
+				inputRevision
+			)
+		) {
+			throw new Error();
+		}
+
+		if (
+			!Number.isInteger(
+				createdAt
+			) ||
+			createdAt < 0 ||
+			!EVENT_ID_PATTERN.test(
+				eventId
+			)
+		) {
+			throw new Error();
+		}
+	}
+	catch {
+		throw malformedFilename(
+			filename
 		);
 	}
 
 
 	return {
 		collectionName,
+		...(inputRevision === undefined
+			? {}
+			: { inputRevision }),
 		createdAt,
 		eventId
 	};
 }
 
+
+function assertCollectionName(
+	collectionName:
+		string
+): void {
+	if (
+		collectionName.length === 0
+	) {
+		throw new Error(
+			'Collection name is empty.'
+		);
+	}
+
+
+	if (
+		Buffer.byteLength(
+			collectionName,
+			'utf8'
+		) >
+			MAX_STAGED_COLLECTION_NAME_BYTES
+	) {
+		throw new Error(
+			`Collection name exceeds ${MAX_STAGED_COLLECTION_NAME_BYTES} UTF-8 bytes.`
+		);
+	}
+}
+
+
 function assertFilename(
 	filename:
 		string
 ): void {
-
 	if (
 		Buffer.byteLength(
 			filename,
@@ -204,4 +270,14 @@ function assertFilename(
 			`Staged collection event filename exceeds ${MAX_STAGED_COLLECTION_EVENT_FILENAME_BYTES} UTF-8 bytes.`
 		);
 	}
+}
+
+
+function malformedFilename(
+	filename:
+		string
+): Error {
+	return new Error(
+		`Malformed staged collection event filename: ${filename}`
+	);
 }

@@ -23,6 +23,12 @@ interface ArtifactPublicationPlan {
 }
 
 
+/**
+ * Publishes only object-upload artifacts belonging to Resources in the supplied
+ * Manifest. Validates staged paths/metadata before contacting Blossom. A
+ * source-backed symlink is checked by mtime and size, not by mandatory
+ * rehashing of the source file on every publication attempt.
+ */
 export class BlossomArtifactPublisher {
 
 	constructor(
@@ -40,6 +46,11 @@ export class BlossomArtifactPublisher {
 	) {}
 
 
+	/**
+	 * @param manifest Publication strategies and the selected Resource names.
+	 * @param stagingRoot Directory containing the selected staged generation.
+	 * @returns Per-server publication outcomes for the selected artifacts.
+	 */
 	async publish(
 		manifest:
 			Manifest,

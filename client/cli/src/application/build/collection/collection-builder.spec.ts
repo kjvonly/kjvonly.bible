@@ -65,6 +65,14 @@ const secretKey =
 	);
 
 
+async function getPublisher():
+	Promise<string> {
+	return new LocalNostrSigner(
+		secretKey
+	).getPublicKey();
+}
+
+
 function createLogger():
 	Logger {
 
@@ -151,6 +159,131 @@ function createDescriptor(
 		}
 	};
 }
+
+function createIncrementalCollectionManifest():
+	Manifest {
+	return {
+		version:
+			1,
+		kind:
+			37770,
+		staging: {
+			path:
+				'./.kjvonly'
+		},
+		nostr: {
+			relays: [
+				'wss://relay.example'
+			]
+		},
+		strategies:
+			{},
+		resources:
+			{},
+		collections: {
+			defaults: {
+				event: {
+					encoding: [
+						'hex'
+					],
+					tags: [
+						[
+							'd',
+							'kjvonly/resources/collections/default'
+						],
+						[
+							'm',
+							'application/json+hex'
+						],
+						[
+							't',
+							'resource/descriptor-collection'
+						],
+						[
+							'dataType',
+							'kjvonly.resource-descriptor-collection'
+						],
+						[
+							'dataVersion',
+							'1'
+						],
+						[
+							'representation',
+							'descriptors'
+						]
+					]
+				},
+				resources: [
+					'chapters'
+				],
+				collections: []
+			}
+		},
+		filesystems:
+			{}
+	};
+}
+
+
+function createIncrementalCollectionBuilder(
+	stagingRepository:
+		NodeCollectionEventStagingRepository,
+
+	signer:
+		LocalNostrSigner,
+
+	logger:
+		Logger = createLogger()
+): CollectionBuilder {
+	return new CollectionBuilder(
+		new CollectionEventBuilder(
+			new EncodingRegistry([
+				new GzipEncoder(),
+				new HexEncoder()
+			]),
+			signer,
+			{
+				nowEpochSeconds:
+					() =>
+						1000
+			}
+		),
+		new NostrEventResourceDescriptorBuilder(),
+		stagingRepository,
+		logger
+	);
+}
+
+
+function createCollectionRequest(
+	manifest:
+		Manifest,
+
+	stagingRoot:
+		string,
+
+	publisher:
+		string,
+
+	descriptor:
+		ResourceDescriptor
+) {
+	return {
+		manifest,
+		stagingRoot,
+		publisher,
+		descriptorsByResource:
+			new Map([
+				[
+					'chapters',
+					[
+						descriptor
+					]
+				]
+			])
+	};
+}
+
 
 
 afterEach(
@@ -318,6 +451,9 @@ describe(
 
 					stagingRoot,
 
+					publisher:
+						await getPublisher(),
+
 					descriptorsByResource:
 						new Map([
 							[
@@ -451,6 +587,195 @@ describe(
 						collectionCount:
 							1
 					}
+				);
+			}
+		);
+
+
+		it(
+			'reuses the exact signed Collection event when semantic inputs are unchanged',
+			async () => {
+				const stagingRoot =
+					await createDirectory();
+
+				const stagingRepository =
+					new NodeCollectionEventStagingRepository();
+
+				const logger =
+					createLogger();
+
+				const signer =
+					new LocalNostrSigner(
+						secretKey
+					);
+
+				const builder =
+					createIncrementalCollectionBuilder(
+						stagingRepository,
+						signer,
+						logger
+					);
+
+				const request =
+					createCollectionRequest(
+						createIncrementalCollectionManifest(),
+						stagingRoot,
+						await signer.getPublicKey(),
+						createDescriptor(
+							'kjvonly/test/1_1',
+							100
+						)
+					);
+
+
+				await builder.build(
+					request
+				);
+
+
+				const firstEntry =
+					(
+						await stagingRepository.list(
+							stagingRoot
+						)
+					)[0]!;
+
+				const firstEvent =
+					await stagingRepository.read(
+						firstEntry
+					);
+
+
+				await builder.build(
+					request
+				);
+
+
+				const secondEntry =
+					(
+						await stagingRepository.list(
+							stagingRoot
+						)
+					)[0]!;
+
+				const secondEvent =
+					await stagingRepository.read(
+						secondEntry
+					);
+
+
+				expect(
+					secondEntry.inputRevision
+				).toBe(
+					firstEntry.inputRevision
+				);
+
+				expect(
+					secondEvent
+				).toEqual(
+					firstEvent
+				);
+
+				expect(
+					logger.verbose
+				).toHaveBeenCalledWith(
+					'collection.event.reused',
+					{
+						collectionName:
+							'defaults',
+						eventId:
+							firstEvent.id
+					}
+				);
+			}
+		);
+
+
+		it(
+			'rebuilds a Collection when one ordered descriptor changes',
+			async () => {
+				const stagingRoot =
+					await createDirectory();
+
+				const stagingRepository =
+					new NodeCollectionEventStagingRepository();
+
+				const signer =
+					new LocalNostrSigner(
+						secretKey
+					);
+
+				const builder =
+					createIncrementalCollectionBuilder(
+						stagingRepository,
+						signer
+					);
+
+				const manifest =
+					createIncrementalCollectionManifest();
+
+				const publisher =
+					await signer.getPublicKey();
+
+
+				await builder.build(
+					createCollectionRequest(
+						manifest,
+						stagingRoot,
+						publisher,
+						createDescriptor(
+							'kjvonly/test/1_1',
+							100
+						)
+					)
+				);
+
+
+				const firstEntry =
+					(
+						await stagingRepository.list(
+							stagingRoot
+						)
+					)[0]!;
+
+
+				await builder.build(
+					createCollectionRequest(
+						manifest,
+						stagingRoot,
+						publisher,
+						createDescriptor(
+							'kjvonly/test/1_1',
+							101
+						)
+					)
+				);
+
+
+				const secondEntry =
+					(
+						await stagingRepository.list(
+							stagingRoot
+						)
+					)[0]!;
+
+
+				expect(
+					secondEntry.inputRevision
+				).not.toBe(
+					firstEntry.inputRevision
+				);
+
+				expect(
+					secondEntry.eventId
+				).not.toBe(
+					firstEntry.eventId
+				);
+
+				expect(
+					secondEntry.createdAt
+				).toBe(
+					1001
 				);
 			}
 		);
@@ -616,6 +941,9 @@ describe(
 					manifest,
 
 					stagingRoot,
+
+					publisher:
+						await getPublisher(),
 
 					descriptorsByResource:
 						new Map([
@@ -848,6 +1176,9 @@ describe(
 
 						stagingRoot,
 
+						publisher:
+							await getPublisher(),
+
 						descriptorsByResource:
 							new Map()
 					})
@@ -947,6 +1278,9 @@ describe(
 						manifest,
 
 						stagingRoot,
+
+						publisher:
+							await getPublisher(),
 
 						descriptorsByResource:
 							new Map()

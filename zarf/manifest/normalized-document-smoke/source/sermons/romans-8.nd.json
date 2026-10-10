@@ -1,0 +1,24 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "id": "sermon-heading",
+      "level": 1,
+      "content": [
+        { "type": "word", "text": "Romans" },
+        { "type": "word", "text": "8" }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "sermon-paragraph",
+      "content": [
+        { "type": "word", "text": "A" },
+        { "type": "word", "text": "sample" },
+        { "type": "word", "text": "sermon" },
+        { "type": "word", "text": "for" },
+        { "type": "word", "text": "publishing." }
+      ]
+    }
+  ]
+}

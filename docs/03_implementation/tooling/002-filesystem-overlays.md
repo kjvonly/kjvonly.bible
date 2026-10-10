@@ -12,6 +12,10 @@
 
 This implementation document records the CLI Filesystem overlay category used to publish Filesystem Resources from Resources and Collections that the CLI has already built.
 
+The Normalized Document directory importer builds this same overlay from discovered files.
+See [CLI Filesystem recursive import](../../../client/cli/docs/filesystem-recursive-import-discovery.md)
+for its current import command, generated Manifest, and staging-generation behavior.
+
 The manifest has three named publication categories:
 
 ```text
@@ -1445,6 +1449,7 @@ Implemented V1 work:
 ✓ staging-safe logical-name validation and centralized reserved staging names
 ✓ FilesystemBuilder after CollectionBuilder
 ✓ application-owned Nostr publication category ordering
+✓ Collection semantic input revision and exact signed-event reuse
 ✓ focused boundary tests
 ✓ small-scale filesystem-smoke manifest
 ✓ build and relay publication smoke validation
@@ -1457,7 +1462,6 @@ Still intentionally deferred:
 
 ```text
 real `zarf/manifest/app-data.yaml` Filesystem definitions
-Collection event reuse optimization
 explicit Filesystem deletion/tombstone semantics
 V2 recursive-directory / GUI authoring
 ```
@@ -1483,7 +1487,7 @@ filesystem-smoke/content/collection
 
 The live relay result confirmed that both values are Nostr-backed `ResourceDescriptor`s pointing at the target Resource/Collection events rather than bypassing the Resource layer and pointing directly at Blossom. The target event representation remains authoritative, so the chapter descriptor points to a `representation = descriptors` Resource event which then resolves its Blossom descriptor normally.
 
-The smoke test also confirmed the existing Collection behavior: Collection events may be re-signed on each build. Because a Filesystem input revision includes exact target event IDs, a newly signed Collection correctly causes a new Filesystem event. Collection reuse remains a separate deferred optimization.
+The original smoke test also captured the then-current Collection behavior: Collection events were re-signed on each build, so their new event IDs correctly invalidated dependent Filesystem revisions. Current CLI source now reuses the exact signed Collection event when its semantic inputs are unchanged. A genuinely changed Collection still receives a new event ID and therefore still invalidates dependent Filesystem overlays as intended.
 
 The same published Filesystem Resource was also installed through the PWA's ordinary `ResourceWorkerClient` path and produced two accepted Filesystem entries in IndexedDB. FileManager displayed those entries through its normal Filesystem service boundary. This proves the full publication-to-client vertical slice without introducing a Filesystem-specific Resource acquisition path.
 

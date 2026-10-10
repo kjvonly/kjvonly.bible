@@ -63,6 +63,7 @@ import {
 import { ConsoleLogger } from '#adapters/logging/console-logger.js';
 import { ObjectArtifactStager } from '#application/build/artifact/object-artifact-stager.js';
 import { BuildManifestUseCase } from '#application/build/build-manifest.js';
+import { ManifestBuildExecutor } from '#application/build/manifest-build-executor.js';
 import { CollectionBuilder } from '#application/build/collection/collection-builder.js';
 import { CollectionEventBuilder } from '#application/build/collection/collection-event-builder.js';
 import { DescriptorBackedResourceBuilder } from '#application/build/descriptor/descriptor-backed-resource-builder.js';
@@ -76,6 +77,18 @@ import { FilesystemEventBuilder } from '#application/build/filesystem/filesystem
 import { EncodingRegistry } from '#application/build/encoding/encoding-registry.js';
 import { InlineEventBuilder } from '#application/build/inline/inline-event-builder.js';
 import { SourceExpander } from '#application/build/source/source-expander.js';
+import { FilesystemImportClassifier } from '#application/import/classification/filesystem-import-classifier.js';
+import { NormalizedDocumentRecognizer } from '#application/import/classification/recognizers/normalized-document-recognizer.js';
+import { FilesystemSemanticImportResolver } from '#application/import/resolution/filesystem-semantic-import-resolver.js';
+import { NodeImportContentReader } from '#adapters/import/node-import-content-reader.js';
+import { NormalizedDocumentManifestCompiler } from '#application/import/manifest/normalized-document-manifest-compiler.js';
+import { BuildNormalizedDocumentImport } from '#application/import/manifest/build-normalized-document-import.js';
+import { BuildNormalizedDocumentDirectory } from '#application/import/directory/build-normalized-document-directory.js';
+import { NodeImportDirectoryWalker } from '#adapters/import/node-import-directory-walker.js';
+import { NodeGeneratedManifestWriter } from '#adapters/import/node-generated-manifest-writer.js';
+import { NodeImportStagingWorkspace } from '#adapters/import/node-import-staging-workspace.js';
+import { SemanticTypeRegistry } from '#application/semantic/semantic-type-registry.js';
+import { createNormalizedDocumentSemanticType } from '#application/semantic/definitions/normalized-document-semantic-type.js';
 import { ParseUseCase } from '#application/parse/parse.js';
 import { ParseDirectoryUseCase } from '#application/parse/batch/parse-directory.js';
 import { NodeParseWorkspace } from '#adapters/parse/node-parse-workspace.js';
@@ -251,6 +264,25 @@ export function createCliComposition() {
 
 	// =============================================================================
 	// Manifest / Build / Publish / Sync
+	// Semantic import contracts remain separate from file recognition.
+	const filesystemImportClassifier =
+		new FilesystemImportClassifier([
+			new NormalizedDocumentRecognizer()
+		]);
+
+	const semanticTypeRegistry =
+		new SemanticTypeRegistry([
+			createNormalizedDocumentSemanticType(
+				normalizedDocumentValidator
+			)
+		]);
+
+	const filesystemSemanticImportResolver =
+		new FilesystemSemanticImportResolver(
+			filesystemImportClassifier,
+			semanticTypeRegistry
+		);
+
 	const workingDirectory =
 		process.cwd();
 
@@ -404,9 +436,8 @@ export function createCliComposition() {
 			logger
 		);
 
-	const buildManifest =
-		new BuildManifestUseCase(
-			manifestLoader,
+	const manifestBuildExecutor =
+		new ManifestBuildExecutor(
 			sourceExpander,
 			sourceRepository,
 			eventBuilder,
@@ -415,6 +446,30 @@ export function createCliComposition() {
 			descriptorBackedResourceBuilder,
 			collectionBuilder,
 			filesystemBuilder,
+			logger
+		);
+
+	const buildNormalizedDocumentImport =
+		new BuildNormalizedDocumentImport(
+			filesystemSemanticImportResolver,
+			path => new NodeImportContentReader(path),
+			new NormalizedDocumentManifestCompiler(),
+			manifestBuildExecutor
+		);
+
+	const buildNormalizedDocumentDirectory =
+		new BuildNormalizedDocumentDirectory(
+			new NodeImportDirectoryWalker(),
+			manifestLoader,
+			buildNormalizedDocumentImport,
+			new NodeGeneratedManifestWriter(),
+			new NodeImportStagingWorkspace()
+		);
+
+	const buildManifest =
+		new BuildManifestUseCase(
+			manifestLoader,
+			manifestBuildExecutor,
 			logger
 		);
 
@@ -496,6 +551,7 @@ export function createCliComposition() {
 		createCli({
 			parseDirectory,
 			buildManifest,
+			buildNormalizedDocumentDirectory,
 			publishManifest,
 			syncManifest,
 			setVerbose:
@@ -510,6 +566,11 @@ export function createCliComposition() {
 
 	return {
 		cli,
-		parse
+		parse,
+		semanticTypeRegistry,
+		filesystemImportClassifier,
+		filesystemSemanticImportResolver,
+		buildNormalizedDocumentImport,
+		buildNormalizedDocumentDirectory
 	};
 }

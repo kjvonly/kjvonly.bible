@@ -1,0 +1,24 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "id": "intro-heading",
+      "level": 1,
+      "content": [
+        { "type": "word", "text": "Filesystem" },
+        { "type": "word", "text": "Smoke" }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "id": "intro-paragraph",
+      "content": [
+        { "type": "word", "text": "This" },
+        { "type": "word", "text": "document" },
+        { "type": "word", "text": "tests" },
+        { "type": "word", "text": "recursive" },
+        { "type": "word", "text": "import." }
+      ]
+    }
+  ]
+}

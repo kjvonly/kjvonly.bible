@@ -23,6 +23,7 @@ import { Manifest } from '#domain/manifest/manifest.js';
 import { ResourceDescriptor } from '#domain/resource/resource-descriptor.js';
 import { ConcreteSource } from '#domain/source/concrete-source.js';
 
+/** One Resource definition expanded into concrete external-storage sources. */
 export interface BuildDescriptorBackedResourceRequest {
 	readonly manifest:
 	Manifest;
@@ -38,6 +39,14 @@ export interface BuildDescriptorBackedResourceRequest {
 }
 
 
+/**
+ * Stages object artifacts, builds their Resource descriptors, and reconciles
+ * the signed descriptor-backed Resource events. The artifact's SHA-256 is
+ * required for Blossom publication; unchanged sources can reuse its *staged*
+ * hash using source metadata rather than hashing on every build.
+ *
+ * This builder does not upload artifacts or publish events to remote services.
+ */
 export class DescriptorBackedResourceBuilder {
 
 	constructor(
@@ -65,6 +74,11 @@ export class DescriptorBackedResourceBuilder {
 	) { }
 
 
+	/**
+	 * @param request Manifest strategy, staging root, Resource name and sources.
+	 * @returns Descriptors pointing to staged artifacts and their publication URLs.
+	 * @throws If the strategy, artifact or signed event cannot be constructed.
+	 */
 	async build(
 		request:
 			BuildDescriptorBackedResourceRequest
