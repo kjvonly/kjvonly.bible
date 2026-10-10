@@ -326,6 +326,24 @@ DOM word identity
 selected-word Note reference behavior
 ```
 
+## Bible Note Location Selection
+
+```text
+docs/03_implementation/domains/bible/004-note-location-selection.md
+```
+
+Read when working on:
+
+```text
+inline exact-location Note access
+chapter-scoped Notes from the Bible Reader
+explicit Add Note word selection
+Notes list scope vs new-draft location
+chapter-level Note creation
+Bible edit interaction while selecting a Note location
+compact expandable Notes actions
+```
+
 ---
 
 # Testing Architecture

@@ -1,10 +1,10 @@
+<!-- @component
+Renders one Bible verse with paragraph/pericope presentation and Word children. It is a presentation/composition layer; chapter-level click/drag semantics are delegated from the parent chapter surface.
+-->
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// MODELS
-	import {
-		type BibleMode,
-		type Verse
-	} from '../../../models/bible.model';
+	import type { Verse } from '../../../models/bible.model';
 	import type {
 		BibleParagraphMap
 	} from '../../../models/bible-paragraphs.model';
@@ -23,27 +23,29 @@
 
 	// =============================== BINDINGS ================================
 
+	interface Props {
+		/** Mutable chapter Text Markup draft rendered by descendant Word components. */
+		textMarkup: BibleTextMarkup;
+		/** Installed paragraph presentation keyed for the active chapter. */
+		paragraphs: BibleParagraphMap;
+		/** Installed pericope presentation keyed for the active chapter. */
+		pericopes: BiblePericopeMap;
+		/** Exact-location Note lookup used by descendant Word components. */
+		notes: ChapterNotesByLocation;
+		/** Active canonical Bible location used to derive Word/paragraph/pericope identity. */
+		bibleLocationRef: string;
+		/** Verse domain object rendered by this component. */
+		verse: Verse;
+	}
+
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
 		paragraphs = $bindable<BibleParagraphMap>(),
 		pericopes = $bindable<BiblePericopeMap>(),
-		mode = $bindable<BibleMode>(),
 		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
-		bibleVersion,
-		footnotes,
 		verse
-	}: {
-		textMarkup: BibleTextMarkup;
-		paragraphs: BibleParagraphMap;
-		pericopes: BiblePericopeMap;
-		mode: BibleMode;
-		notes: ChapterNotesByLocation;
-		bibleLocationRef: string;
-		bibleVersion: string;
-		footnotes: { [key: string]: string };
-		verse: Verse;
-	} = $props();
+	}: Props = $props();
 </script>
 
 {#if verse}
@@ -62,12 +64,9 @@
 		{#each verse.words.slice(0, 2) as word, idx}<Word
 				bind:textMarkup
 				bind:notes
-				bind:mode
 				{verse}
 				{word}
-				{footnotes}
 				{bibleLocationRef}
-				{bibleVersion}
 				wordIdx={idx}
 			></Word>
 		{/each}
@@ -75,12 +74,9 @@
 		<Word
 			bind:textMarkup
 			bind:notes
-			bind:mode
 			{verse}
 			{word}
-			{footnotes}
 			{bibleLocationRef}
-			{bibleVersion}
 			wordIdx={idx + 2}
 		></Word>
 	{/each}

@@ -1,7 +1,7 @@
 <!--
 Notes may be associated with a Bible location or may stand alone.
-When bibleLocationRef is supplied by NavigationState, this view shows only
-notes for that location. Without it, the view shows all notes.
+An explicit Bible scope controls whether this view shows all Notes, one exact
+location, or every Note associated with a chapter.
 -->
 <script lang="ts">
 	// ================================ IMPORTS ================================
@@ -30,6 +30,12 @@ notes for that location. Without it, the view shows all notes.
 	import type {
 		NoteListItem
 	} from './notesList/note-list-item';
+	import type {
+		NotesBibleScope
+	} from '../models/notes-navigation.model';
+	import {
+		filterNotesByBibleScope
+	} from '../services/notes-bible-scope';
 
 	// APPLICATION
 	import {
@@ -40,17 +46,20 @@ notes for that location. Without it, the view shows all notes.
 	const {
 		notesService,
 		notesAvailabilityService,
-		toastService
+		toastService,
+		bibleLocationReferenceService
 	} = useApplicationContext();
 
 	// =============================== BINDINGS ================================
 
 	let {
-		bibleLocationRef,
+		bibleScope,
+		createBibleLocationRef,
 		noteIDToOpen = '',
 		navigationState
 	}: {
-		bibleLocationRef?: string;
+		bibleScope?: NotesBibleScope;
+		createBibleLocationRef?: string;
 		noteIDToOpen: string;
 		navigationState: NavigationState;
 	} = $props();
@@ -65,6 +74,7 @@ notes for that location. Without it, the view shows all notes.
 	let availableNotes: AvailableNote[] = $state([]);
 	let availableSearchGeneration = 0;
 	let openedNoteID: string | undefined = $state();
+	let pendingCreateBibleLocationRef = $state(createBibleLocationRef);
 	let noteListItems: NoteListItem[] = $derived(
 		createNoteListItems()
 	);
@@ -153,21 +163,13 @@ notes for that location. Without it, the view shows all notes.
 	}
 
 	function onSearchResults(results: { notes: NotesById }) {
-		if (bibleLocationRef === undefined) {
-			noteKeys = [];
-			notes = results.notes;
-			onFilterInputChanged();
-		} else {
-			noteKeys = [];
-			notes = {};
-			/** filter to keys with the same bibleLocationRef*/
-			Object.keys(results.notes).forEach((k) => {
-				if (results.notes[k].bibleLocationRef === bibleLocationRef) {
-					notes[k] = results.notes[k];
-				}
-			});
-			onFilterInputChanged();
-		}
+		noteKeys = [];
+		notes = filterNotesByBibleScope(
+			results.notes,
+			bibleScope,
+			bibleLocationReferenceService
+		);
+		onFilterInputChanged();
 
 		if (
 			noteIDToOpen.length > 0 &&
@@ -214,7 +216,7 @@ notes for that location. Without it, the view shows all notes.
 			);
 
 		if (
-			bibleLocationRef !==
+			bibleScope !==
 				undefined ||
 			!titleSearchEnabled
 		) {
@@ -350,6 +352,10 @@ notes for that location. Without it, the view shows all notes.
 		note = newNote;
 		notePersisted = false;
 	}
+
+	function onCreateBibleLocationConsumed(): void {
+		pendingCreateBibleLocationRef = undefined;
+	}
 </script>
 
 <!-- ============================== CONTAINER ============================== -->
@@ -360,7 +366,9 @@ notes for that location. Without it, the view shows all notes.
 		bind:filterInput
 		{noteListItems}
 		{onSelectedNoteListItem}
-		{bibleLocationRef}
+		{bibleScope}
+		createBibleLocationRef={pendingCreateBibleLocationRef}
+		{onCreateBibleLocationConsumed}
 		{filterParams}
 		{onFilterParamChanged}
 		{onFilterInputChanged}

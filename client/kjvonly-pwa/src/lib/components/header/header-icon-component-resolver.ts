@@ -17,7 +17,6 @@ import FormatListNumbered from '../svgs/formatListNumbered.svelte';
 import Grid from '../svgs/grid.svelte';
 import Import from '../svgs/import.svelte';
 import List from '../svgs/list.svelte';
-import MoreVertical from '../svgs/moreVertical.svelte';
 import Pending from '../svgs/pending.svelte';
 import Save from '../svgs/save.svelte';
 import Search from '../svgs/search.svelte';
@@ -51,7 +50,6 @@ const HEADER_ICON_COMPONENTS = {
 	grid: Grid,
 	import: Import,
 	list: List,
-	'more-vertical': MoreVertical,
 	pending: Pending,
 	save: Save,
 	search: Search,

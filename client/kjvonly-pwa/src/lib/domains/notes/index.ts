@@ -54,6 +54,12 @@ export type {
 } from './runtime/search/notes-search-worker-message';
 
 export {
+	NOTES_BIBLE_SCOPE_KINDS,
 	NOTES_VIEWS,
+	parseNotesBibleScope,
+	parseNotesNavigationIntent,
+	type NotesBibleScope,
+	type NotesBibleScopeKind,
+	type NotesNavigationIntent,
 	type NotesView
 } from './models/notes-navigation.model';

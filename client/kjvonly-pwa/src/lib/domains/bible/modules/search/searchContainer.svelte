@@ -2,6 +2,7 @@
 	// ================================ IMPORTS ================================
 	import {
 		KJVBackButton,
+		KJVMoreActionsButton,
 		ViewBody,
 		ViewHeader,
 		SearchView,
@@ -325,10 +326,15 @@
 	<KJVBackButton></KJVBackButton>
 {/snippet}
 
+{#snippet trailingContent()}
+	<KJVMoreActionsButton onClick={onOverflowClick}></KJVMoreActionsButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		title="Search"
 		{leadingContent}
+		{trailingContent}
 		actions={[
 			{
 				icon: 'split-horizontal',
@@ -339,11 +345,6 @@
 				icon: 'split-vertical',
 				label: 'Split pane vertically',
 				onClick: onSplitVertical
-			},
-			{
-				icon: 'more-vertical',
-				label: 'More actions',
-				onClick: onOverflowClick
 			}
 		]}
 	></KJVHeader>

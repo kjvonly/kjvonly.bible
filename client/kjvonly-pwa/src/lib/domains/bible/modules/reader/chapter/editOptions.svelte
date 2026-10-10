@@ -1,3 +1,8 @@
+<!-- @component
+Renders the Bible Reader edit toolbar for Text Markup and Notes actions. Owns
+markup palette/type selection UI and coordinates Chapter Notes/Add Note intent;
+actual chapter click/drag mutations remain owned by chapter.svelte.
+-->
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
@@ -8,27 +13,57 @@
 		Modules,
 		useNavigationRuntimeContext
 	} from '$lib/application';
-	import { NOTES_VIEWS } from '$lib/domains/notes';
+	import {
+		NOTES_BIBLE_SCOPE_KINDS,
+		NOTES_VIEWS
+	} from '$lib/domains/notes';
 	import type { BibleMode } from '../../../models/bible.model';
 
+	import {
+		KJVExpandableActionCluster,
+		type KJVExpandableActionClusterItem
+	} from '$lib/components/actions';
+
+	import {
+		BIBLE_READER_EDIT_INTENTS,
+		useBibleReaderEditContext
+	} from '../runtime/bible-reader-edit-context';
+
 	import Highlighter from '$lib/components/svgs/highlighter.svelte';
+	import AddNote from '$lib/components/svgs/addNote.svelte';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';
 	import TextFormat from '$lib/components/svgs/textFormat.svelte';
 	import Underline from '$lib/components/svgs/underline.svelte';
 
 	// =============================== BINDINGS ================================
+
+	interface Props {
+		/** Mutable Reader edit mode carrying the selected markup type/color. */
+		mode: BibleMode;
+		/** Canonical `bookID_chapter` scope used by the Chapter Notes action. */
+		bibleChapterRef: string;
+		/** Saves Text Markup and returns the Reader to reading mode. */
+		onExitEdit: () => Promise<void>;
+	}
+
 	let {
 		mode = $bindable<BibleMode>(),
+		bibleChapterRef,
 		onExitEdit
-	}: {
-		mode: BibleMode;
-		onExitEdit: () => Promise<void>;
-	} = $props();
+	}: Props = $props();
 
 	const { navigation } =
 		useNavigationRuntimeContext();
+	const readerEdit =
+		useBibleReaderEditContext();
 
 	// ================================= VARS ==================================
+
+	let noteLocationSelectionActive =
+		$derived(
+			readerEdit.intent ===
+				BIBLE_READER_EDIT_INTENTS.NOTE_LOCATION
+		);
 
 	let selectedColor = $state('a');
 	let selectedMarkup = $state('bg');
@@ -37,7 +72,6 @@
 	let underlineColor = $state(5);
 	let textColor = $state(5);
 	let highlighterColor = $state(0);
-	let colorPickerExpanded = $state(false);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -48,39 +82,43 @@
 
 	// ============================== CLICK FUNCS ==============================
 
+	/**
+	 * Selects a palette color while preserving the currently active markup type.
+	 *
+	 * @param color - Palette ID (`a` through `e`) chosen from the shared cluster.
+	 */
 	function onSelectColor(color: string) {
 		selectedColor = color;
 		onType(selectedType);
 		updateColorMarkup();
 	}
 
-	function onColorOptionClick(color: string): void {
-		if (!colorPickerExpanded) {
-			colorPickerExpanded = true;
-			return;
-		}
-
-		onSelectColor(color);
-		colorPickerExpanded = false;
-	}
-
-	async function onNoteClick(): Promise<void> {
+	/** Saves pending Text Markup, then opens Notes scoped to the current chapter. */
+	async function onChapterNotesClick(): Promise<void> {
 		await onExitEdit();
 
 		navigation.pushModule(
 			Modules.NOTES,
 			NOTES_VIEWS.ROOT,
 			{
-				bibleLocationRef:
-					mode.bibleLocationRef
+				bibleScope: {
+					kind: NOTES_BIBLE_SCOPE_KINDS.CHAPTER,
+					bibleLocationRef: bibleChapterRef
+				}
 			}
 		);
 	}
 
+	/** Rebuilds `mode.colorMarkup` from the selected markup family and palette color. */
 	function updateColorMarkup() {
 		mode.colorMarkup = selectedMarkup + '-highlight' + selectedColor;
 	}
 
+	/**
+	 * Selects the active Text Markup family and synchronizes toolbar icon fills.
+	 *
+	 * @param index - Index into `types`: text, background highlight, or decoration.
+	 */
 	function onType(index: number) {
 		for (let i = 0; i < fill.length; i++) {
 			if (i == index) {
@@ -118,75 +156,122 @@
 		{ color: 'e', classes: 'bg-highlighte' }
 	] as const;
 
-	const collapsedColorZClasses = ['z-50', 'z-40', 'z-30', 'z-20', 'z-10'] as const;
+	let colorActions: readonly KJVExpandableActionClusterItem[] =
+		$derived(
+			colorOptions.map((option) => ({
+				id: option.color,
+				label: `select color ${option.color}`,
+				onSelect: () => onSelectColor(option.color),
+				pressed: selectedColor === option.color
+			}))
+		);
 
-	let visibleColorOptions = $derived(
-		colorPickerExpanded
-			? colorOptions
-			: [
-				...colorOptions.filter((option) => option.color === selectedColor),
-				...colorOptions.filter((option) => option.color !== selectedColor)
-			]
-	);
+	/**
+	 * Returns the Tailwind palette class rendered for one shared-cluster action.
+	 *
+	 * @param id - Palette action ID.
+	 */
+	function colorActionClass(id: string): string {
+		return colorOptions.find(
+			(option) => option.color === id
+		)?.classes ?? '';
+	}
 </script>
 
+{#snippet colorActionIcon(item: KJVExpandableActionClusterItem)}
+	<span
+		class="block h-full w-full rounded-full {colorActionClass(item.id)} {item.pressed
+			? 'ring-2 ring-neutral-700'
+			: ''}"
+	></span>
+{/snippet}
+
 <div class="w-full overflow-x-auto border bg-neutral-50">
-	<div class="flex min-w-max items-center gap-4 px-3 py-2">
-		<div
-			class="flex h-8 shrink-0 items-center"
-			role="group"
-			aria-label="markup color picker"
-		>
-			{#each visibleColorOptions as option, index}
-				<button
-					onclick={() => onColorOptionClick(option.color)}
-					aria-label={colorPickerExpanded
-						? `select color ${option.color}`
-						: 'expand colors'}
-					aria-pressed={selectedColor === option.color}
-					aria-expanded={colorPickerExpanded}
-					class="{option.classes} relative h-8 w-8 shrink-0 rounded-full transition-all duration-200 ease-out {index ===
-					0
-						? ''
-						: colorPickerExpanded
-							? 'ml-2'
-							: '-ml-6'} {colorPickerExpanded
-						? 'z-0'
-						: collapsedColorZClasses[index]} {selectedColor === option.color
-						? 'ring-2 ring-neutral-700'
-						: ''}"
-				></button>
-			{/each}
+	{#if noteLocationSelectionActive}
+		<div class="flex min-h-12 w-full items-center justify-between gap-4 px-3 py-2">
+			<span class="font-medium text-neutral-700">Select a verse or word for the note</span>
+			<button
+				onclick={readerEdit.cancelNoteLocationSelection}
+				aria-label="cancel note location selection"
+				class="shrink-0 px-2 py-1 font-medium text-neutral-700 underline"
+			>
+				Cancel
+			</button>
 		</div>
+	{:else}
+		<div class="flex min-w-max items-center gap-4 px-3 py-2">
+			<div
+				class="flex h-8 shrink-0 items-center gap-4"
+				role="group"
+				aria-label="text markup actions"
+			>
+				<KJVExpandableActionCluster
+					items={colorActions}
+					label="markup color picker"
+					expandLabel="expand colors"
+					itemContent={colorActionIcon}
+					collapsedPrimaryId={selectedColor}
+					collapsedOverlapClass="-ml-6"
+				></KJVExpandableActionCluster>
 
-		<button
-			onclick={() => onType(0)}
-			aria-label="text color"
-			class="h-8 w-8 shrink-0"
-		>
-			<TextFormat classes={`h-full w-full ${fills[textColor]}`}></TextFormat>
-		</button>
+				<button
+					type="button"
+					onclick={() => onType(0)}
+					aria-label="text color"
+					class="h-8 w-8 shrink-0"
+				>
+					<TextFormat classes={`h-full w-full ${fills[textColor]}`}></TextFormat>
+				</button>
 
-		<button
-			onclick={() => onType(1)}
-			aria-label="highlight color"
-			class="h-8 w-8 shrink-0"
-		>
-			<Highlighter classes={`h-full w-full ${fills[highlighterColor]}`}></Highlighter>
-		</button>
+				<button
+					type="button"
+					onclick={() => onType(1)}
+					aria-label="highlight color"
+					class="h-8 w-8 shrink-0"
+				>
+					<Highlighter classes={`h-full w-full ${fills[highlighterColor]}`}></Highlighter>
+				</button>
 
-		<button
-			onclick={() => onType(2)}
-			aria-label="underline color"
-			class="h-8 w-8 shrink-0"
-		>
-			<Underline classes={`h-full w-full ${fills[underlineColor]}`}></Underline>
-		</button>
+				<button
+					type="button"
+					onclick={() => onType(2)}
+					aria-label="underline color"
+					class="h-8 w-8 shrink-0"
+				>
+					<Underline classes={`h-full w-full ${fills[underlineColor]}`}></Underline>
+				</button>
+			</div>
 
-		<button onclick={onNoteClick} aria-label="note" class="h-8 w-8 shrink-0">
-			<NoteStack classes="h-full w-full fill-neutral-700"></NoteStack>
-		</button>
-	</div>
+			<div
+				class="h-6 w-px shrink-0 bg-neutral-300"
+				aria-hidden="true"
+			></div>
+
+			<div
+				class="flex h-8 shrink-0 items-center gap-4"
+				role="group"
+				aria-label="note actions"
+			>
+				<button
+					type="button"
+					onclick={onChapterNotesClick}
+					aria-label="chapter notes"
+					class="h-8 w-8 shrink-0"
+				>
+					<NoteStack classes="h-full w-full fill-neutral-700"></NoteStack>
+				</button>
+
+				<button
+					type="button"
+					onclick={readerEdit.startNoteLocationSelection}
+					aria-label="add note"
+					class="h-8 w-8 shrink-0"
+				>
+					<AddNote classes="h-full w-full text-neutral-700"></AddNote>
+				</button>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <!-- typescript will optimize these out if not used. Must keep them in dom -->

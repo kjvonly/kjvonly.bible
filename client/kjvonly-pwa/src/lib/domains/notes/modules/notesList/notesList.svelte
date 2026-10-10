@@ -4,6 +4,7 @@
 	// ================================ IMPORTS ================================
 	import {
 		KJVBackButton,
+		KJVMoreActionsButton,
 		ViewHeader,
 		ViewBody
 	} from '$lib/application/ui';
@@ -23,6 +24,9 @@
 	import type {
 		Note
 	} from '../../models/note.model';
+	import {
+		createNewNoteDraft
+	} from '../../models/note-draft';
 	import { createNoteDomainObjectId } from '../../models/note-id';
 	import type {
 		NoteListItem
@@ -55,6 +59,7 @@
 		NOTES_LIST_ACTIONS,
 		NOTES_NAVIGATION_RESULTS,
 		NOTES_VIEWS,
+		type NotesBibleScope,
 		type NotesListAction
 	} from '../../models/notes-navigation.model';
 
@@ -66,6 +71,7 @@
 		toastService,
 		verseService,
 		bibleBooknamesService,
+		bibleLocationReferenceService,
 		moduleResourceSelectionResolver
 	} = useApplicationContext();
 
@@ -86,7 +92,9 @@
 		filterInput = $bindable(),
 		noteListItems,
 		onSelectedNoteListItem,
-		bibleLocationRef,
+		bibleScope,
+		createBibleLocationRef,
+		onCreateBibleLocationConsumed,
 		filterParams,
 		onFilterParamChanged,
 		onFilterInputChanged,
@@ -96,7 +104,9 @@
 		filterInput: string;
 		noteListItems: NoteListItem[];
 		onSelectedNoteListItem: (item: NoteListItem) => Promise<void>;
-		bibleLocationRef?: string;
+		bibleScope?: NotesBibleScope;
+		createBibleLocationRef?: string;
+		onCreateBibleLocationConsumed: () => void;
 		filterParams: NoteFilterParameter[];
 		onFilterParamChanged: (index: NoteFilterIndex, checked: boolean) => void;
 		onFilterInputChanged: () => void;
@@ -114,11 +124,24 @@
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(() =>
-		onResult(
-			onNavigationResult
-		)
-	);
+	onMount(() => {
+		const unsubscribe =
+			onResult(
+				onNavigationResult
+			);
+
+		if (createBibleLocationRef) {
+			const location =
+				createBibleLocationRef;
+
+			// Consume before opening the draft so closing it returns to the
+			// chapter-scoped list instead of creating another draft.
+			onCreateBibleLocationConsumed();
+			void onAdd(location);
+		}
+
+		return unsubscribe;
+	});
 
 	// ============================== CLICK FUNCS ==============================
 
@@ -274,10 +297,10 @@
 			);
 	}
 
-	async function onAdd() {
-		const keys = bibleLocationRef?.split('_');
+	async function onAdd(
+		bibleLocationRefOverride?: string
+	) {
 		const now = Date.now();
-		let newNote: Note;
 		const notesSource =
 			requireResourceSelection(
 				NOTES_RESOURCE_TYPE
@@ -288,84 +311,108 @@
 				notesSource,
 				uuid4()
 			);
-		if (!bibleLocationRef || !keys) {
-			newNote = {
-				id: noteID,
-				bibleLocationRef: undefined,
-				bibleReferenceText: undefined,
-				text: ``,
-				html: ``,
-				title: `Note`,
-				dateCreated: now,
-				dateUpdated: now,
-				tags: []
-			};
-		} else {
-			const [
-				bookID,
-				chapterNumber,
-				verseNumber,
-				wordIndex
-			] = keys;
 
-			if (!bookID || !chapterNumber || !verseNumber) {
-				throw new Error(
-					`Invalid Bible location reference: ${bibleLocationRef}`
-				);
-			}
+		const bibleLocationRef =
+			bibleLocationRefOverride ??
+			bibleScope?.bibleLocationRef;
 
-			const chapterSource =
-				requireResourceSelection(
-					BIBLE_CHAPTER_RESOURCE_TYPE
-				);
-
-			const booknamesSource =
-				requireResourceSelection(
-					BIBLE_BOOKNAMES_RESOURCE_TYPE
-				);
-
-			const [
-				verse,
-				booknames
-			] = await Promise.all([
-				verseService.get(
-					chapterSource,
-					bibleLocationRef
-				),
-				bibleBooknamesService.get(
-					booknamesSource
-				)
-			]);
-
-			const verseTextWithoutVerseNumber = verse.text.slice(
-				verse.text.indexOf(' ') + 1
+		if (!bibleLocationRef) {
+			onAddNewNote(
+				createNewNoteDraft({
+					kind: 'standalone',
+					id: noteID,
+					now
+				})
 			);
-
-			const bookName =
-				booknames.shortNames[bookID] ?? '';
-
-			const wordSuffix =
-				wordIndex && Number(wordIndex) > 0
-					? `:${wordIndex}`
-					: '';
-
-			const title =
-				`${bookName} ${chapterNumber}:${verseNumber}${wordSuffix}`;
-
-			newNote = {
-				id: noteID,
-				bibleLocationRef,
-				bibleReferenceText: `${bookName} ${chapterNumber}:${verseNumber}`,
-				text: `${title}\n${verseTextWithoutVerseNumber}`,
-				html: `<h1>${title}</h1><p><italic>${verseTextWithoutVerseNumber}</italic></p>`,
-				title: `${title}`,
-				dateCreated: now,
-				dateUpdated: now,
-				tags: []
-			};
+			return;
 		}
 
-		onAddNewNote(newNote);
+		// Validate the location at the Bible boundary before loading metadata.
+		bibleLocationReferenceService
+			.extractBookIDChapter(
+				bibleLocationRef
+			);
+
+		const bookID =
+			bibleLocationReferenceService
+				.extractBookID(
+					bibleLocationRef
+				);
+		const chapterNumber =
+			bibleLocationReferenceService
+				.extractChapter(
+					bibleLocationRef
+				);
+		const booknamesSource =
+			requireResourceSelection(
+				BIBLE_BOOKNAMES_RESOURCE_TYPE
+			);
+		const booknames =
+			await bibleBooknamesService.get(
+				booknamesSource
+			);
+		const bookName =
+			booknames.shortNames[bookID] ??
+			bookID;
+
+		if (
+			!bibleLocationReferenceService
+				.hasVerse(
+					bibleLocationRef
+				)
+		) {
+			onAddNewNote(
+				createNewNoteDraft({
+					kind: 'chapter',
+					id: noteID,
+					now,
+					bibleLocationRef,
+					bookName,
+					chapterNumber
+				})
+			);
+			return;
+		}
+
+		const chapterSource =
+			requireResourceSelection(
+				BIBLE_CHAPTER_RESOURCE_TYPE
+			);
+		const verse =
+			await verseService.get(
+				chapterSource,
+				bibleLocationRef
+			);
+		const verseTextWithoutVerseNumber =
+			verse.text.slice(
+				verse.text.indexOf(' ') + 1
+			);
+		const verseNumber =
+			bibleLocationReferenceService
+				.extractVerse(
+					bibleLocationRef
+				);
+		const wordIndex = Number(
+			bibleLocationReferenceService
+				.extractWordIndexOrDefault(
+					bibleLocationRef
+				)
+		);
+
+		onAddNewNote(
+			createNewNoteDraft({
+				kind: 'verse',
+				id: noteID,
+				now,
+				bibleLocationRef,
+				bookName,
+				chapterNumber,
+				verseNumber,
+				wordIndex,
+				verseText:
+					verseTextWithoutVerseNumber
+			})
+		);
 	}
 
 	function onBibleClicked(e: Event, note: Note): void {
@@ -431,10 +478,15 @@
 	<KJVBackButton></KJVBackButton>
 {/snippet}
 
+{#snippet trailingContent()}
+	<KJVMoreActionsButton onClick={onOpenActions}></KJVMoreActionsButton>
+{/snippet}
+
 {#snippet noteListHeader()}
 	<KJVHeader
 		title="Notes"
 		{leadingContent}
+		{trailingContent}
 		actions={[
 			{
 				icon: 'filter',
@@ -448,11 +500,6 @@
 				icon: 'add-note',
 				label: 'Add note',
 				onClick: () => void onAdd()
-			},
-			{
-				icon: 'more-vertical',
-				label: 'More actions',
-				onClick: onOpenActions
 			}
 		]}
 	></KJVHeader>

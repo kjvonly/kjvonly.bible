@@ -1,3 +1,8 @@
+<!-- @component
+Renders previous/next Reader navigation controls. The controls adapt to ordinary
+Bible chapter navigation or a reading-plan sequence and fade away while the user
+is scrolling through the middle of a chapter.
+-->
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
@@ -36,19 +41,26 @@
 
 	// =============================== BINDINGS ================================
 
+	interface Props {
+		/** Reader mode; `navReadings` switches controls to reading-plan traversal. */
+		mode: BibleMode;
+		/** Active canonical Bible location mutated by previous/next navigation. */
+		bibleLocationRef: string;
+		/** Active Bible version ID retained with this Reader instance. */
+		bibleVersion: string;
+		/** Whether navigation controls are currently visible. */
+		showNavButtons: boolean;
+		/** Reader instance ID used to locate its scroll container. */
+		ID: string;
+	}
+
 	let {
 		mode = $bindable<BibleMode>(),
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		showNavButtons = $bindable<boolean>(),
 		ID
-	}: {
-		mode: BibleMode;
-		bibleLocationRef: string;
-		bibleVersion: string;
-		showNavButtons: boolean;
-		ID: string;
-	} = $props();
+	}: Props = $props();
 
 	// ================================= VARS ==================================
 
@@ -62,10 +74,15 @@
 
 	// ================================ FUNCS ==================================
 
+	/** Attaches visibility tracking to this Reader instance's scroll container. */
 	function attachScrolls() {
 		attachEvents(`${ID}-scroll-container`, 'scroll', handleNavButtonVisibility);
 	}
 
+	/**
+	 * Shows chapter navigation controls near the top/bottom and hides them while
+	 * traversing the middle of a scrollable chapter.
+	 */
 	function handleNavButtonVisibility() {
 		let el = document.getElementById(`${ID}-scroll-container`);
 		if (!el) {
@@ -94,6 +111,12 @@
 
 	// ============================== CLICK FUNCS ==============================
 
+	/**
+	 * Advances within a reading-plan sequence or returns its configured result
+	 * when the final reading has been completed.
+	 *
+	 * @param nr - Mutable reading-plan navigation state owned by this Reader.
+	 */
 	async function _nextPlanChapter(nr: BibleReadingNavigation) {
 		let ci = nr.currentNavReadingsIndex;
 		let nextIndex = ci + 1;
@@ -115,6 +138,11 @@
 		}
 	}
 
+	/**
+	 * Moves to the previous entry in the active reading-plan sequence.
+	 *
+	 * @param nr - Mutable reading-plan navigation state owned by this Reader.
+	 */
 	async function _previousPlanChapter(nr: BibleReadingNavigation) {
 		let ci = nr.currentNavReadingsIndex;
 		let nextIndex = ci - 1;
@@ -124,6 +152,7 @@
 		}
 	}
 
+	/** Handles the Next control using plan traversal or ordinary Bible navigation. */
 	async function _nextChapter(e: Event) {
 		e.stopPropagation();
 		if (mode.navReadings) {
@@ -135,6 +164,7 @@
 		}
 	}
 
+	/** Handles the Previous control using plan traversal or ordinary Bible navigation. */
 	async function _previousChapter(e: Event) {
 		e.stopPropagation();
 		if (mode.navReadings) {

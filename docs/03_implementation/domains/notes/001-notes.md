@@ -590,6 +590,26 @@ Notes are not text markup.
 
 Bible Text Markup controls visual formatting of Bible words; Notes are separate user-authored Domain Objects.
 
+Bible Reader Note navigation distinguishes two responsibilities:
+
+```text
+Notes scope
+    = which Notes are visible
+
+new-Note location
+    = where a new draft is anchored
+```
+
+The serialized Notes root intent carries these as `bibleScope` and `createBibleLocationRef`. `bibleScope.kind` is explicitly `exact` or `chapter`; a bare root-level `bibleLocationRef` is rejected rather than treated as a legacy exact scope.
+
+Exact-location Reader icons open Notes with an exact `bibleScope`. The Bible edit toolbar opens Chapter Notes with a chapter `bibleScope`, and direct Add Note opens a new draft at an explicitly selected verse number or word through `createBibleLocationRef` while retaining the chapter scope behind the editor.
+
+The detailed Reader interaction is defined in:
+
+```text
+03_implementation/domains/bible/004-note-location-selection.md
+```
+
 ---
 
 # Current UI Behavior

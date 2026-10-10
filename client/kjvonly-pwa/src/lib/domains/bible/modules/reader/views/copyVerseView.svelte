@@ -98,6 +98,7 @@
 	});
 
 	// ================================ FUNCS ==================================
+	/** Loads the chapter whose verses can be selected for copy/split actions. */
 	async function loadVerses() {
 		const source = moduleResourceSelectionResolver.require(
 			navigationState,
@@ -109,16 +110,19 @@
 		verses = chapter.verses;
 	}
 
+	/** Rebuilds the visible verse-number list in ascending numeric order. */
 	function setSortedAscVersesKeys() {
 		verseNumbers = Object.keys(verses).sort((a, b) => {
 			return parseInt(a) - parseInt(b);
 		});
 	}
 
+	/** Initializes one selection slot per loaded verse; all begin unchecked. */
 	function initializeCheckedVersesByIdMap() {
 		checked = Array<boolean>(Object.keys(verses).length);
 	}
 
+	/** Loads long/short book labels used in copy text and the adaptive header. */
 	async function setTitle(): Promise<void> {
 		const bookID =
 			bibleLocationReferenceService.extractBookID(bibleLocationRef);
@@ -140,6 +144,12 @@
 		shortTitle = `${shortBookName} ${chapterNumber}`;
 	}
 
+	/**
+	 * Reads the Bible location captured when the Copy Verses view was opened.
+	 *
+	 * The view operates on this navigation-entry location rather than following
+	 * subsequent Reader location changes behind the persistent stack.
+	 */
 	function getBibleLocationRef(): string {
 		const value =
 			navigationState.state
@@ -154,12 +164,14 @@
 		return value;
 	}
 
+	/** Closes the view when its navigation payload is not at least book/chapter. */
 	function closeViewOnInvalidBibleLocationReference() {
 		if (bibleLocationRef.split('_').length < 2) {
 			navigation.back();
 		}
 	}
 
+	/** Formats all currently selected verse ranges as clipboard-ready text. */
 	function getAllVerseRangeText(): string {
 		let checkedVerseNumbers: number[] = getCheckedVerses();
 		let verseRangesToCopy = groupConsecutiveVerseRanges(checkedVerseNumbers);
@@ -169,6 +181,7 @@
 		return concatVerseRangeText(allVerseRangeText);
 	}
 
+	/** Joins independently formatted verse ranges with a trailing line break. */
 	function concatVerseRangeText(allVerseRangeText: string[]) {
 		return allVerseRangeText
 			.map((vrt: string) => {
@@ -177,6 +190,11 @@
 			.join('');
 	}
 
+	/**
+	 * Formats one consecutive verse range with its reference title and text.
+	 *
+	 * @param verseRange - Two-number inclusive `[start, end]` verse range.
+	 */
 	function getVerseRangeText(verseRange: number[]): string {
 		let [start, end] = getStartAndEndVerseNumbers(verseRange);
 		let verseRangeText = getVerseRangeTitle(start, end);
@@ -219,15 +237,12 @@
 	}
 
 	/**
-	 * We want to group consecutive verse numbers like this:
-	 * [[1,3], [5, 5], [18,21]]
-	 * meaning verses 1, 2, and 3 were selected,
-	 * 		   verse 5 was selected
-	 *         verses 18, 19, 20, and 21 were selected
+	 * Groups selected verse numbers into inclusive `[start, end]` ranges.
 	 *
-	 *  [5, 5] means verse 5 was selected without verse 4 and 6
+	 * A single isolated verse is represented with identical bounds. For example,
+	 * `[1, 2, 3, 5]` becomes `[[1, 3], [5, 5]]`.
 	 *
-	 * @param checkedVerses the verseNumber checked by the user to copy
+	 * @param checkedVerses - Ascending 1-based verse numbers selected for copy.
 	 */
 	function groupConsecutiveVerseRanges(checkedVerses: number[]): number[][] {
 		if (checkedVerses.length === 0) {
@@ -249,6 +264,7 @@
 		return groupedVerseRanges;
 	}
 
+	/** Returns whether two ascending verse numbers start a new selected range. */
 	function isInconsecutive(
 		lastVerseNumber: number,
 		currentVerseNumber: number
@@ -256,14 +272,17 @@
 		return currentVerseNumber - lastVerseNumber > 1;
 	}
 
+	/** Applies the header-level select-all state to every loaded verse. */
 	function toggleSelects() {
 		checked = Array(Object.keys(verses).length).fill(allChecked);
 	}
 
+	/** Synchronizes the select-all control with the current per-verse selection. */
 	function areAllVersesChecked() {
 		allChecked = checked.filter((c) => c).length == checked.length;
 	}
 
+	/** Builds an exact Bible location for a verse in this copied chapter. */
 	function getVerseBibleLocationReference(verseNumber: number) {
 		let bookID = bibleLocationReferenceService.extractBookID(bibleLocationRef);
 		let chapter =
@@ -275,6 +294,7 @@
 		);
 	}
 
+	/** Recomputes the compact selected-range label shown above the verse list. */
 	function setSelectedVerses() {
 		let checkedVerseNumbers: number[] = getCheckedVerses();
 		let verseRanges = groupConsecutiveVerseRanges(checkedVerseNumbers);
@@ -297,6 +317,7 @@
 	}
 	// ============================== CLICK FUNCS ==============================
 
+	/** Copies all selected verse ranges, or reports that no verses are selected. */
 	function onCopy() {
 		if (checked.filter((c) => c).length > 0) {
 			let copyText = getAllVerseRangeText();
@@ -307,12 +328,14 @@
 		}
 	}
 
+	/** Toggles one row's selected state and refreshes aggregate selection UI. */
 	function onVerseClicked(idx: number) {
 		checked[idx] = !checked[idx];
 		areAllVersesChecked();
 		setSelectedVerses();
 	}
 
+	/** Copies only the requested verse without changing the row selection. */
 	function onCopyVerseClicked(event: Event, verseNumber: number) {
 		event.stopPropagation();
 
@@ -322,6 +345,7 @@
 		toastService.showToast('Copied Verses');
 	}
 
+	/** Splits a new Bible Reader horizontally at the requested exact verse. */
 	function onSplitScreenHorizontal(e: Event, verseNumber: number): void {
 		e.stopPropagation();
 		let bibleLocationRef = getVerseBibleLocationReference(verseNumber);
@@ -334,6 +358,7 @@
 		);
 	}
 
+	/** Splits a new Bible Reader vertically at the requested exact verse. */
 	function onSplitScreenVertical(e: Event, verseNumber: number): void {
 		e.stopPropagation();
 		let bibleLocationRef = getVerseBibleLocationReference(verseNumber);
@@ -345,6 +370,16 @@
 		);
 	}
 </script>
+
+<!--
+@component
+Reader child view for selecting, formatting, and copying verses from one chapter.
+
+The Bible location is captured in this navigation entry when the view opens.
+Selection state is local to the view. The view may copy all selected ranges,
+copy a single verse, or split a new Bible Reader at an exact verse; it does not
+change the location of the Reader underneath it.
+-->
 
 <!-- ================================ HEADER =============================== -->
 

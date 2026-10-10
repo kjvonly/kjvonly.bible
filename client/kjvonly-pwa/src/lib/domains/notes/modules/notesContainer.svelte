@@ -5,82 +5,53 @@
 		useNavigationEntryContext
 	} from '$lib/application';
 	import Notes from './notes.svelte';
-	import { NOTES_VIEWS } from '../models/notes-navigation.model';
+	import {
+		NOTES_VIEWS,
+		parseNotesNavigationIntent,
+		type NotesNavigationIntent
+	} from '../models/notes-navigation.model';
 
 	const {
 		navigationState
 	} = useNavigationEntryContext();
 
-	validateNavigationState(
-		navigationState
-	);
+	const navigationIntent =
+		readNavigationIntent(
+			navigationState
+		);
 
-	const bibleLocationRef =
-		navigationState.state
-			.bibleLocationRef as
-				string | undefined;
+	const {
+		bibleScope,
+		createBibleLocationRef
+	} = navigationIntent;
 
 	const noteID =
-		navigationState.state.noteID ??
+		navigationIntent.noteID ??
 		'';
 
-	function validateNavigationState(
+	function readNavigationIntent(
 		state: NavigationState
-	): asserts state is NotesNavigationState {
+	): NotesNavigationIntent {
 		if (
 			state.module !== Modules.NOTES ||
-			state.view !== NOTES_VIEWS.ROOT ||
-			!isRecord(state.state)
+			state.view !== NOTES_VIEWS.ROOT
 		) {
 			throw new Error(
 				'Invalid Notes navigation state'
 			);
 		}
 
-		if (
-			state.state.noteID !== undefined &&
-			typeof state.state.noteID !== 'string'
-		) {
-			throw new Error(
-				'Invalid Notes note ID state'
-			);
-		}
-
-		if (
-			state.state.bibleLocationRef !== undefined &&
-			typeof state.state.bibleLocationRef !== 'string'
-		) {
-			throw new Error(
-				'Invalid Notes Bible location state'
-			);
-		}
-
-	}
-
-	function isRecord(
-		value: unknown
-	): value is Record<string, unknown> {
-		return (
-			typeof value === 'object' &&
-			value !== null
+		return parseNotesNavigationIntent(
+			state.state
 		);
 	}
-
-	type NotesNavigationState =
-		NavigationState<typeof NOTES_VIEWS.ROOT> & {
-			state: NavigationState<
-				typeof NOTES_VIEWS.ROOT
-			>['state'] & {
-				noteID?: string;
-				bibleLocationRef?: string;
-		};
-	};
 </script>
 
 <!-- PaneNavigationContainer owns the presentation shell. -->
 <div class="kjvonly-noselect h-full w-full min-h-0 min-w-0">
 	<Notes
-		{bibleLocationRef}
+		{bibleScope}
+		{createBibleLocationRef}
 		noteIDToOpen={noteID}
 		{navigationState}
 	></Notes>

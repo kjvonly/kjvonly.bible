@@ -1,3 +1,8 @@
+<!-- @component
+Owns the Bible chapter interaction surface: resource loading, visible verse range,
+Reader click routing, Text Markup click/drag mutation, inline Note navigation, and
+Add Note location selection. Persistence remains owned by the Reader container.
+-->
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
@@ -24,12 +29,27 @@
 	} from '../../../models/bible-text-markup.model';
 	import {
 		applyBibleTextMarkupWord,
-		removeBibleTextMarkupWord
+		removeBibleTextMarkupWord,
+		toggleBibleTextMarkupVerse,
+		toggleBibleTextMarkupWord
 	} from './text-markup-edit';
 	import {
 		bibleTextMarkupDrag,
 		type BibleTextMarkupDragTarget
 	} from './interactions/bible-text-markup-drag';
+	import {
+		BIBLE_CHAPTER_CLICK_INTENTS,
+		bibleChapterClick,
+		type BibleChapterClickTarget
+	} from './interactions/bible-chapter-click';
+	import {
+		createBibleNoteLocationRef
+	} from './interactions/bible-note-location';
+
+	import {
+		BIBLE_READER_EDIT_INTENTS,
+		useBibleReaderEditContext
+	} from '../runtime/bible-reader-edit-context';
 
 	// SERVICES
 	// OTHER
@@ -39,8 +59,10 @@
 
 	// APPLICATION CONTEXT
 	import {
+		Modules,
 		useApplicationContext,
-		useNavigationEntryContext
+		useNavigationEntryContext,
+		useNavigationRuntimeContext
 	} from '$lib/application';
 
 	import {
@@ -60,10 +82,14 @@
 	} from '../../../resources/text-markup/bible-text-markup-resource';
 
 	import {
-		NOTES_COLLECTION_CHANGED
-	} from '$lib/domains/notes';
-	import type {
-		NotesSearchResult
+		REFS_VIEWS
+	} from '../../../models/refs-navigation.model';
+
+	import {
+		NOTES_BIBLE_SCOPE_KINDS,
+		NOTES_COLLECTION_CHANGED,
+		NOTES_VIEWS,
+		type NotesSearchResult
 	} from '$lib/domains/notes';
 	import {
 		createChapterNotesByLocation,
@@ -78,14 +104,34 @@
 		notesService,
 		moduleResourceSelectionResolver,
 		settingsService,
-		bibleLocationReferenceService
+		bibleLocationReferenceService,
+		bibleVerseReferenceService
 	} = useApplicationContext();
 
 	const {
 		navigationState
 	} = useNavigationEntryContext();
 
+	const { navigation } =
+		useNavigationRuntimeContext();
+
+	const readerEdit =
+		useBibleReaderEditContext();
+
 	// =============================== BINDINGS ================================
+
+	interface Props {
+		/** Active canonical Bible location rendered by this chapter surface. */
+		bibleLocationRef: string;
+		/** Canonical Bible version ID used for chapter content/resource lookup. */
+		bibleVersion: string;
+		/** Reader instance ID used to scope subscriptions and DOM anchors. */
+		id: string;
+		/** Mutable Reader mode used to route reading/edit interactions. */
+		mode: BibleMode;
+		/** Mutable in-memory Text Markup draft for the active chapter. */
+		textMarkup: BibleTextMarkup;
+	}
 
 	let {
 		bibleLocationRef = $bindable<string>(),
@@ -93,15 +139,15 @@
 		id = $bindable<string>(),
 		mode = $bindable<BibleMode>(),
 		textMarkup = $bindable<BibleTextMarkup>()
-	}: {
-		bibleLocationRef: string;
-		bibleVersion: string;
-		id: string;
-		mode: BibleMode;
-		textMarkup: BibleTextMarkup;
-	} = $props();
+	}: Props = $props();
 
 	// ================================= VARS ==================================
+
+	let noteLocationSelectionActive =
+		$derived(
+			readerEdit.intent ===
+				BIBLE_READER_EDIT_INTENTS.NOTE_LOCATION
+		);
 
 	let notesID = uuid4();
 
@@ -119,8 +165,8 @@
 	let currentSettings: AppSettings = settingsService.getSettings();
 
 	/**
-	 * svelte isn't updating Text Markup on chapter change. Need to toggle
-	 * to update Text Markup
+	 * Forces the verse subtree to remount when the chapter changes so rendered
+	 * Text Markup/paragraph/pericope state cannot leak from the previous chapter.
 	 */
 	let toggleVersesView: boolean = $state(true);
 	let verses: { [verseNumber: string]: VerseModel } = $state({});
@@ -140,9 +186,10 @@
 	});
 
 	/**
-	 * CORE NOTE: on new bibleLocationRef we must reset the chapter prior to
-	 * loading new content. Otehrwise, the rendering will render previous chapter
-	 * Text Markup, paragraphs, and pericopes on the new chapter.
+	 * Rebuilds all chapter-local state when the Reader location/version changes.
+	 *
+	 * Resets happen before async loads start so the new location cannot briefly
+	 * render Text Markup, paragraphs, pericopes, or Notes from the previous chapter.
 	 */
 
 	$effect(() => {
@@ -185,6 +232,7 @@
 		mode.value = BIBLE_MODES.READING;
 	}
 
+	/** Recreates an empty/current-source Text Markup draft for the active chapter. */
 	function resetTextMarkup() {
 		const source =
 			moduleResourceSelectionResolver.find(
@@ -216,6 +264,7 @@
 		pericopes = {};
 	}
 
+	/** Resolves the optional verse-range window encoded in the Reader location. */
 	function setVerseRanges() {
 		let [start, end] =
 			bibleLocationReferenceService.extractVersesOrOne(bibleLocationRef);
@@ -224,6 +273,7 @@
 		verseRangeEndIndex = end;
 	}
 
+	/** Scrolls to the selected verse when present, otherwise restores chapter top. */
 	function scrollToVerse() {
 		if (bibleLocationReferenceService.hasVerse(bibleLocationRef)) {
 			let verseNumber =
@@ -241,6 +291,7 @@
 		}, 4000);
 	}
 
+	/** Subscribes this Reader instance to updates for the installed markup object. */
 	function subscribeToTextMarkup(
 		textMarkupId: string
 	) {
@@ -257,6 +308,11 @@
 		);
 	}
 
+	/**
+	 * Replaces the mutable local draft from an external Text Markup store update.
+	 *
+	 * @param updated - Latest installed Text Markup value for this chapter.
+	 */
 	function onTextMarkupChange(
 		updated: BibleTextMarkup
 	) {
@@ -268,6 +324,10 @@
 			);
 	}
 
+	/**
+	 * Loads the installed Text Markup for the active chapter and subscribes to it.
+	 * Falls back to an empty draft when no Text Markup resource is selected.
+	 */
 	async function loadTextMarkup() {
 		const source =
 			moduleResourceSelectionResolver.find(
@@ -298,6 +358,12 @@
 		);
 	}
 
+	/**
+	 * Loads paragraph presentation for the active location when enabled.
+	 * Stale async results are discarded if settings/location change mid-request.
+	 *
+	 * @param settings - Settings snapshot that triggered the load.
+	 */
 	async function loadParagraphs(settings: AppSettings) {
 		if (!settings.showParagraphs) {
 			resetParagraphs();
@@ -325,6 +391,12 @@
 		paragraphs = installed.paragraphs;
 	}
 
+	/**
+	 * Loads pericope presentation for the active location when enabled.
+	 * Stale async results are discarded if settings/location change mid-request.
+	 *
+	 * @param settings - Settings snapshot that triggered the load.
+	 */
 	async function loadPericopes(settings: AppSettings) {
 		if (!settings.showPericopes) {
 			resetPericopes();
@@ -365,6 +437,7 @@
 		notesService.unsubscribe(id);
 	}
 
+	/** Requests the chapter-scoped Note index used to render inline Note affordances. */
 	function loadNotes() {
 		notesService.searchNotes(
 			notesID,
@@ -387,6 +460,7 @@
 		settingsService.unsubscribe(id);
 	}
 
+	/** Loads the active Bible chapter resource and rebuilds the visible verse list. */
 	async function loadChapter() {
 		const source = moduleResourceSelectionResolver.require(
 			navigationState,
@@ -402,6 +476,7 @@
 		setChapterVersesToShow();
 	}
 
+	/** Projects the loaded chapter into the full or requested verse-range window. */
 	function setChapterVersesToShow() {
 		if (hasVerseRange) {
 			versesNumbersToShow = Object.keys(verses)
@@ -414,6 +489,11 @@
 		}
 	}
 
+	/**
+	 * Converts Notes search results into the exact-location lookup consumed by Word.
+	 *
+	 * @param data - Chapter-scoped Notes search result.
+	 */
 	function onChapterNotesSearchResults(
 		data: NotesSearchResult
 	): void {
@@ -423,6 +503,92 @@
 			);
 	}
 
+	/**
+	 * Handles one delegated reading-mode reference/verse token click.
+	 *
+	 * Returns whether the token belongs to the Reader's reading interaction contract;
+	 * the click router consumes only handled tokens.
+	 *
+	 * @param target - Semantic Bible token identity resolved from the chapter DOM.
+	 * @returns True when reading navigation handled the token.
+	 */
+	function activateReadingToken(
+		target: BibleChapterClickTarget
+	): boolean {
+		const selectedVerse =
+			verses[String(target.verseNumber)];
+		const selectedWord =
+			selectedVerse?.words[target.wordIndex];
+
+		if (
+			!selectedVerse ||
+			!selectedWord ||
+			!isReadingInteractiveWord(selectedWord.class)
+		) {
+			return false;
+		}
+
+		const bookIDChapter =
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					bibleLocationRef
+				);
+		const verseBibleLocationRef =
+			`${bibleLocationReferenceService
+				.extractVersionBookIDChapter(
+					bibleLocationRef
+				)}_${target.verseNumber}`;
+
+		mode.bibleLocationRef =
+			`${bookIDChapter}_${target.verseNumber}_${target.wordIndex}`;
+
+		if (target.wordIndex === 0) {
+			const {
+				refs,
+				strongsWords
+			} = bibleVerseReferenceService
+				.extractAll(selectedVerse);
+
+			navigation.pushModule(
+				Modules.STRONGS,
+				REFS_VIEWS.ROOT,
+				{
+					bibleLocationRef:
+						verseBibleLocationRef,
+					footnotes,
+					refs,
+					strongsWords
+				}
+			);
+			return true;
+		}
+
+		navigation.pushModule(
+			Modules.STRONGS,
+			REFS_VIEWS.ROOT,
+			{
+				bibleLocationRef:
+					verseBibleLocationRef,
+				word: selectedWord,
+				footnotes
+			}
+		);
+
+		return true;
+	}
+
+	/** Preserves the existing reading-mode clickable token contract. */
+	function isReadingInteractiveWord(
+		classes: string[] | null
+	): boolean {
+		return (
+			classes?.includes('xref') === true ||
+			classes?.includes('FOOTNO') === true ||
+			classes?.includes('vno') === true
+		);
+	}
+
+	/** Applies the currently selected markup family to one drag-resolved token. */
 	function applyDragMarkup(
 		target: BibleTextMarkupDragTarget
 	): void {
@@ -434,6 +600,7 @@
 		);
 	}
 
+	/** Removes only the selected markup family from one drag-resolved token. */
 	function removeDragMarkup(
 		target: BibleTextMarkupDragTarget
 	): void {
@@ -443,6 +610,102 @@
 			target.wordIndex,
 			mode
 		);
+	}
+
+	/**
+	 * Toggles Text Markup for one delegated edit-mode Bible token click.
+	 *
+	 * A verse-number token (`wordIndex === 0`) retains whole-verse click semantics;
+	 * ordinary tokens toggle only that exact word.
+	 *
+	 * @param target - Semantic Bible token identity resolved by the click router.
+	 */
+	function toggleClickedMarkup(
+		target: BibleChapterClickTarget
+	): void {
+		const selectedVerse =
+			verses[String(target.verseNumber)];
+
+		if (!selectedVerse) {
+			return;
+		}
+
+		const bookIDChapter =
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					bibleLocationRef
+				);
+
+		mode.bibleLocationRef =
+			`${bookIDChapter}_${target.verseNumber}_${target.wordIndex}`;
+
+		if (target.wordIndex === 0) {
+			toggleBibleTextMarkupVerse(
+				textMarkup,
+				target.verseNumber,
+				selectedVerse.words.length,
+				mode
+			);
+			return;
+		}
+
+		toggleBibleTextMarkupWord(
+			textMarkup,
+			target.verseNumber,
+			target.wordIndex,
+			mode
+		);
+	}
+
+	/**
+	 * Opens existing Notes with an exact Bible scope for one inline Note affordance.
+	 *
+	 * @param target - Bible location represented by the clicked Note affordance.
+	 */
+	function openInlineNote(
+		target: BibleChapterClickTarget
+	): void {
+		const bookIDChapter =
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					bibleLocationRef
+				);
+
+		navigation.pushModule(
+			Modules.NOTES,
+			NOTES_VIEWS.ROOT,
+			{
+				bibleScope: {
+					kind: NOTES_BIBLE_SCOPE_KINDS.EXACT,
+					bibleLocationRef:
+						`${bookIDChapter}_${target.verseNumber}_${target.wordIndex}`
+				}
+			}
+		);
+	}
+
+	/**
+	 * Converts selected DOM token identity into the canonical Add Note anchor and
+	 * completes the Reader-scoped Note-location selection flow.
+	 *
+	 * @param target - Verse/word token selected while Add Note mode is active.
+	 */
+	function selectNoteLocation(
+		target: BibleChapterClickTarget
+	): void {
+		const bookIDChapter =
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					bibleLocationRef
+				);
+
+		void readerEdit
+			.completeNoteLocationSelection(
+				createBibleNoteLocationRef(
+					bookIDChapter,
+					target
+				)
+			);
 	}
 </script>
 
@@ -454,11 +717,8 @@
 				bind:paragraphs
 				bind:pericopes
 				bind:notes
-				bind:mode
-				{footnotes}
 				verse={chapter?.verses[k] as VerseModel}
 				{bibleLocationRef}
-				{bibleVersion}
 			></Verse>
 		</span>
 	{/each}
@@ -466,9 +726,22 @@
 
 <div
 	use:bibleTextMarkupDrag={{
-		enabled: mode.value === BIBLE_MODES.EDIT,
+		enabled:
+			mode.value === BIBLE_MODES.EDIT &&
+			!noteLocationSelectionActive,
 		onApply: applyDragMarkup,
 		onRemove: removeDragMarkup
+	}}
+	use:bibleChapterClick={{
+		intent: noteLocationSelectionActive
+			? BIBLE_CHAPTER_CLICK_INTENTS.NOTE_LOCATION
+			: mode.value === BIBLE_MODES.EDIT
+				? BIBLE_CHAPTER_CLICK_INTENTS.TEXT_MARKUP
+				: BIBLE_CHAPTER_CLICK_INTENTS.READING,
+		onReadingActivate: activateReadingToken,
+		onTextMarkupToggle: toggleClickedMarkup,
+		onNoteLocationSelect: selectNoteLocation,
+		onOpenNote: openInlineNote
 	}}
 	class="px-4 leading-loose"
 	class:touch-pan-y={mode.value === BIBLE_MODES.EDIT}

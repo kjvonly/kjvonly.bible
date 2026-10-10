@@ -7,10 +7,10 @@
 	// COMPONENTS
 	import {
 		KJVHeader,
-		type HeaderActionDefinition,
 		type HeaderActions
 	} from '$lib/components';
 	import KJVBackButton from '../../../ui/navigation/KJVBackButton.svelte';
+	import KJVMoreActionsButton from '../../../ui/navigation/KJVMoreActionsButton.svelte';
 	import ViewBody from '../../../runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '../../../runtime/navigation/components/viewHeader.svelte';
 
@@ -69,17 +69,16 @@
 
 	let headerHeight = $state(0);
 
-	const overflowAction:
-		HeaderActionDefinition = {
-			icon: 'more-vertical',
-			label: 'More actions',
-			onClick: () =>
-				fileManagerNavigation.openOverflowActions()
-		};
-
 	let headerActions = $derived.by(
-		(): HeaderActions =>
-			appendOverflowAction(actions)
+		(): HeaderActions => {
+			if (actions.length > 2) {
+				throw new Error(
+					'FileManager header supports at most two direct actions before overflow.'
+				);
+			}
+
+			return actions;
+		}
 	);
 
 	// =============================== LIFECYCLE ===============================
@@ -104,32 +103,23 @@
 			}
 		);
 	}
-
-	/** Reserves FileManager's final header slot for the standard More action. */
-	function appendOverflowAction(
-		directActions: HeaderActions
-	): HeaderActions {
-		if (directActions.length > 2) {
-			throw new Error(
-				'FileManager header supports at most two direct actions before overflow.'
-			);
-		}
-
-		return [
-			...directActions,
-			overflowAction
-		] as HeaderActions;
-	}
 </script>
 
 {#snippet leadingContent()}
 	<KJVBackButton></KJVBackButton>
 {/snippet}
 
+{#snippet trailingContent()}
+	<KJVMoreActionsButton
+		onClick={() => fileManagerNavigation.openOverflowActions()}
+	></KJVMoreActionsButton>
+{/snippet}
+
 {#snippet header()}
 	<KJVHeader
 		{title}
 		{leadingContent}
+		{trailingContent}
 		actions={headerActions}
 	></KJVHeader>
 {/snippet}

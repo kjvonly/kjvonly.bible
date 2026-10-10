@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		KJVMoreActionsButton,
 		ViewHeader,
 		findElement
 	} from '$lib/application/ui';
@@ -219,6 +220,12 @@
 	></KJVAdaptiveHeaderTitle>
 {/snippet}
 
+{#snippet trailingContent()}
+	<KJVMoreActionsButton
+		onClick={() => (showNoteActions = !showNoteActions)}
+	></KJVMoreActionsButton>
+{/snippet}
+
 {#snippet noteHeaderSnippet()}
 	<KJVHeader
 		title={draft.title || 'Note'}
@@ -228,6 +235,7 @@
 			onClick: () => void onBack()
 		}}
 		{titleContent}
+		{trailingContent}
 		actions={[
 			{
 				icon: 'save',
@@ -240,12 +248,6 @@
 				label: showTags ? 'Hide tags' : 'Show tags',
 				onClick: () => (showTags = !showTags),
 				selected: showTags
-			},
-			{
-				icon: 'more-vertical',
-				label: 'More actions',
-				onClick: () =>
-					(showNoteActions = !showNoteActions)
 			}
 		]}
 	></KJVHeader>

@@ -210,19 +210,19 @@ Text Markup source
 
 The Bible module includes Text Markup in its Resource-selection model, but the user-owned selection is optional when there is no authenticated user.
 
-Selection is stored in:
+Selections are carried by each navigation entry in:
 
 ```text
-Buffer.resourceSelections
+NavigationState.state.resourceSelections
 ```
 
-Reader code that only reads Bible text uses a non-throwing lookup for Text Markup. Signed-out reading therefore renders normally with empty markup instead of treating the missing user-owned selection as a Resource error.
+New and related navigation entries derive selections through the shared Module Resource selection policy. `BibleModuleResourceSelectionContributor` adds the user-owned Text Markup default only when a current user exists and a Bible Chapter source is available.
 
-When restoring a persisted Buffer, authentication-dependent selections are reconciled for the current session. A persisted Text Markup selection is discarded first; if a current user exists, the default Text Markup selection is rebuilt for that user and the selected Bible version/source. If no user exists, Text Markup remains absent.
+`ModuleResourceSelectionResolver` resolves the active entry's selections from that navigation state. Reader code that only reads Bible text uses a non-throwing lookup for Text Markup, so signed-out reading renders normally with empty markup instead of treating the missing user-owned selection as a Resource error.
 
 `BibleTextMarkupService` receives only a resolved `PublishedResourceReference` when one exists.
 
-The service does not know about Pane/Buffer mechanics.
+The service does not know about Pane or navigation-state mechanics.
 
 ---
 
@@ -552,9 +552,9 @@ bg-highlight*
 decoration-highlight*
 ```
 
-The word component creates missing nested verse/word entries as edits are made.
+Chapter-owned click/drag interactions mutate the draft through the shared `text-markup-edit.ts` helper. That helper creates missing verse/word marking entries as edits are made and preserves unrelated markup families.
 
-Whole-verse editing uses word index `0` behavior defined by the Reader editing model.
+`word.svelte` only renders the current markup and exposes DOM token identity; it does not own Text Markup mutation semantics. Whole-verse click editing still uses word index `0`, while drag treats index `0` as the verse-number token itself.
 
 Saving performs a deep copy and calls:
 
@@ -699,8 +699,8 @@ Reader/browser behavior should additionally verify that chapter changes do not r
 10. Local writes persist Domain state + ResourceInstallation revision state + Outbox intent atomically.
 11. Local subscribers are notified after durable commit.
 12. Archive/import reconciliation may refresh only currently subscribed Text Markup IDs.
-13. User-owned Text Markup selection is absent when signed out and rebuilt against the current user during workspace restore.
-14. Resource selection lives on the Buffer; the service receives only `PublishedResourceReference` when one exists.
+13. User-owned Text Markup selection is absent when signed out and is derived from the current authenticated user by the Bible Module Resource selection policy.
+14. Resource selection is carried by `NavigationState.state.resourceSelections`; the service receives only `PublishedResourceReference` when one exists.
 15. Legacy annotation runtime must not be recreated.
 
 ---

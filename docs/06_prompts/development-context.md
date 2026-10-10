@@ -698,6 +698,39 @@ The standard pattern for Back is:
 
 Shared views such as `KJVMenuView` should accept caller-owned leading content rather than owning navigation policy themselves.
 
+## 15.4 Standard press-and-hold controls
+
+The hold gesture mechanics are shared by:
+
+```text
+KJVPressHoldButton
+```
+
+It owns:
+
+```text
+pointer + keyboard hold timing
+delayed progress ring
+cancel behavior
+post-hold generated-click suppression
+```
+
+Semantic wrappers own the actions:
+
+```text
+KJVBackButton
+    tap  → navigation.back()
+    hold → navigation.escapePane()
+
+KJVMoreActionsButton
+    tap  → caller-owned More Actions behavior
+    hold → navigation.pushModule(Modules.MODULES, modules.root, {})
+```
+
+The More Actions hold deliberately **pushes** the Modules launcher onto the current Pane stack. It does not reset history; Back returns to the originating view.
+
+Use `KJVHeader.trailingContent` for `KJVMoreActionsButton`. Because More Actions consumes one of the mobile header's three trailing slots, pair it with at most two direct header actions. Do not recreate `more-vertical` as an ordinary `HeaderActionDefinition`.
+
 Do not add fake/invisible leading controls solely to preserve mathematical title centering. If a screen legitimately has no leading control, use normal container/layout spacing instead.
 
 ## 15.4 Nested menu/navigation views

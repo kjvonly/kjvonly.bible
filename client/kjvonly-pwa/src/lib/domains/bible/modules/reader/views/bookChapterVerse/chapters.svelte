@@ -103,6 +103,7 @@
 
 	// ================================ FUNCS ==================================
 
+	/** Loads Booknames metadata needed for chapter count and header labels. */
 	async function loadBooknames(): Promise<void> {
 		const source =
 			moduleResourceSelectionResolver.require(
@@ -119,6 +120,7 @@
 		setChapters();
 	}
 
+	/** Resolves long and short display names for the selected canonical book. */
 	function setBookName(): void {
 		if (!booknames) {
 			return;
@@ -131,6 +133,7 @@
 			bookName;
 	}
 
+	/** Projects the selected book's available chapter numbers in numeric order. */
 	function setChapters(): void {
 		if (!booknames) {
 			chapters = [];
@@ -148,6 +151,12 @@
 		);
 	}
 
+	/**
+	 * Forwards a verse-selection result produced by the nested verse view.
+	 *
+	 * The persistent navigation stack may leave this component mounted while it
+	 * is hidden, so forwarding is guarded by `whenActive`.
+	 */
 	function onNavigationResult(
 		result: NavigationStateValue
 	): void {
@@ -160,6 +169,15 @@
 		);
 	}
 
+	/**
+	 * Selects a chapter or drills into verse selection based on `goToVerses`.
+	 *
+	 * When verse selection is disabled, the chapter location is returned directly
+	 * to the owning Reader. Otherwise this view remains on the stack and pushes
+	 * the verse child view.
+	 *
+	 * @param chapter - Chapter number encoded as the navigation resource key.
+	 */
 	function chapterSelected(
 		chapter: string
 	): void {
@@ -181,6 +199,7 @@
 		});
 	}
 
+	/** Persists whether chapter selection should immediately drill into verses. */
 	function onToggleGoToVerses(): void {
 		goToVerses = !goToVerses;
 		updateState(
@@ -189,6 +208,12 @@
 		);
 	}
 
+	/**
+	 * Requires one non-empty string field from this view's navigation state.
+	 *
+	 * @param value - Candidate serialized navigation-state value.
+	 * @param key - Field name included in the invariant error.
+	 */
 	function requireStringState(
 		value: unknown,
 		key: string
@@ -205,6 +230,15 @@
 		return value;
 	}
 </script>
+
+<!--
+@component
+Chapter-selection step in the Reader's Book → Chapter → Verse navigation flow.
+
+The selected book ID is immutable navigation-entry state. A chapter can either
+be returned immediately as a Bible location or used to push the verse-selection
+child view. Nested verse results are forwarded to the owning Reader.
+-->
 
 <!-- ================================ HEADER =============================== -->
 

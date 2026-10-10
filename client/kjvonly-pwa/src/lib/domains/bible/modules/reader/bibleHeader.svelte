@@ -1,6 +1,11 @@
+<!-- @component
+Renders the Bible Reader header and owns Reader-level navigation actions such as
+book/chapter selection, overflow actions, and entering/exiting Text Markup edit mode.
+-->
 <script lang="ts">
 	import {
-		KJVBackButton
+		KJVBackButton,
+		KJVMoreActionsButton
 	} from '$lib/application/ui';
 
 	// SVELTE
@@ -51,17 +56,23 @@
 
 	// =============================== BINDINGS ================================
 
+	interface Props {
+		/** Mutable Reader interaction mode shared with the chapter/edit toolbar. */
+		mode: BibleMode;
+		/** Active canonical Bible location displayed by this Reader. */
+		bibleLocationRef: string;
+		/** Canonical Bible version ID selected for this Reader. */
+		bibleVersion: string;
+		/** Saves the current Text Markup draft and returns to reading mode. */
+		onExitEdit: () => Promise<void>;
+	}
+
 	let {
 		mode = $bindable(),
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
 		onExitEdit
-	}: {
-		mode: BibleMode;
-		bibleLocationRef: string;
-		bibleVersion: string;
-		onExitEdit: () => Promise<void>;
-	} = $props();
+	}: Props = $props();
 
 	// ================================== VARS =================================
 
@@ -101,6 +112,12 @@
 
 	// ================================ FUNCS ==================================
 
+	/**
+	 * Resolves long/short book names for the current Reader location.
+	 *
+	 * The captured location is checked after the async resource read so a stale
+	 * response cannot overwrite a header that already navigated elsewhere.
+	 */
 	async function setBookNameAndChapter(): Promise<void> {
 		const locationRef = bibleLocationRef;
 
@@ -153,6 +170,7 @@
 		showBibleVersion = settings.showBibleVersion;
 	}
 
+	/** Returns whether this Reader has a Text Markup resource selection available. */
 	function hasTextMarkupSelection(): boolean {
 		return moduleResourceSelectionResolver.find(
 			navigationState,
@@ -162,6 +180,12 @@
 
 	// ============================== CLICK FUNCS ==============================
 
+	/**
+	 * Opens the appropriate location picker for the Reader context.
+	 *
+	 * Reading-plan Readers open their plan-reading navigator; ordinary Readers
+	 * open the normal book/chapter/verse selector.
+	 */
 	function onBookChapterClick(): void {
 		if (mode.navReadings) {
 			navigation.pushView(
@@ -179,6 +203,7 @@
 		);
 	}
 
+	/** Opens Reader overflow actions as a child navigation view. */
 	function onOverflowClick(): void {
 		navigation.pushView(
 			BIBLE_VIEWS.OVERFLOW_ACTIONS,
@@ -186,6 +211,12 @@
 		);
 	}
 
+	/**
+	 * Toggles Bible Text Markup editing from the header.
+	 *
+	 * Entering edit mode snapshots the current exact Reader location into the
+	 * edit mode. Exiting delegates to the Reader container so the draft is saved.
+	 */
 	function onEditClick(): void {
 		if (mode.value === BIBLE_MODES.EDIT) {
 			void onExitEdit();
@@ -231,6 +262,10 @@
 	<KJVBackButton></KJVBackButton>
 {/snippet}
 
+{#snippet trailingContent()}
+	<KJVMoreActionsButton onClick={onOverflowClick}></KJVMoreActionsButton>
+{/snippet}
+
 <KJVHeader
 	title="Bible"
 	{leadingContent}
@@ -241,6 +276,7 @@
 		onClick: onBookChapterClick
 	}}
 	{titleContent}
+	{trailingContent}
 	actions={[
 		{
 			icon:
@@ -252,11 +288,6 @@
 					? 'Exit edit mode'
 					: 'Edit',
 			onClick: onEditClick
-		},
-		{
-			icon: 'more-vertical',
-			label: 'More actions',
-			onClick: onOverflowClick
 		}
 	]}
 ></KJVHeader>

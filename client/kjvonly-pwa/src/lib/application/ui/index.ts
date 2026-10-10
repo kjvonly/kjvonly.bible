@@ -24,6 +24,10 @@ export {
 } from './navigation/KJVBackButton.svelte';
 
 export {
+	default as KJVMoreActionsButton
+} from './navigation/KJVMoreActionsButton.svelte';
+
+export {
 	default as Settings
 } from '../modules/settings/settings.svelte';
 

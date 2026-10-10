@@ -626,6 +626,26 @@ The hold-progress ring is intentionally delayed for 300 ms. Normal taps therefor
 
 `escapePane()` is Pane-level behavior, not another meaning of `back()`. A feature whose leading action has different semantics should render its own control instead of using `<KJVBackButton>`.
 
+The timing/progress mechanics are not Back-specific. Both the Back and More Actions controls compose the shared `<KJVPressHoldButton>`, which owns pointer/keyboard hold timing, delayed progress, and suppression of the native click that follows a completed hold. The semantic wrappers own what press and hold mean.
+
+## Standard More Actions Control
+
+`<KJVMoreActionsButton>` is the standard trailing More Actions control.
+
+```text
+tap / click
+    ↓
+caller-owned More Actions behavior
+
+press and hold for 1.5 seconds
+    ↓
+navigation.pushModule(Modules.MODULES, modules.root, {})
+```
+
+The hold therefore opens the Modules launcher **on top of** the current Pane history. It does not escape, reset, or replace the current stack. Back from Modules returns to the originating module/view.
+
+`KJVHeader.trailingContent` is used for this richer standard trailing control. When More Actions occupies that slot, callers should expose at most two direct `HeaderActionDefinition` controls so the mobile header remains within the three-slot convention.
+
 ---
 
 # 22. Persistence Ordering

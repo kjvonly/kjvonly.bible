@@ -1,294 +1,103 @@
+<!-- @component
+Renders one Bible token, its Text Markup classes, and optional inline Note affordance. It exposes stable `data-bible-*` identity for chapter-level interactions and intentionally owns no reading/edit click behavior.
+-->
 <script lang="ts">
 	import {
-		useApplicationContext,
-		useNavigationRuntimeContext
+		useApplicationContext
 	} from '$lib/application';
 	// ================================ IMPORTS ================================
-	// SVELTE
-	import { onMount } from 'svelte';
-
 	// MODELS
-	import { Modules } from '$lib/application';
 
 	// SERVICES
-	import { REFS_VIEWS } from '../../../models/refs-navigation.model';
-	import { NOTES_VIEWS } from '$lib/domains/notes';
 	import type {
-		BibleTextMarkup,
-		BibleTextMarkupMarking
+		BibleTextMarkup
 	} from '../../../models/bible-text-markup.model';
-	import {
-		BIBLE_MODES,
-		type BibleMode,
-		type Verse
-	} from '../../../models/bible.model';
-	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
-	import Notes from '$lib/components/svgs/notes.svelte';
+	import type { Verse, Word } from '../../../models/bible.model';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';
 	import type {
 		ChapterNotesByLocation
 	} from './chapter-notes';
-	import {
-		toggleBibleTextMarkupVerse,
-		toggleBibleTextMarkupWord
-	} from './text-markup-edit';
 	const {
-		bibleLocationReferenceService,
-		bibleVerseReferenceService
+		bibleLocationReferenceService
 	} = useApplicationContext();
-	const { navigation } =
-		useNavigationRuntimeContext();
-
 	// =============================== BINDINGS ================================
+
+	interface Props {
+		/** Mutable chapter Text Markup draft used to derive this token’s classes. */
+		textMarkup: BibleTextMarkup;
+		/** Exact-location Note lookup used to decide whether to show the Note affordance. */
+		notes: ChapterNotesByLocation;
+		/** Active canonical Bible location used to construct this token’s exact Note key. */
+		bibleLocationRef: string;
+		/** Parent verse containing this token. */
+		verse: Verse;
+		/** Bible token rendered by this component. */
+		word: Word;
+		/** Zero-based token index; index `0` is the verse-number token. */
+		wordIdx: number;
+	}
 
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
-		mode = $bindable<BibleMode>(),
 		notes = $bindable<ChapterNotesByLocation>(),
 		bibleLocationRef,
-		bibleVersion,
-		footnotes,
 		verse,
 		word,
 		wordIdx
-	}: {
-		textMarkup: BibleTextMarkup;
-		mode: BibleMode;
-		notes: ChapterNotesByLocation;
-		bibleLocationRef: string;
-		bibleVersion: string;
-		footnotes: { [key: string]: string };
-		verse: Verse;
-		word: Word;
-		wordIdx: number;
-	} = $props();
+	}: Props = $props();
 
 	// ================================= VARS ==================================
 
-	let wordMarkup: BibleTextMarkupMarking | undefined = $state();
-	let wordHasNotes: boolean = $state(false);
-	let verseHasReferences = $state(false);
-	let bibleWordAttributes = $derived({
-		'data-bible-word': '',
-		'data-verse': verse.number,
-		'data-word-index': wordIdx
-	});
-
-	// =============================== LIFECYCLE ===============================
-
-	$effect(() => {
-		textMarkup;
-		setWordMarkup();
-	});
-
-	$effect(() => {
-		notes;
-		setWordHasNotes();
-	});
-
-	onMount(() => {
-		setVerseHasReferences();
-	});
-
-	// ================================ FUNCS ==================================
-
-	function setVerseHasReferences() {
-		if (isWordAVerseNumber()) {
-			for (let w of verse.words) {
-				for (const h of w.href || []) {
-					if (h.includes('/')) {
-						verseHasReferences = true;
-						return;
-					}
-				}
-			}
-		}
-		verseHasReferences = false;
-	}
-
-	function isWordAVerseNumber(): boolean {
-		return wordIdx === 0;
-	}
-
-	function setWordMarkup() {
-		wordMarkup = undefined;
-
-		if (
-			textMarkup.markings &&
-			textMarkup.markings[verse.number] &&
-			textMarkup.markings[verse.number][wordIdx]
-		) {
-			wordMarkup = textMarkup.markings[verse.number][wordIdx];
-		}
-	}
-
-	function setWordHasNotes(): void {
-		const bookIDChapter =
-			bibleLocationReferenceService.extractBookIDChapter(
+	let wordMarkup = $derived(
+		textMarkup.markings?.[verse.number]?.[wordIdx]
+	);
+	let wordLocationRef = $derived(
+		`${bibleLocationReferenceService
+			.extractBookIDChapter(
 				bibleLocationRef
-			);
-		const wordKey =
-			`${bookIDChapter}_${verse.number}_${wordIdx}`;
-
-		wordHasNotes =
-			wordKey in notes;
-	}
-
-	function updateBibleLocationRef() {
-		let bookIDChapter =
-			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
-		mode.bibleLocationRef = `${bookIDChapter}_${verse.number}_${wordIdx}`;
-	}
-
-	// ============================== CLICK FUNCS ==============================
-
-	function onWordClicked(e: Event) {
-		e.stopPropagation();
-
-		updateBibleLocationRef();
-
-		if (isBibleModeEdit()) {
-			onEditClick();
-			return;
-		}
-
-		if (isWordAVerseNumber()) {
-			verseNumberClicked();
-		} else {
-			nonVerseNumberClicked();
-		}
-	}
-
-	function isBibleModeEdit() {
-		return mode.value === BIBLE_MODES.EDIT;
-	}
-
-	function onEditClick() {
-		updateBibleLocationRef();
-		if (isWordAVerseNumber()) {
-			applyMarkupToVerse();
-		} else {
-			applyMarkupToWord();
-		}
-	}
-
-	function verseNumberClicked(): void {
-		const {
-			refs,
-			strongsWords
-		} = bibleVerseReferenceService
-			.extractAll(verse);
-
-		navigation.pushModule(
-			Modules.STRONGS,
-			REFS_VIEWS.ROOT,
-			{
-				bibleLocationRef:
-					getVerseBibleLocationRef(),
-				footnotes,
-				refs,
-				strongsWords
-			}
-		);
-	}
-
-	function nonVerseNumberClicked(): void {
-		navigation.pushModule(
-			Modules.STRONGS,
-			REFS_VIEWS.ROOT,
-			{
-				bibleLocationRef:
-					getVerseBibleLocationRef(),
-				word,
-				footnotes
-			}
-		);
-	}
-
-	function applyMarkupToVerse() {
-		toggleBibleTextMarkupVerse(
-			textMarkup,
-			verse.number,
-			verse.words.length,
-			mode
-		);
-	}
-
-	function applyMarkupToWord() {
-		toggleBibleTextMarkupWord(
-			textMarkup,
-			verse.number,
-			wordIdx,
-			mode
-		);
-	}
-
-	function getVerseBibleLocationRef(): string {
-		return `${bibleLocationReferenceService
-			.extractVersionBookIDChapter(
-				bibleLocationRef
-			)}_${verse.number}`;
-	}
-
-
-	function onNotesClicked() {
-		const bookIDChapter =
-			bibleLocationReferenceService
-				.extractBookIDChapter(
-					bibleLocationRef
-				);
-
-		navigation.pushModule(
-			Modules.NOTES,
-			NOTES_VIEWS.ROOT,
-			{
-				bibleLocationRef:
-					`${bookIDChapter}_${verse.number}_${wordIdx}`
-			}
-		);
-	}
+			)}_${verse.number}_${wordIdx}`
+	);
+	let wordHasNotes = $derived(
+		wordLocationRef in notes
+	);
+	let verseHasReferences = $derived(
+		wordIdx === 0 &&
+		verse.words.some((candidate) =>
+			(candidate.href ?? []).some((href) =>
+				href.includes('/')
+			)
+		)
+	);
 </script>
 
 {#if wordHasNotes}
 	<span class={wordMarkup?.class?.join(' ')}>
-		&nbsp;<KJVButton classes="" onClick={onNotesClicked}>
+		&nbsp;<button
+			type="button"
+			data-bible-note
+			data-verse={verse.number}
+			data-word-index={wordIdx}
+			aria-label="open note"
+		>
 			<NoteStack classes="fill-support-a-500"></NoteStack>
-		</KJVButton>
+		</button>
 	</span>
-{/if}{#if word && word.class && (word.class.includes('xref') || word.class.includes('FOOTNO') || word.class.includes('vno'))}
-	<span {...bibleWordAttributes} class={wordMarkup?.class?.join(' ')}>
-		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
-			role="button"
-			tabindex="-1"
-			onkeydown={() => {}}
-			onclick={onWordClicked}
-			class="{word.class?.join(' ')} {verseHasReferences
-				? 'vno-refs'
-				: ''} {wordMarkup?.class?.join(' ')}">{word.text}</span
-		></span
-	>
-{:else if mode.value === BIBLE_MODES.EDIT}
-	<span {...bibleWordAttributes} class=" {wordMarkup?.class?.join(' ')}">
-		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
-			tabindex="-1"
-			role="button"
-			onkeydown={() => {}}
-			onclick={onEditClick}
-			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"
-			>{word.text}</span
-		></span
-	>
-{:else}
-	<span {...bibleWordAttributes} class=" {wordMarkup?.class?.join(' ')}">
-		<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
-			tabindex="-1"
-			role="button"
-			onkeydown={() => {}}
-			class="{word.class?.join(' ')} {wordMarkup?.class?.join(' ')}"
-			>{word.text}</span
-		></span
-	>
-{/if}
+{/if}<span
+	data-bible-word
+	data-verse={verse.number}
+	data-word-index={wordIdx}
+	class={wordMarkup?.class?.join(' ')}
+>
+	<span class={wordMarkup?.class?.join(' ')}>&nbsp;</span><span
+		tabindex="-1"
+		role="button"
+		onkeydown={() => {}}
+		class="{word.class?.join(' ')} {verseHasReferences
+			? 'vno-refs'
+			: ''} {wordMarkup?.class?.join(' ')}"
+		>{word.text}</span
+	></span
+>
 
 <style>
 	@reference "../../../../../../app.css";

@@ -20,6 +20,11 @@ import NavReadingsView from '../views/navReadingsView.svelte';
 
 /**
  * Bible-owned navigation views registered by the application composition root.
+ *
+ * View IDs are persistent navigation contract values; this table is the single
+ * Reader-local mapping from those IDs to Svelte components. The legacy
+ * `BOOK_CHAPTER_VERSE` alias remains only so existing in-development persisted
+ * stacks can still resolve while the split book/chapter/verse views are used.
  */
 export const bibleNavigationViewRegistrations:
 	readonly NavigationViewRegistration<BibleView>[] = [

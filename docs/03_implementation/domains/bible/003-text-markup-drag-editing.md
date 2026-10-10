@@ -52,9 +52,9 @@ The feature should provide:
 5. deterministic apply/remove semantics,
 6. no continuous CPU work while idle,
 7. no persistence or publication work per crossed word,
-8. minimal gesture-specific code inside `word.svelte`,
+8. minimal interaction-specific code inside `word.svelte`,
 9. shared markup mutation semantics between click and drag,
-10. preservation of the existing selected-word Note reference behavior.
+10. preservation of existing reading-mode reference/Strong's activation behavior.
 
 ---
 
@@ -119,7 +119,7 @@ set mode.bibleLocationRef to that exact word
 toggle the currently selected markup family on that word
 ```
 
-This behavior is intentionally retained because it provides pinpoint editing and establishes the word reference used by the Edit toolbar's Note action.
+This behavior is intentionally retained because it provides pinpoint editing and establishes the Reader's current exact selection. Add Note does not consume that selection; it uses its own explicit Note-location selection result.
 
 A click below the drag threshold must remain indistinguishable from the current click interaction.
 
@@ -261,22 +261,24 @@ Normal read mode must not change its scrolling or touch behavior.
 
 Gesture semantics do not belong in each `word.svelte` instance.
 
-The target ownership is:
+The current ownership is:
 
 ```mermaid
 flowchart TD
-    Chapter[chapter.svelte\nReader edit surface]
+    Chapter[chapter.svelte\nReader interaction owner]
+    Router[Chapter Click Router\none delegated capture listener]
     Drag[Markup Drag Interaction\npointer gesture state]
-    Hit[DOM Word Hit Testing\nx/y → word identity]
+    Hit[DOM Target Resolver\nDOM → token / Note identity]
     Edit[Text Markup Edit Helper\napply/remove/toggle semantics]
-    Word[word.svelte\nrender + precise click]
+    Word[word.svelte\nrender + DOM identity]
     Draft[Bound BibleTextMarkup draft]
 
-    Chapter --> Drag
+    Word --> Hit
+    Router --> Hit
     Drag --> Hit
-    Hit --> Drag
-    Drag --> Edit
-    Word --> Edit
+    Router -->|resolved click target| Chapter
+    Drag -->|apply/remove target| Chapter
+    Chapter --> Edit
     Edit --> Draft
     Draft --> Word
 ```
@@ -290,14 +292,13 @@ The responsibilities are intentionally separated.
 ```text
 rendering one Bible token
 rendering its current markup classes
-precise click behavior
-updating the selected Bible location reference on edit click
-existing Strong's / reference / note interactions
+exposing stable DOM identity
+existing inline Note affordance
 ```
 
-Its drag-specific responsibility should be limited to exposing stable DOM identity for hit testing.
+Reading-mode reference/Strong's activation, edit-mode markup clicks, Note-location selection, and inline Note activation are delegated from the chapter surface rather than installed independently on every rendered Word component.
 
-It should not own:
+It does not own:
 
 ```text
 pointerdown/pointermove/pointerup state
@@ -308,6 +309,9 @@ visited-word tracking
 requestAnimationFrame throttling
 coordinate hit testing
 click suppression after a drag
+reading-mode reference/Strong's activation
+edit-mode markup click mutation
+inline Note click navigation
 ```
 
 ## 7.2 Markup drag interaction
@@ -337,7 +341,46 @@ which words were already processed during the stroke
 
 It does not know how CSS markup families are mutated.
 
-## 7.3 Text Markup edit helper
+## 7.3 Chapter click router
+
+One Reader-local Svelte action owns chapter click delegation:
+
+```text
+src/lib/domains/bible/modules/reader/chapter/interactions/
+    bible-chapter-click.ts
+```
+
+It installs one capture listener on the chapter interaction root and resolves semantic DOM identity with `closest(...)`:
+
+```text
+[data-bible-word]
+    → verseNumber + wordIndex
+
+[data-bible-note]
+    → verseNumber + wordIndex
+```
+
+`chapter.svelte` supplies the current interaction intent and owns all semantics:
+
+```text
+reading
+    → only xref / FOOTNO / vno activate references / Strong's
+    → ordinary Bible words remain unhandled
+
+text-markup
+    → toggle the selected token / verse
+
+note-location
+    → consume chapter clicks exclusively
+    → complete only selected Bible-token locations
+
+inline Note affordance
+    → open exact-location Notes outside note-location selection
+```
+
+The router does not mutate Text Markup, construct Bible references, or navigate by itself. The drag action remains separate because pointer gesture recognition and drag-click suppression have different lifecycle requirements. The drag action is registered before the click router so a completed drag suppresses its resulting click before the router can process it.
+
+## 7.4 Text Markup edit helper
 
 Markup mutation logic is shared through:
 
@@ -373,7 +416,7 @@ This prevents two independent implementations of Text Markup editing rules.
 
 # 8. DOM Word Identity
 
-The drag controller must map viewport coordinates back to Bible word identity without searching or measuring every word.
+Reader interactions must map browser event/hit-test targets back to Bible word identity without searching or measuring every word.
 
 Each eligible rendered word exposes semantic DOM metadata:
 
@@ -622,11 +665,11 @@ Therefore a stroke across many words does not create corresponding IndexedDB wri
 
 ---
 
-# 16. Selected Word and Note Reference
+# 16. Selected Bible Location
 
-Edit-mode clicks currently establish the precise Bible word reference used by the Edit toolbar's Note action.
+Edit-mode clicks establish the precise Bible token reference represented by the current edit selection.
 
-That behavior must remain explicit:
+That behavior remains explicit after click delegation:
 
 ```text
 click word in edit mode
@@ -648,9 +691,9 @@ drag
     = bulk Text Markup operation only
 ```
 
-Therefore clicking a word and then dragging elsewhere does not silently move the Note reference to the last word crossed by the drag.
+Therefore clicking a word and then dragging elsewhere does not silently move the selected Reader location to the last word crossed by the drag.
 
-The Note action continues to use the last explicit selected-word reference established by click/edit selection behavior.
+The selected Reader location continues to reflect the last explicit edit-mode click; drag remains a bulk Text Markup operation only.
 
 ---
 
@@ -918,8 +961,8 @@ vertical swipe continues to scroll without markup edits
 verse number participates as a single drag target without invoking whole-verse editing
 completed drag does not trigger a final click toggle
 normal click still toggles one word
-clicked word still becomes the Note reference
-drag does not overwrite the selected Note reference
+clicked word still becomes the selected Reader location
+drag does not overwrite the selected Reader location
 other markup families survive erase strokes
 edit-mode exit disables drag behavior
 ```
@@ -928,31 +971,32 @@ Real-time visual feedback should be asserted before releasing the pointer where 
 
 ---
 
-# 26. Expected Source Changes
+# 26. Current Source Ownership
 
-The implementation is expected to remain a small Reader-local slice.
+The implemented interaction remains a small Reader-local slice.
 
-Likely areas include:
+Current ownership is:
 
 ```text
 src/lib/domains/bible/modules/reader/chapter/word.svelte
+    render Bible tokens + markup + inline Note affordance
     expose DOM word identity
-    retain precise click + Note-reference selection
-    consume shared markup edit helper
 
 src/lib/domains/bible/modules/reader/chapter/chapter.svelte
-    own/wire the chapter-level drag interaction surface
+    own/wire chapter click routing + drag semantics
 
 src/lib/domains/bible/modules/reader/chapter/interactions/
+    one delegated chapter click router
     pointer gesture state + coordinate hit testing
+    shared DOM token / Note target resolution
 
 src/lib/domains/bible/modules/reader/chapter/
     shared Text Markup edit helper
 ```
 
-The exact file names are implementation details; ownership boundaries are the important constraint.
+The ownership boundaries are the important constraint.
 
-No change should be required to:
+The interaction does not require changes to:
 
 ```text
 BibleTextMarkup Domain Object
@@ -962,8 +1006,6 @@ IndexedDB Text Markup schema
 Outbox publication contract
 ```
 
-unless source inspection reveals a separate defect.
-
 ---
 
 # 27. Invariants
@@ -971,9 +1013,9 @@ unless source inspection reveals a separate defect.
 The implementation must preserve these invariants:
 
 1. Drag editing exists only in Bible edit mode.
-2. Normal click remains the precise one-word toggle interaction.
-3. Explicit edit-mode click continues to establish `mode.bibleLocationRef` for Notes.
-4. Drag does not continuously rewrite the Note reference.
+2. Normal word click remains the precise one-word toggle interaction; verse-number click retains whole-verse toggle semantics.
+3. Explicit edit-mode click continues to establish `mode.bibleLocationRef` as the Reader's current exact selection.
+4. Drag does not continuously rewrite that selected Reader location.
 5. Left-to-right means apply; right-to-left means remove.
 6. A stroke operation is idempotent per word and does not toggle crossed words.
 7. Removal affects only the selected markup family.
@@ -982,9 +1024,9 @@ The implementation must preserve these invariants:
 10. Crossed words update visually while the stroke is active.
 11. Drag mutation remains in the existing in-memory edit draft.
 12. Durable persistence/publication occurs only through the existing save flow.
-13. Gesture semantics are owned outside `word.svelte`.
+13. Reading-mode click, edit-mode click, inline Note activation, and drag interaction semantics are owned outside `word.svelte`.
 14. Click and drag share one markup mutation implementation.
-15. DOM data attributes identify Bible words but do not become Domain identity.
+15. Reading click, edit click, drag, Note-location selection, and inline Note activation resolve the same chapter DOM identity contract.
 16. Coordinate lookup uses browser hit testing rather than chapter-wide geometry scans.
 17. The feature performs no continuous background work when idle.
 18. A completed drag must not fall through into a normal click toggle.
@@ -994,13 +1036,22 @@ The implementation must preserve these invariants:
 # 28. Final Mental Model
 
 ```text
+Bible reading mode
+    ↓
+reference / footnote / verse-number click
+    → delegated chapter click resolves DOM Bible token identity
+    → preserve existing reference/Strong's navigation behavior
+
+ordinary Bible word click
+    → unhandled
+
 Bible edit mode
     ↓
 
 precise click
-    → select exact Bible word reference
+    → delegated chapter click resolves DOM Bible token identity
+    → update the exact selected Bible location
     → toggle current markup
-    → Note action can use selected word
 
 horizontal drag
     → gesture controller determines apply/remove

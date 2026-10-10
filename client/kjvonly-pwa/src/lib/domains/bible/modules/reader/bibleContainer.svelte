@@ -1,3 +1,8 @@
+<!-- @component
+Owns one Bible Reader instance: navigation state, selected Bible version/location,
+Text Markup save/exit flow, Reader-scoped edit intent, and composition of the header,
+chapter surface, navigation controls, and edit toolbar.
+-->
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
@@ -71,6 +76,17 @@
 		handleBibleVersionNavigationResult
 	} from '../components/bibleVersion';
 
+	import {
+		BIBLE_READER_EDIT_INTENTS,
+		provideBibleReaderEditContext,
+		type BibleReaderEditContext
+	} from './runtime/bible-reader-edit-context';
+
+	import {
+		NOTES_BIBLE_SCOPE_KINDS,
+		NOTES_VIEWS
+	} from '$lib/domains/notes';
+
 	const {
 		moduleResourceSelectionResolver,
 		bibleLocationReferenceService,
@@ -137,6 +153,31 @@
 	const DEFAULT_BIBLE_LOCATION_REF = '52_10_9';
 	let mode: BibleMode = $state(newBibleMode());
 
+	const readerEdit =
+		$state<BibleReaderEditContext>({
+			intent:
+				BIBLE_READER_EDIT_INTENTS.MARKUP,
+			startNoteLocationSelection() {
+				readerEdit.intent =
+					BIBLE_READER_EDIT_INTENTS.NOTE_LOCATION;
+			},
+			cancelNoteLocationSelection() {
+				readerEdit.intent =
+					BIBLE_READER_EDIT_INTENTS.MARKUP;
+			},
+			completeNoteLocationSelection(
+				bibleLocationRef: string
+			): Promise<void> {
+				return onNoteLocationSelected(
+					bibleLocationRef
+				);
+			}
+		});
+
+	provideBibleReaderEditContext(
+		readerEdit
+	);
+
 	// DOM related vars
 	let showNavButtons = $state(true);
 	let showBibleScrollbar = $state(
@@ -166,6 +207,15 @@
 
 	// ================================ FUNCS ==================================
 
+	/**
+	 * Routes child-view results back into this Reader instance.
+	 *
+	 * Handles Reader menu actions, explicit Bible-location selections, Bible
+	 * version changes, and reading-plan navigation results. Unrelated result
+	 * payloads are intentionally ignored.
+	 *
+	 * @param result - Result returned by a child navigation entry.
+	 */
 	async function onNavigationResult(
 		result: NavigationStateValue
 	): Promise<void> {
@@ -223,6 +273,7 @@
 		}
 	}
 
+	/** Hydrates optional reading-plan navigation context from persisted view state. */
 	function setNavReadings(): void {
 		mode.navReadings =
 			navigationState.state
@@ -230,6 +281,15 @@
 	}
 
 	
+	/**
+	 * Derives the active Bible version identity from the selected chapter resource.
+	 *
+	 * The Reader selection must point at a version-level Bible Chapter Resource,
+	 * not a chapter-specific resource identity.
+	 *
+	 * @param source - Selected Bible Chapter Resource reference.
+	 * @returns Canonical Bible version ID used by Reader services.
+	 */
 	function getBibleVersionId(
 		source: PublishedResourceReference
 	): string {
@@ -253,6 +313,10 @@
 		);
 	}
 
+	/**
+	 * Initializes the Reader location from navigation state, then persisted local
+	 * Reader history, and finally the development/default fallback.
+	 */
 	function setBibleLocationRef(): void {
 		const ref =
 			navigationState.state
@@ -266,6 +330,7 @@
 		setToLastBibleLocationRef();
 	}
 
+	/** Restores the most recent Reader location, normalized to chapter scope. */
 	function setToLastBibleLocationRef() {
 		let ref = localStorage.getItem(LAST_BIBLE_LOCATION_REF);
 		if (!ref) {
@@ -275,10 +340,12 @@
 		bibleLocationRef = bibleLocationReferenceService.extractBookIDChapter(ref);
 	}
 
+	/** Uses the Reader fallback location when no navigation/history location exists. */
 	function setDefaultBibleLocationRef() {
 		bibleLocationRef = DEFAULT_BIBLE_LOCATION_REF;
 	}
 
+	/** Suppresses the browser context menu on the chapter interaction surface. */
 	function overrideContextMenu() {
 		attachEvents(`chapter-container-${id}`, 'contextmenu', (e) =>
 			e.preventDefault()
@@ -299,7 +366,15 @@
 			settings.showBibleScrollbar;
 	}
 
+	/**
+	 * Commits a new active Reader location to navigation state and local history.
+	 *
+	 * Any in-progress Note-location selection is canceled because its DOM target
+	 * belongs to the previous Reader location.
+	 */
 	function onBibleLocationRefChanged(): void {
+		readerEdit.cancelNoteLocationSelection();
+
 		if (
 			!bibleLocationRef ||
 			!bibleVersion
@@ -318,7 +393,15 @@
 		);
 	}
 
+	/**
+	 * Saves the mutable Text Markup draft and returns the Reader to reading mode.
+	 *
+	 * This is the durable boundary for Bible Text Markup edits; click/drag
+	 * interactions only mutate the in-memory draft.
+	 */
 	async function onExitEdit(): Promise<void> {
+		readerEdit.cancelNoteLocationSelection();
+
 		await bibleTextMarkupService.put(
 			JSON.parse(JSON.stringify(textMarkup))
 		);
@@ -326,6 +409,48 @@
 		mode.value = BIBLE_MODES.READING;
 	}
 
+
+	/**
+	 * Completes Add Note location selection and opens Notes in direct-create mode.
+	 *
+	 * The Notes list remains chapter-scoped while the new draft is anchored at
+	 * the exact selected verse/word location. Text Markup is saved before leaving
+	 * the Reader edit surface.
+	 *
+	 * @param selectedBibleLocationRef - Exact canonical Bible location selected in the chapter.
+	 */
+	async function onNoteLocationSelected(
+		selectedBibleLocationRef: string
+	): Promise<void> {
+		const bibleChapterRef =
+			bibleLocationReferenceService
+				.extractBookIDChapter(
+					selectedBibleLocationRef
+				);
+
+		await onExitEdit();
+
+		navigation.pushModule(
+			Modules.NOTES,
+			NOTES_VIEWS.ROOT,
+			{
+				bibleScope: {
+					kind:
+						NOTES_BIBLE_SCOPE_KINDS.CHAPTER,
+					bibleLocationRef:
+						bibleChapterRef
+				},
+				createBibleLocationRef:
+					selectedBibleLocationRef
+			}
+		);
+	}
+
+	/**
+	 * Rebinds the Reader chapter resource selection to a newly selected Bible version.
+	 *
+	 * @param version - Bible version chosen by the Bible-version child view.
+	 */
 	function onBibleVersionSelected(
 		version: BibleVersion
 	): void {
@@ -341,7 +466,10 @@
 	}
 
 	/**
-	 * Validates the state contract required by the Bible reader view.
+	 * Validates the navigation contract required by the Bible Reader root view.
+	 *
+	 * @param value - Candidate navigation state owned by this Reader entry.
+	 * @throws When module, view, or Reader-owned state fields are invalid.
 	 */
 	function validateNavState(
 		value: unknown
@@ -460,6 +588,10 @@
 					<div class="absolute bottom-0 w-full">
 						<EditOptions
 							bind:mode
+							bibleChapterRef={bibleLocationReferenceService
+								.extractBookIDChapter(
+									bibleLocationRef
+								)}
 							{onExitEdit}
 						></EditOptions>
 					</div>

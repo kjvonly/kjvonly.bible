@@ -14,9 +14,13 @@ import {
 	type BibleMenuAction
 } from '../../../models/bible-navigation.model';
 
+/** Runtime state required to apply an overflow-menu result to one Reader. */
 interface BibleMenuNavigationResultContext {
+	/** Reader location copied into views that operate on the current passage. */
 	bibleLocationRef: string;
+	/** Navigation API owned by the Reader entry receiving the menu result. */
 	navigation: PaneNavigation;
+	/** Defers mutations until the Reader is active after the menu pops. */
 	whenActive:
 		NavigationEntryContext['whenActive'];
 }
@@ -25,10 +29,12 @@ interface BibleMenuNavigationResultContext {
  * Handles a menu action returned to the owning Bible reader.
  *
  * The menu reports intent through backWithResult(). This helper owns the menu
- * semantics and waits for bible.reader to become active before changing the
- * reader's sibling navigation or Pane layout.
+ * semantics and waits for `bible.reader` to become active before changing the
+ * Reader's sibling navigation or Pane layout.
  *
- * @returns true when the result belongs to the Bible menu.
+ * @param result - Navigation result returned by the overflow-actions view.
+ * @param context - Current Reader location and navigation runtime.
+ * @returns `true` when the result belongs to the Bible overflow menu.
  */
 export function handleBibleMenuNavigationResult(
 	result: NavigationStateValue,
@@ -53,6 +59,7 @@ export function handleBibleMenuNavigationResult(
 	return true;
 }
 
+/** Applies one validated overflow-menu action to the owning Reader. */
 function applyBibleMenuAction(
 	action: BibleMenuAction,
 	context: BibleMenuNavigationResultContext
@@ -98,6 +105,7 @@ function applyBibleMenuAction(
 	}
 }
 
+/** Narrows serialized menu action values to the supported Reader actions. */
 function isBibleMenuAction(
 	value: unknown
 ): value is BibleMenuAction {
@@ -109,6 +117,7 @@ function isBibleMenuAction(
 	);
 }
 
+/** Returns whether an unknown navigation value is a non-array object. */
 function isRecord(
 	value: unknown
 ): value is Record<string, unknown> {

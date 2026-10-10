@@ -3,12 +3,20 @@ import type {
 	PaneNavigation
 } from '$lib/application';
 
+/** Runtime capabilities required to forward a nested Bible-location result. */
 interface BibleLocationNavigationResultContext {
+	/** Navigation entry that receives the forwarded result. */
 	navigation:
 		Pick<
 			PaneNavigation,
 			'backWithResult'
 		>;
+	/**
+	 * Defers work until this mounted navigation entry is active again.
+	 *
+	 * The returned cleanup cancels the pending callback when the entry is
+	 * destroyed before becoming active.
+	 */
 	whenActive(
 		handler: () => void | Promise<void>
 	): () => void;
@@ -19,6 +27,10 @@ interface BibleLocationNavigationResultContext {
  *
  * backWithResult() delivers before the child is popped, so the parent waits
  * until it is active before returning the same result to its own parent.
+ *
+ * @param result - Navigation result returned by the child Bible selection view.
+ * @param context - Parent navigation capabilities used to defer and forward it.
+ * @returns `true` when the result is a Bible-location result owned by this flow.
  */
 export function forwardBibleLocationNavigationResult(
 	result: NavigationStateValue,
@@ -35,6 +47,7 @@ export function forwardBibleLocationNavigationResult(
 	return true;
 }
 
+/** Returns whether a navigation result carries a canonical Bible location. */
 function isBibleLocationNavigationResult(
 	result: NavigationStateValue
 ): result is {
@@ -49,6 +62,7 @@ function isBibleLocationNavigationResult(
 	);
 }
 
+/** Narrows serialized navigation state to a non-array object. */
 function isRecord(
 	value: NavigationStateValue
 ): value is {

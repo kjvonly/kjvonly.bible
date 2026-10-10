@@ -129,6 +129,7 @@
 
 	// ================================ FUNCS ==================================
 
+	/** Loads the selected Booknames resource used to render and search books. */
 	async function loadBooknames(): Promise<void> {
 		const source =
 			moduleResourceSelectionResolver.require(
@@ -144,6 +145,7 @@
 		setBookNames();
 	}
 
+	/** Projects resource book names into stable canonical Bible-book order. */
 	function setBookNames(): void {
 		if (!booknames) {
 			bookNamesSorted = [];
@@ -168,6 +170,12 @@
 		filterBooks();
 	}
 
+	/**
+	 * Applies the current text filter and optional alphanumeric sort.
+	 *
+	 * Bible order remains the default; alphanumeric ordering is presentation-only
+	 * and does not alter book identity or downstream navigation state.
+	 */
 	function filterBooks(): void {
 		const books = alphaNumeric
 			? [...bookNamesSorted].sort(
@@ -193,11 +201,19 @@
 		);
 	}
 
+	/** Loads static Bible book grouping metadata used by the grouped grid. */
 	function setBookGroupings(): void {
 		bookGroups =
 			bookGroupingsService.bookGroups;
 	}
 
+	/**
+	 * Forwards a nested chapter/verse selection result back through this view.
+	 *
+	 * Results are forwarded only while this navigation entry is active so a
+	 * hidden persistent-stack view cannot consume a result meant for another
+	 * Reader entry.
+	 */
 	function onNavigationResult(
 		result: NavigationStateValue
 	): void {
@@ -210,6 +226,7 @@
 		);
 	}
 
+	/** Returns the presentation label for one book in the current grid mode. */
 	function gridBookName(
 		book: Book
 	): string {
@@ -230,6 +247,7 @@
 		);
 	}
 
+	/** Returns the grouped-grid decoration associated with a book category. */
 	function gridBookClasses(
 		book: Book
 	): string {
@@ -264,6 +282,12 @@
 		alphaNumeric = !alphaNumeric;
 	}
 
+	/**
+	 * Opens chapter selection for one canonical Bible book.
+	 *
+	 * @param event - Book button click whose bubbling should stop at this view.
+	 * @param bookID - Canonical Bible book identifier passed to the chapter view.
+	 */
 	function onBookSelected(
 		event: Event,
 		bookID: string
@@ -278,6 +302,15 @@
 		);
 	}
 </script>
+
+<!--
+@component
+Book-selection root for the Reader's Book → Chapter → Verse navigation flow.
+
+The view owns only presentation preferences such as filtering, grouping, and
+alphanumeric sorting. Selecting a book pushes the chapter child view; location
+results from deeper child views are forwarded back to the owning Reader.
+-->
 
 <!-- ================================ HEADER =============================== -->
 

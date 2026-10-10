@@ -23,7 +23,6 @@ export type HeaderIconID =
 	| 'import'
 	| 'grid'
 	| 'list'
-	| 'more-vertical'
 	| 'pending'
 	| 'save'
 	| 'search'
@@ -47,8 +46,9 @@ export interface HeaderTitleActionDefinition {
 }
 
 /**
- * Header trailing actions are intentionally limited to three slots.
- * Overflow, when present, occupies one of these slots.
+ * Generic Header action definitions are intentionally limited to three slots.
+ * Caller-owned `trailingContent` also consumes a visual slot, so callers using
+ * the standard More Actions control should expose at most two direct actions.
  */
 export type HeaderActions =
 	| readonly []

@@ -76,6 +76,16 @@
 	}
 </script>
 
+<!--
+@component
+Bible Reader overflow menu.
+
+This view is intentionally a result-producing child of the Reader rather than
+an owner of Reader navigation. Selecting an action pops the menu with a typed
+Bible menu result; the owning Reader decides whether that result opens another
+view, splits the pane, or changes Reader state.
+-->
+
 {#snippet leadingContent()}
 	<KJVBackButton></KJVBackButton>
 {/snippet}

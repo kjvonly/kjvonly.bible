@@ -3,13 +3,23 @@ import type {
 	BibleTextMarkupMarking
 } from '../../../models/bible-text-markup.model';
 
+/** Current Text Markup family/class selected by the Reader edit toolbar. */
 export interface BibleTextMarkupEditSelection {
+	/** Markup family prefix, such as `bg`, `text`, or `decoration`. */
 	readonly type: string;
+	/** Concrete class applied for the selected family/color. */
 	readonly colorMarkup: string;
 }
 
 /**
- * Toggles the selected markup family for one word.
+ * Toggles the selected markup family for one Bible token.
+ *
+ * Existing classes from other markup families are preserved.
+ *
+ * @param textMarkup - Mutable Reader Text Markup draft.
+ * @param verseNumber - Verse containing the target token.
+ * @param wordIndex - Token index; `0` is the verse-number token.
+ * @param selection - Currently selected markup family/class.
  */
 export function toggleBibleTextMarkupWord(
 	textMarkup: BibleTextMarkup,
@@ -32,7 +42,15 @@ export function toggleBibleTextMarkupWord(
 }
 
 /**
- * Applies the selected markup family to one word without toggling it off.
+ * Applies the selected markup family to one token without toggling it off.
+ *
+ * Used by rightward drag painting; repeated application is idempotent for the
+ * selected family and preserves unrelated markup families.
+ *
+ * @param textMarkup - Mutable Reader Text Markup draft.
+ * @param verseNumber - Verse containing the target token.
+ * @param wordIndex - Token index; `0` is the verse-number token.
+ * @param selection - Currently selected markup family/class.
  */
 export function applyBibleTextMarkupWord(
 	textMarkup: BibleTextMarkup,
@@ -51,7 +69,14 @@ export function applyBibleTextMarkupWord(
 }
 
 /**
- * Removes the selected markup family from one word when present.
+ * Removes the selected markup family from one token when present.
+ *
+ * Used by leftward drag erasing and intentionally preserves unrelated families.
+ *
+ * @param textMarkup - Mutable Reader Text Markup draft.
+ * @param verseNumber - Verse containing the target token.
+ * @param wordIndex - Token index; `0` is the verse-number token.
+ * @param selection - Currently selected markup family/class.
  */
 export function removeBibleTextMarkupWord(
 	textMarkup: BibleTextMarkup,
@@ -70,8 +95,16 @@ export function removeBibleTextMarkupWord(
 }
 
 /**
- * Preserves the Reader's existing verse-number click behavior: the selected
- * family is toggled across every word index in the verse based on word index 0.
+ * Toggles the selected family across the whole verse for a verse-number click.
+ *
+ * Word index `0` is the control token used to decide whether this invocation
+ * applies or removes the family. Dragging across index `0` does not call this
+ * helper; drag treats the verse number as one ordinary paint target.
+ *
+ * @param textMarkup - Mutable Reader Text Markup draft.
+ * @param verseNumber - Verse toggled by the verse-number click.
+ * @param wordCount - Number of token indexes to update in the verse.
+ * @param selection - Currently selected markup family/class.
  */
 export function toggleBibleTextMarkupVerse(
 	textMarkup: BibleTextMarkup,
@@ -108,6 +141,9 @@ export function toggleBibleTextMarkupVerse(
 	}
 }
 
+/**
+ * Returns the mutable marking for one token, creating its sparse entry as needed.
+ */
 function requireWordMarking(
 	textMarkup: BibleTextMarkup,
 	verseNumber: number,
@@ -126,6 +162,7 @@ function requireWordMarking(
 	return textMarkup.markings[verseNumber][wordIndex];
 }
 
+/** Tests whether a token contains any class from one markup family. */
 function hasMarkupFamily(
 	marking: BibleTextMarkupMarking,
 	type: string
@@ -135,6 +172,9 @@ function hasMarkupFamily(
 	);
 }
 
+/**
+ * Removes only the selected family and its decoration companion classes.
+ */
 function removeMarkupFamily(
 	marking: BibleTextMarkupMarking,
 	type: string
@@ -162,6 +202,9 @@ function removeMarkupFamily(
 	);
 }
 
+/**
+ * Applies the selected class and companion classes required by its family.
+ */
 function addSelectedMarkup(
 	marking: BibleTextMarkupMarking,
 	selection: BibleTextMarkupEditSelection

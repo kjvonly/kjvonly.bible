@@ -30,6 +30,12 @@
 
 	let headerHeight = $state(0);
 
+	/**
+	 * Reads and validates the reading-list navigation payload owned by this view.
+	 *
+	 * The view requires the complete reading sequence plus the caller's current
+	 * index so a selected row can be returned as an explicit navigation result.
+	 */
 	function getNavReadings(): BibleReadingNavigation {
 		const value = navigationState.state.navReadings;
 
@@ -51,6 +57,13 @@
 		return value as unknown as BibleReadingNavigation;
 	}
 
+	/**
+	 * Returns the selected reading to the owning Reader and closes this view.
+	 *
+	 * @param event - Row click whose bubbling must not trigger surrounding UI.
+	 * @param reading - Reading selected from the current navigation sequence.
+	 * @param index - Position of the reading in the sequence.
+	 */
 	async function rowClicked(
 		event: Event,
 		reading: BCV,
@@ -65,6 +78,15 @@
 		});
 	}
 </script>
+
+<!--
+@component
+Displays the Reader's current navigation-reading sequence.
+
+This view does not mutate Bible Reader state directly. Selecting a reading
+returns `{ index, bibleLocationRef }` through `backWithResult(...)`; the owning
+Reader applies the location and updates its reading-navigation cursor.
+-->
 
 {#snippet leadingContent()}
 	<KJVBackButton></KJVBackButton>

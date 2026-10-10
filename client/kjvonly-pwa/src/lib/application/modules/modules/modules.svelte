@@ -6,6 +6,7 @@
 	import ViewBody from '$lib/application/runtime/navigation/components/viewBody.svelte';
 	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
 	import { KJVHeader } from '$lib/components';
+	import KJVBackButton from '../../ui/navigation/KJVBackButton.svelte';
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
@@ -24,6 +25,7 @@
 	const {
 		navigation
 	} = useNavigationRuntimeContext();
+	const navigationViews = navigation.views;
 
 	// =============================== BINDINGS ================================
 	const paneLayout = usePaneLayoutContext();
@@ -45,6 +47,9 @@
 
 	let headerHeight = $state(0);
 	let canClosePane = $state(false);
+	let hasPreviousNavigationView = $derived(
+		$navigationViews.length > 1
+	);
 
 	// =============================== LIFECYCLE ===============================
 
@@ -127,11 +132,21 @@
 </script>
 
 <!-- ================================ HEADER =============================== -->
+{#snippet backButton()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
 {#snippet header()}
-	<div class:ps-4={!canClosePane} class="w-full">
+	<div
+		class:ps-4={!hasPreviousNavigationView && !canClosePane}
+		class="w-full"
+	>
 		<KJVHeader
 			title="Modules"
-			leadingAction={canClosePane
+			leadingContent={hasPreviousNavigationView
+				? backButton
+				: undefined}
+			leadingAction={!hasPreviousNavigationView && canClosePane
 				? {
 					icon: 'close',
 					label: 'Close pane',
