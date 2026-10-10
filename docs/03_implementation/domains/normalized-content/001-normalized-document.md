@@ -365,29 +365,56 @@ The resolver should be scoped to one rendered NormalizedDocument root so separat
 
 ---
 
-# 10. Text Markup Model Direction
+# 10. Text Markup Domain and Resource Contract
 
-Normalized Content Text Markup should follow the architecture already proven by Bible Text Markup.
-
-The important pattern is:
+Normalized Content Text Markup follows the architecture already proven by Bible Text Markup:
 
 ```text
 semantic token identity
     ↓
-markup state
+user-owned markup state
     ↓
 renderer applies classes
 ```
 
-not:
+It does not persist browser `Range`, `Selection`, DOM paths, or pointer geometry.
+
+The canonical application type is:
 
 ```text
-browser Range
-    ↓
-persist DOM selection
+objectType = normalized-content/text-markup
 ```
 
-A future Normalized Content Text Markup payload may conceptually resemble:
+The Resource boundary uses the same application type:
+
+```text
+resourceType = normalized-content/text-markup
+```
+
+The semantic payload contract is independently versioned:
+
+```text
+dataType = kjvonly.normalized-content.text-markup
+dataVersion = 1
+```
+
+The value model is conceptually:
+
+```ts
+interface NormalizedContentTextMarkup {
+    readonly id: string;
+
+    readonly document: {
+        readonly publisher: string;
+        readonly resourceId: string;
+        readonly modifiedAt: number;
+    };
+
+    readonly markings: NormalizedContentTextMarkupMap;
+}
+```
+
+The markings remain:
 
 ```text
 blockId
@@ -397,25 +424,253 @@ contentIndex
 { class: string[] }
 ```
 
-For example:
+Only canonical `word` entries are valid marking targets.
+
+## 10.1 Exact document snapshot identity
+
+Normalized token addresses are snapshot-local.
+
+Therefore durable Text Markup must identify not only the target Resource but the exact Resource revision that produced the normalized token addresses.
+
+The target snapshot is:
+
+```text
+document publisher
++
+document resourceId
++
+document modifiedAt
+```
+
+`modifiedAt` is intentionally part of Text Markup identity.
+
+Example:
+
+```text
+document Resource
+    publisher  = author-pubkey
+    resourceId = sermons/grace
+    modifiedAt = 42
+
+Text Markup target
+    author-pubkey
+    sermons/grace
+    42
+```
+
+If the document is republished as:
+
+```text
+modifiedAt = 43
+```
+
+that is a different Text Markup target snapshot.
+
+The application must not silently apply markup created for revision `42` to revision `43`, because block IDs or `contentIndex` values may have changed.
+
+This preserves the older markup instead of destroying it and leaves future migration/remapping as an explicit higher-level operation.
+
+## 10.2 Application identity
+
+One user owns one Text Markup object for one exact target document snapshot.
+
+The canonical application ID is:
+
+```text
+<markupPublisher>/<documentPublisher>/<encodedDocumentResourceId>/<documentModifiedAt>
+```
+
+Example:
+
+```text
+user-pubkey/author-pubkey/sermons%2Fgrace/42
+```
+
+The target `resourceId` is encoded as one segment.
+
+This is important because generic Resource IDs are opaque strings and may themselves contain `/`, `%`, or Domain-owned path grammar.
+
+Normalized Content Text Markup must not parse the target Resource ID into assumed generic path segments.
+
+## 10.3 Resource identity
+
+The individual Text Markup Resource ID is:
+
+```text
+kjvonly/normalized-content/text-markup/<documentPublisher>/<encodedDocumentResourceId>/<documentModifiedAt>
+```
+
+The Resource publisher is the Text Markup owner.
+
+Example:
+
+```text
+publisher = user-pubkey
+
+resourceId =
+    kjvonly/normalized-content/text-markup/
+    author-pubkey/
+    sermons%2Fgrace/
+    42
+```
+
+The target document publisher is therefore distinct from the Text Markup Resource publisher:
+
+```text
+Text Markup publisher
+    = user who owns the markup
+
+document publisher
+    = publisher of the document being marked
+```
+
+## 10.4 Resource payload
+
+The Text Markup Resource payload contains the markings map only.
+
+Conceptually:
 
 ```json
 {
-  "markings": {
-    "paragraph-12": {
-      "17": {
-        "class": ["bg-highlighta"]
-      }
+  "paragraph-12": {
+    "17": {
+      "class": ["bg-highlighta"]
     }
   }
 }
 ```
 
-This example defines the intended addressing shape only.
+The payload does not duplicate:
 
-The concrete Text Markup Domain Object identity, Resource Type, data type/version, collection identity, publication contract, and synchronization policy must be specified by the Text Markup feature before implementation.
+```text
+markup publisher
+document publisher
+document resourceId
+document modifiedAt
+objectType
+resourceType
+dataType
+dataVersion
+```
+
+Those values belong to Domain/Resource identity and envelope contracts.
+
+## 10.5 Current scope
+
+The first durable implementation targets Resource-backed documents opened through the standalone Normalized Content reader.
+
+That reader already has the target `ResourceDescriptor`, including:
+
+```text
+publisher
+resourceId
+modifiedAt
+dataType
+dataVersion
+```
+
+The renderer itself remains reusable by other Domains.
+
+This Text Markup Resource contract must not be generalized into a universal cross-Domain annotation identity until another owning Domain has a concrete persistence requirement.
+
+A sermon, Note, Bible view, or other Domain may reuse `NormalizedContentRenderer` without automatically becoming owned by the standalone Normalized Content Text Markup persistence contract.
+
+## 10.6 Signed-out state and save boundary
+
+Durable Text Markup is user-owned and therefore requires a publisher identity.
+
+When no current user publisher exists:
+
+```text
+render document normally
+markup may be absent
+no synthetic/anonymous publisher is created
+no durable Text Markup publication occurs
+```
+
+The signed-out Reader renders the document without entering durable Text Markup edit mode. Editing requires an authenticated publisher; no anonymous markup identity is persisted.
+
+Durable writes remain at the explicit save boundary:
+
+```text
+accepted Text Markup
+    ↓
+mutable Reader draft
+    ↓ click / drag
+updated draft
+    ↓ Save
+Domain persistence + Resource revision + Outbox intent
+```
+
+Crossing a word during drag must never cause an independent durable write.
 
 Do not make the renderer the persistence owner merely because it exposes token addresses.
+
+## 10.7 Implemented v1 lifecycle and boundaries
+
+The standalone Reader owns the in-memory edit session and the document-specific
+interaction surface. It obtains markup through
+`NormalizedContentTextMarkupService` for the authenticated publisher and the
+exact validated document descriptor.
+
+```text
+Reader enters / authenticated publisher changes
+    ↓
+Text Markup service.get(publisher, descriptor)
+    ↓
+local accepted Domain Object, or exact Resource load on local miss
+    ↓
+Reader subscribes to that Text Markup Domain identity
+    ↓
+Reader clones accepted markings into a separate mutable draft
+    ↓
+click / horizontal drag edits the draft; renderer projects the classes
+    ↓
+explicit Save
+    ↓
+service.put(draft snapshot)
+    ↓
+IndexedDB transaction: Domain Object + Resource installation + Outbox
+    ↓
+notify subscribers, then wake Outbox publication
+```
+
+The IndexedDB transaction is the durable commit boundary. Publication is
+asynchronous: a remote Nostr relay is not required to accept an event before
+local Save succeeds. The pending Outbox entry carries the outbound Resource
+intent, whose content is the markings map and whose media type is
+`application/json+gzip+hex`. The transaction also advances the local Resource
+installation timestamp monotonically, including repeated saves within one
+second.
+
+Resource discovery and installation use the generic Resource Worker path, not
+a Text Markup-specific Nostr client. Archive import refreshes active Text Markup
+subscribers using the same accepted local store. No import or subscription
+callback publishes a new draft on behalf of the Reader.
+
+Reader lifecycle safeguards:
+
+- Repeated authentication notifications for the **same publisher** do not
+  discard an open edit draft. A publisher identity change resets the edit
+  session, unsubscribes the previous identity, and invalidates old loads,
+  edit-entry attempts, and save completions (including A → B → A).
+- A subscription notification updates accepted markup. It updates displayed
+  markings only outside edit mode; while editing, the unsaved draft remains
+  independent. Cancel returns to the latest accepted markings.
+- Save captures a clone of the draft. While it is pending, the Reader disables
+  further edits and duplicate saves. A failed durable write retains the draft
+  for retry. Stale completions cannot repaint a different account's Reader.
+- Subscription callbacks are observer notifications, not part of the durable
+  commit. One throwing subscriber is logged without blocking the others or
+  preventing the Outbox wakeup.
+- Archive refreshes are guarded against outdated reads: newer refreshes or a
+  committed local Save invalidate older results. A replaced/unsubscribed
+  listener does not receive a notification from its previous subscription.
+
+Tests intentionally use in-memory Nostr transport for the publication →
+installation round trip; the normal browser suite must not require a live
+relay. Multi-user markup overlays and cross-revision token migration are
+future features, not v1 Reader behavior.
 
 ---
 
@@ -465,9 +720,10 @@ The two features may share interaction patterns and presentation vocabulary with
 
 ---
 
-# 12. Click and Drag Editing Direction
+# 12. Click and Drag Editing
 
-If Normalized Content Text Markup adopts the Bible editing behavior, the interaction model should remain token-oriented.
+Normalized Content Text Markup v1 implements Bible-style whole-token editing
+with Reader-local gesture state and canonical token addressing.
 
 Conceptually:
 
@@ -485,9 +741,16 @@ right-to-left horizontal drag
 remove selected markup from each unique crossed word token
 ```
 
-The exact interaction must be specified by the Text Markup feature before implementation.
+Horizontal direction is selected when a drag crosses the gesture threshold.
+Vertical movement remains scrolling rather than a markup stroke. The action
+uses coordinate hit testing and de-duplicates visited semantic word addresses;
+intervening browser pointer events do not create independent persistence
+writes. A completed drag suppresses its trailing click to avoid toggling a
+word twice.
 
-The renderer should provide the semantic DOM bridge needed by the interaction, but should not own the gesture state machine or markup mutation rules.
+The renderer provides the semantic DOM bridge; the Reader-local Svelte action
+and gesture controller own the pointer lifecycle, and markup helpers own token
+mutation. The renderer does not own either gesture state or persistence.
 
 ---
 
@@ -618,7 +881,8 @@ markup absent without changing the document
 
 # 17. Mutable Edit Draft
 
-If Normalized Content Text Markup follows Bible Text Markup, editing should operate on a mutable in-memory draft.
+Text Markup v1 edits a Reader-owned mutable clone of the accepted markings.
+The accepted Domain object is not mutated by pending clicks or drag strokes.
 
 Conceptually:
 
@@ -648,9 +912,10 @@ The durable write boundary remains owned by the Text Markup feature/service.
 
 # 18. Markup Mutation Semantics
 
-Markup mutation should be centralized rather than duplicated in click and drag code.
+The Reader's click and drag handlers use the shared Text Markup edit helpers;
+mutation rules are centralized rather than duplicated.
 
-A Text Markup edit helper should own operations such as:
+Implemented operations are:
 
 ```text
 toggle token markup
@@ -660,7 +925,7 @@ remove token markup
 
 Gesture/click code should resolve a semantic token and request one of those operations.
 
-The helper should own presentation-family rules such as:
+The helpers own presentation-family rules including:
 
 ```text
 replace conflicting value in the same markup family
@@ -820,7 +1085,11 @@ selection/scroll interaction
 pointer cancellation
 ```
 
-Pure markup mutation rules should remain unit-testable without DOM geometry.
+Pure markup mutation rules remain unit-testable without DOM geometry.
+
+The v1 integration tests also cover edit/save cancellation, account changes,
+subscriber isolation, stale archive refreshes, atomic IndexedDB + Outbox
+writes, and in-memory signed Nostr Resource publication/reinstallation.
 
 ---
 
@@ -859,10 +1128,13 @@ Those capabilities may be designed later if a concrete feature requires them.
 10. Browser Selection/Range is not the current Text Markup identity model.
 11. Character-offset Point/Range support must be justified by a concrete character-level feature.
 12. Generated normalized IDs/content indexes are snapshot-local unless a stronger revision contract is deliberately introduced.
-13. Bible semantic identity remains Bible-owned even when normalized rendering is reused.
-14. Click and drag interactions should share one markup mutation implementation.
-15. Drag editing should use browser hit testing rather than repeated full-document geometry scans.
-16. Durable writes/publication occur at the feature's save boundary, not once per crossed word.
+13. Durable Text Markup identity includes the target document Resource `modifiedAt`, so markup from one snapshot is never silently applied to another.
+14. Target Resource IDs remain opaque and are encoded as one Text Markup identity segment rather than generically parsed.
+15. The first durable Text Markup contract targets standalone Resource-backed Normalized Content documents; renderer reuse does not transfer persistence ownership across Domains.
+16. Bible semantic identity remains Bible-owned even when normalized rendering is reused.
+17. Click and drag interactions should share one markup mutation implementation.
+18. Drag editing should use browser hit testing rather than repeated full-document geometry scans.
+19. Durable writes/publication occur at the feature's save boundary, not once per crossed word.
 
 ---
 

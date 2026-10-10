@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import uuid4 from 'uuid4';
 
 	import {
 		Modules,
@@ -24,9 +25,29 @@
 		NormalizedDocument
 	} from '@kjvonly/normalized-content';
 
+	import type {
+		NormalizedContentAddress
+	} from '../../models/normalized-content-address.model';
 	import {
 		NORMALIZED_CONTENT_VIEWS
 	} from '../../models/normalized-content-navigation.model';
+	import type {
+		NormalizedContentTextMarkup,
+		NormalizedContentTextMarkupMap
+	} from '../../models/normalized-content-text-markup.model';
+	import {
+		cloneNormalizedContentTextMarkupMap
+	} from './normalized-content-text-markup-draft';
+	import {
+		applyNormalizedContentTextMarkupWord,
+		removeNormalizedContentTextMarkupWord,
+		toggleNormalizedContentTextMarkupWord,
+		type NormalizedContentTextMarkupEditSelection
+	} from './normalized-content-text-markup-edit';
+	import {
+		normalizedContentTextMarkupDrag
+	} from './interactions/normalized-content-text-markup-drag';
+	import NormalizedContentTextMarkupEditOptions from './normalizedContentTextMarkupEditOptions.svelte';
 
 	import NormalizedContentRenderer from '../../ui/components/normalizedContentRenderer.svelte';
 	import {
@@ -35,7 +56,10 @@
 
 	const {
 		applicationReferenceResolver,
-		normalizedContentService
+		authenticationService,
+		normalizedContentService,
+		normalizedContentTextMarkupService,
+		toastService
 	} = useApplicationContext();
 
 	const {
@@ -59,6 +83,9 @@
 		) ??
 		'Document';
 
+	const textMarkupSubscriberId =
+		uuid4();
+
 	const paneLayout =
 		usePaneLayoutContext();
 
@@ -78,12 +105,68 @@
 	let loading =
 		$state(true);
 
+	let editing =
+		$state(false);
+
+	let acceptedTextMarkup =
+		$state<NormalizedContentTextMarkup>();
+
+	let textMarkupLoading =
+		$state(false);
+
+	let savingTextMarkup =
+		$state(false);
+
+	let enteringTextMarkupEdit =
+		$state(false);
+
+	let textMarkupEditAttemptVersion = 0;
+
+	let textMarkupLoadVersion = 0;
+
+	let currentTextMarkupPublisher: string | undefined;
+
+	let textMarkupMarkings =
+		$state<NormalizedContentTextMarkupMap>({});
+
+	let textMarkupSelection =
+		$state<NormalizedContentTextMarkupEditSelection>({
+			type: 'bg',
+			colorMarkup: 'bg-highlighta'
+		});
+
 	let renderedDocumentRoot:
 		HTMLDivElement | undefined =
 		$state();
 
 	onMount(() => {
 		void loadDocument();
+
+		const unsubscribeAuthentication =
+			authenticationService.subscribe(
+				() => {
+					const publisher =
+						authenticationService.tryGetUserId();
+
+					if (publisher === currentTextMarkupPublisher) {
+						return;
+					}
+
+					currentTextMarkupPublisher = publisher;
+					void loadTextMarkupForCurrentUser(
+						publisher
+					);
+				}
+			);
+
+		return () => {
+			unsubscribeAuthentication();
+			textMarkupEditAttemptVersion += 1;
+			textMarkupLoadVersion += 1;
+			normalizedContentTextMarkupService.unsubscribe(
+				textMarkupSubscriberId
+			);
+		};
 	});
 
 	/**
@@ -148,6 +231,332 @@
 		});
 
 		return true;
+	}
+
+	/** Toggles Reader-local Text Markup editing without persisting the draft. */
+	function onEditClick(): void {
+		if (!document) {
+			return;
+		}
+
+		editing = !editing;
+	}
+
+	/** Enters edit mode once, even if multiple clicks race an asynchronous reload. */
+	async function onEnterEdit(): Promise<void> {
+		if (!document || editing || enteringTextMarkupEdit) {
+			return;
+		}
+
+		const publisher =
+			authenticationService.tryGetUserId();
+
+		if (!publisher) {
+			toastService.showToast(
+				'Login first'
+			);
+			return;
+		}
+
+		// A user switch invalidates the previous entry attempt. A late
+		// completion must not open (or unlock) the new user's editor.
+		const attemptVersion = ++textMarkupEditAttemptVersion;
+		enteringTextMarkupEdit = true;
+
+		try {
+			if (!acceptedTextMarkup) {
+				await loadTextMarkup(
+					publisher
+				);
+			}
+
+			if (
+				attemptVersion !== textMarkupEditAttemptVersion ||
+				authenticationService.tryGetUserId() !== publisher
+			) {
+				return;
+			}
+
+			if (!acceptedTextMarkup) {
+				toastService.showToast(
+					'Unable to load Text Markup'
+				);
+				return;
+			}
+
+			textMarkupMarkings =
+				cloneNormalizedContentTextMarkupMap(
+					acceptedTextMarkup.markings
+				);
+
+			onEditClick();
+		} finally {
+			if (attemptVersion === textMarkupEditAttemptVersion) {
+				enteringTextMarkupEdit = false;
+			}
+		}
+	}
+
+	/** Discards the mutable draft and restores the latest accepted markup. */
+	function onCancelEdit(): void {
+		if (savingTextMarkup) {
+			return;
+		}
+
+		if (acceptedTextMarkup) {
+			textMarkupMarkings =
+				cloneNormalizedContentTextMarkupMap(
+					acceptedTextMarkup.markings
+				);
+		}
+
+		if (editing) {
+			onEditClick();
+		}
+	}
+
+	/** Persists the current draft through the Text Markup service. */
+	async function onSaveEdit(): Promise<void> {
+		if (
+			!editing ||
+			!acceptedTextMarkup ||
+			savingTextMarkup
+		) {
+			return;
+		}
+
+		const publisher = currentTextMarkupPublisher;
+		if (
+			!publisher ||
+			authenticationService.tryGetUserId() !== publisher
+		) {
+			return;
+		}
+
+		// Invalidate this completion if authentication changes, including A → B → A.
+		const saveLoadVersion = textMarkupLoadVersion;
+
+		const textMarkup: NormalizedContentTextMarkup = {
+			...acceptedTextMarkup,
+			document: {
+				...acceptedTextMarkup.document
+			},
+			markings:
+				cloneNormalizedContentTextMarkupMap(
+					textMarkupMarkings
+				)
+		};
+
+		savingTextMarkup = true;
+
+		try {
+			await normalizedContentTextMarkupService.put(
+				textMarkup
+			);
+
+			if (
+				saveLoadVersion === textMarkupLoadVersion &&
+				authenticationService.tryGetUserId() === publisher &&
+				acceptedTextMarkup?.id === textMarkup.id
+			) {
+				acceptedTextMarkup =
+					textMarkup;
+
+				textMarkupMarkings =
+					cloneNormalizedContentTextMarkupMap(
+						textMarkup.markings
+					);
+
+				if (editing) {
+					onEditClick();
+				}
+			}
+		} catch {
+			if (
+				saveLoadVersion === textMarkupLoadVersion &&
+				authenticationService.tryGetUserId() === publisher
+			) {
+				toastService.showToast(
+					'Unable to save Text Markup'
+				);
+			}
+		} finally {
+			// A previous user's save must not unlock a newer user's save.
+			if (saveLoadVersion === textMarkupLoadVersion) {
+				savingTextMarkup = false;
+			}
+		}
+	}
+
+	/**
+	 * Toggles the selected Text Markup family for one activated canonical word.
+	 *
+	 * @returns True only while edit mode consumes the word activation.
+	 */
+	function onWordActivate(
+		address: NormalizedContentAddress
+	): boolean {
+		if (!editing || !document) {
+			return false;
+		}
+
+		// Consume clicks without editing while the captured draft is being saved.
+		if (savingTextMarkup) {
+			return true;
+		}
+
+		toggleNormalizedContentTextMarkupWord(
+			document,
+			textMarkupMarkings,
+			address,
+			textMarkupSelection
+		);
+
+		return true;
+	}
+
+	/** Ensures the selected markup family is applied during a drag stroke. */
+	function applyDragMarkup(
+		address: NormalizedContentAddress
+	): void {
+		if (!document || savingTextMarkup) {
+			return;
+		}
+
+		applyNormalizedContentTextMarkupWord(
+			document,
+			textMarkupMarkings,
+			address,
+			textMarkupSelection
+		);
+	}
+
+	/** Ensures the selected markup family is removed during a drag stroke. */
+	function removeDragMarkup(
+		address: NormalizedContentAddress
+	): void {
+		if (!document || savingTextMarkup) {
+			return;
+		}
+
+		removeNormalizedContentTextMarkupWord(
+			document,
+			textMarkupMarkings,
+			address,
+			textMarkupSelection
+		);
+	}
+
+	/** Updates the Reader-owned markup tool selection used by click/drag edits. */
+	function onTextMarkupSelectionChange(
+		selection: NormalizedContentTextMarkupEditSelection
+	): void {
+		textMarkupSelection = selection;
+	}
+
+	/** Resets the Reader only when its authenticated publisher actually changes. */
+	async function loadTextMarkupForCurrentUser(
+		publisher: string | undefined
+	): Promise<void> {
+
+		normalizedContentTextMarkupService.unsubscribe(
+			textMarkupSubscriberId
+		);
+
+		textMarkupEditAttemptVersion += 1;
+		enteringTextMarkupEdit = false;
+		textMarkupLoadVersion += 1;
+		// The previous user's in-flight save must not lock the new user's editor.
+		savingTextMarkup = false;
+		acceptedTextMarkup = undefined;
+		textMarkupMarkings = {};
+		editing = false;
+
+		if (!publisher) {
+			textMarkupLoading = false;
+			return;
+		}
+
+		await loadTextMarkup(
+			publisher
+		);
+	}
+
+	/** Loads and subscribes to markup for one authenticated publisher. */
+	async function loadTextMarkup(
+		publisher: string
+	): Promise<void> {
+		const loadVersion =
+			++textMarkupLoadVersion;
+
+		textMarkupLoading = true;
+
+		try {
+			const installed =
+				await normalizedContentTextMarkupService.get(
+					publisher,
+					descriptor
+				);
+
+			if (
+				loadVersion !==
+				textMarkupLoadVersion
+			) {
+				return;
+			}
+
+			acceptedTextMarkup =
+				installed;
+
+			textMarkupMarkings =
+				cloneNormalizedContentTextMarkupMap(
+					installed.markings
+				);
+
+			normalizedContentTextMarkupService.subscribe(
+				textMarkupSubscriberId,
+				installed.id,
+				(updated) => {
+					if (loadVersion === textMarkupLoadVersion) {
+						onTextMarkupChange(updated);
+					}
+				}
+			);
+		} catch {
+			if (
+				loadVersion ===
+				textMarkupLoadVersion
+			) {
+				acceptedTextMarkup = undefined;
+			}
+		} finally {
+			if (
+				loadVersion ===
+				textMarkupLoadVersion
+			) {
+				textMarkupLoading = false;
+			}
+		}
+	}
+
+	/** Reconciles accepted updates without overwriting an active edit draft. */
+	function onTextMarkupChange(
+		updated: NormalizedContentTextMarkup
+	): void {
+		// Never apply a notification for a different document/user markup object.
+		if (updated.id !== acceptedTextMarkup?.id) {
+			return;
+		}
+
+		acceptedTextMarkup =
+			updated;
+
+		if (!editing) {
+			textMarkupMarkings =
+				cloneNormalizedContentTextMarkupMap(
+					updated.markings
+				);
+		}
 	}
 
 	async function loadDocument(): Promise<void> {
@@ -232,6 +641,36 @@
 	<KJVHeader
 		{title}
 		{leadingContent}
+		actions={editing
+			? [
+				{
+					icon: 'edit-off',
+					label: 'Cancel edits',
+					onClick: onCancelEdit,
+					disabled: savingTextMarkup
+				},
+				{
+					icon: 'save',
+					label: 'Save Text Markup',
+					onClick: () => {
+						void onSaveEdit();
+					},
+					disabled: savingTextMarkup
+				}
+			]
+			: [
+				{
+					icon: 'edit',
+					label: 'Edit',
+					onClick: () => {
+						void onEnterEdit();
+					},
+					disabled:
+						!document ||
+						textMarkupLoading ||
+						enteringTextMarkupEdit
+				}
+			]}
 	></KJVHeader>
 {/snippet}
 
@@ -246,11 +685,19 @@
 		</div>
 	{:else if document}
 		<div
+			use:normalizedContentTextMarkupDrag={{
+				enabled: editing && !savingTextMarkup,
+				onApply: applyDragMarkup,
+				onRemove: removeDragMarkup
+			}}
 			class="py-4"
+			class:touch-pan-y={editing}
 			bind:this={renderedDocumentRoot}
 		>
 			<NormalizedContentRenderer
 				{document}
+				{textMarkupMarkings}
+				{onWordActivate}
 				{onLinkActivate}
 			></NormalizedContentRenderer>
 		</div>
@@ -267,3 +714,21 @@
 >
 	{@render body()}
 </ViewBody>
+
+{#if editing && document}
+	<div class="flex w-full justify-center">
+		<div class="w-full">
+			<div
+				style="transform: translate3d(0px, 0px, 0px);"
+				class="sticky z-10"
+			>
+				<div class="absolute bottom-0 w-full">
+					<NormalizedContentTextMarkupEditOptions
+						selection={textMarkupSelection}
+						onSelectionChange={onTextMarkupSelectionChange}
+					></NormalizedContentTextMarkupEditOptions>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}

@@ -70,6 +70,12 @@ import {
 	BibleTextMarkupResourcePublication
 } from '$lib/domains/bible/resources/text-markup/bible-text-markup-resource-publication';
 
+import {
+	NORMALIZED_CONTENT_TEXT_MARKUP_OBJECT_TYPE,
+	NormalizedContentTextMarkupResourcePublication,
+	type NormalizedContentTextMarkup
+} from '$lib/domains/normalized-content';
+
 import type {
 	Note
 } from '$lib/domains/notes/models/note.model';
@@ -254,6 +260,9 @@ export function createArchivePublicationResolver():
 	const textMarkup =
 		new BibleTextMarkupResourcePublication();
 
+	const normalizedContentTextMarkup =
+		new NormalizedContentTextMarkupResourcePublication();
+
 	const notes =
 		new NotesResourcePublication();
 
@@ -341,6 +350,21 @@ export function createArchivePublicationResolver():
 				) =>
 					textMarkup.create({
 						...value as BibleTextMarkup,
+						id:
+							objectId
+					})
+		},
+		{
+			objectType:
+				NORMALIZED_CONTENT_TEXT_MARKUP_OBJECT_TYPE,
+
+			create:
+				(
+					objectId,
+					value
+				) =>
+					normalizedContentTextMarkup.create({
+						...value as NormalizedContentTextMarkup,
 						id:
 							objectId
 					})

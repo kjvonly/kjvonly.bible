@@ -37,13 +37,19 @@ export {
 } from './models/normalized-content-address.model';
 
 export type {
+	NormalizedContentTextMarkup,
 	NormalizedContentTextMarkupContentMap,
+	NormalizedContentTextMarkupDocumentReference,
+	NormalizedContentTextMarkupIdentity,
 	NormalizedContentTextMarkupMap,
 	NormalizedContentTextMarkupMarking
 } from './models/normalized-content-text-markup.model';
 
 export {
-	getNormalizedContentTextMarkupMarking
+	NORMALIZED_CONTENT_TEXT_MARKUP_OBJECT_TYPE,
+	createNormalizedContentTextMarkupId,
+	getNormalizedContentTextMarkupMarking,
+	parseNormalizedContentTextMarkupId
 } from './models/normalized-content-text-markup.model';
 
 export {
@@ -68,8 +74,33 @@ export {
 } from './resources/normalized-content-resource-contract';
 
 export {
+	NormalizedContentTextMarkupDataTypeHandler
+} from './resources/text-markup/normalized-content-text-markup-data-type-handler';
+
+export {
+	NormalizedContentTextMarkupDomainObjectFactory
+} from './resources/text-markup/normalized-content-text-markup-domain-object-factory';
+
+export {
+	NormalizedContentTextMarkupResourcePublication
+} from './resources/text-markup/normalized-content-text-markup-resource-publication';
+
+export {
+	NORMALIZED_CONTENT_TEXT_MARKUP_DATA_TYPE,
+	NORMALIZED_CONTENT_TEXT_MARKUP_DATA_VERSION,
+	NORMALIZED_CONTENT_TEXT_MARKUP_RESOURCE_TYPE,
+	createNormalizedContentTextMarkupResourceId,
+	parseNormalizedContentTextMarkupResourceId,
+	type NormalizedContentTextMarkupResourceIdentity
+} from './resources/text-markup/normalized-content-text-markup-resource';
+
+export {
 	NormalizedContentService
 } from './services/normalized-content.service';
+
+export {
+	NormalizedContentTextMarkupService
+} from './services/normalized-content-text-markup.service';
 
 export {
 	NORMALIZED_CONTENT_VIEWS,

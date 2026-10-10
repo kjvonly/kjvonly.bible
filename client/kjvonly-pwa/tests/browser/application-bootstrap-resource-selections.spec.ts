@@ -484,8 +484,8 @@ function createApplication():
 	Application {
 
 	return new Application({
-		resourceRelays:
-			[]
+		resourceRelays: [],
+		accountBootstrapRelays: []
 	});
 }
 

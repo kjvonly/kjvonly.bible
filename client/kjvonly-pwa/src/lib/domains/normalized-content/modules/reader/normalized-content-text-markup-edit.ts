@@ -150,11 +150,10 @@ function requireWordMarking(
 	);
 
 	if (!blockMarkings) {
-		blockMarkings = {};
-		defineOwnEnumerableProperty(
+		blockMarkings = setOwnEnumerableProperty(
 			markings,
 			address.blockId,
-			blockMarkings
+			{}
 		);
 	}
 
@@ -165,13 +164,12 @@ function requireWordMarking(
 	);
 
 	if (!marking) {
-		marking = {
-			class: []
-		};
-		defineOwnEnumerableProperty(
+		marking = setOwnEnumerableProperty(
 			blockMarkings,
 			key,
-			marking
+			{
+				class: []
+			}
 		);
 	}
 
@@ -200,24 +198,41 @@ function getOwnProperty<T>(
 }
 
 /**
- * Adds an own JSON-serializable key without invoking the legacy `__proto__`
- * setter when a normalized source ID happens to use that exact string.
+ * Adds an own JSON-serializable key through normal assignment so Svelte's
+ * deep-state proxy observes newly created markup entries.
+ *
+ * `__proto__` is defined as an own data property first so the assignment does
+ * not invoke the legacy prototype setter. The placeholder intentionally differs
+ * from `value`, ensuring the following assignment crosses the reactive `set`
+ * boundary even for that special key.
+ *
+ * The stored value is read back because a reactive proxy may wrap nested plain
+ * objects when they are assigned into state.
  */
-function defineOwnEnumerableProperty<T>(
+function setOwnEnumerableProperty<T>(
 	record: Record<string, T>,
 	key: string,
 	value: T
-): void {
-	Object.defineProperty(
-		record,
-		key,
-		{
-			configurable: true,
-			enumerable: true,
-			value,
-			writable: true
-		}
-	);
+): T {
+	if (
+		key === '__proto__' &&
+		!Object.prototype.hasOwnProperty.call(record, key)
+	) {
+		Object.defineProperty(
+			record,
+			key,
+			{
+				configurable: true,
+				enumerable: true,
+				value: undefined,
+				writable: true
+			}
+		);
+	}
+
+	record[key] = value;
+
+	return record[key];
 }
 
 function hasMarkupFamily(

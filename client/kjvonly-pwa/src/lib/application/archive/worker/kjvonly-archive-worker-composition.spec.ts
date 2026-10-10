@@ -29,6 +29,10 @@ import {
 } from '$lib/domains/bible/persistence/chapter-store';
 
 import {
+	NORMALIZED_CONTENT_TEXT_MARKUP_OBJECT_TYPE
+} from '$lib/domains/normalized-content';
+
+import {
 	NOTE_OBJECT_TYPE
 } from '$lib/domains/notes/persistence/notes-store';
 
@@ -147,6 +151,31 @@ describe(
 							'bible/text-markup',
 						resourceId:
 							'kjvonly/bible/text-markup/kjvs/1_1'
+					},
+					{
+						objectType:
+							NORMALIZED_CONTENT_TEXT_MARKUP_OBJECT_TYPE,
+						objectId:
+							'markup-publisher/document-publisher/articles%2Fsermon/42',
+						value: {
+							id:
+								'markup-publisher/document-publisher/articles%2Fsermon/42',
+							document: {
+								publisher:
+									'document-publisher',
+								resourceId:
+									'articles/sermon',
+								modifiedAt:
+									42
+							},
+							markings: {}
+						},
+						resourceType:
+							'normalized-content/text-markup',
+						resourceId:
+							'kjvonly/normalized-content/text-markup/document-publisher/articles%2Fsermon/42',
+						publisher:
+							'markup-publisher'
 					},
 					{
 						objectType:
@@ -279,7 +308,9 @@ describe(
 						testCase.objectType
 					).toMatchObject({
 						publisher:
-							'publisher',
+							'publisher' in testCase
+								? testCase.publisher
+								: 'publisher',
 						resourceType:
 							testCase.resourceType,
 						resourceId:

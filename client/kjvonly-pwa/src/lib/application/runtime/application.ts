@@ -405,7 +405,10 @@ import {
 // Normalized Content
 
 import {
-    NormalizedContentService
+    NORMALIZED_CONTENT_TEXT_MARKUP_RESOURCE_TYPE,
+    NormalizedContentService,
+    NormalizedContentTextMarkupResourcePublication,
+    NormalizedContentTextMarkupService
 } from '$lib/domains/normalized-content';
 
 import {
@@ -415,6 +418,14 @@ import {
 import {
     IndexedDBNormalizedContentStore
 } from '$lib/domains/normalized-content/persistence/indexeddb-normalized-content-store';
+
+import {
+    IndexedDBNormalizedContentTextMarkupStore
+} from '$lib/domains/normalized-content/persistence/indexeddb-normalized-content-text-markup-store';
+
+import {
+    IndexedDBNormalizedContentTextMarkupWriteTransaction
+} from '$lib/domains/normalized-content/persistence/normalized-content-text-markup-write-transaction';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Notes
@@ -1425,6 +1436,49 @@ export class Application {
                 new ResourceDescriptorValidator()
             );
 
+        const normalizedContentTextMarkupStore =
+            new IndexedDBNormalizedContentTextMarkupStore(
+                getApplicationDB
+            );
+
+        const normalizedContentTextMarkupResourceLoader =
+            new ResourceLoader<string>(
+                resourceWorkerClient,
+                appendResourceReferenceBuilder
+            );
+
+        const normalizedContentTextMarkupWriteTransaction =
+            new IndexedDBNormalizedContentTextMarkupWriteTransaction(
+                getApplicationDB
+            );
+
+        const normalizedContentTextMarkupResourcePublication =
+            new NormalizedContentTextMarkupResourcePublication();
+
+        const normalizedContentTextMarkupService =
+            new NormalizedContentTextMarkupService(
+                normalizedContentTextMarkupStore,
+                normalizedContentTextMarkupResourceLoader,
+                normalizedContentTextMarkupWriteTransaction,
+                normalizedContentTextMarkupResourcePublication,
+                outboxProcessor,
+                new ResourceDescriptorValidator()
+            );
+
+        archiveService.subscribeToImports(
+            ({
+                importedResourceTypes
+            }) => {
+                if (
+                    importedResourceTypes.has(
+                        NORMALIZED_CONTENT_TEXT_MARKUP_RESOURCE_TYPE
+                    )
+                ) {
+                    void normalizedContentTextMarkupService.refresh();
+                }
+            }
+        );
+
         ///////////////////////////////////////////////////////////////////////
         // Notes
 
@@ -1625,6 +1679,7 @@ export class Application {
             filesystemService,
 
             normalizedContentService,
+            normalizedContentTextMarkupService,
 
             notesService,
             notesAvailabilityService,

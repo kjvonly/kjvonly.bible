@@ -83,6 +83,13 @@
 			placeholder: 'default/*,*sermon*'
 		},
 		{
+			label: 'Normalized Content Text Markups',
+			objectType: 'normalized-content/text-markup',
+			selected: true,
+			filter: '',
+			placeholder: '*sermon*,*article*'
+		},
+		{
 			label: 'Bible Search Indexes',
 			objectType: 'bible/search-index',
 			selected: false,

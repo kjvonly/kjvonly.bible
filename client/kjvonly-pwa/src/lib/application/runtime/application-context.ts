@@ -78,7 +78,8 @@ import type {
 // Normalized Content
 
 import type {
-    NormalizedContentService
+    NormalizedContentService,
+    NormalizedContentTextMarkupService
 } from '$lib/domains/normalized-content';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -201,6 +202,9 @@ export interface ApplicationContext {
 
     readonly normalizedContentService:
     NormalizedContentService;
+
+    readonly normalizedContentTextMarkupService:
+    NormalizedContentTextMarkupService;
 
     ///////////////////////////////////////////////////////////////////////////
     // Notes

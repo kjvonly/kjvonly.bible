@@ -183,12 +183,11 @@ import {
 } from '@kjvonly/normalized-content';
 
 import {
+	NormalizedContentDomainObjectFactory,
+	NormalizedContentTextMarkupDataTypeHandler,
+	NormalizedContentTextMarkupDomainObjectFactory,
 	NormalizedDocumentDataTypeHandler
-} from '$lib/domains/normalized-content/validation/normalized-document-data-type-handler';
-
-import {
-	NormalizedContentDomainObjectFactory
-} from '$lib/domains/normalized-content/resources/normalized-content-domain-object-factory';
+} from '$lib/domains/normalized-content';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Notes
@@ -436,6 +435,7 @@ function createResourceProcessingDependencies():
 			new NormalizedDocumentDataTypeHandler(
 				normalizedDocumentValidator
 			),
+			new NormalizedContentTextMarkupDataTypeHandler(),
 			new StrongsDataTypeHandler(),
 			new StrongsDefinitionDataTypeHandler(),
 			new NoteDataTypeHandler(),
@@ -453,6 +453,7 @@ function createResourceProcessingDependencies():
 	const domainObjectFactories =
 		new ResourceDomainObjectFactoryResolver([
 			new NormalizedContentDomainObjectFactory(),
+			new NormalizedContentTextMarkupDomainObjectFactory(),
 			new StrongsDomainObjectFactory(),
 			new NoteDomainObjectFactory(),
 			new BibleChapterDomainObjectFactory(),
