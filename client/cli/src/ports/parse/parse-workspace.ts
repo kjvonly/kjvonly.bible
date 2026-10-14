@@ -27,6 +27,20 @@ export interface ParseWorkspace {
 	): Promise<readonly ParseSourceFile[]>;
 
 	/**
+	 * Resolves a POSIX-style relative artifact path inside a destination tree.
+	 * The supplied filename and extension are preserved without interpretation;
+	 * artifact naming is owned by the caller. Rejects paths outside the destination.
+	 *
+	 * @param outputDirectory Destination directory selected by the caller.
+	 * @param relativeOutputPath Caller-selected relative artifact path.
+	 * @returns Native absolute artifact path under the destination directory.
+	 */
+	resolveDestinationOutputPath(
+		outputDirectory: string,
+		relativeOutputPath: string
+	): string;
+
+	/**
 	 * Produces a comparison key for detecting output paths that may alias on the
 	 * workspace filesystem or on filesystems targeted for portable output.
 	 *

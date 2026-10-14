@@ -3,17 +3,22 @@
 
 	let {
 		onClick,
+		disabled = false,
+		ariaLabel = 'next chapter arrow',
 		classes = 'h-12 w-12 p-4'
 	}: {
 		onClick: MouseEventHandler<HTMLButtonElement>;
+		disabled?: boolean;
+		ariaLabel?: string;
 		classes?: string;
 	} = $props();
 </script>
 
 <button
 	onclick={onClick}
-	class="h-12 w-12 rounded-full bg-neutral-100 text-neutral-700 ring-2 ring-neutral-300 hover:cursor-pointer"
-	aria-label="next chapter arrow"
+	{disabled}
+	class="h-12 w-12 rounded-full bg-neutral-100 text-neutral-700 ring-2 ring-neutral-300 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+	aria-label={ariaLabel}
 >
 	<svg
 		class={classes}

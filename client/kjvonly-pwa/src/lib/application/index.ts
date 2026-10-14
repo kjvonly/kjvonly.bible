@@ -99,6 +99,9 @@ export {
 	ResourceModuleResolver,
 	type ResourceModuleDestination,
 	type ResourceModuleMatch,
+	type ResourceModuleOpenContext,
+	type ResourceModuleOpenItem,
+	type ResourceModuleOpenSequence,
 	type ResourceModuleRegistration
 } from './modules/modules/resource-module-resolver';
 

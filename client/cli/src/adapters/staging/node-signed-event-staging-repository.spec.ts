@@ -176,6 +176,33 @@ describe(
 
 
 		it(
+			'stages a long valid key without overflowing the temporary filename',
+			async () => {
+				const stagingRoot = await createDirectory();
+				const repository = new NodeSignedEventStagingRepository();
+				const event = await createEvent(1_791_837_567);
+
+				const entry = await repository.stage({
+					stagingRoot,
+					resourceName: 'chapters',
+					key: 'a'.repeat(128),
+					sourceMtimeMs: 1_791_836_517_684,
+					sourceSize: 1_279_230,
+					createdAt: event.created_at,
+					definitionRevision: '65d5a103',
+					event
+				});
+
+				expect(Buffer.byteLength(basename(entry.path), 'utf8')).toBeLessThanOrEqual(255);
+				expect(await repository.list(stagingRoot, 'chapters')).toEqual([entry]);
+				expect(await repository.read(entry)).toEqual(event);
+				expect(await readdir(join(stagingRoot, 'events', 'chapters'))).toEqual([
+					basename(entry.path)
+				]);
+			}
+		);
+
+		it(
 			'replaces the previous current event',
 			async () => {
 

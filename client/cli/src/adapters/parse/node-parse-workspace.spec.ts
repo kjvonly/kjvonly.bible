@@ -164,6 +164,61 @@ describe(
 		);
 
 		it(
+			'resolves caller-named output paths without changing their formats and rejects traversal',
+			async () => {
+				const root = await createTemporaryDirectory();
+				const workspace = new NodeParseWorkspace();
+
+				expect(workspace.resolveDestinationOutputPath(root, 'Genesis/1.nd.json')).toBe(
+					join(root, 'Genesis', '1.nd.json')
+				);
+				expect(workspace.resolveDestinationOutputPath(root, 'Exodus/2.html')).toBe(
+					join(root, 'Exodus', '2.html')
+				);
+				expect(workspace.resolveDestinationOutputPath(root, 'books/chapter.epub')).toBe(
+					join(root, 'books', 'chapter.epub')
+				);
+				expect(workspace.resolveDestinationOutputPath(root, 'exports/report')).toBe(
+					join(root, 'exports', 'report')
+				);
+				expect(() => workspace.resolveDestinationOutputPath(root, '../escape.cfm'))
+					.toThrow('Invalid parse destination');
+				expect(() => workspace.resolveDestinationOutputPath(root, '/escape.cfm'))
+					.toThrow('Invalid parse destination');
+				expect(() => workspace.resolveDestinationOutputPath(root, '..\\escape.json'))
+					.toThrow('Invalid parse destination');
+				expect(() => workspace.resolveDestinationOutputPath(root, 'C:/escape.json'))
+					.toThrow('Invalid parse destination');
+				expect(() => workspace.resolveDestinationOutputPath('', 'Genesis/1.cfm'))
+					.toThrow('Invalid parse destination');
+			}
+		);
+
+		it(
+			'creates nested destination directories before publishing atomic output',
+			async () => {
+				const root = await createTemporaryDirectory();
+				const workspace = new NodeParseWorkspace();
+				const outputPath = workspace.resolveDestinationOutputPath(
+					join(root, 'normalized'), 'Genesis/1.nd.json'
+				);
+
+				await workspace.writeOutputAtomically(outputPath, '{"blocks":[]}\n', {
+					overwrite: false
+				});
+				expect(await readFile(outputPath, 'utf8')).toBe('{"blocks":[]}\n');
+				await expect(workspace.writeOutputAtomically(outputPath, 'replaced', {
+					overwrite: false
+				})).rejects.toMatchObject({ code: 'EEXIST' });
+				await workspace.writeOutputAtomically(outputPath, 'replaced', { overwrite: true });
+				expect(await readFile(outputPath, 'utf8')).toBe('replaced');
+				expect((await readdir(join(root, 'normalized', 'Genesis'))).some(name =>
+					name.includes('.kjvonly-tmp-')
+				)).toBe(false);
+			}
+		);
+
+		it(
 			'creates a portable case-insensitive collision key without changing the emitted path',
 			() => {
 				const workspace =

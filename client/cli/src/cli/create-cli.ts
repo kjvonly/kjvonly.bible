@@ -1,5 +1,6 @@
 import {
-	Command
+	Command,
+	InvalidArgumentError
 } from 'commander';
 
 import type {
@@ -11,7 +12,7 @@ import type {
 } from '#application/sync/sync-manifest.js';
 
 import { BuildManifest } from '#application/build/build-manifest.js';
-import type { BuildNormalizedDocumentDirectory } from '#application/import/directory/build-normalized-document-directory.js';
+import type { BuildFilesystemDirectory } from '#application/import/directory/build-filesystem-directory.js';
 
 import type {
 	ParseDirectory,
@@ -30,8 +31,8 @@ export interface CliDependencies {
 	readonly buildManifest:
 	BuildManifest;
 
-	readonly buildNormalizedDocumentDirectory:
-		Pick<BuildNormalizedDocumentDirectory, 'build'>;
+	readonly buildFilesystemDirectory:
+		Pick<BuildFilesystemDirectory, 'build'>;
 
 	readonly publishManifest:
 	PublishManifest;
@@ -108,8 +109,12 @@ export function createCli(
 			'CSS selector for the document content root'
 		)
 		.option(
+			'--output-dir <directory>',
+			'write converted files to a separate directory, preserving source layout'
+		)
+		.option(
 			'--overwrite',
-			'replace existing normalized JSON output files'
+			'replace existing normalized output files'
 		)
 		.action(
 			async (
@@ -118,6 +123,7 @@ export function createCli(
 				options:
 					{
 						rootSelector?: string;
+						outputDir?: string;
 						overwrite?: boolean;
 					}
 			): Promise<void> => {
@@ -130,6 +136,8 @@ export function createCli(
 							directory,
 							rootSelector:
 								options.rootSelector,
+							outputDirectory:
+								options.outputDir,
 							overwrite:
 								options.overwrite === true
 						});
@@ -141,24 +149,57 @@ export function createCli(
 		);
 
 
-	program
+	const migrateCommand = program
+		.command('migrate')
+		.description('Migrate legacy documents to canonical formats')
+		.addHelpText(
+			'after',
+			'\nRequired for normalized-document:\n  --output-dir <directory>  destination root for canonical .nd.json files\n\nExample:\n  kjvonly migrate normalized-document ./legacy-json --output-dir ./canonical-documents\n'
+		);
+
+	migrateCommand
+		.command('normalized-document')
+		.description('Recursively migrate first-generation normalized-document JSON to .nd.json')
+		.argument('<directory>', 'directory containing legacy .json files')
+		.requiredOption('--output-dir <directory>', 'destination root for canonical .nd.json files')
+		.option('--overwrite', 'replace existing migrated output files')
+		.action(async (
+			directory: string,
+			options: { outputDir: string; overwrite?: boolean }
+		): Promise<void> => {
+			const result = await dependencies.parseDirectory.run({
+				format: 'legacy-normalized-document',
+				directory,
+				outputDirectory: options.outputDir,
+				overwrite: options.overwrite === true
+			});
+			reportParseResult(result, 'Migrated');
+		});
+
+	const importCommand = program
 		.command('import')
-		.description('Import supported source files through the Manifest build pipeline')
-		.command('normalized-documents')
-		.description('Recursively build and stage .nd.json Resources and a Filesystem overlay')
+		.description('Import supported source files through the Manifest build pipeline');
+
+
+	// Every discovered file is handled by its registered compiler strategy.
+	importCommand
+		.command('filesystem')
+		.description('Recursively build and stage mixed files into one Filesystem')
 		.argument('<directory>', 'source directory to scan recursively')
 		.requiredOption('--manifest <path>', 'base publication manifest (YAML)')
 		.requiredOption('--root <root>', 'Filesystem root/mount name')
 		.requiredOption('--output-manifest <path>', 'generated publication Manifest JSON path')
+		.option('--inline-limit-bytes <bytes>', 'maximum original Normalized Document size stored inline (default: 1048576)', parseInlineLimitBytes)
 		.action(async (
 			directory: string,
-			options: { manifest: string; root: string; outputManifest: string }
+			options: { manifest: string; root: string; outputManifest: string; inlineLimitBytes?: number }
 		): Promise<void> => {
-			await dependencies.buildNormalizedDocumentDirectory.build({
+			await dependencies.buildFilesystemDirectory.build({
 				directory,
 				manifestPath: options.manifest,
 				outputManifestPath: options.outputManifest,
-				filesystemRoot: options.root
+				filesystemRoot: options.root,
+				inlineLimitBytes: options.inlineLimitBytes
 			});
 		});
 
@@ -236,6 +277,15 @@ export function createCli(
 
 	return program;
 }
+
+/** Parses an optional byte limit without rounding or silently replacing zero. */
+function parseInlineLimitBytes(value: string): number {
+	if (!/^(0|[1-9]\d*)$/.test(value) || !Number.isSafeInteger(Number(value))) {
+		throw new InvalidArgumentError('expected a nonnegative safe integer (bytes)');
+	}
+	return Number(value);
+}
+
 /** Formats known 1-based source positions without changing warning identity. */
 function formatWarningSourceLocations(
 	warning: ParseWarning
@@ -261,7 +311,8 @@ function formatWarningSourceLocations(
  * failures are surfaced without hiding successful outputs from the same batch.
  */
 function reportParseResult(
-	result: ParseDirectoryResult
+	result: ParseDirectoryResult,
+	verb: 'Parsed' | 'Migrated' = 'Parsed'
 ): void {
 	for (
 		const output of result.outputs
@@ -294,7 +345,7 @@ function reportParseResult(
 	}
 
 	console.log(
-		`Parsed ${result.converted}/${result.total} file(s); ${result.failed} failed.`
+		`${verb} ${result.converted}/${result.total} file(s); ${result.failed} failed.`
 	);
 
 	if (

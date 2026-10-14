@@ -5,6 +5,8 @@
 	import {
 		Modules,
 		type NavigationState,
+		type NavigationStateValue,
+		type ResourceModuleOpenItem,
 		useApplicationContext,
 		useNavigationEntryContext,
 		useNavigationRuntimeContext,
@@ -13,12 +15,14 @@
 
 	import {
 		KJVBackButton,
+		KJVMoreActionsButton,
 		ViewBody,
 		ViewHeader
 	} from '$lib/application/ui';
 
 	import {
-		KJVHeader
+		KJVHeader,
+		type HeaderActions
 	} from '$lib/components';
 
 	import type {
@@ -48,6 +52,14 @@
 		normalizedContentTextMarkupDrag
 	} from './interactions/normalized-content-text-markup-drag';
 	import NormalizedContentTextMarkupEditOptions from './normalizedContentTextMarkupEditOptions.svelte';
+	import NormalizedContentNavButtons from './normalizedContentNavButtons.svelte';
+	import {
+		handleNormalizedContentOverflowNavigationResult
+	} from './runtime/normalized-content-overflow-navigation-result';
+
+	import {
+		resolveNormalizedContentReaderTitle
+	} from './normalized-content-reader-title';
 
 	import NormalizedContentRenderer from '../../ui/components/normalizedContentRenderer.svelte';
 	import {
@@ -67,24 +79,43 @@
 	} = useNavigationRuntimeContext();
 
 	const {
-		navigationState
+		navigationState,
+		onResult,
+		whenActive,
+		updateState
 	} = useNavigationEntryContext();
 
 	validateNavigationState(
 		navigationState
 	);
 
-	const descriptor =
-		navigationState.state.descriptor;
+	const unsubscribeNavigationResult = onResult(onNavigationResult);
 
-	const title =
-		readDescriptorName(
-			descriptor
-		) ??
-		'Document';
+	// Persisted reader sequences are generic Resource descriptors, not FileManager
+	// objects. Snapshot navigation state to keep Svelte proxies out of Workers.
+	const initialDescriptor = $state.snapshot(
+		navigationState.state.descriptor
+	);
+	const initialFileName = typeof navigationState.state.fileName === 'string'
+		? navigationState.state.fileName
+		: undefined;
+	const sequence = navigationState.state.sequence
+		? $state.snapshot(navigationState.state.sequence) as ResourceModuleOpenItem[]
+		: undefined;
+	let currentIndex = $state(
+		sequence ? navigationState.state.sequenceIndex as number : 0
+	);
+	const descriptor = $derived(
+		sequence?.[currentIndex]?.descriptor ?? initialDescriptor
+	);
+	const title = $derived(resolveNormalizedContentReaderTitle(
+		descriptor,
+		sequence?.[currentIndex]?.fileName ?? initialFileName
+	));
 
 	const textMarkupSubscriberId =
 		uuid4();
+	const readerId = uuid4();
 
 	const paneLayout =
 		usePaneLayoutContext();
@@ -104,6 +135,9 @@
 
 	let loading =
 		$state(true);
+
+	// Invalidate in-flight loads when the reader moves to another Resource.
+	let documentLoadVersion = 0;
 
 	let editing =
 		$state(false);
@@ -160,6 +194,8 @@
 			);
 
 		return () => {
+			unsubscribeNavigationResult();
+			documentLoadVersion += 1;
 			unsubscribeAuthentication();
 			textMarkupEditAttemptVersion += 1;
 			textMarkupLoadVersion += 1;
@@ -168,6 +204,22 @@
 			);
 		};
 	});
+
+	/** Handles actions returned after the Reader's More Actions view closes. */
+	function onNavigationResult(result: NavigationStateValue): void {
+		handleNormalizedContentOverflowNavigationResult(result, {
+			navigation,
+			whenActive
+		});
+	}
+
+	/** Opens the Reader-local overflow view without changing the document. */
+	function onOverflowClick(): void {
+		navigation.pushView(
+			NORMALIZED_CONTENT_VIEWS.OVERFLOW_ACTIONS,
+			{}
+		);
+	}
 
 	/**
 	 * Handles normalized link targets in canonical order.
@@ -231,6 +283,31 @@
 		});
 
 		return true;
+	}
+
+	/** Advances within the caller-provided sequence, without pushing a Pane view. */
+	function moveDocument(offset: number): void {
+		if (
+			!sequence || editing || savingTextMarkup || enteringTextMarkupEdit
+		) {
+			return;
+		}
+
+		const nextIndex = currentIndex + offset;
+		if (nextIndex < 0 || nextIndex >= sequence.length) {
+			return;
+		}
+
+		// ViewBody remains the only scroll owner, including while changing files.
+		renderedDocumentRoot?.closest('[id$="-scroll-container"]')
+			?.scrollTo({ top: 0 });
+		currentIndex = nextIndex;
+		updateState('sequenceIndex', nextIndex);
+		renderedDocumentRoot = undefined;
+		void loadTextMarkupForCurrentUser(
+			authenticationService.tryGetUserId()
+		);
+		void loadDocument();
 	}
 
 	/** Toggles Reader-local Text Markup editing without persisting the draft. */
@@ -492,10 +569,11 @@
 		textMarkupLoading = true;
 
 		try {
+			const requestedDescriptor = $state.snapshot(descriptor);
 			const installed =
 				await normalizedContentTextMarkupService.get(
 					publisher,
-					descriptor
+					requestedDescriptor
 				);
 
 			if (
@@ -560,19 +638,27 @@
 	}
 
 	async function loadDocument(): Promise<void> {
+		const loadVersion = ++documentLoadVersion;
+		const requestedDescriptor = $state.snapshot(descriptor);
+		document = undefined;
+		errorMessage = undefined;
+		loading = true;
 		try {
-			document =
-				await normalizedContentService
-					.getByDescriptor(
-						descriptor
-					);
+			const loaded = await normalizedContentService
+				.getByDescriptor(requestedDescriptor);
+			if (loadVersion === documentLoadVersion) {
+				document = loaded;
+			}
 		} catch (error) {
-			errorMessage =
-				error instanceof Error
+			if (loadVersion === documentLoadVersion) {
+				errorMessage = error instanceof Error
 					? error.message
 					: 'Unable to load document.';
+			}
 		} finally {
-			loading = false;
+			if (loadVersion === documentLoadVersion) {
+				loading = false;
+			}
 		}
 	}
 
@@ -584,32 +670,23 @@
 			value.module !== Modules.NORMALIZED_CONTENT ||
 			value.view !== NORMALIZED_CONTENT_VIEWS.READER ||
 			!isRecord(value.state) ||
-			!isRecord(value.state.descriptor)
+			!isRecord(value.state.descriptor) ||
+			(value.state.sequence !== undefined && (
+				!Array.isArray(value.state.sequence) ||
+				value.state.sequence.length === 0 ||
+				!Number.isInteger(value.state.sequenceIndex) ||
+				(value.state.sequenceIndex as number) < 0 ||
+				(value.state.sequenceIndex as number) >= value.state.sequence.length ||
+				!value.state.sequence.every((item: unknown) =>
+					isRecord(item) && isRecord(item.descriptor) &&
+					typeof item.fileName === 'string'
+				)
+			))
 		) {
 			throw new Error(
 				'Invalid Normalized Content navigation state'
 			);
 		}
-	}
-
-	function readDescriptorName(
-		value: unknown
-	): string | undefined {
-		if (!isRecord(value)) {
-			return undefined;
-		}
-
-		const metadata =
-			value.metadata;
-
-		if (!isRecord(metadata)) {
-			return undefined;
-		}
-
-		return typeof metadata.name === 'string' &&
-			metadata.name.length > 0
-			? metadata.name
-			: undefined;
 	}
 
 	function isRecord(
@@ -622,27 +699,10 @@
 		);
 	}
 
-	type NormalizedContentNavigationState =
-		NavigationState<
-			typeof NORMALIZED_CONTENT_VIEWS.READER
-		> & {
-			readonly state: {
-				readonly descriptor:
-					Record<string, unknown>;
-			};
-		};
-</script>
-
-{#snippet leadingContent()}
-	<KJVBackButton></KJVBackButton>
-{/snippet}
-
-{#snippet header()}
-	<KJVHeader
-		{title}
-		{leadingContent}
-		actions={editing
-			? [
+	/** Header actions remain separate from floating document navigation. */
+	let actions = $derived.by((): HeaderActions => {
+		if (editing) {
+			return [
 				{
 					icon: 'edit-off',
 					label: 'Cancel edits',
@@ -652,25 +712,51 @@
 				{
 					icon: 'save',
 					label: 'Save Text Markup',
-					onClick: () => {
-						void onSaveEdit();
-					},
+					onClick: () => { void onSaveEdit(); },
 					disabled: savingTextMarkup
 				}
-			]
-			: [
-				{
-					icon: 'edit',
-					label: 'Edit',
-					onClick: () => {
-						void onEnterEdit();
-					},
-					disabled:
-						!document ||
-						textMarkupLoading ||
-						enteringTextMarkupEdit
-				}
-			]}
+			];
+		}
+
+		return [{
+			icon: 'edit' as const,
+			label: 'Edit',
+			onClick: () => { void onEnterEdit(); },
+			disabled: !document || textMarkupLoading || enteringTextMarkupEdit
+		}];
+	});
+
+	type NormalizedContentNavigationState =
+		NavigationState<
+			typeof NORMALIZED_CONTENT_VIEWS.READER
+		> & {
+			readonly state: {
+				readonly descriptor:
+					Record<string, unknown>;
+				readonly fileName?: string;
+				readonly sequence?: readonly ResourceModuleOpenItem[];
+				readonly sequenceIndex?: number;
+			};
+		};
+</script>
+
+{#snippet leadingContent()}
+	<KJVBackButton></KJVBackButton>
+{/snippet}
+
+{#snippet trailingContent()}
+	<KJVMoreActionsButton
+		onClick={onOverflowClick}
+		disabled={editing || savingTextMarkup || enteringTextMarkupEdit}
+	></KJVMoreActionsButton>
+{/snippet}
+
+{#snippet header()}
+	<KJVHeader
+		{title}
+		{leadingContent}
+		{trailingContent}
+		{actions}
 	></KJVHeader>
 {/snippet}
 
@@ -691,6 +777,8 @@
 				onRemove: removeDragMarkup
 			}}
 			class="py-4"
+			class:pb-20={sequence !== undefined && sequence.length > 1}
+			class:kjvonly-noselect={editing}
 			class:touch-pan-y={editing}
 			bind:this={renderedDocumentRoot}
 		>
@@ -709,11 +797,23 @@
 </ViewHeader>
 
 <ViewBody
+	ID={readerId}
 	{clientHeight}
 	{headerHeight}
 >
 	{@render body()}
 </ViewBody>
+
+{#if sequence && sequence.length > 1 && !editing}
+	<NormalizedContentNavButtons
+		scrollContainerId={`${readerId}-scroll-container`}
+		{currentIndex}
+		canPrevious={currentIndex > 0 && !enteringTextMarkupEdit}
+		canNext={currentIndex < sequence.length - 1 && !enteringTextMarkupEdit}
+		onPrevious={() => moveDocument(-1)}
+		onNext={() => moveDocument(1)}
+	></NormalizedContentNavButtons>
+{/if}
 
 {#if editing && document}
 	<div class="flex w-full justify-center">

@@ -4,7 +4,7 @@ export interface ImportSourceFile {
 	readonly sourcePath: string;
 	/** Canonical forward-slash path relative to the import source directory. */
 	readonly relativePath: string;
-	/** Original file size in bytes, before any encoding or compression. */
+	/** Source file size in bytes as stored on disk (already compressed for `.gz`). */
 	readonly size: number;
 }
 

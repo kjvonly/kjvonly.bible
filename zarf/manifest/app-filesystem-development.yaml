@@ -1,0 +1,24 @@
+# Local-development variant of app-filesystem.yaml. Publishes the same
+# app-filesystem Resource identity using localhost relay and Blossom endpoints.
+version: 1
+kind: 37770
+
+staging:
+  path: ./app-filesystem/.staging-development
+
+nostr:
+  relays:
+    - ws://localhost:3334
+
+defaults:
+  strategy: local
+
+strategies:
+  local:
+    type: blossom
+    urls:
+      - http://localhost:3335
+
+resources: {}
+collections: {}
+filesystems: {}

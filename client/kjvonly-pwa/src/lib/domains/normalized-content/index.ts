@@ -106,3 +106,7 @@ export {
 	NORMALIZED_CONTENT_VIEWS,
 	type NormalizedContentView
 } from './models/normalized-content-navigation.model';
+
+export {
+	normalizedContentResourceModuleRegistrations
+} from './modules/runtime/normalized-content-resource-module-registrations';

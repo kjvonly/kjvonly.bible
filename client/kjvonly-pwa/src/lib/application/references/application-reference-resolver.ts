@@ -16,7 +16,7 @@ export interface ApplicationReferenceConsumerRegistration {
 	readonly module: Modules;
 	readonly view: string | number;
 	readonly createState:
-		(value: string) => NavigationViewState;
+		(value: string) => NavigationViewState | undefined;
 }
 
 export interface ApplicationReferenceDestination {
@@ -85,15 +85,15 @@ export class ApplicationReferenceResolver {
 			return undefined;
 		}
 
+		const state = registration.createState(parsed.value);
+		if (state === undefined) {
+			return undefined;
+		}
+
 		return {
-			module:
-				registration.module,
-			view:
-				registration.view,
-			state:
-				registration.createState(
-					parsed.value
-				)
+			module: registration.module,
+			view: registration.view,
+			state
 		};
 	}
 }

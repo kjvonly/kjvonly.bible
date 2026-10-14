@@ -81,21 +81,26 @@ import { FilesystemImportClassifier } from '#application/import/classification/f
 import { NormalizedDocumentRecognizer } from '#application/import/classification/recognizers/normalized-document-recognizer.js';
 import { FilesystemSemanticImportResolver } from '#application/import/resolution/filesystem-semantic-import-resolver.js';
 import { NodeImportContentReader } from '#adapters/import/node-import-content-reader.js';
-import { NormalizedDocumentManifestCompiler } from '#application/import/manifest/normalized-document-manifest-compiler.js';
-import { BuildNormalizedDocumentImport } from '#application/import/manifest/build-normalized-document-import.js';
-import { BuildNormalizedDocumentDirectory } from '#application/import/directory/build-normalized-document-directory.js';
+import { NormalizedDocumentResourceDefinitionBuilder } from '#application/import/manifest/normalized-document-resource-definition-builder.js';
+import { BuildFilesystemDirectory } from '#application/import/directory/build-filesystem-directory.js';
+import { BuildFilesystemImport } from '#application/import/manifest/build-filesystem-import.js';
+import { FilesystemFileCompilerRegistry, GenericFileCompiler, NormalizedDocumentFileCompiler } from '#application/import/manifest/filesystem-file-compiler-registry.js';
+import { FilesystemImportManifestCompiler } from '#application/import/manifest/filesystem-import-manifest-compiler.js';
+import { GenericFileResourceDefinitionBuilder } from '#application/import/manifest/generic-file-resource-definition-builder.js';
+import { createDefaultFileFormatRegistry } from '#application/import/format/file-format-registry.js';
 import { NodeImportDirectoryWalker } from '#adapters/import/node-import-directory-walker.js';
 import { NodeGeneratedManifestWriter } from '#adapters/import/node-generated-manifest-writer.js';
 import { NodeImportStagingWorkspace } from '#adapters/import/node-import-staging-workspace.js';
 import { SemanticTypeRegistry } from '#application/semantic/semantic-type-registry.js';
 import { createNormalizedDocumentSemanticType } from '#application/semantic/definitions/normalized-document-semantic-type.js';
 import { ParseUseCase } from '#application/parse/parse.js';
+import { LegacyNormalizedDocumentConverter } from '#application/parse/legacy/legacy-normalized-document-converter.js';
 import { ParseDirectoryUseCase } from '#application/parse/batch/parse-directory.js';
 import { NodeParseWorkspace } from '#adapters/parse/node-parse-workspace.js';
 import { CheerioHtmlParser } from '#application/parse/html/parser/cheerio-html-parser.js';
 import {
 	OrdinalNormalizedBlockIdGenerator
-} from '#application/parse/html/identity/ordinal-normalized-block-id-generator.js';
+} from '#application/parse/identity/ordinal-normalized-block-id-generator.js';
 import { CaptionBlockProcessor } from '#application/parse/html/processors/caption-block-processor.js';
 import { FigureBlockProcessor } from '#application/parse/html/processors/figure-block-processor.js';
 import { HeadingBlockProcessor } from '#application/parse/html/processors/heading-block-processor.js';
@@ -249,7 +254,8 @@ export function createCliComposition() {
 	const parse =
 		new ParseUseCase(
 			htmlParser,
-			htmlNormalizedDocumentConverter
+			htmlNormalizedDocumentConverter,
+            new LegacyNormalizedDocumentConverter(normalizedDocumentValidator)
 		);
 
 	const parseWorkspace =
@@ -449,22 +455,26 @@ export function createCliComposition() {
 			logger
 		);
 
-	const buildNormalizedDocumentImport =
-		new BuildNormalizedDocumentImport(
-			filesystemSemanticImportResolver,
-			path => new NodeImportContentReader(path),
-			new NormalizedDocumentManifestCompiler(),
-			manifestBuildExecutor
-		);
-
-	const buildNormalizedDocumentDirectory =
-		new BuildNormalizedDocumentDirectory(
-			new NodeImportDirectoryWalker(),
-			manifestLoader,
-			buildNormalizedDocumentImport,
-			new NodeGeneratedManifestWriter(),
-			new NodeImportStagingWorkspace()
-		);
+	const fileFormats = createDefaultFileFormatRegistry();
+	const buildFilesystemImport = new BuildFilesystemImport(
+		new FilesystemImportManifestCompiler(new FilesystemFileCompilerRegistry([
+			new NormalizedDocumentFileCompiler(
+				filesystemSemanticImportResolver,
+				(path, encoding) => new NodeImportContentReader(path, encoding),
+				new NormalizedDocumentResourceDefinitionBuilder(),
+				fileFormats
+			),
+			new GenericFileCompiler(new GenericFileResourceDefinitionBuilder(fileFormats))
+		])),
+		manifestBuildExecutor
+	);
+	const buildFilesystemDirectory = new BuildFilesystemDirectory(
+		new NodeImportDirectoryWalker(),
+		manifestLoader,
+		buildFilesystemImport,
+		new NodeGeneratedManifestWriter(),
+		new NodeImportStagingWorkspace()
+	);
 
 	const buildManifest =
 		new BuildManifestUseCase(
@@ -551,7 +561,7 @@ export function createCliComposition() {
 		createCli({
 			parseDirectory,
 			buildManifest,
-			buildNormalizedDocumentDirectory,
+			buildFilesystemDirectory,
 			publishManifest,
 			syncManifest,
 			setVerbose:
@@ -570,7 +580,6 @@ export function createCliComposition() {
 		semanticTypeRegistry,
 		filesystemImportClassifier,
 		filesystemSemanticImportResolver,
-		buildNormalizedDocumentImport,
-		buildNormalizedDocumentDirectory
+		buildFilesystemDirectory
 	};
 }

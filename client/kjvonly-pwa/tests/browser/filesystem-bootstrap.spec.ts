@@ -19,7 +19,7 @@ import {
 } from '$lib/resource/worker';
 
 const FILESYSTEM_BOOTSTRAP_RESOURCE_ID =
-	'kjvonly/filesystem/filesystem-smoke';
+	'kjvonly/filesystem/app-filesystem';
 
 describe(
 	'Filesystem bootstrap',

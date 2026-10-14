@@ -337,6 +337,25 @@ describe(
 		);
 
 		it(
+			'naturally sorts numbered filesystem roots',
+			() => {
+				const service = new FileManagerService();
+				const groups = service.buildRootGroups(
+					[
+						{ publisher: 'alice', rootPath: 'library/Book 20' },
+						{ publisher: 'alice', rootPath: 'library/Book 2' },
+						{ publisher: 'alice', rootPath: 'library/Book 10' },
+						{ publisher: 'alice', rootPath: 'library/Book 1' }
+					],
+					() => 'Publisher'
+				);
+
+				expect(groups[0].roots.map((root) => root.name))
+					.toEqual(['Book 1', 'Book 2', 'Book 10', 'Book 20']);
+			}
+		);
+
+		it(
 			'prefers optional Resource icon metadata with generic fallback',
 			() => {
 				const service =
@@ -640,6 +659,31 @@ describe(
 						path: 'library/spurgeon/grace'
 					}
 				]);
+			}
+		);
+
+		it(
+			'naturally sorts directory names and resource display names independently',
+			() => {
+				const service = new FileManagerService();
+				const tree = service.buildTree('library', [
+					createEntry('library/Book 10/chapter'),
+					createEntry('library/Book 2/chapter'),
+					createEntry('library/Book 1/file-20', 'Chapter 20.nd.json'),
+					createEntry('library/Book 1/file-10', 'Chapter 10.nd.json'),
+					createEntry('library/Book 1/file-2', 'Chapter 2.nd.json'),
+					createEntry('library/Book 1/file-1', 'Chapter 1.nd.json')
+				]);
+
+				expect(tree.directories.map((directory) => directory.name))
+					.toEqual(['Book 1', 'Book 2', 'Book 10']);
+				expect(tree.directories[0].resources.map((resource) => resource.name))
+					.toEqual([
+						'Chapter 1.nd.json',
+						'Chapter 2.nd.json',
+						'Chapter 10.nd.json',
+						'Chapter 20.nd.json'
+					]);
 			}
 		);
 

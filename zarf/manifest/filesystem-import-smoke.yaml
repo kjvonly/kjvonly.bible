@@ -1,0 +1,25 @@
+# Configuration only: `import filesystem` generates Resource/Filesystem definitions for all discovered files.
+# Endpoints match the local relay (3334) and Blossom (3335) smoke environment.
+version: 1
+kind: 37770
+
+staging:
+  path: ./filesystem-import-smoke/.staging
+
+nostr:
+  relays:
+    - ws://localhost:3334
+
+# Required for generic files, pre-gzipped documents, and documents over the inline threshold.
+defaults:
+  strategy: local-blossom
+
+strategies:
+  local-blossom:
+    type: blossom
+    urls:
+      - http://localhost:3335
+
+resources: {}
+collections: {}
+filesystems: {}

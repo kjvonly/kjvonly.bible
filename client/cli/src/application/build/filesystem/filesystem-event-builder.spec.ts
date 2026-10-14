@@ -2,6 +2,11 @@ import {
 	verifyEvent
 } from 'nostr-tools/pure';
 
+import { gunzipSync } from 'node:zlib';
+
+import { GzipEncoder } from '#adapters/encoding/gzip-encoder.js';
+import { HexEncoder } from '#adapters/encoding/hex-encoder.js';
+
 import {
 	describe,
 	expect,
@@ -140,6 +145,53 @@ describe(
 				).toBe(
 					true
 				);
+			}
+		);
+
+
+		it(
+			'compresses and signs a large Filesystem index without changing its semantic entries',
+			async () => {
+				const root = 'app-filesystem';
+				const content = Object.fromEntries(Array.from({ length: 1_200 }, (_, index) => {
+					const path = `${root}/commentary/book-${String(Math.floor(index / 30)).padStart(2, '0')}/chapter-${String(index % 30 + 1).padStart(3, '0')}.nd.json`;
+					return [path, {
+						descriptor: {
+							metadata: {
+								publisher: 'a'.repeat(64),
+								resourceId: `kjvonly/normalized-content/documents/${path}`,
+								resourceType: 'normalized-content/document',
+								dataType: 'kjvonly.normalized-document',
+								dataVersion: 1,
+								modifiedAt: 1_000,
+								representation: 'content' as const,
+								mediaType: 'application/json+gzip+hex'
+							},
+							strategy: { type: 'nostr', data: { kind: 37770, relays: ['wss://relay.example'] } }
+						}
+					}] as const;
+				}));
+				const builder = new FilesystemEventBuilder(
+					new EncodingRegistry([new GzipEncoder(), new HexEncoder()]),
+					new LocalNostrSigner(secretKey),
+					{ nowEpochSeconds: () => 1_000 }
+				);
+				const event = await builder.build({
+					kind: 37770,
+					event: {
+						encoding: ['gzip', 'hex'],
+						tags: [
+							['d', `kjvonly/filesystem/${root}`],
+							['m', 'application/json+gzip+hex']
+						]
+					},
+					root,
+					content
+				});
+				expect(Object.keys(content)).toHaveLength(1_200);
+				expect(event.content.length).toBeLessThan(1024 * 1024);
+				expect(JSON.parse(gunzipSync(Buffer.from(event.content, 'hex')).toString('utf8'))).toEqual(content);
+				expect(verifyEvent(event)).toBe(true);
 			}
 		);
 

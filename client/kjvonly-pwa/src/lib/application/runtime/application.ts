@@ -287,6 +287,7 @@ import {
     BibleNavigationService,
     BibleVerseReferenceService,
     BIBLE_LOCATION_REFERENCE_TYPE,
+    parseBibleLocationRef,
     BIBLE_VIEWS,
     SEARCH_VIEWS,
     createBibleVersionId,
@@ -406,6 +407,7 @@ import {
 
 import {
     NORMALIZED_CONTENT_TEXT_MARKUP_RESOURCE_TYPE,
+    normalizedContentResourceModuleRegistrations,
     NormalizedContentService,
     NormalizedContentTextMarkupResourcePublication,
     NormalizedContentTextMarkupService
@@ -537,8 +539,8 @@ const APPLICATION_BOOTSTRAP_RESOURCE:
  * Published Filesystem Resource installed when the Filesystem bootstrap
  * release feature is enabled.
  *
- * The current Resource remains the small integration fixture until it is
- * replaced by the application's durable published Filesystem content.
+ * The configured Resource is the durable application-owned Filesystem mount,
+ * published separately from the ordinary application bootstrap collection.
  */
 const FILESYSTEM_BOOTSTRAP_RESOURCE:
     PublishedResourceReference = {
@@ -547,7 +549,7 @@ const FILESYSTEM_BOOTSTRAP_RESOURCE:
         KJVONLY_PUBKEY,
 
     resourceId:
-        'kjvonly/filesystem/filesystem-smoke'
+        'kjvonly/filesystem/app-filesystem'
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -975,7 +977,9 @@ export class Application {
             new SettingsService();
 
         const resourceModuleResolver =
-            new ResourceModuleResolver([]);
+            new ResourceModuleResolver(
+                normalizedContentResourceModuleRegistrations
+            );
 
         const moduleLaunchDestinationResolver =
             new ModuleLaunchDestinationResolver([
@@ -1063,9 +1067,13 @@ export class Application {
                     view:
                         BIBLE_VIEWS.READER,
                     createState:
-                        (bibleLocationRef) => ({
-                            bibleLocationRef
-                        })
+                        (value) => {
+                            const bibleLocationRef =
+                                parseBibleLocationRef(value);
+                            return bibleLocationRef === undefined
+                                ? undefined
+                                : { bibleLocationRef };
+                        }
                 }
             ]);
 

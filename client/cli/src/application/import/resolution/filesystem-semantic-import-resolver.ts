@@ -42,10 +42,8 @@ export type FilesystemSemanticImportResolution =
  * is an error only when more than one distinct family actually validates.
  *
  * An `unvalidated` result is deliberately NOT generic file classification.
- * The current Normalized Document directory importer rejects invalid
- * `.nd.json` candidates. A future mixed-type importer must separately decide
- * whether weak structural hints may fall back to generic Resources; this
- * resolver implements no generic fallback.
+ * The filesystem compiler registry rejects invalid explicit semantic
+ * candidates (including `.nd.json.gz`); this resolver never applies a generic fallback.
  */
 export class FilesystemSemanticImportResolver {
 	constructor(

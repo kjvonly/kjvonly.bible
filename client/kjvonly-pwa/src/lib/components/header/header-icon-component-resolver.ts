@@ -6,6 +6,8 @@ import ArrowBack from '../svgs/arrowBack.svelte';
 import BookRibbon from '../svgs/bookRibbon.svelte';
 import Check from '../svgs/check.svelte';
 import CheckCircle from '../svgs/checkCircle.svelte';
+import ChevronLeft from '../svgs/chevronLeft.svelte';
+import ChevronRight from '../svgs/chevronRight.svelte';
 import Copy from '../svgs/copy.svelte';
 import DocumentSearch from '../svgs/documentSearch.svelte';
 import Close from '../svgs/close.svelte';
@@ -39,6 +41,8 @@ const HEADER_ICON_COMPONENTS = {
 	'book-ribbon': BookRibbon,
 	check: Check,
 	'check-circle': CheckCircle,
+	'chevron-left': ChevronLeft,
+	'chevron-right': ChevronRight,
 	copy: Copy,
 	'document-search': DocumentSearch,
 	close: Close,

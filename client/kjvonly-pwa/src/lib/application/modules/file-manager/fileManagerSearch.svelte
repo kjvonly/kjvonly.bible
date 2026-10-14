@@ -143,6 +143,22 @@
 		};
 	});
 
+	/** Uses the current search result order for viewer-independent file traversal. */
+	function openResult(index: number): void {
+		const selected = results[index];
+		if (!selected) {
+			return;
+		}
+		navigation.openResource(
+			selected.entry.descriptor,
+			selected.entry.path,
+			{
+				entries: results.map((result) => $state.snapshot(result.entry)),
+				selectedIndex: index
+			}
+		);
+	}
+
 	function restartSearchRuntime(): void {
 		searchRequestGeneration++;
 		void initializeSearch();
@@ -607,10 +623,10 @@
 <!-- Renders Search results as aligned Resource icon tiles; list mode retains filesystem context. -->
 {#snippet searchResultsGrid()}
 	<div class="grid w-full auto-rows-fr grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3 p-4" aria-busy={searchState === 'searching'}>
-		{#each results as result (`${result.filesystemPublisher}:${result.rootPath}:${result.entry.path}`)}
+		{#each results as result, index (`${result.filesystemPublisher}:${result.rootPath}:${result.entry.path}`)}
 			<FileManagerResourceGridItem
 				display={fileManagerService.describeResource(result.entry)}
-				onOpen={() => navigation.openResource(result.entry.descriptor)}
+				onOpen={() => openResult(index)}
 			></FileManagerResourceGridItem>
 		{/each}
 	</div>
@@ -619,7 +635,7 @@
 <!-- Renders Search results as rows with relative directory and filesystem-root context. -->
 {#snippet searchResultsList()}
 	<div class="flex w-full flex-col" aria-busy={searchState === 'searching'}>
-		{#each results as result (`${result.filesystemPublisher}:${result.rootPath}:${result.entry.path}`)}
+		{#each results as result, index (`${result.filesystemPublisher}:${result.rootPath}:${result.entry.path}`)}
 			{@const location = fileManagerService.describeSearchLocation(
 				result,
 				(filesystemPublisher) =>
@@ -630,7 +646,7 @@
 				context={location.relativeDirectoryPath
 					? [location.relativeDirectoryPath, location.filesystemRootLabel]
 					: [location.filesystemRootLabel]}
-				onOpen={() => navigation.openResource(result.entry.descriptor)}
+				onOpen={() => openResult(index)}
 			></FileManagerResourceListItem>
 		{/each}
 	</div>

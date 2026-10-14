@@ -21,13 +21,16 @@ const HTML_SOURCE_EXTENSIONS = [
 /** Describes one recursive directory-normalization request. */
 export interface ParseDirectoryRequest {
 	/** Source representation selected for this batch. */
-	readonly format: 'html';
+	readonly format: 'html' | 'legacy-normalized-document';
 
 	/** Root directory recursively scanned for supported source files. */
 	readonly directory: string;
 
 	/** Optional HTML selector limiting conversion to the first matching root. */
 	readonly rootSelector?: string;
+
+	/** Optional output root; preserves the source hierarchy with parser-chosen filenames. */
+	readonly outputDirectory?: string;
 
 	/** Whether existing output files may be replaced. Defaults to false. */
 	readonly overwrite?: boolean;
@@ -77,7 +80,7 @@ export interface ParseDirectory {
 	/**
 	 * Processes every supported source independently and returns one batch report.
 	 *
-	 * @param request Directory, format, extraction, and overwrite policy for the batch.
+	 * @param request Source directory, optional destination, extraction, and overwrite policy.
 	 * @returns Aggregate successes and per-source failures after publication attempts.
 	 */
 	run(
@@ -96,7 +99,8 @@ interface PlannedSourceFile {
  * This use case owns import orchestration—not HTML interpretation. It discovers
  * source files through an injected workspace, preflights their complete output
  * plan, delegates each safe document to the canonical Parse use case, and writes
- * normalized JSON beside the source file.
+ * normalized JSON beside each HTML source, or into a separately selected output
+ * tree. Legacy JSON migration always requires a distinct output filename.
  */
 export class ParseDirectoryUseCase
 	implements ParseDirectory {
@@ -113,23 +117,34 @@ export class ParseDirectoryUseCase
 	 * ambiguous or protected output paths fail independently; remaining sources
 	 * are still attempted so one bad document does not abort the batch.
 	 *
-	 * @param request Directory, extraction boundary, and overwrite intent.
+	 * @param request Source directory, destination, extraction boundary, and overwrite intent.
 	 * @returns Complete batch report after all unblocked sources are attempted.
 	 */
 	async run(
 		request: ParseDirectoryRequest
 	): Promise<ParseDirectoryResult> {
-		const sourceFiles =
-			await this.workspace.findSourceFiles(
-				request.directory,
-				this.getExtensions(
-					request.format
-				)
-			);
+		if (
+			request.format === 'legacy-normalized-document' &&
+			!request.outputDirectory?.trim()
+		) {
+			throw new Error('Legacy JSON migration requires --output-dir to preserve source files.');
+		}
+
+		const discoveredFiles = await this.workspace.findSourceFiles(
+			request.directory,
+			this.getExtensions(request.format)
+		);
+
+		// Avoid reading canonical outputs on a subsequent migration run.
+		const sourceFiles = request.format === 'legacy-normalized-document'
+			? discoveredFiles.filter(file => !file.relativePath.toLowerCase().endsWith('.nd.json'))
+			: discoveredFiles;
 
 		const plan =
 			createOutputPlan(
-				sourceFiles
+				sourceFiles,
+				request.outputDirectory,
+				this.workspace
 			);
 
 		const preflight =
@@ -168,15 +183,16 @@ export class ParseDirectoryUseCase
 						sourcePath
 					);
 
-				const parseResult =
-					this.parse.run({
-						format:
-							request.format,
+				const parseResult = request.format === 'html'
+					? this.parse.run({
+						format: 'html',
 						content,
-						rootSelector:
-							request.rootSelector,
-						source:
-							plannedSource.sourceFile.relativePath
+						rootSelector: request.rootSelector,
+						source: plannedSource.sourceFile.relativePath
+					})
+					: this.parse.run({
+						format: 'legacy-normalized-document',
+						content
 					});
 
 				await this.workspace.writeOutputAtomically(
@@ -391,6 +407,8 @@ export class ParseDirectoryUseCase
 		) {
 			case 'html':
 				return HTML_SOURCE_EXTENSIONS;
+			case 'legacy-normalized-document':
+				return ['.json'];
 		}
 	}
 }
@@ -424,29 +442,35 @@ function createOutputCollisionMessage(
 
 /** Creates the complete source-to-output mapping before conversion begins. */
 function createOutputPlan(
-	sourceFiles: readonly ParseSourceFile[]
+	sourceFiles: readonly ParseSourceFile[],
+	outputDirectory: string | undefined,
+	workspace: ParseWorkspace
 ): readonly PlannedSourceFile[] {
 	return sourceFiles.map(
 		sourceFile => ({
 			sourceFile,
-			outputPath:
-				toOutputPath(
-					sourceFile.path
+			outputPath: outputDirectory === undefined
+				? toOutputPath(sourceFile.path, '.json')
+				: workspace.resolveDestinationOutputPath(
+					outputDirectory,
+					toOutputPath(sourceFile.relativePath, '.nd.json')
 				)
 		})
 	);
 }
 
 /**
- * Preserves the POC output convention: normalized JSON is written beside the
- * source document using the same basename and a `.json` extension.
+ * Chooses the parse artifact filename independently of destination path resolution.
+ * In-place parsing retains the original `.json` convention; a separate output
+ * tree uses the normalized-document importer's `.nd.json` convention.
  */
 function toOutputPath(
-	sourcePath: string
+	sourcePath: string,
+	outputExtension: string
 ): string {
 	return sourcePath.replace(
 		/\.[^./\\]+$/,
-		'.json'
+		outputExtension
 	);
 }
 

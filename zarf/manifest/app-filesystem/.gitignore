@@ -1,0 +1,9 @@
+# Generated publication pointers and signed event/artifact staging generations.
+/.publication.generated.json
+/.publication-development.generated.json
+/.publication.generated.json.*.tmp
+/.publication-development.generated.json.*.tmp
+/.staging/
+/.staging-development/
+/.staging.import-*/
+/.staging-development.import-*/

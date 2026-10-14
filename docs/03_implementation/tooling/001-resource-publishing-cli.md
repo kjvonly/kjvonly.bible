@@ -807,7 +807,7 @@ with:
 event.encoding
 ```
 
-The captured implementation commonly used:
+An earlier captured implementation used:
 
 ```text
 outer descriptor event:
@@ -816,6 +816,41 @@ outer descriptor event:
 resolved external artifact:
     application/json+gzip
 ```
+
+Those are historical examples, not defaults for the current filesystem
+importer. The actual event and object encodings come from each generated
+Resource definition.
+
+The unified filesystem importer preserves each source encoding. Ordinary
+`.nd.json` documents stored externally use `application/json` with no
+object-upload encoding (raw JSON). Pre-gzipped `.nd.json.gz` documents are
+decoded for semantic validation, then staged unchanged with
+`application/json+gzip` and object-upload `encoding: []`. They always remain
+external, regardless of the inline threshold, to avoid double compression.
+The registered `GenericFileCompiler` produces descriptor-backed Resources for
+other file types, regardless of the Normalized Document inline threshold:
+
+| File | Published descriptor media type | Stored Blossom bytes |
+| --- | --- | --- |
+| MP3 | `audio/mpeg` | Original MP3 |
+| PDF | `application/pdf` | Original PDF |
+| DOCX / ODT | Office / OpenDocument MIME type | Original file |
+| `.pdf.gz` | `application/pdf+gzip` | Original gzip bytes |
+| Unknown extension | `application/octet-stream` | Original file |
+
+ZIP, XZ, Zstandard and other archive types are stored unchanged; only a
+terminal `.gz` is modeled as a pre-existing encoding wrapper. Format recognition
+is filename-based, not content sniffing. A file need not be readable by the
+application to be stored and indexed through the Filesystem.
+
+Both `.nd.json` and `.nd.json.gz` descriptor events use gzip+hex on Nostr, as
+do generic-file descriptors; the Filesystem index event is also gzip+hex.
+These encodings are independent of Blossom object encoding. The optional
+`import filesystem --inline-limit-bytes <bytes>` limit applies only to
+ordinary uncompressed `.nd.json` sources (1 MiB by default); `0` selects
+Blossom for every nonempty `.nd.json`. The app-filesystem Make workflow passes
+it via `INLINE_LIMIT_BYTES`. Changing the threshold requires restaging before
+publication. Descriptor and Filesystem events remain on Nostr.
 
 ---
 

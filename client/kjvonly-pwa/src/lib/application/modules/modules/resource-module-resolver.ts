@@ -42,8 +42,27 @@ export interface ResourceModuleRegistration<
 		descriptor: ResourceDescriptor
 	) => boolean;
 	readonly createState: (
-		descriptor: ResourceDescriptor
+		descriptor: ResourceDescriptor,
+		context?: ResourceModuleOpenContext
 	) => NavigationViewState;
+}
+
+/** One Resource in the caller's visible, ordered sequence (independent of Module type). */
+export interface ResourceModuleOpenItem {
+	readonly descriptor: ResourceDescriptor;
+	readonly fileName: string;
+}
+
+/** Optional ordered selection supplied by a Resource opener, such as File Manager. */
+export interface ResourceModuleOpenSequence {
+	readonly items: readonly ResourceModuleOpenItem[];
+	readonly index: number;
+}
+
+/** Optional presentation context supplied by the Resource opener, not Resource identity. */
+export interface ResourceModuleOpenContext {
+	readonly fileName?: string;
+	readonly sequence?: ResourceModuleOpenSequence;
 }
 
 /** Destination chosen for one Resource open request. */
@@ -78,7 +97,8 @@ export class ResourceModuleResolver {
 	}
 
 	resolve(
-		descriptor: ResourceDescriptor
+		descriptor: ResourceDescriptor,
+		context?: ResourceModuleOpenContext
 	): ResourceModuleDestination {
 		const resourceTypeCandidates =
 			this.compatibleRegistrations(
@@ -93,7 +113,8 @@ export class ResourceModuleResolver {
 					descriptor,
 					resourceTypeCandidates,
 					'resourceType'
-				)
+				),
+				context
 			);
 		}
 
@@ -110,7 +131,8 @@ export class ResourceModuleResolver {
 					descriptor,
 					dataTypeCandidates,
 					'dataType'
-				)
+				),
+				context
 			);
 		}
 
@@ -201,13 +223,15 @@ export class ResourceModuleResolver {
 
 	private createDestination(
 		descriptor: ResourceDescriptor,
-		registration: ResourceModuleRegistration
+		registration: ResourceModuleRegistration,
+		context?: ResourceModuleOpenContext
 	): ResourceModuleDestination {
 		return {
 			module: registration.module,
 			view: registration.view,
 			state: registration.createState(
-				descriptor
+				descriptor,
+				context
 			)
 		};
 	}

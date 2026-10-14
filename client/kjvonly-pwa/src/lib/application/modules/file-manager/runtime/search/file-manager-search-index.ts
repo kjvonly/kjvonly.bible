@@ -1,5 +1,9 @@
 import FlexSearch from 'flexsearch';
 
+import {
+	compareFileManagerNames
+} from '../../sorting/compare-file-manager-names';
+
 import type {
 	FileManagerSearchDocument
 } from './file-manager-search-document';
@@ -155,18 +159,15 @@ function compareDocuments(
 	const rightName =
 		right.name || right.path;
 
-	const byName = leftName.localeCompare(
-		rightName,
-		undefined,
-		{ sensitivity: 'base' }
-	);
+	const byName = compareFileManagerNames(leftName, rightName);
 
 	if (byName !== 0) {
 		return byName;
 	}
 
 	const byPublisher =
-		left.filesystemPublisher.localeCompare(
+		compareFileManagerNames(
+			left.filesystemPublisher,
 			right.filesystemPublisher
 		);
 
@@ -175,7 +176,8 @@ function compareDocuments(
 	}
 
 	const byRoot =
-		left.rootPath.localeCompare(
+		compareFileManagerNames(
+			left.rootPath,
 			right.rootPath
 		);
 
@@ -183,7 +185,5 @@ function compareDocuments(
 		return byRoot;
 	}
 
-	return left.path.localeCompare(
-		right.path
-	);
+	return compareFileManagerNames(left.path, right.path);
 }

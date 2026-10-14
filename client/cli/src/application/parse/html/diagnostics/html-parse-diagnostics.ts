@@ -29,6 +29,7 @@ import type {
 import {
 	getIgnoredSourceClassNames,
 	getSourceClassNames,
+	projectNormalizedClasses,
 	getSourceStyleDeclarations,
 	getUnsupportedSourceStyleDeclarations
 } from '../projection/html-normalized-class-projector.js';
@@ -62,10 +63,20 @@ export function createHtmlParseDiagnostics(
 	elementSupport: HtmlElementSupportLookup,
 	getSourceLocation:
 		(element: Element) => ParseSourceLocation | undefined =
-			() => undefined
+			() => undefined,
+	duplicateSourceIds: ReadonlySet<string> = new Set<string>()
 ): ParseDiagnostics {
 	const sourceIds =
 		new Set<string>();
+
+	const discardedContainerIdCounts =
+		new Map<string, WarningOccurrences>();
+
+	const discardedContainerPresentationCounts =
+		new Map<string, WarningOccurrences>();
+
+	const duplicateSourceIdCounts =
+		new Map<string, WarningOccurrences>();
 
 	const ignoredClassCounts =
 		new Map<string, WarningOccurrences>();
@@ -203,16 +214,29 @@ export function createHtmlParseDiagnostics(
 			const sourceId =
 				element.attribs.id;
 
+			if (tag === 'div') {
+				if (sourceId) {
+					increment(discardedContainerIdCounts, sourceId, sourceLocation);
+				}
+				const discardedClasses = projectNormalizedClasses(element);
+				if (discardedClasses) {
+					increment(
+						discardedContainerPresentationCounts,
+						discardedClasses.join(' '),
+						sourceLocation
+					);
+				}
+			}
+
 			if (
 				sourceId &&
-				preservesHtmlElementSourceIdentity(
-					tag,
-					elementSupport
-				)
+				preservesHtmlElementSourceIdentity(tag, elementSupport)
 			) {
-				sourceIds.add(
-					sourceId
-				);
+				if (duplicateSourceIds.has(sourceId)) {
+					increment(duplicateSourceIdCounts, sourceId, sourceLocation);
+				} else {
+					sourceIds.add(sourceId);
+				}
 			}
 
 			for (
@@ -319,6 +343,9 @@ export function createHtmlParseDiagnostics(
 		linkedWordsProduced:
 			metrics.linkedWordsProduced,
 		warnings: [
+			...toDiscardedContainerIdWarnings(discardedContainerIdCounts),
+			...toDiscardedContainerPresentationWarnings(discardedContainerPresentationCounts),
+			...toDuplicateSourceIdWarnings(duplicateSourceIdCounts),
 			...toClassWarnings(
 				ignoredClassCounts
 			),
@@ -688,6 +715,43 @@ function createParseWarning(
 				occurrences.sourceLocations
 		}
 		: warning;
+}
+
+/** Warn about metadata intentionally lost while flattening neutral containers. */
+function toDiscardedContainerIdWarnings(
+	counts: ReadonlyMap<string, WarningOccurrences>
+): ParseWarning[] {
+	return [...counts.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([id, occurrences]) => createParseWarning(
+			'html-container-id-discarded',
+			`Flattened <div id="${id}">; its source ID was not preserved, but representable descendants were normalized.`,
+			occurrences
+		));
+}
+
+function toDiscardedContainerPresentationWarnings(
+	counts: ReadonlyMap<string, WarningOccurrences>
+): ParseWarning[] {
+	return [...counts.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([classes, occurrences]) => createParseWarning(
+			'html-container-presentation-discarded',
+			`Flattened <div> with canonical presentation classes "${classes}"; wrapper presentation was not preserved.`,
+			occurrences
+		));
+}
+
+function toDuplicateSourceIdWarnings(
+	counts: ReadonlyMap<string, WarningOccurrences>
+): ParseWarning[] {
+	return [...counts.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([id, occurrences]) => createParseWarning(
+			'html-source-id-duplicate',
+			`Duplicate source HTML id "${id}"; generated unique canonical IDs were used for all ${occurrences.count} occurrences. Original fragment links to this ID are ambiguous.`,
+			occurrences
+		));
 }
 
 /** Converts ignored-class counters into stable, sorted diagnostics. */

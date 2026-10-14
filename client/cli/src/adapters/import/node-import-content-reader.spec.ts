@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { NodeImportContentReader } from './node-import-content-reader.js';
 import { FilesystemImportClassifier } from '../../application/import/classification/filesystem-import-classifier.js';
 import { NormalizedDocumentRecognizer } from '../../application/import/classification/recognizers/normalized-document-recognizer.js';
@@ -56,6 +57,45 @@ describe('NodeImportContentReader', () => {
 			resourceType: 'normalized-content/document',
 			objectType: 'normalized-content/document'
 		});
+	});
+
+	it('reads bounded decoded gzip prefixes and validates full compressed documents', async () => {
+		const directory = await mkdtemp(join(tmpdir(), 'kjvonly-import-gzip-'));
+		temporaryPaths.push(directory);
+		const path = join(directory, 'chapter.nd.json.gz');
+		const original = '{"blocks":[]}' + ' '.repeat(110_000);
+		const compressed = gzipSync(Buffer.from(original));
+		await writeFile(path, compressed);
+		const reader = new NodeImportContentReader(path, ['gzip']);
+		expect(Buffer.from(await reader.readPrefix(32)).toString()).toBe(original.slice(0, 32));
+		expect(await reader.readPrefix(64 * 1024)).toHaveLength(64 * 1024);
+		expect(Buffer.from(await reader.readAll()).toString()).toBe(original);
+		expect(await readFile(path)).toEqual(compressed);
+
+		const resolver = new FilesystemSemanticImportResolver(
+			new FilesystemImportClassifier([new NormalizedDocumentRecognizer()]),
+			new SemanticTypeRegistry([createNormalizedDocumentSemanticType(new NormalizedDocumentValidator())])
+		);
+		const result = await resolver.resolve(
+			{ sourcePath: path, relativePath: 'chapter.nd.json.gz', size: compressed.length },
+			reader
+		);
+		expect(result.kind).toBe('semantic');
+	});
+
+	it('fails strict semantic import when the .gz source is corrupted', async () => {
+		const directory = await mkdtemp(join(tmpdir(), 'kjvonly-import-bad-gzip-'));
+		temporaryPaths.push(directory);
+		const path = join(directory, 'invalid.nd.json.gz');
+		await writeFile(path, Buffer.from('not a gzip stream'));
+		const resolver = new FilesystemSemanticImportResolver(
+			new FilesystemImportClassifier([new NormalizedDocumentRecognizer()]),
+			new SemanticTypeRegistry([createNormalizedDocumentSemanticType(new NormalizedDocumentValidator())])
+		);
+		await expect(resolver.resolve(
+			{ sourcePath: path, relativePath: 'invalid.nd.json.gz', size: 17 },
+			new NodeImportContentReader(path, ['gzip'])
+		)).rejects.toThrow('Cannot read import "invalid.nd.json.gz"');
 	});
 
 	it('returns the available bytes on a short file and rejects unbounded prefix requests', async () => {

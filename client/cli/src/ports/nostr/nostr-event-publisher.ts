@@ -8,4 +8,7 @@ export interface NostrEventPublisher {
 		event:
 			SignedNostrEvent
 	): Promise<void>;
+
+	/** Release the relay connection after the publication batch ends. */
+	close(relay: string): void;
 }

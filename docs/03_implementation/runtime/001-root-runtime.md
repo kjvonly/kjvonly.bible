@@ -991,10 +991,10 @@ normal application bootstrap
     → kjvonly/resources/collections/default
 
 Filesystem bootstrap
-    → kjvonly/filesystem/filesystem-smoke
+    → kjvonly/filesystem/app-filesystem
 ```
 
-The second identity is temporary integration content; the Filesystem bootstrap mechanism is generic application policy.
+The second identity is the published application-owned Filesystem mount; the Filesystem bootstrap mechanism is generic application policy.
 
 The three related configuration concerns remain independent:
 

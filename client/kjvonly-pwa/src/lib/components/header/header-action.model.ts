@@ -12,6 +12,8 @@ export type HeaderIconID =
 	| 'arrow-back'
 	| 'check'
 	| 'check-circle'
+	| 'chevron-left'
+	| 'chevron-right'
 	| 'copy'
 	| 'document-search'
 	| 'close'

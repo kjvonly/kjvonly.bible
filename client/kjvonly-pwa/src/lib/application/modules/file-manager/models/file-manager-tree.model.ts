@@ -25,7 +25,7 @@ export interface FileManagerResource {
 }
 
 
-/** One ancestor/current-path segment rendered in the wide-pane breadcrumb. */
+/** One ancestor/current-path segment rendered in the File Manager breadcrumb. */
 export interface FileManagerBreadcrumb {
 	readonly name: string;
 	readonly path: string;

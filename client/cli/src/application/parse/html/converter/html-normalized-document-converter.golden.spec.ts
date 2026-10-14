@@ -22,7 +22,7 @@ import {
 
 import {
 	OrdinalNormalizedBlockIdGenerator
-} from '../identity/ordinal-normalized-block-id-generator.js';
+} from '../../identity/ordinal-normalized-block-id-generator.js';
 
 import {
 	HtmlInlineParser

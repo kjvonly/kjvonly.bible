@@ -13,7 +13,7 @@ const BLOCKS_ARRAY_HINT = /"blocks"\s*:\s*\[/;
  * Recognizes plausible Normalized Documents without materializing or parsing
  * the full JSON payload. SemanticTypeRegistry validates complete content later.
  *
- * A `.nd.json` suffix is an explicit hint and needs no read. For ordinary
+ * A `.nd.json` or `.nd.json.gz` suffix is an explicit hint and needs no read. For ordinary
  * `.json` files, a bounded prefix is scanned for a `"blocks": [` property.
  * This scan may match nested objects or JSON string contents, and may miss a
  * property beyond the prefix: both are expected limits of cheap recognition.
@@ -32,7 +32,7 @@ export class NormalizedDocumentRecognizer implements FilesystemImportRecognizer 
 		probe: ImportFileProbe
 	): Promise<string | undefined> {
 		const path = file.relativePath.toLowerCase();
-		if (path.endsWith('.nd.json')) return NORMALIZED_DOCUMENT_TYPE;
+		if (path.endsWith('.nd.json') || path.endsWith('.nd.json.gz')) return NORMALIZED_DOCUMENT_TYPE;
 		if (!path.endsWith('.json') || file.size <= 0) return undefined;
 
 		const bytes = await probe.readPrefix(Math.min(file.size, MAX_JSON_PROBE_BYTES));

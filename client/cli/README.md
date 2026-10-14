@@ -7,53 +7,61 @@ Its publication workflow replaces resource-specific publishing scripts with a ge
 The CLI is written in TypeScript and runs on Node.js.
 
 
-## Recursive Normalized Document import (build/stage)
+## Mixed filesystem import (build/stage)
 
-Import a directory of canonical `.nd.json` Normalized Documents (including
-nested directories) into ordinary staged Resource and Filesystem events:
+`import filesystem` recursively stages **all ordinary non-hidden files** through
+registered per-file compiler strategies. `.nd.json` is strictly validated as a
+Normalized Document; MP3, PDF, DOCX, ODT, ZIP, unknown formats, etc. are handled
+as generic Blossom-backed Resources with per-file media types. No file-type
+specific publishing pipeline or mandatory gzip preprocessing is required.
 
 ```bash
-kjvonly import normalized-documents ./content --manifest ./publication.yaml --root library --output-manifest ./publication.generated.json
+kjvonly import filesystem "$HOME/app-files" \
+  --manifest ./app-filesystem-development.yaml \
+  --root app-filesystem \
+  --output-manifest ./publication-development.generated.json \
+  --inline-limit-bytes 0
+kjvonly publish ./publication-development.generated.json
 ```
 
-The configuration-only YAML manifest supplies publication settings (`kind`, `nostr.relays`,
-`staging.path`, and optional Blossom strategy). It is still loaded and validated
-through the existing manifest loader. The directory importer compiles one
-Resource per `.nd.json` file, with a published identity and Filesystem path
-that mirror `library/<relative path>`. It then runs the same Manifest build
-executor used by `build`.
+Generic file bytes are preserved (`object-upload.encoding: []`), including files
+already compressed as `.gz`, `.zip`, `.xz`, `.zst` or similar. Unknown formats use
+`application/octet-stream`. `.nd.json.gz` is decoded for strict semantic validation but preserved as gzip
+bytes when staged for Blossom; invalid compressed documents abort the import.
+`--inline-limit-bytes` affects only Normalized Documents. No network publication
+occurs during import; the generated Manifest selects the newly staged generation.
+Source YAML must contain only publication configuration. This is the only recursive filesystem import command.
 
-The input YAML must not contain existing Resource, Collection, or Filesystem
-definitions; combining explicit definitions with a separate source-directory
-root is deferred to a later slice.
+## Import details
 
-Only `.nd.json` files are imported by this initial command. Other files,
-hidden paths, and symlinks are skipped; invalid `.nd.json` documents abort the
-batch before any staging begins. An empty selection is an error. Files up to
-1 MiB use inline gzip+hex; larger documents require `defaults.strategy` for
-the existing object-upload path. The staging directory is resolved relative
-to the YAML manifest. A generated publication Manifest is saved as JSON after
-successful staging and contains all built Resources, including object-upload
-metadata needed for Blossom publication. Each directory import builds in a
-private staging generation, seeded from the previously published generation
-for signed-event reuse. After the build succeeds, the generated Manifest is
-atomically updated to point to the new generation. Failed imports leave the
-previous generated Manifest and staged events unchanged. Previous generations
-are retained on disk (including orphaned generations from interrupted runs)
-until explicitly cleaned up. The original YAML is never rewritten.
+`import filesystem` walks the full source hierarchy. Every file gets one Resource
+and a mirrored Filesystem placement. The ordered `FilesystemFileCompilerRegistry`
+selects a compiler for each file; there is no separate Normalized Document
+batch importer. `.nd.json` and `.nd.json.gz` files are validated strictly, and invalid documents
+abort the import before staging. Other files are stored externally as original
+bytes with their registered MIME types, including unknown binary formats.
 
-This command **stages but does not publish**. Afterwards use:
+The input YAML must be configuration-only (no Resource/Collection/Filesystem
+definitions). The generated output Manifest must be located **outside** the
+walked source directory so subsequent imports cannot import their own output.
+The original YAML is not rewritten. The importer builds in a
+private staging generation, reusing compatible signed events and artifacts from
+the previous generation. Only successful staging updates the generated JSON
+publication Manifest. Failures retain the last publishable generation.
+
+For `.nd.json`, the **original source size** sets the inline cutoff (1 MiB by
+default, inclusive): smaller documents use Nostr gzip+hex content; larger
+ones use Blossom descriptors with raw JSON artifacts. `--inline-limit-bytes 0`
+selects Blossom for every nonempty Normalized Document. Generic files always
+use Blossom and preserve their existing byte encoding. Pre-gzipped `.nd.json.gz`
+documents are validated after decompression and always stored externally as
+`application/json+gzip` without recompression (regardless of inline limit).
+
+Publication remains a separate command:
 
 ```bash
 kjvonly publish ./publication.generated.json
 ```
-
-The generalized classifier's optional `.json` structural hints are not yet
-part of this initial directory command. Generic file import and other semantic
-families remain future work.
-
-For the implemented behavior and longer-term design (clearly distinguished),
-see [Filesystem recursive import](docs/filesystem-recursive-import-discovery.md).
 
 ### Incremental rebuild and exceptional reprocessing
 
@@ -62,6 +70,13 @@ build-definition revision** (plus signing identity where relevant) to decide
 whether a previously signed Resource or staged object artifact can be reused.
 Unchanged inputs do **not** require a fresh SHA-256 read of every source file.
 Blossom still uses SHA-256 for an artifact when that artifact is actually staged.
+
+Artifact staging keeps existing short deterministic filenames. When adding revision
+metadata would exceed the filesystem's 255-byte filename-component limit,
+the staging adapter instead uses `artifacts/<resource>/by-filename/<original-basename>/`
+with a short revision-bearing leaf filename. Both layouts are readable, and the
+published Resource identity and source filename remain unchanged.
+
 Dependent Filesystem events are rebuilt when referenced Resource events change.
 
 This is an intentional fast-path tradeoff: if another tool replaces file contents
@@ -71,12 +86,14 @@ its modification time and rerun import, then **publish the generated Manifest**:
 
 ```bash
 find ./content -type f -name '*.nd.json' -exec touch {} +
-kjvonly import normalized-documents ./content --manifest ./publication.yaml --root library --output-manifest ./publication.generated.json
+kjvonly import filesystem ./content --manifest ./publication.yaml --root library --output-manifest ./publication.generated.json
 kjvonly publish ./publication.generated.json
 ```
 
-The same approach can target a single `.nd.json` file. There is no requirement
-for an import-specific `--force` option or mandatory whole-tree source hashing.
+The same approach works for other file types, including individual PDFs and
+MP3s: update the source modification time, then import and publish. There is
+no requirement for an import-specific `--force` option or mandatory whole-tree
+source hashing.
 Do not delete the staging generation still referenced by the generated Manifest.
 
 ### Staging generations and source-backed objects
@@ -89,7 +106,9 @@ failed builds discard their unfinished generation. A crash can leave an
 unreferenced generation that must be cleaned up manually.
 
 Unencoded Blossom artifacts may be stored as symlinks to the original source
-files instead of immutable copies. Keeping an old Manifest and event signatures
+files instead of immutable copies. External Normalized Document and generic-file
+uploads use this unencoded source-byte path; neither the artifact stager nor
+Blossom implicitly gzips these files. Keeping an old Manifest and event signatures
 does not guarantee that those original bytes remain available after source
 changes or deletion. Publish promptly or keep the source tree available;
 rebuild and republish after changes. Automatic staging-generation garbage
@@ -116,14 +135,14 @@ publish
 Blossom + Nostr
 ```
 
-The CLI exposes four top-level command families. Parsing is independent of Resource publication:
+The CLI exposes five top-level command families. Parsing is independent of Resource publication:
 
 ```text
 parse html <directory>
 build <manifest>
 publish <manifest>
 sync <manifest>
-import normalized-documents <directory> --manifest <manifest> --root <filesystem-root> --output-manifest <output.json>
+import filesystem <directory> --manifest <manifest> --root <filesystem-root> --output-manifest <output.json> [--inline-limit-bytes <bytes>]
 ```
 
 `parse html` recursively converts supported HTML-family source files into validated `NormalizedDocument` JSON. It does not require a manifest, stage Resources, or publish to Blossom/Nostr. The user can review and organize the resulting files before including them in a manifest. See [Normalized Content Parsing](docs/normalized-content-parsing.md) for the conversion contract and options.
@@ -612,6 +631,16 @@ when rebuilding is required. Matching metadata intentionally allows signed
 Resource event and artifact reuse without rereading and hashing every file.
 
 Identity object uploads may be staged as symlinks to mutable sources. Byte-changing transformations are staged as materialized files. Reusing a signed event is separate from checking whether the relay already has that event.
+
+Staged signed Resource, Collection, and Filesystem event files retain their
+deterministic revision-bearing filenames. The signed Resource event filename
+format explicitly checks a 255-byte UTF-8 limit (a common Linux
+per-component limit). When staging an event or artifact atomically, Node first writes a
+short, UUID-named hidden `.tmp` file **beside** the destination, then renames
+it to the final path. The temporary filename is independent of the potentially
+long final filename, preventing a valid final filename from becoming
+`ENAMETOOLONG` solely because an atomic-write suffix was appended. This does
+not waive any final filename limits or shorten published Resource `d` tags.
 
 ---
 

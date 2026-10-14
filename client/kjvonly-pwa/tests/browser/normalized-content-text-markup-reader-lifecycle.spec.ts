@@ -111,6 +111,45 @@ describe(
 		);
 
 		it(
+			'disables native selection only while editing document markup',
+			async () => {
+				const authentication = createAuthentication('user-a');
+				const textMarkup = createTextMarkupService(
+					async () => createTextMarkup('user-a', 'markup-a')
+				);
+
+				mountReader(authentication, textMarkup);
+				await waitFor(
+					() => !requireButton('Edit').disabled,
+					'document to become editable'
+				);
+
+				const documentRoot = requireWord().closest('div.py-4');
+				expect(documentRoot).not.toBeNull();
+				expect(documentRoot?.classList.contains('kjvonly-noselect')).toBe(false);
+
+				requireButton('Edit').click();
+				await tick();
+				expect(documentRoot?.classList.contains('kjvonly-noselect')).toBe(true);
+
+				requireButton('Cancel edits').click();
+				await tick();
+				expect(documentRoot?.classList.contains('kjvonly-noselect')).toBe(false);
+
+				requireButton('Edit').click();
+				await tick();
+				expect(documentRoot?.classList.contains('kjvonly-noselect')).toBe(true);
+
+				requireButton('Save Text Markup').click();
+				await waitFor(
+					() => findButton('Edit') !== undefined,
+					'save to return to reading mode'
+				);
+				expect(documentRoot?.classList.contains('kjvonly-noselect')).toBe(false);
+			}
+		);
+
+		it(
 			'preserves the edit draft across subscription updates and cancels to the latest accepted markup',
 			async () => {
 				const accepted = createTextMarkup(

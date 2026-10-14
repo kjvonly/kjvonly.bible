@@ -10,6 +10,15 @@ import type {
 } from '$lib/resource';
 
 import {
+	normalizedContentResourceModuleRegistrations,
+	NORMALIZED_CONTENT_VIEWS
+} from '$lib/domains/normalized-content';
+
+import {
+	ResourceModuleResolver
+} from '../../modules/resource-module-resolver';
+
+import {
 	Modules
 } from '../../../models/modules.model';
 
@@ -297,6 +306,88 @@ describe(
 							noteID: 'note-1'
 						}
 					);
+			}
+		);
+
+		it(
+			'launches a standalone normalized document through the registered Reader destination',
+			() => {
+				const fixture = createDescriptor();
+				const descriptor: ResourceDescriptor = {
+					...fixture,
+					metadata: {
+						...fixture.metadata,
+						resourceType: 'normalized-content/document',
+						dataType: 'kjvonly.normalized-document'
+					}
+				};
+				const pushModule = vi.fn();
+				const showToast = vi.fn();
+				const service = new FileManagerNavigationService(
+					{
+						pushView: vi.fn(),
+						pushModule,
+						back: vi.fn()
+					},
+					new ResourceModuleResolver(
+						normalizedContentResourceModuleRegistrations
+					),
+					{ showToast }
+				);
+
+				service.openResource(
+					descriptor,
+					'library/commentary/Genesis-1.nd.json'
+				);
+
+				expect(pushModule).toHaveBeenCalledOnce();
+				expect(pushModule).toHaveBeenCalledWith(
+					Modules.NORMALIZED_CONTENT,
+					NORMALIZED_CONTENT_VIEWS.READER,
+					{ descriptor, fileName: 'Genesis-1.nd.json' }
+				);
+				expect(showToast).not.toHaveBeenCalled();
+			}
+		);
+
+		it(
+			'passes only same-extension files in the displayed order',
+			() => {
+				const paths = [
+					'library/Chapter-2.nd.json',
+					'library/Track-1.mp3',
+					'library/Chapter-10.nd.json',
+					'library/README.txt'
+				];
+				const entries = paths.map(path => ({
+					path,
+					descriptor: createDescriptor()
+				}));
+				const resolve = vi.fn(() => ({
+					module: Modules.NOTES,
+					view: 'notes.root',
+					state: {}
+				}));
+				const service = new FileManagerNavigationService(
+					{ pushView: vi.fn(), pushModule: vi.fn(), back: vi.fn() },
+					{ resolve },
+					{ showToast: vi.fn() }
+				);
+
+				service.openResource(entries[2].descriptor, entries[2].path, {
+					entries,
+					selectedIndex: 2
+				});
+				expect(resolve).toHaveBeenCalledWith(entries[2].descriptor, {
+					fileName: 'Chapter-10.nd.json',
+					sequence: {
+						items: [
+							{ descriptor: entries[0].descriptor, fileName: 'Chapter-2.nd.json' },
+							{ descriptor: entries[2].descriptor, fileName: 'Chapter-10.nd.json' }
+						],
+						index: 1
+					}
+				});
 			}
 		);
 

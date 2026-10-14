@@ -13,6 +13,10 @@ export {
 } from './models/bible-location-reference.model';
 
 export {
+	parseBibleLocationRef
+} from './services/bible-application-reference';
+
+export {
 	ChapterService
 } from './services/chapter.service';
 

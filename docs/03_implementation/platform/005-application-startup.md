@@ -1280,17 +1280,17 @@ The accepted development values are `enabled` and `disabled`, with `enabled` as 
 
 Filesystem bootstrap is a separate release feature. It installs the application's configured published Filesystem Resource through the same Resource Worker lifecycle.
 
-The current configured Resource is still the small integration Resource:
+The configured Resource is the application-owned Filesystem Resource:
 
 ```text
 publisher:
     KJVONLY_PUBKEY
 
 resourceId:
-    kjvonly/filesystem/filesystem-smoke
+    kjvonly/filesystem/app-filesystem
 ```
 
-The bootstrap mechanism is intentionally generic even though the current Resource content remains a smoke fixture.
+The bootstrap mechanism is generic. The application Filesystem is published separately from the default application Resource collection.
 
 Filesystem bootstrap is controlled by:
 
@@ -1299,7 +1299,7 @@ VITE_FILESYSTEM_BOOTSTRAP_MODE=enabled
 VITE_FILESYSTEM_BOOTSTRAP_MODE=disabled
 ```
 
-This setting is release-capable rather than development-only. Both development and production builds may enable or disable it. It currently defaults to `disabled` so a production build cannot accidentally install the smoke Resource.
+This setting is release-capable rather than development-only. Both development and production builds may enable or disable it. It currently defaults to `disabled` so deployments explicitly opt in after publishing the application Filesystem.
 
 Filesystem bootstrap runs only with the real IndexedDB Filesystem runtime. The development mock runtime is a FileManager composition aid and does not install or consume the published Filesystem bootstrap Resource.
 

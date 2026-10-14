@@ -54,53 +54,14 @@ describe(
 			}
 		);
 
-		it(
-			'rejects an addressable container because flattening would lose identity',
-			() => {
-				const processor =
-					new TransparentContainerBlockProcessor();
-
-				expect(
-					() =>
-						processor.process(
-							element(
-								'div',
-								{
-									id:
-										'anchor'
-								}
-							),
-							context([])
-						)
-				).toThrow(
-					'Cannot discard addressable container <div>#anchor.'
-				);
-			}
-		);
-
-		it(
-			'rejects supported normalized presentation on a flattened container',
-			() => {
-				const processor =
-					new TransparentContainerBlockProcessor();
-
-				expect(
-					() =>
-						processor.process(
-							element(
-								'div',
-								{
-									class:
-										'text-center'
-								}
-							),
-							context([])
-						)
-				).toThrow(
-					'Cannot discard normalized presentation on container <div>: text-center.'
-				);
-			}
-		);
+		it('continues through wrappers whose IDs or presentation are discarded', () => {
+			const blocks: NormalizedBlock[] = [{ type: 'paragraph', id: 'p', content: [] }];
+			const processor = new TransparentContainerBlockProcessor();
+			expect(processor.process(
+				element('div', { id: 'commPhoto', class: 'text-center' }),
+				context(blocks)
+			)).toBe(blocks);
+		});
 	}
 );
 

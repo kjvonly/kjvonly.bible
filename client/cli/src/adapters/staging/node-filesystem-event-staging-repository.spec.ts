@@ -143,6 +143,30 @@ describe(
 
 
 		it(
+			'atomically stages a maximum-length Filesystem name',
+			async () => {
+				const stagingRoot = await createDirectory();
+				const event = await new LocalNostrSigner(secretKey).sign({
+					kind: 37770,
+					created_at: 1_791_837_567,
+					tags: [],
+					content: '{}'
+				});
+				const repository = new NodeFilesystemEventStagingRepository();
+
+				const staged = await repository.stage({
+					stagingRoot,
+					filesystemName: 'a'.repeat(128),
+					inputRevision: 'b'.repeat(32),
+					event
+				});
+
+				expect(await repository.list(stagingRoot)).toEqual([staged]);
+				expect(await repository.read(staged)).toEqual(event);
+			}
+		);
+
+		it(
 			'replaces the previous staged revision for the same Filesystem definition',
 			async () => {
 				const stagingRoot =

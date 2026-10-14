@@ -44,6 +44,11 @@ function createWorkspace() {
 	return {
 		findSourceFiles:
 			vi.fn(),
+		resolveDestinationOutputPath:
+			vi.fn(
+				(outputDirectory: string, relativeOutputPath: string) =>
+					`${outputDirectory}/${relativeOutputPath}`
+			),
 		getPathCollisionKey:
 			vi.fn(
 				(path: string) =>
@@ -61,6 +66,92 @@ function createWorkspace() {
 describe(
 	'ParseDirectoryUseCase',
 	() => {
+		it(
+			'writes destination .nd.json files preserving relative hierarchy and document provenance',
+			async () => {
+				const workspace = createWorkspace();
+				workspace.pathExists.mockResolvedValue(false);
+				workspace.findSourceFiles.mockResolvedValue([
+					{ path: '/original/01_Genesis/one.cfm', relativePath: '01_Genesis/one.cfm' },
+					{ path: '/original/02_Exodus/two.HTM', relativePath: '02_Exodus/two.HTM' }
+				]);
+				workspace.readTextFile.mockResolvedValue('<p>Text</p>');
+				const run = vi.fn()
+					.mockReturnValueOnce(createParseResult({ source: '01_Genesis/one.cfm', blocks: [] }))
+					.mockReturnValueOnce(createParseResult({ source: '02_Exodus/two.HTM', blocks: [] }));
+				const result = await new ParseDirectoryUseCase({ run }, workspace).run({
+					format: 'html',
+					directory: '/original',
+					outputDirectory: '/normalized',
+					rootSelector: '#commentary'
+				});
+
+				expect(workspace.resolveDestinationOutputPath).toHaveBeenNthCalledWith(
+					1, '/normalized', '01_Genesis/one.nd.json'
+				);
+				expect(workspace.resolveDestinationOutputPath).toHaveBeenNthCalledWith(
+					2, '/normalized', '02_Exodus/two.nd.json'
+				);
+				expect(run).toHaveBeenNthCalledWith(1, {
+					format: 'html', content: '<p>Text</p>', rootSelector: '#commentary',
+					source: '01_Genesis/one.cfm'
+				});
+				expect(run).toHaveBeenNthCalledWith(2, {
+					format: 'html', content: '<p>Text</p>', rootSelector: '#commentary',
+					source: '02_Exodus/two.HTM'
+				});
+				expect(workspace.writeOutputAtomically).toHaveBeenNthCalledWith(
+					1, '/normalized/01_Genesis/one.nd.json',
+					`${JSON.stringify({ source: '01_Genesis/one.cfm', blocks: [] }, null, 2)}\n`,
+					{ overwrite: false }
+				);
+				expect(workspace.writeOutputAtomically).toHaveBeenNthCalledWith(
+					2, '/normalized/02_Exodus/two.nd.json',
+					`${JSON.stringify({ source: '02_Exodus/two.HTM', blocks: [] }, null, 2)}\n`,
+					{ overwrite: false }
+				);
+				expect(result).toMatchObject({
+					total: 2, converted: 2, failed: 0,
+					outputs: [
+						{ sourcePath: '/original/01_Genesis/one.cfm', outputPath: '/normalized/01_Genesis/one.nd.json' },
+						{ sourcePath: '/original/02_Exodus/two.HTM', outputPath: '/normalized/02_Exodus/two.nd.json' }
+					]
+				});
+			}
+		);
+
+		it(
+			'preflights protected destination outputs and ambiguous destination names',
+			async () => {
+				const workspace = createWorkspace();
+				workspace.findSourceFiles.mockResolvedValue([
+					{ path: '/sources/duplicate.cfm', relativePath: 'duplicate.cfm' },
+					{ path: '/sources/duplicate.html', relativePath: 'duplicate.html' },
+					{ path: '/sources/existing.html', relativePath: 'existing.html' },
+					{ path: '/sources/valid.cfm', relativePath: 'valid.cfm' }
+				]);
+				workspace.pathExists.mockImplementation(async (path: string) =>
+					path === '/dest/existing.nd.json'
+				);
+				workspace.readTextFile.mockResolvedValue('<p>Text</p>');
+				const run = vi.fn().mockReturnValue(createParseResult({ blocks: [] }));
+				const result = await new ParseDirectoryUseCase({ run }, workspace).run({
+					format: 'html', directory: '/sources', outputDirectory: '/dest'
+				});
+
+				expect(result).toMatchObject({ total: 4, converted: 1, failed: 3 });
+				expect(result.failures.map(failure => failure.sourcePath)).toEqual([
+					'/sources/duplicate.cfm', '/sources/duplicate.html', '/sources/existing.html'
+				]);
+				expect(result.failures[0]?.message).toContain('Output path collision');
+				expect(result.failures[2]?.message).toContain('/dest/existing.nd.json');
+				expect(run).toHaveBeenCalledOnce();
+				expect(workspace.writeOutputAtomically).toHaveBeenCalledWith(
+					'/dest/valid.nd.json', expect.any(String), { overwrite: false }
+				);
+			}
+		);
+
 		it(
 			'discovers supported HTML-family files and writes normalized JSON beside each source',
 			async () => {
@@ -843,3 +934,96 @@ describe(
 		);
 	}
 );
+
+describe('legacy normalized-document directory migration', () => {
+    it('processes legacy .json recursively, preserves PDF provenance, and leaves inputs untouched', async () => {
+        const workspace = createWorkspace();
+        workspace.findSourceFiles.mockResolvedValue([
+            { path: '/legacy/vol1/chs1.json', relativePath: 'vol1/chs1.json' },
+            { path: '/legacy/vol2/chs2.JSON', relativePath: 'vol2/chs2.JSON' },
+            { path: '/legacy/canonical.nd.json', relativePath: 'canonical.nd.json' }
+        ]);
+        workspace.pathExists.mockResolvedValue(false);
+        workspace.readTextFile.mockResolvedValue('{"source":"chs1.pdf","blocks":[]}');
+        const run = vi.fn().mockReturnValue(createParseResult({ source: 'chs1.pdf', blocks: [] }));
+        const result = await new ParseDirectoryUseCase({ run }, workspace).run({
+            format: 'legacy-normalized-document',
+            directory: '/legacy',
+            outputDirectory: '/app-files/Spurgeon'
+        });
+        expect(workspace.findSourceFiles).toHaveBeenCalledWith('/legacy', ['.json']);
+        expect(workspace.resolveDestinationOutputPath.mock.calls).toEqual([
+            ['/app-files/Spurgeon', 'vol1/chs1.nd.json'],
+            ['/app-files/Spurgeon', 'vol2/chs2.nd.json']
+        ]);
+        expect(run).toHaveBeenCalledTimes(2);
+        expect(run).toHaveBeenCalledWith({
+            format: 'legacy-normalized-document',
+            content: '{"source":"chs1.pdf","blocks":[]}'
+        });
+        expect(workspace.writeOutputAtomically).toHaveBeenCalledTimes(2);
+        expect(workspace.writeOutputAtomically).toHaveBeenCalledWith(
+            '/app-files/Spurgeon/vol1/chs1.nd.json',
+            '{\n  "source": "chs1.pdf",\n  "blocks": []\n}\n',
+            { overwrite: false }
+        );
+        expect(result).toMatchObject({ total: 2, converted: 2, failed: 0 });
+        expect(result.outputs.map(output => output.outputPath)).toEqual([
+            '/app-files/Spurgeon/vol1/chs1.nd.json',
+            '/app-files/Spurgeon/vol2/chs2.nd.json'
+        ]);
+    });
+
+    it('requires a separate output root before reading or writing source files', async () => {
+        const workspace = createWorkspace();
+        const run = vi.fn();
+        await expect(new ParseDirectoryUseCase({ run }, workspace).run({
+            format: 'legacy-normalized-document', directory: '/legacy'
+        })).rejects.toThrow('requires --output-dir');
+        expect(workspace.findSourceFiles).not.toHaveBeenCalled();
+        expect(workspace.writeOutputAtomically).not.toHaveBeenCalled();
+    });
+
+    it('blocks existing outputs by default and continues after invalid legacy JSON', async () => {
+        const workspace = createWorkspace();
+        workspace.findSourceFiles.mockResolvedValue([
+            { path: '/old/a.json', relativePath: 'a.json' },
+            { path: '/old/b.json', relativePath: 'b.json' },
+            { path: '/old/c.json', relativePath: 'c.json' }
+        ]);
+        workspace.pathExists.mockImplementation(async (path: string) => path === '/new/a.nd.json');
+        workspace.readTextFile.mockImplementation(async (path: string) => path.endsWith('b.json') ? '{bad' : '{}');
+        const run = vi.fn().mockImplementation(({ content }: { content: string }) => {
+            JSON.parse(content);
+            return createParseResult({ blocks: [] });
+        });
+        const result = await new ParseDirectoryUseCase({ run }, workspace).run({
+            format: 'legacy-normalized-document', directory: '/old', outputDirectory: '/new'
+        });
+        expect(result).toMatchObject({ total: 3, converted: 1, failed: 2 });
+        expect(result.failures[0]?.message).toContain('Output already exists');
+        expect(result.failures[1]?.sourcePath).toBe('/old/b.json');
+        expect(workspace.writeOutputAtomically).toHaveBeenCalledOnce();
+        expect(workspace.writeOutputAtomically).toHaveBeenCalledWith(
+            '/new/c.nd.json', expect.any(String), { overwrite: false }
+        );
+    });
+
+    it('reuses atomic overwrite policy for legacy output', async () => {
+        const workspace = createWorkspace();
+        workspace.findSourceFiles.mockResolvedValue([
+            { path: '/old/chs1.json', relativePath: 'chs1.json' }
+        ]);
+        workspace.readTextFile.mockResolvedValue('{}');
+        const run = vi.fn().mockReturnValue(createParseResult({ blocks: [] }));
+        const result = await new ParseDirectoryUseCase({ run }, workspace).run({
+            format: 'legacy-normalized-document', directory: '/old',
+            outputDirectory: '/new', overwrite: true
+        });
+        expect(workspace.pathExists).not.toHaveBeenCalled();
+        expect(workspace.writeOutputAtomically).toHaveBeenCalledWith(
+            '/new/chs1.nd.json', expect.any(String), { overwrite: true }
+        );
+        expect(result).toMatchObject({ converted: 1, failed: 0 });
+    });
+});

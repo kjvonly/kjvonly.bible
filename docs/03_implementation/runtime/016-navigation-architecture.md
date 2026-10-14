@@ -1100,7 +1100,78 @@ Verify one Pane's navigation, result handlers, state updates, and Resource chang
 
 ---
 
-# 37. Adding a New Navigable View
+# 37. Typed Application References
+
+**Status:** Implemented. The existing `bibleLocationReference:` type uses the Bible Domain's underscore-separated location format and the generic application-reference dispatcher.
+
+## Reference identity and payload
+
+A typed application reference has the form:
+
+```text
+<referenceType>:<value>
+```
+
+The first `:` separates the registered reference type from the **opaque, consumer-owned** value. Only the registered consumer interprets that value; further `:` characters belong to the value. A typed reference is a semantic navigation target, **not** a filesystem path, Resource descriptor, or Resource/Domain Object identity.
+
+The canonical type uses the existing Bible location format:
+
+```text
+bibleLocationReference:<bookId>_<chapter>[_<verseOrRange>[_<word>]]
+```
+
+- `bookId` and `chapter` are required numeric Bible location segments.
+- `verseOrRange` is optional: a single verse (`10`) or an inclusive range (`10-15`) within the same chapter. `word` is optional only when verse detail is present. The existing Bible Reader also accepts a word index alongside a range.
+- The numbers are **Bible's internal book IDs**, not book abbreviations or ordinal positions inferred from a filename.
+- This reference does not select a Bible version. The destination Reader continues using its existing Resource-selection policy.
+- The Bible consumer validates the number of segments, canonical nonnegative integer syntax, supported book ID, and the book/chapter/verse bounds supplied by the existing Bible metadata. For verse ranges, both endpoints must be valid in the same chapter and the start must not exceed the end. Book, chapter, and verse must be positive. The optional word index may be zero (the verse-number token); its upper bound cannot be validated until the chapter content is loaded. Invalid references resolve to no destination rather than silently opening a default location.
+
+Examples:
+
+| Source reference | Bible Reader navigation state |
+|---|---|
+| `bibleLocationReference:1_1` | `{ bibleLocationRef: '1_1' }` |
+| `bibleLocationReference:1_1_1` | `{ bibleLocationRef: '1_1_1' }` |
+| `bibleLocationReference:1_1_1_5` | `{ bibleLocationRef: '1_1_1_5' }` |
+| `bibleLocationReference:1_1_10-15` | `{ bibleLocationRef: '1_1_10-15' }` |
+| `bibleLocationReference:23_119_130-132` | `{ bibleLocationRef: '23_119_130-132' }` |
+
+The payload is already the Bible Reader's established underscore-separated `bibleLocationRef` format. The Bible-owned consumer validates it and passes it through unchanged; the generic dispatcher and document renderer do not interpret Bible locations.
+
+## Dispatch and navigation flow
+
+```text
+NormalizedDocument word.href (e.g. bibleLocationReference:1_1_1)
+    → NormalizedContentRenderer delegates activation unchanged
+    → Reader's link handler tries document-local target first
+    → ApplicationReferenceResolver splits on first ':'
+    → registered Bible reference consumer validates '1_1_1'
+    → { module: Bible, view: bible.reader,
+        state: { bibleLocationRef: '1_1_1' } }
+    → PaneNavigation.pushModule(...)
+    → Bible Reader
+```
+
+The existing `ApplicationReferenceResolver` already accepts registrations with `referenceType`, `module`, `view`, and `createState(value)`, and preserves the portion after the first `:`. Reuse this boundary. **Do not** add reference-type `if`/`switch` logic to `NormalizedContentRenderer` or a parallel navigation stack. Application composition registers the Bible-owned interpretation, and the existing Pane navigation service performs the push.
+
+The normalized renderer should continue to handle link presentation and activation delegation only. The Reader already prioritizes document-local fragments before registered application references; preserve that behavior. An unregistered type, malformed reference, or invalid Bible payload must not be converted to an unrelated destination.
+
+## Relationship to the current implementation
+
+The existing `BIBLE_LOCATION_REFERENCE_TYPE` constant and its `bibleLocationReference:` prefix are unchanged. Its single Bible consumer validates the underscore-separated value before creating Reader navigation state. The generic dispatcher permits a consumer to return no navigation state for an invalid payload. Existing valid published links continue to work; no second prefix or conversion is introduced.
+
+## Regression cases
+
+- Chapter, verse, inclusive verse range, and word addresses resolve to the expected Bible Reader state.
+- Missing required segments, a word without a verse, extra segments, malformed/reversed/out-of-bounds verse ranges, invalid numbers, and unknown book IDs do not navigate to a default location.
+- The dispatcher preserves opaque payloads for other registered reference types, including values containing `:`.
+- Document-local links continue to take priority; unregistered application references do not push a view.
+- Activation pushes the Bible Reader on the current Pane stack, and Back restores the originating Reader; other Panes remain independent.
+- The parsed destination state stays serializable and survives normal Pane navigation persistence.
+
+---
+
+# 38. Adding a New Navigable View
 
 A new view should normally:
 
@@ -1121,7 +1192,7 @@ Do not create another navigation subsystem because one feature has a child view.
 
 ---
 
-# 38. Summary
+# 39. Summary
 
 The implemented model is:
 

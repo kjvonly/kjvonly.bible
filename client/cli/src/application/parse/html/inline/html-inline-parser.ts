@@ -254,6 +254,7 @@ export class HtmlInlineParser {
 				type:
 					'anchor',
 				id:
+					state.resolveAnchorId?.(element.attribs.id) ??
 					element.attribs.id
 			});
 		}

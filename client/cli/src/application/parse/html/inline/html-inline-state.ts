@@ -21,6 +21,9 @@ export interface HtmlInlineState {
 
 	/** Semantic inline marks inherited by emitted words. */
 	marks: Set<NormalizedMark>;
+
+	/** Optional document-local source-anchor identity resolver. */
+	resolveAnchorId?: (id: string) => string;
 }
 
 /**
@@ -28,7 +31,9 @@ export interface HtmlInlineState {
  *
  * @returns Empty mutable class/mark sets, link stack, and emphasis/strong flags.
  */
-export function createHtmlInlineState(): HtmlInlineState {
+export function createHtmlInlineState(
+	resolveAnchorId?: (id: string) => string
+): HtmlInlineState {
 	return {
 		classes:
 			new Set<NormalizedClassName>(),
@@ -39,7 +44,8 @@ export function createHtmlInlineState(): HtmlInlineState {
 		strong:
 			false,
 		marks:
-			new Set<NormalizedMark>()
+			new Set<NormalizedMark>(),
+		resolveAnchorId
 	};
 }
 
@@ -68,6 +74,7 @@ export function cloneHtmlInlineState(
 		marks:
 			new Set(
 				state.marks
-			)
+			),
+		resolveAnchorId: state.resolveAnchorId
 	};
 }

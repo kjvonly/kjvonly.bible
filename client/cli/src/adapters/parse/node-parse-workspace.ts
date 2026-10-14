@@ -1,5 +1,6 @@
 import {
 	link,
+	mkdir,
 	open,
 	readdir,
 	readFile,
@@ -12,6 +13,7 @@ import {
 	basename,
 	dirname,
 	extname,
+	isAbsolute,
 	join,
 	normalize,
 	relative,
@@ -101,6 +103,53 @@ export class NodeParseWorkspace
 	}
 
 	/**
+	 * Resolves a caller-selected relative artifact path under an output root.
+	 * Preserves the supplied filename and extension; the caller owns output naming.
+	 * Relative paths use POSIX separators, as produced by recursive discovery.
+	 * Rejects paths that escape the selected destination directory.
+	 */
+	resolveDestinationOutputPath(
+		outputDirectory: string,
+		relativeOutputPath: string
+	): string {
+		if (
+			!outputDirectory.trim() ||
+			!relativeOutputPath ||
+			isAbsolute(relativeOutputPath) ||
+			relativeOutputPath.includes('\\') ||
+			/^[A-Za-z]:/.test(relativeOutputPath) ||
+			relativeOutputPath.split('/').some(
+				segment =>
+					!segment || segment === '.' || segment === '..'
+			)
+		) {
+			throw new Error(
+				`Invalid parse destination or relative output path: ${relativeOutputPath}`
+			);
+		}
+
+		const root = resolve(outputDirectory);
+		const outputPath = resolve(
+			root,
+			...relativeOutputPath.split('/')
+		);
+		const fromRoot = relative(root, outputPath);
+
+		if (
+			!fromRoot ||
+			fromRoot === '..' ||
+			fromRoot.startsWith(`..${sep}`) ||
+			isAbsolute(fromRoot)
+		) {
+			throw new Error(
+				`Parse output escapes destination directory: ${relativeOutputPath}`
+			);
+		}
+
+		return outputPath;
+	}
+
+	/**
 	 * Creates a conservative portable comparison key without changing the path
 	 * that will actually be emitted. Case folding intentionally rejects output
 	 * sets that would alias on common case-insensitive filesystems even when the
@@ -167,7 +216,8 @@ export class NodeParseWorkspace
 
 	/**
 	 * Writes a complete artifact to a same-directory temporary file before the
-	 * final filesystem publication step. Non-overwrite publication uses an
+	 * final filesystem publication step. Missing destination parent directories are
+	 * created when an artifact is written. Non-overwrite publication uses an
 	 * atomic hard-link create so a destination that appears after preflight still
 	 * fails with `EEXIST`; overwrite publication uses same-filesystem rename so
 	 * consumers never observe a partially written destination.
@@ -191,6 +241,11 @@ export class NodeParseWorkspace
 			false;
 
 		try {
+			await mkdir(
+				dirname(path),
+				{ recursive: true }
+			);
+
 			const temporaryFile =
 				await open(
 					temporaryPath,

@@ -20,7 +20,7 @@ flowchart LR
     Validate --> Json
 ```
 
-Parsing does not publish Resources and does not require a publication manifest. After conversion, the generated JSON files are ordinary filesystem artifacts. A user can review them, move them into the directory hierarchy they want to publish, reference that hierarchy from an existing CLI manifest, and use the normal `build`, `publish`, or `sync` workflow.
+Parsing does not publish Resources and does not require a publication manifest. After conversion, the generated JSON files are ordinary filesystem artifacts. A user can review them, arrange them into a publication hierarchy, and use the existing `import filesystem`, `build`, `publish`, or `sync` workflow. The optional destination mode can directly create an importer-ready `.nd.json` tree without moving or renaming outputs.
 
 Conceptually, parsing and publication remain two independently useful stages:
 
@@ -71,6 +71,12 @@ Optionally select the content root inside every source document:
 kjvonly parse html <directory> --root-selector '<css-selector>'
 ```
 
+To keep source files untouched and emit importer-ready `.nd.json` files into a separate tree, preserving the source hierarchy:
+
+```bash
+kjvonly parse html <directory> --output-dir <destination-directory>
+```
+
 Existing normalized JSON is protected by default. Explicitly allow replacement with:
 
 ```bash
@@ -80,7 +86,7 @@ kjvonly parse html <directory> --overwrite
 Options may be combined:
 
 ```bash
-kjvonly parse html ./sermons --root-selector '#content' --overwrite
+kjvonly parse html ./sermons --root-selector '#content' --output-dir ./normalized --overwrite
 ```
 
 The root selector is a CSS selector interpreted against each HTML document. The first matching element is an **extraction boundary**: normalization converts its children, not the selected element itself. The boundary's own tag semantics, ID, classes, and other metadata are therefore outside the canonical document.
@@ -111,7 +117,7 @@ The CLI exits unsuccessfully when one or more files fail, while still reporting 
 
 ## Output Files
 
-Normalized JSON is written beside each source file using the same basename and a `.json` extension.
+Without `--output-dir`, normalized JSON is written beside each source file using the same basename and a `.json` extension (existing behavior).
 
 Example:
 
@@ -126,12 +132,16 @@ sermons/
 
 The JSON is pretty-printed for inspection and ends with a newline.
 
-**Naming boundary:** `parse html` emits `.json`, whereas the separate
-`import normalized-documents` command discovers only `.nd.json`. Parsing does
-not silently rename its output or import it. After inspecting the result,
-copy/move it to the desired publication directory with a `.nd.json` suffix
-before using that importer. This keeps source conversion and Resource
-publication as separate, explicit operations.
+With `--output-dir`, the output tree is created as needed under the chosen destination, retaining each source-relative directory and replacing the source extension with `.nd.json`:
+
+```text
+sermons/                       normalized/
+├── 001.html                   ├── 001.nd.json
+└── nested/                    └── nested/
+    └── 002.cfm                    └── 002.nd.json
+```
+
+The input source files are not modified, and the generated documents retain their original source-relative provenance. The destination can be used directly with `import filesystem`, which discovers all ordinary files and validates `.nd.json` through its registered compiler. Without `--output-dir`, the older `.json` output convention still requires an explicit copy/rename before importing. Neither mode publishes anything by itself.
 
 The document's optional `source` field records the source path relative to the parse root rather than an absolute machine path.
 
@@ -146,9 +156,9 @@ Example:
 
 Absolute paths such as `/Users/...` or `/home/...` are filesystem implementation details and are not persisted as document provenance.
 
-Before parsing begins, the batch computes the complete source-to-output plan. If multiple source files map to the same `.json` path, every source participating in that collision fails preflight and that output is not written. Collision comparison uses a workspace-owned comparison key rather than rewriting emitted filenames. The Node workspace conservatively compares normalized paths case-insensitively, so inputs such as `KJV.html` and `kjv.htm` are rejected as ambiguous even on a case-sensitive host because their outputs would alias on common case-insensitive filesystems. Non-colliding sources retain their original output path casing and may still be converted.
+Before parsing begins, the batch computes the complete source-to-output plan. If multiple source files map to the same output path (`.json` in-place or `.nd.json` under `--output-dir`), every source participating in that collision fails preflight and that output is not written. Collision comparison uses a workspace-owned comparison key rather than rewriting emitted filenames. The Node workspace conservatively compares normalized paths case-insensitively, so inputs such as `KJV.html` and `kjv.htm` are rejected as ambiguous even on a case-sensitive host because their outputs would alias on common case-insensitive filesystems. Non-colliding sources retain their original output path casing and may still be converted.
 
-Existing output paths are also checked during preflight. By default, an existing `.json` file protects that source from conversion and is reported as a failure. Use `--overwrite` only when replacing existing normalized output is intentional. Source-to-source output collisions remain errors even with `--overwrite`; overwrite permission never chooses one ambiguous source over another.
+Existing output paths are also checked during preflight. By default, an existing output artifact protects that source from conversion and is reported as a failure. Use `--overwrite` only when replacing existing normalized output is intentional. Source-to-source output collisions remain errors even with `--overwrite`; overwrite permission never chooses one ambiguous source over another.
 
 Final output publication enforces the same policy after preflight. The Node workspace first writes and syncs the complete JSON artifact to a uniquely named temporary file in the destination directory. Without `--overwrite`, it publishes the completed file with an atomic create-if-absent hard link so a destination that appears after preflight still fails rather than being replaced. With `--overwrite`, it atomically renames the completed same-filesystem temporary file over the destination. Temporary artifacts are cleaned up on ordinary failure paths where practical. Consumers therefore never need to observe a partially written final JSON file, and overwrite intent remains enforced at the final filesystem step.
 
@@ -156,7 +166,7 @@ Final output publication enforces the same policy after preflight. The Node work
 
 ## Publication Workflow
 
-Parsing and publishing are separate workflows.
+Parsing and publishing are separate workflows. The destination mode selects an output tree and compatible filename suffix; it does not create manifests or publish Resources.
 
 The parser does not decide:
 
@@ -196,16 +206,17 @@ kjvonly parse html ./incoming-sermons --root-selector '#content'
 kjvonly sync ./manifest.yaml
 ```
 
-Alternatively, use the implemented recursive Normalized Document import
-rather than writing Resource/Filesystem definitions for each accepted file.
-The `.nd.json` naming step is required because parsing outputs `.json`:
+Alternatively, use the implemented `import filesystem` workflow for the
+parsed documents alongside any other files, instead of writing
+Resource/Filesystem definitions for each file.
+Use `--output-dir` when you want the parser to produce the importer's `.nd.json` inputs directly:
 
 ```bash
-kjvonly parse html ./incoming-sermons --root-selector '#content'
+kjvonly parse html ./incoming-sermons --root-selector '#content' \
+  --output-dir ./publication-source
 
-# After review, arrange approved output files under ./publication-source,
-# using names such as ./publication-source/sermons/romans-8.nd.json.
-kjvonly import normalized-documents ./publication-source \
+# Review generated files and diagnostics before importing.
+kjvonly import filesystem ./publication-source \
   --manifest ./publication.yaml \
   --root library \
   --output-manifest ./publication.generated.json
@@ -216,7 +227,7 @@ Here `publication.yaml` is a configuration-only publication Manifest (no
 explicit Resource, Collection, or Filesystem entries). Import builds and stages;
 only the subsequent `publish` command uploads artifacts and sends Nostr events.
 See [Filesystem recursive import](filesystem-recursive-import-discovery.md)
-for the implemented importer contract and the deferred mixed-type design.
+for the implemented mixed-file importer and its compiler registry.
 
 The Resource build/publish pipeline consumes files. Neither publication path
 needs to understand HTML or reconstruct the source conversion process.
@@ -822,7 +833,7 @@ flowchart TD
         HasHtmlId{"Element has id?"}
         Preservable{"Identity can survive normalization?"}
         Duplicate{"Already reserved?"}
-        Reject["Reject duplicate canonical source id"]
+        MarkAmbiguous["Mark authored ID ambiguous (warn and regenerate)"]
         Reserve["Reserve source id"]
         Continue["Continue traversal"]
 
@@ -831,7 +842,7 @@ flowchart TD
         HasHtmlId -- Yes --> Preservable
         Preservable -- No --> Continue
         Preservable -- Yes --> Duplicate
-        Duplicate -- Yes --> Reject
+        Duplicate -- Yes --> MarkAmbiguous --> Continue
         Duplicate -- No --> Reserve --> Continue
     end
 
@@ -847,8 +858,8 @@ flowchart TD
         Return["Return candidate"]
 
         Block --> HasSource
-        HasSource -- Yes --> Preserve
-        HasSource -- No --> ReadCount --> Candidate --> Collision
+        HasSource -- Yes, unique --> Preserve
+        HasSource -- No or duplicated --> ReadCount --> Candidate --> Collision
         Collision -- Yes --> Increment --> Candidate
         Collision -- No --> Record --> Return
     end
@@ -886,7 +897,7 @@ document/revision identity
     tells consumers whether an older reference still applies to the current snapshot
 ```
 
-Duplicate source IDs that would both survive normalization are rejected because they would make normalized document locations ambiguous. IDs that exist only on unsupported/ignored source boundaries are diagnostic source metadata rather than canonical identity and do not reserve or collide with generated output. The extraction boundary itself is also outside the canonical identity set.
+Duplicate source IDs that could survive normalization are **non-fatal**: every occurrence of an ambiguous ID is assigned a distinct generated canonical ID (including zero-width inline anchors), and a warning identifies the duplicated source ID. Original fragment links targeting a duplicated ID remain ambiguous and are reported as unresolved. Unique authored IDs remain preserved. A neutral `div` wrapper with an ID or canonical presentation is flattened, its descendants are normalized, and discarded wrapper metadata is reported through warnings. IDs that exist only on unsupported/ignored source boundaries do not reserve or collide with generated output. The extraction boundary itself is also outside the canonical identity set.
 
 Canonical validation applies the same invariant to the finished `NormalizedDocument`: every ordinary and contextual block must have a non-blank ID, every inline anchor must have a non-blank ID, and block/anchor IDs must be unique across the entire recursive document. This protects documents entering through paths other than the HTML converter as well.
 

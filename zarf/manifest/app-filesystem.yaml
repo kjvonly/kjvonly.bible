@@ -1,0 +1,26 @@
+# Permanent app-owned filesystem, built from a recursive directory of .nd.json files.
+# The CLI importer generates the Resource and Filesystem definitions; this
+# configuration-only Manifest supplies the publication destination and staging.
+version: 1
+kind: 37770
+
+staging:
+  path: ./app-filesystem/.staging
+
+# Match app-data-home.yaml so application files use the main app's backend.
+nostr:
+  relays:
+    - wss://kjvonly.bible.home:3334
+
+defaults:
+  strategy: local
+
+strategies:
+  local:
+    type: blossom
+    urls:
+      - https://kjvonly.bible.home:3335
+
+resources: {}
+collections: {}
+filesystems: {}

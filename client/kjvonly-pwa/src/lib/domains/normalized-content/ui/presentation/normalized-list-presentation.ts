@@ -12,6 +12,19 @@ export function resolveNormalizedListMarkerClass(
 		return undefined;
 	}
 
+	// Unordered lists with a numbering hint keep their literal number tokens.
+	// They must not receive a second marker from CSS. Ordinary unordered
+	// lists without that hint continue to display their normal bullets.
+	if (
+		!block.ordered &&
+		(
+			block.class?.includes('list-roman') ||
+			block.class?.includes('list-arabic')
+		)
+	) {
+		return 'list-none';
+	}
+
 	if (
 		block.class?.includes(
 			'list-roman'

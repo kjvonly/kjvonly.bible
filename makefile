@@ -373,60 +373,112 @@ app-data-sync-verbose: up
 		'
 
 # =============================================================================
-# Normalized Document Filesystem Smoke
+# Filesystem Import Smoke (mixed file types)
 # =============================================================================
-NORMALIZED_DOCUMENT_SMOKE_SOURCE = ../../zarf/manifest/normalized-document-smoke/source
-NORMALIZED_DOCUMENT_SMOKE_MANIFEST = ../../zarf/manifest/normalized-document-smoke.yaml
-NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST = ../../zarf/manifest/normalized-document-smoke/.publication.generated.json
-NORMALIZED_DOCUMENT_SMOKE_ROOT = normalized-document-smoke
-NORMALIZED_DOCUMENT_SMOKE_LARGE_STUB = zarf/manifest/normalized-document-smoke/large.nd.json.stub
-NORMALIZED_DOCUMENT_SMOKE_LARGE = zarf/manifest/normalized-document-smoke/source/sermons/large.nd.json
-NORMALIZED_DOCUMENT_SMOKE_BLOCK = zarf/manifest/normalized-document-smoke/.large-content-block
+# This exercises the same recursive import/strategy/staging pipeline as
+# app-filesystem, but publishes to a separate local smoke mount.
+FILESYSTEM_IMPORT_SMOKE_SOURCE = ../../zarf/manifest/filesystem-import-smoke/source
+FILESYSTEM_IMPORT_SMOKE_MANIFEST = ../../zarf/manifest/filesystem-import-smoke.yaml
+FILESYSTEM_IMPORT_SMOKE_OUTPUT_MANIFEST = ../../zarf/manifest/filesystem-import-smoke/.publication.generated.json
+FILESYSTEM_IMPORT_SMOKE_ROOT = filesystem-import-smoke
+FILESYSTEM_IMPORT_SMOKE_LARGE_STUB = zarf/manifest/filesystem-import-smoke/large.nd.json.stub
+FILESYSTEM_IMPORT_SMOKE_LARGE = zarf/manifest/filesystem-import-smoke/source/sermons/large.nd.json
+FILESYSTEM_IMPORT_SMOKE_BLOCK = zarf/manifest/filesystem-import-smoke/.large-content-block
+FILESYSTEM_IMPORT_SMOKE_VERBOSE = $(if $(filter 1,$(VERBOSE)),-v)
+FILESYSTEM_IMPORT_SMOKE_INLINE_ARG = $(if $(filter undefined,$(origin INLINE_LIMIT_BYTES)),,--inline-limit-bytes "$(INLINE_LIMIT_BYTES)")
 
-# Blossom smoke fixture: keep only the short template under version control.
-# The generated 1 MiB word block and expanded .nd.json are both Git-ignored.
-# An unchanged source is retained between builds to exercise event reuse.
-$(NORMALIZED_DOCUMENT_SMOKE_LARGE): $(NORMALIZED_DOCUMENT_SMOKE_LARGE_STUB)
+# Keep the generated large source between runs to test incremental reuse.
+# Generate a source document just over 1 MiB to exercise Blossom at the
+# default threshold, alongside the committed small inline documents.
+$(FILESYSTEM_IMPORT_SMOKE_LARGE): $(FILESYSTEM_IMPORT_SMOKE_LARGE_STUB)
 	@mkdir -p "$(dir $@)"
 	@{ printf '{"type":"word","text":"'; \
 		head -c 1048576 /dev/zero | tr '\0' 'A'; \
-		printf '"}\n'; } > "$(NORMALIZED_DOCUMENT_SMOKE_BLOCK)"
-	@sed -e '/^__LARGE_WORD__$$/r $(NORMALIZED_DOCUMENT_SMOKE_BLOCK)' \
+		printf '"}\n'; } > "$(FILESYSTEM_IMPORT_SMOKE_BLOCK)"
+	@sed -e '/^__LARGE_WORD__$$/r $(FILESYSTEM_IMPORT_SMOKE_BLOCK)' \
 		-e '/^__LARGE_WORD__$$/d' "$<" > "$@"
 
+.PHONY: filesystem-import-smoke-build filesystem-import-smoke-publish filesystem-import-smoke-sync
+
+filesystem-import-smoke-build: $(FILESYSTEM_IMPORT_SMOKE_LARGE)
+	cd $(CLI_DIR) && \
+		npm run build && \
+		node dist/main.js import filesystem $(FILESYSTEM_IMPORT_SMOKE_VERBOSE) \
+			"$(FILESYSTEM_IMPORT_SMOKE_SOURCE)" \
+			--manifest "$(FILESYSTEM_IMPORT_SMOKE_MANIFEST)" \
+			--root "$(FILESYSTEM_IMPORT_SMOKE_ROOT)" \
+			--output-manifest "$(FILESYSTEM_IMPORT_SMOKE_OUTPUT_MANIFEST)" \
+			$(FILESYSTEM_IMPORT_SMOKE_INLINE_ARG)
+
+filesystem-import-smoke-publish:
+	@test -f "zarf/manifest/filesystem-import-smoke/.publication.generated.json" || { \
+		echo 'Run make filesystem-import-smoke-build first.' >&2; exit 1; \
+	}
+	cd $(CLI_DIR) && \
+		NODE_USE_SYSTEM_CA=1 \
+		node dist/main.js publish $(FILESYSTEM_IMPORT_SMOKE_VERBOSE) \
+			"$(FILESYSTEM_IMPORT_SMOKE_OUTPUT_MANIFEST)"
+
+# Import must succeed before publishing its newly generated Manifest.
+filesystem-import-smoke-sync: filesystem-import-smoke-build
+	@$(MAKE) filesystem-import-smoke-publish
+
+# =============================================================================
+# Application Filesystem (mixed files)
+# =============================================================================
+# Keep APP_FILESYSTEM_SOURCE as one cumulative local directory. New collections
+# can be added under that tree without changing the mounted Filesystem root.
+# Source paths are resolved from the repository root, not from client/cli.
+APP_FILESYSTEM_SOURCE ?= $(HOME)/git/app-files
+APP_FILESYSTEM_SOURCE_ABS = $(abspath $(APP_FILESYSTEM_SOURCE))
+# Separate production and localhost publication pointers. Both use the same
+# Filesystem Resource identity and mount path, but independent staging.
+APP_FILESYSTEM_ENV ?= development
+ifeq ($(APP_FILESYSTEM_ENV),development)
+APP_FILESYSTEM_MANIFEST = ../../zarf/manifest/app-filesystem-development.yaml
+APP_FILESYSTEM_OUTPUT_MANIFEST_REPO = zarf/manifest/app-filesystem/.publication-development.generated.json
+else ifeq ($(APP_FILESYSTEM_ENV),production)
+APP_FILESYSTEM_MANIFEST = ../../zarf/manifest/app-filesystem.yaml
+APP_FILESYSTEM_OUTPUT_MANIFEST_REPO = zarf/manifest/app-filesystem/.publication.generated.json
+else
+$(error Invalid APP_FILESYSTEM_ENV '$(APP_FILESYSTEM_ENV)'; use development or production)
+endif
+APP_FILESYSTEM_OUTPUT_MANIFEST = ../../$(APP_FILESYSTEM_OUTPUT_MANIFEST_REPO)
+APP_FILESYSTEM_ROOT = app-filesystem
+APP_FILESYSTEM_VERBOSE = $(if $(filter 1,$(VERBOSE)),-v)
+# Omitted: CLI default 1 MiB. Explicit zero: all nonempty documents use Blossom.
+APP_FILESYSTEM_INLINE_LIMIT_ARG = $(if $(filter undefined,$(origin INLINE_LIMIT_BYTES)),,--inline-limit-bytes "$(INLINE_LIMIT_BYTES)")
+
 .PHONY: \
-	normalized-document-smoke-build \
-	normalized-document-smoke-build-verbose \
-	normalized-document-smoke-publish \
-	normalized-document-smoke-publish-verbose
+	app-filesystem-build \
+	app-filesystem-publish \
+	app-filesystem-sync
 
-normalized-document-smoke-build: $(NORMALIZED_DOCUMENT_SMOKE_LARGE)
+app-filesystem-build:
+	@test -d "$(APP_FILESYSTEM_SOURCE_ABS)" || { \
+		printf 'App filesystem source directory not found: %s\n' "$(APP_FILESYSTEM_SOURCE_ABS)" >&2; \
+		exit 1; \
+	}
 	cd $(CLI_DIR) && \
 		npm run build && \
-		node dist/main.js import normalized-documents $(NORMALIZED_DOCUMENT_SMOKE_SOURCE) \
-			--manifest $(NORMALIZED_DOCUMENT_SMOKE_MANIFEST) \
-			--root $(NORMALIZED_DOCUMENT_SMOKE_ROOT) \
-			--output-manifest $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
+		node dist/main.js import filesystem $(APP_FILESYSTEM_VERBOSE) "$(APP_FILESYSTEM_SOURCE_ABS)" \
+			--manifest $(APP_FILESYSTEM_MANIFEST) \
+			--root $(APP_FILESYSTEM_ROOT) \
+			--output-manifest $(APP_FILESYSTEM_OUTPUT_MANIFEST) $(APP_FILESYSTEM_INLINE_LIMIT_ARG)
 
-normalized-document-smoke-build-verbose: $(NORMALIZED_DOCUMENT_SMOKE_LARGE)
+app-filesystem-publish:
+	@test -f "$(APP_FILESYSTEM_OUTPUT_MANIFEST_REPO)" || { \
+		echo 'First run make app-filesystem-build APP_FILESYSTEM_ENV=$(APP_FILESYSTEM_ENV) to stage a publication.' >&2; \
+		exit 1; \
+	}
 	cd $(CLI_DIR) && \
-		npm run build && \
-		node dist/main.js import normalized-documents -v $(NORMALIZED_DOCUMENT_SMOKE_SOURCE) \
-			--manifest $(NORMALIZED_DOCUMENT_SMOKE_MANIFEST) \
-			--root $(NORMALIZED_DOCUMENT_SMOKE_ROOT) \
-			--output-manifest $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
-
-normalized-document-smoke-publish:
-	cd $(CLI_DIR) && \
-		npm run build && \
 		NODE_USE_SYSTEM_CA=1 \
-		node dist/main.js publish $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
+		node dist/main.js publish $(APP_FILESYSTEM_VERBOSE) $(APP_FILESYSTEM_OUTPUT_MANIFEST)
 
-normalized-document-smoke-publish-verbose:
-	cd $(CLI_DIR) && \
-		npm run build && \
-		NODE_USE_SYSTEM_CA=1 \
-		node dist/main.js publish -v $(NORMALIZED_DOCUMENT_SMOKE_OUTPUT_MANIFEST)
+# Build first; never publish a stale generated Manifest after a failed import.
+# Reuse the publish recipe rather than running a second copy of the command.
+app-filesystem-sync: app-filesystem-build
+	@$(MAKE) app-filesystem-publish
 
 ###############################################################################
 # GIT

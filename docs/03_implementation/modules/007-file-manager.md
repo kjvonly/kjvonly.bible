@@ -349,6 +349,8 @@ FileManagerRootGroup[]
 
 `fileManagerRoot.svelte` calls `FileManagerService.loadRootGroups(...)`; the service performs the public `FilesystemService.listRoots()` read and owns grouping/sorting. FileManager never reaches into filesystem persistence or IndexedDB directly.
 
+FileManager uses the same case-insensitive, numeric-aware name comparator for publisher/root presentation, projected directory and file lists, search filters, and Search Worker results. Numeric segments sort naturally (`1`, `2`, `10`), with a deterministic tie-break for different names that compare equivalently (such as `1` and `01`). Directories and files remain separate lists in Browse; sorting does not change Resource identities or paths.
+
 The Svelte root view owns UI state such as:
 
 ```text
@@ -595,7 +597,7 @@ If additional metadata is broadly useful to FileManager, extend a deliberate gen
 
 ---
 
-# 13. Breadcrumbs and Pane Width
+# 13. Breadcrumbs
 
 The Browser header title is only the current folder name.
 
@@ -607,15 +609,7 @@ Spurgeon
 
 It does not display the complete path in the header.
 
-On wider panes, FileManager renders clickable breadcrumbs beneath the header.
-
-The current threshold is approximately:
-
-```text
-pane client width >= 640px
-```
-
-The decision is based on Pane/container width through `PaneLayoutContext`, not global viewport width.
+FileManager renders clickable breadcrumbs beneath the header at every pane width, including narrow mobile panes. The breadcrumb wraps onto additional lines rather than scrolling horizontally. Each `/` separator stays with its following folder name, and long folder names can wrap within the available width.
 
 Breadcrumbs are supplemental context. Pane Back remains the primary navigation mechanism.
 
@@ -678,6 +672,8 @@ sequenceDiagram
 ```
 
 FileManager passes the `ResourceDescriptor` unchanged to the application resolver.
+
+Application composition registers the Normalized Content Domain's standalone `normalized-content/document` Resource Type with `Modules.NORMALIZED_CONTENT` / `normalized-content.reader`. The registration accepts only the supported `kjvonly.normalized-document` data type and version, and forwards the original descriptor as Reader navigation state. Other Resource Types using the same semantic data contract are not implicitly redirected to this Domain's Reader.
 
 Resource resolution failure and Pane navigation failure are separate error boundaries.
 
@@ -1097,7 +1093,7 @@ Maintain these invariants when changing FileManager:
 14. Friendly FileManager file type is metadata-search/filtering state only.
 15. Search Worker state remains ephemeral and service-owned.
 16. FileManager remains isolated from destination feature internals.
-17. Header title remains the current folder name; breadcrumbs are supplemental wide-pane context.
+17. Header title remains the current folder name; breadcrumbs are supplemental context at every pane width.
 18. Pane width, not viewport width, controls pane-local responsive behavior.
 19. Back navigation is owned by the shared Pane navigation stack.
 20. Persisted navigation field `publisher` means filesystem publisher; runtime models prefer `filesystemPublisher`.
@@ -1131,3 +1127,41 @@ destination Module
 Its design depends on keeping that boundary narrow:
 
 > **FileManager knows where Resources are exposed and how to present/find them generically. Destination Modules know what those Resources mean and how to use them.**
+
+## Ordered Resource opening
+
+File Manager passes an optional `ResourceModuleOpenSequence` alongside its
+existing descriptor and filename context. Browse uses the current directory's
+naturally sorted files; Search uses the current ordered results. Both pass only
+entries whose filesystem filenames have the **same extension** as the selected
+file (`.nd.json` is treated as a compound extension, distinct from `.json`;
+`.mp3` groups with `.mp3` regardless of case). No document content is loaded
+by File Manager. Extensionless and singleton selections open normally without a
+sequence.
+
+The Resource-to-Module registration translates optional generic launch context
+into destination-owned navigation state. The destination Module handles movement
+through the sequence, its own loading and edit lifecycle, and persisted position.
+In the Normalized Content Reader, Previous/Next updates `sequenceIndex` within
+the existing Pane navigation entry; Back still returns to File Manager. The
+standalone Normalized Content renderer has no File Manager or sequence dependency.
+
+The Normalized Content Reader presents sequence Previous/Next through floating
+chevron controls below its sole `ViewBody` scroll owner, reusing the Bible
+Reader's chevron components. Controls appear when scrolling upward and hide when
+scrolling downward, while remaining visible at the top and near the bottom.
+A small movement threshold prevents flicker. They disable at the sequence
+boundaries. The rendered document reserves bottom padding for them.
+Navigation controls are hidden while Text Markup editing; the header retains
+its Edit/Save/Cancel actions. Standalone opens have no floating navigation.
+
+The Reader header also uses the shared `KJVMoreActionsButton`. Its normal
+press opens the registered `normalized-content.overflow-actions` child view;
+press-and-hold pushes the Modules launcher. The menu reuses `KJVMenuView`
+with horizontal and vertical split controls in the header and an initially empty
+Reader-specific action list. Split actions return through `backWithResult`,
+then execute after the Reader becomes active again. The More control is
+disabled during Text Markup editing to avoid leaving an unsaved draft.
+
+
+Future viewers (such as an audio player) can consume the same launch context.

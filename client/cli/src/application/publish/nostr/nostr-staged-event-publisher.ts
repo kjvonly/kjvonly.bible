@@ -122,104 +122,130 @@ export class NostrStagedEventPublisher {
             );
 
 
-            const missingEventIds =
-                await this
-                    .reconciler
-                    .reconcile({
-                        relay,
+            try {
+                const missingEventIds =
+                    await this
+                        .reconciler
+                        .reconcile({
+                            relay,
 
-                        publisher,
+                            publisher,
 
-                        kind:
-                            manifest.kind,
+                            kind:
+                                manifest.kind,
 
-                        events:
-                            reconciliationEntries
-                    });
+                            events:
+                                reconciliationEntries
+                        });
 
 
-            const missing =
-                new Set(
-                    missingEventIds
+                const missing =
+                    new Set(
+                        missingEventIds
+                    );
+
+
+                for (
+                    const eventId
+                    of missing
+                ) {
+                    if (
+                        !stagedEventIds.has(
+                            eventId
+                        )
+                    ) {
+                        throw new Error(
+                            `Nostr reconciliation returned unknown staged event ID: ${eventId}`
+                        );
+                    }
+                }
+
+
+                this.logRelayReconciled(
+                    relay,
+                    missing.size,
+                    stagedEvents.length -
+                        missing.size
                 );
 
 
-            for (
-                const eventId
-                of missing
-            ) {
-                if (
-                    !stagedEventIds.has(
-                        eventId
-                    )
+                let publishedCount =
+                    0;
+
+
+                let alreadyPresentCount =
+                    0;
+
+
+                for (
+                    const entry
+                    of stagedEvents
                 ) {
-                    throw new Error(
-                        `Nostr reconciliation returned unknown staged event ID: ${eventId}`
-                    );
-                }
-            }
-
-
-            this.logRelayReconciled(
-                relay,
-                missing.size,
-                stagedEvents.length -
-                    missing.size
-            );
-
-
-            let publishedCount =
-                0;
-
-
-            let alreadyPresentCount =
-                0;
-
-
-            for (
-                const entry
-                of stagedEvents
-            ) {
-                if (
-                    missing.has(
-                        entry.eventId
-                    )
-                ) {
-                    this.logEventRead(
-                        relay,
-                        entry.eventId
-                    );
-
-
-                    const event =
-                        await this
-                            .stagingRepository
-                            .read(
-                                entry
-                            );
-
-
-                    this.logEventPublishStart(
-                        relay,
-                        entry.eventId
-                    );
-
-
-                    await this
-                        .eventPublisher
-                        .publish(
+                    if (
+                        missing.has(
+                            entry.eventId
+                        )
+                    ) {
+                        this.logEventRead(
                             relay,
-                            event
+                            entry.eventId
                         );
 
 
-                    this.logEventPublishComplete(
+                        const event =
+                            await this
+                                .stagingRepository
+                                .read(
+                                    entry
+                                );
+
+
+                        this.logEventPublishStart(
+                            relay,
+                            entry.eventId
+                        );
+
+
+                        await this
+                            .eventPublisher
+                            .publish(
+                                relay,
+                                event
+                            );
+
+
+                        this.logEventPublishComplete(
+                            relay,
+                            entry.eventId
+                        );
+
+
+                        publishedCount +=
+                            1;
+
+
+                        results.push({
+                            eventId:
+                                entry.eventId,
+
+                            relay,
+
+                            status:
+                                'published'
+                        });
+
+
+                        continue;
+                    }
+
+
+                    this.logEventAlreadyPresent(
                         relay,
                         entry.eventId
                     );
 
 
-                    publishedCount +=
+                    alreadyPresentCount +=
                         1;
 
 
@@ -230,41 +256,20 @@ export class NostrStagedEventPublisher {
                         relay,
 
                         status:
-                            'published'
+                            'already-present'
                     });
-
-
-                    continue;
                 }
 
 
-                this.logEventAlreadyPresent(
+                this.logRelayComplete(
                     relay,
-                    entry.eventId
+                    publishedCount,
+                    alreadyPresentCount
                 );
-
-
-                alreadyPresentCount +=
-                    1;
-
-
-                results.push({
-                    eventId:
-                        entry.eventId,
-
-                    relay,
-
-                    status:
-                        'already-present'
-                });
             }
-
-
-            this.logRelayComplete(
-                relay,
-                publishedCount,
-                alreadyPresentCount
-            );
+            finally {
+                this.eventPublisher.close(relay);
+            }
         }
 
 

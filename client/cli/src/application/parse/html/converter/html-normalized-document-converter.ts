@@ -29,7 +29,7 @@ import type {
 
 import type {
 	OrdinalNormalizedBlockIdGenerator
-} from '../identity/ordinal-normalized-block-id-generator.js';
+} from '../../identity/ordinal-normalized-block-id-generator.js';
 
 import type {
 	HtmlBlockProcessorContext,
@@ -189,7 +189,9 @@ export class HtmlNormalizedDocumentConverter {
 			collectPreservableDescendantElementIds(
 				rootElement,
 				elementSupport
-			)
+			),
+			'HTML id',
+			'regenerate'
 		);
 
 		const blocks =
@@ -199,7 +201,9 @@ export class HtmlNormalizedDocumentConverter {
 					this.blockProcessorRegistry,
 					this.inlineParser,
 					idGenerator,
-					createHtmlInlineState()
+					createHtmlInlineState(
+						id => idGenerator.createAnchorId(id)
+					)
 				),
 				'HTML document root'
 			);
@@ -235,7 +239,8 @@ export class HtmlNormalizedDocumentConverter {
 					element =>
 						parsedDocument.getSourceLocation(
 							element
-						)
+						),
+					idGenerator.getDuplicateSourceIds()
 				)
 		};
 	}
@@ -521,7 +526,7 @@ function hasRegisteredStructuralDescendant(
 
 /**
  * Finalizes one normalized block with controlled presentation metadata and a
- * document-local ID. Source IDs win; otherwise the ordinal generator supplies the
+ * document-local ID. Unique source IDs win; otherwise the generator supplies the
  * next available ID.
  */
 function createNormalizedBlock(

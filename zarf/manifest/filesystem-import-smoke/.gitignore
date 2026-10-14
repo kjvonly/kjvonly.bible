@@ -1,0 +1,7 @@
+# Local-only generated files; keep source fixtures and filename metadata intact.
+.staging/
+.staging.*/
+.publication.generated.json
+.publication.generated.json.*
+.large-content-block
+source/sermons/large.nd.json

@@ -1,4 +1,5 @@
 import type {
+	FilesystemEntry,
 	FilesystemRoot
 } from '$lib/domains/filesystem';
 
@@ -13,6 +14,14 @@ import type {
 import type {
 	NavigationViewState
 } from '../../../services/navigation.service';
+
+import {
+	createFileManagerOpenSequence
+} from './file-manager-open-sequence';
+
+import type {
+	ResourceModuleOpenContext
+} from '../../modules/resource-module-resolver';
 
 import {
 	FILE_MANAGER_VIEWS,
@@ -39,7 +48,8 @@ interface FileManagerPaneNavigation {
 /** Application Resource-to-Module boundary consumed by FileManager. */
 interface FileManagerResourceModuleResolver {
 	resolve(
-		descriptor: ResourceDescriptor
+		descriptor: ResourceDescriptor,
+		context?: ResourceModuleOpenContext
 	): {
 		readonly module: Modules;
 		readonly view: string | number;
@@ -115,9 +125,17 @@ export class FileManagerNavigationService {
 	 * Resolves and pushes the application's preferred Module for one Resource.
 	 * Destination state is owned by the registered Module resolver; FileManager
 	 * does not load or interpret the Resource before crossing this boundary.
+	 * The optional Filesystem path supplies display-only launch context. A
+	 * displayed ordered selection allows viewers to provide Previous/Next without
+	 * depending on File Manager or determining the ordering themselves.
 	 */
 	openResource(
-		descriptor: ResourceDescriptor
+		descriptor: ResourceDescriptor,
+		filesystemPath?: string,
+		selection?: {
+			readonly entries: readonly FilesystemEntry[];
+			readonly selectedIndex: number;
+		}
 	): void {
 		let destination:
 			ReturnType<
@@ -125,10 +143,20 @@ export class FileManagerNavigationService {
 			>;
 
 		try {
-			destination =
-				this.resourceModuleResolver.resolve(
-					descriptor
-				);
+			const fileName = filesystemPath?.split('/').pop();
+			const sequence = selection
+				? createFileManagerOpenSequence(
+					selection.entries,
+					selection.selectedIndex
+				)
+				: undefined;
+			const context: ResourceModuleOpenContext = {
+				...(fileName ? { fileName } : {}),
+				...(sequence ? { sequence } : {})
+			};
+			destination = fileName || sequence
+				? this.resourceModuleResolver.resolve(descriptor, context)
+				: this.resourceModuleResolver.resolve(descriptor);
 		} catch (error) {
 			console.error(
 				'FileManager Resource resolution failed.',

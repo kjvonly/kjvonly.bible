@@ -1491,7 +1491,7 @@ The original smoke test also captured the then-current Collection behavior: Coll
 
 The same published Filesystem Resource was also installed through the PWA's ordinary `ResourceWorkerClient` path and produced two accepted Filesystem entries in IndexedDB. FileManager displayed those entries through its normal Filesystem service boundary. This proves the full publication-to-client vertical slice without introducing a Filesystem-specific Resource acquisition path.
 
-The PWA bootstrap mechanism is now intentionally generic. The current bootstrap reference still points at `kjvonly/filesystem/filesystem-smoke`, but application architecture does not model this as a `published-smoke` runtime. Instead:
+The PWA bootstrap mechanism is now intentionally generic. The current application bootstrap reference points at `kjvonly/filesystem/app-filesystem`; `filesystem-smoke` remains an independent test fixture. The application architecture does not model this as a `published-smoke` runtime. Instead:
 
 ```text
 VITE_FILESYSTEM_DEV_MODE
@@ -1503,7 +1503,7 @@ VITE_FILESYSTEM_BOOTSTRAP_MODE
     = release-capable published Filesystem bootstrap policy
 ```
 
-Filesystem bootstrap currently defaults to `disabled` while the configured Resource is still the smoke fixture. When enabled with the real IndexedDB runtime, authenticated startup installs the configured Filesystem Resource through the ordinary Resource Worker. The mock runtime remains a deterministic FileManager development aid and does not participate in published Filesystem bootstrap.
+Filesystem bootstrap continues to default to `disabled` until explicitly enabled in a deployment. When enabled with the real IndexedDB runtime, authenticated startup installs the published application Filesystem Resource through the ordinary Resource Worker. The mock runtime remains a deterministic FileManager development aid and does not participate in published Filesystem bootstrap.
 
 ---
 

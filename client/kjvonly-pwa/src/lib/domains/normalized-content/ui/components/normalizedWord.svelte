@@ -99,7 +99,7 @@
 
 {#if hasPrimaryHref}
 	<a
-		class={className}
+		class={['text-primary-500 underline underline-offset-2', className].filter(Boolean).join(' ')}
 		href={primaryHref}
 		data-normalized-content-index={contentIndex}
 		data-normalized-content-kind="word"

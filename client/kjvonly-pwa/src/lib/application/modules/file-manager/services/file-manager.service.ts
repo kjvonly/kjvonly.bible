@@ -28,6 +28,10 @@ import {
 } from '../resolvers/file-manager-resource-icon-resolver';
 
 import {
+	compareFileManagerNames
+} from '../sorting/compare-file-manager-names';
+
+import {
 	FileManagerSearchRuntime
 } from '../runtime/search/file-manager-search-runtime';
 import type {
@@ -222,12 +226,10 @@ export class FileManagerService {
 			left: string,
 			right: string
 		): number =>
-			resolvePublisherName(left)
-				.localeCompare(
-					resolvePublisherName(right),
-					undefined,
-					{ sensitivity: 'base' }
-				);
+			compareFileManagerNames(
+				resolvePublisherName(left),
+				resolvePublisherName(right)
+			) || compareFileManagerNames(left, right);
 
 		return {
 			filesystemPublishers: uniqueMetadataValues(
@@ -491,7 +493,7 @@ export class FileManagerService {
 		return freezeDirectory(root);
 	}
 
-	/** Builds root-to-current path segments for optional wide-pane navigation. */
+	/** Builds root-to-current path segments for File Manager breadcrumb navigation. */
 	buildBreadcrumbs(
 		rootPath: string,
 		path: string
@@ -763,14 +765,14 @@ function compareRootDisplays(
 	left: FileManagerRootGroup['roots'][number],
 	right: FileManagerRootGroup['roots'][number]
 ): number {
-	const byName = compareStrings(
+	const byName = compareFileManagerNames(
 		left.name,
 		right.name
 	);
 
 	return byName !== 0
 		? byName
-		: compareStrings(
+		: compareFileManagerNames(
 			left.path,
 			right.path
 		);
@@ -780,14 +782,14 @@ function compareRootGroups(
 	left: FileManagerRootGroup,
 	right: FileManagerRootGroup
 ): number {
-	const byName = compareStrings(
+	const byName = compareFileManagerNames(
 		left.filesystemPublisherName,
 		right.filesystemPublisherName
 	);
 
 	return byName !== 0
 		? byName
-		: compareStrings(
+		: compareFileManagerNames(
 			left.filesystemPublisher,
 			right.filesystemPublisher
 		);
@@ -796,7 +798,7 @@ function compareRootGroups(
 function uniqueMetadataValues(
 	entries: readonly LocatedFilesystemEntry[],
 	readValue: (entry: LocatedFilesystemEntry) => string | undefined,
-	compare: (left: string, right: string) => number = compareStrings
+	compare: (left: string, right: string) => number = compareFileManagerNames
 ): readonly string[] {
 	return Array.from(
 		new Set(
@@ -811,28 +813,11 @@ function uniqueMetadataValues(
 	).sort(compare);
 }
 
-function compareStrings(
-	left: string,
-	right: string
-): number {
-	return left.localeCompare(
-		right,
-		undefined,
-		{ sensitivity: 'base' }
-	);
-}
-
 function compareByName(
 	left: { readonly name: string },
 	right: { readonly name: string }
 ): number {
-	return left.name.localeCompare(
-		right.name,
-		undefined,
-		{
-			sensitivity: 'base'
-		}
-	);
+	return compareFileManagerNames(left.name, right.name);
 }
 
 /** Segment-safe root containment check; avoids treating `foo2` as inside `foo`. */

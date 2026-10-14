@@ -1,13 +1,12 @@
-import WebSocket from 'ws';
-
 import {
 	Relay,
 	useWebSocketImplementation
 } from 'nostr-tools/relay';
+import { NodeNostrWebSocket } from '../transport/node-nostr-websocket.js';
 
 
 useWebSocketImplementation(
-	WebSocket
+	NodeNostrWebSocket
 );
 
 export async function connectNodeNostrToolsRelay(

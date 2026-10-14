@@ -94,7 +94,9 @@ describe(
                 const eventPublisher:
                     NostrEventPublisher = {
                     publish:
-                        publishEvent
+                        publishEvent,
+                    close:
+                        vi.fn()
                 };
 
                 const publisher =
@@ -488,7 +490,9 @@ describe(
                 const eventPublisher:
                     NostrEventPublisher = {
                     publish:
-                        publishEvent
+                        publishEvent,
+                    close:
+                        vi.fn()
                 };
 
 
@@ -642,7 +646,9 @@ describe(
                         },
                         {
                             publish:
-                                publishEvent
+                                publishEvent,
+                            close:
+                                vi.fn()
                         },
                         createLogger()
                     );
@@ -785,7 +791,9 @@ describe(
                 const eventPublisher:
                     NostrEventPublisher = {
                     publish:
-                        publishEvent
+                        publishEvent,
+                    close:
+                        vi.fn()
                 };
 
 
@@ -944,7 +952,9 @@ describe(
                 const eventPublisher:
                     NostrEventPublisher = {
                     publish:
-                        publishEvent
+                        publishEvent,
+                    close:
+                        vi.fn()
                 };
 
 
@@ -984,6 +994,8 @@ describe(
                 expect(
                     publishEvent
                 ).not.toHaveBeenCalled();
+
+                expect(eventPublisher.close).toHaveBeenCalledWith('wss://relay.example');
             }
         );
     }

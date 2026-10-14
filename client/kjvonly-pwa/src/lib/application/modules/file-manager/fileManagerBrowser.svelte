@@ -13,9 +13,6 @@
 	import {
 		useNavigationEntryContext
 	} from '../../runtime/navigation/navigation-entry-context';
-	import {
-		usePaneLayoutContext
-	} from '../../runtime/pane/pane-layout-context';
 
 	import FileManagerDirectoryGridItem from './components/fileManagerDirectoryGridItem.svelte';
 	import FileManagerDirectoryListItem from './components/fileManagerDirectoryListItem.svelte';
@@ -23,7 +20,8 @@
 	import FileManagerResourceListItem from './components/fileManagerResourceListItem.svelte';
 	import FileManagerScreen from './components/fileManagerScreen.svelte';
 	import type {
-		FileManagerDirectory
+		FileManagerDirectory,
+		FileManagerResource
 	} from './models/file-manager-tree.model';
 	import type {
 		FileManagerViewMode
@@ -48,14 +46,8 @@
 	const navigation =
 		useFileManagerNavigationContext();
 
-	const paneLayout =
-		usePaneLayoutContext();
-
 	const fileManagerService =
 		new FileManagerService();
-
-	// Breadcrumb visibility is based on the Pane itself, not the global viewport.
-	const BREADCRUMB_MIN_PANE_WIDTH = 640;
 
 	let directory = $state<FileManagerDirectory>();
 	let loadState: 'loading' | 'ready' | 'missing' | 'failure' =
@@ -74,10 +66,6 @@
 		requireViewMode()
 	);
 	const title = basename(path);
-
-	const showBreadcrumbs = $derived(
-		paneLayout.clientWidth >= BREADCRUMB_MIN_PANE_WIDTH
-	);
 
 	const breadcrumbs = $derived.by(
 		() => fileManagerService.buildBreadcrumbs(
@@ -161,6 +149,24 @@
 		);
 	}
 
+	/** Opens a file together with same-extension siblings in displayed order. */
+	function openResource(
+		resource: FileManagerResource,
+		index: number,
+		currentDirectory: FileManagerDirectory
+	): void {
+		navigation.openResource(
+			resource.entry.descriptor,
+			resource.entry.path,
+			{
+				entries: currentDirectory.resources.map(
+					(item) => $state.snapshot(item.entry)
+				),
+				selectedIndex: index
+			}
+		);
+	}
+
 	function openDirectory(
 		targetDirectoryPath: string
 	): void {
@@ -226,36 +232,37 @@
 
 </script>
 
-<!-- Shows filesystem source/ancestry on wide panes, including the mounted root itself. -->
+<!-- Shows filesystem source and ancestry at every pane width, wrapping whole path segments. -->
 {#snippet folderBreadcrumbs()}
 	<nav
 		aria-label="Current folder"
-		class="flex min-h-[44px] w-full items-center gap-2 overflow-x-auto px-4 py-2 text-sm text-neutral-500"
+		class="sticky top-0 z-10 flex min-h-[44px] w-full min-w-0 max-w-full shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-neutral-50 px-4 py-2 text-sm text-neutral-500"
 	>
-		<span class="shrink-0">{petNameService.resolve(filesystemPublisher)}</span>
-		<span aria-hidden="true" class="shrink-0">/</span>
+		<span class="min-w-0 max-w-full [overflow-wrap:anywhere]">
+			{petNameService.resolve(filesystemPublisher)}
+		</span>
 
-		{#each breadcrumbs as breadcrumb, index (breadcrumb.path)}
-			{#if index > 0}
+		{#each breadcrumbs as breadcrumb (breadcrumb.path)}
+			<span class="inline-flex min-w-0 max-w-full items-center gap-2">
 				<span aria-hidden="true" class="shrink-0">/</span>
-			{/if}
 
-			{#if breadcrumb.path === path}
-				<span
-					aria-current="page"
-					class="shrink-0 text-support-a-500"
-				>
-					{breadcrumb.name}
-				</span>
-			{:else}
-				<button
-					type="button"
-					onclick={() => openBreadcrumb(breadcrumb.path)}
-					class="min-h-[44px] shrink-0 text-neutral-500 hover:text-support-a-500 focus-visible:outline-2 focus-visible:outline-primary-500"
-				>
-					{breadcrumb.name}
-				</button>
-			{/if}
+				{#if breadcrumb.path === path}
+					<span
+						aria-current="page"
+						class="min-w-0 text-support-a-500 [overflow-wrap:anywhere]"
+					>
+						{breadcrumb.name}
+					</span>
+				{:else}
+					<button
+						type="button"
+						onclick={() => openBreadcrumb(breadcrumb.path)}
+						class="min-h-[44px] min-w-0 text-left text-neutral-500 hover:text-support-a-500 focus-visible:outline-2 focus-visible:outline-primary-500 [overflow-wrap:anywhere]"
+					>
+						{breadcrumb.name}
+					</button>
+				{/if}
+			</span>
 		{/each}
 	</nav>
 {/snippet}
@@ -297,10 +304,10 @@
 			></FileManagerDirectoryGridItem>
 		{/each}
 
-		{#each currentDirectory.resources as resource (resource.path)}
+		{#each currentDirectory.resources as resource, index (resource.path)}
 			<FileManagerResourceGridItem
 				display={fileManagerService.describeResource(resource.entry)}
-				onOpen={() => navigation.openResource(resource.entry.descriptor)}
+				onOpen={() => openResource(resource, index, currentDirectory)}
 			></FileManagerResourceGridItem>
 		{/each}
 	</div>
@@ -316,19 +323,17 @@
 			></FileManagerDirectoryListItem>
 		{/each}
 
-		{#each currentDirectory.resources as resource (resource.path)}
+		{#each currentDirectory.resources as resource, index (resource.path)}
 			<FileManagerResourceListItem
 				display={fileManagerService.describeResource(resource.entry)}
-				onOpen={() => navigation.openResource(resource.entry.descriptor)}
+				onOpen={() => openResource(resource, index, currentDirectory)}
 			></FileManagerResourceListItem>
 		{/each}
 	</div>
 {/snippet}
 
 <FileManagerScreen {title} {actions}>
-	{#if showBreadcrumbs}
-		{@render folderBreadcrumbs()}
-	{/if}
+	{@render folderBreadcrumbs()}
 
 	{#if loadState === 'loading'}
 		{@render loadingFolderState()}

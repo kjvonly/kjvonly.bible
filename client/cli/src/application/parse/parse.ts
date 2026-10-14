@@ -2,6 +2,9 @@ import type {
 	ParseResult
 } from './diagnostics/parse-diagnostics.js';
 
+import type { LegacyNormalizedDocumentConverter } from './legacy/legacy-normalized-document-converter.js';
+import { getLegacyMigrationDiagnostics } from './legacy/legacy-migration-diagnostics.js';
+
 import type {
 	HtmlNormalizedDocumentConversionOptions
 } from './html/converter/html-normalized-document-converter.js';
@@ -41,9 +44,15 @@ export interface HtmlParseRequest {
 	readonly source?: string;
 }
 
+/** Request for converting one first-generation normalized-document JSON file. */
+export interface LegacyNormalizedDocumentParseRequest {
+	readonly format: 'legacy-normalized-document';
+	readonly content: string;
+}
+
 /** Union of source-format requests accepted by the generic parse boundary. */
 export type ParseRequest =
-	HtmlParseRequest;
+	HtmlParseRequest | LegacyNormalizedDocumentParseRequest;
 
 /** Source-neutral application boundary for document normalization. */
 export interface Parse {
@@ -73,7 +82,8 @@ export class ParseUseCase
 		private readonly htmlParser:
 			HtmlParser,
 		private readonly htmlDocumentConverter:
-			HtmlDocumentConverter
+			HtmlDocumentConverter,
+		private readonly legacyDocumentConverter: Pick<LegacyNormalizedDocumentConverter, 'convert'>
 	) {}
 
 	/**
@@ -89,6 +99,15 @@ export class ParseUseCase
 		switch (
 			request.format
 		) {
+			case 'legacy-normalized-document': {
+				// Explicit first-generation JSON; no autodetection or HTML round-trip.
+				const decoded: unknown = JSON.parse(request.content);
+				const document = this.legacyDocumentConverter.convert(decoded);
+				return {
+					document,
+					diagnostics: getLegacyMigrationDiagnostics(decoded, document)
+				};
+			}
 			case 'html': {
 				const parsedDocument =
 					this.htmlParser.parse(

@@ -2,30 +2,73 @@
 
 ## Status and scope
 
-**Active architectural specification.** The CLI implements a first vertical slice for recursively importing **Normalized Document** (`.nd.json`) files. Automatic mixed-type discovery, generic media, and integration with explicit Resource definitions remain **deferred**. Sections describing those capabilities are normative design direction, **not claims of existing implementation**.
+**Active implementation and architectural specification.** The CLI uses a
+single `import filesystem` directory importer. Each discovered file passes
+through a registered compiler strategy; `.nd.json` and `.nd.json.gz` receive
+strict semantic validation, while generic media and unknown formats are preserved as opaque
+Blossom artifacts. All files contribute to one Filesystem Manifest and share
+the ordinary staging/publication lifecycle. Additional semantic-family compilers
+and combining explicit YAML Resource definitions with discovered files remain
+future work.
 
 This specification preserves both the implemented contracts and the broader design rationale. It extends the existing manifest-driven Resource build system; it does **not** introduce a second Resource build, staging, storage, Filesystem, or publication pipeline.
 
 The existence of automated staging/publication integration tests is not evidence of a successful publication against live Blossom and Nostr services. Check actual CLI test/build results separately.
 
-### Implemented Normalized Document entrypoint
+### Registered per-file compiler strategies (used by `import filesystem`)
+
+The `FilesystemFileCompilerRegistry` dispatches **each discovered file** to the
+first matching compiler strategy; it does not partition the directory into
+Normalized Document and generic-file batches. The registered strategies are:
+
+- `NormalizedDocumentFileCompiler`: matches `.nd.json` and `.nd.json.gz` case-insensitively, invokes
+  the semantic resolver for strict validation, then delegates Resource generation
+  to `NormalizedDocumentResourceDefinitionBuilder.build()`. Failed validation
+  **never** falls through to generic storage. `.nd.json.gz` is decoded by the shared import reader for validation;
+  the original gzip bytes remain the Blossom artifact with `application/json+gzip`.
+- `GenericFileCompiler`: final fallback for all other files, using
+  `FileFormatRegistry` to set the descriptor media type; file bytes are
+  preserved for Blossom without implicit gzip transformation.
+
+`FilesystemImportManifestCompiler` invokes the registry once per file and
+assembles those Resource definitions into one standard Filesystem Manifest. It
+has no format-specific branches. Existing `.nd.json` Resource identities and
+both inline / external representation choices remain unchanged. No separate document-only batch importer or CLI entrypoint is needed.
+
+The `import filesystem` command walks all regular non-hidden files (excluding symlinks),
+compiles a single Manifest, and stages its Resources with the shared executor.
+It does **not** publish remotely. A failed compiler/validation/staging operation
+discards the new staging generation without switching the generated Manifest pointer.
+
+### Mixed Filesystem entrypoint
 
 ```bash
-kjvonly import normalized-documents ./content \
-  --manifest ./publication.yaml \
-  --root library \
-  --output-manifest ./publication.generated.json
+kjvonly import filesystem "$HOME/app-files" \
+  --manifest ./app-filesystem-development.yaml \
+  --root app-filesystem \
+  --output-manifest ./publication-development.generated.json \
+  --inline-limit-bytes 0
+kjvonly publish ./publication-development.generated.json
 ```
 
-The import command **builds and stages**, but does not publish. Publication remains a separate operation using the **generated** Manifest:
+The file compiler registry routes `.nd.json` to strict Normalized Document validation;
+other files use the generic Resource compiler and `FileFormatRegistry` for MIME type.
+Generic assets are always externally staged for Blossom, preserving original source
+bytes (`encoding: []`). Unknown extensions use `application/octet-stream`.
+Long original filenames are kept intact in the Filesystem; artifact staging can
+use a nested directory to keep internal filename components within 255 bytes.
 
-```bash
-kjvonly publish ./publication.generated.json
-```
+`.nd.json.gz` receives strict validation using decompressed bytes; it cannot fall
+back to generic media and always remains external to avoid double compression.
+The optional inline threshold affects only ordinary `.nd.json` files.
 
-The input YAML must be a **configuration-only Manifest**, with no Resources, Collections, or Filesystems. The command does not rewrite that input. The generated JSON Manifest retains the Resource definitions required by the ordinary publisher, including Blossom-backed Resources.
-
-For the current command, only `.nd.json` files are selected; hidden paths, symlinks, and unrelated files are skipped. Empty selections and invalid selected documents fail the batch. The source files can live in a different directory from the YAML and output Manifest. Publication uses the signed staging generation identified by the generated Manifest.
+The source publication Manifest must contain configuration only. The generated
+output Manifest must live outside the walked source directory so later imports
+do not ingest their own output as a generic file. A single staging-generation
+workflow is used for all file types; separate generated Manifest paths should
+be used for separate publication environments. The
+import command stages but does not remotely publish; use `publish` on the
+generated Manifest afterwards.
 
 Related current documentation:
 
@@ -40,7 +83,7 @@ Related current documentation:
 
 The CLI currently builds Resources, Collections, and Filesystems from explicit semantic YAML manifests.
 
-The first directory workflow imports Normalized Documents; the broader goal is to support a directory containing multiple recognized semantic families and ordinary media, preserving its hierarchy through the standard publishing lifecycle.
+Directory imports can now compile Normalized Documents and generic media together. Future semantic families can be added by registering further compiler strategies without changing the walker or the Manifest executor.
 
 Conceptually:
 
@@ -154,7 +197,9 @@ Manifest
 
 The YAML file is only one way to create that model.
 
-Recursive discovery is another way to create it for the implemented Normalized Document slice; the same convergence rule applies to later content types.
+Recursive discovery already compiles validated Normalized Documents and
+opaque generic files into the same Manifest model. Additional semantic
+families can use the same convergence point.
 
 The desired convergence point is:
 
@@ -191,8 +236,8 @@ Internal discovery objects are acceptable while a directory is being inspected, 
 
 The shared build execution has been extracted into `ManifestBuildExecutor`.
 `BuildManifestUseCase` now loads a YAML Manifest and delegates execution to it.
-The Normalized Document import use case also calls that executor with an
-in-memory, validated Manifest.
+The `import filesystem` workflow calls that executor with one in-memory,
+validated Manifest containing both semantic and generic file definitions.
 
 The two entrypoints are:
 
@@ -291,7 +336,7 @@ library/
     └── sermon.mp3
 ```
 
-the eventual mixed-file importer produces three logical Resources. The current Normalized Document-only command selects just the two `.nd.json` files.
+the filesystem importer produces three logical Resources, with the `.nd.json` files validated by their registered semantic strategy.
 
 This keeps:
 
@@ -348,9 +393,44 @@ Recognition identifies the likely semantic family.
 
 Registered version validators determine the exact supported semantic version.
 
-## 8.3 Generic Media/File Content (deferred)
+## 8.3 Physical format registry (implemented)
 
-Future mixed-file import may map files that are not application-structured semantic documents to existing generic Resource/data types.
+`application/import/format/file-format-registry.ts` resolves filenames to a base
+MIME type and a physical source encoding. The longest registered suffix wins
+(`.nd.json` before `.json`), matching is case-insensitive, and a trailing
+`.gz` means the original source bytes already contain gzip compression:
+
+```text
+chapter.nd.json       → application/json           sourceEncoding: []
+chapter.nd.json.gz    → application/json+gzip      sourceEncoding: [gzip]
+sermon.mp3            → audio/mpeg                 sourceEncoding: []
+book.pdf              → application/pdf           sourceEncoding: []
+letter.docx           → application/vnd.openxmlformats-officedocument.wordprocessingml.document  sourceEncoding: []
+letter.odt            → application/vnd.oasis.opendocument.text  sourceEncoding: []
+backup.zip            → application/zip           sourceEncoding: []
+backup.tar.xz         → application/x-xz          sourceEncoding: []
+unknown.bin           → application/octet-stream  sourceEncoding: []
+```
+
+Known MIME mappings include Office/OpenDocument (`.docx`, `.odt`, `.xlsx`,
+`.ods`, `.pptx`, `.odp`, `.odg`), EPUB, ZIP, 7z, RAR, tar, XZ, Bzip2, Zstandard,
+and common text/audio/video/image formats. These types are **opaque** to this
+registry: a DOCX/ODT happens to contain a ZIP package, but that does not mean
+it is a gzip-encoded document. Likewise `.xz`, `.bz2`, and `.zst` are
+preserved as-is, not transparently decompressed. An unrecognized extension
+still resolves to `application/octet-stream`; the registry is not an upload
+allowlist; the walker discovers ordinary non-hidden files independently.
+
+`sourceEncoding` describes existing bytes; it is **not** the artifact stager's
+`object-upload.encoding`. Pre-gzipped sources must ultimately be staged with
+`object-upload.encoding: []` and their encoded media type, without double
+compression. Raw sources may optionally be compressed by a later storage policy.
+The registry only resolves physical formats. Semantic validation and generic
+Resource/dataType contracts are supplied by registered file compiler strategies.
+
+## 8.4 Generic Media/File Content (implemented for opaque files)
+
+Generic files map to Resource/dataType contracts through the fallback file compiler.
 
 Current application examples include:
 
@@ -370,7 +450,8 @@ image/jpeg
 
 The current development mock uses `mock/audio`, `mock/video`, and `mock/image` Resource types. Those `mock/*` names are fixture details and must not become the production semantic contract merely because they appear in FileManager development data.
 
-PDF and opaque generic-binary handling should use the appropriate registered generic Resource/data type once that production contract is established. Discovery should not invent ad-hoc per-file data types.
+PDFs and opaque generic files use the registered `generic/file` Resource type and
+`kjvonly.file` data type. Discovery does not invent an ad-hoc data type for each extension.
 
 ---
 
@@ -418,7 +499,9 @@ library/sermons/romans-8.mp3
 library/video/sunday.mp4
 ```
 
-This is the desired hierarchy for mixed-type import. With the current `.nd.json`-only command, only `library/books/pilgrim.nd.json` is emitted from this example.
+The implemented `import filesystem` command emits all the file placements in
+this example. The `.nd.json` file is validated; other files use registered
+generic Resource contracts.
 
 ---
 
@@ -552,14 +635,17 @@ GenericBinaryRecognizer
 
 The concrete CLI classifier currently gathers plausible `dataType` candidates
 from registered recognizers, deduplicates and sorts them, and defers semantic
-validation. Only `NormalizedDocumentRecognizer` is registered for this first
-slice; the other recognizer names above express future extension points.
+validation. Only `NormalizedDocumentRecognizer` is registered as a semantic recognizer;
+other semantic families remain future extension points. The separate
+`GenericFileCompiler` handles all other discovered files.
 
 For `.nd.json`, the recognizer claims a candidate from the suffix. For
 ordinary `.json`, it can inspect up to 64 KiB for a `"blocks": [` structural
-hint. This broader `.json` hint is **not used by the current directory command**,
-which selects only `.nd.json`. See Sections 14–20 for the recognition,
-validation, version-precedence, and ambiguity contracts, and Sections 27–30
+hint. This broader `.json` hint does **not** cause ordinary `.json` files to be
+semantically validated during directory import: the compiler strategy claims
+only `.nd.json` and `.nd.json.gz`. Other `.json` files use the generic
+fallback. See Sections 14–20 for recognition, validation, version-precedence,
+and ambiguity contracts, and Sections 27–30
 for Manifest compilation and storage handling.
 
 The architecture must make adding a recognizer a registration/composition change rather than a rewrite of the directory walker.
@@ -683,10 +769,12 @@ that later fail semantic validation. An **explicit semantic filename** (such as
 not silently become a generic file.
 
 A weak structural hint in ordinary `.json` may instead be a false positive.
-Whether a file with **only heuristic candidates** and no successful validator
-falls back to generic content or fails remains a decision for the later import
-workflow; this classifier does not decide it. No candidate, even an explicit
-hint, is an accepted semantic type until validation succeeds.
+The current file compiler dispatch is path-specific: `.nd.json` and
+`.nd.json.gz` require semantic validation, while all other paths use the
+generic fallback. Handling weak hints in *future* semantic compilers remains
+an open policy decision; the low-level classifier does not decide it. No
+candidate, even an explicit hint, is an accepted semantic type until validation
+succeeds.
 
 ---
 
@@ -698,9 +786,8 @@ first. Multiple recognition hints are not yet a semantic conflict.
 Desired behavior:
 
 ```text
-zero semantic candidates
-    → generic media/file classification in the future mixed-type importer
-      (not implemented by the current .nd.json-only command)
+no registered semantic compiler claims the path
+    → generic fallback Resource compiler (implemented)
 
 one or more semantic candidates
     → decode complete content once
@@ -709,10 +796,12 @@ one or more semantic candidates
     → multiple families validate: ambiguity error
 ```
 
-The policy for zero validated families, particularly when only a weak heuristic
-matched, remains open for the future mixed-type importer. Explicit semantic filename
-hints should not silently turn malformed content into generic Resources.
-Recognizer ordering must not hide candidates or become semantic policy.
+For the current importer, `.nd.json` and `.nd.json.gz` are claimed by the
+Normalized Document compiler; semantic failure aborts the import and cannot
+fall through to generic storage. Additional semantic recognizers may need
+an explicit policy for weak heuristic matches and cross-family ambiguity.
+The ordered *file compiler* registry is dispatch; it does not replace the
+semantic resolver's validation and ambiguity handling.
 
 ---
 
@@ -905,24 +994,39 @@ Should its content be inline or externally stored?
 
 These concerns must remain separate.
 
-Current Normalized Document policy (future types may require their own configured defaults):
+Current policy:
 
 ```text
-source size <= inline threshold
+ordinary .nd.json with source size <= inline threshold
     → inline Resource content
 
-source size > inline threshold
+ordinary .nd.json with source size > inline threshold
     → external object storage
+
+pre-gzipped .nd.json.gz, any size
+    → external object storage, preserving gzip bytes
+
+all generic files, any size
+    → external object storage, preserving source bytes
 ```
 
 Default threshold:
 
 ```text
-1 MiB (1,048,576 source bytes; equality remains inline)
+1 MiB (1,048,576 original source bytes; equality remains inline)
 ```
 
-`BuildNormalizedDocumentImport` accepts an optional `inlineLimitBytes` input;
-the documented CLI command does not currently expose a separate threshold flag.
+This comparison is made against the **original source file size**, not its
+gzipped size or the eventual Nostr event size. `BuildFilesystemImport`
+accepts an optional `inlineLimitBytes` input. The CLI exposes this as
+`--inline-limit-bytes <bytes>`; `make app-filesystem-build INLINE_LIMIT_BYTES=0`
+and `make app-filesystem-sync INLINE_LIMIT_BYTES=0` pass the same override
+through to the importer. A value of `0` selects external storage for every
+nonempty ordinary `.nd.json` source, while omission preserves the 1 MiB
+default. Generic files and `.nd.json.gz` are external regardless of threshold. The CLI rejects
+negative, fractional, and unsafe integer limits. Changing the setting changes
+the generated Resource definition and rebuilds affected staged signed events,
+even if original source modification times and sizes did not change.
 The threshold should not be duplicated across semantic type handlers.
 
 ---
@@ -973,9 +1077,14 @@ existing descriptor-backed Resource build
 existing Blossom publication
 ```
 
-For the current Normalized Document contract, the original JSON file is staged
-for external upload without applying inline gzip+hex encoding to its object bytes.
-The descriptor-backed Resource event remains an ordinary Resource.
+External `.nd.json` is staged with `mediaType: application/json` and
+`object-upload.encoding: []`; Blossom receives the original JSON bytes
+(possibly through a source-backed symlink). `.nd.json.gz` is validated after
+decoding, but staged unchanged with `mediaType: application/json+gzip` and
+`object-upload.encoding: []`. Generic files likewise preserve their original
+bytes and use their registered MIME type. The *Nostr descriptor event* is
+independently gzip+hex encoded; the Filesystem index is also gzip+hex.
+None of these encoded events imply automatic gzip compression of Blossom files.
 
 The recursive importer must not read a multi-gigabyte file into memory merely to pass it to the object-upload path.
 
@@ -1125,10 +1234,10 @@ Manifest
 shared build executor
 ```
 
-The current implementation exposes Normalized Document directory discovery
-through a separate CLI command/use case. **Combining explicit Resource,
-Collection, or Filesystem definitions with that command is not supported**;
-its input YAML must contain only publication configuration.
+The current `import filesystem` command compiles mixed files into one Manifest.
+**Combining explicit Resource, Collection, or Filesystem definitions with
+discovered files is not supported**: its input YAML must contain publication
+configuration only. Direct `build`/`sync` from explicit YAML remains separate.
 
 A future YAML syntax may declare recursive import roots directly.
 
@@ -1299,7 +1408,7 @@ Mirrored path:
 library/sermons/romans-8.mp3
 ```
 
-If larger than the inline threshold:
+Generic audio is always external, independent of the Normalized Document inline threshold:
 
 ```text
 source path
@@ -1327,7 +1436,9 @@ dataType  = kjvonly.image
 mediaType = image/jpeg
 ```
 
-The semantic registry supplies the production Resource/object metadata for these data types.
+For opaque audio, video, and image files, `GenericFileResourceDefinitionBuilder`
+selects the registered `media/*` Resource and `kjvonly.*` data types using
+`FileFormatRegistry`. This is not a semantic content validation step.
 
 ---
 
@@ -1405,10 +1516,9 @@ The arbitrary path does not promise canonical Bible navigation relationships.
 
 # 39. Large File Safety
 
-The recursive importer must scale to very large media files.
+The recursive importer must scale to large media files.
 
-The directory walker currently collects metadata and should keep that
-responsibility for future media types:
+The directory walker collects metadata for all current file types:
 
 ```text
 path
@@ -1435,8 +1545,7 @@ Walked files must remain canonical descendants of the configured source director
 Discovery must reject or safely handle traversal outside the import root.
 
 The current `NodeImportDirectoryWalker` excludes symlinks, including a
-symlinked source root. The generalized import's symlink policy remains deferred;
-any future policy must enforce root containment and avoid traversing outside
+symlinked source root. Any future symlink policy must enforce root containment and avoid traversing outside
 the source tree.
 
 The user-visible Filesystem path must also pass the existing canonical Filesystem path rules after `<root>/<relative-path>` is constructed.
@@ -1472,8 +1581,9 @@ Resource identity collision
 Filesystem placement collision
 ```
 
-The current `.nd.json` import fails the batch rather than silently skipping an
-invalid selected document. Generalized failure policies are deferred.
+The current mixed-file import fails the batch when an explicit `.nd.json` or
+`.nd.json.gz` file is invalid; it does not silently publish it as generic
+content. Best-effort error handling remains deferred.
 
 A future best-effort import mode can be designed separately if needed.
 
@@ -1492,21 +1602,21 @@ HtmlBlockProcessorRegistry
 HtmlInlineProcessorRegistry
 ```
 
-The implemented first-slice composition is:
+The current composition is:
 
 ```text
 createCliComposition
-    ├── SemanticTypeRegistry (Normalized Document v1)
-    ├── FilesystemImportClassifier (NormalizedDocumentRecognizer)
+    ├── FilesystemImportClassifier / SemanticTypeRegistry
     ├── NodeImportDirectoryWalker
-    ├── FilesystemSemanticImportResolver
-    ├── NormalizedDocumentManifestCompiler
-    ├── BuildNormalizedDocumentDirectory
+    ├── BuildFilesystemDirectory → BuildFilesystemImport
+    ├── FilesystemFileCompilerRegistry
+    │   ├── NormalizedDocumentFileCompiler
+    │   └── GenericFileCompiler
+    ├── FilesystemImportManifestCompiler
     └── ManifestBuildExecutor
 ```
 
-Additional recognizers and a mixed-type import compiler will be composed at
-this same boundary when those features are implemented.
+New semantic formats register compiler strategies without changing the walker.
 
 Lower-level recognizers should receive their dependencies through composition rather than importing a global registry.
 
@@ -1514,44 +1624,26 @@ Lower-level recognizers should receive their dependencies through composition ra
 
 # 44. Major Responsibilities
 
-The current concrete components and the generalized extension points have
-different statuses. Do not treat a future generalized compiler as an existing
-production class.
+The importer uses one generalized workflow; format-specific validation and
+Resource construction live behind compiler strategies.
 
-## `NodeImportDirectoryWalker` (implemented; generalized discovery is deferred)
+## `NodeImportDirectoryWalker`
 
-Owns recursive enumeration, deterministic root-relative paths, source metadata,
-root safety, and skipping hidden entries/symlinks. It does not own semantic
-tags or publication.
+Owns recursive discovery, deterministic root-relative paths, source metadata,
+root safety, and skipping hidden entries/symlinks. It does not own Resource
+metadata or publication.
 
-## FilesystemImportClassifier
+## `FilesystemFileCompilerRegistry`
 
-Owns:
+Selects one compiler for each file. The `.nd.json` strategy validates against
+the `SemanticTypeRegistry` and creates the established Normalized Document
+Resource through `NormalizedDocumentResourceDefinitionBuilder`. The generic
+fallback uses `FileFormatRegistry` for MIME metadata, preserving source bytes.
 
-```text
-registered recognizer coordination
-stable unique semantic candidate collection
-no premature ambiguity rejection
-```
+## `FilesystemImportManifestCompiler`
 
-Does not own Resource building.
-
-## SemanticTypeRegistry
-
-Owns:
-
-```text
-registered semantic contracts
-newest-to-oldest version validation
-semantic dataType/version metadata mapping
-```
-
-## `NormalizedDocumentManifestCompiler` (implemented)
-
-Owns one validated document → one ordinary `ResourceDefinition`, mirrored
-Resource identity and Filesystem placement, storage selection, collision checks,
-and `validateManifest`. It does not sign or stage events. A generalized
-mixed-type Manifest compiler and explicit/generated merging remain deferred.
+Combines all compiled Resources and mirrored paths into a single Filesystem
+Manifest, without knowing individual media types.
 
 ## `ManifestBuildExecutor` (implemented)
 
@@ -1564,13 +1656,13 @@ Filesystem build
 staging coordination
 ```
 
-It is shared by YAML and the implemented Normalized Document directory entrypoint.
+It is shared by explicit YAML builds and the mixed-file `import filesystem` workflow.
 
-## `BuildNormalizedDocumentDirectory` (implemented)
+## `BuildFilesystemDirectory` (implemented)
 
-Connects the recursive walker, configuration Manifest loading, staging-generation
-workspace, batch semantic import, and atomic generated publication Manifest.
-The command does not itself publish events.
+Connects recursive discovery, configuration Manifest loading, staging-generation
+workspace, registered compilers, and the atomic generated publication Manifest.
+The command stages Resources but does not publish them.
 
 ---
 
@@ -1642,13 +1734,13 @@ large external file is path/stream based
 
 ## Integration
 
-For the **implemented** Normalized Document slice, signed-staging and
+For the **implemented** filesystem importer, signed-staging and
 publication integration specs cover inline/external Resource events,
 Filesystem descriptor mapping, incremental reuse, and the generated Manifest.
 These specs use substituted network endpoints; live publication must be
 verified separately. Run official CLI tests and build to confirm results.
 
-For a **future mixed-type importer**, given a directory containing:
+For further semantic compiler strategies, given a directory containing:
 
 ```text
 Normalized Document
@@ -1673,34 +1765,69 @@ second unchanged build reuses events
 
 ---
 
+## Generic file Resource definition (implemented)
+
+`GenericFileResourceDefinitionBuilder` prepares ordinary **descriptor-backed**
+Resource definitions for files that do not have an accepted semantic contract.
+It uses `FileFormatRegistry` to select the physical MIME type while leaving
+all source bytes untouched (`object-upload.encoding: []`). Terminal `.gz`
+files use the registry's `+gzip` media type without recompression. Other
+archive formats (including ZIP, XZ, DOCX, and ODT) remain opaque files.
+
+The currently registered generic Resource contracts are:
+
+| Base MIME family | `t` / Resource type | `dataType` | Version |
+| --- | --- | --- | --- |
+| `audio/*` | `media/audio` | `kjvonly.audio` | 1 |
+| `video/*` | `media/video` | `kjvonly.video` | 1 |
+| `image/*` | `media/image` | `kjvonly.image` | 1 |
+| All other/unknown | `generic/file` | `kjvonly.file` | 1 |
+
+The generic Resource ID is `kjvonly/files/<filesystem-root>/<relative-path>`.
+File Manager can index the resulting descriptor metadata even without an
+application reader for that content. Actual content installation/viewing is a
+separate consumer capability. The registered Normalized Document strategy
+claims `.nd.json` and `.nd.json.gz` before the generic fallback; invalid
+semantic content is an error, not an opaque upload.
+
+This builder does not walk directories, construct Filesystem placements, stage
+artifacts, or publish. The implemented `FilesystemImportManifestCompiler`
+assembles each compiled Resource into one Filesystem Manifest;
+`ManifestBuildExecutor` and the existing publisher stage and publish it.
+
+---
+
 # 46. Implementation Status and Remaining Sequence
 
 The original incremental implementation plan is retained here as a status map,
 not as instructions to repeat completed work:
 
 ```text
-Implemented for Normalized Documents:
+Implemented for mixed-file filesystem import:
   ✓ ManifestBuildExecutor extracted from BuildManifestUseCase
   ✓ SemanticTypeRegistry with Normalized Document v1 registration
   ✓ FilesystemImportClassifier and NormalizedDocumentRecognizer
   ✓ newest-valid semantic version selection and candidate ambiguity handling
   ✓ NodeImportDirectoryWalker with metadata and stable relative paths
-  ✓ NormalizedDocumentManifestCompiler (one file → one Resource)
+  ✓ NormalizedDocumentResourceDefinitionBuilder (one file → one Resource)
   ✓ mirrored Resource identity and Filesystem placement
   ✓ 1 MiB inline threshold and existing external object-upload strategy
-  ✓ CLI import normalized-documents entrypoint
+  ✓ CLI import filesystem entrypoint
   ✓ generated publication Manifest and isolated staging generations
   ✓ focused signed-staging, event-reuse, and publication integration specs
+  ✓ Generic media/file compiler wired into mixed-directory import
+  ✓ FileFormatRegistry for PDF, Office, audio, video, archives, and unknown files
+  ✓ `.nd.json.gz` semantic validation with original gzip-byte preservation
+  ✓ generic-file staging/publication and incremental-reuse regression tests
 
 Pending verification:
   • Full CLI Vitest suite and build after the latest fixture changes
   • Live relay/Blossom publication smoke test where applicable
-  • Confirm the generated Manifest remains usable after failed semantic validation
+  • Reverify the generated Manifest after a failed semantic import on the current branch
 
 Deferred (future separate slices):
   • Generalized semantic recognizers backed by shared domain validators
-  • Registered generic media/file types and their production contracts
-  • Mixed-type directory import and explicit/generated Manifest merging
+  • Combining explicit and discovered Resource definitions within one Manifest
   • Generalized best-effort/ignore policy and safe cleanup policy
 ```
 
@@ -1709,7 +1836,7 @@ subsequent work.
 
 ---
 
-## Current Normalized Document staging-generation consistency
+## Current filesystem import staging-generation consistency
 
 The directory-import command uses an isolated staging generation rather than
 mutating the generation pointed to by its current publication Manifest.
@@ -1736,6 +1863,16 @@ old Manifest still exists after an import failure, but an older Blossom artifact
 is only republishable while its source is available and matches staged source
 metadata. This is not an immutable historical archive, a multi-process lock,
 or atomicity of external Blossom/Nostr publication.
+
+The Node staging repositories write temporary signed event and artifact files
+using short, hidden UUID-based names in the **destination directory**, then
+rename them to deterministic final staging names. This preserves same-directory
+atomic replacement without appending a random suffix to an already-long final
+filename. A valid final Resource event staging filename may be as large as
+255 UTF-8 bytes, so appending `.UUID.tmp` used to trigger `ENAMETOOLONG` on
+Linux. Short temporary names fix that intermediate-path problem without
+altering final staging metadata or mirrored Filesystem/Resource identities.
+Normal final-filename validation and filesystem limitations still apply.
 
 ---
 
@@ -1801,17 +1938,16 @@ A locked architectural rule does not mean every generalized feature is already i
 
 # 48. Open Decisions for Future Generalized Import
 
-The current Normalized Document command has resolved its own contracts. The
-following questions apply to *future* generalized or mixed-type imports:
+The mixed-file importer supports validated Normalized Documents and opaque
+generic media. The following questions remain for future extensions:
 
 ```text
 whether import roots may also be declared within YAML
 
 how explicit and generated definitions are safely combined
 
-production resourceType/objectType mappings for generic media
-
-PDF and opaque-binary standard dataType contracts where not already defined
+verify and adopt the new generic Resource contracts in the app consuming
+   modules (production reader/handler support is separate)
 
 generalized recognizer registrations backed by shared semantic validators
 
@@ -1819,11 +1955,11 @@ symlink policy for generalized import (current walker skips symlinks)
 
 custom ignore/glob support
 
-user-facing threshold configuration (current API accepts inlineLimitBytes)
+other future storage-policy controls beyond the implemented inline byte threshold
 
 whether future storage policy considers encoded size as well as source size
 
-best-effort versus fail-whole-build for future mixed-type imports
+optional best-effort mode (the current importer fails the whole build)
 
 safe retention/garbage collection of unreferenced staging generations
 
@@ -1840,7 +1976,7 @@ mistaking an old proposal for an unresolved implementation question.
 
 # 49. End-State Mental Model
 
-The **future mixed-type** user experience should be approximately:
+The **implemented mixed-type** user experience is approximately:
 
 ```text
 "Publish this directory as root library."

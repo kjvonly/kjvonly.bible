@@ -264,7 +264,7 @@ export class NodeFilesystemEventStagingRepository
 		const temporaryPath =
 			join(
 				directory,
-				`.${filename}.${randomUUID()}.tmp`
+				`.${randomUUID()}.tmp`
 			);
 
 

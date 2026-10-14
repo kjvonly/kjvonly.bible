@@ -34,6 +34,39 @@ afterEach(async () => {
 });
 
 describe('NormalizedContentRenderer links', () => {
+	it('styles linked words with the theme accent and an underline', () => {
+		mountDocument({
+			blocks: [
+				{
+					type: 'paragraph',
+					id: 'link-presentation',
+					content: [
+						{
+							type: 'word',
+							text: 'Linked',
+							href: ['bibleLocationReference:22_35_10']
+						},
+						{
+							type: 'word',
+							text: 'plain'
+						}
+					]
+				}
+			]
+		});
+
+		const link = requireLink();
+		expect(link.classList).toContain('text-primary-500');
+		expect(link.classList).toContain('underline');
+		expect(link.classList).toContain('underline-offset-2');
+
+		const plainWord = target?.querySelector(
+			'span[data-normalized-content-kind="word"]'
+		);
+		expect(plainWord?.classList.contains('text-primary-500')).toBe(false);
+		expect(plainWord?.classList.contains('underline')).toBe(false);
+	});
+
 	it('renders the first href while delegating the complete href array', async () => {
 		const onLinkActivate = vi.fn(() => true);
 		const hrefs = [

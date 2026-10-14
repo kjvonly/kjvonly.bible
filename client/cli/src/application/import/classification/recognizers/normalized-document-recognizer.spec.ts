@@ -20,6 +20,8 @@ describe('NormalizedDocumentRecognizer', () => {
 		const reader = probe('invalid');
 		expect(await recognizer.recognize(file('books/sermon.ND.JSON'), reader))
 			.toBe('kjvonly.normalized-document');
+		expect(await recognizer.recognize(file('books/sermon.ND.JSON.GZ'), reader))
+			.toBe('kjvonly.normalized-document');
 		expect(reader.readPrefix).not.toHaveBeenCalled();
 	});
 

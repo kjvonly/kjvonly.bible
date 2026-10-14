@@ -14,7 +14,7 @@ import {
 
 import {
 	OrdinalNormalizedBlockIdGenerator
-} from '../identity/ordinal-normalized-block-id-generator.js';
+} from '../../identity/ordinal-normalized-block-id-generator.js';
 
 import {
 	CaptionBlockProcessor
@@ -1799,33 +1799,52 @@ describe(
 			}
 		);
 
-		it(
-			'rejects duplicate source ids because durable document locations would be ambiguous',
-			() => {
-				expect(
-					() =>
-						convertHtml(
-							`<p id="duplicate">One</p><p id="duplicate">Two</p>`
-						)
-				).toThrow(
-					'Duplicate HTML id: duplicate'
-				);
-			}
-		);
+		it('warns and generates unique IDs for duplicate block source IDs', () => {
+			const result = convertHtmlWithDiagnostics(
+				'<p id="duplicate">One</p><p id="duplicate">Two</p><p id="unique">Three</p>'
+			);
+			expect(result.document.blocks.map(block => block.id)).toEqual([
+				'nd-v1-paragraph-1', 'nd-v1-paragraph-2', 'unique'
+			]);
+			expect(result.diagnostics.sourceIdsPreserved).toBe(1);
+			expect(result.diagnostics.warnings).toContainEqual(
+				expect.objectContaining({
+					code: 'html-source-id-duplicate', count: 2
+				})
+			);
+		});
 
-		it(
-			'rejects duplicate identity shared by a block and inline anchor',
-			() => {
-				expect(
-					() =>
-						convertHtml(
-							`<p id="fn1">KJV <span id="fn1"></span></p>`
-						)
-				).toThrow(
-					'Duplicate HTML id: fn1'
-				);
-			}
-		);
+		it('replaces duplicate block and inline IDs without losing anchor positions', () => {
+			const result = convertHtmlWithDiagnostics(
+				'<p id="fn1">KJV <span id="fn1"></span> Text</p><p><a href="#fn1">Link</a></p>'
+			);
+			expect(result.document.blocks[0]).toMatchObject({
+				type: 'paragraph', id: 'nd-v1-paragraph-1',
+				content: [
+					{ type: 'word', text: 'KJV' },
+					{ type: 'anchor', id: 'nd-v1-anchor-1' },
+					{ type: 'word', text: 'Text' }
+				]
+			});
+			expect(result.diagnostics.warnings.map(w => w.code)).toContain('html-source-id-duplicate');
+			expect(result.diagnostics.warnings.map(w => w.code)).toContain('html-local-link-target-missing');
+		});
+
+		it('continues after discarding a div identity and presentation', () => {
+			const result = convertHtmlWithDiagnostics(
+				'<div id="commPhoto" class="text-center"><p>Caption text</p></div><p>Following</p>'
+			);
+			expect(result.document.blocks).toHaveLength(2);
+			expect(result.document.blocks[0]).toMatchObject({
+				type: 'paragraph', content: [{ type: 'word', text: 'Caption' }, { type: 'word', text: 'text' }]
+			});
+			expect(result.diagnostics.warnings).toContainEqual(
+				expect.objectContaining({ code: 'html-container-id-discarded', count: 1 })
+			);
+			expect(result.diagnostics.warnings).toContainEqual(
+				expect.objectContaining({ code: 'html-container-presentation-discarded', count: 1 })
+			);
+		});
 
 		it(
 			'preserves descendants of semantic structural wrappers while diagnosing the unsupported boundary',
@@ -2070,19 +2089,18 @@ describe(
 			}
 		);
 
-		it(
-			'rejects normalized presentation on a transparent container rather than silently dropping it',
-			() => {
-				expect(
-					() =>
-						convertHtml(
-							`<div class="text-center"><p>Text</p></div>`
-						)
-				).toThrow(
-					'Cannot discard normalized presentation on container <div>: text-center.'
-				);
-			}
-		);
+		it('warns when a transparent container loses canonical presentation', () => {
+			const result = convertHtmlWithDiagnostics(
+				'<div class="text-center"><p>Text</p></div>'
+			);
+			expect(result.document.blocks).toHaveLength(1);
+			expect(result.diagnostics.warnings).toContainEqual(
+				expect.objectContaining({
+					code: 'html-container-presentation-discarded',
+					count: 1
+				})
+			);
+		});
 
 		it(
 			'ignores executable source nodes instead of preserving them as content',

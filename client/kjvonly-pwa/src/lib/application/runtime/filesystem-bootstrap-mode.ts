@@ -16,9 +16,9 @@ const DEFAULT_FILESYSTEM_BOOTSTRAP_MODE:
 /**
  * Resolves whether the published application Filesystem should be installed.
  *
- * The feature defaults to disabled while the configured bootstrap Resource is
- * still the small integration fixture. Production and development builds may
- * both explicitly enable or disable it.
+ * The feature defaults to disabled until a deployment explicitly enables
+ * installation of its published application Filesystem Resource. Development
+ * and production builds may both enable or disable it.
  *
  * @param configuredMode Optional mode supplied by the Vite environment.
  */

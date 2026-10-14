@@ -89,6 +89,19 @@ describe(
 		);
 
 		it(
+			'uses no generated bullets for unordered lists containing authored Roman or Arabic numbers',
+			() => {
+				for (const style of ['list-roman', 'list-arabic'] as const) {
+					expect(
+						resolveNormalizedListMarkerClass(list(false, [style]))
+					).toBe('list-none');
+				}
+				// An unnumbered unordered list still receives normal bullets.
+				expect(resolveNormalizedListMarkerClass(list(false))).toBe('list-disc');
+			}
+		);
+
+		it(
 			'returns no list marker class for non-list blocks',
 			() => {
 				expect(

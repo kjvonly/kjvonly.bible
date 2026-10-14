@@ -149,6 +149,19 @@ link presentation and activation delegation
 exposure of canonical document-local identity to the rendered DOM
 ```
 
+Application-typed links such as `bibleLocationReference:1_1_1` or
+`bibleLocationReference:1_1_10-15` are
+resolved by the application's registered reference consumers after the Reader
+receives the renderer's activation event. The generic renderer must not parse
+Bible locations or create navigation state. Document-local anchors retain
+priority in the Reader's link handler.
+
+Linked words use the active theme's primary accent color and an underline,
+so links are recognizable without relying on color alone. The styling applies
+to all normalized links regardless of reference type or local-anchor target.
+
+See [Navigation Architecture — Typed Application References](../../runtime/016-navigation-architecture.md#37-typed-application-references) for the implemented syntax, validation, and ownership requirements.
+
 ---
 
 # 4. Canonical Inline Content
