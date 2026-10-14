@@ -1,5 +1,5 @@
 <!-- @component
-Renders one Bible token, its Text Markup classes, and optional inline Note affordance. It exposes stable `data-bible-*` identity for chapter-level interactions and intentionally owns no reading/edit click behavior.
+Renders one Bible token, its Text Markup classes, and optional inline Note/Bookmark affordances. It exposes stable `data-bible-*` identity for chapter-level interactions and intentionally owns no reading/edit click behavior.
 -->
 <script lang="ts">
 	import {
@@ -14,9 +14,11 @@ Renders one Bible token, its Text Markup classes, and optional inline Note affor
 	} from '../../../models/bible-text-markup.model';
 	import type { Verse, Word } from '../../../models/bible.model';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';
+	import BookmarkIcon from '$lib/components/svgs/bookmark.svelte';
 	import type {
 		ChapterNotesByLocation
 	} from './chapter-notes';
+	import type { ChapterBookmarksByLocation } from '$lib/domains/bookmarks';
 	const {
 		bibleLocationReferenceService
 	} = useApplicationContext();
@@ -27,6 +29,8 @@ Renders one Bible token, its Text Markup classes, and optional inline Note affor
 		textMarkup: BibleTextMarkup;
 		/** Exact-location Note lookup used to decide whether to show the Note affordance. */
 		notes: ChapterNotesByLocation;
+		/** Exact-location Bookmark membership lookup for inline indicators. */
+		bookmarks: ChapterBookmarksByLocation;
 		/** Active canonical Bible location used to construct this token’s exact Note key. */
 		bibleLocationRef: string;
 		/** Parent verse containing this token. */
@@ -40,6 +44,7 @@ Renders one Bible token, its Text Markup classes, and optional inline Note affor
 	let {
 		textMarkup = $bindable<BibleTextMarkup>(),
 		notes = $bindable<ChapterNotesByLocation>(),
+		bookmarks,
 		bibleLocationRef,
 		verse,
 		word,
@@ -59,6 +64,9 @@ Renders one Bible token, its Text Markup classes, and optional inline Note affor
 	);
 	let wordHasNotes = $derived(
 		wordLocationRef in notes
+	);
+	let wordHasBookmarks = $derived(
+		bookmarks[wordLocationRef] === true
 	);
 	let verseHasReferences = $derived(
 		wordIdx === 0 &&
@@ -80,6 +88,18 @@ Renders one Bible token, its Text Markup classes, and optional inline Note affor
 			aria-label="open note"
 		>
 			<NoteStack classes="fill-support-a-500"></NoteStack>
+		</button>
+	</span>
+{/if}{#if wordHasBookmarks}
+	<span class={wordMarkup?.class?.join(' ')}>
+		&nbsp;<button
+			type="button"
+			data-bible-bookmark
+			data-verse={verse.number}
+			data-word-index={wordIdx}
+			aria-label="open bookmarks"
+		>
+			<BookmarkIcon classes="fill-support-a-500"></BookmarkIcon>
 		</button>
 	</span>
 {/if}<span

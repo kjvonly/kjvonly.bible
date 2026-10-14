@@ -39,6 +39,7 @@
 		bible: Modules.BIBLE,
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
+		bookmarks: Modules.BOOKMARKS,
 		plans: Modules.PLANS,
 		archive: Modules.ARCHIVE,
 		files: Modules.FILE_MANAGER,

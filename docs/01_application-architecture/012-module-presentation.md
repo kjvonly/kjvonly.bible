@@ -97,8 +97,15 @@ Examples include:
 * Reading Plans,
 * Notes List,
 * Notes Search,
+* Bookmarks List,
 * Settings,
 * and future Domain capabilities.
+
+The registered Bookmarks Module presents Bookmarks-owned Browse, relocation,
+delete confirmation and list actions. The Bible Reader provides Add/Update location
+selection and inline markers, but never owns Bookmark Domain state. Normalized-document
+Reader integration remains deferred. The Workspace Runtime does not gain
+Bookmark-specific behavior. See the [Bookmarks implementation](../03_implementation/domains/bookmarks/001-bookmarks.md).
 
 Each Module focuses on presenting one capability while delegating application behavior to its owning Domain.
 

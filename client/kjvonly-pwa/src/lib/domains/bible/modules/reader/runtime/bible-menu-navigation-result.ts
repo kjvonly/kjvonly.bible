@@ -7,6 +7,8 @@ import {
 	type PaneNavigation
 } from '$lib/application';
 
+import { BOOKMARKS_VIEWS } from '$lib/domains/bookmarks';
+
 import {
 	BIBLE_MENU_ACTIONS,
 	BIBLE_NAVIGATION_RESULTS,
@@ -77,6 +79,14 @@ function applyBibleMenuAction(
 			);
 			return;
 
+		case BIBLE_MENU_ACTIONS.BROWSE_BOOKMARKS:
+			navigation.pushModule(
+				Modules.BOOKMARKS,
+				BOOKMARKS_VIEWS.ROOT,
+				{ returnBibleLocationToReader: true }
+			);
+			return;
+
 		case BIBLE_MENU_ACTIONS.BIBLE_VERSION:
 			navigation.pushView(
 				BIBLE_VIEWS.VERSION,
@@ -112,6 +122,7 @@ function isBibleMenuAction(
 	return (
 		value === BIBLE_MENU_ACTIONS.COPY_VERSES ||
 		value === BIBLE_MENU_ACTIONS.BIBLE_VERSION ||
+		value === BIBLE_MENU_ACTIONS.BROWSE_BOOKMARKS ||
 		value === BIBLE_MENU_ACTIONS.SPLIT_VERTICAL ||
 		value === BIBLE_MENU_ACTIONS.SPLIT_HORIZONTAL
 	);

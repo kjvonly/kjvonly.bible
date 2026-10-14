@@ -94,6 +94,7 @@ Bible
 Notes
 Reading Plans
 Strong's
+Bookmarks
 ```
 
 There is **not** currently a separate Settings Domain.
@@ -117,6 +118,9 @@ $lib/domains/bible/ui
 
 $lib/domains/notes
 $lib/domains/notes/ui
+
+$lib/domains/bookmarks
+$lib/domains/bookmarks/ui
 
 $lib/domains/reading-plans
 $lib/domains/reading-plans/ui
@@ -223,7 +227,7 @@ ModuleResourceSelectionResolver
 KJVOnlyArchiveService
 ```
 
-and Domain-facing services required directly by Svelte presentation, including current Bible, Notes, Reading Plans, and Strong's services.
+and Domain-facing services required directly by Svelte presentation, including current Bible, Notes, Bookmarks, Reading Plans, and Strong's services.
 
 A service belongs in `ApplicationContext` when:
 
@@ -645,6 +649,32 @@ Browser-only presentation exports are available through:
 ```text
 $lib/domains/notes/ui
 ```
+
+---
+
+# Bookmarks Domain
+
+Bookmarks owns independent saved content locations, metadata, relocation and deletion.
+A Bookmark has a stable publisher/UUID ID distinct from its Bible or normalized-document
+target. Duplicate target locations are allowed. The Bible Domain owns canonical Bible
+references and Reader interactions; Normalized Content owns document word addresses.
+
+The Bookmarks service, IndexedDB persistence, Resource validation/factory/publication,
+and Bookmarks Module live under:
+
+```text
+$lib/domains/bookmarks
+```
+
+The Node-safe root exports Domain and Resource contracts; Svelte presentation exports
+belong in `$lib/domains/bookmarks/ui`. The registered module supports Browse, selection,
+relocation/delete confirmation, and horizontal/vertical pane-split actions. Bible Reader
+integration is active; normalized-document Reader UI is deferred.
+
+Local create/relocate/delete operations notify BookmarksService subscribers after a
+successful write. Archive imports explicitly invalidate subscribers; automatic
+notifications after generic externally installed Bookmark Resources are not yet verified.
+Do not add a separate PubSub or Worker notification framework solely for Bookmarks.
 
 ---
 
@@ -1286,6 +1316,9 @@ If ownership is ambiguous, resolve that ambiguity before moving or exposing the 
 | Strong's lookup/data | Strong's |
 | Notes | Notes |
 | Notes search/index behavior | Notes |
+| Bookmark identity, metadata and persistence | Bookmarks |
+| Bookmark Resource interpretation/publication | Bookmarks |
+| Bookmark list, relocation and deletion | Bookmarks |
 | Reading Plan definitions | Reading Plans |
 | Reading Plan subscriptions | Reading Plans |
 | Reading Plan progress/completed readings | Reading Plans |

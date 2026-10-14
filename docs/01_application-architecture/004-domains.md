@@ -45,12 +45,36 @@ Application
     Strong's Domain
         Strong's definitions
 
+    Bookmarks Domain
+        Saved content locations
+        Bookmark relocation
+        Bookmark metadata and lifecycle
+
     Application-owned capabilities
         Settings
         Workspace-wide coordination
 ```
 
 Each Domain groups concepts and behavior that derive their meaning from the same area of the application.
+
+## Bookmarks Domain
+
+Bookmarks is an implemented independent Domain for saving and relocating references
+to content without taking ownership of that content. Its target model supports
+canonical Bible locations and publisher/Resource-specific normalized documents.
+
+A Bookmark retains its owner/UUID identity when its target changes. Multiple
+Bookmarks may target the same exact location. The Bible Domain still owns Bible
+addressing; Normalized Content owns document and word addressing. Bookmarks owns
+the saved target, metadata, validation, lookup and lifecycle.
+
+The registered Bookmarks Module presents Browse, relocation and deletion workflows.
+The Bible Reader provides Bookmark location selection and inline markers; normalized
+Reader UI integration remains deferred. The Workspace Runtime remains independent
+of Bookmarks behavior.
+
+See the [Bookmarks Domain implementation](../03_implementation/domains/bookmarks/001-bookmarks.md)
+for the Resource contract and bounded Reader integration.
 
 For example, Bible search belongs to the Bible Domain because the Bible gives that search behavior meaning. Bible text markup also belongs to the Bible Domain because it describes markings over Bible content. Strong's remains a separate Domain because it owns a distinct body of definitions and behavior even when Bible interactions consume it.
 

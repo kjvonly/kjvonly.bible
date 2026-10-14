@@ -16,6 +16,7 @@ Renders one Bible verse with paragraph/pericope presentation and Word children. 
 	import type {
 		ChapterNotesByLocation
 	} from './chapter-notes';
+	import type { ChapterBookmarksByLocation } from '$lib/domains/bookmarks';
 	import Pericope from './pericope.svelte';
 
 	// Components
@@ -32,6 +33,8 @@ Renders one Bible verse with paragraph/pericope presentation and Word children. 
 		pericopes: BiblePericopeMap;
 		/** Exact-location Note lookup used by descendant Word components. */
 		notes: ChapterNotesByLocation;
+		/** Exact-location Bookmark lookup for descendant Word components. */
+		bookmarks: ChapterBookmarksByLocation;
 		/** Active canonical Bible location used to derive Word/paragraph/pericope identity. */
 		bibleLocationRef: string;
 		/** Verse domain object rendered by this component. */
@@ -43,6 +46,7 @@ Renders one Bible verse with paragraph/pericope presentation and Word children. 
 		paragraphs = $bindable<BibleParagraphMap>(),
 		pericopes = $bindable<BiblePericopeMap>(),
 		notes = $bindable<ChapterNotesByLocation>(),
+		bookmarks,
 		bibleLocationRef,
 		verse
 	}: Props = $props();
@@ -64,6 +68,7 @@ Renders one Bible verse with paragraph/pericope presentation and Word children. 
 		{#each verse.words.slice(0, 2) as word, idx}<Word
 				bind:textMarkup
 				bind:notes
+				{bookmarks}
 				{verse}
 				{word}
 				{bibleLocationRef}
@@ -74,6 +79,7 @@ Renders one Bible verse with paragraph/pericope presentation and Word children. 
 		<Word
 			bind:textMarkup
 			bind:notes
+			{bookmarks}
 			{verse}
 			{word}
 			{bibleLocationRef}

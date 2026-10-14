@@ -5,7 +5,9 @@ import {
 
 export const BIBLE_READER_EDIT_INTENTS = {
 	MARKUP: 'markup',
-	NOTE_LOCATION: 'note-location'
+	NOTE_LOCATION: 'note-location',
+	BOOKMARK_LOCATION: 'bookmark-location',
+	BOOKMARK_RELOCATION_LOCATION: 'bookmark-relocation-location'
 } as const;
 
 export type BibleReaderEditIntent =
@@ -30,6 +32,25 @@ export interface BibleReaderEditContext {
 	/** Reports the selected exact verse or word location to the Reader owner. */
 	completeNoteLocationSelection(
 		bibleLocationRef: string
+	): Promise<void>;
+
+	/** Enter exclusive verse/word selection for a new Bible Bookmark. */
+	startBookmarkLocationSelection(): void;
+
+	/** Select a new destination before choosing which existing Bookmark to move. */
+	startBookmarkRelocationLocationSelection(): void;
+	/** Cancel relocation destination selection without making changes. */
+	cancelBookmarkRelocationLocationSelection(): void;
+	/** Return a selected destination and verse preview to the Reader owner. */
+	completeBookmarkRelocationLocationSelection(bibleLocationRef: string, previewText: string): Promise<void>;
+
+	/** Leave Bookmark selection without creating anything. */
+	cancelBookmarkLocationSelection(): void;
+
+	/** Create a Bookmark at the exact location with its containing-verse preview. */
+	completeBookmarkLocationSelection(
+		bibleLocationRef: string,
+		previewText: string
 	): Promise<void>;
 }
 

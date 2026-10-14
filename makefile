@@ -552,14 +552,16 @@ new-chat-files:
 	echo "Creating $$ZIP"; \
 	zip -r "$$ZIP" \
 		client/kjvonly-pwa/src \
-	    client/cli \
+		client/cli \
 		client/kjvonly-pwa/tests \
 		client/kjvonly-pwa/package.json \
 		client/kjvonly-pwa/package-lock.json \
 		docs/ \
+		zarf/ \
+		makefile \
 		-x '*/node_modules/*' \
 		   '*/.svelte-kit/*' \
-		   '*/.DS_Store'
+		   '*/.*'
 
 worktrees-backups:
 	@DATE=$$(date +%Y%m%d); \

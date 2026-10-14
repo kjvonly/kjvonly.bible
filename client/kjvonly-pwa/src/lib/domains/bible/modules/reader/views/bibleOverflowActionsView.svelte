@@ -17,6 +17,8 @@
 		type KJVMenuAction
 	} from '$lib/components';
 
+	import BookmarkStack from '$lib/components/svgs/bookmarkStack.svelte';
+
 	// MODELS
 	import {
 		BIBLE_MENU_ACTIONS,
@@ -41,6 +43,10 @@
 		{
 			label: 'Bible version',
 			value: BIBLE_MENU_ACTIONS.BIBLE_VERSION
+		},
+		{
+			label: 'Browse bookmarks',
+			value: BIBLE_MENU_ACTIONS.BROWSE_BOOKMARKS
 		}
 	];
 
@@ -86,6 +92,12 @@ Bible menu result; the owning Reader decides whether that result opens another
 view, splits the pane, or changes Reader state.
 -->
 
+{#snippet actionIcon(action: BibleMenuAction)}
+	{#if action === BIBLE_MENU_ACTIONS.BROWSE_BOOKMARKS}
+		<BookmarkStack classes="h-5 w-5 shrink-0" />
+	{/if}
+{/snippet}
+
 {#snippet leadingContent()}
 	<KJVBackButton></KJVBackButton>
 {/snippet}
@@ -96,5 +108,6 @@ view, splits the pane, or changes Reader state.
 	{actions}
 	{headerActions}
 	{leadingContent}
+	{actionIcon}
 	{onAction}
 ></KJVMenuView>

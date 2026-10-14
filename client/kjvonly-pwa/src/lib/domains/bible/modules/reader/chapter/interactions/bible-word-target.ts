@@ -42,6 +42,14 @@ export function resolveBibleNoteTarget(
 	);
 }
 
+/** Resolves an inline Bookmark affordance to the exact verse or word token. */
+export function resolveBibleBookmarkTarget(
+	root: HTMLElement,
+	target: EventTarget | null
+): BibleWordTarget | undefined {
+	return resolveBibleTarget(root, target, '[data-bible-bookmark]');
+}
+
 /** Shared `closest(...)` parser for Reader-owned semantic DOM identities. */
 function resolveBibleTarget(
 	root: HTMLElement,

@@ -96,6 +96,9 @@ import {
     notesNavigationViewRegistrations
 } from '$lib/domains/notes/ui';
 
+import { bookmarksNavigationViewRegistrations } from '$lib/domains/bookmarks/ui';
+import { BOOKMARKS_VIEWS, BookmarksModuleResourceSelectionContributor } from '$lib/domains/bookmarks';
+
 import {
     bibleNavigationViewRegistrations,
     refsNavigationViewRegistrations,
@@ -454,6 +457,23 @@ import {
     NotesAvailabilityService,
     NotesService
 } from '$lib/domains/notes';
+
+///////////////////////////////////////////////////////////////////////////////
+// Bookmarks
+
+import {
+    BOOKMARKS_RESOURCE_TYPE,
+    BookmarksResourcePublication,
+    BookmarksService
+} from '$lib/domains/bookmarks';
+
+import {
+    IndexedDBBookmarksStore
+} from '$lib/domains/bookmarks/persistence/indexeddb-bookmarks-store';
+
+import {
+    IndexedDBBookmarksWriteTransaction
+} from '$lib/domains/bookmarks/persistence/bookmarks-write-transaction';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reading Plans
@@ -952,6 +972,7 @@ export class Application {
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.NORMALIZED_CONTENT
                     ),
+                    new BookmarksModuleResourceSelectionContributor(),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.FILE_MANAGER
                     ),
@@ -1014,6 +1035,11 @@ export class Application {
                         NOTES_VIEWS.ROOT,
                     createState:
                         () => ({})
+                },
+                {
+                    module: Modules.BOOKMARKS,
+                    view: BOOKMARKS_VIEWS.ROOT,
+                    createState: () => ({})
                 },
                 {
                     module:
@@ -1122,6 +1148,10 @@ export class Application {
 
         navigationViewRegistry.registerAll(
             notesNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            bookmarksNavigationViewRegistrations
         );
 
         navigationViewRegistry.registerAll(
@@ -1543,6 +1573,27 @@ export class Application {
         );
 
         ///////////////////////////////////////////////////////////////////////
+        // Bookmarks
+
+        const bookmarksService =
+            new BookmarksService(
+                new IndexedDBBookmarksStore(getApplicationDB),
+                new IndexedDBBookmarksWriteTransaction(getApplicationDB),
+                new BookmarksResourcePublication(),
+                outboxProcessor,
+                () => authenticationService.tryGetUserId(),
+                bibleLocationReferenceService
+            );
+
+        archiveService.subscribeToImports(
+            ({ importedResourceTypes }) => {
+                if (importedResourceTypes.has(BOOKMARKS_RESOURCE_TYPE)) {
+                    bookmarksService.refresh();
+                }
+            }
+        );
+
+        ///////////////////////////////////////////////////////////////////////
         // Reading Plans
 
         const planDefinitionsStore =
@@ -1691,6 +1742,7 @@ export class Application {
 
             notesService,
             notesAvailabilityService,
+            bookmarksService,
 
             planDefinitionsService,
             planSubscriptionsService,

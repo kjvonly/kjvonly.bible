@@ -436,6 +436,20 @@ FileManager search Worker lifecycle
 Resource-to-Module opening from filesystem entries
 ```
 
+## Bookmarks Domain and Module
+
+```text
+docs/03_implementation/domains/bookmarks/001-bookmarks.md
+```
+
+This document records the implemented Bookmarks Domain, Resource and Outbox contracts,
+Bible Reader Add/Browse/Update/Delete workflows, module navigation and list presentation.
+It distinguishes implemented wiring from browser validation still outstanding.
+Bookmarks use version-independent Bible references and exact normalized-document
+publisher + Resource ID targets, with stable IDs and duplicate-location support.
+Normalized-document Reader UI and generic external Resource-installation refresh remain
+deferred/unverified respectively. Use the current source to verify concrete contracts.
+
 ---
 
 # Task-Oriented Reading Map

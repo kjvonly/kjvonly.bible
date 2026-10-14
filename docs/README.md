@@ -149,6 +149,11 @@ They may describe concrete details such as:
 
 Implementation documentation is expected to evolve as the source changes.
 
+Documents distinguish implemented behavior from pending validation or deferred work. The
+[Bookmarks Domain and Module implementation](03_implementation/domains/bookmarks/001-bookmarks.md)
+records its Resource and Bible Reader integration and the still-unverified external-installation
+notification path; normalized-document Reader UI is deferred.
+
 When a current implementation document disagrees with the source, inspect the source and update the implementation document.
 
 Do not silently rewrite architecture merely to match an accidental implementation detail.

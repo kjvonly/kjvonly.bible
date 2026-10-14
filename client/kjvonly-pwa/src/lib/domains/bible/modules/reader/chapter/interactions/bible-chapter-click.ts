@@ -1,4 +1,5 @@
 import {
+	resolveBibleBookmarkTarget,
 	resolveBibleNoteTarget,
 	resolveBibleWordTarget,
 	type BibleWordTarget
@@ -7,7 +8,9 @@ import {
 export const BIBLE_CHAPTER_CLICK_INTENTS = {
 	READING: 'reading',
 	TEXT_MARKUP: 'text-markup',
-	NOTE_LOCATION: 'note-location'
+	NOTE_LOCATION: 'note-location',
+	BOOKMARK_LOCATION: 'bookmark-location',
+	BOOKMARK_RELOCATION_LOCATION: 'bookmark-relocation-location'
 } as const;
 
 export type BibleChapterClickIntent =
@@ -37,6 +40,16 @@ export interface BibleChapterClickParameters {
 	readonly onNoteLocationSelect: (
 		target: BibleChapterClickTarget
 	) => void;
+	/** Completes Add Bookmark selection with the same verse/word token. */
+	readonly onBookmarkLocationSelect: (
+		target: BibleChapterClickTarget
+	) => void;
+	/** Completes the destination selection for relocating an existing Bookmark. */
+	readonly onBookmarkRelocationLocationSelect: (target: BibleChapterClickTarget) => void;
+	/** Opens Bookmarks scoped to an existing inline Bookmark's exact location. */
+	readonly onOpenBookmark: (
+		target: BibleChapterClickTarget
+	) => void;
 	/** Opens the existing exact-location Note affordance that was clicked. */
 	readonly onOpenNote: (
 		target: BibleChapterClickTarget
@@ -44,10 +57,10 @@ export interface BibleChapterClickParameters {
 }
 
 /**
- * Delegates chapter token and inline-Note clicks through one capture listener.
+ * Delegates chapter token and inline Note/Bookmark clicks through one capture listener.
  *
- * Note-location selection is exclusive: while active, every chapter click is
- * consumed before inline Notes or markup can respond. Reading mode consumes only
+ * Note/Bookmark location selection is exclusive: while active, every chapter
+ * click is consumed before inline Notes or markup can respond. Reading mode consumes only
  * tokens the chapter reports as interactive. Text Markup consumes any valid Bible
  * token, including the verse-number token at `wordIndex = 0`.
  *
@@ -63,20 +76,28 @@ export function bibleChapterClick(
 
 	/** Resolves and dispatches one capture-phase click according to Reader intent. */
 	function onClick(event: MouseEvent): void {
-		if (
-			parameters.intent ===
-			BIBLE_CHAPTER_CLICK_INTENTS.NOTE_LOCATION
-		) {
+		if (parameters.intent === BIBLE_CHAPTER_CLICK_INTENTS.NOTE_LOCATION) {
 			consumeClick(event);
-
-			const target = resolveBibleWordTarget(
-				node,
-				event.target
-			);
-
+			const target = resolveBibleWordTarget(node, event.target);
 			if (target) {
 				parameters.onNoteLocationSelect(target);
 			}
+			return;
+		}
+
+		if (parameters.intent === BIBLE_CHAPTER_CLICK_INTENTS.BOOKMARK_LOCATION) {
+			consumeClick(event);
+			const target = resolveBibleWordTarget(node, event.target);
+			if (target) {
+				parameters.onBookmarkLocationSelect(target);
+			}
+			return;
+		}
+
+		if (parameters.intent === BIBLE_CHAPTER_CLICK_INTENTS.BOOKMARK_RELOCATION_LOCATION) {
+			consumeClick(event);
+			const target = resolveBibleWordTarget(node, event.target);
+			if (target) parameters.onBookmarkRelocationLocationSelect(target);
 			return;
 		}
 
@@ -88,6 +109,13 @@ export function bibleChapterClick(
 		if (noteTarget) {
 			consumeClick(event);
 			parameters.onOpenNote(noteTarget);
+			return;
+		}
+
+		const bookmarkTarget = resolveBibleBookmarkTarget(node, event.target);
+		if (bookmarkTarget) {
+			consumeClick(event);
+			parameters.onOpenBookmark(bookmarkTarget);
 			return;
 		}
 

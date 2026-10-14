@@ -28,6 +28,7 @@
 		actions,
 		headerActions = [],
 		leadingContent,
+		actionIcon,
 		onAction
 	}: {
 		title?: string;
@@ -35,6 +36,8 @@
 		actions: readonly KJVMenuAction<TAction>[];
 		headerActions?: HeaderActions;
 		leadingContent: Snippet;
+		/** Optional domain-provided icon for individual menu actions. */
+		actionIcon?: Snippet<[TAction]>;
 		onAction: (action: TAction) => void | Promise<void>;
 	} = $props();
 
@@ -65,8 +68,11 @@
 			type="button"
 			disabled={action.disabled ?? false}
 			onclick={() => void onAction(action.value)}
-			class="min-h-[max(2.75rem,44px)] w-full bg-neutral-50 px-4 py-3 text-left text-base text-neutral-700 transition-colors duration-150 hover:bg-neutral-100 active:bg-neutral-200 focus-visible:outline-2 focus-visible:outline-primary-500 disabled:pointer-events-none disabled:opacity-50"
+			class="flex min-h-[max(2.75rem,44px)] w-full items-center gap-3 bg-neutral-50 px-4 py-3 text-left text-base text-neutral-700 transition-colors duration-150 hover:bg-neutral-100 active:bg-neutral-200 focus-visible:outline-2 focus-visible:outline-primary-500 disabled:pointer-events-none disabled:opacity-50"
 		>
+			{#if actionIcon}
+				{@render actionIcon(action.value)}
+			{/if}
 			{action.label}
 		</button>
 	{/each}

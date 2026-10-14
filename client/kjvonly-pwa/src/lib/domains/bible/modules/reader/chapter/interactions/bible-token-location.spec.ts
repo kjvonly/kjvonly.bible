@@ -5,17 +5,17 @@ import {
 } from 'vitest';
 
 import {
-	createBibleNoteLocationRef
-} from './bible-note-location';
+	createBibleTokenLocationRef
+} from './bible-token-location';
 
 describe(
-	'createBibleNoteLocationRef',
+	'createBibleTokenLocationRef',
 	() => {
 		it(
 			'creates an exact word location from the active chapter',
 			() => {
 				expect(
-					createBibleNoteLocationRef(
+					createBibleTokenLocationRef(
 						'43_3',
 						{
 							verseNumber: 16,
@@ -30,7 +30,7 @@ describe(
 			'creates a verse location from a verse-number target',
 			() => {
 				expect(
-					createBibleNoteLocationRef(
+					createBibleTokenLocationRef(
 						'43_3',
 						{
 							verseNumber: 16,
@@ -45,7 +45,7 @@ describe(
 			'rejects an invalid negative word index',
 			() => {
 				expect(() =>
-					createBibleNoteLocationRef(
+					createBibleTokenLocationRef(
 						'43_3',
 						{
 							verseNumber: 16,
@@ -53,7 +53,7 @@ describe(
 						}
 					)
 				).toThrow(
-					'Add Note requires a valid Bible location'
+					'Invalid Bible token location'
 				);
 			}
 		);

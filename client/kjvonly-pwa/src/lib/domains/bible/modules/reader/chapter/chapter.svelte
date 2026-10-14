@@ -1,7 +1,7 @@
 <!-- @component
 Owns the Bible chapter interaction surface: resource loading, visible verse range,
 Reader click routing, Text Markup click/drag mutation, inline Note navigation, and
-Add Note location selection. Persistence remains owned by the Reader container.
+Add Note/Bookmark location selection. Persistence remains owned by the Reader container.
 -->
 <script lang="ts">
 	// ================================ IMPORTS ================================
@@ -43,8 +43,9 @@ Add Note location selection. Persistence remains owned by the Reader container.
 		type BibleChapterClickTarget
 	} from './interactions/bible-chapter-click';
 	import {
-		createBibleNoteLocationRef
-	} from './interactions/bible-note-location';
+		createBibleTokenLocationRef
+	} from './interactions/bible-token-location';
+	import { getBibleBookmarkVersePreview } from './interactions/bible-bookmark-verse-preview';
 
 	import {
 		BIBLE_READER_EDIT_INTENTS,
@@ -92,6 +93,10 @@ Add Note location selection. Persistence remains owned by the Reader container.
 		type NotesSearchResult
 	} from '$lib/domains/notes';
 	import {
+		BOOKMARKS_VIEWS,
+		type ChapterBookmarksByLocation
+	} from '$lib/domains/bookmarks';
+	import {
 		createChapterNotesByLocation,
 		type ChapterNotesByLocation
 	} from './chapter-notes';
@@ -102,6 +107,7 @@ Add Note location selection. Persistence remains owned by the Reader container.
 		pericopesService,
 		bibleTextMarkupService,
 		notesService,
+		bookmarksService,
 		moduleResourceSelectionResolver,
 		settingsService,
 		bibleLocationReferenceService,
@@ -144,10 +150,11 @@ Add Note location selection. Persistence remains owned by the Reader container.
 	// ================================= VARS ==================================
 
 	let noteLocationSelectionActive =
-		$derived(
-			readerEdit.intent ===
-				BIBLE_READER_EDIT_INTENTS.NOTE_LOCATION
-		);
+		$derived(readerEdit.intent === BIBLE_READER_EDIT_INTENTS.NOTE_LOCATION);
+	let bookmarkLocationSelectionActive =
+		$derived(readerEdit.intent === BIBLE_READER_EDIT_INTENTS.BOOKMARK_LOCATION);
+	let bookmarkRelocationLocationSelectionActive =
+		$derived(readerEdit.intent === BIBLE_READER_EDIT_INTENTS.BOOKMARK_RELOCATION_LOCATION);
 
 	let notesID = uuid4();
 
@@ -155,6 +162,8 @@ Add Note location selection. Persistence remains owned by the Reader container.
 	let hasVerseRange: boolean = $state(false);
 
 	let notes: ChapterNotesByLocation = $state({});
+	let bookmarks: ChapterBookmarksByLocation = $state({});
+	let unsubscribeBookmarks: (() => void) | undefined;
 
 	let verseRangeStartIndex: number = 0;
 	let verseRangeEndIndex: number = 0;
@@ -174,14 +183,16 @@ Add Note location selection. Persistence remains owned by the Reader container.
 
 	// =============================== LIFECYCLE ===============================
 
-	onMount(async () => {
+	onMount(() => {
 		subscribeToNotes();
+		subscribeToBookmarks();
 		subscribeToSettings();
 	});
 
 	onDestroy(() => {
 		unsubscribeFromTextMarkup();
 		unsubscribeToNotes();
+		unsubscribeToBookmarks();
 		unsubscribeToSettings();
 	});
 
@@ -202,12 +213,14 @@ Add Note location selection. Persistence remains owned by the Reader container.
 			resetTextMarkup();
 			resetParagraphs();
 			resetPericopes();
+			resetBookmarks();
 			toggleVersesViewFn();
 			setVerseRanges();
 			scrollToVerse();
 			loadTextMarkup();
 			void loadParagraphs(currentSettings);
 			void loadPericopes(currentSettings);
+			void loadBookmarks();
 			loadNotes();
 			loadChapter();
 		});
@@ -262,6 +275,10 @@ Add Note location selection. Persistence remains owned by the Reader container.
 
 	function resetPericopes() {
 		pericopes = {};
+	}
+
+	function resetBookmarks() {
+		bookmarks = {};
 	}
 
 	/** Resolves the optional verse-range window encoded in the Reader location. */
@@ -444,6 +461,30 @@ Add Note location selection. Persistence remains owned by the Reader container.
 			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef),
 			['bookChapter']
 		);
+	}
+
+	function subscribeToBookmarks(): void {
+		unsubscribeBookmarks = bookmarksService.subscribe(() => void loadBookmarks());
+	}
+
+	function unsubscribeToBookmarks(): void {
+		unsubscribeBookmarks?.();
+		unsubscribeBookmarks = undefined;
+	}
+
+	/** Loads the chapter's exact-location Bookmark indicators through the Bookmarks Domain. */
+	async function loadBookmarks(): Promise<void> {
+		const locationRef = bibleLocationRef;
+		try {
+			const installed = await bookmarksService.getChapterBookmarksByLocation(locationRef);
+			if (bibleLocationRef === locationRef) {
+				bookmarks = installed;
+			}
+		} catch (error) {
+			if (bibleLocationRef === locationRef) {
+				console.error('Failed to load Bible Bookmarks', error);
+			}
+		}
 	}
 
 	function subscribeToSettings() {
@@ -684,8 +725,21 @@ Add Note location selection. Persistence remains owned by the Reader container.
 		);
 	}
 
+	/** Opens all Bookmarks attached to the clicked exact verse/word location. */
+	function openInlineBookmark(target: BibleChapterClickTarget): void {
+		const bookIDChapter = bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
+		navigation.pushModule(
+			Modules.BOOKMARKS,
+			BOOKMARKS_VIEWS.ROOT,
+			{
+				bibleLocationRef: `${bookIDChapter}_${target.verseNumber}_${target.wordIndex}`,
+				returnBibleLocationToReader: true
+			}
+		);
+	}
+
 	/**
-	 * Converts selected DOM token identity into the canonical Add Note anchor and
+	 * Converts the selected Bible token into its canonical location and
 	 * completes the Reader-scoped Note-location selection flow.
 	 *
 	 * @param target - Verse/word token selected while Add Note mode is active.
@@ -694,18 +748,35 @@ Add Note location selection. Persistence remains owned by the Reader container.
 		target: BibleChapterClickTarget
 	): void {
 		const bookIDChapter =
-			bibleLocationReferenceService
-				.extractBookIDChapter(
-					bibleLocationRef
-				);
+			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
+		void readerEdit.completeNoteLocationSelection(
+			createBibleTokenLocationRef(bookIDChapter, target)
+		);
+	}
 
-		void readerEdit
-			.completeNoteLocationSelection(
-				createBibleNoteLocationRef(
-					bookIDChapter,
-					target
-				)
-			);
+	/** Selects the exact Bookmark anchor and captures its containing verse text. */
+	function selectBookmarkLocation(target: BibleChapterClickTarget): void {
+		const previewText = getBibleBookmarkVersePreview(verses, target);
+		if (!previewText) {
+			console.error('Cannot bookmark a verse without loaded text');
+			return;
+		}
+		const bookIDChapter =
+			bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
+		void readerEdit.completeBookmarkLocationSelection(
+			createBibleTokenLocationRef(bookIDChapter, target),
+			previewText
+		);
+	}
+
+	/** Destination selection shares the loaded verse preview, not the Add operation. */
+	function selectBookmarkRelocationLocation(target: BibleChapterClickTarget): void {
+		const previewText = getBibleBookmarkVersePreview(verses, target);
+		if (!previewText) return;
+		const chapterRef = bibleLocationReferenceService.extractBookIDChapter(bibleLocationRef);
+		void readerEdit.completeBookmarkRelocationLocationSelection(
+			createBibleTokenLocationRef(chapterRef, target), previewText
+		);
 	}
 </script>
 
@@ -717,6 +788,7 @@ Add Note location selection. Persistence remains owned by the Reader container.
 				bind:paragraphs
 				bind:pericopes
 				bind:notes
+				{bookmarks}
 				verse={chapter?.verses[k] as VerseModel}
 				{bibleLocationRef}
 			></Verse>
@@ -728,20 +800,29 @@ Add Note location selection. Persistence remains owned by the Reader container.
 	use:bibleTextMarkupDrag={{
 		enabled:
 			mode.value === BIBLE_MODES.EDIT &&
-			!noteLocationSelectionActive,
+			!noteLocationSelectionActive &&
+			!bookmarkLocationSelectionActive &&
+			!bookmarkRelocationLocationSelectionActive,
 		onApply: applyDragMarkup,
 		onRemove: removeDragMarkup
 	}}
 	use:bibleChapterClick={{
 		intent: noteLocationSelectionActive
 			? BIBLE_CHAPTER_CLICK_INTENTS.NOTE_LOCATION
+			: bookmarkLocationSelectionActive
+				? BIBLE_CHAPTER_CLICK_INTENTS.BOOKMARK_LOCATION
+			: bookmarkRelocationLocationSelectionActive
+				? BIBLE_CHAPTER_CLICK_INTENTS.BOOKMARK_RELOCATION_LOCATION
 			: mode.value === BIBLE_MODES.EDIT
 				? BIBLE_CHAPTER_CLICK_INTENTS.TEXT_MARKUP
 				: BIBLE_CHAPTER_CLICK_INTENTS.READING,
 		onReadingActivate: activateReadingToken,
 		onTextMarkupToggle: toggleClickedMarkup,
 		onNoteLocationSelect: selectNoteLocation,
-		onOpenNote: openInlineNote
+		onBookmarkLocationSelect: selectBookmarkLocation,
+		onBookmarkRelocationLocationSelect: selectBookmarkRelocationLocation,
+		onOpenNote: openInlineNote,
+		onOpenBookmark: openInlineBookmark
 	}}
 	class="px-4 leading-loose"
 	class:touch-pan-y={mode.value === BIBLE_MODES.EDIT}

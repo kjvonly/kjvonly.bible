@@ -198,6 +198,14 @@ import {
 } from '$lib/domains/notes';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Bookmarks
+
+import {
+    BookmarkDataTypeHandler,
+    BookmarkDomainObjectFactory
+} from '$lib/domains/bookmarks';
+
+///////////////////////////////////////////////////////////////////////////////
 // Reading Plans
 
 import {
@@ -439,6 +447,7 @@ function createResourceProcessingDependencies():
 			new StrongsDataTypeHandler(),
 			new StrongsDefinitionDataTypeHandler(),
 			new NoteDataTypeHandler(),
+			new BookmarkDataTypeHandler(),
 			new BibleChapterDataTypeHandler(),
 			new BibleBooknamesDataTypeHandler(),
 			new BibleParagraphsDataTypeHandler(),
@@ -456,6 +465,7 @@ function createResourceProcessingDependencies():
 			new NormalizedContentTextMarkupDomainObjectFactory(),
 			new StrongsDomainObjectFactory(),
 			new NoteDomainObjectFactory(),
+			new BookmarkDomainObjectFactory(),
 			new BibleChapterDomainObjectFactory(),
 			new BibleBooknamesDomainObjectFactory(),
 			new BibleParagraphsDomainObjectFactory(),

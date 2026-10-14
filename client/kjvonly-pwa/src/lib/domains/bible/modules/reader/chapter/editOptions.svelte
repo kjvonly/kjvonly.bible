@@ -1,6 +1,6 @@
 <!-- @component
-Renders the Bible Reader edit toolbar for Text Markup and Notes actions. Owns
-markup palette/type selection UI and coordinates Chapter Notes/Add Note intent;
+Renders the Bible Reader edit toolbar for Text Markup, Notes, and Bookmarks.
+Owns markup palette/type selection UI and coordinates location-selection intent;
 actual chapter click/drag mutations remain owned by chapter.svelte.
 -->
 <script lang="ts">
@@ -32,6 +32,8 @@ actual chapter click/drag mutations remain owned by chapter.svelte.
 	import Highlighter from '$lib/components/svgs/highlighter.svelte';
 	import AddNote from '$lib/components/svgs/addNote.svelte';
 	import NoteStack from '$lib/components/svgs/noteStack.svelte';
+	import BookmarkAdd from '$lib/components/svgs/bookmarkAdd.svelte';
+	import BookmarkCheck from '$lib/components/svgs/bookmarkCheck.svelte';
 	import TextFormat from '$lib/components/svgs/textFormat.svelte';
 	import Underline from '$lib/components/svgs/underline.svelte';
 
@@ -60,10 +62,11 @@ actual chapter click/drag mutations remain owned by chapter.svelte.
 	// ================================= VARS ==================================
 
 	let noteLocationSelectionActive =
-		$derived(
-			readerEdit.intent ===
-				BIBLE_READER_EDIT_INTENTS.NOTE_LOCATION
-		);
+		$derived(readerEdit.intent === BIBLE_READER_EDIT_INTENTS.NOTE_LOCATION);
+	let bookmarkLocationSelectionActive =
+		$derived(readerEdit.intent === BIBLE_READER_EDIT_INTENTS.BOOKMARK_LOCATION);
+	let bookmarkRelocationLocationSelectionActive =
+		$derived(readerEdit.intent === BIBLE_READER_EDIT_INTENTS.BOOKMARK_RELOCATION_LOCATION);
 
 	let selectedColor = $state('a');
 	let selectedMarkup = $state('bg');
@@ -186,18 +189,48 @@ actual chapter click/drag mutations remain owned by chapter.svelte.
 	></span>
 {/snippet}
 
+{#snippet noteLocationSelectionPrompt()}
+	<div class="flex min-h-12 w-full items-center justify-between gap-4 px-3 py-2">
+		<span class="font-medium text-neutral-700">Select a verse or word for the note</span>
+		<button
+			type="button"
+			onclick={readerEdit.cancelNoteLocationSelection}
+			aria-label="cancel note location selection"
+			class="shrink-0 px-2 py-1 font-medium text-neutral-700 underline"
+		>Cancel</button>
+	</div>
+{/snippet}
+
+{#snippet bookmarkRelocationLocationSelectionPrompt()}
+	<div class="flex min-h-12 w-full items-center justify-between gap-4 px-3 py-2">
+		<span class="font-medium text-neutral-700">Select the new verse or word for this bookmark</span>
+		<button type="button"
+			onclick={readerEdit.cancelBookmarkRelocationLocationSelection}
+			aria-label="cancel bookmark relocation selection"
+			class="shrink-0 px-2 py-1 font-medium text-neutral-700 underline"
+		>Cancel</button>
+	</div>
+{/snippet}
+
+{#snippet bookmarkLocationSelectionPrompt()}
+	<div class="flex min-h-12 w-full items-center justify-between gap-4 px-3 py-2">
+		<span class="font-medium text-neutral-700">Select a verse or word for the bookmark</span>
+		<button
+			type="button"
+			onclick={readerEdit.cancelBookmarkLocationSelection}
+			aria-label="cancel bookmark location selection"
+			class="shrink-0 px-2 py-1 font-medium text-neutral-700 underline"
+		>Cancel</button>
+	</div>
+{/snippet}
+
 <div class="w-full overflow-x-auto border bg-neutral-50">
 	{#if noteLocationSelectionActive}
-		<div class="flex min-h-12 w-full items-center justify-between gap-4 px-3 py-2">
-			<span class="font-medium text-neutral-700">Select a verse or word for the note</span>
-			<button
-				onclick={readerEdit.cancelNoteLocationSelection}
-				aria-label="cancel note location selection"
-				class="shrink-0 px-2 py-1 font-medium text-neutral-700 underline"
-			>
-				Cancel
-			</button>
-		</div>
+		{@render noteLocationSelectionPrompt()}
+	{:else if bookmarkLocationSelectionActive}
+		{@render bookmarkLocationSelectionPrompt()}
+	{:else if bookmarkRelocationLocationSelectionActive}
+		{@render bookmarkRelocationLocationSelectionPrompt()}
 	{:else}
 		<div class="flex min-w-max items-center gap-4 px-3 py-2">
 			<div
@@ -268,6 +301,31 @@ actual chapter click/drag mutations remain owned by chapter.svelte.
 					class="h-8 w-8 shrink-0"
 				>
 					<AddNote classes="h-full w-full text-neutral-700"></AddNote>
+				</button>
+			</div>
+
+			<div class="h-6 w-px shrink-0 bg-neutral-300" aria-hidden="true"></div>
+
+			<div
+				class="flex h-8 shrink-0 items-center gap-4"
+				role="group"
+				aria-label="bookmark actions"
+			>
+				<button
+					type="button"
+					onclick={readerEdit.startBookmarkLocationSelection}
+					aria-label="add bookmark"
+					class="h-8 w-8 shrink-0"
+				>
+					<BookmarkAdd classes="h-full w-full text-neutral-700"></BookmarkAdd>
+				</button>
+				<button
+					type="button"
+					onclick={readerEdit.startBookmarkRelocationLocationSelection}
+					aria-label="update bookmark"
+					class="h-8 w-8 shrink-0"
+				>
+					<BookmarkCheck classes="h-full w-full text-neutral-700"></BookmarkCheck>
 				</button>
 			</div>
 		</div>

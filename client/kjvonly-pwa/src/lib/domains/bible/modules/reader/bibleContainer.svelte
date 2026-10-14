@@ -82,6 +82,8 @@ chapter surface, navigation controls, and edit toolbar.
 		type BibleReaderEditContext
 	} from './runtime/bible-reader-edit-context';
 
+	import { BOOKMARKS_VIEWS, parseBookmarkBrowseNavigationResult } from '$lib/domains/bookmarks';
+
 	import {
 		NOTES_BIBLE_SCOPE_KINDS,
 		NOTES_VIEWS
@@ -91,6 +93,8 @@ chapter surface, navigation controls, and edit toolbar.
 		moduleResourceSelectionResolver,
 		bibleLocationReferenceService,
 		bibleTextMarkupService,
+		bookmarksService,
+		toastService,
 		settingsService
 	} = useApplicationContext();
 	// =============================== BINDINGS ================================
@@ -168,9 +172,25 @@ chapter surface, navigation controls, and edit toolbar.
 			completeNoteLocationSelection(
 				bibleLocationRef: string
 			): Promise<void> {
-				return onNoteLocationSelected(
-					bibleLocationRef
-				);
+				return onNoteLocationSelected(bibleLocationRef);
+			},
+			startBookmarkLocationSelection() {
+				readerEdit.intent = BIBLE_READER_EDIT_INTENTS.BOOKMARK_LOCATION;
+			},
+			cancelBookmarkLocationSelection() {
+				readerEdit.intent = BIBLE_READER_EDIT_INTENTS.MARKUP;
+			},
+			completeBookmarkLocationSelection(selectedBibleLocationRef: string, previewText: string) {
+				return onBookmarkLocationSelected(selectedBibleLocationRef, previewText);
+			},
+			startBookmarkRelocationLocationSelection() {
+				readerEdit.intent = BIBLE_READER_EDIT_INTENTS.BOOKMARK_RELOCATION_LOCATION;
+			},
+			cancelBookmarkRelocationLocationSelection() {
+				readerEdit.intent = BIBLE_READER_EDIT_INTENTS.MARKUP;
+			},
+			completeBookmarkRelocationLocationSelection(selectedBibleLocationRef: string, previewText: string) {
+				return onBookmarkRelocationDestinationSelected(selectedBibleLocationRef, previewText);
 			}
 		});
 
@@ -233,6 +253,14 @@ chapter surface, navigation controls, and edit toolbar.
 				}
 			)
 		) {
+			return;
+		}
+
+		const browseResult = parseBookmarkBrowseNavigationResult(result);
+		if (browseResult) {
+			whenActive(() => {
+				bibleLocationRef = browseResult.bibleLocationRef;
+			});
 			return;
 		}
 
@@ -369,12 +397,9 @@ chapter surface, navigation controls, and edit toolbar.
 	/**
 	 * Commits a new active Reader location to navigation state and local history.
 	 *
-	 * Any in-progress Note-location selection is canceled because its DOM target
-	 * belongs to the previous Reader location.
+	 * Reader edit intent remains independent of navigation/history changes.
 	 */
 	function onBibleLocationRefChanged(): void {
-		readerEdit.cancelNoteLocationSelection();
-
 		if (
 			!bibleLocationRef ||
 			!bibleVersion
@@ -400,7 +425,7 @@ chapter surface, navigation controls, and edit toolbar.
 	 * interactions only mutate the in-memory draft.
 	 */
 	async function onExitEdit(): Promise<void> {
-		readerEdit.cancelNoteLocationSelection();
+		readerEdit.intent = BIBLE_READER_EDIT_INTENTS.MARKUP;
 
 		await bibleTextMarkupService.put(
 			JSON.parse(JSON.stringify(textMarkup))
@@ -444,6 +469,53 @@ chapter surface, navigation controls, and edit toolbar.
 					selectedBibleLocationRef
 			}
 		);
+	}
+
+	/**
+	 * Saves pending Text Markup, then adds an exact verse/word Bookmark with
+	 * the selected verse's text snapshot. Remains in the same Bible Reader.
+	 * Exiting edit mode synchronously prevents duplicate selection clicks.
+	 */
+	async function onBookmarkLocationSelected(
+		selectedBibleLocationRef: string,
+		previewText: string
+	): Promise<void> {
+		if (readerEdit.intent !== BIBLE_READER_EDIT_INTENTS.BOOKMARK_LOCATION) {
+			return;
+		}
+		try {
+			await onExitEdit();
+			await bookmarksService.create({
+				kind: 'bible',
+				bibleLocationRef: selectedBibleLocationRef
+			}, previewText);
+		} catch (error) {
+			console.error('Unable to complete Add Bookmark', error);
+			mode.value = BIBLE_MODES.EDIT;
+			readerEdit.startBookmarkLocationSelection();
+			toastService.showToast('Could not add Bookmark');
+		}
+	}
+
+	/** Leaves Reader editing, then asks Bookmarks which existing ID to relocate. */
+	async function onBookmarkRelocationDestinationSelected(
+		selectedBibleLocationRef: string,
+		previewText: string
+	): Promise<void> {
+		if (readerEdit.intent !== BIBLE_READER_EDIT_INTENTS.BOOKMARK_RELOCATION_LOCATION) return;
+		try {
+			await onExitEdit();
+			navigation.pushModule(Modules.BOOKMARKS, BOOKMARKS_VIEWS.ROOT, {
+				mode: 'relocate',
+				destinationBibleLocationRef: selectedBibleLocationRef,
+				destinationPreviewText: previewText
+			});
+		} catch (error) {
+			console.error('Could not start Bookmark relocation', error);
+			mode.value = BIBLE_MODES.EDIT;
+			readerEdit.startBookmarkRelocationLocationSelection();
+			toastService.showToast('Could not choose Bookmark to move');
+		}
 	}
 
 	/**

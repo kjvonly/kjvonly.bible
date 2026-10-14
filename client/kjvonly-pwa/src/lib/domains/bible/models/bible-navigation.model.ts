@@ -22,6 +22,7 @@ export const BIBLE_NAVIGATION_RESULTS = {
 export const BIBLE_MENU_ACTIONS = {
 	COPY_VERSES: 'copy-verses',
 	BIBLE_VERSION: 'bible-version',
+	BROWSE_BOOKMARKS: 'browse-bookmarks',
 	SPLIT_VERTICAL: 'split-vertical',
 	SPLIT_HORIZONTAL: 'split-horizontal'
 } as const;
