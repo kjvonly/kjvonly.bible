@@ -70,3 +70,39 @@ function defineOwnProperty<T>(
 		}
 	);
 }
+
+/**
+ * Reports changes to visible word markings, ignoring empty entries left behind
+ * when a user toggles a style on and then off. The saved map is still the
+ * canonical Domain representation; no extra dirty flag needs synchronization.
+ */
+export function hasNormalizedContentTextMarkupDraftChanges(
+	accepted: NormalizedContentTextMarkupMap,
+	draft: NormalizedContentTextMarkupMap
+): boolean {
+	return hasDifferentWordMarkings(accepted, draft) ||
+		hasDifferentWordMarkings(draft, accepted);
+}
+
+function hasDifferentWordMarkings(
+	left: NormalizedContentTextMarkupMap,
+	right: NormalizedContentTextMarkupMap
+): boolean {
+	for (const [blockId, entries] of Object.entries(left)) {
+		const matchingBlock = Object.prototype.hasOwnProperty.call(right, blockId)
+			? right[blockId]
+			: undefined;
+		for (const [index, marking] of Object.entries(entries)) {
+			if (marking.class.length === 0) continue;
+			const matchingMarking = matchingBlock && Object.prototype.hasOwnProperty.call(matchingBlock, index)
+				? matchingBlock[index]
+				: undefined;
+			if (!matchingMarking ||
+				marking.class.length !== matchingMarking.class.length ||
+				marking.class.some((value, position) => value !== matchingMarking.class[position])) {
+				return true;
+			}
+		}
+	}
+	return false;
+}

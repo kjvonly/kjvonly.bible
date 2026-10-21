@@ -20,14 +20,6 @@
 			navigationState
 		);
 
-	const {
-		bibleScope,
-		createBibleLocationRef
-	} = navigationIntent;
-
-	const noteID =
-		navigationIntent.noteID ??
-		'';
 
 	function readNavigationIntent(
 		state: NavigationState
@@ -50,9 +42,7 @@
 <!-- PaneNavigationContainer owns the presentation shell. -->
 <div class="kjvonly-noselect h-full w-full min-h-0 min-w-0">
 	<Notes
-		{bibleScope}
-		{createBibleLocationRef}
-		noteIDToOpen={noteID}
+		{navigationIntent}
 		{navigationState}
 	></Notes>
 </div>

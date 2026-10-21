@@ -92,6 +92,51 @@ describe(
 				).toThrow();
 			}
 		);
+
+	it('accepts document and Resource-scoped word associations, including bundles', () => {
+		const handler = new NoteDataTypeHandler();
+		const document = createNoteContent({
+			bibleLocationRef: undefined,
+			bibleReferenceText: undefined,
+			association: documentAssociation()
+		});
+		const word = createNoteContent({
+			bibleLocationRef: undefined,
+			bibleReferenceText: undefined,
+			association: wordAssociation()
+		});
+		expect(handler.validate(document)).toEqual(document);
+		expect(handler.validate({ document, word })).toEqual({ document, word });
+	});
+
+	it('rejects mixed Bible and normalized associations', () => {
+		expect(() => new NoteDataTypeHandler().validate({
+			...createNoteContent(), association: documentAssociation()
+		})).toThrow();
+	});
+
+	it.each([
+		{ document: { publisher: '', resourceId: 'opaque/id' } },
+		{ document: { publisher: 'alice', resourceId: '' } },
+		{ document: { publisher: 'alice', resourceId: 'opaque/id', modifiedAt: 100 } },
+		{ target: { kind: 'document', contentIndex: 0 } },
+		{ target: { kind: 'word', documentModifiedAt: 1, address: { blockId: 'x', contentIndex: 0 } } },
+		{ target: { kind: 'word' } },
+		{ target: { kind: 'word', address: { blockId: '', contentIndex: 0 } } },
+		{ target: { kind: 'word', address: { blockId: 'x', contentIndex: -1 } } },
+		{ target: { kind: 'word', address: { blockId: 'x', contentIndex: 1.5 } } },
+		{ target: { kind: 'word', address: { blockId: 'x', contentIndex: 0, domIndex: 1 } } },
+		{ unexpected: 'field' }
+	])('rejects malformed normalized association %j', (overrides) => {
+		const association = { ...wordAssociation(), ...overrides };
+		expect(() => new NoteDataTypeHandler().validate({
+			...createNoteContent(),
+			bibleLocationRef: undefined,
+			bibleReferenceText: undefined,
+			association
+		})).toThrow();
+	});
+
 	}
 );
 
@@ -126,5 +171,23 @@ function createNoteContent(
 			[],
 
 		...overrides
+	};
+}
+
+function documentAssociation() {
+	return {
+		kind: 'normalized-document',
+		document: { publisher: 'alice', resourceId: 'opaque/id%25' },
+		target: { kind: 'document' }
+	};
+}
+
+function wordAssociation() {
+	return {
+		...documentAssociation(),
+		target: {
+			kind: 'word',
+			address: { blockId: '__proto__', contentIndex: 3 }
+		}
 	};
 }

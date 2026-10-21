@@ -33,7 +33,8 @@ export type {
 } from './models/normalized-content-address.model';
 
 export {
-	resolveNormalizedContentAtAddress
+	resolveNormalizedContentAtAddress,
+	assertNormalizedContentWordAddress
 } from './models/normalized-content-address.model';
 
 export type {

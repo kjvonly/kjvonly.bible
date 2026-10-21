@@ -128,6 +128,42 @@ describe(
 			}
 		);
 
+		it('finds a Resource by publisher and opaque ID, choosing its latest mounted descriptor', async () => {
+			const older = createEntry();
+			const latest: FilesystemEntry = {
+				...older,
+				path: 'catalog/commentary/Genesis-1.nd.json',
+				descriptor: { ...older.descriptor, metadata: {
+					...older.descriptor.metadata,
+					resourceId: 'library/a/%2F/b', modifiedAt: 300
+				} }
+			};
+			const first: FilesystemEntry = {
+				...latest, descriptor: { ...latest.descriptor, metadata: {
+					...latest.descriptor.metadata, modifiedAt: 100
+				} }
+			};
+			const unrelated: FilesystemEntry = {
+				...latest, descriptor: { ...latest.descriptor, metadata: {
+					...latest.descriptor.metadata, publisher: 'someone-else', modifiedAt: 999
+				} }
+			};
+			const service = createService({
+				listRoots: vi.fn().mockResolvedValue([
+					{ publisher: 'catalog', rootPath: 'a' },
+					{ publisher: 'catalog', rootPath: 'b' }
+				]),
+				listByRootPath: vi.fn(async (_publisher: string, rootPath: string) =>
+					rootPath === 'a' ? [first] : [unrelated, latest])
+			});
+			expect(await service.findResourceEntry(latest.descriptor.metadata.publisher, 'library/a/%2F/b'))
+				.toEqual(latest);
+			expect(await service.findResourceDescriptor(latest.descriptor.metadata.publisher, 'library/a/%2F/b'))
+				.toEqual(latest.descriptor);
+			expect(await service.findResourceDescriptor('unmounted', 'library/a/%2F/b'))
+				.toBeUndefined();
+		});
+
 		it(
 			'searches mounted Resource metadata through the filesystem search boundary',
 			async () => {

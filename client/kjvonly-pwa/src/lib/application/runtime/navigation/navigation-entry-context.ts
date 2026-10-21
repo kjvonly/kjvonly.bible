@@ -31,6 +31,12 @@ export interface NavigationEntryContext {
 	): () => void;
 
 	/**
+	 * Subscribes to later inactive-to-active transitions of this entry.
+	 * Does not fire for an entry that is already active at subscription time.
+	 */
+	onActivation(handler: () => void): () => void;
+
+	/**
 	 * Runs a callback once this mounted navigation entry is active.
 	 *
 	 * If the entry is already active, the callback runs immediately.

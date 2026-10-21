@@ -27,6 +27,18 @@ Do not expose code publicly merely because a test wants convenient access.
 
 ---
 
+# Evidence Before Complexity
+
+Before adding special cases, state, or abstractions, establish the requirement and trace existing behavior. Separate observed defects from plausible but unrequested scenarios. Verify callers, tests, and the owning API rather than inventing a missing product rule.
+
+Ask whether another owner already performs the validation, persistence, coordination, or notification. Do not repeat that responsibility in a consumer without a distinct boundary reason.
+
+When an unresolved requirement would materially change ownership or user experience, ask one focused clarification. Otherwise make the smallest safe change using established conventions.
+
+See `005-code-quality-and-assumptions.md` for the full review rubric.
+
+---
+
 # Small Reviewable Slices
 
 Prefer one coherent responsibility per change.
@@ -42,6 +54,14 @@ Good slices include:
 Avoid combining unrelated cleanup just because the same files are nearby.
 
 A patch can touch many files when they all participate in one mechanical boundary change.
+
+---
+
+# Explicit Code As A Review Goal
+
+Prefer explicit state transitions, meaningful names, and direct handlers over generic dispatch or implicit side effects when simpler code expresses the same behavior. Name mixed responsibilities honestly before extracting them; extract only when the responsibility justifies a boundary and focused testing.
+
+Use braces for return guards in touched code without changing logic. Update JSDoc for non-obvious invariants, side effects, and contracts. Do not make a change solely because an audit is in progress: **no change needed** is a valid conclusion.
 
 ---
 

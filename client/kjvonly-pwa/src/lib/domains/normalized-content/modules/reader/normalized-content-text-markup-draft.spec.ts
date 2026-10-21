@@ -9,7 +9,8 @@ import type {
 } from '../../models/normalized-content-text-markup.model';
 
 import {
-	cloneNormalizedContentTextMarkupMap
+	cloneNormalizedContentTextMarkupMap,
+	hasNormalizedContentTextMarkupDraftChanges
 } from './normalized-content-text-markup-draft';
 
 describe(
@@ -113,3 +114,43 @@ describe(
 		);
 	}
 );
+
+
+describe('hasNormalizedContentTextMarkupDraftChanges', () => {
+	it('skips unchanged and reverted edits, including empty marking placeholders', () => {
+		const accepted: NormalizedContentTextMarkupMap = {};
+		const draft: NormalizedContentTextMarkupMap = {
+			paragraph: { '0': { class: [] } }
+		};
+		expect(hasNormalizedContentTextMarkupDraftChanges(accepted, draft)).toBe(false);
+		const updated: NormalizedContentTextMarkupMap = {
+			paragraph: { '0': { class: ['bg-highlighta'] } }
+		};
+		expect(hasNormalizedContentTextMarkupDraftChanges(updated, draft)).toBe(true);
+		expect(hasNormalizedContentTextMarkupDraftChanges(draft, updated)).toBe(true);
+	});
+
+	it('detects added, removed, and changed presentation classes', () => {
+		const accepted: NormalizedContentTextMarkupMap = {
+			paragraph: { '0': { class: ['bg-highlighta'] } }
+		};
+		expect(hasNormalizedContentTextMarkupDraftChanges(accepted,
+			cloneNormalizedContentTextMarkupMap(accepted))).toBe(false);
+		expect(hasNormalizedContentTextMarkupDraftChanges(accepted,
+			{ paragraph: { '0': { class: ['bg-highlightb'] } } })).toBe(true);
+		expect(hasNormalizedContentTextMarkupDraftChanges(accepted, {})).toBe(true);
+		expect(hasNormalizedContentTextMarkupDraftChanges(accepted,
+			{ paragraph: { '0': { class: ['bg-highlighta', 'underline'] } } })).toBe(true);
+	});
+
+	it('compares prototype-like canonical block IDs as own keys', () => {
+		const draft: NormalizedContentTextMarkupMap = {};
+		Object.defineProperty(draft, '__proto__', {
+			enumerable: true, configurable: true, writable: true,
+			value: { '0': { class: ['bg-highlighta'] } }
+		});
+		expect(hasNormalizedContentTextMarkupDraftChanges({}, draft)).toBe(true);
+		expect(hasNormalizedContentTextMarkupDraftChanges(
+			cloneNormalizedContentTextMarkupMap(draft), draft)).toBe(false);
+	});
+});

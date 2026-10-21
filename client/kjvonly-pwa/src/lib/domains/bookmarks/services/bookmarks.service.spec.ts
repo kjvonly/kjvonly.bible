@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { NormalizedDocument } from '$lib/domains/normalized-content';
 import type { ResourcePublicationIntent } from '$lib/resource';
 import { BibleLocationReferenceService } from '$lib/domains/bible';
 
-import type { BibleBookmarkTarget, Bookmark, BookmarkTarget } from '../models/bookmark.model';
+import type { BibleBookmarkTarget, Bookmark } from '../models/bookmark.model';
 import type { BookmarksStore } from '../persistence/bookmarks-store';
 import type { BookmarksWriteStores, BookmarksWriteTransaction } from '../resources/bookmarks-write-stores';
 import { BookmarksResourcePublication } from '../resources/bookmarks-resource-publication';
@@ -21,15 +20,6 @@ const NORMALIZED = {
 	document: { publisher: 'commentary-author', resourceId: 'commentaries/matthew-henry/genesis-1' },
 	address: { kind: 'word', blockId: 'p1', contentIndex: 0 }
 } as const;
-const DOCUMENT: NormalizedDocument = {
-	blocks: [{
-		type: 'paragraph', id: 'p1', content: [
-			{ type: 'word', text: 'In' },
-			{ type: 'anchor', id: 'anchor-1' },
-			{ type: 'line-break' }
-		]
-	}]
-};
 
 class MemoryStore implements Pick<BookmarksStore, 'get' | 'getAll'> {
 	readonly accepted = new Map<string, Bookmark>();
@@ -199,7 +189,7 @@ describe('BookmarksService', () => {
 
 	it('looks up exact publisher/Resource pairs without matching another publisher or Resource', async () => {
 		const { service } = harness();
-		const normalized = await service.create(NORMALIZED, DOCUMENT);
+		const normalized = await service.create(NORMALIZED);
 		const unrelated = await service.create(BIBLE);
 		expect(await service.listForNormalizedDocument(NORMALIZED.document)).toEqual([normalized]);
 		expect(await service.listForNormalizedDocument({
@@ -213,18 +203,21 @@ describe('BookmarksService', () => {
 		expect(await service.listForBibleLocation('43_3_16_0')).toEqual([unrelated]);
 	});
 
-	it('requires an actual normalized word in the supplied document snapshot on create and relocation', async () => {
+	it('trusts canonical word addresses supplied by normalized content without a document', async () => {
 		const { service, transaction } = harness();
-		const invalid = { ...NORMALIZED, address: { ...NORMALIZED.address, contentIndex: 1 } };
-		await expect(service.create(invalid, DOCUMENT)).rejects.toThrow('canonical word');
-		await expect(service.create(NORMALIZED, { blocks: [] })).rejects.toThrow('canonical word');
-		// Call through the general runtime method to check missing snapshot validation.
-		await expect((service.create as (target: BookmarkTarget) => Promise<Bookmark>)(NORMALIZED))
-			.rejects.toThrow('opened document snapshot');
-		const original = await service.create(BIBLE);
-		await expect(service.relocate(original.id, invalid, DOCUMENT)).rejects.toThrow('canonical word');
-		expect(await service.get(original.id)).toEqual(original);
-		expect(transaction.runCount).toHaveBeenCalledTimes(1);
+		const address = { kind: 'word', blockId: 'word-not-installed-here', contentIndex: 999 } as const;
+		const selectedTarget = { ...NORMALIZED, address };
+		const created = await service.create(selectedTarget, 'Reader-selected preview');
+		expect(created.target).toEqual(selectedTarget);
+		expect(created.previewText).toBe('Reader-selected preview');
+		const moved = await service.relocate(created.id, NORMALIZED, 'Updated preview');
+		expect(moved.target).toEqual(NORMALIZED);
+		expect(moved.previewText).toBe('Updated preview');
+		expect(moved.id).toBe(created.id);
+		expect(transaction.runCount).toHaveBeenCalledTimes(2);
+		await expect(service.create({ ...NORMALIZED, address: { ...address, contentIndex: -1 } }))
+			.rejects.toThrow('word address');
+		expect(transaction.runCount).toHaveBeenCalledTimes(2);
 	});
 
 	it('rejects unauthenticated writes and modifications to third-party Bookmarks', async () => {
@@ -400,7 +393,7 @@ describe('Bookmark saved metadata', () => {
 
 	it('persists and publishes normalized preview without changing document-scoped identity', async () => {
 		const { service, transaction } = harness();
-		const bookmark = await service.create(NORMALIZED, DOCUMENT, 'A sentence from this document.');
+		const bookmark = await service.create(NORMALIZED, 'A sentence from this document.');
 		expect(bookmark.previewText).toBe('A sentence from this document.');
 		expect(transaction.publications.get(bookmark.id)).toMatchObject({ value: {
 			target: NORMALIZED, updatedAt: bookmark.updatedAt, previewText: bookmark.previewText

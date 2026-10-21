@@ -11,6 +11,7 @@ Current guide:
 002-change-workflow.md
 003-testing-and-patches.md
 004-documentation.md
+005-code-quality-and-assumptions.md
 ```
 
 The central development rule is:
@@ -28,3 +29,5 @@ Implementation
 ```
 
 Implementation should reinforce that sequence rather than bypass it for convenience.
+
+For code review and cleanup, use `005-code-quality-and-assumptions.md` to verify requirements, ownership, and evidence before adding state, checks, or abstractions.

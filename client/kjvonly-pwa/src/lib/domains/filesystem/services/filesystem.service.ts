@@ -1,4 +1,8 @@
 import type {
+	ResourceDescriptor
+} from '$lib/resource';
+
+import type {
 	FilesystemEntry
 } from '../models/filesystem-entry';
 
@@ -84,6 +88,40 @@ export class FilesystemService {
 			publisher,
 			rootPath
 		);
+	}
+
+	/**
+	 * Locate an accepted mounted mapping for an opaque Resource identity.
+	 *
+	 * Keep the FilesystemEntry so callers can use its path as display-only
+	 * launch context. Identity is matched exclusively by Resource publisher and
+	 * Resource ID; equal identities select the newest advertised descriptor.
+	 */
+	async findResourceEntry(
+		publisher: string,
+		resourceId: string
+	): Promise<FilesystemEntry | undefined> {
+		let newest: FilesystemEntry | undefined;
+		for (const root of await this.listRoots()) {
+			const entries = await this.listByRootPath(root.publisher, root.rootPath);
+			for (const entry of entries) {
+				const { descriptor } = entry;
+				if (descriptor.metadata.publisher !== publisher ||
+					descriptor.metadata.resourceId !== resourceId) continue;
+				if (!newest || descriptor.metadata.modifiedAt > newest.descriptor.metadata.modifiedAt) {
+					newest = entry;
+				}
+			}
+		}
+		return newest;
+	}
+
+	/** Return the newest mounted Resource descriptor without Filesystem presentation context. */
+	async findResourceDescriptor(
+		publisher: string,
+		resourceId: string
+	): Promise<ResourceDescriptor | undefined> {
+		return (await this.findResourceEntry(publisher, resourceId))?.descriptor;
 	}
 
 	/**

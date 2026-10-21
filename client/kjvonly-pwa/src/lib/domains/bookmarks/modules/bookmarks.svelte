@@ -24,10 +24,13 @@
         BOOKMARKS_LIST_ACTIONS,
         parseBookmarksListActionResult,
         createBookmarkBrowseNavigationResult,
+        createNormalizedBookmarkBrowseNavigationResult,
         parseBookmarkRelocationCompletedResult,
+        parseNormalizedBookmarkRelocationConfirmedResult,
         parseBookmarksNavigationIntent
     } from '../models/bookmarks-navigation.model';
-    import { filterBookmarksByBibleScope } from '../services/bookmarks-bible-scope';
+    import { filterBookmarksForNavigation } from '../services/bookmarks-navigation-filter';
+    import { openNormalizedBookmarkFromMain } from './runtime/open-normalized-bookmark';
     import { formatBookmarkUpdatedAt, sortBookmarksByUpdatedAt } from './bookmarks-list-presentation';
 
     const {
@@ -35,7 +38,9 @@
         toastService,
         bibleBooknamesService,
         bibleLocationReferenceService,
-        moduleResourceSelectionResolver
+        moduleResourceSelectionResolver,
+        filesystemService,
+        resourceModuleResolver
     } = useApplicationContext();
     const { navigationState, onResult, whenActive } = useNavigationEntryContext();
     const { navigation } = useNavigationRuntimeContext();
@@ -50,6 +55,8 @@
     const intent = parseBookmarksNavigationIntent(navigationState.state);
     const relocation = intent.mode === 'relocate' ? intent : undefined;
     const browse = intent.mode !== 'relocate' ? intent : undefined;
+    const normalizedTarget = browse?.normalizedTarget;
+    const normalizedDocument = browse?.normalizedDocument;
     const bibleChapterRef = browse?.bibleChapterRef;
     const bibleLocationRef = browse?.bibleLocationRef;
     const returnBibleLocationToReader = browse?.returnBibleLocationToReader ?? false;
@@ -59,10 +66,9 @@
     let error = $state(false);
     let request = 0;
     let activeView = true;
+    // Sorting is presentation policy; scope selection belongs to a tested Domain helper.
     const visibleBookmarks = $derived(sortBookmarksByUpdatedAt(
-        relocation
-            ? bookmarks.filter((bookmark) => bookmark.target.kind === 'bible')
-            : filterBookmarksByBibleScope(bookmarks, { bibleChapterRef, bibleLocationRef }, bibleLocationReferenceService)
+        filterBookmarksForNavigation(bookmarks, intent, bibleLocationReferenceService)
     ));
 
     /** Forward a successfully confirmed relocation after this list becomes active again. */
@@ -78,6 +84,11 @@
             return;
         }
         if (!relocation) return;
+        const normalizedConfirmation = parseNormalizedBookmarkRelocationConfirmedResult(result);
+        if (normalizedConfirmation) {
+            whenActive(() => { void navigation.backWithResult(normalizedConfirmation); });
+            return;
+        }
         const completed = parseBookmarkRelocationCompletedResult(result);
         if (!completed) return;
         whenActive(() => navigation.backWithResult(
@@ -135,17 +146,43 @@
 
     /** Return to the originating Reader, or open one when browsing standalone. */
     async function openBookmark(bookmark: Bookmark): Promise<void> {
-        if (bookmark.target.kind !== 'bible') return;
+        if (relocation) {
+            // Confirmation selects the ID. The normalized Reader owns its loaded document
+            // and performs the validated write after confirmation returns.
+            navigation.pushView(BOOKMARKS_VIEWS.CONFIRM_RELOCATION, {
+                bookmarkId: bookmark.id, ...relocation
+            });
+            return;
+        }
+        if (bookmark.target.kind === 'normalized-document') {
+            if (normalizedDocument) {
+                try {
+                    await navigation.backWithResult(createNormalizedBookmarkBrowseNavigationResult(bookmark.target));
+                } catch (cause) {
+                    console.error('Could not return to normalized Bookmark word', cause);
+                    toastService.showToast('Could not open Bookmark');
+                }
+            } else if (normalizedTarget) {
+                await navigation.back();
+            } else {
+                // Main Bookmarks view: resolve a mounted Resource descriptor and
+                // open its registered Reader at this bookmarked word.
+                try {
+                    const opened = await openNormalizedBookmarkFromMain(bookmark.target, {
+                        filesystemService, resourceModuleResolver, navigation
+                    });
+                    if (!opened) {
+                        toastService.showToast('Bookmarked document is not available in mounted files');
+                    }
+                } catch (cause) {
+                    console.error('Could not open normalized Bookmark', cause);
+                    toastService.showToast('Could not open bookmarked document');
+                }
+            }
+            return;
+        }
         const locationRef = bookmark.target.bibleLocationRef;
         try {
-            if (relocation) {
-                navigation.pushView(BOOKMARKS_VIEWS.CONFIRM_RELOCATION, {
-                    bookmarkId: bookmark.id,
-                    destinationBibleLocationRef: relocation.destinationBibleLocationRef,
-                    destinationPreviewText: relocation.destinationPreviewText
-                });
-                return;
-            }
             if (returnBibleLocationToReader) {
                 await navigation.backWithResult(createBookmarkBrowseNavigationResult(locationRef));
                 return;
@@ -205,11 +242,13 @@
 {/snippet}
 
 <ViewHeader bind:headerHeight>
-    <KJVHeader title={relocation ? 'Select bookmark to move' : bibleLocationRef ? 'Location Bookmarks' : bibleChapterRef ? 'Chapter Bookmarks' : 'Bookmarks'} {leadingContent} {trailingContent}></KJVHeader>
+    <KJVHeader title={relocation ? 'Select bookmark to move' : normalizedDocument ? 'Document Bookmarks' : normalizedTarget ? 'Word Bookmarks' : bibleLocationRef ? 'Location Bookmarks' : bibleChapterRef ? 'Chapter Bookmarks' : 'Bookmarks'} {leadingContent} {trailingContent}></KJVHeader>
 </ViewHeader>
 <ViewBody {clientHeight} {headerHeight} classes="px-4">
     {#if relocation}
-        <p class="py-3 text-sm text-neutral-700">Choose an existing Bible bookmark to move to {labelBibleLocation(relocation.destinationBibleLocationRef)}.</p>
+        <p class="py-3 text-sm text-neutral-700">{relocation.normalizedDestination !== undefined
+            ? 'Choose an existing document bookmark to relocate.'
+            : `Choose an existing Bible bookmark to move to ${labelBibleLocation(relocation.destinationBibleLocationRef!)}`}</p>
     {/if}
     {#if loading}
         <p class="py-4 text-sm text-neutral-600">Loading bookmarks…</p>
@@ -217,12 +256,12 @@
         <p class="py-4 text-sm text-neutral-700" role="alert">Could not load bookmarks.</p>
         <button type="button" class="underline" onclick={() => bookmarksService.refresh()}>Retry</button>
     {:else if visibleBookmarks.length === 0}
-        <p class="py-4 text-sm text-neutral-600">{relocation ? 'No Bible bookmarks available to move.' : 'No bookmarks here yet.'}</p>
+        <p class="py-4 text-sm text-neutral-600">{relocation ? 'No bookmarks available to move.' : 'No bookmarks here yet.'}</p>
     {:else}
         <ul>
             {#each visibleBookmarks as bookmark (bookmark.id)}
                 <li class="py-3 transition-colors duration-150 hover:bg-neutral-100 focus-within:bg-neutral-100">
-                    {#if bookmark.target.kind === 'bible'}
+                    {#if bookmark.target.kind === 'bible' || relocation || (!normalizedTarget && !normalizedDocument)}
                         <button
                             type="button"
                             class="flex min-h-12 w-full min-w-0 items-start gap-3 py-2 text-start focus-visible:outline-2 focus-visible:outline-primary-500"
@@ -231,11 +270,16 @@
                         >
                             {@render bookmarkDetails(bookmark)}
                         </button>
-                    {:else}
-                        <div class="flex w-full min-w-0 items-start gap-3 py-2">
+                    {:else if normalizedTarget || normalizedDocument}
+                        <!-- Both normalized Browse modes return to their mounted Reader. -->
+                        <button
+                            type="button"
+                            class="flex min-h-12 w-full min-w-0 items-start gap-3 py-2 text-start focus-visible:outline-2 focus-visible:outline-primary-500"
+                            aria-label="Return to bookmarked word"
+                            onclick={() => void openBookmark(bookmark)}
+                        >
                             {@render bookmarkDetails(bookmark)}
-                        </div>
-                        <p class="pb-2 pl-8 text-xs text-neutral-500">Normalized-document Reader integration is not available yet.</p>
+                        </button>
                     {/if}
                     {#if !relocation}
                         <div class="flex justify-end gap-2 pb-2">

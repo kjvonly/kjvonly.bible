@@ -26,6 +26,23 @@ A handoff explains architectural intent, history, rejected approaches, and what 
 
 ---
 
+## Code-review, scope, and implementation discipline
+
+For audits and code changes, follow `docs/05_developer-guide/005-code-quality-and-assumptions.md` alongside the Change Workflow and Testing and Patch Workflow.
+
+- **Verify before designing.** Use the latest supplied source, applicable architecture, existing tests, and actual user workflow. Distinguish established requirements, observed defects, and hypothetical possibilities.
+- **Do not introduce unstated product rules.** If a missing requirement materially changes behavior or ownership, ask one focused question. Otherwise preserve the existing contract and proceed with a small change.
+- **Trace architectural ownership.** Establish which Domain or layer owns meaning, validation, persistence, data acceptance, notifications, and presentation; avoid implementing an owner's rules again in consumers.
+- **Remove demonstrated redundancy.** Look for duplicated checks, derived-but-stored state, repeated queries, unnecessary subscriptions, redundant transformations, and effects already handled by existing APIs.
+- **Preserve distinct contracts.** Do not conflate external resources, local accepted data, subscriptions, UI navigation, or asynchronous completion. Keep guards when they protect a genuinely separate correctness boundary.
+- **Favor explicit code.** Use descriptive names and JSDoc, straightforward handlers, explicit state transitions, braced returns in touched code, and extraction only for a meaningful responsibility.
+- **Avoid change for its own sake.** An audit may correctly conclude that no patch is necessary. Do not invent abstractions, lifecycle machinery, or tests merely to demonstrate progress.
+- **Test and patch against reality.** Diagnose failing tests before changing expectations. Match the newest source plus confirmed applied patches, and report precisely which validation ran.
+
+Keep product- or feature-specific workflows in their owning implementation and feature documentation; do not turn a single feature's current mechanics into a universal architectural rule.
+
+---
+
 # 1. Project Overview
 
 Repository:
@@ -1001,6 +1018,16 @@ do not produce implementation changes.
 Discuss the architecture/finding first and wait until I tell you to continue.
 
 If an investigation reveals a potentially important architectural change, explain it before broadening the implementation scope.
+
+---
+
+## 21.1 Cleanup and audit stopping rule
+
+Before changing anything, identify the specific incorrect behavior, duplicated responsibility, misleading contract, unnecessary complexity, or missing test. Trace where that responsibility belongs and whether an existing API already covers it.
+
+If a proposed change depends on an unestablished product assumption, make it explicit and clarify it when consequential. If current boundaries and behavior are correct, report that conclusion and move to the next item rather than manufacturing a patch.
+
+See `docs/05_developer-guide/005-code-quality-and-assumptions.md` for the full checklist.
 
 ---
 

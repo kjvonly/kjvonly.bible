@@ -123,5 +123,81 @@ describe(
 				});
 			}
 		);
+
+	it('creates a document Note without Bible loading or unsafe HTML', () => {
+		const note = createNewNoteDraft({
+			kind: 'normalized-document', id: 'note-doc', now: 7,
+			documentTitle: 'Henry <Genesis> & Friends',
+			association: {
+				kind: 'normalized-document',
+				document: { publisher: 'doc-owner', resourceId: 'opaque/path' },
+				target: { kind: 'document' }
+			}
+		});
+		expect(note).toMatchObject({
+			bibleLocationRef: undefined,
+			bibleReferenceText: undefined,
+			title: 'Henry <Genesis> & Friends',
+			html: '<h1>Henry &lt;Genesis&gt; &amp; Friends</h1><p></p>',
+			association: { target: { kind: 'document' } }
+		});
+	});
+
+	it('retains word Note prepopulation when a title is explicitly supplied', () => {
+		const note = createNewNoteDraft({
+			kind: 'normalized-document', id: 'note-titled-word', now: 8,
+			documentTitle: 'Genesis 1',
+			association: {
+				kind: 'normalized-document',
+				document: { publisher: 'doc-owner', resourceId: 'opaque/path' },
+				target: { kind: 'word', address: { blockId: 'p1', contentIndex: 2 } }
+			}
+		});
+		expect(note).toMatchObject({
+			title: 'Genesis 1 — Word Note',
+			text: 'Genesis 1 — Word Note\n',
+			html: '<h1>Genesis 1 — Word Note</h1><p></p>'
+		});
+	});
+
+	it('keeps an empty document title from prepopulating a document Note', () => {
+		const note = createNewNoteDraft({
+			kind: 'normalized-document', id: 'note-empty', now: 8,
+			documentTitle: '',
+			association: {
+				kind: 'normalized-document',
+				document: { publisher: 'doc-owner', resourceId: 'opaque/path' },
+				target: { kind: 'document' }
+			}
+		});
+		expect(note).toMatchObject({
+			title: 'Note',
+			text: '',
+			html: '',
+			association: { target: { kind: 'document' } }
+		});
+	});
+
+	it('creates a word Note with an address scoped only by Resource identity', () => {
+		const note = createNewNoteDraft({
+			kind: 'normalized-document', id: 'note-word', now: 9,
+			association: {
+				kind: 'normalized-document',
+				document: { publisher: 'doc-owner', resourceId: 'opaque/path' },
+				target: { kind: 'word',
+					address: { blockId: 'b', contentIndex: 5 } }
+			}
+		});
+		expect(note).toMatchObject({
+			title: 'Note',
+			text: '',
+			html: ''
+		});
+		expect(note.association?.target).toEqual({
+			kind: 'word',
+			address: { blockId: 'b', contentIndex: 5 }
+		});
+	});
+
 	}
 );

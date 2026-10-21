@@ -1,5 +1,6 @@
 import {
-	NOTE_DATA_TYPE
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION
 } from '../resources/notes-resource-contract';
 
 import type {
@@ -103,7 +104,7 @@ export class IndexedDBNotesWriteTransaction
 										NOTE_DATA_TYPE,
 
 									dataVersion:
-										1,
+										NOTE_DATA_VERSION,
 
 									objectId:
 										note.id,

@@ -112,6 +112,10 @@ function createResourceValue(
 		bibleReferenceText:
 			note.bibleReferenceText,
 
+		...(note.association !== undefined
+			? { association: note.association }
+			: {}),
+
 		text:
 			note.text,
 

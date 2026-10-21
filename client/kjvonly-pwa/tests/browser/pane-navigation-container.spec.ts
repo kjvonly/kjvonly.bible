@@ -287,6 +287,39 @@ describe(
 			}
 		);
 
+		it('notifies retained views whenever they become active again', async () => {
+			const target = document.createElement('div');
+			document.body.append(target);
+			const navigation = createPaneNavigation();
+			navigation.pushModule(Modules.PLANS, PLANS_DETAILS_VIEW, { subID: 'plan-1' });
+			const host = mount(PaneNavigationTestHost, { target, props: { navigation } });
+
+			const activationCount = () => requireElement<HTMLElement>(
+				target, `[data-pane-navigation-activations="${PLANS_DETAILS_VIEW}"]`
+			).textContent;
+
+			try {
+				await tick();
+				expect(activationCount()).toBe('0');
+
+				navigation.pushModule(Modules.BIBLE, BIBLE_READER_VIEW, {});
+				await tick();
+				expect(activationCount()).toBe('0');
+				navigation.back();
+				await tick();
+				expect(activationCount()).toBe('1');
+
+				navigation.pushModule(Modules.BIBLE, BIBLE_READER_VIEW, {});
+				await tick();
+				navigation.back();
+				await tick();
+				expect(activationCount()).toBe('2');
+			} finally {
+				await unmount(host);
+				target.remove();
+			}
+		});
+
 		it(
 			'completes returned Plan progress before Bible is popped',
 			async () => {

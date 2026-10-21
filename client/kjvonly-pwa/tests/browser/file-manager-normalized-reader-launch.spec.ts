@@ -55,6 +55,10 @@ import {
 	parseBibleLocationRef
 } from '$lib/domains/bible';
 import {
+	NOTES_COLLECTION_CHANGED, NOTES_VIEWS,
+	type Note, type NotesSearchResult
+} from '$lib/domains/notes';
+import {
 	FilesystemService,
 	type FilesystemEntry
 } from '$lib/domains/filesystem';
@@ -91,6 +95,9 @@ import {
 
 import FileManagerNormalizedReaderHost from './fixtures/file-manager-normalized-reader-host.svelte';
 import BibleReferenceNavigationTarget from './fixtures/bible-reference-navigation-target.svelte';
+import NotesNormalizedWordNavigationTarget from './fixtures/notes-normalized-word-navigation-target.svelte';
+import BookmarkBrowseNavigationTarget from './fixtures/bookmarks-normalized-browse-navigation-target.svelte';
+import { BOOKMARKS_VIEWS } from '$lib/domains/bookmarks';
 
 // Filesystem path deliberately differs from the published Resource identity.
 const FILE_PATH = 'library/commentary/matthew-henry/genesis/Genesis-1.nd.json';
@@ -205,10 +212,15 @@ describe('File Manager → Normalized Content Reader', () => {
 				{ loadDescriptor },
 				new ResourceDescriptorValidator()
 			);
+			let authenticatedPublisher: string | undefined;
+			// Multiple mounted Readers must each receive account changes.
+			const authenticationSubscribers = new Set<() => void>();
 			const registry = new NavigationViewRegistry();
 			registry.registerAll([
 				{ view: FILE_MANAGER_VIEWS.BROWSER, component: FileManagerNavigationEntry },
 				{ view: BIBLE_VIEWS.READER, component: BibleReferenceNavigationTarget },
+				{ view: NOTES_VIEWS.ROOT, component: NotesNormalizedWordNavigationTarget },
+				{ view: BOOKMARKS_VIEWS.ROOT, component: BookmarkBrowseNavigationTarget },
 				...normalizedContentNavigationViewRegistrations
 			]);
 			const builder = new NavigationStateBuilder({
@@ -233,6 +245,30 @@ describe('File Manager → Normalized Content Reader', () => {
 			});
 
 			const showToast = vi.fn();
+			const createBookmark = vi.fn(async (..._args: unknown[]) => ({ id: 'test-bookmark' }));
+			const relocateBookmark = vi.fn(async (..._args: unknown[]) => ({ id: 'test-bookmark' }));
+			let acceptedNotes: Record<string, Note> = {};
+			let notesSubscribers: Array<{
+				subID: string;
+				id: string;
+				fn: (result: NotesSearchResult) => void;
+			}> = [];
+			const dispatchNotes = (id: string) => {
+				for (const subscriber of [...notesSubscribers]) {
+					if (subscriber.id === id) {
+						subscriber.fn({ id, notes: acceptedNotes });
+					}
+				}
+			};
+			const notesService = {
+				subscribe: (subID: string, id: string, fn: (result: NotesSearchResult) => void) => {
+					notesSubscribers.push({ subID, id, fn });
+				},
+				unsubscribe: (subID: string) => {
+					notesSubscribers = notesSubscribers.filter((subscriber) => subscriber.subID !== subID);
+				},
+				getAllNotes: (id: string) => queueMicrotask(() => dispatchNotes(id))
+			};
 			const applicationContext = {
 				settingsService: new SettingsService(),
 				filesystemService,
@@ -241,11 +277,36 @@ describe('File Manager → Normalized Content Reader', () => {
 					normalizedContentResourceModuleRegistrations
 				),
 				normalizedContentService,
-				authenticationService: {
+				notesService,
+				bookmarksService: {
+					create: createBookmark,
+					relocate: relocateBookmark,
+					// The Reader subscribes once per mount, even when this fixture has no Bookmarks.
 					subscribe: () => () => {},
-					tryGetUserId: () => undefined
+					listForNormalizedDocument: async () => []
+				},
+				authenticationService: {
+					subscribe: (callback: () => void) => {
+						authenticationSubscribers.add(callback);
+						callback();
+						return () => { authenticationSubscribers.delete(callback); };
+					},
+					tryGetUserId: () => authenticatedPublisher
 				},
 				normalizedContentTextMarkupService: {
+					// This fixture has no locally accepted markup; get() supplies the result.
+					getLocal: vi.fn(async () => undefined),
+					get: vi.fn(async (publisher: string, resource: ResourceDescriptor) => ({
+						id: `markup-${publisher}-${resource.metadata.resourceId}`,
+						document: {
+							publisher: resource.metadata.publisher,
+							resourceId: resource.metadata.resourceId,
+							modifiedAt: resource.metadata.modifiedAt
+						},
+						markings: {}
+					})),
+					put: vi.fn(async () => {}),
+					subscribe: vi.fn(),
 					unsubscribe: vi.fn()
 				},
 				applicationReferenceResolver: new ApplicationReferenceResolver([
@@ -416,6 +477,304 @@ describe('File Manager → Normalized Content Reader', () => {
 						expect(get(navigation.views).at(-1)?.navigationState.state.sequenceIndex)
 							.toBe(0);
 					});
+
+					// Document-scoped Browse returns the chosen canonical word to this same Reader.
+					// A rendered separator shares contentIndex 6 with its word.
+					// Spy on the semantic word, not the preceding whitespace span.
+					const selectedWord = target!.querySelector<HTMLAnchorElement>(
+						'#poc-paragraph-3 [data-normalized-content-kind="word"][data-normalized-content-index="6"]'
+					)!;
+					expect(selectedWord.textContent).toBe('Job');
+					expect(target!.querySelector(
+						'#poc-paragraph-3 [data-normalized-content-kind="separator"][data-normalized-content-index="6"]'
+					)).not.toBeNull();
+					const scrollToWord = vi.fn();
+					selectedWord.scrollIntoView = scrollToWord;
+					const browseMore = [...target!.querySelectorAll<HTMLButtonElement>(
+						'button[aria-label="More actions. Press and hold to open modules."]'
+					)].at(-1)!;
+					browseMore.click();
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
+						.toBe(NORMALIZED_CONTENT_VIEWS.OVERFLOW_ACTIONS));
+					const browseAction = [...target!.querySelectorAll<HTMLButtonElement>('button')]
+						.find((button) => button.textContent?.trim() === 'Browse document bookmarks');
+					expect(browseAction).toBeDefined();
+					browseAction!.click();
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState)
+						.toMatchObject({ module: Modules.BOOKMARKS, view: BOOKMARKS_VIEWS.ROOT,
+							state: { normalizedDocument: {
+								publisher: entry.descriptor.metadata.publisher,
+								resourceId: entry.descriptor.metadata.resourceId
+							} } }));
+					target!.querySelector<HTMLButtonElement>(
+						'[data-testid="normalized-bookmark-browse-destination"] button'
+					)!.click();
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
+						.toBe(NORMALIZED_CONTENT_VIEWS.READER));
+					await vi.waitFor(() => expect(scrollToWord)
+						.toHaveBeenCalledWith({ block: 'center' }));
+					expect(target!.querySelector(
+						'#poc-paragraph-3 [data-normalized-content-kind="word"][data-normalized-content-index="6"]'
+					)).toBe(selectedWord);
+				}
+
+				if (attempt === 0) {
+					// A Bookmark launched from the main module opens a fresh Reader and
+					// positions its canonical word after the document has rendered.
+					const originalScroll = Object.getOwnPropertyDescriptor(
+						HTMLElement.prototype, 'scrollIntoView'
+					);
+					const launchScroll = vi.fn(function (this: HTMLElement, _options: ScrollIntoViewOptions) {
+						return this;
+					});
+					Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+						configurable: true, writable: true, value: launchScroll
+					});
+					try {
+						navigation.pushModule(Modules.NORMALIZED_CONTENT, NORMALIZED_CONTENT_VIEWS.READER, {
+							descriptor: entry.descriptor,
+							bookmarkTarget: {
+								kind: 'normalized-document',
+								document: {
+									publisher: entry.descriptor.metadata.publisher,
+									resourceId: entry.descriptor.metadata.resourceId
+								},
+								address: { kind: 'word', blockId: 'poc-paragraph-3', contentIndex: 6 }
+							}
+						});
+						await vi.waitFor(() => {
+							expect(launchScroll).toHaveBeenCalledWith({ block: 'center' });
+							expect(launchScroll.mock.instances.some((word) =>
+								word instanceof HTMLElement &&
+								word.dataset.normalizedContentKind === 'word' &&
+								word.dataset.normalizedContentIndex === '6' &&
+								word.closest('[data-normalized-block]')?.id === 'poc-paragraph-3'
+							)).toBe(true);
+						});
+						navigation.back();
+						await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
+							.toBe(NORMALIZED_CONTENT_VIEWS.READER));
+						// The temporary Reader unmounts; the original Reader must still
+						// receive authentication changes used by its Notes edit flow.
+						await vi.waitFor(() => expect(authenticationSubscribers.size).toBe(1));
+					} finally {
+						if (originalScroll) Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScroll);
+						else delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+					}
+				}
+
+				if (attempt === 0) {
+					// As in the Bible Reader, Notes actions live in Edit options.
+					authenticatedPublisher = 'notes-test-publisher';
+					for (const notify of authenticationSubscribers) notify();
+					const originalDocumentNode = target!.querySelector('#poc-heading-3');
+					const findEditButton = () => [...target!.querySelectorAll<HTMLButtonElement>('button')]
+						.find((button) => button.textContent?.trim() === 'Edit');
+					const openEdit = async () => {
+						// Authentication and pane Back update Svelte state before the DOM.
+						// Flush those changes so we do not click a stale Edit button.
+						await tick();
+						await vi.waitFor(() => expect(findEditButton()?.disabled).toBe(false));
+						findEditButton()!.click();
+						await vi.waitFor(() => expect(target!.querySelector('button[aria-label="add note"]'))
+							.not.toBeNull());
+					};
+					await openEdit();
+					expect(target!.querySelector('[aria-label="note actions"]')).not.toBeNull();
+					// Document Notes saves the markup draft and opens the existing Notes module.
+					target!.querySelector<HTMLButtonElement>('button[aria-label="document notes"]')!.click();
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState)
+						.toMatchObject({ module: Modules.NOTES, view: NOTES_VIEWS.ROOT, state: {
+							normalizedDocument: { scope: { kind: 'document', document: {
+								publisher: entry.descriptor.metadata.publisher,
+								resourceId: entry.descriptor.metadata.resourceId
+							} } }
+						} }));
+					target!.querySelector<HTMLButtonElement>(
+						'[data-testid="normalized-word-notes-destination"] button'
+					)!.click();
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
+						.toBe(NORMALIZED_CONTENT_VIEWS.READER));
+
+					const openWordSelection = async () => {
+						await openEdit();
+						target!.querySelector<HTMLButtonElement>('button[aria-label="add note"]')!.click();
+						await vi.waitFor(() => expect(target!.textContent)
+							.toContain('Select a word for the note'));
+						expect(target!.querySelector('button[aria-label="text color"]')).toBeNull();
+					};
+
+					await openWordSelection();
+					expect(target!.querySelector('[aria-label="Next document"]')).toBeNull();
+					target!.querySelector<HTMLButtonElement>(
+						'button[aria-label="cancel note location selection"]'
+					)!.click();
+					await vi.waitFor(() => expect(target?.textContent)
+						.not.toContain('Select a word for the note'));
+					// Cancel returns to the markup toolbar, not reading mode.
+					expect(target!.querySelector('button[aria-label="text color"]')).not.toBeNull();
+					target!.querySelector<HTMLButtonElement>('button[aria-label="add note"]')!.click();
+					await vi.waitFor(() => expect(target!.textContent)
+						.toContain('Select a word for the note'));
+					const bibleLink = target!.querySelector<HTMLAnchorElement>(
+						'a[href="bibleLocationReference:22_35_10"]'
+					);
+					const blockId = bibleLink!.closest('[data-normalized-block]')!.id;
+					const contentIndex = Number(bibleLink!.dataset.normalizedContentIndex);
+					const modified = new MouseEvent('click', {
+						bubbles: true, cancelable: true, ctrlKey: true
+					});
+					bibleLink!.dispatchEvent(modified);
+					expect(modified.defaultPrevented).toBe(true);
+					expect(get(navigation.views).at(-1)?.navigationState.view)
+						.toBe(NORMALIZED_CONTENT_VIEWS.READER);
+					const clicked = new MouseEvent('click', { bubbles: true, cancelable: true });
+					bibleLink!.dispatchEvent(clicked);
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState)
+						.toMatchObject({ module: Modules.NOTES, view: NOTES_VIEWS.ROOT, state: {
+								normalizedDocument: {
+									scope: { kind: 'document', document: {
+										publisher: entry.descriptor.metadata.publisher,
+										resourceId: entry.descriptor.metadata.resourceId
+									} },
+									createTarget: { kind: 'normalized-document',
+										target: { kind: 'word', address: { blockId, contentIndex } } }
+								}
+						} }));
+					expect(clicked.defaultPrevented).toBe(true);
+					expect(target!.querySelector('[data-testid="bible-reference-destination"]'))
+						.toBeNull();
+					target!.querySelector<HTMLButtonElement>(
+						'[data-testid="normalized-word-notes-destination"] button'
+					)!.click();
+					await vi.waitFor(() => {
+						expect(get(navigation.views).at(-1)?.navigationState.view)
+							.toBe(NORMALIZED_CONTENT_VIEWS.READER);
+						expect(target!.querySelector('#poc-heading-3')).toBe(originalDocumentNode);
+						expect(target?.textContent).not.toContain('Select a word for the note');
+					});
+					// Simulate the accepted Note arriving from the Notes Module / another pane.
+					acceptedNotes = {
+						'word-note': {
+							id: 'word-note',
+							bibleLocationRef: undefined,
+							bibleReferenceText: undefined,
+							association: {
+								kind: 'normalized-document',
+								document: {
+									publisher: entry.descriptor.metadata.publisher,
+									resourceId: entry.descriptor.metadata.resourceId
+								},
+								target: { kind: 'word', address: { blockId, contentIndex } }
+							},
+							text: 'Test', html: '<p>Test</p>', title: 'Word Note',
+							dateCreated: 1, dateUpdated: 1, tags: []
+						}
+					};
+					dispatchNotes(NOTES_COLLECTION_CHANGED);
+					const marker = () => target!.querySelector<HTMLButtonElement>(
+						`button[data-normalized-word-note][data-normalized-note-block="${blockId}"][data-normalized-note-index="${contentIndex}"]`
+					);
+					await vi.waitFor(() => expect(marker()).not.toBeNull());
+					expect(marker()!.closest('a')).toBeNull();
+					marker()!.click();
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState)
+						.toMatchObject({ module: Modules.NOTES, view: NOTES_VIEWS.ROOT, state: {
+							normalizedDocument: { scope: { kind: 'word', address: { blockId, contentIndex } } }
+						} }));
+					expect(target!.querySelector('[data-testid="bible-reference-destination"]')).toBeNull();
+					target!.querySelector<HTMLButtonElement>(
+						'[data-testid="normalized-word-notes-destination"] button'
+					)!.click();
+					await vi.waitFor(() => expect(marker()).not.toBeNull());
+					// Add Bookmark follows the Bible edit-toolbar pattern: choose a
+					// canonical word, save markup, persist, and remain in this Reader.
+					await openEdit();
+					const addBookmark = () => target!.querySelector<HTMLButtonElement>(
+						'button[aria-label="add bookmark"]'
+					);
+					expect(addBookmark()).not.toBeNull();
+					addBookmark()!.click();
+					await vi.waitFor(() => expect(target!.textContent)
+						.toContain('Select a word for the bookmark'));
+					expect(target!.querySelector('[aria-label="text color"]')).toBeNull();
+					target!.querySelector<HTMLButtonElement>(
+						'button[aria-label="cancel bookmark location selection"]'
+					)!.click();
+					await vi.waitFor(() => expect(addBookmark()).not.toBeNull());
+					expect(createBookmark).not.toHaveBeenCalled();
+					addBookmark()!.click();
+					await vi.waitFor(() => expect(target!.textContent)
+						.toContain('Select a word for the bookmark'));
+					const bookmarkedLink = target!.querySelector<HTMLAnchorElement>(
+						'a[href="bibleLocationReference:22_35_10"]'
+					)!;
+					const bookmarkedBlockId = bookmarkedLink.closest('[data-normalized-block]')!.id;
+					const bookmarkedIndex = Number(bookmarkedLink.dataset.normalizedContentIndex);
+					const bookmarkClick = new MouseEvent('click', { bubbles: true, cancelable: true });
+					bookmarkedLink.dispatchEvent(bookmarkClick);
+					await vi.waitFor(() => expect(createBookmark).toHaveBeenCalledOnce());
+					expect(createBookmark).toHaveBeenCalledWith({
+						kind: 'normalized-document',
+						document: {
+							publisher: entry.descriptor.metadata.publisher,
+							resourceId: entry.descriptor.metadata.resourceId
+						},
+						address: { kind: 'word', blockId: bookmarkedBlockId, contentIndex: bookmarkedIndex }
+					}, expect.any(String));
+					expect(createBookmark.mock.calls[0]?.[1]).not.toBe('');
+					expect(bookmarkClick.defaultPrevented).toBe(true);
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
+						.toBe(NORMALIZED_CONTENT_VIEWS.READER));
+					await vi.waitFor(() => expect(addBookmark()).toBeNull());
+					// The Bookmark did not follow the linked word into Bible.
+					expect(target!.querySelector('[data-testid="bible-reference-destination"]')).toBeNull();
+
+                    // Relocate: select the new word before selecting the existing ID.
+                    await openEdit();
+                    target!.querySelector<HTMLButtonElement>('button[aria-label="update bookmark"]')!.click();
+                    await vi.waitFor(() => expect(target!.textContent)
+                        .toContain('Select the new word for the bookmark'));
+                    target!.querySelector<HTMLButtonElement>(
+                        'button[aria-label="cancel bookmark location selection"]'
+                    )!.click();
+                    await vi.waitFor(() => expect(target!.querySelector('button[aria-label="update bookmark"]'))
+                        .not.toBeNull());
+                    expect(relocateBookmark).not.toHaveBeenCalled();
+                    target!.querySelector<HTMLButtonElement>('button[aria-label="update bookmark"]')!.click();
+                    const destinationWord = target!.querySelector<HTMLAnchorElement>(
+                        'a[href="bibleLocationReference:22_35_10"]'
+                    )!;
+                    destinationWord.click();
+                    await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState)
+                        .toMatchObject({ module: Modules.BOOKMARKS, view: BOOKMARKS_VIEWS.ROOT,
+                            state: { mode: 'relocate', normalizedDestination: {
+                                kind: 'normalized-document',
+                                document: { publisher: entry.descriptor.metadata.publisher,
+                                    resourceId: entry.descriptor.metadata.resourceId },
+                                address: { kind: 'word', blockId: bookmarkedBlockId,
+                                    contentIndex: bookmarkedIndex }
+                            } } }));
+                    expect(createBookmark).toHaveBeenCalledOnce();
+                    target!.querySelector<HTMLButtonElement>(
+                        '[data-testid="normalized-bookmark-relocation-destination"] button'
+                    )!.click();
+                    await vi.waitFor(() => expect(relocateBookmark).toHaveBeenCalledOnce());
+                    expect(relocateBookmark).toHaveBeenCalledWith(
+                        'notes-test-publisher/default/123e4567-e89b-42d3-a456-426614174000',
+                        { kind: 'normalized-document', document: {
+                            publisher: entry.descriptor.metadata.publisher,
+                            resourceId: entry.descriptor.metadata.resourceId
+                        }, address: { kind: 'word', blockId: bookmarkedBlockId,
+                            contentIndex: bookmarkedIndex } },
+                        expect.any(String)
+                    );
+                    await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
+                        .toBe(NORMALIZED_CONTENT_VIEWS.READER));
+                    expect(target!.querySelector('[data-testid="bible-reference-destination"]')).toBeNull();
+
+					authenticatedPublisher = undefined;
+					for (const notify of authenticationSubscribers) notify();
 				}
 
 				const navigationButton = (label: string) =>
@@ -473,6 +832,7 @@ describe('File Manager → Normalized Content Reader', () => {
 					expect(target?.querySelector('#poc-heading-3')?.textContent)
 						.toContain('Genesis');
 				});
+				expect(target!.querySelector('[data-normalized-word-note]')).toBeNull();
 				expect(next()?.disabled).toBe(true);
 				expect(previous()?.disabled).toBe(false);
 				previous()?.click();
@@ -483,6 +843,15 @@ describe('File Manager → Normalized Content Reader', () => {
 						.some((element) => element.textContent?.trim() === 'Genesis-1'))
 						.toBe(true);
 				});
+
+				if (attempt === 0) {
+					await vi.waitFor(() => expect(target!.querySelector('[data-normalized-word-note]'))
+						.not.toBeNull());
+					acceptedNotes = {};
+					dispatchNotes(NOTES_COLLECTION_CHANGED);
+					await vi.waitFor(() => expect(target!.querySelector('[data-normalized-word-note]'))
+						.toBeNull());
+				}
 
 				const back = [...(target?.querySelectorAll<HTMLButtonElement>(
 					'button[aria-label="Back. Press and hold to exit pane."]'

@@ -126,10 +126,10 @@ Implementation may select other names, but preserve the **identity distinctions 
 ### 4.1 Saved display metadata (domain and Resource contract implemented)
 
 - `updatedAt` is a UTC Unix-epoch **millisecond** number, set by the Bookmarks service on **creation and successful relocation**; consumers display it in local format. Values must be positive safe integers. The clock is injectable and relocation advances at least one millisecond even if the clock has not advanced. It is not the Resource publication `modifiedAt`, which serves ordering/currentness. Use an injectable clock for deterministic tests.
-- `previewText` is a validated **plain-text snapshot** bounded to 4096 UTF-16 code units and captured from the selected content, not a live content reference. Selecting an individual Bible word still snapshots the **containing verse**, not just that word. For normalized content, a sentence/context preview is deferred with its Reader integration.
+- `previewText` is a validated **plain-text snapshot** bounded to 4096 UTF-16 code units and captured from the selected content, not a live content reference. Selecting an individual Bible word still snapshots the **containing verse**, not just that word. For normalized content, the Reader captures a short word-context preview.
 - The Reader/owning content layer will supply the actual display text from its loaded content, while Bookmarks validates, stores and publishes the snapshot. The Bookmarks list renders it without loading every referenced chapter or document. The source translation may differ from a later Reader selection: **preview text is context, not authoritative Scripture or a target identity**.
 - Relocation refreshes `target`, `updatedAt` and `previewText` together under the **same Bookmark ID** and one existing atomic Domain/Outbox transaction. Neither display field affects target matching. Deletion is still by ID.
-- The model, Data Type validation, factory, Resource representation, publication, persistence and service tests use the single `kjvonly.bookmark` / `1` contract with required `updatedAt` and `previewText` fields. No compatibility handler or installed-object migration is retained during development. Target-only Bookmark Resources or stored objects created before this contract change must be cleared or republished in the development environment. Empty previews remain valid for Bookmark producers without a Reader snapshot, including deferred normalized-document integration.
+- The model, Data Type validation, factory, Resource representation, publication, persistence and service tests use the single `kjvonly.bookmark` / `1` contract with required `updatedAt` and `previewText` fields. No compatibility handler or installed-object migration is retained during development. Target-only Bookmark Resources or stored objects created before this contract change must be cleared or republished in the development environment. Empty previews remain valid for callers without available preview metadata.
 
 
 ### 4.2 Target comparison and duplicate policy
@@ -150,7 +150,7 @@ Each normalized Bookmark targets **exactly one normalized-document Resource**, u
 - The Bookmark's **owner/publisher** identifies who may edit the Bookmark and is separate from the **document publisher** inside the target.
 - Two Resources containing identical words or normalized blocks, but published under different identities, have **different Bookmark targets**. Cross-publisher equivalence is deliberately unsupported.
 - A different Reader opening the *same* publisher + Resource ID can display the Bookmark at the saved word address, subject to anchor validation.
-- Document Resource IDs are opaque and may contain `/`; do not parse the combined Domain ID by naïvely splitting it into path segments. Prefer the existing Domain identity helper and preserve the two fields in the Bookmark target.
+- Document Resource IDs are opaque and may contain `/`; do not parse the combined Domain ID by naïvely splitting it into path segments. Keep the publisher and Resource ID as two opaque target fields; Bookmarks validates their structure without constructing a Normalized Document Domain Object.
 
 ### 5.2 Word anchor
 
@@ -215,7 +215,7 @@ interface BookmarksService {
 }
 ```
 
-- The service, not the Reader, stamps `updatedAt` on creation/relocation. It also verifies ownership and writes the preview snapshot together with the target. Maintain the existing normalized-document create/relocate overloads with their required loaded-document word validation; normalized Reader UI stays deferred.
+- The service, not the Reader, stamps `updatedAt` on creation/relocation. It also verifies ownership and writes the preview snapshot together with the target. Normalized-document operations use the same `create(target, previewText?)` and `relocate(id, target, previewText?)` signatures as Bible operations. Only the Normalized Content Reader interprets and validates word addresses against document content.
 - `create` allocates a new UUID even if other Bookmarks share the target. `relocate` retains the selected Bookmark's ID and Resource publication key; never delete/recreate to move it. `delete` acts on one exact ID.
 - The Reader sends the **current `bibleLocationRef`** to the chapter lookup. The Bookmark service extracts chapter scope and projects exact verse/word anchors; do not reintroduce chapter-owned filtering or per-word requests. This is analogous to Paragraphs and Pericopes loading.
 - `subscribe(listener)` is **change invalidation**, not a second canonical Bookmark store. The chapter and each mounted Bookmarks view unsubscribe through their normal lifecycle, and on notification they re-query only the projection they display. Multiple open Readers/panes must all refresh after add/move/delete. No additional custom PubSub layer or cross-component calls.
@@ -336,9 +336,17 @@ Bookmarks list -> Delete action -> Bookmarks confirmation view
 - The confirmation view identifies the Bookmark by its preview/reference. Only an explicitly confirmed action deletes it **by stable ID**, never all Bookmarks sharing the location.
 - On a failed delete, remain on the confirmation view and show the error. On success, subscriber invalidation refreshes lists and all mounted Reader markers. Cancel/Back is non-destructive.
 
-### 9.6 Normalized Content Reader — deferred
+### 9.6 Normalized Content Reader — implemented
 
-Keep the existing `publisher + resourceId` target and canonical `blockId/contentIndex` contract, but **do not integrate the normalized Reader in this Bible-first phase**. When resumed, the loaded snapshot must verify that the selected address resolves to `word`; content hashing and cross-publisher matching remain out of scope. The saved preview will be a sentence/context snapshot. Avoid modifying `NormalizedWord.svelte`, `NormalizedContentRenderer.svelte` or the normalized-document schema solely for Bookmark UI.
+The normalized Reader handles Add, inline indicators, current-document Browse,
+and destination-first relocation. The Reader verifies selected and returned word
+addresses against the loaded `NormalizedDocument`, captures `previewText`, and
+passes only the canonical target and preview to Bookmarks. The Bookmarks Domain
+never receives a `NormalizedDocument` or queries content to validate an address.
+Inline markers are projected from Bookmarks' stored Resource IDs and addresses;
+the generic renderer attaches them only to rendered word elements. The main
+Bookmarks Module also opens normalized documents through Resource-aware Reader
+navigation without retrieving content before opening the Reader.
 
 ## 10. Bookmark list presentation, rendering and accessibility
 
@@ -348,9 +356,9 @@ The Bookmarks list follows the existing **Search result row/action structure**:
 - **Independent actions:** a Delete `KJVIconButton` in the standard actions area. Clicking it is not the same event as clicking the primary content. Row click returns a location in Reader-origin Browse mode or selects an ID in Update mode; do not make one callback cover both semantics implicitly.
 - **Recognition:** even if the target is an exact word, display its **containing verse** as saved text so the reader can recognize the place. The snapshot avoids one Bible Resource lookup per Bookmark row. Preview can be stale after a version/content change; keep canonical target as source of truth.
 - **Sorting:** newest `updatedAt` first is a display default only. Never use sorting to infer which Bookmark to relocate. Stable tie-breaking is needed for equal timestamps.
-- **Normalized-document rows:** distinguish with a document icon and eventually a sentence preview. Normalized Reader opening/relocation stays deferred; avoid presenting a non-working action as enabled.
+- **Normalized-document rows:** distinguish with a document icon and eventually a sentence preview. Normalized Reader opening and relocation are implemented using canonical targets and the existing pane navigation.
 
-The shared inline `bookmark` SVG appears **immediately left** of its exact verse-number or word target, using the existing Notes affordance positioning. Group duplicates at one location instead of stacking inaccessible identical icons; selection opens a chooser/list preserving every distinct Bookmark ID. Bible markers are keyed by version-independent `bibleLocationRef`, while normalized markers (later) are keyed by exact document Resource plus word address. Missing tokens/anchors must never be guessed.
+The shared inline `bookmark` SVG appears **immediately left** of its exact verse-number or word target, using the existing Notes affordance positioning. Group duplicates at one location instead of stacking inaccessible identical icons; selection opens a chooser/list preserving every distinct Bookmark ID. Bible markers are keyed by version-independent `bibleLocationRef`, while normalized markers are keyed by exact document Resource plus word address. Missing tokens/anchors must never be guessed.
 
 Inline indicators and list views re-query on `BookmarksService` invalidation after successful local save, move and delete, or after an explicit `refresh()` (including archive import). Local cross-Reader create/delete refresh has been manually verified. Automatic invalidation after generic external installations has **not** been verified. No UI directly pushes updates into another component's local state. Preserve scrolling, text selection, markup and accessible keyboard/pointer activation, with clear errors and no success feedback before a transaction commits.
 
@@ -453,6 +461,6 @@ Keep patches small and incremental. Distinguish *existing code* from *new requir
 
 ## 15. Maintenance and remaining verification
 
-For each follow-up, inspect the most recent source, preserve Reader/Bookmarks ownership and the existing Resource and navigation boundaries, and verify the affected contracts with focused tests. Run the full browser/Vitest/build suites before declaring the Bible-first workstream complete. Investigate generic external Resource-installation invalidation separately; local PubSub and archive-import refresh do not by themselves establish that behavior. Normalized Reader integration remains deferred.
+For each follow-up, inspect the most recent source, preserve Reader/Bookmarks ownership and the existing Resource and navigation boundaries, and verify the affected contracts with focused tests. Run the full browser/Vitest/build suites before declaring the Bible-first workstream complete. Investigate generic external Resource-installation invalidation separately; local PubSub and archive-import refresh do not by themselves establish that behavior. Normalized Reader integration is described in `002-normalized-content-reader-integration.md`.
 
 Do not expand Resource-worker notification APIs or navigation infrastructure solely to satisfy a speculative Bookmark integration need.

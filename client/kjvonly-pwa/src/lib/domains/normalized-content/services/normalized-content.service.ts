@@ -1,3 +1,8 @@
+import {
+	isNormalizedReaderProfilingEnabled,
+	logNormalizedReaderServiceDuration
+} from '../runtime/normalized-content-reader-performance';
+
 import type {
 	ResourceDescriptor,
 	ResourceDescriptorValidator
@@ -86,10 +91,18 @@ export class NormalizedContentService {
 				validatedDescriptor
 			);
 
+		const profiling = isNormalizedReaderProfilingEnabled();
+		const localReadStart = profiling ? performance.now() : 0;
 		const existing =
 			await this.get(
 				documentId
 			);
+		if (profiling) {
+			logNormalizedReaderServiceDuration(
+				existing === undefined ? 'IndexedDB document lookup (miss)' : 'IndexedDB document lookup (hit)',
+				localReadStart
+			);
+		}
 
 		if (existing !== undefined) {
 			return existing;
@@ -100,15 +113,23 @@ export class NormalizedContentService {
 			validatedDescriptor.metadata.dataVersion
 		);
 
+		const installStart = profiling ? performance.now() : 0;
 		await this.resourceLoader
 			.loadDescriptor(
 				validatedDescriptor
 			);
+		if (profiling) {
+			logNormalizedReaderServiceDuration('Resource installation (network, decoding, Worker)', installStart);
+		}
 
+		const installedReadStart = profiling ? performance.now() : 0;
 		const installed =
 			await this.get(
 				documentId
 			);
+		if (profiling) {
+			logNormalizedReaderServiceDuration('IndexedDB document read after installation', installedReadStart);
+		}
 
 		if (installed === undefined) {
 			throw new Error(

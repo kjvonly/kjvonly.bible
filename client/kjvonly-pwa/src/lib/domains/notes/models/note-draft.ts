@@ -1,5 +1,6 @@
 import type {
-	Note
+	Note,
+	NormalizedDocumentNoteAssociation
 } from './note.model';
 
 interface NewNoteDraftBase {
@@ -10,6 +11,11 @@ interface NewNoteDraftBase {
 export type NewNoteDraftInput =
 	| (NewNoteDraftBase & {
 		kind: 'standalone';
+	})
+	| (NewNoteDraftBase & {
+		kind: 'normalized-document';
+		association: NormalizedDocumentNoteAssociation;
+		documentTitle?: string;
 	})
 	| (NewNoteDraftBase & {
 		kind: 'chapter';
@@ -52,6 +58,28 @@ export function createNewNoteDraft(
 					title: 'Note'
 				}
 			);
+
+		case 'normalized-document': {
+			// Keep title prepopulation available, but an empty title should
+			// create a blank Note rather than a synthetic 'Document' heading.
+			const documentTitle = input.documentTitle?.trim();
+			const title = documentTitle
+				? input.association.target.kind === 'word'
+					? `${documentTitle} — Word Note`
+					: documentTitle
+				: 'Note';
+
+			return {
+				...createNote(input, {
+					bibleLocationRef: undefined,
+					bibleReferenceText: undefined,
+					title,
+					text: documentTitle ? `${title}\n` : '',
+					html: documentTitle ? `<h1>${escapeHtml(title)}</h1><p></p>` : ''
+				}),
+				association: input.association
+			};
+		}
 
 		case 'chapter': {
 			const title =
@@ -117,4 +145,17 @@ function createNote(
 		dateUpdated: input.now,
 		tags: []
 	};
+}
+
+/** Escape display-only metadata before seeding Quill HTML. */
+function escapeHtml(value: string): string {
+	return value.replace(/[&<>"']/g, (character) => {
+		switch (character) {
+			case '&': return '&amp;';
+			case '<': return '&lt;';
+			case '>': return '&gt;';
+			case '"': return '&quot;';
+			default: return '&#39;';
+		}
+	});
 }

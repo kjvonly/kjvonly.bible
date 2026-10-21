@@ -4,6 +4,10 @@ export {
     parseBookmarksNavigationIntent,
     type BookmarksNavigationIntent,
     type BookmarksRelocationNavigationIntent,
+    type BookmarksNormalizedRelocationNavigationIntent,
+    createNormalizedBookmarkRelocationConfirmedResult,
+    parseNormalizedBookmarkRelocationConfirmedResult,
+    type NormalizedBookmarkRelocationConfirmedResult,
     parseBookmarkRelocationConfirmationState,
     parseBookmarkDeleteConfirmationState,
     type BookmarkDeleteConfirmationState,
@@ -12,7 +16,10 @@ export {
     BOOKMARKS_NAVIGATION_RESULTS,
     createBookmarkBrowseNavigationResult,
     parseBookmarkBrowseNavigationResult,
-    type BookmarkBrowseNavigationResult
+    type BookmarkBrowseNavigationResult,
+    parseNormalizedBookmarkBrowseNavigationResult,
+    createNormalizedBookmarkBrowseNavigationResult,
+    type NormalizedBookmarkBrowseNavigationResult
 } from './models/bookmarks-navigation.model';
 export type {
 	Bookmark,
@@ -32,8 +39,7 @@ export {
 
 export {
 	parseBookmarkTarget,
-	bookmarkTargetsEqual,
-	assertNormalizedBookmarkWordAddress
+	bookmarkTargetsEqual
 } from './services/bookmark-target-validation';
 
 export {

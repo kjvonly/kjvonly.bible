@@ -621,8 +621,12 @@ Do not make the renderer the persistence owner merely because it exposes token a
 
 ## 10.7 Implemented v1 lifecycle and boundaries
 
-The standalone Reader owns the in-memory edit session and the document-specific
-interaction surface. It obtains markup through
+The current `documentEditMode`/word-selection implementation below is the
+baseline for the proposed [Reader Action State Pattern](./002-reader-action-state-pattern.md).
+That refactor is a **design**, not implemented behavior.
+
+The standalone Reader owns `documentEditMode`, the shared document action
+surface for Text Markup, Notes, and Bookmarks. It obtains markup through
 `NormalizedContentTextMarkupService` for the authenticated publisher and the
 exact validated document descriptor.
 
@@ -639,11 +643,13 @@ Reader clones accepted markings into a separate mutable draft
     ↓
 click / horizontal drag edits the draft; renderer projects the classes
     ↓
-explicit Save
+Save, or a Notes/Bookmarks action that exits documentEditMode
     ↓
-service.put(draft snapshot)
-    ↓
-IndexedDB transaction: Domain Object + Resource installation + Outbox
+compare visible draft markings with accepted markings
+    ├─ unchanged → close actions without a write
+    └─ changed → service.put(draft snapshot)
+                  ↓
+                  IndexedDB transaction: Domain Object + Resource installation + Outbox
     ↓
 notify subscribers, then wake Outbox publication
 ```
@@ -661,18 +667,74 @@ a Text Markup-specific Nostr client. Archive import refreshes active Text Markup
 subscribers using the same accepted local store. No import or subscription
 callback publishes a new draft on behalf of the Reader.
 
-Reader lifecycle safeguards:
+Lookup failure and explicit new drafts:
 
-- Repeated authentication notifications for the **same publisher** do not
-  discard an open edit draft. A publisher identity change resets the edit
-  session, unsubscribes the previous identity, and invalidates old loads,
-  edit-entry attempts, and save completions (including A → B → A).
-- A subscription notification updates accepted markup. It updates displayed
-  markings only outside edit mode; while editing, the unsaved draft remains
-  independent. Cancel returns to the latest accepted markings.
-- Save captures a clone of the draft. While it is pending, the Reader disables
-  further edits and duplicate saves. A failed durable write retains the draft
-  for retry. Stale completions cannot repaint a different account's Reader.
+- On document entry, the Reader first reads the signed-in user's accepted Text
+  Markup directly from IndexedDB and displays its markings immediately, without
+  waiting for a relay. It subscribes to the same Domain object for accepted
+  updates across panes. Reading the document never requires a network lookup.
+- Independently, the Reader verifies the published Text Markup through the
+  generic Resource installation lifecycle. The Edit control remains disabled
+  until this verification completes. The service then reads accepted markup
+  from IndexedDB, which may have been updated by a newer installed Resource.
+  The Reader applies that accepted result without changing the document's
+  canonical content. A confirmed remote miss retains the local copy if one
+  exists, or provides an empty markup object otherwise.
+- A failed relay lookup **does not** prove that the local copy is current or
+  that no published markup exists. It does not clear locally rendered markings.
+  Even with saved local markup, the failure remains unresolved so selecting
+  **Edit** presents the recovery choices.
+- On lookup failure, the Reader continues displaying the document without an
+  inline warning. Selecting **Edit** opens a dedicated navigation view explaining
+  the uncertainty and listing **Retry lookup**, **Continue with new Text Markup**
+  when no saved local copy exists (or **Continue with local Text Markup** when
+  one exists), and **Continue without Text Markup**. The local choice uses the
+  accepted IndexedDB object without contacting the relay or creating an empty
+  draft. Back returns to ordinary reading without
+  selecting an option.
+- Retry is handled directly in the lookup view, displaying progress while
+  the Resource is retrieved and the accepted object is read from IndexedDB.
+  Retry checks the relay even when a saved local copy exists.
+  A failed Retry stays in that view with an error
+  and the same options. Only completed outcomes cross the navigation boundary:
+  accepted markup (`loaded`), use a saved local copy (`use-local`), start new
+  markup, or continue without markup. Choosing local markup keeps the unresolved
+  lookup state so that the next Edit action offers the choices again.
+  A successful lookup opens document actions without a second lookup. Either
+  Continue option returns to the Reader with document actions open.
+- Neither continuation choice creates or publishes markup immediately. When
+  continuing with new markup, only changed markings are saved at the normal
+  Save boundary. When continuing without markup, the palette, markup Save action,
+  and click/drag marking gestures are unavailable. No markup action is selected;
+  document action mode waits for the user to choose Notes or Bookmarks. These
+  actions do not initiate a Text Markup write.
+- A Continue choice applies to the current document action session. If the
+  lookup is still unresolved, choosing **Edit** again opens the choices view,
+  allowing the user to change their mind. A successful Retry resolves the
+  warning. Re-entering new-markup mode reuses any accepted local draft rather
+  than replacing it with an empty object.
+- The lookup decision resets when the Reader switches documents or authenticated
+  users.
+
+Reader lifecycle behavior:
+
+- A repeated authentication notification for the **same publisher** keeps the
+  current edit draft. Switching publishers resets the editor and changes the
+  active document-specific Text Markup subscription.
+- Accepted Text Markup notifications update the displayed markings, even during
+  an open edit. The latest accepted event replaces the Reader draft; there is
+  no merge of unsaved changes.
+- The Reader edits only the signed-in user's Text Markup. It permits one
+  in-flight save at a time, including across authentication changes. A save
+  captures a clone of the draft; a completed write updates the displayed
+  editor only if that Text Markup object is still active. A failed write leaves
+  the active editor open.
+- Document retrieval uses the currently selected Resource identity, not a
+  Reader-local generation counter. Concurrent requests for that same identity
+  use last-completion-wins behavior.
+- Notes collection notifications refresh word-note indicators, and Bookmarks
+  collection notifications refresh Bookmark indicators. Neither mutates the
+  canonical Normalized Document.
 - Subscription callbacks are observer notifications, not part of the durable
   commit. One throwing subscriber is logged without blocking the others or
   preventing the Outbox wakeup.
@@ -1191,3 +1253,55 @@ blockId + contentIndex
 ```
 
 This mirrors the successful Bible Text Markup model while remaining native to the `NormalizedDocument` contract.
+
+---
+
+# Height-Driven Nested Reader Block Rendering
+
+**Status:** Current Reader implementation (October 2026).
+
+The accepted `NormalizedDocument` is kept complete in memory. The standalone
+Reader bounds **DOM work** by rendering canonical leaf blocks in depth-first
+order, including those nested under quotes, lists, list-items, tables, figures,
+and other structural blocks. A table row is one atomic window unit: all
+cells are mounted together to preserve table structure. One incremental
+operation adds one complete renderable leaf or row. Its necessary ancestor
+elements are projected without mounting unrelated descendants. The projection does not change the original
+Normalized Document, its canonical IDs, word `contentIndex`, or inline anchors.
+
+The window is height-driven, **not a fixed number of blocks**. After each added
+block and Svelte DOM update, the Reader measures the rendered leaf bounds within
+its existing `ViewBody` scroll container. Initially it aims for approximately
+three screens of content. As the user scrolls, it retains roughly one viewport
+above and one below, with a half-screen refill threshold to avoid churn. A leaf
+is removed only when its removal will preserve the one-screen buffer. Scroll
+anchoring retains the visible leaf's pixel position when leaves are inserted or
+removed above it. A single particularly large leaf or row is indivisible and may
+exceed the intended height; no word, paragraph, or table row is split.
+Ordered lists retain original item numbering when earlier items are outside
+the rendered window. Empty and single-leaf documents stop at their canonical
+boundaries without attempting extra window changes.
+
+**Triggers:** one passive scroll handler with checks throttled to at most once
+per 100 ms, initial Reader mount, navigation reactivation, and changes to the
+Pane's existing reactive `clientWidth`/`clientHeight` context. No
+`ResizeObserver`, `IntersectionObserver`, background polling, or second scroll container. Work stops when the Reader is
+hidden or disposed. Work started before a document reset or explicit navigation
+jump is invalidated rather than applying stale window or scroll-anchor changes.
+Reconciliation yields the browser a paint opportunity after approximately one second of block-by-block work before continuing. The trailing
+accent spinner remains until the final canonical leaf enters the window.
+Floating Previous/Next controls distinguish the **actual** document boundaries
+from the current rendered window's scroll boundaries: reaching the latter does
+not force the controls visible while more canonical leaves remain. Controls
+start visible for each loaded document, hide on downward scrolling, and return
+on upward scrolling. Height-window scroll-anchor corrections do not change
+control visibility, because they are not user scrolling.
+
+Bookmark targets and local anchors are resolved to a canonical leaf index
+without mounting preceding blocks. The Reader mounts that leaf and its ancestor
+structure, scrolls to its semantic word/anchor, then reconciles the surrounding
+viewport. This preserves Back, Notes, Bookmarks, Text Markup, and ordinary
+non-windowed `NormalizedContentRenderer` consumers.
+
+The window's numeric indices are **presentation-only** and are never persisted
+as Bookmark, Note, or Text Markup identities.

@@ -18,6 +18,14 @@ Do not generate PWA patches relative to `client/kjvonly-pwa` when the patch is e
 
 ---
 
+# Baseline And Patch Integrity
+
+Treat the newest supplied source as the implementation baseline. Replay only changes the user has confirmed applied. A failed patch must be checked against the actual conflicting file and rebased; a failed download must not change the code.
+
+When re-uploading identical content, use a `-v2`, `-v3`, etc. suffix without changing its bytes. When correcting content, document the difference and verify the corrected patch against the current baseline.
+
+---
+
 # Applying a Patch
 
 Check before applying:
@@ -64,6 +72,16 @@ Examples:
 * browser tests for Worker/WebSocket/IndexedDB/browser-only behavior.
 
 Do not expose private runtime infrastructure through `ApplicationContext` only to make a test easier to write.
+
+---
+
+# Diagnose Existing Test Failures First
+
+Before changing production code or expectations, distinguish between a real regression, an outdated fixture/mock, an asynchronous test synchronization issue, an intentional requirement change, or a mismatched source baseline.
+
+Trace the contract and reproduce the failure when possible. Fix production for production defects; fix fixtures when they misrepresent the current contract. Never relax an assertion solely to make tests pass.
+
+Write tests for actual workflows and owned contracts. Do not freeze speculative requirements or incidental implementation structure. State exactly which validation steps were run and which were not.
 
 ---
 

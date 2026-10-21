@@ -1,7 +1,10 @@
 export type {
 	Note,
 	NoteTag,
-	NotesById
+	NotesById,
+	NormalizedDocumentNoteAddress,
+	NormalizedDocumentNoteIdentity,
+	NormalizedDocumentNoteAssociation
 } from './models/note.model';
 
 export type {
@@ -57,9 +60,24 @@ export {
 	NOTES_BIBLE_SCOPE_KINDS,
 	NOTES_VIEWS,
 	parseNotesBibleScope,
+	parseNotesBibleNavigationIntent,
 	parseNotesNavigationIntent,
+	parseNotesNormalizedDocumentNavigationIntent,
+	parseNotesNormalizedDocumentScope,
+	parseNotesNormalizedDocumentTarget,
 	type NotesBibleScope,
 	type NotesBibleScopeKind,
+	type NotesBibleNavigationIntent,
 	type NotesNavigationIntent,
+	type NotesNormalizedDocumentNavigation,
+	type NotesNormalizedDocumentNavigationIntent,
 	type NotesView
 } from './models/notes-navigation.model';
+
+export {
+	filterNotesByNormalizedDocumentScope,
+	noteBelongsToNormalizedDocumentScope,
+	createNormalizedDocumentAssociationForScope,
+	createNormalizedDocumentWordNoteMarkers,
+	type NotesNormalizedDocumentScope
+} from './services/notes-normalized-document-scope';

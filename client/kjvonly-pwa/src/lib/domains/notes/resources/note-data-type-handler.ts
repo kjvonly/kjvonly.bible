@@ -7,7 +7,8 @@ import type {
 } from '$lib/resource';
 
 import type {
-	NoteTag
+	NoteTag,
+	NormalizedDocumentNoteAssociation
 } from '../models/note.model';
 
 import {
@@ -36,7 +37,7 @@ const noteTagSchema =
 	})
 		.strict();
 
-const noteContentSchema =
+const baseNoteContentSchema =
 	z.object({
 		bibleLocationRef:
 			z.string()
@@ -74,11 +75,45 @@ const noteContentSchema =
 	})
 		.strict();
 
-const noteBundleSchema =
-	z.record(
-		z.string(),
-		noteContentSchema
-	);
+
+const normalizedDocumentIdentitySchema =
+	z.object({
+		publisher: z.string().min(1),
+		resourceId: z.string().min(1)
+	}).strict();
+
+const normalizedDocumentAssociationSchema =
+	z.object({
+		kind: z.literal('normalized-document'),
+		document: normalizedDocumentIdentitySchema,
+		target: z.discriminatedUnion('kind', [
+			z.object({ kind: z.literal('document') }).strict(),
+			z.object({
+				kind: z.literal('word'),
+				address: z.object({
+					blockId: z.string().min(1),
+					contentIndex: z.number().int().nonnegative()
+				}).strict()
+			}).strict()
+		])
+	}).strict();
+
+const noteContentSchema =
+	baseNoteContentSchema.extend({
+		association: normalizedDocumentAssociationSchema.optional()
+	}).superRefine((note, context) => {
+		if (
+			note.association !== undefined &&
+			(note.bibleLocationRef !== undefined ||
+				note.bibleReferenceText !== undefined)
+		) {
+			context.addIssue({
+				code: 'custom',
+				message: 'Normalized document Notes cannot also have Bible associations',
+				path: ['association']
+			});
+		}
+	});
 
 export interface NoteResourceContent {
 	readonly bibleLocationRef:
@@ -88,6 +123,8 @@ export interface NoteResourceContent {
 	readonly bibleReferenceText:
 		string |
 		undefined;
+
+	readonly association?: NormalizedDocumentNoteAssociation;
 
 	readonly text:
 		string;
@@ -117,54 +154,27 @@ export type NoteResourceData =
 		>
 	>;
 
-/**
- * Validates the existing Note semantic Resource payload.
- *
- * The published contract supports either one Note value or a named bundle.
- * Resource-path identity remains the responsibility of the Domain Object
- * factory.
- */
+/** The current strict Note payload, including optional normalized associations. */
 export class NoteDataTypeHandler
 	implements ResourceDataTypeHandler<NoteResourceData> {
 
-	readonly dataType =
-		NOTE_DATA_TYPE;
+	readonly dataType = NOTE_DATA_TYPE;
+	readonly dataVersion = NOTE_DATA_VERSION;
 
-	readonly dataVersion =
-		NOTE_DATA_VERSION;
+	validate(value: unknown): NoteResourceData {
+		const single = noteContentSchema.safeParse(value);
 
-	validate(
-		value: unknown
-	): NoteResourceData {
-		const single =
-			noteContentSchema.safeParse(
-				value
-			);
-
-		if (
-			single.success
-		) {
-			return createNoteContent(
-				single.data
-			);
+		if (single.success) {
+			return createNoteContent(single.data);
 		}
 
-		const bundle =
-			noteBundleSchema.parse(
-				value
-			);
+		const bundle = z.record(z.string(), noteContentSchema).parse(value);
 
 		return Object.fromEntries(
-			Object.entries(
-				bundle
-			).map(
-				([noteId, note]) => [
-					noteId,
-					createNoteContent(
-						note
-					)
-				]
-			)
+			Object.entries(bundle).map(([noteId, note]) => [
+				noteId,
+				createNoteContent(note)
+			])
 		);
 	}
 }
@@ -216,6 +226,10 @@ function createNoteContent(
 
 		bibleReferenceText:
 			value.bibleReferenceText,
+
+		...(value.association !== undefined
+			? { association: value.association }
+			: {}),
 
 		text:
 			value.text,

@@ -77,6 +77,7 @@ export class NoteDomainObjectFactory
 			return [
 				this.createCandidate(
 					resource.publisher,
+					resource.dataVersion,
 					name,
 					noteId,
 					accepted
@@ -104,6 +105,7 @@ export class NoteDomainObjectFactory
 			([noteId, note]) =>
 				this.createCandidate(
 					resource.publisher,
+					resource.dataVersion,
 					name,
 					noteId,
 					note
@@ -113,6 +115,7 @@ export class NoteDomainObjectFactory
 
 	private createCandidate(
 		publisher: string,
+		dataVersion: number,
 		name: string,
 		noteId: string,
 		content: NoteResourceContent
@@ -145,8 +148,7 @@ export class NoteDomainObjectFactory
 			dataType:
 				NOTE_DATA_TYPE,
 
-			dataVersion:
-				1,
+			dataVersion,
 
 			value:
 				note

@@ -58,6 +58,15 @@
 
 		isActive,
 
+		onActivation(handler) {
+			let previouslyActive = isActive();
+			return navigation.views.subscribe(() => {
+				const active = isActive();
+				if (active && !previouslyActive) handler();
+				previouslyActive = active;
+			});
+		},
+
 		onResult(handler) {
 			return navigation.onResult(
 				navigationView.navigationState,

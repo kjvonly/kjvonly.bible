@@ -149,6 +149,23 @@ describe(
 				);
 			}
 		);
+
+	it('preserves Resource version and normalized association in candidates', () => {
+		const association = {
+			kind: 'normalized-document' as const,
+			document: { publisher: 'doc-owner', resourceId: 'opaque/id' },
+			target: { kind: 'word' as const,
+				address: { blockId: 'b', contentIndex: 2 } }
+		};
+		const [candidate] = new NoteDomainObjectFactory().create(
+			{ ...createContext(createNotesResourceId('default', 'note-2')),
+				dataVersion: 1 },
+			createNoteContent({ association })
+		);
+		expect(candidate.dataVersion).toBe(1);
+		expect(candidate.value).toMatchObject({ association });
+	});
+
 	}
 );
 

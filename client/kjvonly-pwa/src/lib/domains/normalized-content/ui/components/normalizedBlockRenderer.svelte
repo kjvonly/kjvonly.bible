@@ -21,21 +21,39 @@
 	import {
 		resolveNormalizedListMarkerClass
 	} from '../presentation/normalized-list-presentation';
+	import type {
+		NormalizedContentWordMarkers,
+		NormalizedContentWordMarkerHandler
+	} from '../models/normalized-content-word-marker-handler';
 	import NormalizedInlineRenderer from './normalizedInlineRenderer.svelte';
 	import NormalizedBlockRenderer from './normalizedBlockRenderer.svelte';
 
 	let {
 		block,
+		windowIndices,
+		orderedListStarts,
 		parentType,
 		textMarkupMarkings,
 		onWordActivate,
-		onLinkActivate
+		onLinkActivate,
+		wordMarkers,
+		onWordMarkerActivate,
+		bookmarkMarkers,
+		onBookmarkMarkerActivate
 	}: {
 		block: NormalizedBlock;
+		/** Leaf positions used to anchor the moving nested window. */
+		windowIndices?: ReadonlyMap<string, number>;
+		/** Presentation-only list offsets; absent for full-document rendering. */
+		orderedListStarts?: ReadonlyMap<string, number>;
 		parentType?: NormalizedBlock['type'];
 		textMarkupMarkings?: NormalizedContentTextMarkupMap;
 		onWordActivate?: NormalizedContentWordActivationHandler;
 		onLinkActivate?: NormalizedContentLinkHandler;
+		wordMarkers?: NormalizedContentWordMarkers;
+		onWordMarkerActivate?: NormalizedContentWordMarkerHandler;
+		bookmarkMarkers?: NormalizedContentWordMarkers;
+		onBookmarkMarkerActivate?: NormalizedContentWordMarkerHandler;
 	} = $props();
 
 	const presentation = $derived(
@@ -100,6 +118,7 @@
 	<hr
 		id={block.id}
 		data-normalized-block=""
+		data-normalized-window-index={windowIndices?.get(block.id)}
 		class={className}
 	/>
 {:else}
@@ -107,6 +126,8 @@
 		this={presentation.element}
 		id={block.id}
 		data-normalized-block=""
+		data-normalized-window-index={windowIndices?.get(block.id)}
+		start={block.type === 'list' && block.ordered ? orderedListStarts?.get(block.id) : undefined}
 		class={className}
 	>
 		{#if presentation.contentKind === 'content'}
@@ -116,15 +137,25 @@
 				{textMarkupMarkings}
 				{onWordActivate}
 				{onLinkActivate}
+				{wordMarkers}
+				{onWordMarkerActivate}
+				{bookmarkMarkers}
+				{onBookmarkMarkerActivate}
 			></NormalizedInlineRenderer>
 		{:else if presentation.contentKind === 'blocks'}
 			{#each childBlocks as child}
 				<NormalizedBlockRenderer
 					block={child}
 					parentType={block.type}
+					{windowIndices}
+					{orderedListStarts}
 					{textMarkupMarkings}
 					{onWordActivate}
 					{onLinkActivate}
+					{wordMarkers}
+					{onWordMarkerActivate}
+					{bookmarkMarkers}
+					{onBookmarkMarkerActivate}
 				></NormalizedBlockRenderer>
 			{/each}
 		{/if}

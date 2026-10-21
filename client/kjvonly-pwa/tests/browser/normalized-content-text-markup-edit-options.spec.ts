@@ -54,6 +54,61 @@ describe('Normalized Content Text Markup edit options', () => {
 		});
 	});
 
+	it('places Document Notes and Add Note after the markup tools and divider', () => {
+		const onDocumentNotes = vi.fn();
+		const onAddNote = vi.fn();
+		mountOptions(
+			{ type: 'bg', colorMarkup: 'bg-highlighta' },
+			vi.fn(),
+			{ onDocumentNotes, onAddNote }
+		);
+		const notes = root!.querySelector('[role="group"][aria-label="note actions"]');
+		expect(notes).not.toBeNull();
+		expect(notes?.previousElementSibling?.getAttribute('aria-hidden')).toBe('true');
+		expect(notes?.previousElementSibling?.className).toContain('w-px');
+		requireButton('document notes').click();
+		requireButton('add note').click();
+		expect(onDocumentNotes).toHaveBeenCalledOnce();
+		expect(onAddNote).toHaveBeenCalledOnce();
+	});
+
+	it('places Add Bookmark after Notes, with its own cancellable selection prompt', async () => {
+		const onAddBookmark = vi.fn();
+		const onCancelBookmarkSelection = vi.fn();
+		mountOptions({ type: 'bg', colorMarkup: 'bg-highlighta' }, vi.fn(), {
+			onAddBookmark, onCancelBookmarkSelection
+		});
+		const bookmarks = root!.querySelector('[role="group"][aria-label="bookmark actions"]');
+		expect(bookmarks).not.toBeNull();
+		expect(bookmarks?.previousElementSibling?.getAttribute('aria-hidden')).toBe('true');
+		requireButton('add bookmark').click();
+		expect(onAddBookmark).toHaveBeenCalledOnce();
+		await unmount(component!);
+		component = undefined;
+		root!.replaceChildren();
+		mountOptions({ type: 'bg', colorMarkup: 'bg-highlighta' }, vi.fn(), {
+			choosingBookmarkWord: true, onCancelBookmarkSelection
+		});
+		expect(root?.textContent).toContain('Select a word for the bookmark');
+		expect(root?.querySelector('[aria-label="text color"]')).toBeNull();
+		requireButton('cancel bookmark location selection').click();
+		expect(onCancelBookmarkSelection).toHaveBeenCalledOnce();
+	});
+
+	it('replaces the toolbar with a cancellable word Note prompt', () => {
+		const onCancelNoteSelection = vi.fn();
+		mountOptions(
+			{ type: 'bg', colorMarkup: 'bg-highlighta' },
+			vi.fn(),
+			{ choosingWordNote: true, onCancelNoteSelection }
+		);
+		expect(root?.textContent).toContain('Select a word for the note');
+		expect(root?.querySelector('[aria-label="note actions"]')).toBeNull();
+		expect(root?.querySelector('[aria-label="text color"]')).toBeNull();
+		requireButton('cancel note location selection').click();
+		expect(onCancelNoteSelection).toHaveBeenCalledOnce();
+	});
+
 	it('exposes text, highlight, and underline markup tools', () => {
 		mountOptions({ type: 'bg', colorMarkup: 'bg-highlighta' }, vi.fn());
 		expect(requireButton('text color')).toBeDefined();
@@ -66,13 +121,22 @@ function mountOptions(
 	selection: NormalizedContentTextMarkupEditSelection,
 	onSelectionChange: (
 		selection: NormalizedContentTextMarkupEditSelection
-	) => void
+	) => void,
+	extra: {
+		choosingWordNote?: boolean;
+		choosingBookmarkWord?: boolean;
+		onAddBookmark?: () => void;
+		onCancelBookmarkSelection?: () => void;
+		onDocumentNotes?: () => void;
+		onAddNote?: () => void;
+		onCancelNoteSelection?: () => void;
+	} = {}
 ): void {
 	root = window.document.createElement('div');
 	window.document.body.append(root);
 	component = mount(NormalizedContentTextMarkupEditOptions, {
 		target: root,
-		props: { selection, onSelectionChange }
+		props: { selection, onSelectionChange, ...extra }
 	});
 }
 

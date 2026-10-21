@@ -1,7 +1,6 @@
 <!--
-Notes may be associated with a Bible location or may stand alone.
-An explicit Bible scope controls whether this view shows all Notes, one exact
-location, or every Note associated with a chapter.
+Notes may be standalone, Bible-associated, or normalized-document-associated.
+Navigation scope filters installed Notes without changing Note ownership.
 -->
 <script lang="ts">
 	// ================================ IMPORTS ================================
@@ -31,11 +30,14 @@ location, or every Note associated with a chapter.
 		NoteListItem
 	} from './notesList/note-list-item';
 	import type {
-		NotesBibleScope
+		NotesNavigationIntent
 	} from '../models/notes-navigation.model';
 	import {
 		filterNotesByBibleScope
 	} from '../services/notes-bible-scope';
+	import {
+		filterNotesByNormalizedDocumentScope
+	} from '../services/notes-normalized-document-scope';
 
 	// APPLICATION
 	import {
@@ -53,20 +55,19 @@ location, or every Note associated with a chapter.
 	// =============================== BINDINGS ================================
 
 	let {
-		bibleScope,
-		createBibleLocationRef,
-		noteIDToOpen = '',
+		navigationIntent,
 		navigationState
 	}: {
-		bibleScope?: NotesBibleScope;
-		createBibleLocationRef?: string;
-		noteIDToOpen: string;
+		navigationIntent: NotesNavigationIntent;
 		navigationState: NavigationState;
 	} = $props();
 
 	// ================================== VARS =================================
 
 	const NOTE_SUBSCRIPTION_ID = uuid4();
+	const NOTE_SEARCH_SUBSCRIPTION_ID = uuid4();
+	// Only the most recent search may update the currently scoped list.
+	let activeSearchID: string | undefined;
 	let note: Note | undefined = $state();
 	let notePersisted = $state(false);
 	let notes: NotesById = $state({});
@@ -74,12 +75,12 @@ location, or every Note associated with a chapter.
 	let availableNotes: AvailableNote[] = $state([]);
 	let availableSearchGeneration = 0;
 	let openedNoteID: string | undefined = $state();
-	let pendingCreateBibleLocationRef = $state(createBibleLocationRef);
+	// The one-time creation request is consumed by the list before opening a draft.
+	// The scoped context remains unchanged after the draft closes.
+	let pendingNavigationIntent = $state<NotesNavigationIntent>(navigationIntent);
 	let noteListItems: NoteListItem[] = $derived(
 		createNoteListItems()
 	);
-
-	const NOTE_SEARCH_ID = uuid4();
 
 	let filterInput: string = $state('');
 
@@ -106,11 +107,6 @@ location, or every Note associated with a chapter.
 	onMount(() => {
 		notesService.subscribe(
 			NOTE_SUBSCRIPTION_ID,
-			NOTE_SEARCH_ID,
-			onFilterInputResults
-		);
-		notesService.subscribe(
-			NOTE_SUBSCRIPTION_ID,
 			NOTES_COLLECTION_CHANGED,
 			onSearchResults
 		);
@@ -121,6 +117,9 @@ location, or every Note associated with a chapter.
 		return () => {
 			notesService.unsubscribe(
 				NOTE_SUBSCRIPTION_ID
+			);
+			notesService.unsubscribe(
+				NOTE_SEARCH_SUBSCRIPTION_ID
 			);
 		};
 	});
@@ -162,15 +161,28 @@ location, or every Note associated with a chapter.
 		});
 	}
 
-	function onSearchResults(results: { notes: NotesById }) {
-		noteKeys = [];
-		notes = filterNotesByBibleScope(
-			results.notes,
-			bibleScope,
+	/** Apply exactly one Notes context to accepted installed Notes. */
+	function filterNotesForNavigation(results: NotesById): NotesById {
+		if (navigationIntent.normalizedDocument) {
+			return filterNotesByNormalizedDocumentScope(
+				results,
+				navigationIntent.normalizedDocument.scope
+			);
+		}
+
+		return filterNotesByBibleScope(
+			results,
+			navigationIntent.bibleScope,
 			bibleLocationReferenceService
 		);
+	}
+
+	function onSearchResults(results: { notes: NotesById }) {
+		noteKeys = [];
+		notes = filterNotesForNavigation(results.notes);
 		onFilterInputChanged();
 
+		const noteIDToOpen = navigationIntent.noteID ?? '';
 		if (
 			noteIDToOpen.length > 0 &&
 			noteIDToOpen !== openedNoteID &&
@@ -180,7 +192,14 @@ location, or every Note associated with a chapter.
 		}
 	}
 
+	/**
+	 * Retires the previous search before requesting a new one. Worker searches
+	 * may complete out of order (including across import/refresh updates), so
+	 * every query has its own result ID and only the latest remains subscribed.
+	 */
 	function onFilterInputChanged() {
+		notesService.unsubscribe(NOTE_SEARCH_SUBSCRIPTION_ID);
+		activeSearchID = undefined;
 		if (filterInput.length > 0) {
 			const indexes: string[] = [];
 			filterParams.forEach((fp) => {
@@ -188,7 +207,14 @@ location, or every Note associated with a chapter.
 					return indexes.push(fp.index);
 				}
 			});
-			notesService.searchNotes(NOTE_SEARCH_ID, filterInput, indexes);
+			const searchID = uuid4();
+			activeSearchID = searchID;
+			notesService.subscribe(
+				NOTE_SEARCH_SUBSCRIPTION_ID,
+				searchID,
+				onFilterInputResults
+			);
+			notesService.searchNotes(searchID, filterInput, indexes);
 		} else {
 			updateNotesKeys();
 		}
@@ -216,8 +242,8 @@ location, or every Note associated with a chapter.
 			);
 
 		if (
-			bibleScope !==
-				undefined ||
+			navigationIntent.bibleScope !== undefined ||
+			navigationIntent.normalizedDocument !== undefined ||
 			!titleSearchEnabled
 		) {
 			availableNotes = [];
@@ -268,7 +294,7 @@ location, or every Note associated with a chapter.
 	}
 
 	function onFilterInputResults(results: NotesSearchResult) {
-		if (results.id === NOTE_SEARCH_ID) {
+		if (results.id === activeSearchID) {
 			noteKeys = Object.keys(results.notes)
 				.filter((noteID) => notes[noteID] !== undefined)
 				.sort((a, b) => {
@@ -353,8 +379,23 @@ location, or every Note associated with a chapter.
 		notePersisted = false;
 	}
 
-	function onCreateBibleLocationConsumed(): void {
-		pendingCreateBibleLocationRef = undefined;
+	/** Clear only the consumed draft request, preserving the active list scope. */
+	function onCreateIntentConsumed(): void {
+		if (pendingNavigationIntent.normalizedDocument) {
+			pendingNavigationIntent = {
+				noteID: pendingNavigationIntent.noteID,
+				normalizedDocument: {
+					...pendingNavigationIntent.normalizedDocument,
+					createTarget: undefined
+				}
+			};
+			return;
+		}
+
+		pendingNavigationIntent = {
+			...pendingNavigationIntent,
+			createBibleLocationRef: undefined
+		};
 	}
 </script>
 
@@ -366,9 +407,8 @@ location, or every Note associated with a chapter.
 		bind:filterInput
 		{noteListItems}
 		{onSelectedNoteListItem}
-		{bibleScope}
-		createBibleLocationRef={pendingCreateBibleLocationRef}
-		{onCreateBibleLocationConsumed}
+		navigationIntent={pendingNavigationIntent}
+		{onCreateIntentConsumed}
 		{filterParams}
 		{onFilterParamChanged}
 		{onFilterInputChanged}

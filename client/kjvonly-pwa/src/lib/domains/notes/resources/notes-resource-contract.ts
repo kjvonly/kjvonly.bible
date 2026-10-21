@@ -10,6 +10,6 @@ export const NOTES_RESOURCE_TYPE =
 export const NOTE_DATA_TYPE =
 	'kjvonly.note';
 
-/** Current semantic Note data contract version. */
+/** Current strict Note contract, including optional normalized associations. */
 export const NOTE_DATA_VERSION =
 	1;

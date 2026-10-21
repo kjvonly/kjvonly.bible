@@ -14,7 +14,7 @@ export function findNormalizedContentLocalTarget(
 	root: ParentNode,
 	href: string
 ): HTMLElement | undefined {
-	const targetId = readLocalFragmentTargetId(
+	const targetId = readNormalizedContentLocalTargetId(
 		href
 	);
 
@@ -47,7 +47,7 @@ export function findNormalizedContentLocalTarget(
  * Reads the target ID from a local fragment while preserving malformed escapes
  * literally rather than turning renderer navigation into a validation boundary.
  */
-function readLocalFragmentTargetId(
+export function readNormalizedContentLocalTargetId(
 	href: string
 ): string | undefined {
 	if (

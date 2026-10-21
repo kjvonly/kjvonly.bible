@@ -55,8 +55,8 @@ type NormalizedContentTextMarkupSubscriber = {
  * Application-facing lifecycle for user-owned Normalized Content Text Markup.
  *
  * A markup object targets one exact document Resource snapshot. Local accepted
- * state is authoritative; Resource discovery is attempted only when that exact
- * markup object is not already installed.
+ * state is authoritative. Remote lookup uses the generic Resource installation
+ * lifecycle before the accepted local object is read.
  */
 export class NormalizedContentTextMarkupService {
 
@@ -273,11 +273,24 @@ export class NormalizedContentTextMarkupService {
 	}
 
 	/**
+	 * Reads accepted Text Markup for one user and document from local persistence.
+	 * Does not contact a relay or manufacture an empty draft on a miss.
+	 */
+	async getLocal(
+		publisher: string,
+		descriptor: unknown
+	): Promise<NormalizedContentTextMarkup | undefined> {
+		const identity = this.create(publisher, descriptor);
+		return this.textMarkup.get(identity.id);
+	}
+
+	/**
 	 * Returns markup for one user and exact document Resource snapshot.
 	 *
-	 * Local accepted state is checked first. On a miss, the exact user-owned
-	 * markup Resource is loaded through the generic Resource lifecycle and the
-	 * accepted Domain object is then re-read from local persistence.
+	 * Verifies the exact user-owned published Resource through the generic
+	 * installation lifecycle, then reads the accepted Domain object from local
+	 * persistence. This is the verification operation required before editing;
+	 * callers displaying content immediately should use getLocal() first.
 	 *
 	 * @param publisher Authenticated owner of the requested Text Markup.
 	 * @param descriptor Descriptor for the exact Normalized Document snapshot.
@@ -296,18 +309,6 @@ export class NormalizedContentTextMarkupService {
 				descriptor
 			);
 
-		const existing =
-			await this.textMarkup.get(
-				empty.id
-			);
-
-		if (
-			existing !==
-			undefined
-		) {
-			return existing;
-		}
-
 		const loadRequest =
 			createTextMarkupLoadRequest(
 				publisher,
@@ -320,25 +321,22 @@ export class NormalizedContentTextMarkupService {
 				loadRequest.key
 			);
 
-		if (!found) {
-			return empty;
-		}
-
-		const installed =
+		const accepted =
 			await this.textMarkup.get(
 				empty.id
 			);
 
-		if (
-			installed ===
-			undefined
-		) {
-			throw new Error(
-				`Normalized Content Text Markup was not installed: ${empty.id}`
-			);
+		if (accepted !== undefined) {
+			return accepted;
 		}
 
-		return installed;
+		if (!found) {
+			return empty;
+		}
+
+		throw new Error(
+			`Normalized Content Text Markup was not installed: ${empty.id}`
+		);
 	}
 
 	private readDocumentReference(

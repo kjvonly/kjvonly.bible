@@ -181,6 +181,23 @@ describe(
 				);
 			}
 		);
+
+	it('publishes an exact normalized word association in the current payload', () => {
+		const association = {
+			kind: 'normalized-document' as const,
+			document: { publisher: 'doc-owner', resourceId: 'a/opaque%id' },
+			target: { kind: 'word' as const,
+				address: { blockId: '__proto__', contentIndex: 2 } }
+		};
+		const publication = new NotesResourcePublication().create({
+			...createNote(), bibleLocationRef: undefined,
+			bibleReferenceText: undefined, association
+		});
+		expect(publication.dataVersion).toBe(1);
+		expect(publication.value).toHaveProperty('association', association);
+		expect(publication.value).not.toHaveProperty('id');
+	});
+
 	}
 );
 

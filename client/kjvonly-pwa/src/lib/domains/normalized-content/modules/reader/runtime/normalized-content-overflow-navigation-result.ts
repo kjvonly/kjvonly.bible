@@ -16,6 +16,8 @@ import {
 interface NormalizedContentOverflowNavigationResultContext {
 	navigation: PaneNavigation;
 	whenActive: NavigationEntryContext['whenActive'];
+	/** Opens document-scoped Bookmarks using the Reader's current descriptor. */
+	onBrowseDocumentBookmarks: () => void;
 }
 
 /**
@@ -35,21 +37,24 @@ export function handleNormalizedContentOverflowNavigationResult(
 	}
 
 	context.whenActive(() => {
-			applyOverflowAction(result.action, context.navigation);
+		applyOverflowAction(result.action, context);
 	});
 	return true;
 }
 
 function applyOverflowAction(
 	action: NormalizedContentOverflowAction,
-	navigation: PaneNavigation
+	context: NormalizedContentOverflowNavigationResultContext
 ): void {
 	switch (action) {
+		case NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS:
+			context.onBrowseDocumentBookmarks();
+			return;
 		case NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_HORIZONTAL:
-			navigation.split(PaneSplit.HORIZONTAL, Modules.MODULES, MODULES_VIEWS.ROOT, {});
+			context.navigation.split(PaneSplit.HORIZONTAL, Modules.MODULES, MODULES_VIEWS.ROOT, {});
 			return;
 		case NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_VERTICAL:
-			navigation.split(PaneSplit.VERTICAL, Modules.MODULES, MODULES_VIEWS.ROOT, {});
+			context.navigation.split(PaneSplit.VERTICAL, Modules.MODULES, MODULES_VIEWS.ROOT, {});
 	}
 }
 
@@ -58,7 +63,8 @@ function isNormalizedContentOverflowAction(
 ): value is NormalizedContentOverflowAction {
 	return (
 		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_HORIZONTAL ||
-		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_VERTICAL
+		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_VERTICAL ||
+		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS
 	);
 }
 

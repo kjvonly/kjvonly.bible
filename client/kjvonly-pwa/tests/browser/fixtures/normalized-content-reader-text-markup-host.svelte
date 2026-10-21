@@ -6,6 +6,7 @@
 		providePaneLayoutContext,
 		type ApplicationContext,
 		type NavigationState,
+		type NavigationStateValue,
 		type PaneNavigation
 	} from '$lib/application';
 
@@ -14,11 +15,13 @@
 	let {
 		applicationContext,
 		navigation,
-		navigationState
+		navigationState,
+		registerNavigationResult
 	}: {
 		applicationContext: ApplicationContext;
 		navigation: PaneNavigation;
 		navigationState: NavigationState;
+		registerNavigationResult?: (handler: (result: NavigationStateValue) => void | Promise<void>) => void;
 	} = $props();
 
 	provideApplicationContext(
@@ -32,8 +35,15 @@
 	provideNavigationEntryContext({
 		navigationState,
 		isActive: () => true,
-		onResult: () => () => {},
-		whenActive: () => () => {},
+		onResult: (handler) => {
+			registerNavigationResult?.(handler);
+			return () => {};
+		},
+		onActivation: () => () => {},
+		whenActive: (handler) => {
+			void handler();
+			return () => {};
+		},
 		updateState: () => {},
 		updateResourceSelection: () => {}
 	});

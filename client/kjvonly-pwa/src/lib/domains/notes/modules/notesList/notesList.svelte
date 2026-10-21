@@ -29,6 +29,12 @@
 	} from '../../models/note-draft';
 	import { createNoteDomainObjectId } from '../../models/note-id';
 	import type {
+		NormalizedDocumentNoteAssociation
+	} from '../../models/note.model';
+	import {
+		createNormalizedDocumentAssociationForScope
+	} from '../../services/notes-normalized-document-scope';
+	import type {
 		NoteListItem
 	} from './note-list-item';
 	import type {
@@ -59,7 +65,8 @@
 		NOTES_LIST_ACTIONS,
 		NOTES_NAVIGATION_RESULTS,
 		NOTES_VIEWS,
-		type NotesBibleScope,
+		type NotesNavigationIntent,
+		type NotesNormalizedDocumentNavigation,
 		type NotesListAction
 	} from '../../models/notes-navigation.model';
 
@@ -92,9 +99,8 @@
 		filterInput = $bindable(),
 		noteListItems,
 		onSelectedNoteListItem,
-		bibleScope,
-		createBibleLocationRef,
-		onCreateBibleLocationConsumed,
+		navigationIntent,
+		onCreateIntentConsumed,
 		filterParams,
 		onFilterParamChanged,
 		onFilterInputChanged,
@@ -104,9 +110,8 @@
 		filterInput: string;
 		noteListItems: NoteListItem[];
 		onSelectedNoteListItem: (item: NoteListItem) => Promise<void>;
-		bibleScope?: NotesBibleScope;
-		createBibleLocationRef?: string;
-		onCreateBibleLocationConsumed: () => void;
+		navigationIntent: NotesNavigationIntent;
+		onCreateIntentConsumed: () => void;
 		filterParams: NoteFilterParameter[];
 		onFilterParamChanged: (index: NoteFilterIndex, checked: boolean) => void;
 		onFilterInputChanged: () => void;
@@ -130,14 +135,16 @@
 				onNavigationResult
 			);
 
-		if (createBibleLocationRef) {
-			const location =
-				createBibleLocationRef;
-
-			// Consume before opening the draft so closing it returns to the
-			// chapter-scoped list instead of creating another draft.
-			onCreateBibleLocationConsumed();
-			void onAdd(location);
+		if (navigationIntent.normalizedDocument?.createTarget) {
+			const context = navigationIntent.normalizedDocument;
+			const target = context.createTarget;
+			onCreateIntentConsumed();
+			onAddNormalizedDocumentNote(context, target);
+		} else if (navigationIntent.createBibleLocationRef) {
+			const location = navigationIntent.createBibleLocationRef;
+			// Closing the editor must not recreate the initial draft.
+			onCreateIntentConsumed();
+			void onAddBibleNote(location);
 		}
 
 		return unsubscribe;
@@ -297,33 +304,47 @@
 			);
 	}
 
-	async function onAdd(
-		bibleLocationRefOverride?: string
-	) {
+	/** Create IDs through the Notes Resource selection for all Note kinds. */
+	function newNoteID(): string {
+		return createNoteIdForSource(
+			requireResourceSelection(NOTES_RESOURCE_TYPE),
+			uuid4()
+		);
+	}
+
+	/** Dispatch Add to the active Notes context, without mixing draft rules. */
+	function onAdd(): void {
+		if (navigationIntent.normalizedDocument) {
+			onAddNormalizedDocumentNote(navigationIntent.normalizedDocument);
+			return;
+		}
+		void onAddBibleNote();
+	}
+
+	/** Create a document or exact-word Note without resolving Bible metadata. */
+	function onAddNormalizedDocumentNote(
+		context: NotesNormalizedDocumentNavigation,
+		createTarget: NormalizedDocumentNoteAssociation =
+			createNormalizedDocumentAssociationForScope(context.scope)
+	): void {
+		onAddNewNote(createNewNoteDraft({
+			kind: 'normalized-document',
+			id: newNoteID(),
+			now: Date.now(),
+			association: createTarget,
+			documentTitle: context.title
+		}));
+	}
+
+	/** Keep standalone and Scripture-related draft creation in the Bible path. */
+	async function onAddBibleNote(bibleLocationRefOverride?: string): Promise<void> {
+		const noteID = newNoteID();
 		const now = Date.now();
-		const notesSource =
-			requireResourceSelection(
-				NOTES_RESOURCE_TYPE
-			);
-
-		const noteID =
-			createNoteIdForSource(
-				notesSource,
-				uuid4()
-			);
-
 		const bibleLocationRef =
-			bibleLocationRefOverride ??
-			bibleScope?.bibleLocationRef;
+			bibleLocationRefOverride ?? navigationIntent.bibleScope?.bibleLocationRef;
 
 		if (!bibleLocationRef) {
-			onAddNewNote(
-				createNewNoteDraft({
-					kind: 'standalone',
-					id: noteID,
-					now
-				})
-			);
+			onAddNewNote(createNewNoteDraft({ kind: 'standalone', id: noteID, now }));
 			return;
 		}
 

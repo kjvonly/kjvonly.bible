@@ -20,7 +20,7 @@ export interface NormalizedBookmarkDocumentReference {
 	readonly resourceId: string;
 }
 
-/** Snapshot-local address of one canonical normalized word. */
+/** Canonical word address supplied by the owning normalized-content Reader. */
 export interface NormalizedBookmarkWordAddress {
 	readonly kind: 'word';
 	readonly blockId: string;

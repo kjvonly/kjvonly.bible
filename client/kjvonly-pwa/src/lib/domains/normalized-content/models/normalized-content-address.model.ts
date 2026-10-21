@@ -90,3 +90,19 @@ function findNormalizedBlock(
 
 	return undefined;
 }
+
+/**
+ * Verify that a canonical address resolves to a word in the loaded document.
+ * The Normalized Content owner makes this semantic decision; consumers such
+ * as Bookmarks only need the validated Resource ID and address afterward.
+ *
+ * @throws When the address is missing or points to non-word inline content.
+ */
+export function assertNormalizedContentWordAddress(
+	document: NormalizedDocument,
+	address: NormalizedContentAddress
+): void {
+	if (resolveNormalizedContentAtAddress(document, address)?.type !== 'word') {
+		throw new Error('Normalized content address must reference a canonical word');
+	}
+}

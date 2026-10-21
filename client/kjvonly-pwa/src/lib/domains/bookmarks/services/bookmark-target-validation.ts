@@ -2,15 +2,9 @@ import {
 	BibleLocationReferenceService
 } from '$lib/domains/bible';
 
-import {
-	createNormalizedDocumentId,
-	resolveNormalizedContentAtAddress,
-	type NormalizedDocument
-} from '$lib/domains/normalized-content';
-
 import type {
 	BookmarkTarget,
-	NormalizedBookmarkWordAddress
+	NormalizedBookmarkDocumentReference
 } from '../models/bookmark.model';
 
 const bibleRefs = new BibleLocationReferenceService();
@@ -20,8 +14,8 @@ const bibleRefs = new BibleLocationReferenceService();
  * contain unrecognized properties, publisher-bound Bible versions, ambiguous
  * variants, or unvalidated addresses.
  *
- * A normalized-document address must additionally resolve to a word against
- * the loaded document before local creation; see assertNormalizedBookmarkWordAddress.
+ * Bookmarks trusts the owning Reader for semantic validity of word addresses.
+ * This validator checks only serializable structure, not document contents.
  */
 export function parseBookmarkTarget(value: unknown): BookmarkTarget {
 	const target = record(value, 'Bookmark target');
@@ -42,12 +36,7 @@ export function parseBookmarkTarget(value: unknown): BookmarkTarget {
 
 	if (target.kind === 'normalized-document') {
 		keys(target, ['kind', 'document', 'address'], 'Normalized Bookmark target');
-		const document = record(target.document, 'Normalized Bookmark document');
-		keys(document, ['publisher', 'resourceId'], 'Normalized Bookmark document');
-		const publisher = nonEmpty(document.publisher, 'Normalized Bookmark document publisher');
-		const resourceId = nonEmpty(document.resourceId, 'Normalized Bookmark document Resource ID');
-		// Use the normalized-content owner's Resource-derived identity grammar.
-		createNormalizedDocumentId(publisher, resourceId);
+		const document = parseNormalizedBookmarkDocumentReference(target.document);
 
 		const address = record(target.address, 'Normalized Bookmark address');
 		keys(address, ['kind', 'blockId', 'contentIndex'], 'Normalized Bookmark address');
@@ -63,12 +52,27 @@ export function parseBookmarkTarget(value: unknown): BookmarkTarget {
 
 		return {
 			kind: 'normalized-document',
-			document: { publisher, resourceId },
+			document,
 			address: { kind: 'word', blockId: address.blockId, contentIndex: address.contentIndex as number }
 		};
 	}
 
 	throw new Error('Invalid Bookmark target kind');
+}
+
+/**
+ * Validate a document identity independently of a word target. The Resource ID
+ * is opaque: slashes, percent signs and other valid characters are retained.
+ */
+export function parseNormalizedBookmarkDocumentReference(value: unknown): NormalizedBookmarkDocumentReference {
+	const document = record(value, 'Normalized Bookmark document');
+	keys(document, ['publisher', 'resourceId'], 'Normalized Bookmark document');
+	const publisher = nonEmpty(document.publisher, 'Normalized Bookmark document publisher');
+	const resourceId = nonEmpty(document.resourceId, 'Normalized Bookmark document Resource ID');
+	if (publisher.includes('/')) {
+		throw new Error('Invalid normalized Bookmark document publisher');
+	}
+	return { publisher, resourceId };
 }
 
 /** Compare semantic locations; normalized targets are Resource-specific. */
@@ -89,19 +93,6 @@ export function bookmarkTargetsEqual(a: BookmarkTarget, b: BookmarkTarget): bool
 	return false;
 }
 
-/**
- * Resolve a candidate against the *loaded* validated snapshot. Structurally
- * correct indices may refer to anchors/line breaks or non-existent content.
- */
-export function assertNormalizedBookmarkWordAddress(
-	document: NormalizedDocument,
-	address: NormalizedBookmarkWordAddress
-): void {
-	const content = resolveNormalizedContentAtAddress(document, address);
-	if (address.kind !== 'word' || content?.type !== 'word') {
-		throw new Error('Normalized Bookmark must reference a canonical word');
-	}
-}
 
 function record(value: unknown, label: string): Record<string, unknown> {
 	if (value === null || typeof value !== 'object' || Array.isArray(value)) {

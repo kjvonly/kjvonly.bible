@@ -9,6 +9,7 @@ import type {
 } from '@kjvonly/normalized-content';
 
 import {
+	assertNormalizedContentWordAddress,
 	resolveNormalizedContentAtAddress
 } from './normalized-content-address.model';
 
@@ -166,3 +167,23 @@ describe(
 		);
 	}
 );
+
+
+describe('assertNormalizedContentWordAddress', () => {
+	it('accepts a canonical word, including inside nested blocks', () => {
+		expect(() => assertNormalizedContentWordAddress(DOCUMENT, {
+			blockId: 'nested-paragraph', contentIndex: 0
+		})).not.toThrow();
+	});
+
+	it('rejects anchors, missing entries, and missing blocks', () => {
+		for (const address of [
+			{ blockId: 'paragraph-1', contentIndex: 1 },
+			{ blockId: 'paragraph-1', contentIndex: 99 },
+			{ blockId: 'missing', contentIndex: 0 }
+		]) {
+			expect(() => assertNormalizedContentWordAddress(DOCUMENT, address))
+				.toThrow('canonical word');
+		}
+	});
+});

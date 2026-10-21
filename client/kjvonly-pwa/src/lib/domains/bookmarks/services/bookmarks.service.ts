@@ -1,9 +1,5 @@
 import type { OutboxWakeup } from '$lib/application';
 import type { BibleLocationReferenceService } from '$lib/domains/bible';
-import {
-	createNormalizedDocumentId,
-	type NormalizedDocument
-} from '$lib/domains/normalized-content';
 
 import {
 	assertBookmarkPublisher,
@@ -11,11 +7,9 @@ import {
 	parseBookmarkId
 } from '../models/bookmark-id';
 import type {
-	BibleBookmarkTarget,
 	Bookmark,
 	BookmarkTarget,
-	NormalizedBookmarkDocumentReference,
-	NormalizedDocumentBookmarkTarget
+	NormalizedBookmarkDocumentReference
 } from '../models/bookmark.model';
 import type { BookmarksStore } from '../persistence/bookmarks-store';
 import type { BookmarksResourcePublication } from '../resources/bookmarks-resource-publication';
@@ -26,9 +20,9 @@ import {
 } from './bookmarks-bible-scope';
 import { parseBookmarkDisplayMetadata } from './bookmark-metadata';
 import {
-	assertNormalizedBookmarkWordAddress,
 	bookmarkTargetsEqual,
-	parseBookmarkTarget
+	parseBookmarkTarget,
+	parseNormalizedBookmarkDocumentReference
 } from './bookmark-target-validation';
 
 /**
@@ -52,17 +46,15 @@ export class BookmarksService {
 		private readonly now: () => number = () => Date.now()
 	) {}
 
-	/** One Bookmark per new UUID, even if another Bookmark uses this target. */
-	create(target: BibleBookmarkTarget, previewText?: string): Promise<Bookmark>;
-	create(target: NormalizedDocumentBookmarkTarget, document: NormalizedDocument, previewText?: string): Promise<Bookmark>;
-	async create(
-		target: BookmarkTarget, documentOrPreview?: NormalizedDocument | string,
-		normalizedPreview = ''
-	): Promise<Bookmark> {
-		const document = typeof documentOrPreview === 'string' ? undefined : documentOrPreview;
-		const previewText = typeof documentOrPreview === 'string' ? documentOrPreview : normalizedPreview;
+	/**
+	 * Store a caller-selected canonical target and optional plain-text preview.
+	 * The owning Reader verifies content addresses; Bookmarks validates only
+	 * the target's shape/identity and never receives document content.
+	 * Each call allocates a new ID, even for a duplicate target.
+	 */
+	async create(target: BookmarkTarget, previewText = ''): Promise<Bookmark> {
 		const owner = this.requireOwner();
-		const validatedTarget = this.validateSelection(target, document);
+		const validatedTarget = parseBookmarkTarget(target);
 		const bookmark: Bookmark = {
 			id: createBookmarkId(owner, this.newUuid()),
 			target: validatedTarget,
@@ -82,17 +74,10 @@ export class BookmarksService {
 		return bookmark;
 	}
 
-	/** Retain the ID and Resource publication key, changing only the target. */
-	relocate(id: string, target: BibleBookmarkTarget, previewText?: string): Promise<Bookmark>;
-	relocate(id: string, target: NormalizedDocumentBookmarkTarget, document: NormalizedDocument, previewText?: string): Promise<Bookmark>;
-	async relocate(
-		id: string, target: BookmarkTarget, documentOrPreview?: NormalizedDocument | string,
-		normalizedPreview = ''
-	): Promise<Bookmark> {
-		const document = typeof documentOrPreview === 'string' ? undefined : documentOrPreview;
-		const previewText = typeof documentOrPreview === 'string' ? documentOrPreview : normalizedPreview;
+	/** Relocate the selected ID without interpreting the destination document. */
+	async relocate(id: string, target: BookmarkTarget, previewText = ''): Promise<Bookmark> {
 		const owner = this.requireOwnedId(id);
-		const validatedTarget = this.validateSelection(target, document);
+		const validatedTarget = parseBookmarkTarget(target);
 		const existing = await this.store.get(id);
 		this.assertOwner(owner);
 		if (!existing || existing.id !== id) {
@@ -169,7 +154,7 @@ export class BookmarksService {
 	async listForNormalizedDocument(
 		document: NormalizedBookmarkDocumentReference
 	): Promise<readonly Bookmark[]> {
-		createNormalizedDocumentId(document.publisher, document.resourceId);
+		parseNormalizedBookmarkDocumentReference(document);
 		const bookmarks = await this.store.getAll();
 		return bookmarks.filter((bookmark) =>
 			bookmark.target.kind === 'normalized-document' &&
@@ -198,21 +183,6 @@ export class BookmarksService {
 			updatedAt: Math.max(Math.trunc(this.now()), previousUpdatedAt + 1),
 			previewText
 		});
-	}
-
-	private validateSelection(
-		target: BookmarkTarget,
-		document: NormalizedDocument | undefined
-	): BookmarkTarget {
-		const validatedTarget = parseBookmarkTarget(target);
-		if (validatedTarget.kind === 'normalized-document') {
-			if (!document) {
-				throw new Error('Normalized Bookmark requires the opened document snapshot');
-			}
-			// The Reader supplies the verified snapshot for target.document's Resource.
-			assertNormalizedBookmarkWordAddress(document, validatedTarget.address);
-		}
-		return validatedTarget;
 	}
 
 	private requireOwner(): string {

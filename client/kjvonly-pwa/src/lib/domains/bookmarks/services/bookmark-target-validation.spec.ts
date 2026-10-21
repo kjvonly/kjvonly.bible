@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-	createNormalizedDocumentId,
-	type NormalizedDocument
-} from '$lib/domains/normalized-content';
 import type { Bookmark, BookmarkTarget } from '../models/bookmark.model';
 
 import {
-	assertNormalizedBookmarkWordAddress,
 	bookmarkTargetsEqual,
 	parseBookmarkTarget
 } from './bookmark-target-validation';
@@ -18,16 +13,6 @@ const normalizedTarget = {
 	address: { kind: 'word', blockId: 'p1', contentIndex: 0 }
 } as const;
 
-const DOCUMENT: NormalizedDocument = {
-	blocks: [{
-		type: 'paragraph', id: 'p1',
-		content: [
-			{ type: 'word', text: 'Grace' },
-			{ type: 'anchor', id: 'link' },
-			{ type: 'line-break' }
-		]
-	}]
-};
 
 describe('Bookmark targets', () => {
 	it('accepts version-independent Bible verse and word references', () => {
@@ -52,13 +37,14 @@ describe('Bookmark targets', () => {
 		expect(bookmarkTargetsEqual(first.target, second.target)).toBe(true);
 	});
 
-	it('uses the same publisher and Resource ID as the normalized document domain', () => {
-		const target = parseBookmarkTarget(normalizedTarget);
-		expect(target).toEqual(normalizedTarget);
-		if (target.kind !== 'normalized-document') throw new Error('Expected normalized target');
-		expect(createNormalizedDocumentId(
-			target.document.publisher, target.document.resourceId
-		)).toBe(`${'a'.repeat(64)}/library/doc/one`);
+	it('preserves the owning Resource identity without interpreting its path', () => {
+		const target = parseBookmarkTarget({
+			...normalizedTarget,
+			document: { ...normalizedTarget.document, resourceId: 'library/doc/%2Fone' }
+		});
+		expect(target).toMatchObject({ document: {
+			publisher: 'a'.repeat(64), resourceId: 'library/doc/%2Fone'
+		} });
 	});
 
 	it('compares normalized targets by exact Resource identity and word address', () => {
@@ -98,13 +84,14 @@ describe('Bookmark targets', () => {
 		expect(() => parseBookmarkTarget(target)).toThrow();
 	});
 
-	it('requires the selected normalized entry to actually be a word', () => {
-		const address = normalizedTarget.address;
-		expect(() => assertNormalizedBookmarkWordAddress(DOCUMENT, address)).not.toThrow();
-		for (const index of [1, 2, 3]) {
-			expect(() => assertNormalizedBookmarkWordAddress(DOCUMENT, {
-				...address, contentIndex: index
-			})).toThrow('canonical word');
-		}
+	it('trusts structurally valid word addresses without loading source content', () => {
+		const target = parseBookmarkTarget({
+			...normalizedTarget,
+			address: { kind: 'word', blockId: 'not-locally-installed', contentIndex: 999 }
+		});
+		expect(target).toMatchObject({
+			address: { kind: 'word', blockId: 'not-locally-installed', contentIndex: 999 }
+		});
 	});
+
 });

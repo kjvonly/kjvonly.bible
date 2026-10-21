@@ -17,6 +17,10 @@
 	import {
 		shouldInsertNormalizedWordSeparator
 	} from '../presentation/normalized-inline-spacing';
+	import type {
+		NormalizedContentWordMarkers,
+		NormalizedContentWordMarkerHandler
+	} from '../models/normalized-content-word-marker-handler';
 	import NormalizedWord from './normalizedWord.svelte';
 
 	let {
@@ -24,13 +28,21 @@
 		blockId,
 		textMarkupMarkings,
 		onWordActivate,
-		onLinkActivate
+		onLinkActivate,
+		wordMarkers,
+		onWordMarkerActivate,
+		bookmarkMarkers,
+		onBookmarkMarkerActivate
 	}: {
 		content: NormalizedContent[];
 		blockId: string;
 		textMarkupMarkings?: NormalizedContentTextMarkupMap;
 		onWordActivate?: NormalizedContentWordActivationHandler;
 		onLinkActivate?: NormalizedContentLinkHandler;
+		wordMarkers?: NormalizedContentWordMarkers;
+		onWordMarkerActivate?: NormalizedContentWordMarkerHandler;
+		bookmarkMarkers?: NormalizedContentWordMarkers;
+		onBookmarkMarkerActivate?: NormalizedContentWordMarkerHandler;
 	} = $props();
 
 	const renderableContent = $derived(
@@ -99,6 +111,10 @@
 			textMarkupClassName={getTextMarkupClassName(index)}
 			{onWordActivate}
 			{onLinkActivate}
+			marked={wordMarkers?.get(blockId)?.has(index) === true}
+			bookmarked={bookmarkMarkers?.get(blockId)?.has(index) === true}
+			{onWordMarkerActivate}
+			{onBookmarkMarkerActivate}
 		></NormalizedWord>
 	{:else if item.type === 'anchor'}
 		<span

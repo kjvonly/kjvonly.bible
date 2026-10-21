@@ -1245,6 +1245,16 @@ Detailed filesystem schemas, worker messages, concrete service names, database i
 
 ---
 
+# Confirm Meaning Before Extending Behavior
+
+Architectural ownership follows the application's intended meaning and current contracts, not every technically possible use case. New responsibilities should be justified by an explicit requirement or demonstrated gap.
+
+A consumer may invoke an owner's API and present accepted results without owning that owner's validation, persistence, or coordination policy. Different lifecycle stages remain distinct even when they concern the same information.
+
+Prefer the simplest collaboration through established Public APIs. When an unresolved product decision changes the responsibility boundary, identify the assumption rather than silently extending the architecture.
+
+---
+
 # How To Approach A Change
 
 When introducing or refactoring functionality, reason in this order:

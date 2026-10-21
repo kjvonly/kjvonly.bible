@@ -82,7 +82,7 @@ describe(
 		);
 
 		it(
-			'returns accepted local markup without Resource loading',
+			'checks the relay before returning a saved local copy',
 			async () => {
 				const existing =
 					createTextMarkup();
@@ -94,28 +94,30 @@ describe(
 						);
 
 				const load =
-					vi.fn();
+					vi.fn().mockResolvedValue(false);
 
 				const service =
-					createService({
-						get,
-						load
-					});
+					createService({ get, load });
 
 				await expect(
-					service.get(
-						'markup-publisher',
-						descriptor
-					)
-				).resolves.toEqual(
-					existing
-				);
+					service.get('markup-publisher', descriptor)
+				).resolves.toEqual(existing);
 
-				expect(
-					load
-				).not.toHaveBeenCalled();
+				expect(load).toHaveBeenCalledOnce();
+				expect(get).toHaveBeenCalledOnce();
 			}
 		);
+
+		it('checks saved local markup without contacting the relay or creating a draft', async () => {
+			const existing = createTextMarkup();
+			const get = vi.fn().mockResolvedValueOnce(existing).mockResolvedValueOnce(undefined);
+			const load = vi.fn();
+			const service = createService({ get, load });
+			await expect(service.getLocal('markup-publisher', descriptor)).resolves.toEqual(existing);
+			await expect(service.getLocal('markup-publisher', descriptor)).resolves.toBeUndefined();
+			expect(get).toHaveBeenCalledWith(existing.id);
+			expect(load).not.toHaveBeenCalled();
+		});
 
 		it(
 			'loads the exact user-owned markup Resource on a local miss',
@@ -164,6 +166,46 @@ describe(
 			}
 		);
 
+		it.each([
+			['no local copy', undefined],
+			['saved local copy', createTextMarkup()]
+		] as const)(
+			'propagates relay failure with %s so Edit can offer recovery choices',
+			async (_description, local) => {
+				const get = vi.fn().mockResolvedValue(local);
+				const load = vi.fn().mockRejectedValue(new Error('Relay unavailable'));
+				const service = createService({ get, load });
+
+				await expect(
+					service.get('markup-publisher', descriptor)
+				).rejects.toThrow('Relay unavailable');
+				// The lookup view reads local data only after the remote failure.
+				expect(load).toHaveBeenCalledOnce();
+				expect(get).not.toHaveBeenCalled();
+				await expect(service.getLocal('markup-publisher', descriptor))
+					.resolves.toEqual(local);
+				expect(get).toHaveBeenCalledOnce();
+			}
+		);
+
+		it('returns the newly installed markup rather than the older local copy', async () => {
+			const previous = createTextMarkup();
+			const updated = {
+				...previous,
+				markings: { 'paragraph-1': { '3': { class: ['bg-highlightb'] } } }
+			};
+			let accepted = previous;
+			const load = vi.fn(async () => {
+				accepted = updated;
+				return true;
+			});
+			const get = vi.fn(async () => accepted);
+			const service = createService({ get, load });
+
+			await expect(service.get('markup-publisher', descriptor)).resolves.toEqual(updated);
+			expect(load).toHaveBeenCalledOnce();
+			expect(get).toHaveBeenCalledOnce();
+		});
 		it(
 			'reads installed markup after successful Resource loading',
 			async () => {
@@ -172,12 +214,7 @@ describe(
 
 				const get =
 					vi.fn()
-						.mockResolvedValueOnce(
-							undefined
-						)
-						.mockResolvedValueOnce(
-							installed
-						);
+						.mockResolvedValue(installed);
 
 				const service =
 					createService({

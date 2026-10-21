@@ -1,7 +1,8 @@
 <!-- @component
 Floating previous/next controls for a Reader-owned Resource sequence.
-They use the existing ViewBody scroll container, appear on upward scrolling,
-and fade away on downward scrolling while retaining top/bottom visibility.
+They use the existing ViewBody scroll container, start visible, appear on
+upward scrolling, and fade after actual downward scrolling. Window scroll-anchor
+corrections must not be interpreted as user scroll direction.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -9,6 +10,7 @@ and fade away on downward scrolling while retaining top/bottom visibility.
 
 	import LeftChevron from '$lib/components/buttons/chevrons/leftChevron.svelte';
 	import RightChevron from '$lib/components/buttons/chevrons/rightChevron.svelte';
+	import { NORMALIZED_WINDOW_ANCHOR_RESTORED_EVENT } from './runtime/normalized-content-block-window-scroll';
 
 	interface Props {
 		/** Existing ViewBody scroll container (never creates a second scroller). */
@@ -17,6 +19,12 @@ and fade away on downward scrolling while retaining top/bottom visibility.
 		currentIndex: number;
 		canPrevious: boolean;
 		canNext: boolean;
+		/** Reset initial button visibility when the Reader finishes loading. */
+		documentReady: boolean;
+		/** True only when the current DOM window includes the document's first leaf. */
+		atDocumentStart: boolean;
+		/** True only when the current DOM window includes the document's final leaf. */
+		atDocumentEnd: boolean;
 		onPrevious: () => void;
 		onNext: () => void;
 	}
@@ -26,6 +34,9 @@ and fade away on downward scrolling while retaining top/bottom visibility.
 		currentIndex,
 		canPrevious,
 		canNext,
+		documentReady,
+		atDocumentStart,
+		atDocumentEnd,
 		onPrevious,
 		onNext
 	}: Props = $props();
@@ -43,6 +54,11 @@ and fade away on downward scrolling while retaining top/bottom visibility.
 		}
 
 		lastScrollTop = scrollContainer.scrollTop;
+		// Height-window corrections preserve the visible word, not user direction.
+		const resetAnchorBaseline = () => {
+			lastScrollTop = Math.max(0, scrollContainer.scrollTop);
+			accumulatedScrollDelta = 0;
+		};
 		const updateVisibility = () => {
 			const scrollTop = Math.max(0, scrollContainer.scrollTop);
 			const delta = scrollTop - lastScrollTop;
@@ -50,8 +66,10 @@ and fade away on downward scrolling while retaining top/bottom visibility.
 			const remaining = scrollContainer.scrollHeight -
 				scrollContainer.clientHeight - scrollTop;
 
-			// Keep the controls available at either end of the document.
-			if (scrollTop <= 0 || remaining <= BOTTOM_THRESHOLD) {
+			// A bounded window can reach its *rendered* edge before the actual
+			// document edge. Only the latter should force the controls visible.
+			if ((atDocumentStart && scrollTop <= 0) ||
+				(atDocumentEnd && remaining <= BOTTOM_THRESHOLD)) {
 				visible = true;
 				accumulatedScrollDelta = 0;
 				return;
@@ -72,19 +90,26 @@ and fade away on downward scrolling while retaining top/bottom visibility.
 		};
 
 		scrollContainer.addEventListener('scroll', updateVisibility, { passive: true });
-		updateVisibility();
-		return () => scrollContainer.removeEventListener('scroll', updateVisibility);
+		scrollContainer.addEventListener(NORMALIZED_WINDOW_ANCHOR_RESTORED_EVENT, resetAnchorBaseline);
+        updateVisibility();
+		return () => {
+			scrollContainer.removeEventListener('scroll', updateVisibility);
+			scrollContainer.removeEventListener(NORMALIZED_WINDOW_ANCHOR_RESTORED_EVENT, resetAnchorBaseline);
+        };
 	});
 
 	let previousIndex = currentIndex;
+	let previousReady = documentReady;
 	$effect(() => {
-		// Sequence changes reset ViewBody to the top; show the new document's controls.
-		if (currentIndex !== previousIndex) {
+		const ready = documentReady;
+		// Initial window work must not leave new-document controls hidden.
+		if (currentIndex !== previousIndex || (!previousReady && ready)) {
 			previousIndex = currentIndex;
 			lastScrollTop = document.getElementById(scrollContainerId)?.scrollTop ?? 0;
 			accumulatedScrollDelta = 0;
 			visible = true;
 		}
+		previousReady = ready;
 	});
 </script>
 

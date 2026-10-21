@@ -21,8 +21,10 @@
 	const paneLayout = usePaneLayoutContext();
 	let clientHeight = $derived(paneLayout.clientHeight);
 
-	// Placeholder for future Reader-specific menu items.
-	const actions: readonly KJVMenuAction<NormalizedContentOverflowAction>[] = [];
+	/** Reader actions return to the still-mounted Reader for interpretation. */
+	const actions: readonly KJVMenuAction<NormalizedContentOverflowAction>[] = [
+		{ label: 'Browse document bookmarks', value: NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS }
+	];
 
 	// Match the Bible Reader's shared split controls above the action list.
 	const headerActions: HeaderActions = [

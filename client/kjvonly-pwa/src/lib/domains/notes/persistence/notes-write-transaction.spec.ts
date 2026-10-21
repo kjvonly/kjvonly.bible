@@ -1,5 +1,6 @@
 import {
-	NOTE_DATA_TYPE
+	NOTE_DATA_TYPE,
+	NOTE_DATA_VERSION
 } from '../resources/notes-resource-contract';
 
 import {
@@ -119,7 +120,7 @@ describe(
 						NOTE_DATA_TYPE,
 
 					dataVersion:
-						1,
+						NOTE_DATA_VERSION,
 					objectId:
 						note.id,
 					value:
