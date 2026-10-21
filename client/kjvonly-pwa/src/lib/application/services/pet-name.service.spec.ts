@@ -33,6 +33,19 @@ describe('PetNameService', () => {
 		expect(service.resolve(identity)).toBe('01234567…89abcdef');
 	});
 
+	it('supports a view-specific fallback without overriding local or default pet names', () => {
+		const publisher = '0123456789abcdef'.repeat(4);
+		const fallback = publisher.slice(0, 32); // First 16 bytes of a hex pubkey.
+		const storage = new MemoryStorage();
+		const service = new PetNameService(storage);
+
+		expect(service.resolve(publisher, fallback)).toBe(fallback);
+		service.set(publisher, 'My Publisher');
+		expect(service.resolve(publisher, fallback)).toBe('My Publisher');
+		expect(new PetNameService(new MemoryStorage(), { [publisher]: 'Default Name' })
+			.resolve(publisher, fallback)).toBe('Default Name');
+	});
+
 	it('persists user-local pet names', () => {
 		const storage = new MemoryStorage();
 		const first = new PetNameService(storage);

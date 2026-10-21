@@ -100,7 +100,7 @@ source-parser-independent
 application-navigation-independent
 ```
 
-The CLI/parser side owns source interpretation and normalization.
+The shared `@kjvonly/html-normalized-content` package owns HTML source interpretation and normalization. The CLI owns source IO and publication; a browser Worker may invoke the same parser for on-demand Domain content.
 
 The PWA renderer owns projection from accepted normalized semantics into DOM presentation.
 

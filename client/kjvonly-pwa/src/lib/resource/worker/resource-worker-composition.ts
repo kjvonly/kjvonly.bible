@@ -13,6 +13,7 @@ import {
 import {
 	BlossomResourceResolutionStrategy
 } from '$lib/resource/resolution/blossom-resource-resolution-strategy';
+import { CachedDictionaryBlossomResolutionStrategy } from '$lib/resource/resolution/cached-dictionary-blossom-resolution-strategy';
 
 import type {
 	ResourceResolutionStrategy
@@ -206,6 +207,18 @@ import {
 } from '$lib/domains/bookmarks';
 
 ///////////////////////////////////////////////////////////////////////////////
+// Dictionary
+
+import {
+	DictionaryEntriesDataTypeHandler,
+	DictionaryChunkInstaller,
+	DictionaryResourceHandler,
+	DictionaryPublishedHeadwordIndexDataTypeHandler,
+	DictionaryPublishedHeadwordIndexFactory,
+	IndexedDBDictionaryPublishedIndexStore
+} from '$lib/domains/dictionary';
+
+///////////////////////////////////////////////////////////////////////////////
 // Reading Plans
 
 import {
@@ -300,7 +313,9 @@ export function createDescriptorResourceProcessors(
 		new ResourceDescriptorValidator();
 
 	const blossomStrategy =
-		new BlossomResourceResolutionStrategy();
+		new CachedDictionaryBlossomResolutionStrategy(
+			new BlossomResourceResolutionStrategy()
+		);
 
 	const nostrStrategy:
 		ResourceResolutionStrategy = {
@@ -448,6 +463,8 @@ function createResourceProcessingDependencies():
 			new StrongsDefinitionDataTypeHandler(),
 			new NoteDataTypeHandler(),
 			new BookmarkDataTypeHandler(),
+			new DictionaryEntriesDataTypeHandler(),
+			new DictionaryPublishedHeadwordIndexDataTypeHandler(),
 			new BibleChapterDataTypeHandler(),
 			new BibleBooknamesDataTypeHandler(),
 			new BibleParagraphsDataTypeHandler(),
@@ -472,6 +489,7 @@ function createResourceProcessingDependencies():
 			new BiblePericopesDomainObjectFactory(),
 			new BibleTextMarkupDomainObjectFactory(),
 			new BibleSearchIndexDomainObjectFactory(),
+			new DictionaryPublishedHeadwordIndexFactory(),
 			new PlanDefinitionDomainObjectFactory(),
 			new PlanSubscriptionDomainObjectFactory(),
 			new PlanProgressDomainObjectFactory()
@@ -523,7 +541,19 @@ function createResourceHandlers():
 		);
 
 
+	const dictionaryInstallationTransaction =
+		new IndexedDBGenericResourceInstallationTransaction(getApplicationDB);
+
+	const dictionaryResourceHandler = new DictionaryResourceHandler(
+		new DictionaryEntriesDataTypeHandler(),
+		new DictionaryChunkInstaller(
+			dictionaryInstallationTransaction,
+			new IndexedDBDictionaryPublishedIndexStore(getApplicationDB)
+		)
+	);
+
 	return [
-		filesystemResourceHandler
+		filesystemResourceHandler,
+		dictionaryResourceHandler
 	];
 }

@@ -1,0 +1,59 @@
+version: 1
+
+kind: 37770
+
+staging:
+  path: ./.kjvonly-dictionary-indexes-home
+
+nostr:
+  relays:
+    - wss://kjvonly.bible.home:3334
+
+defaults:
+  strategy: local
+
+strategies:
+  local:
+    type: blossom
+    urls:
+      - https://kjvonly.bible.home:3335
+
+resources:
+
+  dictionary-search-webster-1828:
+    path: ../../data/dictionary/indexes/bundles/webster-1828.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/search-index/webster-1828"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/search-index"]
+        - ["dataType", "kjvonly.dictionary.headword-index"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  dictionary-search-webster-1844:
+    path: ../../data/dictionary/indexes/bundles/webster-1844.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/search-index/webster-1844"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/search-index"]
+        - ["dataType", "kjvonly.dictionary.headword-index"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []

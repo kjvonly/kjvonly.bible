@@ -23,10 +23,11 @@ export class PetNameService {
 	}
 
 	/**
-	 * Returns a local pet name when one exists, otherwise a compact identity.
+	 * Returns a local pet name when one exists, otherwise the supplied fallback
+	 * or the standard compact identity.
 	 */
-	resolve(identity: string): string {
-		return this.petNames.get(identity) ?? compactIdentity(identity);
+	resolve(identity: string, fallback?: string): string {
+		return this.petNames.get(identity) ?? fallback ?? compactIdentity(identity);
 	}
 
 	/**

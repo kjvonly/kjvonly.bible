@@ -19,8 +19,8 @@
 		"test:unit": "vitest --config vitest.unit.config.ts",
 		"test:browser": "vitest --config vitest.browser.config.ts --run",
 		"test:browser:watch": "vitest --config vitest.browser.config.ts --browser.headless=false",
-		"prebuild": "npm --prefix ../packages/normalized-content run build",
-		"pretest": "npm --prefix ../packages/normalized-content run test"
+		"prebuild": "npm --prefix ../packages/normalized-content run build && npm --prefix ../packages/html-normalized-content run build",
+		"pretest": "npm --prefix ../packages/normalized-content run test && npm --prefix ../packages/html-normalized-content run build"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.9",
@@ -49,6 +49,7 @@
 	},
 	"dependencies": {
 		"@kjvonly/normalized-content": "file:../packages/normalized-content",
+		"@kjvonly/html-normalized-content": "file:../packages/html-normalized-content",
 		"@noble/hashes": "^2.4.0",
 		"@rx-nostr/crypto": "^3.1.6",
 		"@tailwindcss/postcss": "^4.1.7",

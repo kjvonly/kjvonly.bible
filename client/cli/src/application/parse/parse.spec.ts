@@ -11,7 +11,7 @@ import type {
 
 import type {
 	ParsedHtmlDocument
-} from './html/parser/html-parser.js';
+} from '@kjvonly/html-normalized-content';
 
 import {
 	ParseUseCase

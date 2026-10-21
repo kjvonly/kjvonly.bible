@@ -139,3 +139,37 @@ A Kind `37778` event is then published containing:
 * Deterministic identifier (`d` tag)
 
 The relay stores metadata and discovery information while Blossom stores the actual file bytes.
+
+---
+
+## Dictionary Headword Indexes (optional Blossom sidecars)
+
+Build a headword-only FlexSearch export from each existing keyed dictionary
+`json.gz` bundle and publish the exported gzip files through the normal
+manifest CLI. This uses **the PWA's installed FlexSearch 0.7 dependency**;
+install PWA and CLI dependencies before running. From the `wt1` repository
+root, the data directory is `../../data`.
+
+```bash
+zarf/scripts/seed/publish-dictionary-headword-indexes.sh local
+# Or use 'home' for zarf/manifest/dictionary-search-indexes-home.yaml
+```
+
+The script generates:
+
+- `../../data/dictionary/indexes/bundles/webster-1828.json.gz`
+- `../../data/dictionary/indexes/bundles/webster-1844.json.gz`
+
+The targeted manifests publish **only these two index Resources** to Blossom
+and their descriptors to the relay. The same entries also exist in the full
+`app-data.yaml` and `app-data-home.yaml` manifests for normal deployments.
+
+Each index is publisher-independent, contains no definitions, and includes the
+source dictionary's compressed-file SHA-256. The client must validate the
+source identity, checksum, export version and tokenizer before importing it.
+
+**Current state:** these are optional published sidecars. The Dictionary
+chunk installer still generates its local index in the Resource worker; it
+does not yet fetch or consume these sidecars. Do not remove the local build
+fallback or make an extra network request mandatory before implementing that
+import path.

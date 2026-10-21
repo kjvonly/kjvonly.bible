@@ -40,6 +40,7 @@
 		search: Modules.SEARCH,
 		notes: Modules.NOTES,
 		bookmarks: Modules.BOOKMARKS,
+		dictionary: Modules.DICTIONARY,
 		plans: Modules.PLANS,
 		archive: Modules.ARCHIVE,
 		files: Modules.FILE_MANAGER,

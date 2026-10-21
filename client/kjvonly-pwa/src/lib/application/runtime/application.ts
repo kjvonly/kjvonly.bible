@@ -97,7 +97,23 @@ import {
 } from '$lib/domains/notes/ui';
 
 import { bookmarksNavigationViewRegistrations } from '$lib/domains/bookmarks/ui';
+import { DictionaryRuntime, dictionaryNavigationViewRegistrations } from '$lib/domains/dictionary/ui';
 import { BOOKMARKS_VIEWS, BookmarksModuleResourceSelectionContributor } from '$lib/domains/bookmarks';
+
+import {
+    DictionaryModuleResourceSelectionContributor,
+    DictionaryInstallationService,
+    DictionaryPublishedIndexPreparer,
+    createDictionaryService,
+    DICTIONARY_VIEWS,
+    createDictionaryResourceId,
+    DICTIONARY_RESOURCE_TYPE,
+    type DictionaryEditionSource
+} from '$lib/domains/dictionary';
+
+import {
+    IndexedDBDictionaryHeadwordSourceStore
+} from '$lib/domains/dictionary/persistence/indexeddb-dictionary-headword-source-store';
 
 import {
     bibleNavigationViewRegistrations,
@@ -574,6 +590,19 @@ const FILESYSTEM_BOOTSTRAP_RESOURCE:
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Webster 1828 is the initial Dictionary Resource selection. Both editions are
+ * prepared only when a Dictionary view first opens, never during app bootstrap.
+ * The selected Resource remains owned by the pane's navigation entry.
+ */
+const DEFAULT_DICTIONARY_RESOURCE = createDictionaryResourceId('webster-1828');
+const DICTIONARY_EDITIONS_ON_OPEN: readonly DictionaryEditionSource[] = [
+    { publisher: KJVONLY_PUBKEY, resourceId: DEFAULT_DICTIONARY_RESOURCE },
+    { publisher: KJVONLY_PUBKEY, resourceId: createDictionaryResourceId('webster-1844') }
+];
+
+///////////////////////////////////////////////////////////////////////////////
+
 type ApplicationState =
     | 'created'
     | 'starting'
@@ -928,6 +957,11 @@ export class Application {
                             createStrongsResourceId(
                                 'kjvs'
                             )
+                    },
+                    {
+                        resourceType: DICTIONARY_RESOURCE_TYPE,
+                        publisher: KJVONLY_PUBKEY,
+                        resourceId: DEFAULT_DICTIONARY_RESOURCE
                     }
                 ],
                 resourceSelectionStore
@@ -973,6 +1007,7 @@ export class Application {
                         Modules.NORMALIZED_CONTENT
                     ),
                     new BookmarksModuleResourceSelectionContributor(),
+                    new DictionaryModuleResourceSelectionContributor(),
                     new NoResourceModuleResourceSelectionContributor(
                         Modules.FILE_MANAGER
                     ),
@@ -1039,6 +1074,11 @@ export class Application {
                 {
                     module: Modules.BOOKMARKS,
                     view: BOOKMARKS_VIEWS.ROOT,
+                    createState: () => ({})
+                },
+                {
+                    module: Modules.DICTIONARY,
+                    view: DICTIONARY_VIEWS.ROOT,
                     createState: () => ({})
                 },
                 {
@@ -1152,6 +1192,10 @@ export class Application {
 
         navigationViewRegistry.registerAll(
             bookmarksNavigationViewRegistrations
+        );
+
+        navigationViewRegistry.registerAll(
+            dictionaryNavigationViewRegistrations
         );
 
         navigationViewRegistry.registerAll(
@@ -1397,6 +1441,31 @@ export class Application {
                 bibleSearchIndexStore,
                 resourceWorkerClient
             );
+
+        // Dictionary Resources install on module entry, not Application startup.
+        // Installation is serialized by the existing Dictionary installation service.
+        const dictionaryInstallationService =
+            new DictionaryInstallationService(
+                new IndexedDBDictionaryHeadwordSourceStore(getApplicationDB),
+                resourceWorkerClient,
+                new DictionaryPublishedIndexPreparer(resourceWorkerClient)
+            );
+
+        const dictionaryRuntime =
+            new DictionaryRuntime();
+        const dictionaryService =
+            createDictionaryService(
+                dictionaryRuntime,
+                dictionaryInstallationService,
+                DICTIONARY_EDITIONS_ON_OPEN
+            );
+
+        // Refresh accepted editions after archive imports, without downloading Resources.
+        archiveService.subscribeToImports(({ importedResourceTypes }) => {
+            if (!importedResourceTypes.has(DICTIONARY_RESOURCE_TYPE)) return;
+            void dictionaryService.refreshImportedEditions()
+                .catch(error => console.warn('[Dictionary archive refresh failed]', error));
+        });
 
         const searchRuntime =
             new SearchRuntime(
@@ -1751,7 +1820,9 @@ export class Application {
             subsEnricherService,
             encodedReadingsDecoderService,
 
-            strongsService
+            strongsService,
+
+            dictionaryService
         };
     }
 

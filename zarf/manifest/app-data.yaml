@@ -183,6 +183,103 @@ resources:
       encoding: []
 
   # ---------------------------------------------------------------------------
+  # Dictionary - Webster 1828 - Bundle
+  #
+  # Published independently of application-defaults. Installed with Webster
+  # 1844 when the Dictionary module is first opened.
+  # ---------------------------------------------------------------------------
+
+  dictionary-webster-1828:
+    path: ../../data/dictionary/entries/bundles/webster-1828.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/entries/webster-1828"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/entries"]
+        - ["dataType", "kjvonly.dictionary.entries"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Dictionary - Webster 1844 - Bundle
+  #
+  # Published independently of application-defaults. Installed on Dictionary
+  # module entry without changing the selected Resource (Webster 1828).
+  # ---------------------------------------------------------------------------
+
+  dictionary-webster-1844:
+    path: ../../data/dictionary/entries/bundles/webster-1844.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/entries/webster-1844"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/entries"]
+        - ["dataType", "kjvonly.dictionary.entries"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Dictionary - Prebuilt Headword Search Indexes (optional sidecar Resources)
+  #
+  # Blossom hosts portable FlexSearch exports. The current chunk installer
+  # still builds its local index; downloading these is a later opt-in change.
+  # ---------------------------------------------------------------------------
+
+  dictionary-search-webster-1828:
+    path: ../../data/dictionary/indexes/bundles/webster-1828.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/search-index/webster-1828"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/search-index"]
+        - ["dataType", "kjvonly.dictionary.headword-index"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  dictionary-search-webster-1844:
+    path: ../../data/dictionary/indexes/bundles/webster-1844.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/search-index/webster-1844"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/search-index"]
+        - ["dataType", "kjvonly.dictionary.headword-index"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
   # Reading Plans - Default - Individual
   # ---------------------------------------------------------------------------
 

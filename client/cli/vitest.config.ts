@@ -24,6 +24,10 @@ const sourceAlias = (
 export default defineConfig({
 	resolve: {
 		alias: {
+			// Tests consume the shared package's public API directly from source.
+			// This matches the CLI's # aliases and avoids depending on a dist build.
+			'@kjvonly/html-normalized-content':
+				sourceAlias('../packages/html-normalized-content/src/index.ts'),
 			'#adapters':
 				sourceAlias(
 					'./src/adapters'

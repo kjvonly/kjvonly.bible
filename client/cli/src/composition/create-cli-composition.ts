@@ -97,36 +97,7 @@ import { ParseUseCase } from '#application/parse/parse.js';
 import { LegacyNormalizedDocumentConverter } from '#application/parse/legacy/legacy-normalized-document-converter.js';
 import { ParseDirectoryUseCase } from '#application/parse/batch/parse-directory.js';
 import { NodeParseWorkspace } from '#adapters/parse/node-parse-workspace.js';
-import { CheerioHtmlParser } from '#application/parse/html/parser/cheerio-html-parser.js';
-import {
-	OrdinalNormalizedBlockIdGenerator
-} from '#application/parse/identity/ordinal-normalized-block-id-generator.js';
-import { CaptionBlockProcessor } from '#application/parse/html/processors/caption-block-processor.js';
-import { FigureBlockProcessor } from '#application/parse/html/processors/figure-block-processor.js';
-import { HeadingBlockProcessor } from '#application/parse/html/processors/heading-block-processor.js';
-import { HtmlBlockProcessorRegistry } from '#application/parse/html/registry/html-block-processor-registry.js';
-import { ListBlockProcessor } from '#application/parse/html/processors/list-block-processor.js';
-import { ListItemBlockProcessor } from '#application/parse/html/processors/list-item-block-processor.js';
-import { ParagraphBlockProcessor } from '#application/parse/html/processors/paragraph-block-processor.js';
-import { PreformattedBlockProcessor } from '#application/parse/html/processors/preformatted-block-processor.js';
-import { QuoteBlockProcessor } from '#application/parse/html/processors/quote-block-processor.js';
-import { TableBlockProcessor } from '#application/parse/html/processors/table-block-processor.js';
-import { TableCellBlockProcessor } from '#application/parse/html/processors/table-cell-block-processor.js';
-import { TableRowBlockProcessor } from '#application/parse/html/processors/table-row-block-processor.js';
-import { TableSectionBlockProcessor } from '#application/parse/html/processors/table-section-block-processor.js';
-import { ThematicBreakBlockProcessor } from '#application/parse/html/processors/thematic-break-block-processor.js';
-import { TransparentContainerBlockProcessor } from '#application/parse/html/processors/transparent-container-block-processor.js';
-import { UnsupportedSemanticBlockProcessor } from '#application/parse/html/processors/unsupported-semantic-block-processor.js';
-import { HtmlInlineParser } from '#application/parse/html/inline/html-inline-parser.js';
-import { HtmlInlineProcessorRegistry } from '#application/parse/html/inline/html-inline-processor-registry.js';
-import { AnchorInlineProcessor } from '#application/parse/html/inline/processors/anchor-inline-processor.js';
-import { EmphasisInlineProcessor } from '#application/parse/html/inline/processors/emphasis-inline-processor.js';
-import { LineBreakInlineProcessor } from '#application/parse/html/inline/processors/line-break-inline-processor.js';
-import { MarkInlineProcessor } from '#application/parse/html/inline/processors/mark-inline-processor.js';
-import { StrongInlineProcessor } from '#application/parse/html/inline/processors/strong-inline-processor.js';
-import {
-	HtmlNormalizedDocumentConverter
-} from '#application/parse/html/converter/html-normalized-document-converter.js';
+import { createHtmlNormalizer } from '@kjvonly/html-normalized-content';
 import { BlossomArtifactPublisher } from '#application/publish/blossom/blossom-artifact-publisher.js';
 import { NostrStagedEventPublisher } from '#application/publish/nostr/nostr-staged-event-publisher.js';
 import { PublicationPreflight } from '#application/publish/preflight/publication-preflight.js';
@@ -149,113 +120,14 @@ export function createCliComposition() {
 
 	// =============================================================================
 	// Parse
-	const htmlParser =
-		new CheerioHtmlParser();
-
-	const normalizedDocumentValidator =
-		new NormalizedDocumentValidator();
-
-	const htmlBlockProcessorRegistry =
-		new HtmlBlockProcessorRegistry([
-			new CaptionBlockProcessor(),
-			new FigureBlockProcessor(),
-			new HeadingBlockProcessor(),
-			new ParagraphBlockProcessor(),
-			new PreformattedBlockProcessor(),
-			new TableBlockProcessor(),
-			new TableCellBlockProcessor(),
-			new TableRowBlockProcessor(),
-			new TableSectionBlockProcessor(),
-			new ThematicBreakBlockProcessor(),
-			new QuoteBlockProcessor(),
-			new ListBlockProcessor(),
-			new ListItemBlockProcessor(),
-			new TransparentContainerBlockProcessor(),
-			new UnsupportedSemanticBlockProcessor()
-		]);
-
-	const htmlInlineProcessorRegistry =
-		new HtmlInlineProcessorRegistry([
-			new LineBreakInlineProcessor(),
-			new AnchorInlineProcessor(),
-			new EmphasisInlineProcessor(),
-			new StrongInlineProcessor(),
-			new MarkInlineProcessor(
-				[
-					'sup'
-				],
-				'superscript'
-			),
-			new MarkInlineProcessor(
-				[
-					'sub'
-				],
-				'subscript'
-			),
-			new MarkInlineProcessor(
-				[
-					'u'
-				],
-				'underline'
-			),
-			new MarkInlineProcessor(
-				[
-					'del',
-					's',
-					'strike'
-				],
-				'strikethrough'
-			),
-			new MarkInlineProcessor(
-				[
-					'small'
-				],
-				'small'
-			),
-			new MarkInlineProcessor(
-				[
-					'code'
-				],
-				'code'
-			),
-			new MarkInlineProcessor(
-				[
-					'mark'
-				],
-				'highlight'
-			)
-		]);
-
-	const htmlInlineParser =
-		new HtmlInlineParser(
-			htmlInlineProcessorRegistry,
-			tag =>
-				htmlBlockProcessorRegistry.has(
-					tag
-				)
-		);
-
-	/**
-	 * Creates document-scoped ID state so collision counters never leak between
-	 * independent HTML conversions.
-	 */
-	const createNormalizedBlockIdGenerator =
-		() =>
-			new OrdinalNormalizedBlockIdGenerator();
-
-	const htmlNormalizedDocumentConverter =
-		new HtmlNormalizedDocumentConverter(
-			normalizedDocumentValidator,
-			htmlBlockProcessorRegistry,
-			htmlInlineParser,
-			createNormalizedBlockIdGenerator
-		);
+	const normalizedDocumentValidator = new NormalizedDocumentValidator();
+	const htmlNormalizer = createHtmlNormalizer(normalizedDocumentValidator);
 
 	const parse =
 		new ParseUseCase(
-			htmlParser,
-			htmlNormalizedDocumentConverter,
-            new LegacyNormalizedDocumentConverter(normalizedDocumentValidator)
+			htmlNormalizer.parser,
+			htmlNormalizer.converter,
+			new LegacyNormalizedDocumentConverter(normalizedDocumentValidator)
 		);
 
 	const parseWorkspace =

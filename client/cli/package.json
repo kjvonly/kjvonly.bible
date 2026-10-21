@@ -16,22 +16,21 @@
 	},
 	"scripts": {
 		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-		"prebuild": "npm --prefix ../packages/normalized-content run build && npm run clean",
+		"prebuild": "npm --prefix ../packages/normalized-content run build && npm --prefix ../packages/html-normalized-content run build && npm run clean",
 		"build": "tsc -p tsconfig.build.json",
-		"pretest": "npm --prefix ../packages/normalized-content run test",
+		"pretest": "npm --prefix ../packages/normalized-content run build && npm --prefix ../packages/html-normalized-content run build && npm --prefix ../packages/html-normalized-content run test",
 		"test": "vitest run --config vitest.config.ts"
 	},
 	"dependencies": {
 		"@kjvonly/normalized-content": "file:../packages/normalized-content",
-		"cheerio": "^1.1.2",
 		"commander": "^14.0.0",
-		"domhandler": "^5.0.3",
 		"dotenv": "^17.4.2",
 		"nostr-tools": "^2.25.1",
 		"nunjucks": "^3.2.4",
 		"ws": "^8.21.3",
 		"yaml": "^2.9.0",
-		"zod": "^4.5.4"
+		"zod": "^4.5.4",
+		"@kjvonly/html-normalized-content": "file:../packages/html-normalized-content"
 	},
 	"devDependencies": {
 		"@types/node": "^24.13.3",

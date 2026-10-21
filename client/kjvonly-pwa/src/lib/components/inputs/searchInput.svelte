@@ -6,15 +6,19 @@
 	// =============================== BINDINGS ================================
 
 	let {
+		id,
 		value,
 		placeholder = 'Search',
 		label,
+		maxLength,
 		focusOnMount = false,
 		onInput
 	}: {
+		id?: string;
 		value: string;
 		placeholder?: string;
 		label?: string;
+		maxLength?: number;
 		focusOnMount?: boolean;
 		onInput: (value: string) => void;
 	} = $props();
@@ -47,6 +51,8 @@
 		<input
 			use:focusInput
 			type="search"
+			{id}
+			maxlength={maxLength}
 			{placeholder}
 			aria-label={label ?? placeholder}
 			value={value}

@@ -7,12 +7,12 @@ import { getLegacyMigrationDiagnostics } from './legacy/legacy-migration-diagnos
 
 import type {
 	HtmlNormalizedDocumentConversionOptions
-} from './html/converter/html-normalized-document-converter.js';
+} from '@kjvonly/html-normalized-content';
 
 import type {
 	HtmlParser,
 	ParsedHtmlDocument
-} from './html/parser/html-parser.js';
+} from '@kjvonly/html-normalized-content';
 
 /** Source-specific converter contract used by the generic parse application boundary. */
 export interface HtmlDocumentConverter {
