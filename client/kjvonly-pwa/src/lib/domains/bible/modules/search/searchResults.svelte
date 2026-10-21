@@ -10,6 +10,7 @@
 		type ScrubbedWindowEntry
 	} from '$lib/components';
 	import SearchResultActions from './searchResultActions.svelte';
+	import { getBibleVerseText } from '../../services/bible-verse-text';
 
 	// MODELS
 	import {
@@ -196,7 +197,7 @@
 			bookName: booknames.booknamesById[bookID] ?? '',
 			number: bibleLocationReferenceService.extractChapter(bibleLocationRef),
 			verseNumber: verse.number,
-			text: verse.text,
+			text: getBibleVerseText(verse),
 			strongsRefs,
 			verseRefs: crossRefs,
 			strongsWords

@@ -33,6 +33,7 @@
 		KJVHeader,
 		KJVScrubbedViewport
 	} from '$lib/components';
+	import PlanDetailsScrollLayout from '../components/planDetailsScrollLayout.svelte';
 	import PlanReadingsList from '../components/planReadingsList.svelte';
 	import PlansLoadState from '../components/plansLoadState.svelte';
 	import { initializePlansRuntime } from '../runtime/initialize-plans-runtime';
@@ -560,62 +561,57 @@
 {/snippet}
 
 {#snippet subListView(sub: Sub)}
-	<div class="flex h-full min-h-0 w-full min-w-0 flex-col">
-		<section class="flex shrink-0 min-w-0 flex-col gap-2 py-4">
-			<div class="min-w-0">
-				<h2 class="truncate text-lg font-semibold text-neutral-700">{sub.name}</h2>
+	<PlanDetailsScrollLayout title={sub.name}>
+		<KJVScrubbedViewport
+			min={scrubberMinReadingNumber}
+			max={Math.max(1, sub.nestedReadings.length)}
+			bind:value={scrubberReadingNumber}
+			label="Jump to plan reading"
+			{showScrubber}
+			formatValue={(readingNumber) => `Reading ${readingNumber}`}
+			onReachEnd={loadMoreSubReadings}
+			prepareValue={prepareScrubberValue}
+		>
+			<section class="flex min-w-0 flex-col gap-2 pb-4">
 				<div
-					class="truncate text-sm text-neutral-500"
+					class="min-w-0 truncate text-sm text-neutral-500"
 					title={sub.publisher}
 				>
 					Published by {petNameService.resolve(sub.publisher)}
 				</div>
-			</div>
 
-			{#if sub.description}
-				<p class="text-sm text-neutral-600">
-					{sub.description}
-				</p>
-			{/if}
-
-			<div class="text-sm text-neutral-500">
-				{sub.percentCompleted}% complete · {sub.completedReadingIndexes.size}
-				of {sub.nestedReadings.length} readings
-			</div>
-		</section>
-
-		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
-			<div class="shrink-0 pb-2 text-base text-neutral-700">Readings</div>
-
-			<KJVScrubbedViewport
-				min={scrubberMinReadingNumber}
-				max={Math.max(1, sub.nestedReadings.length)}
-				bind:value={scrubberReadingNumber}
-				label="Jump to plan reading"
-				{showScrubber}
-				formatValue={(readingNumber) => `Reading ${readingNumber}`}
-				onReachEnd={loadMoreSubReadings}
-				prepareValue={prepareScrubberValue}
-			>
-				{#if visibleReadingIndexes.length > 0}
-					<PlanReadingsList
-						readings={sub.nestedReadings}
-						readingIndexes={visibleReadingIndexes}
-						totalReadings={sub.nestedReadings.length}
-						nextReadingIndex={sub.nextReadingsIndex}
-						completedReadingIndexes={sub.completedReadingIndexes}
-						{verseCountByBookChapter}
-						{shortBookNamesById}
-						onReadingSelected={onSelectedSubReading}
-					></PlanReadingsList>
-				{:else if sub.nestedReadings.length > 0}
-					<div class="py-4 text-sm text-neutral-500">
-						All readings completed.
-					</div>
+				{#if sub.description}
+					<p class="text-sm text-neutral-600">
+						{sub.description}
+					</p>
 				{/if}
-			</KJVScrubbedViewport>
-		</div>
-	</div>
+
+				<div class="text-sm text-neutral-500">
+					{sub.percentCompleted}% complete · {sub.completedReadingIndexes.size}
+					of {sub.nestedReadings.length} readings
+				</div>
+			</section>
+
+			<div class="pb-2 text-base text-neutral-700">Readings</div>
+
+			{#if visibleReadingIndexes.length > 0}
+				<PlanReadingsList
+					readings={sub.nestedReadings}
+					readingIndexes={visibleReadingIndexes}
+					totalReadings={sub.nestedReadings.length}
+					nextReadingIndex={sub.nextReadingsIndex}
+					completedReadingIndexes={sub.completedReadingIndexes}
+					{verseCountByBookChapter}
+					{shortBookNamesById}
+					onReadingSelected={onSelectedSubReading}
+				></PlanReadingsList>
+			{:else if sub.nestedReadings.length > 0}
+				<div class="py-4 text-sm text-neutral-500">
+					All readings completed.
+				</div>
+			{/if}
+		</KJVScrubbedViewport>
+	</PlanDetailsScrollLayout>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->

@@ -220,7 +220,7 @@
 							variant="quiet"
 							onClick={() => onNextReadingSelected(s)}
 						>
-							<BookRibbon classes="h-[1.25em] w-[1.25em] text-primary-500" />
+							<BookRibbon classes="h-[1.25em] w-[1.25em] fill-current text-primary-500" />
 						</KJVIconButton>
 					{/if}
 				{/snippet}

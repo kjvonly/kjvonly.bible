@@ -16,7 +16,7 @@ export function newSettings(): Settings {
     fontSize: 16,
     fontWeight: 400,
     fontFamily: 'sans',
-    colorTheme: 'red',
+    colorTheme: 'app',
     isDarkTheme: false,
     showParagraphs: false,
     showPericopes: false,

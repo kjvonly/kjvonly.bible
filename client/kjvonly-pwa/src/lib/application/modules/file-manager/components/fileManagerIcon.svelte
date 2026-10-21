@@ -21,5 +21,5 @@
 </script>
 
 <span aria-hidden="true" class="inline-flex shrink-0 items-center justify-center text-neutral-500">
-	<IconComponent {classes}></IconComponent>
+	<IconComponent classes={`${classes} fill-current`}></IconComponent>
 </span>

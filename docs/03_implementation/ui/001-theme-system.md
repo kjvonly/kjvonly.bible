@@ -91,12 +91,12 @@ The current defaults are:
 fontSize      = 16
 fontWeight    = 400
 fontFamily    = sans
-colorTheme    = red
+colorTheme    = app
 isDarkTheme   = false
 enableMaxWidth = true
 ```
 
-Persisted Settings are normalized before use.
+Persisted Settings are normalized before use. The App palette is the fallback when `colorTheme` is missing, empty, or not a string; existing stored selections remain unchanged.
 
 The font-size migration is important: `fontSize` is now a numeric pixel value. Historical values such as a Tailwind class name are not treated as CSS sizes.
 
@@ -111,6 +111,14 @@ settings
 `SettingsService` owns persistence.
 
 Svelte Settings controls should not write `localStorage` directly.
+
+The Bible Reader's **More actions** view also uses `SettingsService.updateSetting('isDarkTheme', ...)`
+for a reactive Night mode / Light mode `headerActions` button before the
+split actions (not in the menu list).
+It stays open when toggled, and subscribes to Settings changes so the button's
+label and opposite-mode icon stay current even when a separate Settings view
+changes the theme. The preference is application-wide, not a Bible-local
+Reader setting.
 
 The update path is:
 

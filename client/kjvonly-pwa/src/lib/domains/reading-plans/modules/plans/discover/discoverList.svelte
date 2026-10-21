@@ -143,7 +143,7 @@
 						variant="quiet"
 						onClick={() => onAddClicked(plan)}
 					>
-						<Add classes="h-[1.25em] w-[1.25em] text-primary-500" />
+						<Add classes="h-[1.25em] w-[1.25em] fill-current text-primary-500" />
 					</KJVIconButton>
 				{/snippet}
 			</KJVCard>

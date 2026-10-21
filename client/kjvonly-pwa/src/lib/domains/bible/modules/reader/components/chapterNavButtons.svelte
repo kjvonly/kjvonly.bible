@@ -1,7 +1,7 @@
 <!-- @component
 Renders previous/next Reader navigation controls. The controls adapt to ordinary
-Bible chapter navigation or a reading-plan sequence and fade away while the user
-is scrolling through the middle of a chapter.
+Bible chapter navigation or a reading-plan sequence. Like the normalized Reader,
+they hide while scrolling down and reappear when scrolling up or reaching an edge.
 -->
 <script lang="ts">
 	// ================================ IMPORTS ================================
@@ -21,7 +21,7 @@ is scrolling through the middle of a chapter.
 	import RightChevron from '$lib/components/buttons/chevrons/rightChevron.svelte';
 
 	// OTHER
-	import { attachEvents } from '$lib/application/ui';
+	import { ChapterNavScrollVisibility } from './chapter-nav-scroll-visibility';
 	import type {
 		BibleMode,
 		BibleReadingNavigation
@@ -48,8 +48,6 @@ is scrolling through the middle of a chapter.
 		bibleLocationRef: string;
 		/** Active Bible version ID retained with this Reader instance. */
 		bibleVersion: string;
-		/** Whether navigation controls are currently visible. */
-		showNavButtons: boolean;
 		/** Reader instance ID used to locate its scroll container. */
 		ID: string;
 	}
@@ -58,56 +56,46 @@ is scrolling through the middle of a chapter.
 		mode = $bindable<BibleMode>(),
 		bibleLocationRef = $bindable<string>(),
 		bibleVersion = $bindable<string>(),
-		showNavButtons = $bindable<boolean>(),
 		ID
 	}: Props = $props();
 
 	// ================================= VARS ==================================
 
-	const REACHED_BOTTOM_THRESHOLD = 40;
+	let showNavButtons = $state(true);
+	const scrollVisibility = new ChapterNavScrollVisibility();
 
 	// =============================== LIFECYCLE ===============================
 
 	onMount(() => {
-		attachScrolls();
+		// The Reader's existing ViewBody is the only scroll owner.
+		const scrollContainer = document.getElementById(`${ID}-scroll-container`);
+		if (!scrollContainer) {
+			return;
+		}
+
+		scrollVisibility.reset(scrollContainer.scrollTop);
+		const updateVisibility = () => {
+			showNavButtons = scrollVisibility.update(scrollContainer);
+		};
+
+		scrollContainer.addEventListener('scroll', updateVisibility, {
+			passive: true
+		});
+		updateVisibility();
+		return () => scrollContainer.removeEventListener('scroll', updateVisibility);
 	});
 
-	// ================================ FUNCS ==================================
-
-	/** Attaches visibility tracking to this Reader instance's scroll container. */
-	function attachScrolls() {
-		attachEvents(`${ID}-scroll-container`, 'scroll', handleNavButtonVisibility);
-	}
-
-	/**
-	 * Shows chapter navigation controls near the top/bottom and hides them while
-	 * traversing the middle of a scrollable chapter.
-	 */
-	function handleNavButtonVisibility() {
-		let el = document.getElementById(`${ID}-scroll-container`);
-		if (!el) {
-			return;
-		}
-
-		if (el.scrollTop === 0) {
-			showNavButtons = true;
-			return;
-		}
-
-		/** this runs before the container has time to render */
-		if (el.scrollHeight + el.clientHeight + el.scrollTop === 0) {
-			return;
-		}
-		showNavButtons = false;
-
-		let isReachBottom =
-			el.scrollHeight - el.clientHeight - el.scrollTop <=
-			REACHED_BOTTOM_THRESHOLD;
-
-		if (isReachBottom) {
+	let previousLocationRef = bibleLocationRef;
+	$effect(() => {
+		// Show the controls when navigation changes the active chapter/verse.
+		if (bibleLocationRef !== previousLocationRef) {
+			previousLocationRef = bibleLocationRef;
+			scrollVisibility.reset(
+				document.getElementById(`${ID}-scroll-container`)?.scrollTop ?? 0
+			);
 			showNavButtons = true;
 		}
-	}
+	});
 
 	// ============================== CLICK FUNCS ==============================
 
@@ -179,24 +167,16 @@ is scrolling through the middle of a chapter.
 </script>
 
 {#if showNavButtons}
-	<div
-		style="transform: translate3d(0px, 0px, 0px);"
-		class="sticky z-10 transition-opacity duration-500"
-		transition:fade={{ duration: 500 }}
-	>
-		<div class="absolute bottom-2 left-4">
-			<LeftChevron onClick={_previousChapter}></LeftChevron>
+	<div class="pointer-events-none relative z-10 h-0 w-full" transition:fade={{ duration: 500 }}>
+		<div class="pointer-events-auto absolute bottom-2 left-4">
+			<LeftChevron
+				ariaLabel={mode.navReadings ? 'Previous reading' : 'Previous chapter'}
+				onClick={_previousChapter}></LeftChevron>
 		</div>
-	</div>
-{/if}
-{#if showNavButtons}
-	<div
-		style="transform: translate3d(0px, 0px, 0px); "
-		class="sticky z-10 transition-opacity duration-500"
-		transition:fade={{ duration: 500 }}
-	>
-		<div class="absolute right-4 bottom-2">
-			<RightChevron onClick={_nextChapter}></RightChevron>
+		<div class="pointer-events-auto absolute right-4 bottom-2">
+			<RightChevron
+				ariaLabel={mode.navReadings ? 'Next reading' : 'Next chapter'}
+				onClick={_nextChapter}></RightChevron>
 		</div>
 	</div>
 {/if}

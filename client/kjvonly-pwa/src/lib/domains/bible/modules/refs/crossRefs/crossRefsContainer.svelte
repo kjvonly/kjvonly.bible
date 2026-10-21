@@ -1,7 +1,7 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
 	// SVELTE
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	// COMPONENTS
 	import KJVButton from '$lib/components/buttons/KJVButton.svelte';
@@ -31,9 +31,7 @@
 	import { PaneSplit } from '$lib/application';
 
 	// OTHER
-	import uuid4 from 'uuid4';
-	import { findElement, scrollTo } from '$lib/application/ui';
-	import { sleep } from '$lib/shared';
+	import { scrollCrossReferencesToTop } from './scroll-cross-references';
 
 	// APPLICATION
 	import { useApplicationContext } from '$lib/application';
@@ -74,7 +72,7 @@
 
 	// ================================== VARS =================================
 
-	let ID = uuid4();
+	let crossRefsRoot: HTMLDivElement;
 	/**
 	 * A user can click on a cross reference to view the clicked cross reference
 	 * cross references. We store the cross references for each verse clicked
@@ -113,7 +111,10 @@
 		booknames = await bibleBooknamesService.get(source);
 	}
 
-	async function addCrossRefs(crossRefs: string[]): Promise<void> {
+	async function addCrossRefs(
+		crossRefs: string[],
+		scrollToNewList = false
+	): Promise<void> {
 		let verseCrossRefs: CrossRef[] = [];
 		for (let crossRefStr of crossRefs) {
 			try {
@@ -125,6 +126,10 @@
 		}
 		crossRefMatrix.push(verseCrossRefs);
 		updateCurrentCrossRefs();
+		if (scrollToNewList) {
+			await tick();
+			scrollCrossReferencesToTop(crossRefsRoot);
+		}
 	}
 
 	function requireChapterSelection() {
@@ -161,7 +166,7 @@
 		};
 	}
 
-	async function updateCurrentCrossRefs(): Promise<void> {
+	function updateCurrentCrossRefs(): void {
 		if (crossRefMatrix.length > 0) {
 			currentCrossRef = crossRefMatrix[crossRefMatrix.length - 1][0];
 			currentCrossRefs = crossRefMatrix[crossRefMatrix.length - 1].slice(1);
@@ -171,27 +176,7 @@
 				breadcrumbs.push(crossRefs[0]);
 			});
 			breadcrumbCrossRefs = breadcrumbs;
-			scrollToBreadcrumbs();
 		}
-	}
-
-	async function scrollToBreadcrumbs(): Promise<void> {
-		let breadcrumbsID = `${ID}-cross-refs-spacer`;
-		let el = document.getElementById(breadcrumbsID);
-
-		if (!el) {
-			await sleep(10);
-			el = await findElement(breadcrumbsID);
-		}
-
-		if (!el) {
-			return;
-		}
-		el?.scrollIntoView({
-			behavior: 'smooth',
-			block: 'start',
-			inline: 'start'
-		});
 	}
 
 	function copyToClipboard(e: Event, crossRef: CrossRef) {
@@ -238,19 +223,20 @@
 				}
 			});
 		});
-		addCrossRefs(crossRefs);
+		await addCrossRefs(crossRefs, true);
 	}
 
-	function onBreadcrumbCrossRefClicked(idx: number): void {
+	async function onBreadcrumbCrossRefClicked(idx: number): Promise<void> {
 		if (idx <= crossRefMatrix.length - 1) {
 			crossRefMatrix.splice(idx, crossRefMatrix.length);
 		}
 		updateCurrentCrossRefs();
+		await tick();
+		scrollCrossReferencesToTop(crossRefsRoot);
 	}
 
 	function onToggle(): void {
 		toggleCrossRefs = !toggleCrossRefs;
-		scrollToBreadcrumbs();
 	}
 
 	function onOpenBible(e: Event, crossRef: CrossRef): void {
@@ -293,7 +279,11 @@
 
 <!-- ================================= BODY ================================ -->
 {#snippet actions(crossRef: CrossRef)}
-	<div class="flex flex-row justify-end space-x-4 py-2">
+	<div class="flex w-full flex-row justify-end space-x-4 py-2">
+		<KJVButton classes="" onClick={(e: Event) => copyToClipboard(e, crossRef)}>
+			<Copy></Copy>
+		</KJVButton>
+
 		<KJVButton
 			classes=""
 			onClick={(e: Event) => onOpenBible(e, crossRef)}
@@ -302,10 +292,6 @@
 			<span class="sr-only">
 				Open {crossRef.bookName} {crossRef.chapterNumber}:{crossRef.verseNumber} in Bible
 			</span>
-		</KJVButton>
-
-		<KJVButton classes="" onClick={(e: Event) => copyToClipboard(e, crossRef)}>
-			<Copy></Copy>
 		</KJVButton>
 
 		<KJVButton
@@ -326,22 +312,24 @@
 
 {#snippet firstCrossRefListItem()}
 	{#if currentCrossRef}
-		<p class="px-4 py-2 text-left">
-			<span class="font-bold text-neutral-500"
-				>{currentCrossRef.bookName}
-				{currentCrossRef.chapterNumber}:{currentCrossRef.verseNumber}</span
-			><br />
-			{#each currentCrossRef.text.trim().split(' ') as w}
-				<span class="inline-block">{w}&nbsp;</span>
-			{/each}
+		<div class="w-full">
+			<div class="px-4 py-2 text-left">
+				<span class="font-bold text-neutral-500"
+					>{currentCrossRef.bookName}
+					{currentCrossRef.chapterNumber}:{currentCrossRef.verseNumber}</span
+				><br />
+				{#each currentCrossRef.text.trim().split(' ') as w}
+					<span class="inline-block">{w}&nbsp;</span>
+				{/each}
+			</div>
 			{@render actions(currentCrossRef)}
-		</p>
+		</div>
 	{/if}
 {/snippet}
 
 {#snippet crossRefListItem(crossRef: CrossRef)}
 	{#if crossRef}
-		<div class="hover:bg-neutral-100">
+		<div class="w-full hover:bg-neutral-100">
 			<div class="flex w-full">
 				<button class="w-full" onclick={() => onCrossRefClicked(crossRef)}>
 					<p class=" px-4 py-2 text-left">
@@ -357,9 +345,7 @@
 					</p>
 				</button>
 			</div>
-			<div>
-				{@render actions(crossRef)}
-			</div>
+			{@render actions(crossRef)}
 		</div>
 	{/if}
 {/snippet}
@@ -406,7 +392,7 @@
 {/snippet}
 
 {#snippet crossRefList()}
-	<div class="py-2">
+	<div class="w-full py-2">
 		{@render firstCrossRefListItem()}
 
 		{#each currentCrossRefs as crossRef}
@@ -417,13 +403,12 @@
 
 <!-- ============================== CONTAINER ============================== -->
 
-<div>
-	<div id={ID}>
+<div bind:this={crossRefsRoot} class="w-full min-w-0 shrink-0">
+	<div>
 		{@render crossRefsHeader()}
 		{#if !collapsible || toggleCrossRefs}
 			<div class="ps-2">
 				{@render breadcrumbs()}
-				<div id="{ID}-cross-refs-spacer" class="py-4"></div>
 				{@render crossRefList()}
 			</div>
 		{/if}

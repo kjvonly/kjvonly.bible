@@ -34,6 +34,6 @@
 	variant="quiet"
 >
 	<IconComponent
-		classes={`h-[1.25em] w-[1.25em] ${action.selected ? 'text-primary-500' : ''}`}
+		classes={`h-[1.25em] w-[1.25em] fill-current ${action.selected ? 'text-primary-500' : ''}`}
 	></IconComponent>
 </KJVIconButton>

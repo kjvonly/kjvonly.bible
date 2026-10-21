@@ -1,11 +1,14 @@
 <script lang="ts">
 	// ================================ IMPORTS ================================
+	import { onMount } from 'svelte';
+	import uuid4 from 'uuid4';
 	import {
 		KJVBackButton
 	} from '$lib/application/ui';
 
 	// APPLICATION
 	import {
+		useApplicationContext,
 		useNavigationRuntimeContext,
 		usePaneLayoutContext
 	} from '$lib/application';
@@ -18,6 +21,8 @@
 	} from '$lib/components';
 
 	import BookmarkStack from '$lib/components/svgs/bookmarkStack.svelte';
+	import Copy from '$lib/components/svgs/copy.svelte';
+	import LibraryBooks from '$lib/components/svgs/libraryBooks.svelte';
 
 	// MODELS
 	import {
@@ -29,6 +34,19 @@
 	const {
 		navigation
 	} = useNavigationRuntimeContext();
+	const { settingsService } = useApplicationContext();
+	const settingsSubscriberID = uuid4();
+
+	let isDarkTheme = $state(settingsService.getSettings().isDarkTheme);
+
+	onMount(() => {
+		settingsService.subscribe(settingsSubscriberID, (settings) => {
+			isDarkTheme = settings.isDarkTheme;
+		});
+		isDarkTheme = settingsService.getSettings().isDarkTheme;
+
+		return () => settingsService.unsubscribe(settingsSubscriberID);
+	});
 
 	const paneLayout = usePaneLayoutContext();
 	let clientHeight = $derived(
@@ -50,7 +68,12 @@
 		}
 	];
 
-	const headerActions: HeaderActions = [
+	const headerActions = $derived.by((): HeaderActions => [
+		{
+			icon: isDarkTheme ? 'light-mode' : 'dark-mode',
+			label: isDarkTheme ? 'Light mode' : 'Night mode',
+			onClick: toggleTheme
+		},
 		{
 			icon: 'split-horizontal',
 			label: 'Split pane horizontally',
@@ -63,14 +86,17 @@
 			onClick: () =>
 				void onAction(BIBLE_MENU_ACTIONS.SPLIT_VERTICAL)
 		}
-	];
+	]);
 
-	/**
-	 * Returns the selected menu action to the owning Bible reader.
-	 *
-	 * The menu does not manipulate sibling stack entries itself. The reader
-	 * interprets the action after this menu entry is popped.
-	 */
+	/** Toggles the shared application theme without leaving More actions. */
+	function toggleTheme(): void {
+		settingsService.updateSetting(
+			'isDarkTheme',
+			!settingsService.getSettings().isDarkTheme
+		);
+	}
+
+	/** Returns Reader actions to the owning Reader through backWithResult(). */
 	async function onAction(
 		action: BibleMenuAction
 	): Promise<void> {
@@ -86,14 +112,17 @@
 @component
 Bible Reader overflow menu.
 
-This view is intentionally a result-producing child of the Reader rather than
-an owner of Reader navigation. Selecting an action pops the menu with a typed
-Bible menu result; the owning Reader decides whether that result opens another
-view, splits the pane, or changes Reader state.
+This view is a child of the Reader rather than an owner of Reader navigation.
+Reader actions return typed results to the owning Reader; the header's
+application-wide theme toggle applies in place without popping the menu.
 -->
 
 {#snippet actionIcon(action: BibleMenuAction)}
-	{#if action === BIBLE_MENU_ACTIONS.BROWSE_BOOKMARKS}
+	{#if action === BIBLE_MENU_ACTIONS.COPY_VERSES}
+		<Copy classes="h-5 w-5 shrink-0" />
+	{:else if action === BIBLE_MENU_ACTIONS.BIBLE_VERSION}
+		<LibraryBooks classes="h-5 w-5 shrink-0" />
+	{:else if action === BIBLE_MENU_ACTIONS.BROWSE_BOOKMARKS}
 		<BookmarkStack classes="h-5 w-5 shrink-0" />
 	{/if}
 {/snippet}

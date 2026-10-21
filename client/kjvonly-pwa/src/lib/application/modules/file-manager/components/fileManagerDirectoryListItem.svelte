@@ -23,6 +23,6 @@
 	</span>
 	<span class="min-w-0 flex-1 truncate">{name}</span>
 	<span aria-hidden="true" class="shrink-0">
-		<KeyboardArrowRight classes="h-6 w-6 text-neutral-500"></KeyboardArrowRight>
+		<KeyboardArrowRight classes="h-6 w-6 fill-current text-neutral-500"></KeyboardArrowRight>
 	</span>
 </button>

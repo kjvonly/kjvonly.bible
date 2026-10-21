@@ -21,6 +21,8 @@
 	} from '$lib/application';
 	import { BIBLE_VIEWS } from '../../../models/bible-navigation.model';
 	import type { Verse } from '../../../models/bible.model';
+	import { getBibleVerseText } from '../../../services/bible-verse-text';
+	import { getBibleVerseCopyText } from '../../../services/bible-verse-copy-text';
 
 	// SERVICES
 
@@ -171,59 +173,10 @@
 		}
 	}
 
-	/** Formats all currently selected verse ranges as clipboard-ready text. */
+	/** Formats all selected consecutive verse ranges using canonical word tokens. */
 	function getAllVerseRangeText(): string {
-		let checkedVerseNumbers: number[] = getCheckedVerses();
-		let verseRangesToCopy = groupConsecutiveVerseRanges(checkedVerseNumbers);
-		let allVerseRangeText = verseRangesToCopy.map((verseRange) => {
-			return getVerseRangeText(verseRange);
-		});
-		return concatVerseRangeText(allVerseRangeText);
-	}
-
-	/** Joins independently formatted verse ranges with a trailing line break. */
-	function concatVerseRangeText(allVerseRangeText: string[]) {
-		return allVerseRangeText
-			.map((vrt: string) => {
-				return `${vrt}\n`;
-			})
-			.join('');
-	}
-
-	/**
-	 * Formats one consecutive verse range with its reference title and text.
-	 *
-	 * @param verseRange - Two-number inclusive `[start, end]` verse range.
-	 */
-	function getVerseRangeText(verseRange: number[]): string {
-		let [start, end] = getStartAndEndVerseNumbers(verseRange);
-		let verseRangeText = getVerseRangeTitle(start, end);
-		let versesToCopy = Array.from(
-			{ length: end - start + 1 },
-			(_, i) => start + i
-		);
-
-		versesToCopy.forEach((verseNumber: number) => {
-			let vn = `${verseNumber}`;
-			verseRangeText += `${verses[vn]?.text}\n`;
-		});
-
-		return verseRangeText;
-	}
-
-	function getStartAndEndVerseNumbers(r: number[]): number[] {
-		return [r[0], r[r.length - 1]];
-	}
-
-	function getVerseRangeTitle(start: number, end: number): string {
-		let rangeTitle = '';
-		if (start === end) {
-			rangeTitle = `${longTitle}:${start}\n`;
-		} else {
-			rangeTitle = `${longTitle}:${start}-${end}\n`;
-		}
-
-		return rangeTitle;
+		const ranges = groupConsecutiveVerseRanges(getCheckedVerses());
+		return getBibleVerseCopyText(ranges, verses, longTitle);
 	}
 
 	function getCheckedVerses(): number[] {
@@ -339,8 +292,11 @@
 	function onCopyVerseClicked(event: Event, verseNumber: number) {
 		event.stopPropagation();
 
-		let verseRange = [verseNumber, verseNumber];
-		let copyText = getVerseRangeText(verseRange);
+		let copyText = getBibleVerseCopyText(
+			[[verseNumber]],
+			verses,
+			longTitle
+		);
 		navigator.clipboard.writeText(copyText);
 		toastService.showToast('Copied Verses');
 	}
@@ -487,7 +443,9 @@ change the location of the Reader underneath it.
 			</div>
 			<div class="flex w-full flex-col px-4">
 				<span class="whitespace-normal">
-					{verses[verseNumber]?.text}
+					{#if verses[verseNumber]}
+						{getBibleVerseText(verses[verseNumber], { includeVerseNumber: true })}
+					{/if}
 				</span>
 				<span class="flex-fill flex"></span>
 				{@render actions(parseInt(verseNumber))}

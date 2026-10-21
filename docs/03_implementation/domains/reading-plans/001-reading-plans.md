@@ -749,6 +749,20 @@ This updates accepted progress durably first and then updates the worker project
 
 ---
 
+# Plan Details Scrolling
+
+Both My Plans subscription details and Plan Preview keep the plan title visible
+below the navigation header. The publisher, description, progress (for a
+subscription), and reading rows live in the same `KJVScrubbedViewport` scroll
+surface. This lets a long description scroll away at large font sizes without
+shrinking the readings area or introducing a second nested reading scroller.
+
+The shared `planDetailsScrollLayout.svelte` owns the fixed title and remaining
+flex height; the individual views retain ownership of their scrubber state,
+reading lists, completion actions, and Bible navigation.
+
+---
+
 # Application Composition
 
 `Application` constructs and exposes through `ApplicationContext`:

@@ -199,7 +199,6 @@ chapter surface, navigation controls, and edit toolbar.
 	);
 
 	// DOM related vars
-	let showNavButtons = $state(true);
 	let showBibleScrollbar = $state(
 		settingsService.getSettings().showBibleScrollbar
 	);
@@ -649,7 +648,6 @@ chapter surface, navigation controls, and edit toolbar.
 					bind:mode
 					bind:bibleLocationRef
 					bind:bibleVersion
-					bind:showNavButtons
 					ID={id}
 				></ChapterNavButtons>
 			{:else}

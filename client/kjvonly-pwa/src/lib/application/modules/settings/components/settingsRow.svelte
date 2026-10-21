@@ -104,6 +104,6 @@
 			{/if}
 		</span>
 
-		<KeyboardArrowRight classes="h-6 w-6 shrink-0 text-neutral-500"></KeyboardArrowRight>
+		<KeyboardArrowRight classes="h-6 w-6 shrink-0 fill-current text-neutral-500"></KeyboardArrowRight>
 	</button>
 {/if}

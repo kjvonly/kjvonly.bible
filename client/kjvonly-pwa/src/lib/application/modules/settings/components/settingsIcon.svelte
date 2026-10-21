@@ -27,5 +27,5 @@
 </script>
 
 <span class="flex h-8 w-8 shrink-0 items-center justify-center {accentClass}">
-	<IconComponent classes="h-6 w-6"></IconComponent>
+	<IconComponent classes="h-6 w-6 fill-current"></IconComponent>
 </span>

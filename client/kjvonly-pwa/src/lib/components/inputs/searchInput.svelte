@@ -46,7 +46,7 @@
 		class="flex min-h-[44px] items-center gap-2 rounded-lg bg-neutral-100 px-3 text-neutral-700 focus-within:ring-2 focus-within:ring-primary-500"
 	>
 		<span class="flex h-11 w-11 shrink-0 items-center justify-center">
-			<Search classes="h-5 w-5 text-neutral-500"></Search>
+			<Search classes="h-5 w-5 fill-current text-neutral-500"></Search>
 		</span>
 		<input
 			use:focusInput
@@ -67,7 +67,7 @@
 			class:invisible={value.length === 0}
 			class="flex h-11 w-11 shrink-0 items-center justify-center text-support-a-500"
 		>
-			<Close classes="h-5 w-5"></Close>
+			<Close classes="h-5 w-5 fill-current"></Close>
 		</button>
 	</div>
 </div>

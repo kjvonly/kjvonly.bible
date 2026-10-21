@@ -15,6 +15,8 @@
 		type KJVMenuAction
 	} from '$lib/components';
 
+	import LibraryBooks from '$lib/components/svgs/libraryBooks.svelte';
+
 	// MODELS
 	import {
 		SEARCH_NAVIGATION_RESULTS,
@@ -51,6 +53,12 @@
 	}
 </script>
 
+{#snippet actionIcon(action: SearchOverflowAction)}
+	{#if action === SEARCH_OVERFLOW_ACTIONS.BIBLE_VERSION}
+		<LibraryBooks classes="h-5 w-5 shrink-0" />
+	{/if}
+{/snippet}
+
 {#snippet leadingContent()}
 	<KJVBackButton></KJVBackButton>
 {/snippet}
@@ -59,6 +67,7 @@
 	title="More actions"
 	{clientHeight}
 	{actions}
+	{actionIcon}
 	{leadingContent}
 	{onAction}
 ></KJVMenuView>

@@ -99,7 +99,7 @@ describe(
 						fontFamily:
 							'serif',
 						colorTheme:
-							'red',
+							'app',
 						isDarkTheme:
 							true,
 						showParagraphs:
@@ -173,7 +173,7 @@ describe(
 						fontFamily:
 							'sans',
 						colorTheme:
-							'red',
+							'app',
 						isDarkTheme:
 							false,
 						showParagraphs:
@@ -245,7 +245,7 @@ describe(
 						fontFamily:
 							'serif',
 						colorTheme:
-							'red',
+							'app',
 						isDarkTheme:
 							true,
 						showParagraphs:

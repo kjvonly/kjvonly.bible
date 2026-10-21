@@ -7,6 +7,16 @@
 	import ViewHeader from '$lib/application/runtime/navigation/components/viewHeader.svelte';
 	import { KJVHeader } from '$lib/components';
 	import KJVBackButton from '../../ui/navigation/KJVBackButton.svelte';
+	import Bible from '$lib/components/svgs/bible.svelte';
+	import BookmarkStack from '$lib/components/svgs/bookmarkStack.svelte';
+	import Dictionary from '$lib/components/svgs/dictionary.svelte';
+	import EventNote from '$lib/components/svgs/eventNote.svelte';
+	import FolderOpen from '$lib/components/svgs/folderOpen.svelte';
+	import ImportExport from '$lib/components/svgs/importExport.svelte';
+	import Notes from '$lib/components/svgs/notes.svelte';
+	import Person from '$lib/components/svgs/person.svelte';
+	import Search from '$lib/components/svgs/search.svelte';
+	import Settings from '$lib/components/svgs/settings.svelte';
 
 	// MODELS
 	import { Modules } from '$lib/application/models/modules.model';
@@ -171,15 +181,43 @@
 	</div>
 {/snippet}
 
+{#snippet moduleIcon(module: Modules)}
+	{#if module === Modules.BIBLE}
+		<Bible classes="h-5 w-5" />
+	{:else if module === Modules.SEARCH}
+		<Search classes="h-5 w-5" />
+	{:else if module === Modules.NOTES}
+		<Notes classes="h-5 w-5" />
+	{:else if module === Modules.BOOKMARKS}
+		<BookmarkStack classes="h-5 w-5" />
+	{:else if module === Modules.DICTIONARY}
+		<Dictionary classes="h-5 w-5" />
+	{:else if module === Modules.PLANS}
+		<EventNote classes="h-5 w-5" />
+	{:else if module === Modules.ARCHIVE}
+		<ImportExport classes="h-5 w-5" />
+	{:else if module === Modules.FILE_MANAGER}
+		<FolderOpen classes="h-5 w-5" />
+	{:else if module === Modules.SETTINGS}
+		<Settings classes="h-5 w-5" />
+	{:else if module === Modules.PROFILE || module === Modules.LOGIN}
+		<Person classes="h-5 w-5" />
+	{/if}
+{/snippet}
+
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
 	{#each Object.keys(components) as c}
 		<div class="w-full">
 			<button
 				onclick={() => onModuleSelected(components[c])}
-				class="w-full bg-neutral-50 p-4 text-start capitalize hover:bg-neutral-100"
-				>{c}</button
+				class="flex w-full items-center gap-3 bg-neutral-50 p-4 text-start capitalize hover:bg-neutral-100"
 			>
+				<span class="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
+					{@render moduleIcon(components[c])}
+				</span>
+				{c}
+			</button>
 		</div>
 	{/each}
 {/snippet}

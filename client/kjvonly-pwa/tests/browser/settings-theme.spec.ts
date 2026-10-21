@@ -57,6 +57,48 @@ describe(
 		);
 
 		it(
+			'applies the App theme when no settings have been saved',
+			() => {
+				const settingsService =
+					new SettingsService();
+
+				settingsService.applySettings();
+
+				expect(
+					html.getAttribute(
+						'data-theme'
+					)
+				).toBe('color-theme-app');
+
+				expect(
+					settingsService.getSettings().colorTheme
+				).toBe('app');
+			}
+		);
+
+		it(
+			'preserves an existing Red theme preference',
+			() => {
+				localStorage.setItem(
+					SETTINGS_STORAGE_KEY,
+					JSON.stringify({
+						...newSettings(),
+						colorTheme: 'red'
+					})
+				);
+
+				const settingsService =
+					new SettingsService();
+
+				settingsService.applySettings();
+
+				expect(
+					html.getAttribute('data-theme')
+				).toBe('color-theme-red');
+			}
+		);
+
+		it(
 			'persists and applies the Night Colorblind light selector',
 			() => {
 				const settingsService =

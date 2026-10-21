@@ -30,6 +30,7 @@
 		KJVHeader,
 		KJVScrubbedViewport
 	} from '$lib/components';
+	import PlanDetailsScrollLayout from '../components/planDetailsScrollLayout.svelte';
 	import PlanReadingsList from '../components/planReadingsList.svelte';
 	import {
 		subscribeToPlanDefinition
@@ -292,48 +293,44 @@
 
 <!-- ================================= BODY ================================ -->
 {#snippet body()}
-	<div class="flex h-full min-h-0 w-full min-w-0 flex-col">
-		<section class="flex shrink-0 min-w-0 flex-col gap-2 py-4">
-			<h2 class="text-lg font-semibold text-neutral-700">{selectedPlan.name}</h2>
-
-			{#if selectedPublisherLabel}
-				<p class="text-sm text-neutral-500" title={selectedPublisher}>
-					Published by {selectedPublisherLabel}
-				</p>
-			{/if}
-
-			{#if selectedPlan.description}
-				<p class="text-sm text-neutral-600">
-					{selectedPlan.description}
-				</p>
-			{/if}
-		</section>
-
-		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
-			<div class="shrink-0 pb-2 text-base text-neutral-700">Readings</div>
-
-			<KJVScrubbedViewport
-				min={1}
-				max={Math.max(1, selectedPlan.nestedReadings.length)}
-				bind:value={scrubberReadingNumber}
-				label="Jump to plan reading"
-				showScrubber={selectedPlan.nestedReadings.length > 1}
-				formatValue={(readingNumber) => `Reading ${readingNumber}`}
-				onReachEnd={loadMoreReadings}
-				prepareValue={prepareScrubberValue}
-			>
-				{#if visibleReadingIndexes.length > 0}
-					<PlanReadingsList
-						readings={selectedPlan.nestedReadings}
-						readingIndexes={visibleReadingIndexes}
-						totalReadings={selectedPlan.nestedReadings.length}
-						{verseCountByBookChapter}
-						{shortBookNamesById}
-					></PlanReadingsList>
+	<PlanDetailsScrollLayout title={selectedPlan.name}>
+		<KJVScrubbedViewport
+			min={1}
+			max={Math.max(1, selectedPlan.nestedReadings.length)}
+			bind:value={scrubberReadingNumber}
+			label="Jump to plan reading"
+			showScrubber={selectedPlan.nestedReadings.length > 1}
+			formatValue={(readingNumber) => `Reading ${readingNumber}`}
+			onReachEnd={loadMoreReadings}
+			prepareValue={prepareScrubberValue}
+		>
+			<section class="flex min-w-0 flex-col gap-2 pb-4">
+				{#if selectedPublisherLabel}
+					<p class="text-sm text-neutral-500" title={selectedPublisher}>
+						Published by {selectedPublisherLabel}
+					</p>
 				{/if}
-			</KJVScrubbedViewport>
-		</div>
-	</div>
+
+				{#if selectedPlan.description}
+					<p class="text-sm text-neutral-600">
+						{selectedPlan.description}
+					</p>
+				{/if}
+			</section>
+
+			<div class="pb-2 text-base text-neutral-700">Readings</div>
+
+			{#if visibleReadingIndexes.length > 0}
+				<PlanReadingsList
+					readings={selectedPlan.nestedReadings}
+					readingIndexes={visibleReadingIndexes}
+					totalReadings={selectedPlan.nestedReadings.length}
+					{verseCountByBookChapter}
+					{shortBookNamesById}
+				></PlanReadingsList>
+			{/if}
+		</KJVScrubbedViewport>
+	</PlanDetailsScrollLayout>
 {/snippet}
 
 <!-- ============================== CONTAINER ============================== -->

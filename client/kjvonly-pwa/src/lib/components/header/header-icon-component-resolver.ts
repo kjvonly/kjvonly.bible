@@ -9,6 +9,7 @@ import CheckCircle from '../svgs/checkCircle.svelte';
 import ChevronLeft from '../svgs/chevronLeft.svelte';
 import ChevronRight from '../svgs/chevronRight.svelte';
 import Copy from '../svgs/copy.svelte';
+import DarkMode from '../svgs/darkMode.svelte';
 import DocumentSearch from '../svgs/documentSearch.svelte';
 import Close from '../svgs/close.svelte';
 import Edit from '../svgs/edit.svelte';
@@ -18,6 +19,7 @@ import Filter from '../svgs/filter.svelte';
 import FormatListNumbered from '../svgs/formatListNumbered.svelte';
 import Grid from '../svgs/grid.svelte';
 import Import from '../svgs/import.svelte';
+import LightMode from '../svgs/lightMode.svelte';
 import List from '../svgs/list.svelte';
 import Pending from '../svgs/pending.svelte';
 import Save from '../svgs/save.svelte';
@@ -44,6 +46,7 @@ const HEADER_ICON_COMPONENTS = {
 	'chevron-left': ChevronLeft,
 	'chevron-right': ChevronRight,
 	copy: Copy,
+	'dark-mode': DarkMode,
 	'document-search': DocumentSearch,
 	close: Close,
 	edit: Edit,
@@ -53,6 +56,7 @@ const HEADER_ICON_COMPONENTS = {
 	'format-list-numbered': FormatListNumbered,
 	grid: Grid,
 	import: Import,
+	'light-mode': LightMode,
 	list: List,
 	pending: Pending,
 	save: Save,

@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY kjvonly-pwa/package.json ./kjvonly-pwa/package.json
 COPY cli/package.json ./cli/package.json
+COPY packages/normalized-content/package.json ./packages/normalized-content/package.json
+COPY packages/html-normalized-content/package.json ./packages/html-normalized-content/package.json
 
 RUN npm install --ignore-scripts --include=optional
 

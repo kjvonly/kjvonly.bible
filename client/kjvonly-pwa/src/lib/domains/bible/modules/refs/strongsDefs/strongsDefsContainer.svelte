@@ -231,9 +231,9 @@
 	{#if s.thayersDef}
 		<div class="w-full pt-4">
 			<p class="text-neutral-600">Thayers Definition:</p>
-			<p class="w-full ps-2">
+			<div class="w-full ps-2">
 				{@render recursiveDef(s.thayersDef)}
-			</p>
+			</div>
 		</div>
 	{/if}
 {/snippet}
@@ -242,9 +242,9 @@
 	{#if s.brownDef}
 		<div class="w-full pt-4">
 			<p class="text-neutral-600">Brown Definition:</p>
-			<p class="w-full ps-2">
+			<div class="w-full ps-2">
 				{@render recursiveDef(s.brownDef)}
-			</p>
+			</div>
 		</div>
 	{/if}
 {/snippet}

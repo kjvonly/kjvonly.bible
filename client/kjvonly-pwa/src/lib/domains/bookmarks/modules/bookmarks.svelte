@@ -226,9 +226,9 @@
 
 {#snippet bookmarkDetails(bookmark: Bookmark)}
     {#if bookmark.target.kind === 'bible'}
-        <Bible classes="h-5 w-5 shrink-0 text-neutral-600" />
+        <Bible classes="h-5 w-5 shrink-0 fill-current text-neutral-600" />
     {:else}
-        <Article classes="h-5 w-5 shrink-0 text-neutral-600" />
+        <Article classes="h-5 w-5 shrink-0 fill-current text-neutral-600" />
     {/if}
     <div class="flex min-w-0 flex-1 flex-col gap-2">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
