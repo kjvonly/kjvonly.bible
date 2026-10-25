@@ -29,7 +29,7 @@ describe('DictionaryDefinitionWorkerClient', () => {
 
 		const pending = client.getNormalized(proxiedSource, 'aam');
 		expect(worker.sent[0]).toMatchObject({
-			type: 'get-normalized-definition', source, headwordKey: 'aam'
+			type: 'get-normalized-definition', source, key: 'aam'
 		});
 		worker.emit({
 			id: worker.sent[0]!.id,
@@ -37,6 +37,34 @@ describe('DictionaryDefinitionWorkerClient', () => {
 			bytes: new TextEncoder().encode(JSON.stringify({ blocks: [] })).buffer
 		});
 		await expect(pending).resolves.toEqual({ blocks: [] });
+		client.dispose();
+	});
+
+
+	it("returns a raw Strong's definition and keeps a simultaneous normalized response separate", async () => {
+		const worker = new FakeWorker();
+		const client = new DictionaryDefinitionWorkerClient(() => worker);
+		const strongs = { number: 'G26', originalWord: 'ἀγάπη', usageByWord: [] };
+		const raw = client.get(source, 'G26');
+		const normalized = client.getNormalized(source, 'aam');
+		expect(worker.sent).toMatchObject([
+			{ type: 'get-definition', source, key: 'G26' },
+			{ type: 'get-normalized-definition', source, key: 'aam' }
+		]);
+		worker.emit({ id: worker.sent[1]!.id, type: 'normalized-ready', bytes: normalizedBytes('aam') });
+		worker.emit({ id: worker.sent[0]!.id, type: 'definition-ready',
+			bytes: new TextEncoder().encode(JSON.stringify(strongs)).buffer });
+		await expect(raw).resolves.toEqual(strongs);
+		await expect(normalized).resolves.toEqual({ blocks: [{ id: 'aam', type: 'paragraph' }] });
+		client.dispose();
+	});
+
+	it('rejects a mismatched response type for a raw definition request', async () => {
+		const worker = new FakeWorker();
+		const client = new DictionaryDefinitionWorkerClient(() => worker);
+		const pending = client.get(source, 'G26');
+		worker.emit({ id: worker.sent[0]!.id, type: 'normalized-ready', bytes: normalizedBytes('aam') });
+		await expect(pending).rejects.toThrow('Unexpected Dictionary definition worker response');
 		client.dispose();
 	});
 
@@ -49,8 +77,8 @@ describe('DictionaryDefinitionWorkerClient', () => {
 		const second = client.getNormalized(source, 'ability');
 		expect(factory).toHaveBeenCalledOnce();
 		expect(worker.sent).toMatchObject([
-			{ type: 'get-normalized-definition', source, headwordKey: 'abandon' },
-			{ type: 'get-normalized-definition', source, headwordKey: 'ability' }
+			{ type: 'get-normalized-definition', source, key: 'abandon' },
+			{ type: 'get-normalized-definition', source, key: 'ability' }
 		]);
 		worker.emit({ id: worker.sent[1]!.id, type: 'normalized-ready', bytes: normalizedBytes('ability') });
 		worker.emit({ id: worker.sent[0]!.id, type: 'normalized-ready', bytes: normalizedBytes('abandon') });
@@ -65,7 +93,7 @@ describe('DictionaryDefinitionWorkerClient', () => {
 		const client = new DictionaryDefinitionWorkerClient(() => worker);
 		const pending = client.getNormalized(source, 'aam');
 		expect(worker.sent).toMatchObject([
-			{ type: 'get-normalized-definition', source, headwordKey: 'aam' }
+			{ type: 'get-normalized-definition', source, key: 'aam' }
 		]);
 		const document = { blocks: [{ id: 'paragraph-1', type: 'paragraph' }] };
 		const bytes = new TextEncoder().encode(JSON.stringify(document)).buffer;

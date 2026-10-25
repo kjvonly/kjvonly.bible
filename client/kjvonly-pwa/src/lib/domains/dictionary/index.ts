@@ -1,9 +1,10 @@
 /** Node-safe Dictionary Domain boundary. Runtime/module exports belong under /ui. */
 export type {
 	DictionaryDefinition,
-	DictionaryEntriesBundle,
+	DictionaryEditionBundle,
 	DictionaryEditionManifest,
-	DictionarySearchMatch
+	DictionarySearchMatch,
+	HeadwordMatch
 } from './models/dictionary.model';
 
 export {
@@ -25,6 +26,8 @@ export {
 export {
 	DictionaryEntriesDataTypeHandler
 } from './resources/entries/dictionary-entries-data-type-handler';
+export type { DictionaryDefinitionFormatValidator } from './resources/entries/dictionary-definition-format-validator';
+export { WebsterDefinitionFormatValidator } from './resources/entries/webster-definition-format-validator';
 
 export type { DictionaryHeadwordIndex } from './models/dictionary-headword-index.model';
 export type { DictionaryEditionSource } from './models/dictionary.model';

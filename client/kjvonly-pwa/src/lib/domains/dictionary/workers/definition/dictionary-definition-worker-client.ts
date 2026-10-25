@@ -17,6 +17,7 @@ export interface DictionaryDefinitionWorkerPort {
 export class DictionaryDefinitionWorkerClient {
 	private worker: DictionaryDefinitionWorkerPort | undefined;
 	private readonly pending = new Map<string, {
+		expectedType: 'definition-ready' | 'normalized-ready';
 		resolve: (bytes: ArrayBuffer) => void;
 		reject: (error: Error) => void;
 	}>();
@@ -25,9 +26,15 @@ export class DictionaryDefinitionWorkerClient {
 
 	constructor(private readonly createWorker: () => DictionaryDefinitionWorkerPort) {}
 
+	/** Retrieve one raw stored value for format-specific interpretation by its owning domain. */
+	async get(source: DictionaryEditionSource, key: string): Promise<unknown> {
+		const bytes = await this.request('get-definition', source, key);
+		return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+	}
+
 	/** Return one validated document containing all selected definitions in source order. */
-	async getNormalized(source: DictionaryEditionSource, headwordKey: string): Promise<NormalizedDocument> {
-		const bytes = await this.request(source, headwordKey);
+	async getNormalized(source: DictionaryEditionSource, key: string): Promise<NormalizedDocument> {
+		const bytes = await this.request('get-normalized-definition', source, key);
 		const value: unknown = JSON.parse(new TextDecoder().decode(bytes));
 		if (!value || typeof value !== 'object' ||
 			!Array.isArray((value as { blocks?: unknown }).blocks)) {
@@ -44,15 +51,15 @@ export class DictionaryDefinitionWorkerClient {
 	}
 
 	/** Correlate simultaneous selected-word requests without transferring HTML chunks. */
-	private request(source: DictionaryEditionSource, headwordKey: string): Promise<ArrayBuffer> {
+	private request(type: DictionaryDefinitionWorkerRequest['type'], source: DictionaryEditionSource, key: string): Promise<ArrayBuffer> {
 		if (this.disposed) return Promise.reject(new Error('Dictionary definition session was disposed.'));
 		const id = String(++this.sequence);
 		const message: DictionaryDefinitionWorkerRequest = {
-			id, type: 'get-normalized-definition', source: snapshotDictionaryWorkerSource(source), headwordKey
+			id, type, source: snapshotDictionaryWorkerSource(source), key
 		};
 		const worker = this.getWorker();
 		return new Promise((resolve, reject) => {
-			this.pending.set(id, { resolve, reject });
+			this.pending.set(id, { expectedType: type === 'get-definition' ? 'definition-ready' : 'normalized-ready', resolve, reject });
 			try { worker.postMessage(message); }
 			catch (error) {
 				this.pending.delete(id);
@@ -76,7 +83,7 @@ export class DictionaryDefinitionWorkerClient {
 			if (!pending) return;
 			this.pending.delete(response.id);
 			if (response.type === 'error') pending.reject(new Error(response.error));
-			else if (response.type !== 'normalized-ready') {
+			else if (response.type !== pending.expectedType) {
 				pending.reject(new Error('Unexpected Dictionary definition worker response.'));
 			} else pending.resolve(response.bytes);
 		});

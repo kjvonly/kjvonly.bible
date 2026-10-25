@@ -62,8 +62,8 @@ describe('DictionarySearchWorkerClient', () => {
 		const first = client.search('ab', a);
 		const second = client.search('ab', other);
 		expect(worker.posted.map(request => request.source)).toEqual([a, other]);
-		const newer = { ...other, headwordKey: 'abacus' };
-		const older = { ...a, headwordKey: 'abandon' };
+		const newer = { ...other, headword: 'abacus', key: 'abacus' };
+		const older = { ...a, headword: 'abandon', key: 'abandon' };
 		worker.emit({ id: worker.posted[1]!.id, type: 'search-results', matches: [newer] });
 		worker.emit({ id: worker.posted[0]!.id, type: 'search-results', matches: [older] });
 		await expect(first).resolves.toEqual({ matches: [older] });

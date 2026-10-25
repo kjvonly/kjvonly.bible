@@ -26,9 +26,7 @@
 	import {
 		REFS_VIEWS
 	} from '../../models/refs-navigation.model';
-	import {
-		STRONGS_RESOURCE_TYPE
-	} from '$lib/domains/strongs';
+	import { DICTIONARY_RESOURCE_TYPE } from '$lib/domains/dictionary';
 
 	import {
 		isCrossReference,
@@ -83,7 +81,7 @@
 	let strongsSource = $derived(
 		moduleResourceSelectionResolver.require(
 			navigationState,
-			STRONGS_RESOURCE_TYPE
+			DICTIONARY_RESOURCE_TYPE
 		)
 	);
 

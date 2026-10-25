@@ -30,6 +30,12 @@ describe('normalizeDictionaryDefinitions', () => {
 		]));
 	});
 
+	it('rejects non-Webster stored data instead of attempting HTML normalization', () => {
+		const normalize = vi.fn();
+		expect(() => normalizeDictionaryDefinitions({ number: 'G26' }, { normalize })).toThrow('not valid Webster HTML');
+		expect(normalize).not.toHaveBeenCalled();
+	});
+
 	it('propagates conversion failures instead of rendering raw HTML', () => {
 		const normalize = vi.fn((): NormalizedDocument => { throw new Error('Unsupported HTML'); });
 		expect(() => normalizeDictionaryDefinitions([{ word: 'aam', content: '<bad />' }], { normalize }))

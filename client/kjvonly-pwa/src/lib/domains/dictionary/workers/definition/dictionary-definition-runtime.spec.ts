@@ -35,6 +35,7 @@ function makeFixture(options: {
 	const manifest = options.manifest ?? {
 		id: 'publisher-a/webster-1828', edition: 'webster-1828', publisher: selected.publisher,
 		resourceId: selected.resourceId, modifiedAt: 123, entryCount: 2,
+		definitionFormat: 'webster-html',
 		storageFormat: 'chunks-v1' as const, chunkGeneration: generation, chunkCount: 1
 	};
 	const editions = { getEdition: vi.fn(async () => manifest) };
@@ -49,7 +50,7 @@ function makeFixture(options: {
 describe('DictionaryDefinitionRuntime', () => {
 	it('reads exactly one chunk and returns only the selected definitions', async () => {
 		const { runtime, chunks, decompress } = makeFixture();
-		const definitions = await runtime.getDefinitions(source, 'abandon');
+		const definitions = await runtime.get(source, 'abandon');
 		expect(definitions).toEqual([
 			{ word: 'ABANDON', content: '<p>leave</p>' },
 			{ word: 'abandon', content: '<p>forsake</p>' }
@@ -60,23 +61,52 @@ describe('DictionaryDefinitionRuntime', () => {
 		expect(decompress).toHaveBeenCalledTimes(1);
 	});
 
-	it('provides selected definitions to worker-local normalization without transferring a chunk', async () => {
+	it('provides the selected value for worker-local normalization without transferring a chunk', async () => {
 		const { runtime } = makeFixture();
-		await expect(runtime.getDefinitions(source, 'ability')).resolves.toEqual([
+		await expect(runtime.get(source, 'ability')).resolves.toEqual([
 			{ word: 'ABILITY', content: '<p>power</p>' }
 		]);
 	});
 
-	it('does not load HTML for unknown words or invalid canonical queries', async () => {
+	it('rejects missing and empty definition keys before reading chunks', async () => {
 		const { runtime, chunks } = makeFixture();
-		await expect(runtime.getDefinitions(source, 'zebra')).rejects.toThrow('not installed');
-		await expect(runtime.getDefinitions(source, 'ABANDON')).rejects.toThrow('Invalid Dictionary headword');
+		await expect(runtime.get(source, 'zebra')).rejects.toThrow('not installed');
+		await expect(runtime.get(source, '')).rejects.toThrow('key cannot be empty');
 		expect(chunks.getChunk).not.toHaveBeenCalled();
+	});
+
+
+	it("retrieves an opaque case-sensitive Strong's key without normalizing structured content", async () => {
+		const strongs = { number: 'G26', originalWord: 'ἀγάπη', usageByWord: [{ word: 'love', count: 1 }] };
+		const payload = JSON.stringify({ G26: strongs, H157: { number: 'H157' } });
+		const selected = { publisher: 'publisher-a', resourceId: 'kjvonly/dictionary/entries/strongs-kjvs' };
+		const map = createDictionaryChunkMap(selected, generation, [
+			{ chunkId: '0000', firstKey: 'G26', lastKey: 'H157' }
+		]);
+		const chunk: DictionaryChunk = {
+			id: createDictionaryChunkObjectId(selected, generation, 0),
+			source: selected, generation, chunkId: '0000', ordinal: 0,
+			firstKey: 'G26', lastKey: 'H157', uncompressedBytes: new TextEncoder().encode(payload).length,
+			compressedBytes: compressed.byteLength, gzip: compressed
+		};
+		const fixture = makeFixture({
+			source: selected, map, chunk,
+			manifest: {
+				id: 'publisher-a/strongs-kjvs', edition: 'strongs-kjvs',
+				publisher: selected.publisher, resourceId: selected.resourceId,
+				modifiedAt: 123, entryCount: 2, definitionFormat: 'strongs', storageFormat: 'chunks-v1',
+				chunkGeneration: generation, chunkCount: 1
+			},
+			decompress: async () => payload
+		});
+		await expect(fixture.runtime.get(selected, 'G26')).resolves.toEqual(strongs);
+		await expect(fixture.runtime.get(selected, 'g26')).rejects.toThrow('not installed');
+		expect(fixture.chunks.getChunk).toHaveBeenCalledOnce();
 	});
 
 	it('keeps lookup scoped to the selected publisher', async () => {
 		const { runtime, chunks } = makeFixture({ source: other });
-		await runtime.getDefinitions(other, 'ability');
+		await runtime.get(other, 'ability');
 		expect(chunks.getChunk).toHaveBeenCalledWith(other, generation, 0);
 	});
 
@@ -84,7 +114,7 @@ describe('DictionaryDefinitionRuntime', () => {
 		// Simulate corrupt persisted data despite the strict chunks-v1 model.
 		const fixture = makeFixture({ manifest: { id: 'a', edition: 'webster-1828', publisher: source.publisher,
 			resourceId: source.resourceId, modifiedAt: 123, entryCount: 2 } as DictionaryEditionManifest });
-		await expect(fixture.runtime.getDefinitions(source, 'abandon')).rejects.toThrow('not installed');
+		await expect(fixture.runtime.get(source, 'abandon')).rejects.toThrow('not installed');
 		expect(fixture.chunks.getMap).not.toHaveBeenCalled();
 	});
 
@@ -92,22 +122,22 @@ describe('DictionaryDefinitionRuntime', () => {
 		const bad = makeFixture();
 		const badChunk = { ...await bad.chunks.getChunk(), lastKey: 'abandon' };
 		const fixture = makeFixture({ chunk: badChunk });
-		await expect(fixture.runtime.getDefinitions(source, 'ability')).rejects.toThrow('inconsistent');
+		await expect(fixture.runtime.get(source, 'ability')).rejects.toThrow('inconsistent');
 		expect(fixture.decompress).not.toHaveBeenCalled();
 	});
 
 	it('rejects wrong uncompressed sizes and absent selected definitions', async () => {
 		const tooShort = makeFixture({ decompress: async () => '{}' });
-		await expect(tooShort.runtime.getDefinitions(source, 'abandon')).rejects.toThrow('size');
+		await expect(tooShort.runtime.get(source, 'abandon')).rejects.toThrow('size');
 		const wrongWord = makeFixture({ decompress: async () => json.replace('"abandon":', '"abondan":') });
-		await expect(wrongWord.runtime.getDefinitions(source, 'abandon')).rejects.toThrow(/size|valid definitions/);
+		await expect(wrongWord.runtime.get(source, 'abandon')).rejects.toThrow(/size|no definition/);
 	});
 
 	it('rejects an inconsistent chunk count without loading compressed data', async () => {
 		const original = makeFixture();
 		const manifest = { ...await original.editions.getEdition(), chunkCount: 2 };
 		const fixture = makeFixture({ manifest });
-		await expect(fixture.runtime.getDefinitions(source, 'abandon')).rejects.toThrow('count');
+		await expect(fixture.runtime.get(source, 'abandon')).rejects.toThrow('count');
 		expect(fixture.chunks.getChunk).not.toHaveBeenCalled();
 	});
 });

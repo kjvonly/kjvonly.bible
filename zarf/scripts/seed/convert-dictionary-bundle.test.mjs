@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { gunzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 
 const converter = fileURLToPath(new URL('./convert-dictionary-bundle.mjs', import.meta.url));
 
@@ -37,10 +37,12 @@ test('skips blank fields, logs headwords and positions, and retains valid defini
   assert.match(result.stderr, /record 6 .*content missing or not a string/);
   assert.match(result.stdout, /1 headwords \(2 definitions, 4 skipped\)/);
   assert.deepEqual(JSON.parse(gunzipSync(readFileSync(result.output))), {
-    aam: [
+    definitionFormat: 'webster-html',
+    headwords: [{ headword: 'aam', key: 'aam' }],
+    definitions: { aam: [
       { word: 'aam', content: '<p>First</p>' },
       { word: 'aam', content: '<p>Second</p>' }
-    ]
+    ] }
   });
 });
 
@@ -62,4 +64,19 @@ test('fails if every record is invalid', t => {
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /no valid records/);
   assert.equal(existsSync(result.output), false);
+});
+
+
+test('repacks existing keyed Webster gzip without losing ordered HTML definitions', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'dictionary-repack-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = join(dir, 'webster.json.gz');
+  const output = join(dir, 'repacked.json.gz');
+  const existing = { aam: [{ word: 'AAM', content: '<p>First</p>' }, { word: 'AAM', content: '<p>Second</p>' }] };
+  writeFileSync(input, gzipSync(JSON.stringify(existing)));
+  const result = spawnSync(process.execPath, [converter, input, output], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const data = JSON.parse(gunzipSync(readFileSync(output)));
+  assert.deepEqual(data.definitions, existing);
+  assert.deepEqual(data.headwords, [{ headword: 'aam', key: 'aam' }]);
 });

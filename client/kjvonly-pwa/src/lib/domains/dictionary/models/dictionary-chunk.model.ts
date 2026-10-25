@@ -1,5 +1,5 @@
 import { createDictionaryChunkMapObjectId, formatDictionaryChunkId } from './dictionary-chunk-identity';
-import { compareDictionaryHeadwordKeys, normalizeDictionaryHeadword } from './dictionary-identity';
+import { compareDictionaryDefinitionKeys } from './dictionary-identity';
 import type { DictionaryEditionSource } from './dictionary.model';
 
 /** Domain object types for locally compressed Dictionary definition storage. */
@@ -7,8 +7,8 @@ export const DICTIONARY_CHUNK_OBJECT_TYPE = 'dictionary/chunk';
 export const DICTIONARY_CHUNK_MAP_OBJECT_TYPE = 'dictionary/chunk-map';
 
 /**
- * A persistent, gzip-compressed group of adjacent Dictionary headwords.
- * `gzip` contains a keyed DictionaryEntriesBundle, never an encoded JSON string.
+ * A persistent, gzip-compressed group of adjacent definition keys.
+ * `gzip` contains a subset of the edition definitions, keyed by definition ID.
  */
 export interface DictionaryChunk {
 	readonly id: string;
@@ -30,7 +30,7 @@ export interface DictionaryChunkRange {
 	readonly lastKey: string;
 }
 
-/** One generation's compact lookup table; it never contains HTML definitions. */
+/** One generation's compact lookup table; it never contains definition content. */
 export interface DictionaryChunkMap {
 	readonly id: string;
 	readonly source: DictionaryEditionSource;
@@ -68,7 +68,7 @@ export function createDictionaryChunkMap(
 /**
  * Validate untrusted persisted locator metadata once when importing it.
  * Ranges must be ordered and disjoint, with unique ordinal chunk IDs; gaps
- * between ranges are legal because not every possible word is in a dictionary.
+ * between ranges are legal because definition identifiers can be sparse.
  */
 export function validateDictionaryChunkMap(value: unknown): asserts value is DictionaryChunkMap {
 	if (!isRecord(value)) {
@@ -107,16 +107,14 @@ export function validateDictionaryChunkMap(value: unknown): asserts value is Dic
 		}
 		if (
 			!range.firstKey ||
-			range.firstKey !== normalizeDictionaryHeadword(range.firstKey) ||
 			!range.lastKey ||
-			range.lastKey !== normalizeDictionaryHeadword(range.lastKey) ||
-			compareDictionaryHeadwordKeys(range.firstKey, range.lastKey) > 0
+			compareDictionaryDefinitionKeys(range.firstKey, range.lastKey) > 0
 		) {
 			throw new Error(`Invalid Dictionary chunk range: ${range.firstKey}..${range.lastKey}`);
 		}
 		if (
 			previousLast !== undefined &&
-			compareDictionaryHeadwordKeys(previousLast, range.firstKey) >= 0
+			compareDictionaryDefinitionKeys(previousLast, range.firstKey) >= 0
 		) {
 			throw new Error(`Overlapping or unordered Dictionary chunk range: ${range.firstKey}`);
 		}

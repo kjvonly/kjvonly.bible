@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync, gzipSync } from 'node:zlib';
 
-/** Published payload version. Changing normalization or FlexSearch export requires a new version. */
+/** Development index contract: replace the export format in place without version increments. */
 export const FORMAT_VERSION = 1;
 export const TOKENIZER = 'forward';
 export const ENCODING = 'codepoint-base36-padded4';
@@ -22,34 +22,76 @@ export function encodeHeadwordForSearch(word) {
   return Array.from(word, char => char.codePointAt(0).toString(36).padStart(4, '0')).join('');
 }
 
-/** Reject invalid input before publishing a misleading partial index. */
+/** Verify every published search association resolves to one definition key. */
 export function validateBundle(bundle) {
-  if (bundle === null || typeof bundle !== 'object' || Array.isArray(bundle) || Object.keys(bundle).length === 0) {
-    throw new Error('Dictionary input must be a nonempty keyed bundle.');
+  if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle) ||
+      typeof bundle.definitionFormat !== 'string' || !bundle.definitionFormat.trim() ||
+      !Array.isArray(bundle.headwords) || !bundle.headwords.length ||
+      !bundle.definitions || typeof bundle.definitions !== 'object' || Array.isArray(bundle.definitions) ||
+      !Object.keys(bundle.definitions).length) {
+    throw new Error('Invalid Dictionary edition bundle.');
   }
-  for (const [key, definitions] of Object.entries(bundle)) {
-    if (!key || key !== normalizeHeadword(key) || !Array.isArray(definitions) || definitions.length === 0) {
-      throw new Error(`Invalid Dictionary headword: ${JSON.stringify(key)}`);
+  const pairs = new Set();
+  for (const [key, definition] of Object.entries(bundle.definitions)) {
+    if (!key || definition === null || definition === undefined) {
+      throw new Error(`Invalid Dictionary definition key: ${JSON.stringify(key)}`);
     }
-    for (const definition of definitions) {
-      if (!definition || typeof definition !== 'object' || Array.isArray(definition) ||
-        typeof definition.word !== 'string' || !definition.word.trim() ||
-        typeof definition.content !== 'string' || !definition.content.trim()) {
-        throw new Error(`Invalid Dictionary definition for headword: ${JSON.stringify(key)}`);
-      }
+  }
+  for (const match of bundle.headwords) {
+    if (!match || typeof match.headword !== 'string' || !match.headword ||
+        match.headword !== normalizeHeadword(match.headword) ||
+        typeof match.key !== 'string' || !match.key) {
+      throw new Error('Invalid Dictionary headword association.');
     }
+    if (!Object.hasOwn(bundle.definitions, match.key)) {
+      throw new Error(`Missing Dictionary definition for key ${JSON.stringify(match.key)}.`);
+    }
+    const pair = JSON.stringify([match.headword, match.key]);
+    if (pairs.has(pair)) {
+      throw new Error(`Duplicate Dictionary headword association: ${pair}.`);
+    }
+    pairs.add(pair);
   }
 }
 
-/** Construct a portable, publisher-independent FlexSearch export for one complete edition. */
+/** Each association has its own stable ID, even when words or definition keys repeat. */
+export function createHeadwordDocument(headword, key) {
+  return {
+    id: JSON.stringify([headword, key]),
+    headword,
+    key,
+    searchableHeadword: encodeHeadwordForSearch(headword),
+    searchableKey: encodeHeadwordForSearch(normalizeHeadword(key))
+  };
+}
+
+/** Configure one Document index for any Dictionary edition's headword/key associations. */
+export function createHeadwordDocumentIndex(Document) {
+  return new Document({
+    tokenize: TOKENIZER,
+    encode: false,
+    document: {
+      id: 'id',
+      index: ['searchableHeadword', 'searchableKey'],
+      store: ['headword', 'key']
+    }
+  });
+}
+
+/** Construct a portable, publisher-independent FlexSearch Document export for one edition. */
 export async function createPublishedIndex(bundle, resourceId, sourceSha256, index) {
   if (!/^kjvonly\/dictionary\/entries\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(resourceId)) {
     throw new Error(`Invalid Dictionary Resource ID: ${resourceId}`);
   }
   if (!/^[a-f0-9]{64}$/.test(sourceSha256)) throw new Error('Source SHA-256 must be a lowercase hex digest.');
   validateBundle(bundle);
-  const headwords = Object.keys(bundle).sort();
-  for (const headword of headwords) index.add(headword, encodeHeadwordForSearch(headword));
+  const headwords = [...bundle.headwords].sort((a, b) =>
+    a.headword < b.headword ? -1 : a.headword > b.headword ? 1 :
+      a.key < b.key ? -1 : a.key > b.key ? 1 : 0
+  );
+  for (const { headword, key } of headwords) {
+    index.add(createHeadwordDocument(headword, key));
+  }
   const chunks = {};
   await index.export((key, data) => { chunks[key] = data ?? ''; });
   if (Object.keys(chunks).length === 0) throw new Error('FlexSearch exported no index chunks.');
@@ -64,14 +106,14 @@ export async function createPublishedIndex(bundle, resourceId, sourceSha256, ind
   };
 }
 
-/** Read the existing compressed v1 bundle and write an independently compressed index. */
-export async function buildIndexFile(sourcePath, destinationPath, resourceId, Index) {
+/** Read the published edition bundle and export its searchable associations without definitions. */
+export async function buildIndexFile(sourcePath, destinationPath, resourceId, Document) {
   if (!destinationPath.endsWith('.json.gz')) throw new Error('Output filename must end in .json.gz');
   if (resolve(sourcePath) === resolve(destinationPath)) throw new Error('Refusing to overwrite the source Dictionary Resource.');
   const source = await readFile(sourcePath);
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   const bundle = JSON.parse(gunzipSync(source).toString('utf8'));
-  const index = new Index({ tokenize: TOKENIZER, encode: false });
+  const index = createHeadwordDocumentIndex(Document);
   const output = await createPublishedIndex(bundle, resourceId, sourceSha256, index);
   await mkdir(dirname(destinationPath), { recursive: true });
   await writeFile(destinationPath, gzipSync(JSON.stringify(output), { level: 9 }));
@@ -82,7 +124,7 @@ export async function buildIndexFile(sourcePath, destinationPath, resourceId, In
 function loadFlexSearch() {
   const requireFromPwa = createRequire(new URL('../../../client/kjvonly-pwa/package.json', import.meta.url));
   try {
-    return requireFromPwa('flexsearch').Index;
+    return requireFromPwa('flexsearch').Document;
   } catch (error) {
     throw new Error('Install client/kjvonly-pwa dependencies first (npm --prefix client/kjvonly-pwa ci).', { cause: error });
   }

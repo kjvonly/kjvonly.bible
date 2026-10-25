@@ -50,7 +50,7 @@
 			<button type="button" class="flex min-h-11 w-full flex-col gap-1 bg-neutral-50 px-4 py-3 text-start hover:bg-neutral-100"
 				onclick={() => navigation.backWithResult(createDictionaryEditionNavigationResult(edition))}>
 				<span class="capitalize">{parseDictionaryResourceId(edition.resourceId).edition.replaceAll('-', ' ')}</span>
-				<span class="text-xs text-neutral-600">{edition.entryCount} words · {edition.publisher.slice(0, 12)}{selected.publisher === edition.publisher && selected.resourceId === edition.resourceId ? ' · Selected' : ''}</span>
+				<span class="text-xs text-neutral-600">{edition.entryCount} definitions · {edition.publisher.slice(0, 12)}{selected.publisher === edition.publisher && selected.resourceId === edition.resourceId ? ' · Selected' : ''}</span>
 			</button>
 		{/each}
 	{/if}

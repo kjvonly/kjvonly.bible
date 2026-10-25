@@ -235,10 +235,10 @@ resources:
       encoding: []
 
   # ---------------------------------------------------------------------------
-  # Dictionary - Prebuilt Headword Search Indexes (optional sidecar Resources)
+  # Dictionary - Required published headword search indexes
   #
-  # Blossom hosts portable FlexSearch exports. The current chunk installer
-  # still builds its local index; downloading these is a later opt-in change.
+  # Blossom hosts portable FlexSearch.Document exports. Installation requires
+  # the matching published index for each edition (no browser-side rebuild).
   # ---------------------------------------------------------------------------
 
   dictionary-search-webster-1828:
@@ -269,6 +269,48 @@ resources:
 
       tags:
         - ["d", "kjvonly/dictionary/search-index/webster-1844"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/search-index"]
+        - ["dataType", "kjvonly.dictionary.headword-index"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  # ---------------------------------------------------------------------------
+  # Dictionary - Strong's Concordance - Entries and published search index
+  # ---------------------------------------------------------------------------
+
+  dictionary-strongs-kjvs:
+    path: ../../data/dictionary/entries/bundles/strongs-kjvs.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/entries/strongs-kjvs"]
+        - ["m", "application/json+hex"]
+        - ["t", "dictionary/entries"]
+        - ["dataType", "kjvonly.dictionary.entries"]
+        - ["dataVersion", "1"]
+        - ["representation", "descriptors"]
+
+    object-upload:
+      mediaType: application/json+gzip
+      encoding: []
+
+  dictionary-search-strongs-kjvs:
+    path: ../../data/dictionary/indexes/bundles/strongs-kjvs.json.gz
+
+    event:
+      encoding:
+        - hex
+
+      tags:
+        - ["d", "kjvonly/dictionary/search-index/strongs-kjvs"]
         - ["m", "application/json+hex"]
         - ["t", "dictionary/search-index"]
         - ["dataType", "kjvonly.dictionary.headword-index"]

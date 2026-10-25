@@ -6,10 +6,7 @@ import {
 } from '../models/dictionary-chunk-identity';
 import { createDictionaryChunkMap, validateDictionaryChunkMap, type DictionaryChunkRange } from '../models/dictionary-chunk.model';
 import type { DictionaryEditionSource } from '../models/dictionary.model';
-import {
-	assertDictionaryChunkMapCoversHeadwords,
-	findDictionaryChunkRange
-} from './dictionary-chunk-locator';
+import { findDictionaryChunkRange } from './dictionary-chunk-locator';
 
 const source: DictionaryEditionSource = {
 	publisher: 'publisher-1',
@@ -32,7 +29,17 @@ describe('Dictionary chunk locator', () => {
 		expect(findDictionaryChunkRange(map, 'éclair')?.chunkId).toBe('0002');
 		expect(findDictionaryChunkRange(map, 'b')).toBeUndefined();
 		expect(findDictionaryChunkRange(map, 'zz')).toBeUndefined();
-		expect(() => findDictionaryChunkRange(map, 'ABANDON')).toThrow('canonical');
+		expect(findDictionaryChunkRange(map, 'ABANDON')).toBeUndefined();
+	});
+
+	it('locates case-sensitive Strong’s definition keys without normalizing them', () => {
+		const map = createDictionaryChunkMap(source, generation, [
+			{ chunkId: '0000', firstKey: 'G25', lastKey: 'G26' },
+			{ chunkId: '0001', firstKey: 'H157', lastKey: 'H7225' }
+		]);
+		expect(findDictionaryChunkRange(map, 'G26')?.chunkId).toBe('0000');
+		expect(findDictionaryChunkRange(map, 'H7225')?.chunkId).toBe('0001');
+		expect(findDictionaryChunkRange(map, 'g26')).toBeUndefined();
 	});
 
 	it('keeps chunk IDs independent across publishers, resources and revisions', () => {
@@ -72,14 +79,10 @@ describe('Dictionary chunk locator', () => {
 		expect(() => createDictionaryChunkMap(source, generation, [])).toThrow('at least one');
 	});
 
-	it('rejects mismatched identity and missing indexed headwords', () => {
+	it('rejects mismatched chunk-map identity and ranges', () => {
 		const map = createDictionaryChunkMap(source, generation, ranges);
 		expect(() => validateDictionaryChunkMap(null)).toThrow('object');
 		expect(() => validateDictionaryChunkMap({ ...map, ranges: [null] })).toThrow('position');
 		expect(() => validateDictionaryChunkMap({ ...map, id: 'wrong' })).toThrow('identity');
-		expect(() => assertDictionaryChunkMapCoversHeadwords(map, ['a', 'abandonment', 'é'])).not.toThrow();
-		expect(() => assertDictionaryChunkMapCoversHeadwords(map, ['a', 'b'])).toThrow(
-			'does not cover'
-		);
 	});
 });

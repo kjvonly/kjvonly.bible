@@ -2,7 +2,7 @@
 
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { gzipSync } from 'node:zlib';
+import { gzipSync, gunzipSync } from 'node:zlib';
 
 /** Normalizes lookup keys to the Dictionary Domain's V1 identity policy. */
 function normalizeHeadword(word) {
@@ -71,17 +71,52 @@ function groupDefinitions(records) {
   };
 }
 
-/** Converts source records into the gzipped, keyed Resource bundle contract. */
+/** Wrap existing keyed Webster data or record input in the standard edition contract. */
+function createEdition(definitions) {
+  return {
+    definitionFormat: 'webster-html',
+    headwords: Object.keys(definitions).sort().map(key => ({ headword: key, key })),
+    definitions
+  };
+}
+
+/** Convert a previously generated keyed gzip file without requiring raw source records. */
+function readKeyedGzip(bytes) {
+  const keyed = JSON.parse(gunzipSync(bytes).toString('utf8'));
+  if (!keyed || typeof keyed !== 'object' || Array.isArray(keyed) || !Object.keys(keyed).length) {
+    throw new Error('Expected a nonempty keyed Webster bundle.');
+  }
+  for (const [key, definitions] of Object.entries(keyed)) {
+    if (!key || key !== normalizeHeadword(key) || !Array.isArray(definitions) || !definitions.length ||
+        definitions.some(entry => invalidRecordFields(entry).length || normalizeHeadword(entry.word) !== key)) {
+      throw new Error(`Invalid keyed Webster definition: ${JSON.stringify(key)}`);
+    }
+  }
+  return keyed;
+}
+
+/** Converts source data into the single current gzipped edition format. */
 async function main() {
   const [sourcePath, destinationPath, ...extra] = process.argv.slice(2);
   if (!sourcePath || !destinationPath || extra.length !== 0 || !destinationPath.endsWith('.json.gz')) {
-    throw new Error('Usage: node zarf/scripts/seed/convert-dictionary-bundle.mjs <source.json|source.ndjson> <destination.json.gz>');
+    throw new Error('Usage: node zarf/scripts/seed/convert-dictionary-bundle.mjs <source.json|source.ndjson|keyed.json.gz> <destination.json.gz>');
   }
-  const records = parseRecords(await readFile(sourcePath, 'utf8'));
-  const { bundle, included, skipped } = groupDefinitions(records);
+  let definitions;
+  let included;
+  let skipped = 0;
+  if (sourcePath.endsWith('.json.gz')) {
+    definitions = readKeyedGzip(await readFile(sourcePath));
+    included = Object.values(definitions).reduce((sum, entries) => sum + entries.length, 0);
+  } else {
+    const parsed = groupDefinitions(parseRecords(await readFile(sourcePath, 'utf8')));
+    definitions = parsed.bundle;
+    included = parsed.included;
+    skipped = parsed.skipped;
+  }
+  const bundle = createEdition(definitions);
   await mkdir(dirname(destinationPath), { recursive: true });
   await writeFile(destinationPath, gzipSync(JSON.stringify(bundle), { level: 9 }));
-  console.log(`Wrote ${Object.keys(bundle).length} headwords (${included} definitions, ${skipped} skipped) to ${destinationPath}`);
+  console.log(`Wrote ${bundle.headwords.length} headwords (${included} definitions, ${skipped} skipped) to ${destinationPath}`);
 }
 
 main().catch(error => {

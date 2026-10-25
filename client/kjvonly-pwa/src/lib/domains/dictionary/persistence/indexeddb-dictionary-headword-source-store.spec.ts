@@ -8,6 +8,7 @@ const source = { publisher: 'publisher', resourceId: 'kjvonly/dictionary/entries
 const manifest = {
 	id: 'publisher/webster-1828', publisher: 'publisher', edition: 'webster-1828',
 	resourceId: source.resourceId, modifiedAt: 100, entryCount: 5,
+	definitionFormat: 'webster-html',
 	storageFormat: 'chunks-v1', chunkGeneration: 'm100', chunkCount: 2
 };
 
@@ -56,6 +57,7 @@ describe('IndexedDBDictionaryHeadwordSourceStore', () => {
 	it('rejects absent, malformed, incomplete and wrong-source editions', async () => {
 		expect(await setup(undefined).store.getEdition(source)).toBeUndefined();
 		expect(await setup(stored({ ...manifest, storageFormat: undefined })).store.getEdition(source)).toBeUndefined();
+		expect(await setup(stored({ ...manifest, definitionFormat: undefined })).store.getEdition(source)).toBeUndefined();
 		expect(await setup(stored({ ...manifest, chunkCount: 0 })).store.getEdition(source)).toBeUndefined();
 		expect(await setup(stored({ ...manifest, chunkGeneration: 'm99' })).store.getEdition(source)).toBeUndefined();
 		expect(await setup(stored({ ...manifest, publisher: 'someone-else' })).store.getEdition(source)).toBeUndefined();

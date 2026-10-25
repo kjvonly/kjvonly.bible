@@ -142,13 +142,31 @@ The relay stores metadata and discovery information while Blossom stores the act
 
 ---
 
-## Dictionary Headword Indexes (optional Blossom sidecars)
+## Dictionary Headword Indexes (published Blossom Resources)
 
-Build a headword-only FlexSearch export from each existing keyed dictionary
-`json.gz` bundle and publish the exported gzip files through the normal
-manifest CLI. This uses **the PWA's installed FlexSearch 0.7 dependency**;
-install PWA and CLI dependencies before running. From the `wt1` repository
-root, the data directory is `../../data`.
+Build the published `FlexSearch.Document` index from the current Dictionary
+edition bundle's `headwords` associations. Each association indexes both
+its searchable headword and its definition key, while storing the original
+`{ headword, key }` for display and retrieval. Keys such as `G1` and `H1`
+are searchable (case-insensitively) using the same index, independently
+of the `definitions` map. The
+index contains no definition content and retains `formatVersion: 1` while we
+replace the development contract in place.
+
+Use **the PWA's installed FlexSearch 0.7 dependency**. From the `wt1`
+repository root, the data directory is `../../data`. To generate the index
+files without publishing them:
+
+```bash
+for edition in webster-1828 webster-1844; do
+  node zarf/scripts/seed/build-dictionary-headword-index.mjs \
+    "../../data/dictionary/entries/bundles/$edition.json.gz" \
+    "../../data/dictionary/indexes/bundles/$edition.json.gz" \
+    "kjvonly/dictionary/entries/$edition"
+done
+```
+
+To **regenerate and publish** both indexes through the existing manifest CLI:
 
 ```bash
 zarf/scripts/seed/publish-dictionary-headword-indexes.sh local
@@ -165,11 +183,90 @@ and their descriptors to the relay. The same entries also exist in the full
 `app-data.yaml` and `app-data-home.yaml` manifests for normal deployments.
 
 Each index is publisher-independent, contains no definitions, and includes the
-source dictionary's compressed-file SHA-256. The client must validate the
-source identity, checksum, export version and tokenizer before importing it.
+source dictionary's compressed-file SHA-256. The client validates the source
+identity, checksum, `formatVersion: 1`, tokenizer, and encoding before
+accepting an index.
 
-**Current state:** these are optional published sidecars. The Dictionary
-chunk installer still generates its local index in the Resource worker; it
-does not yet fetch or consume these sidecars. Do not remove the local build
-fallback or make an extra network request mandatory before implementing that
-import path.
+**The published index is required for Dictionary installation.** The PWA
+installs and imports the published `FlexSearch.Document` export; it does not
+build a replacement index in the browser. Rebuild and republish the index after
+changing a source Dictionary bundle or the index builder so the published
+metadata and source checksum match the entries being installed. After changing
+indexed fields, republish both Webster indexes with the command above and the
+Strong's index with `publish-strongs-dictionary-edition.sh local` (or `home`).
+Existing accepted development editions retain their old installed index until
+reinstalled; opening Dictionary alone does not refresh an already-ready edition.
+
+
+### Repacking existing Webster bundles
+
+The current Dictionary entries format is an edition envelope with
+`definitionFormat`, `headwords`, and `definitions`. Convert the existing keyed
+Webster `.json.gz` source files without reprocessing raw definition records:
+
+```bash
+for edition in webster-1828 webster-1844; do
+  node zarf/scripts/seed/convert-dictionary-bundle.mjs \
+    "../../data/dictionary/entries/bundles/$edition.json.gz" \
+    "../../data/dictionary/entries/repacked/$edition.json.gz"
+done
+```
+
+Inspect the repacked output before replacing the published entries-bundle
+inputs. Then publish the new entries Resources using the normal manifest
+workflow, and regenerate/publish their matching headword indexes using the
+command above. The index `sourceSha256` must match the **exact compressed bytes**
+of the corresponding entries bundle. Existing local development installations
+must be reinstalled; no migration or legacy reader is provided.
+
+### Strong's as a Dictionary edition
+
+The Strong's edition uses these **existing source bundles** (no changes to
+those inputs):
+
+- `../../data/strongs/definitions/bundles/strongs.json.gz`
+- `../../data/bible/chapters/bundles/kjvs.json.gz`
+
+Build one standard Dictionary edition at
+`../../data/dictionary/entries/bundles/strongs-kjvs.json.gz` by copying the
+original Strong's definitions keyed by their `G`/`H` IDs and generating
+`{ headword, key }` associations from each Bible word's own Strong's `href`
+references. Semicolon-separated Scripture cross-references are ignored. Tokens
+without Strong's references do not contribute associations; punctuation and
+soft hyphens are removed from searchable English headwords. Repeated pairs are
+deduplicated. If a Bible reference points to a Strong's ID absent from the
+definitions bundle, the generator omits only that association and warns with
+the missing IDs; it does not invent definitions or drop existing definitions.
+A build with no usable associations still fails. Missing IDs will remain
+unavailable to direct Bible lookups until the source definitions are corrected.
+
+The output keeps **one edition** for Greek and Hebrew, one flat association
+list, and one separate published `FlexSearch.Document` index at
+`../../data/dictionary/indexes/bundles/strongs-kjvs.json.gz`.
+
+From the `wt1` repository root, build both files without publishing:
+
+```bash
+node zarf/scripts/seed/build-strongs-dictionary-edition.mjs \
+  ../../data/strongs/definitions/bundles/strongs.json.gz \
+  ../../data/bible/chapters/bundles/kjvs.json.gz \
+  ../../data/dictionary/entries/bundles/strongs-kjvs.json.gz
+node zarf/scripts/seed/build-dictionary-headword-index.mjs \
+  ../../data/dictionary/entries/bundles/strongs-kjvs.json.gz \
+  ../../data/dictionary/indexes/bundles/strongs-kjvs.json.gz \
+  kjvonly/dictionary/entries/strongs-kjvs
+```
+
+Or build and publish **both** Resources through their dedicated manifest:
+
+```bash
+zarf/scripts/seed/publish-strongs-dictionary-edition.sh local
+# Or use home for the home relay/Blossom environment.
+```
+
+The full `app-data.yaml` and `app-data-home.yaml` manifests also include the
+new entries and index Resources. The existing `strongs/definition` Resource
+remains in those manifests **until Bible/Strong's consumers are switched** in
+a separate implementation slice. These publishing tools do not change client
+Resource selection or definition presentation. All existing data and index
+version values remain `1` during development.

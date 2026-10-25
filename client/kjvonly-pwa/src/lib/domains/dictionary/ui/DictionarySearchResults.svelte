@@ -13,9 +13,11 @@
 		matches: readonly DictionarySearchMatch[];
 		/** Navigate to the selected headword; no definition is requested by this list. */
 		onSelect: (match: DictionarySearchMatch) => void;
+		/** Hide navigation for formats without a registered result opener. */
+		selectable?: boolean;
 	};
 
-	let { matches, onSelect }: Props = $props();
+	let { matches, onSelect, selectable = true }: Props = $props();
 	let activeMatches: readonly DictionarySearchMatch[] = [];
 	let visibleMatches: ScrubbedWindowEntry<DictionarySearchMatch>[] = $state([]);
 	let scrubberValue = $state(1);
@@ -31,7 +33,7 @@
 
 	/** Formats the absolute scrubber position without reading a definition. */
 	function formatScrubberValue(value: number): string {
-		return activeMatches[value - 1]?.headwordKey ?? `Word ${value}`;
+		return activeMatches[value - 1]?.headword ?? `Word ${value}`;
 	}
 
 	/** Reports a failed window operation without leaving an unhandled rejection. */
@@ -73,10 +75,16 @@
 		<div data-kjv-scrubber-value={result.value}>
 			<button
 				type="button"
-				class="flex min-h-12 w-full min-w-0 items-center px-4 py-3 text-left hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-primary-500"
+				disabled={!selectable}
+				class="flex min-h-12 w-full min-w-0 items-center py-3 pl-4 pr-12 text-left hover:bg-neutral-100 disabled:cursor-default disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-primary-500"
 				onclick={() => onSelect(result.item)}
 			>
-				<span class="text-base">{result.item.headwordKey}</span>
+				<span class="grid w-[38ch] max-w-full grid-cols-[minmax(0,1fr)_max-content] items-baseline gap-3">
+					<span class="min-w-0 truncate text-base">{result.item.headword}</span>
+					{#if result.item.key !== result.item.headword}
+						<span class="text-sm text-neutral-600">{result.item.key}</span>
+					{/if}
+				</span>
 			</button>
 		</div>
 	{/each}

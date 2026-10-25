@@ -10,7 +10,7 @@ import {
 } from '../workers/definition/dictionary-definition-worker-client';
 
 type SearchClient = Pick<DictionarySearchWorkerClient, 'search' | 'dispose'>;
-type DefinitionClient = Pick<DictionaryDefinitionWorkerClient, 'getNormalized' | 'dispose'>;
+type DefinitionClient = Pick<DictionaryDefinitionWorkerClient, 'get' | 'getNormalized' | 'dispose'>;
 
 /**
  * Application-owned Dictionary runtime, following Bible Search's runtime ownership.
@@ -53,10 +53,22 @@ export class DictionaryRuntime {
 		return this.searchClient.search(query, source);
 	}
 
-	/** Normalize only the selected word's definitions in the shared definition worker. */
-	getNormalized(source: DictionaryEditionSource, headwordKey: string): Promise<NormalizedDocument> {
+	/** Retrieve a raw definition by opaque key, even outside a mounted Dictionary view. */
+	async get(source: DictionaryEditionSource, key: string): Promise<unknown> {
+		if (this.users === 0 && !this.definitionClient) {
+			// Bible/Strong's lookups do not acquire a Dictionary view session.
+			const client = this.createDefinitionClient();
+			try { return await client.get(source, key); }
+			finally { client.dispose(); }
+		}
 		this.definitionClient ??= this.createDefinitionClient();
-		return this.definitionClient.getNormalized(source, headwordKey);
+		return this.definitionClient.get(source, key);
+	}
+
+	/** Normalize only the selected word's definitions in the shared definition worker. */
+	getNormalized(source: DictionaryEditionSource, key: string): Promise<NormalizedDocument> {
+		this.definitionClient ??= this.createDefinitionClient();
+		return this.definitionClient.getNormalized(source, key);
 	}
 
 	/** Stop the session when no Dictionary view is mounted, without discarding accepted data. */

@@ -4,7 +4,7 @@ import { DictionaryChunkInstaller } from './dictionary-chunk-installer';
 import { DICTIONARY_RESOURCE_TYPE } from './dictionary-resource-contract';
 
 /**
- * Dictionary-specific Resource handler: validate the published v1 bundle, then
+ * Dictionary-specific Resource handler: validate the published Dictionary edition bundle, then
  * install chunked Domain objects in the existing Resource Worker. No per-word
  * Domain objects or changes to the generic Resource installer are involved.
  */

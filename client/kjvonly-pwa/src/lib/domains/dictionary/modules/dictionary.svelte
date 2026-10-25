@@ -12,6 +12,7 @@
 		usePaneLayoutContext
 	} from '$lib/application';
 	import { KJVBackButton, KJVMoreActionsButton, ViewBody, ViewHeader } from '$lib/application/ui';
+	import { REFS_VIEWS } from '$lib/domains/bible';
 	import { KJVAdaptiveHeaderTitle, KJVAsyncState, KJVHeader } from '$lib/components';
 	import SearchInput from '$lib/components/inputs/searchInput.svelte';
 	import type { DictionaryEditionSource, DictionarySearchMatch } from '../models/dictionary.model';
@@ -139,6 +140,7 @@
 	const readyEdition = $derived(editionStatus?.status === 'ready' && sameSource(editionStatus.source, selectedSource)
 		? editionStatus.edition : undefined);
 	const searchableSource = $derived(readyEdition ? selectedSource : undefined);
+	const canOpenDefinition = $derived(readyEdition !== undefined && definitionOpeners[readyEdition.definitionFormat] !== undefined);
 	const acceptedGeneration = $derived(readyEdition?.chunkGeneration);
 	const activePrefix = $derived(query.trim() || (showAlphabet ? browseLetter : ''));
 
@@ -146,9 +148,25 @@
 		searchSession.update(activePrefix, searchableSource, acceptedGeneration);
 	});
 
+	/** Only definition presentation varies; index search and key retrieval are shared. */
+	const definitionOpeners: Record<string, (match: DictionarySearchMatch) => void> = {
+		'webster-html': match => {
+			navigation.pushView(DICTIONARY_VIEWS.ENTRY, createDictionaryEntryNavigationState(match, match.key));
+		},
+		strongs: match => {
+			navigation.pushModule(Modules.STRONGS, REFS_VIEWS.ROOT, {
+				refs: [match.key],
+				strongsWords: [match.headword]
+			});
+		}
+	};
+
 	function openEntry(match: DictionarySearchMatch): void {
-		navigation.pushView(DICTIONARY_VIEWS.ENTRY,
-			createDictionaryEntryNavigationState(match, match.headwordKey));
+		const format = readyEdition?.definitionFormat;
+		if (!format) return;
+		const open = definitionOpeners[format];
+		if (!open) throw new Error(`Unsupported Dictionary presentation format: ${format}`);
+		open(match);
 	}
 
 	onMount(() => {
@@ -173,7 +191,7 @@
 {#snippet titleContent()}
 	<KJVAdaptiveHeaderTitle
 		longTitle={editionLabel(selectedSource)}
-		secondary={readyEdition ? `${readyEdition.entryCount} words` : undefined}
+		secondary={readyEdition ? `${readyEdition.entryCount} definitions` : undefined}
 	/>
 {/snippet}
 
@@ -243,7 +261,7 @@
 
 		{#if searchSession.matches.length > 0 && !searchSession.searching}
 			<div class="flex min-h-0 flex-1 flex-col">
-				<DictionarySearchResults matches={searchSession.matches} onSelect={openEntry}></DictionarySearchResults>
+				<DictionarySearchResults matches={searchSession.matches} onSelect={openEntry} selectable={canOpenDefinition}></DictionarySearchResults>
 			</div>
 		{/if}
 	</div>

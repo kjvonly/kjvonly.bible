@@ -52,7 +52,7 @@ describe('DictionaryHeadwordSearchSession', () => {
 
 	it('keeps the existing results when another pane reports the same edition generation', async () => {
 		vi.useFakeTimers();
-		const match = { ...webster1828, headwordKey: 'abandon' };
+		const match = { ...webster1828, headword: 'abandon', key: 'abandon' };
 		const search = vi.fn(async () => ({ matches: [match] }));
 		const session = createSession(search);
 
@@ -97,10 +97,10 @@ describe('DictionaryHeadwordSearchSession', () => {
 		session.update('faith', webster1828, 'generation-2');
 		await vi.advanceTimersByTimeAsync(250);
 
-		const freshMatch = { ...webster1828, headwordKey: 'faith' };
+		const freshMatch = { ...webster1828, headword: 'faith', key: 'faith' };
 		current.resolve({ matches: [freshMatch] });
 		await Promise.resolve();
-		previous.resolve({ matches: [{ ...freshMatch, headwordKey: 'old-faith' }] });
+		previous.resolve({ matches: [{ ...freshMatch, headword: 'old-faith', key: 'old-faith' }] });
 		await Promise.resolve();
 
 		expect(session.matches).toEqual([freshMatch]);
@@ -194,7 +194,7 @@ describe('DictionaryHeadwordSearchSession', () => {
 		await vi.advanceTimersByTimeAsync(250);
 
 		const newestMatch = {
-			...webster1844, headwordKey: 'zebra'
+			...webster1844, headword: 'zebra', key: 'zebra'
 		};
 		second.resolve({ matches: [newestMatch] });
 		await Promise.resolve();
@@ -226,7 +226,7 @@ describe('DictionaryHeadwordSearchSession', () => {
 
 	it('retries an index error with the same prefix and edition', async () => {
 		vi.useFakeTimers();
-		const recoveredMatch = { ...webster1828, headwordKey: 'abandon' };
+		const recoveredMatch = { ...webster1828, headword: 'abandon', key: 'abandon' };
 		const search = vi.fn()
 			.mockRejectedValueOnce(new Error('Temporary index failure'))
 			.mockResolvedValueOnce({ matches: [recoveredMatch] });
@@ -248,7 +248,7 @@ describe('DictionaryHeadwordSearchSession', () => {
 
 	it('recovers from a rejected search without re-entering the query', async () => {
 		vi.useFakeTimers();
-		const match = { ...webster1844, headwordKey: 'faith' };
+		const match = { ...webster1844, headword: 'faith', key: 'faith' };
 		const search = vi.fn()
 			.mockRejectedValueOnce(new Error('Worker failed'))
 			.mockResolvedValueOnce({ matches: [match] });
@@ -284,7 +284,7 @@ describe('DictionaryHeadwordSearchSession', () => {
 		expect(session.searchError).toBeUndefined();
 		expect(session.searching).toBe(true);
 
-		const match = { ...webster1844, headwordKey: 'faith' };
+		const match = { ...webster1844, headword: 'faith', key: 'faith' };
 		second.resolve({ matches: [match] });
 		await Promise.resolve();
 		expect(session.matches).toEqual([match]);
@@ -313,7 +313,7 @@ describe('DictionaryHeadwordSearchSession', () => {
 		await vi.advanceTimersByTimeAsync(250);
 		session.destroy();
 		pending.resolve({
-			matches: [{ ...webster1828, headwordKey: 'abandon' }]
+			matches: [{ ...webster1828, headword: 'abandon', key: 'abandon' }]
 		});
 		await Promise.resolve();
 		expect(session.matches).toEqual([]);

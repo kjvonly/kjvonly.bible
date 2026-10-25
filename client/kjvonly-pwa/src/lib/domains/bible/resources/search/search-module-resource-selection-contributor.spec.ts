@@ -20,10 +20,6 @@ import {
 	BIBLE_SEARCH_RESOURCE_TYPE
 } from './bible-search-index-resource';
 
-import {
-	STRONGS_RESOURCE_TYPE,
-	createStrongsResourceId
-} from '$lib/domains/strongs';
 
 import {
 	SearchModuleResourceSelectionContributor
@@ -55,13 +51,7 @@ describe(
 										'booknames',
 										`kjvonly/bible/booknames/default`
 									),
-								[STRONGS_RESOURCE_TYPE]:
-									createReference(
-										'strongs',
-										createStrongsResourceId(
-									'kjvs'
-								)
-									)
+
 							}
 						});
 
@@ -70,8 +60,7 @@ describe(
 				).toEqual([
 					BIBLE_SEARCH_RESOURCE_TYPE,
 					BIBLE_CHAPTER_RESOURCE_TYPE,
-					BIBLE_BOOKNAMES_RESOURCE_TYPE,
-					STRONGS_RESOURCE_TYPE
+					BIBLE_BOOKNAMES_RESOURCE_TYPE
 				]);
 			}
 		);

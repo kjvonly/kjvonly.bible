@@ -9,14 +9,15 @@ const source = { publisher: 'publisher', resourceId: 'kjvonly/dictionary/entries
 /** Construct fake clients while keeping the production runtime's session logic real. */
 function createFixture() {
 	const search = vi.fn().mockResolvedValue({ matches: [] });
+	const get = vi.fn().mockResolvedValue({ number: 'G26' });
 	const getNormalized = vi.fn().mockResolvedValue({ blocks: [] } as unknown as NormalizedDocument);
 	const disposeSearch = vi.fn();
 	const disposeDefinition = vi.fn();
 	const createSearch = vi.fn(() => ({ search, dispose: disposeSearch }));
-	const createDefinition = vi.fn(() => ({ getNormalized, dispose: disposeDefinition }));
+	const createDefinition = vi.fn(() => ({ get, getNormalized, dispose: disposeDefinition }));
 	return {
 		runtime: new DictionaryRuntime(createSearch, createDefinition),
-		search, getNormalized, disposeSearch, disposeDefinition,
+		search, get, getNormalized, disposeSearch, disposeDefinition,
 		createSearch, createDefinition
 	};
 }
@@ -43,6 +44,27 @@ describe('DictionaryRuntime', () => {
 		expect(fixture.disposeDefinition).not.toHaveBeenCalled();
 		releaseRoot();
 		expect(fixture.disposeSearch).toHaveBeenCalledOnce();
+		expect(fixture.disposeDefinition).toHaveBeenCalledOnce();
+	});
+
+
+	it('retrieves raw definitions without opening a Dictionary view and releases the temporary worker', async () => {
+		const fixture = createFixture();
+		await expect(fixture.runtime.get(source, 'G26')).resolves.toEqual({ number: 'G26' });
+		expect(fixture.get).toHaveBeenCalledWith(source, 'G26');
+		expect(fixture.createDefinition).toHaveBeenCalledOnce();
+		expect(fixture.disposeDefinition).toHaveBeenCalledOnce();
+		expect(fixture.createSearch).not.toHaveBeenCalled();
+	});
+
+	it('reuses the definition worker for raw and normalized lookup while a Dictionary view is mounted', async () => {
+		const fixture = createFixture();
+		const release = fixture.runtime.acquire();
+		await fixture.runtime.get(source, 'G26');
+		await fixture.runtime.getNormalized(source, 'abandon');
+		expect(fixture.createDefinition).toHaveBeenCalledOnce();
+		expect(fixture.disposeDefinition).not.toHaveBeenCalled();
+		release();
 		expect(fixture.disposeDefinition).toHaveBeenCalledOnce();
 	});
 

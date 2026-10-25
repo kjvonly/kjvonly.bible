@@ -10,6 +10,12 @@ import {
 
 import { createContentResourceProcessor } from './resource-worker-composition';
 
+const edition = {
+	definitionFormat: 'webster-html',
+	headwords: [{ headword: 'aam', key: 'aam' }],
+	definitions: { aam: [{ word: 'AAM', content: '<p>A liquid measure.</p>' }] }
+};
+
 const decoded: DecodedResourceContent = {
 	publisher: 'dictionary-publisher',
 	resourceId: createDictionaryResourceId('webster-1828'),
@@ -18,21 +24,35 @@ const decoded: DecodedResourceContent = {
 	dataVersion: DICTIONARY_DATA_VERSION,
 	modifiedAt: 100,
 	mediaType: 'application/json',
-	value: {
-		aam: [{ word: 'AAM', content: '<p>A liquid measure.</p>' }]
-	}
+	value: edition
 };
 
 /** Verify the production worker resolves the Dictionary validator and factory. */
 describe('Dictionary Resource worker registration', () => {
-	it('routes invalid keyed bundles to the Dictionary datatype handler', async () => {
+	it('routes invalid Dictionary edition definitions to the datatype handler', async () => {
 		const result = await createContentResourceProcessor().processDecoded({
 			...decoded,
-			value: { aam: [{ word: 'AAM', content: '' }] }
+			value: { ...edition, definitions: { aam: [{ word: 'AAM', content: '' }] } }
 		});
 		expect(result.status).toBe('failed');
 		if (result.status !== 'failed') throw new Error('Expected validation failure');
 		expect((result.error as Error).message).toContain('Invalid Dictionary definition');
+	});
+
+	it("routes Strong's dictionary definitions through the Strong's semantic validator", async () => {
+		const result = await createContentResourceProcessor().processDecoded({
+			...decoded,
+			resourceId: createDictionaryResourceId('strongs-kjvs'),
+			value: {
+				definitionFormat: 'strongs',
+				headwords: [{ headword: 'alpha', key: 'G1' }],
+				definitions: { G1: { number: 'G1' } }
+			}
+		});
+		expect(result.status).toBe('failed');
+		if (result.status !== 'failed') { throw new Error("Expected Strong's validation failure"); }
+		// The error comes from the existing Strong's schema, not Dictionary's envelope validator.
+		expect((result.error as Error).message).toContain('originalWord');
 	});
 
 	it('rejects unsupported Dictionary semantic data versions', async () => {

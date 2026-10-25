@@ -33,6 +33,7 @@
 			resourceId: source.resourceId,
 			modifiedAt: 1,
 			entryCount: 80,
+			definitionFormat: 'webster-html',
 			storageFormat: 'chunks-v1',
 			chunkGeneration: 'test-generation',
 			chunkCount: 1
@@ -48,7 +49,7 @@
 		settingsService: new SettingsService(),
 		petNameService: petNameService ?? new PetNameService({ getItem: () => null, setItem: () => undefined }),
 		moduleResourceSelectionResolver,
-		dictionaryService: dictionaryService ?? createDictionaryService(new DictionaryRuntime(), { prepareSource, listInstalledEditions: async () => sources.map(source => ({...source, id: `${source.publisher}/${source.resourceId}`, edition: source.resourceId.split('/').at(-1)!, modifiedAt: 1, entryCount: 80, storageFormat: 'chunks-v1' as const, chunkGeneration: 'm1', chunkCount: 1})) })
+		dictionaryService: dictionaryService ?? createDictionaryService(new DictionaryRuntime(), { prepareSource, listInstalledEditions: async () => sources.map(source => ({...source, id: `${source.publisher}/${source.resourceId}`, edition: source.resourceId.split('/').at(-1)!, modifiedAt: 1, entryCount: 80, definitionFormat: 'webster-html', storageFormat: 'chunks-v1' as const, chunkGeneration: 'm1', chunkCount: 1})) })
 	} as unknown as ApplicationContext);
 	provideNavigationRuntimeContext({ navigation });
 	providePaneLayoutContext({ clientHeight: 540, clientWidth: 600 });

@@ -20,7 +20,7 @@ describe('DictionaryService', () => {
 			edition: { entryCount: 80, modifiedAt: 1, chunkGeneration: 'g1' }
 		}));
 		const service = createDictionaryService(
-			{ acquire, search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire, search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource, listInstalledEditions: async () => [] },
 			[source, other]
 		);
@@ -49,7 +49,7 @@ describe('DictionaryService', () => {
 					edition: { entryCount: 80, modifiedAt: 1, chunkGeneration: 'g1' } }
 		);
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource, listInstalledEditions: async () => [] },
 			[source, other]
 		);
@@ -67,16 +67,19 @@ describe('DictionaryService', () => {
 		const release = vi.fn();
 		const acquire = vi.fn(() => release);
 		const search = vi.fn().mockResolvedValue({ matches: [] });
+		const get = vi.fn().mockResolvedValue({ number: 'G26' });
 		const getNormalized = vi.fn().mockResolvedValue({ blocks: [] });
 		const prepared = { source, status: 'ready' as const, edition: { entryCount: 80 } };
 		const prepareSource = vi.fn().mockResolvedValue(prepared);
-		const service = createDictionaryService({ acquire, search, getNormalized }, { prepareSource, listInstalledEditions: async () => [] });
+		const service = createDictionaryService({ acquire, search, get, getNormalized }, { prepareSource, listInstalledEditions: async () => [] });
 
 		expect(prepareSource).not.toHaveBeenCalled();
 		const leave = service.enter();
 		await expect(service.prepareSource(source)).resolves.toEqual(prepared);
 		await expect(service.search('ab', source)).resolves.toEqual({ matches: [] });
 		await expect(service.getNormalized(source, 'abandon')).resolves.toEqual({ blocks: [] });
+		await expect(service.get(source, 'G26')).resolves.toEqual({ number: 'G26' });
+		expect(get).toHaveBeenCalledWith(source, 'G26');
 		expect(prepareSource).toHaveBeenCalledOnce();
 		expect(prepareSource).toHaveBeenCalledWith(source);
 		expect(acquire).toHaveBeenCalledOnce();
@@ -90,7 +93,7 @@ describe('DictionaryService', () => {
 		const listInstalledEditions = vi.fn().mockResolvedValue([{ ...source, edition: 'webster-1828' }]);
 		const acquire = vi.fn();
 		const service = createDictionaryService(
-			{ acquire, search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire, search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource: vi.fn(), listInstalledEditions }
 		);
 		await expect(service.listInstalledEditions()).resolves.toHaveLength(1);
@@ -102,7 +105,7 @@ describe('DictionaryService', () => {
 		const acquire = vi.fn(() => vi.fn());
 		const prepareSource = vi.fn().mockResolvedValue({ source, status: 'error', error: 'Not available' });
 		const service = createDictionaryService(
-			{ acquire, search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire, search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource, listInstalledEditions: async () => [] }
 		);
 
@@ -113,7 +116,7 @@ describe('DictionaryService', () => {
 	});
 	it('reports unexpected preparation failures through the same edition-status notifications', async () => {
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource: vi.fn().mockRejectedValue(new Error('Unexpected storage failure')), listInstalledEditions: async () => [] }
 		);
 		const listener = vi.fn();
@@ -129,7 +132,7 @@ describe('DictionaryService', () => {
 		const prepareSource = vi.fn().mockResolvedValue(recovered)
 			.mockResolvedValueOnce(initialFailure);
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource, listInstalledEditions: async () => [] }
 		);
 		const firstPane = vi.fn();
@@ -153,7 +156,7 @@ describe('DictionaryService', () => {
 	it('isolates subscriber errors from preparation and other views', async () => {
 		const prepared = { source, status: 'ready' as const, edition: { entryCount: 80 } };
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource: vi.fn().mockResolvedValue(prepared), listInstalledEditions: async () => [] }
 		);
 		const logging = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -175,7 +178,7 @@ describe('DictionaryService', () => {
 		const listInstalledEditions = vi.fn().mockResolvedValue([original]);
 		const prepareSource = vi.fn().mockResolvedValue({ source, status: 'ready', edition: original });
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource, listInstalledEditions }
 		);
 		const firstPane = vi.fn();
@@ -205,7 +208,7 @@ describe('DictionaryService', () => {
 		const newEdition = { ...source, entryCount: 81, modifiedAt: 2, chunkGeneration: 'm2' };
 		const pending = deferred<{ source: typeof source; status: 'ready'; edition: typeof oldEdition }>();
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource: vi.fn(() => pending.promise), listInstalledEditions: vi.fn().mockResolvedValue([newEdition]) }
 		);
 		const listener = vi.fn();
@@ -227,7 +230,7 @@ describe('DictionaryService', () => {
 			.mockReturnValueOnce(oldRead.promise)
 			.mockReturnValueOnce(newRead.promise);
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource: vi.fn(), listInstalledEditions }
 		);
 		const listener = vi.fn();
@@ -246,7 +249,7 @@ describe('DictionaryService', () => {
 		const edition = { ...source, entryCount: 81, modifiedAt: 2, chunkGeneration: 'm2' };
 		const pending = deferred<{ source: typeof source; status: 'error'; error: string }>();
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource: vi.fn(() => pending.promise), listInstalledEditions: vi.fn().mockResolvedValue([edition]) }
 		);
 		const listener = vi.fn();
@@ -265,7 +268,7 @@ describe('DictionaryService', () => {
 		const listInstalledEditions = vi.fn().mockResolvedValueOnce([]).mockResolvedValue([edition, otherEdition]);
 		const prepareSource = vi.fn();
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{ prepareSource, listInstalledEditions }
 		);
 		const listener = vi.fn();
@@ -283,7 +286,7 @@ describe('DictionaryService', () => {
 	it('can publish a ready edition after an earlier preparation error', async () => {
 		const edition = { ...source, entryCount: 80, modifiedAt: 3, chunkGeneration: 'm3' };
 		const service = createDictionaryService(
-			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), getNormalized: vi.fn() },
+			{ acquire: vi.fn(() => vi.fn()), search: vi.fn(), get: vi.fn(), getNormalized: vi.fn() },
 			{
 				prepareSource: vi.fn().mockResolvedValue({ source, status: 'error', error: 'Offline' }),
 				listInstalledEditions: vi.fn().mockResolvedValue([edition])

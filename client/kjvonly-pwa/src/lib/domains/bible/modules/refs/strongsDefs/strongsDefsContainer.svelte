@@ -58,48 +58,61 @@
 	// ================================== VARS =================================
 
 	let toggleStrongs = $state(false);
-	let strongsWithToggle: StrongsWithToggle[] = $state([]);
+	const definitionRequests = new Map<string, Promise<Strongs>>();
 
-	interface StrongsWithToggle extends Strongs {
-		toggle: boolean;
+	interface StrongsRow {
+		ref: string;
+		expanded: boolean;
+		definition?: Strongs;
+		loading: boolean;
+		error?: string;
 	}
+
+	// Collapsed rows only need the IDs and verse words already supplied by Refs.
+	let strongsRows: StrongsRow[] = $state(
+		strongsRefs.map(ref => ({
+			ref: ref.toUpperCase(),
+			expanded: false,
+			loading: false
+		}))
+	);
 
 	type StrongsDefinition = NonNullable<
 		Strongs['brownDef'] | Strongs['thayersDef']
 	>;
 
 	// =============================== LIFECYCLE ===============================
-	onMount(async () => {
-		await setStrongsRef();
+	onMount(() => {
+		// A single definition without other reference sections is visible on open.
+		if (strongsRows.length === 1 && !collapseDefinitions) {
+			void loadDefinition(strongsRows[0]);
+		}
 	});
 
 	// ================================ FUNCS ==================================
-	async function setStrongsRef():
-	Promise<void> {
-		if (!strongsRefs) {
+	async function loadDefinition(row: StrongsRow): Promise<void> {
+		if (row.loading || row.definition) {
 			return;
 		}
 
-		// Load the complete group before publishing it to the UI. Rendering one
-		// definition at a time briefly selects the single-definition layout and
-		// then collapses it again when later definitions arrive.
-		strongsWithToggle =
-			await Promise.all(
-				strongsRefs.map(
-					async (ref) => {
-						const data =
-							await strongsService.get(
-								strongsSource,
-								ref.toUpperCase()
-							);
+		row.loading = true;
+		row.error = undefined;
+		let request = definitionRequests.get(row.ref);
+		if (!request) {
+			request = strongsService.get(strongsSource, row.ref);
+			definitionRequests.set(row.ref, request);
+		}
 
-						return {
-							...data,
-							toggle: false
-						};
-					}
-				)
-			);
+		try {
+			row.definition = await request;
+		} catch (error) {
+			definitionRequests.delete(row.ref);
+			row.error = error instanceof Error
+				? error.message
+				: "Unable to load Strong's definition.";
+		} finally {
+			row.loading = false;
+		}
 	}
 
 	function sanitize(w: string): string {
@@ -171,18 +184,24 @@
 		);
 	}
 
-	function onStrongsWordClicked(s: StrongsWithToggle): void {
-		s.toggle = !s.toggle;
+	function onStrongsWordClicked(row: StrongsRow): void {
+		row.expanded = !row.expanded;
+		if (row.expanded) {
+			void loadDefinition(row);
+		}
 	}
 
 	function onToggleStrongs(): void {
 		toggleStrongs = !toggleStrongs;
+		if (toggleStrongs && strongsRows.length === 1) {
+			void loadDefinition(strongsRows[0]);
+		}
 	}
 
 </script>
 
 <!-- ================================= BODY ================================ -->
-{#snippet strongsHtml(s: StrongsWithToggle)}
+{#snippet strongsHtml(s: Strongs)}
 	<div class="ps-8">
 		{#if s['strongsDef']}
 			<div class="">
@@ -328,24 +347,34 @@
 {/snippet}
 
 {#snippet strongsList()}
-	{#each strongsWithToggle as s, idx}
-		{@render strongsWordToggle(s, idx)}
-		{#if s.toggle}
-			{@render strongsHtml(s)}
+	{#each strongsRows as row, idx (idx)}
+		{@render strongsWordToggle(row, idx)}
+		{#if row.expanded}
+			{@render strongsDefinition(row)}
 		{/if}
 	{/each}
 {/snippet}
 
-{#snippet strongsWordToggle(s: StrongsWithToggle, idx: number)}
+{#snippet strongsDefinition(row: StrongsRow)}
+	{#if row.definition}
+		{@render strongsHtml(row.definition)}
+	{:else if row.loading}
+		<p class="ps-8 text-neutral-600">Loading definition...</p>
+	{:else if row.error}
+		<p class="ps-8 text-neutral-600">{row.error}</p>
+	{/if}
+{/snippet}
+
+{#snippet strongsWordToggle(row: StrongsRow, idx: number)}
 	<div class="flex flex-row items-center ps-2 pt-2">
-		{#if strongsWithToggle.length > 1}
+		{#if strongsRows.length > 1}
 			<KJVButton
 				classes=""
 				onClick={() => {
-					onStrongsWordClicked(s);
+					onStrongsWordClicked(row);
 				}}
 			>
-				{#if !s.toggle}
+				{#if !row.expanded}
 					<KeyboardArrowRight></KeyboardArrowRight>
 				{:else}
 					<KeyboardArrowDown></KeyboardArrowDown>
@@ -356,11 +385,11 @@
 		{#if strongsWords && strongsWords.length > 0}
 			<ShortText></ShortText>
 			<span class="ps-1 pe-4"
-				><pre class="inline-block">{`${s.number}:`.padStart(6, ' ')}</pre>
+				><pre class="inline-block">{`${row.ref}:`.padStart(6, ' ')}</pre>
 				{sanitize(strongsWords[idx])}</span
 			>
 		{:else}
-			<span class="pe-4">{s.number}: {sanitize(text)}</span>
+			<span class="pe-4">{row.ref}: {sanitize(text)}</span>
 		{/if}
 	</div>
 {/snippet}
@@ -370,19 +399,19 @@
 {#if collapseDefinitions}
 	{@render strongsHeader()}
 	{#if toggleStrongs}
-		{#if strongsWithToggle.length > 1}
+		{#if strongsRows.length > 1}
 			{@render strongsList()}
-		{:else if strongsWithToggle.length === 1}
-			{@render strongsWordToggle(strongsWithToggle[0], 0)}
-			{@render strongsHtml(strongsWithToggle[0])}
+		{:else if strongsRows.length === 1}
+			{@render strongsWordToggle(strongsRows[0], 0)}
+			{@render strongsDefinition(strongsRows[0])}
 		{/if}
 	{/if}
-{:else if strongsWithToggle.length > 1}
+{:else if strongsRows.length > 1}
 	{@render strongsHeader()}
 	{@render strongsList()}
-{:else if strongsWithToggle.length === 1}
-	{@render strongsWordToggle(strongsWithToggle[0], 0)}
-	{@render strongsHtml(strongsWithToggle[0])}
+{:else if strongsRows.length === 1}
+	{@render strongsWordToggle(strongsRows[0], 0)}
+	{@render strongsDefinition(strongsRows[0])}
 {/if}
 
 <style>

@@ -314,11 +314,6 @@ import {
 } from '$lib/domains/bible';
 
 
-import {
-    STRONGS_RESOURCE_TYPE,
-    createStrongsResourceId
-} from '$lib/domains/strongs';
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bible
@@ -538,9 +533,7 @@ import {
 ///////////////////////////////////////////////////////////////////////////////
 // Strong's
 
-import {
-    IndexedDBStrongsStore
-} from '$lib/domains/strongs/persistence/indexeddb-strongs-store';
+
 
 import {
     StrongsService
@@ -591,14 +584,19 @@ const FILESYSTEM_BOOTSTRAP_RESOURCE:
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Webster 1828 is the initial Dictionary Resource selection. Both editions are
+ * Webster 1828 is the initial Dictionary Resource selection. All editions are
  * prepared only when a Dictionary view first opens, never during app bootstrap.
  * The selected Resource remains owned by the pane's navigation entry.
  */
 const DEFAULT_DICTIONARY_RESOURCE = createDictionaryResourceId('webster-1828');
+const STRONGS_DICTIONARY_SOURCE: DictionaryEditionSource = {
+    publisher: KJVONLY_PUBKEY,
+    resourceId: createDictionaryResourceId('strongs-kjvs')
+};
 const DICTIONARY_EDITIONS_ON_OPEN: readonly DictionaryEditionSource[] = [
     { publisher: KJVONLY_PUBKEY, resourceId: DEFAULT_DICTIONARY_RESOURCE },
-    { publisher: KJVONLY_PUBKEY, resourceId: createDictionaryResourceId('webster-1844') }
+    { publisher: KJVONLY_PUBKEY, resourceId: createDictionaryResourceId('webster-1844') },
+    STRONGS_DICTIONARY_SOURCE
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -947,18 +945,6 @@ export class Application {
                             )
                     },
                     {
-                        resourceType:
-                            STRONGS_RESOURCE_TYPE,
-
-                        publisher:
-                            KJVONLY_PUBKEY,
-
-                        resourceId:
-                            createStrongsResourceId(
-                                'kjvs'
-                            )
-                    },
-                    {
                         resourceType: DICTIONARY_RESOURCE_TYPE,
                         publisher: KJVONLY_PUBKEY,
                         resourceId: DEFAULT_DICTIONARY_RESOURCE
@@ -978,7 +964,7 @@ export class Application {
                         authenticationService
                     ),
                     new SearchModuleResourceSelectionContributor(),
-                    new StrongsModuleResourceSelectionContributor(),
+                    new StrongsModuleResourceSelectionContributor(STRONGS_DICTIONARY_SOURCE),
                     new NotesModuleResourceSelectionContributor(
                         authenticationService
                     ),
@@ -1748,22 +1734,7 @@ export class Application {
         ///////////////////////////////////////////////////////////////////////
         // Strong's
 
-        const strongsStore =
-            new IndexedDBStrongsStore(
-                getApplicationDB
-            );
-
-        const strongsResourceLoader =
-            new ResourceLoader(
-                resourceWorkerClient,
-                appendResourceReferenceBuilder
-            );
-
-        const strongsService =
-            new StrongsService(
-                strongsStore,
-                strongsResourceLoader
-            );
+        const strongsService = new StrongsService(dictionaryService);
 
         ///////////////////////////////////////////////////////////////////////
         // Application Context

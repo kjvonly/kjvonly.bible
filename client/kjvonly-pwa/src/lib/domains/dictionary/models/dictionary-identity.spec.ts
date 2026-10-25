@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	assertDictionaryEditionSource,
-	compareDictionaryHeadwordKeys,
+	compareDictionaryDefinitionKeys,
 	createDictionaryEditionId,
 	createDictionaryEntryId,
 	createDictionaryResourceId,
@@ -10,10 +10,10 @@ import {
 } from './dictionary-identity';
 
 describe('Dictionary identity', () => {
-	it('orders canonical headwords by code units, not locale collation', () => {
-		expect(['é', '2', 'z', '10', 'a'].sort(compareDictionaryHeadwordKeys))
+	it('orders definition keys by code units, not locale collation', () => {
+		expect(['é', '2', 'z', '10', 'a'].sort(compareDictionaryDefinitionKeys))
 			.toEqual(['10', '2', 'a', 'z', 'é']);
-		expect(compareDictionaryHeadwordKeys('a', 'a')).toBe(0);
+		expect(compareDictionaryDefinitionKeys('a', 'a')).toBe(0);
 	});
 
 	it('canonicalizes case, compatibility forms and whitespace without stripping punctuation', () => {

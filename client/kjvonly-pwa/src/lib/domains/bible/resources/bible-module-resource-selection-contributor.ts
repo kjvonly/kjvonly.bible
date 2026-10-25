@@ -30,10 +30,6 @@ import {
 } from './text-markup/bible-text-markup-resource';
 
 import {
-	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs';
-
-import {
 	createDefaultBibleTextMarkupSelection
 } from './text-markup/bible-text-markup-default-selection';
 
@@ -47,7 +43,6 @@ const RESOURCE_TYPES = [
 	BIBLE_PARAGRAPHS_RESOURCE_TYPE,
 	BIBLE_PERICOPES_RESOURCE_TYPE,
 	BIBLE_BOOKNAMES_RESOURCE_TYPE,
-	STRONGS_RESOURCE_TYPE,
 	BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
 	NOTES_RESOURCE_TYPE
 ] as const;

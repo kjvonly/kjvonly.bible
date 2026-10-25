@@ -29,6 +29,6 @@ describe('Dictionary chunk-map model', () => {
 			{ chunkId: '0000', firstKey: 'a', lastKey: 'z' }
 		]);
 		expect(() => validateDictionaryChunkMap({ ...map, source: { ...source, publisher: 'different' } })).toThrow('identity');
-		expect(() => validateDictionaryChunkMap({ ...map, ranges: [{ chunkId: '0000', firstKey: 'Z', lastKey: 'z' }] })).toThrow('range');
+		expect(() => validateDictionaryChunkMap({ ...map, ranges: [{ chunkId: '0000', firstKey: 'z', lastKey: 'a' }] })).toThrow('range');
 	});
 });

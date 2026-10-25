@@ -9,12 +9,12 @@ import type { DictionaryHeadwordSourceStore } from '../../persistence/dictionary
 export interface LoadedDictionaryHeadwordIndex {
 	readonly revision: number;
 	readonly headwordCount: number;
-	readonly index: FlexSearch.Index;
+	readonly index: FlexSearch.Document;
 }
 
 /**
  * Imports the index installed atomically with an edition's chunk map and manifest.
- * Index creation belongs to Dictionary Resource installation; searching never scans
+ * Index generation belongs to the publication script; searching never scans
  * individual definitions or decompresses definition chunks.
  */
 export class DictionaryHeadwordIndexManager {
@@ -60,7 +60,7 @@ export class DictionaryHeadwordIndexManager {
 		edition: DictionaryEditionManifest
 	): Promise<LoadedDictionaryHeadwordIndex> {
 		const stored = await this.indexes.get(source, edition.modifiedAt);
-		if (!stored || stored.headwordCount !== edition.entryCount) {
+		if (!stored) {
 			throw new Error(`Dictionary headword index is missing or incompatible: ${source.resourceId}`);
 		}
 
@@ -73,9 +73,13 @@ export class DictionaryHeadwordIndexManager {
 	}
 
 	/** Import FlexSearch's serialized postings; only headword data crosses this boundary. */
-	private async importIndex(source: DictionaryEditionSource, stored: DictionaryHeadwordIndex): Promise<FlexSearch.Index> {
+	private async importIndex(source: DictionaryEditionSource, stored: DictionaryHeadwordIndex): Promise<FlexSearch.Document> {
 		try {
-			const index = new FlexSearch.Index({ tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER, encode: false });
+			const index = new FlexSearch.Document({
+				tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER,
+				encode: false,
+				document: { id: 'id', index: ['searchableHeadword', 'searchableKey'], store: ['headword', 'key'] }
+			});
 			for (const [key, value] of Object.entries(stored.chunks)) {
 				await index.import(key, value);
 			}
@@ -95,11 +99,11 @@ export class DictionaryHeadwordIndexManager {
 		}
 	}
 
-	/** A current index must describe exactly the accepted generation's headwords. */
+	/** The accepted Resource revision scopes the imported index; definition count is unrelated. */
 	private matchesEdition(
 		value: LoadedDictionaryHeadwordIndex | undefined,
 		edition: DictionaryEditionManifest
 	): value is LoadedDictionaryHeadwordIndex {
-		return value?.revision === edition.modifiedAt && value.headwordCount === edition.entryCount;
+		return value?.revision === edition.modifiedAt;
 	}
 }

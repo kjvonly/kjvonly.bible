@@ -13,8 +13,14 @@ const b = { publisher: 'publisher', resourceId: 'kjvonly/dictionary/entries/webs
 
 /** Produces the same headword-only FlexSearch export as Dictionary installation. */
 async function installedIndex(source: DictionaryEditionSource, words: readonly string[], revision = 1): Promise<DictionaryHeadwordIndex> {
-	const index = new FlexSearch.Index({ tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER, encode: false });
-	for (const word of words) index.add(word, encodeHeadwordForSearch(word));
+	const index = new FlexSearch.Document({
+		tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER, encode: false,
+		document: { id: 'id', index: ['searchableHeadword', 'searchableKey'], store: ['headword', 'key'] }
+	});
+	for (const word of words) index.add({
+		id: JSON.stringify([word, word]), headword: word, key: word,
+		searchableHeadword: encodeHeadwordForSearch(word), searchableKey: encodeHeadwordForSearch(word)
+	});
 	const chunks: Record<string, string> = {};
 	await index.export((key: string, data: string | undefined) => { chunks[key] = data ?? ''; });
 	return {
@@ -49,6 +55,7 @@ function fixture() {
 			editions.set(id, {
 				id, edition: source.resourceId.split('/').at(-1)!, publisher: source.publisher,
 				resourceId: source.resourceId, modifiedAt: revision, entryCount: words.length,
+				definitionFormat: 'webster-html',
 				storageFormat: 'chunks-v1', chunkGeneration: `m${revision}`, chunkCount: 1
 			});
 			indexes.set(id, await installedIndex(source, words, revision));
@@ -62,8 +69,8 @@ describe('DictionarySearchRuntime with installed chunk indexes', () => {
 		await f.install(a, ['a', 'abandon', 'old testament']);
 		await f.install(b, ['a', 'abacus', 'alpha']);
 		const runtime = f.createRuntime();
-		expect((await runtime.search('ab', a)).map(m => m.headwordKey)).toEqual(['abandon']);
-		expect((await runtime.search('ab', b)).map(m => m.headwordKey)).toEqual(['abacus']);
+		expect((await runtime.search('ab', a)).map(m => m.headword)).toEqual(['abandon']);
+		expect((await runtime.search('ab', b)).map(m => m.headword)).toEqual(['abacus']);
 		expect(f.reads).toHaveLength(2);
 		await runtime.search('a', a);
 		expect(f.reads).toHaveLength(2);
@@ -75,8 +82,8 @@ describe('DictionarySearchRuntime with installed chunk indexes', () => {
 		await f.install(a, ['abandon']);
 		await f.install(other, ['abacus']);
 		const runtime = f.createRuntime();
-		expect((await runtime.search('ab', a)).map(m => [m.publisher, m.headwordKey])).toEqual([['publisher', 'abandon']]);
-		expect((await runtime.search('ab', other)).map(m => [m.publisher, m.headwordKey])).toEqual([['other-publisher', 'abacus']]);
+		expect((await runtime.search('ab', a)).map(m => [m.publisher, m.headword])).toEqual([['publisher', 'abandon']]);
+		expect((await runtime.search('ab', other)).map(m => [m.publisher, m.headword])).toEqual([['other-publisher', 'abacus']]);
 		expect(f.reads).toHaveLength(2);
 	});
 
@@ -84,9 +91,9 @@ describe('DictionarySearchRuntime with installed chunk indexes', () => {
 		const f = fixture();
 		await f.install(a, ['abandon', 'old testament', 'test']);
 		const runtime = f.createRuntime();
-		expect((await runtime.search('aba', a)).map(m => m.headwordKey)).toEqual(['abandon']);
+		expect((await runtime.search('aba', a)).map(m => m.headword)).toEqual(['abandon']);
 		expect(await runtime.search('band', a)).toEqual([]);
-		expect((await runtime.search('old t', a)).map(m => m.headwordKey)).toEqual(['old testament']);
+		expect((await runtime.search('old t', a)).map(m => m.headword)).toEqual(['old testament']);
 		expect(await runtime.search('testament', a)).toEqual([]);
 	});
 
@@ -95,17 +102,84 @@ describe('DictionarySearchRuntime with installed chunk indexes', () => {
 		await f.install(a, Array.from({ length: 750 }, (_, i) => `aa${String(i).padStart(3, '0')}`));
 		const matches = await f.createRuntime().search('aa', a);
 		expect(matches).toHaveLength(750);
-		expect(matches[0]?.headwordKey).toBe('aa000');
-		expect(matches.at(-1)?.headwordKey).toBe('aa749');
+		expect(matches[0]?.headword).toBe('aa000');
+		expect(matches.at(-1)?.headword).toBe('aa749');
 	});
 
 	it('orders exact matches first, then prefixes, retaining their source identity', async () => {
 		const f = fixture();
 		await f.install(a, ['abandon', 'ab', 'abacus']);
 		const matches = await f.createRuntime().search('ab', a);
-		expect(matches).toEqual(['ab', 'abacus', 'abandon'].map(headwordKey => ({
-			...a, headwordKey
+		expect(matches).toEqual(['ab', 'abacus', 'abandon'].map(headword => ({
+			...a, headword, key: headword
 		})));
+	});
+
+	it('searches all associations when their count differs from the definition count', async () => {
+		const f = fixture();
+		await f.install(a, ['love', 'charity', 'beloved']);
+		const index = new FlexSearch.Document({
+			tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER, encode: false,
+			document: { id: 'id', index: ['searchableHeadword', 'searchableKey'], store: ['headword', 'key'] }
+		});
+		for (const [headword, key] of [['love', 'G25'], ['love', 'G26'], ['charity', 'G26']] as const) {
+			index.add({ id: JSON.stringify([headword, key]), headword, key,
+				searchableHeadword: encodeHeadwordForSearch(headword),
+				searchableKey: encodeHeadwordForSearch(key.toLowerCase()) });
+		}
+		const chunks: Record<string, string> = {};
+		await index.export((key: string, data: string | undefined) => { chunks[key] = data ?? ''; });
+		const id = createDictionaryHeadwordIndexId(a);
+		// Three searchable associations reference just two distinct definitions.
+		f.editions.set(id, { ...f.editions.get(id)!, entryCount: 2 });
+		f.indexes.set(id, { ...f.indexes.get(id)!, chunks });
+		const runtime = f.createRuntime();
+		expect(await runtime.search('love', a)).toEqual([
+			{ ...a, headword: 'love', key: 'G25' },
+			{ ...a, headword: 'love', key: 'G26' }
+		]);
+		// A previously loaded index must remain reusable for the same edition revision.
+		expect(await runtime.search('charity', a)).toEqual([
+			{ ...a, headword: 'charity', key: 'G26' }
+		]);
+		expect(f.reads).toHaveLength(1);
+
+		// Definitions without searchable headwords must not invalidate the index either.
+		await f.install(b, ['abacus']);
+		const otherId = createDictionaryHeadwordIndexId(b);
+		f.editions.set(otherId, { ...f.editions.get(otherId)!, entryCount: 4 });
+		expect((await runtime.search('aba', b)).map(match => match.headword)).toEqual(['abacus']);
+	});
+
+	it('searches Strong’s IDs and headwords from one imported index without duplicate results', async () => {
+		const f = fixture();
+		const strongs = { publisher: 'publisher', resourceId: 'kjvonly/dictionary/entries/strongs-kjvs' };
+		await f.install(strongs, ['alpha', 'another', 'beginning', 'alphabet']);
+		const index = new FlexSearch.Document({
+			tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER, encode: false,
+			document: { id: 'id', index: ['searchableHeadword', 'searchableKey'], store: ['headword', 'key'] }
+		});
+		for (const [headword, key] of [
+			['alpha', 'G1'], ['another', 'G1'], ['beginning', 'H1'], ['alphabet', 'G10']
+		] as const) {
+			index.add({ id: JSON.stringify([headword, key]), headword, key,
+				searchableHeadword: encodeHeadwordForSearch(headword),
+				searchableKey: encodeHeadwordForSearch(key.toLowerCase()) });
+		}
+		const chunks: Record<string, string> = {};
+		await index.export((key: string, data: string | undefined) => { chunks[key] = data ?? ''; });
+		const id = createDictionaryHeadwordIndexId(strongs);
+		f.indexes.set(id, { ...f.indexes.get(id)!, chunks });
+		const runtime = f.createRuntime();
+		expect((await runtime.search('G1', strongs)).map(({ headword, key }) => [headword, key])).toEqual([
+			['alpha', 'G1'], ['another', 'G1'], ['alphabet', 'G10']
+		]);
+		expect((await runtime.search('h1', strongs)).map(({ headword, key }) => [headword, key]))
+			.toEqual([['beginning', 'H1']]);
+		expect((await runtime.search('alpha', strongs)).map(({ headword, key }) => [headword, key]))
+			.toEqual([['alpha', 'G1'], ['alphabet', 'G10']]);
+		expect((await runtime.search('another', strongs)).map(({ headword, key }) => [headword, key]))
+			.toEqual([['another', 'G1']]);
 	});
 
 	it('rejects missing and incompatible accepted indexes without silently hiding errors', async () => {
@@ -115,16 +189,14 @@ describe('DictionarySearchRuntime with installed chunk indexes', () => {
 		f.indexes.delete(createDictionaryHeadwordIndexId(b));
 		const runtime = f.createRuntime();
 		await expect(runtime.search('ab', b)).rejects.toThrow('missing or incompatible');
-		expect((await runtime.search('ab', a)).map(m => m.headwordKey)).toEqual(['abandon']);
+		expect((await runtime.search('ab', a)).map(m => m.headword)).toEqual(['abandon']);
 	});
 
-	it('rejects incorrect headword counts and corrupt exports instead of rebuilding', async () => {
+	it('rejects corrupt exports instead of rebuilding', async () => {
 		const f = fixture();
 		await f.install(a, ['abandon']);
 		const id = createDictionaryHeadwordIndexId(a);
-		f.indexes.set(id, { ...f.indexes.get(id)!, headwordCount: 2 });
-		await expect(f.createRuntime().search('ab', a)).rejects.toThrow('missing or incompatible');
-		f.indexes.set(id, { ...f.indexes.get(id)!, headwordCount: 1, chunks: { cfg: '{invalid-json' } });
+		f.indexes.set(id, { ...f.indexes.get(id)!, chunks: { cfg: '{invalid-json' } });
 		await expect(f.createRuntime().search('ab', a)).rejects.toThrow('could not be imported');
 	});
 
@@ -134,7 +206,7 @@ describe('DictionarySearchRuntime with installed chunk indexes', () => {
 		const runtime = f.createRuntime();
 		expect(await runtime.search('aa', a)).toHaveLength(1);
 		await f.install(a, ['abandon'], 2);
-		expect((await runtime.search('ab', a)).map(m => m.headwordKey)).toEqual(['abandon']);
+		expect((await runtime.search('ab', a)).map(m => m.headword)).toEqual(['abandon']);
 		expect(f.reads).toHaveLength(2);
 	});
 

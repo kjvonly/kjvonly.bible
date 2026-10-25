@@ -1,126 +1,31 @@
-import {
-	type PublishedResourceReference,
-	type ResourceLoader
-} from '$lib/resource';
+import type { PublishedResourceReference } from '$lib/resource';
+import { parseDictionaryResourceId, type DictionaryService } from '$lib/domains/dictionary';
+import type { Strongs } from '../models/strongs.model';
+import { StrongsDefinitionDataTypeHandler } from '../resources/definitions/strongs-data-type-handler';
+import { createStrongsId } from '../utils/strongs-identity';
 
-import type {
-	Strongs
-} from '../models/strongs.model';
-
-import type {
-	StrongsStore
-} from '../persistence/strongs-store';
-
-
-import {
-	createStrongsId
-} from '../utils/strongs-identity';
-
-import {
-	parseStrongsResourceId
-} from '../resources/strongs-resource-id';
-
+/** Strong's owns the definition model; Dictionary owns the compressed definition lookup. */
 export class StrongsService {
+    private readonly validator = new StrongsDefinitionDataTypeHandler();
 
-	constructor(
-		private readonly strongs:
-			Pick<
-				StrongsStore,
-				'get'
-			>,
+    constructor(private readonly dictionary: Pick<DictionaryService, 'get' | 'prepareSource'>) {}
 
-		private readonly resourceLoader:
-			Pick<
-				ResourceLoader<string>,
-				'load'
-			>
-	) {}
+    async get(source: PublishedResourceReference, key: string): Promise<Strongs> {
+        const { edition } = parseDictionaryResourceId(source.resourceId);
+        if (!edition.startsWith('strongs-')) {
+            throw new Error(`Not a Strong's Dictionary edition: ${source.resourceId}`);
+        }
+        const status = await this.dictionary.prepareSource(source);
+        if (status.status !== 'ready') throw new Error(status.error);
 
-	async get(
-		source:
-			PublishedResourceReference,
-		key:
-			string
-	): Promise<Strongs> {
-
-		const {
-			edition
-		} =
-			parseStrongsSource(
-				source
-			);
-
-		const strongsId =
-			createStrongsId(
-				`${source.publisher}/${edition}`,
-				key
-			);
-
-		const existing =
-			await this.strongs.get(
-				strongsId
-			);
-
-		if (
-			existing !==
-			undefined
-		) {
-			return existing;
-		}
-
-		const found =
-			await this.resourceLoader.load(
-				source,
-				key
-			);
-
-		if (!found) {
-			throw new Error(
-				`Strong's Resource not found: ${source.publisher}/${source.resourceId}/${key}`
-			);
-		}
-
-		const installed =
-			await this.strongs.get(
-				strongsId
-			);
-
-		if (
-			installed ===
-			undefined
-		) {
-			throw new Error(
-				`Strong's definition was not installed: ${strongsId}`
-			);
-		}
-
-		return installed;
-	}
-}
-
-function parseStrongsSource(
-	source:
-		PublishedResourceReference
-): {
-	readonly edition:
-		string;
-} {
-	const {
-		edition,
-		key
-	} = parseStrongsResourceId(
-		source.resourceId
-	);
-
-	if (
-		key !== undefined
-	) {
-		throw new Error(
-			`Invalid Strong's Resource source: ${source.resourceId}`
-		);
-	}
-
-	return {
-		edition
-	};
+        const raw = await this.dictionary.get(source, key);
+        const content = this.validator.validate(raw);
+        if (content.number !== key) {
+            throw new Error(`Strong's key ${key} does not match content number ${content.number}.`);
+        }
+        return {
+            ...content,
+            id: createStrongsId(`${source.publisher}/${edition.slice('strongs-'.length)}`, key)
+        };
+    }
 }

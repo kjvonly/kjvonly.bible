@@ -1,26 +1,26 @@
 import { formatDictionaryChunkId } from '../models/dictionary-chunk-identity';
 import type { DictionaryChunkPartition } from '../models/dictionary-chunk.model';
-import type { DictionaryEntriesBundle } from '../models/dictionary.model';
-import { compareDictionaryHeadwordKeys, normalizeDictionaryHeadword } from '../models/dictionary-identity';
+import type { DictionaryEditionBundle } from '../models/dictionary.model';
+import { compareDictionaryDefinitionKeys } from '../models/dictionary-identity';
 
 /**
  * Partition a validated keyed dictionary into size-bounded JSON objects.
  *
- * Every headword and all its ordered definitions remain in one chunk. Size is
+ * Each complete definition value stays in one chunk, identified by its opaque key. Size is
  * measured as UTF-8 bytes of the actual serialized JSON (including keys,
- * commas, and braces). A single oversized headword forms an oversized chunk.
+ * commas, and braces). A single oversized definition forms an oversized chunk.
  * Yielding one chunk at a time allows its consumer to gzip/persist it before
  * requesting the next partition; no gzip or IndexedDB work occurs here.
  */
 export function* partitionDictionaryIntoChunks(
-	bundle: DictionaryEntriesBundle,
+	bundle: DictionaryEditionBundle,
 	targetBytes: number
 ): Generator<DictionaryChunkPartition> {
 	if (!Number.isSafeInteger(targetBytes) || targetBytes < 2) {
 		throw new Error(`Invalid Dictionary chunk target bytes: ${targetBytes}`);
 	}
 
-	const keys = Object.keys(bundle).sort(compareDictionaryHeadwordKeys);
+	const keys = Object.keys(bundle.definitions).sort(compareDictionaryDefinitionKeys);
 	if (keys.length === 0) {
 		throw new Error('Cannot partition an empty Dictionary edition.');
 	}
@@ -33,15 +33,10 @@ export function* partitionDictionaryIntoChunks(
 	let size = 2; // Opening and closing object braces.
 
 	for (const key of keys) {
-		if (!key || key !== normalizeDictionaryHeadword(key)) {
-			throw new Error(`Invalid canonical Dictionary headword: ${key}`);
+		if (!key) {
+			throw new Error('Dictionary definition key cannot be empty.');
 		}
-		const definitions = bundle[key];
-		if (!definitions || definitions.length === 0) {
-			throw new Error(`Dictionary headword has no definitions: ${key}`);
-		}
-
-		const entry = `${JSON.stringify(key)}:${JSON.stringify(definitions)}`;
+		const entry = `${JSON.stringify(key)}:${JSON.stringify(bundle.definitions[key])}`;
 		const entryBytes = encoder.encode(entry).byteLength;
 		const nextSize = size + entryBytes + (fragments.length > 0 ? 1 : 0);
 

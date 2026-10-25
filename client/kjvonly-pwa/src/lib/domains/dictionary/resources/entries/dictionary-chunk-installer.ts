@@ -7,7 +7,7 @@ import {
 } from '$lib/resource';
 import { createDictionaryChunkGeneration, createDictionaryChunkObjectId } from '../../models/dictionary-chunk-identity';
 import { createDictionaryChunkMap, type DictionaryChunk, type DictionaryChunkMap, type DictionaryChunkRange } from '../../models/dictionary-chunk.model';
-import type { DictionaryEditionSource, DictionaryEditionManifest, DictionaryEntriesBundle } from '../../models/dictionary.model';
+import type { DictionaryEditionSource, DictionaryEditionManifest, DictionaryEditionBundle } from '../../models/dictionary.model';
 import { createDictionaryEditionId, parseDictionaryResourceId } from '../../models/dictionary-identity';
 
 import type { DictionaryHeadwordIndex } from '../../models/dictionary-headword-index.model';
@@ -15,7 +15,7 @@ import {
 	DICTIONARY_HEADWORD_INDEX_OBJECT_TYPE, DICTIONARY_HEADWORD_INDEX_DATA_TYPE,
 	DICTIONARY_HEADWORD_INDEX_DATA_VERSION
 } from '../../persistence/dictionary-headword-index-store';
-import { createDictionaryHeadwordIndex } from '../../services/dictionary-headword-index-builder';
+import { acceptPublishedDictionaryHeadwordIndex } from '../../services/dictionary-published-headword-index-acceptance';
 import { partitionDictionaryIntoChunks, type DictionaryChunkPartition } from '../../services/dictionary-chunk-partitioner';
 import {
 	DICTIONARY_CHUNK_DATA_TYPE, DICTIONARY_CHUNK_DATA_VERSION,
@@ -26,7 +26,7 @@ import { DICTIONARY_CHUNK_OBJECT_TYPE, DICTIONARY_CHUNK_MAP_OBJECT_TYPE } from '
 import { gzipDictionaryChunk } from './dictionary-chunk-compressor';
 import type { DictionaryPublishedIndexStore } from '../../persistence/dictionary-published-index-store';
 
-/** Target approximate uncompressed JSON size; never divides one headword. */
+/** Target approximate uncompressed JSON size; never divides one definition. */
 export const DICTIONARY_CHUNK_TARGET_BYTES = 384 * 1024;
 /** Bound compressed bytes and IndexedDB requests kept in one transaction. */
 export const DICTIONARY_CHUNK_WRITE_BATCH_SIZE = 4;
@@ -75,7 +75,7 @@ export interface DictionaryChunkInstallationTiming {
 export class DictionaryChunkInstaller {
 	constructor(
 		private readonly transaction: GenericResourceInstallationTransaction,
-		private readonly publishedIndexes: DictionaryPublishedIndexStore | undefined,
+		private readonly publishedIndexes: DictionaryPublishedIndexStore,
 		private readonly compress: (json: string) => Promise<Uint8Array> = gzipDictionaryChunk,
 		private readonly pause: () => Promise<void> = () => new Promise(resolve => setTimeout(resolve, WRITE_PAUSE_MS)),
 		private readonly report: (timing: DictionaryChunkInstallationTiming) => void = timing => console.info('[Dictionary chunk install timing]', timing),
@@ -90,7 +90,7 @@ export class DictionaryChunkInstaller {
 	 * Coordinate the installation without owning compression, persistence, or
 	 * completion details. An interrupted attempt never publishes a new edition.
 	 */
-	async install(resource: DecodedResourceContent, bundle: DictionaryEntriesBundle): Promise<void> {
+	async install(resource: DecodedResourceContent, bundle: DictionaryEditionBundle): Promise<void> {
 		const startedAt = performance.now();
 		const context = this.createInstallationContext(resource);
 		const progress = this.createInstallationProgress();
@@ -102,8 +102,10 @@ export class DictionaryChunkInstaller {
 				return;
 			}
 
+			// Reject an unavailable or incompatible published index before writing any chunks.
+			const index = await acceptPublishedDictionaryHeadwordIndex(context.source, resource.modifiedAt, bundle, this.publishedIndexes);
 			await this.persistCompressedChunks(resource, bundle, context, progress);
-			await this.publishCompletedEdition(resource, bundle, context, progress);
+			await this.publishCompletedEdition(resource, bundle, context, progress, index);
 			status = 'completed';
 		} finally {
 			this.reportInstallationTiming(resource.resourceId, startedAt, status, progress);
@@ -141,7 +143,7 @@ export class DictionaryChunkInstaller {
 	 */
 	private async persistCompressedChunks(
 		resource: DecodedResourceContent,
-		bundle: DictionaryEntriesBundle,
+		bundle: DictionaryEditionBundle,
 		context: DictionaryInstallationContext,
 		progress: DictionaryInstallationProgress
 	): Promise<void> {
@@ -202,12 +204,12 @@ export class DictionaryChunkInstaller {
 	 */
 	private async publishCompletedEdition(
 		resource: DecodedResourceContent,
-		bundle: DictionaryEntriesBundle,
+		bundle: DictionaryEditionBundle,
 		context: DictionaryInstallationContext,
-		progress: DictionaryInstallationProgress
+		progress: DictionaryInstallationProgress,
+		index: DictionaryHeadwordIndex
 	): Promise<void> {
 		const map = createDictionaryChunkMap(context.source, context.generation, progress.ranges);
-		const index = await createDictionaryHeadwordIndex(context.source, resource.modifiedAt, bundle, this.publishedIndexes);
 		const manifest = this.createEditionManifest(resource, bundle, context, progress.chunks);
 		await this.commit(resource, this.createCompletionCandidates(index, map, manifest), true);
 		progress.batchesCommitted++;
@@ -216,7 +218,7 @@ export class DictionaryChunkInstaller {
 	/** Describe the installed chunk generation without embedding its definitions. */
 	private createEditionManifest(
 		resource: DecodedResourceContent,
-		bundle: DictionaryEntriesBundle,
+		bundle: DictionaryEditionBundle,
 		context: DictionaryInstallationContext,
 		chunkCount: number
 	): DictionaryEditionManifest {
@@ -226,7 +228,8 @@ export class DictionaryChunkInstaller {
 			publisher: context.source.publisher,
 			resourceId: context.source.resourceId,
 			modifiedAt: resource.modifiedAt,
-			entryCount: Object.keys(bundle).length,
+			entryCount: Object.keys(bundle.definitions).length,
+			definitionFormat: bundle.definitionFormat,
 			storageFormat: 'chunks-v1',
 			chunkGeneration: context.generation,
 			chunkCount

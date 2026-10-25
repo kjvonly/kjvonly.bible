@@ -19,6 +19,7 @@ function manifest(source: DictionaryEditionSource): DictionaryEditionManifest {
 		edition,
 		modifiedAt: 100,
 		entryCount: 2,
+		definitionFormat: 'webster-html',
 		storageFormat: 'chunks-v1',
 		chunkGeneration: 'm100',
 		chunkCount: 1
@@ -39,7 +40,7 @@ describe('DictionaryInstallationService', () => {
 		const installed = manifest(source1828);
 		const getEdition = vi.fn().mockResolvedValue(installed);
 		const install = vi.fn();
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		expect(await service.ensureInstalled(source1828)).toEqual(installed);
 		expect(install).not.toHaveBeenCalled();
 	});
@@ -48,7 +49,7 @@ describe('DictionaryInstallationService', () => {
 		const installed = manifest(source1828);
 		const listEditions = vi.fn().mockResolvedValue([installed]);
 		const install = vi.fn();
-		const service = new DictionaryInstallationService({ getEdition: vi.fn(), listEditions }, { install });
+		const service = new DictionaryInstallationService({ getEdition: vi.fn(), listEditions }, { install }, { prepare: async () => undefined });
 
 		await expect(service.listInstalledEditions()).resolves.toEqual([installed]);
 		expect(listEditions).toHaveBeenCalledOnce();
@@ -59,7 +60,7 @@ describe('DictionaryInstallationService', () => {
 		const installed = manifest(source1828);
 		const getEdition = vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(installed);
 		const install = vi.fn().mockResolvedValue(handled(source1828));
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		expect(await service.ensureInstalled(source1828)).toEqual(installed);
 		expect(install).toHaveBeenCalledTimes(1);
 		expect(install).toHaveBeenCalledWith(source1828);
@@ -71,7 +72,7 @@ describe('DictionaryInstallationService', () => {
 		const pending = new Promise<ResourceInstallResult>(resolve => { complete = resolve; });
 		const getEdition = vi.fn().mockResolvedValueOnce(undefined).mockResolvedValue(manifest(source1828));
 		const install = vi.fn().mockReturnValue(pending);
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		const a = service.ensureInstalled(source1828);
 		const b = service.ensureInstalled({ ...source1828 });
 		expect(a).toBe(b);
@@ -99,7 +100,7 @@ describe('DictionaryInstallationService', () => {
 			installed.add(source.resourceId);
 			return Promise.resolve(handled(source));
 		});
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		const first = service.ensureInstalled(source1828);
 		const second = service.ensureInstalled(source1844);
 
@@ -127,7 +128,7 @@ describe('DictionaryInstallationService', () => {
 				? pending1828
 				: Promise.resolve(handled(source))
 		);
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		const first = service.prepareSource(source1828);
 		const second = service.prepareSource(source1844);
 		await vi.waitFor(() => expect(install).toHaveBeenCalledTimes(1));
@@ -152,7 +153,7 @@ describe('DictionaryInstallationService', () => {
 			ready.add(source.resourceId);
 			return Promise.resolve(handled(source));
 		});
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		const first = service.prepareSource(source1828);
 		const second = service.prepareSource(source1844);
 		await vi.waitFor(() => expect(install).toHaveBeenCalledTimes(1));
@@ -167,7 +168,7 @@ describe('DictionaryInstallationService', () => {
 			source.resourceId === source1828.resourceId ? manifest(source1828) : undefined
 		);
 		const install = vi.fn().mockResolvedValue({ requested: source1844, found: false, resources: [] });
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		const [ready, failed] = await Promise.all([
 			service.prepareSource(source1828),
 			service.prepareSource(source1844)
@@ -184,7 +185,7 @@ describe('DictionaryInstallationService', () => {
 		const install = vi.fn()
 			.mockRejectedValueOnce(new Error('offline'))
 			.mockResolvedValueOnce(handled(source1828));
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		await expect(service.ensureInstalled(source1828)).rejects.toThrow('offline');
 		await expect(service.ensureInstalled(source1828)).resolves.toEqual(installed);
 		expect(install).toHaveBeenCalledTimes(2);
@@ -197,26 +198,26 @@ describe('DictionaryInstallationService', () => {
 			found: true,
 			resources: [{ reference: source1828, resourceType: 'bible/chapters', status: 'handled' }]
 		});
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		await expect(service.ensureInstalled(source1828)).rejects.toThrow('not accepted');
 	});
 
 	it('does not claim success when the edition manifest is still missing', async () => {
 		const getEdition = vi.fn().mockResolvedValue(undefined);
 		const install = vi.fn().mockResolvedValue(handled(source1828));
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		await expect(service.ensureInstalled(source1828)).rejects.toThrow('was not installed');
 	});
 
 	it('rejects an invalid Resource ID before reading the local store or installing', async () => {
 		const getEdition = vi.fn();
 		const install = vi.fn();
-		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install });
+		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare: async () => undefined });
 		expect(() => service.ensureInstalled({ publisher: 'a', resourceId: 'invalid' })).toThrow('Invalid Dictionary');
 		expect(getEdition).not.toHaveBeenCalled();
 		expect(install).not.toHaveBeenCalled();
 	});
-	it('attempts the optional index Resource first, but still installs entries if it fails', async () => {
+	it('requires the published index before installing entries', async () => {
 		const order: string[] = [];
 		const installed = manifest(source1828);
 		const getEdition = vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(installed);
@@ -229,8 +230,9 @@ describe('DictionaryInstallationService', () => {
 			return handled(source1828);
 		});
 		const service = new DictionaryInstallationService({ getEdition, listEditions: async () => [] }, { install }, { prepare });
-		await expect(service.ensureInstalled(source1828)).resolves.toEqual(installed);
-		expect(order).toEqual(['index', 'entries']);
+		await expect(service.ensureInstalled(source1828)).rejects.toThrow('published index unavailable');
+		expect(order).toEqual(['index']);
+		expect(install).not.toHaveBeenCalled();
 	});
 
 });

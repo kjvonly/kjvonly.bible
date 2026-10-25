@@ -34,7 +34,10 @@ export interface DictionaryService {
 		matches: readonly DictionarySearchMatch[];
 	}>;
 
-	getNormalized(source: DictionaryEditionSource, headwordKey: string): Promise<NormalizedDocument>;
+	/** Retrieve one unmodified stored definition by its opaque edition-scoped key. */
+	get(source: DictionaryEditionSource, key: string): Promise<unknown>;
+
+	getNormalized(source: DictionaryEditionSource, key: string): Promise<NormalizedDocument>;
 }
 
 /**
@@ -45,7 +48,7 @@ class DefaultDictionaryService implements DictionaryService {
 	private readonly editionStatusListeners = new Set<DictionaryEditionStatusListener>();
 	private readonly reportedEditionStatuses = new Map<string, DictionaryInstallationStatus>();
 	constructor(
-		private readonly runtime: Pick<DictionaryRuntime, 'acquire' | 'search' | 'getNormalized'>,
+		private readonly runtime: Pick<DictionaryRuntime, 'acquire' | 'search' | 'get' | 'getNormalized'>,
 		private readonly installation: Pick<DictionaryInstallationService, 'prepareSource' | 'listInstalledEditions'>,
 		private readonly prepareOnEnterSources: readonly DictionaryEditionSource[]
 	) {}
@@ -136,8 +139,12 @@ class DefaultDictionaryService implements DictionaryService {
 		return this.runtime.search(query, source);
 	}
 
-	getNormalized(source: DictionaryEditionSource, headwordKey: string) {
-		return this.runtime.getNormalized(source, headwordKey);
+	get(source: DictionaryEditionSource, key: string) {
+		return this.runtime.get(source, key);
+	}
+
+	getNormalized(source: DictionaryEditionSource, key: string) {
+		return this.runtime.getNormalized(source, key);
 	}
 }
 
@@ -146,7 +153,7 @@ class DefaultDictionaryService implements DictionaryService {
  * and the existing independent, serial edition installation service.
  */
 export function createDictionaryService(
-	runtime: Pick<DictionaryRuntime, 'acquire' | 'search' | 'getNormalized'>,
+	runtime: Pick<DictionaryRuntime, 'acquire' | 'search' | 'get' | 'getNormalized'>,
 	installation: Pick<DictionaryInstallationService, 'prepareSource' | 'listInstalledEditions'>,
 	prepareOnEnterSources: readonly DictionaryEditionSource[] = []
 ): DictionaryService {

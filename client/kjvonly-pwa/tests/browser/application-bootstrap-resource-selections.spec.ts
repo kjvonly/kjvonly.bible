@@ -35,14 +35,14 @@ const RESOURCE_SELECTIONS_STORAGE_KEY =
 const BIBLE_CHAPTER_RESOURCE_TYPE =
 	'bible/chapter';
 
-const STRONGS_RESOURCE_TYPE =
-	'strongs/definition';
+const DICTIONARY_RESOURCE_TYPE =
+	'dictionary/entries';
 
 const BIBLE_CHAPTER_RESOURCE_ID =
 	`kjvonly/bible/chapter/kjvs`;
 
-const STRONGS_RESOURCE_ID =
-	'kjvonly/strongs/definition/kjvs';
+const DICTIONARY_RESOURCE_ID =
+	'kjvonly/dictionary/entries/webster-1828';
 
 const BOOTSTRAP_RESOURCE_ID =
 	'kjvonly/resources/collections/default';
@@ -215,12 +215,12 @@ describe(
 									BIBLE_CHAPTER_RESOURCE_ID
 							},
 
-							[STRONGS_RESOURCE_TYPE]: {
+							[DICTIONARY_RESOURCE_TYPE]: {
 								publisher:
 									KJVONLY_PUBKEY,
 
 								resourceId:
-									STRONGS_RESOURCE_ID
+									DICTIONARY_RESOURCE_ID
 							}
 						});
 					}
@@ -285,12 +285,12 @@ describe(
 									`kjvonly/bible/chapter/kjv`
 							},
 
-							[STRONGS_RESOURCE_TYPE]: {
+							[DICTIONARY_RESOURCE_TYPE]: {
 								publisher:
 									KJVONLY_PUBKEY,
 
 								resourceId:
-									STRONGS_RESOURCE_ID
+									DICTIONARY_RESOURCE_ID
 							}
 						});
 					}
@@ -339,12 +339,12 @@ describe(
 									BIBLE_CHAPTER_RESOURCE_ID
 							},
 
-							[STRONGS_RESOURCE_TYPE]: {
+							[DICTIONARY_RESOURCE_TYPE]: {
 								publisher:
 									KJVONLY_PUBKEY,
 
 								resourceId:
-									STRONGS_RESOURCE_ID
+									DICTIONARY_RESOURCE_ID
 							}
 						});
 					}
@@ -403,12 +403,12 @@ describe(
 									BIBLE_CHAPTER_RESOURCE_TYPE
 								],
 
-							[STRONGS_RESOURCE_TYPE]: {
+							[DICTIONARY_RESOURCE_TYPE]: {
 								publisher:
 									KJVONLY_PUBKEY,
 
 								resourceId:
-									STRONGS_RESOURCE_ID
+									DICTIONARY_RESOURCE_ID
 							}
 						});
 					}
@@ -452,12 +452,12 @@ describe(
 									BIBLE_CHAPTER_RESOURCE_ID
 							},
 
-							[STRONGS_RESOURCE_TYPE]: {
+							[DICTIONARY_RESOURCE_TYPE]: {
 								publisher:
 									KJVONLY_PUBKEY,
 
 								resourceId:
-									STRONGS_RESOURCE_ID
+									DICTIONARY_RESOURCE_ID
 							}
 						});
 					}
@@ -529,11 +529,11 @@ function createBootstrapResult(
 						KJVONLY_PUBKEY,
 
 					resourceId:
-						STRONGS_RESOURCE_ID
+						DICTIONARY_RESOURCE_ID
 				},
 
 				resourceType:
-					STRONGS_RESOURCE_TYPE,
+					DICTIONARY_RESOURCE_TYPE,
 
 				status
 			}
@@ -578,18 +578,18 @@ function createFailedBootstrapResult():
 						KJVONLY_PUBKEY,
 
 					resourceId:
-						STRONGS_RESOURCE_ID
+						DICTIONARY_RESOURCE_ID
 				},
 
 				resourceType:
-					STRONGS_RESOURCE_TYPE,
+					DICTIONARY_RESOURCE_TYPE,
 
 				status:
 					'failed',
 
 				error:
 					new Error(
-						"Strong's download failed."
+						"Dictionary download failed."
 					)
 			}
 		]
@@ -648,11 +648,11 @@ function createDuplicateBootstrapResult():
 						KJVONLY_PUBKEY,
 
 					resourceId:
-						STRONGS_RESOURCE_ID
+						DICTIONARY_RESOURCE_ID
 				},
 
 				resourceType:
-					STRONGS_RESOURCE_TYPE,
+					DICTIONARY_RESOURCE_TYPE,
 
 				status:
 					'handled'

@@ -36,3 +36,5 @@ export {
 export {
 	StrongsModuleResourceSelectionContributor
 } from './resources/strongs-module-resource-selection-contributor';
+
+export { StrongsDictionaryDefinitionFormatValidator } from './resources/definitions/strongs-dictionary-definition-format-validator';

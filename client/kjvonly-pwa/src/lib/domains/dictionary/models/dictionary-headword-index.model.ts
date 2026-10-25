@@ -4,7 +4,7 @@ import { assertDictionaryEditionSource } from './dictionary-identity';
 /** V1 matches prefixes of headwords, not arbitrary interior substrings. */
 export const DICTIONARY_HEADWORD_INDEX_TOKENIZER = 'forward' as const;
 
-/** Increment when changing FlexSearch settings, headword normalization or export format. */
+/** Development index format is replaced in place; no legacy import support. */
 export const DICTIONARY_HEADWORD_INDEX_FORMAT_VERSION = 1;
 
 /**
@@ -16,7 +16,7 @@ export function encodeHeadwordForSearch(headword: string): string {
 	return Array.from(headword, char => char.codePointAt(0)!.toString(36).padStart(4, '0')).join('');
 }
 
-/** Locally generated cache; the HTML definitions never appear in its chunks. */
+/** Installed published index export; definition content never appears in its chunks. */
 export interface DictionaryHeadwordIndex extends DictionaryEditionSource {
 	readonly id: string;
 	/** Accepted Dictionary edition Resource revision (`modifiedAt`). */
@@ -33,7 +33,7 @@ export function createDictionaryHeadwordIndexId(source: DictionaryEditionSource)
 	return `${encodeURIComponent(source.publisher)}/${encodeURIComponent(source.resourceId)}`;
 }
 
-/** Treat stale, incompatible and malformed cache records as rebuildable misses. */
+/** Reject missing, stale, or malformed accepted index records. */
 export function isCurrentDictionaryHeadwordIndex(
 	value: unknown,
 	source: DictionaryEditionSource,

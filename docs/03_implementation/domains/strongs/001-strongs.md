@@ -8,6 +8,8 @@
 **Domain Object Type:** `strongs/definition`
 **Data Type:** `kjvonly.strongs.definition@1`
 
+> **Planned replacement (2026-10-21):** [Multi-format Dictionary editions](../dictionary/002-multi-format-editions.md) defines a single `dictionary/entries/strongs-kjvs` bundle with Bible-derived headword associations and Dictionary-owned chunk retrieval. The current per-definition Strong's Resource, installation, and persistence described below remain **current implementation**, not the target design. Strong's semantic model and public lookup/presentation behavior remain Strong's-owned. No legacy compatibility or migration will be added.
+
 ---
 
 # 1. Purpose

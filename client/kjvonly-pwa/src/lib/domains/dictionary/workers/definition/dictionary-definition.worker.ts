@@ -12,13 +12,18 @@ const port = self as unknown as {
 
 port.addEventListener('message', event => { void handleDefinitionRequest(event.data); });
 
-/** Resolve and normalize a selected headword entirely in the worker; transfer only its result. */
+/** Retrieve or normalize one selected definition entirely in the worker; transfer only its result. */
 async function handleDefinitionRequest(request: DictionaryDefinitionWorkerRequest): Promise<void> {
 	try {
+		const definition = await runtime.get(request.source, request.key);
+		if (request.type === 'get-definition') {
+			const bytes = new TextEncoder().encode(JSON.stringify(definition)).buffer;
+			port.postMessage({ id: request.id, type: 'definition-ready', bytes }, [bytes]);
+			return;
+		}
 		if (request.type === 'get-normalized-definition') {
-			const definitions = await runtime.getDefinitions(request.source, request.headwordKey);
 			normalizer ??= createHtmlNormalizer();
-			const documents = normalizeDictionaryDefinitions(definitions, normalizer);
+			const documents = normalizeDictionaryDefinitions(definition, normalizer);
 			const bytes = new TextEncoder().encode(JSON.stringify(documents)).buffer;
 			port.postMessage({ id: request.id, type: 'normalized-ready', bytes }, [bytes]);
 			return;

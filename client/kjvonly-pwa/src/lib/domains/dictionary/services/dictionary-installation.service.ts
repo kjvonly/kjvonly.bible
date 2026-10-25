@@ -32,7 +32,7 @@ export class DictionaryInstallationService {
 	constructor(
 		private readonly editions: DictionaryHeadwordSourceStore,
 		private readonly resources: DictionaryResourceInstaller,
-		private readonly publishedIndexes?: { prepare(source: DictionaryEditionSource): Promise<void> }
+		private readonly publishedIndexes: { prepare(source: DictionaryEditionSource): Promise<void> }
 	) {}
 
 	/** Installed editions are the candidate Resources shown by the edition picker. */
@@ -87,9 +87,8 @@ export class DictionaryInstallationService {
 	 */
 	private queueInstallation(source: DictionaryEditionSource): Promise<DictionaryEditionManifest> {
 		const installation = this.installationTail.then(async () => {
-			// Resolve the optional published index Resource before installing dictionary entries.
-			// It must never be a prerequisite to offline Dictionary availability.
-			try { await this.publishedIndexes?.prepare(source); } catch { /* fallback */ }
+			// The published index must be accepted before the entries installer runs.
+			await this.publishedIndexes.prepare(source);
 			const result = await this.resources.install(source);
 			assertDictionaryInstalled(result, source);
 

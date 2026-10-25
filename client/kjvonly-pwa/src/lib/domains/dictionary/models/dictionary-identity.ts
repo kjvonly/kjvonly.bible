@@ -4,17 +4,17 @@ import type { DictionaryEditionSource } from './dictionary.model';
  * Dictionary V1 key policy: NFKC, locale-independent JavaScript lowercase,
  * trim, and collapse whitespace. This is not full Unicode case folding.
  * Punctuation/diacritics are preserved; source `word` is never rewritten.
- * Changes to this policy require a versioned data migration.
+ * Changes to this policy require rebuilding the published search indexes.
  */
 export function normalizeDictionaryHeadword(word: string): string {
 	return word.normalize('NFKC').toLowerCase().trim().replace(/\s+/gu, ' ');
 }
 
 /**
- * Stable JavaScript code-unit ordering for persisted Dictionary headword keys.
+ * Stable JavaScript code-unit ordering for persisted Dictionary definition keys.
  * Chunk partitioning and worker-side range lookups must use the same order.
  */
-export function compareDictionaryHeadwordKeys(left: string, right: string): number {
+export function compareDictionaryDefinitionKeys(left: string, right: string): number {
 	return left < right ? -1 : left > right ? 1 : 0;
 }
 

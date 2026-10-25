@@ -16,6 +16,7 @@ import DictionaryEntry from '$lib/domains/dictionary/modules/dictionaryEntry.sve
 import DictionaryEditionView from '$lib/domains/dictionary/modules/dictionaryEditionView.svelte';
 import DictionaryOverflowActionsView from '$lib/domains/dictionary/modules/dictionaryOverflowActionsView.svelte';
 import { DICTIONARY_RESOURCE_TYPE } from '$lib/domains/dictionary';
+import { REFS_VIEWS } from '$lib/domains/bible';
 import type { DictionarySearchMatch } from '$lib/domains/dictionary';
 import DictionaryNavigationTestHost from './fixtures/dictionary-navigation-test-host.svelte';
 import PersistentNavigationView from './fixtures/persistent-navigation-view.svelte';
@@ -35,12 +36,19 @@ vi.mock('$lib/domains/dictionary/workers/search/dictionary-search-worker-client'
 			dispose: () => { searchRequests.disposedClients++; },
 			search: async (query: string, source: DictionaryEditionSource) => {
 				searchRequests.queries.push(query);
+				if (source.resourceId.endsWith('/strongs-kjvs')) {
+					return { matches: [
+						{ ...source, headword: 'love', key: 'G25' },
+						{ ...source, headword: 'love', key: 'H157' }
+					] };
+				}
 				return {
 					matches: Array.from({ length: 80 }, (_, index): DictionarySearchMatch => {
 						const headwordKey = `${query}${String(index).padStart(3, '0')}`;
 						return {
 							...source,
-							headwordKey
+							headword: headwordKey,
+							key: headwordKey
 						};
 					})
 				};
@@ -83,7 +91,7 @@ const sources: readonly DictionaryEditionSource[] = [
 /** Available picker options are already accepted Dictionary Domain objects. */
 function createEdition(source: DictionaryEditionSource): DictionaryEditionManifest {
 	return { ...source, id: `${source.publisher}/${source.resourceId}`, edition: source.resourceId.split('/').at(-1)!,
-		modifiedAt: 1, entryCount: 80, storageFormat: 'chunks-v1', chunkGeneration: 'm1', chunkCount: 1 };
+		modifiedAt: 1, entryCount: 80, definitionFormat: 'webster-html', storageFormat: 'chunks-v1', chunkGeneration: 'm1', chunkCount: 1 };
 }
 
 let target: HTMLDivElement | undefined;
@@ -103,7 +111,8 @@ function createNavigation(paneId = 'dictionary-navigation-test-pane', realEntry 
 		{ view: DICTIONARY_VIEWS.ROOT, component: DictionaryRoot as unknown as NavigationComponent },
 		{ view: DICTIONARY_VIEWS.ENTRY, component: (realEntry ? DictionaryEntry : PersistentNavigationView) as unknown as NavigationComponent },
 		{ view: DICTIONARY_VIEWS.EDITION, component: DictionaryEditionView as unknown as NavigationComponent },
-		{ view: DICTIONARY_VIEWS.OVERFLOW_ACTIONS, component: DictionaryOverflowActionsView as unknown as NavigationComponent }
+		{ view: DICTIONARY_VIEWS.OVERFLOW_ACTIONS, component: DictionaryOverflowActionsView as unknown as NavigationComponent },
+        { view: REFS_VIEWS.ROOT, component: PersistentNavigationView as unknown as NavigationComponent }
 	]);
 	const selections = {
 		independent: () => ({ [DICTIONARY_RESOURCE_TYPE]: sources[0]! }),
@@ -177,13 +186,13 @@ describe('Dictionary navigation preservation', () => {
 			});
 			await vi.waitFor(() => expect(prepareSource).toHaveBeenCalledOnce());
 			await dictionaryService.refreshImportedEditions();
-			await vi.waitFor(() => expect(requireElement<HTMLElement>('header').textContent).toContain('81 words'));
+			await vi.waitFor(() => expect(requireElement<HTMLElement>('header').textContent).toContain('81 definitions'));
 			completePreparation(lateStatus === 'ready'
 				? { source: selected, status: 'ready', edition: original }
 				: { source: selected, status: 'error', error: 'Outdated installation failure' });
 			await prepareThroughService.mock.results[0]!.value;
 			await tick();
-			expect(requireElement<HTMLElement>('header').textContent).toContain('81 words');
+			expect(requireElement<HTMLElement>('header').textContent).toContain('81 definitions');
 			expect(target?.textContent).not.toContain('Outdated installation failure');
 		}
 	);
@@ -271,7 +280,7 @@ describe('Dictionary navigation preservation', () => {
 
 		const header = requireElement<HTMLElement>('header');
 		expect(header.textContent).toContain('Webster 1828');
-		expect(header.textContent).toContain('80 words');
+		expect(header.textContent).toContain('80 definitions');
 		const abc = requireElement<HTMLButtonElement>('button[aria-label="Toggle alphabetical browsing"]');
 		expect(abc.getAttribute('aria-pressed')).toBe('true');
 		expect(abc.querySelector('svg')?.getAttribute('class')).toContain('text-support-a-500');
@@ -335,6 +344,7 @@ describe('Dictionary navigation preservation', () => {
 				resourceId: source.resourceId,
 				modifiedAt: 1,
 				entryCount: 80,
+				definitionFormat: 'webster-html',
 				storageFormat: 'chunks-v1',
 				chunkGeneration: 'same-accepted-generation',
 				chunkCount: 1
@@ -393,6 +403,7 @@ describe('Dictionary navigation preservation', () => {
 						resourceId: source.resourceId,
 						modifiedAt: 1,
 						entryCount: 80,
+						definitionFormat: 'webster-html',
 						storageFormat: 'chunks-v1' as const,
 						chunkGeneration: 'shared-worker-test',
 						chunkCount: 1
@@ -478,6 +489,7 @@ describe('Dictionary navigation preservation', () => {
 					resourceId: source.resourceId,
 					modifiedAt: 1,
 					entryCount: 80,
+					definitionFormat: 'webster-html',
 					storageFormat: 'chunks-v1' as const,
 					chunkGeneration: 'definition-navigation-test',
 					chunkCount: 1
@@ -652,6 +664,68 @@ describe('Dictionary navigation preservation', () => {
 		restoredInput.dispatchEvent(new Event('input', { bubbles: true }));
 		requireElement<HTMLButtonElement>('button[aria-label="Toggle alphabetical browsing"]').click();
 		await vi.waitFor(() => expect(target?.textContent).toContain('80 headwords beginning with A'), { timeout: 3000 });
+	});
+
+	it("installs and searches the Strong's edition without opening it as Webster HTML", async () => {
+		const strongs = { publisher: sources[0]!.publisher, resourceId: 'kjvonly/dictionary/entries/strongs-kjvs' };
+		const editions = [...sources, strongs];
+		const prepareSource = vi.fn(async (source: DictionaryEditionSource) => ({
+			source,
+			status: 'ready' as const,
+			edition: {
+				...createEdition(source),
+				definitionFormat: source.resourceId === strongs.resourceId ? 'strongs' : 'webster-html'
+			}
+		}));
+		const dictionaryService = createDictionaryService(new DictionaryRuntime(), {
+			prepareSource,
+			listInstalledEditions: async () => editions.map(source => ({
+				...createEdition(source),
+				definitionFormat: source.resourceId === strongs.resourceId ? 'strongs' : 'webster-html'
+			}))
+		}, editions);
+		target = document.createElement('div');
+		document.body.append(target);
+		const navigation = createNavigation('dictionary-strongs-search');
+		navigation.pushModule(Modules.DICTIONARY, DICTIONARY_VIEWS.ROOT, {});
+		mounted = mount(DictionaryNavigationTestHost, {
+			target, props: { navigation, sources: editions, dictionaryService }
+		});
+		await vi.waitFor(() => expect(prepareSource).toHaveBeenCalledWith(strongs));
+		requireElement<HTMLButtonElement>('button[aria-label="More actions. Press and hold to open modules."]').click();
+		await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view).toBe(DICTIONARY_VIEWS.OVERFLOW_ACTIONS));
+		const versions = [...target!.querySelectorAll<HTMLButtonElement>('button')].find(button =>
+			button.textContent?.trim() === 'Dictionary versions');
+		versions!.click();
+		await vi.waitFor(() => expect(target?.textContent).toContain('strongs kjvs'));
+		const choice = [...target!.querySelectorAll<HTMLButtonElement>('button')].find(button =>
+			button.textContent?.includes('strongs kjvs'));
+		choice!.click();
+		await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view).toBe(DICTIONARY_VIEWS.ROOT));
+		await vi.waitFor(() => expect(requireElement<HTMLElement>('header').textContent).toContain('Strongs kjvs'));
+		const search = requireElement<HTMLInputElement>('input[type="search"]');
+		search.value = 'love';
+		search.dispatchEvent(new Event('input', { bubbles: true }));
+		await vi.waitFor(() => expect(target?.textContent).toContain('2 matching headwords'));
+		expect(target?.textContent).toContain('G25');
+		expect(target?.textContent).toContain('H157');
+		const row = requireElement<HTMLButtonElement>('[data-kjv-scrubber-value="1"] button');
+		expect(row.disabled).toBe(false);
+		row.click();
+		await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view).toBe(REFS_VIEWS.ROOT));
+		expect(get(navigation.views).at(-1)?.navigationState).toMatchObject({
+			module: Modules.STRONGS,
+			state: {
+				refs: ['G25'],
+				strongsWords: ['love'],
+				resourceSelections: { [DICTIONARY_RESOURCE_TYPE]: strongs }
+			}
+		});
+		navigation.back();
+		await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view).toBe(DICTIONARY_VIEWS.ROOT));
+		expect(get(navigation.views)[0]?.navigationState.state).toMatchObject({
+			resourceSelections: { [DICTIONARY_RESOURCE_TYPE]: strongs }
+		});
 	});
 
 	it('preserves the selected Resource and scroll position when returning from an entry', async () => {

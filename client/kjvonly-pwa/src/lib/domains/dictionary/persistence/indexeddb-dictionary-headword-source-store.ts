@@ -42,6 +42,8 @@ export class IndexedDBDictionaryHeadwordSourceStore implements DictionaryHeadwor
 			!Number.isFinite(manifest.modifiedAt) ||
 			!Number.isSafeInteger(manifest.entryCount) ||
 			manifest.entryCount < 1 ||
+			typeof manifest.definitionFormat !== 'string' ||
+			!manifest.definitionFormat ||
 			manifest.storageFormat !== 'chunks-v1' ||
 			manifest.chunkGeneration !== `m${manifest.modifiedAt}` ||
 			typeof manifest.chunkCount !== 'number' ||

@@ -10,7 +10,8 @@ function match(word: string, edition: 'webster-1828' | 'webster-1844'): Dictiona
 	return {
 		publisher,
 		resourceId: `kjvonly/dictionary/entries/${edition}`,
-		headwordKey: word
+		headword: word,
+		key: word
 	};
 }
 
@@ -47,6 +48,16 @@ describe('Dictionary headword results', () => {
 		expect(onSelect).toHaveBeenCalledExactlyOnceWith(matches[1]);
 	});
 
+	it('shows a distinct definition key only when it differs from the headword', async () => {
+		render([{ ...match('love', 'webster-1828'), key: 'G26' }, match('serpent', 'webster-1828')], vi.fn());
+		await vi.waitFor(() => expect(target?.querySelectorAll('[data-kjv-scrubber-value] button').length).toBe(2));
+		const rows = target?.querySelectorAll('[data-kjv-scrubber-value] button');
+		expect(rows?.[0]?.textContent).toContain('G26');
+		expect(rows?.[0]?.classList.contains('pr-12')).toBe(true);
+		expect(rows?.[0]?.querySelector('span.grid')?.classList.contains('w-[38ch]')).toBe(true);
+		expect(rows?.[1]?.textContent?.trim()).toBe('serpent');
+	});
+
 	it('uses a full-width hover target with padded text and a minimum row height', async () => {
 		render([match('abandon', 'webster-1828')], vi.fn());
 		await vi.waitFor(() => expect(target?.querySelector('[data-kjv-scrubber-value] button')).not.toBeNull());
@@ -54,7 +65,8 @@ describe('Dictionary headword results', () => {
 		const button = row?.querySelector<HTMLButtonElement>('button');
 		expect(row?.classList.contains('px-4')).toBe(false);
 		expect(button?.classList.contains('w-full')).toBe(true);
-		expect(button?.classList.contains('px-4')).toBe(true);
+		expect(button?.classList.contains('pl-4')).toBe(true);
+		expect(button?.classList.contains('pr-12')).toBe(true);
 		expect(button?.classList.contains('min-h-12')).toBe(true);
 		expect(button?.classList.contains('hover:bg-neutral-100')).toBe(true);
 	});

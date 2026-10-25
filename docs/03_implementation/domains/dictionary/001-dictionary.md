@@ -6,6 +6,8 @@
 **Scope:** Two Application-configured editions installed on Dictionary entry, compact chunk persistence, headword-only search, on-demand definition reading through Normalized Content
 **Placement:** `docs/03_implementation/domains/dictionary/001-dictionary.md`
 
+> **Next design (2026-10-21):** [Multi-format Dictionary editions](002-multi-format-editions.md) specifies the accepted, **not yet implemented** replacement for Webster-only bundle keys, `FlexSearch.Index` headword identities, HTML-only definitions, and Strong's per-definition storage. This document describes the current V1 implementation until the refactor lands. There is no requirement to preserve V1 readers or migrate development data.
+
 This document records **both the accepted design and the current implementation**. Chunk installation, published-index fallback, persisted FlexSearch search, selectable headwords, worker-side chunk lookup, and normalized definition rendering are wired. The latest reported browser blocker—passing Svelte reactive proxies into `Worker.postMessage()`—was corrected and the user confirmed that fix. Focused browser regression tests now exercise navigation, search, worker lifecycle, and definition rendering; acceptance and performance with real published Webster bundles should still be verified. `chunks-v1` is the only supported Dictionary storage format; legacy per-entry compatibility and migration are intentionally out of scope during development. The no-delete policy remains in effect.
 
 Related references:

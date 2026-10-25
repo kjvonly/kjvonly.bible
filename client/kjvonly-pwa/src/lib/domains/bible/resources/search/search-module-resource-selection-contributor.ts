@@ -21,15 +21,11 @@ import {
 	BIBLE_BOOKNAMES_RESOURCE_TYPE
 } from '../booknames/bible-booknames-resource';
 
-import {
-	STRONGS_RESOURCE_TYPE
-} from '$lib/domains/strongs';
 
 const RESOURCE_TYPES = [
 	BIBLE_SEARCH_RESOURCE_TYPE,
 	BIBLE_CHAPTER_RESOURCE_TYPE,
-	BIBLE_BOOKNAMES_RESOURCE_TYPE,
-	STRONGS_RESOURCE_TYPE
+	BIBLE_BOOKNAMES_RESOURCE_TYPE
 ] as const;
 
 export class SearchModuleResourceSelectionContributor

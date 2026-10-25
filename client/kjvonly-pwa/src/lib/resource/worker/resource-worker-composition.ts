@@ -211,6 +211,7 @@ import {
 
 import {
 	DictionaryEntriesDataTypeHandler,
+	WebsterDefinitionFormatValidator,
 	DictionaryChunkInstaller,
 	DictionaryResourceHandler,
 	DictionaryPublishedHeadwordIndexDataTypeHandler,
@@ -235,9 +236,17 @@ import {
 
 import {
 	StrongsDataTypeHandler,
+	StrongsDictionaryDefinitionFormatValidator,
 	StrongsDefinitionDataTypeHandler,
 	StrongsDomainObjectFactory
 } from '$lib/domains/strongs';
+
+function createDictionaryEntriesValidator(): DictionaryEntriesDataTypeHandler {
+	return new DictionaryEntriesDataTypeHandler([
+		new WebsterDefinitionFormatValidator(),
+		new StrongsDictionaryDefinitionFormatValidator()
+	]);
+}
 
 interface ResourceProcessingDependencies {
 	readonly decoratorBuilder:
@@ -463,7 +472,7 @@ function createResourceProcessingDependencies():
 			new StrongsDefinitionDataTypeHandler(),
 			new NoteDataTypeHandler(),
 			new BookmarkDataTypeHandler(),
-			new DictionaryEntriesDataTypeHandler(),
+			createDictionaryEntriesValidator(),
 			new DictionaryPublishedHeadwordIndexDataTypeHandler(),
 			new BibleChapterDataTypeHandler(),
 			new BibleBooknamesDataTypeHandler(),
@@ -545,7 +554,7 @@ function createResourceHandlers():
 		new IndexedDBGenericResourceInstallationTransaction(getApplicationDB);
 
 	const dictionaryResourceHandler = new DictionaryResourceHandler(
-		new DictionaryEntriesDataTypeHandler(),
+		createDictionaryEntriesValidator(),
 		new DictionaryChunkInstaller(
 			dictionaryInstallationTransaction,
 			new IndexedDBDictionaryPublishedIndexStore(getApplicationDB)

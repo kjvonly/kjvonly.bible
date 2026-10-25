@@ -1,7 +1,7 @@
 import { createDictionaryHeadwordIndexId } from './dictionary-headword-index.model';
 import { parseDictionaryResourceId } from './dictionary-identity';
 
-/** Optional published Resource for a portable headword index, independent of its storage provider. */
+/** Published Resource for a portable headword index, independent of its storage provider. */
 export const DICTIONARY_PUBLISHED_INDEX_RESOURCE_TYPE = 'dictionary/search-index';
 export const DICTIONARY_PUBLISHED_INDEX_DATA_TYPE = 'kjvonly.dictionary.headword-index';
 export const DICTIONARY_PUBLISHED_INDEX_DATA_VERSION = 1;
@@ -15,6 +15,7 @@ export interface DictionaryPublishedHeadwordIndex {
 	readonly formatVersion: number;
 	readonly tokenizer: 'forward';
 	readonly encoding: string;
+	/** Number of indexed (headword, key) associations. */
 	readonly headwordCount: number;
 	readonly chunks: Readonly<Record<string, string>>;
 }

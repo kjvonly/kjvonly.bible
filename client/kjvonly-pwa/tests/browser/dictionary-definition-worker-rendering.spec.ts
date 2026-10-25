@@ -101,12 +101,19 @@ async function installFixture(): Promise<void> {
     const manifest = {
         id: editionId, publisher: source.publisher, resourceId: source.resourceId,
         edition, modifiedAt: revision, entryCount: 2,
+        definitionFormat: 'webster-html',
         storageFormat: 'chunks-v1' as const, chunkGeneration: generation, chunkCount: 1
     };
 
     // This is the same forward-prefix export contract used by Dictionary installation.
-    const index = new FlexSearch.Index({ tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER, encode: false });
-    for (const headword of Object.keys(definitions)) index.add(headword, encodeHeadwordForSearch(headword));
+    const index = new FlexSearch.Document({
+        tokenize: DICTIONARY_HEADWORD_INDEX_TOKENIZER, encode: false,
+        document: { id: 'id', index: 'searchableHeadword', store: ['headword', 'key'] }
+    });
+    for (const headword of Object.keys(definitions)) index.add({
+        id: JSON.stringify([headword, headword]), headword, key: headword,
+        searchableHeadword: encodeHeadwordForSearch(headword)
+    });
     const chunks: Record<string, string> = {};
     await index.export((key: string, value: string | undefined) => { chunks[key] = value ?? ''; });
     const persistedIndex = {
@@ -159,9 +166,9 @@ describe('Dictionary search → selected-definition workers → Normalized Conte
         const reactiveSource = new Proxy({ ...source }, {});
         const search = await searchClient.search('aa', reactiveSource);
         expect(search.matches).toHaveLength(2);
-        expect(search.matches.map(match => match.headwordKey)).toEqual(['aam', 'aamish']);
+        expect(search.matches.map(match => match.headword)).toEqual(['aam', 'aamish']);
         const selected = search.matches[0]!;
-        const document = await client.getNormalized(new Proxy({ ...selected }, {}), selected.headwordKey);
+        const document = await client.getNormalized(new Proxy({ ...selected }, {}), selected.key);
         expect(document.blocks).toHaveLength(2);
 
         target = documentTarget();

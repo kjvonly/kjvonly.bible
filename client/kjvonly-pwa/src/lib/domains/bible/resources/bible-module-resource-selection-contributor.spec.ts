@@ -36,10 +36,6 @@ import {
 	BIBLE_TEXT_MARKUP_RESOURCE_TYPE
 } from './text-markup/bible-text-markup-resource';
 
-import {
-	STRONGS_RESOURCE_TYPE,
-	createStrongsResourceId
-} from '$lib/domains/strongs';
 
 import {
 	NOTES_RESOURCE_TYPE
@@ -76,13 +72,6 @@ describe(
 							'booknames',
 							`kjvonly/bible/booknames/default`
 						),
-					[STRONGS_RESOURCE_TYPE]:
-						createReference(
-							'strongs',
-							createStrongsResourceId(
-									'kjvs'
-								)
-						),
 					[BIBLE_SEARCH_RESOURCE_TYPE]:
 						createReference(
 							'search',
@@ -105,7 +94,6 @@ describe(
 						BIBLE_PARAGRAPHS_RESOURCE_TYPE,
 						BIBLE_PERICOPES_RESOURCE_TYPE,
 						BIBLE_BOOKNAMES_RESOURCE_TYPE,
-						STRONGS_RESOURCE_TYPE,
 						BIBLE_TEXT_MARKUP_RESOURCE_TYPE,
 						NOTES_RESOURCE_TYPE
 					])
