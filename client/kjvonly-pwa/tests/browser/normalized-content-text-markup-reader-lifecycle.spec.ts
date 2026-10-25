@@ -16,6 +16,9 @@ import { createNormalizedBookmarkRelocationConfirmedResult } from '$lib/domains/
 
 import {
 	Modules,
+	PaneSplit,
+	MODULES_VIEWS,
+	SettingsService,
 	type NavigationStateValue,
 	type ApplicationContext,
 	type NavigationState,
@@ -32,6 +35,7 @@ import {
 } from '$lib/domains/normalized-content';
 import {
 	NORMALIZED_CONTENT_NAVIGATION_RESULTS,
+	NORMALIZED_CONTENT_OVERFLOW_ACTIONS,
 	NORMALIZED_CONTENT_TEXT_MARKUP_LOOKUP_OUTCOMES,
 	type NormalizedContentTextMarkupLookupOutcome
 } from '$lib/domains/normalized-content/models/normalized-content-navigation.model';
@@ -415,7 +419,7 @@ describe(
 				expect(root?.querySelector('[aria-label="text color"]')).toBeNull();
 				expect(root?.querySelector('[aria-label="highlight color"]')).toBeNull();
 				expect(root?.querySelector('[aria-label="underline color"]')).toBeNull();
-				expect(root?.querySelector('[aria-label="document notes"]')).not.toBeNull();
+				expect(root?.querySelector('[aria-label="document notes"]')).toBeNull();
 				expect(root?.querySelector('[aria-label="add note"]')).not.toBeNull();
 				expect(root?.querySelector('[aria-label="add bookmark"]')).not.toBeNull();
 
@@ -430,12 +434,10 @@ describe(
 				expect(textMarkup.create).not.toHaveBeenCalled();
 				expect(textMarkup.put).not.toHaveBeenCalled();
 
-				requireButton('Edit').click();
-				await waitFor(() => vi.mocked(navigation.pushView).mock.calls.length === 2,
-					'choice view to reopen after Note');
-				await selectLookupOption(NORMALIZED_CONTENT_TEXT_MARKUP_LOOKUP_OUTCOMES.WITHOUT_MARKUP);
+				// A Note navigation does not end this explicit without-markup session.
 				await waitFor(() => findButton('Close actions') !== undefined,
-					'actions reopened after choosing without markup');
+					'without-markup state to resume after Note');
+				expect(navigation.pushView).toHaveBeenCalledTimes(1);
 				root?.querySelector<HTMLButtonElement>('button[aria-label="add bookmark"]')?.click();
 				await tick();
 				requireWord(1).click();
@@ -792,22 +794,119 @@ describe(
 			async () => {
 				const authentication = createAuthentication('user-a');
 				const textMarkup = createTextMarkupService();
-				const { navigation } = mountReader(authentication, textMarkup);
+				const { navigation, sendNavigationResult } = mountReader(authentication, textMarkup);
 				await waitFor(() => textMarkup.subscribe.mock.calls.length === 1 &&
 					!requireButton('Edit').disabled, 'document and accepted markings to load');
 				requireButton('Edit').click();
-				await tick();
-				const notes = root?.querySelector<HTMLButtonElement>('button[aria-label="document notes"]');
-				expect(notes).not.toBeNull();
-				notes!.click();
+				await waitFor(() => findButton('Save Text Markup') !== undefined, 'markup active');
+				expect(root?.querySelector('button[aria-label="document notes"]')).toBeNull();
+				await sendNavigationResult({
+					type: NORMALIZED_CONTENT_NAVIGATION_RESULTS.OVERFLOW_ACTION,
+					action: NORMALIZED_CONTENT_OVERFLOW_ACTIONS.OPEN_DOCUMENT_NOTES
+				});
 				await waitFor(() => vi.mocked(navigation.pushModule).mock.calls.length === 1,
 					'document Notes to open');
+				expect(navigation.pushModule).toHaveBeenCalledWith(Modules.NOTES, expect.anything(),
+					expect.objectContaining({ normalizedDocument: expect.objectContaining({
+						scope: expect.objectContaining({ kind: 'document' })
+					}) }));
+				expect(findButton('Save Text Markup')).toBeDefined();
 				expect(textMarkup.put).not.toHaveBeenCalled();
 			}
 		);
 
+		it('preserves unsaved Text Markup when opening document Notes', async () => {
+			const textMarkup = createTextMarkupService();
+			const { navigation, sendNavigationResult } = mountReader(createAuthentication('user-a'), textMarkup);
+			await waitFor(() => !requireButton('Edit').disabled, 'Reader ready');
+			requireButton('Edit').click();
+			await waitFor(() => findButton('Save Text Markup') !== undefined, 'markup active');
+			requireWord().click();
+			await tick();
+			expect(requireWord().classList.contains('bg-highlighta')).toBe(true);
+			const paletteBefore = root?.querySelector<HTMLButtonElement>('button[aria-label="highlight color"]')?.getAttribute('aria-pressed');
+			const more = root?.querySelector<HTMLButtonElement>(
+				'button[aria-label="More actions. Press and hold to open modules."]'
+			);
+			expect(more).not.toBeNull();
+			more!.click();
+			expect(navigation.pushView).toHaveBeenCalledWith(NORMALIZED_CONTENT_VIEWS.OVERFLOW_ACTIONS, {});
+			expect(requireWord().classList.contains('bg-highlighta')).toBe(true);
+			expect(textMarkup.put).not.toHaveBeenCalled();
+			await sendNavigationResult({
+				type: NORMALIZED_CONTENT_NAVIGATION_RESULTS.OVERFLOW_ACTION,
+				action: NORMALIZED_CONTENT_OVERFLOW_ACTIONS.OPEN_DOCUMENT_NOTES
+			});
+			await waitFor(() => vi.mocked(navigation.pushModule).mock.calls.length === 1,
+				'document Notes navigation');
+			expect(findButton('Save Text Markup')).toBeDefined();
+			expect(root?.querySelector<HTMLButtonElement>('button[aria-label="highlight color"]')?.getAttribute('aria-pressed'))
+				.toBe(paletteBefore);
+			expect(requireWord().classList.contains('bg-highlighta')).toBe(true);
+			expect(textMarkup.put).not.toHaveBeenCalled();
+		});
+
+		it.each([
+			[NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_HORIZONTAL, PaneSplit.HORIZONTAL],
+			[NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_VERTICAL, PaneSplit.VERTICAL]
+		] as const)('retains unsaved markup when splitting from overflow (%s)', async (action, direction) => {
+			const textMarkup = createTextMarkupService();
+			const { navigation, sendNavigationResult } = mountReader(createAuthentication('user-a'), textMarkup);
+			await waitFor(() => !requireButton('Edit').disabled, 'Reader ready');
+			requireButton('Edit').click();
+			await waitFor(() => findButton('Save Text Markup') !== undefined, 'markup active');
+			requireWord().click();
+			await tick();
+			expect(requireWord().classList.contains('bg-highlighta')).toBe(true);
+			await sendNavigationResult({
+				type: NORMALIZED_CONTENT_NAVIGATION_RESULTS.OVERFLOW_ACTION,
+				action
+			});
+			expect(navigation.split).toHaveBeenCalledWith(direction, Modules.MODULES, MODULES_VIEWS.ROOT, {});
+			expect(findButton('Save Text Markup')).toBeDefined();
+			expect(requireWord().classList.contains('bg-highlighta')).toBe(true);
+			expect(textMarkup.put).not.toHaveBeenCalled();
+		});
+
+		it('preserves Without Markup state when opening document Bookmarks from overflow', async () => {
+			const textMarkup = createTextMarkupService(async () => { throw new Error('Relay unavailable'); });
+			const { navigation, sendNavigationResult, selectLookupOption } = mountReader(createAuthentication('user-a'), textMarkup);
+			await waitFor(() => textMarkup.get.mock.calls.length === 1 && !requireButton('Edit').disabled,
+				'lookup failure');
+			requireButton('Edit').click();
+			await selectLookupOption(NORMALIZED_CONTENT_TEXT_MARKUP_LOOKUP_OUTCOMES.WITHOUT_MARKUP);
+			await waitFor(() => findButton('Close actions') !== undefined, 'without-markup actions');
+			await sendNavigationResult({
+				type: NORMALIZED_CONTENT_NAVIGATION_RESULTS.OVERFLOW_ACTION,
+				action: NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS
+			});
+			expect(navigation.pushModule).toHaveBeenCalledWith(Modules.BOOKMARKS, expect.anything(),
+				expect.objectContaining({ mode: 'browse' }));
+			expect(findButton('Close actions')).toBeDefined();
+			expect(findButton('Save Text Markup')).toBeUndefined();
+			expect(textMarkup.put).not.toHaveBeenCalled();
+		});
+
+		it('vetoes a failed Text Markup exit before entering Note selection', async () => {
+			const textMarkup = createTextMarkupService();
+			const toast = vi.fn();
+			mountReader(createAuthentication('user-a'), textMarkup, toast);
+			await waitFor(() => !requireButton('Edit').disabled, 'Reader ready');
+			requireButton('Edit').click();
+			await waitFor(() => findButton('Save Text Markup') !== undefined, 'markup active');
+			requireWord().click();
+			await tick();
+			textMarkup.put.mockRejectedValueOnce(new Error('storage failed'));
+			root?.querySelector<HTMLButtonElement>('button[aria-label="add note"]')?.click();
+			await waitFor(() => toast.mock.calls.length > 0, 'save failure');
+			expect(toast).toHaveBeenCalledWith('Unable to save Text Markup');
+			expect(root?.textContent).not.toContain('Select a word for the note');
+			expect(findButton('Save Text Markup')).toBeDefined();
+			expect(requireWord().classList.contains('bg-highlighta')).toBe(true);
+		});
+
 		it(
-			'auto-saves a changed highlight before creating a word Bookmark',
+			'saves changed Text Markup before entering Bookmark selection',
 			async () => {
 				const authentication = createAuthentication('user-a');
 				const textMarkup = createTextMarkupService();
@@ -818,11 +917,16 @@ describe(
 				await tick();
 				requireWord().click();
 				root?.querySelector<HTMLButtonElement>('button[aria-label="add bookmark"]')?.click();
-				await tick();
+				await waitFor(() => textMarkup.put.mock.calls.length === 1 &&
+					root?.textContent?.includes('Select a word for the bookmark') === true,
+					'Text Markup save and Bookmark state entry');
+				expect(bookmarks.create).not.toHaveBeenCalled();
 				requireWord(1).click();
 				await waitFor(() => bookmarks.create.mock.calls.length === 1,
 					'Bookmark to be created');
 				expect(textMarkup.put).toHaveBeenCalledTimes(1);
+				await waitFor(() => findButton('Save Text Markup') !== undefined,
+					'Text Markup state restored after Bookmark creation');
 				expect(bookmarks.create).toHaveBeenCalledWith(
 					expect.objectContaining({
 						address: expect.objectContaining({ blockId: 'paragraph-1', contentIndex: 1 })
@@ -845,10 +949,14 @@ describe(
 				root?.querySelector<HTMLButtonElement>('button[aria-label="add note"]')?.click();
 				await tick();
 				expect(root?.textContent).toContain('Select a word for the note');
+				// Temporary selection owns Cancel; no stale Save/Cancel header actions.
+				expect(findButton('Save Text Markup')).toBeUndefined();
+				expect(findButton('Cancel edits')).toBeUndefined();
 				expect(root?.querySelector('button[aria-label="add bookmark"]')).toBeNull();
 				root?.querySelector<HTMLButtonElement>('button[aria-label="cancel note location selection"]')?.click();
 				await tick();
 				expect(root?.querySelector('button[aria-label="add bookmark"]')).not.toBeNull();
+				expect(findButton('Save Text Markup')).toBeDefined();
 
 				root?.querySelector<HTMLButtonElement>('button[aria-label="update bookmark"]')?.click();
 				await tick();
@@ -1110,9 +1218,12 @@ describe(
 					createTextMarkupService(
 						async () => createTextMarkup('user-a', 'markup-a')
 					);
-				textMarkup.put.mockImplementation(
-					async () => pendingSave.promise
-				);
+				// Preserve the Domain contract: a successful put notifies Readers
+				// after the local commit. Only defer completion in this test.
+				textMarkup.put.mockImplementation(async (markup) => {
+					await pendingSave.promise;
+					textMarkup.emit(markup);
+				});
 
 				mountReader(authentication, textMarkup);
 				await waitFor(
@@ -1380,6 +1491,7 @@ function mountReader(
 	window.document.body.append(root);
 
 	const applicationContext = {
+		settingsService: new SettingsService(),
 		authenticationService:
 			authentication.service,
 		applicationReferenceResolver: {
@@ -1403,6 +1515,7 @@ function mountReader(
 	let navigationResultHandler: ((result: NavigationStateValue) => void | Promise<void>) | undefined;
 	const navigation = {
 		pushView: vi.fn(),
+		split: vi.fn(),
 		back: vi.fn(),
 		escapePane: vi.fn(),
 		pushModule: vi.fn()

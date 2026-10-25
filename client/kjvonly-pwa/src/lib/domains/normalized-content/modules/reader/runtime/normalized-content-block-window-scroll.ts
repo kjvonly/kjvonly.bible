@@ -28,7 +28,8 @@ const RENDER_BUDGET_MS = 1000;
 export function attachScrollAndReconcileNormalizedBlockWindow(
     root: HTMLElement,
     window: NormalizedContentBlockWindow,
-    isActive: () => boolean
+    isActive: () => boolean,
+    onProgressChange?: (progress: number) => void
 ): NormalizedBlockWindowScrollHandle {
     const viewport = root.closest<HTMLElement>('[id$="-scroll-container"]');
     if (!viewport) {
@@ -59,6 +60,35 @@ export function attachScrollAndReconcileNormalizedBlockWindow(
             return candidate as HTMLElement;
         }
         return root.querySelector<HTMLElement>(`[data-normalized-window-index="${position}"]`);
+    }
+
+    /** Measure the first visible canonical leaf; buffered leaves do not count as read. */
+    function publishDocumentProgress(): void {
+        if (!onProgressChange || !canReconcile()) return;
+        const { start, end, total } = window.getRange();
+        if (!total || start >= end) {
+            onProgressChange(0);
+            return;
+        }
+        const top = viewport!.getBoundingClientRect().top;
+        let low = start + 1;
+        let high = end;
+        // Leaf bounds are in document order. A binary search avoids measuring
+        // every mounted leaf on each scroll event.
+        while (low < high) {
+            const middle = Math.floor((low + high) / 2);
+            const bounds = findRenderedLeafElement(middle)?.getBoundingClientRect();
+            if (bounds && bounds.bottom <= top) low = middle + 1;
+            else high = middle;
+        }
+        const bounds = findRenderedLeafElement(low)?.getBoundingClientRect();
+        const fraction = bounds && bounds.height > 0
+            ? Math.max(0, Math.min(1, (top - bounds.top) / bounds.height))
+            : 0;
+        const remaining = viewport!.scrollHeight - viewport!.clientHeight - viewport!.scrollTop;
+        onProgressChange(end === total && remaining <= 1
+            ? 1
+            : window.getTextProgress(low - 1, fraction));
     }
 
     /** Measure a single rendered leaf only when capture or restoration requires it. */
@@ -179,6 +209,7 @@ export function attachScrollAndReconcileNormalizedBlockWindow(
                 budgetStart = performance.now();
             }
         }
+        if (canContinueReconciliation()) publishDocumentProgress();
     }
 
     const reconciliationQueue = createNormalizedBlockWindowReconciliationQueue(
@@ -188,7 +219,11 @@ export function attachScrollAndReconcileNormalizedBlockWindow(
         reconciliationQueue.request, canReconcile, SCROLL_THROTTLE_MS
     );
 
-    viewport.addEventListener('scroll', scrollThrottle.onScroll, { passive: true });
+    const onScroll = () => {
+        scrollThrottle.onScroll();
+        publishDocumentProgress();
+    };
+    viewport.addEventListener('scroll', onScroll, { passive: true });
     void tick().then(reconciliationQueue.request);
 
     return {
@@ -197,7 +232,7 @@ export function attachScrollAndReconcileNormalizedBlockWindow(
             disposed = true;
             reconciliationQueue.destroy();
             scrollThrottle.destroy();
-            viewport.removeEventListener('scroll', scrollThrottle.onScroll);
+            viewport.removeEventListener('scroll', onScroll);
         }
     };
 }

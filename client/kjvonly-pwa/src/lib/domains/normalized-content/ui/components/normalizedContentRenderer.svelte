@@ -29,7 +29,8 @@
 		wordMarkers,
 		onWordMarkerActivate,
 		bookmarkMarkers,
-		onBookmarkMarkerActivate
+		onBookmarkMarkerActivate,
+		markersInteractive = true
 	}: {
 		document: NormalizedDocument;
 		/** Optional bounded top-level block window; omitted by ordinary full-document consumers. */
@@ -45,6 +46,7 @@
 		onWordMarkerActivate?: NormalizedContentWordMarkerHandler;
 		bookmarkMarkers?: NormalizedContentWordMarkers;
 		onBookmarkMarkerActivate?: NormalizedContentWordMarkerHandler;
+		markersInteractive?: boolean;
 	} = $props();
 </script>
 
@@ -61,6 +63,7 @@
 			{onWordMarkerActivate}
 			{bookmarkMarkers}
 			{onBookmarkMarkerActivate}
+			{markersInteractive}
 		></NormalizedBlockRenderer>
 	{/each}
 </article>

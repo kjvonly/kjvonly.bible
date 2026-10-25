@@ -17,6 +17,7 @@ export type SettingsRowID = string;
 export type SettingsIconID =
 	| 'appearance'
 	| 'bible'
+	| 'reader'
 	| 'theme-mode'
 	| 'color-theme'
 	| 'font-family'

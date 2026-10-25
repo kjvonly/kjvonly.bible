@@ -8,7 +8,8 @@ import {
 	NORMALIZED_DOCUMENT_DATA_VERSION
 } from '../../../resources/normalized-content-resource-contract';
 import {
-	createNormalizedContentWordNotesIntent
+	createNormalizedContentWordNotesIntent,
+	createNormalizedContentWordNotesBrowseIntent
 } from './normalized-content-word-notes-navigation';
 
 const document: NormalizedDocument = {
@@ -51,6 +52,25 @@ function descriptor(modifiedAt: number): ResourceDescriptor {
 }
 
 describe('Normalized Content Reader word Notes navigation', () => {
+	it('opens an existing canonical word Notes scope without creating a Note', () => {
+		const address = { blockId: '__proto__', contentIndex: 2 };
+		const intent = createNormalizedContentWordNotesBrowseIntent(
+			descriptor(100), '', address
+		);
+		expect(intent).toEqual({
+			normalizedDocument: {
+				scope: {
+					kind: 'word',
+					document: { publisher: 'publisher', resourceId: 'documents/a/%20/b' },
+					address
+				},
+				title: ''
+			}
+		});
+		expect(parseNotesNavigationIntent(intent)).toEqual(intent);
+		expect(createNormalizedContentWordNotesBrowseIntent(descriptor(200), '', address)).toEqual(intent);
+	});
+
 	it('selects canonical content[] indexes, including linked words after anchors', () => {
 		const intent = createNormalizedContentWordNotesIntent(
 			descriptor(100), 'Genesis 1', document,

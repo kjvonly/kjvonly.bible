@@ -32,7 +32,8 @@
 		wordMarkers,
 		onWordMarkerActivate,
 		bookmarkMarkers,
-		onBookmarkMarkerActivate
+		onBookmarkMarkerActivate,
+		markersInteractive = true
 	}: {
 		content: NormalizedContent[];
 		blockId: string;
@@ -43,6 +44,7 @@
 		onWordMarkerActivate?: NormalizedContentWordMarkerHandler;
 		bookmarkMarkers?: NormalizedContentWordMarkers;
 		onBookmarkMarkerActivate?: NormalizedContentWordMarkerHandler;
+		markersInteractive?: boolean;
 	} = $props();
 
 	const renderableContent = $derived(
@@ -115,6 +117,7 @@
 			bookmarked={bookmarkMarkers?.get(blockId)?.has(index) === true}
 			{onWordMarkerActivate}
 			{onBookmarkMarkerActivate}
+			{markersInteractive}
 		></NormalizedWord>
 	{:else if item.type === 'anchor'}
 		<span

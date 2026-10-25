@@ -25,6 +25,8 @@ export interface NormalizedContentBlockWindowChange {
 export class NormalizedContentBlockWindow {
     private source: NormalizedDocument | undefined;
     private leaves: NormalizedBlock[] = [];
+    /** Prefix sums of visible text lengths in canonical leaf order. */
+    private cumulativeTextLengths: number[] = [0];
     private readonly spans = new WeakMap<NormalizedBlock, SubtreeSpan>();
     /** Includes block IDs and inline anchor IDs, both mapped to leaf indices. */
     private readonly leafIndexByTargetId = new Map<string, number>();
@@ -38,6 +40,43 @@ export class NormalizedContentBlockWindow {
     /** Zero-based [start, end) leaf window, with total canonical leaves. */
     getRange(): { start: number; end: number; total: number } {
         return { start: this.start, end: this.end, total: this.leaves.length };
+    }
+
+    /**
+     * Position in the entire document by cumulative text length, not the
+     * number or pixel height of currently rendered leaves.
+     *
+     * fraction is the visible fraction through the zero-based leaf.
+     */
+    getTextProgress(zeroBasedLeaf: number, fraction = 0): number {
+        const total = this.cumulativeTextLengths[this.cumulativeTextLengths.length - 1];
+        if (!total) return 0;
+        const index = Math.max(0, Math.min(this.leaves.length, zeroBasedLeaf));
+        const start = this.cumulativeTextLengths[index];
+        const length = index < this.leaves.length
+            ? this.cumulativeTextLengths[index + 1] - start
+            : 0;
+        return (start + length * Math.max(0, Math.min(1, fraction))) / total;
+    }
+
+    /**
+     * Resolve cumulative-text progress to a canonical leaf and approximate
+     * fraction within it. Seeking uses the prefix sums built once by reset().
+     */
+    findTextPosition(progress: number): { index: number; fraction: number } | undefined {
+        if (!this.leaves.length || !Number.isFinite(progress)) return;
+        const total = this.cumulativeTextLengths[this.leaves.length];
+        const target = Math.max(0, Math.min(1, progress)) * total;
+        let low = 0;
+        let high = this.leaves.length - 1;
+        while (low < high) {
+            const middle = Math.floor((low + high) / 2);
+            if (this.cumulativeTextLengths[middle + 1] <= target) low = middle + 1;
+            else high = middle;
+        }
+        const start = this.cumulativeTextLengths[low];
+        const length = this.cumulativeTextLengths[low + 1] - start;
+        return { index: low, fraction: (target - start) / length };
     }
 
     /** Changes only for a new document or an explicit navigation jump. */
@@ -55,6 +94,7 @@ export class NormalizedContentBlockWindow {
         this.generation++;
         this.source = document;
         this.leaves = [];
+        this.cumulativeTextLengths = [0];
         this.leafIndexByTargetId.clear();
         for (const block of document?.blocks ?? []) this.indexBlockSubtreeAndTargets(block);
         this.start = 0;
@@ -127,12 +167,12 @@ export class NormalizedContentBlockWindow {
     private indexBlockSubtreeAndTargets(block: NormalizedBlock): SubtreeSpan {
         const start = this.leaves.length;
         if (block.type === 'table-row') {
-            this.leaves.push(block);
+            this.addLeaf(block);
             this.indexTargetsWithinAtomicRow(block, start);
         } else if ('blocks' in block && block.blocks.length) {
             for (const child of block.blocks) this.indexBlockSubtreeAndTargets(child);
         } else {
-            this.leaves.push(block);
+            this.addLeaf(block);
             if ('content' in block) {
                 for (const part of block.content) {
                     if (part.type === 'anchor') this.leafIndexByTargetId.set(part.id, start);
@@ -143,6 +183,27 @@ export class NormalizedContentBlockWindow {
         const span = { start, end: this.leaves.length };
         this.spans.set(block, span);
         return span;
+    }
+
+    /** Each leaf contributes its readable text; a text-free leaf still occupies a position. */
+    private addLeaf(block: NormalizedBlock): void {
+        this.leaves.push(block);
+        const previous = this.cumulativeTextLengths[this.cumulativeTextLengths.length - 1];
+        this.cumulativeTextLengths.push(previous + Math.max(1, this.countText(block)));
+    }
+
+    /** Table rows are atomic leaves, so their nested cell text counts together. */
+    private countText(block: NormalizedBlock): number {
+        if ('content' in block) {
+            return block.content.reduce((sum, part) => sum + (
+                part.type === 'word' ? part.text.length + (part.joinPrevious ? 0 : 1)
+                : part.type === 'line-break' ? 1 : 0
+            ), 0);
+        }
+        if ('blocks' in block) {
+            return block.blocks.reduce((sum, child) => sum + this.countText(child), 0);
+        }
+        return 0;
     }
 
     /**

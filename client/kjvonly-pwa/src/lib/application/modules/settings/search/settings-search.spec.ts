@@ -61,6 +61,20 @@ describe(
 		);
 
 		it(
+			'finds normalized document progress in Reader settings',
+			() => {
+				expect(searchSettings(entries, 'normalized progress')).toEqual(
+					expect.arrayContaining([
+						expect.objectContaining({
+							pageID: 'reader',
+							rowID: 'show-normalized-document-progress'
+						})
+					])
+				);
+			}
+		);
+
+		it(
 			'searches select option labels',
 			() => {
 				expect(

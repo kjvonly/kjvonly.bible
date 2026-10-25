@@ -8,7 +8,8 @@ import type {
 export const SETTINGS_PAGE_IDS = {
 	ROOT: 'settings',
 	APPEARANCE: 'appearance',
-	BIBLE: 'bible'
+	BIBLE: 'bible',
+	READER: 'reader'
 } as const satisfies Record<string, SettingsPageID>;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -50,6 +51,20 @@ export const settingsDefinition: SettingsDefinition = {
 								keywords: ['bible', 'reader', 'display']
 							},
 							pageID: SETTINGS_PAGE_IDS.BIBLE
+						},
+						{
+							type: 'group',
+							id: 'reader',
+							title: 'Reader',
+							secondary: 'Normalized document reader options',
+							icon: {
+								name: 'reader',
+								accent: 'support-a-500'
+							},
+							search: {
+								keywords: ['reader', 'document', 'normalized', 'progress']
+							},
+							pageID: SETTINGS_PAGE_IDS.READER
 						},
 						{
 							type: 'custom',
@@ -197,6 +212,31 @@ export const settingsDefinition: SettingsDefinition = {
 								keywords: ['width', 'layout', 'content']
 							},
 							setting: 'enableMaxWidth'
+						}
+					]
+				}
+			]
+		},
+		{
+			id: SETTINGS_PAGE_IDS.READER,
+			title: 'Reader',
+			sections: [
+				{
+					id: 'display',
+					label: 'Display',
+					rows: [
+						{
+							type: 'toggle',
+							id: 'show-normalized-document-progress',
+							title: 'Document Progress',
+							secondary: 'Show progress through the entire normalized document',
+							icon: {
+								name: 'scrollbar'
+							},
+							search: {
+								keywords: ['progress', 'reading', 'reader', 'document']
+							},
+							setting: 'showNormalizedDocumentProgress'
 						}
 					]
 				}

@@ -3,7 +3,8 @@
 	"private": true,
 	"workspaces": [
 		"kjvonly-pwa",
-		"cli"
+		"cli",
+		"packages/*"
 	],
 	"scripts": {
 		"pwa:dev": "npm run dev --workspace @kjvonly/pwa",

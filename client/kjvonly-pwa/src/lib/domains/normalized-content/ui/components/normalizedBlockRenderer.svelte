@@ -39,7 +39,8 @@
 		wordMarkers,
 		onWordMarkerActivate,
 		bookmarkMarkers,
-		onBookmarkMarkerActivate
+		onBookmarkMarkerActivate,
+		markersInteractive = true
 	}: {
 		block: NormalizedBlock;
 		/** Leaf positions used to anchor the moving nested window. */
@@ -54,6 +55,7 @@
 		onWordMarkerActivate?: NormalizedContentWordMarkerHandler;
 		bookmarkMarkers?: NormalizedContentWordMarkers;
 		onBookmarkMarkerActivate?: NormalizedContentWordMarkerHandler;
+		markersInteractive?: boolean;
 	} = $props();
 
 	const presentation = $derived(
@@ -141,6 +143,7 @@
 				{onWordMarkerActivate}
 				{bookmarkMarkers}
 				{onBookmarkMarkerActivate}
+				{markersInteractive}
 			></NormalizedInlineRenderer>
 		{:else if presentation.contentKind === 'blocks'}
 			{#each childBlocks as child}
@@ -156,6 +159,7 @@
 					{onWordMarkerActivate}
 					{bookmarkMarkers}
 					{onBookmarkMarkerActivate}
+					{markersInteractive}
 				></NormalizedBlockRenderer>
 			{/each}
 		{/if}

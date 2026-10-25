@@ -551,32 +551,26 @@ new-chat-files:
 	ZIP="kjvonly-new-chat-files-$$DATE.zip"; \
 	echo "Creating $$ZIP"; \
 	zip -r "$$ZIP" \
-		client/kjvonly-pwa/src \
-		client/cli \
-		client/kjvonly-pwa/tests \
-		client/kjvonly-pwa/package.json \
-		client/kjvonly-pwa/package-lock.json \
+		client/ \
 		docs/ \
 		zarf/ \
 		makefile \
 		-x '*/node_modules/*' \
 		   '*/.svelte-kit/*' \
-		   '*/.*'
+		   '*/.*' \
+		   '*/.certs/*'
 
 worktrees-backups:
 	@DATE=$$(date +%Y%m%d); \
 	ZIP="kjvonly-worktree-backups-$$DATE.zip"; \
 	echo "Creating $$ZIP"; \
 	zip -r "$$ZIP" \
-		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/src \
-		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/tests \
-		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/package.json \
-		worktrees/wt{1,2,3,4}/client/kjvonly-pwa/package-lock.json \
-		worktrees/wt{1,2,3,4}/client/cli \
+		worktrees/wt{1,2,3,4}/client \
 		worktrees/wt{1,2,3,4}/docs \
 		-x '*/node_modules/*' \
 		   '*/.svelte-kit/*' \
-		   '*/.DS_Store'
+		   '*/.DS_Store' \
+		   '*/.certs/*'
 
 new-chat-prompt:
 	@pbcopy < ../kjvonly.bible.prompts/NEW_CHAT_PROMPT.md

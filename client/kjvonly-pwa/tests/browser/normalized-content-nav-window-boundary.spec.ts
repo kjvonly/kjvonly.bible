@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount, tick, unmount } from 'svelte';
 
-import NormalizedContentNavButtons from '$lib/domains/normalized-content/modules/reader/normalizedContentNavButtons.svelte';
+import NormalizedReaderFloatingControlsHost from './fixtures/normalized-reader-floating-controls-host.svelte';
 import { NORMALIZED_WINDOW_ANCHOR_RESTORED_EVENT } from '$lib/domains/normalized-content/modules/reader/runtime/normalized-content-block-window-scroll';
 
 let component: ReturnType<typeof mount> | undefined;
@@ -21,18 +21,14 @@ async function renderButtons(atDocumentEnd: boolean, documentReady = true): Prom
 	document.body.append(scrollContainer);
 	host = document.createElement('div');
 	document.body.append(host);
-	component = mount(NormalizedContentNavButtons, {
+	component = mount(NormalizedReaderFloatingControlsHost, {
 		target: host,
 		props: {
 			scrollContainerId: scrollContainer.id,
 			currentIndex: 1,
-			canPrevious: true,
-			canNext: true,
-            documentReady,
+			documentReady,
 			atDocumentStart: true,
-			atDocumentEnd,
-			onPrevious: vi.fn(),
-			onNext: vi.fn()
+			atDocumentEnd
 		}
 	});
 	await tick();

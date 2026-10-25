@@ -159,5 +159,44 @@ describe(
 				}
 			}
 		);
+
+		it(
+			'toggles document progress from Reader settings in both mounted views',
+			async () => {
+				const target = document.createElement('div');
+				document.body.appendChild(target);
+				const component = mount(SettingsMultiInstanceHost, { target });
+				try {
+					await tick();
+					const first = requireElement<HTMLElement>(target, '[data-settings-instance="first"]');
+					const second = requireElement<HTMLElement>(target, '[data-settings-instance="second"]');
+					requireElement<HTMLButtonElement>(first, '[data-settings-row-id="reader"] button').click();
+					requireElement<HTMLButtonElement>(second, '[data-settings-row-id="reader"] button').click();
+					await tick();
+					const selector = '[data-settings-row-id="show-normalized-document-progress"] input[type="checkbox"]';
+					const firstToggle = requireElement<HTMLInputElement>(first, selector);
+					const secondToggle = requireElement<HTMLInputElement>(second, selector);
+					expect(firstToggle.checked).toBe(false);
+					expect(secondToggle.checked).toBe(false);
+					firstToggle.checked = true;
+					firstToggle.dispatchEvent(new Event('change', { bubbles: true }));
+					await tick();
+					expect(firstToggle.checked).toBe(true);
+					expect(secondToggle.checked).toBe(true);
+					expect(JSON.parse(localStorage.getItem('settings') ?? '{}')).toMatchObject({
+						showNormalizedDocumentProgress: true,
+						showBibleScrollbar: false
+					});
+					firstToggle.checked = false;
+					firstToggle.dispatchEvent(new Event('change', { bubbles: true }));
+					await tick();
+					expect(firstToggle.checked).toBe(false);
+					expect(secondToggle.checked).toBe(false);
+				} finally {
+					await unmount(component);
+					target.remove();
+				}
+			}
+		);
 	}
 );

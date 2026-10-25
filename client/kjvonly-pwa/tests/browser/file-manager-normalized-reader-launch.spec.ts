@@ -269,8 +269,9 @@ describe('File Manager → Normalized Content Reader', () => {
 				},
 				getAllNotes: (id: string) => queueMicrotask(() => dispatchNotes(id))
 			};
+			const settingsService = new SettingsService();
 			const applicationContext = {
-				settingsService: new SettingsService(),
+				settingsService,
 				filesystemService,
 				petNameService: { resolve: (publisher: string) => publisher },
 				resourceModuleResolver: new ResourceModuleResolver(
@@ -416,6 +417,34 @@ describe('File Manager → Normalized Content Reader', () => {
 				expect(showToast).not.toHaveBeenCalled();
 
 				if (attempt === 0) {
+					// Progress is separate from the native scrollbar and the Pane's ViewBody.
+					const scrollBody = target!.querySelector('#poc-heading-3')!
+						.closest<HTMLElement>('[id$="-scroll-container"]')!;
+					const progress = () => target!.querySelector<HTMLInputElement>(
+						'input[type="range"][aria-label="Document progress"]'
+					);
+					const initialProgress = settingsService.getSettings().showNormalizedDocumentProgress;
+					const initialBibleScrollbar = settingsService.getSettings().showBibleScrollbar;
+					expect(progress() !== null).toBe(initialProgress);
+					settingsService.updateSetting('showNormalizedDocumentProgress', true);
+					await vi.waitFor(() => expect(progress()).not.toBeNull());
+					expect(progress()!.min).toBe('0');
+					expect(progress()!.max).toBe('1000');
+					expect(progress()!.getAttribute('aria-valuetext')).toMatch(/^\d+%$/);
+					expect(scrollBody.classList.contains('kjv-scrollbar-visible')).toBe(false);
+					// The scrubber overlays the pane; toggling it must not resize document content.
+					expect(scrollBody.classList.contains('px-4')).toBe(true);
+					expect(scrollBody.classList.contains('pr-14')).toBe(false);
+					expect(getComputedStyle(scrollBody).paddingRight).toBe('16px');
+					expect(settingsService.getSettings().showBibleScrollbar).toBe(initialBibleScrollbar);
+					settingsService.updateSetting('showNormalizedDocumentProgress', false);
+					await vi.waitFor(() => expect(progress()).toBeNull());
+					expect(scrollBody.classList.contains('px-4')).toBe(true);
+					expect(getComputedStyle(scrollBody).paddingRight).toBe('16px');
+					settingsService.updateSetting('showNormalizedDocumentProgress', initialProgress);
+				}
+
+				if (attempt === 0) {
 					// Follow the real Matthew Henry fixture's Bible reference through
 					// the renderer, Reader, typed resolver, and Pane navigation stack.
 					const documentRoot = target!.querySelector('#poc-paragraph-3');
@@ -467,6 +496,35 @@ describe('File Manager → Normalized Content Reader', () => {
 							.find((button) => button.textContent?.trim() === label);
 					expect(findMenuAction('Split pane horizontally')).toBeDefined();
 					expect(findMenuAction('Split pane vertically')).toBeDefined();
+					// Document actions use distinct icons before their labels.
+					const findDocumentAction = (label: string) =>
+						[...target!.querySelectorAll<HTMLButtonElement>('button')]
+							.find((button) => button.textContent?.trim() === label);
+					const notesIcon = findDocumentAction('Open document notes')?.querySelector('svg');
+					const bookmarksIcon = findDocumentAction('Browse document bookmarks')?.querySelector('svg');
+					expect(notesIcon).toBeTruthy();
+					expect(bookmarksIcon).toBeTruthy();
+					expect(notesIcon?.querySelector('path')?.getAttribute('d'))
+						.not.toBe(bookmarksIcon?.querySelector('path')?.getAttribute('d'));
+					// Theme changes in place; split controls and the menu stay available.
+					const initiallyDark = settingsService.getSettings().isDarkTheme;
+					const initialLabel = initiallyDark ? 'Light mode' : 'Night mode';
+					const toggledLabel = initiallyDark ? 'Night mode' : 'Light mode';
+					expect(findMenuAction(initialLabel)).toBeDefined();
+					findMenuAction(initialLabel)!.click();
+					await vi.waitFor(() => {
+						expect(settingsService.getSettings().isDarkTheme).toBe(!initiallyDark);
+						expect(findMenuAction(toggledLabel)).toBeDefined();
+						expect(get(navigation.views).at(-1)?.navigationState.view)
+							.toBe(NORMALIZED_CONTENT_VIEWS.OVERFLOW_ACTIONS);
+					});
+					expect(findMenuAction('Split pane horizontally')).toBeDefined();
+					expect(findMenuAction('Split pane vertically')).toBeDefined();
+					findMenuAction(toggledLabel)!.click();
+					await vi.waitFor(() => {
+						expect(settingsService.getSettings().isDarkTheme).toBe(initiallyDark);
+						expect(findMenuAction(initialLabel)).toBeDefined();
+					});
 					const menuBack = [...target!.querySelectorAll<HTMLButtonElement>(
 						'button[aria-label="Back. Press and hold to exit pane."]'
 					)].at(-1);
@@ -571,18 +629,32 @@ describe('File Manager → Normalized Content Reader', () => {
 					const findEditButton = () => [...target!.querySelectorAll<HTMLButtonElement>('button')]
 						.find((button) => button.textContent?.trim() === 'Edit');
 					const openEdit = async () => {
-						// Authentication and pane Back update Svelte state before the DOM.
-						// Flush those changes so we do not click a stale Edit button.
+						// Navigation preserves the active action state. Returning from
+						// Notes/Bookmarks may already have the Text Markup toolbar open.
 						await tick();
-						await vi.waitFor(() => expect(findEditButton()?.disabled).toBe(false));
-						findEditButton()!.click();
+						if (!target!.querySelector('button[aria-label="add note"]')) {
+							await vi.waitFor(() => expect(findEditButton()?.disabled).toBe(false));
+							findEditButton()!.click();
+						}
 						await vi.waitFor(() => expect(target!.querySelector('button[aria-label="add note"]'))
 							.not.toBeNull());
 					};
 					await openEdit();
 					expect(target!.querySelector('[aria-label="note actions"]')).not.toBeNull();
-					// Document Notes saves the markup draft and opens the existing Notes module.
-					target!.querySelector<HTMLButtonElement>('button[aria-label="document notes"]')!.click();
+					// Document Notes is an overflow action. Opening it must leave the
+					// mounted Reader's Text Markup action and palette intact.
+					expect(target!.querySelector('button[aria-label="document notes"]')).toBeNull();
+					const notesMore = [...target!.querySelectorAll<HTMLButtonElement>(
+						'button[aria-label="More actions. Press and hold to open modules."]'
+					)].at(-1);
+					expect(notesMore).toBeDefined();
+					notesMore!.click();
+					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
+						.toBe(NORMALIZED_CONTENT_VIEWS.OVERFLOW_ACTIONS));
+					const documentNotesAction = [...target!.querySelectorAll<HTMLButtonElement>('button')]
+						.find((button) => button.textContent?.trim() === 'Open document notes');
+					expect(documentNotesAction).toBeDefined();
+					documentNotesAction!.click();
 					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState)
 						.toMatchObject({ module: Modules.NOTES, view: NOTES_VIEWS.ROOT, state: {
 							normalizedDocument: { scope: { kind: 'document', document: {
@@ -595,6 +667,9 @@ describe('File Manager → Normalized Content Reader', () => {
 					)!.click();
 					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
 						.toBe(NORMALIZED_CONTENT_VIEWS.READER));
+					// Opening document Notes does not close or recreate the action session.
+					await vi.waitFor(() => expect(target!.querySelector('button[aria-label="text color"]'))
+						.not.toBeNull());
 
 					const openWordSelection = async () => {
 						await openEdit();
@@ -652,6 +727,8 @@ describe('File Manager → Normalized Content Reader', () => {
 							.toBe(NORMALIZED_CONTENT_VIEWS.READER);
 						expect(target!.querySelector('#poc-heading-3')).toBe(originalDocumentNode);
 						expect(target?.textContent).not.toContain('Select a word for the note');
+						// Returning from a word Note must restore the originating Text Markup state.
+						expect(target!.querySelector('button[aria-label="text color"]')).not.toBeNull();
 					});
 					// Simulate the accepted Note arriving from the Notes Module / another pane.
 					acceptedNotes = {
@@ -677,6 +754,18 @@ describe('File Manager → Normalized Content Reader', () => {
 					);
 					await vi.waitFor(() => expect(marker()).not.toBeNull());
 					expect(marker()!.closest('a')).toBeNull();
+					// Marker indicators remain visible during Text Markup, but word
+					// markers are only interactive in ReadingState.
+					expect(marker()!.disabled).toBe(true);
+					marker()!.click();
+					expect(get(navigation.views).at(-1)?.navigationState.view)
+						.toBe(NORMALIZED_CONTENT_VIEWS.READER);
+					expect(target!.querySelector('button[aria-label="text color"]')).not.toBeNull();
+					const saveMarkup = [...target!.querySelectorAll<HTMLButtonElement>('button')]
+						.find((button) => button.textContent?.trim() === 'Save Text Markup');
+					expect(saveMarkup).toBeDefined();
+					saveMarkup!.click();
+					await vi.waitFor(() => expect(marker()?.disabled).toBe(false));
 					marker()!.click();
 					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState)
 						.toMatchObject({ module: Modules.NOTES, view: NOTES_VIEWS.ROOT, state: {
@@ -726,7 +815,13 @@ describe('File Manager → Normalized Content Reader', () => {
 					expect(bookmarkClick.defaultPrevented).toBe(true);
 					await vi.waitFor(() => expect(get(navigation.views).at(-1)?.navigationState.view)
 						.toBe(NORMALIZED_CONTENT_VIEWS.READER));
-					await vi.waitFor(() => expect(addBookmark()).toBeNull());
+					// A successful temporary Bookmark action returns to Text Markup;
+					// merely finding the Add Bookmark button absent could pass while
+					// selection is still running and would miss a failed return.
+					await vi.waitFor(() => {
+						expect(target!.querySelector('button[aria-label="text color"]')).not.toBeNull();
+						expect(addBookmark()).not.toBeNull();
+					});
 					// The Bookmark did not follow the linked word into Bible.
 					expect(target!.querySelector('[data-testid="bible-reference-destination"]')).toBeNull();
 
@@ -781,8 +876,13 @@ describe('File Manager → Normalized Content Reader', () => {
 					target!.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
 				const previous = () => navigationButton('Previous document');
 				const next = () => navigationButton('Next document');
-				expect(previous()).not.toBeNull();
-				expect(next()).not.toBeNull();
+				// Returning from Notes/Bookmarks preserves the active action state.
+				// Signing out resets it to ReadingState; wait for Svelte to render
+				// the floating navigation controls before testing their behavior.
+				await vi.waitFor(() => {
+					expect(previous()).not.toBeNull();
+					expect(next()).not.toBeNull();
+				});
 				// Navigation is floating, not counted among the header's action slots.
 				expect(target!.querySelector('header button[aria-label="Next document"]'))
 					.toBeNull();

@@ -42,7 +42,7 @@ describe('Normalized Content Reader overflow results', () => {
 					type: NORMALIZED_CONTENT_NAVIGATION_RESULTS.OVERFLOW_ACTION,
 					action
 				},
-				{ navigation, whenActive, onBrowseDocumentBookmarks: vi.fn() }
+				{ navigation, whenActive, onBrowseDocumentBookmarks: vi.fn(), onOpenDocumentNotes: vi.fn() }
 			)).toBe(true);
 			expect(navigation.split).not.toHaveBeenCalled();
 			expect(whenActive).toHaveBeenCalledOnce();
@@ -68,10 +68,32 @@ describe('Normalized Content Reader overflow results', () => {
 		expect(handleNormalizedContentOverflowNavigationResult({
 			type: NORMALIZED_CONTENT_NAVIGATION_RESULTS.OVERFLOW_ACTION,
 			action: NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS
-		}, { navigation, whenActive, onBrowseDocumentBookmarks })).toBe(true);
+		}, { navigation, whenActive, onBrowseDocumentBookmarks, onOpenDocumentNotes: vi.fn() })).toBe(true);
 		expect(onBrowseDocumentBookmarks).not.toHaveBeenCalled();
 		onActive?.();
 		expect(onBrowseDocumentBookmarks).toHaveBeenCalledOnce();
+		expect(navigation.split).not.toHaveBeenCalled();
+	});
+
+
+	it('opens document Notes only after revealing the Reader', () => {
+		const navigation = { split: vi.fn() } as unknown as PaneNavigation;
+		const onOpenDocumentNotes = vi.fn();
+		const onBrowseDocumentBookmarks = vi.fn();
+		let onActive: (() => void | Promise<void>) | undefined;
+		const whenActive = vi.fn((handler: () => void | Promise<void>) => {
+			onActive = handler;
+			return () => {};
+		}) as NavigationEntryContext['whenActive'];
+
+		expect(handleNormalizedContentOverflowNavigationResult({
+			type: NORMALIZED_CONTENT_NAVIGATION_RESULTS.OVERFLOW_ACTION,
+			action: NORMALIZED_CONTENT_OVERFLOW_ACTIONS.OPEN_DOCUMENT_NOTES
+		}, { navigation, whenActive, onOpenDocumentNotes, onBrowseDocumentBookmarks })).toBe(true);
+		expect(onOpenDocumentNotes).not.toHaveBeenCalled();
+		onActive?.();
+		expect(onOpenDocumentNotes).toHaveBeenCalledOnce();
+		expect(onBrowseDocumentBookmarks).not.toHaveBeenCalled();
 		expect(navigation.split).not.toHaveBeenCalled();
 	});
 
@@ -89,7 +111,7 @@ describe('Normalized Content Reader overflow results', () => {
 			expect(handleNormalizedContentOverflowNavigationResult(result, {
 				navigation,
 				whenActive,
-				onBrowseDocumentBookmarks: vi.fn()
+				onBrowseDocumentBookmarks: vi.fn(), onOpenDocumentNotes: vi.fn()
 			})).toBe(false);
 		}
 		expect(whenActive).not.toHaveBeenCalled();

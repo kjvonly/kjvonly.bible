@@ -6,7 +6,7 @@ import {
 	NORMALIZED_DOCUMENT_DATA_TYPE,
 	NORMALIZED_DOCUMENT_DATA_VERSION
 } from '../../../resources/normalized-content-resource-contract';
-import { createNormalizedContentBookmarkSelection } from './normalized-content-bookmark-selection';
+import { createNormalizedContentBookmarkSelection, createNormalizedContentBookmarkTarget } from './normalized-content-bookmark-selection';
 
 const document: NormalizedDocument = {
 	blocks: [
@@ -45,6 +45,28 @@ function descriptor(modifiedAt = 100): ResourceDescriptor {
 		strategy: { type: 'test', data: null }
 	};
 }
+
+describe('Normalized Content Bookmark target', () => {
+	it('builds the exact canonical browse target without requiring preview text', () => {
+		const address = { blockId: '__proto__', contentIndex: 3 };
+		const target = createNormalizedContentBookmarkTarget(descriptor(100), document, address);
+		expect(target).toEqual({
+			kind: 'normalized-document',
+			document: { publisher: 'publisher', resourceId: 'documents/a/%20/b' },
+			address: { kind: 'word', ...address }
+		});
+		expect(createNormalizedContentBookmarkTarget(descriptor(200), document, address)).toEqual(target);
+	});
+
+	it('validates canonical words before opening a Bookmark marker', () => {
+		expect(() => createNormalizedContentBookmarkTarget(
+			descriptor(), document, { blockId: '__proto__', contentIndex: 1 }
+		)).toThrow();
+		expect(() => createNormalizedContentBookmarkTarget(
+			descriptor(), document, { blockId: 'missing', contentIndex: 0 }
+		)).toThrow();
+	});
+});
 
 describe('Normalized Content Bookmark selection', () => {
 	it('uses the opaque Resource identity and canonical indexes, never modifiedAt', () => {

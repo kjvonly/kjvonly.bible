@@ -11,6 +11,30 @@ import {
 } from './normalized-content-document-notes-navigation';
 
 /**
+ * Opens existing Notes scoped to a canonical word marker without creating a draft.
+ * Unlike createNormalizedContentWordNotesIntent(), this is a browse action:
+ * the Notes scope is the selected word and no create target is supplied.
+ * The renderer supplies the canonical address; the Notes parser validates it.
+ */
+export function createNormalizedContentWordNotesBrowseIntent(
+	descriptor: ResourceDescriptor,
+	title: string,
+	address: NormalizedContentAddress
+): NotesNormalizedDocumentNavigationIntent {
+	const documentIntent = createNormalizedContentDocumentNotesIntent(descriptor, title);
+	return {
+		normalizedDocument: {
+			...documentIntent.normalizedDocument,
+			scope: {
+				kind: 'word',
+				document: documentIntent.normalizedDocument.scope.document,
+				address: { blockId: address.blockId, contentIndex: address.contentIndex }
+			}
+		}
+	};
+}
+
+/**
  * Creates a one-time word Note draft request in a document-wide Notes list.
  *
  * The canonical address is validated against the loaded document rather than

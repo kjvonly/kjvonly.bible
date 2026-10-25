@@ -1,3 +1,4 @@
+import Article from '$lib/components/svgs/article.svelte';
 import Bible from '$lib/components/svgs/bible.svelte';
 import Colors from '$lib/components/svgs/colors.svelte';
 import Info from '$lib/components/svgs/info.svelte';
@@ -19,6 +20,7 @@ import type {
 const SETTINGS_ICON_COMPONENTS = {
 	appearance: TextFormat,
 	bible: Bible,
+	reader: Article,
 	'theme-mode': LightMode,
 	'color-theme': Colors,
 	'font-family': TextFormat,

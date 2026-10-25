@@ -31,7 +31,8 @@
 		marked = false,
 		bookmarked = false,
 		onBookmarkMarkerActivate,
-		onWordMarkerActivate
+		onWordMarkerActivate,
+		markersInteractive = true
 	}: {
 		word: NormalizedWord;
 		blockId: string;
@@ -43,6 +44,7 @@
 		bookmarked?: boolean;
 		onBookmarkMarkerActivate?: NormalizedContentWordMarkerHandler;
 		onWordMarkerActivate?: NormalizedContentWordMarkerHandler;
+		markersInteractive?: boolean;
 	} = $props();
 
 	const className = $derived(
@@ -113,9 +115,10 @@
 {#if bookmarked && onBookmarkMarkerActivate}
 	<button
 		type="button"
-		class="mr-1 inline-flex size-6 items-center justify-center align-middle text-support-a-500 focus-visible:outline-2 focus-visible:outline-offset-2"
+		class="mr-1 inline-flex size-6 items-center justify-center align-middle text-support-a-500 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-default"
 		aria-label="Open word bookmarks"
 		title="Open word bookmarks"
+		disabled={!markersInteractive}
 		data-normalized-word-bookmark=""
 		data-normalized-bookmark-block={blockId}
 		data-normalized-bookmark-index={contentIndex}
@@ -130,9 +133,10 @@
 {/if}{#if marked && onWordMarkerActivate}
 	<button
 		type="button"
-		class="mr-1 inline-flex size-6 items-center justify-center align-middle text-support-a-500 focus-visible:outline-2 focus-visible:outline-offset-2"
+		class="mr-1 inline-flex size-6 items-center justify-center align-middle text-support-a-500 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-default"
 		aria-label="Open word notes"
 		title="Open word notes"
+		disabled={!markersInteractive}
 		data-normalized-word-note=""
 		data-normalized-note-block={blockId}
 		data-normalized-note-index={contentIndex}

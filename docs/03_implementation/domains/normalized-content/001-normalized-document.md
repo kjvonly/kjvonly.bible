@@ -603,17 +603,22 @@ no durable Text Markup publication occurs
 
 The signed-out Reader renders the document without entering durable Text Markup edit mode. Editing requires an authenticated publisher; no anonymous markup identity is persisted.
 
-Durable writes remain at the explicit save boundary:
+Durable writes occur when `TextMarkupState` exits for Save or a different
+word-selection action, and only if its draft differs from accepted markings:
 
 ```text
 accepted Text Markup
     ↓
-mutable Reader draft
+TextMarkupState-owned draft
     ↓ click / drag
 updated draft
-    ↓ Save
+    ↓ Save or switch action (changed markings only)
 Domain persistence + Resource revision + Outbox intent
 ```
+
+Cancel and document/account reset discard the pending draft without a write.
+Opening Notes or Bookmarks through Navigation preserves the current action state
+and does not trigger a save.
 
 Crossing a word during drag must never cause an independent durable write.
 
@@ -621,38 +626,66 @@ Do not make the renderer the persistence owner merely because it exposes token a
 
 ## 10.7 Implemented v1 lifecycle and boundaries
 
-The current `documentEditMode`/word-selection implementation below is the
-baseline for the proposed [Reader Action State Pattern](./002-reader-action-state-pattern.md).
-That refactor is a **design**, not implemented behavior.
+The Reader's **Document Progress** setting (`showNormalizedDocumentProgress`)
+shows a vertical progress scrubber representing cumulative canonical text length
+across the entire normalized document. `NormalizedContentBlockWindow` builds
+text-length prefix sums once when the document is indexed (with whole table rows
+as one leaf). Scroll updates reuse those sums to report the first visible leaf
+and an approximate within-leaf position; they do not recount text.
 
-The standalone Reader owns `documentEditMode`, the shared document action
-surface for Text Markup, Notes, and Bookmarks. It obtains markup through
-`NormalizedContentTextMarkupService` for the authenticated publisher and the
-exact validated document descriptor.
+The existing `KJVVerticalScrubber` commits a percentage into the same cached
+index, locates its canonical leaf with binary search, and uses `prepareIndex()`
+to render the destination. The Reader scrolls its existing Pane-owned `ViewBody`
+to that leaf, with an approximate offset within it. Document Progress is a
+floating control whose visibility follows the shared scroll-direction runtime
+also used by Previous/Next. The Pane-owned `ViewBody` keeps its normal `px-4`
+content padding whether progress is enabled or disabled; no permanent right
+content gutter is reserved. The scrubber may overlay content at the right edge
+while visible. Neither the scrubber nor the progress setting creates a second
+scroll container or exposes the native scrollbar.
+
+The standalone Reader now uses the implemented
+[Reader Action State Pattern](./002-reader-action-state-pattern.md). One
+per-Reader `ReaderActionController` owns the active `ReaderActionState` and a
+single optional temporary-action return target. There is no parallel mutable
+`documentEditMode`/word-action flag machine. The Reader still owns document
+loading, authenticated publisher lookup, accepted Text Markup subscriptions,
+Navigation callbacks, and rendering.
 
 ```text
 Reader enters / authenticated publisher changes
     ↓
-Text Markup service.get(publisher, descriptor)
+Text Markup service reads local accepted object for immediate display
     ↓
-local accepted Domain Object, or exact Resource load on local miss
+service verifies published Resource; Reader subscribes to accepted Domain identity
     ↓
-Reader subscribes to that Text Markup Domain identity
+Edit requests TextMarkupState.enter(Initial)
+    ├─ verified → clone accepted markings into the state's editable draft
+    └─ failed lookup → existing recovery Navigation view
+         ├─ use local / start new / loaded → TextMarkupState
+         └─ continue without markup → WithoutMarkupState
     ↓
-Reader clones accepted markings into a separate mutable draft
+word click / drag updates TextMarkupState's in-memory draft
     ↓
-click / horizontal drag edits the draft; renderer projects the classes
+Save or switch to Note/Bookmark word selection
     ↓
-Save, or a Notes/Bookmarks action that exits documentEditMode
-    ↓
-compare visible draft markings with accepted markings
-    ├─ unchanged → close actions without a write
-    └─ changed → service.put(draft snapshot)
+TextMarkupState.exit(...) compares the draft to accepted markings
+    ├─ unchanged → transition without a write
+    ├─ write failure → veto transition; retain editable draft
+    └─ changed → service.put(captured draft)
                   ↓
                   IndexedDB transaction: Domain Object + Resource installation + Outbox
-    ↓
-notify subscribers, then wake Outbox publication
+                  ↓
+                  accepted-object notification updates Reader and state
+                  ↓
+                  controller activates the destination state
 ```
+
+A temporary Note/Bookmark selection returns to its captured origin state on
+completion or cancellation. Opening Notes, browsing Bookmarks, or splitting a
+Pane from the overflow **does not exit the current state or save its draft**.
+Returning to the mounted Reader preserves that action session. Clicking Save
+explicitly closes Text Markup; Cancel discards uncommitted changes.
 
 The IndexedDB transaction is the durable commit boundary. Publication is
 asynchronous: a remote Nostr relay is not required to accept an event before
@@ -699,7 +732,8 @@ Lookup failure and explicit new drafts:
   and the same options. Only completed outcomes cross the navigation boundary:
   accepted markup (`loaded`), use a saved local copy (`use-local`), start new
   markup, or continue without markup. Choosing local markup keeps the unresolved
-  lookup state so that the next Edit action offers the choices again.
+  lookup state so that the next **new** Edit session offers the choices again;
+  resuming the same session after a temporary action does not prompt again.
   A successful lookup opens document actions without a second lookup. Either
   Continue option returns to the Reader with document actions open.
 - Neither continuation choice creates or publishes markup immediately. When
@@ -956,8 +990,10 @@ markup absent without changing the document
 
 # 17. Mutable Edit Draft
 
-Text Markup v1 edits a Reader-owned mutable clone of the accepted markings.
-The accepted Domain object is not mutated by pending clicks or drag strokes.
+Text Markup v1 edits a reactive draft owned by the per-Reader `TextMarkupState`.
+The Reader passes accepted Domain updates to that state, but does not own the
+editable draft. The accepted Domain object is not mutated by pending clicks
+or drag strokes.
 
 Conceptually:
 
@@ -972,9 +1008,9 @@ reactive rerender
     ↓
 immediate visual feedback
     ↓
-explicit Save
+Save or switch to another word-selection action
     ↓
-persistence/publication
+changed-only persistence/publication
 ```
 
 Crossing many words during a drag must not cause one persistence/publication write per word.
@@ -987,8 +1023,9 @@ The durable write boundary remains owned by the Text Markup feature/service.
 
 # 18. Markup Mutation Semantics
 
-The Reader's click and drag handlers use the shared Text Markup edit helpers;
-mutation rules are centralized rather than duplicated.
+The Reader delegates word and drag interactions to the active action state.
+`TextMarkupState` uses the shared Text Markup edit helpers, keeping mutation
+rules centralized rather than duplicating them in the Reader.
 
 Implemented operations are:
 
@@ -1294,8 +1331,12 @@ Floating Previous/Next controls distinguish the **actual** document boundaries
 from the current rendered window's scroll boundaries: reaching the latter does
 not force the controls visible while more canonical leaves remain. Controls
 start visible for each loaded document, hide on downward scrolling, and return
-on upward scrolling. Height-window scroll-anchor corrections do not change
-control visibility, because they are not user scrolling.
+on upward scrolling. The Document Progress scrubber shares that same
+visibility and fade behavior, including in a standalone Reader with no
+Previous/Next buttons. A shared Reader runtime hook owns this visibility,
+listens to the Pane-owned `ViewBody`, and exposes the result to both controls;
+the navigation component only renders its buttons. Height-window scroll-anchor
+corrections do not change control visibility, because they are not user scrolling.
 
 Bookmark targets and local anchors are resolved to a canonical leaf index
 without mounting preceding blocks. The Reader mounts that leaf and its ancestor

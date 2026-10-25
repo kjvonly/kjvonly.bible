@@ -138,6 +138,35 @@ describe('normalized word Note markers', () => {
 		expect(onLinkActivate).not.toHaveBeenCalled();
 	});
 
+	it('keeps both markers visible but disables their activation when interactions are off', () => {
+		const onBookmarkMarkerActivate = vi.fn();
+		const onWordMarkerActivate = vi.fn();
+		const onLinkActivate = vi.fn(() => true);
+		mountRenderer({
+			wordMarkers: new Map([['__proto__', new Set([2])]]),
+			bookmarkMarkers: new Map([['__proto__', new Set([2])]]),
+			onBookmarkMarkerActivate, onWordMarkerActivate, onLinkActivate,
+			markersInteractive: false
+		});
+
+		const bookmark = root?.querySelector<HTMLButtonElement>('[data-normalized-word-bookmark]');
+		const note = root?.querySelector<HTMLButtonElement>('[data-normalized-word-note]');
+		expect(bookmark).not.toBeNull();
+		expect(note).not.toBeNull();
+		expect(bookmark?.disabled).toBe(true);
+		expect(note?.disabled).toBe(true);
+		bookmark!.click();
+		note!.click();
+		expect(onBookmarkMarkerActivate).not.toHaveBeenCalled();
+		expect(onWordMarkerActivate).not.toHaveBeenCalled();
+		expect(onLinkActivate).not.toHaveBeenCalled();
+		expect(root?.querySelector('p')?.textContent).toBe('Before Linked');
+
+		// Disabling markers does not disable the separate linked-word behavior.
+		root!.querySelector<HTMLAnchorElement>('a')!.click();
+		expect(onLinkActivate).toHaveBeenCalledOnce();
+	});
+
 	it('keeps joinPrevious text exact when a Bookmark marker precedes the joined word', () => {
 		mountRenderer({
 			document: { blocks: [{ type: 'paragraph', id: 'joined', content: [
@@ -171,6 +200,7 @@ function mountRenderer(props: {
 	onBookmarkMarkerActivate?: (address: {blockId: string; contentIndex: number}) => void;
 	onWordMarkerActivate?: (address: {blockId: string; contentIndex: number}) => void;
 	onLinkActivate?: (hrefs: readonly string[]) => boolean;
+	markersInteractive?: boolean;
 }): void {
 	root = window.document.createElement('div');
 	window.document.body.append(root);

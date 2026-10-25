@@ -20,7 +20,27 @@ export interface NormalizedContentBookmarkSelection {
 }
 
 /**
- * Builds one word Bookmark from the loaded document and active Resource identity.
+ * Builds a validated canonical word target for browsing an existing Bookmark.
+ * No preview text is needed: the target is the complete navigation identity.
+ *
+ * @throws When the descriptor is invalid or the address is not a word.
+ */
+export function createNormalizedContentBookmarkTarget(
+	descriptor: ResourceDescriptor,
+	document: NormalizedDocument,
+	address: NormalizedContentAddress
+): NormalizedDocumentBookmarkTarget {
+	const target: NormalizedDocumentBookmarkTarget = {
+		kind: 'normalized-document',
+		document: requireNormalizedContentDocumentIdentity(descriptor),
+		address: { kind: 'word', blockId: address.blockId, contentIndex: address.contentIndex }
+	};
+	assertNormalizedContentWordAddress(document, target.address);
+	return target;
+}
+
+/**
+ * Builds one word Bookmark for creation or relocation, including its preview.
  *
  * The address is the exact canonical content[] index, including non-word items.
  * The preview is a bounded plain-text window around the word; it is not used
@@ -33,15 +53,7 @@ export function createNormalizedContentBookmarkSelection(
 	document: NormalizedDocument,
 	address: NormalizedContentAddress
 ): NormalizedContentBookmarkSelection {
-	const documentIdentity = requireNormalizedContentDocumentIdentity(descriptor);
-
-	const target: NormalizedDocumentBookmarkTarget = {
-		kind: 'normalized-document',
-		document: documentIdentity,
-		address: { kind: 'word', blockId: address.blockId, contentIndex: address.contentIndex }
-	};
-	assertNormalizedContentWordAddress(document, target.address);
-
+	const target = createNormalizedContentBookmarkTarget(descriptor, document, address);
 	const content = findBlockContent(document.blocks, address.blockId);
 	if (!content) {
 		throw new Error('Selected Bookmark word has no source block');

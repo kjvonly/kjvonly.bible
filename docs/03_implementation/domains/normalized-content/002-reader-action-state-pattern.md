@@ -1,21 +1,19 @@
 # Normalized Content Reader — Action State Pattern
 
-**Status:** Proposed implementation design (2026-10-20); not yet implemented
+**Status:** Implemented (2026-10-21)
+
 **Scope:** Document actions in the normalized-content Reader
 
-The current Reader action lifecycle is documented in
+This documents the implemented state ownership and navigation behavior.
+The Text Markup persistence and lookup lifecycle is documented in
 [Normalized Document Implementation](./001-normalized-document.md#107-implemented-v1-lifecycle-and-boundaries).
-This document defines the intended refactor; it does **not** describe code that
-already exists. The existing Notes, Bookmarks, and Text Markup contracts remain
-in force until the refactor is implemented and validated.
 
 ## Purpose and boundaries
 
-Replace action-specific combinations of `documentEditMode`,
-`selectedWordAction`, and conditional gesture handlers in
-`normalizedContentReader.svelte` with **one active behavior-owning state**.
-An action state handles its own interactions and lifecycle. The Reader forwards
-word/drag/link interactions to that state instead of determining their meaning.
+The former mutable `documentEditMode`/`selectedWordAction` action flags and
+conditional gesture handlers have been replaced with **one active behavior-owning
+state** in `normalizedContentReader.svelte`. Each state owns its action behavior;
+the Reader forwards word/drag/link interactions to that state.
 
 Use a small **State design pattern**, not a general event dispatcher or a Harel
 statechart. An ordinary state can perform entry/exit actions and await an
@@ -47,14 +45,13 @@ block-window and document-loading implementations are outside this refactor.
 | State | Owned behavior | Gesture behavior | Exit/completion |
 |---|---|---|---|
 | `ReadingState` | Ordinary document interaction and initiating Edit | Existing word/link behavior; no markup | Begin the configured action session |
-| `TextMarkupState` | Draft, selected markup tool, changed-only save, recovery entry decision | Word click toggles; drag applies/removes markup | Save on successful switch/Done/handoff; discard on Cancel |
+| `TextMarkupState` | Draft, selected markup tool, changed-only save, recovery entry decision | Word click toggles; drag applies/removes markup | Save on successful switch/Done; discard on Cancel |
 | `WithoutMarkupState` | Explicit recovery choice to continue without markup | Consume word click without marking; ignore markup drag | Switch/close without a markup write |
 | `AddNoteState` | Select canonical word and initiate word Note navigation | Click selects word; drag ignored; document link suppressed | Complete/cancel through controller; navigation handoff follows agreed return policy |
 | `AddBookmarkState` | Select canonical word; create Bookmark | Click selects word; drag ignored; document link suppressed | On success return to captured state; on create failure remain for retry |
 | `MoveBookmarkState` | Select destination and open existing Bookmarks relocation picker | Click selects destination; drag ignored; document link suppressed | Cancel or picker handoff; typed picker result is handled separately |
-| `AddTagsState` | Future action; no Tag contract or behavior specified yet | To be defined by Tag requirements | Implements the same state contract |
 
-`TextMarkupState` is the **usual initial action state** when the user selects
+`TextMarkupState` is the **usual first action state** when the user selects
 Edit. This choice belongs to Reader composition/session setup, **not** to a
 controller hardcoded to the Text Markup class. A recovery decision can instead
 start the session in `WithoutMarkupState`.
@@ -63,14 +60,16 @@ Selecting a markup color/tool changes Text Markup's local data; it is not a
 transition to a different state. Toolbar/header visibility derives from the
 active state rather than becoming another source of workflow truth.
 
-## State interface (illustrative)
+## Implemented state contract
+
+The concrete contract lives in `modules/reader/actions/reader-action-state.ts`:
 
 ```ts
 interface ReaderActionState {
   readonly kind: ReaderActionKind;
 
-  enter(entry: 'initial' | 'resume'): Promise<EntryResult> | EntryResult;
-  exit(reason: ExitReason): Promise<boolean> | boolean;
+  enter(entry: ReaderActionEntry): ReaderActionEntryResult | Promise<ReaderActionEntryResult>;
+  exit(reason: ReaderActionExitReason): boolean | Promise<boolean>;
 
   onWordClick(address: NormalizedContentAddress): boolean;
   onDragApply(address: NormalizedContentAddress): void;
@@ -79,14 +78,17 @@ interface ReaderActionState {
 }
 ```
 
-These types and hooks are **provisional** and must be finalized against the
-renderer callbacks during implementation. Every concrete state implements the
-agreed interface, including intentional no-op methods. Word activation remains
+`ReaderActionKind`, `ReaderActionEntry`, `ReaderActionOutcome`, and
+`ReaderActionExitReason` are enums. The entry results are `Entered`, `Deferred`,
+and `Rejected`; controller transitions additionally permit `Blocked`. A future
+`AddTagsState` would implement the same contract when Tag requirements exist.
+
+Every concrete state implements the agreed interface, including intentional no-op methods. Word activation remains
 synchronous for the renderer's consumed/not-consumed contract; a state can begin
 asynchronous persistence/navigation after consuming an interaction.
 
-Avoid duplicate `onCancel()` and `exit('cancel')` responsibilities. The UI can
-request cancellation from the controller, which calls the state's `exit()`.
+Avoid duplicate `onCancel()` and `exit(ReaderActionExitReason.Cancel)`
+responsibilities. The UI can request cancellation from the controller, which calls the state's `exit()`.
 Do not introduce a generic `onEvent()` dispatcher alongside typed handlers.
 
 ## Controller and transitions
@@ -95,26 +97,27 @@ The controller holds the active state and offers a transition operation, not a
 set of `if (state === ...)` business-action branches:
 
 1. Ask `currentState.exit(reason)` to finish or discard its work as required.
-2. Await exit; if it fails/vetoes, leave the current state and draft active.
+2. Wait for asynchronous exits; complete synchronous exits immediately. If an exit
+   fails/vetoes, leave the current state and draft active.
 3. When activating a temporary action, capture the outgoing state as its
    **return target**. This is a state reference/contract, not a concrete class
    name or a separately hardcoded default.
 4. Enter the requested state; only publish it as active on a successful entry.
    A deferred/rejected entry must not expose a half-activated toolbar.
 5. When the temporary action reports completion or cancellation, transition
-   to the captured target; that state receives `enter('resume')`.
+   to the captured target; that state receives `enter(ReaderActionEntry.Resume)`.
 
 For example:
 
 ```text
 currentState: TextMarkupState
     Add Bookmark requested
-        -> currentState.exit('switch')
+        -> currentState.exit(ReaderActionExitReason.SwitchAction)
              -> unchanged draft: no write
              -> changed draft: await Text Markup Domain put()
              -> failed write: veto, remain in TextMarkupState
         -> capture current state as return target
-        -> AddBookmarkState.enter('initial')
+        -> AddBookmarkState.enter(ReaderActionEntry.Initial)
         -> currentState: AddBookmarkState
     Word clicked
         -> AddBookmarkState creates Bookmark through owning service
@@ -133,7 +136,6 @@ If nested temporary actions become real, revisit that constraint then.
 |---|---|
 | Switch to another action | Save only changed markings; veto transition on failure |
 | Save/Done | Save only changed markings; end action session |
-| Navigation handoff | Save changed markings before leaving; on failure do not navigate |
 | Cancel edits | Restore accepted markings; **do not write** |
 | Document/account reset | Clear abandoned session; **do not write** |
 
@@ -145,9 +147,9 @@ continues to update the displayed draft according to the current contract.
 
 ### Text Markup entry and recovery
 
-`TextMarkupState.enter('initial')` determines whether Text Markup is available
-for the current authenticated publisher/document and whether verification
-requires recovery. It **uses the existing** `TEXT_MARKUP_LOOKUP` Navigation view:
+`TextMarkupState.enter(ReaderActionEntry.Initial)` determines whether Text
+Markup is available for the authenticated publisher/document and whether
+verification requires recovery. It **uses the existing** `TEXT_MARKUP_LOOKUP` Navigation view:
 
 | Existing recovery outcome | Action session behavior |
 |---|---|
@@ -165,46 +167,61 @@ turn a session choice into a fabricated global verification success.
 
 ## Notes, Bookmarks, toolbar, and overflow
 
-- Move **Open Document Notes** to Reader overflow alongside **Browse document
-  bookmarks**. They are navigation commands, not word-selection states.
-- The same overflow has split-horizontal and split-vertical commands. Choosing
-  a command that leaves/changes editing context must honor the active state's
-  exit/save semantics; opening the menu itself need not exit.
-- Use small conditional rendering in the toolbar/header initially. Reuse the
-  existing toolbar component where practical; consider dynamic components only
-  when conditionals become difficult to maintain. Rendering checks are not a
-  second gesture dispatcher.
+- **Open Document Notes** and **Browse document bookmarks** are available in
+  Reader overflow. They are navigation commands, not word-selection states.
+- Opening overflow and using its Notes, Bookmarks, or split/navigation commands
+  **does not exit or replace the active Reader action state**. The mounted Reader
+  retains its draft, palette, and current mode while another view is open.
+  Returning resumes the same state; an external Bookmark result may change the
+  displayed location without ending the action session. Only a real state
+  switch or explicit Save/Done invokes Text Markup's save-on-exit behavior.
+- The existing toolbar and header derive their controls from
+  `ReaderActionKind`. Their presentation checks are not a second gesture
+  dispatcher or a second source of action state.
 - Notes/Bookmarks are Navigation-owned views over a preserved mounted Reader,
   not `NotesOpenState`/`BookmarksOpenState`. On return, use the controller's
   retained session and existing Domain notifications. Bookmark relocation still
   completes from the typed `backWithResult`, even if the selecting state has
   already handed off control.
 
-**Navigation-return policy still to settle:** whether the Reader resumes its
-captured action state or Reading after (a) opening word Notes or the relocation
-picker and (b) choosing overflow navigation/split commands. The controller
-must support the chosen behavior without importing concrete action states.
-The current overflow is disabled while editing, so that UI must also be
-adjusted when moving Document Notes there; do not leave the command unreachable.
+When a temporary word-selection action launches Notes or a Bookmark relocation
+picker, the controller returns to the captured action state; Navigation owns the
+pushed view and its typed result. Merely opening or returning from that view is
+not an additional state transition.
+
+The Reader overflow remains available while editing. It is disabled only
+while a transition or word action is busy; Document Notes is reachable from
+the overflow in both Text Markup and Without Markup sessions.
+
+Existing Note and Bookmark markers remain visible in every action state, but
+are interactive **only in `ReadingState`** (and while no Reader action is busy).
+Their disabled buttons do not navigate, consume word-selection gestures, or
+present a clickable cursor. New word-selection states do not need additional
+marker-handler exclusion checks.
 
 ## Implementation shape and Svelte reactivity
 
-Proposed per-Reader organization:
+Implemented per-Reader organization:
 
 ```text
 modules/reader/
-  normalizedContentReader.svelte           # host and rendering
+  normalizedContentReader.svelte           # host, Domain subscriptions, rendering
+  normalizedContentTextMarkupEditOptions.svelte  # presentation-only toolbar
   actions/
-    reader-action-state.ts                  # contracts
-    reader-action-controller.svelte.ts      # active state + reactive view status
-    states/
-      reading-state.ts
-      text-markup-state.ts                  # .svelte.ts only if it owns reactive fields
-      without-markup-state.ts
-      add-note-state.ts
-      add-bookmark-state.ts
-      move-bookmark-state.ts
+    reader-action-state.ts                  # contracts and enums
+    reader-action-controller.svelte.ts      # active state and temporary return target
+    reading-state.ts
+    text-markup-state.svelte.ts             # reactive draft and palette
+    without-markup-state.ts
+    add-note-state.svelte.ts
+    add-bookmark-state.svelte.ts
+    move-bookmark-state.svelte.ts
+    word-action-ports.ts                    # narrow shared word-action capabilities
 ```
+
+Each state/controller has a focused `.spec.ts`. The toolbar and integrated
+Reader behavior are covered by browser tests, including recovery, draft saving,
+Notes/Bookmarks navigation, and File Manager sequence navigation.
 
 Ordinary `.ts` files can implement behavior, delegate through **small typed
 collaborator ports**, and remain independently testable. Use `.svelte.ts` only
@@ -219,7 +236,7 @@ rather than reimplementing their rules in state files. This extraction should
 **reduce** the Reader's responsibilities, not move those responsibilities into
 an oversized controller.
 
-## Verification when implementing
+## Regression verification
 
 - Switching from Text Markup saves **before** entering a temporary action,
   writes only if changed, and stays in Text Markup on save failure.
@@ -231,8 +248,8 @@ an oversized controller.
 - Cancel versus Save/Done versus context reset preserve their distinct effects.
 - Recovery uses the existing view and typed results, including a return to
   Text Markup within the same session without another recovery prompt.
-- Navigation and relocation results preserve existing accepted Domain data and
-  correct return behavior as the remaining UX decisions are made.
+- Opening overflow/Notes/Bookmarks and returning preserves the active Reader
+  state without an implicit save; relocation may change the displayed location.
 - Multiple mounted Readers remain independent; no second scroll owner is added.
 
 ## Related implementation documentation

@@ -18,7 +18,8 @@ export const NORMALIZED_CONTENT_NAVIGATION_RESULTS = {
 export const NORMALIZED_CONTENT_OVERFLOW_ACTIONS = {
 	SPLIT_HORIZONTAL: 'split-horizontal',
 	SPLIT_VERTICAL: 'split-vertical',
-	BROWSE_DOCUMENT_BOOKMARKS: 'browse-document-bookmarks'
+	BROWSE_DOCUMENT_BOOKMARKS: 'browse-document-bookmarks',
+	OPEN_DOCUMENT_NOTES: 'open-document-notes'
 } as const;
 
 export type NormalizedContentOverflowAction =

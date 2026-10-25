@@ -31,6 +31,23 @@ describe(
 		);
 
 		it(
+			'exposes an independent document progress toggle under Reader',
+			() => {
+				const readerPage = settingsDefinition.pages.find((page) => page.id === 'reader');
+				expect(readerPage?.title).toBe('Reader');
+				expect(readerPage?.sections[0]?.rows).toContainEqual(
+					expect.objectContaining({
+						type: 'toggle',
+						id: 'show-normalized-document-progress',
+						setting: 'showNormalizedDocumentProgress'
+					})
+				);
+				expect(settingsDefinition.pages.find((page) => page.id === 'bible')?.sections[0]?.rows)
+					.toContainEqual(expect.objectContaining({ setting: 'showBibleScrollbar' }));
+			}
+		);
+
+		it(
 			'uses unique page ids',
 			() => {
 				const pageIDs = settingsDefinition.pages.map(

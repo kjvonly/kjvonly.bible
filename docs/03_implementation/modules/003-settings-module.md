@@ -154,6 +154,13 @@ Stable semantic IDs are used instead of Svelte component constructors in definit
 
 Resolvers map those IDs to presentation behavior where needed.
 
+The **Reader** settings page contains the normalized-document progress toggle
+(`showNormalizedDocumentProgress`). It is independent of the Bible scrollbar
+setting (`showBibleScrollbar`). Bible controls the native scrollbar; Reader
+controls a visual-only document progress rail based on cumulative text length.
+The Pane retains its single
+`ViewBody` scroll container.
+
 ---
 
 # 5. Important Settings Files

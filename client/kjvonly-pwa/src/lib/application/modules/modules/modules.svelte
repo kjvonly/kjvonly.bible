@@ -13,7 +13,7 @@
 	import EventNote from '$lib/components/svgs/eventNote.svelte';
 	import FolderOpen from '$lib/components/svgs/folderOpen.svelte';
 	import ImportExport from '$lib/components/svgs/importExport.svelte';
-	import Notes from '$lib/components/svgs/notes.svelte';
+	import NoteStack from '$lib/components/svgs/noteStack.svelte';
 	import Person from '$lib/components/svgs/person.svelte';
 	import Search from '$lib/components/svgs/search.svelte';
 	import Settings from '$lib/components/svgs/settings.svelte';
@@ -187,7 +187,7 @@
 	{:else if module === Modules.SEARCH}
 		<Search classes="h-5 w-5" />
 	{:else if module === Modules.NOTES}
-		<Notes classes="h-5 w-5" />
+		<NoteStack classes="h-5 w-5" />
 	{:else if module === Modules.BOOKMARKS}
 		<BookmarkStack classes="h-5 w-5" />
 	{:else if module === Modules.DICTIONARY}

@@ -110,10 +110,25 @@ describe(
 							false,
 						showBibleScrollbar:
 							false,
+						showNormalizedDocumentProgress:
+							false,
 						enableMaxWidth:
 							true
 					}
 				);
+			}
+		);
+
+		it(
+			'persists document progress independently of the Bible scrollbar',
+			() => {
+				settingsService.updateSetting('showNormalizedDocumentProgress', true);
+				expect(settingsService.getSettings()).toMatchObject({
+					showNormalizedDocumentProgress: true,
+					showBibleScrollbar: false
+				});
+				settingsService.updateSetting('showNormalizedDocumentProgress', false);
+				expect(settingsService.getSettings().showNormalizedDocumentProgress).toBe(false);
 			}
 		);
 
@@ -183,6 +198,8 @@ describe(
 						showBibleVersion:
 							false,
 						showBibleScrollbar:
+							false,
+						showNormalizedDocumentProgress:
 							false,
 						enableMaxWidth:
 							true
@@ -255,6 +272,8 @@ describe(
 						showBibleVersion:
 							false,
 						showBibleScrollbar:
+							false,
+						showNormalizedDocumentProgress:
 							false,
 						enableMaxWidth:
 							true
@@ -354,6 +373,8 @@ describe(
 						showBibleVersion:
 							true,
 						showBibleScrollbar:
+							true,
+						showNormalizedDocumentProgress:
 							true,
 						enableMaxWidth:
 							false

@@ -19,6 +19,66 @@ function nestedSermon(): NormalizedDocument {
     };
 }
 
+describe('Normalized Content text-length progress', () => {
+    it('weights long paragraphs by cumulative text rather than the number of blocks', () => {
+        const window = new NormalizedContentBlockWindow(() => {});
+        window.reset({ blocks: [
+            { type: 'paragraph', id: 'short', content: [{ type: 'word', text: 'a' }] },
+            { type: 'paragraph', id: 'long', content: [{ type: 'word', text: 'x'.repeat(98) }] }
+        ] });
+        // With one space per token, the first of 100 characters occupies 2%.
+        expect(window.getTextProgress(0)).toBe(0);
+        expect(window.getTextProgress(1)).toBeCloseTo(0.02);
+        expect(window.getTextProgress(1, 0.5)).toBeCloseTo(0.51);
+        expect(window.getTextProgress(2)).toBe(1);
+        window.prepareIndex(1);
+        expect(window.getTextProgress(1)).toBeCloseTo(0.02);
+    });
+
+    it('seeks by cumulative text length without scanning the mounted window', () => {
+        const window = new NormalizedContentBlockWindow(() => {});
+        window.reset({ blocks: [
+            { type: 'paragraph', id: 'short', content: [{ type: 'word', text: 'a' }] },
+            { type: 'paragraph', id: 'long', content: [{ type: 'word', text: 'x'.repeat(98) }] }
+        ] });
+        expect(window.findTextPosition(0)).toEqual({ index: 0, fraction: 0 });
+        expect(window.findTextPosition(0.01)?.index).toBe(0);
+        expect(window.findTextPosition(0.01)?.fraction).toBeCloseTo(0.505);
+        expect(window.findTextPosition(0.51)?.index).toBe(1);
+        expect(window.findTextPosition(0.51)?.fraction).toBeCloseTo(0.5001);
+        expect(window.findTextPosition(1)).toEqual({ index: 1, fraction: 1 });
+        expect(window.findTextPosition(10)).toEqual({ index: 1, fraction: 1 });
+
+        expect(window.prepareIndex(window.findTextPosition(0.51)!.index)).toBe(true);
+        expect(window.getRange()).toEqual({ start: 1, end: 2, total: 2 });
+        expect(window.findTextPosition(0.01)?.index).toBe(0);
+        expect(window.findTextPosition(0.01)?.fraction).toBeCloseTo(0.505);
+        window.reset();
+        expect(window.findTextPosition(0.5)).toBeUndefined();
+    });
+
+    it('counts nested table-row text as one atomic leaf and resets for new documents', () => {
+        const window = new NormalizedContentBlockWindow(() => {});
+        window.reset({ blocks: [
+            { type: 'table', id: 'table', blocks: [{
+                type: 'table-row', id: 'row', blocks: [{
+                    type: 'table-cell', id: 'cell', header: false, blocks: [
+                        { type: 'paragraph', id: 'nested', content: [{ type: 'word', text: 'a'.repeat(8) }] }
+                    ]
+                }]
+            }] },
+            { type: 'paragraph', id: 'after', content: [{ type: 'word', text: 'b'.repeat(8) }] }
+        ] });
+        expect(window.getRange().total).toBe(2);
+        expect(window.getTextProgress(1)).toBeCloseTo(0.5);
+        window.reset({ blocks: [{ type: 'thematic-break', id: 'break' }] });
+        expect(window.getTextProgress(0)).toBe(0);
+        expect(window.getTextProgress(1)).toBe(1);
+        window.reset();
+        expect(window.getTextProgress(0)).toBe(0);
+    });
+});
+
 describe('Normalized Content nested block window', () => {
     it('does not render all descendants of a mounted container', () => {
         const original = nestedSermon();

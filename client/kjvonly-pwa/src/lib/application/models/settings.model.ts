@@ -8,6 +8,7 @@ export interface Settings {
   showPericopes: boolean;
   showBibleVersion: boolean;
   showBibleScrollbar: boolean;
+  showNormalizedDocumentProgress: boolean;
   enableMaxWidth: boolean;
 }
 
@@ -22,6 +23,7 @@ export function newSettings(): Settings {
     showPericopes: false,
     showBibleVersion: false,
     showBibleScrollbar: false,
+    showNormalizedDocumentProgress: false,
     enableMaxWidth: true
   };
 }
@@ -97,6 +99,11 @@ export function normalizeSettings(
       normalizeBoolean(
         settings.showBibleScrollbar,
         defaults.showBibleScrollbar
+      ),
+    showNormalizedDocumentProgress:
+      normalizeBoolean(
+        settings.showNormalizedDocumentProgress,
+        defaults.showNormalizedDocumentProgress
       ),
     enableMaxWidth:
       normalizeBoolean(

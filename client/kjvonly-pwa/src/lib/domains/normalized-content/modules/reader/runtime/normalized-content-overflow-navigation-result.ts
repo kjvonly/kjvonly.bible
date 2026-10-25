@@ -18,6 +18,8 @@ interface NormalizedContentOverflowNavigationResultContext {
 	whenActive: NavigationEntryContext['whenActive'];
 	/** Opens document-scoped Bookmarks using the Reader's current descriptor. */
 	onBrowseDocumentBookmarks: () => void;
+	/** Opens Notes scoped to this Reader's current document without exiting its action state. */
+	onOpenDocumentNotes: () => void;
 }
 
 /**
@@ -47,6 +49,9 @@ function applyOverflowAction(
 	context: NormalizedContentOverflowNavigationResultContext
 ): void {
 	switch (action) {
+		case NORMALIZED_CONTENT_OVERFLOW_ACTIONS.OPEN_DOCUMENT_NOTES:
+			context.onOpenDocumentNotes();
+			return;
 		case NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS:
 			context.onBrowseDocumentBookmarks();
 			return;
@@ -64,7 +69,8 @@ function isNormalizedContentOverflowAction(
 	return (
 		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_HORIZONTAL ||
 		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.SPLIT_VERTICAL ||
-		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS
+		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.BROWSE_DOCUMENT_BOOKMARKS ||
+		value === NORMALIZED_CONTENT_OVERFLOW_ACTIONS.OPEN_DOCUMENT_NOTES
 	);
 }
 
