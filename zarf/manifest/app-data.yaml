@@ -21,24 +21,29 @@ strategies:
 resources:
 
   # ---------------------------------------------------------------------------
-  # Bible Chapters - KJVS - Individual
+  # Bible Chapters - KJVS - Individual (optional; disabled by default)
+  #
+  # Bundles are kept in Git LFS instead of thousands of chapter files.
+  # If individual Nostr chapter events are needed for faster initial
+  # chapter loads, expand the KJVS bundle locally into
+  # data/bible/chapters/content/kjvs/ and uncomment this resource.
   # ---------------------------------------------------------------------------
 
-  bible-chapters-kjvs:
-    path: ../../data/bible/chapters/content/kjvs
-
-    event:
-      encoding:
-        - hex
-
-      tags:
-        - ["d", "kjvonly/bible/chapter/kjvs/${key}"]
-        - ["m", "application/json+gzip+hex"]
-        - ["t", "bible/chapter"]
-        - ["dataType", "kjvonly.bible.chapter"]
-        - ["dataVersion", "1"]
-        - ["representation", "content"]
-        - ["version", "kjvs"]
+  # bible-chapters-kjvs:
+  #   path: ../../data/bible/chapters/content/kjvs
+  #
+  #   event:
+  #     encoding:
+  #       - hex
+  #
+  #     tags:
+  #       - ["d", "kjvonly/bible/chapter/kjvs/${key}"]
+  #       - ["m", "application/json+gzip+hex"]
+  #       - ["t", "bible/chapter"]
+  #       - ["dataType", "kjvonly.bible.chapter"]
+  #       - ["dataVersion", "1"]
+  #       - ["representation", "content"]
+  #       - ["version", "kjvs"]
 
   # ---------------------------------------------------------------------------
   # Bible Chapters - KJVS - Bundle
@@ -149,32 +154,6 @@ resources:
         - ["m", "application/json+hex"]
         - ["t", "bible/booknames"]
         - ["dataType", "kjvonly.bible.booknames"]
-        - ["dataVersion", "1"]
-        - ["representation", "descriptors"]
-
-    object-upload:
-      mediaType: application/json+gzip
-      encoding: []
-
-  # ---------------------------------------------------------------------------
-  # Strong's Definitions - Bundle
-  #
-  # Individual Strong's Resources are intentionally omitted from the
-  # development manifest. They can be added for production publication.
-  # ---------------------------------------------------------------------------
-
-  strongs-kjvs:
-    path: ../../data/strongs/definitions/bundles/strongs.json.gz
-
-    event:
-      encoding:
-        - hex
-
-      tags:
-        - ["d", "kjvonly/strongs/definition/kjvs"]
-        - ["m", "application/json+hex"]
-        - ["t", "strongs/definition"]
-        - ["dataType", "kjvonly.strongs.definition"]
         - ["dataVersion", "1"]
         - ["representation", "descriptors"]
 
@@ -389,7 +368,6 @@ collections:
       - bible-paragraphs
       - bible-pericopes
       - bible-booknames
-      - strongs-kjvs
 
     collections:
       - plans-readings-default

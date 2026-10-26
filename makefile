@@ -5,55 +5,6 @@ NOSTR_SECRET_KEY := $(shell cat ~/.config/nostr/dev.key)
 export NOSTR_SECRET_KEY
 
 ###############################################################################
-# SEED 
-
-## CHAPTERS
-seed-chapters:
-	cd zarf/scripts/seed && \
-	./chapters.sh all
-
-seed-chapters-relay:
-	cd zarf/scripts/seed && \
-	./chapters.sh relay
-
-seed-chapters-blossom:
-	cd zarf/scripts/seed && \
-	./chapters.sh blossom
-
-seed-kjvs:
-	cd zarf/scripts/seed && \
-	./chapters.sh file ../../../data/json.gz/kjvs.json.gz "KJV Bible with Strongs Concordance"
-
-seed-kjv:
-	cd client/cli && \
-	npm run build && \
-	node dist/main.js sync -v ../../zarf/manifest/kjv.yaml \
-	| node scripts/format-verbose-log.mjs
-
-## STRONGS
-seed-strongs:
-	cd zarf/scripts/seed && ./strongs.sh all
-
-seed-strongs-relay:
-	cd zarf/scripts/seed && ./strongs.sh relay
-
-seed-strongs-blossom:
-	cd zarf/scripts/seed && ./strongs.sh blossom
-
-seed-strongs-all-file:
-	cd zarf/scripts/seed && ./strongs.sh file ../../../data/strongs.json.gz/all.json.gz "Strong's Concordance"
-
-## PLANS
-seed-plans-relay:
-	cd zarf/scripts/seed && ./plans.sh relay
-	cd zarf/scripts/seed && NOSTR_SECRET_KEY="$(NOSTR_SECRET_KEY)" ./plans.sh
-
-## BOOTSTRAP
-
-seed-bootstrap:
-	cd zarf/scripts/seed && ./bootstrap.sh
-
-###############################################################################
 # DOCKER
 
 DOCKER_COMPOSE = docker compose \
@@ -511,7 +462,6 @@ worktree-sync:
 worktree-remove:
 	@test -n "$(BRANCH)" || (echo "Usage: make worktree-remove BRANCH=feature/server-deployment" && exit 1)
 	@WORKTREE="worktrees/$$(basename "$(BRANCH)")"; \
-	git -C "$$WORKTREE" submodule deinit -f --all; \
 	git worktree remove "$$WORKTREE"
 
 # make worktree-remove-all SKIP=ops,bug

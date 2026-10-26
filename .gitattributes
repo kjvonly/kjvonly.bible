@@ -1,0 +1,2 @@
+# Track compressed Resource payloads only in the worktree-local data directory.
+data/**/*.gz filter=lfs diff=lfs merge=lfs -text

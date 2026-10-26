@@ -12,8 +12,8 @@ esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 BUILDER="$ROOT/zarf/scripts/seed/build-dictionary-headword-index.mjs"
-SOURCE_DIR="$ROOT/../../data/dictionary/entries/bundles"
-OUTPUT_DIR="$ROOT/../../data/dictionary/indexes/bundles"
+SOURCE_DIR="$ROOT/data/dictionary/entries/bundles"
+OUTPUT_DIR="$ROOT/data/dictionary/indexes/bundles"
 
 for edition in webster-1828 webster-1844; do
   node "$BUILDER" \

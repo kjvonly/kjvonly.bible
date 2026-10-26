@@ -555,7 +555,7 @@ This allows manifests to remain portable regardless of where the CLI command is 
 ```yaml
 resources:
   bible-bundle-kjv:
-    path: ../../data/json.gz/kjv.json.gz
+    path: ../../data/bible/chapters/bundles/kjv.json.gz
 
     event:
       encoding:
