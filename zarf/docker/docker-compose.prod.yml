@@ -103,8 +103,8 @@ services:
 
   relay:
     build:
-      context: ../../relay
-      dockerfile: Dockerfile
+      context: ../../server
+      dockerfile: relay/Dockerfile
     ports:
       - "${RELAY_PORT}:3334"
     environment:
@@ -116,8 +116,8 @@ services:
 
   blossom:
     build:
-      context: ../../blossom
-      dockerfile: Dockerfile
+      context: ../../server
+      dockerfile: blossom/Dockerfile
     ports:
       - "${BLOSSOM_PORT}:3335"
     environment:

@@ -26,6 +26,17 @@ Start with the smallest relevant set and follow cross-references only when the t
 
 ---
 
+# Backend services (Khatru)
+
+For changes to the Go Nostr relay and Blossom servers, start with
+[`services/000-khatru-services.md`](services/000-khatru-services.md), then
+read the relevant pages under `services/relay/`, `services/blossom/`,
+`services/platform/`, or `services/storage/`. These document current server
+wiring, storage and deployment; they do not redefine the client
+Resource Boundary or Domain ownership.
+
+---
+
 # Core Runtime Documents
 
 ## Pane / Navigation Runtime

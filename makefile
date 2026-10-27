@@ -44,8 +44,9 @@ DOCKER_COMPOSE_TEST = docker compose \
 ###############################################################################
 ## DEFAULT STACK
 
+# Rebuild local images on development startup; Docker still uses its layer cache.
 up:
-	$(DOCKER_COMPOSE) up -d
+	$(DOCKER_COMPOSE) up -d --build
 
 down:
 	$(DOCKER_COMPOSE) down
@@ -81,7 +82,7 @@ psql-blossom:
 ## TEST STACK
 
 test-up:
-	$(DOCKER_COMPOSE_TEST) up -d
+	$(DOCKER_COMPOSE_TEST) up -d --build
 
 test-down:
 	$(DOCKER_COMPOSE_TEST) down
@@ -138,59 +139,81 @@ nostr-load:
 nostr-nsec:
 	@cat ~/.config/nostr/dev.key | xargs nak encode nsec
 
-##############################################################################
+###############################################################################
+# SERVER (one Go module at server/)
+
+.PHONY: server-tidy server-build server-test
+
+server-tidy:
+	cd server && GOTOOLCHAIN=auto go mod tidy
+
+server-build: relay-build blossom-build
+
+# Tests both services and the shared PostgreSQL eventstore package.
+server-test:
+	cd server && GOTOOLCHAIN=auto go test ./...
+
+###############################################################################
 # RELAY
 
+.PHONY: relay-build relay-run relay-test relay-docker-build relay-docker-up \
+	relay-docker-rebuild relay-logs relay-shell
+
 relay-build:
-	cd relay && go build -o relay .
+	mkdir -p server/bin
+	cd server && GOTOOLCHAIN=auto go build -o bin/relay ./relay
 
 relay-run:
-	cd relay && go run .
+	cd server && GOTOOLCHAIN=auto go run ./relay
 
 relay-test:
-	cd relay && go test ./...
+	cd server && GOTOOLCHAIN=auto go test ./relay/...
 
 relay-docker-build:
-	docker compose -f zarf/docker/docker-compose.yml build relay
+	$(DOCKER_COMPOSE) build relay
 
 relay-docker-up:
-	docker compose -f zarf/docker/docker-compose.yml up -d relay
+	$(DOCKER_COMPOSE) up -d relay
 
 relay-docker-rebuild:
-	docker compose -f zarf/docker/docker-compose.yml up -d --build relay
+	$(DOCKER_COMPOSE) up -d --build relay
 
 relay-logs:
-	docker compose -f zarf/docker/docker-compose.yml logs -f relay
+	$(DOCKER_COMPOSE) logs -f relay
 
 relay-shell:
-	docker exec -it relay_server sh
+	$(DOCKER_COMPOSE) exec relay sh
 
 ###############################################################################
 # BLOSSOM
 
+.PHONY: blossom-build blossom-run blossom-test blossom-docker-build \
+	blossom-docker-up blossom-docker-rebuild blossom-logs blossom-shell
+
 blossom-build:
-	cd blossom && go build -o blossom .
+	mkdir -p server/bin
+	cd server && GOTOOLCHAIN=auto go build -o bin/blossom ./blossom
 
 blossom-run:
-	cd blossom && go run .
+	cd server && GOTOOLCHAIN=auto go run ./blossom
 
 blossom-test:
-	cd blossom && go test ./...
+	cd server && GOTOOLCHAIN=auto go test ./blossom/...
 
 blossom-docker-build:
-	docker compose -f zarf/docker/docker-compose.yml build blossom
+	$(DOCKER_COMPOSE) build blossom
 
 blossom-docker-up:
-	docker compose -f zarf/docker/docker-compose.yml up -d blossom
+	$(DOCKER_COMPOSE) up -d blossom
 
 blossom-docker-rebuild:
-	docker compose -f zarf/docker/docker-compose.yml up -d --build blossom
+	$(DOCKER_COMPOSE) up -d --build blossom
 
 blossom-logs:
-	docker compose -f zarf/docker/docker-compose.yml logs -f blossom
+	$(DOCKER_COMPOSE) logs -f blossom
 
 blossom-shell:
-	docker exec -it blossom_server sh
+	$(DOCKER_COMPOSE) exec blossom sh
 
 
 ###############################################################################

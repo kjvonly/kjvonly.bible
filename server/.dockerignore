@@ -1,0 +1,5 @@
+# Exclude build artifacts from the server-only Docker context.
+relay/relay
+blossom/blossom
+*.test
+*.exe

@@ -1,19 +1,18 @@
 FROM golang:1.25.4-bookworm AS builder
 
-WORKDIR /app
+WORKDIR /src
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o relay ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/relay ./relay
 
 FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY --from=builder /app/relay /app/relay
+COPY --from=builder /out/relay /app/relay
 
 EXPOSE 3334
 
