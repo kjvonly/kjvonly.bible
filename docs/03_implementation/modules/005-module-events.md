@@ -1,7 +1,7 @@
 # Module Events and Runtime Communication
 
 **Status:** Current
-**Scope:** `client/kjvonly-pwa`
+**Scope:** `client/pwa`
 
 ## Purpose
 

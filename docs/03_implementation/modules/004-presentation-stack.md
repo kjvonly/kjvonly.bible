@@ -1,7 +1,7 @@
 # Module Presentation Stack
 
 **Status:** Current  
-**Scope:** `client/kjvonly-pwa`
+**Scope:** `client/pwa`
 
 ---
 
@@ -123,7 +123,7 @@ The `{#each}` must remain keyed by runtime `NavigationView` identity so replacin
 Location:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/pane/components/paneSurface.svelte
+client/pwa/src/lib/application/runtime/pane/components/paneSurface.svelte
 ```
 
 It owns Pane-wide presentation policy such as:
@@ -163,7 +163,7 @@ The feature does not receive a generic mutable `obj` prop.
 Shared view presentation primitives live under:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/pane/components/
+client/pwa/src/lib/application/runtime/pane/components/
 ```
 
 The two important view-region components are:

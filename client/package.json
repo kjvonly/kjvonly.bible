@@ -2,7 +2,7 @@
 	"name": "kjvonly-client",
 	"private": true,
 	"workspaces": [
-		"kjvonly-pwa",
+		"pwa",
 		"cli",
 		"packages/*"
 	],

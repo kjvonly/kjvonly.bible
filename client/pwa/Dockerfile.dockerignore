@@ -2,4 +2,4 @@
 **/.svelte-kit
 **/build
 **/dist
-kjvonly-pwa/.certs
+pwa/.certs

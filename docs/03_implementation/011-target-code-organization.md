@@ -86,7 +86,7 @@ unless the caller is itself part of that owner or is intentionally composing/tes
 The primary client organization is:
 
 ```text
-client/kjvonly-pwa/src/lib/
+client/pwa/src/lib/
 
     application/
     domains/

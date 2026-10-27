@@ -122,11 +122,11 @@ export async function buildIndexFile(sourcePath, destinationPath, resourceId, Do
 
 /** Use the app's installed FlexSearch dependency rather than introducing another version. */
 function loadFlexSearch() {
-  const requireFromPwa = createRequire(new URL('../../../client/kjvonly-pwa/package.json', import.meta.url));
+  const requireFromPwa = createRequire(new URL('../../../client/pwa/package.json', import.meta.url));
   try {
     return requireFromPwa('flexsearch').Document;
   } catch (error) {
-    throw new Error('Install client/kjvonly-pwa dependencies first (npm --prefix client/kjvonly-pwa ci).', { cause: error });
+    throw new Error('Install client/pwa dependencies first (npm --prefix client/pwa ci).', { cause: error });
   }
 }
 

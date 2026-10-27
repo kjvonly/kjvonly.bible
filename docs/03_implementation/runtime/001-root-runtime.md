@@ -2408,11 +2408,11 @@ runtime dimension model is intentionally being replaced.
 The most relevant current files are:
 
 ```text
-client/kjvonly-pwa/src/routes/
+client/pwa/src/routes/
     +layout.svelte
     +page.svelte
 
-client/kjvonly-pwa/src/lib/application/runtime/
+client/pwa/src/lib/application/runtime/
     application.ts
     application-context.ts
     index.ts
@@ -2437,7 +2437,7 @@ client/kjvonly-pwa/src/lib/application/runtime/
             buffer.model.ts
         module-buffer-factory.ts
 
-client/kjvonly-pwa/src/lib/application/services/
+client/pwa/src/lib/application/services/
     pane.service.svelte.ts
     authentication.service.ts
     toast.service.ts
@@ -2445,7 +2445,7 @@ client/kjvonly-pwa/src/lib/application/services/
     account/
         account.service.ts
 
-client/kjvonly-pwa/src/lib/application/resources/
+client/pwa/src/lib/application/resources/
     resource-selection.service.ts
     module-resource-selection-builder.ts
     module-resource-selection-resolver.ts

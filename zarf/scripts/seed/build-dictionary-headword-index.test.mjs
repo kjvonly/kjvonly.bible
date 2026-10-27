@@ -80,7 +80,7 @@ test('published records preserve multiple keys and aliases without storing defin
 // On a developer workstation this verifies the actual app FlexSearch serialization.
 // The code-only test environment may not have npm dependencies installed.
 import { createRequire } from 'node:module';
-const requireFromPwa = createRequire(new URL('../../../client/kjvonly-pwa/package.json', import.meta.url));
+const requireFromPwa = createRequire(new URL('../../../client/pwa/package.json', import.meta.url));
 let FlexSearchDocument;
 try { FlexSearchDocument = requireFromPwa('flexsearch').Document; } catch { /* node_modules not available */ }
 

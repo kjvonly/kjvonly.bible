@@ -456,8 +456,8 @@ worktree-sync:
 	@test -n "$(BRANCH)" || (echo "Usage: make worktree-sync BRANCH=feature/server-deployment" && exit 1)
 	@WORKTREE="worktrees/$$(basename "$(BRANCH)")"; \
 	test -d "$$WORKTREE" || (echo "Worktree does not exist: $$WORKTREE" && exit 1); \
-	rsync -av --delete client/node_modules/ "$$WORKTREE/client/kjvonly-pwa/node_modules/"; \
-	rsync -a client/kjvonly-pwa/.certs/ "$$WORKTREE/client/kjvonly-pwa/.certs/"
+	rsync -av --delete client/node_modules/ "$$WORKTREE/client/pwa/node_modules/"; \
+	rsync -a client/pwa/.certs/ "$$WORKTREE/client/pwa/.certs/"
 
 worktree-remove:
 	@test -n "$(BRANCH)" || (echo "Usage: make worktree-remove BRANCH=feature/server-deployment" && exit 1)

@@ -257,7 +257,7 @@ client/cli/
 The browser application remained separate:
 
 ```text
-client/kjvonly-pwa/
+client/pwa/
 ```
 
 The captured repository shape was:
@@ -266,7 +266,7 @@ The captured repository shape was:
 kjvonly.bible/
 ├── client/
 │   ├── cli/
-│   └── kjvonly-pwa/
+│   └── pwa/
 ├── data/
 ├── relay/
 ├── zarf/

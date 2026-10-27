@@ -344,7 +344,7 @@ The CLI lives in the `client` npm workspace:
 
 ```text
 client/
-├── kjvonly-pwa/
+├── pwa/
 ├── cli/
 └── packages/
     └── normalized-content/

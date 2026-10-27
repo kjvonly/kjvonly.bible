@@ -261,7 +261,7 @@ client/packages/normalized-content/       # existing normalized semantic contrac
 client/packages/html-normalized-content/  # shared source-format converter
 
 client/cli/                               # consumes shared HTML conversion
-client/kjvonly-pwa/                       # consumes shared HTML conversion
+client/pwa/                       # consumes shared HTML conversion
 ```
 
 The HTML package is named `@kjvonly/html-normalized-content`. Keep it a separate dependency *toward* `@kjvonly/normalized-content`; do not add HTML/Cheerio dependencies to the canonical normalized-content contract.

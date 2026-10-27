@@ -54,7 +54,7 @@ Repository:
 Primary application:
 
 ```text
-client/kjvonly-pwa
+client/pwa
 ```
 
 The PWA is built with:
@@ -1182,22 +1182,22 @@ Patch paths must always be repository-root-relative Git paths.
 Use standard `a/` and `b/` prefixes:
 
 ```diff
-diff --git a/client/kjvonly-pwa/src/lib/example.ts b/client/kjvonly-pwa/src/lib/example.ts
---- a/client/kjvonly-pwa/src/lib/example.ts
-+++ b/client/kjvonly-pwa/src/lib/example.ts
+diff --git a/client/pwa/src/lib/example.ts b/client/pwa/src/lib/example.ts
+--- a/client/pwa/src/lib/example.ts
++++ b/client/pwa/src/lib/example.ts
 ```
 
 For new files:
 
 ```diff
 --- /dev/null
-+++ b/client/kjvonly-pwa/src/lib/example.ts
++++ b/client/pwa/src/lib/example.ts
 ```
 
 For deleted files:
 
 ```diff
---- a/client/kjvonly-pwa/src/lib/example.ts
+--- a/client/pwa/src/lib/example.ts
 +++ /dev/null
 ```
 
@@ -1263,14 +1263,14 @@ Afterward give validation separately.
 For the primary PWA, the normal full validation is:
 
 ```bash
-cd client/kjvonly-pwa
+cd client/pwa
 npm run test && npm run build
 ```
 
 When the patch specifically adds or changes browser tests, also call out the targeted browser-test command when useful:
 
 ```bash
-cd client/kjvonly-pwa
+cd client/pwa
 npm run test:browser
 ```
 

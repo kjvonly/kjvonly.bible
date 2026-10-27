@@ -1,7 +1,7 @@
 # UI Theme System
 
 **Status:** Current  
-**Area:** `client/kjvonly-pwa`  
+**Area:** `client/pwa`  
 **Primary implementation:** `src/app.css`, `SettingsService`, Settings UI
 
 ## Purpose
@@ -43,10 +43,10 @@ It does not define general component styling conventions or Workspace layout. Th
 The important implementation files are:
 
 ```text
-client/kjvonly-pwa/src/app.css
-client/kjvonly-pwa/src/lib/application/models/settings.model.ts
-client/kjvonly-pwa/src/lib/application/services/settings.service.ts
-client/kjvonly-pwa/src/lib/application/modules/settings/
+client/pwa/src/app.css
+client/pwa/src/lib/application/models/settings.model.ts
+client/pwa/src/lib/application/services/settings.service.ts
+client/pwa/src/lib/application/modules/settings/
 ```
 
 `SettingsService` is application-owned and exposed to Svelte through `ApplicationContext`.

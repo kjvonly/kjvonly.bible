@@ -137,7 +137,7 @@ services:
   web:
     build:
       context: ../../client
-      dockerfile: kjvonly-pwa/Dockerfile
+      dockerfile: pwa/Dockerfile
       args:
         BASE_PATH: ${BASE_PATH:-}
         APP_GIT_COMMIT: ${GIT_COMMIT:-unknown}

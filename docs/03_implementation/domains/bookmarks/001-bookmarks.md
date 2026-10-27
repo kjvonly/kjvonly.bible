@@ -367,7 +367,7 @@ Inline indicators and list views re-query on `BookmarksService` invalidation aft
 Representative implemented Bookmarks files (consult the source for the complete tree):
 
 ```text
-client/kjvonly-pwa/src/lib/domains/bookmarks/
+client/pwa/src/lib/domains/bookmarks/
   index.ts                              # Node-safe public API
   models/
     bookmark.model.ts                   # target discriminated union
@@ -431,7 +431,7 @@ client/kjvonly-pwa/src/lib/domains/bookmarks/
 
 ### Validation commands
 
-Run focused tests first, then (from `client/kjvonly-pwa`) `npm run test && npm run build`, and `npm run test:browser` for browser/IndexedDB/navigation work. Use `git diff --check` before generating code patches. Do not mark these pending UI flows complete based on structural/syntax checks alone.
+Run focused tests first, then (from `client/pwa`) `npm run test && npm run build`, and `npm run test:browser` for browser/IndexedDB/navigation work. Use `git diff --check` before generating code patches. Do not mark these pending UI flows complete based on structural/syntax checks alone.
 
 ## 13. Implementation slices
 

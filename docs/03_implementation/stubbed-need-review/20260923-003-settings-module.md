@@ -1,10 +1,10 @@
 # Settings Module Implementation
 
 **Status:** Current  
-**Area:** `client/kjvonly-pwa`  
-**Primary implementation:** `client/kjvonly-pwa/src/lib/application/modules/settings/`  
-**Application settings service:** `client/kjvonly-pwa/src/lib/application/services/settings.service.ts`  
-**Settings model:** `client/kjvonly-pwa/src/lib/application/models/settings.model.ts`
+**Area:** `client/pwa`  
+**Primary implementation:** `client/pwa/src/lib/application/modules/settings/`  
+**Application settings service:** `client/pwa/src/lib/application/services/settings.service.ts`  
+**Settings model:** `client/pwa/src/lib/application/models/settings.model.ts`
 
 ---
 
@@ -330,7 +330,7 @@ flowchart TB
 The Settings module is organized approximately as follows:
 
 ```text
-client/kjvonly-pwa/src/lib/application/modules/settings/
+client/pwa/src/lib/application/modules/settings/
 ├── components/
 │   ├── settingsIcon.svelte
 │   ├── settingsPage.svelte
@@ -376,11 +376,11 @@ client/kjvonly-pwa/src/lib/application/modules/settings/
 Related application-wide files include:
 
 ```text
-client/kjvonly-pwa/src/lib/application/models/settings.model.ts
-client/kjvonly-pwa/src/lib/application/services/settings.service.ts
-client/kjvonly-pwa/src/lib/application/services/navigation.service.ts
-client/kjvonly-pwa/src/lib/application/runtime/navigation/components/navigationContainer.svelte
-client/kjvonly-pwa/src/lib/application/runtime/application-context.ts
+client/pwa/src/lib/application/models/settings.model.ts
+client/pwa/src/lib/application/services/settings.service.ts
+client/pwa/src/lib/application/services/navigation.service.ts
+client/pwa/src/lib/application/runtime/navigation/components/navigationContainer.svelte
+client/pwa/src/lib/application/runtime/application-context.ts
 ```
 
 ---

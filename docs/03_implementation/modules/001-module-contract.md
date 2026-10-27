@@ -1,7 +1,7 @@
 # Module Contract
 
 **Status:** Current
-**Scope:** `client/kjvonly-pwa`
+**Scope:** `client/pwa`
 
 ## Purpose
 

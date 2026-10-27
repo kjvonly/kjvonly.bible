@@ -8,9 +8,9 @@ dist
 .vercel
 .netlify
 .wrangler
-kjvonly-pwa/.svelte-kit
-kjvonly-pwa/build
-kjvonly-pwa/site
+pwa/.svelte-kit
+pwa/build
+pwa/site
 .tmp
 __screenshots__
 .vitest-attachments

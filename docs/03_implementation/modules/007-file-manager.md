@@ -4,12 +4,12 @@
 
 **Current**
 
-**Area:** `client/kjvonly-pwa`
+**Area:** `client/pwa`
 
 Primary implementation:
 
 ```text
-client/kjvonly-pwa/src/lib/application/modules/file-manager/
+client/pwa/src/lib/application/modules/file-manager/
 ```
 
 Related implementation documentation:

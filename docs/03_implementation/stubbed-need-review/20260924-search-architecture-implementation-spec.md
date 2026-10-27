@@ -3,7 +3,7 @@
 **Status:** Current implementation specification  
 **Date:** 2026-09-24  
 **Scope:** Shared Search UI/runtime contract and the current Bible Search implementation  
-**Primary application:** `client/kjvonly-pwa`  
+**Primary application:** `client/pwa`  
 **Framework:** Svelte 5 + TypeScript + Web Workers + FlexSearch
 
 ---
@@ -187,7 +187,7 @@ The important architectural direction is that the shared Search layer does not d
 ### 5.1 Shared application Search layer
 
 ```text
-client/kjvonly-pwa/src/lib/application/ui/search/
+client/pwa/src/lib/application/ui/search/
     search-adapter.ts
     search-view.model.ts
     search-session.svelte.ts
@@ -198,20 +198,20 @@ client/kjvonly-pwa/src/lib/application/ui/search/
 Public exports are surfaced through:
 
 ```text
-client/kjvonly-pwa/src/lib/application/ui/index.ts
+client/pwa/src/lib/application/ui/index.ts
 ```
 
 ### 5.2 Shared Search controls
 
 ```text
-client/kjvonly-pwa/src/lib/components/inputs/searchInput.svelte
-client/kjvonly-pwa/src/lib/components/buttons/KJVIconButton.svelte
+client/pwa/src/lib/components/inputs/searchInput.svelte
+client/pwa/src/lib/components/buttons/KJVIconButton.svelte
 ```
 
 ### 5.3 Bible Search module
 
 ```text
-client/kjvonly-pwa/src/lib/domains/bible/modules/search/
+client/pwa/src/lib/domains/bible/modules/search/
     bible-search-adapter.ts
     bible-search-adapter.spec.ts
     searchContainer.svelte
@@ -222,19 +222,19 @@ client/kjvonly-pwa/src/lib/domains/bible/modules/search/
 ### 5.4 Bible Search model/service/runtime/worker
 
 ```text
-client/kjvonly-pwa/src/lib/domains/bible/models/search.model.ts
-client/kjvonly-pwa/src/lib/domains/bible/models/bible-search-index.model.ts
+client/pwa/src/lib/domains/bible/models/search.model.ts
+client/pwa/src/lib/domains/bible/models/bible-search-index.model.ts
 
-client/kjvonly-pwa/src/lib/domains/bible/services/search.service.ts
-client/kjvonly-pwa/src/lib/domains/bible/services/bible-search-index.service.ts
+client/pwa/src/lib/domains/bible/services/search.service.ts
+client/pwa/src/lib/domains/bible/services/bible-search-index.service.ts
 
-client/kjvonly-pwa/src/lib/domains/bible/runtime/search/search-runtime.ts
+client/pwa/src/lib/domains/bible/runtime/search/search-runtime.ts
 
-client/kjvonly-pwa/src/lib/domains/bible/workers/kjvsearch.worker.ts
-client/kjvonly-pwa/src/lib/domains/bible/workers/search/search-index-runtime.ts
-client/kjvonly-pwa/src/lib/domains/bible/workers/search/search-worker-message.ts
+client/pwa/src/lib/domains/bible/workers/kjvsearch.worker.ts
+client/pwa/src/lib/domains/bible/workers/search/search-index-runtime.ts
+client/pwa/src/lib/domains/bible/workers/search/search-worker-message.ts
 
-client/kjvonly-pwa/src/lib/domains/bible/resources/search/
+client/pwa/src/lib/domains/bible/resources/search/
 ```
 
 ---

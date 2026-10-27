@@ -4,18 +4,18 @@
 
 **Current**
 
-**Area:** `client/kjvonly-pwa`
+**Area:** `client/pwa`
 
 Primary implementation:
 
 ```text
-client/kjvonly-pwa/src/lib/application/modules/settings/
+client/pwa/src/lib/application/modules/settings/
 ```
 
 Application settings authority:
 
 ```text
-client/kjvonly-pwa/src/lib/application/services/settings.service.ts
+client/pwa/src/lib/application/services/settings.service.ts
 ```
 
 Navigation architecture:

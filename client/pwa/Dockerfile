@@ -5,7 +5,7 @@ FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
 COPY package*.json ./
-COPY kjvonly-pwa/package.json ./kjvonly-pwa/package.json
+COPY pwa/package.json ./pwa/package.json
 COPY cli/package.json ./cli/package.json
 COPY packages/normalized-content/package.json ./packages/normalized-content/package.json
 COPY packages/html-normalized-content/package.json ./packages/html-normalized-content/package.json
@@ -22,12 +22,12 @@ ENV VITE_APP_GIT_COMMIT=${APP_GIT_COMMIT}
 ENV VITE_APP_GIT_TAG=${APP_GIT_TAG}
 
 RUN npm run prepare --workspace @kjvonly/pwa
-RUN --mount=type=secret,id=build_env,target=/app/kjvonly-pwa/.env.production.local \
+RUN --mount=type=secret,id=build_env,target=/app/pwa/.env.production.local \
     npm run build --workspace @kjvonly/pwa
 
 FROM nginx:alpine AS runtime
 
-COPY kjvonly-pwa/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/kjvonly-pwa/build /usr/share/nginx/html
+COPY pwa/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/pwa/build /usr/share/nginx/html
 
 EXPOSE 80

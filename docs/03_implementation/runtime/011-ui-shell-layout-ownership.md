@@ -91,7 +91,7 @@ Descendants that need Pane height should consume the context instead of introduc
 Current source location:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/pane/components/paneSurface.svelte
+client/pwa/src/lib/application/runtime/pane/components/paneSurface.svelte
 ```
 
 `PaneNavigationContainer` owns the one `PaneSurface` instance for its Pane.
@@ -169,7 +169,7 @@ The feature component rendered by the entry decides whether it needs a `ViewHead
 Current source location:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/pane/components/viewHeader.svelte
+client/pwa/src/lib/application/runtime/pane/components/viewHeader.svelte
 ```
 
 It owns normal header-region presentation such as:
@@ -198,7 +198,7 @@ Feature-specific header components own semantic actions.
 Current source location:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/pane/components/viewBody.svelte
+client/pwa/src/lib/application/runtime/pane/components/viewBody.svelte
 ```
 
 It consumes:
@@ -459,7 +459,7 @@ This keeps the navigation shell singular regardless of how many feature views ar
 The shared Pane/view presentation primitives live together under:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/pane/components/
+client/pwa/src/lib/application/runtime/pane/components/
 ```
 
 Current important components include:

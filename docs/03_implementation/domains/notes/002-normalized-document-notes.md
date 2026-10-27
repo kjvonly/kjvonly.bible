@@ -33,7 +33,7 @@ The Notes Domain owns association meaning and Note filtering. The Normalized Con
 
 # 2. Source Audit (October 14 Archive)
 
-The following describes implementation verified in `kjvonly-new-chat-files-20261014(1).zip`; paths below are relative to `client/kjvonly-pwa/src/lib/` unless indicated otherwise.
+The following describes implementation verified in `kjvonly-new-chat-files-20261014(1).zip`; paths below are relative to `client/pwa/src/lib/` unless indicated otherwise.
 
 | Area | Current behavior | Implication |
 | --- | --- | --- |

@@ -1,7 +1,7 @@
 # Browser APIs
 
 **Status:** Current  
-**Area:** `client/kjvonly-pwa`
+**Area:** `client/pwa`
 
 ## Purpose
 

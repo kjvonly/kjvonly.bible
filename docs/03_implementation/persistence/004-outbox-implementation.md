@@ -1184,7 +1184,7 @@ Do not document or depend on them as though they already exist.
 Current implementation centers around:
 
 ```text
-client/kjvonly-pwa/src/lib/application/outbox/
+client/pwa/src/lib/application/outbox/
     outbox-entry.ts
     outbox-publication-intent.ts
     outbox-publication-strategy.ts
@@ -1197,17 +1197,17 @@ client/kjvonly-pwa/src/lib/application/outbox/
 Resource publication:
 
 ```text
-client/kjvonly-pwa/src/lib/resource/publication/
+client/pwa/src/lib/resource/publication/
     resource-publication.ts
 
-client/kjvonly-pwa/src/lib/resource/nostr/
+client/pwa/src/lib/resource/nostr/
     nostr-resource-publication-strategy.ts
 ```
 
 Native Nostr-event publication:
 
 ```text
-client/kjvonly-pwa/src/lib/infrastructure/nostr/events/publication/
+client/pwa/src/lib/infrastructure/nostr/events/publication/
     nostr-event-publication.ts
     nostr-event-publication-strategy.ts
     nostr-event-write-stores.ts
@@ -1216,22 +1216,22 @@ client/kjvonly-pwa/src/lib/infrastructure/nostr/events/publication/
 Persistence:
 
 ```text
-client/kjvonly-pwa/src/lib/infrastructure/persistence/
+client/pwa/src/lib/infrastructure/persistence/
     application.db.ts
 ```
 
 Composition:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/application.ts
+client/pwa/src/lib/application/runtime/application.ts
 ```
 
 Domain transaction examples include:
 
 ```text
-client/kjvonly-pwa/src/lib/domains/bible/persistence/
-client/kjvonly-pwa/src/lib/domains/notes/persistence/
-client/kjvonly-pwa/src/lib/domains/reading-plans/persistence/
+client/pwa/src/lib/domains/bible/persistence/
+client/pwa/src/lib/domains/notes/persistence/
+client/pwa/src/lib/domains/reading-plans/persistence/
 ```
 
 ---

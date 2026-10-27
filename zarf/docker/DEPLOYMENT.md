@@ -172,7 +172,7 @@ The nginx deployment connects to these ports through its configured
 The production Compose file builds the PWA from:
 
 ```text
-client/kjvonly-pwa/Dockerfile
+client/pwa/Dockerfile
 ```
 
 Two different environment files are involved in deployment:
@@ -189,7 +189,7 @@ The web build file is passed to Docker BuildKit as the Compose `build_env`
 secret. The PWA Dockerfile mounts that secret only for the Vite build step at:
 
 ```text
-/app/kjvonly-pwa/.env.production.local
+/app/pwa/.env.production.local
 ```
 
 That filename is intentional. `vite build` runs in production mode and loads

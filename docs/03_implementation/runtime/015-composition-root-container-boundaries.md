@@ -377,7 +377,7 @@ ViewBody
 They live under:
 
 ```text
-client/kjvonly-pwa/src/lib/application/runtime/pane/components/
+client/pwa/src/lib/application/runtime/pane/components/
 ```
 
 Their ownership is intentionally different:

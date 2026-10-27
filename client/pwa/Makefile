@@ -2,10 +2,10 @@
 	run run-arm64 run-amd64 up up-arm64 up-amd64 down down-arm64 down-amd64 \
 	restart logs shell ps clean rebuild
 
-IMAGE ?= kjvonly-pwa
-ARM64_IMAGE ?= kjvonly-pwa:arm64
-AMD64_IMAGE ?= kjvonly-pwa:amd64
-CONTAINER ?= kjvonly-pwa
+IMAGE ?= pwa
+ARM64_IMAGE ?= pwa:arm64
+AMD64_IMAGE ?= pwa:amd64
+CONTAINER ?= pwa
 PORT ?= 8080
 BASE_PATH ?=
 ENV_FILE ?=
@@ -19,7 +19,7 @@ ifneq ($(strip $(ENV_FILE)),)
 ENV_SECRET := --secret=id=build_env,src="$(ENV_FILE)"
 endif
 
-BUILDER ?= kjvonly-pwa-builder
+BUILDER ?= pwa-builder
 PLATFORMS ?= linux/amd64,linux/arm64
 PUSH_IMAGE ?=
 
@@ -62,7 +62,7 @@ build-all: build-arm64 build-amd64
 
 build-multi: builder
 	@test -n "$(PUSH_IMAGE)" || \
-		(echo "Usage: make build-multi PUSH_IMAGE=registry.example/kjvonly-pwa:tag" && exit 1)
+		(echo "Usage: make build-multi PUSH_IMAGE=registry.example/pwa:tag" && exit 1)
 	docker buildx build $(ENV_SECRET) $(BUILD_METADATA_ARGS) \
 		--builder "$(BUILDER)" \
 		--platform "$(PLATFORMS)" \

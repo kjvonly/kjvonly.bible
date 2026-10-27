@@ -1,8 +1,8 @@
 # Color System Implementation
 **Status:** Current  
-**Area:** `client/kjvonly-pwa`  
-**Primary implementation:** `client/kjvonly-pwa/src/app.css`  
-**Settings UI definition:** `client/kjvonly-pwa/src/lib/application/modules/settings/definitions/settings.definition.ts`
+**Area:** `client/pwa`  
+**Primary implementation:** `client/pwa/src/app.css`  
+**Settings UI definition:** `client/pwa/src/lib/application/modules/settings/definitions/settings.definition.ts`
 ---
 # Purpose
 KJVOnly.bible uses semantic color tokens rather than hard-coded component palettes.
@@ -60,15 +60,15 @@ docs/03_implementation/ui/001-theme-system.md
 # Source of Truth
 The concrete palette values live in:
 ```text
-client/kjvonly-pwa/src/app.css
+client/pwa/src/app.css
 ```
 The selectable theme values live in the Settings definition:
 ```text
-client/kjvonly-pwa/src/lib/application/modules/settings/definitions/settings.definition.ts
+client/pwa/src/lib/application/modules/settings/definitions/settings.definition.ts
 ```
 The global theme attribute is applied by:
 ```text
-client/kjvonly-pwa/src/lib/application/services/settings.service.ts
+client/pwa/src/lib/application/services/settings.service.ts
 ```
 Color definitions should not be duplicated in Svelte components.
 ---

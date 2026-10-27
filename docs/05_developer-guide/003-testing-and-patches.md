@@ -11,10 +11,10 @@ YYYYMMDD-descriptive-name.patch
 Generate patches from the repository root so paths include the complete project prefix, for example:
 
 ```text
-client/kjvonly-pwa/...
+client/pwa/...
 ```
 
-Do not generate PWA patches relative to `client/kjvonly-pwa` when the patch is expected to be applied from the repository root.
+Do not generate PWA patches relative to `client/pwa` when the patch is expected to be applied from the repository root.
 
 ---
 
@@ -44,14 +44,14 @@ Keep patch application separate from test/build commands so failures are easy to
 For client code changes:
 
 ```bash
-cd client/kjvonly-pwa
+cd client/pwa
 npm run test && npm run build
 ```
 
 For browser-facing or infrastructure integration changes also run:
 
 ```bash
-cd client/kjvonly-pwa
+cd client/pwa
 npm run test:browser
 ```
 
